@@ -1003,10 +1003,18 @@ class DeviceManager(object):
         # the following loop...
         port = None
 
-        # Look for an existing DHCP for this network.
+        # Look for an existing DHCP port for this network.
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == device_id:
+                # If using gateway IPs on this port, we can skip the
+                # following code, whose purpose is just to review and
+                # update the Neutron-allocated IP addresses for the
+                # port.
+                if self.driver.use_gateway_ips:
+                    return port
+                # Otherwise break out, as we now have the DHCP port
+                # whose subnets and addresses we need to review.
                 break
         else:
             return None
@@ -1063,13 +1071,21 @@ class DeviceManager(object):
         LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
                   ' does not yet exist. Creating new one.',
                   {'device_id': device_id, 'network_id': network.id})
+
+        # Make a list of the subnets that need a unique IP address for
+        # this DHCP port.
+        if self.driver.use_gateway_ips:
+            unique_ip_subnets = []
+        else:
+            unique_ip_subnets = [dict(subnet_id=s) for s in dhcp_subnets]
+
         port_dict = dict(
             name='',
             admin_state_up=True,
             device_id=device_id,
             network_id=network.id,
             tenant_id=network.tenant_id,
-            fixed_ips=[dict(subnet_id=s) for s in dhcp_subnets])
+            fixed_ips=unique_ip_subnets)
         return self.plugin.create_dhcp_port({'port': port_dict})
 
     def setup_dhcp_port(self, network):
@@ -1140,6 +1156,17 @@ class DeviceManager(object):
                 net = netaddr.IPNetwork(subnet.cidr)
                 ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
                 ip_cidrs.append(ip_cidr)
+
+        if self.driver.use_gateway_ips:
+            # For each DHCP-enabled subnet, add that subnet's gateway
+            # IP address to the Linux device for the DHCP port.
+            for subnet in network.subnets:
+                if not subnet.enable_dhcp:
+                    continue
+                gateway = subnet.gateway_ip
+                if gateway:
+                    net = netaddr.IPNetwork(subnet.cidr)
+                    ip_cidrs.append('%s/%s' % (gateway, net.prefixlen))
 
         if (self.conf.enable_isolated_metadata and
             self.conf.use_namespaces):

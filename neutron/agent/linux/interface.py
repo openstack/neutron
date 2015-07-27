@@ -52,6 +52,46 @@ class LinuxInterfaceDriver(object):
     def __init__(self, conf):
         self.conf = conf
 
+    @property
+    def use_gateway_ips(self):
+        """Whether to use gateway IPs instead of unique IP allocations.
+
+        In each place where the DHCP agent runs, and for each subnet for
+        which DHCP is handling out IP addresses, the DHCP port needs -
+        at the Linux level - to have an IP address within that subnet.
+        Generally this needs to be a unique Neutron-allocated IP
+        address, because the subnet's underlying L2 domain is bridged
+        across multiple compute hosts and network nodes, and for HA
+        there may be multiple DHCP agents running on that same bridged
+        L2 domain.
+
+        However, if the DHCP ports - on multiple compute/network nodes
+        but for the same network - are _not_ bridged to each other,
+        they do not need each to have a unique IP address.  Instead
+        they can all share the same address from the relevant subnet.
+        This works, without creating any ambiguity, because those
+        ports are not all present on the same L2 domain, and because
+        no data within the network is ever sent to that address.
+        (DHCP requests are broadcast, and it is the network's job to
+        ensure that such a broadcast will reach at least one of the
+        available DHCP servers.  DHCP responses will be sent _from_
+        the DHCP port address.)
+
+        Specifically, for networking backends where it makes sense,
+        the DHCP agent allows all DHCP ports to use the subnet's
+        gateway IP address, and thereby to completely avoid any unique
+        IP address allocation.  This behaviour is selected by running
+        the DHCP agent with a configured interface driver whose
+        'use_gateway_ips' property is True.
+
+        When an operator deploys Neutron with an interface driver that
+        makes use_gateway_ips True, they should also ensure that a
+        gateway IP address is defined for each DHCP-enabled subnet,
+        and that the gateway IP address doesn't change during the
+        subnet's lifetime.
+        """
+        return False
+
     def init_l3(self, device_name, ip_cidrs, namespace=None,
                 preserve_ips=[], gateway_ips=None,
                 clean_connections=False):

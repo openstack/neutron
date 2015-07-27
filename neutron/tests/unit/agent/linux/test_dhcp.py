@@ -504,10 +504,17 @@ class FakeDualNetwork(object):
 
 
 class FakeDeviceManagerNetwork(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
-    ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
+    # Use instance rather than class attributes here, so that we get
+    # an independent set of ports each time FakeDeviceManagerNetwork()
+    # is used.
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+        self.ports = [FakePort1(),
+                      FakeV6Port(),
+                      FakeDualPort(),
+                      FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetworkReserved(object):
@@ -1887,7 +1894,17 @@ class TestDeviceManager(TestConfBase):
         """Test new and existing cases of DeviceManager's DHCP port setup
         logic.
         """
+        self._test_setup(load_interface_driver, ip_lib, False)
 
+    @mock.patch('neutron.agent.linux.dhcp.ip_lib')
+    @mock.patch('neutron.agent.linux.dhcp.common_utils.load_interface_driver')
+    def test_setup_gateway_ips(self, load_interface_driver, ip_lib):
+        """Test new and existing cases of DeviceManager's DHCP port setup
+        logic.
+        """
+        self._test_setup(load_interface_driver, ip_lib, True)
+
+    def _test_setup(self, load_interface_driver, ip_lib, use_gateway_ips):
         # Create DeviceManager.
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=False))
@@ -1913,6 +1930,7 @@ class TestDeviceManager(TestConfBase):
 
         plugin.create_dhcp_port.side_effect = mock_create
         mgr.driver.get_device_name.return_value = 'ns-XXX'
+        mgr.driver.use_gateway_ips = use_gateway_ips
         ip_lib.ensure_device_is_ready.return_value = True
         mgr.setup(network)
         plugin.create_dhcp_port.assert_called_with(mock.ANY)
@@ -1921,8 +1939,13 @@ class TestDeviceManager(TestConfBase):
                                               mock.ANY,
                                               namespace='qdhcp-ns')
         cidrs = set(mgr.driver.init_l3.call_args[0][1])
-        self.assertEqual(cidrs, set(['unique-IP-address/24',
-                                     'unique-IP-address/64']))
+        if use_gateway_ips:
+            self.assertEqual(cidrs, set(['%s/%s' % (s.gateway_ip,
+                                                    s.cidr.split('/')[1])
+                                         for s in network.subnets]))
+        else:
+            self.assertEqual(cidrs, set(['unique-IP-address/24',
+                                         'unique-IP-address/64']))
 
         # Now call setup again.  This time we go through the existing
         # port code path, and the driver's init_l3 method is called
@@ -1934,8 +1957,13 @@ class TestDeviceManager(TestConfBase):
                                               mock.ANY,
                                               namespace='qdhcp-ns')
         cidrs = set(mgr.driver.init_l3.call_args[0][1])
-        self.assertEqual(cidrs, set(['unique-IP-address/24',
-                                     'unique-IP-address/64']))
+        if use_gateway_ips:
+            self.assertEqual(cidrs, set(['%s/%s' % (s.gateway_ip,
+                                                    s.cidr.split('/')[1])
+                                         for s in network.subnets]))
+        else:
+            self.assertEqual(cidrs, set(['unique-IP-address/24',
+                                         'unique-IP-address/64']))
         self.assertFalse(plugin.create_dhcp_port.called)
 
     @mock.patch('neutron.agent.linux.dhcp.ip_lib')
@@ -1965,6 +1993,7 @@ class TestDeviceManager(TestConfBase):
 
         plugin.update_dhcp_port.side_effect = mock_update
         mgr.driver.get_device_name.return_value = 'ns-XXX'
+        mgr.driver.use_gateway_ips = False
         ip_lib.ensure_device_is_ready.return_value = True
         mgr.setup(network)
         plugin.update_dhcp_port.assert_called_with(reserved_port.id, mock.ANY)
@@ -2004,6 +2033,7 @@ class TestDeviceManager(TestConfBase):
 
         plugin.update_dhcp_port.side_effect = mock_update
         mgr.driver.get_device_name.return_value = 'ns-XXX'
+        mgr.driver.use_gateway_ips = False
         ip_lib.ensure_device_is_ready.return_value = True
         mgr.setup(network)
         plugin.update_dhcp_port.assert_called_with(reserved_port_2.id,
