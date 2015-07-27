@@ -41,11 +41,12 @@ class RpcQosServiceNotificationDriver(
     """RPC message queue service notification driver for QoS."""
 
     def __init__(self):
-        LOG.debug(
-            "Initializing RPC Messaging Queue notification driver for QoS")
         rpc_registry.register_provider(
             _get_qos_policy_cb,
             resources.QOS_POLICY)
+
+    def get_description(self):
+        return "Message queue updates"
 
     def create_policy(self, policy):
         #No need to update agents on create

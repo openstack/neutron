@@ -20,7 +20,7 @@ from neutron.extensions import qos
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
-from neutron.services.qos.notification_drivers import message_queue
+from neutron.services.qos.notification_drivers import manager as driver_mgr
 
 
 LOG = logging.getLogger(__name__)
@@ -38,27 +38,26 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
-        #TODO(QoS) load from configuration option
-        self.notification_driver = (
-            message_queue.RpcQosServiceNotificationDriver())
+        self.notification_driver_manager = (
+            driver_mgr.QosServiceNotificationDriverManager())
 
     def create_policy(self, context, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.create()
-        self.notification_driver.create_policy(policy)
+        self.notification_driver_manager.create_policy(policy)
         return policy.to_dict()
 
     def update_policy(self, context, policy_id, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.id = policy_id
         policy.update()
-        self.notification_driver.update_policy(policy)
+        self.notification_driver_manager.update_policy(policy)
         return policy.to_dict()
 
     def delete_policy(self, context, policy_id):
         policy = policy_object.QosPolicy(context)
         policy.id = policy_id
-        self.notification_driver.delete_policy(policy)
+        self.notification_driver_manager.delete_policy(policy)
         policy.delete()
 
     def _get_policy_obj(self, context, policy_id):
@@ -66,7 +65,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def _update_policy_on_driver(self, context, policy_id):
         policy = self._get_policy_obj(context, policy_id)
-        self.notification_driver.update_policy(policy)
+        self.notification_driver_manager.update_policy(policy)
 
     @db_base_plugin_common.filter_fields
     def get_policy(self, context, policy_id, fields=None):

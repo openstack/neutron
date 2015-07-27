@@ -9,34 +9,22 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import abc
 
-import six
+from neutron.services.qos.notification_drivers import qos_base
 
 
-@six.add_metaclass(abc.ABCMeta)
-class QosServiceNotificationDriverBase(object):
-    """QoS service notification driver base class."""
+class DummyQosServiceNotificationDriver(
+    qos_base.QosServiceNotificationDriverBase):
+    """Dummy service notification driver for QoS."""
 
-    @abc.abstractmethod
     def get_description(self):
-        """Get the notification driver description.
-        """
+        return "Dummy"
 
-    @abc.abstractmethod
     def create_policy(self, policy):
-        """Create the QoS policy."""
+        pass
 
-    @abc.abstractmethod
     def update_policy(self, policy):
-        """Update the QoS policy.
+        pass
 
-        Apply changes to the QoS policy.
-        """
-
-    @abc.abstractmethod
     def delete_policy(self, policy):
-        """Delete the QoS policy.
-
-        Remove all rules for this policy and free up all the resources.
-        """
+        pass
