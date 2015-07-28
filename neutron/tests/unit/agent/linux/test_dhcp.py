@@ -1652,13 +1652,13 @@ class TestDnsmasq(TestBase):
 
     def test__output_hosts_file_log_only_twice(self):
         dm = self._get_dnsmasq(FakeDualStackNetworkSingleDHCP())
-        with mock.patch.object(dhcp.LOG, 'process') as process:
-            process.return_value = ('fake_message', {})
+        with mock.patch.object(dhcp, 'LOG') as logger:
+            logger.process.return_value = ('fake_message', {})
             dm._output_hosts_file()
         # The method logs twice, at the start of and the end. There should be
         # no other logs, no matter how many hosts there are to dump in the
         # file.
-        self.assertEqual(2, process.call_count)
+        self.assertEqual(2, len(logger.method_calls))
 
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
