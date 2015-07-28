@@ -21,7 +21,6 @@ from neutron.i18n import _LE, _LI
 LOG = log.getLogger(__name__)
 
 
-# TODO(QoS) add unit tests to Agent extensions mgr
 class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
     """Manage agent extensions."""
 
