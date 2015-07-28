@@ -32,6 +32,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
+from neutron.db import extradhcpopt_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
@@ -43,6 +44,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import external_net as ext_net_extn
+from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.extensions import multiprovidernet as mpnet
@@ -93,6 +95,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                   dhcpmeta_modes.DhcpMetadataAccess,
                   l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                   external_net_db.External_net_db_mixin,
+                  extradhcpopt_db.ExtraDhcpOptMixin,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
                   mac_db.MacLearningDbMixin,
@@ -117,6 +120,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    "qos-queue",
                                    "quotas",
                                    "external-net",
+                                   "extra_dhcp_opt",
                                    "router",
                                    "security-group"]
 
@@ -1061,6 +1065,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # ATTR_NOT_SPECIFIED is for the case where a port is created on a
         # shared network that is not owned by the tenant.
         port_data = port['port']
+        dhcp_opts = port_data.get(edo_ext.EXTRADHCPOPTS, [])
         # Set port status as 'DOWN'. This will be updated by backend sync.
         port_data['status'] = constants.PORT_STATUS_DOWN
         with context.session.begin(subtransactions=True):
@@ -1109,6 +1114,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_portbindings_create_and_update(context,
                                                          port['port'],
                                                          port_data)
+            self._process_port_create_extra_dhcp_opts(context, port_data,
+                                                      dhcp_opts)
             # For some reason the port bindings DB mixin does not handle
             # the VNIC_TYPE attribute, which is required by nova for
             # setting up VIFs.
@@ -1155,6 +1162,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         with context.session.begin(subtransactions=True):
             ret_port = super(NsxPluginV2, self).update_port(
                 context, id, port)
+
             # Save current mac learning state to check whether it's
             # being updated or not
             old_mac_learning_state = ret_port.get(mac_ext.MAC_LEARNING)
@@ -1163,6 +1171,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             port['port'].pop('fixed_ips', None)
             ret_port.update(port['port'])
             tenant_id = self._get_tenant_id_for_create(context, ret_port)
+            self._update_extra_dhcp_opts_on_port(context, id, port, ret_port)
 
             # populate port_security setting
             if psec.PORTSECURITY not in port['port']:
