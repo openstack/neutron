@@ -91,6 +91,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-edge-vpn_          |          vpn          |
 +-------------------------------+-----------------------+
+| networking-fujitsu_           |          ml2          |
++-------------------------------+-----------------------+
 | networking-hyperv_            |          ml2          |
 +-------------------------------+-----------------------+
 | networking-ibm_               |         ml2,l3        |
@@ -207,6 +209,15 @@ Edge VPN
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-edge-vpn
 * Launchpad: https://launchpad.net/edge-vpn
+
+.. _networking-fujitsu:
+
+FUJITSU
+-------
+
+* Git: https://git.openstack.org/cgit/openstack/networking-fujitsu
+* Launchpad: https://launchpad.net/networking-fujitsu
+* PyPI: https://pypi.python.org/pypi/networking-fujitsu
 
 .. _networking-hyperv:
 
