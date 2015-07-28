@@ -200,6 +200,14 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                                connection_attrs))
         seg_type = network_mapping_info.get(SEGMENTATION_TYPE)
         seg_id = network_mapping_info.get(SEGMENTATION_ID)
+        # It is important to validate that the segmentation ID is actually an
+        # integer value
+        try:
+            seg_id = int(seg_id)
+        except ValueError:
+            msg = _("An invalid segmentation ID was specified. The "
+                    "segmentation ID must be a positive integer number")
+            raise exceptions.InvalidInput(error_message=msg)
         # The NSX plugin accepts 0 as a valid vlan tag
         seg_id_valid = seg_id == 0 or utils.is_valid_vlan_tag(seg_id)
         if seg_type.lower() == 'flat' and seg_id:
@@ -207,7 +215,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                     "the segmentation type is flat")
             raise exceptions.InvalidInput(error_message=msg)
         elif (seg_type.lower() == 'vlan' and not seg_id_valid):
-            msg = _("Invalid segmentation id (%d) for "
+            msg = _("Invalid segmentation id (%s) for "
                     "vlan segmentation type") % seg_id
             raise exceptions.InvalidInput(error_message=msg)
         return network_id
@@ -313,6 +321,10 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
         with context.session.begin(subtransactions=True):
             gw_db = self._get_network_gateway(context, network_gateway_id)
             tenant_id = self._get_tenant_id_for_create(context, gw_db)
+            # _get_tenant_id_for_create might return None in some cases.
+            # This is not acceptable for the NSX plugin
+            if context.is_admin and not tenant_id:
+                tenant_id = context.tenant_id
             # TODO(salvatore-orlando): Leverage unique constraint instead
             # of performing another query!
             if self._retrieve_gateway_connections(context,
