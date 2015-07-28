@@ -262,8 +262,8 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
                             neutron_context=neutron_context)
         self.assertNotIn(ext_qos.QUEUE, port['port'])
 
-    def test_rxtx_factor(self):
-        with self.qos_queue(max=10) as q1:
+    def _test_rxtx_factor(self, max_value, rxtx_factor):
+        with self.qos_queue(max=max_value) as q1:
 
             res = self._create_network('json', 'net1', True,
                                        arg_list=(ext_qos.QUEUE,),
@@ -271,10 +271,20 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
             net1 = self.deserialize('json', res)
             res = self._create_port('json', net1['network']['id'],
                                     arg_list=(ext_qos.RXTX_FACTOR,),
-                                    rxtx_factor=2, device_id='1')
+                                    rxtx_factor=rxtx_factor, device_id='1')
             port = self.deserialize('json', res)
             req = self.new_show_request('qos-queues',
                                         port['port'][ext_qos.QUEUE])
             res = req.get_response(self.ext_api)
             queue = self.deserialize('json', res)
-            self.assertEqual(queue['qos_queue']['max'], 20)
+            self.assertEqual(queue['qos_queue']['max'],
+                             max_value * rxtx_factor)
+
+    def test_rxtx_factor(self):
+        self._test_rxtx_factor(10, 2)
+
+    def test_decimal_rxtx_factor(self):
+        self._test_rxtx_factor(10, 1.5)
+
+    def test_decimal_rxtx_factor_below_1(self):
+        self._test_rxtx_factor(10, 0.5)
