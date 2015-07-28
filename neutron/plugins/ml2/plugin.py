@@ -165,6 +165,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         )
         self.start_periodic_dhcp_agent_status_check()
 
+    @property
+    def supported_qos_rule_types(self):
+        return self.mechanism_manager.supported_qos_rule_types
+
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
         """Start the RPC loop to let the plugin communicate with agents."""

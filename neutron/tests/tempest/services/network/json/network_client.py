@@ -68,6 +68,7 @@ class NetworkClientJSON(service_client.ServiceClient):
             'firewalls': 'fw',
             'policies': 'qos',
             'bandwidth_limit_rules': 'qos',
+            'rule_types': 'qos',
         }
         service_prefix = service_resource_prefix_map.get(
             plural_name)
@@ -691,4 +692,11 @@ class NetworkClientJSON(service_client.ServiceClient):
             }
         resp, body = self.put(uri, json.dumps(post_data))
         self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_qos_rule_types(self):
+        uri = '%s/qos/rule-types' % self.uri_prefix
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = json.loads(body)
         return service_client.ResponseBody(resp, body)

@@ -29,7 +29,7 @@ class FakeModel(object):
 
 
 @obj_base.VersionedObjectRegistry.register
-class FakeNeutronObject(base.NeutronObject):
+class FakeNeutronObject(base.NeutronDbObject):
 
     db_model = FakeModel
 

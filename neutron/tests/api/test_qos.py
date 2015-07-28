@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.services.qos import qos_consts
 from neutron.tests.api import base
 from neutron.tests.tempest import config
 from neutron.tests.tempest import test
@@ -69,6 +70,25 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         rules = rules['bandwidth_limit_rules']
         rules_ids = [r['id'] for r in rules]
         self.assertIn(rule['id'], rules_ids)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('cf776f77-8d3d-49f2-8572-12d6a1557224')
+    def test_list_rule_types(self):
+        # List supported rule types
+        expected_rule_types = qos_consts.VALID_RULE_TYPES
+        expected_rule_details = ['type']
+
+        rule_types = self.admin_client.list_qos_rule_types()
+        actual_list_rule_types = rule_types['rule_types']
+        actual_rule_types = [rule['type'] for rule in actual_list_rule_types]
+
+        # Verify that only required fields present in rule details
+        for rule in actual_list_rule_types:
+            self.assertEqual(tuple(rule.keys()), tuple(expected_rule_details))
+
+        # Verify if expected rules are present in the actual rules list
+        for rule in expected_rule_types:
+            self.assertIn(rule, actual_rule_types)
 
     #TODO(QoS): policy update (name)
     #TODO(QoS): create several bandwidth-limit rules (not sure it makes sense,

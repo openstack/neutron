@@ -26,6 +26,31 @@ class NeutronObject(obj_base.VersionedObject,
                     obj_base.VersionedObjectDictCompat,
                     obj_base.ComparableVersionedObject):
 
+    # TODO(QoS): this should be revisited on how we plan to work with dicts
+    def to_dict(self):
+        return dict(self.items())
+
+    @classmethod
+    def get_by_id(cls, context, id):
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def get_objects(cls, context, **kwargs):
+        raise NotImplementedError()
+
+    def create(self):
+        raise NotImplementedError()
+
+    def update(self):
+        raise NotImplementedError()
+
+    def delete(self):
+        raise NotImplementedError()
+
+
+class NeutronDbObject(NeutronObject):
+
     # should be overridden for all persistent objects
     db_model = None
 
@@ -41,10 +66,6 @@ class NeutronObject(obj_base.VersionedObject,
                     setattr(self, field, db_obj[field])
                 break
         self.obj_reset_changes()
-
-    # TODO(QoS): this should be revisited on how we plan to work with dicts
-    def to_dict(self):
-        return dict(self.items())
 
     @classmethod
     def get_by_id(cls, context, id):

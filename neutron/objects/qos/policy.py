@@ -24,9 +24,9 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
-from neutron.extensions import qos as qos_extension
 from neutron.objects import base
 from neutron.objects.qos import rule as rule_obj_impl
+from neutron.services.qos import qos_consts
 
 
 class QosRulesExtenderMeta(abc.ABCMeta):
@@ -35,7 +35,7 @@ class QosRulesExtenderMeta(abc.ABCMeta):
         cls = super(QosRulesExtenderMeta, mcs).__new__(mcs, name, bases, dct)
 
         cls.rule_fields = {}
-        for rule in qos_extension.VALID_RULE_TYPES:
+        for rule in qos_consts.VALID_RULE_TYPES:
             rule_cls_name = 'Qos%sRule' % utils.camelize(rule)
             field = '%s_rules' % rule
             cls.fields[field] = obj_fields.ListOfObjectsField(rule_cls_name)
@@ -48,7 +48,7 @@ class QosRulesExtenderMeta(abc.ABCMeta):
 
 @obj_base.VersionedObjectRegistry.register
 @six.add_metaclass(QosRulesExtenderMeta)
-class QosPolicy(base.NeutronObject):
+class QosPolicy(base.NeutronDbObject):
 
     db_model = qos_db_model.QosPolicy
 

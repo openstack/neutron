@@ -22,6 +22,7 @@ from neutron.extensions import qos
 from neutron.i18n import _LW
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
+from neutron.objects.qos import rule_type as rule_type_object
 from neutron.plugins.common import constants
 
 from oslo_log import log as logging
@@ -140,4 +141,5 @@ class QoSPlugin(qos.QoSPluginBase):
     def get_rule_types(self, context, filters=None, fields=None,
                        sorts=None, limit=None,
                        marker=None, page_reverse=False):
-        pass
+        return [rule_type_obj.to_dict() for rule_type_obj in
+                rule_type_object.QosRuleType.get_objects()]

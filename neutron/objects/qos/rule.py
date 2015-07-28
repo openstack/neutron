@@ -21,12 +21,12 @@ import six
 
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
-from neutron.extensions import qos as qos_extension
 from neutron.objects import base
+from neutron.services.qos import qos_consts
 
 
 @six.add_metaclass(abc.ABCMeta)
-class QosRule(base.NeutronObject):
+class QosRule(base.NeutronDbObject):
 
     base_db_model = qos_db_model.QosRule
 
@@ -155,7 +155,7 @@ class QosBandwidthLimitRule(QosRule):
 
     db_model = qos_db_model.QosBandwidthLimitRule
 
-    rule_type = qos_extension.RULE_TYPE_BANDWIDTH_LIMIT
+    rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
 
     fields = {
         'max_kbps': obj_fields.IntegerField(nullable=True),

@@ -31,6 +31,21 @@ Service side design
   notifications to any interested agent, using `RPC callbacks <rpc_callbacks.html>`_.
 
 
+Supported QoS rule types
+------------------------
+
+Any plugin or Ml2 mechanism driver can claim support for some QoS rule types by
+providing a plugin/driver class property called 'supported_qos_rule_types' that
+should return a list of strings that correspond to QoS rule types (for the list
+of all rule types, see: neutron.extensions.qos.VALID_RULE_TYPES).
+
+In the most simple case, the property can be represented by a simple Python
+list defined on the class.
+
+For Ml2 plugin, the list of supported QoS rule types is defined as a common
+subset of rules supported by all active mechanism drivers.
+
+
 QoS resources
 -------------
 
@@ -253,4 +268,3 @@ in terms of how those objects are implemented. Specific test classes can
 obviously extend the set of test cases as they see needed (f.e. you need to
 define new test cases for those additional methods that you may add to your
 object implementations on top of base semantics common to all neutron objects).
-
