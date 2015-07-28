@@ -16,13 +16,18 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
+from neutron.i18n import _LE, _LW
 from neutron.agent.l2.extensions import qos_agent
-from neutron.services.qos import qos_consts
+from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
+    mech_openvswitch)
 
 LOG = logging.getLogger(__name__)
 
 
 class QosOVSAgentDriver(qos_agent.QosAgentDriver):
+
+    _SUPPORTED_RULES = (
+        mech_openvswitch.OpenvswitchMechanismDriver.supported_qos_rule_types)
 
     def __init__(self):
         super(QosOVSAgentDriver, self).__init__()
@@ -30,37 +35,42 @@ class QosOVSAgentDriver(qos_agent.QosAgentDriver):
         #  as constructor arguments
         self.br_int_name = cfg.CONF.OVS.integration_bridge
         self.br_int = None
-        self.handlers = {}
 
     def initialize(self):
-        self.handlers[('update', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
-            self._update_bw_limit_rule)
-        self.handlers[('create', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
-            self._update_bw_limit_rule)
-        self.handlers[('delete', qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)] = (
-            self._delete_bw_limit_rule)
-
         self.br_int = ovs_lib.OVSBridge(self.br_int_name)
 
-    def create(self, port, rules):
-        self._handle_rules('create', port, rules)
+    def create(self, port, qos_policy):
+        self._handle_rules('create', port, qos_policy)
 
-    def update(self, port, rules):
-        self._handle_rules('update', port, rules)
+    def update(self, port, qos_policy):
+        self._handle_rules('update', port, qos_policy)
 
-    def delete(self, port, rules):
-        self._handle_rules('delete', port, rules)
+    def delete(self, port, qos_policy):
+        self._handle_rules('delete', port, qos_policy)
 
-    def _handle_rules(self, action, port, rules):
-        for rule in rules:
-            handler = self.handlers.get((action, rule.get('type')))
-            if handler is not None:
-                handler(port, rule)
+    def _handle_rules(self, action, port, qos_policy):
+        for rule in qos_policy.rules:
+            if rule.rule_type in self._SUPPORTED_RULES:
+                handler_name = ("".join(("_", action, "_", rule.rule_type)))
+                try:
+                    handler = getattr(self, handler_name)
+                    handler(port, rule)
+                except AttributeError:
+                    LOG.error(
+                        _LE('Failed to locate a handler for %(rule_type) '
+                        'rules; skipping.'), handler_name)
+            else:
+                LOG.warning(_LW('Unsupported QoS rule type for %(rule_id)s: '
+                            '%(rule_type)s; skipping'),
+                            {'rule_id': rule.id, 'rule_type': rule.rule_type})
 
-    def _update_bw_limit_rule(self, port, rule):
-        port_name = port.get('name')
-        max_kbps = rule.get('max_kbps')
-        max_burst_kbps = rule.get('max_burst_kbps')
+    def _create_bandwidth_limit(self, port, rule):
+        self._update_bandwidth_limit(port, rule)
+
+    def _update_bandwidth_limit(self, port, rule):
+        port_name = port['vif_port'].port_name
+        max_kbps = rule.max_kbps
+        max_burst_kbps = rule.max_burst_kbps
 
         current_max_kbps, current_max_burst = (
             self.br_int.get_qos_bw_limit_for_port(port_name))
@@ -71,8 +81,8 @@ class QosOVSAgentDriver(qos_agent.QosAgentDriver):
                                                  max_kbps,
                                                  max_burst_kbps)
 
-    def _delete_bw_limit_rule(self, port, rule):
-        port_name = port.get('name')
+    def _delete_bandwidth_limit(self, port, rule):
+        port_name = port['vif_port'].port_name
         current_max_kbps, current_max_burst = (
             self.br_int.get_qos_bw_limit_for_port(port_name))
         if current_max_kbps is not None or current_max_burst is not None:
