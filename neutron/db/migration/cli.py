@@ -31,6 +31,7 @@ from neutron.common import utils
 HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
 CURRENT_RELEASE = "liberty"
+RELEASES = (CURRENT_RELEASE,)
 MIGRATION_BRANCHES = ('expand', 'contract')
 
 MIGRATION_ENTRYPOINTS = 'neutron.db.alembic_migrations'
@@ -114,6 +115,7 @@ def _get_alembic_entrypoint(project):
 
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
+    validate_labels(config)
     validate_heads_file(config)
 
 
@@ -158,9 +160,9 @@ def do_stamp(config, cmd):
                        sql=CONF.command.sql)
 
 
-def _get_branch_label(branch):
+def _get_branch_label(branch, release=None):
     '''Get the latest branch label corresponding to release cycle.'''
-    return '%s_%s' % (CURRENT_RELEASE, branch)
+    return '%s_%s' % (release or CURRENT_RELEASE, branch)
 
 
 def _get_branch_head(branch):
@@ -199,6 +201,56 @@ def do_revision(config, cmd):
     else:
         do_alembic_command(config, cmd, **addn_kwargs)
     update_heads_file(config)
+
+
+def _compare_labels(revision, expected_labels):
+    # validate that the script has the only label that corresponds to path
+    bad_labels = revision.branch_labels - expected_labels
+    if bad_labels:
+        script_name = os.path.basename(revision.path)
+        alembic_util.err(
+            _('Unexpected label for script %(script_name)s: %(labels)s') %
+            {'script_name': script_name,
+             'labels': bad_labels}
+        )
+
+
+def _validate_single_revision_labels(script_dir, revision,
+                                     release=None, branch=None):
+    if branch is not None:
+        branch_label = _get_branch_label(branch, release=release)
+        expected_labels = set([branch_label])
+    else:
+        expected_labels = set()
+
+    _compare_labels(revision, expected_labels)
+
+    # if it's not the root element of the branch, expect the parent of the
+    # script to have the same label
+    if revision.down_revision is not None:
+        down_revision = script_dir.get_revision(revision.down_revision)
+        _compare_labels(down_revision, expected_labels)
+
+
+def _validate_revision(script_dir, revision):
+    for branch in MIGRATION_BRANCHES:
+        for release in RELEASES:
+            marker = os.path.join(release, branch)
+            if marker in revision.path:
+                _validate_single_revision_labels(
+                    script_dir, revision, release=release, branch=branch)
+                return
+
+    # validate script from branchless part of migration rules
+    _validate_single_revision_labels(script_dir, revision)
+
+
+def validate_labels(config):
+    script_dir = alembic_script.ScriptDirectory.from_config(config)
+    revisions = [v for v in script_dir.walk_revisions(base='base',
+                                                      head='heads')]
+    for revision in revisions:
+        _validate_revision(script_dir, revision)
 
 
 def _get_sorted_heads(script):
