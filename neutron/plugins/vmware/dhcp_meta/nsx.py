@@ -192,9 +192,9 @@ def is_user_port(p, check_dev_id=False):
 
 def check_services_requirements(cluster):
     ver = cluster.api_client.get_version()
-    # It sounds like 4.1 is the first one where DHCP in NSX
-    # will have the experimental feature
-    if ver.major >= 4 and ver.minor >= 1:
+    # 4.1 is the first and only release where DHCP in NSX
+    # will have this feature, as experimental
+    if ver.major == 4 and ver.minor == 1:
         cluster_id = cfg.CONF.default_service_cluster_uuid
         if not lsn_api.service_cluster_exists(cluster, cluster_id):
             raise p_exc.ServiceClusterUnavailable(cluster_id=cluster_id)
