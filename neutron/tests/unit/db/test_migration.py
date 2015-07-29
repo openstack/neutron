@@ -259,24 +259,23 @@ class TestCli(base.BaseTestCase):
                 mock_open.return_value.read.return_value = (
                     '\n'.join(file_heads))
 
-                with mock.patch('os.path.isfile') as is_file:
-                    is_file.return_value = bool(file_heads)
+                if all(head in file_heads for head in heads):
+                    cli.validate_heads_file(fake_config)
+                else:
+                    self.assertRaises(
+                        SystemExit,
+                        cli.validate_heads_file,
+                        fake_config
+                    )
+                    self.assertTrue(self.mock_alembic_err.called)
 
-                    if all(head in file_heads for head in heads):
-                        cli.validate_heads_file(fake_config)
-                    else:
-                        self.assertRaises(
-                            SystemExit,
-                            cli.validate_heads_file,
-                            fake_config
-                        )
-                        self.mock_alembic_err.assert_called_once_with(mock.ANY)
                 if branchless:
                     mock_open.assert_called_with(
                         cli._get_head_file_path(fake_config))
                 else:
                     mock_open.assert_called_with(
                         cli._get_heads_file_path(fake_config))
+
             fc.assert_called_once_with(fake_config)
 
     def test_validate_heads_file_multiple_heads(self):
@@ -324,7 +323,9 @@ class TestCli(base.BaseTestCase):
             )
             self.mock_alembic_err.assert_called_once_with(mock.ANY)
 
-    def test_update_heads_file_success(self):
+    @mock.patch('os.path.exists')
+    @mock.patch('os.remove')
+    def test_update_heads_file_success(self, *os_mocks):
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
             heads = ('a', 'b')
             fc.return_value.get_heads.return_value = heads
@@ -335,6 +336,10 @@ class TestCli(base.BaseTestCase):
                 cli.update_heads_file(self.configs[0])
                 mock_open.return_value.write.assert_called_once_with(
                     '\n'.join(heads))
+
+                old_head_file = cli._get_head_file_path(self.configs[0])
+                for mock_ in os_mocks:
+                    mock_.assert_called_with(old_head_file)
 
     def test_get_project_base(self):
         config = alembic_config.Config()
