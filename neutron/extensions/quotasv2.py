@@ -31,7 +31,7 @@ from neutron import wsgi
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
 QUOTAS = quota.QUOTAS
-DB_QUOTA_DRIVER = 'neutron.db.quota_db.DbQuotaDriver'
+DB_QUOTA_DRIVER = 'neutron.db.quota.driver.DbQuotaDriver'
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
