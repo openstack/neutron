@@ -111,11 +111,11 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
                                          fw_rule['id'])
             # Clean up QoS policies
             for qos_policy in cls.qos_policies:
-                cls._try_delete_resource(cls.client.delete_qos_policy,
+                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
                                          qos_policy['id'])
             # Clean up QoS rules
             for qos_rule in cls.qos_rules:
-                cls._try_delete_resource(cls.client.delete_qos_rule,
+                cls._try_delete_resource(cls.admin_client.delete_qos_rule,
                                          qos_rule['id'])
             # Clean up ike policies
             for ikepolicy in cls.ikepolicies:
@@ -444,7 +444,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
     @classmethod
     def create_qos_policy(cls, name, description, shared):
         """Wrapper utility that returns a test QoS policy."""
-        body = cls.client.create_qos_policy(name, description, shared)
+        body = cls.admin_client.create_qos_policy(name, description, shared)
         qos_policy = body['policy']
         cls.qos_policies.append(qos_policy)
         return qos_policy
@@ -453,7 +453,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
     def create_qos_bandwidth_limit_rule(cls, policy_id,
                                        max_kbps, max_burst_kbps):
         """Wrapper utility that returns a test QoS bandwidth limit rule."""
-        body = cls.client.create_bandwidth_limit_rule(
+        body = cls.admin_client.create_bandwidth_limit_rule(
             policy_id, max_kbps, max_burst_kbps)
         qos_rule = body['bandwidth_limit_rule']
         cls.qos_rules.append(qos_rule)

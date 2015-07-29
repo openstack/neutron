@@ -18,15 +18,11 @@ import six
 from neutron.db import api as db_api
 
 
-# TODO(QoS): revisit dict compatibility and how we can isolate dict behavior
-
-
 @six.add_metaclass(abc.ABCMeta)
 class NeutronObject(obj_base.VersionedObject,
                     obj_base.VersionedObjectDictCompat,
                     obj_base.ComparableVersionedObject):
 
-    # TODO(QoS): this should be revisited on how we plan to work with dicts
     def to_dict(self):
         return dict(self.items())
 

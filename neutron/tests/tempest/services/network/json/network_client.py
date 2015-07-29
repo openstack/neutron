@@ -645,6 +645,14 @@ class NetworkClientJSON(service_client.ServiceClient):
         self.expected_success(201, resp.status)
         return service_client.ResponseBody(resp, body)
 
+    def update_qos_policy(self, policy_id, **kwargs):
+        uri = '%s/qos/policies/%s' % (self.uri_prefix, policy_id)
+        post_data = self.serialize({'policy': kwargs})
+        resp, body = self.put(uri, post_data)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     def get_qos_policy(self, policy_id):
         uri = '%s/qos/policies/%s' % (self.uri_prefix, policy_id)
         resp, body = self.get(uri)
@@ -681,17 +689,20 @@ class NetworkClientJSON(service_client.ServiceClient):
         self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)
 
-    def update_bandwidth_limit_rule(self, policy_id, rule_id,
-                                    max_kbps, max_burst_kbps):
+    def update_bandwidth_limit_rule(self, policy_id, rule_id, **kwargs):
         uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
             self.uri_prefix, policy_id, rule_id)
-        post_data = {
-            'bandwidth_limit_rule': {
-                'max_kbps': max_kbps,
-                'max_burst_kbps': max_burst_kbps}
-            }
+        post_data = {'bandwidth_limit_rule': kwargs}
         resp, body = self.put(uri, json.dumps(post_data))
+        body = self.deserialize_single(body)
         self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_bandwidth_limit_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
     def list_qos_rule_types(self):
