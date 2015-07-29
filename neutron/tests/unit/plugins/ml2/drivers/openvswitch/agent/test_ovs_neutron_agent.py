@@ -2135,11 +2135,11 @@ class TestOvsDvrNeutronAgent(object):
                 pass
         self.assertTrue(all([x.called for x in reset_mocks]))
 
-    def test_scan_ports_failure(self):
+    def _test_scan_ports_failure(self, scan_method_name):
         with mock.patch.object(self.agent,
                                'check_ovs_status',
                                return_value=constants.OVS_RESTARTED),\
-                mock.patch.object(self.agent, 'scan_ports',
+                mock.patch.object(self.agent, scan_method_name,
                                side_effect=TypeError('broken')),\
                 mock.patch.object(self.agent, '_agent_has_updates',
                                   return_value=True),\
@@ -2151,6 +2151,15 @@ class TestOvsDvrNeutronAgent(object):
             self.agent.reset_tunnel_br = mock.Mock()
             self.agent.state_rpc = mock.Mock()
             self.agent.rpc_loop(polling_manager=mock.Mock())
+
+    def test_scan_ports_failure(self):
+        self._test_scan_ports_failure('scan_ports')
+
+    def test_scan_ancillary_ports_failure(self):
+        with mock.patch.object(self.agent, 'scan_ports'):
+            with mock.patch.object(self.agent, 'update_stale_ofport_rules'):
+                self.agent.ancillary_brs = mock.Mock()
+                self._test_scan_ports_failure('scan_ancillary_ports')
 
 
 class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
