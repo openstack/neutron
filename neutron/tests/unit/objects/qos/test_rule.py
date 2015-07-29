@@ -12,6 +12,7 @@
 
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.services.qos import qos_consts
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -19,6 +20,11 @@ from neutron.tests.unit import testlib_api
 class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosBandwidthLimitRule
+
+    def test_to_dict_returns_type(self):
+        obj = rule.QosBandwidthLimitRule(self.context, **self.db_obj)
+        dict_ = obj.to_dict()
+        self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, dict_['type'])
 
 
 class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,

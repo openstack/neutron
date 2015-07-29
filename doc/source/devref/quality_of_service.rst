@@ -115,20 +115,19 @@ For QosPolicy neutron object, the following public methods were implemented:
   resource.
 
 In addition to the fields that belong to QoS policy database object itself,
-synthetic fields were added to the object that represent lists of rules,
-per-type, that belong to the policy. For example, to get a list of all
-bandwidth_limit rules for a specific policy, a consumer of the object can just
-access corresponding attribute via:
+synthetic fields were added to the object that represent lists of rules that
+belong to the policy. To get a list of all rules for a specific policy, a
+consumer of the object can just access the corresponding attribute via:
 
-* policy.bandwidth_limit_rules
+* policy.rules
 
 Implementation is done in a way that will allow adding a new rule list field
 with little or no modifications in the policy object itself. This is achieved
 by smart introspection of existing available rule object definitions and
 automatic definition of those fields on the policy class.
 
-Note that synthetic fields are lazily loaded, meaning there is no hit into
-the database if the field is not inspected by consumers.
+Note that rules are loaded in a non lazy way, meaning they are all fetched from
+the database on policy fetch.
 
 For Qos<type>Rule objects, an extendable approach was taken to allow easy
 addition of objects for new rule types. To accomodate this, fields common to
