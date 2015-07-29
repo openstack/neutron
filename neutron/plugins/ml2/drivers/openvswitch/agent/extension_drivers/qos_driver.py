@@ -26,8 +26,6 @@ class QosOVSAgentDriver(qos_agent.QosAgentDriver):
 
     def __init__(self):
         super(QosOVSAgentDriver, self).__init__()
-        # TODO(QoS) check if we can get this configuration
-        #  as constructor arguments
         self.br_int_name = cfg.CONF.OVS.integration_bridge
         self.br_int = None
         self.handlers = {}
