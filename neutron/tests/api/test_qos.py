@@ -257,6 +257,21 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(rule['id'], policy_rules[0]['id'])
 
     @test.attr(type='smoke')
+    @test.idempotent_id('8a59b00b-ab01-4787-92f8-93a5cdf5e378')
+    def test_rule_create_fail_for_the_same_type(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
+                                             max_kbps=200,
+                                             max_burst_kbps=1337)
+
+        self.assertRaises(exceptions.ServerFault,
+                          self.create_qos_bandwidth_limit_rule,
+                          policy_id=policy['id'],
+                          max_kbps=201, max_burst_kbps=1338)
+
+    @test.attr(type='smoke')
     @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
     def test_rule_update(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -295,6 +310,3 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(exceptions.ServerFault,
                           self.admin_client.show_bandwidth_limit_rule,
                           policy['id'], rule['id'])
-
-    #TODO(QoS): create several bandwidth-limit rules (not sure it makes sense,
-    #           but to test more than one rule)

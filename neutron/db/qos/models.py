@@ -70,7 +70,9 @@ class QosPortPolicyBinding(model_base.BASEV2):
 
 
 class QosRuleColumns(models_v2.HasId):
-    qos_policy_id = sa.Column(sa.String(36), nullable=False)
+    # NOTE(ihrachyshka): we may need to rework it later when we introduce types
+    # that should not enforce uniqueness
+    qos_policy_id = sa.Column(sa.String(36), nullable=False, unique=True)
 
     __table_args__ = (
         sa.ForeignKeyConstraint(['qos_policy_id'], ['qos_policies.id']),

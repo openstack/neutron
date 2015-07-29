@@ -85,10 +85,6 @@ class QoSPlugin(qos.QoSPluginBase):
     #           future code duplication when we have more rules.
     def create_policy_bandwidth_limit_rule(self, context, policy_id,
                                            bandwidth_limit_rule):
-        #TODO(QoS): avoid creation of severan bandwidth limit rules
-        #           in the future we need an inter-rule validation
-        #           mechanism to verify all created rules will
-        #           play well together.
         # validate that we have access to the policy
         policy = self._get_policy_obj(context, policy_id)
         rule = rule_object.QosBandwidthLimitRule(
