@@ -24,6 +24,9 @@ from neutron.objects import base
 from neutron.tests import base as test_base
 
 
+SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
+
+
 class FakeModel(object):
     def __init__(self, *args, **kwargs):
         pass
@@ -241,3 +244,41 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
     def test_delete_non_existent_object_raises_not_found(self):
         obj = self._test_class(self.context, **self.db_obj)
         self.assertRaises(n_exc.ObjectNotFound, obj.delete)
+
+    @mock.patch(SQLALCHEMY_COMMIT)
+    def test_create_single_transaction(self, mock_commit):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.create()
+        self.assertEqual(1, mock_commit.call_count)
+
+    def test_update_single_transaction(self):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.create()
+
+        for key, val in self.get_updatable_fields(self.db_obj).items():
+            setattr(obj, key, val)
+
+        with mock.patch(SQLALCHEMY_COMMIT) as mock_commit:
+            obj.update()
+        self.assertEqual(1, mock_commit.call_count)
+
+    def test_delete_single_transaction(self):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.create()
+
+        with mock.patch(SQLALCHEMY_COMMIT) as mock_commit:
+            obj.delete()
+        self.assertEqual(1, mock_commit.call_count)
+
+    @mock.patch(SQLALCHEMY_COMMIT)
+    def test_get_objects_single_transaction(self, mock_commit):
+        self._test_class.get_objects(self.context)
+        self.assertEqual(1, mock_commit.call_count)
+
+    @mock.patch(SQLALCHEMY_COMMIT)
+    def test_get_by_id_single_transaction(self, mock_commit):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.create()
+
+        obj = self._test_class.get_by_id(self.context, obj.id)
+        self.assertEqual(2, mock_commit.call_count)
