@@ -31,6 +31,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import service
+from oslo_utils import excutils
 from six import moves
 
 from neutron.agent.linux import bridge_lib
@@ -248,7 +249,19 @@ class LinuxBridgeManager(object):
                 args['tos'] = cfg.CONF.VXLAN.tos
             if cfg.CONF.VXLAN.l2_population:
                 args['proxy'] = True
-            int_vxlan = self.ip.add_vxlan(interface, segmentation_id, **args)
+            try:
+                int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
+                                              **args)
+            except RuntimeError:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    # perform this check after an attempt rather than before
+                    # to avoid excessive lookups and a possible race condition.
+                    if ip_lib.vxlan_in_use(segmentation_id):
+                        ctxt.reraise = False
+                        LOG.error(_LE("Unable to create VXLAN interface for "
+                                      "VNI %s because it is in use by another "
+                                      "interface."), segmentation_id)
+                        return None
             int_vxlan.link.set_up()
             LOG.debug("Done creating vxlan interface %s", interface)
         return interface
@@ -526,10 +539,11 @@ class LinuxBridgeManager(object):
 
         test_iface = None
         for seg_id in moves.range(1, p_const.MAX_VXLAN_VNI + 1):
-            if not ip_lib.device_exists(
-                    self.get_vxlan_device_name(seg_id)):
-                test_iface = self.ensure_vxlan(seg_id)
-                break
+            if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id))
+                    or ip_lib.vxlan_in_use(seg_id)):
+                continue
+            test_iface = self.ensure_vxlan(seg_id)
+            break
         else:
             LOG.error(_LE('No valid Segmentation ID to perform UCAST test.'))
             return False

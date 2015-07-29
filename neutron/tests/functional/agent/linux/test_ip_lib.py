@@ -101,6 +101,18 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertFalse(
             ip_lib.device_exists(attr.name, namespace=attr.namespace))
 
+    def test_vxlan_exists(self):
+        attr = self.generate_device_details()
+        ip = ip_lib.IPWrapper(namespace=attr.namespace)
+        ip.netns.add(attr.namespace)
+        self.addCleanup(ip.netns.delete, attr.namespace)
+        self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+        device = ip.add_vxlan(attr.name, 9999)
+        self.addCleanup(self._safe_delete_device, device)
+        self.assertTrue(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+        device.link.delete()
+        self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+
     def test_ipwrapper_get_device_by_ip(self):
         attr = self.generate_device_details()
         self.manage_device(attr)
