@@ -277,25 +277,24 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(200, retrieved_policy['max_kbps'])
         self.assertEqual(1337, retrieved_policy['max_burst_kbps'])
 
-    #TODO(QoS): Uncomment once the rule-delete logic is fixed.
-#    @test.attr(type='smoke')
-#    @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
-#    def test_rule_delete(self):
-#        policy = self.create_qos_policy(name='test-policy',
-#                                        description='test policy',
-#                                        shared=False)
-#        rule = self.admin_client.create_bandwidth_limit_rule(
-#            policy['id'], 200, 1337)['bandwidth_limit_rule']
-#
-#        retrieved_policy = self.admin_client.show_bandwidth_limit_rule(
-#            policy['id'], rule['id'])
-#        retrieved_policy = retrieved_policy['bandwidth_limit_rule']
-#        self.assertEqual(rule['id'], retrieved_policy['id'])
-#
-#        self.admin_client.delete_bandwidth_limit_rule(policy['id'], rule['id']
-#        self.assertRaises(exceptions.ServerFault,
-#                          self.admin_client.show_bandwidth_limit_rule,
-#                          policy['id'], rule['id'])
+    @test.attr(type='smoke')
+    @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
+    def test_rule_delete(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_bandwidth_limit_rule(
+            policy['id'], 200, 1337)['bandwidth_limit_rule']
+
+        retrieved_policy = self.admin_client.show_bandwidth_limit_rule(
+            policy['id'], rule['id'])
+        retrieved_policy = retrieved_policy['bandwidth_limit_rule']
+        self.assertEqual(rule['id'], retrieved_policy['id'])
+
+        self.admin_client.delete_bandwidth_limit_rule(policy['id'], rule['id'])
+        self.assertRaises(exceptions.ServerFault,
+                          self.admin_client.show_bandwidth_limit_rule,
+                          policy['id'], rule['id'])
 
     #TODO(QoS): create several bandwidth-limit rules (not sure it makes sense,
     #           but to test more than one rule)
