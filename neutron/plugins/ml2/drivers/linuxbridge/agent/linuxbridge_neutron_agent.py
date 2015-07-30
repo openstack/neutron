@@ -77,6 +77,7 @@ class NetworkSegment(object):
 class LinuxBridgeManager(object):
     def __init__(self, interface_mappings):
         self.interface_mappings = interface_mappings
+        self.validate_interface_mappings()
         self.ip = ip_lib.IPWrapper()
         # VXLAN related parameters:
         self.local_ip = cfg.CONF.VXLAN.local_ip
@@ -92,6 +93,14 @@ class LinuxBridgeManager(object):
                                 'must be provided'))
         # Store network mapping to segments
         self.network_map = {}
+
+    def validate_interface_mappings(self):
+        for physnet, interface in self.interface_mappings.items():
+            if not ip_lib.device_exists(interface):
+                LOG.error(_LE("Interface %(intf)s for physical network %(net)s"
+                              " does not exist. Agent terminated!"),
+                          {'intf': interface, 'net': physnet})
+                sys.exit(1)
 
     def interface_exists_on_bridge(self, bridge, interface):
         directory = '/sys/class/net/%s/brif' % bridge

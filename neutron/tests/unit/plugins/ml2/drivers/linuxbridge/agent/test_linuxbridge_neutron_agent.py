@@ -50,7 +50,9 @@ class TestLinuxBridge(base.BaseTestCase):
         interface_mappings = {'physnet1': 'eth1'}
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip', return_value=None),\
+                mock.patch.object(ip_lib, 'device_exists',
+                                  return_value=True):
             self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
                 interface_mappings)
 
@@ -355,7 +357,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.interface_mappings = {'physnet1': 'eth1'}
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip', return_value=None),\
+                mock.patch.object(ip_lib, 'device_exists',
+                                  return_value=True):
             self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 self.interface_mappings)
 
@@ -935,7 +939,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 self.agent_id = 1
                 with mock.patch.object(
                         ip_lib.IPWrapper,
-                        'get_device_by_ip', return_value=None):
+                        'get_device_by_ip', return_value=None),\
+                    mock.patch.object(ip_lib, 'device_exists',
+                                      return_value=True):
                     self.br_mgr = (linuxbridge_neutron_agent.
                                    LinuxBridgeManager({'physnet1': 'eth1'}))
 
