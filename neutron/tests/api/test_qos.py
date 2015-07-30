@@ -76,7 +76,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual('test-policy', retrieved_policy['name'])
 
         self.admin_client.delete_qos_policy(policy['id'])
-        self.assertRaises(exceptions.ServerFault,
+        self.assertRaises(exceptions.NotFound,
                           self.admin_client.show_qos_policy, policy['id'])
 
     @test.attr(type='smoke')
