@@ -25,6 +25,10 @@ LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 
 DRIVER_TABLES = [
+    # Arista ML2 driver Models moved to openstack/networking-arista
+    'arista_provisioned_nets',
+    'arista_provisioned_vms',
+    'arista_provisioned_tenants',
     # Models moved to openstack/networking-cisco
     'cisco_ml2_apic_contracts',
     'cisco_ml2_apic_names',
