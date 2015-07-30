@@ -23,6 +23,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron import context as neutron_context
+from neutron.db import api as db_api
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
@@ -58,6 +59,7 @@ class L3RpcCallback(object):
                 plugin_constants.L3_ROUTER_NAT]
         return self._l3plugin
 
+    @db_api.retry_db_errors
     def sync_routers(self, context, **kwargs):
         """Sync routers according to filters to a specific agent.
 
@@ -196,6 +198,7 @@ class L3RpcCallback(object):
         filters = {'fixed_ips': {'subnet_id': [subnet_id]}}
         return self.plugin.get_ports(context, filters=filters)
 
+    @db_api.retry_db_errors
     def get_agent_gateway_port(self, context, **kwargs):
         """Get Agent Gateway port for FIP.
 
