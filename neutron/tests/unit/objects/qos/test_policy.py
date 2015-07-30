@@ -245,3 +245,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         self.assertEqual(rule_dict,
                          obj_dict['bandwidth_limit_rules'][0])
+
+    def test_shared_default(self):
+        self.db_obj.pop('shared')
+        obj = self._test_class(self.context, **self.db_obj)
+        self.assertEqual(False, obj.shared)

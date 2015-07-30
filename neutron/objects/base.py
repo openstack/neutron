@@ -23,6 +23,10 @@ class NeutronObject(obj_base.VersionedObject,
                     obj_base.VersionedObjectDictCompat,
                     obj_base.ComparableVersionedObject):
 
+    def __init__(self, context=None, **kwargs):
+        super(NeutronObject, self).__init__(context, **kwargs)
+        self.obj_set_defaults()
+
     def to_dict(self):
         return dict(self.items())
 

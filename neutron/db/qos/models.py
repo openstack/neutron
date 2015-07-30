@@ -28,7 +28,7 @@ class QosPolicy(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
     description = sa.Column(sa.String(attrs.DESCRIPTION_MAX_LEN))
-    shared = sa.Column(sa.Boolean)
+    shared = sa.Column(sa.Boolean, nullable=False)
 
 
 class QosNetworkPolicyBinding(model_base.BASEV2):

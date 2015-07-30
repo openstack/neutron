@@ -37,7 +37,7 @@ def upgrade():
         sa.Column('id', sa.String(length=36), primary_key=True),
         sa.Column('name', sa.String(length=attrs.NAME_MAX_LEN)),
         sa.Column('description', sa.String(length=attrs.DESCRIPTION_MAX_LEN)),
-        sa.Column('shared', sa.Boolean()),
+        sa.Column('shared', sa.Boolean(), nullable=False),
         sa.Column('tenant_id', sa.String(length=attrs.TENANT_ID_MAX_LEN),
                   index=True))
 

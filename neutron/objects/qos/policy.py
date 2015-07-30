@@ -60,7 +60,7 @@ class QosPolicy(base.NeutronDbObject):
         'tenant_id': obj_fields.UUIDField(),
         'name': obj_fields.StringField(),
         'description': obj_fields.StringField(),
-        'shared': obj_fields.BooleanField()
+        'shared': obj_fields.BooleanField(default=False)
     }
 
     fields_no_update = ['id', 'tenant_id']
