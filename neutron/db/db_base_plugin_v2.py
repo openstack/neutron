@@ -577,9 +577,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
             s['allocation_pools'] = range_pools
 
-        if s.get('gateway_ip') is not None:
+        # If either gateway_ip or allocation_pools were specified
+        gateway_ip = s.get('gateway_ip')
+        if gateway_ip is not None or s.get('allocation_pools') is not None:
+            if gateway_ip is None:
+                gateway_ip = db_subnet.gateway_ip
             pools = range_pools if range_pools is not None else db_pools
-            self.ipam.validate_gw_out_of_pools(s["gateway_ip"], pools)
+            self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
 
         with context.session.begin(subtransactions=True):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
