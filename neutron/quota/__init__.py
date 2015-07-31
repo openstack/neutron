@@ -1,4 +1,4 @@
-#    Copyright 2011 OpenStack Foundation
+# Copyright (c) 2015 OpenStack Foundation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -25,6 +25,7 @@ import webob
 
 from neutron.common import exceptions
 from neutron.i18n import _LI, _LW
+from neutron.quota import resource_registry
 
 
 LOG = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ QUOTA_DB_MODULE = 'neutron.db.quota.driver'
 QUOTA_DB_DRIVER = '%s.DbQuotaDriver' % QUOTA_DB_MODULE
 QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
 default_quota_items = ['network', 'subnet', 'port']
+
 
 quota_opts = [
     cfg.ListOpt('quota_items',
@@ -59,6 +61,11 @@ quota_opts = [
     cfg.StrOpt('quota_driver',
                default=QUOTA_DB_DRIVER,
                help=_('Default driver to use for quota checks')),
+    cfg.BoolOpt('track_quota_usage',
+                default=True,
+                help=_('Keep in track in the database of current resource'
+                       'quota usage. Plugins which do not leverage the '
+                       'neutron database should set this flag to False')),
 ]
 # Register the configuration options
 cfg.CONF.register_opts(quota_opts, 'QUOTAS')
@@ -146,67 +153,19 @@ class ConfDriver(object):
         raise webob.exc.HTTPForbidden(msg)
 
 
-class BaseResource(object):
-    """Describe a single resource for quota checking."""
-
-    def __init__(self, name, flag):
-        """Initializes a resource.
-
-        :param name: The name of the resource, i.e., "instances".
-        :param flag: The name of the flag or configuration option
-        """
-
-        self.name = name
-        self.flag = flag
-
-    @property
-    def default(self):
-        """Return the default value of the quota."""
-        # Any negative value will be interpreted as an infinite quota,
-        # and stored as -1 for compatibility with current behaviour
-        value = getattr(cfg.CONF.QUOTAS,
-                        self.flag,
-                        cfg.CONF.QUOTAS.default_quota)
-        return max(value, -1)
-
-
-class CountableResource(BaseResource):
-    """Describe a resource where the counts are determined by a function."""
-
-    def __init__(self, name, count, flag=None):
-        """Initializes a CountableResource.
-
-        Countable resources are those resources which directly
-        correspond to objects in the database, i.e., netowk, subnet,
-        etc.,.  A CountableResource must be constructed with a counting
-        function, which will be called to determine the current counts
-        of the resource.
-
-        The counting function will be passed the context, along with
-        the extra positional and keyword arguments that are passed to
-        Quota.count().  It should return an integer specifying the
-        count.
-
-        :param name: The name of the resource, i.e., "instances".
-        :param count: A callable which returns the count of the
-                      resource.  The arguments passed are as described
-                      above.
-        :param flag: The name of the flag or configuration option
-                     which specifies the default value of the quota
-                     for this resource.
-        """
-
-        super(CountableResource, self).__init__(name, flag=flag)
-        self.count = count
-
-
 class QuotaEngine(object):
     """Represent the set of recognized quotas."""
 
+    _instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if not cls._instance:
+            cls._instance = cls()
+        return cls._instance
+
     def __init__(self, quota_driver_class=None):
         """Initialize a Quota object."""
-
-        self._resources = {}
         self._driver = None
         self._driver_class = quota_driver_class
 
@@ -232,29 +191,7 @@ class QuotaEngine(object):
             LOG.info(_LI('Loaded quota_driver: %s.'), _driver_class)
         return self._driver
 
-    def __contains__(self, resource):
-        return resource in self._resources
-
-    def register_resource(self, resource):
-        """Register a resource."""
-        if resource.name in self._resources:
-            LOG.warn(_LW('%s is already registered.'), resource.name)
-            return
-        self._resources[resource.name] = resource
-
-    def register_resource_by_name(self, resourcename):
-        """Register a resource by name."""
-        resource = CountableResource(resourcename, _count_resource,
-                                     'quota_' + resourcename)
-        self.register_resource(resource)
-
-    def register_resources(self, resources):
-        """Register a list of resources."""
-
-        for resource in resources:
-            self.register_resource(resource)
-
-    def count(self, context, resource, *args, **kwargs):
+    def count(self, context, resource_name, *args, **kwargs):
         """Count a resource.
 
         For countable resources, invokes the count() function and
@@ -263,13 +200,13 @@ class QuotaEngine(object):
         the resource.
 
         :param context: The request context, for access checks.
-        :param resource: The name of the resource, as a string.
+        :param resource_name: The name of the resource, as a string.
         """
 
         # Get the resource
-        res = self._resources.get(resource)
+        res = resource_registry.get_resource(resource_name)
         if not res or not hasattr(res, 'count'):
-            raise exceptions.QuotaResourceUnknown(unknown=[resource])
+            raise exceptions.QuotaResourceUnknown(unknown=[resource_name])
 
         return res.count(context, *args, **kwargs)
 
@@ -297,7 +234,8 @@ class QuotaEngine(object):
         """
         # Verify that resources are managed by the quota engine
         requested_resources = set(values.keys())
-        managed_resources = set([res for res in self._resources.keys()
+        managed_resources = set([res for res in
+                                 resource_registry.get_all_resources()
                                  if res in requested_resources])
 
         # Make sure we accounted for all of them...
@@ -306,31 +244,11 @@ class QuotaEngine(object):
             raise exceptions.QuotaResourceUnknown(
                 unknown=sorted(unknown_resources))
 
-        return self.get_driver().limit_check(context, tenant_id,
-                                             self._resources, values)
-
-    @property
-    def resources(self):
-        return self._resources
+        return self.get_driver().limit_check(
+            context, tenant_id, resource_registry.get_all_resources(), values)
 
 
-QUOTAS = QuotaEngine()
-
-
-def _count_resource(context, plugin, resources, tenant_id):
-    count_getter_name = "get_%s_count" % resources
-
-    # Some plugins support a count method for particular resources,
-    # using a DB's optimized counting features. We try to use that one
-    # if present. Otherwise just use regular getter to retrieve all objects
-    # and count in python, allowing older plugins to still be supported
-    try:
-        obj_count_getter = getattr(plugin, count_getter_name)
-        return obj_count_getter(context, filters={'tenant_id': [tenant_id]})
-    except (NotImplementedError, AttributeError):
-        obj_getter = getattr(plugin, "get_%s" % resources)
-        obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
-        return len(obj_list) if obj_list else 0
+QUOTAS = QuotaEngine.get_instance()
 
 
 def register_resources_from_config():
@@ -342,12 +260,9 @@ def register_resources_from_config():
                  "quota_items option is deprecated as of Liberty."
                  "Resource REST controllers should take care of registering "
                  "resources with the quota engine."))
-    resources = []
     for resource_item in (set(cfg.CONF.QUOTAS.quota_items) -
                           set(default_quota_items)):
-        resources.append(CountableResource(resource_item, _count_resource,
-                                           'quota_' + resource_item))
-    QUOTAS.register_resources(resources)
+        resource_registry.register_resource_by_name(resource_item)
 
 
 register_resources_from_config()

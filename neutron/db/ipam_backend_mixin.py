@@ -409,7 +409,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                  enable_eagerloads(False).filter_by(id=port_id))
         if not context.is_admin:
             query = query.filter_by(tenant_id=context.tenant_id)
-        query.delete()
+        context.session.delete(query.first())
 
     def _save_subnet(self, context,
                      network,
