@@ -122,7 +122,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         self.periodic_agent_loop = loopingcall.FixedIntervalLoopingCall(
             function)
         # TODO(enikanorov): make interval configurable rather than computed
-        interval = max(cfg.CONF.agent_down_time / 2, 1)
+        interval = max(cfg.CONF.agent_down_time // 2, 1)
         # add random initial delay to allow agents to check in after the
         # neutron server first starts. random to offset multiple servers
         initial_delay = random.randint(interval, interval * 2)
