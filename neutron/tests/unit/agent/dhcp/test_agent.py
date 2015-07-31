@@ -102,6 +102,14 @@ fake_port1 = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
                             network_id='12345678-1234-5678-1234567890ab',
                             fixed_ips=[fake_fixed_ip1]))
 
+fake_dhcp_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789022',
+                            device_id='dhcp-12345678-1234-aaaa-123456789022',
+                            device_owner='network:dhcp',
+                            allocation_pools=fake_subnet1_allocation_pools,
+                            mac_address='aa:bb:cc:dd:ee:22',
+                            network_id='12345678-1234-5678-1234567890ab',
+                            fixed_ips=[fake_fixed_ip2]))
+
 fake_port2 = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
                             device_id='dhcp-12345678-1234-aaaa-123456789000',
                             device_owner='',
@@ -1253,6 +1261,23 @@ class TestDeviceManager(base.BaseTestCase):
                 % const.DHCP_RESPONSE_PORT)
         expected = [mock.call.add_rule('POSTROUTING', rule)]
         self.mangle_inst.assert_has_calls(expected)
+
+    def test_setup_create_dhcp_port(self):
+        plugin = mock.Mock()
+        net = copy.deepcopy(fake_network)
+        plugin.create_dhcp_port.return_value = fake_dhcp_port
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        dh.setup(net)
+
+        plugin.assert_has_calls([
+            mock.call.create_dhcp_port(
+                {'port': {'name': '', 'admin_state_up': True,
+                          'network_id': net.id,
+                          'tenant_id': net.tenant_id,
+                          'fixed_ips': [{'subnet_id':
+                          fake_dhcp_port.fixed_ips[0].subnet_id}],
+                          'device_id': mock.ANY}})])
+        self.assertIn(fake_dhcp_port, net.ports)
 
     def test_setup_ipv6(self):
         self._test_setup_helper(True, net=fake_network_ipv6,

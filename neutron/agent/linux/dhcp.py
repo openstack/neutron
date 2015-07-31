@@ -1056,9 +1056,18 @@ class DeviceManager(object):
 
         return dhcp_port
 
+    def _update_dhcp_port(self, network, port):
+        for index in range(len(network.ports)):
+            if network.ports[index].id == port.id:
+                network.ports[index] = port
+                break
+        else:
+            network.ports.append(port)
+
     def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
         port = self.setup_dhcp_port(network)
+        self._update_dhcp_port(network, port)
         interface_name = self.get_interface_name(network, port)
 
         if ip_lib.ensure_device_is_ready(interface_name,
