@@ -14,6 +14,8 @@
 #    under the License.
 
 import collections
+import re
+
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -41,7 +43,10 @@ DIRECTION_IP_PREFIX = {firewall.INGRESS_DIRECTION: 'source_ip_prefix',
                        firewall.EGRESS_DIRECTION: 'dest_ip_prefix'}
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
+# length of all device prefixes (e.g. qvo, tap, qvb)
+LINUX_DEV_PREFIX_LEN = 3
 LINUX_DEV_LEN = 14
+MAX_CONNTRACK_ZONES = 65535
 comment_rule = iptables_manager.comment_rule
 
 
@@ -57,7 +62,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one
         self.ipset = ipset_manager.IpsetManager(namespace=namespace)
-        self.ipconntrack = ip_conntrack.IpConntrackManager(namespace=namespace)
+        self.ipconntrack = ip_conntrack.IpConntrackManager(
+            self.get_device_zone, namespace=namespace)
+        self._populate_initial_zone_map()
         # list of port which has security group
         self.filtered_ports = {}
         self.unfiltered_ports = {}
@@ -795,6 +802,68 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._pre_defer_filtered_ports = None
             self._pre_defer_unfiltered_ports = None
 
+    def _populate_initial_zone_map(self):
+        """Setup the map between devices and zones based on current rules."""
+        self._device_zone_map = {}
+        rules = self.iptables.get_rules_for_table('raw')
+        for rule in rules:
+            match = re.match(r'.* --physdev-in (?P<dev>[a-zA-Z0-9\-]+)'
+                             r'.* -j CT --zone (?P<zone>\d+).*', rule)
+            if match:
+                # strip off any prefix that the interface is using
+                short_port_id = match.group('dev')[LINUX_DEV_PREFIX_LEN:]
+                self._device_zone_map[short_port_id] = int(match.group('zone'))
+        LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
+
+    def get_device_zone(self, port_id):
+        # we have to key the device_zone_map based on the fragment of the port
+        # UUID that shows up in the interface name. This is because the initial
+        # map is populated strictly based on interface names that we don't know
+        # the full UUID of.
+        short_port_id = port_id[:(LINUX_DEV_LEN - LINUX_DEV_PREFIX_LEN)]
+        try:
+            return self._device_zone_map[short_port_id]
+        except KeyError:
+            self._free_zones_from_removed_ports()
+            return self._generate_device_zone(short_port_id)
+
+    def _free_zones_from_removed_ports(self):
+        """Clears any entries from the zone map of removed ports."""
+        existing_ports = [
+            port['device'][:(LINUX_DEV_LEN - LINUX_DEV_PREFIX_LEN)]
+            for port in (list(self.filtered_ports.values()) +
+                         list(self.unfiltered_ports.values()))
+        ]
+        removed = set(self._device_zone_map) - set(existing_ports)
+        for dev in removed:
+            self._device_zone_map.pop(dev, None)
+
+    def _generate_device_zone(self, short_port_id):
+        """Generates a unique conntrack zone for the passed in ID."""
+        zone = self._find_open_zone()
+        self._device_zone_map[short_port_id] = zone
+        LOG.debug("Assigned CT zone %(z)s to port %(dev)s.",
+                  {'z': zone, 'dev': short_port_id})
+        return self._device_zone_map[short_port_id]
+
+    def _find_open_zone(self):
+        # call set to dedup because old ports may be mapped to the same zone.
+        zones_in_use = sorted(set(self._device_zone_map.values()))
+        if not zones_in_use:
+            return 1
+        # attempt to increment onto the highest used zone first. if we hit the
+        # end, go back and look for any gaps left by removed devices.
+        last = zones_in_use[-1]
+        if last < MAX_CONNTRACK_ZONES:
+            return last + 1
+        for index, used in enumerate(zones_in_use):
+            if used - index != 1:
+                # gap found, let's use it!
+                return index + 1
+        # conntrack zones exhausted :( :(
+        raise RuntimeError("iptables conntrack zones exhausted. "
+                           "iptables rules cannot be applied.")
+
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
     OVS_HYBRID_TAP_PREFIX = constants.TAP_DEVICE_PREFIX
@@ -815,20 +884,18 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
         else:
             device = self._get_device_name(port)
         jump_rule = '-m physdev --physdev-in %s -j CT --zone %s' % (
-            device, port['zone_id'])
+            device, self.get_device_zone(port['device']))
         return jump_rule
 
     def _add_raw_chain_rules(self, port, direction):
-        if port['zone_id']:
-            jump_rule = self._get_jump_rule(port, direction)
-            self.iptables.ipv4['raw'].add_rule('PREROUTING', jump_rule)
-            self.iptables.ipv6['raw'].add_rule('PREROUTING', jump_rule)
+        jump_rule = self._get_jump_rule(port, direction)
+        self.iptables.ipv4['raw'].add_rule('PREROUTING', jump_rule)
+        self.iptables.ipv6['raw'].add_rule('PREROUTING', jump_rule)
 
     def _remove_raw_chain_rules(self, port, direction):
-        if port['zone_id']:
-            jump_rule = self._get_jump_rule(port, direction)
-            self.iptables.ipv4['raw'].remove_rule('PREROUTING', jump_rule)
-            self.iptables.ipv6['raw'].remove_rule('PREROUTING', jump_rule)
+        jump_rule = self._get_jump_rule(port, direction)
+        self.iptables.ipv4['raw'].remove_rule('PREROUTING', jump_rule)
+        self.iptables.ipv6['raw'].remove_rule('PREROUTING', jump_rule)
 
     def _add_chain(self, port, direction):
         super(OVSHybridIptablesFirewallDriver, self)._add_chain(port,
