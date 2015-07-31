@@ -172,7 +172,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
 
     def _get_dns_by_subnet(self, context, subnet_id):
         dns_qry = context.session.query(models_v2.DNSNameServer)
-        return dns_qry.filter_by(subnet_id=subnet_id).all()
+        return dns_qry.filter_by(subnet_id=subnet_id).order_by(
+            models_v2.DNSNameServer.order).all()
 
     def _get_route_by_subnet(self, context, subnet_id):
         route_qry = context.session.query(models_v2.SubnetRoute)

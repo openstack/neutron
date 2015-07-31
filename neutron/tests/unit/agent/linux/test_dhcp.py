@@ -333,11 +333,30 @@ class FakeV4SubnetMultipleAgentsWithoutDnsProvided(object):
     host_routes = []
 
 
+class FakeV4SubnetAgentWithManyDnsProvided(object):
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    ip_version = 4
+    cidr = '192.168.0.0/24'
+    gateway_ip = '192.168.0.1'
+    enable_dhcp = True
+    dns_nameservers = ['2.2.2.2', '9.9.9.9', '1.1.1.1',
+                       '3.3.3.3']
+    host_routes = []
+
+
 class FakeV4MultipleAgentsWithoutDnsProvided(object):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
     ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
              FakePortMultipleAgents1(), FakePortMultipleAgents2()]
+    namespace = 'qdhcp-ns'
+
+
+class FakeV4AgentWithManyDnsProvided(object):
+    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    subnets = [FakeV4SubnetAgentWithManyDnsProvided()]
+    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+             FakePortMultipleAgents1()]
     namespace = 'qdhcp-ns'
 
 
@@ -1134,6 +1153,18 @@ class TestDnsmasq(TestBase):
 
         self._test_output_opts_file(expected,
                                     FakeV4MultipleAgentsWithoutDnsProvided())
+
+    def test_output_opts_file_agent_with_many_dns_provided(self):
+        expected = ('tag:tag0,'
+                    'option:dns-server,2.2.2.2,9.9.9.9,1.1.1.1,3.3.3.3\n'
+                    'tag:tag0,option:classless-static-route,'
+                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
+                    '192.168.0.1\n'
+                    'tag:tag0,option:router,192.168.0.1').lstrip()
+
+        self._test_output_opts_file(expected,
+                                    FakeV4AgentWithManyDnsProvided())
 
     def test_output_opts_file_multiple_agents_with_dns_provided(self):
         expected = ('tag:tag0,option:dns-server,8.8.8.8\n'

@@ -53,6 +53,7 @@ Neutron Internals
    advanced_services
    oslo-incubator
    callbacks
+   dns_order
 
 Testing
 -------

@@ -178,6 +178,7 @@ class DNSNameServer(model_base.BASEV2):
                           sa.ForeignKey('subnets.id',
                                         ondelete="CASCADE"),
                           primary_key=True)
+    order = sa.Column(sa.Integer, nullable=False, server_default='0')
 
 
 class Subnet(model_base.BASEV2, HasId, HasTenant):
@@ -201,6 +202,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
                                        cascade='all, delete, delete-orphan',
+                                       order_by=DNSNameServer.order,
                                        lazy='joined')
     routes = orm.relationship(SubnetRoute,
                               backref='subnet',

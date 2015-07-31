@@ -3921,8 +3921,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(sorted(res['subnet']['host_routes']),
                              sorted(host_routes))
-            self.assertEqual(sorted(res['subnet']['dns_nameservers']),
-                             sorted(dns_nameservers))
+            self.assertEqual(res['subnet']['dns_nameservers'],
+                             dns_nameservers)
 
     def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
@@ -4462,6 +4462,27 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['subnet']['dns_nameservers'],
                              data['subnet']['dns_nameservers'])
+
+    def test_subnet_lifecycle_dns_retains_order(self):
+        cfg.CONF.set_override('max_dns_nameservers', 3)
+        with self.subnet(dns_nameservers=['1.1.1.1', '2.2.2.2',
+            '3.3.3.3']) as subnet:
+            subnets = self._show('subnets', subnet['subnet']['id'],
+                expected_code=webob.exc.HTTPOk.code)
+            self.assertEqual(['1.1.1.1', '2.2.2.2', '3.3.3.3'],
+                subnets['subnet']['dns_nameservers'])
+            data = {'subnet': {'dns_nameservers': ['2.2.2.2', '3.3.3.3',
+                '1.1.1.1']}}
+            req = self.new_update_request('subnets',
+                                          data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(data['subnet']['dns_nameservers'],
+                             res['subnet']['dns_nameservers'])
+            subnets = self._show('subnets', subnet['subnet']['id'],
+                expected_code=webob.exc.HTTPOk.code)
+            self.assertEqual(data['subnet']['dns_nameservers'],
+                             subnets['subnet']['dns_nameservers'])
 
     def test_update_subnet_dns_to_None(self):
         with self.subnet(dns_nameservers=['11.0.0.1']) as subnet:

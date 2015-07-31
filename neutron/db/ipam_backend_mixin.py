@@ -138,22 +138,22 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     def _update_subnet_dns_nameservers(self, context, id, s):
         old_dns_list = self._get_dns_by_subnet(context, id)
-        new_dns_addr_set = set(s["dns_nameservers"])
-        old_dns_addr_set = set([dns['address']
-                                for dns in old_dns_list])
+        new_dns_addr_list = s["dns_nameservers"]
 
-        new_dns = list(new_dns_addr_set)
-        for dns_addr in old_dns_addr_set - new_dns_addr_set:
-            for dns in old_dns_list:
-                if dns['address'] == dns_addr:
-                    context.session.delete(dns)
-        for dns_addr in new_dns_addr_set - old_dns_addr_set:
+        # NOTE(changzhi) delete all dns nameservers from db
+        # when update subnet's DNS nameservers. And store new
+        # nameservers with order one by one.
+        for dns in old_dns_list:
+            context.session.delete(dns)
+
+        for order, server in enumerate(new_dns_addr_list):
             dns = models_v2.DNSNameServer(
-                address=dns_addr,
+                address=server,
+                order=order,
                 subnet_id=id)
             context.session.add(dns)
         del s["dns_nameservers"]
-        return new_dns
+        return new_dns_addr_list
 
     def _update_subnet_allocation_pools(self, context, subnet_id, s):
         context.session.query(models_v2.IPAllocationPool).filter_by(
@@ -424,11 +424,15 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         subnet = models_v2.Subnet(**subnet_args)
         context.session.add(subnet)
+        # NOTE(changzhi) Store DNS nameservers with order into DB one
+        # by one when create subnet with DNS nameservers
         if attributes.is_attr_set(dns_nameservers):
-            for addr in dns_nameservers:
-                ns = models_v2.DNSNameServer(address=addr,
-                                             subnet_id=subnet.id)
-                context.session.add(ns)
+            for order, server in enumerate(dns_nameservers):
+                dns = models_v2.DNSNameServer(
+                    address=server,
+                    order=order,
+                    subnet_id=subnet.id)
+                context.session.add(dns)
 
         if attributes.is_attr_set(host_routes):
             for rt in host_routes:
