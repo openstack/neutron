@@ -62,9 +62,10 @@ gate and bug triage for their area of focus is under control.
 The following are the current Neutron Lieutenants.
 
 +------------------------+---------------------------+----------------------+
-| Area                   | Lieutenant                | IRC nic              |
+| Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | API and DB             | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
 |                        | Henry Gessau              | HenryG               |
 +------------------------+---------------------------+----------------------+
 | Built-In Control Plane | Kevin Benton              | kevinbenton          |
@@ -74,6 +75,7 @@ The following are the current Neutron Lieutenants.
 | Docs                   | Edgar Magana              | emagana              |
 +------------------------+---------------------------+----------------------+
 | Infra                  | Armando Migliaccio        | armax                |
+|                        +---------------------------+----------------------+
 |                        | Doug Wiegley              | dougwig              |
 +------------------------+---------------------------+----------------------+
 | L3                     | Carl Baldwin              | carl_baldwin         |
@@ -104,18 +106,23 @@ updating the core review team for the sub-project's repositories.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | dragonflow             | Eran Gampel               | gampel               |
+|                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
 | kuryr                  | Antoni Segura Puimedon    | apuimedo             |
+|                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
+|                        +---------------------------+----------------------+
 |                        | Jaume Devesa              | devvesa              |
+|                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
 | networking-odl         | Flavio Fernandes          | flaviof              |
+|                        +---------------------------+----------------------+
 |                        | Kyle Mestery              | mestery              |
 +------------------------+---------------------------+----------------------+
 | networking-ofagent     | YAMAMOTO Takashi          | yamamoto             |
