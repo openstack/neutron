@@ -20,7 +20,6 @@ import itertools
 import mock
 import netaddr
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_utils import importutils
 import six
 from sqlalchemy import orm
@@ -3809,16 +3808,18 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.subnet(network=network) as v4_subnet,\
             self.port(subnet=v4_subnet, device_owner=device_owner) as port:
             if insert_db_reference_error:
-                orig = orm.Session.add
+                orig_fn = orm.Session.add
 
                 def db_ref_err_for_ipalloc(s, instance):
                     if instance.__class__.__name__ == 'IPAllocation':
-                        raise db_exc.DBReferenceError(
-                            'dummy_table', 'dummy_constraint',
-                            'dummy_key', 'dummy_key_table')
-                    return orig(s, instance)
+                        # tweak port_id to cause a FK violation,
+                        # thus DBReferenceError
+                        instance.port_id = 'nonexistent'
+                    return orig_fn(s, instance)
+
                 mock.patch.object(orm.Session, 'add',
-                                  new=db_ref_err_for_ipalloc).start()
+                                  side_effect=db_ref_err_for_ipalloc,
+                                  autospec=True).start()
                 mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
                                   '_get_subnet',
                                   return_value=mock.Mock()).start()
