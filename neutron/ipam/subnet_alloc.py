@@ -17,6 +17,7 @@ import math
 import operator
 
 import netaddr
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
@@ -46,10 +47,23 @@ class SubnetAllocator(driver.Pool):
         subnetpool, it's required to ensure non-overlapping cidrs in the same
         subnetpool.
         """
-        # FIXME(cbrandily): not working with Galera
-        (self._context.session.query(models_v2.SubnetPool.id).
-         filter_by(id=self._subnetpool['id']).
-         with_lockmode('update').first())
+
+        current_hash = (self._context.session.query(models_v2.SubnetPool.hash)
+                        .filter_by(id=self._subnetpool['id']).scalar())
+        if current_hash is None:
+            # NOTE(cbrandily): subnetpool has been deleted
+            raise n_exc.SubnetPoolNotFound(
+                subnetpool_id=self._subnetpool['id'])
+        new_hash = uuidutils.generate_uuid()
+
+        # NOTE(cbrandily): the update disallows 2 concurrent subnet allocation
+        # to succeed: at most 1 transaction will succeed, others will be
+        # rollbacked and be caught in neutron.db.v2.base
+        query = self._context.session.query(models_v2.SubnetPool).filter_by(
+            id=self._subnetpool['id'], hash=current_hash)
+        count = query.update({'hash': new_hash})
+        if not count:
+            raise db_exc.RetryRequest()
 
     def _get_allocated_cidrs(self):
         query = self._context.session.query(models_v2.Subnet)
