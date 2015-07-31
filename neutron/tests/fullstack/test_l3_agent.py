@@ -56,39 +56,15 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
         utils.wait_until_true(lambda: ip.netns.exists(ns_name))
 
     def test_namespace_exists(self):
-        uuid = uuidutils.generate_uuid()
+        tenant_id = uuidutils.generate_uuid()
 
-        router = self.client.create_router(
-            body={'router': {'name': 'router-test',
-                             'tenant_id': uuid}})
+        router = self.safe_client.create_router(tenant_id)
+        network = self.safe_client.create_network(tenant_id)
+        subnet = self.safe_client.create_subnet(
+            tenant_id, network['id'], '20.0.0.0/24', gateway_ip='20.0.0.1')
+        self.safe_client.add_router_interface(router['id'], subnet['id'])
 
-        network = self.client.create_network(
-            body={'network': {'name': 'network-test',
-                              'tenant_id': uuid}})
-
-        subnet = self.client.create_subnet(
-            body={'subnet': {'name': 'subnet-test',
-                             'tenant_id': uuid,
-                             'network_id': network['network']['id'],
-                             'cidr': '20.0.0.0/24',
-                             'gateway_ip': '20.0.0.1',
-                             'ip_version': 4,
-                             'enable_dhcp': True}})
-
-        self.client.add_interface_router(
-            router=router['router']['id'],
-            body={'subnet_id': subnet['subnet']['id']})
-
-        router_id = router['router']['id']
         namespace = "%s@%s" % (
-            self._get_namespace(router_id),
+            self._get_namespace(router['id']),
             self.environment.l3_agent.get_namespace_suffix(), )
         self._assert_namespace_exists(namespace)
-
-        self.client.remove_interface_router(
-            router=router['router']['id'],
-            body={'subnet_id': subnet['subnet']['id']})
-
-        self.client.delete_subnet(subnet['subnet']['id'])
-        self.client.delete_network(network['network']['id'])
-        self.client.delete_router(router['router']['id'])

@@ -54,7 +54,6 @@ from neutron.plugins.common import constants as svc_constants
 
 
 LOG = logging.getLogger(__name__)
-PLUGIN_VERSION = 0.88
 AGENT_OWNER_PREFIX = "network:"
 NOS_DRIVER = 'neutron.plugins.brocade.nos.nosdriver.NOSdriver'
 
@@ -480,10 +479,6 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 portbindings.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
         return binding
-
-    def get_plugin_version(self):
-        """Get version number of the plugin."""
-        return PLUGIN_VERSION
 
     @staticmethod
     def mac_reformat_62to34(interface_mac):

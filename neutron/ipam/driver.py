@@ -148,14 +148,3 @@ class Subnet(object):
 
         :returns: An instance of SpecificSubnetRequest with the subnet detail.
         """
-
-    @abc.abstractmethod
-    def associate_neutron_subnet(self, subnet_id):
-        """Associate the IPAM subnet with a neutron subnet.
-
-        This operation should be performed to attach a neutron subnet to the
-        current subnet instance. In some cases IPAM subnets may be created
-        independently of neutron subnets and associated at a later stage.
-
-        :param subnet_id: neutron subnet identifier.
-        """

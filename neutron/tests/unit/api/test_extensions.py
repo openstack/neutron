@@ -486,6 +486,55 @@ class ExtensionManagerTest(base.BaseTestCase):
         self.assertIn('valid_extension', ext_mgr.extensions)
         self.assertNotIn('invalid_extension', ext_mgr.extensions)
 
+    def test_assignment_of_attr_map(self):
+        """Unit test for bug 1443342
+
+        In this bug, an extension that extended multiple resources with the
+        same dict would cause future extensions to inadvertently modify the
+        resources of all of the resources since they were referencing the same
+        dictionary.
+        """
+
+        class MultiResourceExtension(ext_stubs.StubExtension):
+            """Generated Extended Resources.
+
+            This extension's extended resource will assign
+            to more than one resource.
+            """
+
+            def get_extended_resources(self, version):
+                EXTENDED_TIMESTAMP = {
+                    'created_at': {'allow_post': False, 'allow_put': False,
+                                   'is_visible': True}}
+                EXTENDED_RESOURCES = ["ext1", "ext2"]
+                attrs = {}
+                for resources in EXTENDED_RESOURCES:
+                    attrs[resources] = EXTENDED_TIMESTAMP
+
+                return attrs
+
+        class AttrExtension(ext_stubs.StubExtension):
+            def get_extended_resources(self, version):
+                attrs = {
+                    self.alias: {
+                        '%s-attr' % self.alias: {'allow_post': False,
+                                                 'allow_put': False,
+                                                 'is_visible': True}}}
+                return attrs
+
+        ext_mgr = extensions.ExtensionManager('')
+        attr_map = {}
+        ext_mgr.add_extension(MultiResourceExtension('timestamp'))
+        ext_mgr.extend_resources("2.0", attr_map)
+        ext_mgr.add_extension(AttrExtension("ext1"))
+        ext_mgr.add_extension(AttrExtension("ext2"))
+        ext_mgr.extend_resources("2.0", attr_map)
+        self.assertIn('created_at', attr_map['ext2'])
+        self.assertIn('created_at', attr_map['ext1'])
+        # now we need to make sure the attrextensions didn't leak across
+        self.assertNotIn('ext1-attr', attr_map['ext2'])
+        self.assertNotIn('ext2-attr', attr_map['ext1'])
+
 
 class PluginAwareExtensionManagerTest(base.BaseTestCase):
 

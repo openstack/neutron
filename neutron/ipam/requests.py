@@ -255,11 +255,22 @@ class AddressRequestFactory(object):
     """
 
     @classmethod
-    def get_request(cls, context, port, ip):
-        if not ip:
-            return AnyAddressRequest()
+    def get_request(cls, context, port, ip_dict):
+        """
+        :param context: context (not used here, but can be used in sub-classes)
+        :param port: port dict (not used here, but can be used in sub-classes)
+        :param ip_dict: dict that can contain 'ip_address', 'mac' and
+            'subnet_cidr' keys. Request to generate is selected depending on
+             this ip_dict keys.
+        :return: returns prepared AddressRequest (specific or any)
+        """
+        if ip_dict.get('ip_address'):
+            return SpecificAddressRequest(ip_dict['ip_address'])
+        elif ip_dict.get('eui64_address'):
+            return AutomaticAddressRequest(prefix=ip_dict['subnet_cidr'],
+                                           mac=ip_dict['mac'])
         else:
-            return SpecificAddressRequest(ip)
+            return AnyAddressRequest()
 
 
 class SubnetRequestFactory(object):

@@ -304,7 +304,12 @@ class OVSBridge(BaseOVS):
                  ('options', {'peer': remote_name})]
         return self.add_port(local_name, *attrs)
 
+    def get_iface_name_list(self):
+        # get the interface name list for this bridge
+        return self.ovsdb.list_ifaces(self.br_name).execute(check_error=True)
+
     def get_port_name_list(self):
+        # get the port name list for this bridge
         return self.ovsdb.list_ports(self.br_name).execute(check_error=True)
 
     def get_port_stats(self, port_name):
@@ -557,7 +562,7 @@ class DeferredOVSBridge(object):
                                     key=operator.itemgetter(0))
         itemgetter_1 = operator.itemgetter(1)
         for action, action_flow_list in grouped:
-            flows = map(itemgetter_1, action_flow_list)
+            flows = list(map(itemgetter_1, action_flow_list))
             self.br.do_action_flows(action, flows)
 
     def __enter__(self):

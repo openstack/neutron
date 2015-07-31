@@ -28,13 +28,13 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
     def __init__(self, agent, host, *args, **kwargs):
         super(DvrEdgeRouter, self).__init__(agent, host, *args, **kwargs)
         self.snat_namespace = None
+        self.snat_iptables_manager = None
 
     def external_gateway_added(self, ex_gw_port, interface_name):
         super(DvrEdgeRouter, self).external_gateway_added(
             ex_gw_port, interface_name)
         if self._is_this_snat_host():
-            snat_ports = self.get_snat_interfaces()
-            self._create_dvr_gateway(ex_gw_port, interface_name, snat_ports)
+            self._create_dvr_gateway(ex_gw_port, interface_name)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
         if not self._is_this_snat_host():
@@ -70,8 +70,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         if not self._is_this_snat_host():
             return
 
-        snat_ports = self.get_snat_interfaces()
-        sn_port = self._map_internal_interfaces(port, snat_ports)
+        sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
             return
 
@@ -92,7 +91,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         if not self.ex_gw_port:
             return
 
-        sn_port = self._map_internal_interfaces(port, self.snat_ports)
+        sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
             return
 
@@ -108,12 +107,11 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             self.driver.unplug(snat_interface, namespace=ns_name,
                                prefix=prefix)
 
-    def _create_dvr_gateway(self, ex_gw_port, gw_interface_name,
-                            snat_ports):
+    def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
         """Create SNAT namespace."""
         snat_ns = self.create_snat_namespace()
         # connect snat_ports to br_int from SNAT namespace
-        for port in snat_ports:
+        for port in self.get_snat_interfaces():
             # create interface_name
             interface_name = self.get_snat_int_device_name(port['id'])
             self._internal_network_added(
@@ -145,4 +143,26 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         return long_name[:self.driver.DEV_NAME_LEN]
 
     def _is_this_snat_host(self):
-        return self.get_gw_port_host() == self.host
+        host = self.router.get('gw_port_host')
+        if not host:
+            LOG.debug("gw_port_host missing from router: %s",
+                      self.router['id'])
+        return host == self.host
+
+    def _handle_router_snat_rules(self, ex_gw_port, interface_name):
+        if not self._is_this_snat_host():
+            return
+        if not self.get_ex_gw_port():
+            return
+
+        if not self.snat_iptables_manager:
+            LOG.debug("DVR router: no snat rules to be handled")
+            return
+
+        with self.snat_iptables_manager.defer_apply():
+            self._empty_snat_chains(self.snat_iptables_manager)
+
+            # NOTE DVR doesn't add the jump to float snat like the super class.
+
+            self._add_snat_rules(ex_gw_port, self.snat_iptables_manager,
+                                 interface_name)

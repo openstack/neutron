@@ -16,28 +16,36 @@
 """Tests to test the test framework"""
 
 import sys
+import unittest2
 
 from neutron.tests import base
 
 
-class SystemExitTestCase(base.BaseTestCase):
+class SystemExitTestCase(base.DietTestCase):
+    # Embedded to hide from the regular test discovery
+    class MyTestCase(base.DietTestCase):
+        def __init__(self, exitcode):
+            super(SystemExitTestCase.MyTestCase, self).__init__()
+            self.exitcode = exitcode
 
-    def setUp(self):
-        def _fail_SystemExit(exc_info):
-            if isinstance(exc_info[1], SystemExit):
-                self.fail("A SystemExit was allowed out")
-        super(SystemExitTestCase, self).setUp()
-        # add the handler last so reaching it means the handler in BaseTestCase
-        # didn't do it's job
-        self.addOnException(_fail_SystemExit)
+        def runTest(self):
+            if self.exitcode is not None:
+                sys.exit(self.exitcode)
 
-    def run(self, *args, **kwargs):
-        exc = self.assertRaises(AssertionError,
-                                super(SystemExitTestCase, self).run,
-                                *args, **kwargs)
-        # this message should be generated when SystemExit is raised by a test
-        self.assertIn('A SystemExit was raised during the test.', str(exc))
+    def test_no_sysexit(self):
+        result = self.MyTestCase(exitcode=None).run()
+        self.assertTrue(result.wasSuccessful())
 
-    def test_system_exit(self):
-        # this should generate a failure that mentions SystemExit was used
-        sys.exit(1)
+    def test_sysexit(self):
+        expectedFails = [self.MyTestCase(exitcode) for exitcode in (0, 1)]
+
+        suite = unittest2.TestSuite(tests=expectedFails)
+        result = self.defaultTestResult()
+        try:
+            suite.run(result)
+        except SystemExit:
+            self.fail('SystemExit escaped!')
+
+        self.assertEqual([], result.errors)
+        self.assertItemsEqual(set(id(t) for t in expectedFails),
+                              set(id(t) for (t, traceback) in result.failures))

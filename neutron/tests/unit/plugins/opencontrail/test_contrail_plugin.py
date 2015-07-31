@@ -193,6 +193,8 @@ class KeyStoneInfo(object):
 
 class ContrailPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = ('%s.NeutronPluginContrailCoreV2' % CONTRAIL_PKG_PATH)
+    _fetch = ('neutron.ipam.drivers.neutrondb_ipam.driver.NeutronDbSubnet'
+              '._fetch_subnet')
 
     def setUp(self, plugin=None, ext_mgr=None):
         if 'v6' in self._testMethodName:
@@ -201,6 +203,7 @@ class ContrailPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.skipTest("OpenContrail Plugin does not support subnet pools.")
         cfg.CONF.keystone_authtoken = KeyStoneInfo()
         mock.patch('requests.post').start().side_effect = FAKE_SERVER.request
+        mock.patch(self._fetch).start().side_effect = FAKE_SERVER._get_subnet
         super(ContrailPluginTestCase, self).setUp(self._plugin_name)
 
 

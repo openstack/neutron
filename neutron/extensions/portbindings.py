@@ -47,11 +47,29 @@ CAP_PORT_FILTER = 'port_filter'
 OVS_HYBRID_PLUG = 'ovs_hybrid_plug'
 VIF_DETAILS_VLAN = 'vlan'
 
+# The keys below are used in the VIF_DETAILS attribute to convey
+# information related to the configuration of the vhost-user VIF driver.
+
+# - vhost_user_mode: String value used to declare the mode of a
+#                    vhost-user socket
+VHOST_USER_MODE = 'vhostuser_mode'
+# - server: socket created by hypervisor
+VHOST_USER_MODE_SERVER = 'server'
+# - client: socket created by vswitch
+VHOST_USER_MODE_CLIENT = 'client'
+# - vhostuser_socket String value used to declare the vhostuser socket name
+VHOST_USER_SOCKET = 'vhostuser_socket'
+# - vhost_user_ovs_plug: Boolean used to inform Nova that the ovs plug
+#                        method should be used when binding the
+#                        vhost-user vif.
+VHOST_USER_OVS_PLUG = 'vhostuser_ovs_plug'
+
 VIF_TYPE_UNBOUND = 'unbound'
 VIF_TYPE_BINDING_FAILED = 'binding_failed'
 VIF_TYPE_DISTRIBUTED = 'distributed'
 VIF_TYPE_IOVISOR = 'iovisor'
 VIF_TYPE_OVS = 'ovs'
+VIF_TYPE_VHOST_USER = 'vhostuser'
 VIF_TYPE_IVS = 'ivs'
 VIF_TYPE_DVS = 'dvs'
 VIF_TYPE_BRIDGE = 'bridge'

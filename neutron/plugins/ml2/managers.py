@@ -172,7 +172,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def _add_network_segment(self, session, network_id, segment, mtu,
                              segment_index=0):
         db.add_network_segment(session, network_id, segment, segment_index)
-        if segment.get(api.MTU) > 0:
+        if segment.get(api.MTU, 0) > 0:
             mtu.append(segment[api.MTU])
 
     def create_network_segments(self, context, network, tenant_id):
@@ -803,19 +803,19 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         """Notify all extension drivers to extend network dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_network_dict(session, base_model, result)
-            LOG.info(_LI("Extended network dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended network dict for driver '%(drv)s'",
+                      {'drv': driver.name})
 
     def extend_subnet_dict(self, session, base_model, result):
         """Notify all extension drivers to extend subnet dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_subnet_dict(session, base_model, result)
-            LOG.info(_LI("Extended subnet dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended subnet dict for driver '%(drv)s'",
+                      {'drv': driver.name})
 
     def extend_port_dict(self, session, base_model, result):
         """Notify all extension drivers to extend port dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_port_dict(session, base_model, result)
-            LOG.info(_LI("Extended port dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended port dict for driver '%(drv)s'",
+                      {'drv': driver.name})

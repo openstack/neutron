@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import types
-
 import fixtures
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -56,7 +54,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
         self.assertIsInstance(
-            plugin, (dummy_plugin.DummyServicePlugin, types.ClassType),
+            plugin, dummy_plugin.DummyServicePlugin,
             "loaded plugin should be of type neutronDummyPlugin")
 
     def test_service_plugin_by_name_is_loaded(self):
@@ -66,7 +64,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
         self.assertIsInstance(
-            plugin, (dummy_plugin.DummyServicePlugin, types.ClassType),
+            plugin, dummy_plugin.DummyServicePlugin,
             "loaded plugin should be of type neutronDummyPlugin")
 
     def test_multiple_plugins_specified_for_service_type(self):
@@ -107,7 +105,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               "MultiServiceCorePlugin")
         mgr = manager.NeutronManager.get_instance()
         svc_plugins = mgr.get_service_plugins()
-        self.assertEqual(3, len(svc_plugins))
+        self.assertEqual(4, len(svc_plugins))
         self.assertIn(constants.CORE, svc_plugins.keys())
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
         self.assertIn(constants.DUMMY, svc_plugins.keys())

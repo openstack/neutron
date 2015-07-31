@@ -84,9 +84,11 @@ OPTS = [
     cfg.StrOpt('metadata_access_mark',
                default='0x1',
                help=_('Iptables mangle mark used to mark metadata valid '
-                      'requests')),
+                      'requests. This mark will be masked with 0xffff so '
+                      'that only the lower 16 bits will be used.')),
     cfg.StrOpt('external_ingress_mark',
                default='0x2',
                help=_('Iptables mangle mark used to mark ingress from '
-                      'external network')),
+                      'external network. This mark will be masked with '
+                      '0xffff so that only the lower 16 bits will be used.')),
 ]

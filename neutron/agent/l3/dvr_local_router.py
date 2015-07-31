@@ -19,7 +19,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.l3 import dvr_fip_ns
-from neutron.agent.l3 import router_info as router
+from neutron.agent.l3 import dvr_router_base
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions
@@ -31,15 +31,11 @@ LOG = logging.getLogger(__name__)
 MASK_30 = 0x3fffffff
 
 
-class DvrLocalRouter(router.RouterInfo):
+class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def __init__(self, agent, host, *args, **kwargs):
-        super(DvrLocalRouter, self).__init__(*args, **kwargs)
-
-        self.agent = agent
-        self.host = host
+        super(DvrLocalRouter, self).__init__(agent, host, *args, **kwargs)
 
         self.floating_ips_dict = {}
-        self.snat_iptables_manager = None
         # Linklocal subnet for router and floating IP namespace link
         self.rtr_fip_subnet = None
         self.dist_fip_count = None
@@ -49,9 +45,6 @@ class DvrLocalRouter(router.RouterInfo):
         """Filter Floating IPs to be hosted on this agent."""
         floating_ips = super(DvrLocalRouter, self).get_floating_ips()
         return [i for i in floating_ips if i['host'] == self.host]
-
-    def get_snat_interfaces(self):
-        return self.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
 
     def _handle_fip_nat_rules(self, interface_name, action):
         """Configures NAT rules for Floating IPs for DVR.
@@ -201,17 +194,6 @@ class DvrLocalRouter(router.RouterInfo):
                                            subnet_id,
                                            'add')
 
-    def _map_internal_interfaces(self, int_port, snat_ports):
-        """Return the SNAT port for the given internal interface port."""
-        fixed_ip = int_port['fixed_ips'][0]
-        subnet_id = fixed_ip['subnet_id']
-        match_port = [p for p in snat_ports if
-                      p['fixed_ips'][0]['subnet_id'] == subnet_id]
-        if match_port:
-            return match_port[0]
-        else:
-            LOG.error(_LE('DVR: no map match_port found!'))
-
     @staticmethod
     def _get_snat_idx(ip_cidr):
         """Generate index for DVR snat rules and route tables.
@@ -291,13 +273,6 @@ class DvrLocalRouter(router.RouterInfo):
         """Removes rules and routes for SNAT redirection."""
         self._snat_redirect_modify(gateway, sn_port, sn_int, is_add=False)
 
-    def get_gw_port_host(self):
-        host = self.router.get('gw_port_host')
-        if not host:
-            LOG.debug("gw_port_host missing from router: %s",
-                      self.router['id'])
-        return host
-
     def internal_network_added(self, port):
         super(DvrLocalRouter, self).internal_network_added(port)
 
@@ -313,8 +288,7 @@ class DvrLocalRouter(router.RouterInfo):
         if not ex_gw_port:
             return
 
-        snat_ports = self.get_snat_interfaces()
-        sn_port = self._map_internal_interfaces(port, snat_ports)
+        sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
             return
 
@@ -325,7 +299,7 @@ class DvrLocalRouter(router.RouterInfo):
         if not self.ex_gw_port:
             return
 
-        sn_port = self._map_internal_interfaces(port, self.snat_ports)
+        sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
             return
 
@@ -355,14 +329,13 @@ class DvrLocalRouter(router.RouterInfo):
         ip_wrapr = ip_lib.IPWrapper(namespace=self.ns_name)
         ip_wrapr.netns.execute(['sysctl', '-w',
                                'net.ipv4.conf.all.send_redirects=0'])
-        snat_ports = self.get_snat_interfaces()
         for p in self.internal_ports:
-            gateway = self._map_internal_interfaces(p, snat_ports)
+            gateway = self.get_snat_port_for_internal_port(p)
             id_name = self.get_internal_device_name(p['id'])
             if gateway:
                 self._snat_redirect_add(gateway, p, id_name)
 
-        for port in snat_ports:
+        for port in self.get_snat_interfaces():
             for ip in port['fixed_ips']:
                 self._update_arp_entry(ip['ip_address'],
                                        port['mac_address'],
@@ -379,35 +352,13 @@ class DvrLocalRouter(router.RouterInfo):
             to_fip_interface_name = (
                 self.get_external_device_interface_name(ex_gw_port))
             self.process_floating_ip_addresses(to_fip_interface_name)
-        snat_ports = self.get_snat_interfaces()
         for p in self.internal_ports:
-            gateway = self._map_internal_interfaces(p, snat_ports)
+            gateway = self.get_snat_port_for_internal_port(p)
             internal_interface = self.get_internal_device_name(p['id'])
             self._snat_redirect_remove(gateway, p, internal_interface)
 
-    def _handle_router_snat_rules(self, ex_gw_port,
-                                  interface_name, action):
-        if not self.snat_iptables_manager:
-            LOG.debug("DVR router: no snat rules to be handled")
-            return
-
-        with self.snat_iptables_manager.defer_apply():
-            self._empty_snat_chains(self.snat_iptables_manager)
-
-            # NOTE DVR doesn't add the jump to float snat like the super class.
-
-            self._add_snat_rules(ex_gw_port, self.snat_iptables_manager,
-                                 interface_name, action)
-
-    def perform_snat_action(self, snat_callback, *args):
-        # NOTE DVR skips this step in a few cases...
-        if not self.get_ex_gw_port():
-            return
-        if self.get_gw_port_host() != self.host:
-            return
-
-        super(DvrLocalRouter,
-              self).perform_snat_action(snat_callback, *args)
+    def _handle_router_snat_rules(self, ex_gw_port, interface_name):
+        pass
 
     def process_external(self, agent):
         ex_gw_port = self.get_ex_gw_port()

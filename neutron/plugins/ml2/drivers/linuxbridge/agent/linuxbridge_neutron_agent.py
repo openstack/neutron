@@ -33,6 +33,7 @@ from oslo_service import loopingcall
 from oslo_service import service
 from six import moves
 
+from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
@@ -303,21 +304,18 @@ class LinuxBridgeManager(object):
             LOG.debug("Starting bridge %(bridge_name)s for subinterface "
                       "%(interface)s",
                       {'bridge_name': bridge_name, 'interface': interface})
-            if utils.execute(['brctl', 'addbr', bridge_name],
-                             run_as_root=True):
+            bridge_device = bridge_lib.BridgeDevice.addbr(bridge_name)
+            if bridge_device.setfd(0):
                 return
-            if utils.execute(['brctl', 'setfd', bridge_name,
-                              str(0)], run_as_root=True):
+            if bridge_device.disable_stp():
                 return
-            if utils.execute(['brctl', 'stp', bridge_name,
-                              'off'], run_as_root=True):
-                return
-            if utils.execute(['ip', 'link', 'set', bridge_name,
-                              'up'], run_as_root=True):
+            if bridge_device.link.set_up():
                 return
             LOG.debug("Done starting bridge %(bridge_name)s for "
                       "subinterface %(interface)s",
                       {'bridge_name': bridge_name, 'interface': interface})
+        else:
+            bridge_device = bridge_lib.BridgeDevice(bridge_name)
 
         if not interface:
             return bridge_name
@@ -331,11 +329,9 @@ class LinuxBridgeManager(object):
                 # Check if the interface is not enslaved in another bridge
                 if self.is_device_on_bridge(interface):
                     bridge = self.get_bridge_for_tap_device(interface)
-                    utils.execute(['brctl', 'delif', bridge, interface],
-                                  run_as_root=True)
+                    bridge_lib.BridgeDevice(bridge).delif(interface)
 
-                utils.execute(['brctl', 'addif', bridge_name, interface],
-                              run_as_root=True)
+                bridge_device.addif(interface)
             except Exception as e:
                 LOG.error(_LE("Unable to add %(interface)s to %(bridge_name)s"
                               "! Exception: %(e)s"),
@@ -401,8 +397,7 @@ class LinuxBridgeManager(object):
                     'bridge_name': bridge_name}
             LOG.debug("Adding device %(tap_device_name)s to bridge "
                       "%(bridge_name)s", data)
-            if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
-                             run_as_root=True):
+            if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
                 return False
         else:
             data = {'tap_device_name': tap_device_name,
@@ -450,11 +445,10 @@ class LinuxBridgeManager(object):
                             self.delete_vlan(interface)
 
             LOG.debug("Deleting bridge %s", bridge_name)
-            if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
-                             run_as_root=True):
+            bridge_device = bridge_lib.BridgeDevice(bridge_name)
+            if bridge_device.link.set_down():
                 return
-            if utils.execute(['brctl', 'delbr', bridge_name],
-                             run_as_root=True):
+            if bridge_device.delbr():
                 return
             LOG.debug("Done deleting bridge %s", bridge_name)
 
@@ -477,8 +471,7 @@ class LinuxBridgeManager(object):
                       "%(bridge_name)s",
                       {'interface_name': interface_name,
                        'bridge_name': bridge_name})
-            if utils.execute(['brctl', 'delif', bridge_name, interface_name],
-                             run_as_root=True):
+            if bridge_lib.BridgeDevice(bridge_name).delif(interface_name):
                 return False
             LOG.debug("Done removing device %(interface_name)s from bridge "
                       "%(bridge_name)s",

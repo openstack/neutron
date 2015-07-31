@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import errno
 import fcntl
 import glob
 import grp
@@ -25,6 +24,7 @@ import struct
 import tempfile
 import threading
 
+from debtcollector import removals
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
@@ -79,7 +79,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     The return value will be a tuple of the process object and the
     list of command arguments used to create it.
     """
-    cmd = map(str, addl_env_args(addl_env) + cmd)
+    cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
     LOG.debug("Running command: %s", cmd)
@@ -92,7 +92,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
 
 
 def execute_rootwrap_daemon(cmd, process_input, addl_env):
-    cmd = map(str, addl_env_args(addl_env) + cmd)
+    cmd = list(map(str, addl_env_args(addl_env) + cmd))
     # NOTE(twilson) oslo_rootwrap.daemon will raise on filter match
     # errors, whereas oslo_rootwrap.cmd converts them to return codes.
     # In practice, no neutron code should be trying to execute something that
@@ -189,14 +189,9 @@ def find_child_pids(pid):
     return [x.strip() for x in raw_pids.split('\n') if x.strip()]
 
 
-def ensure_dir(dir_path):
-    """Ensure a directory with 755 permissions mode."""
-    try:
-        os.makedirs(dir_path, 0o755)
-    except OSError as e:
-        # If the directory already existed, don't raise the error.
-        if e.errno != errno.EEXIST:
-            raise
+@removals.remove(message='Use neutron.common.utils.ensure_dir instead.')
+def ensure_dir(*args, **kwargs):
+    return utils.ensure_dir(*args, **kwargs)
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
@@ -205,7 +200,7 @@ def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
     conf_base = os.path.join(conf_dir, uuid)
     if ensure_conf_dir:
-        ensure_dir(conf_dir)
+        utils.ensure_dir(conf_dir)
     return conf_base
 
 
@@ -338,7 +333,7 @@ def ensure_directory_exists_without_file(path):
                 if not os.path.exists(path):
                     ctxt.reraise = False
     else:
-        ensure_dir(dirname)
+        utils.ensure_dir(dirname)
 
 
 def is_effective_user(user_id_or_name):

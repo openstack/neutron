@@ -18,6 +18,7 @@ from oslo_db.sqlalchemy import test_base
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 from neutron.tests.common import base
+from neutron.tests.fullstack.resources import client as client_resource
 
 
 class BaseFullStackTestCase(base.MySQLTestCase):
@@ -35,6 +36,8 @@ class BaseFullStackTestCase(base.MySQLTestCase):
         self.useFixture(self.environment)
 
         self.client = self.environment.neutron_server.client
+        self.safe_client = self.useFixture(
+            client_resource.ClientFixture(self.client))
 
     def get_name(self):
         class_name, test_name = self.id().split(".")[-2:]

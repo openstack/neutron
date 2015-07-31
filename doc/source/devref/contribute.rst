@@ -1,14 +1,11 @@
 Contributing new extensions to Neutron
 ======================================
 
-**NOTE!**
----------
+.. note:: **Third-party plugins/drivers which do not start decomposition in
+  Liberty will be marked as deprecated and removed before the Mitaka-3
+  milestone.**
 
-**Third-party plugins/drivers which do not start decomposition in Liberty will
-be marked as deprecated, and they will be removed before the Mxxx-3
-milestone.**
-
-Read on for details ...
+  Read on for details ...
 
 
 Introduction
@@ -46,7 +43,7 @@ by allowing third-party code to exist entirely out of tree. Further extension
 mechanisms have been provided to better support external plugins and drivers
 that alter the API and/or the data model.
 
-In the Mxxx cycle we will **require** all third-party code to be moved out of
+In the Mitaka cycle we will **require** all third-party code to be moved out of
 the neutron tree completely.
 
 'Outside the tree' can be anything that is publicly available: it may be a repo

@@ -13,10 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import abc
+import itertools
+import operator
 
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log
+from six import moves
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
@@ -31,20 +35,26 @@ LOG = log.getLogger(__name__)
 TUNNEL = 'tunnel'
 
 
+def chunks(iterable, chunk_size):
+    """Chunks data into chunk with size<=chunk_size."""
+    iterator = iter(iterable)
+    chunk = list(itertools.islice(iterator, 0, chunk_size))
+    while chunk:
+        yield chunk
+        chunk = list(itertools.islice(iterator, 0, chunk_size))
+
+
 class TunnelTypeDriver(helpers.SegmentTypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
     methods to manage these endpoints.
     """
+    BULK_SIZE = 100
 
     def __init__(self, model):
         super(TunnelTypeDriver, self).__init__(model)
         self.segmentation_key = next(iter(self.primary_keys))
-
-    @abc.abstractmethod
-    def sync_allocations(self):
-        """Synchronize type_driver allocation table with configured ranges."""
 
     @abc.abstractmethod
     def add_endpoint(self, ip, host):
@@ -112,6 +122,42 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
             current_range.append(tunnel_range)
         LOG.info(_LI("%(type)s ID ranges: %(range)s"),
                  {'type': self.get_type(), 'range': current_range})
+
+    @oslo_db_api.wrap_db_retry(
+        max_retries=db_api.MAX_RETRIES, retry_on_deadlock=True)
+    def sync_allocations(self):
+        # determine current configured allocatable tunnel ids
+        tunnel_ids = set()
+        for tun_min, tun_max in self.tunnel_ranges:
+            tunnel_ids |= set(moves.range(tun_min, tun_max + 1))
+
+        tunnel_id_getter = operator.attrgetter(self.segmentation_key)
+        tunnel_col = getattr(self.model, self.segmentation_key)
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            # remove from table unallocated tunnels not currently allocatable
+            # fetch results as list via all() because we'll be iterating
+            # through them twice
+            allocs = (session.query(self.model).
+                      with_lockmode("update").all())
+
+            # collect those vnis that needs to be deleted from db
+            unallocateds = (
+                tunnel_id_getter(a) for a in allocs if not a.allocated)
+            to_remove = (x for x in unallocateds if x not in tunnel_ids)
+            # Immediately delete tunnels in chunks. This leaves no work for
+            # flush at the end of transaction
+            for chunk in chunks(to_remove, self.BULK_SIZE):
+                session.query(self.model).filter(
+                    tunnel_col.in_(chunk)).delete(synchronize_session=False)
+
+            # collect vnis that need to be added
+            existings = {tunnel_id_getter(a) for a in allocs}
+            missings = list(tunnel_ids - existings)
+            for chunk in chunks(missings, self.BULK_SIZE):
+                bulk = [{self.segmentation_key: x, 'allocated': False}
+                        for x in chunk]
+                session.execute(self.model.__table__.insert(), bulk)
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None

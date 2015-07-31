@@ -20,7 +20,6 @@ import itertools
 import mock
 import netaddr
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_utils import importutils
 import six
 from sqlalchemy import orm
@@ -2293,7 +2292,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 # must query db to see whether subnet's shared attribute
                 # has been updated or not
                 ctx = context.Context('', '', is_admin=True)
-                subnet_db = manager.NeutronManager.get_plugin()._get_subnet(
+                subnet_db = manager.NeutronManager.get_plugin().get_subnet(
                     ctx, subnet['subnet']['id'])
                 self.assertEqual(subnet_db['shared'], True)
 
@@ -3278,6 +3277,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 [{'start': '10.0.0.2', 'end': '10.0.0.254'},
                                  {'end': '10.0.0.254'}],
                                 None,
+                                [{'start': '10.0.0.200', 'end': '10.0.3.20'}],
+                                [{'start': '10.0.2.250', 'end': '10.0.3.5'}],
+                                [{'start': '10.0.2.10', 'end': '10.0.2.5'}],
                                 [{'start': '10.0.0.2', 'end': '10.0.0.3'},
                                  {'start': '10.0.0.2', 'end': '10.0.0.3'}]]
             tenant_id = network['network']['tenant_id']
@@ -3806,14 +3808,19 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.subnet(network=network) as v4_subnet,\
             self.port(subnet=v4_subnet, device_owner=device_owner) as port:
             if insert_db_reference_error:
-                def db_ref_err_for_ipalloc(instance):
+                orig_fn = orm.Session.add
+
+                def db_ref_err_for_ipalloc(s, instance):
                     if instance.__class__.__name__ == 'IPAllocation':
-                        raise db_exc.DBReferenceError(
-                            'dummy_table', 'dummy_constraint',
-                            'dummy_key', 'dummy_key_table')
+                        # tweak port_id to cause a FK violation,
+                        # thus DBReferenceError
+                        instance.port_id = 'nonexistent'
+                    return orig_fn(s, instance)
+
                 mock.patch.object(orm.Session, 'add',
-                                  side_effect=db_ref_err_for_ipalloc).start()
-                mock.patch.object(non_ipam.IpamNonPluggableBackend,
+                                  side_effect=db_ref_err_for_ipalloc,
+                                  autospec=True).start()
+                mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
                                   '_get_subnet',
                                   return_value=mock.Mock()).start()
             # Add an IPv6 auto-address subnet to the network
@@ -3915,8 +3922,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(sorted(res['subnet']['host_routes']),
                              sorted(host_routes))
-            self.assertEqual(sorted(res['subnet']['dns_nameservers']),
-                             sorted(dns_nameservers))
+            self.assertEqual(res['subnet']['dns_nameservers'],
+                             dns_nameservers)
 
     def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
@@ -4456,6 +4463,27 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['subnet']['dns_nameservers'],
                              data['subnet']['dns_nameservers'])
+
+    def test_subnet_lifecycle_dns_retains_order(self):
+        cfg.CONF.set_override('max_dns_nameservers', 3)
+        with self.subnet(dns_nameservers=['1.1.1.1', '2.2.2.2',
+            '3.3.3.3']) as subnet:
+            subnets = self._show('subnets', subnet['subnet']['id'],
+                expected_code=webob.exc.HTTPOk.code)
+            self.assertEqual(['1.1.1.1', '2.2.2.2', '3.3.3.3'],
+                subnets['subnet']['dns_nameservers'])
+            data = {'subnet': {'dns_nameservers': ['2.2.2.2', '3.3.3.3',
+                '1.1.1.1']}}
+            req = self.new_update_request('subnets',
+                                          data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(data['subnet']['dns_nameservers'],
+                             res['subnet']['dns_nameservers'])
+            subnets = self._show('subnets', subnet['subnet']['id'],
+                expected_code=webob.exc.HTTPOk.code)
+            self.assertEqual(data['subnet']['dns_nameservers'],
+                             subnets['subnet']['dns_nameservers'])
 
     def test_update_subnet_dns_to_None(self):
         with self.subnet(dns_nameservers=['11.0.0.1']) as subnet:
@@ -5323,8 +5351,8 @@ class DbModelTestCase(base.BaseTestCase):
         exp_middle = "[object at %x]" % id(network)
         exp_end_with = (" {tenant_id=None, id=None, "
                         "name='net_net', status='OK', "
-                        "admin_state_up=True, shared=None, "
-                        "mtu=None, vlan_transparent=None}>")
+                        "admin_state_up=True, mtu=None, "
+                        "vlan_transparent=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(actual_repr_output, final_exp)
 

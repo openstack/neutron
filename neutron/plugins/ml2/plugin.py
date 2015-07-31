@@ -14,10 +14,10 @@
 #    under the License.
 
 from eventlet import greenthread
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
+from oslo_log import helpers as log_helpers
 from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import excutils
@@ -40,7 +40,6 @@ from neutron.callbacks import resources
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import ipv6_utils
-from neutron.common import log as neutron_log
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -55,7 +54,7 @@ from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
 from neutron.db import netmtu_db
-from neutron.db import quota_db  # noqa
+from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
@@ -163,7 +162,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         )
         self.start_periodic_dhcp_agent_status_check()
 
-    @neutron_log.log
+    @log_helpers.log_method_call
     def start_rpc_listeners(self):
         """Start the RPC loop to let the plugin communicate with agents."""
         self.topic = topics.PLUGIN
@@ -344,13 +343,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # After we've attempted to bind the port, we begin a
         # transaction, get the current port state, and decide whether
         # to commit the binding results.
-        #
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             # Get the current port state and build a new PortContext
             # reflecting this state as original state for subsequent
             # mechanism driver update_port_*commit() calls.
@@ -729,15 +722,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # to 'lock wait timeout' errors.
                 #
                 # Process L3 first, since, depending on the L3 plugin, it may
-                # involve locking the db-access semaphore, sending RPC
-                # notifications, and/or calling delete_port on this plugin.
+                # involve sending RPC notifications, and/or calling delete_port
+                # on this plugin.
                 # Additionally, a rollback may not be enough to undo the
                 # deletion of a floating IP with certain L3 backends.
                 self._process_l3_delete(context, id)
                 # Using query().with_lockmode isn't necessary. Foreign-key
                 # constraints prevent deletion if concurrent creation happens.
-                with lockutils.lock('db-access'),\
-                        session.begin(subtransactions=True):
+                with session.begin(subtransactions=True):
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).
@@ -852,14 +844,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("Deleting subnet %s", id)
         session = context.session
         while True:
-            # REVISIT: Serialize this operation with a semaphore to
-            # prevent deadlock waiting to acquire a DB lock held by
-            # another thread in the same process, leading to 'lock
-            # wait timeout' errors.
-            with lockutils.lock('db-access'),\
-                    session.begin(subtransactions=True):
+            with session.begin(subtransactions=True):
                 record = self._get_subnet(context, id)
-                subnet = self._make_subnet_dict(record, None)
+                subnet = self._make_subnet_dict(record, None, context=context)
                 qry_allocated = (session.query(models_v2.IPAllocation).
                                  filter_by(subnet_id=id).
                                  join(models_v2.Port))
@@ -877,7 +864,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 allocated = qry_allocated.all()
                 # Delete all the IPAllocation that can be auto-deleted
                 if allocated:
-                    map(session.delete, allocated)
+                    for x in allocated:
+                        session.delete(x)
                 LOG.debug("Ports to auto-deallocate: %s", allocated)
                 # Check if there are more IP allocations, unless
                 # is_auto_address_subnet is True. In that case the check is
@@ -1101,13 +1089,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = port[attributes.PORT]
         need_port_update_notify = False
         session = context.session
+        bound_mech_contexts = []
 
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
@@ -1141,11 +1125,36 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding, levels,
                 original_port=original_port)
-            new_host_port = self._get_host_port_if_changed(mech_context, attrs)
+            # For DVR router interface ports we need to retrieve the
+            # DVRPortbinding context instead of the normal port context.
+            # The normal Portbinding context does not have the status
+            # of the ports that are required by the l2pop to process the
+            # postcommit events.
+
+            # NOTE:Sometimes during the update_port call, the DVR router
+            # interface port may not have the port binding, so we cannot
+            # create a generic bindinglist that will address both the
+            # DVR and non-DVR cases here.
+            # TODO(Swami): This code need to be revisited.
+            if port_db['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+                dvr_binding_list = db.get_dvr_port_bindings(session, id)
+                for dvr_binding in dvr_binding_list:
+                    levels = db.get_binding_levels(session, id,
+                                                   dvr_binding.host)
+                    dvr_mech_context = driver_context.PortContext(
+                        self, context, updated_port, network,
+                        dvr_binding, levels, original_port=original_port)
+                    self.mechanism_manager.update_port_precommit(
+                        dvr_mech_context)
+                    bound_mech_contexts.append(dvr_mech_context)
+            else:
+                self.mechanism_manager.update_port_precommit(mech_context)
+                bound_mech_contexts.append(mech_context)
+
+            new_host_port = self._get_host_port_if_changed(
+                mech_context, attrs)
             need_port_update_notify |= self._process_port_binding(
                 mech_context, attrs)
-            self.mechanism_manager.update_port_precommit(mech_context)
-
         # Notifications must be sent after the above transaction is complete
         kwargs = {
             'context': context,
@@ -1154,11 +1163,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         }
         registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
 
-        # TODO(apech) - handle errors raised by update_port, potentially
-        # by re-calling update_port with the previous attributes. For
-        # now the error is propogated to the caller, which is expected to
-        # either undo/retry the operation or delete the resource.
-        self.mechanism_manager.update_port_postcommit(mech_context)
+        # Note that DVR Interface ports will have bindings on
+        # multiple hosts, and so will have multiple mech_contexts,
+        # while other ports typically have just one.
+        # Since bound_mech_contexts has both the DVR and non-DVR
+        # contexts we can manage just with a single for loop.
+        try:
+            for mech_context in bound_mech_contexts:
+                self.mechanism_manager.update_port_postcommit(
+                    mech_context)
+        except ml2_exc.MechanismDriverError:
+            LOG.error(_LE("mechanism_manager.update_port_postcommit "
+                          "failed for port %s"), id)
 
         self.check_and_notify_security_group_member_changed(
             context, original_port, updated_port)
@@ -1167,7 +1183,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if original_port['admin_state_up'] != updated_port['admin_state_up']:
             need_port_update_notify = True
-
+        # NOTE: In the case of DVR ports, the port-binding is done after
+        # router scheduling when sync_routers is callede and so this call
+        # below may not be required for DVR routed interfaces. But still
+        # since we don't have the mech_context for the DVR router interfaces
+        # at certain times, we just pass the port-context and return it, so
+        # that we don't disturb other methods that are expecting a return
+        # value.
         bound_context = self._bind_port_if_needed(
             mech_context,
             allow_notify=True,
@@ -1258,12 +1280,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             l3plugin, const.L3_DISTRIBUTED_EXT_ALIAS)
 
         session = context.session
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 LOG.debug("The port '%s' was deleted", id)
@@ -1392,12 +1409,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         """
         updated = False
         session = context.session
-        # REVISIT: Serialize this operation with a semaphore to
-        # prevent deadlock waiting to acquire a DB lock held by
-        # another thread in the same process, leading to 'lock wait
-        # timeout' errors.
-        with lockutils.lock('db-access'),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port = db.get_port(session, port_id)
             if not port:
                 LOG.debug("Port %(port)s update to %(val)s by agent not found",
@@ -1428,8 +1440,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (updated and
             port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
-            with lockutils.lock('db-access'),\
-                    session.begin(subtransactions=True):
+            with session.begin(subtransactions=True):
                 port = db.get_port(session, port_id)
                 if not port:
                     LOG.warning(_LW("Port %s not found during update"),

@@ -38,7 +38,7 @@ from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
 
-NS_PREFIX = 'func-'
+NS_PREFIX = 'test-'
 BR_PREFIX = 'test-br'
 PORT_PREFIX = 'test-port'
 VETH0_PREFIX = 'test-veth0'
@@ -274,6 +274,10 @@ class NetcatTester(object):
             self.server_namespace,
             address=self.server_address,
             listen=True)
+
+    @property
+    def is_established(self):
+        return bool(self._client_process and not self._client_process.poll())
 
     def establish_connection(self):
         if self._client_process:

@@ -117,7 +117,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                 plugin.get_ports_from_devices(self.ctx,
                     ['%s%s' % (const.TAP_DEVICE_PREFIX, i)
                      for i in range(ports_to_query)])
-                all_call_args = map(lambda x: x[1][1], get_mock.mock_calls)
+                all_call_args = [x[1][1] for x in get_mock.mock_calls]
                 last_call_args = all_call_args.pop()
                 # all but last should be getting MAX_PORTS_PER_QUERY ports
                 self.assertTrue(

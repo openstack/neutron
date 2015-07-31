@@ -19,6 +19,7 @@
 """Utilities and helper functions."""
 
 import datetime
+import errno
 import functools
 import hashlib
 import logging as std_logging
@@ -170,6 +171,16 @@ def find_config_file(options, config_file):
         cfg_file = os.path.join(cfg_dir, config_file)
         if os.path.exists(cfg_file):
             return cfg_file
+
+
+def ensure_dir(dir_path):
+    """Ensure a directory with 755 permissions mode."""
+    try:
+        os.makedirs(dir_path, 0o755)
+    except OSError as e:
+        # If the directory already existed, don't raise the error.
+        if e.errno != errno.EEXIST:
+            raise
 
 
 def _subprocess_setup():

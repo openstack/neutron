@@ -17,7 +17,6 @@ import copy
 
 import netaddr
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -35,6 +34,7 @@ from neutron.db import api as db_api
 from neutron.i18n import _LE, _LI
 from neutron import policy
 from neutron import quota
+from neutron.quota import resource_registry
 
 
 LOG = logging.getLogger(__name__)
@@ -187,6 +187,7 @@ class Controller(object):
 
     def __getattr__(self, name):
         if name in self._member_actions:
+            @db_api.retry_db_errors
             def _handle_action(request, id, **kwargs):
                 arg_list = [request.context, id]
                 # Ensure policy engine is initialized
@@ -197,7 +198,7 @@ class Controller(object):
                 except oslo_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
-                body = kwargs.pop('body', None)
+                body = copy.deepcopy(kwargs.pop('body', None))
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
@@ -207,7 +208,15 @@ class Controller(object):
                                name,
                                resource,
                                pluralized=self._collection)
-                return getattr(self._plugin, name)(*arg_list, **kwargs)
+                ret_value = getattr(self._plugin, name)(*arg_list, **kwargs)
+                # It is simply impossible to predict whether one of this
+                # actions alters resource usage. For instance a tenant port
+                # is created when a router interface is added. Therefore it is
+                # important to mark as dirty resources whose counters have
+                # been altered by this operation
+                resource_registry.set_resources_dirty(request.context)
+                return ret_value
+
             return _handle_action
         else:
             raise AttributeError()
@@ -280,6 +289,9 @@ class Controller(object):
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:
             collection[self._collection + "_links"] = pagination_links
+        # Synchronize usage trackers, if needed
+        resource_registry.resync_resource(
+            request.context, self._resource, request.context.tenant_id)
         return collection
 
     def _item(self, request, id, do_authz=False, field_list=None,
@@ -383,8 +395,7 @@ class Controller(object):
                 # We need a way for ensuring that if it has been created,
                 # it is then deleted
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -414,11 +425,13 @@ class Controller(object):
                            action,
                            item[self._resource],
                            pluralized=self._collection)
+            if 'tenant_id' not in item[self._resource]:
+                # no tenant_id - no quota check
+                continue
             try:
                 tenant_id = item[self._resource]['tenant_id']
                 count = quota.QUOTAS.count(request.context, self._resource,
-                                           self._plugin, self._collection,
-                                           tenant_id)
+                                           self._plugin, tenant_id)
                 if bulk:
                     delta = deltas.get(tenant_id, 0) + 1
                     deltas[tenant_id] = delta
@@ -434,6 +447,12 @@ class Controller(object):
                                          **kwargs)
 
         def notify(create_result):
+            # Ensure usage trackers for all resources affected by this API
+            # operation are marked as dirty
+            # TODO(salv-orlando): This operation will happen in a single
+            # transaction with reservation commit once that is implemented
+            resource_registry.set_resources_dirty(request.context)
+
             notifier_method = self._resource + '.create.end'
             self._notifier.info(request.context,
                                 notifier_method,
@@ -470,8 +489,7 @@ class Controller(object):
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
         self._notifier.info(request.context,
@@ -496,6 +514,9 @@ class Controller(object):
 
         obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id, **kwargs)
+        # A delete operation usually alters resource usage, so mark affected
+        # usage trackers as dirty
+        resource_registry.set_resources_dirty(request.context)
         notifier_method = self._resource + '.delete.end'
         self._notifier.info(request.context,
                             notifier_method,
@@ -506,8 +527,7 @@ class Controller(object):
                                      result,
                                      notifier_method)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
+    @db_api.retry_db_errors
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -561,6 +581,12 @@ class Controller(object):
         if parent_id:
             kwargs[self._parent_id_name] = parent_id
         obj = obj_updater(request.context, id, **kwargs)
+        # Usually an update operation does not alter resource usage, but as
+        # there might be side effects it might be worth checking for changes
+        # in resource usage here as well (e.g: a tenant port is created when a
+        # router interface is added)
+        resource_registry.set_resources_dirty(request.context)
+
         result = {self._resource: self._view(request.context, obj)}
         notifier_method = self._resource + '.update.end'
         self._notifier.info(request.context, notifier_method, result)
@@ -571,8 +597,7 @@ class Controller(object):
         return result
 
     @staticmethod
-    def _populate_tenant_id(context, res_dict, is_create):
-
+    def _populate_tenant_id(context, res_dict, attr_info, is_create):
         if (('tenant_id' in res_dict and
              res_dict['tenant_id'] != context.tenant_id and
              not context.is_admin)):
@@ -583,9 +608,9 @@ class Controller(object):
         if is_create and 'tenant_id' not in res_dict:
             if context.tenant_id:
                 res_dict['tenant_id'] = context.tenant_id
-            else:
+            elif 'tenant_id' in attr_info:
                 msg = _("Running without keystone AuthN requires "
-                        " that tenant_id is specified")
+                        "that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
     @staticmethod
@@ -627,7 +652,7 @@ class Controller(object):
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        Controller._populate_tenant_id(context, res_dict, is_create)
+        Controller._populate_tenant_id(context, res_dict, attr_info, is_create)
         Controller._verify_attributes(res_dict, attr_info)
 
         if is_create:  # POST

@@ -102,6 +102,14 @@ fake_port1 = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
                             network_id='12345678-1234-5678-1234567890ab',
                             fixed_ips=[fake_fixed_ip1]))
 
+fake_dhcp_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789022',
+                            device_id='dhcp-12345678-1234-aaaa-123456789022',
+                            device_owner='network:dhcp',
+                            allocation_pools=fake_subnet1_allocation_pools,
+                            mac_address='aa:bb:cc:dd:ee:22',
+                            network_id='12345678-1234-5678-1234567890ab',
+                            fixed_ips=[fake_fixed_ip2]))
+
 fake_port2 = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
                             device_id='dhcp-12345678-1234-aaaa-123456789000',
                             device_owner='',
@@ -400,13 +408,14 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_periodic_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.needs_resync_reasons = collections.OrderedDict(
+            resync_reasons = collections.OrderedDict(
                 (('a', 'reason1'), ('b', 'reason2')))
+            dhcp.needs_resync_reasons = resync_reasons
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
                     dhcp._periodic_resync_helper()
-                sync_state.assert_called_once_with(['a', 'b'])
+                sync_state.assert_called_once_with(resync_reasons.keys())
                 sleep.assert_called_once_with(dhcp.conf.resync_interval)
                 self.assertEqual(len(dhcp.needs_resync_reasons), 0)
 
@@ -438,22 +447,17 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_none_interface_driver(self):
         cfg.CONF.set_override('interface_driver', None)
-        with mock.patch.object(dhcp, 'LOG') as log:
-            self.assertRaises(SystemExit, dhcp.DeviceManager,
-                              cfg.CONF, None)
-            msg = 'An interface driver must be specified'
-            log.error.assert_called_once_with(msg)
+        self.assertRaises(SystemExit, dhcp.DeviceManager,
+                          cfg.CONF, None)
 
     def test_nonexistent_interface_driver(self):
         # Temporarily turn off mock, so could use the real import_class
         # to import interface_driver.
         self.driver_cls_p.stop()
         self.addCleanup(self.driver_cls_p.start)
-        cfg.CONF.set_override('interface_driver', 'foo')
-        with mock.patch.object(dhcp, 'LOG') as log:
-            self.assertRaises(SystemExit, dhcp.DeviceManager,
-                              cfg.CONF, None)
-            self.assertEqual(log.error.call_count, 1)
+        cfg.CONF.set_override('interface_driver', 'foo.bar')
+        self.assertRaises(SystemExit, dhcp.DeviceManager,
+                          cfg.CONF, None)
 
 
 class TestLogArgs(base.BaseTestCase):
@@ -1067,7 +1071,7 @@ class TestNetworkCache(base.BaseTestCase):
         nc = dhcp_agent.NetworkCache()
         nc.put(fake_network)
 
-        self.assertEqual(nc.get_network_ids(), [fake_network.id])
+        self.assertEqual(list(nc.get_network_ids()), [fake_network.id])
 
     def test_get_network_by_subnet_id(self):
         nc = dhcp_agent.NetworkCache()
@@ -1257,6 +1261,23 @@ class TestDeviceManager(base.BaseTestCase):
                 % const.DHCP_RESPONSE_PORT)
         expected = [mock.call.add_rule('POSTROUTING', rule)]
         self.mangle_inst.assert_has_calls(expected)
+
+    def test_setup_create_dhcp_port(self):
+        plugin = mock.Mock()
+        net = copy.deepcopy(fake_network)
+        plugin.create_dhcp_port.return_value = fake_dhcp_port
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        dh.setup(net)
+
+        plugin.assert_has_calls([
+            mock.call.create_dhcp_port(
+                {'port': {'name': '', 'admin_state_up': True,
+                          'network_id': net.id,
+                          'tenant_id': net.tenant_id,
+                          'fixed_ips': [{'subnet_id':
+                          fake_dhcp_port.fixed_ips[0].subnet_id}],
+                          'device_id': mock.ANY}})])
+        self.assertIn(fake_dhcp_port, net.ports)
 
     def test_setup_ipv6(self):
         self._test_setup_helper(True, net=fake_network_ipv6,

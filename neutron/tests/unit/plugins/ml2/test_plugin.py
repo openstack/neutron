@@ -1489,16 +1489,63 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     data = {'port': {'name': new_name}}
                     req = self.new_update_request('ports', data, port_id)
                     res = req.get_response(self.api)
-                    self.assertEqual(500, res.status_int)
-                    error = self.deserialize(self.fmt, res)
-                    self.assertEqual('MechanismDriverError',
-                                     error['NeutronError']['type'])
+                    self.assertEqual(200, res.status_int)
                     # Test if other mechanism driver was called
                     self.assertTrue(upp.called)
                     port = self._show('ports', port_id)
                     self.assertEqual(new_name, port['port']['name'])
 
                     self._delete('ports', port['port']['id'])
+
+    def test_update_dvr_router_interface_port(self):
+        """Test validate dvr router interface update succeeds."""
+        host_id = 'host'
+        binding = models.DVRPortBinding(
+                            port_id='port_id',
+                            host=host_id,
+                            router_id='old_router_id',
+                            vif_type=portbindings.VIF_TYPE_OVS,
+                            vnic_type=portbindings.VNIC_NORMAL,
+                            status=constants.PORT_STATUS_DOWN)
+        with mock.patch.object(
+            mech_test.TestMechanismDriver,
+            'update_port_postcommit',
+            side_effect=ml2_exc.MechanismDriverError) as port_post,\
+                mock.patch.object(
+                    mech_test.TestMechanismDriver,
+                    'update_port_precommit') as port_pre,\
+                mock.patch.object(ml2_db,
+                                  'get_dvr_port_bindings') as dvr_bindings:
+                dvr_bindings.return_value = [binding]
+                port_pre.return_value = True
+                with self.network() as network:
+                    with self.subnet(network=network) as subnet:
+                        subnet_id = subnet['subnet']['id']
+                        data = {'port': {
+                            'network_id': network['network']['id'],
+                            'tenant_id':
+                            network['network']['tenant_id'],
+                            'name': 'port1',
+                            'device_owner':
+                            'network:router_interface_distributed',
+                            'admin_state_up': 1,
+                            'fixed_ips':
+                            [{'subnet_id': subnet_id}]}}
+                        port_req = self.new_create_request('ports', data)
+                        port_res = port_req.get_response(self.api)
+                        self.assertEqual(201, port_res.status_int)
+                        port = self.deserialize(self.fmt, port_res)
+                        port_id = port['port']['id']
+                        new_name = 'a_brand_new_name'
+                        data = {'port': {'name': new_name}}
+                        req = self.new_update_request('ports', data, port_id)
+                        res = req.get_response(self.api)
+                        self.assertEqual(200, res.status_int)
+                        self.assertTrue(dvr_bindings.called)
+                        self.assertTrue(port_pre.called)
+                        self.assertTrue(port_post.called)
+                        port = self._show('ports', port_id)
+                        self.assertEqual(new_name, port['port']['name'])
 
 
 class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):

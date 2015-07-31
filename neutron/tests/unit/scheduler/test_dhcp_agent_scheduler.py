@@ -289,7 +289,6 @@ class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     def test_scheduler_one_agents_per_network(self):
         self._save_networks(['1111'])
         helpers.register_dhcp_agent(HOST_C)
-        helpers.register_dhcp_agent(HOST_C)
         self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
                                                {'id': '1111'})
         agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,

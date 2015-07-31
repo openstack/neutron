@@ -223,6 +223,11 @@ class TestDaemon(base.BaseTestCase):
         d = daemon.Daemon('pidfile')
         self.assertEqual(d.procname, 'python')
 
+    def test_init_nopidfile(self):
+        d = daemon.Daemon(pidfile=None)
+        self.assertEqual(d.procname, 'python')
+        self.assertFalse(self.pidfile.called)
+
     def test_fork_parent(self):
         self.os.fork.return_value = 1
         d = daemon.Daemon('pidfile')

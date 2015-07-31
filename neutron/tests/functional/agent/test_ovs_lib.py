@@ -174,6 +174,10 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         ports = {self.create_ovs_port()[0] for i in range(5)}
         self.assertSetEqual(ports, set(self.br.get_port_name_list()))
 
+    def test_get_iface_name_list(self):
+        ifaces = {self.create_ovs_port()[0] for i in range(5)}
+        self.assertSetEqual(ifaces, set(self.br.get_iface_name_list()))
+
     def test_get_port_stats(self):
         # Nothing seems to use this function?
         (port_name, ofport) = self.create_ovs_port()

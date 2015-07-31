@@ -74,6 +74,10 @@ METADATA_PROXY_HANDLER_OPTS = [
                 default='adminURL',
                 help=_("Network service endpoint type to pull from "
                        "the keystone catalog")),
+     cfg.StrOpt('endpoint_url',
+                default=None,
+                help=_("Neutron endpoint URL, if not set will use endpoint "
+                       "from the keystone catalog along with endpoint_type")),
      cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
                 help=_("IP address used by Nova metadata server.")),
      cfg.IntOpt('nova_metadata_port',
@@ -109,7 +113,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
     cfg.StrOpt('metadata_proxy_socket_mode',
                default=DEDUCE_MODE,
                choices=SOCKET_MODES,
-               help=_("Metadata Proxy UNIX domain socket mode, 3 values "
+               help=_("Metadata Proxy UNIX domain socket mode, 4 values "
                       "allowed: "
                       "'deduce': deduce mode from metadata_proxy_user/group "
                       "values, "

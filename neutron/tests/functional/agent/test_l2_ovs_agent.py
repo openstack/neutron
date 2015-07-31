@@ -202,11 +202,6 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         for port in [self.patch_tun, self.patch_int]:
             self.assertTrue(self.ovs.port_exists(port))
 
-    def assert_no_vlan_tags(self, ports, agent):
-        for port in ports:
-            res = agent.int_br.db_get_val('Port', port.get('vif_name'), 'tag')
-            self.assertEqual([], res)
-
     def assert_vlan_tags(self, ports, agent):
         for port in ports:
             res = agent.int_br.db_get_val('Port', port.get('vif_name'), 'tag')
@@ -215,30 +210,64 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
 class TestOVSAgent(OVSAgentTestFramework):
 
-    def _expected_plugin_rpc_call(self, call, expected_devices):
+    def _expected_plugin_rpc_call(self, call, expected_devices, is_up=True):
         """Helper to check expected rpc call are received
         :param call: The call to check
         :param expected_devices The device for which call is expected
+        :param is_up True if expected_devices are devices that are set up,
+               False if expected_devices are devices that are set down
         """
-        args = (args[0][1] for args in call.call_args_list)
-        return not (set(expected_devices) - set(args))
+        if is_up:
+            rpc_devices = [
+                dev for args in call.call_args_list for dev in args[0][1]]
+        else:
+            rpc_devices = [
+                dev for args in call.call_args_list for dev in args[0][2]]
+        return not (set(expected_devices) - set(rpc_devices))
 
-    def _create_ports(self, network, agent):
+    def _create_ports(self, network, agent, trigger_resync=False):
         ports = []
         for x in range(3):
             ports.append(self._create_test_port_dict())
 
+        def mock_device_raise_exception(context, devices_up, devices_down,
+                                        agent_id, host=None):
+            agent.plugin_rpc.update_device_list.side_effect = (
+                mock_update_device)
+            raise Exception('Exception to trigger resync')
+
         def mock_device_details(context, devices, agent_id, host=None):
+
             details = []
             for port in ports:
                 if port['id'] in devices:
                     dev = OVSAgentTestFramework._get_device_details(
                         port, network)
                     details.append(dev)
-            return details
+            return {'devices': details, 'failed_devices': []}
 
-        agent.plugin_rpc.get_devices_details_list.side_effect = (
-            mock_device_details)
+        def mock_update_device(context, devices_up, devices_down, agent_id,
+                               host=None):
+            dev_up = []
+            dev_down = []
+            for port in ports:
+                if devices_up and port['id'] in devices_up:
+                    dev_up.append(port['id'])
+                if devices_down and port['id'] in devices_down:
+                    dev_down.append({'device': port['id'], 'exists': True})
+            return {'devices_up': dev_up,
+                    'failed_devices_up': [],
+                    'devices_down': dev_down,
+                    'failed_devices_down': []}
+
+        (agent.plugin_rpc.get_devices_details_list_and_failed_devices.
+            side_effect) = mock_device_details
+        if trigger_resync:
+            agent.plugin_rpc.update_device_list.side_effect = (
+                 mock_device_raise_exception)
+        else:
+            agent.plugin_rpc.update_device_list.side_effect = (
+                mock_update_device)
         return ports
 
     def test_port_creation_and_deletion(self):
@@ -250,39 +279,35 @@ class TestOVSAgent(OVSAgentTestFramework):
         up_ports_ids = [p['id'] for p in ports]
         agent_utils.wait_until_true(
             lambda: self._expected_plugin_rpc_call(
-                agent.plugin_rpc.update_device_up, up_ports_ids))
+                agent.plugin_rpc.update_device_list, up_ports_ids))
         down_ports_ids = [p['id'] for p in ports]
         for port in ports:
             agent.int_br.delete_port(port['vif_name'])
         agent_utils.wait_until_true(
             lambda: self._expected_plugin_rpc_call(
-                agent.plugin_rpc.update_device_down, down_ports_ids))
+                agent.plugin_rpc.update_device_list, down_ports_ids, False))
 
     def test_resync_devices_set_up_after_exception(self):
         agent = self.create_agent()
         self.start_agent(agent)
         network = self._create_test_network_dict()
-        ports = self._create_ports(network, agent)
-        agent.plugin_rpc.update_device_up.side_effect = [
-            Exception('Exception to trigger resync'),
-            None, None, None]
+        ports = self._create_ports(network, agent, True)
         self._plug_ports(network, ports, agent)
         ports_ids = [p['id'] for p in ports]
         agent_utils.wait_until_true(
             lambda: self._expected_plugin_rpc_call(
-                agent.plugin_rpc.update_device_up, ports_ids))
+                agent.plugin_rpc.update_device_list, ports_ids))
 
     def test_port_vlan_tags(self):
         agent = self.create_agent()
         self.start_agent(agent)
-        ports = []
-        for x in range(3):
-            ports.append(self._create_test_port_dict())
         network = self._create_test_network_dict()
+        ports = self._create_ports(network, agent)
+        ports_ids = [p['id'] for p in ports]
         self._plug_ports(network, ports, agent)
-        agent.provision_local_vlan(network['id'], 'vlan', 'physnet', 1)
-        self.assert_no_vlan_tags(ports, agent)
-        self._bind_ports(ports, network, agent)
+        agent_utils.wait_until_true(
+            lambda: self._expected_plugin_rpc_call(
+                agent.plugin_rpc.update_device_list, ports_ids))
         self.assert_vlan_tags(ports, agent)
 
     def test_assert_bridges_ports_vxlan(self):

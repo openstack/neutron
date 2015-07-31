@@ -29,6 +29,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants
+
 
 class OVSDVRProcessMixin(object):
     """Common logic for br-tun and br-phys' DVR_PROCESS tables.
@@ -58,6 +60,7 @@ class OVSDVRProcessMixin(object):
                       priority=3,
                       dl_vlan=vlan_tag,
                       proto='icmp6',
+                      icmp_type=constants.ICMPV6_TYPE_RA,
                       dl_src=gateway_mac,
                       actions='drop')
 
@@ -65,6 +68,7 @@ class OVSDVRProcessMixin(object):
         self.delete_flows(table=self.dvr_process_table_id,
                           dl_vlan=vlan_tag,
                           proto='icmp6',
+                          icmp_type=constants.ICMPV6_TYPE_RA,
                           dl_src=gateway_mac)
 
     def install_dvr_process(self, vlan_tag, vif_mac, dvr_mac_address):

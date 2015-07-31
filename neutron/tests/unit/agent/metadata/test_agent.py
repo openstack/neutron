@@ -23,6 +23,7 @@ from neutron.agent import metadata_agent
 from neutron.common import constants
 from neutron.common import utils
 from neutron.tests import base
+from neutronclient.v2_0 import client
 
 
 class FakeConf(object):
@@ -43,10 +44,53 @@ class FakeConf(object):
     nova_client_cert = 'nova_cert'
     nova_client_priv_key = 'nova_priv_key'
     cache_url = ''
+    endpoint_url = None
 
 
 class FakeConfCache(FakeConf):
     cache_url = 'memory://?default_ttl=5'
+
+
+class FakeConfEndpoint(FakeConf):
+    endpoint_url = 'http://127.0.0.0:8776'
+
+
+class TestNeutronClient(base.BaseTestCase):
+    fake_conf = FakeConf
+    expected_params = {
+        'username': 'neutron',
+        'region_name': 'region',
+        'ca_cert': None,
+        'tenant_name': 'tenant',
+        'insecure': False,
+        'token': None,
+        'endpoint_type': 'adminURL',
+        'auth_url': 'http://127.0.0.1',
+        'password': 'password',
+        'endpoint_url': None,
+        'auth_strategy': 'keystone',
+    }
+
+    def test_client_params(self):
+        handler = agent.MetadataProxyHandler(self.fake_conf)
+
+        with mock.patch.object(
+            client.Client, "__init__", return_value=None) as mock_init:
+            handler._get_neutron_client()
+            mock_init.assert_called_once_with(**self.expected_params)
+
+    def test_client_with_endpoint_url(self):
+        fake_conf = FakeConfEndpoint
+        handler = agent.MetadataProxyHandler(fake_conf)
+
+        expected_params = self.expected_params.copy()
+        del expected_params['endpoint_type']
+        expected_params['endpoint_url'] = 'http://127.0.0.0:8776'
+
+        with mock.patch.object(
+            client.Client, "__init__", return_value=None) as mock_init:
+            handler._get_neutron_client()
+            mock_init.assert_called_once_with(**expected_params)
 
 
 class TestMetadataProxyHandlerBase(base.BaseTestCase):
@@ -524,7 +568,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         self.cfg.CONF.metadata_backlog = 128
         self.cfg.CONF.metadata_proxy_socket_mode = config.USER_MODE
 
-    @mock.patch.object(agent_utils, 'ensure_dir')
+    @mock.patch.object(utils, 'ensure_dir')
     def test_init_doesnot_exists(self, ensure_dir):
         agent.UnixDomainMetadataProxy(mock.Mock())
         ensure_dir.assert_called_once_with('/the')
@@ -561,7 +605,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
 
     @mock.patch.object(agent, 'MetadataProxyHandler')
     @mock.patch.object(agent_utils, 'UnixDomainWSGIServer')
-    @mock.patch.object(agent_utils, 'ensure_dir')
+    @mock.patch.object(utils, 'ensure_dir')
     def test_run(self, ensure_dir, server, handler):
         p = agent.UnixDomainMetadataProxy(self.cfg.CONF)
         p.run()

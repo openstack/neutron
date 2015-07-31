@@ -3,14 +3,16 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
+# Pablo Sanchez <furybeat@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-07-11 06:09+0000\n"
-"PO-Revision-Date: 2015-07-08 20:45+0000\n"
+"POT-Creation-Date: 2015-07-27 06:07+0000\n"
+"PO-Revision-Date: 2015-07-25 03:05+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Spanish (http://www.transifex.com/p/neutron/language/es/)\n"
+"Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
+"es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -72,11 +74,23 @@ msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Se ha intentado actualizar el filtro de puerto que no está filtrado %s"
 
 #, python-format
+msgid "Cleaning bridge: %s"
+msgstr "LImpiando puente: %s"
+
+#, python-format
 msgid "Config paste file: %s"
 msgstr "Archivo de configuración de pegar: %s"
 
 msgid "DHCP agent started"
 msgstr "Se ha iniciado al agente DHCP"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Destruyendo puerto: %s"
+
+#, python-format
+msgid "Destroying IPset: %s"
+msgstr "Destruyendo IPset: %s"
 
 #, python-format
 msgid "Device %s already exists"
@@ -153,6 +167,9 @@ msgstr "Rangos de VLAN de red: %s"
 msgid "No %s Plugin loaded"
 msgstr "No se ha cargado ningún plug-in de %s"
 
+msgid "No ports here to refresh firewall"
+msgstr "No hay puertos aqui para actualizar firewall"
+
 msgid "OVS cleanup completed successfully"
 msgstr "La limpieza de OVS se ha completado satisfactoriamente"
 
@@ -187,6 +204,13 @@ msgid "Remove device filter for %r"
 msgstr "Eliminar filtro de dispositivo para %r"
 
 #, python-format
+msgid ""
+"Router %s is not managed by this agent. It was possibly deleted concurrently."
+msgstr ""
+"Router %s no es controlado por este agente.Fue posiblemente borrado "
+"concurrentemente"
+
+#, python-format
 msgid "Security group member updated %r"
 msgstr "Se ha actualizado el miembro de grupo de seguridad %r"
 
@@ -202,13 +226,11 @@ msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 "Las direcciones IP especificadas no coinciden con la versión de IP de subred "
 
-#, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
-msgstr ""
-"La IP de inicio (%(start)s) es mayor que la IP de finalización (%(end)s)"
-
 msgid "Synchronizing state"
 msgstr "Sincronizando estado"
+
+msgid "Synchronizing state complete"
+msgstr "Sincronizando estado completado"
 
 #, python-format
 msgid ""

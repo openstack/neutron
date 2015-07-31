@@ -21,6 +21,7 @@ Based on this comparison database can be healed with healing migration.
 
 """
 
+from neutron.db import address_scope_db  # noqa
 from neutron.db import agents_db  # noqa
 from neutron.db import agentschedulers_db  # noqa
 from neutron.db import allowedaddresspairs_db  # noqa
@@ -28,6 +29,7 @@ from neutron.db import dvr_mac_db  # noqa
 from neutron.db import external_net_db  # noqa
 from neutron.db import extradhcpopt_db  # noqa
 from neutron.db import extraroute_db  # noqa
+from neutron.db import flavors_db  # noqa
 from neutron.db import l3_agentschedulers_db  # noqa
 from neutron.db import l3_attrs_db  # noqa
 from neutron.db import l3_db  # noqa
@@ -39,7 +41,8 @@ from neutron.db import model_base
 from neutron.db import models_v2  # noqa
 from neutron.db import portbindings_db  # noqa
 from neutron.db import portsecurity_db  # noqa
-from neutron.db import quota_db  # noqa
+from neutron.db.quota import models  # noqa
+from neutron.db import rbac_db_models  # noqa
 from neutron.db import securitygroups_db  # noqa
 from neutron.db import servicetype_db  # noqa
 from neutron.ipam.drivers.neutrondb_ipam import db_models  # noqa
@@ -49,18 +52,12 @@ from neutron.plugins.brocade.db import models as brocade_models  # noqa
 from neutron.plugins.cisco.db.l3 import l3_models  # noqa
 from neutron.plugins.cisco.db import n1kv_models_v2  # noqa
 from neutron.plugins.cisco.db import network_models_v2  # noqa
-from neutron.plugins.metaplugin import meta_models_v2  # noqa
 from neutron.plugins.ml2.drivers.arista import db  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
-from neutron.plugins.ml2.drivers.cisco.apic import apic_model  # noqa
-from neutron.plugins.ml2.drivers.cisco.n1kv import n1kv_models  # noqa
 from neutron.plugins.ml2.drivers.cisco.nexus import (  # noqa
     nexus_models_v2 as ml2_nexus_models_v2)
 from neutron.plugins.ml2.drivers.cisco.ucsm import ucsm_model  # noqa
-from neutron.plugins.ml2.drivers.linuxbridge.agent import (  # noqa
-    l2network_models_v2)
-from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_models_v2  # noqa
 from neutron.plugins.ml2.drivers import type_flat  # noqa
 from neutron.plugins.ml2.drivers import type_gre  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa

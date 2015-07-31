@@ -13,7 +13,7 @@ triaging. The bug czar is expected to communicate with the various Neutron teams
 been triaged. In addition, the bug czar should be reporting "High" and "Critical" priority bugs
 to both the PTL and the core reviewer team during each weekly Neutron meeting.
 
-The current Neutron bug czar is Eugene Nikanorov (IRC nick enikanorov).
+The current Neutron bug czar is Kyle Mestery (IRC nick mestery).
 
 Plugin and Driver Repositories
 ------------------------------

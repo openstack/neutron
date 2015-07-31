@@ -32,7 +32,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import portbindings_db
-from neutron.db import quota_db
+from neutron.db.quota import driver
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron.i18n import _LW
@@ -59,7 +59,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                           n1kv_db_v2.PolicyProfile_db_mixin,
                           network_db_v2.Credential_db_mixin,
                           agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                          quota_db.DbQuotaDriver):
+                          driver.DbQuotaDriver):
 
     """
     Implement the Neutron abstractions using Cisco Nexus1000V.

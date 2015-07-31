@@ -348,10 +348,10 @@ class IpLinkCommand(IpDeviceCommandBase):
         self._as_root([], ('set', self.name, 'mtu', mtu_size))
 
     def set_up(self):
-        self._as_root([], ('set', self.name, 'up'))
+        return self._as_root([], ('set', self.name, 'up'))
 
     def set_down(self):
-        self._as_root([], ('set', self.name, 'down'))
+        return self._as_root([], ('set', self.name, 'down'))
 
     def set_netns(self, namespace):
         self._as_root([], ('set', self.name, 'netns', namespace))
@@ -489,6 +489,17 @@ class IpAddrCommand(IpDeviceCommandBase):
 class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
+    def __init__(self, parent, table=None):
+        super(IpRouteCommand, self).__init__(parent)
+        self._table = table
+
+    def table(self, table):
+        """Return an instance of IpRouteCommand which works on given table"""
+        return IpRouteCommand(self._parent, table)
+
+    def _table_args(self):
+        return ['table', self._table] if self._table else []
+
     def add_gateway(self, gateway, metric=None, table=None):
         ip_version = get_ip_version(gateway)
         args = ['replace', 'default', 'via', gateway]
@@ -497,6 +508,8 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += ['dev', self.name]
         if table:
             args += ['table', table]
+        else:
+            args += self._table_args()
         self._as_root([ip_version], tuple(args))
 
     def delete_gateway(self, gateway, table=None):
@@ -506,6 +519,8 @@ class IpRouteCommand(IpDeviceCommandBase):
                 'dev', self.name]
         if table:
             args += ['table', table]
+        else:
+            args += self._table_args()
         try:
             self._as_root([ip_version], tuple(args))
         except RuntimeError as rte:
@@ -517,10 +532,9 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def list_onlink_routes(self, ip_version):
         def iterate_routes():
-            output = self._run([ip_version],
-                               ('list',
-                                'dev', self.name,
-                                'scope', 'link'))
+            args = ['list', 'dev', self.name, 'scope', 'link']
+            args += self._table_args()
+            output = self._run([ip_version], tuple(args))
             for line in output.split('\n'):
                 line = line.strip()
                 if line and not line.count('src'):
@@ -530,22 +544,21 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def add_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        self._as_root([ip_version],
-                      ('replace', cidr,
-                       'dev', self.name,
-                       'scope', 'link'))
+        args = ['replace', cidr, 'dev', self.name, 'scope', 'link']
+        args += self._table_args()
+        self._as_root([ip_version], tuple(args))
 
     def delete_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        self._as_root([ip_version],
-                      ('del', cidr,
-                       'dev', self.name,
-                       'scope', 'link'))
+        args = ['del', cidr, 'dev', self.name, 'scope', 'link']
+        args += self._table_args()
+        self._as_root([ip_version], tuple(args))
 
     def get_gateway(self, scope=None, filters=None, ip_version=None):
         options = [ip_version] if ip_version else []
 
         args = ['list', 'dev', self.name]
+        args += self._table_args()
         if filters:
             args += filters
 
@@ -739,16 +752,22 @@ def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
         return True
 
 
-def get_routing_table(namespace=None):
+def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
 
+    @param ip_version: the routes of version to return, for example 4
+    @param namespace
+    @return: a list of dictionaries, each representing a route.
     The dictionary format is: {'destination': cidr,
                                'nexthop': ip,
-                               'device': device_name}
+                               'device': device_name,
+                               'scope': scope}
     """
 
     ip_wrapper = IPWrapper(namespace=namespace)
-    table = ip_wrapper.netns.execute(['ip', 'route'], check_exit_code=True)
+    table = ip_wrapper.netns.execute(
+        ['ip', '-%s' % ip_version, 'route'],
+        check_exit_code=True)
 
     routes = []
     # Example for route_lines:
@@ -765,7 +784,8 @@ def get_routing_table(namespace=None):
         data = dict(route[i:i + 2] for i in range(1, len(route), 2))
         routes.append({'destination': network,
                        'nexthop': data.get('via'),
-                       'device': data.get('dev')})
+                       'device': data.get('dev'),
+                       'scope': data.get('scope')})
     return routes
 
 

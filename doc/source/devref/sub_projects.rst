@@ -7,10 +7,10 @@ part of the overall Neutron project.
 Inclusion Process
 -----------------
 
-The process for proposing the move of a repo into openstack/ and under
-the Neutron project is to propose a patch to the openstack/governance
-repository.  For example, to propose moving networking-foo, one
-would add the following entry under Neutron in reference/projects.yaml::
+The process for proposing a repo into openstack/ and under the Neutron
+project is to propose a patch to the openstack/governance repository.
+For example, to propose networking-foo, one would add the following entry
+under Neutron in reference/projects.yaml::
 
     - repo: openstack/networking-foo
       tags:
@@ -27,6 +27,11 @@ additional repos without needing TC approval as long as the added
 repositories are within the existing approved scope of the project.
 
     http://git.openstack.org/cgit/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d
+
+In order to create a project, in case it does not exist, follow steps
+as explained in:
+
+    http://docs.openstack.org/infra/manual/creators.html
 
 Responsibilities
 ----------------
@@ -86,13 +91,13 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-edge-vpn_          |          vpn          |
 +-------------------------------+-----------------------+
+| networking-fujitsu_           |          ml2          |
++-------------------------------+-----------------------+
 | networking-hyperv_            |          ml2          |
 +-------------------------------+-----------------------+
 | networking-ibm_               |         ml2,l3        |
 +-------------------------------+-----------------------+
 | networking-l2gw_              |         l2            |
-+-------------------------------+-----------------------+
-| networking-metaplugin_        |         core          |
 +-------------------------------+-----------------------+
 | networking-midonet_           |        core,lb        |
 +-------------------------------+-----------------------+
@@ -205,6 +210,15 @@ Edge VPN
 * Git: https://git.openstack.org/cgit/stackforge/networking-edge-vpn
 * Launchpad: https://launchpad.net/edge-vpn
 
+.. _networking-fujitsu:
+
+FUJITSU
+-------
+
+* Git: https://git.openstack.org/cgit/openstack/networking-fujitsu
+* Launchpad: https://launchpad.net/networking-fujitsu
+* PyPI: https://pypi.python.org/pypi/networking-fujitsu
+
 .. _networking-hyperv:
 
 Hyper-V
@@ -238,13 +252,6 @@ L2 Gateway
 
 * Git: https://git.openstack.org/cgit/openstack/networking-l2gw
 * Launchpad: https://launchpad.net/networking-l2gw
-
-.. _networking-metaplugin:
-
-Metaplugin
-----------
-
-* Git: https://github.com/ntt-sic/networking-metaplugin
 
 .. _networking-midonet:
 

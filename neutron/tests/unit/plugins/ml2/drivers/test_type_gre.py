@@ -13,13 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-
-from oslo_db import exception as db_exc
-from sqlalchemy.orm import exc as sa_exc
-import testtools
-
-from neutron.db import api as db_api
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_gre
@@ -61,32 +54,6 @@ class GreTypeTest(base_type_tunnel.TunnelTypeTestMixin,
                 self.assertEqual(base_type_tunnel.HOST_ONE, endpoint['host'])
             elif endpoint['ip_address'] == base_type_tunnel.TUNNEL_IP_TWO:
                 self.assertEqual(base_type_tunnel.HOST_TWO, endpoint['host'])
-
-    def test_sync_allocations_entry_added_during_session(self):
-        with mock.patch.object(self.driver, '_add_allocation',
-                               side_effect=db_exc.DBDuplicateEntry) as (
-                mock_add_allocation):
-            self.driver.sync_allocations()
-            self.assertTrue(mock_add_allocation.called)
-
-    def test__add_allocation_not_existing(self):
-        session = db_api.get_session()
-        _add_allocation(session, gre_id=1)
-        self.driver._add_allocation(session, {1, 2})
-        _get_allocation(session, 2)
-
-    def test__add_allocation_existing_allocated_is_kept(self):
-        session = db_api.get_session()
-        _add_allocation(session, gre_id=1, allocated=True)
-        self.driver._add_allocation(session, {2})
-        _get_allocation(session, 1)
-
-    def test__add_allocation_existing_not_allocated_is_removed(self):
-        session = db_api.get_session()
-        _add_allocation(session, gre_id=1)
-        self.driver._add_allocation(session, {2})
-        with testtools.ExpectedException(sa_exc.NoResultFound):
-            _get_allocation(session, 1)
 
     def test_get_mtu(self):
         config.cfg.CONF.set_override('segment_mtu', 1500, group='ml2')

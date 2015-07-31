@@ -23,6 +23,7 @@ from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import ha as l3_ha_agent
 from neutron.agent.metadata import config
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.common import constants
 from neutron.tests import base
 
 
@@ -39,7 +40,8 @@ class TestMetadataDriverRules(base.BaseTestCase):
             metadata_driver.MetadataDriver.metadata_nat_rules(8775))
 
     def test_metadata_filter_rules(self):
-        rules = [('INPUT', '-m mark --mark 0x1 -j ACCEPT'),
+        rules = [('INPUT', '-m mark --mark 0x1/%s -j ACCEPT' %
+                  constants.ROUTER_MARK_MASK),
                  ('INPUT', '-p tcp -m tcp --dport 8775 -j DROP')]
         self.assertEqual(
             rules,
@@ -49,7 +51,7 @@ class TestMetadataDriverRules(base.BaseTestCase):
         rule = ('PREROUTING', '-d 169.254.169.254/32 '
                 '-p tcp -m tcp --dport 80 '
                 '-j MARK --set-xmark 0x1/%s' %
-                metadata_driver.METADATA_ACCESS_MARK_MASK)
+                constants.ROUTER_MARK_MASK)
         self.assertEqual(
             [rule],
             metadata_driver.MetadataDriver.metadata_mangle_rules('0x1'))

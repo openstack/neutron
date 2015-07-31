@@ -22,6 +22,7 @@ import webob
 
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
+from neutron.common import utils as common_utils
 from neutron.i18n import _LI
 from neutron.notifiers import batch_notifier
 
@@ -157,4 +158,4 @@ class AgentMixin(object):
 
     def _init_ha_conf_path(self):
         ha_full_path = os.path.dirname("/%s/" % self.conf.ha_confs_path)
-        agent_utils.ensure_dir(ha_full_path)
+        common_utils.ensure_dir(ha_full_path)

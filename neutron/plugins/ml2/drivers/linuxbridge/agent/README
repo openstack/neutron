@@ -1,4 +1,0 @@
-# -- Background
-
-The Neutron Linux Bridge plugin has removed from the tree in Juno.  You must 
-migrate to ML2 using the script in: neutron/db/migration/migrate_to_ml2.py

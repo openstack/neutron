@@ -200,6 +200,15 @@ class HaRouter(router.RouterInfo):
         if enable_ra_on_gw:
             self.driver.configure_ipv6_ra(self.ns_name, interface_name)
 
+    def _add_extra_subnet_onlink_routes(self, ex_gw_port, interface_name):
+        extra_subnets = ex_gw_port.get('extra_subnets', [])
+        instance = self._get_keepalived_instance()
+        onlink_route_cidrs = set(s['cidr'] for s in extra_subnets)
+        instance.virtual_routes.extra_subnets = [
+            keepalived.KeepalivedVirtualRoute(
+                onlink_route_cidr, None, interface_name, scope='link') for
+            onlink_route_cidr in onlink_route_cidrs]
+
     def _should_delete_ipv6_lladdr(self, ipv6_lladdr):
         """Only the master should have any IP addresses configured.
         Let keepalived manage IPv6 link local addresses, the same way we let
@@ -235,6 +244,7 @@ class HaRouter(router.RouterInfo):
         for ip_cidr in common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips']):
             self._add_vip(ip_cidr, interface_name)
         self._add_default_gw_virtual_route(ex_gw_port, interface_name)
+        self._add_extra_subnet_onlink_routes(ex_gw_port, interface_name)
 
     def add_floating_ip(self, fip, interface_name, device):
         fip_ip = fip['floating_ip_address']
@@ -353,6 +363,7 @@ class HaRouter(router.RouterInfo):
         if self.ha_port:
             self.enable_keepalived()
 
+    @common_utils.synchronized('enable_radvd')
     def enable_radvd(self, internal_ports=None):
         if (self.keepalived_manager.get_process().active and
                 self.ha_state == 'master'):

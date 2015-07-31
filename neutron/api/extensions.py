@@ -452,10 +452,7 @@ class ExtensionManager(object):
                 try:
                     extended_attrs = ext.get_extended_resources(version)
                     for res, resource_attrs in six.iteritems(extended_attrs):
-                        if attr_map.get(res, None):
-                            attr_map[res].update(resource_attrs)
-                        else:
-                            attr_map[res] = resource_attrs
+                        attr_map.setdefault(res, {}).update(resource_attrs)
                 except AttributeError:
                     LOG.exception(_LE("Error fetching extended attributes for "
                                       "extension '%s'"), ext.get_name())

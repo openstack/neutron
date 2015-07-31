@@ -34,6 +34,7 @@ Programming HowTos and Tutorials
     contribute
     neutron_api
     sub_projects
+    client_command_extensions
 
 
 Neutron Internals
@@ -52,6 +53,7 @@ Neutron Internals
    advanced_services
    oslo-incubator
    callbacks
+   dns_order
 
 Testing
 -------

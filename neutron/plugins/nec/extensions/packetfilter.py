@@ -21,7 +21,8 @@ from neutron.api.v2 import base
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron import manager
-from neutron import quota
+from neutron.quota import resource as quota_resource
+from neutron.quota import resource_registry
 
 
 quota_packet_filter_opts = [
@@ -180,10 +181,10 @@ class Packetfilter(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        qresource = quota.CountableResource(RESOURCE,
-                                            quota._count_resource,
-                                            'quota_%s' % RESOURCE)
-        quota.QUOTAS.register_resource(qresource)
+        qresource = quota_resource.CountableResource(
+            RESOURCE, quota_resource._count_resource, 'quota_%s' % RESOURCE)
+
+        resource_registry.register_resource(qresource)
 
         resource = base.create_resource(COLLECTION, RESOURCE,
                                         manager.NeutronManager.get_plugin(),

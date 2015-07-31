@@ -29,7 +29,6 @@ from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr_edge_router as dvr_router
-from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import legacy_router
@@ -44,7 +43,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.i18n import _LE
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
@@ -81,8 +79,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()
 
-        self.ensure_dir = mock.patch('neutron.agent.linux.utils'
-                                     '.ensure_dir').start()
+        self.ensure_dir = mock.patch('neutron.common.utils.ensure_dir').start()
 
         mock.patch('neutron.agent.linux.keepalived.KeepalivedManager'
                    '.get_full_config_file_path').start()
@@ -339,7 +336,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         if action == 'add':
             self.device_exists.return_value = False
 
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_add = mock.Mock()
             ri._set_subnet_arp_info = mock.Mock()
             ri._internal_network_added = mock.Mock()
@@ -358,7 +356,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 dvr_snat_ns.SNAT_INT_DEV_PREFIX)
         elif action == 'remove':
             self.device_exists.return_value = False
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_modify = mock.Mock()
             ri.internal_network_removed(port)
             ri._snat_redirect_modify.assert_called_with(
@@ -434,8 +433,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 interface_name, ip_cidrs, **kwargs)
         else:
             ri._create_dvr_gateway.assert_called_once_with(
-                ex_gw_port, interface_name,
-                self.snat_ports)
+                ex_gw_port, interface_name)
 
     def _test_external_gateway_action(self, action, router, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -520,7 +518,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         elif action == 'remove':
             self.device_exists.return_value = True
-            ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
             ri._snat_redirect_remove = mock.Mock()
             ri.external_gateway_removed(ex_gw_port, interface_name)
             if not router.get('distributed'):
@@ -687,22 +686,24 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
             (interface_name, interface_name),
             '-o %s -j SNAT --to-source %s' % (interface_name, source_nat_ip),
-            '-m mark ! --mark 0x2 -m conntrack --ctstate DNAT '
-            '-j SNAT --to-source %s' % source_nat_ip]
+            '-m mark ! --mark 0x2/%s -m conntrack --ctstate DNAT '
+            '-j SNAT --to-source %s' %
+            (l3_constants.ROUTER_MARK_MASK, source_nat_ip)]
         for r in nat_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
             else:
                 self.assertIn(r.rule, expected_rules)
         expected_rules = [
-            '-i %s -j MARK --set-xmark 0x2/0xffffffff' % interface_name]
+            '-i %s -j MARK --set-xmark 0x2/%s' %
+            (interface_name, l3_constants.ROUTER_MARK_MASK)]
         for r in mangle_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
             else:
                 self.assertIn(r.rule, expected_rules)
 
-    def test__map_internal_interfaces(self):
+    def test_get_snat_port_for_internal_port(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=4)
         ri = dvr_router.DvrEdgeRouter(mock.sentinel.agent,
                                       HOSTNAME,
@@ -716,13 +717,15 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 'ip_address': '101.12.13.14'}]}
         internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
         # test valid case
-        res_port = ri._map_internal_interfaces(internal_ports[0], [test_port])
-        self.assertEqual(test_port, res_port)
-        # test invalid case
-        test_port['fixed_ips'][0]['subnet_id'] = 1234
-        res_ip = ri._map_internal_interfaces(internal_ports[0], [test_port])
-        self.assertNotEqual(test_port, res_ip)
-        self.assertIsNone(res_ip)
+        with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
+            get_interfaces.return_value = [test_port]
+            res_port = ri.get_snat_port_for_internal_port(internal_ports[0])
+            self.assertEqual(test_port, res_port)
+            # test invalid case
+            test_port['fixed_ips'][0]['subnet_id'] = 1234
+            res_ip = ri.get_snat_port_for_internal_port(internal_ports[0])
+            self.assertNotEqual(test_port, res_ip)
+            self.assertIsNone(res_ip)
 
     def test_process_cent_router(self):
         router = l3_test_common.prepare_router_data()
@@ -1487,10 +1490,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             {},
             **self.ri_kwargs)
         ri.iptables_manager = mock.Mock()
+        ri._is_this_snat_host = mock.Mock(return_value=True)
+        ri.get_ex_gw_port = mock.Mock(return_value=mock.ANY)
 
-        with mock.patch.object(dvr_local_router.LOG,
-                               'debug') as log_debug:
-            ri._handle_router_snat_rules(mock.ANY, mock.ANY, mock.ANY)
+        with mock.patch.object(dvr_router.LOG, 'debug') as log_debug:
+            ri._handle_router_snat_rules(mock.ANY, mock.ANY)
         self.assertIsNone(ri.snat_iptables_manager)
         self.assertFalse(ri.iptables_manager.called)
         self.assertTrue(log_debug.called)
@@ -1500,7 +1504,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.iptables_manager = mock.MagicMock()
         port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
 
-        ri._handle_router_snat_rules(port, "iface", "add_rules")
+        ri._handle_router_snat_rules(port, "iface")
 
         nat = ri.iptables_manager.ipv4['nat']
         nat.empty_chain.assert_any_call('snat')
@@ -1516,19 +1520,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = l3router.RouterInfo(_uuid(), {}, **self.ri_kwargs)
         ex_gw_port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
         ri.router = {'distributed': False}
-        ri._handle_router_snat_rules(ex_gw_port, "iface", "add_rules")
+        ri._handle_router_snat_rules(ex_gw_port, "iface")
 
-        nat_rules = map(str, ri.iptables_manager.ipv4['nat'].rules)
+        nat_rules = list(map(str, ri.iptables_manager.ipv4['nat'].rules))
         wrap_name = ri.iptables_manager.wrap_name
 
         jump_float_rule = "-A %s-snat -j %s-float-snat" % (wrap_name,
                                                            wrap_name)
         snat_rule1 = ("-A %s-snat -o iface -j SNAT --to-source %s") % (
             wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
-        snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2 "
+        snat_rule2 = ("-A %s-snat -m mark ! --mark 0x2/%s "
                       "-m conntrack --ctstate DNAT "
                       "-j SNAT --to-source %s") % (
-            wrap_name, ex_gw_port['fixed_ips'][0]['ip_address'])
+            wrap_name, l3_constants.ROUTER_MARK_MASK,
+            ex_gw_port['fixed_ips'][0]['ip_address'])
 
         self.assertIn(jump_float_rule, nat_rules)
 
@@ -1537,9 +1542,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertThat(nat_rules.index(jump_float_rule),
                         matchers.LessThan(nat_rules.index(snat_rule1)))
 
-        mangle_rules = map(str, ri.iptables_manager.ipv4['mangle'].rules)
+        mangle_rules = list(map(str, ri.iptables_manager.ipv4['mangle'].rules))
         mangle_rule = ("-A %s-mark -i iface "
-                       "-j MARK --set-xmark 0x2/0xffffffff") % wrap_name
+                       "-j MARK --set-xmark 0x2/%s" %
+                       (wrap_name, l3_constants.ROUTER_MARK_MASK))
         self.assertIn(mangle_rule, mangle_rules)
 
     def test_process_router_delete_stale_internal_devices(self):
@@ -1852,18 +1858,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_nonexistent_interface_driver(self):
         self.conf.set_override('interface_driver', None)
-        with mock.patch.object(l3_agent, 'LOG') as log:
-            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                              HOSTNAME, self.conf)
-            msg = 'An interface driver must be specified'
-            log.error.assert_called_once_with(msg)
+        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
 
-        self.conf.set_override('interface_driver', 'wrong_driver')
-        with mock.patch.object(l3_agent, 'LOG') as log:
-            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                              HOSTNAME, self.conf)
-            msg = _LE("Error importing interface driver '%s'")
-            log.error.assert_called_once_with(msg, 'wrong_driver')
+        self.conf.set_override('interface_driver', 'wrong.driver')
+        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
 
     @mock.patch.object(namespaces.RouterNamespace, 'delete')
     @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
@@ -1961,7 +1961,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         interface_name = ri.get_snat_int_device_name(port_id)
         self.device_exists.return_value = False
 
-        ri._create_dvr_gateway(dvr_gw_port, interface_name, self.snat_ports)
+        with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
+            get_interfaces.return_value = self.snat_ports
+            ri._create_dvr_gateway(dvr_gw_port, interface_name)
 
         # check 2 internal ports are plugged
         # check 1 ext-gw-port is plugged

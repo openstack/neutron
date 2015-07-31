@@ -15,6 +15,7 @@
 
 from oslo_utils import uuidutils
 import sqlalchemy as sa
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
@@ -132,7 +133,8 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
-    fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='joined')
+    fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='joined',
+                                 passive_deletes='all')
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
@@ -177,6 +179,7 @@ class DNSNameServer(model_base.BASEV2):
                           sa.ForeignKey('subnets.id',
                                         ondelete="CASCADE"),
                           primary_key=True)
+    order = sa.Column(sa.Integer, nullable=False, server_default='0')
 
 
 class Subnet(model_base.BASEV2, HasId, HasTenant):
@@ -200,12 +203,12 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
                                        cascade='all, delete, delete-orphan',
+                                       order_by=DNSNameServer.order,
                                        lazy='joined')
     routes = orm.relationship(SubnetRoute,
                               backref='subnet',
                               cascade='all, delete, delete-orphan',
                               lazy='joined')
-    shared = sa.Column(sa.Boolean)
     ipv6_ra_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
                                      constants.DHCPV6_STATEFUL,
                                      constants.DHCPV6_STATELESS,
@@ -214,6 +217,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
                                   constants.DHCPV6_STATEFUL,
                                   constants.DHCPV6_STATELESS,
                                   name='ipv6_address_modes'), nullable=True)
+    rbac_entries = association_proxy('networks', 'rbac_entries')
 
 
 class SubnetPoolPrefix(model_base.BASEV2):
@@ -251,10 +255,13 @@ class Network(model_base.BASEV2, HasId, HasTenant):
 
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     ports = orm.relationship(Port, backref='networks')
-    subnets = orm.relationship(Subnet, backref='networks',
-                               lazy="joined")
+    subnets = orm.relationship(
+        Subnet, backref=orm.backref('networks', lazy='joined'),
+        lazy="joined")
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
-    shared = sa.Column(sa.Boolean)
     mtu = sa.Column(sa.Integer, nullable=True)
     vlan_transparent = sa.Column(sa.Boolean, nullable=True)
+    rbac_entries = orm.relationship("NetworkRBAC", backref='network',
+                                    lazy='joined',
+                                    cascade='all, delete, delete-orphan')

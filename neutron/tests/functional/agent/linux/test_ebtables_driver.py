@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ebtables_driver
-from neutron.agent.linux import ip_lib
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
@@ -85,14 +85,13 @@ class EbtablesLowLevelTestCase(base.BaseSudoTestCase):
 
         # Pick one of the namespaces and setup a bridge for the local ethernet
         # interface there, because ebtables only works on bridged interfaces.
-        self.source.execute(['brctl', 'addbr', 'mybridge'])
-        self.source.execute(
-            ['brctl', 'addif', 'mybridge', self.source.port.name])
+        dev_mybridge = bridge_lib.BridgeDevice.addbr(
+            'mybridge', self.source.namespace)
+        dev_mybridge.addif(self.source.port.name)
 
         # Take the IP addrss off one of the interfaces and apply it to the
         # bridge interface instead.
         self.source.port.addr.delete(self.source.ip_cidr)
-        dev_mybridge = ip_lib.IPDevice("mybridge", self.source.namespace)
         dev_mybridge.link.set_up()
         dev_mybridge.addr.add(self.source.ip_cidr)
 

@@ -1,6 +1,0 @@
-# NOTE
-
-The main source codes of Metaplugin is now in https://github.com/ntt-sic/networking-metaplugin.
-They were moved from Neutron tree to there according to core-vendor-decomposition.
-Defining config and DB are still here according to the decomposition policy.
-Codes of 'flavor' extension and interface driver used by *-agent remain in Neutron tree too.

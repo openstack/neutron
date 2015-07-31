@@ -45,6 +45,9 @@ DEVICE_OWNER_LOADBALANCERV2 = "neutron:LOADBALANCERV2"
 # DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.
 ROUTER_INTERFACE_OWNERS = (DEVICE_OWNER_ROUTER_INTF,
                            DEVICE_OWNER_DVR_INTERFACE)
+ROUTER_INTERFACE_OWNERS_SNAT = (DEVICE_OWNER_ROUTER_INTF,
+                                DEVICE_OWNER_DVR_INTERFACE,
+                                DEVICE_OWNER_ROUTER_SNAT)
 L3_AGENT_MODE_DVR = 'dvr'
 L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
 L3_AGENT_MODE_LEGACY = 'legacy'
@@ -178,3 +181,5 @@ RPC_NAMESPACE_STATE = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 0
+
+ROUTER_MARK_MASK = "0xffff"

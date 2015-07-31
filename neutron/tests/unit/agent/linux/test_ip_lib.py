@@ -619,11 +619,13 @@ class TestIpLinkCommand(TestIPCmdBase):
         self._assert_sudo([], ('set', 'eth0', 'mtu', 1500))
 
     def test_set_up(self):
-        self.link_cmd.set_up()
+        observed = self.link_cmd.set_up()
+        self.assertEqual(self.parent._as_root.return_value, observed)
         self._assert_sudo([], ('set', 'eth0', 'up'))
 
     def test_set_down(self):
-        self.link_cmd.set_down()
+        observed = self.link_cmd.set_down()
+        self.assertEqual(self.parent._as_root.return_value, observed)
         self._assert_sudo([], ('set', 'eth0', 'down'))
 
     def test_set_netns(self):
@@ -814,8 +816,25 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
+    def test_add_gateway_subtable(self):
+        self.route_cmd.table(self.table).add_gateway(self.gateway, self.metric)
+        self._assert_sudo([self.ip_version],
+                          ('replace', 'default',
+                           'via', self.gateway,
+                           'metric', self.metric,
+                           'dev', self.parent.name,
+                           'table', self.table))
+
     def test_del_gateway_success(self):
         self.route_cmd.delete_gateway(self.gateway, table=self.table)
+        self._assert_sudo([self.ip_version],
+                          ('del', 'default',
+                           'via', self.gateway,
+                           'dev', self.parent.name,
+                           'table', self.table))
+
+    def test_del_gateway_success_subtable(self):
+        self.route_cmd.table(table=self.table).delete_gateway(self.gateway)
         self._assert_sudo([self.ip_version],
                           ('del', 'default',
                            'via', self.gateway,
@@ -892,6 +911,33 @@ class TestIpRouteCommand(TestIPCmdBase):
                           ('del', self.cidr,
                            'via', self.ip,
                            'dev', self.parent.name,
+                           'table', self.table))
+
+    def test_list_onlink_routes_subtable(self):
+        self.parent._run.return_value = (
+            "10.0.0.0/22\n"
+            "172.24.4.0/24 proto kernel src 172.24.4.2\n")
+        routes = self.route_cmd.table(self.table).list_onlink_routes(
+            self.ip_version)
+        self.assertEqual(['10.0.0.0/22'], routes)
+        self._assert_call([self.ip_version],
+                          ('list', 'dev', self.parent.name, 'scope', 'link',
+                           'table', self.table))
+
+    def test_add_onlink_route_subtable(self):
+        self.route_cmd.table(self.table).add_onlink_route(self.cidr)
+        self._assert_sudo([self.ip_version],
+                          ('replace', self.cidr,
+                           'dev', self.parent.name,
+                           'scope', 'link',
+                           'table', self.table))
+
+    def test_delete_onlink_route_subtable(self):
+        self.route_cmd.table(self.table).delete_onlink_route(self.cidr)
+        self._assert_sudo([self.ip_version],
+                          ('del', self.cidr,
+                           'dev', self.parent.name,
+                           'scope', 'link',
                            'table', self.table))
 
 

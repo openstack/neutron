@@ -82,11 +82,15 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.ikepolicies = []
         cls.floating_ips = []
         cls.metering_labels = []
+        cls.service_profiles = []
+        cls.flavors = []
         cls.metering_label_rules = []
         cls.fw_rules = []
         cls.fw_policies = []
         cls.ipsecpolicies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
+        cls.address_scopes = []
+        cls.admin_address_scopes = []
 
     @classmethod
     def resource_cleanup(cls):
@@ -146,6 +150,16 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
                 cls._try_delete_resource(
                     cls.admin_client.delete_metering_label,
                     metering_label['id'])
+            # Clean up flavors
+            for flavor in cls.flavors:
+                cls._try_delete_resource(
+                    cls.admin_client.delete_flavor,
+                    flavor['id'])
+            # Clean up service profiles
+            for service_profile in cls.service_profiles:
+                cls._try_delete_resource(
+                    cls.admin_client.delete_service_profile,
+                    service_profile['id'])
             # Clean up ports
             for port in cls.ports:
                 cls._try_delete_resource(cls.client.delete_port,
@@ -163,6 +177,15 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for network in cls.shared_networks:
                 cls._try_delete_resource(cls.admin_client.delete_network,
                                          network['id'])
+
+            for address_scope in cls.address_scopes:
+                cls._try_delete_resource(cls.client.delete_address_scope,
+                                         address_scope['id'])
+
+            for address_scope in cls.admin_address_scopes:
+                cls._try_delete_resource(
+                    cls.admin_client.delete_address_scope,
+                    address_scope['id'])
 
             cls.clear_isolated_creds()
         super(BaseNetworkTest, cls).resource_cleanup()
@@ -428,6 +451,16 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.ipsecpolicies.append(ipsecpolicy)
         return ipsecpolicy
 
+    @classmethod
+    def create_address_scope(cls, name, is_admin=False, **kwargs):
+        if is_admin:
+            body = cls.admin_client.create_address_scope(name=name, **kwargs)
+            cls.admin_address_scopes.append(body['address_scope'])
+        else:
+            body = cls.client.create_address_scope(name=name, **kwargs)
+            cls.address_scopes.append(body['address_scope'])
+        return body['address_scope']
+
 
 class BaseAdminNetworkTest(BaseNetworkTest):
 
@@ -464,3 +497,22 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         metering_label_rule = body['metering_label_rule']
         cls.metering_label_rules.append(metering_label_rule)
         return metering_label_rule
+
+    @classmethod
+    def create_flavor(cls, name, description, service_type):
+        """Wrapper utility that returns a test flavor."""
+        body = cls.admin_client.create_flavor(
+            description=description, service_type=service_type,
+            name=name)
+        flavor = body['flavor']
+        cls.flavors.append(flavor)
+        return flavor
+
+    @classmethod
+    def create_service_profile(cls, description, metainfo, driver):
+        """Wrapper utility that returns a test service profile."""
+        body = cls.admin_client.create_service_profile(
+            driver=driver, metainfo=metainfo, description=description)
+        service_profile = body['service_profile']
+        cls.service_profiles.append(service_profile)
+        return service_profile
