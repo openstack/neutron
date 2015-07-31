@@ -246,6 +246,20 @@ class TestEmbSwitch(base.BaseTestCase):
                               self.emb_switch.set_device_state,
                               self.WRONG_PCI_SLOT, True)
 
+    def test_set_device_spoofcheck_ok(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_spoofcheck") as \
+                                set_vf_spoofcheck_mock:
+            self.emb_switch.set_device_spoofcheck(self.PCI_SLOT, True)
+            self.assertTrue(set_vf_spoofcheck_mock.called)
+
+    def test_set_device_spoofcheck_fail(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_spoofcheck"):
+            self.assertRaises(exc.InvalidPciSlotError,
+                              self.emb_switch.set_device_spoofcheck,
+                              self.WRONG_PCI_SLOT, True)
+
     def test_get_pci_device(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                         "PciDeviceIPWrapper.get_assigned_macs",

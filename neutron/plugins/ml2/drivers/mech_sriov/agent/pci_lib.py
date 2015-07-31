@@ -106,6 +106,22 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             raise exc.IpCommandError(dev_name=self.dev_name,
                                      reason=e)
 
+    def set_vf_spoofcheck(self, vf_index, enabled):
+        """sets vf spoofcheck
+
+        @param vf_index: vf index
+        @param enabled: True to enable spoof checking,
+                        False to disable
+        """
+        setting = "on" if enabled else "off"
+
+        try:
+            self._as_root('', "link", ("set", self.dev_name, "vf",
+                                       str(vf_index), "spoofchk", setting))
+        except Exception as e:
+            raise exc.IpCommandError(dev_name=self.dev_name,
+                                     reason=str(e))
+
     def _get_vf_link_show(self, vf_list, link_show_out):
         """Get link show output for VFs
 

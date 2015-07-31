@@ -33,7 +33,7 @@ from neutron.common import constants as n_constants
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -169,8 +169,17 @@ class SriovNicSwitchAgent(object):
         # If one of the above operations fails => resync with plugin
         return (resync_a | resync_b)
 
-    def treat_device(self, device, pci_slot, admin_state_up):
+    def treat_device(self, device, pci_slot, admin_state_up, spoofcheck=True):
         if self.eswitch_mgr.device_exists(device, pci_slot):
+            try:
+                self.eswitch_mgr.set_device_spoofcheck(device, pci_slot,
+                                                       spoofcheck)
+            except Exception:
+                LOG.warning(_LW("Failed to set spoofcheck for device %s"),
+                            device)
+            LOG.info(_LI("Device %(device)s spoofcheck %(spoofcheck)s"),
+                     {"device": device, "spoofcheck": spoofcheck})
+
             try:
                 self.eswitch_mgr.set_device_state(device, pci_slot,
                                                   admin_state_up)
@@ -210,9 +219,11 @@ class SriovNicSwitchAgent(object):
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
                 profile = device_details['profile']
+                spoofcheck = device_details.get('port_security_enabled', True)
                 self.treat_device(device_details['device'],
                                   profile.get('pci_slot'),
-                                  device_details['admin_state_up'])
+                                  device_details['admin_state_up'],
+                                  spoofcheck)
             else:
                 LOG.info(_LI("Device with MAC %s not defined on plugin"),
                          device)
