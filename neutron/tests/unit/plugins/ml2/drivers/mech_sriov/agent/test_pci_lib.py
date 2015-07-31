@@ -50,51 +50,51 @@ class TestPciLib(base.BaseTestCase):
 
     def test_get_assigned_macs(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.VF_LINK_SHOW
+                               "_as_root") as mock_as_root:
+            mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_assigned_macs([self.VF_INDEX])
             self.assertEqual([self.MAC_MAPPING[self.VF_INDEX]], result)
 
     def test_get_assigned_macs_fail(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception()
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception()
             self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.get_assigned_macs,
                               [self.VF_INDEX])
 
     def test_get_vf_state_enable(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.VF_LINK_SHOW
+                               "_as_root") as mock_as_root:
+            mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_vf_state(self.VF_INDEX)
             self.assertTrue(result)
 
     def test_get_vf_state_disable(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.VF_LINK_SHOW
+                               "_as_root") as mock_as_root:
+            mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_vf_state(self.VF_INDEX_DISABLE)
             self.assertFalse(result)
 
     def test_get_vf_state_fail(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception()
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception()
             self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.get_vf_state,
                               self.VF_INDEX)
 
     def test_set_vf_state(self):
-        with mock.patch.object(self.pci_wrapper, "_execute"):
+        with mock.patch.object(self.pci_wrapper, "_as_root"):
             result = self.pci_wrapper.set_vf_state(self.VF_INDEX,
                                                    True)
             self.assertIsNone(result)
 
     def test_set_vf_state_fail(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception()
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception()
             self.assertRaises(exc.IpCommandError,
                               self.pci_wrapper.set_vf_state,
                               self.VF_INDEX,
