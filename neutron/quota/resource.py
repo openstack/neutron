@@ -26,8 +26,8 @@ from neutron.i18n import _LE
 LOG = log.getLogger(__name__)
 
 
-def _count_resource(context, plugin, resources, tenant_id):
-    count_getter_name = "get_%s_count" % resources
+def _count_resource(context, plugin, collection_name, tenant_id):
+    count_getter_name = "get_%s_count" % collection_name
 
     # Some plugins support a count method for particular resources,
     # using a DB's optimized counting features. We try to use that one
@@ -38,7 +38,7 @@ def _count_resource(context, plugin, resources, tenant_id):
         meh = obj_count_getter(context, filters={'tenant_id': [tenant_id]})
         return meh
     except (NotImplementedError, AttributeError):
-        obj_getter = getattr(plugin, "get_%s" % resources)
+        obj_getter = getattr(plugin, "get_%s" % collection_name)
         obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
         return len(obj_list) if obj_list else 0
 
@@ -46,14 +46,33 @@ def _count_resource(context, plugin, resources, tenant_id):
 class BaseResource(object):
     """Describe a single resource for quota checking."""
 
-    def __init__(self, name, flag):
+    def __init__(self, name, flag, plural_name=None):
         """Initializes a resource.
 
         :param name: The name of the resource, i.e., "instances".
         :param flag: The name of the flag or configuration option
+        :param plural_name: Plural form of the resource name. If not
+                            specified, it is generated automatically by
+                            appending an 's' to the resource name, unless
+                            it ends with a 'y'. In that case the last
+                            letter is removed, and 'ies' is appended.
+                            Dashes are always converted to underscores.
         """
 
         self.name = name
+        # If a plural name is not supplied, default to adding an 's' to
+        # the resource name, unless the resource name ends in 'y', in which
+        # case remove the 'y' and add 'ies'. Even if the code should not fiddle
+        # too much with English grammar, this is a rather common and easy to
+        # implement rule.
+        if plural_name:
+            self.plural_name = plural_name
+        elif self.name[-1] == 'y':
+            self.plural_name = "%sies" % self.name[:-1]
+        else:
+            self.plural_name = "%ss" % self.name
+        # always convert dashes to underscores
+        self.plural_name = self.plural_name.replace('-', '_')
         self.flag = flag
 
     @property
@@ -79,7 +98,7 @@ class BaseResource(object):
 class CountableResource(BaseResource):
     """Describe a resource where the counts are determined by a function."""
 
-    def __init__(self, name, count, flag=None):
+    def __init__(self, name, count, flag=None, plural_name=None):
         """Initializes a CountableResource.
 
         Countable resources are those resources which directly
@@ -100,16 +119,26 @@ class CountableResource(BaseResource):
         :param flag: The name of the flag or configuration option
                      which specifies the default value of the quota
                      for this resource.
+        :param plural_name: Plural form of the resource name. If not
+                            specified, it is generated automatically by
+                            appending an 's' to the resource name, unless
+                            it ends with a 'y'. In that case the last
+                            letter is removed, and 'ies' is appended.
+                            Dashes are always converted to underscores.
         """
 
-        super(CountableResource, self).__init__(name, flag=flag)
-        self.count = count
+        super(CountableResource, self).__init__(
+            name, flag=flag, plural_name=plural_name)
+        self._count_func = count
+
+    def count(self, context, plugin, tenant_id):
+        return self._count_func(context, plugin, self.plural_name, tenant_id)
 
 
 class TrackedResource(BaseResource):
     """Resource which keeps track of its usage data."""
 
-    def __init__(self, name, model_class, flag):
+    def __init__(self, name, model_class, flag, plural_name=None):
         """Initializes an instance for a given resource.
 
         TrackedResource are directly mapped to data model classes.
@@ -126,8 +155,16 @@ class TrackedResource(BaseResource):
         :param flag: The name of the flag or configuration option
                      which specifies the default value of the quota
                      for this resource.
+        :param plural_name: Plural form of the resource name. If not
+                            specified, it is generated automatically by
+                            appending an 's' to the resource name, unless
+                            it ends with a 'y'. In that case the last
+                            letter is removed, and 'ies' is appended.
+                            Dashes are always converted to underscores.
+
         """
-        super(TrackedResource, self).__init__(name, flag)
+        super(TrackedResource, self).__init__(
+            name, flag=flag, plural_name=plural_name)
         # Register events for addition/removal of records in the model class
         # As tenant_id is immutable for all Neutron objects there is no need
         # to register a listener for update events
@@ -198,8 +235,7 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, tenant_id, in_use)
 
-    def count(self, context, _plugin, _resources, tenant_id,
-              resync_usage=False):
+    def count(self, context, _plugin, tenant_id, resync_usage=False):
         """Return the current usage count for the resource."""
         # Load current usage data
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(

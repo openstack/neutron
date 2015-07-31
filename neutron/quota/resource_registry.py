@@ -27,8 +27,9 @@ def register_resource(resource):
     ResourceRegistry.get_instance().register_resource(resource)
 
 
-def register_resource_by_name(resource_name):
-    ResourceRegistry.get_instance().register_resource_by_name(resource_name)
+def register_resource_by_name(resource_name, plural_name=None):
+    ResourceRegistry.get_instance().register_resource_by_name(
+        resource_name, plural_name)
 
 
 def get_all_resources():
@@ -151,7 +152,7 @@ class ResourceRegistry(object):
     def __contains__(self, resource):
         return resource in self._resources
 
-    def _create_resource_instance(self, resource_name):
+    def _create_resource_instance(self, resource_name, plural_name):
         """Factory function for quota Resource.
 
         This routine returns a resource instance of the appropriate type
@@ -220,9 +221,11 @@ class ResourceRegistry(object):
         for res in resources:
             self.register_resource(res)
 
-    def register_resource_by_name(self, resource_name):
+    def register_resource_by_name(self, resource_name,
+                                  plural_name=None):
         """Register a resource by name."""
-        resource = self._create_resource_instance(resource_name)
+        resource = self._create_resource_instance(
+            resource_name, plural_name)
         self.register_resource(resource)
 
     def unregister_resources(self):
