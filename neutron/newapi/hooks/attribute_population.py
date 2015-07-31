@@ -32,12 +32,20 @@ class AttributePopulationHook(hooks.PecanHook):
         resource = state.request.resource_type
         if not resource:
             return
-        state.request.prepared_data = v2base.Controller.prepare_request_body(
-            state.request.context, state.request.json, is_create, resource,
-            _attributes_for_resource(resource))
+        if state.request.member_action:
+            # Neutron currently does not describe request bodies for member
+            # actions in meh. prepare_request_body should not be called for
+            # member actions, and the body should be passed as it is. The
+            # plugin will do the validation (yuck).
+            state.request.prepared_data = state.request.json
+        else:
+            state.request.prepared_data = (
+                v2base.Controller.prepare_request_body(
+                    state.request.context, state.request.json, is_create,
+                    resource, _attributes_for_resource(resource)))
         state.request.resources = _extract_resources_from_state(state)
         # make the original object available:
-        if not is_create:
+        if not is_create and not state.request.member_action:
             obj_id = _pull_id_from_request(state.request)
             attrs = _attributes_for_resource(resource)
             field_list = [name for (name, value) in attrs.items()

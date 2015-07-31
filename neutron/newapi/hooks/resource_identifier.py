@@ -30,19 +30,54 @@ class ResourceIdentifierHook(hooks.PecanHook):
     def before(self, state):
         # TODO(kevinbenton): find a better way to look this up. maybe something
         # in the pecan internals somewhere?
+        # TODO(salv-orlando): try and leverage _lookup to this aim. Also remove
+        # the "special" code path for "actions"
         state.request.resource_type = None
         try:
-            url_type = state.request.path.split('/')[2].rsplit('.', 1)[0]
+            # TODO(blogan): remove this dirty hack and do a better solution
+            # needs to work with /v2.0, /v2.0/ports, and /v2.0/ports.json
+            uri = state.request.path
+            if not uri.endswith('.json'):
+                uri += '.json'
+            # Remove the format suffix if any
+            uri = uri.rsplit('.', 1)[0].split('/')[2:]
+            if not uri:
+                # there's nothing to process in the URI
+                return
         except IndexError:
             return
-        if url_type == 'extensions':
+        resource_type = uri[0]
+        if resource_type == 'extensions':
             return
         for plural, single in attributes.PLURALS.items():
-            if plural == url_type:
+            if plural == resource_type:
                 state.request.resource_type = single
                 state.request.plugin = self._plugin_for_resource(single)
+                state.request.member_action = self._parse_action(
+                    single, plural, uri[1:])
                 return
-        abort(404, detail='Resource: %s' % url_type)
+        abort(404, detail='Resource: %s' % resource_type)
+
+    def _parse_action(self, resource, collection, remainder):
+        # NOTE(salv-orlando): This check is revolting and makes me
+        # puke, but avoids silly failures when dealing with API actions
+        # such as "add_router_interface".
+        if len(remainder) > 1:
+            action = remainder[1]
+        else:
+            return
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        resource_exts = ext_mgr.get_resources()
+        for ext in resource_exts:
+            if (ext.collection == collection and
+                action in ext.member_actions):
+                return action
+        # Action or resource extension not found
+        if action:
+            abort(404, detail="Action %(action)s for resource "
+                              "%(resource)s undefined" %
+                              {'action': action,
+                               'resource': resource})
 
     def _plugin_for_resource(self, resource):
         # NOTE(kevinbenton): memoizing the responses to this had no useful

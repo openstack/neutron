@@ -131,6 +131,11 @@ class ItemController(object):
 
     @when(index, method='PUT')
     def put(self, *args, **kwargs):
+        if request.member_action:
+            member_action_method = getattr(request.plugin,
+                                           request.member_action)
+            return member_action_method(request.context, self.item,
+                                        request.prepared_data)
         # TODO(kevinbenton): bulk?
         updater = getattr(request.plugin, 'update_%s' % request.resource_type)
         return updater(request.context, self.item, request.prepared_data)
