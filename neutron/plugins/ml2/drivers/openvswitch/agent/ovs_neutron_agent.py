@@ -1516,6 +1516,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         tunnel_sync = True
         ovs_restarted = False
         while self._check_and_handle_signal():
+            port_info = {}
             start = time.time()
             LOG.debug("Agent rpc_loop - iteration:%d started",
                       self.iter_num)
