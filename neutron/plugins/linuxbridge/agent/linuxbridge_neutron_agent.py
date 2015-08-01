@@ -915,7 +915,6 @@ class LinuxBridgeNeutronAgentRPC(object):
                 LOG.info(_LI("Port %s updated."), device)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
-            self.br_mgr.remove_empty_bridges()
         return resync
 
     def scan_devices(self, previous, sync):
