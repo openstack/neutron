@@ -115,6 +115,8 @@ class KeepalivedConfTestCase(base.BaseTestCase,
     interface eth0
     virtual_router_id 1
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     advert_int 5
     authentication {
         auth_type AH
@@ -141,6 +143,8 @@ vrrp_instance VR_2 {
     interface eth4
     virtual_router_id 2
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     mcast_src_ip 224.0.0.1
     track_interface {
         eth4
@@ -207,6 +211,8 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
     interface eth0
     virtual_router_id 1
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     advert_int 5
     authentication {
         auth_type AH
@@ -230,6 +236,8 @@ vrrp_instance VR_2 {
     interface eth4
     virtual_router_id 2
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     mcast_src_ip 224.0.0.1
     track_interface {
         eth4
@@ -252,6 +260,8 @@ vrrp_instance VR_2 {
     interface eth0
     virtual_router_id 1
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     virtual_ipaddress {
         169.254.0.1/24 dev eth0
     }
