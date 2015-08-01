@@ -1638,8 +1638,12 @@ class TestOvsDvrNeutronAgent(object):
     def test_treat_devices_removed_for_dvr_interface(self):
         self._test_treat_devices_removed_for_dvr_interface()
         self._test_treat_devices_removed_for_dvr_interface(ip_version=6)
+        self._test_treat_devices_removed_for_dvr_interface(network_type='vlan')
+        self._test_treat_devices_removed_for_dvr_interface(ip_version=6,
+                                                           network_type='vlan')
 
-    def _test_treat_devices_removed_for_dvr_interface(self, ip_version=4):
+    def _test_treat_devices_removed_for_dvr_interface(
+            self, ip_version=4, network_type='vxlan'):
         self._setup_for_dvr_test()
         if ip_version == 4:
             gateway_ip = '1.1.1.1'
@@ -1668,27 +1672,36 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port):
-            self.agent.port_bound(
-                self._port, self._net_uuid, 'vxlan',
-                None, None, self._fixed_ips,
-                n_const.DEVICE_OWNER_DVR_INTERFACE,
-                False)
-            lvid = self.agent.local_vlan_map[self._net_uuid].vlan
-            self.assertEqual(self._expected_port_bound(self._port, lvid),
-                             int_br.mock_calls)
-            expected_on_tun_br = [
-                mock.call.provision_local_vlan(network_type='vxlan',
-                    lvid=lvid, segmentation_id=None, distributed=True),
-            ] + self._expected_install_dvr_process(
-                port=self._port,
-                lvid=lvid,
-                ip_version=ip_version,
-                gateway_ip=gateway_ip,
-                gateway_mac=gateway_mac)
-            self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+            if network_type == 'vlan':
+                self.agent.port_bound(self._port, self._net_uuid,
+                                      network_type, self._physical_network,
+                                      self._segmentation_id,
+                                      self._compute_fixed_ips,
+                                      n_const.DEVICE_OWNER_DVR_INTERFACE,
+                                      False)
+            else:
+                self.agent.port_bound(
+                    self._port, self._net_uuid, 'vxlan',
+                    None, None, self._fixed_ips,
+                    n_const.DEVICE_OWNER_DVR_INTERFACE,
+                    False)
+                lvid = self.agent.local_vlan_map[self._net_uuid].vlan
+                self.assertEqual(self._expected_port_bound(self._port, lvid),
+                                 int_br.mock_calls)
+                expected_on_tun_br = [
+                    mock.call.provision_local_vlan(network_type='vxlan',
+                        lvid=lvid, segmentation_id=None, distributed=True),
+                ] + self._expected_install_dvr_process(
+                    port=self._port,
+                    lvid=lvid,
+                    ip_version=ip_version,
+                    gateway_ip=gateway_ip,
+                    gateway_mac=gateway_mac)
+                self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
 
         int_br.reset_mock()
         tun_br.reset_mock()
+        phys_br = mock.create_autospec(self.br_phys_cls('br-phys'))
         with mock.patch.object(self.agent, 'reclaim_local_vlan'),\
                 mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
                                   return_value={
@@ -1698,9 +1711,14 @@ class TestOvsDvrNeutronAgent(object):
                                       'failed_devices_down': []}),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.dict(self.agent.phys_brs,
+                                {self._physical_network: phys_br}),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
-                mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
+                mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br),\
+                mock.patch.dict(self.agent.dvr_agent.phys_brs,
+                                {self._physical_network: phys_br}):
             self.agent.treat_devices_removed([self._port.vif_id])
+            lvid = self.agent.local_vlan_map[self._net_uuid].vlan
             if ip_version == 4:
                 expected = [
                     mock.call.delete_dvr_process_ipv4(
@@ -1718,8 +1736,15 @@ class TestOvsDvrNeutronAgent(object):
                     vlan_tag=lvid,
                     vif_mac=self._port.vif_mac),
             ])
-            self.assertEqual([], int_br.mock_calls)
-            self.assertEqual(expected, tun_br.mock_calls)
+            if network_type == 'vlan':
+                self.assertEqual([], int_br.mock_calls)
+                self.assertEqual([], tun_br.mock_calls)
+                self.assertEqual(expected, phys_br.mock_calls)
+                self.assertEqual({}, self.agent.dvr_agent.local_ports)
+            else:
+                self.assertEqual([], int_br.mock_calls)
+                self.assertEqual(expected, tun_br.mock_calls)
+                self.assertEqual([], phys_br.mock_calls)
 
     def _test_treat_devices_removed_for_dvr(self, device_owner, ip_version=4):
         self._setup_for_dvr_test()
