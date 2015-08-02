@@ -130,7 +130,8 @@ class SriovNicSwitchAgent(object):
             LOG.exception(_LE("Failed reporting state!"))
 
     def setup_eswitch_mgr(self, device_mappings, exclude_devices={}):
-        self.eswitch_mgr = esm.ESwitchManager(device_mappings, exclude_devices)
+        self.eswitch_mgr = esm.ESwitchManager()
+        self.eswitch_mgr.discover_devices(device_mappings, exclude_devices)
 
     def scan_devices(self, registered_devices, updated_devices):
         curr_devices = self.eswitch_mgr.get_assigned_devices()

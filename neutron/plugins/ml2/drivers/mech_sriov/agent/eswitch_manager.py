@@ -144,11 +144,7 @@ class EmbSwitch(object):
 
         @param pci_slot: Virtual Function address
         """
-        vf_index = self.pci_slot_map.get(pci_slot)
-        if vf_index is None:
-            LOG.warning(_LW("Cannot find vf index for pci slot %s"),
-                        pci_slot)
-            raise exc.InvalidPciSlotError(pci_slot=pci_slot)
+        vf_index = self._get_vf_index(pci_slot)
         return self.pci_dev_wrapper.get_vf_state(vf_index)
 
     def set_device_state(self, pci_slot, state):
@@ -157,12 +153,25 @@ class EmbSwitch(object):
         @param pci_slot: Virtual Function address
         @param state: link state
         """
+        vf_index = self._get_vf_index(pci_slot)
+        return self.pci_dev_wrapper.set_vf_state(vf_index, state)
+
+    def set_device_max_rate(self, pci_slot, max_kbps):
+        """Set device max rate.
+
+        @param pci_slot: Virtual Function address
+        @param max_kbps: device max rate in kbps
+        """
+        vf_index = self._get_vf_index(pci_slot)
+        return self.pci_dev_wrapper.set_vf_max_rate(vf_index, max_kbps)
+
+    def _get_vf_index(self, pci_slot):
         vf_index = self.pci_slot_map.get(pci_slot)
         if vf_index is None:
             LOG.warning(_LW("Cannot find vf index for pci slot %s"),
                         pci_slot)
             raise exc.InvalidPciSlotError(pci_slot=pci_slot)
-        return self.pci_dev_wrapper.set_vf_state(vf_index, state)
+        return vf_index
 
     def set_device_spoofcheck(self, pci_slot, enabled):
         """Set device spoofchecking
@@ -194,7 +203,13 @@ class EmbSwitch(object):
 class ESwitchManager(object):
     """Manages logical Embedded Switch entities for physical network."""
 
-    def __init__(self, device_mappings, exclude_devices):
+    def __new__(cls):
+        # make it a singleton
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(ESwitchManager, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self):
         """Constructor.
 
         Create Embedded Switch logical entities for all given device mappings,
@@ -202,8 +217,6 @@ class ESwitchManager(object):
         """
         self.emb_switches_map = {}
         self.pci_slot_map = {}
-
-        self._discover_devices(device_mappings, exclude_devices)
 
     def device_exists(self, device_mac, pci_slot):
         """Verify if device exists.
@@ -250,6 +263,19 @@ class ESwitchManager(object):
             return embedded_switch.get_device_state(pci_slot)
         return False
 
+    def set_device_max_rate(self, device_mac, pci_slot, max_kbps):
+        """Set device max rate
+
+        Sets the device max rate in kbps
+        @param device_mac: device mac
+        @param pci_slot: pci slot
+        @param max_kbps: device max rate in kbps
+        """
+        embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
+        if embedded_switch:
+            embedded_switch.set_device_max_rate(pci_slot,
+                                                max_kbps)
+
     def set_device_state(self, device_mac, pci_slot, admin_state_up):
         """Set device state
 
@@ -276,7 +302,7 @@ class ESwitchManager(object):
             embedded_switch.set_device_spoofcheck(pci_slot,
                                                   enabled)
 
-    def _discover_devices(self, device_mappings, exclude_devices):
+    def discover_devices(self, device_mappings, exclude_devices):
         """Discover which Virtual functions to manage.
 
         Discover devices, and create embedded switch object for network device
