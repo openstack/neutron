@@ -92,15 +92,15 @@ class QosPolicy(base.NeutronDbObject):
         # sure the tenant has permission to access the policy later on.
         admin_context = context.elevated()
         with db_api.autonested_transaction(admin_context.session):
-            db_objs = db_api.get_objects(admin_context, cls.db_model, **kwargs)
-            objs = []
-            for db_obj in db_objs:
-                if not cls._is_policy_accessible(context, db_obj):
+            objs = super(QosPolicy, cls).get_objects(admin_context,
+                                                     **kwargs)
+            result = []
+            for obj in objs:
+                if not cls._is_policy_accessible(context, obj):
                     continue
-                obj = cls(context, **db_obj)
                 obj.reload_rules()
-                objs.append(obj)
-        return objs
+                result.append(obj)
+            return result
 
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):

@@ -80,8 +80,7 @@ class QoSPlugin(qos.QoSPluginBase):
     def get_policies(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        #TODO(QoS): Support all the optional parameters
-        return policy_object.QosPolicy.get_objects(context)
+        return policy_object.QosPolicy.get_objects(context, **filters)
 
     #TODO(QoS): Consider adding a proxy catch-all for rules, so
     #           we capture the API function call, and just pass
@@ -148,12 +147,12 @@ class QoSPlugin(qos.QoSPluginBase):
                                          filters=None, fields=None,
                                          sorts=None, limit=None,
                                          marker=None, page_reverse=False):
-        #TODO(QoS): Support all the optional parameters
         # make sure we have access to the policy when fetching rules
         with db_api.autonested_transaction(context.session):
             # first, validate that we have access to the policy
             self._get_policy_obj(context, policy_id)
-            return rule_object.QosBandwidthLimitRule.get_objects(context)
+            return rule_object.QosBandwidthLimitRule.get_objects(context,
+                                                                 **filters)
 
     # TODO(QoS): enforce rule types when accessing rule objects
     @db_base_plugin_common.filter_fields
@@ -161,4 +160,4 @@ class QoSPlugin(qos.QoSPluginBase):
     def get_rule_types(self, context, filters=None, fields=None,
                        sorts=None, limit=None,
                        marker=None, page_reverse=False):
-        return rule_type_object.QosRuleType.get_objects()
+        return rule_type_object.QosRuleType.get_objects(**filters)

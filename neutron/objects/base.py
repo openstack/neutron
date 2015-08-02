@@ -41,6 +41,8 @@ class NeutronObject(obj_base.VersionedObject,
                     obj_base.VersionedObjectDictCompat,
                     obj_base.ComparableVersionedObject):
 
+    synthetic_fields = []
+
     def __init__(self, context=None, **kwargs):
         super(NeutronObject, self).__init__(context, **kwargs)
         self.obj_set_defaults()
@@ -57,6 +59,15 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     def get_by_id(cls, context, id):
         raise NotImplementedError()
+
+    @classmethod
+    def validate_filters(cls, **kwargs):
+        bad_filters = [key for key in kwargs
+                       if key not in cls.fields or key in cls.synthetic_fields]
+        if bad_filters:
+            bad_filters = ', '.join(bad_filters)
+            msg = _("'%s' is not supported for filtering") % bad_filters
+            raise exceptions.InvalidInput(error_message=msg)
 
     @classmethod
     @abc.abstractmethod
@@ -78,8 +89,6 @@ class NeutronDbObject(NeutronObject):
     # should be overridden for all persistent objects
     db_model = None
 
-    synthetic_fields = []
-
     fields_no_update = []
 
     def from_db_object(self, *objs):
@@ -100,6 +109,7 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def get_objects(cls, context, **kwargs):
+        cls.validate_filters(**kwargs)
         db_objs = db_api.get_objects(context, cls.db_model, **kwargs)
         objs = [cls(context, **db_obj) for db_obj in db_objs]
         for obj in objs:

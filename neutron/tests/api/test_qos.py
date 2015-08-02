@@ -34,14 +34,14 @@ class QosTestJSON(base.BaseAdminNetworkTest):
     @test.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
         policy = self.create_qos_policy(name='test-policy',
-                                        description='test policy desc',
+                                        description='test policy desc1',
                                         shared=False)
 
         # Test 'show policy'
         retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
         retrieved_policy = retrieved_policy['policy']
         self.assertEqual('test-policy', retrieved_policy['name'])
-        self.assertEqual('test policy desc', retrieved_policy['description'])
+        self.assertEqual('test policy desc1', retrieved_policy['description'])
         self.assertFalse(retrieved_policy['shared'])
 
         # Test 'list policies'
@@ -50,18 +50,33 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertIn(policy['id'], policies_ids)
 
     @test.attr(type='smoke')
+    @test.idempotent_id('f8d20e92-f06d-4805-b54f-230f77715815')
+    def test_list_policy_filter_by_name(self):
+        self.create_qos_policy(name='test', description='test policy',
+                               shared=False)
+        self.create_qos_policy(name='test2', description='test policy',
+                               shared=False)
+
+        policies = (self.admin_client.
+                    list_qos_policies(name='test')['policies'])
+        self.assertEqual(1, len(policies))
+
+        retrieved_policy = policies[0]
+        self.assertEqual('test', retrieved_policy['name'])
+
+    @test.attr(type='smoke')
     @test.idempotent_id('8e88a54b-f0b2-4b7d-b061-a15d93c2c7d6')
     def test_policy_update(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='',
                                         shared=False)
         self.admin_client.update_qos_policy(policy['id'],
-                                            description='test policy desc',
+                                            description='test policy desc2',
                                             shared=True)
 
         retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
         retrieved_policy = retrieved_policy['policy']
-        self.assertEqual('test policy desc', retrieved_policy['description'])
+        self.assertEqual('test policy desc2', retrieved_policy['description'])
         self.assertTrue(retrieved_policy['shared'])
         self.assertEqual([], retrieved_policy['rules'])
 

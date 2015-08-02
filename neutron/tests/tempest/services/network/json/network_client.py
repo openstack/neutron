@@ -12,6 +12,8 @@
 
 import json
 import time
+import urllib
+
 
 from six.moves.urllib import parse
 from tempest_lib.common.utils import misc
@@ -625,8 +627,12 @@ class NetworkClientJSON(service_client.ServiceClient):
         body = json.loads(body)
         return service_client.ResponseBody(resp, body)
 
-    def list_qos_policies(self):
-        uri = '%s/qos/policies' % self.uri_prefix
+    def list_qos_policies(self, **filters):
+        if filters:
+            uri = '%s/qos/policies?%s' % (self.uri_prefix,
+                                          urllib.urlencode(filters))
+        else:
+            uri = '%s/qos/policies' % self.uri_prefix
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
         body = json.loads(body)

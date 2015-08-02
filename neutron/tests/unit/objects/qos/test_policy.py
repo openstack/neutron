@@ -64,6 +64,27 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                 admin_context, self._test_class.db_model)
         self._validate_objects(self.db_objs, objs)
 
+    def test_get_objects_valid_fields(self):
+        admin_context = self.context.elevated()
+
+        with mock.patch.object(
+            db_api, 'get_objects',
+            return_value=[self.db_obj]) as get_objects_mock:
+
+            with mock.patch.object(
+                self.context,
+                'elevated',
+                return_value=admin_context) as context_mock:
+
+                objs = self._test_class.get_objects(
+                    self.context,
+                    **self.valid_field_filter)
+                context_mock.assert_called_once_with()
+            get_objects_mock.assert_any_call(
+                admin_context, self._test_class.db_model,
+                **self.valid_field_filter)
+        self._validate_objects([self.db_obj], objs)
+
     def test_get_by_id(self):
         admin_context = self.context.elevated()
         with mock.patch.object(db_api, 'get_object',

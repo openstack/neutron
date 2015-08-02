@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import random
 import string
 
@@ -48,6 +49,8 @@ class FakeNeutronObject(base.NeutronDbObject):
 
     fields_no_update = ['id']
 
+    synthetic_fields = ['field2']
+
 
 def _random_string(n=10):
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
@@ -84,6 +87,10 @@ class _BaseObjectTestCase(object):
         self.context = context.get_admin_context()
         self.db_objs = list(self.get_random_fields() for _ in range(3))
         self.db_obj = self.db_objs[0]
+
+        valid_field = [f for f in self._test_class.fields
+                       if f not in self._test_class.synthetic_fields][0]
+        self.valid_field_filter = {valid_field: self.db_obj[valid_field]}
 
     @classmethod
     def get_random_fields(cls, obj_cls=None):
@@ -126,6 +133,53 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self._validate_objects(self.db_objs, objs)
         get_objects_mock.assert_called_once_with(
             self.context, self._test_class.db_model)
+
+    def test_get_objects_valid_fields(self):
+        with mock.patch.object(
+            db_api, 'get_objects',
+            return_value=[self.db_obj]) as get_objects_mock:
+
+            objs = self._test_class.get_objects(self.context,
+                                                **self.valid_field_filter)
+            self._validate_objects([self.db_obj], objs)
+
+        get_objects_mock.assert_called_with(
+            self.context, self._test_class.db_model,
+            **self.valid_field_filter)
+
+    def test_get_objects_mixed_fields(self):
+        synthetic_fields = self._test_class.synthetic_fields
+        if not synthetic_fields:
+            self.skipTest('No synthetic fields found in test class %r' %
+                          self._test_class)
+
+        filters = copy.copy(self.valid_field_filter)
+        filters[synthetic_fields[0]] = 'xxx'
+
+        with mock.patch.object(db_api, 'get_objects',
+                               return_value=self.db_objs):
+            self.assertRaises(base.exceptions.InvalidInput,
+                              self._test_class.get_objects, self.context,
+                              **filters)
+
+    def test_get_objects_synthetic_fields(self):
+        synthetic_fields = self._test_class.synthetic_fields
+        if not synthetic_fields:
+            self.skipTest('No synthetic fields found in test class %r' %
+                          self._test_class)
+
+        with mock.patch.object(db_api, 'get_objects',
+                               return_value=self.db_objs):
+            self.assertRaises(base.exceptions.InvalidInput,
+                              self._test_class.get_objects, self.context,
+                              **{synthetic_fields[0]: 'xxx'})
+
+    def test_get_objects_invalid_fields(self):
+        with mock.patch.object(db_api, 'get_objects',
+                               return_value=self.db_objs):
+            self.assertRaises(base.exceptions.InvalidInput,
+                              self._test_class.get_objects, self.context,
+                              fake_field='xxx')
 
     def _validate_objects(self, expected, observed):
         self.assertFalse(
