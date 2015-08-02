@@ -15,9 +15,9 @@ from oslo_log import log as logging
 from neutron.i18n import _LI
 from neutron import manager
 
-QOS_DRIVER_NAMESPACE = 'neutron.qos.service_notification_drivers'
+QOS_DRIVER_NAMESPACE = 'neutron.qos.notification_drivers'
 QOS_PLUGIN_OPTS = [
-    cfg.ListOpt('service_notification_drivers',
+    cfg.ListOpt('notification_drivers',
                 default='message_queue',
                 help=_('Drivers list to use to send the update notification')),
 ]
@@ -31,7 +31,7 @@ class QosServiceNotificationDriverManager(object):
 
     def __init__(self):
         self.notification_drivers = []
-        self._load_drivers(cfg.CONF.qos.service_notification_drivers)
+        self._load_drivers(cfg.CONF.qos.notification_drivers)
 
     def update_policy(self, qos_policy):
         for driver in self.notification_drivers:

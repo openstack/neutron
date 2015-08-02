@@ -27,7 +27,7 @@ DUMMY_DRIVER = ("neutron.tests.unit.services.qos.notification_drivers."
 
 def _load_multiple_drivers():
     cfg.CONF.set_override(
-        "service_notification_drivers",
+        "notification_drivers",
         ["message_queue", DUMMY_DRIVER],
         "qos")
 
