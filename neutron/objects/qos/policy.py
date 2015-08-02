@@ -85,7 +85,6 @@ class QosPolicy(base.NeutronDbObject):
             policy_obj._load_rules()
             return policy_obj
 
-    # TODO(QoS): Test that all objects are fetched within one transaction
     @classmethod
     def get_objects(cls, context, **kwargs):
         # We want to get the policy regardless of its tenant id. We'll make

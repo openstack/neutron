@@ -224,14 +224,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
         self.assertEqual([rule_obj], policy_obj.rules)
 
-    def test_create_is_in_single_transaction(self):
-        obj = self._test_class(self.context, **self.db_obj)
-        with mock.patch('sqlalchemy.engine.'
-                        'Connection._commit_impl') as mock_commit,\
-                mock.patch.object(obj._context.session, 'add'):
-            obj.create()
-        self.assertEqual(1, mock_commit.call_count)
-
     def test_get_by_id_fetches_rules_non_lazily(self):
         policy_obj, rule_obj = self._create_test_policy_with_rule()
         policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
