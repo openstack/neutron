@@ -60,18 +60,10 @@ def upgrade():
                   nullable=False, unique=True))
 
     op.create_table(
-        'qos_rules',
+        'qos_bandwidth_limit_rules',
         sa.Column('id', sa.String(length=36), primary_key=True),
         sa.Column('qos_policy_id', sa.String(length=36),
                   sa.ForeignKey('qos_policies.id', ondelete='CASCADE'),
                   nullable=False),
-        sa.Column('type', sa.String(length=255)))
-
-    op.create_table(
-        'qos_bandwidth_limit_rules',
-        sa.Column('id', sa.String(length=36),
-                  sa.ForeignKey('qos_rules.id', ondelete='CASCADE'),
-                  nullable=False,
-                  primary_key=True),
         sa.Column('max_kbps', sa.Integer()),
         sa.Column('max_burst_kbps', sa.Integer()))

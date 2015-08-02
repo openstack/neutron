@@ -18,6 +18,7 @@ from neutron.api.rpc.callbacks import resources
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
+from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
@@ -80,8 +81,10 @@ class TestQosPlugin(base.BaseTestCase):
         self.assertFalse(self.registry_m.called)
 
     def test_update_policy(self):
+        fields = base_object.get_updatable_fields(
+            policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(
-            self.ctxt, self.policy.id, self.policy_data)
+            self.ctxt, self.policy.id, {'policy': fields})
         self._validate_registry_params(events.UPDATED)
 
     def test_delete_policy(self):

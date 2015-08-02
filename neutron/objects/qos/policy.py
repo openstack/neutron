@@ -78,7 +78,7 @@ class QosPolicy(base.NeutronDbObject):
                 action='obj_load_attr', reason='unable to load %s' % attrname)
 
         rule_cls = getattr(rule_obj_impl, self.rule_fields[attrname])
-        rules = rule_cls.get_rules_by_policy(self._context, self.id)
+        rules = rule_cls.get_objects(self._context, qos_policy_id=self.id)
         setattr(self, attrname, rules)
         self.obj_reset_changes([attrname])
 
@@ -142,6 +142,7 @@ class QosPolicy(base.NeutronDbObject):
         return cls._get_object_policy(context, cls.port_binding_model,
                                       port_id=port_id)
 
+    # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
         with db_api.autonested_transaction(self._context.session):
             super(QosPolicy, self).create()

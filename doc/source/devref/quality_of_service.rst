@@ -65,15 +65,8 @@ From database point of view, following objects are defined in schema:
 * QosPolicy: directly maps to the conceptual policy resource.
 * QosNetworkPolicyBinding, QosPortPolicyBinding: defines attachment between a
   Neutron resource and a QoS policy.
-* QosRule: defines common rule fields for all supported rule types.
-* QosBandwidthLimitRule: defines rule fields that are specific to
-  bandwidth_limit type (the only type supported by the service as of time of
-  writing).
+* QosBandwidthLimitRule: defines the only rule type available at the moment.
 
-There is a one-to-one relationship between QosRule and type specific
-Qos<type>Rule database objects. We represent the single object with two tables
-to avoid duplication of common fields. (That introduces some complexity in
-neutron objects for rule resources, but see below).
 
 All database models are defined under:
 
@@ -138,10 +131,10 @@ Note that synthetic fields are lazily loaded, meaning there is no hit into
 the database if the field is not inspected by consumers.
 
 For Qos<type>Rule objects, an extendable approach was taken to allow easy
-addition of objects for new rule types. To accomodate this, all the methods
-that access the database were implemented in a base class called QosRule that
-is then inherited into type-specific rule implementations that, ideally, only
-define additional fields and some other minor things.
+addition of objects for new rule types. To accomodate this, fields common to
+all types are put into a base class called QosRule that is then inherited into
+type-specific rule implementations that, ideally, only define additional fields
+and some other minor things.
 
 Note that the QosRule base class is not registered with oslo.versionedobjects
 registry, because it's not expected that 'generic' rules should be
