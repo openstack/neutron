@@ -656,7 +656,6 @@ class NetworkClientJSON(service_client.ServiceClient):
     def create_bandwidth_limit_rule(self, policy_id, max_kbps, max_burst_kbps):
         uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
             self.uri_prefix, policy_id)
-        #TODO(QoS): 'bandwidth_limit' should not be a magic string.
         post_data = self.serialize(
             {'bandwidth_limit_rule': {
                 'max_kbps': max_kbps,
