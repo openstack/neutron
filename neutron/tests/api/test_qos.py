@@ -63,7 +63,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         retrieved_policy = retrieved_policy['policy']
         self.assertEqual('test policy desc', retrieved_policy['description'])
         self.assertTrue(retrieved_policy['shared'])
-        self.assertEqual([], retrieved_policy['bandwidth_limit_rules'])
+        self.assertEqual([], retrieved_policy['rules'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('1cb42653-54bd-4a9a-b888-c55e18199201')
@@ -252,9 +252,11 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
 
         # Test 'show policy'
         retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
-        policy_rules = retrieved_policy['policy']['bandwidth_limit_rules']
+        policy_rules = retrieved_policy['policy']['rules']
         self.assertEqual(1, len(policy_rules))
         self.assertEqual(rule['id'], policy_rules[0]['id'])
+        self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                         policy_rules[0]['type'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')

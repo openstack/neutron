@@ -222,12 +222,12 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_synthetic_rule_fields(self):
         policy_obj, rule_obj = self._create_test_policy_with_rule()
         policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
-        self.assertEqual([rule_obj], policy_obj.bandwidth_limit_rules)
+        self.assertEqual([rule_obj], policy_obj.rules)
 
     def test_create_is_in_single_transaction(self):
         obj = self._test_class(self.context, **self.db_obj)
         with mock.patch('sqlalchemy.engine.'
-                        'Transaction.commit') as mock_commit,\
+                        'Connection._commit_impl') as mock_commit,\
                 mock.patch.object(obj._context.session, 'add'):
             obj.create()
         self.assertEqual(1, mock_commit.call_count)
@@ -237,8 +237,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy.get_by_id(self.context, policy_obj.id)
 
         primitive = policy_obj.obj_to_primitive()
-        self.assertNotEqual([], (primitive['versioned_object.data']
-                                          ['bandwidth_limit_rules']))
+        self.assertNotEqual([], (primitive['versioned_object.data']['rules']))
 
     def test_to_dict_returns_rules_as_dicts(self):
         policy_obj, rule_obj = self._create_test_policy_with_rule()
@@ -252,8 +251,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for obj in (rule_dict, obj_dict):
             self.assertIsInstance(obj, dict)
 
-        self.assertEqual(rule_dict,
-                         obj_dict['bandwidth_limit_rules'][0])
+        self.assertEqual(rule_dict, obj_dict['rules'][0])
 
     def test_shared_default(self):
         self.db_obj.pop('shared')
