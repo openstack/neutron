@@ -148,6 +148,8 @@ vrrp_instance VR_1 {
     interface %(ha_device_name)s
     virtual_router_id 1
     priority 50
+    garp_master_repeat 5
+    garp_master_refresh 10
     nopreempt
     advert_int 2
     track_interface {
