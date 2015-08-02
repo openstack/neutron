@@ -231,9 +231,9 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         return network
 
     @classmethod
-    def create_shared_network(cls, network_name=None):
+    def create_shared_network(cls, network_name=None, **post_body):
         network_name = network_name or data_utils.rand_name('sharednetwork-')
-        post_body = {'name': network_name, 'shared': True}
+        post_body.update({'name': network_name, 'shared': True})
         body = cls.admin_client.create_network(**post_body)
         network = body['network']
         cls.shared_networks.append(network)

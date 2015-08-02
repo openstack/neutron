@@ -60,14 +60,39 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         return [obj for obj in objects if obj['id'] == id][0]
 
     def test_get_objects(self):
+        admin_context = self.context.elevated()
         with mock.patch.object(
-                    db_api, 'get_objects',
-                    side_effect=self.fake_get_objects),\
-                mock.patch.object(
-                    db_api, 'get_object',
-                    side_effect=self.fake_get_object):
-            objs = self._test_class.get_objects(self.context)
+            db_api, 'get_objects',
+            side_effect=self.fake_get_objects) as get_objects_mock:
+
+            with mock.patch.object(
+                db_api, 'get_object',
+                side_effect=self.fake_get_object):
+
+                with mock.patch.object(
+                    self.context,
+                    'elevated',
+                    return_value=admin_context) as context_mock:
+
+                    objs = self._test_class.get_objects(self.context)
+                    context_mock.assert_called_once_with()
+                    get_objects_mock.assert_any_call(
+                        admin_context, self._test_class.db_model)
         self._validate_objects(self.db_objs, objs)
+
+    def test_get_by_id(self):
+        admin_context = self.context.elevated()
+        with mock.patch.object(db_api, 'get_object',
+                               return_value=self.db_obj) as get_object_mock:
+            with mock.patch.object(self.context,
+                                   'elevated',
+                                   return_value=admin_context) as context_mock:
+                obj = self._test_class.get_by_id(self.context, id='fake_id')
+                self.assertTrue(self._is_test_class(obj))
+                self.assertEqual(self.db_obj, test_base.get_obj_db_fields(obj))
+                context_mock.assert_called_once_with()
+                get_object_mock.assert_called_once_with(
+                    admin_context, self._test_class.db_model, id='fake_id')
 
 
 class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
