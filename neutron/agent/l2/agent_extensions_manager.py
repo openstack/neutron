@@ -39,34 +39,23 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
             invoke_on_load=True, name_order=True)
         LOG.info(_LI("Loaded agent extensions names: %s"), self.names())
 
-    def _call_on_agent_extensions(self, method_name, context, data):
-        """Helper method for calling a method across all agent extensions."""
-        for extension in self:
-            try:
-                getattr(extension.obj, method_name)(context, data)
-            # TODO(QoS) add agent extensions exception and catch them here
-            except AttributeError:
-                LOG.exception(
-                    _LE("Agent Extension '%(name)s' failed in %(method)s"),
-                    {'name': extension.name, 'method': method_name}
-                )
-
     def initialize(self):
         # Initialize each agent extension in the list.
         for extension in self:
             LOG.info(_LI("Initializing agent extension '%s'"), extension.name)
             extension.obj.initialize()
 
-    def handle_network(self, context, data):
-        """Notify all agent extensions to handle network."""
-        self._call_on_agent_extensions("handle_network", context, data)
-
-    def handle_subnet(self, context, data):
-        """Notify all agent extensions to handle subnet."""
-        self._call_on_agent_extensions("handle_subnet", context, data)
-
     def handle_port(self, context, data):
         """Notify all agent extensions to handle port."""
-        self._call_on_agent_extensions("handle_port", context, data)
+        for extension in self:
+            try:
+                extension.obj.handle_port(context, data)
+            # TODO(QoS) add agent extensions exception and catch them here
+            except AttributeError:
+                LOG.exception(
+                    _LE("Agent Extension '%(name)s' failed "
+                        "while handling port update"),
+                    {'name': extension.name}
+                )
     #TODO(Qos) we are missing how to handle delete. we can pass action
     #type in all the handle methods or add handle_delete_resource methods

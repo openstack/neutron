@@ -20,7 +20,7 @@ import six
 
 @six.add_metaclass(abc.ABCMeta)
 class AgentCoreResourceExtension(object):
-    """Define stable abstract interface for Agent extension.
+    """Define stable abstract interface for agent extensions.
 
     An agent extension extends the agent core functionality.
     """
@@ -29,31 +29,13 @@ class AgentCoreResourceExtension(object):
         """Perform agent core resource extension initialization.
 
         Called after all extensions have been loaded.
-        No abstract methods defined below will be
-        called prior to this method being called.
+        No port handling will be called before this method.
         """
-        pass
 
-    def handle_network(self, context, data):
-        """handle agent extension for network.
-
-        :param context - rpc context
-        :param data - network data
-        """
-        pass
-
-    def handle_subnet(self, context, data):
-        """handle agent extension for subnet.
-
-        :param context - rpc context
-        :param data - subnet data
-        """
-        pass
-
+    @abc.abstractmethod
     def handle_port(self, context, data):
         """handle agent extension for port.
 
         :param context - rpc context
         :param data - port data
         """
-        pass
