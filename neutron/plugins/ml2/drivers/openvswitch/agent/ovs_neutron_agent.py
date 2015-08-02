@@ -314,11 +314,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _restore_local_vlan_map(self):
         cur_ports = self.int_br.get_vif_ports()
-        port_info = self.int_br.db_list(
-            "Port", columns=["name", "other_config", "tag"])
+        port_names = [p.port_name for p in cur_ports]
+        port_info = self.int_br.get_ports_attributes(
+            "Port", columns=["name", "other_config", "tag"], ports=port_names)
         by_name = {x['name']: x for x in port_info}
         for port in cur_ports:
-            # if a port was deleted between get_vif_ports and db_lists, we
+            # if a port was deleted between get_vif_ports and
+            # get_ports_attributes, we
             # will get a KeyError
             try:
                 local_vlan_map = by_name[port.port_name]['other_config']
@@ -741,8 +743,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _bind_devices(self, need_binding_ports):
         devices_up = []
         devices_down = []
-        port_info = self.int_br.db_list(
-            "Port", columns=["name", "tag"])
+        port_names = [p['vif_port'].port_name for p in need_binding_ports]
+        port_info = self.int_br.get_ports_attributes(
+            "Port", columns=["name", "tag"], ports=port_names)
         tags_by_name = {x['name']: x['tag'] for x in port_info}
         for port_detail in need_binding_ports:
             lvm = self.local_vlan_map.get(port_detail['network_id'])

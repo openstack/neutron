@@ -141,12 +141,6 @@ class BaseOVS(object):
         return self.ovsdb.db_get(table, record, column).execute(
             check_error=check_error, log_errors=log_errors)
 
-    def db_list(self, table, records=None, columns=None,
-                check_error=True, log_errors=True, if_exists=False):
-        return (self.ovsdb.db_list(table, records=records, columns=columns,
-                                   if_exists=if_exists).
-                execute(check_error=check_error, log_errors=log_errors))
-
 
 class OVSBridge(BaseOVS):
     def __init__(self, br_name):
@@ -326,20 +320,24 @@ class OVSBridge(BaseOVS):
                               "Exception: %(exception)s"),
                           {'cmd': args, 'exception': e})
 
+    def get_ports_attributes(self, table, columns=None, ports=None,
+                             check_error=True, log_errors=True,
+                             if_exists=False):
+        port_names = ports or self.get_port_name_list()
+        return (self.ovsdb.db_list(table, port_names, columns=columns,
+                                   if_exists=if_exists).
+                execute(check_error=check_error, log_errors=log_errors))
+
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
         edge_ports = []
-        port_names = self.get_port_name_list()
-        port_info = self.db_list(
-            'Interface', columns=['name', 'external_ids', 'ofport'])
-        by_name = {x['name']: x for x in port_info}
-        for name in port_names:
-            if not by_name.get(name):
-                #NOTE(dprince): some ports (like bonds) won't have all
-                # these attributes so we skip them entirely
-                continue
-            external_ids = by_name[name]['external_ids']
-            ofport = by_name[name]['ofport']
+        port_info = self.get_ports_attributes(
+            'Interface', columns=['name', 'external_ids', 'ofport'],
+            if_exists=True)
+        for port in port_info:
+            name = port['name']
+            external_ids = port['external_ids']
+            ofport = port['ofport']
             if "iface-id" in external_ids and "attached-mac" in external_ids:
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
@@ -356,9 +354,8 @@ class OVSBridge(BaseOVS):
         return edge_ports
 
     def get_vif_port_to_ofport_map(self):
-        port_names = self.get_port_name_list()
-        results = self.db_list(
-            'Interface', port_names, ['name', 'external_ids', 'ofport'],
+        results = self.get_ports_attributes(
+            'Interface', columns=['name', 'external_ids', 'ofport'],
             if_exists=True)
         port_map = {}
         for r in results:
@@ -373,9 +370,8 @@ class OVSBridge(BaseOVS):
 
     def get_vif_port_set(self):
         edge_ports = set()
-        port_names = self.get_port_name_list()
-        results = self.db_list(
-            'Interface', port_names, ['name', 'external_ids', 'ofport'],
+        results = self.get_ports_attributes(
+            'Interface', columns=['name', 'external_ids', 'ofport'],
             if_exists=True)
         for result in results:
             if result['ofport'] == UNASSIGNED_OFPORT:
@@ -413,22 +409,18 @@ class OVSBridge(BaseOVS):
         in the "Interface" table queried by the get_vif_port_set() method.
 
         """
-        port_names = self.get_port_name_list()
-        results = self.db_list('Port', port_names, ['name', 'tag'],
-                               if_exists=True)
+        results = self.get_ports_attributes(
+            'Port', columns=['name', 'tag'], if_exists=True)
         return {p['name']: p['tag'] for p in results}
 
     def get_vifs_by_ids(self, port_ids):
-        interface_info = self.db_list(
+        interface_info = self.get_ports_attributes(
             "Interface", columns=["name", "external_ids", "ofport"])
         by_id = {x['external_ids'].get('iface-id'): x for x in interface_info}
-        intfs_on_bridge = self.ovsdb.list_ports(self.br_name).execute(
-            check_error=True)
         result = {}
         for port_id in port_ids:
             result[port_id] = None
-            if (port_id not in by_id or
-                    by_id[port_id]['name'] not in intfs_on_bridge):
+            if port_id not in by_id:
                 LOG.info(_LI("Port %(port_id)s not present in bridge "
                              "%(br_name)s"),
                          {'port_id': port_id, 'br_name': self.br_name})

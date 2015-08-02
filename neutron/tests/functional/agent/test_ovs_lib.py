@@ -194,6 +194,22 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertEqual(sorted([x.port_name for x in vif_ports]),
                          sorted([x.port_name for x in ports]))
 
+    def test_get_vif_ports_with_bond(self):
+        for i in range(2):
+            self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port() for i in range(3)]
+        # bond ports don't have records in the Interface table but they do in
+        # the Port table
+        orig = self.br.get_port_name_list
+        new_port_name_list = lambda: orig() + ['bondport']
+        mock.patch.object(self.br, 'get_port_name_list',
+                          new=new_port_name_list).start()
+        ports = self.br.get_vif_ports()
+        self.assertEqual(3, len(ports))
+        self.assertTrue(all([isinstance(x, ovs_lib.VifPort) for x in ports]))
+        self.assertEqual(sorted([x.port_name for x in vif_ports]),
+                         sorted([x.port_name for x in ports]))
+
     def test_get_vif_port_set(self):
         for i in range(2):
             self.create_ovs_port()
@@ -214,6 +230,12 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         ports = self.br.get_vif_port_set()
         expected = set([vif_ports[0].vif_id])
         self.assertEqual(expected, ports)
+
+    def test_get_ports_attributes(self):
+        port_names = [self.create_ovs_port()[0], self.create_ovs_port()[0]]
+        db_ports = self.br.get_ports_attributes('Interface', columns=['name'])
+        db_ports_names = [p['name'] for p in db_ports]
+        self.assertEqual(sorted(port_names), sorted(db_ports_names))
 
     def test_get_port_tag_dict(self):
         # Simple case tested in port test_set_get_clear_db_val

@@ -121,7 +121,7 @@ class TunnelTest(object):
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
         self.mock_int_bridge.get_vif_ports.return_value = []
-        self.mock_int_bridge.db_list.return_value = []
+        self.mock_int_bridge.get_ports_attributes.return_value = []
         self.mock_int_bridge.db_get_val.return_value = {}
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
@@ -209,7 +209,8 @@ class TunnelTest(object):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
-            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
+            mock.call.get_ports_attributes(
+                'Port', columns=['name', 'other_config', 'tag'], ports=[])
         ]
 
         self.mock_tun_bridge_expected += [
@@ -601,7 +602,8 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
-            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
+            mock.call.get_ports_attributes(
+                'Port', columns=['name', 'other_config', 'tag'], ports=[])
         ]
         self.mock_tun_bridge_expected += [
             mock.call.delete_flows(),
