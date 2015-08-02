@@ -87,7 +87,8 @@ class TestQosPlugin(base.BaseTestCase):
             self.ctxt, self.policy.id, {'policy': fields})
         self._validate_registry_params(events.UPDATED)
 
-    def test_delete_policy(self):
+    @mock.patch('neutron.db.api.get_object', return_value=None)
+    def test_delete_policy(self, *mocks):
         self.qos_plugin.delete_policy(self.ctxt, self.policy.id)
         self._validate_registry_params(events.DELETED)
 

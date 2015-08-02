@@ -132,6 +132,11 @@ class InUse(NeutronException):
     message = _("The resource is inuse")
 
 
+class QosPolicyInUse(InUse):
+    message = _("QoS Policy %(policy_id)s is used by "
+                "%(object_type)s %(object_id)s.")
+
+
 class NetworkInUse(InUse):
     message = _("Unable to complete operation on network %(net_id)s. "
                 "There are one or more ports still in use on the network.")

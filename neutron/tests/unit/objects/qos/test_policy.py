@@ -248,3 +248,21 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.db_obj.pop('shared')
         obj = self._test_class(self.context, **self.db_obj)
         self.assertEqual(False, obj.shared)
+
+    def test_delete_not_allowed_if_policy_in_use_by_port(self):
+        obj = self._create_test_policy()
+        obj.attach_port(self._port['id'])
+
+        self.assertRaises(n_exc.QosPolicyInUse, obj.delete)
+
+        obj.detach_port(self._port['id'])
+        obj.delete()
+
+    def test_delete_not_allowed_if_policy_in_use_by_network(self):
+        obj = self._create_test_policy()
+        obj.attach_network(self._network['id'])
+
+        self.assertRaises(n_exc.QosPolicyInUse, obj.delete)
+
+        obj.detach_network(self._network['id'])
+        obj.delete()
