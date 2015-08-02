@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 from oslo_log import log
 import stevedore
 
@@ -21,23 +22,26 @@ from neutron.i18n import _LE, _LI
 LOG = log.getLogger(__name__)
 
 
+L2_AGENT_EXT_MANAGER_NAMESPACE = 'neutron.agent.l2.extensions'
+L2_AGENT_EXT_MANAGER_OPTS = [
+    cfg.ListOpt('extensions',
+                default=[],
+                help=_('Extensions list to use')),
+]
+
+
+def register_opts(conf):
+    conf.register_opts(L2_AGENT_EXT_MANAGER_OPTS, 'agent')
+
+
 class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
     """Manage agent extensions."""
 
-    def __init__(self):
-        # Ordered list of agent extensions, defining
-        # the order in which the agent extensions are called.
-
-        #TODO(QoS): get extensions from config
-        agent_extensions = ('qos', )
-
-        LOG.info(_LI("Configured agent extensions names: %s"),
-                 agent_extensions)
-
+    def __init__(self, conf):
         super(AgentExtensionsManager, self).__init__(
-            'neutron.agent.l2.extensions', agent_extensions,
+            L2_AGENT_EXT_MANAGER_NAMESPACE, conf.agent.extensions,
             invoke_on_load=True, name_order=True)
-        LOG.info(_LI("Loaded agent extensions names: %s"), self.names())
+        LOG.info(_LI("Loaded agent extensions: %s"), self.names())
 
     def _call_on_agent_extensions(self, method_name, context, data):
         """Helper method for calling a method across all agent extensions."""

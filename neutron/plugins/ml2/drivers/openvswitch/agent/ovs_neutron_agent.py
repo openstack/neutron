@@ -367,8 +367,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      start_listening=False)
 
     def init_agent_extensions_mgr(self):
+        agent_extensions_manager.register_opts(self.conf)
         self.agent_extensions_mgr = (
-            agent_extensions_manager.AgentExtensionsManager())
+            agent_extensions_manager.AgentExtensionsManager(self.conf))
         self.agent_extensions_mgr.initialize()
 
     def get_net_uuid(self, vif_id):
