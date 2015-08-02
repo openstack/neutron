@@ -89,6 +89,10 @@ class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found")
 
 
+class QosPolicyNotFound(NotFound):
+    message = _("QoS policy %(policy_id)s could not be found")
+
+
 class PortNotFoundOnNetwork(NotFound):
     message = _("Port %(port_id)s could not be found "
                 "on network %(net_id)s")
