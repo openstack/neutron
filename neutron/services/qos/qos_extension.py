@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db import api as db_api
 from neutron import manager
 from neutron.objects.qos import policy as policy_object
 from neutron.plugins.common import constants as plugin_constants
@@ -39,11 +40,6 @@ class QosResourceExtensionHandler(object):
         old_policy = policy_object.QosPolicy.get_port_policy(
             context, port['id'])
         if old_policy:
-            #TODO(QoS): this means two transactions. One for detaching
-            #           one for re-attaching, we may want to update
-            #           within a single transaction instead, or put
-            #           a whole transaction on top, or handle the switch
-            #           at db api level automatically within transaction.
             old_policy.detach_port(port['id'])
 
         qos_policy_id = port_changes.get(qos_consts.QOS_POLICY_ID)
@@ -71,7 +67,8 @@ class QosResourceExtensionHandler(object):
             network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _exec(self, method_name, context, kwargs):
-        return getattr(self, method_name)(context=context, **kwargs)
+        with db_api.autonested_transaction(context.session):
+            return getattr(self, method_name)(context=context, **kwargs)
 
     def process_resource(self, context, resource_type, requested_resource,
                          actual_resource):

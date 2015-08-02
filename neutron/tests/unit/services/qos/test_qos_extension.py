@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron import context
 from neutron.plugins.common import constants as plugin_constants
 from neutron.services.qos import qos_consts
 from neutron.services.qos import qos_extension
@@ -33,9 +34,11 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
         self.ext_handler = qos_extension.QosResourceExtensionHandler()
         policy_p = mock.patch('neutron.objects.qos.policy.QosPolicy')
         self.policy_m = policy_p.start()
+        self.context = context.get_admin_context()
 
     def test_process_resource_no_qos_policy_id(self):
-        self.ext_handler.process_resource(None, qos_extension.PORT, {}, None)
+        self.ext_handler.process_resource(
+            self.context, qos_extension.PORT, {}, None)
         self.assertFalse(self.policy_m.called)
 
     def _mock_plugin_loaded(self, plugin_loaded):
@@ -48,7 +51,7 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
     def test_process_resource_no_qos_plugin_loaded(self):
         with self._mock_plugin_loaded(False):
             self.ext_handler.process_resource(
-                None, qos_extension.PORT,
+                self.context, qos_extension.PORT,
                 {qos_consts.QOS_POLICY_ID: None}, None)
             self.assertFalse(self.policy_m.called)
 
@@ -60,7 +63,7 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
             qos_policy = mock.MagicMock()
             self.policy_m.get_by_id = mock.Mock(return_value=qos_policy)
             self.ext_handler.process_resource(
-                None, qos_extension.PORT,
+                self.context, qos_extension.PORT,
                 {qos_consts.QOS_POLICY_ID: qos_policy_id},
                 actual_port)
 
@@ -78,7 +81,7 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
             new_qos_policy = mock.MagicMock()
             self.policy_m.get_by_id = mock.Mock(return_value=new_qos_policy)
             self.ext_handler.process_resource(
-                None, qos_extension.PORT,
+                self.context, qos_extension.PORT,
                 {qos_consts.QOS_POLICY_ID: qos_policy_id},
                 actual_port)
 
@@ -93,7 +96,7 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
             qos_policy = mock.MagicMock()
             self.policy_m.get_by_id = mock.Mock(return_value=qos_policy)
             self.ext_handler.process_resource(
-                None, qos_extension.NETWORK,
+                self.context, qos_extension.NETWORK,
                 {qos_consts.QOS_POLICY_ID: qos_policy_id}, actual_network)
 
             qos_policy.attach_network.assert_called_once_with(
@@ -111,7 +114,7 @@ class QosResourceExtensionHandlerTestCase(base.BaseTestCase):
             new_qos_policy = mock.MagicMock()
             self.policy_m.get_by_id = mock.Mock(return_value=new_qos_policy)
             self.ext_handler.process_resource(
-                None, qos_extension.NETWORK,
+                self.context, qos_extension.NETWORK,
                 {qos_consts.QOS_POLICY_ID: qos_policy_id}, actual_network)
 
             old_qos_policy.detach_network.assert_called_once_with(network_id)
