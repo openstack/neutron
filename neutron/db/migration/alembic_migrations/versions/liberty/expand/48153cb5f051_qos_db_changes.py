@@ -64,6 +64,6 @@ def upgrade():
         sa.Column('id', sa.String(length=36), primary_key=True),
         sa.Column('qos_policy_id', sa.String(length=36),
                   sa.ForeignKey('qos_policies.id', ondelete='CASCADE'),
-                  nullable=False),
+                  nullable=False, unique=True),
         sa.Column('max_kbps', sa.Integer()),
         sa.Column('max_burst_kbps', sa.Integer()))
