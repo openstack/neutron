@@ -111,16 +111,17 @@ running.
 
 At the root of the results - there should be the following:
 
-console.html.gz - contains the output of stdout of the test run
-local.conf / localrc - contains the setup used for this run
-logs/
-Logs must be a directory, which contains the following:
+* console.html.gz - contains the output of stdout of the test run
+* local.conf / localrc - contains the setup used for this run
+* logs - contains the output of detail test log of the test run
 
-Log files for each screen session that DevStack creates and launches an
-OpenStack component in
-Test result files
-testr_results.html.gz
-tempest.txt.gz
+The above "logs" must be a directory, which contains the following:
+
+* Log files for each screen session that DevStack creates and launches an
+  OpenStack component in
+* Test result files
+* testr_results.html.gz
+* tempest.txt.gz
 
 List of existing plugins and drivers
 ------------------------------------
