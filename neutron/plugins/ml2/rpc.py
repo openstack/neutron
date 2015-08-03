@@ -28,11 +28,11 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
-from neutron.extensions import qos
 from neutron.i18n import _LW
 from neutron import manager
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
+from neutron.services.qos import qos_consts
 # REVISIT(kmestery): Allow the type and mechanism drivers to supply the
 # mixins and eventually remove the direct dependencies on type_tunnel.
 
@@ -107,8 +107,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                           host,
                                           port_context.network.current)
 
-        qos_profile_id = (port.get(qos.QOS_POLICY_ID) or
-                          port_context.network._network.get(qos.QOS_POLICY_ID))
+        qos_policy_id = (port.get(qos_consts.QOS_POLICY_ID) or
+                         port_context.network._network.get(
+                             qos_consts.QOS_POLICY_ID))
         entry = {'device': device,
                  'network_id': port['network_id'],
                  'port_id': port['id'],
@@ -121,7 +122,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'device_owner': port['device_owner'],
                  'allowed_address_pairs': port['allowed_address_pairs'],
                  'port_security_enabled': port.get(psec.PORTSECURITY, True),
-                 'qos_policy_id': qos_profile_id,
+                 'qos_policy_id': qos_policy_id,
                  'profile': port[portbindings.PROFILE]}
         LOG.debug("Returning: %s", entry)
         return entry

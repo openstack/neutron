@@ -24,6 +24,7 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron import manager
 from neutron.plugins.common import constants
+from neutron.services.qos import qos_consts
 from neutron.services import service_base
 
 QOS_PREFIX = "/qos"
@@ -80,19 +81,19 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
     }
 }
 
-QOS_POLICY_ID = "qos_policy_id"
-
 EXTENDED_ATTRIBUTES_2_0 = {
-    'ports': {QOS_POLICY_ID: {'allow_post': True,
-                              'allow_put': True,
-                              'is_visible': True,
-                              'default': None,
-                              'validate': {'type:uuid_or_none': None}}},
-    'networks': {QOS_POLICY_ID: {'allow_post': True,
-                                 'allow_put': True,
-                                 'is_visible': True,
-                                 'default': None,
-                                 'validate': {'type:uuid_or_none': None}}}}
+    'ports': {qos_consts.QOS_POLICY_ID: {
+                                    'allow_post': True,
+                                    'allow_put': True,
+                                    'is_visible': True,
+                                    'default': None,
+                                    'validate': {'type:uuid_or_none': None}}},
+    'networks': {qos_consts.QOS_POLICY_ID: {
+                                    'allow_post': True,
+                                    'allow_put': True,
+                                    'is_visible': True,
+                                    'default': None,
+                                    'validate': {'type:uuid_or_none': None}}}}
 
 
 class Qos(extensions.ExtensionDescriptor):

@@ -15,3 +15,5 @@
 
 RULE_TYPE_BANDWIDTH_LIMIT = 'bandwidth_limit'
 VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT]
+
+QOS_POLICY_ID = 'qos_policy_id'
