@@ -183,3 +183,6 @@ RPC_NAMESPACE_STATE = None
 DEFAULT_NETWORK_MTU = 0
 
 ROUTER_MARK_MASK = "0xffff"
+
+# Time format
+ISO8601_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
