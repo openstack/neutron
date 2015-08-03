@@ -317,6 +317,11 @@ class IptablesManager(object):
 
         if not state_less:
             self.ipv4.update(
+                {'mangle': IptablesTable(binary_name=self.wrap_name)})
+            builtin_chains[4].update(
+                {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
+                            'POSTROUTING']})
+            self.ipv4.update(
                 {'nat': IptablesTable(binary_name=self.wrap_name)})
             builtin_chains[4].update({'nat': ['PREROUTING',
                                       'OUTPUT', 'POSTROUTING']})
