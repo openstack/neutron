@@ -144,10 +144,10 @@ class ConfigurationTest(base.BaseTestCase):
         cfg.CONF.set_override('core_plugin', vmware.PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
-        # The version returned from NSX does not really matter here
+        # The version returned from NSX matter as it has be exactly 4.1
         with mock.patch.object(client.NsxApiClient,
                                'get_version',
-                               return_value=version.Version("9.9")):
+                               return_value=version.Version("4.1")):
             with mock.patch.object(lsnlib,
                                    'service_cluster_exists',
                                    return_value=True):
@@ -206,7 +206,7 @@ class ConfigurationTest(base.BaseTestCase):
                          cfg.CONF.NSX.agent_mode)
         with mock.patch.object(client.NsxApiClient,
                                'get_version',
-                               return_value=version.Version("4.2")):
+                               return_value=version.Version("4.1")):
             with mock.patch.object(lsnlib,
                                    'service_cluster_exists',
                                    return_value=True):
