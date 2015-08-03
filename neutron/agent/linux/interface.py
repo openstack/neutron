@@ -25,6 +25,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
+from neutron.common import ipv6_utils
 from neutron.i18n import _LE, _LI
 
 
@@ -51,6 +52,17 @@ class LinuxInterfaceDriver(object):
 
     def __init__(self, conf):
         self.conf = conf
+        if self.conf.network_device_mtu:
+            self._validate_network_device_mtu()
+
+    def _validate_network_device_mtu(self):
+        if (ipv6_utils.is_enabled() and
+            self.conf.network_device_mtu < n_const.IPV6_MIN_MTU):
+            LOG.error(_LE("IPv6 protocol requires a minimum MTU of "
+                          "%(min_mtu)s, while the configured value is "
+                          "%(current_mtu)s"), {'min_mtu': n_const.IPV6_MIN_MTU,
+                          'current_mtu': self.conf.network_device_mtu})
+            raise SystemExit(1)
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
                 preserve_ips=[], gateway_ips=None,

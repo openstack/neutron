@@ -15,6 +15,7 @@
 
 import mock
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
@@ -334,6 +335,13 @@ class TestOVSInterfaceDriver(TestBase):
         self.assertIsNone(self.conf.network_device_mtu)
         self.conf.set_override('network_device_mtu', 9000)
         self.assertEqual(self.conf.network_device_mtu, 9000)
+
+    def test_validate_min_ipv6_mtu(self):
+        self.conf.set_override('network_device_mtu', 1200)
+        with mock.patch('neutron.common.ipv6_utils.is_enabled') as ipv6_status:
+            with testtools.ExpectedException(SystemExit):
+                ipv6_status.return_value = True
+                BaseChild(self.conf)
 
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)

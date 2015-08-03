@@ -190,6 +190,7 @@ RPC_NAMESPACE_RESOURCES = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 0
+IPV6_MIN_MTU = 1280
 
 ROUTER_MARK_MASK = "0xffff"
 
