@@ -12,6 +12,7 @@
 
 import abc
 
+from oslo_db import exception as obj_exc
 from oslo_versionedobjects import base as obj_base
 import six
 
@@ -21,6 +22,10 @@ from neutron.db import api as db_api
 
 class NeutronObjectUpdateForbidden(exceptions.NeutronException):
     message = _("Unable to update the following object fields: %(fields)s")
+
+
+class NeutronObjectDuplicateEntry(exceptions.Conflict):
+    message = _("Failed to create a duplicate object")
 
 
 def get_updatable_fields(cls, fields):
@@ -116,7 +121,10 @@ class NeutronDbObject(NeutronObject):
 
     def create(self):
         fields = self._get_changed_persistent_fields()
-        db_obj = db_api.create_object(self._context, self.db_model, fields)
+        try:
+            db_obj = db_api.create_object(self._context, self.db_model, fields)
+        except obj_exc.DBDuplicateEntry:
+            raise NeutronObjectDuplicateEntry()
         self.from_db_object(db_obj)
 
     def update(self):

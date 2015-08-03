@@ -14,6 +14,7 @@ import random
 import string
 
 import mock
+from oslo_db import exception as obj_exc
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -153,6 +154,12 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self._check_equal(obj, self.db_objs[1])
             obj.create()
             self._check_equal(obj, self.db_obj)
+
+    def test_create_duplicates(self):
+        with mock.patch.object(db_api, 'create_object',
+                               side_effect=obj_exc.DBDuplicateEntry):
+            obj = self._test_class(self.context, **self.db_obj)
+            self.assertRaises(base.NeutronObjectDuplicateEntry, obj.create)
 
     @mock.patch.object(db_api, 'update_object')
     def test_update_no_changes(self, update_mock):
