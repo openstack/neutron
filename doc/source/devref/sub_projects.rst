@@ -358,7 +358,7 @@ SFC
 vSphere
 -------
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-vsphere
+* Git: https://git.openstack.org/cgit/openstack/networking-vsphere
 * Launchpad: https://launchpad.net/networking-vsphere
 
 .. _vmware-nsx:
