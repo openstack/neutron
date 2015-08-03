@@ -374,12 +374,7 @@ class TestOvsNeutronAgent(object):
                                   return_value=None):
             self.assertFalse(get_dev_fn.called)
 
-    #TODO(QoS) that this mock should go away once we don't hardcode
-    #qos extension.
-    @mock.patch('neutron.api.rpc.handlers.resources_rpc.'
-                'ResourcesServerRpcApi.get_info', return_value=[])
-    def test_treat_devices_added_updated_updates_known_port(
-        self, *args):
+    def test_treat_devices_added_updated_updates_known_port(self):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
         self.assertTrue(self._mock_treat_devices_added_updated(

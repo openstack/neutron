@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from oslo_config import cfg
 
 from neutron.agent.l2 import agent_extensions_manager
 from neutron.tests import base
@@ -22,7 +23,10 @@ class TestAgentExtensionsManager(base.BaseTestCase):
         super(TestAgentExtensionsManager, self).setUp()
         mock.patch('neutron.agent.l2.extensions.qos_agent.QosAgentExtension',
                    autospec=True).start()
-        self.manager = agent_extensions_manager.AgentExtensionsManager()
+        conf = cfg.CONF
+        agent_extensions_manager.register_opts(conf)
+        cfg.CONF.set_override('extensions', ['qos'], 'agent')
+        self.manager = agent_extensions_manager.AgentExtensionsManager(conf)
 
     def _get_extension(self):
         return self.manager.extensions[0].obj
