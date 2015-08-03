@@ -312,3 +312,23 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(exceptions.ServerFault,
                           self.admin_client.show_bandwidth_limit_rule,
                           policy['id'], rule['id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f211222c-5808-46cb-a961-983bbab6b852')
+    def test_rule_create_rule_nonexistent_policy(self):
+        self.assertRaises(
+            exceptions.NotFound,
+            self.create_qos_bandwidth_limit_rule,
+            'policy', 200, 1337)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('3ba4abf9-7976-4eaf-a5d0-a934a6e09b2d')
+    def test_rule_association_nonshared_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False,
+                                        tenant_id='tenant-id')
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.create_bandwidth_limit_rule,
+            policy['id'], 200, 1337)

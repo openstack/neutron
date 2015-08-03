@@ -442,9 +442,10 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         return fw_policy
 
     @classmethod
-    def create_qos_policy(cls, name, description, shared):
+    def create_qos_policy(cls, name, description, shared, tenant_id=None):
         """Wrapper utility that returns a test QoS policy."""
-        body = cls.admin_client.create_qos_policy(name, description, shared)
+        body = cls.admin_client.create_qos_policy(
+            name, description, shared, tenant_id)
         qos_policy = body['policy']
         cls.qos_policies.append(qos_policy)
         return qos_policy
