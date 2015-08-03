@@ -30,7 +30,11 @@ vxlan_opts = [
     cfg.IntOpt('tos',
                help=_("TOS for vxlan interface protocol packets.")),
     cfg.StrOpt('vxlan_group', default=DEFAULT_VXLAN_GROUP,
-               help=_("Multicast group for vxlan interface.")),
+               help=_("Multicast group(s) for vxlan interface. A range of "
+                      "group addresses may be specified by using CIDR "
+                      "notation. To reserve a unique group for each possible "
+                      "(24-bit) VNI, use a /8 such as 239.0.0.0/8. This "
+                      "setting must be the same on all the agents.")),
     cfg.IPOpt('local_ip', version=4,
               help=_("Local IP address of the VXLAN endpoints.")),
     cfg.BoolOpt('l2_population', default=False,
