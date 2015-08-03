@@ -26,6 +26,8 @@ from neutron.tests import base as test_base
 
 
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
+OBJECTS_BASE_OBJ_FROM_PRIMITIVE = ('oslo_versionedobjects.base.'
+                                   'VersionedObject.obj_from_primitive')
 
 
 class FakeModel(object):
@@ -213,6 +215,13 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self._check_equal(obj, self.db_obj)
         delete_mock.assert_called_once_with(
             self.context, self._test_class.db_model, self.db_obj['id'])
+
+    @mock.patch(OBJECTS_BASE_OBJ_FROM_PRIMITIVE)
+    def test_clean_obj_from_primitive(self, get_prim_m):
+        expected_obj = get_prim_m.return_value
+        observed_obj = self._test_class.clean_obj_from_primitive('foo', 'bar')
+        self.assertIs(expected_obj, observed_obj)
+        self.assertTrue(observed_obj.obj_reset_changes.called)
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):

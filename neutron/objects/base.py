@@ -49,6 +49,12 @@ class NeutronObject(obj_base.VersionedObject,
         return dict(self.items())
 
     @classmethod
+    def clean_obj_from_primitive(cls, primitive, context=None):
+        obj = cls.obj_from_primitive(primitive, context)
+        obj.obj_reset_changes()
+        return obj
+
+    @classmethod
     def get_by_id(cls, context, id):
         raise NotImplementedError()
 

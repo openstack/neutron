@@ -38,6 +38,8 @@ DHCP_AGENT = 'dhcp_agent'
 METERING_AGENT = 'metering_agent'
 LOADBALANCER_AGENT = 'n-lbaas_agent'
 
+RESOURCE_TOPIC_PATTERN = "neutron-vo-%(resource_type)s-%(version)s"
+
 
 def get_topic_name(prefix, table, operation, host=None):
     """Create a topic name.

@@ -17,12 +17,14 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.api.rpc.callbacks.producer import registry
+from neutron.api.rpc.callbacks.consumer import registry as cons_registry
+from neutron.api.rpc.callbacks.producer import registry as prod_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.objects import base as obj_base
 
 
 LOG = logging.getLogger(__name__)
@@ -83,9 +85,7 @@ class ResourcesPullRpcApi(object):
             raise ResourceNotFound(resource_type=resource_type,
                                    resource_id=resource_id)
 
-        obj = resource_type_cls.obj_from_primitive(primitive)
-        obj.obj_reset_changes()
-        return obj
+        return resource_type_cls.clean_obj_from_primitive(primitive)
 
 
 class ResourcesPullRpcCallback(object):
@@ -103,11 +103,73 @@ class ResourcesPullRpcCallback(object):
         version='1.0', namespace=constants.RPC_NAMESPACE_RESOURCES)
 
     def pull(self, context, resource_type, version, resource_id):
-        _validate_resource_type(resource_type)
-
-        obj = registry.pull(resource_type, resource_id, context=context)
+        obj = prod_registry.pull(resource_type, resource_id, context=context)
         if obj:
-            # don't request a backport for the latest known version
+            #TODO(QoS): Remove in the future with new version of
+            #           versionedobjects containing
+            #           https://review.openstack.org/#/c/207998/
             if version == obj.VERSION:
                 version = None
             return obj.obj_to_primitive(target_version=version)
+
+
+def _object_topic(obj):
+    resource_type = resources.get_resource_type(obj)
+    return topics.RESOURCE_TOPIC_PATTERN % {
+        'resource_type': resource_type, 'version': obj.VERSION}
+
+
+class ResourcesPushRpcApi(object):
+    """Plugin-side RPC for plugin-to-agents interaction.
+
+    This interface is designed to push versioned object updates to interested
+    agents using fanout topics.
+
+    This class implements the caller side of an rpc interface.  The receiver
+    side can be found below: ResourcesPushRpcCallback.
+    """
+
+    def __init__(self):
+        target = oslo_messaging.Target(
+            version='1.0',
+            namespace=constants.RPC_NAMESPACE_RESOURCES)
+        self.client = n_rpc.get_client(target)
+
+    def _prepare_object_fanout_context(self, obj):
+        """Prepare fanout context, one topic per object type."""
+        obj_topic = _object_topic(obj)
+        return self.client.prepare(fanout=True, topic=obj_topic)
+
+    @log_helpers.log_method_call
+    def push(self, context, resource, event_type):
+        resource_type = resources.get_resource_type(resource)
+        _validate_resource_type(resource_type)
+        cctxt = self._prepare_object_fanout_context(resource)
+        #TODO(QoS): Push notifications for every known version once we have
+        #           multiple of those
+        dehydrated_resource = resource.obj_to_primitive()
+        cctxt.cast(context, 'push',
+                   resource=dehydrated_resource,
+                   event_type=event_type)
+
+
+class ResourcesPushRpcCallback(object):
+    """Agent-side RPC for plugin-to-agents interaction.
+
+    This class implements the receiver for notification about versioned objects
+    resource updates used by neutron.api.rpc.callbacks. You can find the
+    caller side in ResourcesPushRpcApi.
+    """
+    # History
+    #   1.0 Initial version
+
+    target = oslo_messaging.Target(version='1.0',
+                                   namespace=constants.RPC_NAMESPACE_RESOURCES)
+
+    def push(self, context, resource, event_type):
+        resource_obj = obj_base.NeutronObject.clean_obj_from_primitive(
+            resource)
+        LOG.debug("Resources notification (%(event_type)s): %(resource)s",
+                  {'event_type': event_type, 'resource': repr(resource_obj)})
+        resource_type = resources.get_resource_type(resource_obj)
+        cons_registry.push(resource_type, resource_obj, event_type)
