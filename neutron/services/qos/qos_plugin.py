@@ -128,8 +128,10 @@ class QoSPlugin(qos.QoSPluginBase):
                                         policy_id, fields=None):
         # validate that we have access to the policy
         self._get_policy_obj(context, policy_id)
-        return rule_object.QosBandwidthLimitRule.get_by_id(context,
-                                                           rule_id)
+        rule = rule_object.QosBandwidthLimitRule.get_by_id(context, rule_id)
+        if not rule:
+            raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
+        return rule
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
