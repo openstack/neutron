@@ -276,7 +276,7 @@ class FlavorManager(common_db_mixin.CommonDbMixin):
         sp = service_profile['service_profile']
         with context.session.begin(subtransactions=True):
             driver_klass = self._load_dummy_driver(sp['driver'])
-            # 'get_service_type' must be a static method so it cant be changed
+            # 'get_service_type' must be a static method so it can't be changed
             svc_type = DummyServiceDriver.get_service_type()
 
             sp_db = ServiceProfile(id=uuidutils.generate_uuid(),
