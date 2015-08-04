@@ -294,7 +294,7 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_provision_local_vlan(self):
-        ofports = TUN_OFPORTS[p_const.TYPE_GRE].values()
+        ofports = list(TUN_OFPORTS[p_const.TYPE_GRE].values())
         self.mock_tun_bridge_expected += [
             mock.call.install_flood_to_tun(LV_ID, LS_ID, ofports),
             mock.call.provision_local_vlan(
