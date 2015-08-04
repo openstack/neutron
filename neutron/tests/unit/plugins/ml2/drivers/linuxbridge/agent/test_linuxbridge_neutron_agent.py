@@ -886,6 +886,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self, expected, l2_population, iproute_arg_supported, fdb_append):
         cfg.CONF.set_override('l2_population', l2_population, 'VXLAN')
         with mock.patch.object(ip_lib, 'device_exists', return_value=False),\
+                mock.patch.object(ip_lib, 'vxlan_in_use', return_value=False),\
                 mock.patch.object(self.lbm,
                                   'delete_vxlan',
                                   return_value=None),\
