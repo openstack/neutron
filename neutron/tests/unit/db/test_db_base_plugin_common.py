@@ -17,6 +17,35 @@ from neutron.db import db_base_plugin_common
 from neutron.tests import base
 
 
+class DummyObject(object):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def to_dict(self):
+        return self.kwargs
+
+
+class ConvertToDictTestCase(base.BaseTestCase):
+
+    @db_base_plugin_common.convert_result_to_dict
+    def method_dict(self, fields=None):
+        return DummyObject(one=1, two=2, three=3)
+
+    @db_base_plugin_common.convert_result_to_dict
+    def method_list(self):
+        return [DummyObject(one=1, two=2, three=3)] * 3
+
+    def test_simple_object(self):
+        expected = {'one': 1, 'two': 2, 'three': 3}
+        observed = self.method_dict()
+        self.assertEqual(expected, observed)
+
+    def test_list_of_objects(self):
+        expected = [{'one': 1, 'two': 2, 'three': 3}] * 3
+        observed = self.method_list()
+        self.assertEqual(expected, observed)
+
+
 class FilterFieldsTestCase(base.BaseTestCase):
 
     @db_base_plugin_common.filter_fields
