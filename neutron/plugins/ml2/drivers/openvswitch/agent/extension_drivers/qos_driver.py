@@ -16,8 +16,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
-from neutron.i18n import _LE, _LW
 from neutron.agent.l2.extensions import qos_agent
+from neutron.i18n import _LW
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
     mech_openvswitch)
 
@@ -52,13 +52,8 @@ class QosOVSAgentDriver(qos_agent.QosAgentDriver):
         for rule in qos_policy.rules:
             if rule.rule_type in self._SUPPORTED_RULES:
                 handler_name = ("".join(("_", action, "_", rule.rule_type)))
-                try:
-                    handler = getattr(self, handler_name)
-                    handler(port, rule)
-                except AttributeError:
-                    LOG.error(
-                        _LE('Failed to locate a handler for %(rule_type) '
-                        'rules; skipping.'), handler_name)
+                handler = getattr(self, handler_name)
+                handler(port, rule)
             else:
                 LOG.warning(_LW('Unsupported QoS rule type for %(rule_id)s: '
                             '%(rule_type)s; skipping'),
