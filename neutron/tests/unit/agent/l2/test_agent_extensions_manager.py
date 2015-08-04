@@ -31,27 +31,10 @@ class TestAgentExtensionsManager(base.BaseTestCase):
     def _get_extension(self):
         return self.manager.extensions[0].obj
 
-    def test__call_on_agent_extension_missing_attribute_doesnt_crash(self):
-        self.manager._call_on_agent_extensions('foo', 'bar', 'baz')
-
     def test_initialize(self):
         self.manager.initialize()
         ext = self._get_extension()
         self.assertTrue(ext.initialize.called)
-
-    def test_handle_network(self):
-        context = object()
-        data = object()
-        self.manager.handle_network(context, data)
-        ext = self._get_extension()
-        ext.handle_network.assert_called_once_with(context, data)
-
-    def test_handle_subnet(self):
-        context = object()
-        data = object()
-        self.manager.handle_subnet(context, data)
-        ext = self._get_extension()
-        ext.handle_subnet.assert_called_once_with(context, data)
 
     def test_handle_port(self):
         context = object()
