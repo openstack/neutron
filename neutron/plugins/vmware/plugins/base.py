@@ -1567,16 +1567,24 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             context.session, self.cluster, router_id)
         # It is safe to remove the router from the database, so remove it
         # from the backend
-        try:
-            self._delete_lrouter(context, router_id, nsx_router_id)
-        except n_exc.NotFound:
-            # This is not a fatal error, but needs to be logged
-            LOG.warning(_("Logical router '%s' not found "
-                        "on NSX Platform"), router_id)
-        except api_exc.NsxApiException:
-            raise nsx_exc.NsxPluginException(
-                err_msg=(_("Unable to delete logical router '%s' "
-                           "on NSX Platform") % nsx_router_id))
+        if nsx_router_id:
+            try:
+                self._delete_lrouter(context, router_id, nsx_router_id)
+            except n_exc.NotFound:
+                # This is not a fatal error, but needs to be logged
+                LOG.warning(_("Logical router '%s' not found "
+                              "on NSX Platform"), router_id)
+            except api_exc.NsxApiException:
+                raise nsx_exc.NsxPluginException(
+                    err_msg=(_("Unable to delete logical router '%s' "
+                               "on NSX Platform") % nsx_router_id))
+        else:
+            # If no mapping is found it is likely that the logical router does
+            # not exist anymore in the backend. This is not a fatal condition,
+            # but will result in an exception is "None" is passed to
+            # _delete_lrouter
+            LOG.warning(_("No mapping found for logical router '%s' "
+                          "on NSX Platform"), router_id)
         # Remove the NSX mapping first in order to ensure a mapping to
         # a non-existent NSX router is not left in the DB in case of
         # failure while removing the router from the neutron DB
