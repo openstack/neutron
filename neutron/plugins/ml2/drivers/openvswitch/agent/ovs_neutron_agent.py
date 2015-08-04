@@ -596,7 +596,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if network_type in constants.TUNNEL_NETWORK_TYPES:
             if self.enable_tunneling:
                 # outbound broadcast/multicast
-                ofports = self.tun_br_ofports[network_type].values()
+                ofports = list(self.tun_br_ofports[network_type].values())
                 if ofports:
                     self.tun_br.install_flood_to_tun(lvid,
                                                      segmentation_id,
