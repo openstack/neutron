@@ -89,3 +89,14 @@ def arp_responder_supported(root_helper):
                                dl_vlan=42,
                                nw_dst='%s' % ip,
                                actions=actions)
+
+
+def ebtables_supported():
+    try:
+        cmd = ['ebtables', '--version']
+        agent_utils.execute(cmd)
+        return True
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking for installed ebtables. "
+                  "Exception: %s", e)
+        return False

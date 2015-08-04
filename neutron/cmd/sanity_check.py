@@ -71,6 +71,14 @@ def check_arp_responder():
     return result
 
 
+def check_ebtables():
+    result = checks.ebtables_supported()
+    if not result:
+        LOG.error(_LE('Cannot run ebtables. Please ensure that it '
+                      'is installed.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -81,6 +89,8 @@ OPTS = [
                     help=_('Check for nova notification support')),
     BoolOptCallback('arp_responder', check_arp_responder, default=False,
                     help=_('Check for ARP responder support')),
+    BoolOptCallback('ebtables_installed', check_ebtables, default=False,
+                    help=_('Check ebtables installation')),
 ]
 
 
@@ -101,6 +111,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
         cfg.CONF.set_override('arp_responder', True)
+    if cfg.CONF.AGENT.prevent_arp_spoofing:
+        cfg.CONF.set_override('ebtables_installed', True)
 
 
 def all_tests_passed():
