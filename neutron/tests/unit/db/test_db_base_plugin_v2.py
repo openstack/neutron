@@ -4161,6 +4161,21 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPClientError.code)
 
+    #updating alloc pool on top of existing subnet.gateway_ip
+    def test_update_subnet_allocation_pools_over_gateway_ip_returns_409(self):
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             allocation_pools=allocation_pools,
+                             cidr='10.0.0.0/24') as subnet:
+                data = {'subnet': {'allocation_pools': [
+                        {'start': '10.0.0.1', 'end': '10.0.0.254'}]}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPConflict.code)
+
     def _test_subnet_update_enable_dhcp_no_ip_available_returns_409(
             self, allocation_pools, cidr):
         ip_version = netaddr.IPNetwork(cidr).version
