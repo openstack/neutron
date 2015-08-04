@@ -124,7 +124,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                            'device_id': 'fake_device',
                                            'device_owner': 'fake_owner'})
 
-    #TODO(QoS): give a thought on checking detach/attach for invalid values.
     def test_attach_network_get_network_policy(self):
 
         obj = self._create_test_policy()
