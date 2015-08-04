@@ -23,7 +23,10 @@ class CallbackFailure(Exception):
         self.errors = errors
 
     def __str__(self):
-        return ','.join(str(error) for error in self.errors)
+        if isinstance(self.errors, list):
+            return ','.join(str(error) for error in self.errors)
+        else:
+            return str(self.errors)
 
 
 class NotificationError(object):
