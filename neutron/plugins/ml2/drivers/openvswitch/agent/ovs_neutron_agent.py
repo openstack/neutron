@@ -1233,6 +1233,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if 'port_id' in details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
+                details['vif_port'] = port
                 need_binding = self.treat_vif_port(port, details['port_id'],
                                                    details['network_id'],
                                                    details['network_type'],
@@ -1246,7 +1247,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     self.setup_arp_spoofing_protection(self.int_br,
                                                        port, details)
                 if need_binding:
-                    details['vif_port'] = port
                     need_binding_devices.append(details)
                 self.agent_extensions_mgr.handle_port(self.context, details)
             else:

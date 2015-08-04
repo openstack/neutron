@@ -27,44 +27,44 @@ from neutron import manager
 
 @six.add_metaclass(abc.ABCMeta)
 class QosAgentDriver(object):
-    """Define stable abstract interface for Qos Agent Driver.
+    """Define stable abstract interface for QoS Agent Driver.
 
-    Qos Agent driver defines the interface to be implemented by Agent
-    for applying Qos Rules on a port.
+    QoS Agent driver defines the interface to be implemented by Agent
+    for applying QoS Rules on a port.
     """
 
     @abc.abstractmethod
     def initialize(self):
-        """Perform Qos agent driver initialization.
+        """Perform QoS agent driver initialization.
         """
         pass
 
     @abc.abstractmethod
-    def create(self, port, rules):
-        """Apply Qos rules on port for the first time.
+    def create(self, port, qos_policy):
+        """Apply QoS rules on port for the first time.
 
         :param port: port object.
-        :param rules: the list of rules to apply on port.
+        :param qos_policy: the QoS policy to be apply on port.
         """
-        #TODO(Qos) we may want to provide default implementations of calling
+        #TODO(QoS) we may want to provide default implementations of calling
         #delete and then update
         pass
 
     @abc.abstractmethod
-    def update(self, port, rules):
-        """Apply Qos rules on port.
+    def update(self, port, qos_policy):
+        """Apply QoS rules on port.
 
         :param port: port object.
-        :param rules: the list of rules to be apply on port.
+        :param qos_policy: the QoS policy to be apply on port.
         """
         pass
 
     @abc.abstractmethod
-    def delete(self, port, rules):
-        """Remove Qos rules from port.
+    def delete(self, port, qos_policy):
+        """Remove QoS rules from port.
 
         :param port: port object.
-        :param rules: the list of rules to be removed from port.
+        :param qos_policy: the QoS policy to be removed from port.
         """
         pass
 
@@ -84,11 +84,11 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         self.known_ports = set()
 
     def handle_port(self, context, port):
-        """Handle agent qos extension for port.
+        """Handle agent QoS extension for port.
 
         This method subscribes to qos_policy_id changes
         with a callback and get all the qos_policy_ports and apply
-        them using the qos driver.
+        them using the QoS driver.
         Updates and delete event should be handle by the registered
         callback.
         """
