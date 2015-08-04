@@ -217,6 +217,36 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_port(port['id'])
 
+    @test.attr(type='smoke')
+    @test.idempotent_id('18163237-8ba9-4db5-9525-bad6d2343c75')
+    def test_delete_not_allowed_if_policy_in_use_by_network(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=True)
+        network = self.create_shared_network(
+            'test network', qos_policy_id=policy['id'])
+        self.assertRaises(
+            exceptions.Conflict,
+            self.admin_client.delete_qos_policy, policy['id'])
+
+        self._disassociate_network(self.admin_client, network['id'])
+        self.admin_client.delete_qos_policy(policy['id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('24153230-84a9-4dd5-9525-bad6d2343c75')
+    def test_delete_not_allowed_if_policy_in_use_by_port(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=True)
+        network = self.create_shared_network('test network')
+        port = self.create_port(network, qos_policy_id=policy['id'])
+        self.assertRaises(
+            exceptions.Conflict,
+            self.admin_client.delete_qos_policy, policy['id'])
+
+        self._disassociate_port(port['id'])
+        self.admin_client.delete_qos_policy(policy['id'])
+
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     @classmethod

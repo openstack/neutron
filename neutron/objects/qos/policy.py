@@ -124,6 +124,23 @@ class QosPolicy(base.NeutronDbObject):
             super(QosPolicy, self).create()
             self._load_rules()
 
+    def delete(self):
+        models = (
+            ('network', self.network_binding_model),
+            ('port', self.port_binding_model)
+        )
+        with db_api.autonested_transaction(self._context.session):
+            for object_type, model in models:
+                binding_db_obj = db_api.get_object(self._context, model,
+                                                   policy_id=self.id)
+                if binding_db_obj:
+                    raise exceptions.QosPolicyInUse(
+                        policy_id=self.id,
+                        object_type=object_type,
+                        object_id=binding_db_obj['%s_id' % object_type])
+
+            super(QosPolicy, self).delete()
+
     def attach_network(self, network_id):
         qos_db_api.create_policy_network_binding(self._context,
                                                  policy_id=self.id,
