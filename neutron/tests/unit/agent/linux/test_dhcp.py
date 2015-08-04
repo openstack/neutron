@@ -293,52 +293,29 @@ class FakeV4Subnet(object):
     dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4Subnet2(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
+class FakeV4Subnet2(FakeV4Subnet):
     cidr = '192.168.1.0/24'
     gateway_ip = '192.168.1.1'
-    enable_dhcp = True
     host_routes = []
-    dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4MetadataSubnet(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
+class FakeV4MetadataSubnet(FakeV4Subnet):
     cidr = '169.254.169.254/30'
     gateway_ip = '169.254.169.253'
-    enable_dhcp = True
     host_routes = []
     dns_nameservers = []
 
 
-class FakeV4SubnetGatewayRoute(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetGatewayRoute(FakeV4Subnet):
     host_routes = [FakeV4HostRouteGateway]
-    dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4SubnetMultipleAgentsWithoutDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetMultipleAgentsWithoutDnsProvided(FakeV4Subnet):
     dns_nameservers = []
     host_routes = []
 
 
-class FakeV4SubnetAgentWithManyDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetAgentWithManyDnsProvided(FakeV4Subnet):
     dns_nameservers = ['2.2.2.2', '9.9.9.9', '1.1.1.1',
                        '3.3.3.3']
     host_routes = []
@@ -360,13 +337,7 @@ class FakeV4AgentWithManyDnsProvided(object):
     namespace = 'qdhcp-ns'
 
 
-class FakeV4SubnetMultipleAgentsWithDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
-    dns_nameservers = ['8.8.8.8']
+class FakeV4SubnetMultipleAgentsWithDnsProvided(FakeV4Subnet):
     host_routes = []
 
 
@@ -435,9 +406,8 @@ class FakeV6SubnetStateless(object):
     ipv6_ra_mode = None
 
 
-class FakeV4SubnetNoGateway(object):
+class FakeV4SubnetNoGateway(FakeV4Subnet):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
     cidr = '192.168.1.0/24'
     gateway_ip = None
     enable_dhcp = True
@@ -445,12 +415,10 @@ class FakeV4SubnetNoGateway(object):
     dns_nameservers = []
 
 
-class FakeV4SubnetNoRouter(object):
+class FakeV4SubnetNoRouter(FakeV4Subnet):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
     cidr = '192.168.1.0/24'
     gateway_ip = '192.168.1.1'
-    enable_dhcp = True
     host_routes = []
     dns_nameservers = []
 
