@@ -339,7 +339,7 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(rule['id'], retrieved_policy['id'])
 
         self.admin_client.delete_bandwidth_limit_rule(policy['id'], rule['id'])
-        self.assertRaises(exceptions.ServerFault,
+        self.assertRaises(exceptions.NotFound,
                           self.admin_client.show_bandwidth_limit_rule,
                           policy['id'], rule['id'])
 
