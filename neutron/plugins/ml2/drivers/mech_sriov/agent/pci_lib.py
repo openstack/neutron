@@ -122,6 +122,21 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             raise exc.IpCommandError(dev_name=self.dev_name,
                                      reason=str(e))
 
+    def set_vf_max_rate(self, vf_index, max_tx_rate):
+        """sets vf max rate.
+
+        @param vf_index: vf index
+        @param max_tx_rate: vf max tx rate
+        """
+        try:
+            self._as_root([], "link", ("set", self.dev_name, "vf",
+                                       str(vf_index), "rate",
+                                       str(max_tx_rate)))
+        except Exception as e:
+            LOG.exception(_LE("Failed executing ip command"))
+            raise exc.IpCommandError(dev_name=self.dev_name,
+                                     reason=e)
+
     def _get_vf_link_show(self, vf_list, link_show_out):
         """Get link show output for VFs
 

@@ -402,6 +402,29 @@ class TestOvsNeutronAgent(object):
         self.assertTrue(self._mock_treat_devices_added_updated(
             details, mock.Mock(), 'treat_vif_port'))
 
+    def test_treat_devices_added_updated_sends_vif_port_into_extension_manager(
+        self, *args):
+        details = mock.MagicMock()
+        details.__contains__.side_effect = lambda x: True
+        port = mock.MagicMock()
+
+        def fake_handle_port(context, port):
+            self.assertIn('vif_port', port)
+
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [details],
+                                             'failed_devices': None}),\
+            mock.patch.object(self.agent.agent_extensions_mgr,
+                              'handle_port', new=fake_handle_port),\
+            mock.patch.object(self.agent.int_br,
+                              'get_vifs_by_ids',
+                              return_value={details['device']: port}),\
+            mock.patch.object(self.agent, 'treat_vif_port',
+                              return_value=False):
+
+            self.agent.treat_devices_added_or_updated([{}], False)
+
     def test_treat_devices_added_updated_skips_if_port_not_found(self):
         dev_mock = mock.MagicMock()
         dev_mock.__getitem__.return_value = 'the_skipped_one'
