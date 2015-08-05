@@ -48,6 +48,13 @@ def _validate_resource_type(resource_type):
         raise InvalidResourceTypeClass(resource_type=resource_type)
 
 
+def resource_type_versioned_topic(resource_type):
+    _validate_resource_type(resource_type)
+    cls = resources.get_resource_cls(resource_type)
+    return topics.RESOURCE_TOPIC_PATTERN % {'resource_type': resource_type,
+                                            'version': cls.VERSION}
+
+
 class ResourcesPullRpcApi(object):
     """Agent-side RPC (stub) for agent-to-plugin interaction.
 
@@ -113,12 +120,6 @@ class ResourcesPullRpcCallback(object):
             return obj.obj_to_primitive(target_version=version)
 
 
-def _object_topic(obj):
-    resource_type = resources.get_resource_type(obj)
-    return topics.RESOURCE_TOPIC_PATTERN % {
-        'resource_type': resource_type, 'version': obj.VERSION}
-
-
 class ResourcesPushRpcApi(object):
     """Plugin-side RPC for plugin-to-agents interaction.
 
@@ -137,7 +138,7 @@ class ResourcesPushRpcApi(object):
 
     def _prepare_object_fanout_context(self, obj):
         """Prepare fanout context, one topic per object type."""
-        obj_topic = _object_topic(obj)
+        obj_topic = resource_type_versioned_topic(obj.obj_name())
         return self.client.prepare(fanout=True, topic=obj_topic)
 
     @log_helpers.log_method_call

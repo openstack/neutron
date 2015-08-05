@@ -43,11 +43,11 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
             invoke_on_load=True, name_order=True)
         LOG.info(_LI("Loaded agent extensions: %s"), self.names())
 
-    def initialize(self):
+    def initialize(self, connection):
         # Initialize each agent extension in the list.
         for extension in self:
             LOG.info(_LI("Initializing agent extension '%s'"), extension.name)
-            extension.obj.initialize()
+            extension.obj.initialize(connection)
 
     def handle_port(self, context, data):
         """Notify all agent extensions to handle port."""

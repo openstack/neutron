@@ -265,3 +265,10 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         obj.detach_network(self._network['id'])
         obj.delete()
+
+    def test_reload_rules_reloads_rules(self):
+        policy_obj, rule_obj = self._create_test_policy_with_rule()
+        self.assertEqual([], policy_obj.rules)
+
+        policy_obj.reload_rules()
+        self.assertEqual([rule_obj], policy_obj.rules)

@@ -37,7 +37,7 @@ def push(resource_type, resource, event_type):
 
     callbacks = _get_manager().get_callbacks(resource_type)
     for callback in callbacks:
-        callback(resource_type, resource, event_type)
+        callback(resource, event_type)
 
 
 def clear():

@@ -32,9 +32,10 @@ class TestAgentExtensionsManager(base.BaseTestCase):
         return self.manager.extensions[0].obj
 
     def test_initialize(self):
-        self.manager.initialize()
+        connection = object()
+        self.manager.initialize(connection)
         ext = self._get_extension()
-        self.assertTrue(ext.initialize.called)
+        ext.initialize.assert_called_once_with(connection)
 
     def test_handle_port(self):
         context = object()

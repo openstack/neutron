@@ -33,17 +33,17 @@ class QosServiceNotificationDriverManager(object):
         self.notification_drivers = []
         self._load_drivers(cfg.CONF.qos.notification_drivers)
 
-    def update_policy(self, qos_policy):
+    def update_policy(self, context, qos_policy):
         for driver in self.notification_drivers:
-            driver.update_policy(qos_policy)
+            driver.update_policy(context, qos_policy)
 
-    def delete_policy(self, qos_policy):
+    def delete_policy(self, context, qos_policy):
         for driver in self.notification_drivers:
-            driver.delete_policy(qos_policy)
+            driver.delete_policy(context, qos_policy)
 
-    def create_policy(self, qos_policy):
+    def create_policy(self, context, qos_policy):
         for driver in self.notification_drivers:
-            driver.create_policy(qos_policy)
+            driver.create_policy(context, qos_policy)
 
     def _load_drivers(self, notification_drivers):
         """Load all the instances of the configured QoS notification drivers

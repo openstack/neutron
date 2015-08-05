@@ -46,7 +46,9 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
         self._handle_rules('update', port, qos_policy)
 
     def delete(self, port, qos_policy):
-        self._handle_rules('delete', port, qos_policy)
+        # TODO(QoS): consider optimizing flushing of all QoS rules from the
+        # port by inspecting qos_policy.rules contents
+        self._delete_bandwidth_limit(port)
 
     def _handle_rules(self, action, port, qos_policy):
         for rule in qos_policy.rules:
@@ -76,7 +78,7 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
                                                  max_kbps,
                                                  max_burst_kbps)
 
-    def _delete_bandwidth_limit(self, port, rule):
+    def _delete_bandwidth_limit(self, port):
         port_name = port['vif_port'].port_name
         current_max_kbps, current_max_burst = (
             self.br_int.get_qos_bw_limit_for_port(port_name))

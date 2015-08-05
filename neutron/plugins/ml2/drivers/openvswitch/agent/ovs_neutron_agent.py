@@ -226,7 +226,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
-        self.init_extension_manager()
+        self.init_extension_manager(self.connection)
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
@@ -367,11 +367,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      consumers,
                                                      start_listening=False)
 
-    def init_extension_manager(self):
+    def init_extension_manager(self, connection):
         ext_manager.register_opts(self.conf)
         self.ext_manager = (
             ext_manager.AgentExtensionsManager(self.conf))
-        self.ext_manager.initialize()
+        self.ext_manager.initialize(connection)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):

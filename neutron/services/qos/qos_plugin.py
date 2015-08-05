@@ -16,6 +16,7 @@ from oslo_log import log as logging
 
 
 from neutron.common import exceptions as n_exc
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects.qos import policy as policy_object
@@ -46,7 +47,7 @@ class QoSPlugin(qos.QoSPluginBase):
     def create_policy(self, context, policy):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.create()
-        self.notification_driver_manager.create_policy(policy)
+        self.notification_driver_manager.create_policy(context, policy)
         return policy
 
     @db_base_plugin_common.convert_result_to_dict
@@ -54,14 +55,14 @@ class QoSPlugin(qos.QoSPluginBase):
         policy = policy_object.QosPolicy(context, **policy['policy'])
         policy.id = policy_id
         policy.update()
-        self.notification_driver_manager.update_policy(policy)
+        self.notification_driver_manager.update_policy(context, policy)
         return policy
 
     def delete_policy(self, context, policy_id):
         policy = policy_object.QosPolicy(context)
         policy.id = policy_id
+        self.notification_driver_manager.delete_policy(context, policy)
         policy.delete()
-        self.notification_driver_manager.delete_policy(policy)
 
     def _get_policy_obj(self, context, policy_id):
         obj = policy_object.QosPolicy.get_by_id(context, policy_id)
@@ -89,42 +90,54 @@ class QoSPlugin(qos.QoSPluginBase):
     @db_base_plugin_common.convert_result_to_dict
     def create_policy_bandwidth_limit_rule(self, context, policy_id,
                                            bandwidth_limit_rule):
-        # validate that we have access to the policy
-        policy = self._get_policy_obj(context, policy_id)
-        rule = rule_object.QosBandwidthLimitRule(
-            context, qos_policy_id=policy_id,
-            **bandwidth_limit_rule['bandwidth_limit_rule'])
-        rule.create()
-        self.notification_driver_manager.update_policy(policy)
+        # make sure we will have a policy object to push resource update
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosBandwidthLimitRule(
+                context, qos_policy_id=policy_id,
+                **bandwidth_limit_rule['bandwidth_limit_rule'])
+            rule.create()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
         return rule
 
     @db_base_plugin_common.convert_result_to_dict
     def update_policy_bandwidth_limit_rule(self, context, rule_id, policy_id,
                                            bandwidth_limit_rule):
-        # validate that we have access to the policy
-        policy = self._get_policy_obj(context, policy_id)
-        rule = rule_object.QosBandwidthLimitRule(
-            context, **bandwidth_limit_rule['bandwidth_limit_rule'])
-        rule.id = rule_id
-        rule.update()
-        self.notification_driver_manager.update_policy(policy)
+        # make sure we will have a policy object to push resource update
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosBandwidthLimitRule(
+                context, **bandwidth_limit_rule['bandwidth_limit_rule'])
+            rule.id = rule_id
+            rule.update()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
         return rule
 
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
-        # validate that we have access to the policy
-        policy = self._get_policy_obj(context, policy_id)
-        rule = rule_object.QosBandwidthLimitRule(context)
-        rule.id = rule_id
-        rule.delete()
-        self.notification_driver_manager.update_policy(policy)
+        # make sure we will have a policy object to push resource update
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosBandwidthLimitRule(context)
+            rule.id = rule_id
+            rule.delete()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_policy_bandwidth_limit_rule(self, context, rule_id,
                                         policy_id, fields=None):
-        # validate that we have access to the policy
-        self._get_policy_obj(context, policy_id)
-        rule = rule_object.QosBandwidthLimitRule.get_by_id(context, rule_id)
+        # make sure we have access to the policy when fetching the rule
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosBandwidthLimitRule.get_by_id(
+                context, rule_id)
         if not rule:
             raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
         return rule
@@ -136,9 +149,11 @@ class QoSPlugin(qos.QoSPluginBase):
                                          sorts=None, limit=None,
                                          marker=None, page_reverse=False):
         #TODO(QoS): Support all the optional parameters
-        # validate that we have access to the policy
-        self._get_policy_obj(context, policy_id)
-        return rule_object.QosBandwidthLimitRule.get_objects(context)
+        # make sure we have access to the policy when fetching rules
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            self._get_policy_obj(context, policy_id)
+            return rule_object.QosBandwidthLimitRule.get_objects(context)
 
     # TODO(QoS): enforce rule types when accessing rule objects
     @db_base_plugin_common.filter_fields

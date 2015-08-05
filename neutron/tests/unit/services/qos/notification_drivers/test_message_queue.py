@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron.api.rpc.callbacks import events
 from neutron import context
 from neutron.objects.qos import policy as policy_object
@@ -24,6 +26,9 @@ class TestQosRpcNotificationDriver(base.BaseQosTestCase):
 
     def setUp(self):
         super(TestQosRpcNotificationDriver, self).setUp()
+        rpc_api_cls = mock.patch('neutron.api.rpc.handlers.resources_rpc'
+                                 '.ResourcesPushRpcApi').start()
+        self.rpc_api = rpc_api_cls.return_value
         self.driver = message_queue.RpcQosServiceNotificationDriver()
 
         self.policy_data = {'policy': {
@@ -38,25 +43,26 @@ class TestQosRpcNotificationDriver(base.BaseQosTestCase):
                             'max_kbps': 100,
                             'max_burst_kbps': 150}}
 
-        self.policy = policy_object.QosPolicy(context,
+        self.context = context.get_admin_context()
+        self.policy = policy_object.QosPolicy(self.context,
                         **self.policy_data['policy'])
 
         self.rule = rule_object.QosBandwidthLimitRule(
-                                context,
+                                self.context,
                                 **self.rule_data['bandwidth_limit_rule'])
 
     def _validate_push_params(self, event_type, policy):
-        # TODO(QoS): actually validate push works once implemented
-        pass
+        self.rpc_api.push.assert_called_once_with(self.context, policy,
+                                                  event_type)
 
     def test_create_policy(self):
-        self.driver.create_policy(self.policy)
-        self._validate_push_params(events.CREATED, self.policy)
+        self.driver.create_policy(self.context, self.policy)
+        self.assertFalse(self.rpc_api.push.called)
 
     def test_update_policy(self):
-        self.driver.update_policy(self.policy)
+        self.driver.update_policy(self.context, self.policy)
         self._validate_push_params(events.UPDATED, self.policy)
 
     def test_delete_policy(self):
-        self.driver.delete_policy(self.policy)
+        self.driver.delete_policy(self.context, self.policy)
         self._validate_push_params(events.DELETED, self.policy)

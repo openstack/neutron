@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import mock
-from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import testtools
@@ -25,6 +24,18 @@ from neutron.common import topics
 from neutron import context
 from neutron.objects import base as objects_base
 from neutron.tests import base
+
+
+def _create_test_dict():
+    return {'id': 'uuid',
+            'field': 'foo'}
+
+
+def _create_test_resource(context=None):
+    resource_dict = _create_test_dict()
+    resource = FakeResource(context, **resource_dict)
+    resource.obj_reset_changes()
+    return resource
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -46,15 +57,6 @@ class ResourcesRpcBaseTestCase(base.BaseTestCase):
         super(ResourcesRpcBaseTestCase, self).setUp()
         self.context = context.get_admin_context()
 
-    def _create_test_dict(self):
-        return {'id': uuidutils.generate_uuid(),
-                'field': 'foo'}
-
-    def _create_test_resource(self, **kwargs):
-        resource = FakeResource(self.context, **kwargs)
-        resource.obj_reset_changes()
-        return resource
-
 
 class _ValidateResourceTypeTestCase(base.BaseTestCase):
     def setUp(self):
@@ -73,6 +75,19 @@ class _ValidateResourceTypeTestCase(base.BaseTestCase):
             resources_rpc._validate_resource_type('foo')
 
 
+class _ResourceTypeVersionedTopicTestCase(base.BaseTestCase):
+
+    @mock.patch.object(resources_rpc, '_validate_resource_type')
+    def test_resource_type_versioned_topic(self, validate_mock):
+        obj_name = FakeResource.obj_name()
+        expected = topics.RESOURCE_TOPIC_PATTERN % {
+            'resource_type': 'FakeResource', 'version': '1.0'}
+        with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
+                return_value=FakeResource):
+            observed = resources_rpc.resource_type_versioned_topic(obj_name)
+        self.assertEqual(expected, observed)
+
+
 class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
@@ -85,13 +100,11 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
         self.cctxt_mock = self.rpc.client.prepare.return_value
 
     def test_is_singleton(self):
-        self.assertEqual(id(self.rpc),
-                         id(resources_rpc.ResourcesPullRpcApi()))
+        self.assertIs(self.rpc, resources_rpc.ResourcesPullRpcApi())
 
     def test_pull(self):
-        resource_dict = self._create_test_dict()
-        expected_obj = self._create_test_resource(**resource_dict)
-        resource_id = resource_dict['id']
+        expected_obj = _create_test_resource(self.context)
+        resource_id = expected_obj.id
         self.cctxt_mock.call.return_value = expected_obj.obj_to_primitive()
 
         result = self.rpc.pull(
@@ -103,7 +116,7 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
         self.assertEqual(expected_obj, result)
 
     def test_pull_resource_not_found(self):
-        resource_dict = self._create_test_dict()
+        resource_dict = _create_test_dict()
         resource_id = resource_dict['id']
         self.cctxt_mock.call.return_value = None
         with testtools.ExpectedException(resources_rpc.ResourceNotFound):
@@ -116,20 +129,20 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
     def setUp(self):
         super(ResourcesPullRpcCallbackTestCase, self).setUp()
         self.callbacks = resources_rpc.ResourcesPullRpcCallback()
-        self.resource_dict = self._create_test_dict()
-        self.resource_obj = self._create_test_resource(**self.resource_dict)
+        self.resource_obj = _create_test_resource(self.context)
 
     def test_pull(self):
+        resource_dict = _create_test_dict()
         with mock.patch.object(
                 resources_rpc.prod_registry, 'pull',
                 return_value=self.resource_obj) as registry_mock:
             primitive = self.callbacks.pull(
                 self.context, resource_type=FakeResource.obj_name(),
                 version=FakeResource.VERSION,
-                resource_id=self.resource_dict['id'])
+                resource_id=self.resource_obj.id)
         registry_mock.assert_called_once_with(
-            'FakeResource', self.resource_dict['id'], context=self.context)
-        self.assertEqual(self.resource_dict,
+            'FakeResource', self.resource_obj.id, context=self.context)
+        self.assertEqual(resource_dict,
                          primitive['versioned_object.data'])
         self.assertEqual(self.resource_obj.obj_to_primitive(), primitive)
 
@@ -150,7 +163,7 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
             self.callbacks.pull(
                 self.context, resource_type=FakeResource.obj_name(),
                 version='0.9',  # less than initial version 1.0
-                resource_id=self.resource_dict['id'])
+                resource_id=self.resource_obj.id)
             to_prim_mock.assert_called_with(target_version='0.9')
 
 
@@ -162,23 +175,27 @@ class ResourcesPushRpcApiTestCase(ResourcesRpcBaseTestCase):
         mock.patch.object(resources_rpc, '_validate_resource_type').start()
         self.rpc = resources_rpc.ResourcesPushRpcApi()
         self.cctxt_mock = self.rpc.client.prepare.return_value
-        resource_dict = self._create_test_dict()
-        self.resource_obj = self._create_test_resource(**resource_dict)
+        self.resource_obj = _create_test_resource(self.context)
 
     def test__prepare_object_fanout_context(self):
         expected_topic = topics.RESOURCE_TOPIC_PATTERN % {
             'resource_type': resources.get_resource_type(self.resource_obj),
             'version': self.resource_obj.VERSION}
 
-        observed = self.rpc._prepare_object_fanout_context(self.resource_obj)
+        with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
+                return_value=FakeResource):
+            observed = self.rpc._prepare_object_fanout_context(
+                self.resource_obj)
 
         self.rpc.client.prepare.assert_called_once_with(
             fanout=True, topic=expected_topic)
         self.assertEqual(self.cctxt_mock, observed)
 
-    def test_push(self):
-        self.rpc.push(
-            self.context, self.resource_obj, 'TYPE')
+    def test_pushy(self):
+        with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
+                return_value=FakeResource):
+            self.rpc.push(
+                self.context, self.resource_obj, 'TYPE')
 
         self.cctxt_mock.cast.assert_called_once_with(
             self.context, 'push',
@@ -194,8 +211,7 @@ class ResourcesPushRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         mock.patch.object(
             resources_rpc.resources,
             'get_resource_cls', return_value=FakeResource).start()
-        resource_dict = self._create_test_dict()
-        self.resource_obj = self._create_test_resource(**resource_dict)
+        self.resource_obj = _create_test_resource(self.context)
         self.resource_prim = self.resource_obj.obj_to_primitive()
         self.callbacks = resources_rpc.ResourcesPushRpcCallback()
 

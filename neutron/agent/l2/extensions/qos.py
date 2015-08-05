@@ -20,6 +20,8 @@ from oslo_config import cfg
 import six
 
 from neutron.agent.l2 import agent_extension
+from neutron.api.rpc.callbacks.consumer import registry
+from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron import manager
@@ -70,7 +72,9 @@ class QosAgentDriver(object):
 
 
 class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
-    def initialize(self):
+    SUPPORTED_RESOURCES = [resources.QOS_POLICY]
+
+    def initialize(self, connection):
         """Perform Agent Extension initialization.
 
         """
@@ -80,22 +84,40 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
             'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)()
         self.qos_driver.initialize()
+
+        # we cannot use a dict of sets here because port dicts are not hashable
         self.qos_policy_ports = collections.defaultdict(dict)
         self.known_ports = set()
+
+        registry.subscribe(self._handle_notification, resources.QOS_POLICY)
+        self._register_rpc_consumers(connection)
+
+    def _register_rpc_consumers(self, connection):
+        endpoints = [resources_rpc.ResourcesPushRpcCallback()]
+        for resource_type in self.SUPPORTED_RESOURCES:
+            # we assume that neutron-server always broadcasts the latest
+            # version known to the agent
+            topic = resources_rpc.resource_type_versioned_topic(resource_type)
+            connection.create_consumer(topic, endpoints, fanout=True)
+
+    def _handle_notification(self, qos_policy, event_type):
+        # server does not allow to remove a policy that is attached to any
+        # port, so we ignore DELETED events. Also, if we receive a CREATED
+        # event for a policy, it means that there are no ports so far that are
+        # attached to it. That's why we are interested in UPDATED events only
+        if event_type == events.UPDATED:
+            self._process_update_policy(qos_policy)
 
     def handle_port(self, context, port):
         """Handle agent QoS extension for port.
 
-        This method subscribes to qos_policy_id changes
-        with a callback and get all the qos_policy_ports and apply
-        them using the QoS driver.
-        Updates and delete event should be handle by the registered
-        callback.
+        This method applies a new policy to a port using the QoS driver.
+        Update events are handled in _handle_notification.
         """
         port_id = port['port_id']
         qos_policy_id = port.get('qos_policy_id')
         if qos_policy_id is None:
-            #TODO(QoS):  we should also handle removing policy
+            self._process_reset_port(port)
             return
 
         #Note(moshele) check if we have seen this port
@@ -104,23 +126,26 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
                 port_id in self.qos_policy_ports[qos_policy_id]):
             return
 
+        # TODO(QoS): handle race condition between push and pull APIs
         self.qos_policy_ports[qos_policy_id][port_id] = port
         self.known_ports.add(port_id)
-        #TODO(QoS): handle updates when implemented
-        # we have two options:
-        # 1. to add new api for subscribe
-        #    registry.subscribe(self._process_policy_updates,
-        #                   resources.QOS_POLICY, qos_policy_id)
-        # 2. combine pull rpc to also subscribe to the resource
         qos_policy = self.resource_rpc.pull(
-            context,
-            resources.QOS_POLICY,
-            qos_policy_id)
-        self._process_policy_updates(
-            port, resources.QOS_POLICY, qos_policy_id,
-            qos_policy, 'create')
+            context, resources.QOS_POLICY, qos_policy_id)
+        self.qos_driver.create(port, qos_policy)
 
-    def _process_policy_updates(
-            self, port, resource_type, resource_id,
-            qos_policy, action_type):
-        getattr(self.qos_driver, action_type)(port, qos_policy)
+    def _process_update_policy(self, qos_policy):
+        for port_id, port in self.qos_policy_ports[qos_policy.id].items():
+            # TODO(QoS): for now, just reflush the rules on the port. Later, we
+            # may want to apply the difference between the rules lists only.
+            self.qos_driver.delete(port, None)
+            self.qos_driver.update(port, qos_policy)
+
+    def _process_reset_port(self, port):
+        port_id = port['port_id']
+        if port_id in self.known_ports:
+            self.known_ports.remove(port_id)
+            for qos_policy_id, port_dict in self.qos_policy_ports.items():
+                if port_id in port_dict:
+                    del port_dict[port_id]
+                    self.qos_driver.delete(port, None)
+                    return

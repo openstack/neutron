@@ -46,9 +46,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.qos_plugin = mgr.get_service_plugins().get(
             constants.QOS)
 
-        self.notif_driver_p = mock.patch.object(
-            self.qos_plugin, 'notification_driver_manager')
-        self.notif_driver_m = self.notif_driver_p.start()
+        self.notif_driver_m = mock.patch.object(
+            self.qos_plugin, 'notification_driver_manager').start()
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
         self.policy_data = {
@@ -64,16 +63,16 @@ class TestQosPlugin(base.BaseQosTestCase):
                                      'max_burst_kbps': 150}}
 
         self.policy = policy_object.QosPolicy(
-            context, **self.policy_data['policy'])
+            self.ctxt, **self.policy_data['policy'])
 
         self.rule = rule_object.QosBandwidthLimitRule(
-            context, **self.rule_data['bandwidth_limit_rule'])
+            self.ctxt, **self.rule_data['bandwidth_limit_rule'])
 
     def _validate_notif_driver_params(self, method_name):
         method = getattr(self.notif_driver_m, method_name)
         self.assertTrue(method.called)
         self.assertIsInstance(
-            method.call_args[0][0], policy_object.QosPolicy)
+            method.call_args[0][1], policy_object.QosPolicy)
 
     def test_add_policy(self):
         self.qos_plugin.create_policy(self.ctxt, self.policy_data)

@@ -24,18 +24,18 @@ class QosServiceNotificationDriverBase(object):
         """
 
     @abc.abstractmethod
-    def create_policy(self, policy):
+    def create_policy(self, context, policy):
         """Create the QoS policy."""
 
     @abc.abstractmethod
-    def update_policy(self, policy):
+    def update_policy(self, context, policy):
         """Update the QoS policy.
 
         Apply changes to the QoS policy.
         """
 
     @abc.abstractmethod
-    def delete_policy(self, policy):
+    def delete_policy(self, context, policy):
         """Delete the QoS policy.
 
         Remove all rules for this policy and free up all the resources.

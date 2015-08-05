@@ -56,12 +56,13 @@ class QosPolicy(base.NeutronDbObject):
             raise exceptions.ObjectActionError(
                 action='obj_load_attr', reason='unable to load %s' % attrname)
 
-        rules = rule_obj_impl.get_rules(self._context, self.id)
-        setattr(self, attrname, rules)
-        self.obj_reset_changes([attrname])
+        if not hasattr(self, attrname):
+            self.reload_rules()
 
-    def _load_rules(self):
-        self.obj_load_attr('rules')
+    def reload_rules(self):
+        rules = rule_obj_impl.get_rules(self._context, self.id)
+        setattr(self, 'rules', rules)
+        self.obj_reset_changes(['rules'])
 
     @staticmethod
     def _is_policy_accessible(context, db_obj):
@@ -82,7 +83,7 @@ class QosPolicy(base.NeutronDbObject):
                 not cls._is_policy_accessible(context, policy_obj)):
                 return
 
-            policy_obj._load_rules()
+            policy_obj.reload_rules()
             return policy_obj
 
     @classmethod
@@ -97,7 +98,7 @@ class QosPolicy(base.NeutronDbObject):
                 if not cls._is_policy_accessible(context, db_obj):
                     continue
                 obj = cls(context, **db_obj)
-                obj._load_rules()
+                obj.reload_rules()
                 objs.append(obj)
         return objs
 
@@ -122,7 +123,7 @@ class QosPolicy(base.NeutronDbObject):
     def create(self):
         with db_api.autonested_transaction(self._context.session):
             super(QosPolicy, self).create()
-            self._load_rules()
+            self.reload_rules()
 
     def delete(self):
         models = (
