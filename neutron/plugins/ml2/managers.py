@@ -15,6 +15,7 @@
 
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import excutils
 import six
 import stevedore
 
@@ -800,10 +801,10 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
             try:
                 getattr(driver.obj, method_name)(plugin_context, data, result)
             except Exception:
-                LOG.exception(
-                    _LE("Extension driver '%(name)s' failed in %(method)s"),
-                    {'name': driver.name, 'method': method_name}
-                )
+                with excutils.save_and_reraise_exception():
+                    LOG.info(_LI("Extension driver '%(name)s' failed in "
+                             "%(method)s"),
+                             {'name': driver.name, 'method': method_name})
 
     def process_create_network(self, plugin_context, data, result):
         """Notify all extension drivers during network creation."""
@@ -835,23 +836,30 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         self._call_on_ext_drivers("process_update_port", plugin_context,
                                   data, result)
 
+    def _call_on_dict_driver(self, method_name, session, base_model, result):
+        for driver in self.ordered_ext_drivers:
+            try:
+                getattr(driver.obj, method_name)(session, base_model, result)
+            except Exception:
+                LOG.error(_LE("Extension driver '%(name)s' failed in "
+                          "%(method)s"),
+                          {'name': driver.name, 'method': method_name})
+                raise ml2_exc.ExtensionDriverError(driver=driver.name)
+
+            LOG.debug("%(method)s succeeded for driver %(driver)s",
+                      {'method': method_name, 'driver': driver.name})
+
     def extend_network_dict(self, session, base_model, result):
         """Notify all extension drivers to extend network dictionary."""
-        for driver in self.ordered_ext_drivers:
-            driver.obj.extend_network_dict(session, base_model, result)
-            LOG.debug("Extended network dict for driver '%(drv)s'",
-                      {'drv': driver.name})
+        self._call_on_dict_driver("extend_network_dict", session, base_model,
+                                  result)
 
     def extend_subnet_dict(self, session, base_model, result):
         """Notify all extension drivers to extend subnet dictionary."""
-        for driver in self.ordered_ext_drivers:
-            driver.obj.extend_subnet_dict(session, base_model, result)
-            LOG.debug("Extended subnet dict for driver '%(drv)s'",
-                      {'drv': driver.name})
+        self._call_on_dict_driver("extend_subnet_dict", session, base_model,
+                                  result)
 
     def extend_port_dict(self, session, base_model, result):
         """Notify all extension drivers to extend port dictionary."""
-        for driver in self.ordered_ext_drivers:
-            driver.obj.extend_port_dict(session, base_model, result)
-            LOG.debug("Extended port dict for driver '%(drv)s'",
-                      {'drv': driver.name})
+        self._call_on_dict_driver("extend_port_dict", session, base_model,
+                                  result)
