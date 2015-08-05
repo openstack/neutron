@@ -78,8 +78,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.vips = []
         cls.members = []
         cls.health_monitors = []
-        cls.vpnservices = []
-        cls.ikepolicies = []
         cls.floating_ips = []
         cls.metering_labels = []
         cls.service_profiles = []
@@ -87,7 +85,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.metering_label_rules = []
         cls.fw_rules = []
         cls.fw_policies = []
-        cls.ipsecpolicies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
         cls.address_scopes = []
         cls.admin_address_scopes = []
@@ -95,10 +92,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
     @classmethod
     def resource_cleanup(cls):
         if CONF.service_available.neutron:
-            # Clean up ipsec policies
-            for ipsecpolicy in cls.ipsecpolicies:
-                cls._try_delete_resource(cls.client.delete_ipsecpolicy,
-                                         ipsecpolicy['id'])
             # Clean up firewall policies
             for fw_policy in cls.fw_policies:
                 cls._try_delete_resource(cls.client.delete_firewall_policy,
@@ -107,14 +100,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for fw_rule in cls.fw_rules:
                 cls._try_delete_resource(cls.client.delete_firewall_rule,
                                          fw_rule['id'])
-            # Clean up ike policies
-            for ikepolicy in cls.ikepolicies:
-                cls._try_delete_resource(cls.client.delete_ikepolicy,
-                                         ikepolicy['id'])
-            # Clean up vpn services
-            for vpnservice in cls.vpnservices:
-                cls._try_delete_resource(cls.client.delete_vpnservice,
-                                         vpnservice['id'])
             # Clean up floating IPs
             for floating_ip in cls.floating_ips:
                 cls._try_delete_resource(cls.client.delete_floatingip,
@@ -191,7 +176,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         super(BaseNetworkTest, cls).resource_cleanup()
 
     @classmethod
-    def _try_delete_resource(self, delete_callable, *args, **kwargs):
+    def _try_delete_resource(cls, delete_callable, *args, **kwargs):
         """Cleanup resources in case of test-failure
 
         Some resources are explicitly deleted by the test.
@@ -394,24 +379,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         return interface
 
     @classmethod
-    def create_vpnservice(cls, subnet_id, router_id):
-        """Wrapper utility that returns a test vpn service."""
-        body = cls.client.create_vpnservice(
-            subnet_id=subnet_id, router_id=router_id, admin_state_up=True,
-            name=data_utils.rand_name("vpnservice-"))
-        vpnservice = body['vpnservice']
-        cls.vpnservices.append(vpnservice)
-        return vpnservice
-
-    @classmethod
-    def create_ikepolicy(cls, name):
-        """Wrapper utility that returns a test ike policy."""
-        body = cls.client.create_ikepolicy(name=name)
-        ikepolicy = body['ikepolicy']
-        cls.ikepolicies.append(ikepolicy)
-        return ikepolicy
-
-    @classmethod
     def create_firewall_rule(cls, action, protocol):
         """Wrapper utility that returns a test firewall rule."""
         body = cls.client.create_firewall_rule(
@@ -442,14 +409,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             except lib_exc.NotFound:
                 pass
         cls.client.delete_router(router['id'])
-
-    @classmethod
-    def create_ipsecpolicy(cls, name):
-        """Wrapper utility that returns a test ipsec policy."""
-        body = cls.client.create_ipsecpolicy(name=name)
-        ipsecpolicy = body['ipsecpolicy']
-        cls.ipsecpolicies.append(ipsecpolicy)
-        return ipsecpolicy
 
     @classmethod
     def create_address_scope(cls, name, is_admin=False, **kwargs):
