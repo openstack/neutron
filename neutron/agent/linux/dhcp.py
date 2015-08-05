@@ -422,6 +422,11 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _release_lease(self, mac_address, ip, client_id):
         """Release a DHCP lease."""
+        if netaddr.IPAddress(ip).version == constants.IP_VERSION_6:
+            # Note(SridharG) dhcp_release is only supported for IPv4
+            # addresses. For more details, please refer to man page.
+            return
+
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
         if client_id:
             cmd.append(client_id)

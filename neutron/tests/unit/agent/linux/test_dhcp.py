@@ -1514,6 +1514,24 @@ class TestDnsmasq(TestBase):
             [mock.call(dnsmasq.interface_name,
                        namespace=dnsmasq.network.namespace)])
 
+    def test_release_for_ipv6_lease(self):
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+
+        ip1 = 'fdca:3ba5:a17a::1'
+        mac1 = '00:00:80:aa:bb:cc'
+        ip2 = '192.168.1.3'
+        mac2 = '00:00:80:cc:bb:aa'
+
+        old_leases = set([(ip1, mac1, None), (ip2, mac2, None)])
+        dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
+        ipw = mock.patch(
+            'neutron.agent.linux.ip_lib.IpNetnsCommand.execute').start()
+        dnsmasq._release_unused_leases()
+        # Verify that dhcp_release is called only for ipv4 addresses.
+        self.assertEqual(1, ipw.call_count)
+        ipw.assert_has_calls([mock.call(['dhcp_release', None, ip2, mac2],
+                             run_as_root=True)])
+
     def test_release_unused_leases_with_dhcp_port(self):
         dnsmasq = self._get_dnsmasq(FakeNetworkDhcpPort())
         ip1 = '192.168.1.2'
