@@ -24,6 +24,7 @@ from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron import manager
+from neutron.plugins.common import constants
 
 
 def main():
@@ -32,6 +33,8 @@ def main():
 
     cxt = context.get_admin_context()
     plugin = manager.NeutronManager.get_plugin()
+    l3_plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
     notifier = n_rpc.get_notifier('network')
     for network in plugin.get_networks(cxt):
         notifier.info(cxt, 'network.exists', {'network': network})
@@ -39,7 +42,7 @@ def main():
         notifier.info(cxt, 'subnet.exists', {'subnet': subnet})
     for port in plugin.get_ports(cxt):
         notifier.info(cxt, 'port.exists', {'port': port})
-    for router in plugin.get_routers(cxt):
+    for router in l3_plugin.get_routers(cxt):
         notifier.info(cxt, 'router.exists', {'router': router})
-    for floatingip in plugin.get_floatingips(cxt):
+    for floatingip in l3_plugin.get_floatingips(cxt):
         notifier.info(cxt, 'floatingip.exists', {'floatingip': floatingip})
