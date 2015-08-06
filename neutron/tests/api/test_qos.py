@@ -140,7 +140,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=False)
         #TODO(QoS): This currently raises an exception on the server side. See
-        #           services/qos/qos_extension.py for comments on this subject.
+        #           core_extensions/qos.py for comments on this subject.
         network = self.create_network('test network',
                                       qos_policy_id=policy['id'])
 
@@ -193,7 +193,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
                                         shared=False)
         network = self.create_shared_network('test network')
         #TODO(QoS): This currently raises an exception on the server side. See
-        #           services/qos/qos_extension.py for comments on this subject.
+        #           core_extensions/qos.py for comments on this subject.
         port = self.create_port(network, qos_policy_id=policy['id'])
 
         retrieved_port = self.admin_client.show_port(port['id'])

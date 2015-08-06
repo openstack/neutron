@@ -35,19 +35,22 @@ Service side design
   MQ-based reference notification driver which updates agents via messaging
   bus, using `RPC callbacks <rpc_callbacks.html>`_.
 
-* neutron.services.qos.qos_extension:
-  Contains a class that can be used by external code to extend core
-  (network/port) resources with QoS details (at the moment, it's just
-  qos_policy_id). This class is designed in a way that should allow its
-  integration into different plugins. Alternatively, we may want to have a core
-  resource extension manager that would utilize it, among other extensions, and
-  that could be easily integrated into plugins.
+* neutron.core_extensions.base:
+  Contains an interface class to implement core resource (port/network)
+  extensions. Core resource extensions are then easily integrated into
+  interested plugins. We may need to  have a core resource extension manager
+  that would utilize those extensions, to avoid plugin modifications for every
+  new core resource extension.
+
+* neutron.core_extensions.qos:
+  Contains QoS core resource extension that conforms to the interface described
+  above.
 
 * neutron.plugins.ml2.extensions.qos:
   Contains ml2 extension driver that handles core resource updates by reusing
-  the qos_extension module mentioned above. In the future, we would like to see
-  a plugin-agnostic core resource extension manager that could be integrated
-  into other plugins with ease.
+  the core_extensions.qos module mentioned above. In the future, we would like
+  to see a plugin-agnostic core resource extension manager that could be
+  integrated into other plugins with ease.
 
 
 Supported QoS rule types

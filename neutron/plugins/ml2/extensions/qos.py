@@ -15,8 +15,9 @@
 
 from oslo_log import log as logging
 
+from neutron.core_extensions import base as base_core
+from neutron.core_extensions import qos as qos_core
 from neutron.plugins.ml2 import driver_api as api
-from neutron.services.qos import qos_extension
 
 LOG = logging.getLogger(__name__)
 
@@ -24,27 +25,26 @@ LOG = logging.getLogger(__name__)
 class QosExtensionDriver(api.ExtensionDriver):
 
     def initialize(self):
-        self.qos_ext_handler = qos_extension.QosResourceExtensionHandler()
+        self.core_ext_handler = qos_core.QosCoreResourceExtension()
         LOG.debug("QosExtensionDriver initialization complete")
 
     def process_create_network(self, context, data, result):
-        self.qos_ext_handler.process_resource(
-            context, qos_extension.NETWORK, data, result)
+        self.core_ext_handler.process_fields(
+            context, base_core.NETWORK, data, result)
 
     process_update_network = process_create_network
 
     def process_create_port(self, context, data, result):
-        self.qos_ext_handler.process_resource(
-            context, qos_extension.PORT, data, result)
+        self.core_ext_handler.process_fields(
+            context, base_core.PORT, data, result)
 
     process_update_port = process_create_port
 
     def extend_network_dict(self, session, db_data, result):
         result.update(
-            self.qos_ext_handler.extract_resource_fields(qos_extension.NETWORK,
-                                                         db_data))
+            self.core_ext_handler.extract_fields(
+                base_core.NETWORK, db_data))
 
     def extend_port_dict(self, session, db_data, result):
         result.update(
-            self.qos_ext_handler.extract_resource_fields(qos_extension.PORT,
-                                                         db_data))
+            self.core_ext_handler.extract_fields(base_core.PORT, db_data))
