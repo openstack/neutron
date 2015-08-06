@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as l3_agent
@@ -19,34 +21,15 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.tests.fullstack import base
-from neutron.tests.fullstack import fullstack_fixtures as f_fixtures
-
-
-class SingleNodeEnvironment(f_fixtures.FullstackFixture):
-    def _setUp(self):
-        super(SingleNodeEnvironment, self)._setUp()
-
-        neutron_config = self.neutron_server.neutron_cfg_fixture
-        ml2_config = self.neutron_server.plugin_cfg_fixture
-
-        self.ovs_agent = self.useFixture(
-            f_fixtures.OVSAgentFixture(
-                self.test_name, neutron_config, ml2_config))
-
-        self.l3_agent = self.useFixture(
-            f_fixtures.L3AgentFixture(
-                self.test_name,
-                self.temp_dir,
-                neutron_config,
-                self.ovs_agent._get_br_int_name()))
-
-        self.wait_until_env_is_up(agents_count=2)
+from neutron.tests.fullstack.resources import environment
 
 
 class TestLegacyL3Agent(base.BaseFullStackTestCase):
     def __init__(self, *args, **kwargs):
         super(TestLegacyL3Agent, self).__init__(
-            SingleNodeEnvironment(), *args, **kwargs)
+            environment.Environment(
+                [environment.HostDescription(l3_agent=True)]),
+            *args, **kwargs)
 
     def _get_namespace(self, router_id):
         return namespaces.build_ns_name(l3_agent.NS_PREFIX, router_id)
@@ -66,5 +49,35 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
 
         namespace = "%s@%s" % (
             self._get_namespace(router['id']),
-            self.environment.l3_agent.get_namespace_suffix(), )
+            self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
         self._assert_namespace_exists(namespace)
+
+
+class TestHAL3Agent(base.BaseFullStackTestCase):
+    def __init__(self, *args, **kwargs):
+        super(TestHAL3Agent, self).__init__(
+            environment.Environment(
+                [environment.HostDescription(l3_agent=True),
+                 environment.HostDescription(l3_agent=True)]),
+            *args, **kwargs)
+
+    def _is_ha_router_active_on_one_agent(self, router_id):
+        agents = self.client.list_l3_agent_hosting_routers(router_id)
+        return (
+            agents['agents'][0]['ha_state'] != agents['agents'][1]['ha_state'])
+
+    def test_ha_router(self):
+        # TODO(amuller): Test external connectivity before and after a
+        # failover, see: https://review.openstack.org/#/c/196393/
+
+        tenant_id = uuidutils.generate_uuid()
+        router = self.safe_client.create_router(tenant_id, ha=True)
+        agents = self.client.list_l3_agent_hosting_routers(router['id'])
+        self.assertEqual(2, len(agents['agents']),
+                         'HA router must be scheduled to both nodes')
+
+        utils.wait_until_true(
+            functools.partial(
+                self._is_ha_router_active_on_one_agent,
+                router['id']),
+            timeout=90)

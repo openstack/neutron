@@ -19,6 +19,7 @@ import uuid
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
+from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -35,7 +36,7 @@ class OVSBridgeTestBase(base.BaseOVSLinuxTestCase):
         # Convert ((a, b), (c, d)) to {a: b, c: d} and add 'type' by default
         attrs = collections.OrderedDict(interface_attrs)
         attrs.setdefault('type', 'internal')
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         return (port_name, self.br.add_port(port_name, *attrs.items()))
 
     def create_ovs_vif_port(self, iface_id=None, mac=None,
@@ -73,7 +74,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertRaises(RuntimeError, cmd.execute, check_error=True)
 
     def test_replace_port(self):
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.replace_port(port_name, ('type', 'internal'))
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('internal',
@@ -150,7 +151,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
             'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
         }
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.add_tunnel_port(port_name, attrs['remote_ip'],
                                 attrs['local_ip'])
         self.assertEqual(self.ovs.db_get_val('Interface', port_name, 'type'),
@@ -160,7 +161,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.assertEqual(val, options[attr])
 
     def test_add_patch_port(self):
-        local = net_helpers.get_rand_port_name()
+        local = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         peer = 'remotepeer'
         self.br.add_patch_port(local, peer)
         self.assertEqual(self.ovs.db_get_val('Interface', local, 'type'),
