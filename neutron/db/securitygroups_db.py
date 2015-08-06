@@ -441,7 +441,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     raise ext_sg.SecurityGroupInvalidIcmpValue(
                         field=field, attr=attr, value=rule[attr])
             if (rule['port_range_min'] is None and
-                    rule['port_range_max']):
+                    rule['port_range_max'] is not None):
                 raise ext_sg.SecurityGroupMissingIcmpType(
                     value=rule['port_range_max'])
 
