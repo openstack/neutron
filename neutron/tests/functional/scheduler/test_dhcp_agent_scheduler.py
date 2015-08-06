@@ -391,9 +391,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                           for net in hosted_networks]
         expected_hosted_networks = self.expected_hosted_networks['agent-%s' %
                                                                  host_index]
-        for hosted_net_id in hosted_net_ids:
-            self.assertIn(hosted_net_id, expected_hosted_networks,
-                          message=msg + '[%s]' % hosted_net_id)
+        self.assertItemsEqual(hosted_net_ids, expected_hosted_networks, msg)
 
     def test_auto_schedule(self):
         for i in range(self.agent_count):
