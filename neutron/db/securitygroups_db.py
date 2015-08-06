@@ -151,7 +151,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if not default_sg:
             self._ensure_default_security_group(context, tenant_id)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.autonested_transaction(context.session):
             security_group_db = SecurityGroup(id=s.get('id') or (
                                               uuidutils.generate_uuid()),
                                               description=s['description'],
@@ -663,9 +663,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                          'description': _('Default security group')}
                 }
                 try:
-                    with db_api.autonested_transaction(context.session):
-                        ret = self.create_security_group(
-                            context, security_group, default_sg=True)
+                    ret = self.create_security_group(
+                        context, security_group, default_sg=True)
                 except exception.DBDuplicateEntry as ex:
                     LOG.debug("Duplicate default security group %s was "
                               "not created", ex.value)
