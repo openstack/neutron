@@ -1494,7 +1494,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port_ids_to_devices = dict(
             (self._device_to_port_id(context, device), device)
             for device in devices)
-        port_ids = port_ids_to_devices.keys()
+        port_ids = list(port_ids_to_devices.keys())
         ports = db.get_ports_and_sgs(context, port_ids)
         for port in ports:
             # map back to original requested id
