@@ -758,12 +758,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # Do not bind a port if it's already bound
             cur_tag = tags_by_name.get(port.port_name)
             if cur_tag != lvm.vlan:
+                self.int_br.delete_flows(in_port=port.ofport)
+            if self.prevent_arp_spoofing:
+                self.setup_arp_spoofing_protection(self.int_br,
+                                                   port, port_detail)
+            if cur_tag != lvm.vlan:
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "tag", lvm.vlan)
-                if port.ofport != -1:
-                    # NOTE(yamamoto): Remove possible drop_port flow
-                    # installed by port_dead.
-                    self.int_br.delete_flows(in_port=port.ofport)
 
             # update plugin about port status
             # FIXME(salv-orlando): Failures while updating device status
@@ -1044,16 +1045,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # ofport-based rules, so make arp_spoofing protection a conditional
         # until something else uses ofport
         if not self.prevent_arp_spoofing:
-            return
+            return []
         previous = self.vifname_to_ofport_map
         current = self.int_br.get_vif_port_to_ofport_map()
 
         # if any ofport numbers have changed, re-process the devices as
         # added ports so any rules based on ofport numbers are updated.
         moved_ports = self._get_ofport_moves(current, previous)
-        if moved_ports:
-            self.treat_devices_added_or_updated(moved_ports,
-                                                ovs_restarted=False)
 
         # delete any stale rules based on removed ofports
         ofports_deleted = set(previous.values()) - set(current.values())
@@ -1062,6 +1060,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # store map for next iteration
         self.vifname_to_ofport_map = current
+        return moved_ports
 
     @staticmethod
     def _get_ofport_moves(current, previous):
@@ -1255,9 +1254,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                    details['fixed_ips'],
                                                    details['device_owner'],
                                                    ovs_restarted)
-                if self.prevent_arp_spoofing:
-                    self.setup_arp_spoofing_protection(self.int_br,
-                                                       port, details)
                 if need_binding:
                     details['vif_port'] = port
                     need_binding_devices.append(details)
@@ -1576,7 +1572,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     reg_ports = (set() if ovs_restarted else ports)
                     port_info = self.scan_ports(reg_ports, updated_ports_copy)
                     self.process_deleted_ports(port_info)
-                    self.update_stale_ofport_rules()
+                    ofport_changed_ports = self.update_stale_ofport_rules()
+                    if ofport_changed_ports:
+                        port_info.setdefault('updated', set()).update(
+                            ofport_changed_ports)
                     LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
                               "port information retrieved. "
                               "Elapsed:%(elapsed).3f",
