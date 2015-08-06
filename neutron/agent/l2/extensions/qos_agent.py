@@ -44,7 +44,7 @@ class QosAgentDriver(object):
         """Apply QoS rules on port for the first time.
 
         :param port: port object.
-        :param qos_policy: the QoS policy to be apply on port.
+        :param qos_policy: the QoS policy to be applied on port.
         """
         #TODO(QoS) we may want to provide default implementations of calling
         #delete and then update
@@ -55,7 +55,7 @@ class QosAgentDriver(object):
         """Apply QoS rules on port.
 
         :param port: port object.
-        :param qos_policy: the QoS policy to be apply on port.
+        :param qos_policy: the QoS policy to be applied on port.
         """
         pass
 
