@@ -168,6 +168,12 @@ class OvsdbIdl(api.API):
     def br_set_external_id(self, name, field, value):
         return cmd.BrSetExternalIdCommand(self, name, field, value)
 
+    def db_create(self, table, **col_values):
+        return cmd.DbCreateCommand(self, table, **col_values)
+
+    def db_destroy(self, table, record):
+        return cmd.DbDestroyCommand(self, table, record)
+
     def db_set(self, table, record, *col_values):
         return cmd.DbSetCommand(self, table, record, *col_values)
 

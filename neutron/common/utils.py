@@ -438,3 +438,7 @@ class DelayedStringRenderer(object):
 
     def __str__(self):
         return str(self.function(*self.args, **self.kwargs))
+
+
+def camelize(s):
+    return ''.join(s.replace('_', ' ').title().split())

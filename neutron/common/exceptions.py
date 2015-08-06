@@ -77,6 +77,10 @@ class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
 
+class ObjectNotFound(NotFound):
+    message = _("Object %(id)s not found.")
+
+
 class NetworkNotFound(NotFound):
     message = _("Network %(net_id)s could not be found")
 
@@ -93,9 +97,28 @@ class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found")
 
 
+class QosPolicyNotFound(NotFound):
+    message = _("QoS policy %(policy_id)s could not be found")
+
+
+class QosRuleNotFound(NotFound):
+    message = _("QoS rule %(rule_id)s for policy %(policy_id)s "
+                "could not be found")
+
+
 class PortNotFoundOnNetwork(NotFound):
     message = _("Port %(port_id)s could not be found "
                 "on network %(net_id)s")
+
+
+class PortQosBindingNotFound(NotFound):
+    message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
+                "could not be found")
+
+
+class NetworkQosBindingNotFound(NotFound):
+    message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
+                "could not be found")
 
 
 class PolicyFileNotFound(NotFound):
@@ -116,6 +139,11 @@ class StateInvalid(BadRequest):
 
 class InUse(NeutronException):
     message = _("The resource is inuse")
+
+
+class QosPolicyInUse(InUse):
+    message = _("QoS Policy %(policy_id)s is used by "
+                "%(object_type)s %(object_id)s.")
 
 
 class NetworkInUse(InUse):
@@ -474,3 +502,7 @@ class DeviceNotFoundError(NeutronException):
 class NetworkSubnetPoolAffinityError(BadRequest):
     message = _("Subnets hosted on the same network must be allocated from "
                 "the same subnet pool")
+
+
+class ObjectActionError(NeutronException):
+    message = _('Object action %(action)s failed because: %(reason)s')

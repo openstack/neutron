@@ -25,11 +25,12 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
+from neutron.services.qos import qos_consts
 
 LOG = log.getLogger(__name__)
 
@@ -311,6 +312,40 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             self.ordered_mech_drivers.append(ext)
         LOG.info(_LI("Registered mechanism drivers: %s"),
                  [driver.name for driver in self.ordered_mech_drivers])
+
+    @property
+    def supported_qos_rule_types(self):
+        if not self.ordered_mech_drivers:
+            return []
+
+        rule_types = set(qos_consts.VALID_RULE_TYPES)
+
+        # Recalculate on every call to allow drivers determine supported rule
+        # types dynamically
+        for driver in self.ordered_mech_drivers:
+            if hasattr(driver.obj, 'supported_qos_rule_types'):
+                new_rule_types = \
+                    rule_types & set(driver.obj.supported_qos_rule_types)
+                dropped_rule_types = new_rule_types - rule_types
+                if dropped_rule_types:
+                    LOG.info(
+                        _LI("%(rule_types)s rule types disabled for ml2 "
+                            "because %(driver)s does not support them"),
+                        {'rule_types': ', '.join(dropped_rule_types),
+                         'driver': driver.name})
+                rule_types = new_rule_types
+            else:
+                # at least one of drivers does not support QoS, meaning there
+                # are no rule types supported by all of them
+                LOG.warn(
+                    _LW("%s does not support QoS; no rule types available"),
+                    driver.name)
+                return []
+
+        rule_types = list(rule_types)
+        LOG.debug("Supported QoS rule types "
+                  "(common subset for all mech drivers): %s", rule_types)
+        return rule_types
 
     def initialize(self):
         for driver in self.ordered_mech_drivers:
@@ -753,9 +788,10 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         exts = []
         for driver in self.ordered_ext_drivers:
             alias = driver.obj.extension_alias
-            exts.append(alias)
-            LOG.info(_LI("Got %(alias)s extension from driver '%(drv)s'"),
-                     {'alias': alias, 'drv': driver.name})
+            if alias:
+                exts.append(alias)
+                LOG.info(_LI("Got %(alias)s extension from driver '%(drv)s'"),
+                         {'alias': alias, 'drv': driver.name})
         return exts
 
     def _call_on_ext_drivers(self, method_name, plugin_context, data, result):

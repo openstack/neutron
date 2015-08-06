@@ -30,6 +30,7 @@ from six import moves
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
+from neutron.agent.l2 import agent_extensions_manager
 from neutron.agent.linux import ip_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -225,6 +226,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
+        self.init_agent_extensions_mgr()
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
@@ -364,6 +366,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      self.topic,
                                                      consumers,
                                                      start_listening=False)
+
+    def init_agent_extensions_mgr(self):
+        agent_extensions_manager.register_opts(self.conf)
+        self.agent_extensions_mgr = (
+            agent_extensions_manager.AgentExtensionsManager(self.conf))
+        self.agent_extensions_mgr.initialize()
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
@@ -1245,6 +1253,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if 'port_id' in details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
+                details['vif_port'] = port
                 need_binding = self.treat_vif_port(port, details['port_id'],
                                                    details['network_id'],
                                                    details['network_type'],
@@ -1255,8 +1264,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                    details['device_owner'],
                                                    ovs_restarted)
                 if need_binding:
-                    details['vif_port'] = port
                     need_binding_devices.append(details)
+                self.agent_extensions_mgr.handle_port(self.context, details)
             else:
                 LOG.warn(_LW("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):

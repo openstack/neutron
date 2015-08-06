@@ -114,3 +114,20 @@ class TestPciLib(base.BaseTestCase):
                               self.pci_wrapper.set_vf_spoofcheck,
                               self.VF_INDEX,
                               True)
+
+    def test_set_vf_max_rate(self):
+        with mock.patch.object(self.pci_wrapper, "_as_root") \
+                as mock_as_root:
+            result = self.pci_wrapper.set_vf_max_rate(self.VF_INDEX, 1000)
+            self.assertIsNone(result)
+        mock_as_root.assert_called_once_with([], "link",
+            ("set", self.DEV_NAME, "vf", str(self.VF_INDEX), "rate", '1000'))
+
+    def test_set_vf_max_rate_fail(self):
+        with mock.patch.object(self.pci_wrapper,
+                               "_execute") as mock_exec:
+            mock_exec.side_effect = Exception()
+            self.assertRaises(exc.IpCommandError,
+                              self.pci_wrapper.set_vf_max_rate,
+                              self.VF_INDEX,
+                              1000)

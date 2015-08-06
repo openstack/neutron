@@ -49,6 +49,7 @@ from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron.services.qos import qos_consts
 from neutron.tests import base
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
@@ -137,6 +138,37 @@ class TestMl2BulkToggleWithoutBulkless(Ml2PluginV2TestCase):
 
     def test_bulk_enabled_with_bulk_drivers(self):
         self.assertFalse(self._skip_native_bulk)
+
+
+class TestMl2SupportedQosRuleTypes(Ml2PluginV2TestCase):
+
+    def test_empty_driver_list(self, *mocks):
+        mech_drivers_mock = mock.PropertyMock(return_value=[])
+        with mock.patch.object(self.driver.mechanism_manager,
+                               'ordered_mech_drivers',
+                               new_callable=mech_drivers_mock):
+            self.assertEqual(
+                [], self.driver.mechanism_manager.supported_qos_rule_types)
+
+    def test_no_rule_types_in_common(self):
+        self.assertEqual(
+            [], self.driver.mechanism_manager.supported_qos_rule_types)
+
+    @mock.patch.object(mech_logger.LoggerMechanismDriver,
+                       'supported_qos_rule_types',
+                       new_callable=mock.PropertyMock,
+                       create=True)
+    @mock.patch.object(mech_test.TestMechanismDriver,
+                       'supported_qos_rule_types',
+                       new_callable=mock.PropertyMock,
+                       create=True)
+    def test_rule_type_in_common(self, *mocks):
+        # make sure both plugins have the same supported qos rule types
+        for mock_ in mocks:
+            mock_.return_value = qos_consts.VALID_RULE_TYPES
+        self.assertEqual(
+            qos_consts.VALID_RULE_TYPES,
+            self.driver.mechanism_manager.supported_qos_rule_types)
 
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,
@@ -1630,3 +1662,75 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             # run the transaction balancing function defined in this test
             plugin.delete_port(self.context, 'fake_id')
             self.assertTrue(self.notify.call_count)
+
+
+class TestMl2PluginCreateUpdateNetwork(base.BaseTestCase):
+    def setUp(self):
+        super(TestMl2PluginCreateUpdateNetwork, self).setUp()
+        self.context = mock.MagicMock()
+        self.notify_p = mock.patch('neutron.callbacks.registry.notify')
+        self.notify = self.notify_p.start()
+
+    def _ensure_transaction_is_closed(self):
+        transaction = self.context.session.begin(subtransactions=True)
+        enter = transaction.__enter__.call_count
+        exit = transaction.__exit__.call_count
+        self.assertEqual(enter, exit)
+
+    def _create_plugin_for_create_update_network(self):
+        plugin = ml2_plugin.Ml2Plugin()
+        plugin.extension_manager = mock.Mock()
+        plugin.type_manager = mock.Mock()
+        plugin.mechanism_manager = mock.Mock()
+        plugin.notifier = mock.Mock()
+        mock.patch('neutron.extensions.providernet.'
+                   '_raise_if_updates_provider_attributes').start()
+
+        self.notify.side_effect = (
+            lambda r, e, t, **kwargs: self._ensure_transaction_is_closed())
+
+        return plugin
+
+    def test_create_network_rpc_outside_transaction(self):
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'create_network'):
+            init.return_value = None
+
+            plugin = self._create_plugin_for_create_update_network()
+
+            plugin.create_network(self.context, mock.MagicMock())
+
+            kwargs = {'context': self.context, 'network': mock.ANY}
+            self.notify.assert_called_once_with('network', 'after_create',
+                plugin, **kwargs)
+
+    def test_create_network_bulk_rpc_outside_transaction(self):
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'create_network'):
+            init.return_value = None
+
+            plugin = self._create_plugin_for_create_update_network()
+
+            plugin.create_network_bulk(self.context,
+                                       {'networks':
+                                        [mock.MagicMock(), mock.MagicMock()]})
+
+            self.assertEqual(2, self.notify.call_count)
+
+    def test_update_network_rpc_outside_transaction(self):
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'update_network'):
+            init.return_value = None
+            plugin = self._create_plugin_for_create_update_network()
+
+            plugin.update_network(self.context, 'fake_id', mock.MagicMock())
+
+            kwargs = {
+                'context': self.context,
+                'network': mock.ANY,
+            }
+            self.notify.assert_called_once_with('network', 'after_update',
+                plugin, **kwargs)

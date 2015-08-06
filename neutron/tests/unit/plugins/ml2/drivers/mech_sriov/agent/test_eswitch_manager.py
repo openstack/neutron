@@ -42,7 +42,8 @@ class TestCreateESwitchManager(base.BaseTestCase):
                            return_value=True):
 
             with testtools.ExpectedException(exc.InvalidDeviceError):
-                esm.ESwitchManager(device_mappings, None)
+                esm.ESwitchManager().discover_devices(
+                    device_mappings, None)
 
     def test_create_eswitch_mgr_ok(self):
         device_mappings = {'physnet1': 'p6p1'}
@@ -53,7 +54,7 @@ class TestCreateESwitchManager(base.BaseTestCase):
                            "eswitch_manager.PciOsWrapper.is_assigned_vf",
                            return_value=True):
 
-            esm.ESwitchManager(device_mappings, None)
+            esm.ESwitchManager().discover_devices(device_mappings, None)
 
 
 class TestESwitchManagerApi(base.BaseTestCase):
@@ -75,7 +76,8 @@ class TestESwitchManagerApi(base.BaseTestCase):
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.PciOsWrapper.is_assigned_vf",
                            return_value=True):
-            self.eswitch_mgr = esm.ESwitchManager(device_mappings, None)
+            self.eswitch_mgr = esm.ESwitchManager()
+            self.eswitch_mgr.discover_devices(device_mappings, None)
 
     def test_get_assigned_devices(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -131,6 +133,19 @@ class TestESwitchManagerApi(base.BaseTestCase):
                            "eswitch_manager.EmbSwitch.set_device_state"):
             self.eswitch_mgr.set_device_state(self.ASSIGNED_MAC,
                                               self.PCI_SLOT, True)
+
+    def test_set_device_max_rate(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                        "eswitch_manager.EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC) as get_pci_mock,\
+                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                           "eswitch_manager.EmbSwitch.set_device_max_rate")\
+                as set_device_max_rate_mock:
+            self.eswitch_mgr.set_device_max_rate(self.ASSIGNED_MAC,
+                                                 self.PCI_SLOT, 1000)
+            get_pci_mock.assert_called_once_with(self.PCI_SLOT)
+            set_device_max_rate_mock.assert_called_once_with(
+                self.PCI_SLOT, 1000)
 
     def test_set_device_status_mismatch(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -259,6 +274,18 @@ class TestEmbSwitch(base.BaseTestCase):
             self.assertRaises(exc.InvalidPciSlotError,
                               self.emb_switch.set_device_spoofcheck,
                               self.WRONG_PCI_SLOT, True)
+
+    def test_set_device_max_rate_ok(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate"):
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 1000)
+
+    def test_set_device_max_rate_fail(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate"):
+            self.assertRaises(exc.InvalidPciSlotError,
+                              self.emb_switch.set_device_max_rate,
+                              self.WRONG_PCI_SLOT, 1000)
 
     def test_get_pci_device(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."

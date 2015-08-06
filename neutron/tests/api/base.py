@@ -88,6 +88,8 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.fw_rules = []
         cls.fw_policies = []
         cls.ipsecpolicies = []
+        cls.qos_rules = []
+        cls.qos_policies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
         cls.address_scopes = []
         cls.admin_address_scopes = []
@@ -115,6 +117,14 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for vpnservice in cls.vpnservices:
                 cls._try_delete_resource(cls.client.delete_vpnservice,
                                          vpnservice['id'])
+            # Clean up QoS policies
+            for qos_policy in cls.qos_policies:
+                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
+                                         qos_policy['id'])
+            # Clean up QoS rules
+            for qos_rule in cls.qos_rules:
+                cls._try_delete_resource(cls.admin_client.delete_qos_rule,
+                                         qos_rule['id'])
             # Clean up floating IPs
             for floating_ip in cls.floating_ips:
                 cls._try_delete_resource(cls.client.delete_floatingip,
@@ -221,9 +231,9 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         return network
 
     @classmethod
-    def create_shared_network(cls, network_name=None):
+    def create_shared_network(cls, network_name=None, **post_body):
         network_name = network_name or data_utils.rand_name('sharednetwork-')
-        post_body = {'name': network_name, 'shared': True}
+        post_body.update({'name': network_name, 'shared': True})
         body = cls.admin_client.create_network(**post_body)
         network = body['network']
         cls.shared_networks.append(network)
@@ -430,6 +440,25 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         fw_policy = body['firewall_policy']
         cls.fw_policies.append(fw_policy)
         return fw_policy
+
+    @classmethod
+    def create_qos_policy(cls, name, description, shared, tenant_id=None):
+        """Wrapper utility that returns a test QoS policy."""
+        body = cls.admin_client.create_qos_policy(
+            name, description, shared, tenant_id)
+        qos_policy = body['policy']
+        cls.qos_policies.append(qos_policy)
+        return qos_policy
+
+    @classmethod
+    def create_qos_bandwidth_limit_rule(cls, policy_id,
+                                       max_kbps, max_burst_kbps):
+        """Wrapper utility that returns a test QoS bandwidth limit rule."""
+        body = cls.admin_client.create_bandwidth_limit_rule(
+            policy_id, max_kbps, max_burst_kbps)
+        qos_rule = body['bandwidth_limit_rule']
+        cls.qos_rules.append(qos_rule)
+        return qos_rule
 
     @classmethod
     def delete_router(cls, router):
