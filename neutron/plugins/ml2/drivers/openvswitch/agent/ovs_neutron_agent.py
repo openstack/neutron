@@ -1520,6 +1520,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ovs_restarted = False
         while self._check_and_handle_signal():
             port_info = {}
+            ancillary_port_info = {}
             start = time.time()
             LOG.debug("Agent rpc_loop - iteration:%d started",
                       self.iter_num)
@@ -1628,8 +1629,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     # Put the ports back in self.updated_port
                     self.updated_ports |= updated_ports_copy
                     sync = True
-            ancillary_port_info = (ancillary_port_info if self.ancillary_brs
-                else {})
             port_stats = self.get_port_stats(port_info, ancillary_port_info)
             self.loop_count_and_wait(start, port_stats)
 
