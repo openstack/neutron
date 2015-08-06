@@ -73,8 +73,9 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
         :return: A tuntap ip_lib.IPDevice
         """
         ip = ip_lib.IPWrapper(namespace=attr.namespace)
-        ip.netns.add(attr.namespace)
-        self.addCleanup(ip.netns.delete, attr.namespace)
+        if attr.namespace:
+            ip.netns.add(attr.namespace)
+            self.addCleanup(ip.netns.delete, attr.namespace)
         tap_device = ip.add_tuntap(attr.name)
         self.addCleanup(self._safe_delete_device, tap_device)
         tap_device.link.set_address(attr.mac_address)
