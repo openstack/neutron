@@ -143,6 +143,9 @@ IPV6_LLA_PREFIX = 'fe80::/64'
 # indicate that IPv6 Prefix Delegation should be used to allocate subnet CIDRs
 IPV6_PD_POOL_ID = 'prefix_delegation'
 
+# Special provisional prefix for IPv6 Prefix Delegation
+PROVISIONAL_IPV6_PD_PREFIX = '::/64'
+
 # Linux interface max length
 DEVICE_NAME_MAX_LEN = 15
 

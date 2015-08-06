@@ -233,6 +233,10 @@ def get_hostname():
     return socket.gethostname()
 
 
+def get_first_host_ip(net, ip_version):
+    return str(netaddr.IPAddress(net.first + 1, ip_version))
+
+
 def compare_elements(a, b):
     """Compare elements if a and b have same elements.
 

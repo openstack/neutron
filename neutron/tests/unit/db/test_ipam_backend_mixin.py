@@ -80,6 +80,29 @@ class TestIpamBackendMixin(base.BaseTestCase):
         self._test_get_changed_ips_for_port(expected_change, original_ips,
                                             new_ips, self.owner_non_router)
 
+    def test__get_changed_ips_for_port_autoaddress_ipv6_pd_enabled(self):
+        owner_not_router = constants.DEVICE_OWNER_DHCP
+        new_ips = self._prepare_ips(self.default_new_ips)
+
+        original = (('id-1', '192.168.1.1'),
+                    ('id-5', '2000:1234:5678::12FF:FE34:5678'))
+        original_ips = self._prepare_ips(original)
+
+        # mock to test auto address part
+        pd_subnet = {'subnetpool_id': constants.IPV6_PD_POOL_ID,
+                     'ipv6_address_mode': constants.IPV6_SLAAC,
+                     'ipv6_ra_mode': constants.IPV6_SLAAC}
+        self.mixin._get_subnet = mock.Mock(return_value=pd_subnet)
+
+        # make a copy of original_ips
+        # since it is changed by _get_changed_ips_for_port
+        expected_change = self.mixin.Changes(add=[new_ips[1]],
+                                             original=[original_ips[0]],
+                                             remove=[original_ips[1]])
+
+        self._test_get_changed_ips_for_port(expected_change, original_ips,
+                                            new_ips, owner_not_router)
+
     def _test_get_changed_ips_for_port_no_ip_address(self):
         # IP address should be added if only subnet_id is provided,
         # independently from auto_address status for subnet
