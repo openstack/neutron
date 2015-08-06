@@ -154,11 +154,12 @@ class ConnectionTester(fixtures.Fixture):
             dst_port_info = str()
             src_port_info = str()
             if dst_port is not None:
-                dst_port_info = " and destionation port %d" % dst_port
+                dst_port_info = " and destination port %d" % dst_port
             if src_port is not None:
                 src_port_info = " and source port %d" % src_port
-            raise ConnectionTesterException("%s connection with %s protocol%s"
-                                            "%s was established but it "
+            raise ConnectionTesterException("%s connection with protocol %s, "
+                                            "source port %s, destination "
+                                            "port %s was established but it "
                                             "shouldn't be possible" % (
                                                 direction, protocol,
                                                 src_port_info, dst_port_info))
@@ -191,8 +192,8 @@ class ConnectionTester(fixtures.Fixture):
             pass
         else:
             raise ConnectionTesterException(
-                'Established %s connection with protocol %s, source port  %s, '
-                'destination port %s can still send packets throught' % (
+                'Established %s connection with protocol %s, source port %s, '
+                'destination port %s can still send packets through' % (
                     direction, protocol, src_port, dst_port))
 
     @_validate_direction
