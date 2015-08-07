@@ -117,14 +117,14 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for vpnservice in cls.vpnservices:
                 cls._try_delete_resource(cls.client.delete_vpnservice,
                                          vpnservice['id'])
-            # Clean up QoS policies
-            for qos_policy in cls.qos_policies:
-                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
-                                         qos_policy['id'])
             # Clean up QoS rules
             for qos_rule in cls.qos_rules:
                 cls._try_delete_resource(cls.admin_client.delete_qos_rule,
                                          qos_rule['id'])
+            # Clean up QoS policies
+            for qos_policy in cls.qos_policies:
+                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
+                                         qos_policy['id'])
             # Clean up floating IPs
             for floating_ip in cls.floating_ips:
                 cls._try_delete_resource(cls.client.delete_floatingip,
