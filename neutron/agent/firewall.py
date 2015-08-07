@@ -117,6 +117,11 @@ class FirewallDriver(object):
         """Update rules in a security group."""
         raise NotImplementedError()
 
+    def security_group_updated(self, action_type, sec_group_ids,
+                               device_id=None):
+        """Called when a security group is updated."""
+        raise NotImplementedError()
+
 
 class NoopFirewallDriver(FirewallDriver):
     """Noop Firewall Driver.
@@ -151,4 +156,8 @@ class NoopFirewallDriver(FirewallDriver):
         pass
 
     def update_security_group_rules(self, sg_id, rules):
+        pass
+
+    def security_group_updated(self, action_type, sec_group_ids,
+                               device_id=None):
         pass

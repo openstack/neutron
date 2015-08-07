@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import six
 
 from neutron.agent import firewall
+from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
@@ -56,6 +57,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one
         self.ipset = ipset_manager.IpsetManager(namespace=namespace)
+        self.ipconntrack = ip_conntrack.IpConntrackManager(namespace=namespace)
         # list of port which has security group
         self.filtered_ports = {}
         self.unfiltered_ports = {}
@@ -72,6 +74,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.pre_sg_members = None
         self.enable_ipset = cfg.CONF.SECURITYGROUP.enable_ipset
         self._enabled_netfilter_for_bridges = False
+        self.updated_rule_sg_ids = set()
+        self.updated_sg_members = set()
+        self.devices_with_udpated_sg_members = collections.defaultdict(list)
 
     def _enable_netfilter_for_bridges(self):
         # we only need to set these values once, but it has to be when
@@ -101,6 +106,22 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     @property
     def ports(self):
         return dict(self.filtered_ports, **self.unfiltered_ports)
+
+    def _update_remote_security_group_members(self, sec_group_ids):
+        for sg_id in sec_group_ids:
+            for device in self.filtered_ports.values():
+                if sg_id in device.get('security_group_source_groups', []):
+                    self.devices_with_udpated_sg_members[sg_id].append(device)
+
+    def security_group_updated(self, action_type, sec_group_ids,
+                               device_ids=[]):
+        if action_type == 'sg_rule':
+            self.updated_rule_sg_ids.update(sec_group_ids)
+        elif action_type == 'sg_member':
+            if device_ids:
+                self.updated_sg_members.update(device_ids)
+            else:
+                self._update_remote_security_group_members(sec_group_ids)
 
     def update_security_group_rules(self, sg_id, sg_rules):
         LOG.debug("Update rules of security group (%s)", sg_id)
@@ -688,6 +709,79 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             if not sg_has_members:
                 del self.sg_members[sg_id]
 
+    def _find_deleted_sg_rules(self, sg_id):
+        del_rules = list()
+        for pre_rule in self.pre_sg_rules.get(sg_id, []):
+            if pre_rule not in self.sg_rules.get(sg_id, []):
+                del_rules.append(pre_rule)
+        return del_rules
+
+    def _find_devices_on_security_group(self, sg_id):
+        device_list = list()
+        for device in self.filtered_ports.values():
+            if sg_id in device.get('security_groups', []):
+                device_list.append(device)
+        return device_list
+
+    def _clean_deleted_sg_rule_conntrack_entries(self):
+        deleted_sg_ids = set()
+        for sg_id in self.updated_rule_sg_ids:
+            del_rules = self._find_deleted_sg_rules(sg_id)
+            if not del_rules:
+                continue
+            device_list = self._find_devices_on_security_group(sg_id)
+            for rule in del_rules:
+                self.ipconntrack.delete_conntrack_state_by_rule(
+                    device_list, rule)
+            deleted_sg_ids.add(sg_id)
+        for id in deleted_sg_ids:
+            self.updated_rule_sg_ids.remove(id)
+
+    def _clean_updated_sg_member_conntrack_entries(self):
+        updated_device_ids = set()
+        for device in self.updated_sg_members:
+            sec_group_change = False
+            device_info = self.filtered_ports.get(device)
+            pre_device_info = self._pre_defer_filtered_ports.get(device)
+            if not (device_info or pre_device_info):
+                continue
+            for sg_id in pre_device_info.get('security_groups', []):
+                if sg_id not in device_info.get('security_groups', []):
+                    sec_group_change = True
+                    break
+            if not sec_group_change:
+                continue
+            for ethertype in [constants.IPv4, constants.IPv6]:
+                self.ipconntrack.delete_conntrack_state_by_remote_ips(
+                    [device_info], ethertype, set())
+            updated_device_ids.add(device)
+        for id in updated_device_ids:
+            self.updated_sg_members.remove(id)
+
+    def _clean_deleted_remote_sg_members_conntrack_entries(self):
+        deleted_sg_ids = set()
+        for sg_id, devices in self.devices_with_udpated_sg_members.items():
+            for ethertype in [constants.IPv4, constants.IPv6]:
+                pre_ips = self._get_sg_members(
+                    self.pre_sg_members, sg_id, ethertype)
+                cur_ips = self._get_sg_members(
+                    self.sg_members, sg_id, ethertype)
+                ips = (pre_ips - cur_ips)
+                if devices and ips:
+                    self.ipconntrack.delete_conntrack_state_by_remote_ips(
+                        devices, ethertype, ips)
+            deleted_sg_ids.add(sg_id)
+        for id in deleted_sg_ids:
+            self.devices_with_udpated_sg_members.pop(id, None)
+
+    def _remove_conntrack_entries_from_sg_updates(self):
+        self._clean_deleted_sg_rule_conntrack_entries()
+        self._clean_updated_sg_member_conntrack_entries()
+        self._clean_deleted_remote_sg_members_conntrack_entries()
+
+    def _get_sg_members(self, sg_info, sg_id, ethertype):
+        return set(sg_info.get(sg_id, {}).get(ethertype, []))
+
     def filter_defer_apply_off(self):
         if self._defer_apply:
             self._defer_apply = False
@@ -696,6 +790,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._setup_chains_apply(self.filtered_ports,
                                      self.unfiltered_ports)
             self.iptables.defer_apply_off()
+            self._remove_conntrack_entries_from_sg_updates()
             self._remove_unused_security_group_info()
             self._pre_defer_filtered_ports = None
             self._pre_defer_unfiltered_ports = None
