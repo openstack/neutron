@@ -38,13 +38,15 @@ class L3AgentNotifyAPI(object):
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
-    def _notification_host(self, context, method, host, **kwargs):
+    def _notification_host(self, context, method, host, use_call=False,
+                           **kwargs):
         """Notify the agent that is hosting the router."""
         LOG.debug('Notify agent at %(host)s the message '
                   '%(method)s', {'host': host,
                                  'method': method})
         cctxt = self.client.prepare(server=host)
-        cctxt.cast(context, method, **kwargs)
+        rpc_method = cctxt.call if use_call else cctxt.cast
+        rpc_method(context, method, **kwargs)
 
     def _agent_notification(self, context, method, router_ids, operation,
                             shuffle_agents):
@@ -156,8 +158,12 @@ class L3AgentNotifyAPI(object):
                                 payload={'router_id': router_id})
 
     def router_added_to_agent(self, context, router_ids, host):
+        # need to use call here as we want to be sure agent received
+        # notification and router will not be "lost". However using call()
+        # itself is not a guarantee, calling code should handle exceptions and
+        # retry
         self._notification_host(context, 'router_added_to_agent', host,
-                                payload=router_ids)
+                                use_call=True, payload=router_ids)
 
     def routers_updated_on_host(self, context, router_ids, host):
         self._notification_host(context, 'routers_updated', host,
