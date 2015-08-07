@@ -449,6 +449,21 @@ class SubnetAllocationError(NeutronException):
     message = _("Failed to allocate subnet: %(reason)s")
 
 
+class AddressScopePrefixConflict(Conflict):
+    message = _("Failed to associate address scope: subnetpools "
+                "within an address scope must have unique prefixes")
+
+
+class IllegalSubnetPoolAssociationToAddressScope(BadRequest):
+    message = _("Illegal subnetpool association: subnetpool %(subnetpool_id)s "
+                " cannot be associated with address scope"
+                " %(address_scope_id)s")
+
+
+class IllegalSubnetPoolUpdate(BadRequest):
+    message = _("Illegal subnetpool update : %(reason)s")
+
+
 class MinPrefixSubnetAllocationError(BadRequest):
     message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
                 "minimum allowed prefix is %(min_prefixlen)s")

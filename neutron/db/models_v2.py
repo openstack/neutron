@@ -245,6 +245,7 @@ class SubnetPool(model_base.BASEV2, HasId, HasTenant):
     shared = sa.Column(sa.Boolean, nullable=False)
     default_quota = sa.Column(sa.Integer, nullable=True)
     hash = sa.Column(sa.String(36), nullable=False, server_default='')
+    address_scope_id = sa.Column(sa.String(36), nullable=True)
     prefixes = orm.relationship(SubnetPoolPrefix,
                                 backref='subnetpools',
                                 cascade='all, delete, delete-orphan',

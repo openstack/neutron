@@ -773,11 +773,63 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnetpool_prefix = models_v2.SubnetPoolPrefix(**prefix_args)
         context.session.add(subnetpool_prefix)
 
+    def _validate_address_scope_id(self, context, address_scope_id,
+                                   subnetpool_id, sp_prefixes):
+        """Validate the address scope before associating.
+
+        Subnetpool can associate with an address scope if
+          - the tenant user is the owner of both the subnetpool and
+            address scope
+          - the admin is associating the subnetpool with the shared
+            address scope
+          - there is no prefix conflict with the existing subnetpools
+            associated with the address scope.
+        """
+        if not attributes.is_attr_set(address_scope_id):
+            return
+
+        if not self.is_address_scope_owned_by_tenant(context,
+                                                     address_scope_id):
+            raise n_exc.IllegalSubnetPoolAssociationToAddressScope(
+                subnetpool_id=subnetpool_id, address_scope_id=address_scope_id)
+
+        subnetpools = self._get_subnetpools_by_address_scope_id(
+            context, address_scope_id)
+
+        new_set = netaddr.IPSet(sp_prefixes)
+        for sp in subnetpools:
+            if sp.id == subnetpool_id:
+                continue
+            sp_set = netaddr.IPSet([prefix['cidr'] for prefix in sp.prefixes])
+            if sp_set.intersection(new_set):
+                raise n_exc.AddressScopePrefixConflict()
+
+    def _check_subnetpool_update_allowed(self, context, subnetpool_id,
+                                         address_scope_id):
+        """Check if the subnetpool can be updated or not.
+
+        If the subnetpool is associated to a shared address scope not owned
+        by the tenant, then the subnetpool cannot be updated.
+        """
+
+        if not self.is_address_scope_owned_by_tenant(context,
+                                                     address_scope_id):
+            msg = _("subnetpool %(subnetpool_id)s cannot be updated when"
+                    " associated with shared address scope "
+                    "%(address_scope_id)s") % {
+                        'subnetpool_id': subnetpool_id,
+                        'address_scope_id': address_scope_id}
+            raise n_exc.IllegalSubnetPoolUpdate(reason=msg)
+
     def create_subnetpool(self, context, subnetpool):
         """Create a subnetpool"""
 
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
+        if sp_reader.address_scope_id is attributes.ATTR_NOT_SPECIFIED:
+            sp_reader.address_scope_id = None
+        self._validate_address_scope_id(context, sp_reader.address_scope_id,
+                                        id, sp_reader.prefixes)
         tenant_id = self._get_tenant_id_for_create(context, sp)
         with context.session.begin(subtransactions=True):
             pool_args = {'tenant_id': tenant_id,
@@ -789,7 +841,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          'min_prefixlen': sp_reader.min_prefixlen,
                          'max_prefixlen': sp_reader.max_prefixlen,
                          'shared': sp_reader.shared,
-                         'default_quota': sp_reader.default_quota}
+                         'default_quota': sp_reader.default_quota,
+                         'address_scope_id': sp_reader.address_scope_id}
             subnetpool = models_v2.SubnetPool(**pool_args)
             context.session.add(subnetpool)
             for prefix in sp_reader.prefixes:
@@ -826,7 +879,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         for key in ['id', 'name', 'ip_version', 'min_prefixlen',
                     'max_prefixlen', 'default_prefixlen', 'shared',
-                    'default_quota']:
+                    'default_quota', 'address_scope_id']:
             self._write_key(key, updated, model, new_pool)
 
         return updated
@@ -847,6 +900,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             updated = self._updated_subnetpool_dict(orig_sp, new_sp)
             updated['tenant_id'] = orig_sp.tenant_id
             reader = subnet_alloc.SubnetPoolReader(updated)
+            if orig_sp.address_scope_id:
+                self._check_subnetpool_update_allowed(context, id,
+                                                      orig_sp.address_scope_id)
+
+            self._validate_address_scope_id(context, reader.address_scope_id,
+                                            id, reader.prefixes)
             orig_sp.update(self._filter_non_model_columns(
                                                       reader.subnetpool,
                                                       models_v2.SubnetPool))

@@ -226,6 +226,7 @@ class SubnetPoolReader(object):
         self._read_prefix_bounds(subnetpool)
         self._read_attrs(subnetpool,
                          ['tenant_id', 'name', 'shared'])
+        self._read_address_scope(subnetpool)
         self.subnetpool = {'id': self.id,
                            'name': self.name,
                            'tenant_id': self.tenant_id,
@@ -237,6 +238,7 @@ class SubnetPoolReader(object):
                            'default_prefix': self.default_prefix,
                            'default_prefixlen': self.default_prefixlen,
                            'default_quota': self.default_quota,
+                           'address_scope_id': self.address_scope_id,
                            'shared': self.shared}
 
     def _read_attrs(self, subnetpool, keys):
@@ -312,6 +314,10 @@ class SubnetPoolReader(object):
 
         self.ip_version = ip_version
         self.prefixes = self._compact_subnetpool_prefix_list(prefix_list)
+
+    def _read_address_scope(self, subnetpool):
+        self.address_scope_id = subnetpool.get('address_scope_id',
+                                               attributes.ATTR_NOT_SPECIFIED)
 
     def _compact_subnetpool_prefix_list(self, prefix_list):
         """Compact any overlapping prefixes in prefix_list and return the

@@ -13,6 +13,7 @@
 #    under the License.
 
 import contextlib
+import netaddr
 
 import webob.exc
 
@@ -237,3 +238,126 @@ class TestAddressScope(AddressScopeTestCase):
             neutron_context=context.Context('', 'not-the-owner'))
         self.assertEqual(1, len(admin_res['address_scopes']))
         self.assertEqual(0, len(mortal_res['address_scopes']))
+
+
+class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
+    def setUp(self):
+        plugin = DB_PLUGIN_KLASS
+        ext_mgr = AddressScopeTestExtensionManager()
+        super(TestSubnetPoolsWithAddressScopes, self).setUp(plugin=plugin,
+                                                            ext_mgr=ext_mgr)
+
+    def _test_create_subnetpool(self, prefixes, expected=None,
+                                admin=False, **kwargs):
+        keys = kwargs.copy()
+        keys.setdefault('tenant_id', self._tenant_id)
+        with self.subnetpool(prefixes, admin, **keys) as subnetpool:
+            self._validate_resource(subnetpool, keys, 'subnetpool')
+            if expected:
+                self._compare_resource(subnetpool, expected, 'subnetpool')
+        return subnetpool
+
+    def test_create_subnetpool_associate_address_scope(self):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            expected = {'address_scope_id': address_scope_id}
+            self._test_create_subnetpool([subnet.cidr], expected=expected,
+                                         name='foo-subnetpool',
+                                         min_prefixlen='21',
+                                         address_scope_id=address_scope_id)
+
+    def test_create_subnetpool_associate_invalid_address_scope(self):
+        self.assertRaises(
+            webob.exc.HTTPClientError, self._test_create_subnetpool, [],
+            min_prefixlen='21', address_scope_id='foo-addr-scope-id')
+
+    def test_create_subnetpool_assoc_address_scope_with_prefix_intersect(self):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            expected = {'address_scope_id': address_scope_id}
+            self._test_create_subnetpool([subnet.cidr], expected=expected,
+                                         name='foo-subnetpool',
+                                         min_prefixlen='21',
+                                         address_scope_id=address_scope_id)
+            overlap_subnet = netaddr.IPNetwork('10.10.10.10/24')
+            self.assertRaises(
+                webob.exc.HTTPClientError, self._test_create_subnetpool,
+                [overlap_subnet.cidr], min_prefixlen='21',
+                address_scope_id=address_scope_id)
+
+    def test_update_subnetpool_associate_address_scope(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/24')
+        initial_subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                          name='foo-sp',
+                                                          min_prefixlen='21')
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            data = {'subnetpool': {'address_scope_id': address_scope_id}}
+            req = self.new_update_request(
+                'subnetpools', data, initial_subnetpool['subnetpool']['id'])
+            api = self._api_for_resource('subnetpools')
+            res = self.deserialize(self.fmt, req.get_response(api))
+            self._compare_resource(res, data['subnetpool'], 'subnetpool')
+
+    def test_update_subnetpool_associate_invalid_address_scope(self):
+        subnet = netaddr.IPNetwork('10.10.10.0/24')
+        initial_subnetpool = self._test_create_subnetpool([subnet.cidr],
+                                                          name='foo-sp',
+                                                          min_prefixlen='21')
+        data = {'subnetpool': {'address_scope_id': 'foo-addr-scope-id'}}
+        req = self.new_update_request(
+            'subnetpools', data, initial_subnetpool['subnetpool']['id'])
+        api = self._api_for_resource('subnetpools')
+        res = req.get_response(api)
+        self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
+
+    def test_update_subnetpool_disassociate_address_scope(self):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            expected = {'address_scope_id': address_scope_id}
+            initial_subnetpool = self._test_create_subnetpool(
+                [subnet.cidr], expected=expected, name='foo-sp',
+                min_prefixlen='21', address_scope_id=address_scope_id)
+
+            data = {'subnetpool': {'address_scope_id': None}}
+            req = self.new_update_request(
+                'subnetpools', data, initial_subnetpool['subnetpool']['id'])
+            api = self._api_for_resource('subnetpools')
+            res = self.deserialize(self.fmt, req.get_response(api))
+            self._compare_resource(res, data['subnetpool'], 'subnetpool')
+
+    def test_update_subnetpool_associate_another_address_scope(self):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            expected = {'address_scope_id': address_scope_id}
+            initial_subnetpool = self._test_create_subnetpool(
+                [subnet.cidr], expected=expected, name='foo-sp',
+                min_prefixlen='21', address_scope_id=address_scope_id)
+
+            with self.address_scope(name='foo-address-scope') as other_a_s:
+                other_a_s_id = other_a_s['address_scope']['id']
+                update_data = {'subnetpool': {'address_scope_id':
+                                              other_a_s_id}}
+                req = self.new_update_request(
+                    'subnetpools', update_data,
+                    initial_subnetpool['subnetpool']['id'])
+                api = self._api_for_resource('subnetpools')
+                res = self.deserialize(self.fmt, req.get_response(api))
+                self._compare_resource(res, update_data['subnetpool'],
+                                       'subnetpool')
+
+    def test_delete_address_scope_in_use(self):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            address_scope_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            expected = {'address_scope_id': address_scope_id}
+            self._test_create_subnetpool([subnet.cidr], expected=expected,
+                                         name='foo-subnetpool',
+                                         min_prefixlen='21',
+                                         address_scope_id=address_scope_id)
+            self._delete('address-scopes', address_scope_id,
+                         expected_code=webob.exc.HTTPConflict.code)

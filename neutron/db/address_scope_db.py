@@ -51,6 +51,21 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         except exc.NoResultFound:
             raise ext_address_scope.AddressScopeNotFound(address_scope_id=id)
 
+    def is_address_scope_owned_by_tenant(self, context, id):
+        """Check if address scope id is owned by the tenant or not.
+
+        AddressScopeNotFound is raised if the
+          - address scope id doesn't exist or
+          - if the (unshared) address scope id is not owned by this tenant.
+
+        @return Returns true if the user is admin or tenant is owner
+                Returns false if the address scope id is shared and not
+                owned by the tenant.
+        """
+        address_scope = self._get_address_scope(context, id)
+        return context.is_admin or (
+            address_scope.tenant_id == context.tenant_id)
+
     def create_address_scope(self, context, address_scope):
         """Create a address scope."""
         a_s = address_scope['address_scope']
@@ -101,5 +116,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     def delete_address_scope(self, context, id):
         with context.session.begin(subtransactions=True):
+            if self._get_subnetpools_by_address_scope_id(context, id):
+                raise ext_address_scope.AddressScopeInUse(address_scope_id=id)
             address_scope = self._get_address_scope(context, id)
             context.session.delete(address_scope)
