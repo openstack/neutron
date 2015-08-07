@@ -415,7 +415,7 @@ class TestOvsNeutronAgent(object):
                                'get_devices_details_list_and_failed_devices',
                                return_value={'devices': [details],
                                              'failed_devices': None}),\
-            mock.patch.object(self.agent.agent_extensions_mgr,
+            mock.patch.object(self.agent.ext_manager,
                               'handle_port', new=fake_handle_port),\
             mock.patch.object(self.agent.int_br,
                               'get_vifs_by_ids',

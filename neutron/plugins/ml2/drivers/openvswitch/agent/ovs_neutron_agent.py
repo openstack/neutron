@@ -30,7 +30,7 @@ from six import moves
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
-from neutron.agent.l2 import agent_extensions_manager
+from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent.linux import ip_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -226,7 +226,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
-        self.init_agent_extensions_mgr()
+        self.init_extension_manager()
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
@@ -367,11 +367,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      consumers,
                                                      start_listening=False)
 
-    def init_agent_extensions_mgr(self):
-        agent_extensions_manager.register_opts(self.conf)
-        self.agent_extensions_mgr = (
-            agent_extensions_manager.AgentExtensionsManager(self.conf))
-        self.agent_extensions_mgr.initialize()
+    def init_extension_manager(self):
+        ext_manager.register_opts(self.conf)
+        self.ext_manager = (
+            ext_manager.AgentExtensionsManager(self.conf))
+        self.ext_manager.initialize()
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
@@ -1269,7 +1269,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                        port, details)
                 if need_binding:
                     need_binding_devices.append(details)
-                self.agent_extensions_mgr.handle_port(self.context, details)
+                self.ext_manager.handle_port(self.context, details)
             else:
                 LOG.warn(_LW("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):
