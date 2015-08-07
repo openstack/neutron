@@ -968,6 +968,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 port['fixed_ips'] = [
                     {'ip_address': fip['floating_ip_address']}]
 
+            if fip.get('subnet_id'):
+                port['fixed_ips'] = [
+                    {'subnet_id': fip['subnet_id']}]
             external_port = self._core_plugin.create_port(context.elevated(),
                                                           {'port': port})
 
