@@ -253,8 +253,13 @@ with them.
 Agent backends
 --------------
 
-At the moment, QoS is supported by Open vSwitch backend only, so
-QosOVSAgentDriver is the only driver that implements QosAgentDriver interface.
+At the moment, QoS is supported by Open vSwitch and SR-IOV ml2 drivers.
+
+Each agent backend defines a QoS driver that implements the QosAgentDriver
+interface:
+
+* Open vSwitch (QosOVSAgentDriver);
+* SR-IOV (QosSRIOVAgentDriver).
 
 
 Open vSwitch
@@ -275,6 +280,24 @@ HTB queues are supported at least in all 2.x versions of Open vSwitch.
 
 More details about HTB in `the blog post
 <https://virtualandy.wordpress.com/2013/04/29/deep-dive-htb-rate-limiting-qos-on-with-open-vswitch-and-xenserver/>`_.
+
+
+SR-IOV
+~~~~~~
+
+SR-IOV bandwidth limit implementation relies on the new pci_lib function:
+
+* set_vf_max_rate
+
+As the name of the function suggests, the limit is applied on a Virtual
+Function (VF).
+
+ip link interface has the following limitation for bandwidth limit: it uses
+Mbps as units of bandwidth measurement, not kbps, and does not support float
+numbers. So in case the limit is set to something less than 1000 kbps, it's set
+to 1 Mbps only. If the limit is set to something that does not divide to 1000
+kbps chunks, then the effective limit is rounded to the nearest integer Mbps
+value.
 
 
 Configuration

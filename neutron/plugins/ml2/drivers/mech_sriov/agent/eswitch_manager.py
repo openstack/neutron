@@ -330,3 +330,17 @@ class ESwitchManager(object):
                             {"device_mac": device_mac, "pci_slot": pci_slot})
                 embedded_switch = None
         return embedded_switch
+
+    def get_pci_slot_by_mac(self, device_mac):
+        """Get pci slot by mac.
+
+        Get pci slot by device mac
+        @param device_mac: device mac
+        """
+        result = None
+        for pci_slot, embedded_switch in self.pci_slot_map.items():
+            used_device_mac = embedded_switch.get_pci_device(pci_slot)
+            if used_device_mac == device_mac:
+                result = pci_slot
+                break
+        return result
