@@ -45,6 +45,11 @@ list defined on the class.
 For Ml2 plugin, the list of supported QoS rule types is defined as a common
 subset of rules supported by all active mechanism drivers.
 
+Note: the list of supported rule types reported by core plugin is not enforced
+when accessing QoS rule resources. This is mostly because then we would not be
+able to create any rules while at least one ml2 driver in gate lacks support
+for QoS (at the moment of writing, linuxbridge is such a driver).
+
 
 QoS resources
 -------------

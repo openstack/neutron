@@ -140,6 +140,7 @@ class QoSPlugin(qos.QoSPluginBase):
         self._get_policy_obj(context, policy_id)
         return rule_object.QosBandwidthLimitRule.get_objects(context)
 
+    # TODO(QoS): enforce rule types when accessing rule objects
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_rule_types(self, context, filters=None, fields=None,
