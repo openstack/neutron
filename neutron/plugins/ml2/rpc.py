@@ -126,6 +126,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'port_security_enabled': port.get(psec.PORTSECURITY, True),
                  'qos_policy_id': qos_policy_id,
                  'profile': port[portbindings.PROFILE]}
+        if 'security_groups' in port:
+            entry['security_groups'] = port['security_groups']
         LOG.debug("Returning: %s", entry)
         return entry
 

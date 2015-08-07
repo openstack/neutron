@@ -406,7 +406,7 @@ class TestOvsNeutronAgent(object):
                                                 'failed_devices_up': [],
                                                 'failed_devices_down': []}),\
                 mock.patch.object(self.agent, func_name) as func:
-            skip_devs, need_bound_devices = (
+            skip_devs, need_bound_devices, insecure_ports = (
                 self.agent.treat_devices_added_or_updated([{}], False))
             # The function should not raise
             self.assertFalse(skip_devs)
@@ -477,7 +477,7 @@ class TestOvsNeutronAgent(object):
             skip_devs = self.agent.treat_devices_added_or_updated([{}], False)
             # The function should return False for resync and no device
             # processed
-            self.assertEqual((['the_skipped_one'], []), skip_devs)
+            self.assertEqual((['the_skipped_one'], [], []), skip_devs)
             self.assertFalse(treat_vif_port.called)
 
     def test_treat_devices_added_updated_put_port_down(self):
@@ -490,7 +490,8 @@ class TestOvsNeutronAgent(object):
                              'network_type': 'baz',
                              'fixed_ips': [{'subnet_id': 'my-subnet-uuid',
                                             'ip_address': '1.1.1.1'}],
-                             'device_owner': 'compute:None'
+                             'device_owner': 'compute:None',
+                             'port_security_enabled': True
                              }
 
         with mock.patch.object(self.agent.plugin_rpc,
@@ -502,7 +503,7 @@ class TestOvsNeutronAgent(object):
                                   return_value={'xxx': mock.MagicMock()}),\
                 mock.patch.object(self.agent,
                                   'treat_vif_port') as treat_vif_port:
-            skip_devs, need_bound_devices = (
+            skip_devs, need_bound_devices, insecure_ports = (
                 self.agent.treat_devices_added_or_updated([{}], False))
             # The function should return False for resync
             self.assertFalse(skip_devs)
@@ -538,7 +539,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(
                     self.agent,
                     "treat_devices_added_or_updated",
-                    return_value=([], [])) as device_added_updated,\
+                    return_value=([], [], [])) as device_added_updated,\
                 mock.patch.object(self.agent.int_br, "get_ports_attributes",
                                   return_value=[]),\
                 mock.patch.object(self.agent,
@@ -572,6 +573,24 @@ class TestOvsNeutronAgent(object):
 
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
+
+    def test_process_network_ports_with_insecure_ports(self):
+        port_info = {'current': set(['tap0', 'tap1']),
+                     'updated': set(['tap1']),
+                     'removed': set([]),
+                     'added': set(['eth1'])}
+        with mock.patch.object(self.agent.sg_agent,
+                               "setup_port_filters") as setup_port_filters,\
+                mock.patch.object(
+                    self.agent,
+                    "treat_devices_added_or_updated",
+                    return_value=([], [], ['eth1'])) as device_added_updated:
+            self.assertFalse(self.agent.process_network_ports(port_info,
+                                                              False))
+            device_added_updated.assert_called_once_with(
+                set(['eth1', 'tap1']), False)
+            setup_port_filters.assert_called_once_with(
+                set(), port_info.get('updated', set()))
 
     def test_report_state(self):
         with mock.patch.object(self.agent.state_rpc,
