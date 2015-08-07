@@ -72,8 +72,29 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
 
     def test_process_fields_port_updated_policy(self):
         with self._mock_plugin_loaded(True):
-            qos_policy_id = mock.Mock()
+            qos_policy1_id = mock.Mock()
+            qos_policy2_id = mock.Mock()
             port_id = mock.Mock()
+            actual_port = {'id': port_id,
+                           qos_consts.QOS_POLICY_ID: qos_policy1_id}
+            old_qos_policy = mock.MagicMock()
+            self.policy_m.get_port_policy = mock.Mock(
+                return_value=old_qos_policy)
+            new_qos_policy = mock.MagicMock()
+            self.policy_m.get_by_id = mock.Mock(return_value=new_qos_policy)
+            self.core_extension.process_fields(
+                self.context, base_core.PORT,
+                {qos_consts.QOS_POLICY_ID: qos_policy2_id},
+                actual_port)
+
+            old_qos_policy.detach_port.assert_called_once_with(port_id)
+            new_qos_policy.attach_port.assert_called_once_with(port_id)
+            self.assertEqual(qos_policy2_id, actual_port['qos_policy_id'])
+
+    def test_process_resource_port_updated_no_policy(self):
+        with self._mock_plugin_loaded(True):
+            port_id = mock.Mock()
+            qos_policy_id = mock.Mock()
             actual_port = {'id': port_id,
                            qos_consts.QOS_POLICY_ID: qos_policy_id}
             old_qos_policy = mock.MagicMock()
@@ -83,11 +104,30 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
             self.policy_m.get_by_id = mock.Mock(return_value=new_qos_policy)
             self.core_extension.process_fields(
                 self.context, base_core.PORT,
-                {qos_consts.QOS_POLICY_ID: qos_policy_id},
+                {qos_consts.QOS_POLICY_ID: None},
                 actual_port)
 
             old_qos_policy.detach_port.assert_called_once_with(port_id)
-            new_qos_policy.attach_port.assert_called_once_with(port_id)
+            self.assertIsNone(actual_port['qos_policy_id'])
+
+    def test_process_resource_network_updated_no_policy(self):
+        with self._mock_plugin_loaded(True):
+            network_id = mock.Mock()
+            qos_policy_id = mock.Mock()
+            actual_network = {'id': network_id,
+                              qos_consts.QOS_POLICY_ID: qos_policy_id}
+            old_qos_policy = mock.MagicMock()
+            self.policy_m.get_network_policy = mock.Mock(
+                return_value=old_qos_policy)
+            new_qos_policy = mock.MagicMock()
+            self.policy_m.get_by_id = mock.Mock(return_value=new_qos_policy)
+            self.core_extension.process_fields(
+                self.context, base_core.NETWORK,
+                {qos_consts.QOS_POLICY_ID: None},
+                actual_network)
+
+            old_qos_policy.detach_network.assert_called_once_with(network_id)
+            self.assertIsNone(actual_network['qos_policy_id'])
 
     def test_process_fields_network_new_policy(self):
         with self._mock_plugin_loaded(True):
