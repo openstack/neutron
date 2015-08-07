@@ -30,6 +30,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux.iptables_firewall import port_needs_l3_security
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import dvr_rpc
@@ -806,6 +807,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if port_details.get('allowed_address_pairs'):
             addresses |= {p['ip_address']
                           for p in port_details['allowed_address_pairs']}
+
+        if not port_needs_l3_security(port_details):
+            return
 
         addresses = {ip for ip in addresses
                      if netaddr.IPNetwork(ip).version == 4}
