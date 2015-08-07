@@ -208,7 +208,7 @@ with them.
   This module contains a manager that allows to register multiple extensions,
   and passes handle_port events down to all enabled extensions.
 
-* neutron.agent.l2.extensions.qos_agent:
+* neutron.agent.l2.extensions.qos
   defines QoS L2 agent extension. It receives handle_port events and passes
   them into QoS agent backend driver (see below). The file also defines the
   QosAgentDriver interface for backend QoS drivers.
