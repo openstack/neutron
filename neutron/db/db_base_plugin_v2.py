@@ -590,9 +590,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _update_allocation_pools(self, subnet):
         """Gets new allocation pools and formats them correctly"""
-        allocation_pools = self.ipam.generate_allocation_pools(
-                                    subnet['cidr'],
-                                    subnet['gateway_ip'])
+        allocation_pools = self.ipam.generate_pools(subnet['cidr'],
+                                                    subnet['gateway_ip'])
         return [{'start': str(netaddr.IPAddress(p.first,
                                                 subnet['ip_version'])),
                  'end': str(netaddr.IPAddress(p.last, subnet['ip_version']))}
@@ -619,13 +618,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         db_pools = [netaddr.IPRange(p['first_ip'], p['last_ip'])
                     for p in db_subnet.allocation_pools]
 
-        range_pools = None
-        if s.get('allocation_pools') is not None:
-            # Convert allocation pools to IPRange to simplify future checks
-            range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
-            self.ipam.validate_allocation_pools(range_pools, s['cidr'])
-            s['allocation_pools'] = range_pools
-
         update_ports_needed = False
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
@@ -636,6 +628,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # Update gateway_ip and allocation pools based on new cidr
             s['gateway_ip'] = utils.get_first_host_ip(net, s['ip_version'])
             s['allocation_pools'] = self._update_allocation_pools(s)
+
+        range_pools = None
+        if s.get('allocation_pools') is not None:
+            # Convert allocation pools to IPRange to simplify future checks
+            range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
+            self.ipam.validate_allocation_pools(range_pools, s['cidr'])
+            s['allocation_pools'] = range_pools
 
         # If either gateway_ip or allocation_pools were specified
         gateway_ip = s.get('gateway_ip')
