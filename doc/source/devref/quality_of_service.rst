@@ -6,8 +6,8 @@ Quality of Service advanced service is designed as a service plugin. The
 service is decoupled from the rest of Neutron code on multiple levels (see
 below).
 
-QoS is the first service/api extension to extend core resources (ports,
-networks) without using mixins inherited from plugins.
+QoS extends core resources (ports, networks) without using mixins inherited
+from plugins but through an ml2 extension driver.
 
 Details about the DB models, API extension, and use cases can be found here: `qos spec <http://specs.openstack.org/openstack/neutron-specs/specs/liberty/qos-api-extension.html>`_
 .
@@ -15,20 +15,39 @@ Details about the DB models, API extension, and use cases can be found here: `qo
 Service side design
 ===================
 * neutron.extensions.qos:
-  base extension + API controller definition.
+  base extension + API controller definition. Note that rules are subattributes
+  of policies and hence embedded into their URIs.
 
 * neutron.services.qos.qos_plugin:
   QoSPlugin, service plugin that implements 'qos' extension, receiving and
-  handling API calls to create/modify policies and rules. It also handles core
-  plugin requests to associate ports and networks with a QoS policy.
+  handling API calls to create/modify policies and rules.
 
-* neutron.services.qos.drivers.qos_base:
-  the interface class for server-side QoS backend which will receive {create,
-  update, delete} events on any rule change.
+* neutron.services.qos.notification_drivers.manager:
+  the manager that passes object notifications down to every enabled
+  notification driver.
 
-* neutron.services.qos.drivers.rpc.mq_qos:
-  message queue based reference backend driver which provides messaging
-  notifications to any interested agent, using `RPC callbacks <rpc_callbacks.html>`_.
+* neutron.services.qos.notification_drivers.qos_base:
+  the interface class for pluggable notification drivers that are used to
+  update backends about new {create, update, delete} events on any rule or
+  policy change.
+
+* neutron.services.qos.notification_drivers.message_queue:
+  MQ-based reference notification driver which updates agents via messaging
+  bus, using `RPC callbacks <rpc_callbacks.html>`_.
+
+* neutron.services.qos.qos_extension:
+  Contains a class that can be used by external code to extend core
+  (network/port) resources with QoS details (at the moment, it's just
+  qos_policy_id). This class is designed in a way that should allow its
+  integration into different plugins. Alternatively, we may want to have a core
+  resource extension manager that would utilize it, among other extensions, and
+  that could be easily integrated into plugins.
+
+* neutron.plugins.ml2.extensions.qos:
+  Contains ml2 extension driver that handles core resource updates by reusing
+  the qos_extension module mentioned above. In the future, we would like to see
+  a plugin-agnostic core resource extension manager that could be integrated
+  into other plugins with ease.
 
 
 Supported QoS rule types
@@ -51,10 +70,10 @@ able to create any rules while at least one ml2 driver in gate lacks support
 for QoS (at the moment of writing, linuxbridge is such a driver).
 
 
-QoS resources
--------------
+Database models
+---------------
 
-QoS design defines the following two conceptual resources to define QoS rules
+QoS design defines the following two conceptual resources to apply QoS rules
 for a port or a network:
 
 * QoS policy
@@ -77,6 +96,10 @@ All database models are defined under:
 
 * neutron.db.qos.models
 
+
+QoS versioned objects
+---------------------
+
 There is a long history of passing database dictionaries directly into business
 logic of Neutron. This path is not the one we wanted to take for QoS effort, so
 we've also introduced a new objects middleware to encapsulate the database logic
@@ -84,7 +107,7 @@ from the rest of the Neutron code that works with QoS resources. For this, we've
 adopted oslo.versionedobjects library and introduced a new NeutronObject class
 that is a base for all other objects that will belong to the middle layer.
 There is an expectation that Neutron will evolve into using objects for all
-resources it handles, though that part is obviously out of scope for the QoS
+resources it handles, though that part was obviously out of scope for the QoS
 effort.
 
 Every NeutronObject supports the following operations:
@@ -142,28 +165,14 @@ and some other minor things.
 
 Note that the QosRule base class is not registered with oslo.versionedobjects
 registry, because it's not expected that 'generic' rules should be
-instantiated (and to enforce just that, the base rule class is marked as ABC).
+instantiated (and to suggest just that, the base rule class is marked as ABC).
 
 QoS objects rely on some primitive database API functions that are added in:
 
-* neutron.db.api
-* neutron.db.qos.api
-
-
-Callback changes
-----------------
-
-TODO(QoS): We're changing strategy here to not rely on AFTER_READ callbacks,
-           and foster discussion about how to do decouple core resource
-           extension in the community. So, update next phrase when that
-           happens.
-
-To extend ports and networks with qos_policy_id field, AFTER_READ callback
-event is introduced.
-
-Note: a better mechanism is being built by @armax to make resource extensions
-more explicit and under control. We will migrate to that better mechanism as
-soon as it's available.
+* neutron.db.api: those can be reused to fetch other models that do not have
+  corresponding versioned objects yet, if needed.
+* neutron.db.qos.api: contains database functions that are specific to QoS
+  models.
 
 
 RPC communication
@@ -186,65 +195,60 @@ resources get proper NeutronObject implementations.
 Agent side design
 =================
 
-To facilitate code reusability between agents and agent extensions without
-patching the agent code itself, agent extensions were introduced. They can be
-especially interesting to third parties that don't want to maintain their code
-in Neutron tree.
+To ease code reusability between agents and to avoid the need to patch an agent
+for each new core resource extension, pluggable L2 agent extensions were
+introduced. They can be especially interesting to third parties that don't want
+to maintain their code in Neutron tree.
 
-Extensions are meant to receive basic events like port update or delete, and do
-whatever they need with it.
+Extensions are meant to receive handle_port events, and do whatever they need
+with them.
 
 * neutron.agent.l2.agent_extension:
-  extension interface definition.
+  This module defines an abstract extension interface.
 
 * neutron.agent.l2.agent_extensions_manager:
-  manager that allows to register multiple extensions, and pass events down to
-  all enabled extensions.
+  This module contains a manager that allows to register multiple extensions,
+  and passes handle_port events down to all enabled extensions.
 
 * neutron.agent.l2.extensions.qos_agent:
-  defines QoSAgentExtension that is also pluggable using QoSAgentDriver
-  implementations that are specific to agent backends being used.
-
-* neutron.agent.l2.l2_agent:
-  provides the API entry point for process_{network,subnet,port}_extension,
-  and holds an agent extension manager inside.
-  TODO(QoS): clarify what this is for, I don't follow a bit.
-
-
-ML2
----
-
-TODO(QoS): there is work ongoing that will need to be reflected here.
+  defines QoS L2 agent extension. It receives handle_port events and passes
+  them into QoS agent backend driver (see below). The file also defines the
+  QosAgentDriver interface for backend QoS drivers.
 
 
 Agent backends
 --------------
 
-TODO(QoS): this section needs rework.
+At the moment, QoS is supported for the following agent backends:
 
-Open vSwitch
+* Open vSwitch
+* SR-IOV
 
-* neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers.qos_driver
-  This module implements the QoSAgentDriver interface used by the
-  QosAgentExtension.
-
-* neutron.agent.common.ovs_lib
-* neutron.agent.ovsdb.api
-* neutron.agent.ovsdb.impl_idl
-* neutron.agent.ovsdb.impl_vsctl
-* neutron.agent.ovsdb.native.commands
-
-SR-IOV
+All of them define QoS drivers that reflect the QosAgentDriver interface.
 
 
 Configuration
 =============
 
-TODO(QoS)
+To enable the service, the following steps should be followed:
+
+On server side:
+
+* enable qos service in service_plugins;
+* set the needed notification_drivers in [qos] section (message_queue is the default);
+* for ml2, add 'qos' to extension_drivers in [ml2] section.
+
+On agent side (OVS):
+
+* add 'qos' to extensions in [agent] section.
 
 
 Testing strategy
 ================
+
+All the code added or extended as part of the effort got reasonable unit test
+coverage.
+
 
 Neutron objects
 ---------------
@@ -265,3 +269,19 @@ in terms of how those objects are implemented. Specific test classes can
 obviously extend the set of test cases as they see needed (f.e. you need to
 define new test cases for those additional methods that you may add to your
 object implementations on top of base semantics common to all neutron objects).
+
+
+Functional tests
+----------------
+
+Additions to ovs_lib to set bandwidth limits on ports are covered in:
+
+* neutron.tests.functional.agent.test_ovs_lib
+
+
+API tests
+---------
+
+API tests for basic CRUD operations for ports, networks, policies, and rules were added in:
+
+* neutron.tests.api.test_qos
