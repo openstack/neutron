@@ -623,6 +623,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if s.get('allocation_pools') is not None:
             # Convert allocation pools to IPRange to simplify future checks
             range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
+            self.ipam.validate_allocation_pools(range_pools, s['cidr'])
             s['allocation_pools'] = range_pools
 
         update_ports_needed = False

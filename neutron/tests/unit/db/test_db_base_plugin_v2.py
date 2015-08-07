@@ -4245,6 +4245,47 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPConflict.code)
 
+    def test_update_subnet_allocation_pools_invalid_returns_400(self):
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             allocation_pools=allocation_pools,
+                             cidr='10.0.0.0/24') as subnet:
+                # Check allocation pools
+                invalid_pools = [[{'end': '10.0.0.254'}],
+                                 [{'start': '10.0.0.254'}],
+                                 [{'start': '1000.0.0.254'}],
+                                 [{'start': '10.0.0.2', 'end': '10.0.0.254'},
+                                  {'end': '10.0.0.254'}],
+                                 None,
+                                 [{'start': '10.0.0.200', 'end': '10.0.3.20'}],
+                                 [{'start': '10.0.2.250', 'end': '10.0.3.5'}],
+                                 [{'start': '10.0.0.0', 'end': '10.0.0.50'}],
+                                 [{'start': '10.0.2.10', 'end': '10.0.2.5'}],
+                                 [{'start': 'fe80::2', 'end': 'fe80::ffff'}]]
+                for pool in invalid_pools:
+                    data = {'subnet': {'allocation_pools': pool}}
+                    req = self.new_update_request('subnets', data,
+                                                  subnet['subnet']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPClientError.code)
+
+    def test_update_subnet_allocation_pools_overlapping_returns_409(self):
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             allocation_pools=allocation_pools,
+                             cidr='10.0.0.0/24') as subnet:
+                data = {'subnet': {'allocation_pools': [
+                        {'start': '10.0.0.20', 'end': '10.0.0.40'},
+                        {'start': '10.0.0.30', 'end': '10.0.0.50'}]}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPConflict.code)
+
     def _test_subnet_update_enable_dhcp_no_ip_available_returns_409(
             self, allocation_pools, cidr):
         ip_version = netaddr.IPNetwork(cidr).version
