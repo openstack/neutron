@@ -209,7 +209,7 @@ with them.
 * neutron.agent.l2.agent_extension:
   This module defines an abstract extension interface.
 
-* neutron.agent.l2.agent_extensions_manager:
+* neutron.agent.l2.extensions.manager:
   This module contains a manager that allows to register multiple extensions,
   and passes handle_port events down to all enabled extensions.
 
