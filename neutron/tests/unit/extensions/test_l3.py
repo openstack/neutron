@@ -326,7 +326,7 @@ class L3NatTestCaseMixin(object):
             data['router']['admin_state_up'] = admin_state_up
         for arg in (('admin_state_up', 'tenant_id') + (arg_list or ())):
             # Arg must be present and not empty
-            if kwargs.get(arg):
+            if arg in kwargs:
                 data['router'][arg] = kwargs[arg]
         router_req = self.new_create_request('routers', data, fmt)
         if set_context and tenant_id:
