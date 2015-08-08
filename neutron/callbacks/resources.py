@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-NETWORK = 'network'
 PORT = 'port'
 ROUTER = 'router'
 ROUTER_GATEWAY = 'router_gateway'
@@ -20,7 +19,6 @@ SECURITY_GROUP_RULE = 'security_group_rule'
 SUBNET = 'subnet'
 
 VALID = (
-    NETWORK,
     PORT,
     ROUTER,
     ROUTER_GATEWAY,
