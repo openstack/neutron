@@ -27,10 +27,10 @@ Testing Neutron
 Overview
 --------
 
-Neutron relies on different types of testing to ensure its quality, as
-described below.  In addition to in-tree testing, `Tempest`_ is
+Neutron relies on unit, functional, fullstack and API tests to ensure its
+quality, as described below. In addition to in-tree testing, `Tempest`_ is
 responsible for validating Neutron's integration with other OpenStack
-components, and `Rally`_ is responsible for benchmarking.
+components via scenario tests, and `Rally`_ is responsible for benchmarking.
 
 .. _Tempest: http://docs.openstack.org/developer/tempest/
 .. _Rally: http://rally.readthedocs.org/en/latest/
@@ -39,45 +39,59 @@ Unit Tests
 ~~~~~~~~~~
 
 Unit tests (neutron/test/unit/) are meant to cover as much code as
-possible and should be executed without the service running. They are
-designed to test the various pieces of the neutron tree to make sure
-any new changes don't break existing functionality.
+possible. They are designed to test the various pieces of the Neutron tree to
+make sure any new changes don't break existing functionality. Unit tests have
+no requirements nor make changes to the system they are running on. They use
+an in-memory sqlite database to test DB interaction.
 
 Functional Tests
 ~~~~~~~~~~~~~~~~
 
 Functional tests (neutron/tests/functional/) are intended to
-validate actual system interaction.  Mocks should be used sparingly,
-if at all.  Care should be taken to ensure that existing system
+validate actual system interaction. Mocks should be used sparingly,
+if at all. Care should be taken to ensure that existing system
 resources are not modified and that resources created in tests are
-properly cleaned up.
+properly cleaned up both on test success and failure.
+
+Fullstack Tests
+~~~~~~~~~~~~~~~
+
+Fullstack tests (neutron/tests/fullstack/) target Neutron as a whole.
+The test infrastructure itself manages the Neutron server and its agents.
+Fullstack tests are a form of integration testing and fill a void between
+unit/functional tests and Tempest. More information may be found
+`here. <fullstack_testing.html>`_
 
 API Tests
 ~~~~~~~~~
 
 API tests (neutron/tests/api/) are intended to ensure the function
-and stability of the Neutron API.  As much as possible, changes to
+and stability of the Neutron API. As much as possible, changes to
 this path should not be made at the same time as changes to the code
-to limit the potential for introducing backwards-incompatible changes.
+to limit the potential for introducing backwards-incompatible changes,
+although the same patch that introduces a new API should include an API
+test.
 
-Since API tests need to be able to target a deployed Neutron daemon
-that is not necessarily test-managed, they should not depend on
-controlling the runtime configuration of the target daemon.  API tests
-should be black-box - no assumptions should be made about
-implementation.  Only the contract defined by Neutron's REST API
+Since API tests target a deployed Neutron daemon that is not test-managed,
+they should not depend on controlling the runtime configuration
+of the target daemon. API tests should be black-box - no assumptions should
+be made about implementation. Only the contract defined by Neutron's REST API
 should be validated, and all interaction with the daemon should be via
 a REST client.
 
-Development process
+neutron/tests/api was copied from the Tempest project. The Tempest networking
+API directory was frozen and any new tests belong to the Neutron repository.
+
+Development Process
 -------------------
 
 It is expected that any new changes that are proposed for merge
 come with tests for that feature or code area. Ideally any bugs
 fixes that are submitted also have tests to prove that they stay
-fixed!  In addition, before proposing for merge, all of the
+fixed! In addition, before proposing for merge, all of the
 current tests should be passing.
 
-Structure of the unit test tree
+Structure of the Unit Test Tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The structure of the unit test tree should match the structure of the
@@ -89,7 +103,7 @@ code tree, e.g. ::
 
 Unit test modules should have the same path under neutron/tests/unit/
 as the module they target has under neutron/, and their name should be
-the name of the target module prefixed by `test_`.  This requirement
+the name of the target module prefixed by `test_`. This requirement
 is intended to make it easier for developers to find the unit tests
 for a given module.
 
@@ -106,26 +120,11 @@ tree is structured according to the above requirements: ::
 
     ./tools/check_unit_test_structure.sh
 
-Where appropriate, exceptions can be added to the above script.  If
-code is not part of the neutron namespace, for example, it's probably
+Where appropriate, exceptions can be added to the above script. If
+code is not part of the Neutron namespace, for example, it's probably
 reasonable to exclude their unit tests from the check.
 
-Virtual environments
-~~~~~~~~~~~~~~~~~~~~
-
-Testing OpenStack projects, including Neutron, is made easier with `DevStack <https://git.openstack.org/cgit/openstack-dev/devstack>`_.
-
-Create a machine (such as a VM or Vagrant box) running a distribution supported
-by DevStack and install DevStack there. For example, there is a Vagrant script
-for DevStack at https://github.com/bcwaldon/vagrant_devstack.
-
- .. note::
-
-    If you prefer not to use DevStack, you can still check out source code on your local
-    machine and develop from there.
-
-
-Running tests
+Running Tests
 -------------
 
 There are three mechanisms for running tests: run_tests.sh, tox,
@@ -166,16 +165,11 @@ some rough edges when it comes to diagnosing errors and failures, and there is
 no easy way to set a breakpoint in the Neutron code, and enter an
 interactive debugging session while using testr.
 
-It is also possible to use nose2's predecessor, `nose`_, to run the tests::
-
-    source .venv/bin/activate
-    pip install nose
-    nosetests
-
-nose has one additional disadvantage over nose2 - it does not
-understand the `load_tests protocol`_ introduced in Python 2.7.  This
-limitation will result in errors being reported for modules that
-depend on load_tests (usually due to use of `testscenarios`_).
+Note that nose2's predecessor, `nose`_, does not understand
+`load_tests protocol`_ introduced in Python 2.7. This limitation will result in
+errors being reported for modules that depend on load_tests
+(usually due to use of `testscenarios`_). nose, therefore, is not supported,
+while nose2 is.
 
 .. _nose2: http://nose2.readthedocs.org/en/latest/index.html
 .. _nose: https://nose.readthedocs.org/en/latest/index.html
@@ -190,7 +184,7 @@ environments for running test cases. It uses `Testr`_ for managing the running
 of the test cases.
 
 Tox handles the creation of a series of `virtualenvs`_ that target specific
-versions of Python (2.6, 2.7, 3.3, etc).
+versions of Python.
 
 Testr handles the parallel execution of series of test cases as well as
 the tracking of long-running tests and other things.
@@ -238,19 +232,19 @@ To run all the functional tests, including those requiring sudo
 privileges and system-specific dependencies, the procedure defined by
 tools/configure_for_func_testing.sh should be followed.
 
-IMPORTANT: configure_for_func_testing.sh relies on devstack to perform
-extensive modification to the underlying host.  Execution of the
+IMPORTANT: configure_for_func_testing.sh relies on DevStack to perform
+extensive modification to the underlying host. Execution of the
 script requires sudo privileges and it is recommended that the
-following commands be invoked only on a clean and disposeable VM.  A
-VM that has had devstack previously installed on it is also fine. ::
+following commands be invoked only on a clean and disposeable VM.
+A VM that has had DevStack previously installed on it is also fine. ::
 
     git clone https://git.openstack.org/openstack-dev/devstack ../devstack
     ./tools/configure_for_func_testing.sh ../devstack -i
     tox -e dsvm-functional
 
-The '-i' option is optional and instructs the script to use devstack
-to install and configure all of Neutron's package dependencies.  It is
-not necessary to provide this option if devstack has already been used
+The '-i' option is optional and instructs the script to use DevStack
+to install and configure all of Neutron's package dependencies. It is
+not necessary to provide this option if DevStack has already been used
 to deploy Neutron to the target host.
 
 Fullstack Tests
@@ -262,7 +256,7 @@ To run all the full-stack tests, you may use: ::
 
 Since full-stack tests often require the same resources and
 dependencies as the functional tests, using the configuration script
-tools/configure_for_func_testing.sh is advised (as described above).
+tools/configure_for_func_testing.sh is advised (As described above).
 When running full-stack tests on a clean VM for the first time, we
 advise to run ./stack.sh successfully to make sure all Neutron's
 dependencies are met. Full-stack based Neutron daemons produce logs to a
@@ -273,45 +267,45 @@ so that will be a good place to look if your test is failing.
 API Tests
 +++++++++
 
-To run the api tests, deploy tempest and neutron with devstack and
+To run the api tests, deploy Tempest and Neutron with DevStack and
 then run the following command: ::
 
     tox -e api
 
 If tempest.conf cannot be found at the default location used by
-devstack (/opt/stack/tempest/etc) it may be necessary to set
+DevStack (/opt/stack/tempest/etc) it may be necessary to set
 TEMPEST_CONFIG_DIR before invoking tox: ::
 
     export TEMPEST_CONFIG_DIR=[path to dir containing tempest.conf]
     tox -e api
 
 
-Running individual tests
+Running Individual Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-For running individual test modules or cases, you just need to pass
-the dot-separated path to the module you want as an argument to it.
+For running individual test modules, cases or tests, you just need to pass
+the dot-separated path you want as an argument to it.
 
-For executing a specific test case, specify the name of the test case
-class separating it from the module path with a colon.
+For example, the following would run only a single test or test case::
 
-For example, the following would run only the JSONV2TestCase tests from
-neutron/tests/unit/test_api_v2.py::
-
-      $ ./run_tests.sh neutron.tests.unit.test_api_v2.JSONV2TestCase
+      $ ./run_tests.sh neutron.tests.unit.test_manager
+      $ ./run_tests.sh neutron.tests.unit.test_manager.NeutronManagerTestCase
+      $ ./run_tests.sh neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
 or::
 
-      $ tox -e py27 neutron.tests.unit.test_api_v2.JSONV2TestCase
+      $ tox -e py27 neutron.tests.unit.test_manager
+      $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase
+      $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
-Adding more tests
-~~~~~~~~~~~~~~~~~
+Coverage
+--------
 
-Neutron has a fast growing code base and there is plenty of areas that
-need to be covered by unit and functional tests.
+Neutron has a fast growing code base and there are plenty of areas that
+need better coverage.
 
 To get a grasp of the areas where tests are needed, you can check
-current coverage by running::
+current unit tests coverage by running::
 
     $ ./run_tests.sh -c
 
@@ -319,7 +313,7 @@ Debugging
 ---------
 
 By default, calls to pdb.set_trace() will be ignored when tests
-are run.  For pdb statements to work, invoke run_tests as follows::
+are run. For pdb statements to work, invoke run_tests as follows::
 
     $ ./run_tests.sh -d [test module path]
 
@@ -334,7 +328,7 @@ after a tox run and reused for debugging::
     $ . .tox/venv/bin/activate
     $ python -m testtools.run [test module path]
 
-Tox packages and installs the neutron source tree in a given venv
+Tox packages and installs the Neutron source tree in a given venv
 on every invocation, but if modifications need to be made between
 invocation (e.g. adding more pdb statements), it is recommended
 that the source tree be installed in the venv in editable mode::
@@ -346,7 +340,7 @@ Editable mode ensures that changes made to the source tree are
 automatically reflected in the venv, and that such changes are not
 overwritten during the next tox run.
 
-Post-mortem debugging
+Post-mortem Debugging
 ~~~~~~~~~~~~~~~~~~~~~
 
 Setting OS_POST_MORTEM_DEBUGGER in the shell environment will ensure
