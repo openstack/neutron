@@ -16,7 +16,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
-from neutron.agent.l2.extensions import qos_agent
+from neutron.agent.l2.extensions import qos
 from neutron.i18n import _LW
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
     mech_openvswitch)
@@ -24,7 +24,7 @@ from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
 LOG = logging.getLogger(__name__)
 
 
-class QosOVSAgentDriver(qos_agent.QosAgentDriver):
+class QosOVSAgentDriver(qos.QosAgentDriver):
 
     _SUPPORTED_RULES = (
         mech_openvswitch.OpenvswitchMechanismDriver.supported_qos_rule_types)

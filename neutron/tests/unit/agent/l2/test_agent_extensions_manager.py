@@ -21,7 +21,7 @@ class TestAgentExtensionsManager(base.BaseTestCase):
 
     def setUp(self):
         super(TestAgentExtensionsManager, self).setUp()
-        mock.patch('neutron.agent.l2.extensions.qos_agent.QosAgentExtension',
+        mock.patch('neutron.agent.l2.extensions.qos.QosAgentExtension',
                    autospec=True).start()
         conf = cfg.CONF
         agent_extensions_manager.register_opts(conf)
