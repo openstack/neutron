@@ -70,6 +70,7 @@ Testing
    :maxdepth: 3
 
    fullstack_testing
+   testing_coverage
 
 Module Reference
 ----------------
