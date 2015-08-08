@@ -13,18 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.core_extensions import base
 from neutron.db import api as db_api
 from neutron import manager
 from neutron.objects.qos import policy as policy_object
 from neutron.plugins.common import constants as plugin_constants
 from neutron.services.qos import qos_consts
 
-NETWORK = 'network'
-PORT = 'port'
 
-
-# TODO(QoS): Add interface to define how this should look like
-class QosResourceExtensionHandler(object):
+class QosCoreResourceExtension(base.CoreResourceExtension):
 
     @property
     def plugin_loaded(self):
@@ -70,15 +67,15 @@ class QosResourceExtensionHandler(object):
         with db_api.autonested_transaction(context.session):
             return getattr(self, method_name)(context=context, **kwargs)
 
-    def process_resource(self, context, resource_type, requested_resource,
-                         actual_resource):
+    def process_fields(self, context, resource_type,
+                       requested_resource, actual_resource):
         if (qos_consts.QOS_POLICY_ID in requested_resource and
             self.plugin_loaded):
             self._exec('_update_%s_policy' % resource_type, context,
                        {resource_type: actual_resource,
                         "%s_changes" % resource_type: requested_resource})
 
-    def extract_resource_fields(self, resource_type, resource):
+    def extract_fields(self, resource_type, resource):
         if not self.plugin_loaded:
             return {}
 
