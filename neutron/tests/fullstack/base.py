@@ -24,17 +24,12 @@ from neutron.tests.fullstack.resources import client as client_resource
 class BaseFullStackTestCase(base.MySQLTestCase):
     """Base test class for full-stack tests."""
 
-    def __init__(self, environment, *args, **kwargs):
-        super(BaseFullStackTestCase, self).__init__(*args, **kwargs)
-        self.environment = environment
-
-    def setUp(self):
+    def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
         self.create_db_tables()
-
+        self.environment = environment
         self.environment.test_name = self.get_name()
         self.useFixture(self.environment)
-
         self.client = self.environment.neutron_server.client
         self.safe_client = self.useFixture(
             client_resource.ClientFixture(self.client))

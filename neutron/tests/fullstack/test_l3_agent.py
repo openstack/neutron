@@ -25,10 +25,12 @@ from neutron.tests.fullstack.resources import environment
 
 
 class TestLegacyL3Agent(base.BaseFullStackTestCase):
-    def __init__(self, *args, **kwargs):
+
+    def setUp(self):
         host_descriptions = [environment.HostDescription(l3_agent=True)]
-        env = environment.Environment(host_descriptions)
-        super(TestLegacyL3Agent, self).__init__(env, *args, **kwargs)
+        env = environment.Environment(environment.EnvironmentDescription(),
+                                      host_descriptions)
+        super(TestLegacyL3Agent, self).setUp(env)
 
     def _get_namespace(self, router_id):
         return namespaces.build_ns_name(l3_agent.NS_PREFIX, router_id)
@@ -53,12 +55,13 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
 
 
 class TestHAL3Agent(base.BaseFullStackTestCase):
-    def __init__(self, *args, **kwargs):
-        super(TestHAL3Agent, self).__init__(
-            environment.Environment(
-                [environment.HostDescription(l3_agent=True),
-                 environment.HostDescription(l3_agent=True)]),
-            *args, **kwargs)
+
+    def setUp(self):
+        host_descriptions = [
+            environment.HostDescription(l3_agent=True) for _ in range(2)]
+        env = environment.Environment(environment.EnvironmentDescription(),
+                                      host_descriptions)
+        super(TestHAL3Agent, self).setUp(env)
 
     def _is_ha_router_active_on_one_agent(self, router_id):
         agents = self.client.list_l3_agent_hosting_routers(router_id)
