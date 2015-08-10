@@ -240,9 +240,8 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.l3agentscheduler_dbMinxin = (
-            manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT))
+        self.l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
         self.l3_notify_p = mock.patch(
             'neutron.extensions.l3agentscheduler.notify')
         self.patched_l3_notify = self.l3_notify_p.start()
@@ -967,10 +966,36 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             res = router_req.get_response(self.ext_api)
             router = self.deserialize(self.fmt, res)
             l3agents = (
-                self.l3agentscheduler_dbMinxin.get_l3_agents_hosting_routers(
+                self.l3plugin.get_l3_agents_hosting_routers(
                     self.adminContext, [router['router']['id']]))
             self._delete('routers', router['router']['id'])
         self.assertEqual(0, len(l3agents))
+
+    def test_dvr_router_scheduling_to_all_needed_agents(self):
+        self._register_dvr_agents()
+        with self.subnet() as s:
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+
+            router = {'name': 'router1',
+                      'external_gateway_info': {'network_id': net_id},
+                      'admin_state_up': True,
+                      'distributed': True}
+            r = self.l3plugin.create_router(self.adminContext,
+                                            {'router': router})
+            with mock.patch.object(
+                    self.l3plugin,
+                    'check_ports_exist_on_l3agent') as ports_exist:
+                # emulating dvr serviceable ports exist on compute node
+                ports_exist.return_value = True
+                self.l3plugin.schedule_router(
+                    self.adminContext, r['id'])
+
+        l3agents = self._list_l3_agents_hosting_router(r['id'])
+        self.assertEqual(2, len(l3agents['agents']))
+        self.assertEqual({'dvr', 'dvr_snat'},
+                         set([a['configurations']['agent_mode'] for a in
+                              l3agents['agents']]))
 
     def test_router_sync_data(self):
         with self.subnet() as s1,\
