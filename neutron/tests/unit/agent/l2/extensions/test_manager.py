@@ -43,3 +43,10 @@ class TestAgentExtensionsManager(base.BaseTestCase):
         self.manager.handle_port(context, data)
         ext = self._get_extension()
         ext.handle_port.assert_called_once_with(context, data)
+
+    def test_delete_port(self):
+        context = object()
+        data = object()
+        self.manager.delete_port(context, data)
+        ext = self._get_extension()
+        ext.delete_port.assert_called_once_with(context, data)

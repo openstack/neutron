@@ -34,7 +34,19 @@ class AgentCoreResourceExtension(object):
 
     @abc.abstractmethod
     def handle_port(self, context, data):
-        """handle agent extension for port.
+        """Handle agent extension for port.
+
+        This can be called on either create or update, depending on the
+        code flow. Thus, it's this function's responsibility to check what
+        actually changed.
+
+        :param context - rpc context
+        :param data - port data
+        """
+
+    @abc.abstractmethod
+    def delete_port(self, context, data):
+        """Delete port from agent extension.
 
         :param context - rpc context
         :param data - port data

@@ -98,6 +98,22 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         #TODO(QoS): handle qos_driver.update call check when
         #           we do that
 
+    def test_delete_known_port(self):
+        port = self._create_test_port_dict()
+        port_id = port['port_id']
+        self.qos_ext.handle_port(self.context, port)
+        self.qos_ext.qos_driver.reset_mock()
+        self.qos_ext.delete_port(self.context, port)
+        self.qos_ext.qos_driver.delete.assert_called_with(port, None)
+        self.assertNotIn(port_id, self.qos_ext.known_ports)
+
+    def test_delete_unknown_port(self):
+        port = self._create_test_port_dict()
+        port_id = port['port_id']
+        self.qos_ext.delete_port(self.context, port)
+        self.assertFalse(self.qos_ext.qos_driver.delete.called)
+        self.assertNotIn(port_id, self.qos_ext.known_ports)
+
     def test__handle_notification_ignores_all_event_types_except_updated(self):
         with mock.patch.object(
             self.qos_ext, '_process_update_policy') as update_mock:

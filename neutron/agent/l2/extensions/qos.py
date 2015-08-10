@@ -135,6 +135,9 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
             context, resources.QOS_POLICY, qos_policy_id)
         self.qos_driver.create(port, qos_policy)
 
+    def delete_port(self, context, port):
+        self._process_reset_port(port)
+
     def _process_update_policy(self, qos_policy):
         for port_id, port in self.qos_policy_ports[qos_policy.id].items():
             # TODO(QoS): for now, just reflush the rules on the port. Later, we
