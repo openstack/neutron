@@ -146,17 +146,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.type_manager.initialize()
         self.extension_manager.initialize()
         self.mechanism_manager.initialize()
-
-        self._setup_rpc()
         self._setup_dhcp()
+        self._start_rpc_notifiers()
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
     def _setup_rpc(self):
         """Initialize components to support agent communication."""
-        self.notifier = rpc.AgentNotifierApi(topics.AGENT)
-        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
-            dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        )
         self.endpoints = [
             rpc.RpcCallbacks(self.notifier, self.type_manager),
             securitygroups_rpc.SecurityGroupServerRpcCallback(),
@@ -179,8 +174,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self.mechanism_manager.supported_qos_rule_types
 
     @log_helpers.log_method_call
+    def _start_rpc_notifiers(self):
+        """Initialize RPC notifiers for agents."""
+        self.notifier = rpc.AgentNotifierApi(topics.AGENT)
+        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
+            dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        )
+
+    @log_helpers.log_method_call
     def start_rpc_listeners(self):
         """Start the RPC loop to let the plugin communicate with agents."""
+        self._setup_rpc()
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
