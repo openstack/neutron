@@ -61,5 +61,17 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
                         "while handling port update"),
                     {'name': extension.name}
                 )
-    #TODO(Qos) we are missing how to handle delete. we can pass action
-    #type in all the handle methods or add handle_delete_resource methods
+
+    def delete_port(self, context, data):
+        """Notify all agent extensions to delete port."""
+        for extension in self:
+            try:
+                extension.obj.delete_port(context, data)
+            # TODO(QoS) add agent extensions exception and catch them here
+            # instead of AttributeError
+            except AttributeError:
+                LOG.exception(
+                    _LE("Agent Extension '%(name)s' failed "
+                        "while handling port deletion"),
+                    {'name': extension.name}
+                )

@@ -403,6 +403,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # longer have access to the network
             self.sg_agent.remove_devices_filter([port_id])
             port = self.int_br.get_vif_port_by_id(port_id)
+            self.ext_manager.delete_port(self.context,
+                                         {"vif_port": port,
+                                          "port_id": port_id})
             if port:
                 # don't log errors since there is a chance someone will be
                 # removing the port from the bridge at the same time
