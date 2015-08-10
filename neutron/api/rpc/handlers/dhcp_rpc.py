@@ -26,6 +26,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron import manager
@@ -157,6 +158,7 @@ class DhcpRpcCallback(object):
         network['ports'] = plugin.get_ports(context, filters=filters)
         return network
 
+    @db_api.retry_db_errors
     def release_dhcp_port(self, context, **kwargs):
         """Release the port currently being used by a DHCP agent."""
         host = kwargs.get('host')
@@ -169,6 +171,7 @@ class DhcpRpcCallback(object):
         plugin = manager.NeutronManager.get_plugin()
         plugin.delete_ports_by_device_id(context, device_id, network_id)
 
+    @db_api.retry_db_errors
     def release_port_fixed_ip(self, context, **kwargs):
         """Release the fixed_ip associated the subnet on a port."""
         host = kwargs.get('host')
@@ -203,6 +206,7 @@ class DhcpRpcCallback(object):
         LOG.warning(_LW('Updating lease expiration is now deprecated. Issued  '
                         'from host %s.'), host)
 
+    @db_api.retry_db_errors
     @resource_registry.mark_resources_dirty
     def create_dhcp_port(self, context, **kwargs):
         """Create and return dhcp port information.
@@ -224,6 +228,7 @@ class DhcpRpcCallback(object):
         plugin = manager.NeutronManager.get_plugin()
         return self._port_action(plugin, context, port, 'create_port')
 
+    @db_api.retry_db_errors
     def update_dhcp_port(self, context, **kwargs):
         """Update the dhcp port."""
         host = kwargs.get('host')

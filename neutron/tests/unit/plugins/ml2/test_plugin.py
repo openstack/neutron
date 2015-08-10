@@ -617,6 +617,20 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             # by the called method
             self.assertIsNone(l3plugin.disassociate_floatingips(ctx, port_id))
 
+    def test_create_port_tolerates_db_deadlock(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+            with self.subnet(network=net) as subnet:
+                segments = ml2_db.get_network_segments(ctx.session,
+                                                       net['network']['id'])
+                with mock.patch('neutron.plugins.ml2.plugin.'
+                                'db.get_network_segments') as get_seg_mock:
+                    get_seg_mock.side_effect = [db_exc.DBDeadlock, segments,
+                                                segments, segments]
+                    with self.port(subnet=subnet) as port:
+                        self.assertTrue(port['port']['id'])
+                        self.assertEqual(4, get_seg_mock.call_count)
+
     def test_delete_port_tolerates_db_deadlock(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
@@ -627,7 +641,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                             'db.get_locked_port_and_binding') as lock:
                 lock.side_effect = [db_exc.DBDeadlock,
                                     (port_db, binding)]
-                plugin.delete_port(ctx, port['port']['id'])
+                req = self.new_delete_request('ports', port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(204, res.status_int)
                 self.assertEqual(2, lock.call_count)
                 self.assertRaises(
                     exc.PortNotFound, plugin.get_port, ctx, port['port']['id'])
