@@ -35,6 +35,7 @@ import six
 import testtools
 
 from neutron.agent.linux import external_process
+from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.callbacks import manager as registry_manager
 from neutron.callbacks import registry
 from neutron.common import config
@@ -290,6 +291,7 @@ class BaseTestCase(DietTestCase):
 
         policy.init()
         self.addCleanup(policy.reset)
+        self.addCleanup(rpc_consumer_reg.clear)
 
     def get_new_temp_dir(self):
         """Create a new temporary directory.
