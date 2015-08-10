@@ -207,16 +207,9 @@ class ESwitchManager(object):
         # make it a singleton
         if not hasattr(cls, '_instance'):
             cls._instance = super(ESwitchManager, cls).__new__(cls)
+            cls.emb_switches_map = {}
+            cls.pci_slot_map = {}
         return cls._instance
-
-    def __init__(self):
-        """Constructor.
-
-        Create Embedded Switch logical entities for all given device mappings,
-        using exclude devices.
-        """
-        self.emb_switches_map = {}
-        self.pci_slot_map = {}
 
     def device_exists(self, device_mac, pci_slot):
         """Verify if device exists.
