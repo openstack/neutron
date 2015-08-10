@@ -151,3 +151,36 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
                                                      policy_copy.rules[0])
         self._assert_bandwidth_limit_rule_is_set(self.ports[0],
                                                  policy_copy.rules[0])
+
+    def test_port_qos_disassociation(self):
+        """Test that qos_policy_id set to None will remove all qos rules from
+           given port.
+        """
+        port_dict = self._create_test_port_dict()
+        port_dict['qos_policy_id'] = TEST_POLICY_ID1
+        self.setup_agent_and_ports([port_dict])
+        self.wait_until_ports_state(self.ports, up=True)
+        self.wait_until_bandwidth_limit_rule_applied(port_dict,
+                                                     TEST_BW_LIMIT_RULE_1)
+
+        port_dict['qos_policy_id'] = None
+        self.agent.port_update(None, port=port_dict)
+
+        self.wait_until_bandwidth_limit_rule_applied(port_dict, None)
+
+    def test_port_qos_update_policy_id(self):
+        """Test that change of qos policy id on given port refreshes all its
+           rules.
+        """
+        port_dict = self._create_test_port_dict()
+        port_dict['qos_policy_id'] = TEST_POLICY_ID1
+        self.setup_agent_and_ports([port_dict])
+        self.wait_until_ports_state(self.ports, up=True)
+        self.wait_until_bandwidth_limit_rule_applied(port_dict,
+                                                     TEST_BW_LIMIT_RULE_1)
+
+        port_dict['qos_policy_id'] = TEST_POLICY_ID2
+        self.agent.port_update(None, port=port_dict)
+
+        self.wait_until_bandwidth_limit_rule_applied(port_dict,
+                                                     TEST_BW_LIMIT_RULE_2)
