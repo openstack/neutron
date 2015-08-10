@@ -92,11 +92,11 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
         super(ResourcesPullRpcApiTestCase, self).setUp()
-        mock.patch.object(resources_rpc.n_rpc, 'get_client').start()
         mock.patch.object(resources_rpc, '_validate_resource_type').start()
         mock.patch('neutron.api.rpc.callbacks.resources.get_resource_cls',
                    return_value=FakeResource).start()
         self.rpc = resources_rpc.ResourcesPullRpcApi()
+        mock.patch.object(self.rpc, 'client').start()
         self.cctxt_mock = self.rpc.client.prepare.return_value
 
     def test_is_singleton(self):

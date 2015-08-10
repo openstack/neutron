@@ -67,13 +67,11 @@ class ResourcesPullRpcApi(object):
         # make it a singleton
         if not hasattr(cls, '_instance'):
             cls._instance = super(ResourcesPullRpcApi, cls).__new__(cls)
+            target = oslo_messaging.Target(
+                topic=topics.PLUGIN, version='1.0',
+                namespace=constants.RPC_NAMESPACE_RESOURCES)
+            cls._instance.client = n_rpc.get_client(target)
         return cls._instance
-
-    def __init__(self):
-        target = oslo_messaging.Target(
-            topic=topics.PLUGIN, version='1.0',
-            namespace=constants.RPC_NAMESPACE_RESOURCES)
-        self.client = n_rpc.get_client(target)
 
     @log_helpers.log_method_call
     def pull(self, context, resource_type, resource_id):
