@@ -31,6 +31,7 @@ from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
+from neutron.tests import base
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
@@ -2178,3 +2179,19 @@ class TestOvsDvrNeutronAgent(object):
 class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
                                   ovs_test_base.OVSOFCtlTestBase):
     pass
+
+
+class TestValidateTunnelLocalIP(base.BaseTestCase):
+    def test_validate_local_ip_with_valid_ip(self):
+        mock_get_device_by_ip = mock.patch.object(
+            ip_lib.IPWrapper, 'get_device_by_ip').start()
+        ovs_agent.validate_local_ip(FAKE_IP1)
+        mock_get_device_by_ip.assert_called_once_with(FAKE_IP1)
+
+    def test_validate_local_ip_with_invalid_ip(self):
+        mock_get_device_by_ip = mock.patch.object(
+            ip_lib.IPWrapper, 'get_device_by_ip').start()
+        mock_get_device_by_ip.return_value = None
+        with testtools.ExpectedException(SystemExit):
+            ovs_agent.validate_local_ip(FAKE_IP1)
+        mock_get_device_by_ip.assert_called_once_with(FAKE_IP1)
