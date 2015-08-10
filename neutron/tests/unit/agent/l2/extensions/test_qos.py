@@ -21,12 +21,82 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import exceptions
 from neutron import context
+from neutron.objects.qos import policy
+from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 
-TEST_POLICY = object()
+TEST_POLICY = policy.QosPolicy(context=None,
+                               name='test1', id='fake_policy_id')
+TEST_POLICY2 = policy.QosPolicy(context=None,
+                                name='test2', id='fake_policy_id_2')
+
+TEST_PORT = {'port_id': 'test_port_id',
+             'qos_policy_id': TEST_POLICY.id}
+
+TEST_PORT2 = {'port_id': 'test_port_id_2',
+             'qos_policy_id': TEST_POLICY2.id}
+
+
+class FakeDriver(qos.QosAgentDriver):
+
+    SUPPORTED_RULES = {qos_consts.RULE_TYPE_BANDWIDTH_LIMIT}
+
+    def __init__(self):
+        super(FakeDriver, self).__init__()
+        self.create_bandwidth_limit = mock.Mock()
+        self.update_bandwidth_limit = mock.Mock()
+        self.delete_bandwidth_limit = mock.Mock()
+
+    def initialize(self):
+        pass
+
+
+class QosFakeRule(rule.QosRule):
+
+    rule_type = 'fake_type'
+
+
+class QosAgentDriverTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(QosAgentDriverTestCase, self).setUp()
+        self.driver = FakeDriver()
+        self.policy = TEST_POLICY
+        self.rule = (
+            rule.QosBandwidthLimitRule(context=None, id='fake_rule_id',
+                                       max_kbps=100, max_burst_kbps=200))
+        self.policy.rules = [self.rule]
+        self.port = object()
+        self.fake_rule = QosFakeRule(context=None, id='really_fake_rule_id')
+
+    def test_create(self):
+        self.driver.create(self.port, self.policy)
+        self.driver.create_bandwidth_limit.assert_called_with(
+            self.port, self.rule)
+
+    def test_update(self):
+        self.driver.update(self.port, self.policy)
+        self.driver.update_bandwidth_limit.assert_called_with(
+            self.port, self.rule)
+
+    def test_delete(self):
+        self.driver.delete(self.port, self.policy)
+        self.driver.delete_bandwidth_limit.assert_called_with(self.port)
+
+    def test_delete_no_policy(self):
+        self.driver.delete(self.port, qos_policy=None)
+        self.driver.delete_bandwidth_limit.assert_called_with(self.port)
+
+    def test__iterate_rules_with_unknown_rule_type(self):
+        self.policy.rules.append(self.fake_rule)
+        rules = list(self.driver._iterate_rules(self.policy.rules))
+        self.assertEqual(1, len(rules))
+        self.assertIsInstance(rules[0], rule.QosBandwidthLimitRule)
 
 
 class QosExtensionBaseTestCase(base.BaseTestCase):
@@ -55,9 +125,9 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
             self.qos_ext.resource_rpc, 'pull',
             return_value=TEST_POLICY).start()
 
-    def _create_test_port_dict(self):
+    def _create_test_port_dict(self, qos_policy_id=None):
         return {'port_id': uuidutils.generate_uuid(),
-                'qos_policy_id': uuidutils.generate_uuid()}
+                'qos_policy_id': qos_policy_id or TEST_POLICY.id}
 
     def test_handle_port_with_no_policy(self):
         port = self._create_test_port_dict()
@@ -76,8 +146,10 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         self.qos_ext.qos_driver.create.assert_called_once_with(
             port, TEST_POLICY)
         self.assertEqual(port,
-            self.qos_ext.qos_policy_ports[qos_policy_id][port_id])
-        self.assertTrue(port_id in self.qos_ext.known_ports)
+            self.qos_ext.policy_map.qos_policy_ports[qos_policy_id][port_id])
+        self.assertIn(port_id, self.qos_ext.policy_map.port_policies)
+        self.assertEqual(TEST_POLICY,
+            self.qos_ext.policy_map.known_policies[qos_policy_id])
 
     def test_handle_known_port(self):
         port_obj1 = self._create_test_port_dict()
@@ -96,24 +168,20 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         self.pull_mock.assert_called_once_with(
              self.context, resources.QOS_POLICY,
              port['qos_policy_id'])
-        #TODO(QoS): handle qos_driver.update call check when
-        #           we do that
 
     def test_delete_known_port(self):
         port = self._create_test_port_dict()
-        port_id = port['port_id']
         self.qos_ext.handle_port(self.context, port)
         self.qos_ext.qos_driver.reset_mock()
         self.qos_ext.delete_port(self.context, port)
-        self.qos_ext.qos_driver.delete.assert_called_with(port, None)
-        self.assertNotIn(port_id, self.qos_ext.known_ports)
+        self.qos_ext.qos_driver.delete.assert_called_with(port)
+        self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port))
 
     def test_delete_unknown_port(self):
         port = self._create_test_port_dict()
-        port_id = port['port_id']
         self.qos_ext.delete_port(self.context, port)
         self.assertFalse(self.qos_ext.qos_driver.delete.called)
-        self.assertNotIn(port_id, self.qos_ext.known_ports)
+        self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port))
 
     def test__handle_notification_ignores_all_event_types_except_updated(self):
         with mock.patch.object(
@@ -127,47 +195,41 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         with mock.patch.object(
             self.qos_ext, '_process_update_policy') as update_mock:
 
-            policy = mock.Mock()
-            self.qos_ext._handle_notification(policy, events.UPDATED)
-            update_mock.assert_called_with(policy)
+            policy_obj = mock.Mock()
+            self.qos_ext._handle_notification(policy_obj, events.UPDATED)
+            update_mock.assert_called_with(policy_obj)
 
     def test__process_update_policy(self):
-        port1 = self._create_test_port_dict()
-        port2 = self._create_test_port_dict()
-        self.qos_ext.qos_policy_ports = {
-            port1['qos_policy_id']: {port1['port_id']: port1},
-            port2['qos_policy_id']: {port2['port_id']: port2},
-        }
-        policy = mock.Mock()
-        policy.id = port1['qos_policy_id']
-        self.qos_ext._process_update_policy(policy)
-        self.qos_ext.qos_driver.update.assert_called_with(port1, policy)
+        port1 = self._create_test_port_dict(qos_policy_id=TEST_POLICY.id)
+        port2 = self._create_test_port_dict(qos_policy_id=TEST_POLICY2.id)
+        self.qos_ext.policy_map.set_port_policy(port1, TEST_POLICY)
+        self.qos_ext.policy_map.set_port_policy(port2, TEST_POLICY2)
+
+        policy_obj = mock.Mock()
+        policy_obj.id = port1['qos_policy_id']
+        self.qos_ext._process_update_policy(policy_obj)
+        self.qos_ext.qos_driver.update.assert_called_with(port1, policy_obj)
 
         self.qos_ext.qos_driver.update.reset_mock()
-        policy.id = port2['qos_policy_id']
-        self.qos_ext._process_update_policy(policy)
-        self.qos_ext.qos_driver.update.assert_called_with(port2, policy)
+        policy_obj.id = port2['qos_policy_id']
+        self.qos_ext._process_update_policy(policy_obj)
+        self.qos_ext.qos_driver.update.assert_called_with(port2, policy_obj)
 
     def test__process_reset_port(self):
-        port1 = self._create_test_port_dict()
-        port2 = self._create_test_port_dict()
-        port1_id = port1['port_id']
-        port2_id = port2['port_id']
-        self.qos_ext.qos_policy_ports = {
-            port1['qos_policy_id']: {port1_id: port1},
-            port2['qos_policy_id']: {port2_id: port2},
-        }
-        self.qos_ext.known_ports = {port1_id, port2_id}
+        port1 = self._create_test_port_dict(qos_policy_id=TEST_POLICY.id)
+        port2 = self._create_test_port_dict(qos_policy_id=TEST_POLICY2.id)
+        self.qos_ext.policy_map.set_port_policy(port1, TEST_POLICY)
+        self.qos_ext.policy_map.set_port_policy(port2, TEST_POLICY2)
 
         self.qos_ext._process_reset_port(port1)
-        self.qos_ext.qos_driver.delete.assert_called_with(port1, None)
-        self.assertNotIn(port1_id, self.qos_ext.known_ports)
-        self.assertIn(port2_id, self.qos_ext.known_ports)
+        self.qos_ext.qos_driver.delete.assert_called_with(port1)
+        self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port1))
+        self.assertIsNotNone(self.qos_ext.policy_map.get_port_policy(port2))
 
         self.qos_ext.qos_driver.delete.reset_mock()
         self.qos_ext._process_reset_port(port2)
-        self.qos_ext.qos_driver.delete.assert_called_with(port2, None)
-        self.assertNotIn(port2_id, self.qos_ext.known_ports)
+        self.qos_ext.qos_driver.delete.assert_called_with(port2)
+        self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port2))
 
 
 class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
@@ -185,3 +247,60 @@ class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
              for resource_type in self.qos_ext.SUPPORTED_RESOURCES]
         )
         subscribe_mock.assert_called_with(mock.ANY, resources.QOS_POLICY)
+
+
+class PortPolicyMapTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(PortPolicyMapTestCase, self).setUp()
+        self.policy_map = qos.PortPolicyMap()
+
+    def test_update_policy(self):
+        self.policy_map.update_policy(TEST_POLICY)
+        self.assertEqual(TEST_POLICY,
+                         self.policy_map.known_policies[TEST_POLICY.id])
+
+    def _set_ports(self):
+        self.policy_map.set_port_policy(TEST_PORT, TEST_POLICY)
+        self.policy_map.set_port_policy(TEST_PORT2, TEST_POLICY2)
+
+    def test_set_port_policy(self):
+        self._set_ports()
+        self.assertEqual(TEST_POLICY,
+                         self.policy_map.known_policies[TEST_POLICY.id])
+        self.assertIn(TEST_PORT['port_id'],
+                      self.policy_map.qos_policy_ports[TEST_POLICY.id])
+
+    def test_get_port_policy(self):
+        self._set_ports()
+        self.assertEqual(TEST_POLICY,
+                         self.policy_map.get_port_policy(TEST_PORT))
+        self.assertEqual(TEST_POLICY2,
+                         self.policy_map.get_port_policy(TEST_PORT2))
+
+    def test_get_ports(self):
+        self._set_ports()
+        self.assertEqual([TEST_PORT],
+                         list(self.policy_map.get_ports(TEST_POLICY)))
+
+        self.assertEqual([TEST_PORT2],
+                         list(self.policy_map.get_ports(TEST_POLICY2)))
+
+    def test_clean_by_port(self):
+        self._set_ports()
+        self.policy_map.clean_by_port(TEST_PORT)
+        self.assertNotIn(TEST_POLICY.id, self.policy_map.known_policies)
+        self.assertNotIn(TEST_PORT['port_id'], self.policy_map.port_policies)
+        self.assertIn(TEST_POLICY2.id, self.policy_map.known_policies)
+
+    def test_clean_by_port_raises_exception_for_unknown_port(self):
+        self.assertRaises(exceptions.PortNotFound,
+                          self.policy_map.clean_by_port, TEST_PORT)
+
+    def test_has_policy_changed(self):
+        self._set_ports()
+        self.assertTrue(
+            self.policy_map.has_policy_changed(TEST_PORT, 'a_new_policy_id'))
+
+        self.assertFalse(
+            self.policy_map.has_policy_changed(TEST_PORT, TEST_POLICY.id))
