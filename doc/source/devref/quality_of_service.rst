@@ -189,10 +189,38 @@ for oslo.versionedobjects library), not vague json dictionaries. Meaning,
 oslo.versionedobjects are on the wire and not just used internally inside a
 component.
 
+One more thing to note is that though RPC interface relies on versioned
+objects, it does not yet rely on versioning features the oslo.versionedobjects
+library provides. This is because Liberty is the first release where we start
+using the RPC interface, so we have no way to get different versions in a
+cluster. That said, the versioning strategy for QoS is thought through and
+described in `the separate page <rpc_callbacks.html>`_.
+
 There is expectation that after RPC callbacks are introduced in Neutron, we
 will be able to migrate propagation from server to agents for other resources
 (f.e. security groups) to the new mechanism. This will need to wait until those
 resources get proper NeutronObject implementations.
+
+The flow of updates is as follows:
+
+* if a port that is bound to the agent is attached to a QoS policy, then ML2
+  plugin detects the change by relying on ML2 QoS extension driver, and
+  notifies the agent about a port change. The agent proceeds with the
+  notification by calling to get_device_details() and getting the new port dict
+  that contains a new qos_policy_id. Each device details dict is passed into l2
+  agent extension manager that passes it down into every enabled extension,
+  including QoS. QoS extension sees that there is a new unknown QoS policy for
+  a port, so it uses ResourcesPullRpcApi to fetch the current state of the
+  policy (with all the rules included) from the server. After that, the QoS
+  extension applies the rules by calling into QoS driver that corresponds to
+  the agent.
+* on existing QoS policy update (it includes any policy or its rules change),
+  server pushes the new policy object state through ResourcesPushRpcApi
+  interface. The interface fans out the serialized (dehydrated) object to any
+  agent that is listening for QoS policy updates. If an agent have seen the
+  policy before (it is attached to one of the ports it maintains), then it goes
+  with applying the updates to the port. Otherwise, the agent silently ignores
+  the update.
 
 
 Agent side design
@@ -214,20 +242,39 @@ with them.
   and passes handle_port events down to all enabled extensions.
 
 * neutron.agent.l2.extensions.qos
-  defines QoS L2 agent extension. It receives handle_port events and passes
-  them into QoS agent backend driver (see below). The file also defines the
-  QosAgentDriver interface for backend QoS drivers.
+  defines QoS L2 agent extension. It receives handle_port and delete_port
+  events and passes them down into QoS agent backend driver (see below). The
+  file also defines the QosAgentDriver interface. Note: each backend implements
+  its own driver. The driver handles low level interaction with the underlying
+  networking technology, while the QoS extension handles operations that are
+  common to all agents.
 
 
 Agent backends
 --------------
 
-At the moment, QoS is supported for the following agent backends:
+At the moment, QoS is supported by Open vSwitch backend only, so
+QosOVSAgentDriver is the only driver that implements QosAgentDriver interface.
 
-* Open vSwitch
-* SR-IOV
 
-All of them define QoS drivers that reflect the QosAgentDriver interface.
+Open vSwitch
+~~~~~~~~~~~~
+
+Open vSwitch implementation relies on the new ovs_lib OVSBridge functions:
+
+* create_qos_bw_limit_for_port
+* get_qos_bw_limit_for_port
+* del_qos_bw_limit_for_port
+
+An egress bandwidth limit is effectively configured on the port by creating a
+single QoS queue with min-rate=rule.max_kbps, max-rate=rule.max_kbps and
+burst=rule.max_burst_kbps. Then a linux-htb QoS policy is defined on the port,
+attached to the queue.
+
+HTB queues are supported at least in all 2.x versions of Open vSwitch.
+
+More details about HTB in `the blog post
+<https://virtualandy.wordpress.com/2013/04/29/deep-dive-htb-rate-limiting-qos-on-with-open-vswitch-and-xenserver/>`_.
 
 
 Configuration
