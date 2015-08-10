@@ -46,7 +46,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
             #           the tenant id doesn't match the context's), this will
             #           raise an exception (policy is None).
             policy.attach_port(port['id'])
-            port[qos_consts.QOS_POLICY_ID] = qos_policy_id
+        port[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _update_network_policy(self, context, network, network_changes):
         old_policy = policy_object.QosPolicy.get_network_policy(
@@ -55,13 +55,13 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
             old_policy.detach_network(network['id'])
 
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
-        if qos_policy_id:
+        if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)
             #TODO(QoS): If the policy doesn't exist (or if it is not shared and
             #           the tenant id doesn't match the context's), this will
             #           raise an exception (policy is None).
             policy.attach_network(network['id'])
-            network[qos_consts.QOS_POLICY_ID] = qos_policy_id
+        network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
     def _exec(self, method_name, context, kwargs):
         with db_api.autonested_transaction(context.session):
