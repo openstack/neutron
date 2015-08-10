@@ -1,5 +1,28 @@
+..
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+
+      Convention for heading levels in Neutron devref:
+      =======  Heading 0 (reserved for the title in a document)
+      -------  Heading 1
+      ~~~~~~~  Heading 2
+      +++++++  Heading 3
+      '''''''  Heading 4
+      (Avoid deeper levels because they do not render well.)
+
+
 Testing Neutron
-=============================================================
+===============
 
 Overview
 --------
@@ -183,7 +206,7 @@ see this wiki page:
 .. _virtualenvs: https://pypi.python.org/pypi/virtualenv
 
 PEP8 and Unit Tests
-===================
++++++++++++++++++++
 
 Running pep8 and unit tests is as easy as executing this in the root
 directory of the Neutron source code::
@@ -204,7 +227,7 @@ To run only the unit tests::
     tox -e py27
 
 Functional Tests
-================
+++++++++++++++++
 
 To run functional tests that do not require sudo privileges or
 specific-system dependencies::
@@ -231,7 +254,7 @@ not necessary to provide this option if devstack has already been used
 to deploy Neutron to the target host.
 
 Fullstack Tests
-===============
++++++++++++++++
 
 To run all the full-stack tests, you may use: ::
 
@@ -248,7 +271,7 @@ sub-folder in /tmp/fullstack-logs (for example, a test named
 so that will be a good place to look if your test is failing.
 
 API Tests
-=========
++++++++++
 
 To run the api tests, deploy tempest and neutron with devstack and
 then run the following command: ::
@@ -264,7 +287,7 @@ TEMPEST_CONFIG_DIR before invoking tox: ::
 
 
 Running individual tests
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For running individual test modules or cases, you just need to pass
 the dot-separated path to the module you want as an argument to it.
@@ -341,7 +364,7 @@ with pdb::
     $ OS_POST_MORTEM_DEBUGGER=pudb ./run_tests.sh -d [test module path]
 
 References
-==========
+~~~~~~~~~~
 
 .. [#pudb] PUDB debugger:
    https://pypi.python.org/pypi/pudb
