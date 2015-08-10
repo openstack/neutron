@@ -22,7 +22,7 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron import context
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests import base
 
 
@@ -48,7 +48,8 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
 
     def setUp(self):
         super(QosExtensionRpcTestCase, self).setUp()
-        self.qos_ext.initialize(self.connection)
+        self.qos_ext.initialize(
+            self.connection, constants.EXTENSION_DRIVER_TYPE)
 
         self.pull_mock = mock.patch.object(
             self.qos_ext.resource_rpc, 'pull',
@@ -158,7 +159,8 @@ class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
     @mock.patch.object(registry, 'subscribe')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
-        self.qos_ext.initialize(self.connection)
+        self.qos_ext.initialize(
+            self.connection, constants.EXTENSION_DRIVER_TYPE)
         self.connection.create_consumer.assert_has_calls(
             [mock.call(
                  resources_rpc.resource_type_versioned_topic(resource_type),

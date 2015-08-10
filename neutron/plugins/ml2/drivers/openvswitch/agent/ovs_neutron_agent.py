@@ -371,7 +371,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ext_manager.register_opts(self.conf)
         self.ext_manager = (
             ext_manager.AgentExtensionsManager(self.conf))
-        self.ext_manager.initialize(connection)
+        self.ext_manager.initialize(
+            connection, constants.EXTENSION_DRIVER_TYPE)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):

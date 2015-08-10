@@ -17,7 +17,6 @@ import abc
 import collections
 
 from oslo_concurrency import lockutils
-from oslo_config import cfg
 import six
 
 from neutron.agent.l2 import agent_extension
@@ -30,7 +29,7 @@ from neutron import manager
 
 @six.add_metaclass(abc.ABCMeta)
 class QosAgentDriver(object):
-    """Define stable abstract interface for QoS Agent Driver.
+    """Defines stable abstract interface for QoS Agent Driver.
 
     QoS Agent driver defines the interface to be implemented by Agent
     for applying QoS Rules on a port.
@@ -40,7 +39,6 @@ class QosAgentDriver(object):
     def initialize(self):
         """Perform QoS agent driver initialization.
         """
-        pass
 
     @abc.abstractmethod
     def create(self, port, qos_policy):
@@ -51,7 +49,6 @@ class QosAgentDriver(object):
         """
         #TODO(QoS) we may want to provide default implementations of calling
         #delete and then update
-        pass
 
     @abc.abstractmethod
     def update(self, port, qos_policy):
@@ -60,7 +57,6 @@ class QosAgentDriver(object):
         :param port: port object.
         :param qos_policy: the QoS policy to be applied on port.
         """
-        pass
 
     @abc.abstractmethod
     def delete(self, port, qos_policy):
@@ -69,21 +65,18 @@ class QosAgentDriver(object):
         :param port: port object.
         :param qos_policy: the QoS policy to be removed from port.
         """
-        pass
 
 
 class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
     SUPPORTED_RESOURCES = [resources.QOS_POLICY]
 
-    def initialize(self, connection):
+    def initialize(self, connection, driver_type):
         """Perform Agent Extension initialization.
 
         """
-        super(QosAgentExtension, self).initialize()
-
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
-            'neutron.qos.agent_drivers', cfg.CONF.qos.agent_driver)()
+            'neutron.qos.agent_drivers', driver_type)()
         self.qos_driver.initialize()
 
         # we cannot use a dict of sets here because port dicts are not hashable

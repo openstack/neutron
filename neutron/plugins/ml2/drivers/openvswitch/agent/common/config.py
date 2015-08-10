@@ -100,12 +100,7 @@ agent_opts = [
                       "timeout won't be changed"))
 ]
 
-qos_opts = [
-    cfg.StrOpt('agent_driver', default='ovs', help=_('QoS agent driver.')),
-]
-
 
 cfg.CONF.register_opts(ovs_opts, "OVS")
 cfg.CONF.register_opts(agent_opts, "AGENT")
-cfg.CONF.register_opts(qos_opts, "qos")
 config.register_agent_state_opts_helper(cfg.CONF)
