@@ -22,7 +22,6 @@ import datetime
 import errno
 import functools
 import hashlib
-import logging as std_logging
 import multiprocessing
 import netaddr
 import os
@@ -282,7 +281,7 @@ def is_extension_supported(plugin, ext_alias):
 
 
 def log_opt_values(log):
-    cfg.CONF.log_opt_values(log, std_logging.DEBUG)
+    cfg.CONF.log_opt_values(log, logging.DEBUG)
 
 
 def get_random_mac(base_mac):
