@@ -551,3 +551,44 @@ class L3DvrTestCase(testlib_api.SqlTestCase):
             kwargs = {'context': self.ctx, 'router': router_db}
             mock_notify.assert_called_once_with(
                 'router', 'before_update', self.mixin, **kwargs)
+
+    def _test_dvr_vmarp_table_update(self, device_owner, action):
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp,\
+                mock.patch.object(self.mixin, '_get_router') as grtr:
+            plugin = mock.Mock()
+            dvr_router = mock.Mock()
+            l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
+            gp.return_value = plugin
+            port = {
+                'id': 'my_port_id',
+                'fixed_ips': [{
+                    'ip_address': 'my_ip',
+                    'subnet_id': 'my_subnet_id',
+                }],
+                'mac_address': 'my_mac',
+                'device_owner': device_owner
+            }
+            dvr_port = {
+                'id': 'dvr_port_id',
+                'fixed_ips': mock.ANY,
+                'device_owner': l3_const.DEVICE_OWNER_DVR_INTERFACE,
+                'device_id': 'dvr_router_id'
+            }
+            plugin.get_ports.return_value = [port, dvr_port]
+            grtr.return_value = dvr_router
+            dvr_router.extra_attributes.distributed = True
+            self.mixin.dvr_vmarp_table_update(self.ctx, port, action)
+            if action == 'add':
+                self.assertTrue(l3_notify.add_arp_entry.called)
+            elif action == 'del':
+                self.assertTrue(l3_notify.del_arp_entry.called)
+
+    def test_dvr_vmarp_table_update_with_service_port_added(self):
+        action = 'add'
+        device_owner = l3_const.DEVICE_OWNER_LOADBALANCER
+        self._test_dvr_vmarp_table_update(device_owner, action)
+
+    def test_dvr_vmarp_table_update_with_service_port_deleted(self):
+        action = 'del'
+        device_owner = l3_const.DEVICE_OWNER_LOADBALANCER
+        self._test_dvr_vmarp_table_update(device_owner, action)
