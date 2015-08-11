@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+import uuid
 
 from neutron import context
 from neutron import manager
@@ -30,6 +31,58 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         super(ExtensionDriverTestCase, self).setUp()
         self._plugin = manager.NeutronManager.get_plugin()
         self._ctxt = context.get_admin_context()
+
+    def _verify_network_create(self, code, exc_reason):
+        tenant_id = str(uuid.uuid4())
+        data = {'network': {'name': 'net1',
+                            'tenant_id': tenant_id}}
+        req = self.new_create_request('networks', data)
+        res = req.get_response(self.api)
+        self.assertEqual(code, res.status_int)
+
+        network = self.deserialize(self.fmt, res)
+        if exc_reason:
+            self.assertEqual(exc_reason,
+                             network['NeutronError']['type'])
+
+        return (network, tenant_id)
+
+    def _verify_network_update(self, network, code, exc_reason):
+        net_id = network['network']['id']
+        new_name = 'a_brand_new_name'
+        data = {'network': {'name': new_name}}
+        req = self.new_update_request('networks', data, net_id)
+        res = req.get_response(self.api)
+        self.assertEqual(code, res.status_int)
+        error = self.deserialize(self.fmt, res)
+        self.assertEqual(exc_reason,
+                         error['NeutronError']['type'])
+
+    def test_faulty_process_create(self):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'process_create_network',
+                               side_effect=TypeError):
+            net, tenant_id = self._verify_network_create(500,
+                                                    'HTTPInternalServerError')
+            # Verify the operation is rolled back
+            query_params = "tenant_id=%s" % tenant_id
+            nets = self._list('networks', query_params=query_params)
+            self.assertFalse(nets['networks'])
+
+    def test_faulty_process_update(self):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'process_update_network',
+                               side_effect=TypeError):
+            network, tid = self._verify_network_create(201, None)
+            self._verify_network_update(network, 500,
+                                        'HTTPInternalServerError')
+
+    def test_faulty_extend_dict(self):
+        with mock.patch.object(ext_test.TestExtensionDriver,
+                               'extend_network_dict',
+                               side_effect=TypeError):
+            network, tid = self._verify_network_create(201, None)
+            self._verify_network_update(network, 400, 'ExtensionDriverError')
 
     def test_network_attr(self):
         with self.network() as network:
