@@ -533,13 +533,13 @@ class TestIPCmdBase(base.BaseTestCase):
         self.parent.name = 'eth0'
 
     def _assert_call(self, options, args):
-        self.parent.assert_has_calls([
-            mock.call._run(options, self.command, args)])
+        self.parent._run.assert_has_calls([
+            mock.call(options, self.command, args)])
 
     def _assert_sudo(self, options, args, use_root_namespace=False):
-        self.parent.assert_has_calls(
-            [mock.call._as_root(options, self.command, args,
-                                use_root_namespace=use_root_namespace)])
+        self.parent._as_root.assert_has_calls(
+            [mock.call(options, self.command, args,
+                       use_root_namespace=use_root_namespace)])
 
 
 class TestIpRuleCommand(TestIPCmdBase):
@@ -965,6 +965,53 @@ class TestIPv6IpRouteCommand(TestIpRouteCommand):
                             'expected':
                             {'gateway': '2001:470:9:1224:4508:b885:5fb:740b',
                              'metric': 1024}}]
+
+
+class TestIPRoute(TestIpRouteCommand):
+    """Leverage existing tests for IpRouteCommand for IPRoute
+
+    This test leverages the tests written for IpRouteCommand.  The difference
+    is that the 'dev' argument should not be passed for each of the commands.
+    So, this test removes the dev argument from the expected arguments in each
+    assert.
+    """
+    def setUp(self):
+        super(TestIPRoute, self).setUp()
+        self.parent = ip_lib.IPRoute()
+        self.parent._run = mock.Mock()
+        self.parent._as_root = mock.Mock()
+        self.route_cmd = self.parent.route
+        self.check_dev_args = False
+
+    def _remove_dev_args(self, args):
+        def args_without_dev():
+            previous = None
+            for arg in args:
+                if 'dev' not in (arg, previous):
+                    yield arg
+                previous = arg
+
+        return tuple(arg for arg in args_without_dev())
+
+    def _assert_call(self, options, args):
+        if not self.check_dev_args:
+            args = self._remove_dev_args(args)
+        super(TestIPRoute, self)._assert_call(options, args)
+
+    def _assert_sudo(self, options, args, use_root_namespace=False):
+        if not self.check_dev_args:
+            args = self._remove_dev_args(args)
+        super(TestIPRoute, self)._assert_sudo(options, args)
+
+    def test_pullup_route(self):
+        # This method gets the interface name passed to it as an argument.  So,
+        # don't remove it from the expected arguments.
+        self.check_dev_args = True
+        super(TestIPRoute, self).test_pullup_route()
+
+    def test_del_gateway_cannot_find_device(self):
+        # This test doesn't make sense for this case since dev won't be passed
+        pass
 
 
 class TestIpNetnsCommand(TestIPCmdBase):
