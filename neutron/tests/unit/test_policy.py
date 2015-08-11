@@ -377,7 +377,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         admin_context = context.get_admin_context()
         self.assertFalse(policy.check_is_advsvc(admin_context))
 
-    def test_check_is_advsvc_with_svc_context_suceeds(self):
+    def test_check_is_advsvc_with_svc_context_succeeds(self):
         svc_context = context.Context('', 'svc', roles=['advsvc'])
         self.assertTrue(policy.check_is_advsvc(svc_context))
 

@@ -239,6 +239,72 @@ class SubnetPoolsTest(base.BaseNetworkTest):
         self.assertEqual(pool_id, subnet['subnetpool_id'])
         self.assertTrue(cidr.endswith(str(self.max_prefixlen)))
 
+    @test.attr(type='smoke')
+    @test.idempotent_id('49b44c64-1619-4b29-b527-ffc3c3115dc4')
+    def test_create_subnetpool_associate_address_scope(self):
+        address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'))
+        name, pool_id = self._create_subnetpool(
+            self.client, pool_values={'address_scope_id': address_scope['id']})
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertEqual(address_scope['id'],
+                         body['subnetpool']['address_scope_id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('910b6393-db24-4f6f-87dc-b36892ad6c8c')
+    def test_update_subnetpool_associate_address_scope(self):
+        address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'))
+        name, pool_id = self._create_subnetpool(self.client)
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertIsNone(body['subnetpool']['address_scope_id'])
+        subnetpool_data = {'subnetpool': {'address_scope_id':
+                                          address_scope['id']}}
+        self.client.update_subnetpool(pool_id, subnetpool_data)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertEqual(address_scope['id'],
+                         body['subnetpool']['address_scope_id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('18302e80-46a3-4563-82ac-ccd1dd57f652')
+    def test_update_subnetpool_associate_another_address_scope(self):
+        address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'))
+        another_address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'))
+        name, pool_id = self._create_subnetpool(
+            self.client, pool_values={'address_scope_id':
+                                      address_scope['id']})
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+
+        body = self.client.get_subnetpool(pool_id)
+        self.assertEqual(address_scope['id'],
+                         body['subnetpool']['address_scope_id'])
+        subnetpool_data = {'subnetpool': {'address_scope_id':
+                                          another_address_scope['id']}}
+        self.client.update_subnetpool(pool_id, subnetpool_data)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertEqual(another_address_scope['id'],
+                         body['subnetpool']['address_scope_id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f8970048-e41b-42d6-934b-a1297b07706a')
+    def test_update_subnetpool_disassociate_address_scope(self):
+        address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'))
+        name, pool_id = self._create_subnetpool(
+            self.client, pool_values={'address_scope_id': address_scope['id']})
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertEqual(address_scope['id'],
+                         body['subnetpool']['address_scope_id'])
+        subnetpool_data = {'subnetpool': {'address_scope_id': None}}
+        self.client.update_subnetpool(pool_id, subnetpool_data)
+        body = self.client.get_subnetpool(pool_id)
+        self.assertIsNone(body['subnetpool']['address_scope_id'])
+
 
 class SubnetPoolsTestV6(SubnetPoolsTest):
 

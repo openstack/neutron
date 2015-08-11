@@ -614,7 +614,7 @@ class OVSDVRNeutronAgent(object):
                 # ports available on this agent anymore
                 self.local_dvr_map.pop(sub_uuid, None)
             if network_type == p_const.TYPE_VLAN:
-                br = self.phys_br[physical_network]
+                br = self.phys_brs[physical_network]
             if network_type in constants.TUNNEL_NETWORK_TYPES:
                 br = self.tun_br
             if ip_version == 4:
@@ -626,7 +626,7 @@ class OVSDVRNeutronAgent(object):
             ovsport.remove_subnet(sub_uuid)
 
         if lvm.network_type == p_const.TYPE_VLAN:
-            br = self.phys_br[physical_network]
+            br = self.phys_brs[physical_network]
         if lvm.network_type in constants.TUNNEL_NETWORK_TYPES:
             br = self.tun_br
         br.delete_dvr_process(vlan_tag=lvm.vlan, vif_mac=port.vif_mac)

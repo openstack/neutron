@@ -35,11 +35,11 @@ class ClientFixture(fixtures.Fixture):
         self.addCleanup(delete, data['id'])
         return data
 
-    def create_router(self, tenant_id, name=None):
+    def create_router(self, tenant_id, name=None, ha=False):
         resource_type = 'router'
 
         name = name or base.get_rand_name(prefix=resource_type)
-        spec = {'tenant_id': tenant_id, 'name': name}
+        spec = {'tenant_id': tenant_id, 'name': name, 'ha': ha}
 
         return self._create_resource(resource_type, spec)
 

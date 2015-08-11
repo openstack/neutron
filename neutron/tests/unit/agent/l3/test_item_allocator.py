@@ -1,5 +1,4 @@
-# Copyright (c) 2013 OpenStack Foundation
-# All Rights Reserved.
+# Copyright 2014 Hewlett-Packard Development Company, L.P.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,16 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Exceptions used by ML2."""
-
-from neutron.common import exceptions
-
-
-class MechanismDriverError(exceptions.NeutronException):
-    """Mechanism driver call failed."""
-    message = _("%(method)s failed.")
+from neutron.agent.l3 import item_allocator as ia
+from neutron.tests import base
 
 
-class ExtensionDriverError(exceptions.InvalidInput):
-    """Extension driver call failed."""
-    message = _("Extension %(driver)s failed.")
+class TestItemAllocator(base.BaseTestCase):
+    def setUp(self):
+        super(TestItemAllocator, self).setUp()
+
+    def test__init__(self):
+        test_pool = set(s for s in range(32768, 40000))
+        a = ia.ItemAllocator('/file', object, test_pool)
+        self.assertEqual('/file', a.state_file)
+        self.assertEqual({}, a.allocations)
+        self.assertEqual(object, a.ItemClass)
+        self.assertEqual(test_pool, a.pool)

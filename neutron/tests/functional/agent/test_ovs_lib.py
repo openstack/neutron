@@ -19,6 +19,7 @@ import uuid
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
+from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -35,7 +36,7 @@ class OVSBridgeTestBase(base.BaseOVSLinuxTestCase):
         # Convert ((a, b), (c, d)) to {a: b, c: d} and add 'type' by default
         attrs = collections.OrderedDict(interface_attrs)
         attrs.setdefault('type', 'internal')
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         return (port_name, self.br.add_port(port_name, *attrs.items()))
 
     def create_ovs_vif_port(self, iface_id=None, mac=None,
@@ -73,7 +74,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertRaises(RuntimeError, cmd.execute, check_error=True)
 
     def test_replace_port(self):
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.replace_port(port_name, ('type', 'internal'))
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('internal',
@@ -150,7 +151,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
             'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
         }
-        port_name = net_helpers.get_rand_port_name()
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.add_tunnel_port(port_name, attrs['remote_ip'],
                                 attrs['local_ip'])
         self.assertEqual(self.ovs.db_get_val('Interface', port_name, 'type'),
@@ -160,7 +161,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.assertEqual(val, options[attr])
 
     def test_add_patch_port(self):
-        local = net_helpers.get_rand_port_name()
+        local = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
         peer = 'remotepeer'
         self.br.add_patch_port(local, peer)
         self.assertEqual(self.ovs.db_get_val('Interface', local, 'type'),
@@ -194,6 +195,22 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertEqual(sorted([x.port_name for x in vif_ports]),
                          sorted([x.port_name for x in ports]))
 
+    def test_get_vif_ports_with_bond(self):
+        for i in range(2):
+            self.create_ovs_port()
+        vif_ports = [self.create_ovs_vif_port() for i in range(3)]
+        # bond ports don't have records in the Interface table but they do in
+        # the Port table
+        orig = self.br.get_port_name_list
+        new_port_name_list = lambda: orig() + ['bondport']
+        mock.patch.object(self.br, 'get_port_name_list',
+                          new=new_port_name_list).start()
+        ports = self.br.get_vif_ports()
+        self.assertEqual(3, len(ports))
+        self.assertTrue(all([isinstance(x, ovs_lib.VifPort) for x in ports]))
+        self.assertEqual(sorted([x.port_name for x in vif_ports]),
+                         sorted([x.port_name for x in ports]))
+
     def test_get_vif_port_set(self):
         for i in range(2):
             self.create_ovs_port()
@@ -214,6 +231,12 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         ports = self.br.get_vif_port_set()
         expected = set([vif_ports[0].vif_id])
         self.assertEqual(expected, ports)
+
+    def test_get_ports_attributes(self):
+        port_names = [self.create_ovs_port()[0], self.create_ovs_port()[0]]
+        db_ports = self.br.get_ports_attributes('Interface', columns=['name'])
+        db_ports_names = [p['name'] for p in db_ports]
+        self.assertEqual(sorted(port_names), sorted(db_ports_names))
 
     def test_get_port_tag_dict(self):
         # Simple case tested in port test_set_get_clear_db_val

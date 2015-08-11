@@ -30,6 +30,7 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import model_base
@@ -470,6 +471,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                         msg = (_("Router already has a port on subnet %s")
                                % subnet_id)
                         raise n_exc.BadRequest(resource='router', msg=msg)
+                    # Ignore temporary Prefix Delegation CIDRs
+                    if subnet_cidr == l3_constants.PROVISIONAL_IPV6_PD_PREFIX:
+                        continue
                     sub_id = ip['subnet_id']
                     cidr = self._core_plugin._get_subnet(context.elevated(),
                                                          sub_id)['cidr']
@@ -579,7 +583,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         fixed_ip = {'ip_address': subnet['gateway_ip'],
                     'subnet_id': subnet['id']}
 
-        if subnet['ip_version'] == 6:
+        if (subnet['ip_version'] == 6 and not
+            ipv6_utils.is_ipv6_pd_enabled(subnet)):
             # Add new prefix to an existing ipv6 port with the same network id
             # if one exists
             port = self._find_ipv6_router_port_by_network(router,
@@ -963,6 +968,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 port['fixed_ips'] = [
                     {'ip_address': fip['floating_ip_address']}]
 
+            if fip.get('subnet_id'):
+                port['fixed_ips'] = [
+                    {'subnet_id': fip['subnet_id']}]
             external_port = self._core_plugin.create_port(context.elevated(),
                                                           {'port': port})
 
@@ -1197,7 +1205,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                           for p in each_port_having_fixed_ips())
         filters = {'network_id': [id for id in network_ids]}
         fields = ['id', 'cidr', 'gateway_ip',
-                  'network_id', 'ipv6_ra_mode']
+                  'network_id', 'ipv6_ra_mode', 'subnetpool_id']
 
         subnets_by_network = dict((id, []) for id in network_ids)
         for subnet in self._core_plugin.get_subnets(context, filters, fields):
@@ -1215,7 +1223,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 subnet_info = {'id': subnet['id'],
                                'cidr': subnet['cidr'],
                                'gateway_ip': subnet['gateway_ip'],
-                               'ipv6_ra_mode': subnet['ipv6_ra_mode']}
+                               'ipv6_ra_mode': subnet['ipv6_ra_mode'],
+                               'subnetpool_id': subnet['subnetpool_id']}
                 for fixed_ip in port['fixed_ips']:
                     if fixed_ip['subnet_id'] == subnet['id']:
                         port['subnets'].append(subnet_info)

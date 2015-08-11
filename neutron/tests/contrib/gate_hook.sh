@@ -26,5 +26,10 @@ then
     configure_host_for_func_testing
 elif [ "$VENV" == "api" ]
 then
+    if [[ -z "$DEVSTACK_LOCAL_CONFIG" ]]; then
+        export DEVSTACK_LOCAL_CONFIG="enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas"
+    else
+        export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas"
+    fi
     $BASE/new/devstack-gate/devstack-vm-gate.sh
 fi

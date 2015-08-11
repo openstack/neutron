@@ -54,6 +54,11 @@ DNSMASQ_OPTS = [
                        "This option is deprecated and "
                        "will be removed in a future release."),
                 deprecated_for_removal=True),
+    cfg.StrOpt('dnsmasq_base_log_dir',
+               help=_("Base log dir for dnsmasq logging. "
+                      "The log contains DHCP and DNS log information and "
+                      "is useful for debugging issues with either DHCP or "
+                      "DNS. If this section is null, disable dnsmasq log.")),
     cfg.IntOpt(
         'dnsmasq_lease_max',
         default=(2 ** 24),

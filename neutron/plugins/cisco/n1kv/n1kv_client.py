@@ -19,6 +19,7 @@ import netaddr
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import requests
+import six
 
 from neutron.common import exceptions as n_exc
 from neutron.extensions import providernet
@@ -30,6 +31,22 @@ from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv
 
 LOG = logging.getLogger(__name__)
+
+
+def safe_b64_encode(s):
+    if six.PY3:
+        method = base64.encodebytes
+    else:
+        method = base64.encodestring
+
+    if isinstance(s, six.text_type):
+        s = s.encode('utf-8')
+    encoded_string = method(s).rstrip()
+
+    if six.PY3:
+        return encoded_string.decode('utf-8')
+    else:
+        return encoded_string
 
 
 class Client(object):
@@ -502,7 +519,7 @@ class Client(object):
         """
         username = c_cred.Store.get_username(host_ip)
         password = c_cred.Store.get_password(host_ip)
-        auth = base64.encodestring("%s:%s" % (username, password)).rstrip()
+        auth = safe_b64_encode("%s:%s" % (username, password))
         header = {"Authorization": "Basic %s" % auth}
         return header
 

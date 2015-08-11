@@ -538,6 +538,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             LOG.debug('Processing :%r', routers)
             for r in routers:
                 ns_manager.keep_router(r['id'])
+                if r.get('distributed'):
+                    # need to keep fip namespaces as well
+                    ext_net_id = (r['external_gateway_info'] or {}).get(
+                        'network_id')
+                    if ext_net_id:
+                        ns_manager.keep_ext_net(ext_net_id)
                 update = queue.RouterUpdate(r['id'],
                                             queue.PRIORITY_SYNC_ROUTERS_TASK,
                                             router=r,

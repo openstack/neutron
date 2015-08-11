@@ -95,6 +95,9 @@ class NamespaceManager(object):
     def keep_router(self, router_id):
         self._ids_to_keep.add(router_id)
 
+    def keep_ext_net(self, ext_net_id):
+        self._ids_to_keep.add(ext_net_id)
+
     def get_prefix_and_id(self, ns_name):
         """Get the prefix and id from the namespace name.
 

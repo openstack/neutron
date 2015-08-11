@@ -55,6 +55,7 @@ from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
 from neutron.db import netmtu_db
 from neutron.db.quota import driver  # noqa
+from neutron.db import securitygroups_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
@@ -74,6 +75,7 @@ from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
+from neutron.quota import resource_registry
 
 LOG = log.getLogger(__name__)
 
@@ -126,6 +128,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._aliases = aliases
         return self._aliases
 
+    @resource_registry.tracked_resources(
+        network=models_v2.Network,
+        port=models_v2.Port,
+        subnet=models_v2.Subnet,
+        subnetpool=models_v2.SubnetPool,
+        security_group=securitygroups_db.SecurityGroup,
+        security_group_rule=securitygroups_db.SecurityGroupRule)
     def __init__(self):
         # First load drivers, then initialize DB, then initialize drivers
         self.type_manager = managers.TypeManager()
@@ -1125,6 +1134,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding, levels,
                 original_port=original_port)
+            new_host_port = self._get_host_port_if_changed(
+                mech_context, attrs)
+            need_port_update_notify |= self._process_port_binding(
+                mech_context, attrs)
             # For DVR router interface ports we need to retrieve the
             # DVRPortbinding context instead of the normal port context.
             # The normal Portbinding context does not have the status
@@ -1151,10 +1164,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.mechanism_manager.update_port_precommit(mech_context)
                 bound_mech_contexts.append(mech_context)
 
-            new_host_port = self._get_host_port_if_changed(
-                mech_context, attrs)
-            need_port_update_notify |= self._process_port_binding(
-                mech_context, attrs)
         # Notifications must be sent after the above transaction is complete
         kwargs = {
             'context': context,
@@ -1267,8 +1276,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 raise e.errors[0].error
             raise exc.ServicePortInUse(port_id=port_id, reason=e)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True)
     def delete_port(self, context, id, l3_port_check=True):
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
@@ -1485,7 +1492,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port_ids_to_devices = dict(
             (self._device_to_port_id(context, device), device)
             for device in devices)
-        port_ids = port_ids_to_devices.keys()
+        port_ids = list(port_ids_to_devices.keys())
         ports = db.get_ports_and_sgs(context, port_ids)
         for port in ports:
             # map back to original requested id

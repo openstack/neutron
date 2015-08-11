@@ -50,7 +50,9 @@ class TestLinuxBridge(base.BaseTestCase):
         interface_mappings = {'physnet1': 'eth1'}
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip', return_value=None),\
+                mock.patch.object(ip_lib, 'device_exists',
+                                  return_value=True):
             self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
                 interface_mappings)
 
@@ -355,7 +357,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.interface_mappings = {'physnet1': 'eth1'}
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip', return_value=None),\
+                mock.patch.object(ip_lib, 'device_exists',
+                                  return_value=True):
             self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 self.interface_mappings)
 
@@ -396,6 +400,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.assertEqual(self.lbm.get_vxlan_device_name(vn_id),
                          "vxlan-" + str(vn_id))
         self.assertIsNone(self.lbm.get_vxlan_device_name(vn_id + 1))
+
+    def test_get_vxlan_group(self):
+        cfg.CONF.set_override('vxlan_group', '239.1.2.3/24', 'VXLAN')
+        vn_id = p_const.MAX_VXLAN_VNI
+        self.assertEqual('239.1.2.255', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 256
+        self.assertEqual('239.1.2.0', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 257
+        self.assertEqual('239.1.2.1', self.lbm.get_vxlan_group(vn_id))
+        cfg.CONF.set_override('vxlan_group', '240.0.0.0', 'VXLAN')
+        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
+        cfg.CONF.set_override('vxlan_group', '224.0.0.1/', 'VXLAN')
+        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
 
     def test_get_all_neutron_bridges(self):
         br_list = ["br-int", "brq1", "brq2", "br-ex"]
@@ -873,6 +890,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self, expected, l2_population, iproute_arg_supported, fdb_append):
         cfg.CONF.set_override('l2_population', l2_population, 'VXLAN')
         with mock.patch.object(ip_lib, 'device_exists', return_value=False),\
+                mock.patch.object(ip_lib, 'vxlan_in_use', return_value=False),\
                 mock.patch.object(self.lbm,
                                   'delete_vxlan',
                                   return_value=None),\
@@ -935,7 +953,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 self.agent_id = 1
                 with mock.patch.object(
                         ip_lib.IPWrapper,
-                        'get_device_by_ip', return_value=None):
+                        'get_device_by_ip', return_value=None),\
+                    mock.patch.object(ip_lib, 'device_exists',
+                                      return_value=True):
                     self.br_mgr = (linuxbridge_neutron_agent.
                                    LinuxBridgeManager({'physnet1': 'eth1'}))
 

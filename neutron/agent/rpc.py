@@ -80,7 +80,7 @@ class PluginReportStateAPI(object):
         agent_state['uuid'] = uuidutils.generate_uuid()
         kwargs = {
             'agent_state': {'agent_state': agent_state},
-            'time': datetime.utcnow().isoformat(),
+            'time': datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT),
         }
         method = cctxt.call if use_call else cctxt.cast
         return method(context, 'report_state', **kwargs)

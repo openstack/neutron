@@ -36,7 +36,7 @@ from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.extensions import extra_dhcp_opt as edo_ext
-from neutron.i18n import _LI, _LW
+from neutron.i18n import _LI, _LW, _LE
 
 LOG = logging.getLogger(__name__)
 
@@ -379,6 +379,20 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dhcp_broadcast_reply:
             cmd.append('--dhcp-broadcast')
 
+        if self.conf.dnsmasq_base_log_dir:
+            try:
+                if not os.path.exists(self.conf.dnsmasq_base_log_dir):
+                    os.makedirs(self.conf.dnsmasq_base_log_dir)
+                log_filename = os.path.join(
+                    self.conf.dnsmasq_base_log_dir,
+                    self.network.id, 'dhcp_dns_log')
+                cmd.append('--log-queries')
+                cmd.append('--log-dhcp')
+                cmd.append('--log-facility=%s' % log_filename)
+            except OSError:
+                LOG.error(_LE('Error while create dnsmasq base log dir: %s'),
+                    self.conf.dnsmasq_base_log_dir)
+
         return cmd
 
     def spawn_process(self):
@@ -408,6 +422,11 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _release_lease(self, mac_address, ip, client_id):
         """Release a DHCP lease."""
+        if netaddr.IPAddress(ip).version == constants.IP_VERSION_6:
+            # Note(SridharG) dhcp_release is only supported for IPv4
+            # addresses. For more details, please refer to man page.
+            return
+
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
         if client_id:
             cmd.append(client_id)

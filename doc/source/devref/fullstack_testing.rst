@@ -1,9 +1,31 @@
-==========================
-Neutron Full Stack Testing
-==========================
+..
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+
+      Convention for heading levels in Neutron devref:
+      =======  Heading 0 (reserved for the title in a document)
+      -------  Heading 1
+      ~~~~~~~  Heading 2
+      +++++++  Heading 3
+      '''''''  Heading 4
+      (Avoid deeper levels because they do not render well.)
+
+
+Full Stack Testing
+==================
 
 Why?
-====
+----
 
 The idea behind "fullstack" testing is to fill a gap between unit + functional
 tests and Tempest. Tempest tests are expensive to run, difficult to run in
@@ -14,7 +36,7 @@ environment and provide a rapidly reproducible way to verify code as you're
 still writing it.
 
 How?
-====
+----
 
 Full stack tests set up their own Neutron processes (Server & agents). They
 assume a working Rabbit and MySQL server before the run starts. Instructions
@@ -44,7 +66,7 @@ interconnected.
 .. image:: images/fullstack-multinode-simulation.png
 
 When?
-=====
+-----
 
 1) You'd like to test the interaction between Neutron components (Server
    and agents) and have already tested each component in isolation via unit or
@@ -59,27 +81,24 @@ When?
    agent during the test.
 
 Short Term Goals
-================
+----------------
 
 * Multinode & Stability:
-    - Interconnect the internal and external bridges
     - Convert the L3 HA failover functional test to a full stack test
     - Write a test for DHCP HA / Multiple DHCP agents per network
 * Write DVR tests
-* Write L3 HA tests
+* Write additional L3 HA tests
 * Write a test that validates L3 HA + l2pop integration after
   https://bugs.launchpad.net/neutron/+bug/1365476 is fixed.
 * Write a test that validates DVR + L3 HA integration after
   https://bugs.launchpad.net/neutron/+bug/1365473 is fixed.
-
-None of these tasks currently have owners. Feel free to send patches!
 
 After these tests are merged, it should be fair to start asking contributors to
 add full stack tests when appropriate in the patches themselves and not after
 the fact as there will probably be something to copy/paste from.
 
 Long Term Goals
-===============
+---------------
 
 * Currently we configure the OVS agent with VLANs segmentation (Only because
   it's easier). This allows us to validate most functionality, but we might

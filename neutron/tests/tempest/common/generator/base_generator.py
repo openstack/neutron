@@ -176,7 +176,7 @@ class BasicGeneratorSet(object):
             expected_result = generator_result[2]
             element = path.pop()
             if len(path) > 0:
-                schema_snip = reduce(dict.get, path, schema)
+                schema_snip = six.moves.reduce(dict.get, path, schema)
                 schema_snip[element] = invalid_snippet
             else:
                 schema[element] = invalid_snippet

@@ -26,11 +26,13 @@ import time
 import eventlet
 eventlet.monkey_patch()
 
+import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import service
+from oslo_utils import excutils
 from six import moves
 
 from neutron.agent.linux import bridge_lib
@@ -77,6 +79,7 @@ class NetworkSegment(object):
 class LinuxBridgeManager(object):
     def __init__(self, interface_mappings):
         self.interface_mappings = interface_mappings
+        self.validate_interface_mappings()
         self.ip = ip_lib.IPWrapper()
         # VXLAN related parameters:
         self.local_ip = cfg.CONF.VXLAN.local_ip
@@ -92,6 +95,14 @@ class LinuxBridgeManager(object):
                                 'must be provided'))
         # Store network mapping to segments
         self.network_map = {}
+
+    def validate_interface_mappings(self):
+        for physnet, interface in self.interface_mappings.items():
+            if not ip_lib.device_exists(interface):
+                LOG.error(_LE("Interface %(intf)s for physical network %(net)s"
+                              " does not exist. Agent terminated!"),
+                          {'intf': interface, 'net': physnet})
+                sys.exit(1)
 
     def interface_exists_on_bridge(self, bridge, interface):
         directory = '/sys/class/net/%s/brif' % bridge
@@ -127,6 +138,22 @@ class LinuxBridgeManager(object):
         else:
             LOG.warning(_LW("Invalid Segmentation ID: %s, will lead to "
                             "incorrect vxlan device name"), segmentation_id)
+
+    def get_vxlan_group(self, segmentation_id):
+        try:
+            # Ensure the configured group address/range is valid and multicast
+            net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
+            if not (net.network.is_multicast() and
+                    net.broadcast.is_multicast()):
+                raise ValueError()
+            # Map the segmentation ID to (one of) the group address(es)
+            return str(net.network +
+                       (int(segmentation_id) & int(net.hostmask)))
+        except (netaddr.core.AddrFormatError, ValueError):
+            LOG.warning(_LW("Invalid VXLAN Group: %s, must be an address "
+                            "or network (in CIDR notation) in a multicast "
+                            "range"),
+                        cfg.CONF.VXLAN.vxlan_group)
 
     def get_all_neutron_bridges(self):
         neutron_bridge_list = []
@@ -241,14 +268,26 @@ class LinuxBridgeManager(object):
                        'segmentation_id': segmentation_id})
             args = {'dev': self.local_int}
             if self.vxlan_mode == lconst.VXLAN_MCAST:
-                args['group'] = cfg.CONF.VXLAN.vxlan_group
+                args['group'] = self.get_vxlan_group(segmentation_id)
             if cfg.CONF.VXLAN.ttl:
                 args['ttl'] = cfg.CONF.VXLAN.ttl
             if cfg.CONF.VXLAN.tos:
                 args['tos'] = cfg.CONF.VXLAN.tos
             if cfg.CONF.VXLAN.l2_population:
                 args['proxy'] = True
-            int_vxlan = self.ip.add_vxlan(interface, segmentation_id, **args)
+            try:
+                int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
+                                              **args)
+            except RuntimeError:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    # perform this check after an attempt rather than before
+                    # to avoid excessive lookups and a possible race condition.
+                    if ip_lib.vxlan_in_use(segmentation_id):
+                        ctxt.reraise = False
+                        LOG.error(_LE("Unable to create VXLAN interface for "
+                                      "VNI %s because it is in use by another "
+                                      "interface."), segmentation_id)
+                        return None
             int_vxlan.link.set_up()
             LOG.debug("Done creating vxlan interface %s", interface)
         return interface
@@ -526,10 +565,11 @@ class LinuxBridgeManager(object):
 
         test_iface = None
         for seg_id in moves.range(1, p_const.MAX_VXLAN_VNI + 1):
-            if not ip_lib.device_exists(
-                    self.get_vxlan_device_name(seg_id)):
-                test_iface = self.ensure_vxlan(seg_id)
-                break
+            if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id))
+                    or ip_lib.vxlan_in_use(seg_id)):
+                continue
+            test_iface = self.ensure_vxlan(seg_id)
+            break
         else:
             LOG.error(_LE('No valid Segmentation ID to perform UCAST test.'))
             return False
@@ -547,7 +587,7 @@ class LinuxBridgeManager(object):
 
     def vxlan_mcast_supported(self):
         if not cfg.CONF.VXLAN.vxlan_group:
-            LOG.warning(_LW('VXLAN muticast group must be provided in '
+            LOG.warning(_LW('VXLAN muticast group(s) must be provided in '
                             'vxlan_group option to enable VXLAN MCAST mode'))
             return False
         if not ip_lib.iproute_arg_supported(

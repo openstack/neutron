@@ -38,6 +38,7 @@ from neutron.agent.linux import external_process
 from neutron.callbacks import manager as registry_manager
 from neutron.callbacks import registry
 from neutron.common import config
+from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.db import agentschedulers_db
 from neutron import manager
@@ -85,6 +86,11 @@ def get_rand_name(max_length=None, prefix='test'):
     else:
         suffix = hex(random.randint(0x10000000, 0x7fffffff))[2:]
     return prefix + suffix
+
+
+def get_rand_device_name(prefix='test'):
+    return get_rand_name(
+        max_length=constants.DEVICE_NAME_MAX_LEN, prefix=prefix)
 
 
 def bool_from_env(key, strict=False, default=False):

@@ -16,14 +16,14 @@
 """add order to dnsnameservers
 
 Revision ID: 1c844d1677f7
-Revises: 2a16083502f3
+Revises: 26c371498592
 Create Date: 2015-07-21 22:59:03.383850
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '1c844d1677f7'
-down_revision = '2a16083502f3'
+down_revision = '26c371498592'
 
 from alembic import op
 import sqlalchemy as sa

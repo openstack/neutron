@@ -178,12 +178,14 @@ class TestSriovAgent(base.BaseTestCase):
                         'network_type': 'vlan',
                         'segmentation_id': 100,
                         'profile': {'pci_slot': '1:2:3.0'},
-                        'physical_network': 'physnet1'}
+                        'physical_network': 'physnet1',
+                        'port_security_enabled': False}
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.set_device_state = mock.Mock()
+        agent.set_device_spoofcheck = mock.Mock()
         resync_needed = agent.treat_devices_added_updated(
                                     set(['aa:bb:cc:dd:ee:ff']))
 
@@ -194,6 +196,10 @@ class TestSriovAgent(base.BaseTestCase):
                                         'aa:bb:cc:dd:ee:ff',
                                         '1:2:3.0',
                                         True)
+        agent.eswitch_mgr.set_device_spoofcheck.assert_called_with(
+                                        'aa:bb:cc:dd:ee:ff',
+                                        '1:2:3.0',
+                                        False)
         self.assertTrue(agent.plugin_rpc.update_device_up.called)
 
     def test_treat_devices_added_updated_admin_state_up_false(self):

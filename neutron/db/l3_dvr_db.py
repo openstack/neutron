@@ -475,7 +475,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports_to_populate += interfaces
         self._populate_subnets_for_ports(context, ports_to_populate)
         self._process_interfaces(routers_dict, interfaces)
-        return routers_dict.values()
+        return list(routers_dict.values())
 
     def _get_vm_port_hostid(self, context, port_id, port=None):
         """Return the portbinding host_id."""
@@ -661,9 +661,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         router.
         """
 
-        # Check this is a valid VM port
-        if ("compute:" not in port_dict['device_owner'] or
-            not port_dict['fixed_ips']):
+        # Check this is a valid VM or service port
+        if not (n_utils.is_dvr_serviced(port_dict['device_owner']) and
+                port_dict['fixed_ips']):
             return
         ip_address = port_dict['fixed_ips'][0]['ip_address']
         subnet = port_dict['fixed_ips'][0]['subnet_id']

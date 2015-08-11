@@ -1,3 +1,26 @@
+..
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+
+      Convention for heading levels in Neutron devref:
+      =======  Heading 0 (reserved for the title in a document)
+      -------  Heading 1
+      ~~~~~~~  Heading 2
+      +++++++  Heading 3
+      '''''''  Heading 4
+      (Avoid deeper levels because they do not render well.)
+
+
 Official Sub-Projects
 =====================
 
@@ -62,7 +85,7 @@ The official source of all repositories that exist under the Neutron project is:
     http://governance.openstack.org/reference/projects/neutron.html
 
 Affiliated projects
-===================
+~~~~~~~~~~~~~~~~~~~
 
 This table shows the affiliated projects that integrate with Neutron,
 in one form or another.  These projects typically leverage the pluggable
@@ -131,7 +154,7 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 
 Functionality legend
---------------------
+++++++++++++++++++++
 
 - l2: a Layer 2 service;
 - ml2: an ML2 mechanism driver;
@@ -145,7 +168,7 @@ Functionality legend
 .. _networking-arista:
 
 Arista
-------
+++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
@@ -154,7 +177,7 @@ Arista
 .. _networking-bagpipe-l2:
 
 BaGPipe
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-bagpipe-l2
 * Launchpad: https://launchpad.net/bagpipe-l2
@@ -163,14 +186,14 @@ BaGPipe
 .. _networking-bgpvpn:
 
 BGPVPN
--------
+++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-bgpvpn
 
 .. _networking-bigswitch:
 
 Big Switch Networks
--------------------
++++++++++++++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-bigswitch
 * Pypi: https://pypi.python.org/pypi/bsnstacklib
@@ -178,7 +201,7 @@ Big Switch Networks
 .. _networking-brocade:
 
 Brocade
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-brocade
 * Launchpad: https://launchpad.net/networking-brocade
@@ -187,7 +210,7 @@ Brocade
 .. _networking-cisco:
 
 Cisco
------
++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-cisco
 * Launchpad: https://launchpad.net/networking-cisco
@@ -196,7 +219,7 @@ Cisco
 .. _dragonflow:
 
 DragonFlow
-----------
+++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/dragonflow
 * Launchpad: https://launchpad.net/dragonflow
@@ -205,7 +228,7 @@ DragonFlow
 .. _networking-edge-vpn:
 
 Edge VPN
---------
+++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-edge-vpn
 * Launchpad: https://launchpad.net/edge-vpn
@@ -213,7 +236,7 @@ Edge VPN
 .. _networking-fujitsu:
 
 FUJITSU
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-fujitsu
 * Launchpad: https://launchpad.net/networking-fujitsu
@@ -222,7 +245,7 @@ FUJITSU
 .. _networking-hyperv:
 
 Hyper-V
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-hyperv
 * Launchpad: https://launchpad.net/networking-hyperv
@@ -231,7 +254,7 @@ Hyper-V
 .. _group-based-policy:
 
 Group Based Policy
-------------------
+++++++++++++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/group-based-policy
 * Launchpad: https://launchpad.net/group-based-policy
@@ -240,7 +263,7 @@ Group Based Policy
 .. _networking-ibm:
 
 IBM SDNVE
----------
++++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-ibm
 * Launchpad: https://launchpad.net/networking-ibm
@@ -248,7 +271,7 @@ IBM SDNVE
 .. _networking-l2gw:
 
 L2 Gateway
-----------
+++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-l2gw
 * Launchpad: https://launchpad.net/networking-l2gw
@@ -256,7 +279,7 @@ L2 Gateway
 .. _networking-midonet:
 
 MidoNet
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-midonet
 * Launchpad: https://launchpad.net/networking-midonet
@@ -265,7 +288,7 @@ MidoNet
 .. _networking-mlnx:
 
 Mellanox
---------
+++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-mlnx
 * Launchpad: https://launchpad.net/networking-mlnx
@@ -273,7 +296,7 @@ Mellanox
 .. _networking-nec:
 
 NEC
----
++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-nec
 * Launchpad: https://launchpad.net/networking-nec
@@ -282,14 +305,14 @@ NEC
 .. _nuage-openstack-neutron:
 
 Nuage
------
++++++
 
 * Git: https://github.com/nuage-networks/nuage-openstack-neutron
 
 .. _networking-odl:
 
 OpenDayLight
-------------
+++++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-odl
 * Launchpad: https://launchpad.net/networking-odl
@@ -297,7 +320,7 @@ OpenDayLight
 .. _networking-ofagent:
 
 OpenFlow Agent (ofagent)
-------------------------
+++++++++++++++++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-ofagent
 * Launchpad: https://launchpad.net/networking-ofagent
@@ -306,7 +329,7 @@ OpenFlow Agent (ofagent)
 .. _networking-ovn:
 
 Open Virtual Network
---------------------
+++++++++++++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-ovn
 * Launchpad: https://launchpad.net/networking-ovn
@@ -315,7 +338,7 @@ Open Virtual Network
 .. _networking-ovs-dpdk:
 
 Open DPDK
----------
++++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-ovs-dpdk
 * Launchpad: https://launchpad.net/networking-ovs-dpdk
@@ -323,7 +346,7 @@ Open DPDK
 .. _networking-plumgrid:
 
 PLUMgrid
---------
+++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-plumgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
@@ -332,7 +355,7 @@ PLUMgrid
 .. _neutron-powervm:
 
 PowerVM
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/neutron-powervm
 * Launchpad: https://launchpad.net/neutron-powervm
@@ -341,7 +364,7 @@ PowerVM
 .. _networking-portforwarding:
 
 PortForwarding
---------------
+++++++++++++++
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-portforwarding
 * Launchpad: https://launchpad.net/networking-portforwarding
@@ -349,22 +372,22 @@ PortForwarding
 .. _networking-sfc:
 
 SFC
----
++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-sfc
 
 .. _networking-vsphere:
 
 vSphere
--------
++++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-vsphere
+* Git: https://git.openstack.org/cgit/openstack/networking-vsphere
 * Launchpad: https://launchpad.net/networking-vsphere
 
 .. _vmware-nsx:
 
 VMware NSX
-----------
+++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/vmware-nsx
 * Launchpad: https://launchpad.net/vmware-nsx
@@ -373,7 +396,7 @@ VMware NSX
 .. _octavia:
 
 Octavia
--------
++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/octavia
 * Launchpad: https://launchpad.net/octavia

@@ -150,13 +150,13 @@ class NeutronConfigFixture(ConfigFixture):
 
 class ML2ConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir):
+    def __init__(self, temp_dir, tenant_network_types):
         super(ML2ConfigFixture, self).__init__(
             temp_dir, base_filename='ml2_conf.ini')
 
         self.config.update({
             'ml2': {
-                'tenant_network_types': 'vlan',
+                'tenant_network_types': tenant_network_types,
                 'mechanism_drivers': 'openvswitch',
             },
             'ml2_type_vlan': {
@@ -168,6 +168,16 @@ class ML2ConfigFixture(ConfigFixture):
             'ml2_type_vxlan': {
                 'vni_ranges': '1001:2000',
             },
+        })
+
+
+class OVSConfigFixture(ConfigFixture):
+
+    def __init__(self, temp_dir):
+        super(OVSConfigFixture, self).__init__(
+            temp_dir, base_filename='openvswitch_agent.ini')
+
+        self.config.update({
             'ovs': {
                 'enable_tunneling': 'False',
                 'local_ip': '127.0.0.1',
@@ -181,14 +191,16 @@ class ML2ConfigFixture(ConfigFixture):
         })
 
     def _generate_bridge_mappings(self):
-        return ('physnet1:%s' %
-                base.get_rand_name(
-                    prefix='br-eth',
-                    max_length=constants.DEVICE_NAME_MAX_LEN))
+        return 'physnet1:%s' % base.get_rand_device_name(prefix='br-eth')
 
     def _generate_integration_bridge(self):
-        return base.get_rand_name(prefix='br-int',
-                                  max_length=constants.DEVICE_NAME_MAX_LEN)
+        return base.get_rand_device_name(prefix='br-int')
+
+    def get_br_int_name(self):
+        return self.config.ovs.integration_bridge
+
+    def get_br_phys_name(self):
+        return self.config.ovs.bridge_mappings.split(':')[1]
 
 
 class L3ConfigFixture(ConfigFixture):
@@ -212,8 +224,10 @@ class L3ConfigFixture(ConfigFixture):
         })
 
     def _generate_external_bridge(self):
-        return base.get_rand_name(prefix='br-ex',
-                                  max_length=constants.DEVICE_NAME_MAX_LEN)
+        return base.get_rand_device_name(prefix='br-ex')
+
+    def get_external_bridge(self):
+        return self.config.DEFAULT.external_network_bridge
 
     def _generate_namespace_suffix(self):
         return base.get_rand_name(prefix='test')

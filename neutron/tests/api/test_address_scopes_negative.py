@@ -75,3 +75,18 @@ class AddressScopeTestNegative(test_address_scopes.AddressScopeTestBase):
         self.assertRaises(lib_exc.BadRequest,
                           self.admin_client.update_address_scope,
                           address_scope['id'], name='new-name', shared=False)
+
+    @test.attr(type=['negative', 'smoke'])
+    @test.idempotent_id('1e471e5c-6f9c-437a-9257-fd9bc4b6f0fb')
+    def test_delete_address_scope_associated_with_subnetpool(self):
+        address_scope = self._create_address_scope()
+        prefixes = [u'10.11.12.0/24']
+        subnetpool_data = {'subnetpool': {
+            'name': 'foo-subnetpool',
+            'min_prefixlen': '29', 'prefixes': prefixes,
+            'address_scope_id': address_scope['id']}}
+        body = self.client.create_subnetpool(subnetpool_data)
+        subnetpool = body['subnetpool']
+        self.addCleanup(self.client.delete_subnetpool, subnetpool['id'])
+        self.assertRaises(lib_exc.Conflict, self.client.delete_address_scope,
+                          address_scope['id'])

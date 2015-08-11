@@ -137,8 +137,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         return allocated
 
     def _ipam_update_allocation_pools(self, context, ipam_driver, subnet):
-        self._validate_allocation_pools(subnet['allocation_pools'],
-                                        subnet['cidr'])
+        self.validate_allocation_pools(subnet['allocation_pools'],
+                                       subnet['cidr'])
 
         factory = ipam_driver.get_subnet_request_factory()
         subnet_request = factory.get_request(context, subnet, None)

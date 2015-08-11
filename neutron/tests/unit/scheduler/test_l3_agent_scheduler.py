@@ -489,12 +489,18 @@ class L3SchedulerTestBaseMixin(object):
         sync_router = {'id': 'foo_router_id',
                        'distributed': True}
         plugin.get_router.return_value = sync_router
-        with mock.patch.object(plugin, 'get_snat_bindings', return_value=True):
-                scheduler._schedule_router(
-                    plugin, self.adminContext, 'foo_router_id', None)
+        with mock.patch.object(
+                plugin, 'get_snat_bindings', return_value=True),\
+                mock.patch.object(scheduler, 'bind_router'):
+            scheduler._schedule_router(
+                plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
-            mock.call.unbind_snat_servicenode(mock.ANY, 'foo_router_id'),
+            mock.call.get_l3_agents_hosting_routers(
+                mock.ANY, ['foo_router_id'], admin_state_up=True),
+            mock.call.get_l3_agents(mock.ANY, active=True),
+            mock.call.get_l3_agent_candidates(mock.ANY, sync_router, [agent]),
+            mock.call.unbind_snat_servicenode(mock.ANY, 'foo_router_id')
         ]
         plugin.assert_has_calls(expected_calls)
 
@@ -510,11 +516,16 @@ class L3SchedulerTestBaseMixin(object):
         }
         plugin.get_router.return_value = sync_router
         with mock.patch.object(
-            plugin, 'get_snat_bindings', return_value=False):
-                scheduler._schedule_router(
-                    plugin, self.adminContext, 'foo_router_id', None)
+            plugin, 'get_snat_bindings', return_value=False),\
+                mock.patch.object(scheduler, 'bind_router'):
+            scheduler._schedule_router(
+                plugin, self.adminContext, 'foo_router_id', None)
         expected_calls = [
             mock.call.get_router(mock.ANY, 'foo_router_id'),
+            mock.call.get_l3_agents_hosting_routers(
+                mock.ANY, ['foo_router_id'], admin_state_up=True),
+            mock.call.get_l3_agents(mock.ANY, active=True),
+            mock.call.get_l3_agent_candidates(mock.ANY, sync_router, [agent]),
             mock.call.schedule_snat_router(
                 mock.ANY, 'foo_router_id', sync_router),
         ]

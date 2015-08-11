@@ -17,6 +17,7 @@ import netaddr
 
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base
@@ -206,6 +207,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         """
         net = netaddr.IPNetwork(ip_cidr)
         if net.version == 6:
+            if isinstance(ip_cidr, six.text_type):
+                ip_cidr = ip_cidr.encode()  # Needed for Python 3.x
             # the crc32 & 0xffffffff is for Python 2.6 and 3.0 compatibility
             snat_idx = binascii.crc32(ip_cidr) & 0xffffffff
             # xor-fold the hash to reserve upper range to extend smaller values

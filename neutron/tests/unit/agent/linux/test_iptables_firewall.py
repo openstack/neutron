@@ -1027,6 +1027,75 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         filter_inst.assert_has_calls(calls)
 
+    def _test_remove_conntrack_entries(self, ethertype, protocol,
+                                       direction):
+        port = self._fake_port()
+        port['zone_id'] = 1
+        port['security_groups'] = 'fake_sg_id'
+        self.firewall.filtered_ports[port['device']] = port
+        self.firewall.updated_rule_sg_ids = set(['fake_sg_id'])
+        self.firewall.sg_rules['fake_sg_id'] = [
+            {'direction': direction, 'ethertype': ethertype,
+             'protocol': protocol}]
+
+        self.firewall.filter_defer_apply_on()
+        self.firewall.sg_rules['fake_sg_id'] = []
+        self.firewall.filter_defer_apply_off()
+        cmd = ['conntrack', '-D']
+        if protocol:
+            cmd.extend(['-p', protocol])
+        if ethertype == 'IPv4':
+            cmd.extend(['-f', 'ipv4'])
+            if direction == 'ingress':
+                cmd.extend(['-d', '10.0.0.1'])
+            else:
+                cmd.extend(['-s', '10.0.0.1'])
+        else:
+            cmd.extend(['-f', 'ipv6'])
+            if direction == 'ingress':
+                cmd.extend(['-d', 'fe80::1'])
+            else:
+                cmd.extend(['-s', 'fe80::1'])
+        cmd.extend(['-w', 1])
+        calls = [
+            mock.call(cmd, run_as_root=True, check_exit_code=True,
+                      extra_ok_codes=[1])]
+        self.utils_exec.assert_has_calls(calls)
+
+    def test_remove_conntrack_entries_for_delete_rule_ipv4(self):
+        for direction in ['ingress', 'egress']:
+            for pro in [None, 'tcp', 'icmp', 'udp']:
+                self._test_remove_conntrack_entries(
+                    'IPv4', pro, direction)
+
+    def test_remove_conntrack_entries_for_delete_rule_ipv6(self):
+        for direction in ['ingress', 'egress']:
+            for pro in [None, 'tcp', 'icmp', 'udp']:
+                self._test_remove_conntrack_entries(
+                    'IPv6', pro, direction)
+
+    def test_remove_conntrack_entries_for_port_sec_group_change(self):
+        port = self._fake_port()
+        port['zone_id'] = 1
+        port['security_groups'] = ['fake_sg_id']
+        self.firewall.filtered_ports[port['device']] = port
+        self.firewall.updated_sg_members = set(['tapfake_dev'])
+        self.firewall.filter_defer_apply_on()
+        new_port = copy.deepcopy(port)
+        new_port['security_groups'] = ['fake_sg_id2']
+        self.firewall.filtered_ports[port['device']] = new_port
+        self.firewall.filter_defer_apply_off()
+        calls = [
+            mock.call(['conntrack', '-D', '-f', 'ipv4', '-d', '10.0.0.1',
+                       '-w', 1],
+                      run_as_root=True, check_exit_code=True,
+                      extra_ok_codes=[1]),
+            mock.call(['conntrack', '-D', '-f', 'ipv6', '-d', 'fe80::1',
+                       '-w', 1],
+                      run_as_root=True, check_exit_code=True,
+                      extra_ok_codes=[1])]
+        self.utils_exec.assert_has_calls(calls)
+
     def test_update_delete_port_filter(self):
         port = self._fake_port()
         port['security_group_rules'] = [{'ethertype': 'IPv4',

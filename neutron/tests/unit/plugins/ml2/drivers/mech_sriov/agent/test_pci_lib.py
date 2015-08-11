@@ -99,3 +99,18 @@ class TestPciLib(base.BaseTestCase):
                               self.pci_wrapper.set_vf_state,
                               self.VF_INDEX,
                               True)
+
+    def test_set_vf_spoofcheck(self):
+        with mock.patch.object(self.pci_wrapper, "_execute"):
+            result = self.pci_wrapper.set_vf_spoofcheck(self.VF_INDEX,
+                                                        True)
+            self.assertIsNone(result)
+
+    def test_set_vf_spoofcheck_fail(self):
+        with mock.patch.object(self.pci_wrapper,
+                               "_execute") as mock_exec:
+            mock_exec.side_effect = Exception()
+            self.assertRaises(exc.IpCommandError,
+                              self.pci_wrapper.set_vf_spoofcheck,
+                              self.VF_INDEX,
+                              True)

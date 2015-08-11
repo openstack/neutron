@@ -23,6 +23,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron import context as neutron_context
+from neutron.db import api as db_api
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LE
@@ -43,7 +44,8 @@ class L3RpcCallback(object):
     # 1.4 Added L3 HA update_router_state. This method was later removed,
     #     since it was unused. The RPC version was not changed
     # 1.5 Added update_ha_routers_states
-    target = oslo_messaging.Target(version='1.5')
+    # 1.6 Added process_prefix_update to support IPv6 Prefix Delegation
+    target = oslo_messaging.Target(version='1.6')
 
     @property
     def plugin(self):
@@ -58,6 +60,7 @@ class L3RpcCallback(object):
                 plugin_constants.L3_ROUTER_NAT]
         return self._l3plugin
 
+    @db_api.retry_db_errors
     def sync_routers(self, context, **kwargs):
         """Sync routers according to filters to a specific agent.
 
@@ -104,33 +107,70 @@ class L3RpcCallback(object):
                                                   router.get('gw_port_host'),
                                                   p, router['id'])
             else:
-                self._ensure_host_set_on_port(context, host,
-                                              router.get('gw_port'),
-                                              router['id'])
+                self._ensure_host_set_on_port(
+                    context, host,
+                    router.get('gw_port'),
+                    router['id'],
+                    ha_router_port=router.get('ha'))
             for interface in router.get(constants.INTERFACE_KEY, []):
-                self._ensure_host_set_on_port(context, host,
-                                              interface, router['id'])
+                self._ensure_host_set_on_port(
+                    context,
+                    host,
+                    interface,
+                    router['id'],
+                    ha_router_port=router.get('ha'))
             interface = router.get(constants.HA_INTERFACE_KEY)
             if interface:
                 self._ensure_host_set_on_port(context, host, interface,
                                               router['id'])
 
-    def _ensure_host_set_on_port(self, context, host, port, router_id=None):
+    def _ensure_host_set_on_port(self, context, host, port, router_id=None,
+                                 ha_router_port=False):
         if (port and host is not None and
             (port.get('device_owner') !=
              constants.DEVICE_OWNER_DVR_INTERFACE and
              port.get(portbindings.HOST_ID) != host or
              port.get(portbindings.VIF_TYPE) ==
              portbindings.VIF_TYPE_BINDING_FAILED)):
-            # All ports, including ports created for SNAT'ing for
-            # DVR are handled here
-            try:
-                self.plugin.update_port(context, port['id'],
-                                        {'port': {portbindings.HOST_ID: host}})
-            except exceptions.PortNotFound:
-                LOG.debug("Port %(port)s not found while updating "
-                          "agent binding for router %(router)s.",
-                          {"port": port['id'], "router": router_id})
+
+            # Ports owned by non-HA routers are bound again if they're
+            # already bound but the router moved to another host.
+            if not ha_router_port:
+                # All ports, including ports created for SNAT'ing for
+                # DVR are handled here
+                try:
+                    self.plugin.update_port(
+                        context,
+                        port['id'],
+                        {'port': {portbindings.HOST_ID: host}})
+                except exceptions.PortNotFound:
+                    LOG.debug("Port %(port)s not found while updating "
+                              "agent binding for router %(router)s.",
+                              {"port": port['id'], "router": router_id})
+            # Ports owned by HA routers should only be bound once, if
+            # they are unbound. These ports are moved when an agent reports
+            # that one of its routers moved to the active state.
+            else:
+                if not port.get(portbindings.HOST_ID):
+                    active_host = (
+                        self.l3plugin.get_active_host_for_ha_router(
+                            context, router_id))
+                    if active_host:
+                        host = active_host
+                    # If there is currently no active router instance (For
+                    # example it's a new router), the host that requested
+                    # the routers (Essentially a random host) will do. The
+                    # port binding will be corrected when an active is
+                    # elected.
+                    try:
+                        self.plugin.update_port(
+                            context,
+                            port['id'],
+                            {'port': {portbindings.HOST_ID: host}})
+                    except exceptions.PortNotFound:
+                        LOG.debug("Port %(port)s not found while updating "
+                                  "agent binding for router %(router)s.",
+                                  {"port": port['id'], "router": router_id})
         elif (port and
               port.get('device_owner') ==
               constants.DEVICE_OWNER_DVR_INTERFACE):
@@ -196,6 +236,7 @@ class L3RpcCallback(object):
         filters = {'fixed_ips': {'subnet_id': [subnet_id]}}
         return self.plugin.get_ports(context, filters=filters)
 
+    @db_api.retry_db_errors
     def get_agent_gateway_port(self, context, **kwargs):
         """Get Agent Gateway port for FIP.
 
@@ -224,3 +265,10 @@ class L3RpcCallback(object):
 
         LOG.debug('Updating HA routers states on host %s: %s', host, states)
         self.l3plugin.update_routers_states(context, states, host)
+
+    def process_prefix_update(self, context, **kwargs):
+        subnets = kwargs.get('subnets')
+
+        for subnet_id, prefix in subnets.items():
+            self.plugin.update_subnet(context, subnet_id,
+                                      {'subnet': {'cidr': prefix}})

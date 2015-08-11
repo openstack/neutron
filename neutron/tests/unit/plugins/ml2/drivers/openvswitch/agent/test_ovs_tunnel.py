@@ -121,7 +121,7 @@ class TunnelTest(object):
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
         self.mock_int_bridge.get_vif_ports.return_value = []
-        self.mock_int_bridge.db_list.return_value = []
+        self.mock_int_bridge.get_ports_attributes.return_value = []
         self.mock_int_bridge.db_get_val.return_value = {}
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
@@ -209,7 +209,8 @@ class TunnelTest(object):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
-            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
+            mock.call.get_ports_attributes(
+                'Port', columns=['name', 'other_config', 'tag'], ports=[])
         ]
 
         self.mock_tun_bridge_expected += [
@@ -293,7 +294,7 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_provision_local_vlan(self):
-        ofports = TUN_OFPORTS[p_const.TYPE_GRE].values()
+        ofports = list(TUN_OFPORTS[p_const.TYPE_GRE].values())
         self.mock_tun_bridge_expected += [
             mock.call.install_flood_to_tun(LV_ID, LS_ID, ofports),
             mock.call.provision_local_vlan(
@@ -514,6 +515,7 @@ class TunnelTest(object):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
+            update_stale.return_value = []
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
 
@@ -537,11 +539,11 @@ class TunnelTest(object):
             ])
             process_network_ports.assert_has_calls([
                 mock.call({'current': set(['tap0']),
-                        'removed': set([]),
-                        'added': set(['tap2'])}, False),
+                           'removed': set([]),
+                           'added': set(['tap2'])}, False),
                 mock.call({'current': set(['tap2']),
-                        'removed': set(['tap0']),
-                        'added': set([])}, False)
+                           'removed': set(['tap0']),
+                           'added': set([])}, False)
             ])
             self.assertTrue(update_stale.called)
             self._verify_mock_calls()
@@ -601,7 +603,8 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports(),
-            mock.call.db_list('Port', columns=['name', 'other_config', 'tag'])
+            mock.call.get_ports_attributes(
+                'Port', columns=['name', 'other_config', 'tag'], ports=[])
         ]
         self.mock_tun_bridge_expected += [
             mock.call.delete_flows(),

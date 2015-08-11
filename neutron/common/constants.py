@@ -67,6 +67,8 @@ HA_NETWORK_NAME = 'HA network tenant %s'
 HA_SUBNET_NAME = 'HA subnet tenant %s'
 HA_PORT_NAME = 'HA port tenant %s'
 MINIMUM_AGENTS_FOR_HA = 2
+HA_ROUTER_STATE_ACTIVE = 'active'
+HA_ROUTER_STATE_STANDBY = 'standby'
 
 IPv4 = 'IPv4'
 IPv6 = 'IPv6'
@@ -141,6 +143,9 @@ IPV6_LLA_PREFIX = 'fe80::/64'
 # indicate that IPv6 Prefix Delegation should be used to allocate subnet CIDRs
 IPV6_PD_POOL_ID = 'prefix_delegation'
 
+# Special provisional prefix for IPv6 Prefix Delegation
+PROVISIONAL_IPV6_PD_PREFIX = '::/64'
+
 # Linux interface max length
 DEVICE_NAME_MAX_LEN = 15
 
@@ -183,3 +188,6 @@ RPC_NAMESPACE_STATE = None
 DEFAULT_NETWORK_MTU = 0
 
 ROUTER_MARK_MASK = "0xffff"
+
+# Time format
+ISO8601_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'

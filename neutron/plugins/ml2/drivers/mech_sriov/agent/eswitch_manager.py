@@ -164,6 +164,17 @@ class EmbSwitch(object):
             raise exc.InvalidPciSlotError(pci_slot=pci_slot)
         return self.pci_dev_wrapper.set_vf_state(vf_index, state)
 
+    def set_device_spoofcheck(self, pci_slot, enabled):
+        """Set device spoofchecking
+
+        @param pci_slot: Virtual Function address
+        @param enabled: True to enable spoofcheck, False to disable
+        """
+        vf_index = self.pci_slot_map.get(pci_slot)
+        if vf_index is None:
+            raise exc.InvalidPciSlotError(pci_slot=pci_slot)
+        return self.pci_dev_wrapper.set_vf_spoofcheck(vf_index, enabled)
+
     def get_pci_device(self, pci_slot):
         """Get mac address for given Virtual Function address
 
@@ -251,6 +262,19 @@ class ESwitchManager(object):
         if embedded_switch:
             embedded_switch.set_device_state(pci_slot,
                                              admin_state_up)
+
+    def set_device_spoofcheck(self, device_mac, pci_slot, enabled):
+        """Set device spoofcheck
+
+        Sets device spoofchecking (enabled or disabled)
+        @param device_mac: device mac
+        @param pci_slot: pci slot
+        @param enabled: device spoofchecking
+        """
+        embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
+        if embedded_switch:
+            embedded_switch.set_device_spoofcheck(pci_slot,
+                                                  enabled)
 
     def _discover_devices(self, device_mappings, exclude_devices):
         """Discover which Virtual functions to manage.
