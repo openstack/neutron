@@ -13,12 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+import copy
 
+import mock
 from oslo_utils import uuidutils
 
+from neutron.api.rpc.callbacks.consumer import registry as consumer_reg
+from neutron.api.rpc.callbacks import events
+from neutron.api.rpc.callbacks import resources
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.tests.common.agents import l2_extensions
 from neutron.tests.functional.agent.l2 import base
 
 
@@ -41,6 +46,8 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         super(OVSAgentQoSExtensionTestFramework, self).setUp()
         self.config.set_override('extensions', ['qos'], 'agent')
         self._set_pull_mock()
+        self.set_test_qos_rules(TEST_POLICY_ID1, [TEST_BW_LIMIT_RULE_1])
+        self.set_test_qos_rules(TEST_POLICY_ID2, [TEST_BW_LIMIT_RULE_2])
 
     def _set_pull_mock(self):
 
@@ -93,13 +100,15 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 
+    def wait_until_bandwidth_limit_rule_applied(self, port, rule):
+        l2_extensions.wait_until_bandwidth_limit_rule_applied(
+            self.agent.int_br, port['vif_name'], rule)
+
 
 class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
 
     def test_port_creation_with_bandwidth_limit(self):
         """Make sure bandwidth limit rules are set in low level to ports."""
-
-        self.set_test_qos_rules(TEST_POLICY_ID1, [TEST_BW_LIMIT_RULE_1])
 
         self.setup_agent_and_ports(
             port_dicts=self.create_test_ports(amount=1,
@@ -112,9 +121,6 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
 
     def test_port_creation_with_different_bandwidth_limits(self):
         """Make sure different types of policies end on the right ports."""
-
-        self.set_test_qos_rules(TEST_POLICY_ID1, [TEST_BW_LIMIT_RULE_1])
-        self.set_test_qos_rules(TEST_POLICY_ID2, [TEST_BW_LIMIT_RULE_2])
 
         port_dicts = self.create_test_ports(amount=3)
 
@@ -131,3 +137,17 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
                                                  TEST_BW_LIMIT_RULE_2)
 
         self._assert_bandwidth_limit_rule_not_set(self.ports[2])
+
+    def test_simple_port_policy_update(self):
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(amount=1,
+                                              policy_id=TEST_POLICY_ID1))
+        self.wait_until_ports_state(self.ports, up=True)
+        policy_copy = copy.deepcopy(self.qos_policies[TEST_POLICY_ID1])
+        policy_copy.rules[0].max_kbps = 500
+        policy_copy.rules[0].max_burst_kbps = 5
+        consumer_reg.push(resources.QOS_POLICY, policy_copy, events.UPDATED)
+        self.wait_until_bandwidth_limit_rule_applied(self.ports[0],
+                                                     policy_copy.rules[0])
+        self._assert_bandwidth_limit_rule_is_set(self.ports[0],
+                                                 policy_copy.rules[0])
