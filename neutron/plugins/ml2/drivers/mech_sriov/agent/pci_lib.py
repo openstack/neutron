@@ -126,7 +126,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         """sets vf max rate.
 
         @param vf_index: vf index
-        @param max_tx_rate: vf max tx rate
+        @param max_tx_rate: vf max tx rate in Mbps
         """
         try:
             self._as_root([], "link", ("set", self.dev_name, "vf",

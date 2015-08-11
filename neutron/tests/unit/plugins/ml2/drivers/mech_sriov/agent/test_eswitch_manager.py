@@ -277,8 +277,39 @@ class TestEmbSwitch(base.BaseTestCase):
 
     def test_set_device_max_rate_ok(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                        "PciDeviceIPWrapper.set_vf_max_rate"):
-            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 1000)
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 2000)
+            pci_lib_mock.assert_called_with(0, 2)
+
+    def test_set_device_max_rate_ok2(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 99)
+            pci_lib_mock.assert_called_with(0, 1)
+
+    def test_set_device_max_rate_rounded_ok(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 2001)
+            pci_lib_mock.assert_called_with(0, 2)
+
+    def test_set_device_max_rate_rounded_ok2(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 2499)
+            pci_lib_mock.assert_called_with(0, 2)
+
+    def test_set_device_max_rate_rounded_ok3(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 2500)
+            pci_lib_mock.assert_called_with(0, 3)
+
+    def test_set_device_max_rate_disable(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                        "PciDeviceIPWrapper.set_vf_max_rate") as pci_lib_mock:
+            self.emb_switch.set_device_max_rate(self.PCI_SLOT, 0)
+            pci_lib_mock.assert_called_with(0, 0)
 
     def test_set_device_max_rate_fail(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."

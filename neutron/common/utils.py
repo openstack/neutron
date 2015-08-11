@@ -19,6 +19,7 @@
 """Utilities and helper functions."""
 
 import datetime
+import decimal
 import errno
 import functools
 import hashlib
@@ -442,3 +443,10 @@ class DelayedStringRenderer(object):
 
 def camelize(s):
     return ''.join(s.replace('_', ' ').title().split())
+
+
+def round_val(val):
+    # we rely on decimal module since it behaves consistently across Python
+    # versions (2.x vs. 3.x)
+    return int(decimal.Decimal(val).quantize(decimal.Decimal('1'),
+                                             rounding=decimal.ROUND_HALF_UP))

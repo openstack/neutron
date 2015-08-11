@@ -690,3 +690,13 @@ class TestCamelize(base.BaseTestCase):
 
         for s, expected in data.items():
             self.assertEqual(expected, utils.camelize(s))
+
+
+class TestRoundVal(base.BaseTestCase):
+    def test_round_val_ok(self):
+        for expected, value in ((0, 0),
+                                (0, 0.1),
+                                (1, 0.5),
+                                (1, 1.49),
+                                (2, 1.5)):
+            self.assertEqual(expected, utils.round_val(value))

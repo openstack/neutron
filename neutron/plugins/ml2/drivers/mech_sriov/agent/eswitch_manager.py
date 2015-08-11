@@ -20,6 +20,7 @@ import re
 from oslo_log import log as logging
 import six
 
+from neutron.common import utils
 from neutron.i18n import _LE, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -163,7 +164,30 @@ class EmbSwitch(object):
         @param max_kbps: device max rate in kbps
         """
         vf_index = self._get_vf_index(pci_slot)
-        return self.pci_dev_wrapper.set_vf_max_rate(vf_index, max_kbps)
+        #(Note): ip link set max rate in Mbps therefore
+        #we need to convert the max_kbps to Mbps.
+        #Zero means to disable the rate so the lowest rate
+        #available is 1Mbps. Floating numbers are not allowed
+        if max_kbps > 0 and max_kbps < 1000:
+            max_mbps = 1
+        else:
+            max_mbps = utils.round_val(max_kbps / 1000.0)
+
+        log_dict = {
+            'max_rate': max_mbps,
+            'max_kbps': max_kbps,
+            'vf_index': vf_index
+        }
+        if max_kbps % 1000 != 0:
+            LOG.debug("Maximum rate for SR-IOV ports is counted in Mbps; "
+                      "setting %(max_rate)s Mbps limit for port %(vf_index)s "
+                      "instead of %(max_kbps)s kbps",
+                      log_dict)
+        else:
+            LOG.debug("Setting %(max_rate)s Mbps limit for port %(vf_index)s",
+                      log_dict)
+
+        return self.pci_dev_wrapper.set_vf_max_rate(vf_index, max_mbps)
 
     def _get_vf_index(self, pci_slot):
         vf_index = self.pci_slot_map.get(pci_slot)
