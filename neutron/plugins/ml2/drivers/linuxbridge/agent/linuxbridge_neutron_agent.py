@@ -87,14 +87,9 @@ class LinuxBridgeManager(object):
         self.local_ip = cfg.CONF.VXLAN.local_ip
         self.vxlan_mode = lconst.VXLAN_NONE
         if cfg.CONF.VXLAN.enable_vxlan:
-            device = self.ip.get_device_by_ip(self.local_ip)
-            if device:
-                self.local_int = device.name
-                self.check_vxlan_support()
-            else:
-                self.local_int = None
-                LOG.warning(_LW('VXLAN is enabled, a valid local_ip '
-                                'must be provided'))
+            device = self.get_local_ip_device(self.local_ip)
+            self.local_int = device.name
+            self.check_vxlan_support()
         # Store network mapping to segments
         self.network_map = {}
 
@@ -113,6 +108,18 @@ class LinuxBridgeManager(object):
                               " does not exist. Agent terminated!"),
                           {'brq': bridge, 'net': physnet})
                 sys.exit(1)
+
+    def get_local_ip_device(self, local_ip):
+        """Return the device with local_ip on the host."""
+        device = self.ip.get_device_by_ip(local_ip)
+        if not device:
+            LOG.error(_LE("Tunneling cannot be enabled without the local_ip "
+                          "bound to an interface on the host. Please "
+                          "configure local_ip %s on the host interface to "
+                          "be used for tunneling and restart the agent."),
+                      local_ip)
+            sys.exit(1)
+        return device
 
     def interface_exists_on_bridge(self, bridge, interface):
         directory = '/sys/class/net/%s/brif' % bridge
