@@ -37,65 +37,69 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
 
     def test_setup_default_table(self):
         patch_int_ofport = 5555
-        arp_responder_enabled = False
+        mock_do_action_flows = mock.patch.object(self.br,
+                                                 'do_action_flows').start()
+        self.mock.attach_mock(mock_do_action_flows, 'do_action_flows')
         self.br.setup_default_table(patch_int_ofport=patch_int_ofport,
-            arp_responder_enabled=arp_responder_enabled)
-        expected = [
-            call.add_flow(priority=1, in_port=patch_int_ofport,
-                          actions='resubmit(,2)'),
-            call.add_flow(priority=0, actions='drop'),
-            call.add_flow(priority=0, table=2,
-                          dl_dst='00:00:00:00:00:00/01:00:00:00:00:00',
-                          actions='resubmit(,20)'),
-            call.add_flow(priority=0, table=2,
-                          dl_dst='01:00:00:00:00:00/01:00:00:00:00:00',
-                          actions='resubmit(,22)'),
-            call.add_flow(priority=0, table=3, actions='drop'),
-            call.add_flow(priority=0, table=4, actions='drop'),
-            call.add_flow(priority=1, table=10,
-                          actions='learn(table=20,priority=1,'
-                          'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
-                          'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
-                          'load:0->NXM_OF_VLAN_TCI[],'
-                          'load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],'
-                          'output:NXM_OF_IN_PORT[]),'
-                          'output:%s' % patch_int_ofport),
-            call.add_flow(priority=0, table=20, actions='resubmit(,22)'),
-            call.add_flow(priority=0, table=22, actions='drop'),
-        ]
+                                    arp_responder_enabled=False)
+        flow_args = [{'priority': 1, 'in_port': patch_int_ofport,
+                      'actions': 'resubmit(,2)'},
+                     {'priority': 0, 'actions': 'drop'},
+                     {'priority': 0, 'table': 2,
+                      'dl_dst': '00:00:00:00:00:00/01:00:00:00:00:00',
+                      'actions': 'resubmit(,20)'},
+                     {'priority': 0, 'table': 2,
+                      'dl_dst': '01:00:00:00:00:00/01:00:00:00:00:00',
+                      'actions': 'resubmit(,22)'},
+                     {'priority': 0, 'table': 3, 'actions': 'drop'},
+                     {'priority': 0, 'table': 4, 'actions': 'drop'},
+                     {'priority': 1, 'table': 10,
+                      'actions': 'learn(table=20,priority=1,'
+                      'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
+                      'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
+                      'load:0->NXM_OF_VLAN_TCI[],'
+                      'load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],'
+                      'output:NXM_OF_IN_PORT[]),'
+                      'output:%s' % patch_int_ofport},
+                     {'priority': 0, 'table': 20, 'actions': 'resubmit(,22)'}
+                     ]
+        expected = [call.do_action_flows('add', flow_args),
+                    call.add_flow(priority=0, table=22, actions='drop')]
         self.assertEqual(expected, self.mock.mock_calls)
 
     def test_setup_default_table_arp_responder_enabled(self):
         patch_int_ofport = 5555
-        arp_responder_enabled = True
+        mock_do_action_flows = mock.patch.object(self.br,
+                                                 'do_action_flows').start()
+        self.mock.attach_mock(mock_do_action_flows, 'do_action_flows')
         self.br.setup_default_table(patch_int_ofport=patch_int_ofport,
-            arp_responder_enabled=arp_responder_enabled)
-        expected = [
-            call.add_flow(priority=1, in_port=patch_int_ofport,
-                          actions='resubmit(,2)'),
-            call.add_flow(priority=0, actions='drop'),
-            call.add_flow(priority=1, table=2, dl_dst='ff:ff:ff:ff:ff:ff',
-                          actions='resubmit(,21)', proto='arp'),
-            call.add_flow(priority=0, table=2,
-                          dl_dst='00:00:00:00:00:00/01:00:00:00:00:00',
-                          actions='resubmit(,20)'),
-            call.add_flow(priority=0, table=2,
-                          dl_dst='01:00:00:00:00:00/01:00:00:00:00:00',
-                          actions='resubmit(,22)'),
-            call.add_flow(priority=0, table=3, actions='drop'),
-            call.add_flow(priority=0, table=4, actions='drop'),
-            call.add_flow(priority=1, table=10,
-                          actions='learn(table=20,priority=1,'
-                          'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
-                          'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
-                          'load:0->NXM_OF_VLAN_TCI[],'
-                          'load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],'
-                          'output:NXM_OF_IN_PORT[]),'
-                          'output:%s' % patch_int_ofport),
-            call.add_flow(priority=0, table=20, actions='resubmit(,22)'),
-            call.add_flow(priority=0, table=21, actions='resubmit(,22)'),
-            call.add_flow(priority=0, table=22, actions='drop'),
-        ]
+            arp_responder_enabled=True)
+        flow_args = [{'priority': 1, 'in_port': patch_int_ofport,
+                      'actions': 'resubmit(,2)'},
+                     {'priority': 0, 'actions': 'drop'},
+                     {'priority': 1, 'table': 2, 'dl_dst': 'ff:ff:ff:ff:ff:ff',
+                      'actions': 'resubmit(,21)', 'proto': 'arp'},
+                     {'priority': 0, 'table': 2,
+                      'dl_dst': '00:00:00:00:00:00/01:00:00:00:00:00',
+                      'actions': 'resubmit(,20)'},
+                     {'priority': 0, 'table': 2,
+                      'dl_dst': '01:00:00:00:00:00/01:00:00:00:00:00',
+                      'actions': 'resubmit(,22)'},
+                     {'priority': 0, 'table': 3, 'actions': 'drop'},
+                     {'priority': 0, 'table': 4, 'actions': 'drop'},
+                     {'priority': 1, 'table': 10,
+                      'actions': 'learn(table=20,priority=1,'
+                      'hard_timeout=300,NXM_OF_VLAN_TCI[0..11],'
+                      'NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],'
+                      'load:0->NXM_OF_VLAN_TCI[],'
+                      'load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],'
+                      'output:NXM_OF_IN_PORT[]),'
+                      'output:%s' % patch_int_ofport},
+                     {'priority': 0, 'table': 20, 'actions': 'resubmit(,22)'},
+                     {'priority': 0, 'table': 21, 'actions': 'resubmit(,22)'}
+                     ]
+        expected = [call.do_action_flows('add', flow_args),
+                    call.add_flow(priority=0, table=22, actions='drop')]
         self.assertEqual(expected, self.mock.mock_calls)
 
     def test_provision_local_vlan(self):
