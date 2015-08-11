@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import sys
 
 import mock
 from oslo_config import cfg
@@ -34,6 +35,8 @@ DEVICE_1 = 'tapabcdef01-12'
 BRIDGE_MAPPING_VALUE = 'br-eth2'
 BRIDGE_MAPPINGS = {'physnet0': BRIDGE_MAPPING_VALUE}
 INTERFACE_MAPPINGS = {'physnet1': 'eth1'}
+FAKE_DEFAULT_DEV = mock.Mock()
+FAKE_DEFAULT_DEV.name = 'eth1'
 
 
 class FakeIpLinkCommand(object):
@@ -54,9 +57,12 @@ class TestLinuxBridge(base.BaseTestCase):
         bridge_mappings = BRIDGE_MAPPINGS
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None),\
+                               'get_device_by_ip', return_value=FAKE_DEFAULT_DEV),\
                 mock.patch.object(ip_lib, 'device_exists',
-                                  return_value=True):
+                                  return_value=True),\
+                mock.patch.object(
+                    linuxbridge_neutron_agent.LinuxBridgeManager,
+                    'check_vxlan_support'):
             self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
                 bridge_mappings, interface_mappings)
 
@@ -109,10 +115,14 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.get_mac = self.get_mac_p.start()
         self.get_mac.return_value = '00:00:00:00:00:01'
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip',
+                               return_value=FAKE_DEFAULT_DEV):
             self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC(
                 {}, {}, 0, cfg.CONF.AGENT.quitting_rpc_timeout)
-            with mock.patch.object(self.agent, "daemon_loop"):
+            with mock.patch.object(self.agent, "daemon_loop"),\
+                    mock.patch.object(
+                        linuxbridge_neutron_agent.LinuxBridgeManager,
+                        'check_vxlan_support'):
                 self.agent.start()
 
     def test_treat_devices_removed_with_existed_device(self):
@@ -364,11 +374,33 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.bridge_mappings = BRIDGE_MAPPINGS
 
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None),\
+                               'get_device_by_ip',
+                               return_value=FAKE_DEFAULT_DEV),\
                 mock.patch.object(ip_lib, 'device_exists',
-                                  return_value=True):
+                                  return_value=True),\
+                mock.patch.object(
+                    linuxbridge_neutron_agent.LinuxBridgeManager,
+                    'check_vxlan_support'):
             self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 self.bridge_mappings, self.interface_mappings)
+
+    def test_local_ip_validation_with_valid_ip(self):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip',
+                               return_value=FAKE_DEFAULT_DEV):
+            result = self.lbm.get_local_ip_device(LOCAL_IP)
+            self.assertEqual(FAKE_DEFAULT_DEV, result)
+
+    def test_local_ip_validation_with_invalid_ip(self):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip',
+                               return_value=None),\
+                mock.patch.object(sys, 'exit') as exit,\
+                mock.patch.object(linuxbridge_neutron_agent.LOG,
+                                  'error') as log:
+            self.lbm.get_local_ip_device(LOCAL_IP)
+            self.assertEqual(1, log.call_count)
+            exit.assert_called_once_with(1)
 
     def test_interface_exists_on_bridge(self):
         with mock.patch.object(os, 'listdir') as listdir_fn:
@@ -860,7 +892,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         bridge_mappings = {}
         interface_mappings = {}
         with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=None):
+                               'get_device_by_ip',
+                               return_value=FAKE_DEFAULT_DEV),\
+                mock.patch.object(
+                    linuxbridge_neutron_agent.LinuxBridgeManager,
+                    'check_vxlan_support'):
             lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 bridge_mappings, interface_mappings)
 
@@ -1063,9 +1099,12 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 self.agent_id = 1
                 with mock.patch.object(
                         ip_lib.IPWrapper,
-                        'get_device_by_ip', return_value=None),\
-                    mock.patch.object(ip_lib, 'device_exists',
-                                      return_value=True):
+                        'get_device_by_ip', return_value=FAKE_DEFAULT_DEV),\
+                        mock.patch.object(ip_lib, 'device_exists',
+                                          return_value=True),\
+                        mock.patch.object(
+                            linuxbridge_neutron_agent.LinuxBridgeManager,
+                            'check_vxlan_support'):
                     self.br_mgr = (
                         linuxbridge_neutron_agent.LinuxBridgeManager(
                                    BRIDGE_MAPPINGS,
