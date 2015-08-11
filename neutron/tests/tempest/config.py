@@ -15,7 +15,6 @@
 
 from __future__ import print_function
 
-import logging as std_logging
 import os
 
 from oslo_config import cfg
@@ -1191,7 +1190,7 @@ class TempestConfigPrivate(object):
         register_opts()
         self._set_attrs()
         if parse_conf:
-            cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
+            cfg.CONF.log_opt_values(LOG, logging.DEBUG)
 
 
 class TempestConfigProxy(object):
@@ -1199,15 +1198,15 @@ class TempestConfigProxy(object):
     _path = None
 
     _extra_log_defaults = [
-        ('keystoneclient.session', std_logging.INFO),
-        ('paramiko.transport', std_logging.INFO),
-        ('requests.packages.urllib3.connectionpool', std_logging.WARN),
+        ('keystoneclient.session', logging.INFO),
+        ('paramiko.transport', logging.INFO),
+        ('requests.packages.urllib3.connectionpool', logging.WARN),
     ]
 
     def _fix_log_levels(self):
         """Tweak the oslo log defaults."""
         for name, level in self._extra_log_defaults:
-            std_logging.getLogger(name).setLevel(level)
+            logging.getLogger(name).logger.setLevel(level)
 
     def __getattr__(self, attr):
         if not self._config:

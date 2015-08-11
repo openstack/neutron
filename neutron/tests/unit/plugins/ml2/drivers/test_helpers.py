@@ -14,9 +14,9 @@
 #    under the License.
 
 import fixtures
-import logging as std_logging
 import mock
 from oslo_db import exception as exc
+from oslo_log import log as logging
 from sqlalchemy.orm import query
 
 import neutron.db.api as db
@@ -47,7 +47,7 @@ class HelpersTest(testlib_api.SqlTestCase):
             fixtures.FakeLogger(
                 name=helpers.__name__,
                 format=base.LOG_FORMAT,
-                level=std_logging.DEBUG
+                level=logging.DEBUG
             ))
 
     def check_raw_segment(self, expected, observed):

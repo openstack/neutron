@@ -18,7 +18,6 @@ Policy engine for neutron.  Largely copied from nova.
 """
 
 import collections
-import logging as std_logging
 import re
 
 from oslo_config import cfg
@@ -314,7 +313,7 @@ def _prepare_check(context, action, target, pluralized):
 
 
 def log_rule_list(match_rule):
-    if LOG.isEnabledFor(std_logging.DEBUG):
+    if LOG.isEnabledFor(logging.DEBUG):
         rules = _process_rules_list([], match_rule)
         LOG.debug("Enforcing rules: %s", rules)
 

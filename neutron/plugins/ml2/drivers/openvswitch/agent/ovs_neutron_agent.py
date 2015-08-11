@@ -14,7 +14,6 @@
 #    under the License.
 
 import hashlib
-import logging as std_logging
 import signal
 import sys
 import time
@@ -1660,7 +1659,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.conf.reload_config_files()
             config.setup_logging()
             LOG.debug('Full set of CONF:')
-            self.conf.log_opt_values(LOG, std_logging.DEBUG)
+            self.conf.log_opt_values(LOG, logging.DEBUG)
             self.catch_sighup = False
         return self.run_daemon_loop
 

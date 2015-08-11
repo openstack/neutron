@@ -13,7 +13,6 @@
 #    under the License.
 
 import functools
-import logging
 import pprint
 
 import alembic
@@ -31,9 +30,6 @@ from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 from neutron.tests.common import base
-
-LOG = logging.getLogger(__name__)
-
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
