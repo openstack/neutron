@@ -33,9 +33,9 @@ class TestAgentExtensionsManager(base.BaseTestCase):
 
     def test_initialize(self):
         connection = object()
-        self.manager.initialize(connection)
+        self.manager.initialize(connection, 'fake_driver_type')
         ext = self._get_extension()
-        ext.initialize.assert_called_once_with(connection)
+        ext.initialize.assert_called_once_with(connection, 'fake_driver_type')
 
     def test_handle_port(self):
         context = object()

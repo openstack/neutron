@@ -25,8 +25,14 @@ class AgentCoreResourceExtension(object):
     An agent extension extends the agent core functionality.
     """
 
-    def initialize(self):
+    def initialize(self, connection, driver_type):
         """Perform agent core resource extension initialization.
+
+        :param connection: RPC connection that can be reused by the extension
+                           to define its RPC endpoints
+        :param driver_type: a string that defines the agent type to the
+                            extension. Can be used to choose the right backend
+                            implementation.
 
         Called after all extensions have been loaded.
         No port handling will be called before this method.
