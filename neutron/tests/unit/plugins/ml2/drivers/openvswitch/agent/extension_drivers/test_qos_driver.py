@@ -30,13 +30,13 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver = qos_driver.QosOVSAgentDriver()
         self.qos_driver.initialize()
         self.qos_driver.br_int = mock.Mock()
-        self.qos_driver.br_int.get_qos_bw_limit_for_port = mock.Mock(
+        self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
-        self.get = self.qos_driver.br_int.get_qos_bw_limit_for_port
-        self.qos_driver.br_int.del_qos_bw_limit_for_port = mock.Mock()
-        self.delete = self.qos_driver.br_int.del_qos_bw_limit_for_port
-        self.qos_driver.br_int.create_qos_bw_limit_for_port = mock.Mock()
-        self.create = self.qos_driver.br_int.create_qos_bw_limit_for_port
+        self.get = self.qos_driver.br_int.get_egress_bw_limit_for_port
+        self.qos_driver.br_int.del_egress_bw_limit_for_port = mock.Mock()
+        self.delete = self.qos_driver.br_int.delete_egress_bw_limit_for_port
+        self.qos_driver.br_int.create_egress_bw_limit_for_port = mock.Mock()
+        self.create = self.qos_driver.br_int.create_egress_bw_limit_for_port
         self.rule = self._create_bw_limit_rule_obj()
         self.qos_policy = self._create_qos_policy_obj([self.rule])
         self.port = self._create_fake_port()
@@ -69,12 +69,12 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         return {'vif_port': FakeVifPort()}
 
     def test_create_new_rule(self):
-        self.qos_driver.br_int.get_qos_bw_limit_for_port = mock.Mock(
+        self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(None, None))
         self.qos_driver.create(self.port, self.qos_policy)
         # Assert create is the last call
         self.assertEqual(
-            'create_qos_bw_limit_for_port',
+            'create_egress_bw_limit_for_port',
             self.qos_driver.br_int.method_calls[-1][0])
         self.assertEqual(0, self.delete.call_count)
         self.create.assert_called_once_with(
@@ -96,10 +96,8 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
     def _assert_rule_create_updated(self):
         # Assert create is the last call
         self.assertEqual(
-            'create_qos_bw_limit_for_port',
+            'create_egress_bw_limit_for_port',
             self.qos_driver.br_int.method_calls[-1][0])
-
-        self.delete.assert_called_once_with(self.port_name)
 
         self.create.assert_called_once_with(
             self.port_name, self.rule.max_kbps,
