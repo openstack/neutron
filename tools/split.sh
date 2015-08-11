@@ -45,7 +45,7 @@ pruner="git ls-files | grep -v \"$keep_pattern\" | git update-index --force-remo
 
 roots=""
 for file in $files_to_keep; do
-    file_root="$(git rev-list --reverse HEAD -- $file | head -n1)"
+    file_root=$(git rev-list --reverse HEAD -- $file | head -n1)
     fail=0
     for root in $roots; do
         if git merge-base --is-ancestor $root $file_root; then
