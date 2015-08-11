@@ -17,6 +17,7 @@ import os
 
 import mock
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 from pecan import request
 from pecan import set_config
@@ -27,6 +28,7 @@ from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
+from neutron.newapi.controllers import root as controllers
 from neutron.tests.unit import testlib_api
 
 
@@ -230,3 +232,17 @@ class TestEnforcementHooks(PecanFunctionalTest):
     def test_policy_enforcement(self):
         # TODO(kevinbenton): this test should do something
         pass
+
+
+class TestRootController(PecanFunctionalTest):
+    """Test version listing on root URI."""
+
+    def test_get(self):
+        response = self.app.get('/')
+        self.assertEqual(response.status_int, 200)
+        json_body = jsonutils.loads(response.body)
+        versions = json_body.get('versions')
+        self.assertEqual(1, len(versions))
+        for (attr, value) in controllers.V2Controller.version_info.items():
+            self.assertIn(attr, versions[0])
+            self.assertEqual(value, versions[0][attr])

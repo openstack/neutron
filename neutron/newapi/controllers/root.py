@@ -18,6 +18,18 @@ import pecan
 from pecan import request
 
 from neutron.api import extensions
+from neutron.api.views import versions as versions_view
+
+_VERSION_INFO = {}
+
+
+def _load_version_info(version_info):
+    assert version_info['id'] not in _VERSION_INFO
+    _VERSION_INFO[version_info['id']] = version_info
+
+
+def _get_version_info():
+    return _VERSION_INFO.values()
 
 
 def expose(*args, **kwargs):
@@ -36,24 +48,11 @@ def when(index, *args, **kwargs):
 
 class RootController(object):
 
-    @expose()
-    def _lookup(self, version, *remainder):
-        if version == 'v2.0':
-            return V2Controller(), remainder
-
     @expose(generic=True)
     def index(self):
-        #TODO(kevinbenton): return a version list
-        return dict(message='A neutron server')
-
-
-class V2Controller(object):
-
-    @expose()
-    def _lookup(self, endpoint, *remainder):
-        if endpoint == 'extensions':
-            return ExtensionsController(), remainder
-        return CollectionsController(endpoint), remainder
+        builder = versions_view.get_view_builder(pecan.request)
+        versions = [builder.build(version) for version in _get_version_info()]
+        return dict(versions=versions)
 
 
 class ExtensionsController(object):
@@ -68,6 +67,28 @@ class ExtensionsController(object):
         exts = [extensions.ExtensionController._translate(ext)
                 for ext in ext_mgr.extensions.values()]
         return {'extensions': exts}
+
+
+class V2Controller(object):
+
+    # Same data structure as neutron.api.versions.Versions for API backward
+    # compatibility
+    version_info = {
+        'id': 'v2.0',
+        'status': 'CURRENT'
+    }
+    _load_version_info(version_info)
+
+    extensions = ExtensionsController()
+
+    @expose()
+    def _lookup(self, endpoint, *remainder):
+        return CollectionsController(endpoint), remainder
+
+
+# This controller cannot be specified directly as a member of RootController
+# as its path is not a valid python identifier
+pecan.route(RootController, 'v2.0', V2Controller())
 
 
 class ExtensionController(object):
