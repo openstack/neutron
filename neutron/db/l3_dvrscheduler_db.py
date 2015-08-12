@@ -31,6 +31,7 @@ from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.extensions import l3agentscheduler
 from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -342,7 +343,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             return
         snat_candidates = self.get_snat_candidates(sync_router,
                                                    active_l3_agents)
-        if snat_candidates:
+        if not snat_candidates:
+            LOG.warn(_LW('No candidates found for SNAT'))
+            return
+        else:
             try:
                 chosen_agent = self.bind_snat_servicenode(
                     context, router_id, snat_candidates)
@@ -352,6 +356,43 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             self.bind_dvr_router_servicenode(
                 context, router_id, chosen_agent)
             return chosen_agent
+
+    def reschedule_router(self, context, router_id, candidates=None):
+        """Reschedule router to new l3 agents
+
+        Remove the router from l3 agents currently hosting it and
+        schedule it again
+        """
+        router = self.get_router(context, router_id)
+        is_distributed = router.get('distributed', False)
+        if not is_distributed:
+            return super(L3_DVRsch_db_mixin, self).reschedule_router(
+                context, router_id, candidates)
+
+        old_agents = self.list_l3_agents_hosting_router(
+            context, router_id)['agents']
+        with context.session.begin(subtransactions=True):
+            for agent in old_agents:
+                self._unbind_router(context, router_id, agent['id'])
+                self.unbind_snat_servicenode(context, router_id)
+
+            self.schedule_router(context, router_id, candidates=candidates)
+            new_agents = self.list_l3_agents_hosting_router(
+                context, router_id)['agents']
+            if not new_agents:
+                raise l3agentscheduler.RouterReschedulingFailed(
+                    router_id=router_id)
+
+        l3_notifier = self.agent_notifiers.get(n_const.AGENT_TYPE_L3)
+        if l3_notifier:
+            old_hosts = [agent['host'] for agent in old_agents]
+            new_hosts = [agent['host'] for agent in new_agents]
+            for host in set(old_hosts) - set(new_hosts):
+                l3_notifier.router_removed_from_agent(
+                    context, router_id, host)
+            for host in new_hosts:
+                l3_notifier.router_added_to_agent(
+                    context, [router_id], host)
 
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):
