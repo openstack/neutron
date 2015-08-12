@@ -35,6 +35,7 @@ LOG = logging.getLogger(__name__)
 
 VIF_UNPLUGGED = 'network-vif-unplugged'
 VIF_PLUGGED = 'network-vif-plugged'
+VIF_DELETED = 'network-vif-deleted'
 NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
                                  constants.PORT_STATUS_ERROR: 'failed',
                                  constants.PORT_STATUS_DOWN: 'completed'}
@@ -121,6 +122,11 @@ class Notifier(object):
         return {'name': 'network-changed',
                 'server_uuid': device_id}
 
+    def _get_port_delete_event(self, port):
+        return {'server_uuid': port['device_id'],
+                'name': VIF_DELETED,
+                'tag': port['id']}
+
     @property
     def _plugin(self):
         # NOTE(arosen): this cannot be set in __init__ currently since
@@ -160,7 +166,7 @@ class Notifier(object):
 
     def create_port_changed_event(self, action, original_obj, returned_obj):
         port = None
-        if action == 'update_port':
+        if action in ['update_port', 'delete_port']:
             port = returned_obj['port']
 
         elif action in ['update_floatingip', 'create_floatingip',
@@ -178,7 +184,10 @@ class Notifier(object):
             port = self._plugin.get_port(ctx, port_id)
 
         if port and self._is_compute_port(port):
-            return self._get_network_changed_event(port['device_id'])
+            if action == 'delete_port':
+                return self._get_port_delete_event(port)
+            else:
+                return self._get_network_changed_event(port['device_id'])
 
     def record_port_status_changed(self, port, current_port_status,
                                    previous_port_status, initiator):
