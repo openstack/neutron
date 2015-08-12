@@ -67,18 +67,10 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
         max_kbps = rule.max_kbps
         max_burst_kbps = rule.max_burst_kbps
 
-        current_max_kbps, current_max_burst = (
-            self.br_int.get_qos_bw_limit_for_port(port_name))
-        if current_max_kbps is not None or current_max_burst is not None:
-            self.br_int.del_qos_bw_limit_for_port(port_name)
-
-        self.br_int.create_qos_bw_limit_for_port(port_name,
-                                                 max_kbps,
-                                                 max_burst_kbps)
+        self.br_int.create_egress_bw_limit_for_port(port_name,
+                                                    max_kbps,
+                                                    max_burst_kbps)
 
     def _delete_bandwidth_limit(self, port):
         port_name = port['vif_port'].port_name
-        current_max_kbps, current_max_burst = (
-            self.br_int.get_qos_bw_limit_for_port(port_name))
-        if current_max_kbps is not None or current_max_burst is not None:
-            self.br_int.del_qos_bw_limit_for_port(port_name)
+        self.br_int.delete_egress_bw_limit_for_port(port_name)

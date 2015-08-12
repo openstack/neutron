@@ -90,13 +90,13 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
 
     def _assert_bandwidth_limit_rule_is_set(self, port, rule):
         max_rate, burst = (
-            self.agent.int_br.get_qos_bw_limit_for_port(port['vif_name']))
+            self.agent.int_br.get_egress_bw_limit_for_port(port['vif_name']))
         self.assertEqual(max_rate, rule.max_kbps)
         self.assertEqual(burst, rule.max_burst_kbps)
 
     def _assert_bandwidth_limit_rule_not_set(self, port):
         max_rate, burst = (
-            self.agent.int_br.get_qos_bw_limit_for_port(port['vif_name']))
+            self.agent.int_br.get_egress_bw_limit_for_port(port['vif_name']))
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 

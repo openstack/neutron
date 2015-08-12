@@ -311,14 +311,14 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                                                 controller,
                                                 'connection_mode'))
 
-    def test_qos_bw_limit(self):
+    def test_egress_bw_limit(self):
         port_name, _ = self.create_ovs_port()
-        self.br.create_qos_bw_limit_for_port(port_name, 700, 70)
-        max_rate, burst = self.br.get_qos_bw_limit_for_port(port_name)
+        self.br.create_egress_bw_limit_for_port(port_name, 700, 70)
+        max_rate, burst = self.br.get_egress_bw_limit_for_port(port_name)
         self.assertEqual(700, max_rate)
         self.assertEqual(70, burst)
-        self.br.del_qos_bw_limit_for_port(port_name)
-        max_rate, burst = self.br.get_qos_bw_limit_for_port(port_name)
+        self.br.delete_egress_bw_limit_for_port(port_name)
+        max_rate, burst = self.br.get_egress_bw_limit_for_port(port_name)
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 

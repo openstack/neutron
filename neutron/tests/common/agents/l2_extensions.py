@@ -18,7 +18,7 @@ from neutron.agent.linux import utils as agent_utils
 
 def wait_until_bandwidth_limit_rule_applied(bridge, port_vif, rule):
     def _bandwidth_limit_rule_applied():
-        bw_rule = bridge.get_qos_bw_limit_for_port(port_vif)
+        bw_rule = bridge.get_egress_bw_limit_for_port(port_vif)
         expected = None, None
         if rule:
             expected = rule.max_kbps, rule.max_burst_kbps
