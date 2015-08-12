@@ -30,6 +30,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import portbindings
+from neutron.extensions import providernet
 from neutron.i18n import _LI
 
 VR_ID_RANGE = set(range(1, 255))
@@ -53,6 +54,15 @@ L3_HA_OPTS = [
     cfg.StrOpt('l3_ha_net_cidr',
                default='169.254.192.0/18',
                help=_('Subnet used for the l3 HA admin network.')),
+    cfg.StrOpt('l3_ha_network_type', default='',
+               help=_("The network type to use when creating the HA network "
+                      "for an HA router. By default or if empty, the first "
+                      "'tenant_network_types' is used. This is helpful when "
+                      "the VRRP traffic should use a specific network which "
+                      "is not the default one.")),
+    cfg.StrOpt('l3_ha_network_physical_name', default='',
+               help=_("The physical network name with which the HA network "
+                      "can be created."))
 ]
 cfg.CONF.register_opts(L3_HA_OPTS)
 
@@ -230,6 +240,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             context.session.add(ha_network)
         return ha_network
 
+    def _add_ha_network_settings(self, network):
+        if cfg.CONF.l3_ha_network_type:
+            network[providernet.NETWORK_TYPE] = cfg.CONF.l3_ha_network_type
+
+        if cfg.CONF.l3_ha_network_physical_name:
+            network[providernet.PHYSICAL_NETWORK] = (
+                cfg.CONF.l3_ha_network_physical_name)
+
     def _create_ha_network(self, context, tenant_id):
         admin_ctx = context.elevated()
 
@@ -239,6 +257,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                  'shared': False,
                  'admin_state_up': True,
                  'status': constants.NET_STATUS_ACTIVE}}
+        self._add_ha_network_settings(args['network'])
+
         network = self._core_plugin.create_network(admin_ctx, args)
         try:
             ha_network = self._create_ha_network_tenant_binding(admin_ctx,
