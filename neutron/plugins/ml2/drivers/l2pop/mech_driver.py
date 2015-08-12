@@ -50,7 +50,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
         port = context.current
         agent_host = context.host
 
-        fdb_entries = self._update_port_down(context, port, agent_host)
+        fdb_entries = self._get_agent_fdb(context, port, agent_host)
         self.L2populationAgentNotify.remove_fdb_entries(self.rpc_ctx,
             fdb_entries)
 
@@ -116,7 +116,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
                 self._update_port_up(context)
             if context.status == const.PORT_STATUS_DOWN:
                 agent_host = context.host
-                fdb_entries = self._update_port_down(
+                fdb_entries = self._get_agent_fdb(
                         context, port, agent_host)
                 self.L2populationAgentNotify.remove_fdb_entries(
                     self.rpc_ctx, fdb_entries)
@@ -132,7 +132,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
             if context.status == const.PORT_STATUS_ACTIVE:
                 self._update_port_up(context)
             elif context.status == const.PORT_STATUS_DOWN:
-                fdb_entries = self._update_port_down(
+                fdb_entries = self._get_agent_fdb(
                     context, port, context.host)
                 self.L2populationAgentNotify.remove_fdb_entries(
                     self.rpc_ctx, fdb_entries)
@@ -142,7 +142,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
                     original_port = orig[0]
                     original_host = orig[1]
                     # this port has been migrated: remove its entries from fdb
-                    fdb_entries = self._update_port_down(
+                    fdb_entries = self._get_agent_fdb(
                         context, original_port, original_host)
                     self.L2populationAgentNotify.remove_fdb_entries(
                         self.rpc_ctx, fdb_entries)
@@ -259,7 +259,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
         self.L2populationAgentNotify.add_fdb_entries(self.rpc_ctx,
                                                      other_fdb_entries)
 
-    def _update_port_down(self, context, port, agent_host):
+    def _get_agent_fdb(self, context, port, agent_host):
         port_infos = self._get_port_infos(context, port, agent_host)
         if not port_infos:
             return
