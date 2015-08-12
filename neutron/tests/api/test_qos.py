@@ -157,19 +157,25 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_network(self.client, network['id'])
 
-#    @test.attr(type='smoke')
-#    @test.idempotent_id('1aa55a79-324f-47d9-a076-894a8fc2448b')
-#    def test_policy_association_with_network_non_shared_policy(self):
-#        policy = self.create_qos_policy(name='test-policy',
-#                                        description='test policy',
-#                                        shared=False)
-#        #TODO(QoS): This currently raises an exception on the server side. See
-#        #           core_extensions/qos.py for comments on this subject.
-#        network = self.create_network('test network',
-#                                      qos_policy_id=policy['id'])
-#
-#        retrieved_network = self.admin_client.show_network(network['id'])
-#        self.assertIsNone(retrieved_network['network']['qos_policy_id'])
+    @test.attr(type='smoke')
+    @test.idempotent_id('9efe63d0-836f-4cc2-b00c-468e63aa614e')
+    def test_policy_association_with_network_nonexistent_policy(self):
+        self.assertRaises(
+            exceptions.NotFound,
+            self.create_network,
+            'test network',
+            qos_policy_id='9efe63d0-836f-4cc2-b00c-468e63aa614e')
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('1aa55a79-324f-47d9-a076-894a8fc2448b')
+    def test_policy_association_with_network_non_shared_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.assertRaises(
+            exceptions.NotFound,
+            self.create_network,
+            'test network', qos_policy_id=policy['id'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('09a9392c-1359-4cbb-989f-fb768e5834a8')
@@ -209,19 +215,27 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_port(port['id'])
 
-#    @test.attr(type='smoke')
-#    @test.idempotent_id('f53d961c-9fe5-4422-8b66-7add972c6031')
-#    def test_policy_association_with_port_non_shared_policy(self):
-#        policy = self.create_qos_policy(name='test-policy',
-#                                        description='test policy',
-#                                        shared=False)
-#        network = self.create_shared_network('test network')
-#        #TODO(QoS): This currently raises an exception on the server side. See
-#        #           core_extensions/qos.py for comments on this subject.
-#        port = self.create_port(network, qos_policy_id=policy['id'])
-#
-#        retrieved_port = self.admin_client.show_port(port['id'])
-#        self.assertIsNone(retrieved_port['port']['qos_policy_id'])
+    @test.attr(type='smoke')
+    @test.idempotent_id('49e02f5a-e1dd-41d5-9855-cfa37f2d195e')
+    def test_policy_association_with_port_nonexistent_policy(self):
+        network = self.create_shared_network('test network')
+        self.assertRaises(
+            exceptions.NotFound,
+            self.create_port,
+            network,
+            qos_policy_id='49e02f5a-e1dd-41d5-9855-cfa37f2d195e')
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f53d961c-9fe5-4422-8b66-7add972c6031')
+    def test_policy_association_with_port_non_shared_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        network = self.create_shared_network('test network')
+        self.assertRaises(
+            exceptions.NotFound,
+            self.create_port,
+            network, qos_policy_id=policy['id'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('f8163237-fba9-4db5-9526-bad6d2343c76')

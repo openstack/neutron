@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base
 from neutron.db import api as db_api
 from neutron import manager
@@ -31,7 +32,10 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         return self._plugin_loaded
 
     def _get_policy_obj(self, context, policy_id):
-        return policy_object.QosPolicy.get_by_id(context, policy_id)
+        obj = policy_object.QosPolicy.get_by_id(context, policy_id)
+        if obj is None:
+            raise n_exc.QosPolicyNotFound(policy_id=policy_id)
+        return obj
 
     def _update_port_policy(self, context, port, port_changes):
         old_policy = policy_object.QosPolicy.get_port_policy(
@@ -42,9 +46,6 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         qos_policy_id = port_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)
-            #TODO(QoS): If the policy doesn't exist (or if it is not shared and
-            #           the tenant id doesn't match the context's), this will
-            #           raise an exception (policy is None).
             policy.attach_port(port['id'])
         port[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
@@ -57,9 +58,6 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
         if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)
-            #TODO(QoS): If the policy doesn't exist (or if it is not shared and
-            #           the tenant id doesn't match the context's), this will
-            #           raise an exception (policy is None).
             policy.attach_network(network['id'])
         network[qos_consts.QOS_POLICY_ID] = qos_policy_id
 
