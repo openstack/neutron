@@ -262,20 +262,17 @@ Open vSwitch
 
 Open vSwitch implementation relies on the new ovs_lib OVSBridge functions:
 
-* create_qos_bw_limit_for_port
-* get_qos_bw_limit_for_port
-* del_qos_bw_limit_for_port
+* get_egress_bw_limit_for_port
+* create_egress_bw_limit_for_port
+* delete_egress_bw_limit_for_port
 
-An egress bandwidth limit is effectively configured on the port by creating a
-single QoS queue with min-rate=rule.max_kbps, max-rate=rule.max_kbps and
-burst=rule.max_burst_kbps. Then a linux-htb QoS policy is defined on the port,
-attached to the queue.
+An egress bandwidth limit is effectively configured on the port by setting
+the port Interface parameters ingress_policing_rate and
+ingress_policing_burst.
 
-HTB queues are supported at least in all 2.x versions of Open vSwitch.
-
-More details about HTB in `the blog post
-<https://virtualandy.wordpress.com/2013/04/29/deep-dive-htb-rate-limiting-qos-on-with-open-vswitch-and-xenserver/>`_.
-
+That approach is less flexible than linux-htb, Queues and OvS QoS profiles,
+which we may explore in the future, but which will need to be used in
+combination with openflow rules.
 
 Configuration
 =============
