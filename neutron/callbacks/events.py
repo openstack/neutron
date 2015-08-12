@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# String literals representing core events.
 BEFORE_CREATE = 'before_create'
 BEFORE_READ = 'before_read'
 BEFORE_UPDATE = 'before_update'
@@ -27,18 +28,3 @@ ABORT_DELETE = 'abort_delete'
 
 ABORT = 'abort_'
 BEFORE = 'before_'
-
-VALID = (
-    BEFORE_CREATE,
-    BEFORE_READ,
-    BEFORE_UPDATE,
-    BEFORE_DELETE,
-    AFTER_CREATE,
-    AFTER_READ,
-    AFTER_UPDATE,
-    AFTER_DELETE,
-    ABORT_CREATE,
-    ABORT_READ,
-    ABORT_UPDATE,
-    ABORT_DELETE,
-)

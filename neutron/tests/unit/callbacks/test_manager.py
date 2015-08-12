@@ -13,7 +13,6 @@
 #    under the License.
 
 import mock
-import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
@@ -44,20 +43,18 @@ class CallBacksManagerTestCase(base.BaseTestCase):
         callback_1.counter = 0
         callback_2.counter = 0
 
-    def test_subscribe_invalid_resource_raise(self):
-        with testtools.ExpectedException(exceptions.Invalid):
-            self.manager.subscribe(mock.ANY, 'foo_resource', mock.ANY)
-
-    def test_subscribe_invalid_event_raise(self):
-        self.assertRaises(exceptions.Invalid,
-                  self.manager.subscribe,
-                  mock.ANY, mock.ANY, 'foo_event')
-
     def test_subscribe(self):
         self.manager.subscribe(
             callback_1, resources.PORT, events.BEFORE_CREATE)
         self.assertIsNotNone(
             self.manager._callbacks[resources.PORT][events.BEFORE_CREATE])
+        self.assertIn(callback_id_1, self.manager._index)
+
+    def test_subscribe_unknown(self):
+        self.manager.subscribe(
+            callback_1, 'my_resource', 'my-event')
+        self.assertIsNotNone(
+            self.manager._callbacks['my_resource']['my-event'])
         self.assertIn(callback_id_1, self.manager._index)
 
     def test_subscribe_is_idempotent(self):

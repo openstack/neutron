@@ -17,7 +17,6 @@ from oslo_utils import reflection
 
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
-from neutron.callbacks import resources
 from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
@@ -40,13 +39,15 @@ class CallbacksManager(object):
         """
         LOG.debug("Subscribe: %(callback)s %(resource)s %(event)s",
                   {'callback': callback, 'resource': resource, 'event': event})
-        if resource not in resources.VALID:
-            raise exceptions.Invalid(element='resource', value=resource)
-        if event not in events.VALID:
-            raise exceptions.Invalid(element='event', value=event)
 
         callback_id = _get_id(callback)
-        self._callbacks[resource][event][callback_id] = callback
+        try:
+            self._callbacks[resource][event][callback_id] = callback
+        except KeyError:
+            # Initialize the registry for unknown resources and/or events
+            # prior to enlisting the callback.
+            self._callbacks[resource][event] = {}
+            self._callbacks[resource][event][callback_id] = callback
         # We keep a copy of callbacks to speed the unsubscribe operation.
         if callback_id not in self._index:
             self._index[callback_id] = collections.defaultdict(set)
@@ -125,9 +126,6 @@ class CallbacksManager(object):
         """Brings the manager to a clean slate."""
         self._callbacks = collections.defaultdict(dict)
         self._index = collections.defaultdict(dict)
-        for resource in resources.VALID:
-            for event in events.VALID:
-                self._callbacks[resource][event] = collections.defaultdict()
 
     def _notify_loop(self, resource, event, trigger, **kwargs):
         """The notification loop."""
@@ -135,8 +133,9 @@ class CallbacksManager(object):
                   {'resource': resource, 'event': event})
 
         errors = []
+        callbacks = self._callbacks[resource].get(event, {}).items()
         # TODO(armax): consider using a GreenPile
-        for callback_id, callback in self._callbacks[resource][event].items():
+        for callback_id, callback in callbacks:
             try:
                 LOG.debug("Calling callback %s", callback_id)
                 callback(resource, event, trigger, **kwargs)

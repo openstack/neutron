@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# String literals representing core resources.
 PORT = 'port'
 ROUTER = 'router'
 ROUTER_GATEWAY = 'router_gateway'
@@ -17,13 +18,3 @@ ROUTER_INTERFACE = 'router_interface'
 SECURITY_GROUP = 'security_group'
 SECURITY_GROUP_RULE = 'security_group_rule'
 SUBNET = 'subnet'
-
-VALID = (
-    PORT,
-    ROUTER,
-    ROUTER_GATEWAY,
-    ROUTER_INTERFACE,
-    SECURITY_GROUP,
-    SECURITY_GROUP_RULE,
-    SUBNET,
-)
