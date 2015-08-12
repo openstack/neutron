@@ -22,11 +22,30 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
+from neutron.extensions import l3
 
 DNS_LABEL_MAX_LEN = 63
 DNS_LABEL_REGEX = "[a-z0-9-]{1,%d}$" % DNS_LABEL_MAX_LEN
 FQDN_MAX_LEN = 255
 DNS_DOMAIN_DEFAULT = 'openstacklocal.'
+
+
+class DNSDomainNotFound(n_exc.NotFound):
+    message = _("Domain %(dns_domain)s not found in the external DNS service")
+
+
+class DuplicateRecordSet(n_exc.Conflict):
+    message = _("Name %(dns_name)s is duplicated in the external DNS service")
+
+
+class ExternalDNSDriverNotFound(n_exc.NotFound):
+    message = _("External DNS driver %(driver)s could not be found.")
+
+
+class InvalidPTRZoneConfiguration(n_exc.Conflict):
+    message = _("Value of %(parameter)s has to be multiple of %(number)s, "
+                "with maximum value of %(maximum)s and minimum value of "
+                "%(minimum)s")
 
 
 def _validate_dns_name(data, max_len=FQDN_MAX_LEN):
@@ -38,6 +57,50 @@ def _validate_dns_name(data, max_len=FQDN_MAX_LEN):
         msg = _validate_dns_name_with_dns_domain(request_dns_name)
         if msg:
             return msg
+
+
+def _validate_fip_dns_name(data, max_len=FQDN_MAX_LEN):
+    msg = attr._validate_string(data)
+    if msg:
+        return msg
+    if not data:
+        return
+    if data.endswith('.'):
+        msg = _("'%s' is a FQDN. It should be a relative domain name") % data
+        return msg
+    msg = _validate_dns_format(data, max_len)
+    if msg:
+        return msg
+    length = len(data)
+    if length > max_len - 3:
+        msg = _("'%(data)s' contains '%(length)s' characters. Adding a "
+                "domain name will cause it to exceed the maximum length "
+                "of a FQDN of '%(max_len)s'") % {"data": data,
+                                                 "length": length,
+                                                 "max_len": max_len}
+        return msg
+
+
+def _validate_dns_domain(data, max_len=FQDN_MAX_LEN):
+    msg = attr._validate_string(data)
+    if msg:
+        return msg
+    if not data:
+        return
+    if not data.endswith('.'):
+        msg = _("'%s' is not a FQDN") % data
+        return msg
+    msg = _validate_dns_format(data, max_len)
+    if msg:
+        return msg
+    length = len(data)
+    if length > max_len - 2:
+        msg = _("'%(data)s' contains '%(length)s' characters. Adding a "
+                "sub-domain will cause it to exceed the maximum length of a "
+                "FQDN of '%(max_len)s'") % {"data": data,
+                                           "length": length,
+                                           "max_len": max_len}
+        return msg
 
 
 def _validate_dns_format(data, max_len=FQDN_MAX_LEN):
@@ -133,11 +196,13 @@ def convert_to_lowercase(data):
     raise n_exc.InvalidInput(error_message=msg)
 
 
-attr.validators['type:dns_name'] = (
-    _validate_dns_name)
+attr.validators['type:dns_name'] = (_validate_dns_name)
+attr.validators['type:fip_dns_name'] = (_validate_fip_dns_name)
+attr.validators['type:dns_domain'] = (_validate_dns_domain)
 
 
 DNSNAME = 'dns_name'
+DNSDOMAIN = 'dns_domain'
 DNSASSIGNMENT = 'dns_assignment'
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
@@ -148,7 +213,26 @@ EXTENDED_ATTRIBUTES_2_0 = {
                   'is_visible': True},
         DNSASSIGNMENT: {'allow_post': False, 'allow_put': False,
                         'is_visible': True},
-    }
+    },
+    l3.FLOATINGIPS: {
+        DNSNAME: {'allow_post': True, 'allow_put': False,
+                  'default': '',
+                  'convert_to': convert_to_lowercase,
+                  'validate': {'type:fip_dns_name': FQDN_MAX_LEN},
+                  'is_visible': True},
+        DNSDOMAIN: {'allow_post': True, 'allow_put': False,
+                    'default': '',
+                    'convert_to': convert_to_lowercase,
+                    'validate': {'type:dns_domain': FQDN_MAX_LEN},
+                    'is_visible': True},
+    },
+    attr.NETWORKS: {
+        DNSDOMAIN: {'allow_post': True, 'allow_put': True,
+                    'default': '',
+                    'convert_to': convert_to_lowercase,
+                    'validate': {'type:dns_domain': FQDN_MAX_LEN},
+                    'is_visible': True},
+    },
 }
 
 
@@ -165,7 +249,7 @@ class Dns(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return "Provides integration with internal DNS."
+        return "Provides integration with DNS."
 
     @classmethod
     def get_updated(cls):
