@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
+from oslo_serialization import jsonutils as json
 from tempest_lib.common import rest_client
 from tempest_lib import exceptions as lib_exc
 

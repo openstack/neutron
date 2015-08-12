@@ -17,7 +17,6 @@
 
 import copy
 import hashlib
-import json
 import posixpath
 import re
 import socket
@@ -28,6 +27,7 @@ import urlparse
 
 import OpenSSL
 from oslo_log import log as logging
+from oslo_serialization import jsonutils as json
 from six import moves
 from six.moves import http_client as httplib
 from tempest_lib import exceptions as lib_exc

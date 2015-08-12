@@ -24,7 +24,8 @@ responsible determining whether a command is safe to execute.
 from __future__ import print_function
 
 from six.moves import configparser as ConfigParser
-import json
+from oslo_serialization import jsonutils as json
+
 import os
 import select
 import sys
