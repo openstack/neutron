@@ -1276,8 +1276,8 @@ class TestDvrRouter(L3AgentTestFramework):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info()
         router1 = self.manage_router(self.agent, router_info)
-        self._add_fip(router1, '192.168.111.12', self.agent.conf.host)
         fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(fip_ns))
         restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
             self.agent.host, self.agent.conf)
         router1.router[l3_constants.FLOATINGIP_KEY] = []
