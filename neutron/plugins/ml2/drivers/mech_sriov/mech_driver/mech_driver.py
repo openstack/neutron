@@ -24,6 +24,7 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
+from neutron.services.qos import qos_consts
 
 
 LOG = log.getLogger(__name__)
@@ -60,6 +61,8 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
     will allow to use Mechanism Driver without L2 agent.
 
     """
+
+    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,

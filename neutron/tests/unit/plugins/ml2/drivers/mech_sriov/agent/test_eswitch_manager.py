@@ -194,6 +194,26 @@ class TestESwitchManagerApi(base.BaseTestCase):
                                              'device_mac': self.WRONG_MAC})
                 self.assertFalse(result)
 
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                "PciDeviceIPWrapper.get_assigned_macs",
+                return_value=[ASSIGNED_MAC])
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                return_value=True)
+    def test_get_pci_slot_by_existing_mac(self, *args):
+        pci_slot = self.eswitch_mgr.get_pci_slot_by_mac(self.ASSIGNED_MAC)
+        self.assertIsNotNone(pci_slot)
+
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                "PciDeviceIPWrapper.get_assigned_macs",
+                return_value=[ASSIGNED_MAC])
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                return_value=True)
+    def test_get_pci_slot_by_not_existing_mac(self, *args):
+        pci_slot = self.eswitch_mgr.get_pci_slot_by_mac(self.WRONG_MAC)
+        self.assertIsNone(pci_slot)
+
 
 class TestEmbSwitch(base.BaseTestCase):
     DEV_NAME = "eth2"
