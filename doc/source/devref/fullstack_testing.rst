@@ -40,8 +40,8 @@ How?
 
 Full stack tests set up their own Neutron processes (Server & agents). They
 assume a working Rabbit and MySQL server before the run starts. Instructions
-on how to run fullstack tests on a VM are available at TESTING.rst:
-http://git.openstack.org/cgit/openstack/neutron/tree/TESTING.rst
+on how to run fullstack tests on a VM are available in our
+`TESTING.rst. <development.environment.html#id2>`_
 
 Each test defines its own topology (What and how many servers and agents should
 be running).
@@ -63,7 +63,7 @@ OVS/DHCP/L3 agents, all configured with the same "host" value. Each OVS agent
 is connected to its own pair of br-int/br-ex, and those bridges are then
 interconnected.
 
-.. image:: images/fullstack-multinode-simulation.png
+.. image:: images/fullstack_multinode_simulation.png
 
 When?
 -----
