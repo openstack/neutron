@@ -274,7 +274,7 @@ IBM SDNVE
 .. _kuryr:
 
 Kuryr
------
++++++
 
 * Git: https://git.openstack.org/cgit/openstack/kuryr/
 * Launchpad: https://launchpad.net/kuryr
