@@ -24,6 +24,8 @@ DHCP_AGENT_OPTS = [
                help=_("The driver used to manage the DHCP server.")),
     cfg.BoolOpt('enable_isolated_metadata', default=False,
                 help=_("Support Metadata requests on isolated networks.")),
+    cfg.BoolOpt('force_metadata', default=False,
+                help=_("Force to use DHCP to get Metadata on all networks.")),
     cfg.BoolOpt('enable_metadata_network', default=False,
                 help=_("Allows for serving metadata requests from a "
                        "dedicated network. Requires "

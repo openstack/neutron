@@ -761,9 +761,10 @@ class Dnsmasq(DhcpLocalProcess):
 
             # Add host routes for isolated network segments
 
-            if (isolated_subnets[subnet.id] and
+            if (self.conf.force_metadata or
+                (isolated_subnets[subnet.id] and
                     self.conf.enable_isolated_metadata and
-                    subnet.ip_version == 4):
+                    subnet.ip_version == 4)):
                 subnet_dhcp_ip = subnet_to_interface_ip[subnet.id]
                 host_routes.append(
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
@@ -900,7 +901,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         A subnet is considered non-isolated if there is a port connected to
         the subnet, and the port's ip address matches that of the subnet's
-        gateway. The port must be owned by a nuetron router.
+        gateway. The port must be owned by a neutron router.
         """
         isolated_subnets = collections.defaultdict(lambda: True)
         subnets = dict((subnet.id, subnet) for subnet in network.subnets)
@@ -919,7 +920,8 @@ class Dnsmasq(DhcpLocalProcess):
         """Determine whether the metadata proxy is needed for a network
 
         This method returns True for truly isolated networks (ie: not attached
-        to a router), when the enable_isolated_metadata flag is True.
+        to a router) when enable_isolated_metadata is True, or for all the
+        networks when the force_metadata flags is True.
 
         This method also returns True when enable_metadata_network is True,
         and the network passed as a parameter has a subnet in the link-local
@@ -928,6 +930,9 @@ class Dnsmasq(DhcpLocalProcess):
         providing access to the metadata service via logical routers built
         with 3rd party backends.
         """
+        if conf.force_metadata:
+            return True
+
         if conf.enable_metadata_network and conf.enable_isolated_metadata:
             # check if the network has a metadata subnet
             meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
