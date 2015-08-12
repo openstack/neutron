@@ -100,6 +100,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | group-based-policy_           |         intent        |
 +-------------------------------+-----------------------+
+| kuryr_                        |         docker        |
++-------------------------------+-----------------------+
 | networking-arista_            |         ml2,l3        |
 +-------------------------------+-----------------------+
 | networking-bagpipe-l2_        |          ml2          |
@@ -164,6 +166,7 @@ Functionality legend
 - vpn: a VPN service plugin;
 - lb: a Load Balancer service plugin;
 - intent: a service plugin that provides a declarative API to realize networking;
+- docker: a Docker network plugin that uses Neutron to provide networking services to Docker containers;
 
 .. _networking-arista:
 
@@ -267,6 +270,15 @@ IBM SDNVE
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-ibm
 * Launchpad: https://launchpad.net/networking-ibm
+
+.. _kuryr:
+
+Kuryr
+-----
+
+* Git: https://git.openstack.org/cgit/openstack/kuryr/
+* Launchpad: https://launchpad.net/kuryr
+* PyPI: https://pypi.python.org/pypi/kuryr/
 
 .. _networking-l2gw:
 
