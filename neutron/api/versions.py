@@ -57,6 +57,6 @@ class Versions(object):
 
         response = webob.Response()
         response.content_type = content_type
-        response.body = body
+        response.body = wsgi.encode_body(body)
 
         return response
