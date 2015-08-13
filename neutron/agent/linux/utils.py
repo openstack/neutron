@@ -33,6 +33,7 @@ from oslo_log import log as logging
 from oslo_log import loggers
 from oslo_rootwrap import client
 from oslo_utils import excutils
+import six
 from six.moves import http_client as httplib
 
 from neutron.agent.common import config
@@ -149,8 +150,10 @@ def get_interface_mac(interface):
     MAC_START = 18
     MAC_END = 24
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,
-        struct.pack('256s', interface[:constants.DEVICE_NAME_MAX_LEN]))
+    dev = interface[:constants.DEVICE_NAME_MAX_LEN]
+    if isinstance(dev, six.text_type):
+        dev = dev.encode('utf-8')
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]
 
