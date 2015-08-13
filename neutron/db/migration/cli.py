@@ -287,6 +287,10 @@ def update_heads_file(config):
     heads_path = _get_active_head_file_path(config)
     with open(heads_path, 'w+') as f:
         f.write('\n'.join(heads))
+    if _use_separate_migration_branches(config):
+        old_head_file = _get_head_file_path(config)
+        if os.path.exists(old_head_file):
+            os.remove(old_head_file)
 
 
 def add_command_parsers(subparsers):
