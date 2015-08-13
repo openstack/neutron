@@ -273,7 +273,17 @@ class SortingEmulatedHelper(SortingHelper):
     def sort(self, items):
         def cmp_func(obj1, obj2):
             for key, direction in self.sort_dict:
-                ret = (obj1[key] > obj2[key]) - (obj1[key] < obj2[key])
+                o1 = obj1[key]
+                o2 = obj2[key]
+
+                if o1 is None and o2 is None:
+                    ret = 0
+                elif o1 is None and o2 is not None:
+                    ret = -1
+                elif o1 is not None and o2 is None:
+                    ret = 1
+                else:
+                    ret = (o1 > o2) - (o1 < o2)
                 if ret:
                     return ret * (1 if direction else -1)
             return 0
