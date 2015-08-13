@@ -73,6 +73,9 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | Docs                   | Edgar Magana              | emagana              |
 +------------------------+---------------------------+----------------------+
+| Infra                  | Armando Migliaccio        | armax                |
+|                        | Doug Wiegley              | dougwig              |
++------------------------+---------------------------+----------------------+
 | L3                     | Carl Baldwin              | carl_baldwin         |
 +------------------------+---------------------------+----------------------+
 | Services               | Doug Wiegley              | dougwig              |
@@ -89,6 +92,7 @@ Some notes on the above:
 * Services includes FWaaS, LBaaS, and VPNaaS.
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
+* Infra means interactions with infra from a neutron perspective
 
 Neutron also consists of several plugins, drivers, and agents that are developed
 effectively as sub-projects within Neutron in their own git repositories.
