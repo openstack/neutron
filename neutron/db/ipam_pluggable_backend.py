@@ -407,7 +407,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None
 
-        if subnetpool_id:
+        if subnetpool_id and not subnetpool_id == constants.IPV6_PD_POOL_ID:
             subnetpool = self._get_subnetpool(context, subnetpool_id)
             self._validate_ip_version_with_subnetpool(subnet, subnetpool)
 
