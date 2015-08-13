@@ -248,3 +248,23 @@ class TestRootController(PecanFunctionalTest):
         for (attr, value) in controllers.V2Controller.version_info.items():
             self.assertIn(attr, versions[0])
             self.assertEqual(value, versions[0][attr])
+
+    def _test_method_returns_405(self, method):
+        api_method = getattr(self.app, method)
+        response = api_method('/', expect_errors=True)
+        self.assertEqual(response.status_int, 405)
+
+    def test_post(self):
+        self._test_method_returns_405('post')
+
+    def test_put(self):
+        self._test_method_returns_405('put')
+
+    def test_patch(self):
+        self._test_method_returns_405('patch')
+
+    def test_delete(self):
+        self._test_method_returns_405('delete')
+
+    def test_head(self):
+        self._test_method_returns_405('head')

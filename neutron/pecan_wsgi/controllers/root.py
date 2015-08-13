@@ -54,6 +54,12 @@ class RootController(object):
         versions = [builder.build(version) for version in _get_version_info()]
         return dict(versions=versions)
 
+    @when(index, method='POST')
+    @when(index, method='PUT')
+    @when(index, method='DELETE')
+    def not_supported(self):
+        pecan.abort(405)
+
 
 class ExtensionsController(object):
 
