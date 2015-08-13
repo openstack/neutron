@@ -88,6 +88,8 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
         self.assertTrue(netcat.test_connectivity(),
                         'Failed connectivity check before applying a filter '
                         'with %s' % filter_params)
+        # REVISIT(jlibosva): Make sure we have ASSURED conntrack entry for
+        #                    given connection
         self.filter_add_rule(
             fw_manager, self.server.ip, direction, protocol, port)
         with testtools.ExpectedException(
@@ -97,6 +99,9 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
             netcat.test_connectivity()
         self.filter_remove_rule(
             fw_manager, self.server.ip, direction, protocol, port)
+        # With TCP packets will get through after firewall was removed, so we
+        # would get old data on socket and with UDP process died, so we need to
+        # respawn processes to have clean sockets
         self.assertTrue(netcat.test_connectivity(True),
                         'Failed connectivity check after removing a filter '
                         'with %s' % filter_params)
