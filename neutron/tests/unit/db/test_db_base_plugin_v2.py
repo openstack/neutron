@@ -1703,9 +1703,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(1, len(fixed_ips))
                 self.assertEqual('10.0.0.2', fixed_ips[0]['ip_address'])
 
-    def _make_v6_subnet(self, network, ra_addr_mode):
-        return (self._make_subnet(self.fmt, network, gateway='fe80::1',
-                                  cidr='fe80::/64', ip_version=6,
+    def _make_v6_subnet(self, network, ra_addr_mode, ipv6_pd=False):
+        cidr = 'fe80::/64'
+        gateway = 'fe80::1'
+        if ipv6_pd:
+            cidr = None
+            gateway = None
+            cfg.CONF.set_override('default_ipv6_subnet_pool',
+                                  constants.IPV6_PD_POOL_ID)
+        return (self._make_subnet(self.fmt, network, gateway=gateway,
+                                  cidr=cidr, ip_version=6,
                                   ipv6_ra_mode=ra_addr_mode,
                                   ipv6_address_mode=ra_addr_mode))
 
@@ -1725,10 +1732,11 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self.assertEqual(self._calc_ipv6_addr_by_EUI64(port, subnet),
                          port['port']['fixed_ips'][0]['ip_address'])
 
-    def _test_create_port_with_ipv6_subnet_in_fixed_ips(self, addr_mode):
+    def _test_create_port_with_ipv6_subnet_in_fixed_ips(self, addr_mode,
+                                                        ipv6_pd=False):
         """Test port create with an IPv6 subnet incl in fixed IPs."""
         with self.network(name='net') as network:
-            subnet = self._make_v6_subnet(network, addr_mode)
+            subnet = self._make_v6_subnet(network, addr_mode, ipv6_pd)
             subnet_id = subnet['subnet']['id']
             fixed_ips = [{'subnet_id': subnet_id}]
             with self.port(subnet=subnet, fixed_ips=fixed_ips) as port:
@@ -1744,6 +1752,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_create_port_with_ipv6_slaac_subnet_in_fixed_ips(self):
         self._test_create_port_with_ipv6_subnet_in_fixed_ips(
             addr_mode=constants.IPV6_SLAAC)
+
+    def test_create_port_with_ipv6_pd_subnet_in_fixed_ips(self):
+        self._test_create_port_with_ipv6_subnet_in_fixed_ips(
+            addr_mode=constants.IPV6_SLAAC, ipv6_pd=True)
 
     def test_create_port_with_ipv6_dhcp_stateful_subnet_in_fixed_ips(self):
         self._test_create_port_with_ipv6_subnet_in_fixed_ips(
