@@ -92,6 +92,16 @@ CONF.register_opts(socket_opts)
 LOG = logging.getLogger(__name__)
 
 
+def encode_body(body):
+    """Encode unicode body.
+
+    WebOb requires to encode unicode body used to update response body.
+    """
+    if isinstance(body, six.text_type):
+        return body.encode('utf-8')
+    return body
+
+
 class WorkerService(common_service.ServiceBase):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application):
@@ -426,7 +436,7 @@ class JSONDictSerializer(DictSerializer):
     def default(self, data):
         def sanitizer(obj):
             return six.text_type(obj)
-        return jsonutils.dumps(data, default=sanitizer)
+        return encode_body(jsonutils.dumps(data, default=sanitizer))
 
 
 class ResponseHeaderSerializer(ActionDispatcher):

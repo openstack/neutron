@@ -217,7 +217,7 @@ class SerializerTest(base.BaseTestCase):
         serializer = wsgi.Serializer()
         result = serializer.serialize(input_data, content_type)
 
-        self.assertEqual('{"servers": ["test=pass"]}', result)
+        self.assertEqual(b'{"servers": ["test=pass"]}', result)
 
     def test_deserialize_raise_bad_request(self):
         """Test serialize verifies that exception is raises."""
@@ -308,7 +308,7 @@ class ResponseSerializerTest(testtools.TestCase):
 
         class JSONSerializer(object):
             def serialize(self, data, action='default'):
-                return 'pew_json'
+                return b'pew_json'
 
         class HeadersSerializer(object):
             def serialize(self, response, data, action):
@@ -342,7 +342,7 @@ class ResponseSerializerTest(testtools.TestCase):
         response = self.serializer.serialize({}, 'application/json')
 
         self.assertEqual('application/json', response.headers['Content-Type'])
-        self.assertEqual('pew_json', response.body)
+        self.assertEqual(b'pew_json', response.body)
         self.assertEqual(404, response.status_int)
 
     def test_serialize_response_None(self):
@@ -350,7 +350,7 @@ class ResponseSerializerTest(testtools.TestCase):
             None, 'application/json')
 
         self.assertEqual('application/json', response.headers['Content-Type'])
-        self.assertEqual('', response.body)
+        self.assertEqual(b'', response.body)
         self.assertEqual(404, response.status_int)
 
 
@@ -488,28 +488,28 @@ class JSONDictSerializerTest(base.BaseTestCase):
 
     def test_json(self):
         input_dict = dict(servers=dict(a=(2, 3)))
-        expected_json = '{"servers":{"a":[2,3]}}'
+        expected_json = b'{"servers":{"a":[2,3]}}'
         serializer = wsgi.JSONDictSerializer()
         result = serializer.serialize(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
+        result = result.replace(b'\n', b'').replace(b' ', b'')
 
         self.assertEqual(expected_json, result)
 
     def test_json_with_utf8(self):
         input_dict = dict(servers=dict(a=(2, '\xe7\xbd\x91\xe7\xbb\x9c')))
-        expected_json = '{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
+        expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
         serializer = wsgi.JSONDictSerializer()
         result = serializer.serialize(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
+        result = result.replace(b'\n', b'').replace(b' ', b'')
 
         self.assertEqual(expected_json, result)
 
     def test_json_with_unicode(self):
         input_dict = dict(servers=dict(a=(2, u'\u7f51\u7edc')))
-        expected_json = '{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
+        expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
         serializer = wsgi.JSONDictSerializer()
         result = serializer.serialize(input_dict)
-        result = result.replace('\n', '').replace(' ', '')
+        result = result.replace(b'\n', b'').replace(b' ', b'')
 
         self.assertEqual(expected_json, result)
 
