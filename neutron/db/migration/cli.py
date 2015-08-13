@@ -22,8 +22,8 @@ from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo_config import cfg
 from oslo_utils import importutils
+import pkg_resources
 
-from neutron.common import repos
 from neutron.common import utils
 
 
@@ -33,22 +33,40 @@ HEADS_FILENAME = 'HEADS'
 CURRENT_RELEASE = "liberty"
 MIGRATION_BRANCHES = ('expand', 'contract')
 
+MIGRATION_ENTRYPOINTS = 'neutron.db.alembic_migrations'
+migration_entrypoints = {
+    entrypoint.name: entrypoint
+    for entrypoint in pkg_resources.iter_entry_points(MIGRATION_ENTRYPOINTS)
+}
 
-mods = repos.NeutronModules()
-VALID_SERVICES = list(map(mods.alembic_name, mods.installed_list()))
+neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 
+VALID_SERVICES = ['fwaas', 'lbaas', 'vpnaas']
+INSTALLED_SERVICES = [service_ for service_ in VALID_SERVICES
+                      if 'neutron-%s' % service_ in migration_entrypoints]
+INSTALLED_SERVICE_PROJECTS = ['neutron-%s' % service_
+                              for service_ in INSTALLED_SERVICES]
+INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints
+                         if project_ not in INSTALLED_SERVICE_PROJECTS]
+
+service_help = (
+    _("Can be one of '%s'.") % "', '".join(INSTALLED_SERVICES)
+    if INSTALLED_SERVICES else
+    _("(No services are currently installed).")
+)
 
 _core_opts = [
     cfg.StrOpt('core_plugin',
                default='',
                help=_('Neutron plugin provider module')),
-    cfg.ListOpt('service_plugins',
-                default=[],
-                help=_("The service plugins Neutron will use")),
     cfg.StrOpt('service',
-               choices=VALID_SERVICES,
-               help=_("The advanced service to execute the command against. "
-                      "Can be one of '%s'.") % "', '".join(VALID_SERVICES)),
+               choices=INSTALLED_SERVICES,
+               help=(_("The advanced service to execute the command against. ")
+                     + service_help)),
+    cfg.StrOpt('subproject',
+               choices=INSTALLED_SUBPROJECTS,
+               help=(_("The subproject to execute the command against. "
+                       "Can be one of %s.") % INSTALLED_SUBPROJECTS)),
     cfg.BoolOpt('split_branches',
                 default=False,
                 help=_("Enforce using split branches file structure."))
@@ -78,10 +96,20 @@ CONF.register_opts(_quota_opts, 'QUOTAS')
 
 
 def do_alembic_command(config, cmd, *args, **kwargs):
+    project = config.get_main_option('neutron_project')
+    alembic_util.msg(_('Running %(cmd)s for %(project)s ...') %
+                     {'cmd': cmd, 'project': project})
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
         alembic_util.err(six.text_type(e))
+    alembic_util.msg(_('OK'))
+
+
+def _get_alembic_entrypoint(project):
+    if project not in migration_entrypoints:
+        alembic_util.err(_('Sub-project %s not installed.') % project)
+    return migration_entrypoints[project]
 
 
 def do_check_migration(config, cmd):
@@ -148,9 +176,9 @@ def do_revision(config, cmd):
         'sql': CONF.command.sql,
     }
 
-    if _use_separate_migration_branches(CONF):
+    if _use_separate_migration_branches(config):
         for branch in MIGRATION_BRANCHES:
-            version_path = _get_version_branch_path(CONF, branch)
+            version_path = _get_version_branch_path(config, branch)
             addn_kwargs['version_path'] = version_path
 
             if not os.path.exists(version_path):
@@ -187,7 +215,7 @@ def validate_heads_file(config):
     '''Check that HEADS file contains the latest heads for each branch.'''
     script = alembic_script.ScriptDirectory.from_config(config)
     expected_heads = _get_sorted_heads(script)
-    heads_path = _get_active_head_file_path(CONF)
+    heads_path = _get_active_head_file_path(config)
     try:
         with open(heads_path) as file_:
             observed_heads = file_.read().split()
@@ -204,7 +232,7 @@ def update_heads_file(config):
     '''Update HEADS file with the latest branch heads.'''
     script = alembic_script.ScriptDirectory.from_config(config)
     heads = _get_sorted_heads(script)
-    heads_path = _get_active_head_file_path(CONF)
+    heads_path = _get_active_head_file_path(config)
     with open(heads_path, 'w+') as f:
         f.write('\n'.join(heads))
 
@@ -253,88 +281,153 @@ command_opt = cfg.SubCommandOpt('command',
 CONF.register_cli_opt(command_opt)
 
 
-def _get_neutron_service_base(neutron_config):
-    '''Return base python namespace name for a service.'''
-    if neutron_config.service:
-        validate_service_installed(neutron_config.service)
-        return "neutron_%s" % neutron_config.service
-    return "neutron"
+def _get_project_base(config):
+    '''Return the base python namespace name for a project.'''
+    script_location = config.get_main_option('script_location')
+    return script_location.split(':')[0].split('.')[0]
 
 
-def _get_root_versions_dir(neutron_config):
+def _get_package_root_dir(config):
+    root_module = importutils.try_import(_get_project_base(config))
+    if not root_module:
+        project = config.get_main_option('neutron_project')
+        alembic_util.err(_("Failed to locate source for %s.") % project)
+    # The root_module.__file__ property is a path like
+    #    '/opt/stack/networking-foo/networking_foo/__init__.py'
+    # We return just
+    #    '/opt/stack/networking-foo'
+    return os.path.dirname(os.path.dirname(root_module.__file__))
+
+
+def _get_root_versions_dir(config):
     '''Return root directory that contains all migration rules.'''
-    service_base = _get_neutron_service_base(neutron_config)
-    root_module = importutils.import_module(service_base)
-    return os.path.join(
-        os.path.dirname(root_module.__file__),
-        'db/migration/alembic_migrations/versions')
+    root_dir = _get_package_root_dir(config)
+    script_location = config.get_main_option('script_location')
+    # Script location is something like:
+    #   'project_base.db.migration:alembic_migrations'
+    # Convert it to:
+    #   'project_base/db/migration/alembic_migrations/versions'
+    part1, part2 = script_location.split(':')
+    parts = part1.split('.') + part2.split('.') + ['versions']
+    # Return the absolute path to the versions dir
+    return os.path.join(root_dir, *parts)
 
 
-def _get_head_file_path(neutron_config):
+def _get_head_file_path(config):
     '''Return the path of the file that contains single head.'''
     return os.path.join(
-        _get_root_versions_dir(neutron_config),
+        _get_root_versions_dir(config),
         HEAD_FILENAME)
 
 
-def _get_heads_file_path(neutron_config):
+def _get_heads_file_path(config):
     '''Return the path of the file that contains all latest heads, sorted.'''
     return os.path.join(
-        _get_root_versions_dir(neutron_config),
+        _get_root_versions_dir(config),
         HEADS_FILENAME)
 
 
-def _get_active_head_file_path(neutron_config):
+def _get_active_head_file_path(config):
     '''Return the path of the file that contains latest head(s), depending on
        whether multiple branches are used.
     '''
-    if _use_separate_migration_branches(neutron_config):
-        return _get_heads_file_path(neutron_config)
-    return _get_head_file_path(neutron_config)
+    if _use_separate_migration_branches(config):
+        return _get_heads_file_path(config)
+    return _get_head_file_path(config)
 
 
-def _get_version_branch_path(neutron_config, branch=None):
-    version_path = _get_root_versions_dir(neutron_config)
+def _get_version_branch_path(config, branch=None):
+    version_path = _get_root_versions_dir(config)
     if branch:
         return os.path.join(version_path, CURRENT_RELEASE, branch)
     return version_path
 
 
-def _use_separate_migration_branches(neutron_config):
+def _use_separate_migration_branches(config):
     '''Detect whether split migration branches should be used.'''
-    return (neutron_config.split_branches or
+    return (CONF.split_branches or
             # Use HEADS file to indicate the new, split migration world
-            os.path.exists(_get_heads_file_path(neutron_config)))
+            os.path.exists(_get_heads_file_path(config)))
 
 
 def _set_version_locations(config):
     '''Make alembic see all revisions in all migration branches.'''
-    version_paths = []
-
-    version_paths.append(_get_version_branch_path(CONF))
-    if _use_separate_migration_branches(CONF):
+    version_paths = [_get_version_branch_path(config)]
+    if _use_separate_migration_branches(config):
         for branch in MIGRATION_BRANCHES:
-            version_paths.append(_get_version_branch_path(CONF, branch))
+            version_paths.append(_get_version_branch_path(config, branch))
 
     config.set_main_option('version_locations', ' '.join(version_paths))
 
 
-def validate_service_installed(service):
-    if not importutils.try_import('neutron_%s' % service):
-        alembic_util.err(_('Package neutron-%s not installed') % service)
+def _get_installed_entrypoint(subproject):
+    '''Get the entrypoint for the subproject, which must be installed.'''
+    if subproject not in migration_entrypoints:
+        alembic_util.err(_('Package %s not installed') % subproject)
+    return migration_entrypoints[subproject]
 
 
-def get_script_location(neutron_config):
-    location = '%s.db.migration:alembic_migrations'
-    return location % _get_neutron_service_base(neutron_config)
+def _get_subproject_script_location(subproject):
+    '''Get the script location for the installed subproject.'''
+    entrypoint = _get_installed_entrypoint(subproject)
+    return ':'.join([entrypoint.module_name, entrypoint.attrs[0]])
 
 
-def get_alembic_config():
-    config = alembic_config.Config(os.path.join(os.path.dirname(__file__),
-                                                'alembic.ini'))
-    config.set_main_option('script_location', get_script_location(CONF))
-    _set_version_locations(config)
-    return config
+def _get_service_script_location(service):
+    '''Get the script location for the service, which must be installed.'''
+    return _get_subproject_script_location('neutron-%s' % service)
+
+
+def _get_subproject_base(subproject):
+    '''Get the import base name for the installed subproject.'''
+    entrypoint = _get_installed_entrypoint(subproject)
+    return entrypoint.module_name.split('.')[0]
+
+
+def get_alembic_configs():
+    '''Return a list of alembic configs, one per project.
+    '''
+
+    # Get the script locations for the specified or installed projects.
+    # Which projects to get script locations for is determined by the CLI
+    # options as follows:
+    #     --service X       # only subproject neutron-X
+    #     --subproject Y    # only subproject Y
+    #     (none specified)  # neutron and all installed subprojects
+    script_locations = {}
+    if CONF.service:
+        script_location = _get_service_script_location(CONF.service)
+        script_locations['neutron-%s' % CONF.service] = script_location
+    elif CONF.subproject:
+        script_location = _get_subproject_script_location(CONF.subproject)
+        script_locations[CONF.subproject] = script_location
+    else:
+        for subproject, ep in migration_entrypoints.items():
+            script_locations[subproject] = _get_subproject_script_location(
+                subproject)
+
+    # Return a list of alembic configs from the projects in the
+    # script_locations dict. If neutron is in the list it is first.
+    configs = []
+    project_seq = sorted(script_locations.keys())
+    # Core neutron must be the first project if there is more than one
+    if len(project_seq) > 1 and 'neutron' in project_seq:
+        project_seq.insert(0, project_seq.pop(project_seq.index('neutron')))
+    for project in project_seq:
+        config = alembic_config.Config(neutron_alembic_ini)
+        config.set_main_option('neutron_project', project)
+        script_location = script_locations[project]
+        config.set_main_option('script_location', script_location)
+        _set_version_locations(config)
+        config.neutron_config = CONF
+        configs.append(config)
+
+    return configs
+
+
+def get_neutron_config():
+    # Neutron's alembic config is always the first one
+    return get_alembic_configs()[0]
 
 
 def run_sanity_checks(config, revision):
@@ -357,10 +450,14 @@ def run_sanity_checks(config, revision):
         script_dir.run_env()
 
 
+def validate_cli_options():
+    if CONF.subproject and CONF.service:
+        alembic_util.err(_("Cannot specify both --service and --subproject."))
+
+
 def main():
     CONF(project='neutron')
-    config = get_alembic_config()
-    config.neutron_config = CONF
-
-    #TODO(gongysh) enable logging
-    CONF.command.func(config, CONF.command.name)
+    validate_cli_options()
+    for config in get_alembic_configs():
+        #TODO(gongysh) enable logging
+        CONF.command.func(config, CONF.command.name)

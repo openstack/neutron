@@ -13,9 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+import os
 import sys
 
+from alembic import config as alembic_config
+import fixtures
 import mock
+import pkg_resources
 
 from neutron.db import migration
 from neutron.db.migration import cli
@@ -24,6 +29,21 @@ from neutron.tests import base
 
 class FakeConfig(object):
     service = ''
+
+
+class MigrationEntrypointsMemento(fixtures.Fixture):
+    '''Create a copy of the migration entrypoints map so it can be restored
+       during test cleanup.
+    '''
+
+    def _setUp(self):
+        self.ep_backup = {}
+        for proj, ep in cli.migration_entrypoints.items():
+            self.ep_backup[proj] = copy.copy(ep)
+        self.addCleanup(self.restore)
+
+    def restore(self):
+        cli.migration_entrypoints = self.ep_backup
 
 
 class TestDbMigration(base.BaseTestCase):
@@ -79,6 +99,32 @@ class TestCli(base.BaseTestCase):
         self.mock_alembic_err = mock.patch('alembic.util.err').start()
         self.mock_alembic_err.side_effect = SystemExit
 
+        def mocked_root_dir(cfg):
+            return os.path.join('/fake/dir', cli._get_project_base(cfg))
+        mock_root = mock.patch.object(cli, '_get_package_root_dir').start()
+        mock_root.side_effect = mocked_root_dir
+        # Avoid creating fake directories
+        mock.patch('neutron.common.utils.ensure_dir').start()
+
+        # Set up some configs and entrypoints for tests to chew on
+        self.configs = []
+        self.projects = ('neutron', 'networking-foo', 'neutron-fwaas')
+        ini = os.path.join(os.path.dirname(cli.__file__), 'alembic.ini')
+        self.useFixture(MigrationEntrypointsMemento())
+        cli.migration_entrypoints = {}
+        for project in self.projects:
+            config = alembic_config.Config(ini)
+            config.set_main_option('neutron_project', project)
+            module_name = project.replace('-', '_') + '.db.migration'
+            attrs = ('alembic_migrations',)
+            script_location = ':'.join([module_name, attrs[0]])
+            config.set_main_option('script_location', script_location)
+            self.configs.append(config)
+            entrypoint = pkg_resources.EntryPoint(project,
+                                                  module_name,
+                                                  attrs=attrs)
+            cli.migration_entrypoints[project] = entrypoint
+
     def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs=[{}]):
         with mock.patch.object(sys, 'argv', argv), mock.patch.object(
                 cli, 'run_sanity_checks'):
@@ -112,17 +158,20 @@ class TestCli(base.BaseTestCase):
     def test_check_migration(self):
         with mock.patch.object(cli, 'validate_heads_file') as validate:
             self._main_test_helper(['prog', 'check_migration'], 'branches')
-            validate.assert_called_once_with(mock.ANY)
+            self.assertEqual(len(self.projects), validate.call_count)
 
     def _test_database_sync_revision(self, separate_branches=True):
-        with mock.patch.object(cli, 'update_heads_file') as update:
-            fake_config = FakeConfig()
+        with mock.patch.object(cli, 'update_heads_file') as update,\
+                mock.patch.object(cli, '_use_separate_migration_branches',
+                                  return_value=separate_branches):
             if separate_branches:
+                mock.patch('os.path.exists').start()
                 expected_kwargs = [
                     {'message': 'message', 'sql': False, 'autogenerate': True,
                      'version_path':
-                         cli._get_version_branch_path(fake_config, branch),
+                         cli._get_version_branch_path(config, branch),
                      'head': cli._get_branch_head(branch)}
+                    for config in self.configs
                     for branch in cli.MIGRATION_BRANCHES]
             else:
                 expected_kwargs = [{
@@ -133,7 +182,7 @@ class TestCli(base.BaseTestCase):
                 'revision',
                 (), expected_kwargs
             )
-            update.assert_called_once_with(mock.ANY)
+            self.assertEqual(len(self.projects), update.call_count)
             update.reset_mock()
 
             for kwarg in expected_kwargs:
@@ -145,14 +194,12 @@ class TestCli(base.BaseTestCase):
                 'revision',
                 (), expected_kwargs
             )
-            update.assert_called_once_with(mock.ANY)
+            self.assertEqual(len(self.projects), update.call_count)
 
     def test_database_sync_revision(self):
         self._test_database_sync_revision()
 
-    @mock.patch.object(cli, '_use_separate_migration_branches',
-                       return_value=False)
-    def test_database_sync_revision_no_branches(self, *args):
+    def test_database_sync_revision_no_branches(self):
         # Test that old branchless approach is still supported
         self._test_database_sync_revision(separate_branches=False)
 
@@ -201,8 +248,10 @@ class TestCli(base.BaseTestCase):
                                          branchless=False):
         if file_heads is None:
             file_heads = []
-        fake_config = FakeConfig()
-        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
+        fake_config = self.configs[0]
+        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc,\
+                mock.patch.object(cli, '_use_separate_migration_branches',
+                                  return_value=not branchless):
             fc.return_value.get_heads.return_value = heads
             with mock.patch('six.moves.builtins.open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
@@ -260,7 +309,7 @@ class TestCli(base.BaseTestCase):
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
 
-                cli.update_heads_file(mock.sentinel.config)
+                cli.update_heads_file(self.configs[0])
                 mock_open.return_value.write.assert_called_once_with(
                     '\n'.join(sorted(heads)))
 
@@ -283,6 +332,40 @@ class TestCli(base.BaseTestCase):
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
 
-                cli.update_heads_file(mock.sentinel.config)
+                cli.update_heads_file(self.configs[0])
                 mock_open.return_value.write.assert_called_once_with(
                     '\n'.join(heads))
+
+    def test_get_project_base(self):
+        config = alembic_config.Config()
+        config.set_main_option('script_location', 'a.b.c:d')
+        proj_base = cli._get_project_base(config)
+        self.assertEqual('a', proj_base)
+
+    def test_get_root_versions_dir(self):
+        config = alembic_config.Config()
+        config.set_main_option('script_location', 'a.b.c:d')
+        versions_dir = cli._get_root_versions_dir(config)
+        self.assertEqual('/fake/dir/a/a/b/c/d/versions', versions_dir)
+
+    def test_get_subproject_script_location(self):
+        foo_ep = cli._get_subproject_script_location('networking-foo')
+        expected = 'networking_foo.db.migration:alembic_migrations'
+        self.assertEqual(expected, foo_ep)
+
+    def test_get_subproject_script_location_not_installed(self):
+        self.assertRaises(
+            SystemExit, cli._get_subproject_script_location, 'not-installed')
+
+    def test_get_service_script_location(self):
+        fwaas_ep = cli._get_service_script_location('fwaas')
+        expected = 'neutron_fwaas.db.migration:alembic_migrations'
+        self.assertEqual(expected, fwaas_ep)
+
+    def test_get_service_script_location_not_installed(self):
+        self.assertRaises(
+            SystemExit, cli._get_service_script_location, 'myaas')
+
+    def test_get_subproject_base_not_installed(self):
+        self.assertRaises(
+            SystemExit, cli._get_subproject_base, 'not-installed')
