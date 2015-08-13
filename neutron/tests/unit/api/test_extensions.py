@@ -168,7 +168,7 @@ class ResourceExtensionTest(base.BaseTestCase):
         test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
-        self.assertEqual("resource index", index_response.body)
+        self.assertEqual(b"resource index", index_response.body)
 
         show_response = test_app.get("/tweedles/25266")
         self.assertEqual({'data': {'id': "25266"}}, show_response.json)
@@ -365,7 +365,7 @@ class ActionExtensionTest(base.BaseTestCase):
         response = self.extension_app.post('/dummy_resources/1/action',
                                            req_body,
                                            content_type='application/json')
-        self.assertEqual("Tweedle Beetle Added.", response.body)
+        self.assertEqual(b"Tweedle Beetle Added.", response.body)
 
     def test_extended_action_for_deleting_extra_data(self):
         action_name = 'FOXNSOX:delete_tweedle'
@@ -374,7 +374,7 @@ class ActionExtensionTest(base.BaseTestCase):
         response = self.extension_app.post("/dummy_resources/1/action",
                                            req_body,
                                            content_type='application/json')
-        self.assertEqual("Tweedle Bailey Deleted.", response.body)
+        self.assertEqual(b"Tweedle Bailey Deleted.", response.body)
 
     def test_returns_404_for_non_existent_action(self):
         non_existent_action = 'blah_action'
