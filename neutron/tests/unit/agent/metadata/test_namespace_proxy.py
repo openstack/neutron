@@ -98,7 +98,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             )
 
             self.assertEqual(retval.headers['Content-Type'], 'text/plain')
-            self.assertEqual(retval.body, 'content')
+            self.assertEqual(b'content', retval.body)
 
     def test_proxy_request_network_200(self):
         self.handler.network_id = 'network_id'
@@ -129,7 +129,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
 
             self.assertEqual(retval.headers['Content-Type'],
                              'application/json')
-            self.assertEqual(retval.body, '{}')
+            self.assertEqual(b'{}', retval.body)
 
     def _test_proxy_request_network_4xx(self, status, method, expected):
         self.handler.network_id = 'network_id'
