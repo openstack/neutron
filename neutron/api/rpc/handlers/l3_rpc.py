@@ -269,6 +269,10 @@ class L3RpcCallback(object):
     def process_prefix_update(self, context, **kwargs):
         subnets = kwargs.get('subnets')
 
+        updated_subnets = []
         for subnet_id, prefix in subnets.items():
-            self.plugin.update_subnet(context, subnet_id,
-                                      {'subnet': {'cidr': prefix}})
+            updated_subnets.append(self.plugin.update_subnet(
+                                        context,
+                                        subnet_id,
+                                        {'subnet': {'cidr': prefix}}))
+        return updated_subnets
