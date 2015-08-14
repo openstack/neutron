@@ -40,6 +40,10 @@ DRIVER_TABLES = [
     'cisco_ml2_n1kv_vxlan_allocations',
     'cisco_ml2_n1kv_vlan_allocations',
     'cisco_ml2_n1kv_profile_bindings',
+    'cisco_ml2_nexusport_bindings',
+    'cisco_ml2_nexus_nve',
+    'ml2_nexus_vxlan_allocations',
+    'ml2_nexus_vxlan_mcast_groups',
     # VMware-NSX models moved to openstack/vmware-nsx
     'tz_network_bindings',
     'neutron_nsx_network_mappings',
