@@ -28,12 +28,15 @@ Why?
 ----
 
 The idea behind "fullstack" testing is to fill a gap between unit + functional
-tests and Tempest. Tempest tests are expensive to run, difficult to run in
-a multi node environment, and are often very high level and provide little
-indication to what is wrong, only that something is wrong. Developers further
-benefit from full stack testing as it can sufficiently simulate a real
-environment and provide a rapidly reproducible way to verify code as you're
-still writing it.
+tests and Tempest. Tempest tests are expensive to run, and operate only
+through the REST API. So they can only provide an explanation of what went wrong
+gets reported to an end user via the REST API, which is often too high level.
+Additionally, Tempest requires an OpenStack deployment to be run against, which
+can be difficult to configure and setup. The full stack testing addresses
+these issues by taking care of the deployment itself, according to the topology
+that the test requires. Developers further benefit from full stack testing as
+it can sufficiently simulate a real environment and provide a rapidly
+reproducible way to verify code as you're still writing it.
 
 How?
 ----
