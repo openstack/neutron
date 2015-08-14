@@ -24,6 +24,7 @@ from pecan import set_config
 from pecan.testing import load_test_app
 import testtools
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -37,6 +38,7 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
     def setUp(self):
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
         super(PecanFunctionalTest, self).setUp()
+        self.addCleanup(extensions.PluginAwareExtensionManager.clear_instance)
         self.addCleanup(set_config, {}, overwrite=True)
         self.set_config_overrides()
         self.setup_app()
@@ -181,9 +183,8 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
 
         def capture_request_details(*args, **kwargs):
             self.req_stash = {
-                'context': request.context,
-                'resource_type': request.resource_type,
-                'plugin': request.plugin
+                'context': request.context['neutron_context'],
+                'resource_type': request.context['resource'],
             }
         mock.patch(
             'neutron.pecan_wsgi.controllers.root.CollectionsController.get',
@@ -200,9 +201,6 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
     def test_core_resource_identified(self):
         self.app.get('/v2.0/ports.json')
         self.assertEqual('port', self.req_stash['resource_type'])
-        # make sure the core plugin was identified as the handler for ports
-        self.assertEqual(manager.NeutronManager.get_plugin(),
-                         self.req_stash['plugin'])
 
     def test_service_plugin_identified(self):
         # TODO(kevinbenton): fix the unit test setup to include an l3 plugin

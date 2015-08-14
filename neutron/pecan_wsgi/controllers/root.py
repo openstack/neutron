@@ -14,12 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
 import pecan
 from pecan import request
 
 from neutron.api import extensions
 from neutron.api.views import versions as versions_view
+from neutron.i18n import _LW
+from neutron import manager
 
+LOG = log.getLogger(__name__)
 _VERSION_INFO = {}
 
 
@@ -99,8 +103,17 @@ class V2Controller(object):
         pecan.abort(405)
 
     @expose()
-    def _lookup(self, endpoint, *remainder):
-        return CollectionsController(endpoint), remainder
+    def _lookup(self, collection, *remainder):
+        controller = manager.NeutronManager.get_controller_for_resource(
+            collection)
+        if not controller:
+            LOG.warn(_LW("No controller found for: %s - returning response "
+                         "code 404"), collection)
+            pecan.abort(404)
+        # Store resource name in pecan request context so that hooks can
+        # leverage it if necessary
+        request.context['resource'] = controller.resource
+        return controller, remainder
 
 
 # This controller cannot be specified directly as a member of RootController
@@ -124,14 +137,20 @@ class ExtensionController(object):
         return {'extension': extensions.ExtensionController._translate(ext)}
 
 
-class CollectionsController(object):
+class NeutronPecanController(object):
 
-    def __init__(self, collection):
+    def __init__(self, collection, resource):
         self.collection = collection
+        self.resource = resource
+        self.plugin = manager.NeutronManager.get_plugin_for_resource(
+            self.resource)
+
+
+class CollectionsController(NeutronPecanController):
 
     @expose()
     def _lookup(self, item, *remainder):
-        return ItemController(item), remainder
+        return ItemController(self.resource, item), remainder
 
     @expose(generic=True)
     def index(self, *args, **kwargs):
@@ -145,25 +164,28 @@ class CollectionsController(object):
         _listify = lambda x: x if isinstance(x, list) else [x]
         filters = {k: _listify(v) for k, v in kwargs.items()}
         # TODO(kevinbenton): convert these using api_common.get_filters
-        lister = getattr(request.plugin, 'get_%s' % self.collection)
-        return {self.collection: lister(request.context, filters=filters)}
+        lister = getattr(self.plugin, 'get_%s' % self.collection)
+        neutron_context = request.context.get('neutron_context')
+        return {self.collection: lister(neutron_context, filters=filters)}
 
     @when(index, method='POST')
     def post(self, *args, **kwargs):
         # TODO(kevinbenton): emulated bulk!
         pecan.response.status = 201
         if request.bulk:
-            method = 'create_%s_bulk' % request.resource_type
+            method = 'create_%s_bulk' % self.resource
         else:
-            method = 'create_%s' % request.resource_type
-        creator = getattr(request.plugin, method)
-        key = self.collection if request.bulk else request.resource_type
-        return {key: creator(request.context, request.prepared_data)}
+            method = 'create_%s' % self.resource
+        creator = getattr(self.plugin, method)
+        key = self.collection if request.bulk else self.resource
+        neutron_context = request.context.get('neutron_context')
+        return {key: creator(neutron_context, request.prepared_data)}
 
 
-class ItemController(object):
+class ItemController(NeutronPecanController):
 
-    def __init__(self, item):
+    def __init__(self, resource, item):
+        super(ItemController, self).__init__(None, resource)
         self.item = item
 
     @expose(generic=True)
@@ -171,23 +193,26 @@ class ItemController(object):
         return self.get()
 
     def get(self, *args, **kwargs):
-        getter = getattr(request.plugin, 'get_%s' % request.resource_type)
-        return {request.resource_type: getter(request.context, self.item)}
+        getter = getattr(self.plugin, 'get_%s' % self.resource)
+        neutron_context = request.context.get('neutron_context')
+        return {self.resource: getter(neutron_context, self.item)}
 
     @when(index, method='PUT')
     def put(self, *args, **kwargs):
+        neutron_context = request.context.get('neutron_context')
         if request.member_action:
-            member_action_method = getattr(request.plugin,
+            member_action_method = getattr(self.plugin,
                                            request.member_action)
-            return member_action_method(request.context, self.item,
+            return member_action_method(neutron_context, self.item,
                                         request.prepared_data)
-        updater = getattr(request.plugin, 'update_%s' % request.resource_type)
-        return {request.resource_type: updater(
-                    request.context, self.item, request.prepared_data)}
+        # TODO(kevinbenton): bulk?
+        updater = getattr(self.plugin, 'update_%s' % self.resource)
+        return updater(neutron_context, self.item, request.prepared_data)
 
     @when(index, method='DELETE')
     def delete(self):
         # TODO(kevinbenton): setting code could be in a decorator
         pecan.response.status = 204
-        deleter = getattr(request.plugin, 'delete_%s' % request.resource_type)
-        return deleter(request.context, self.item)
+        neutron_context = request.context.get('neutron_context')
+        deleter = getattr(self.plugin, 'delete_%s' % self.resource)
+        return deleter(neutron_context, self.item)

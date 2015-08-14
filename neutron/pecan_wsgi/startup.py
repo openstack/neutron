@@ -13,14 +13,93 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes
+from neutron.api.v2 import router
+from neutron.i18n import _LI, _LW
+from neutron import manager
+from neutron.pecan_wsgi.controllers import root
 from neutron import policy
+
+LOG = log.getLogger(__name__)
+
+
+def _plugin_for_resource(collection):
+    if collection in router.RESOURCES.values():
+        # this is a core resource, return the core plugin
+        return manager.NeutronManager.get_plugin()
+    ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+    # Multiple extensions can map to the same resource. This happens
+    # because of 'attribute' extensions. Due to the way in which neutron
+    # plugins and request dispatching is constructed, it is impossible for
+    # the same resource to be handled by more than one plugin. Therefore
+    # all the extensions mapped to a given resource will necessarily be
+    # implemented by the same plugin.
+    ext_res_mappings = dict((ext.get_alias(), collection) for
+                            ext in ext_mgr.extensions.values() if
+                            collection in ext.get_extended_resources('2.0'))
+    LOG.debug("Extension mappings for: %(collection)s: %(aliases)s",
+              {'collection': collection, 'aliases': ext_res_mappings.keys()})
+    # find the plugin that supports this extension
+    for plugin in ext_mgr.plugins.values():
+        ext_aliases = getattr(plugin, 'supported_extension_aliases', [])
+        for alias in ext_aliases:
+            if alias in ext_res_mappings:
+                # This plugin implements this resource
+                return plugin
+    LOG.warn(_LW("No plugin found for:%s"), collection)
+
+
+def _handle_plurals(collection):
+    resource = attributes.PLURALS.get(collection)
+    if not resource:
+        if collection.endswith('ies'):
+            resource = "%sy" % collection[:-3]
+        else:
+            resource = collection[:-1]
+    attributes.PLURALS[collection] = resource
+    return resource
 
 
 def initialize_all():
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
     ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
+    # At this stage we have a fully populated resource attribute map;
+    # build Pecan controllers and routes for every resource (both core
+    # and extensions)
+    pecanized_exts = [ext for ext in ext_mgr.extensions.values() if
+                      hasattr(ext, 'get_pecan_controllers')]
+    pecan_controllers = {}
+    for ext in pecanized_exts:
+        LOG.debug("Extension %s is pecan-enabled. Fetching resources "
+                  "and controllers", ext.get_name())
+        controllers = ext.get_pecan_controllers()
+        # controllers is actually a list of pairs where the first element is
+        # the collection name and the second the actual controller
+        for (collection, coll_controller) in controllers:
+            pecan_controllers[collection] = coll_controller
+
+    for collection in attributes.RESOURCE_ATTRIBUTE_MAP:
+        if collection not in pecan_controllers:
+            resource = _handle_plurals(collection)
+            LOG.debug("Building controller for resource:%s", resource)
+            plugin = _plugin_for_resource(collection)
+            if plugin:
+                manager.NeutronManager.set_plugin_for_resource(
+                    resource, plugin)
+            controller = root.CollectionsController(collection, resource)
+            manager.NeutronManager.set_controller_for_resource(
+                collection, controller)
+            LOG.info(_LI("Added controller for resource %(resource)s "
+                         "via URI path segment:%(collection)s"),
+                     {'resource': resource,
+                      'collection': collection})
+        else:
+            LOG.debug("There are already controllers for resource:%s",
+                      resource)
+
     for ext in ext_mgr.extensions.values():
         # make each extension populate its plurals
         if hasattr(ext, 'get_resources'):

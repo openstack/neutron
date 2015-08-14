@@ -28,13 +28,19 @@ LOG = logging.getLogger(__name__)
 def build_plural_mappings(special_mappings, resource_map):
     """Create plural to singular mapping for all resources.
 
-    Allows for special mappings to be provided, like policies -> policy.
+    Allows for special mappings to be provided, for particular cases..
     Otherwise, will strip off the last character for normal mappings, like
-    routers -> router.
+    routers -> router, unless the plural name ends with 'ies', in which
+    case the singular form will end with a 'y' (e.g.: policy/policies)
     """
     plural_mappings = {}
     for plural in resource_map:
-        singular = special_mappings.get(plural, plural[:-1])
+        singular = special_mappings.get(plural)
+        if not singular:
+            if plural.endswith('ies'):
+                singular = "%sy" % plural[:-3]
+            else:
+                singular = plural[:-1]
         plural_mappings[plural] = singular
     return plural_mappings
 

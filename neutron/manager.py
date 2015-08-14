@@ -129,6 +129,9 @@ class NeutronManager(object):
         # the rest of service plugins
         self.service_plugins = {constants.CORE: self.plugin}
         self._load_service_plugins()
+        # Used by pecan WSGI
+        self.resource_plugin_mappings = {}
+        self.resource_controller_mappings = {}
 
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
@@ -251,3 +254,19 @@ class NeutronManager(object):
     def get_unique_service_plugins(cls):
         service_plugins = cls.get_instance().service_plugins
         return tuple(weakref.proxy(x) for x in set(service_plugins.values()))
+
+    @classmethod
+    def set_plugin_for_resource(cls, resource, plugin):
+        cls.get_instance().resource_plugin_mappings[resource] = plugin
+
+    @classmethod
+    def get_plugin_for_resource(cls, resource):
+        return cls.get_instance().resource_plugin_mappings.get(resource)
+
+    @classmethod
+    def set_controller_for_resource(cls, resource, controller):
+        cls.get_instance().resource_controller_mappings[resource] = controller
+
+    @classmethod
+    def get_controller_for_resource(cls, resource):
+        return cls.get_instance().resource_controller_mappings.get(resource)
