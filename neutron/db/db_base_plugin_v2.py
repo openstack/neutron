@@ -767,6 +767,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return self._get_collection_count(context, models_v2.Subnet,
                                           filters=filters)
 
+    def get_subnets_by_network(self, context, network_id):
+        return [self._make_subnet_dict(subnet_db) for subnet_db in
+                self._get_subnets_by_network(context, network_id)]
+
     def _create_subnetpool_prefix(self, context, cidr, subnetpool_id):
         prefix_args = {'cidr': cidr, 'subnetpool_id': subnetpool_id}
         subnetpool_prefix = models_v2.SubnetPoolPrefix(**prefix_args)
