@@ -75,6 +75,7 @@ Testing
 
    fullstack_testing
    testing_coverage
+   template_model_sync_test
 
 Module Reference
 ----------------
