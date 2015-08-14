@@ -59,8 +59,12 @@ def set_mysql_engine():
                     model_base.BASEV2.__table_args__['mysql_engine'])
 
 
-def include_object(object, name, type_, reflected, compare_to):
+def include_object(object_, name, type_, reflected, compare_to):
     if type_ == 'table' and name in external.TABLES:
+        return False
+    elif type_ == 'index' and reflected and name.startswith("idx_autoinc_"):
+        # skip indexes created by SQLAlchemy autoincrement=True
+        # on composite PK integer columns
         return False
     else:
         return True
