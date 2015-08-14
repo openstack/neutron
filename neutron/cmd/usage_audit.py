@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2012 New Dream Network, LLC (DreamHost)
 # All Rights Reserved.
 #
