@@ -106,6 +106,9 @@ updating the core review team for the sub-project's repositories.
 | dragonflow             | Eran Gampel               | gampel               |
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
+| kuryr                  | Antoni Segura Puimedon    | apuimedo             |
+|                        | Gal Sagie                 | gsagie               |
++------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
