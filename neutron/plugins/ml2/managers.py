@@ -698,7 +698,6 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 LOG.exception(_LE("Mechanism driver %s failed in "
                                   "bind_port"),
                               driver.name)
-        binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED
         LOG.error(_LE("Failed to bind port %(port)s on host %(host)s"),
                   {'port': context.current['id'],
                    'host': binding.host})
