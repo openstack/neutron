@@ -47,7 +47,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         floating_ips = super(DvrLocalRouter, self).get_floating_ips()
         return [i for i in floating_ips if i['host'] == self.host]
 
-    def _handle_fip_nat_rules(self, interface_name, action):
+    def _handle_fip_nat_rules(self, interface_name):
         """Configures NAT rules for Floating IPs for DVR.
 
            Remove all the rules. This is safe because if
@@ -61,13 +61,13 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # Add back the jump to float-snat
         self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
 
-        # And add them back if the action is add_rules
-        if action == 'add_rules' and interface_name:
-            rule = ('POSTROUTING', '! -i %(interface_name)s '
-                    '! -o %(interface_name)s -m conntrack ! '
-                    '--ctstate DNAT -j ACCEPT' %
-                    {'interface_name': interface_name})
-            self.iptables_manager.ipv4['nat'].add_rule(*rule)
+        # And add the NAT rule back
+        rule = ('POSTROUTING', '! -i %(interface_name)s '
+                '! -o %(interface_name)s -m conntrack ! '
+                '--ctstate DNAT -j ACCEPT' %
+                {'interface_name': interface_name})
+        self.iptables_manager.ipv4['nat'].add_rule(*rule)
+
         self.iptables_manager.apply()
 
     def floating_ip_added_dist(self, fip, fip_cidr):
