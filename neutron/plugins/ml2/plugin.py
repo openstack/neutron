@@ -360,7 +360,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                                   port_id)
             if not port_db:
                 # The port has been deleted concurrently.
-                return (None, None)
+                return (None, False)
             oport = self._make_port_dict(port_db)
             port = self._make_port_dict(port_db)
             network = new_context.network.current
