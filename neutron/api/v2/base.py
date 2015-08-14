@@ -194,7 +194,12 @@ class Controller(object):
                 policy.init()
                 # Fetch the resource and verify if the user can access it
                 try:
-                    resource = self._item(request, id, True)
+                    parent_id = kwargs.get(self._parent_id_name)
+                    resource = self._item(request,
+                                          id,
+                                          do_authz=True,
+                                          field_list=None,
+                                          parent_id=parent_id)
                 except oslo_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)

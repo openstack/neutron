@@ -1128,12 +1128,16 @@ class SubresourceTest(base.BaseTestCase):
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
 
-        router.SUB_RESOURCES['dummy'] = {
+        api = router.APIRouter()
+
+        SUB_RESOURCES = {}
+        RESOURCE_ATTRIBUTE_MAP = {}
+        SUB_RESOURCES['dummy'] = {
             'collection_name': 'dummies',
             'parent': {'collection_name': 'networks',
                        'member_name': 'network'}
         }
-        attributes.RESOURCE_ATTRIBUTE_MAP['dummies'] = {
+        RESOURCE_ATTRIBUTE_MAP['dummies'] = {
             'foo': {'allow_post': True, 'allow_put': True,
                     'validate': {'type:string': None},
                     'default': '', 'is_visible': True},
@@ -1142,11 +1146,33 @@ class SubresourceTest(base.BaseTestCase):
                           'required_by_policy': True,
                           'is_visible': True}
         }
-        api = router.APIRouter()
+        collection_name = SUB_RESOURCES['dummy'].get('collection_name')
+        resource_name = 'dummy'
+        parent = SUB_RESOURCES['dummy'].get('parent')
+        params = RESOURCE_ATTRIBUTE_MAP['dummies']
+        member_actions = {'mactions': 'GET'}
+        _plugin = manager.NeutronManager.get_plugin()
+        controller = v2_base.create_resource(collection_name, resource_name,
+                                             _plugin, params,
+                                             member_actions=member_actions,
+                                             parent=parent,
+                                             allow_bulk=True,
+                                             allow_pagination=True,
+                                             allow_sorting=True)
+
+        path_prefix = "/%s/{%s_id}/%s" % (parent['collection_name'],
+                                          parent['member_name'],
+                                          collection_name)
+        mapper_kwargs = dict(controller=controller,
+                             path_prefix=path_prefix)
+        api.map.collection(collection_name, resource_name, **mapper_kwargs)
+        api.map.resource(collection_name, collection_name,
+                         controller=controller,
+                         parent_resource=parent,
+                         member=member_actions)
         self.api = webtest.TestApp(api)
 
     def tearDown(self):
-        router.SUB_RESOURCES = {}
         super(SubresourceTest, self).tearDown()
 
     def test_index_sub_resource(self):
@@ -1209,6 +1235,16 @@ class SubresourceTest(base.BaseTestCase):
         instance.delete_network_dummy.assert_called_once_with(mock.ANY,
                                                               dummy_id,
                                                               network_id='id1')
+
+    def test_sub_resource_member_actions(self):
+        instance = self.plugin.return_value
+
+        dummy_id = _uuid()
+        self.api.get('/networks/id1' + _get_path('dummies', id=dummy_id,
+                                                 action='mactions'))
+        instance.mactions.assert_called_once_with(mock.ANY,
+                                                  dummy_id,
+                                                  network_id='id1')
 
 
 # Note: since all resources use the same controller and validation
@@ -1488,6 +1524,9 @@ class TestSubresourcePlugin(object):
         return {}
 
     def delete_network_dummy(self, context, id, network_id):
+        return
+
+    def mactions(self, context, id, network_id):
         return
 
 
