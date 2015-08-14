@@ -823,7 +823,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         Retrieve information concerning the internal port where
         the floating IP should be associated to.
         """
-        internal_port = self._core_plugin._get_port(context, fip['port_id'])
+        internal_port = self._core_plugin.get_port(context, fip['port_id'])
         if not internal_port['tenant_id'] == fip['tenant_id']:
             port_id = fip['port_id']
             if 'id' in fip:
@@ -1085,23 +1085,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         deletion checks.
         """
         try:
-            port_db = self._core_plugin._get_port(context, port_id)
+            port = self._core_plugin.get_port(context, port_id)
         except n_exc.PortNotFound:
             # non-existent ports don't need to be protected from deletion
             return
-        if port_db['device_owner'] in self.router_device_owners:
+        if port['device_owner'] in self.router_device_owners:
             # Raise port in use only if the port has IP addresses
             # Otherwise it's a stale port that can be removed
-            fixed_ips = port_db['fixed_ips']
+            fixed_ips = port['fixed_ips']
             if fixed_ips:
-                reason = _('has device owner %s') % port_db['device_owner']
-                raise n_exc.ServicePortInUse(port_id=port_db['id'],
+                reason = _('has device owner %s') % port['device_owner']
+                raise n_exc.ServicePortInUse(port_id=port['id'],
                                              reason=reason)
             else:
                 LOG.debug("Port %(port_id)s has owner %(port_owner)s, but "
                           "no IP address, so it can be deleted",
-                          {'port_id': port_db['id'],
-                           'port_owner': port_db['device_owner']})
+                          {'port_id': port['id'],
+                           'port_owner': port['device_owner']})
 
     def disassociate_floatingips(self, context, port_id):
         """Disassociate all floating IPs linked to specific port.
