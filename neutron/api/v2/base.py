@@ -602,23 +602,6 @@ class Controller(object):
         return result
 
     @staticmethod
-    def _populate_tenant_id(context, res_dict, attr_info, is_create):
-        if (('tenant_id' in res_dict and
-             res_dict['tenant_id'] != context.tenant_id and
-             not context.is_admin)):
-            msg = _("Specifying 'tenant_id' other than authenticated "
-                    "tenant in request requires admin privileges")
-            raise webob.exc.HTTPBadRequest(msg)
-
-        if is_create and 'tenant_id' not in res_dict:
-            if context.tenant_id:
-                res_dict['tenant_id'] = context.tenant_id
-            elif 'tenant_id' in attr_info:
-                msg = _("Running without keystone AuthN requires "
-                        "that tenant_id is specified")
-                raise webob.exc.HTTPBadRequest(msg)
-
-    @staticmethod
     def prepare_request_body(context, body, is_create, resource, attr_info,
                              allow_bulk=False):
         """Verifies required attributes are in request body.
@@ -657,55 +640,20 @@ class Controller(object):
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        Controller._populate_tenant_id(context, res_dict, attr_info, is_create)
-        Controller._verify_attributes(res_dict, attr_info)
+        attributes.populate_tenant_id(context, res_dict, attr_info, is_create)
+        attributes.verify_attributes(res_dict, attr_info)
 
         if is_create:  # POST
-            for attr, attr_vals in six.iteritems(attr_info):
-                if attr_vals['allow_post']:
-                    if ('default' not in attr_vals and
-                        attr not in res_dict):
-                        msg = _("Failed to parse request. Required "
-                                "attribute '%s' not specified") % attr
-                        raise webob.exc.HTTPBadRequest(msg)
-                    res_dict[attr] = res_dict.get(attr,
-                                                  attr_vals.get('default'))
-                else:
-                    if attr in res_dict:
-                        msg = _("Attribute '%s' not allowed in POST") % attr
-                        raise webob.exc.HTTPBadRequest(msg)
+            attributes.fill_default_value(attr_info, res_dict,
+                                          webob.exc.HTTPBadRequest)
         else:  # PUT
             for attr, attr_vals in six.iteritems(attr_info):
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
                     raise webob.exc.HTTPBadRequest(msg)
 
-        for attr, attr_vals in six.iteritems(attr_info):
-            if (attr not in res_dict or
-                res_dict[attr] is attributes.ATTR_NOT_SPECIFIED):
-                continue
-            # Convert values if necessary
-            if 'convert_to' in attr_vals:
-                res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
-            # Check that configured values are correct
-            if 'validate' not in attr_vals:
-                continue
-            for rule in attr_vals['validate']:
-                res = attributes.validators[rule](res_dict[attr],
-                                                  attr_vals['validate'][rule])
-                if res:
-                    msg_dict = dict(attr=attr, reason=res)
-                    msg = _("Invalid input for %(attr)s. "
-                            "Reason: %(reason)s.") % msg_dict
-                    raise webob.exc.HTTPBadRequest(msg)
+        attributes.convert_value(attr_info, res_dict, webob.exc.HTTPBadRequest)
         return body
-
-    @staticmethod
-    def _verify_attributes(res_dict, attr_info):
-        extra_keys = set(res_dict.keys()) - set(attr_info.keys())
-        if extra_keys:
-            msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
-            raise webob.exc.HTTPBadRequest(msg)
 
     def _validate_network_tenant_ownership(self, request, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded

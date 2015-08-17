@@ -35,6 +35,7 @@ from neutron.extensions import portbindings
 from neutron.i18n import _LI
 from neutron import manager
 from neutron.plugins.common import constants
+from neutron.plugins.common import utils as p_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -563,17 +564,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if not f_port:
                 LOG.info(_LI('Agent Gateway port does not exist,'
                              ' so create one: %s'), f_port)
-                agent_port = self._core_plugin.create_port(
-                    context,
-                    {'port': {'tenant_id': '',
-                              'network_id': network_id,
-                              'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                              'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                              'device_id': l3_agent_db['id'],
-                              'device_owner': DEVICE_OWNER_AGENT_GW,
-                              'binding:host_id': host,
-                              'admin_state_up': True,
-                              'name': ''}})
+                port_data = {'tenant_id': '',
+                             'network_id': network_id,
+                             'device_id': l3_agent_db['id'],
+                             'device_owner': DEVICE_OWNER_AGENT_GW,
+                             'binding:host_id': host,
+                             'admin_state_up': True,
+                             'name': ''}
+                agent_port = p_utils.create_port(self._core_plugin, context,
+                                                 {'port': port_data})
                 if agent_port:
                     self._populate_subnets_for_ports(context, [agent_port])
                     return agent_port
@@ -598,16 +597,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def _add_csnat_router_interface_port(
             self, context, router, network_id, subnet_id, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
-        snat_port = self._core_plugin.create_port(
-            context,
-            {'port': {'tenant_id': '',
-                      'network_id': network_id,
-                      'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                      'fixed_ips': [{'subnet_id': subnet_id}],
-                      'device_id': router.id,
-                      'device_owner': DEVICE_OWNER_DVR_SNAT,
-                      'admin_state_up': True,
-                      'name': ''}})
+        port_data = {'tenant_id': '',
+                     'network_id': network_id,
+                     'fixed_ips': [{'subnet_id': subnet_id}],
+                     'device_id': router.id,
+                     'device_owner': DEVICE_OWNER_DVR_SNAT,
+                     'admin_state_up': True,
+                     'name': ''}
+        snat_port = p_utils.create_port(self._core_plugin, context,
+                                        {'port': port_data})
         if not snat_port:
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
