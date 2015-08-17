@@ -29,6 +29,7 @@ from six import moves
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
+from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent.linux import ip_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -224,6 +225,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
+        self.init_extension_manager(self.connection)
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
@@ -364,6 +366,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      consumers,
                                                      start_listening=False)
 
+    def init_extension_manager(self, connection):
+        ext_manager.register_opts(self.conf)
+        self.ext_manager = (
+            ext_manager.AgentExtensionsManager(self.conf))
+        self.ext_manager.initialize(
+            connection, constants.EXTENSION_DRIVER_TYPE)
+
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
             if vif_id in vlan_mapping.vif_ports:
@@ -394,6 +403,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # longer have access to the network
             self.sg_agent.remove_devices_filter([port_id])
             port = self.int_br.get_vif_port_by_id(port_id)
+            self.ext_manager.delete_port(self.context,
+                                         {"vif_port": port,
+                                          "port_id": port_id})
             if port:
                 # don't log errors since there is a chance someone will be
                 # removing the port from the bridge at the same time
@@ -1244,6 +1256,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if 'port_id' in details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
+                details['vif_port'] = port
                 need_binding = self.treat_vif_port(port, details['port_id'],
                                                    details['network_id'],
                                                    details['network_type'],
@@ -1254,8 +1267,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                    details['device_owner'],
                                                    ovs_restarted)
                 if need_binding:
-                    details['vif_port'] = port
                     need_binding_devices.append(details)
+                self.ext_manager.handle_port(self.context, details)
             else:
                 LOG.warn(_LW("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):

@@ -29,6 +29,40 @@ from neutron.db import models_v2
 LOG = logging.getLogger(__name__)
 
 
+def convert_result_to_dict(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        result = f(*args, **kwargs)
+
+        if result is None:
+            return None
+        elif isinstance(result, list):
+            return [r.to_dict() for r in result]
+        else:
+            return result.to_dict()
+    return inner
+
+
+def filter_fields(f):
+    @functools.wraps(f)
+    def inner_filter(*args, **kwargs):
+        result = f(*args, **kwargs)
+        fields = kwargs.get('fields')
+        if not fields:
+            try:
+                pos = f.func_code.co_varnames.index('fields')
+                fields = args[pos]
+            except (IndexError, ValueError):
+                return result
+
+        do_filter = lambda d: {k: v for k, v in d.items() if k in fields}
+        if isinstance(result, list):
+            return [do_filter(obj) for obj in result]
+        else:
+            return do_filter(result)
+    return inner_filter
+
+
 class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     """Stores getters and helper methods for db_base_plugin_v2
 

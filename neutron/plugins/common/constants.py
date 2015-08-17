@@ -23,6 +23,7 @@ VPN = "VPN"
 METERING = "METERING"
 L3_ROUTER_NAT = "L3_ROUTER_NAT"
 FLAVORS = "FLAVORS"
+QOS = "QOS"
 
 # Maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
@@ -33,7 +34,8 @@ EXT_TO_SERVICE_MAPPING = {
     'vpnaas': VPN,
     'metering': METERING,
     'router': L3_ROUTER_NAT,
-    'flavors': FLAVORS
+    'flavors': FLAVORS,
+    'qos': QOS,
 }
 
 # Service operation status constants

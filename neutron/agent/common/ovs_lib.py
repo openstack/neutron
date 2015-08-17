@@ -489,6 +489,36 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_set('Controller',
                                           controller_uuid, *attr))
 
+    def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
+                                      max_burst_kbps):
+        with self.ovsdb.transaction(check_error=True) as txn:
+            txn.add(self.ovsdb.db_set('Interface', port_name,
+                                      ('ingress_policing_rate', max_kbps)))
+            txn.add(self.ovsdb.db_set('Interface', port_name,
+                                      ('ingress_policing_burst',
+                                       max_burst_kbps)))
+
+    def create_egress_bw_limit_for_port(self, port_name, max_kbps,
+                                        max_burst_kbps):
+        self._set_egress_bw_limit_for_port(
+            port_name, max_kbps, max_burst_kbps)
+
+    def get_egress_bw_limit_for_port(self, port_name):
+
+        max_kbps = self.db_get_val('Interface', port_name,
+                                   'ingress_policing_rate')
+        max_burst_kbps = self.db_get_val('Interface', port_name,
+                                         'ingress_policing_burst')
+
+        max_kbps = max_kbps or None
+        max_burst_kbps = max_burst_kbps or None
+
+        return max_kbps, max_burst_kbps
+
+    def delete_egress_bw_limit_for_port(self, port_name):
+        self._set_egress_bw_limit_for_port(
+            port_name, 0, 0)
+
     def __enter__(self):
         self.create()
         return self

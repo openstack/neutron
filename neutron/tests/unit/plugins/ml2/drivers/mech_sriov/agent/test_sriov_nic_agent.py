@@ -49,7 +49,13 @@ class TestSriovAgent(base.BaseTestCase):
 
         self.agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
 
-    def test_treat_devices_removed_with_existed_device(self):
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                "PciDeviceIPWrapper.get_assigned_macs",
+                return_value=[DEVICE_MAC])
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                return_value=True)
+    def test_treat_devices_removed_with_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
@@ -63,7 +69,13 @@ class TestSriovAgent(base.BaseTestCase):
                 self.assertFalse(resync)
                 self.assertTrue(fn_udd.called)
 
-    def test_treat_devices_removed_with_not_existed_device(self):
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                "PciDeviceIPWrapper.get_assigned_macs",
+                return_value=[DEVICE_MAC])
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                return_value=True)
+    def test_treat_devices_removed_with_not_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
@@ -77,7 +89,13 @@ class TestSriovAgent(base.BaseTestCase):
                 self.assertFalse(resync)
                 self.assertTrue(fn_udd.called)
 
-    def test_treat_devices_removed_failed(self):
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
+                "PciDeviceIPWrapper.get_assigned_macs",
+                return_value=[DEVICE_MAC])
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                return_value=True)
+    def test_treat_devices_removed_failed(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
         devices = [DEVICE_MAC]
         with mock.patch.object(agent.plugin_rpc,
