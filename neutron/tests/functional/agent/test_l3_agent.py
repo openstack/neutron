@@ -1285,6 +1285,31 @@ class TestDvrRouter(L3AgentTestFramework):
         self._assert_dvr_snat_gateway(router1)
         self.assertFalse(self._namespace_exists(fip_ns))
 
+    def test_dvr_router_add_fips_on_restarted_agent(self):
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        router = self.manage_router(self.agent, router_info)
+        floating_ips = router.router[l3_constants.FLOATINGIP_KEY]
+        router_ns = router.ns_name
+        fip_rule_prio_1 = self._get_fixed_ip_rule_priority(
+            router_ns, floating_ips[0]['fixed_ip_address'])
+        restarted_agent = neutron_l3_agent.L3NATAgent(
+            self.agent.host, self.agent.conf)
+        floating_ips[0]['floating_ip_address'] = '21.4.4.2'
+        floating_ips[0]['fixed_ip_address'] = '10.0.0.2'
+        self.manage_router(restarted_agent, router_info)
+        fip_rule_prio_2 = self._get_fixed_ip_rule_priority(
+            router_ns, floating_ips[0]['fixed_ip_address'])
+        self.assertNotEqual(fip_rule_prio_1, fip_rule_prio_2)
+
+    def _get_fixed_ip_rule_priority(self, namespace, fip):
+        iprule = ip_lib.IPRule(namespace)
+        lines = iprule.rule._as_root([4], ['show']).splitlines()
+        for line in lines:
+            if fip in line:
+                info = iprule.rule._parse_line(4, line)
+                return info['priority']
+
     def test_dvr_router_add_internal_network_set_arp_cache(self):
         # Check that, when the router is set up and there are
         # existing ports on the the uplinked subnet, the ARP
