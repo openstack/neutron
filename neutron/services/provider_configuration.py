@@ -51,6 +51,8 @@ def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
     try:
         driver_manager = stevedore.driver.DriverManager(
             namespace, driver).driver
+    except ImportError:
+        return driver
     except RuntimeError:
         return driver
     new_driver = "%s.%s" % (driver_manager.__module__,
