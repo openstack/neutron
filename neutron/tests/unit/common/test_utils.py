@@ -679,3 +679,24 @@ class TestEnsureDir(base.BaseTestCase):
     def test_ensure_dir_calls_makedirs(self, makedirs):
         utils.ensure_dir("/etc/create/directory")
         makedirs.assert_called_once_with("/etc/create/directory", 0o755)
+
+
+class TestCamelize(base.BaseTestCase):
+    def test_camelize(self):
+        data = {'bandwidth_limit': 'BandwidthLimit',
+                'test': 'Test',
+                'some__more__dashes': 'SomeMoreDashes',
+                'a_penguin_walks_into_a_bar': 'APenguinWalksIntoABar'}
+
+        for s, expected in data.items():
+            self.assertEqual(expected, utils.camelize(s))
+
+
+class TestRoundVal(base.BaseTestCase):
+    def test_round_val_ok(self):
+        for expected, value in ((0, 0),
+                                (0, 0.1),
+                                (1, 0.5),
+                                (1, 1.49),
+                                (2, 1.5)):
+            self.assertEqual(expected, utils.round_val(value))

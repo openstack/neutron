@@ -58,8 +58,10 @@ Neutron Internals
    plugin-api
    db_layer
    rpc_api
+   rpc_callbacks
    layer3
    l2_agents
+   quality_of_service
    advanced_services
    oslo-incubator
    callbacks

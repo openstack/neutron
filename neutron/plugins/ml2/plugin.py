@@ -31,6 +31,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
+from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -76,6 +77,7 @@ from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
 from neutron.quota import resource_registry
+from neutron.services.qos import qos_consts
 
 LOG = log.getLogger(__name__)
 
@@ -161,7 +163,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dvr_rpc.DVRServerRpcCallback(),
             dhcp_rpc.DhcpRpcCallback(),
             agents_db.AgentExtRpcCallback(),
-            metadata_rpc.MetadataRpcCallback()
+            metadata_rpc.MetadataRpcCallback(),
+            resources_rpc.ResourcesPullRpcCallback()
         ]
 
     def _setup_dhcp(self):
@@ -170,6 +173,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.network_scheduler_driver
         )
         self.start_periodic_dhcp_agent_status_check()
+
+    @property
+    def supported_qos_rule_types(self):
+        return self.mechanism_manager.supported_qos_rule_types
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
@@ -1118,6 +1125,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if (psec.PORTSECURITY in attrs) and (
                         original_port[psec.PORTSECURITY] !=
                         updated_port[psec.PORTSECURITY]):
+                need_port_update_notify = True
+            # TODO(QoS): Move out to the extension framework somehow.
+            # Follow https://review.openstack.org/#/c/169223 for a solution.
+            if (qos_consts.QOS_POLICY_ID in attrs and
+                    original_port[qos_consts.QOS_POLICY_ID] !=
+                    updated_port[qos_consts.QOS_POLICY_ID]):
                 need_port_update_notify = True
 
             if addr_pair.ADDRESS_PAIRS in attrs:
