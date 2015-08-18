@@ -100,6 +100,14 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                           self.mixin._validate_router_migration,
                           self.ctx, router_db, {'distributed': False})
 
+    def test_upgrade_active_router_to_distributed_validation_failure(self):
+        router = {'name': 'foo_router', 'admin_state_up': True}
+        router_db = self._create_router(router)
+        update = {'distributed': True}
+        self.assertRaises(exceptions.BadRequest,
+                          self.mixin._validate_router_migration,
+                          self.ctx, router_db, update)
+
     def test_update_router_db_centralized_to_distributed(self):
         router = {'name': 'foo_router', 'admin_state_up': True}
         agent = {'id': _uuid()}
@@ -603,7 +611,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertEqual(1, len(dvr_ports))
 
     def test__validate_router_migration_notify_advanced_services(self):
-        router = {'name': 'foo_router', 'admin_state_up': True}
+        router = {'name': 'foo_router', 'admin_state_up': False}
         router_db = self._create_router(router)
         with mock.patch.object(l3_dvr_db.registry, 'notify') as mock_notify:
             self.mixin._validate_router_migration(

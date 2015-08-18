@@ -32,6 +32,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
 
     def test_update_router_db_centralized_to_distributed(self):
         router = self._create_router(distributed=False)
+        # router needs to be in admin state down in order to be upgraded to DVR
+        self.l3_plugin.update_router(
+            self.context, router['id'], {'router': {'admin_state_up': False}})
         self.assertFalse(router['distributed'])
         self.l3_plugin.update_router(
             self.context, router['id'], {'router': {'distributed': True}})
