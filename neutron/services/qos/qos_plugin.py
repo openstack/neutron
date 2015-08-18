@@ -23,6 +23,7 @@ from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.notification_drivers import manager as driver_mgr
+from neutron.services.qos import qos_consts
 
 
 LOG = logging.getLogger(__name__)
@@ -151,6 +152,8 @@ class QoSPlugin(qos.QoSPluginBase):
         with db_api.autonested_transaction(context.session):
             # first, validate that we have access to the policy
             self._get_policy_obj(context, policy_id)
+            filters = filters or dict()
+            filters[qos_consts.QOS_POLICY_ID] = policy_id
             return rule_object.QosBandwidthLimitRule.get_objects(context,
                                                                  **filters)
 
