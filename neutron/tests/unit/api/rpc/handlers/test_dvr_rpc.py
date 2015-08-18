@@ -47,7 +47,9 @@ class DVRServerRpcApiTestCase(base.BaseTestCase):
             host='foo_host', subnet='foo_subnet')
 
     def test_get_subnet_for_dvr(self):
-        self.rpc.get_subnet_for_dvr(self.ctxt, 'foo_subnet')
+        self.rpc.get_subnet_for_dvr(
+            self.ctxt, 'foo_subnet', fixed_ips='foo_fixed_ips')
         self.mock_cctxt.call.assert_called_with(
             self.ctxt, 'get_subnet_for_dvr',
-            subnet='foo_subnet')
+            subnet='foo_subnet',
+            fixed_ips='foo_fixed_ips')
