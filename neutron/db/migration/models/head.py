@@ -65,9 +65,6 @@ from neutron.plugins.ml2.drivers import type_vxlan  # noqa
 from neutron.plugins.ml2 import models  # noqa
 from neutron.plugins.nec.db import models as nec_models  # noqa
 from neutron.plugins.nuage import nuage_models  # noqa
-from neutron.plugins.vmware.dbexts import nsx_models  # noqa
-from neutron.plugins.vmware.dbexts import nsxv_models  # noqa
-from neutron.plugins.vmware.dbexts import vcns_models  # noqa
 
 
 def get_metadata():
