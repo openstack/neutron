@@ -39,9 +39,8 @@ EOF
 
     export DEVSTACK_LOCAL_CONFIG+="
 enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas
+enable_plugin neutron git://git.openstack.org/openstack/neutron
 "
 
-    export DEVSTACK_LOCAL_CONFIG+="DISABLE_NETWORK_API_EXTENSIONS=qos
-"
     $BASE/new/devstack-gate/devstack-vm-gate.sh
 fi
