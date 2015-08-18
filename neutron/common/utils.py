@@ -263,7 +263,7 @@ def str2dict(string):
 
 
 def dict2tuple(d):
-    items = d.items()
+    items = list(d.items())
     items.sort()
     return tuple(items)
 
