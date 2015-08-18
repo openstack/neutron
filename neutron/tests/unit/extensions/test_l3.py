@@ -2477,6 +2477,23 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         fip['floatingip']['floating_ip_address'])
                 self.assertEqual(floating_ip.version, 4)
 
+    def test_create_router_gateway_fails(self):
+        # Force _update_router_gw_info failure
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        ctx = context.Context('', 'foo')
+        plugin._update_router_gw_info = mock.Mock(
+            side_effect=n_exc.NeutronException)
+        data = {'router': {
+            'name': 'router1', 'admin_state_up': True,
+            'external_gateway_info': {'network_id': 'some_uuid'}}}
+
+        # Verify router doesn't persist on failure
+        self.assertRaises(n_exc.NeutronException,
+                          plugin.create_router, ctx, data)
+        routers = plugin.get_routers(ctx)
+        self.assertEqual(0, len(routers))
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
