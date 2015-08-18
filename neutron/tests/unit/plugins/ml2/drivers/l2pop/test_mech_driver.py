@@ -785,7 +785,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         l2pop_mech.L2PopulationAgentNotify = mock.Mock()
         l2pop_mech.rpc_ctx = mock.Mock()
         with mock.patch.object(l2pop_mech,
-                               '_update_port_down',
+                               '_get_agent_fdb',
                                return_value=None) as upd_port_down,\
                 mock.patch.object(l2pop_mech.L2PopulationAgentNotify,
                                   'remove_fdb_entries'):
