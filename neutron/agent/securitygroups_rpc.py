@@ -110,23 +110,6 @@ class SecurityGroupAgentRpc(object):
         self.global_refresh_firewall = False
         self._use_enhanced_rpc = None
 
-    def set_local_zone(self, device):
-        """Set local zone id for device
-
-        In order to separate conntrack in different networks, a local zone
-        id is needed to generate related iptables rules. This routine sets
-        zone id to device according to the network it belongs to. For OVS
-        agent, vlan id of each network can be used as zone id.
-
-        :param device: dictionary of device information, get network id by
-        device['network_id'], and set zone id by device['zone_id']
-        """
-        net_id = device['network_id']
-        zone_id = None
-        if self.local_vlan_map and net_id in self.local_vlan_map:
-            zone_id = self.local_vlan_map[net_id].vlan
-        device['zone_id'] = zone_id
-
     @property
     def use_enhanced_rpc(self):
         if self._use_enhanced_rpc is None:
@@ -176,7 +159,6 @@ class SecurityGroupAgentRpc(object):
 
         with self.firewall.defer_apply():
             for device in devices.values():
-                self.set_local_zone(device)
                 self.firewall.prepare_port_filter(device)
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
@@ -267,7 +249,6 @@ class SecurityGroupAgentRpc(object):
         with self.firewall.defer_apply():
             for device in devices.values():
                 LOG.debug("Update port filter for %s", device['device'])
-                self.set_local_zone(device)
                 self.firewall.update_port_filter(device)
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",

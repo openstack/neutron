@@ -23,7 +23,8 @@ LOG = logging.getLogger(__name__)
 class IpConntrackManager(object):
     """Smart wrapper for ip conntrack."""
 
-    def __init__(self, execute=None, namespace=None):
+    def __init__(self, zone_lookup_func, execute=None, namespace=None):
+        self.get_device_zone = zone_lookup_func
         self.execute = execute or linux_utils.execute
         self.namespace = namespace
 
@@ -48,9 +49,7 @@ class IpConntrackManager(object):
         cmd = self._generate_conntrack_cmd_by_rule(rule, self.namespace)
         ethertype = rule.get('ethertype')
         for device_info in device_info_list:
-            zone_id = device_info.get('zone_id')
-            if not zone_id:
-                continue
+            zone_id = self.get_device_zone(device_info['device'])
             ips = device_info.get('fixed_ips', [])
             for ip in ips:
                 net = netaddr.IPNetwork(ip)
