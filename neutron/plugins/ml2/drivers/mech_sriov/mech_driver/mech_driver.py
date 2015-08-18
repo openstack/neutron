@@ -38,9 +38,12 @@ sriov_opts = [
                       "Repository. Default enables support for Intel "
                       "and Mellanox SR-IOV capable NICs")),
     cfg.BoolOpt('agent_required',
-                default=False,
-                help=_("SRIOV neutron agent is required for port binding")),
-
+                default=True,
+                help=_("SRIOV neutron agent is required for port binding. "
+                       'DEPRECATED: This option is deprecated in the Liberty '
+                       'release and will be removed in the Mitaka release. '
+                       'From Mitaka the agent will always be required.'),
+                deprecated_for_removal=True),
 ]
 
 cfg.CONF.register_opts(sriov_opts, "ml2_sriov")
