@@ -65,7 +65,7 @@ def set_resources_dirty(context):
         return
 
     for res in get_all_resources().values():
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             if is_tracked(res.name) and res.dirty:
                 res.mark_dirty(context, nested=True)
 

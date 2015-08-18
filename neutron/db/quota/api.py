@@ -13,9 +13,19 @@
 #    under the License.
 
 import collections
+import datetime
+
+import sqlalchemy as sa
+from sqlalchemy.orm import exc as orm_exc
+from sqlalchemy import sql
 
 from neutron.db import common_db_mixin as common_db_api
 from neutron.db.quota import models as quota_models
+
+
+# Wrapper for utcnow - needed for mocking it in unit tests
+def utcnow():
+    return datetime.datetime.utcnow()
 
 
 class QuotaUsageInfo(collections.namedtuple(
@@ -25,6 +35,32 @@ class QuotaUsageInfo(collections.namedtuple(
     def total(self):
         """Total resource usage (reserved and used)."""
         return self.reserved + self.used
+
+
+class ReservationInfo(object):
+    """Information about a resource reservation."""
+
+    def __init__(self, reservation_id, tenant_id, expiration, deltas):
+        self._reservation_id = reservation_id
+        self._tenant_id = tenant_id
+        self._expiration = expiration
+        self._deltas = deltas
+
+    @property
+    def reservation_id(self):
+        return self._reservation_id
+
+    @property
+    def tenant_id(self):
+        return self._tenant_id
+
+    @property
+    def expiration(self):
+        return self._expiration
+
+    @property
+    def deltas(self):
+        return self._deltas
 
 
 def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
@@ -157,3 +193,105 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
     query = common_db_api.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource)
     return query.update({'dirty': dirty})
+
+
+def create_reservation(context, tenant_id, deltas, expiration=None):
+    # This method is usually called from within another transaction.
+    # Consider using begin_nested
+    with context.session.begin(subtransactions=True):
+        expiration = expiration or (utcnow() + datetime.timedelta(0, 120))
+        resv = quota_models.Reservation(tenant_id=tenant_id,
+                                        expiration=expiration)
+        context.session.add(resv)
+        for (resource, delta) in deltas.items():
+            context.session.add(
+                quota_models.ResourceDelta(resource=resource,
+                                           amount=delta,
+                                           reservation=resv))
+        # quota_usage for all resources involved in this reservation must
+        # be marked as dirty
+        set_resources_quota_usage_dirty(
+            context, deltas.keys(), tenant_id)
+    return ReservationInfo(resv['id'],
+                           resv['tenant_id'],
+                           resv['expiration'],
+                           dict((delta.resource, delta.amount)
+                                for delta in resv.resource_deltas))
+
+
+def get_reservation(context, reservation_id):
+    query = context.session.query(quota_models.Reservation).filter_by(
+        id=reservation_id)
+    resv = query.first()
+    if not resv:
+        return
+    return ReservationInfo(resv['id'],
+                           resv['tenant_id'],
+                           resv['expiration'],
+                           dict((delta.resource, delta.amount)
+                                for delta in resv.resource_deltas))
+
+
+def remove_reservation(context, reservation_id, set_dirty=False):
+    delete_query = context.session.query(quota_models.Reservation).filter_by(
+        id=reservation_id)
+    # Not handling MultipleResultsFound as the query is filtering by primary
+    # key
+    try:
+        reservation = delete_query.one()
+    except orm_exc.NoResultFound:
+        # TODO(salv-orlando): Raise here and then handle the exception?
+        return
+    tenant_id = reservation.tenant_id
+    resources = [delta.resource for delta in reservation.resource_deltas]
+    num_deleted = delete_query.delete()
+    if set_dirty:
+        # quota_usage for all resource involved in this reservation must
+        # be marked as dirty
+        set_resources_quota_usage_dirty(context, resources, tenant_id)
+    return num_deleted
+
+
+def get_reservations_for_resources(context, tenant_id, resources,
+                                   expired=False):
+    """Retrieve total amount of reservations for specified resources.
+
+    :param context: Neutron context with db session
+    :param tenant_id: Tenant identifier
+    :param resources: Resources for which reserved amounts should be fetched
+    :param expired: False to fetch active reservations, True to fetch expired
+                    reservations (defaults to False)
+    :returns: a dictionary mapping resources with corresponding deltas
+    """
+    if not resources:
+        # Do not waste time
+        return
+    now = utcnow()
+    resv_query = context.session.query(
+        quota_models.ResourceDelta.resource,
+        quota_models.Reservation.expiration,
+        sql.func.sum(quota_models.ResourceDelta.amount)).join(
+        quota_models.Reservation)
+    if expired:
+        exp_expr = (quota_models.Reservation.expiration < now)
+    else:
+        exp_expr = (quota_models.Reservation.expiration >= now)
+    resv_query = resv_query.filter(sa.and_(
+        quota_models.Reservation.tenant_id == tenant_id,
+        quota_models.ResourceDelta.resource.in_(resources),
+        exp_expr)).group_by(
+        quota_models.ResourceDelta.resource)
+    return dict((resource, total_reserved)
+           for (resource, exp, total_reserved) in resv_query)
+
+
+def remove_expired_reservations(context, tenant_id=None):
+    now = utcnow()
+    resv_query = context.session.query(quota_models.Reservation)
+    if tenant_id:
+        tenant_expr = (quota_models.Reservation.tenant_id == tenant_id)
+    else:
+        tenant_expr = sql.true()
+    resv_query = resv_query.filter(sa.and_(
+        tenant_expr, quota_models.Reservation.expiration < now))
+    return resv_query.delete()

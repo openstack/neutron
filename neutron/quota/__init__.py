@@ -24,6 +24,7 @@ import six
 import webob
 
 from neutron.common import exceptions
+from neutron.db.quota import api as quota_api
 from neutron.i18n import _LI, _LW
 from neutron.quota import resource_registry
 
@@ -152,6 +153,33 @@ class ConfDriver(object):
         msg = _('Access to this resource was denied.')
         raise webob.exc.HTTPForbidden(msg)
 
+    def make_reservation(self, context, tenant_id, resources, deltas, plugin):
+        """This driver does not support reservations.
+
+        This routine is provided for backward compatibility purposes with
+        the API controllers which have now been adapted to make reservations
+        rather than counting resources and checking limits - as this
+        routine ultimately does.
+        """
+        for resource in deltas.keys():
+            count = QUOTAS.count(context, resource, plugin, tenant_id)
+            total_use = deltas.get(resource, 0) + count
+            deltas[resource] = total_use
+
+        self.limit_check(
+            context,
+            tenant_id,
+            resource_registry.get_all_resources(),
+            deltas)
+        # return a fake reservation - the REST controller expects it
+        return quota_api.ReservationInfo('fake', None, None, None)
+
+    def commit_reservation(self, context, reservation_id):
+        """Tnis is a noop as this driver does not support reservations."""
+
+    def cancel_reservation(self, context, reservation_id):
+        """Tnis is a noop as this driver does not support reservations."""
+
 
 class QuotaEngine(object):
     """Represent the set of recognized quotas."""
@@ -210,6 +238,39 @@ class QuotaEngine(object):
 
         return res.count(context, *args, **kwargs)
 
+    def make_reservation(self, context, tenant_id, deltas, plugin):
+        # Verify that resources are managed by the quota engine
+        # Ensure no value is less than zero
+        unders = [key for key, val in deltas.items() if val < 0]
+        if unders:
+            raise exceptions.InvalidQuotaValue(unders=sorted(unders))
+
+        requested_resources = set(deltas.keys())
+        all_resources = resource_registry.get_all_resources()
+        managed_resources = set([res for res in all_resources.keys()
+                                 if res in requested_resources])
+        # Make sure we accounted for all of them...
+        unknown_resources = requested_resources - managed_resources
+
+        if unknown_resources:
+            raise exceptions.QuotaResourceUnknown(
+                unknown=sorted(unknown_resources))
+        # FIXME(salv-orlando): There should be no reason for sending all the
+        # resource in the registry to the quota driver, but as other driver
+        # APIs request them, this will be sorted out with a different patch.
+        return self.get_driver().make_reservation(
+            context,
+            tenant_id,
+            all_resources,
+            deltas,
+            plugin)
+
+    def commit_reservation(self, context, reservation_id):
+        self.get_driver().commit_reservation(context, reservation_id)
+
+    def cancel_reservation(self, context, reservation_id):
+        self.get_driver().cancel_reservation(context, reservation_id)
+
     def limit_check(self, context, tenant_id, **values):
         """Check simple quota limits.
 
@@ -232,6 +293,7 @@ class QuotaEngine(object):
         :param tenant_id: Tenant for which the quota limit is being checked
         :param values: Dict specifying requested deltas for each resource
         """
+        # TODO(salv-orlando): Deprecate calls to this API
         # Verify that resources are managed by the quota engine
         requested_resources = set(values.keys())
         managed_resources = set([res for res in

@@ -27,16 +27,22 @@ class FakePlugin(base_plugin.NeutronDbPluginV2, driver.DbQuotaDriver):
 class TestResource(object):
     """Describe a test resource for quota checking."""
 
-    def __init__(self, name, default):
+    def __init__(self, name, default, fake_count=0):
         self.name = name
         self.quota = default
+        self.fake_count = fake_count
 
     @property
     def default(self):
         return self.quota
 
+    def count(self, *args, **kwargs):
+        return self.fake_count
+
+
 PROJECT = 'prj_test'
 RESOURCE = 'res_test'
+ALT_RESOURCE = 'res_test_meh'
 
 
 class TestDbQuotaDriver(testlib_api.SqlTestCase):
@@ -132,3 +138,63 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase):
         self.assertRaises(exceptions.InvalidQuotaValue,
                           self.plugin.limit_check, context.get_admin_context(),
                           PROJECT, resources, values)
+
+    def _test_make_reservation_success(self, quota_driver,
+                                       resource_name, deltas):
+        resources = {resource_name: TestResource(resource_name, 2)}
+        self.plugin.update_quota_limit(self.context, PROJECT, resource_name, 2)
+        reservation = quota_driver.make_reservation(
+            self.context,
+            self.context.tenant_id,
+            resources,
+            deltas,
+            self.plugin)
+        self.assertIn(resource_name, reservation.deltas)
+        self.assertEqual(deltas[resource_name],
+                         reservation.deltas[resource_name])
+        self.assertEqual(self.context.tenant_id,
+                         reservation.tenant_id)
+
+    def test_make_reservation_single_resource(self):
+        quota_driver = driver.DbQuotaDriver()
+        self._test_make_reservation_success(
+            quota_driver, RESOURCE, {RESOURCE: 1})
+
+    def test_make_reservation_fill_quota(self):
+        quota_driver = driver.DbQuotaDriver()
+        self._test_make_reservation_success(
+            quota_driver, RESOURCE, {RESOURCE: 2})
+
+    def test_make_reservation_multiple_resources(self):
+        quota_driver = driver.DbQuotaDriver()
+        resources = {RESOURCE: TestResource(RESOURCE, 2),
+                     ALT_RESOURCE: TestResource(ALT_RESOURCE, 2)}
+        deltas = {RESOURCE: 1, ALT_RESOURCE: 2}
+        self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
+        self.plugin.update_quota_limit(self.context, PROJECT, ALT_RESOURCE, 2)
+        reservation = quota_driver.make_reservation(
+            self.context,
+            self.context.tenant_id,
+            resources,
+            deltas,
+            self.plugin)
+        self.assertIn(RESOURCE, reservation.deltas)
+        self.assertIn(ALT_RESOURCE, reservation.deltas)
+        self.assertEqual(1, reservation.deltas[RESOURCE])
+        self.assertEqual(2, reservation.deltas[ALT_RESOURCE])
+        self.assertEqual(self.context.tenant_id,
+                         reservation.tenant_id)
+
+    def test_make_reservation_over_quota_fails(self):
+        quota_driver = driver.DbQuotaDriver()
+        resources = {RESOURCE: TestResource(RESOURCE, 2,
+                                            fake_count=2)}
+        deltas = {RESOURCE: 1}
+        self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
+        self.assertRaises(exceptions.OverQuota,
+                          quota_driver.make_reservation,
+                          self.context,
+                          self.context.tenant_id,
+                          resources,
+                          deltas,
+                          self.plugin)

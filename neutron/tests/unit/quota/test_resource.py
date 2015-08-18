@@ -165,7 +165,8 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
             res.count(self.context, None, self.tenant_id,
                       resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.tenant_id,
+                reserved=0, in_use=2)
 
     def test_count_with_dirty_true_no_usage_info(self):
         res = self._create_resource()
@@ -184,7 +185,8 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
                                             self.tenant_id)
             res.count(self.context, None, self.tenant_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.tenant_id,
+                reserved=0, in_use=2)
 
     def test_add_delete_data_triggers_event(self):
         res = self._create_resource()
@@ -251,4 +253,5 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
             # and now it should be in sync
             self.assertNotIn(self.tenant_id, res._out_of_sync_tenants)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.tenant_id,
+                reserved=0, in_use=2)
