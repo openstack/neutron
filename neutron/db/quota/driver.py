@@ -91,6 +91,8 @@ class DbQuotaDriver(object):
 
             tenant_quota[quota['resource']] = quota['limit']
 
+        # Convert values to a list to as caller expect an indexable iterable,
+        # where python3's dict_values does not support indexing
         return list(all_tenant_quotas.values())
 
     @staticmethod
