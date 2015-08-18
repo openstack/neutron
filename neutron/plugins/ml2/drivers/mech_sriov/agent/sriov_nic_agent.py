@@ -64,8 +64,20 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         # Do not store port details, as if they're used for processing
         # notifications there is no guarantee the notifications are
         # processed in the same order as the relevant API requests.
-        self.agent.updated_devices.add(port['mac_address'])
-        LOG.debug("port_update RPC received for port: %s", port['id'])
+        mac = port['mac_address']
+        pci_slot = None
+        if port.get('binding:profile'):
+            pci_slot = port['binding:profile'].get('pci_slot')
+
+        if pci_slot:
+            self.agent.updated_devices.add((mac, pci_slot))
+            LOG.debug("port_update RPC received for port: %(id)s with MAC "
+                      "%(mac)s and PCI slot %(pci_slot)s slot",
+                      {'id': port['id'], 'mac': mac, 'pci_slot': pci_slot})
+        else:
+            LOG.debug("No PCI Slot for port %(id)s with MAC %(mac)s; "
+                      "skipping", {'id': port['id'], 'mac': mac,
+                                   'pci_slot': pci_slot})
 
 
 class SriovNicSwitchAgent(object):
@@ -87,6 +99,7 @@ class SriovNicSwitchAgent(object):
 
         # Stores port update notifications for processing in the main loop
         self.updated_devices = set()
+        self.mac_to_port_id_mapping = {}
 
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -128,7 +141,7 @@ class SriovNicSwitchAgent(object):
 
     def _report_state(self):
         try:
-            devices = len(self.eswitch_mgr.get_assigned_devices())
+            devices = len(self.eswitch_mgr.get_assigned_devices_info())
             self.agent_state.get('configurations')['devices'] = devices
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
@@ -147,7 +160,7 @@ class SriovNicSwitchAgent(object):
         self.eswitch_mgr.discover_devices(device_mappings, exclude_devices)
 
     def scan_devices(self, registered_devices, updated_devices):
-        curr_devices = self.eswitch_mgr.get_assigned_devices()
+        curr_devices = self.eswitch_mgr.get_assigned_devices_info()
         device_info = {}
         device_info['current'] = curr_devices
         device_info['added'] = curr_devices - registered_devices
@@ -214,14 +227,15 @@ class SriovNicSwitchAgent(object):
         else:
             LOG.info(_LI("No device with MAC %s defined on agent."), device)
 
-    def treat_devices_added_updated(self, devices):
+    def treat_devices_added_updated(self, devices_info):
         try:
+            macs_list = set([device_info[0] for device_info in devices_info])
             devices_details_list = self.plugin_rpc.get_devices_details_list(
-                self.context, devices, self.agent_id)
+                self.context, macs_list, self.agent_id)
         except Exception as e:
             LOG.debug("Unable to get port details for devices "
-                      "with MAC address %(devices)s: %(e)s",
-                      {'devices': devices, 'e': e})
+                      "with MAC addresses %(devices)s: %(e)s",
+                      {'devices': macs_list, 'e': e})
             # resync is needed
             return True
 
@@ -232,9 +246,11 @@ class SriovNicSwitchAgent(object):
             if 'port_id' in device_details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
+                port_id = device_details['port_id']
+                self.mac_to_port_id_mapping[device] = port_id
                 profile = device_details['profile']
                 spoofcheck = device_details.get('port_security_enabled', True)
-                self.treat_device(device_details['device'],
+                self.treat_device(device,
                                   profile.get('pci_slot'),
                                   device_details['admin_state_up'],
                                   spoofcheck)
@@ -247,31 +263,41 @@ class SriovNicSwitchAgent(object):
     def treat_devices_removed(self, devices):
         resync = False
         for device in devices:
-            LOG.info(_LI("Removing device with mac_address %s"), device)
+            mac, pci_slot = device
+            LOG.info(_LI("Removing device with MAC address %(mac)s and "
+                         "PCI slot %(pci_slot)s"),
+                     {'mac': mac, 'pci_slot': pci_slot})
             try:
-                pci_slot = self.eswitch_mgr.get_pci_slot_by_mac(device)
-                if pci_slot:
+                port_id = self.mac_to_port_id_mapping.get(mac)
+                if port_id:
                     profile = {'pci_slot': pci_slot}
-                    port = {'device': device, 'profile': profile}
+                    port = {'port_id': port_id,
+                            'device': mac,
+                            'profile': profile}
                     self.ext_manager.delete_port(self.context, port)
+                    del self.mac_to_port_id_mapping[mac]
                 else:
-                    LOG.warning(_LW("Failed to find pci slot for device "
-                                    "%(device)s; skipping extension port "
-                                    "cleanup"), device)
-
+                    LOG.warning(_LW("port_id to device with MAC "
+                                 "%s not found"), mac)
                 dev_details = self.plugin_rpc.update_device_down(self.context,
-                                                                 device,
+                                                                 mac,
                                                                  self.agent_id,
                                                                  cfg.CONF.host)
+
             except Exception as e:
-                LOG.debug("Removing port failed for device %(device)s "
-                          "due to %(exc)s", {'device': device, 'exc': e})
+                LOG.debug("Removing port failed for device with MAC address "
+                          "%(mac)s and PCI slot %(pci_slot)s due to %(exc)s",
+                          {'mac': mac, 'pci_slot': pci_slot, 'exc': e})
                 resync = True
                 continue
             if dev_details['exists']:
-                LOG.info(_LI("Port %s updated."), device)
+                LOG.info(_LI("Port with MAC %(mac)s and PCI slot "
+                             "%(pci_slot)s updated."),
+                         {'mac': mac, 'pci_slot': pci_slot})
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.debug("Device with MAC %(mac)s and PCI slot "
+                          "%(pci_slot)s not defined on plugin",
+                          {'mac': mac, 'pci_slot': pci_slot})
         return resync
 
     def daemon_loop(self):

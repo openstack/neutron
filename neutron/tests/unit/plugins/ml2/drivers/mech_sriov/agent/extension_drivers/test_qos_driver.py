@@ -37,7 +37,9 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         self.qos_driver.initialize()
         self.qos_driver.eswitch_mgr = mock.Mock()
         self.qos_driver.eswitch_mgr.set_device_max_rate = mock.Mock()
+        self.qos_driver.eswitch_mgr.clear_max_rate = mock.Mock()
         self.max_rate_mock = self.qos_driver.eswitch_mgr.set_device_max_rate
+        self.clear_max_rate_mock = self.qos_driver.eswitch_mgr.clear_max_rate
         self.rule = self._create_bw_limit_rule_obj()
         self.qos_policy = self._create_qos_policy_obj([self.rule])
         self.port = self._create_fake_port()
@@ -78,8 +80,7 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
 
     def test_delete_rules(self):
         self.qos_driver.delete(self.port, self.qos_policy)
-        self.max_rate_mock.assert_called_once_with(
-            self.ASSIGNED_MAC, self.PCI_SLOT, 0)
+        self.clear_max_rate_mock.assert_called_once_with(self.PCI_SLOT)
 
     def test__set_vf_max_rate_captures_sriov_failure(self):
         self.max_rate_mock.side_effect = exceptions.SriovNicError()
