@@ -69,18 +69,12 @@ class QosPortPolicyBinding(model_base.BASEV2):
                                cascade='delete', lazy='joined'))
 
 
-class QosRuleColumns(models_v2.HasId):
-    # NOTE(ihrachyshka): we may need to rework it later when we introduce types
-    # that should not enforce uniqueness
-    qos_policy_id = sa.Column(sa.String(36), nullable=False, unique=True)
-
-    __table_args__ = (
-        sa.ForeignKeyConstraint(['qos_policy_id'], ['qos_policies.id']),
-        model_base.BASEV2.__table_args__
-    )
-
-
-class QosBandwidthLimitRule(QosRuleColumns, model_base.BASEV2):
+class QosBandwidthLimitRule(models_v2.HasId, model_base.BASEV2):
     __tablename__ = 'qos_bandwidth_limit_rules'
+    qos_policy_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('qos_policies.id',
+                                            ondelete='CASCADE'),
+                              nullable=False,
+                              unique=True)
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)

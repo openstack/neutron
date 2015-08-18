@@ -13,6 +13,7 @@
 #    under the License.
 
 from tempest_lib import exceptions
+import testtools
 
 from neutron.services.qos import qos_consts
 from neutron.tests.api import base
@@ -284,6 +285,20 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_port(port['id'])
         self.admin_client.delete_qos_policy(policy['id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a2a5849b-dd06-4b18-9664-0b6828a1fc27')
+    def test_qos_policy_delete_with_rules(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.admin_client.create_bandwidth_limit_rule(
+            policy['id'], 200, 1337)['bandwidth_limit_rule']
+
+        self.admin_client.delete_qos_policy(policy['id'])
+
+        with testtools.ExpectedException(exceptions.NotFound):
+            self.admin_client.show_qos_policy(policy['id'])
 
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
