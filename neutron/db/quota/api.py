@@ -280,7 +280,8 @@ def get_reservations_for_resources(context, tenant_id, resources,
         quota_models.Reservation.tenant_id == tenant_id,
         quota_models.ResourceDelta.resource.in_(resources),
         exp_expr)).group_by(
-        quota_models.ResourceDelta.resource)
+        quota_models.ResourceDelta.resource,
+        quota_models.Reservation.expiration)
     return dict((resource, total_reserved)
            for (resource, exp, total_reserved) in resv_query)
 
