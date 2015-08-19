@@ -173,7 +173,7 @@ Functionality legend
 Arista
 ++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-arista
+* Git: https://git.openstack.org/cgit/openstack/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
 
@@ -215,7 +215,7 @@ Brocade
 Cisco
 +++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-cisco
+* Git: https://git.openstack.org/cgit/openstack/networking-cisco
 * Launchpad: https://launchpad.net/networking-cisco
 * PyPI: https://pypi.python.org/pypi/networking-cisco
 
@@ -360,7 +360,7 @@ Open DPDK
 PLUMgrid
 ++++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-plumgrid
+* Git: https://git.openstack.org/cgit/openstack/networking-plumgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
 
