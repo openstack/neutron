@@ -18,9 +18,6 @@ from networking_odl.ml2 import mech_driver
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron.common import constants as n_const
-from neutron.extensions import portbindings
-from neutron.plugins.common import constants
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
@@ -59,8 +56,7 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         for opt in required_opts:
             if not getattr(self, opt):
                 raise cfg.RequiredOptError(opt, 'ml2_odl')
-        self.vif_type = portbindings.VIF_TYPE_OVS
-        self.vif_details = {portbindings.CAP_PORT_FILTER: True}
+
         self.odl_drv = mech_driver.OpenDaylightDriver()
 
     # Postcommit hooks are used to trigger synchronization.
@@ -93,33 +89,4 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         self.odl_drv.synchronize('delete', odl_const.ODL_PORTS, context)
 
     def bind_port(self, context):
-        LOG.debug("Attempting to bind port %(port)s on "
-                  "network %(network)s",
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-        for segment in context.segments_to_bind:
-            if self.check_segment(segment):
-                context.set_binding(segment[api.ID],
-                                    self.vif_type,
-                                    self.vif_details,
-                                    status=n_const.PORT_STATUS_ACTIVE)
-                LOG.debug("Bound using segment: %s", segment)
-                return
-            else:
-                LOG.debug("Refusing to bind port for segment ID %(id)s, "
-                          "segment %(seg)s, phys net %(physnet)s, and "
-                          "network type %(nettype)s",
-                          {'id': segment[api.ID],
-                           'seg': segment[api.SEGMENTATION_ID],
-                           'physnet': segment[api.PHYSICAL_NETWORK],
-                           'nettype': segment[api.NETWORK_TYPE]})
-
-    def check_segment(self, segment):
-        """Verify a segment is valid for the OpenDaylight MechanismDriver.
-
-        Verify the requested segment is supported by ODL and return True or
-        False to indicate this to callers.
-        """
-        network_type = segment[api.NETWORK_TYPE]
-        return network_type in [constants.TYPE_LOCAL, constants.TYPE_GRE,
-                                constants.TYPE_VXLAN, constants.TYPE_VLAN]
+        self.odl_drv.bind_port(context)

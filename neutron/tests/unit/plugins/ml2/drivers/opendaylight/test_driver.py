@@ -90,3 +90,17 @@ class TestODLShim(test_plugin.Ml2PluginV2TestCase):
         self.driver.odl_drv.synchronize.assert_called_with('delete',
                                                            const.ODL_PORTS,
                                                            self.context)
+
+    def test_bind_port_delegation(self):
+        # given front-end with attached back-end
+        front_end = self.driver
+        front_end.odl_drv = back_end = mock.MagicMock(
+            spec=driver.OpenDaylightMechanismDriver)
+        # given PortContext to be forwarded to back-end without using
+        context = object()
+
+        # when binding port
+        front_end.bind_port(context)
+
+        # then port is bound by back-end
+        back_end.bind_port.assert_called_once_with(context)
