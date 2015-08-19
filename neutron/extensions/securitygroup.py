@@ -217,6 +217,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
         'security_group_rules': {'allow_post': False, 'allow_put': False,
                                  'is_visible': True},
@@ -251,6 +252,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'convert_to': convert_ip_prefix_to_cidr},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
     }
 }
