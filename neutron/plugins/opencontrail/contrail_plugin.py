@@ -40,6 +40,7 @@ opencontrail_opts = [
 
 cfg.CONF.register_opts(opencontrail_opts, 'CONTRAIL')
 
+VIF_TYPE_VROUTER = 'vrouter'
 CONTRAIL_EXCEPTION_MAP = {
     requests.codes.not_found: c_exc.ContrailNotFoundError,
     requests.codes.conflict: c_exc.ContrailConflictError,
@@ -72,7 +73,7 @@ class NeutronPluginContrailCoreV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """return VIF type and details."""
 
         binding = {
-            portbindings.VIF_TYPE: portbindings.VIF_TYPE_VROUTER,
+            portbindings.VIF_TYPE: VIF_TYPE_VROUTER,
             portbindings.VIF_DETAILS: {
                 # TODO(praneetb): Replace with new VIF security details
                 portbindings.CAP_PORT_FILTER:

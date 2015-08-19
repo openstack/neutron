@@ -33,7 +33,7 @@ with mock.patch.dict(sys.modules,
 
 
 class MlnxMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_IB_HOSTDEV
+    VIF_TYPE = mech_mlnx.VIF_TYPE_IB_HOSTDEV
     CAP_PORT_FILTER = False
     AGENT_TYPE = constants.AGENT_TYPE_MLNX
     VNIC_TYPE = portbindings.VNIC_DIRECT
