@@ -133,7 +133,7 @@ class ResourceRegistry(object):
     there are usage counters which are kept in sync with the actual number
     of rows in the database, this class allows the plugin to register their
     names either explicitly or through the @tracked_resources decorator,
-    which should preferrably be applied to the __init__ method of the class.
+    which should preferably be applied to the __init__ method of the class.
     """
 
     _instance = None
