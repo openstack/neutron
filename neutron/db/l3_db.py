@@ -1173,7 +1173,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             return []
         qry = context.session.query(RouterPort)
         qry = qry.filter(
-            Router.id.in_(router_ids),
+            RouterPort.router_id.in_(router_ids),
             RouterPort.port_type.in_(device_owners)
         )
 
