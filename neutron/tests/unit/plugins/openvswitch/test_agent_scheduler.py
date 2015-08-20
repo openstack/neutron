@@ -1109,6 +1109,48 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                          set([a['configurations']['agent_mode'] for a in
                               l3agents['agents']]))
 
+    def test_dvr_router_snat_scheduling_late_ext_gw_add(self):
+        """Test snat scheduling for the case when dvr router is already
+        scheduled to all dvr_snat agents and then external gateway is added.
+        """
+        self._register_one_l3_agent(
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        self._register_one_l3_agent(
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        with self.subnet() as s_int,\
+                self.subnet(cidr='20.0.0.0/24') as s_ext:
+            net_id = s_ext['subnet']['network_id']
+            self._set_net_external(net_id)
+
+            router = {'name': 'router1',
+                      'admin_state_up': True,
+                      'distributed': True}
+            r = self.l3plugin.create_router(self.adminContext,
+                                            {'router': router})
+            # add router interface first
+            self.l3plugin.add_router_interface(self.adminContext, r['id'],
+                {'subnet_id': s_int['subnet']['id']})
+            # check that router is scheduled to both dvr_snat agents
+            l3agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(l3agents['agents']))
+            # check that snat is not scheduled as router is not connected to
+            # external network
+            snat_agents = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])
+            self.assertEqual(0, len(snat_agents))
+
+            # connect router to external network
+            self.l3plugin.update_router(self.adminContext, r['id'],
+                {'router': {'external_gateway_info': {'network_id': net_id}}})
+            # router should still be scheduled to both dvr_snat agents
+            l3agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(l3agents['agents']))
+            # now snat portion should be scheduled as router is connected
+            # to external network
+            snat_agents = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])
+            self.assertEqual(1, len(snat_agents))
+
     def test_dvr_router_csnat_rescheduling(self):
         self._register_one_l3_agent(
             host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
