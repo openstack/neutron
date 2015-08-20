@@ -1730,7 +1730,10 @@ def create_agent_config_map(config):
 
 
 def validate_local_ip(local_ip):
-    """Verify if the ip exists on the agent's host."""
+    """If tunneling is enabled, verify if the ip exists on the agent's host."""
+    if not cfg.CONF.AGENT.tunnel_types:
+        return
+
     if not ip_lib.IPWrapper().get_device_by_ip(local_ip):
         LOG.error(_LE("Tunneling can't be enabled with invalid local_ip '%s'."
                       " IP couldn't be found on this host's interfaces."),

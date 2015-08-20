@@ -2205,13 +2205,20 @@ class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
 
 
 class TestValidateTunnelLocalIP(base.BaseTestCase):
+    def test_validate_local_ip_no_tunneling(self):
+        cfg.CONF.set_override('tunnel_types', [], group='AGENT')
+        # The test will pass simply if no exception is raised by the next call:
+        ovs_agent.validate_local_ip(FAKE_IP1)
+
     def test_validate_local_ip_with_valid_ip(self):
+        cfg.CONF.set_override('tunnel_types', ['vxlan'], group='AGENT')
         mock_get_device_by_ip = mock.patch.object(
             ip_lib.IPWrapper, 'get_device_by_ip').start()
         ovs_agent.validate_local_ip(FAKE_IP1)
         mock_get_device_by_ip.assert_called_once_with(FAKE_IP1)
 
     def test_validate_local_ip_with_invalid_ip(self):
+        cfg.CONF.set_override('tunnel_types', ['vxlan'], group='AGENT')
         mock_get_device_by_ip = mock.patch.object(
             ip_lib.IPWrapper, 'get_device_by_ip').start()
         mock_get_device_by_ip.return_value = None
