@@ -23,6 +23,7 @@ import webob
 
 import fixtures
 from oslo_db import exception as db_exc
+from sqlalchemy.orm import exc as sqla_exc
 
 from neutron.callbacks import registry
 from neutron.common import constants
@@ -184,13 +185,19 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         plugin = manager.NeutronManager.get_plugin()
         with mock.patch.object(plugin, "delete_port",
                                side_effect=exc.PortNotFound(port_id="123")):
-            plugin._delete_ports(None, [mock.MagicMock()])
+            plugin._delete_ports(mock.MagicMock(), [mock.MagicMock()])
+        with mock.patch.object(plugin, "delete_port",
+                               side_effect=sqla_exc.ObjectDeletedError(None)):
+            plugin._delete_ports(mock.MagicMock(), [mock.MagicMock()])
 
     def test_subnet_delete_helper_tolerates_failure(self):
         plugin = manager.NeutronManager.get_plugin()
         with mock.patch.object(plugin, "delete_subnet",
                                side_effect=exc.SubnetNotFound(subnet_id="1")):
-            plugin._delete_subnets(None, [mock.MagicMock()])
+            plugin._delete_subnets(mock.MagicMock(), [mock.MagicMock()])
+        with mock.patch.object(plugin, "delete_subnet",
+                               side_effect=sqla_exc.ObjectDeletedError(None)):
+            plugin._delete_subnets(mock.MagicMock(), [mock.MagicMock()])
 
     def _create_and_verify_networks(self, networks):
         for net_idx, net in enumerate(networks):
