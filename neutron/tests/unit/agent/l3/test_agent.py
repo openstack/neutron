@@ -445,6 +445,29 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.periodic_sync_routers_task(agent.context)
         self.assertFalse(agent.namespaces_manager._clean_stale)
 
+    def test_periodic_sync_routers_task_call_clean_stale_meta_proxies(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        stale_router_ids = [_uuid(), _uuid()]
+        active_routers = [{'id': _uuid()}, {'id': _uuid()}]
+        self.plugin_api.get_routers.return_value = active_routers
+        namespace_list = [namespaces.NS_PREFIX + r_id
+                          for r_id in stale_router_ids]
+        namespace_list += [namespaces.NS_PREFIX + r['id']
+                           for r in active_routers]
+        self.mock_ip.get_namespaces.return_value = namespace_list
+        driver = metadata_driver.MetadataDriver
+        with mock.patch.object(
+                driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
+            agent.periodic_sync_routers_task(agent.context)
+
+            expected_calls = [mock.call(mock.ANY,
+                                        r_id,
+                                        namespaces.NS_PREFIX + r_id,
+                                        agent.conf)
+                              for r_id in stale_router_ids]
+            self.assertEqual(len(stale_router_ids), destroy_proxy.call_count)
+            destroy_proxy.assert_has_calls(expected_calls, any_order=True)
+
     def test_router_info_create(self):
         id = _uuid()
         ri = l3router.RouterInfo(id, {}, **self.ri_kwargs)
