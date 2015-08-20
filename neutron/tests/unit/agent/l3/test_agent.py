@@ -578,41 +578,60 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_external_gateway_updated_dual_stack(self):
         self._test_external_gateway_updated(dual_stack=True)
 
-    def _test_ext_gw_updated_dvr_agent_mode(self, host,
-                                            agent_mode, expected_call_count):
+    def _test_ext_gw_updated_dvr_edge_router(self, host_match,
+                                             snat_hosted_before=True):
+        """
+        Helper to test external gw update for edge router on dvr_snat agent
+
+        :param host_match: True if new gw host should be the same as agent host
+        :param snat_hosted_before: True if agent has already been hosting
+        snat for the router
+        """
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ri = dvr_router.DvrEdgeRouter(agent,
+        ri = dvr_router.DvrEdgeRouter(mock.Mock(),
                                       HOSTNAME,
                                       router['id'],
                                       router,
                                       **self.ri_kwargs)
-        ri.create_snat_namespace()
+        if snat_hosted_before:
+            ri.create_snat_namespace()
+            snat_ns_name = ri.snat_namespace.name
+        else:
+            self.assertIsNone(ri.snat_namespace)
+
         interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(self,
                                                                         ri)
         ri._external_gateway_added = mock.Mock()
 
-        # test agent mode = dvr (compute node)
-        router['gw_port_host'] = host
-        agent.conf.agent_mode = agent_mode
+        router['gw_port_host'] = ri.host if host_match else (ri.host + 'foo')
 
         ri.external_gateway_updated(ex_gw_port, interface_name)
-        # no gateway should be added on dvr node
-        self.assertEqual(expected_call_count,
-                         ri._external_gateway_added.call_count)
+        if not host_match:
+            self.assertFalse(ri._external_gateway_added.called)
+            if snat_hosted_before:
+                # host mismatch means that snat was rescheduled to another
+                # agent, hence need to verify that gw port was unplugged and
+                # snat namespace was deleted
+                self.mock_driver.unplug.assert_called_with(
+                    interface_name,
+                    bridge=self.conf.external_network_bridge,
+                    namespace=snat_ns_name,
+                    prefix=l3_agent.EXTERNAL_DEV_PREFIX)
+                self.assertIsNone(ri.snat_namespace)
+        else:
+            if not snat_hosted_before:
+                self.assertIsNotNone(ri.snat_namespace)
+            self.assertTrue(ri._external_gateway_added.called)
 
-    def test_ext_gw_updated_dvr_agent_mode(self):
-        # no gateway should be added on dvr node
-        self._test_ext_gw_updated_dvr_agent_mode('any-foo', 'dvr', 0)
+    def test_ext_gw_updated_dvr_edge_router(self):
+        self._test_ext_gw_updated_dvr_edge_router(host_match=True)
 
-    def test_ext_gw_updated_dvr_snat_agent_mode_no_host(self):
-        # no gateway should be added on dvr_snat node without host match
-        self._test_ext_gw_updated_dvr_agent_mode('any-foo', 'dvr_snat', 0)
+    def test_ext_gw_updated_dvr_edge_router_host_mismatch(self):
+        self._test_ext_gw_updated_dvr_edge_router(host_match=False)
 
-    def test_ext_gw_updated_dvr_snat_agent_mode_host(self):
-        # gateway should be added on dvr_snat node
-        self._test_ext_gw_updated_dvr_agent_mode(HOSTNAME,
-                                                 'dvr_snat', 1)
+    def test_ext_gw_updated_dvr_dvr_edge_router_snat_rescheduled(self):
+        self._test_ext_gw_updated_dvr_edge_router(host_match=True,
+                                                  snat_hosted_before=False)
 
     def test_agent_add_external_gateway(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)

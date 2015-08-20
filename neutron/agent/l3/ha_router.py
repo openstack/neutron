@@ -333,6 +333,16 @@ class HaRouter(router.RouterInfo):
         self.ha_state = state
         callback(self.router_id, state)
 
+    @staticmethod
+    def _gateway_ports_equal(port1, port2):
+        def _get_filtered_dict(d, ignore):
+            return {k: v for k, v in d.items() if k not in ignore}
+
+        keys_to_ignore = set(['binding:host_id'])
+        port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
+        port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
+        return port1_filtered == port2_filtered
+
     def external_gateway_added(self, ex_gw_port, interface_name):
         self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
         self._add_gateway_vip(ex_gw_port, interface_name)
