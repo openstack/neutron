@@ -25,15 +25,18 @@ import subprocess
 
 import fixtures
 import netaddr
+from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
+from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
+from neutron.db import db_base_plugin_common
 from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
@@ -420,10 +423,13 @@ class PortFixture(fixtures.Fixture):
     :ivar bridge: port bridge
     """
 
-    def __init__(self, bridge=None, namespace=None):
+    def __init__(self, bridge=None, namespace=None, mac=None, port_id=None):
         super(PortFixture, self).__init__()
         self.bridge = bridge
         self.namespace = namespace
+        self.mac = (
+            mac or db_base_plugin_common.DbBasePluginCommon._generate_mac())
+        self.port_id = port_id or uuidutils.generate_uuid()
 
     @abc.abstractmethod
     def _create_bridge_fixture(self):
@@ -436,10 +442,10 @@ class PortFixture(fixtures.Fixture):
             self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
 
     @classmethod
-    def get(cls, bridge, namespace=None):
+    def get(cls, bridge, namespace=None, mac=None, port_id=None):
         """Deduce PortFixture class from bridge type and instantiate it."""
         if isinstance(bridge, ovs_lib.OVSBridge):
-            return OVSPortFixture(bridge, namespace)
+            return OVSPortFixture(bridge, namespace, mac, port_id)
         if isinstance(bridge, bridge_lib.BridgeDevice):
             return LinuxBridgePortFixture(bridge, namespace)
         if isinstance(bridge, VethBridge):
@@ -468,30 +474,26 @@ class OVSBridgeFixture(fixtures.Fixture):
 
 class OVSPortFixture(PortFixture):
 
-    def __init__(self, bridge=None, namespace=None, attrs=None):
-        super(OVSPortFixture, self).__init__(bridge, namespace)
-        if attrs is None:
-            attrs = []
-        self.attrs = attrs
-
     def _create_bridge_fixture(self):
         return OVSBridgeFixture()
 
     def _setUp(self):
         super(OVSPortFixture, self)._setUp()
 
-        port_name = common_base.create_resource(PORT_PREFIX, self.create_port)
+        interface_config = cfg.ConfigOpts()
+        interface_config.register_opts(interface.OPTS)
+        ovs_interface = interface.OVSInterfaceDriver(interface_config)
+
+        port_name = tests_base.get_rand_device_name(PORT_PREFIX)
+        ovs_interface.plug_new(
+            None,
+            self.port_id,
+            port_name,
+            self.mac,
+            bridge=self.bridge.br_name,
+            namespace=self.namespace)
         self.addCleanup(self.bridge.delete_port, port_name)
-        self.port = ip_lib.IPDevice(port_name)
-
-        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        ns_ip_wrapper.add_device_to_namespace(self.port)
-        self.port.link.set_up()
-
-    def create_port(self, name):
-        self.attrs.insert(0, ('type', 'internal'))
-        self.bridge.add_port(name, *self.attrs)
-        return name
+        self.port = ip_lib.IPDevice(port_name, self.namespace)
 
 
 class LinuxBridgeFixture(fixtures.Fixture):

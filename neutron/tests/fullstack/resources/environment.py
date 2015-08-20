@@ -99,6 +99,10 @@ class Host(fixtures.Fixture):
             self.central_external_bridge, host_external_bridge)
 
     @property
+    def hostname(self):
+        return self.neutron_config.config.DEFAULT.host
+
+    @property
     def l3_agent(self):
         return self.agents['l3']
 
