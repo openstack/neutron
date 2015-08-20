@@ -21,11 +21,12 @@ from neutron.tests.fullstack.resources import machine
 
 class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
 
-    def __init__(self, *args, **kwargs):
+    def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=False) for _ in range(2)]
-        env = environment.Environment(host_descriptions)
-        super(TestConnectivitySameNetwork, self).__init__(env, *args, **kwargs)
+            environment.HostDescription() for _ in range(2)]
+        env = environment.Environment(environment.EnvironmentDescription(),
+                                      host_descriptions)
+        super(TestConnectivitySameNetwork, self).setUp(env)
 
     def test_connectivity(self):
         tenant_uuid = uuidutils.generate_uuid()
