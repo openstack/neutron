@@ -108,15 +108,31 @@ def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
     try:
+        if (process_input is None or
+            isinstance(process_input, six.binary_type)):
+            _process_input = process_input
+        else:
+            _process_input = process_input.encode('utf-8')
         if run_as_root and cfg.CONF.AGENT.root_helper_daemon:
             returncode, _stdout, _stderr = (
                 execute_rootwrap_daemon(cmd, process_input, addl_env))
         else:
             obj, cmd = create_process(cmd, run_as_root=run_as_root,
                                       addl_env=addl_env)
-            _stdout, _stderr = obj.communicate(process_input)
+            _stdout, _stderr = obj.communicate(_process_input)
             returncode = obj.returncode
             obj.stdin.close()
+        if six.PY3:
+            if isinstance(_stdout, bytes):
+                try:
+                    _stdout = _stdout.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
+            if isinstance(_stderr, bytes):
+                try:
+                    _stderr = _stderr.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
 
         m = _("\nCommand: {cmd}\nExit code: {code}\nStdin: {stdin}\n"
               "Stdout: {stdout}\nStderr: {stderr}").format(
