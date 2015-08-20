@@ -39,14 +39,12 @@
     "get_network:provider:physical_network": "rule:admin_only",
     "get_network:provider:segmentation_id": "rule:admin_only",
     "get_network:queue_id": "rule:admin_only",
-    "get_network:qos_policy_id": "rule:admin_only",
     "create_network:shared": "rule:admin_only",
     "create_network:router:external": "rule:admin_only",
     "create_network:segments": "rule:admin_only",
     "create_network:provider:network_type": "rule:admin_only",
     "create_network:provider:physical_network": "rule:admin_only",
     "create_network:provider:segmentation_id": "rule:admin_only",
-    "create_network:qos_policy_id": "rule:admin_only",
     "update_network": "rule:admin_or_owner",
     "update_network:segments": "rule:admin_only",
     "update_network:shared": "rule:admin_only",
@@ -54,7 +52,6 @@
     "update_network:provider:physical_network": "rule:admin_only",
     "update_network:provider:segmentation_id": "rule:admin_only",
     "update_network:router:external": "rule:admin_only",
-    "update_network:qos_policy_id": "rule:admin_only",
     "delete_network": "rule:admin_or_owner",
 
     "create_port": "",
@@ -65,14 +62,12 @@
     "create_port:binding:profile": "rule:admin_only",
     "create_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "create_port:allowed_address_pairs": "rule:admin_or_network_owner",
-    "create_port:qos_policy_id": "rule:admin_only",
     "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
     "get_port:queue_id": "rule:admin_only",
     "get_port:binding:vif_type": "rule:admin_only",
     "get_port:binding:vif_details": "rule:admin_only",
     "get_port:binding:host_id": "rule:admin_only",
     "get_port:binding:profile": "rule:admin_only",
-    "get_port:qos_policy_id": "rule:admin_only",
     "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
     "update_port:mac_address": "rule:admin_only or rule:context_is_advsvc",
     "update_port:fixed_ips": "rule:admin_or_network_owner or rule:context_is_advsvc",
@@ -81,7 +76,6 @@
     "update_port:binding:profile": "rule:admin_only",
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "update_port:allowed_address_pairs": "rule:admin_or_network_owner",
-    "update_port:qos_policy_id": "rule:admin_only",
     "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
 
     "get_router:ha": "rule:admin_only",
@@ -180,5 +174,15 @@
     "update_service_profile": "rule:admin_only",
     "delete_service_profile": "rule:admin_only",
     "get_service_profiles": "rule:admin_only",
-    "get_service_profile": "rule:admin_only"
+    "get_service_profile": "rule:admin_only",
+
+    "get_policy": "rule:regular_user",
+    "create_policy": "rule:admin_only",
+    "update_policy": "rule:admin_only",
+    "delete_policy": "rule:admin_only",
+    "get_policy_bandwidth_limit_rule": "rule:regular_user",
+    "create_policy_bandwidth_limit_rule": "rule:admin_only",
+    "delete_policy_bandwidth_limit_rule": "rule:admin_only",
+    "update_policy_bandwidth_limit_rule": "rule:admin_only"
+
 }
