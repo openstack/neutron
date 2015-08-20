@@ -234,7 +234,6 @@ class FWaaSExtensionTestJSON(base.BaseNetworkTest):
 
     @test.idempotent_id('1355cf5c-77d4-4bb9-87d7-e50c194d08b5')
     def test_firewall_insertion_mode_add_remove_router(self):
-        self.skipTest('Bug #1483875')
         # Create routers
         router1 = self.create_router(
             data_utils.rand_name('router-'),
