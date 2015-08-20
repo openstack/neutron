@@ -52,8 +52,8 @@ class CentralizedSnatL3AgentBinding(model_base.BASEV2):
                             sa.ForeignKey("agents.id", ondelete='CASCADE'),
                             primary_key=True)
     host_id = sa.Column(sa.String(255))
-    csnat_gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
-
+    csnat_gw_port_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey('ports.id', ondelete='CASCADE'))
     l3_agent = orm.relationship(agents_db.Agent)
     csnat_gw_port = orm.relationship(models_v2.Port)
 
