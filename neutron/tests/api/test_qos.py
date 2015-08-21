@@ -97,7 +97,15 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('cf776f77-8d3d-49f2-8572-12d6a1557224')
-    def test_list_rule_types(self):
+    def test_list_admin_rule_types(self):
+        self._test_list_rule_types(self.admin_client)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('49c8ea35-83a9-453a-bd23-239cf3b13929')
+    def test_list_regular_rule_types(self):
+        self._test_list_rule_types(self.client)
+
+    def _test_list_rule_types(self, client):
         # List supported rule types
         # TODO(QoS): since in gate we run both ovs and linuxbridge ml2 drivers,
         # and since Linux Bridge ml2 driver does not have QoS support yet, ml2
@@ -111,7 +119,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         expected_rule_types = []
         expected_rule_details = ['type']
 
-        rule_types = self.admin_client.list_qos_rule_types()
+        rule_types = client.list_qos_rule_types()
         actual_list_rule_types = rule_types['rule_types']
         actual_rule_types = [rule['type'] for rule in actual_list_rule_types]
 
