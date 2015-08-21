@@ -116,6 +116,8 @@ class LinuxInterfaceDriver(object):
           associated to removed ips
         extra_subnets: An iterable of cidrs to add as routes without address
         """
+        LOG.debug("init_router_port: device_name(%s), namespace(%s)",
+                  device_name, namespace)
         self.init_l3(device_name=device_name,
                      ip_cidrs=ip_cidrs,
                      namespace=namespace,
@@ -134,8 +136,10 @@ class LinuxInterfaceDriver(object):
             device.route.list_onlink_routes(n_const.IP_VERSION_4) +
             device.route.list_onlink_routes(n_const.IP_VERSION_6))
         for route in new_onlink_routes - existing_onlink_routes:
+            LOG.debug("adding onlink route(%s)", route)
             device.route.add_onlink_route(route)
         for route in existing_onlink_routes - new_onlink_routes:
+            LOG.debug("deleting onlink route(%s)", route)
             device.route.delete_onlink_route(route)
 
     def check_bridge_exists(self, bridge):

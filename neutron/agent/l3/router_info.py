@@ -238,6 +238,8 @@ class RouterInfo(object):
             ip_cidr for ip_cidr in existing_cidrs - new_cidrs
             if common_utils.is_cidr_host(ip_cidr))
         for ip_cidr in fips_to_remove:
+            LOG.debug("Removing floating ip %s from interface %s in "
+                      "namespace %s", ip_cidr, interface_name, self.ns_name)
             self.remove_floating_ip(device, ip_cidr)
 
         return fip_statuses
@@ -268,6 +270,8 @@ class RouterInfo(object):
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 fixed_ips, mac_address,
                                 interface_name, prefix):
+        LOG.debug("adding internal network: prefix(%s), port(%s)",
+                  prefix, port_id)
         self.driver.plug(network_id, port_id, interface_name, mac_address,
                          namespace=ns_name,
                          prefix=prefix)
@@ -299,7 +303,8 @@ class RouterInfo(object):
 
     def internal_network_removed(self, port):
         interface_name = self.get_internal_device_name(port['id'])
-
+        LOG.debug("removing internal network: port(%s) interface(%s)",
+                  port['id'], interface_name)
         if ip_lib.device_exists(interface_name, namespace=self.ns_name):
             self.driver.unplug(interface_name, namespace=self.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
@@ -360,11 +365,13 @@ class RouterInfo(object):
         enable_ra = False
         for p in new_ports:
             self.internal_network_added(p)
+            LOG.debug("appending port %s to internal_ports cache", p)
             self.internal_ports.append(p)
             enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         for p in old_ports:
             self.internal_network_removed(p)
+            LOG.debug("removing port %s from internal_ports cache", p)
             self.internal_ports.remove(p)
             enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
@@ -375,6 +382,7 @@ class RouterInfo(object):
                 self.internal_ports[index] = updated_ports[p['id']]
                 interface_name = self.get_internal_device_name(p['id'])
                 ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
+                LOG.debug("updating internal network for port %s", p)
                 self.internal_network_updated(interface_name, ip_cidrs)
                 enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
@@ -432,6 +440,8 @@ class RouterInfo(object):
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
+        LOG.debug("External gateway added: port(%s), interface(%s), ns(%s)",
+                  ex_gw_port, interface_name, ns_name)
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
 
         # Build up the interface and gateway IP addresses that
@@ -473,6 +483,8 @@ class RouterInfo(object):
             ex_gw_port, interface_name, self.ns_name, preserve_ips)
 
     def external_gateway_removed(self, ex_gw_port, interface_name):
+        LOG.debug("External gateway removed: port(%s), interface(%s)",
+                  ex_gw_port, interface_name)
         self.driver.unplug(interface_name,
                            bridge=self.agent_conf.external_network_bridge,
                            namespace=self.ns_name,
@@ -611,6 +623,7 @@ class RouterInfo(object):
 
         :param agent: Passes the agent in order to send RPC messages.
         """
+        LOG.debug("process router updates")
         self._process_internal_ports()
         self.process_external(agent)
         # Process static routes for router
