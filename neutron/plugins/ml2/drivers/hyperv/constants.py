@@ -13,4 +13,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+AGENT_TYPE_HYPERV = 'hyperv'
 VIF_TYPE_HYPERV = 'hyperv'
