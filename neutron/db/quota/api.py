@@ -37,30 +37,10 @@ class QuotaUsageInfo(collections.namedtuple(
         return self.reserved + self.used
 
 
-class ReservationInfo(object):
+class ReservationInfo(collections.namedtuple(
+    'ReservationInfo', ['reservation_id', 'tenant_id',
+                        'expiration', 'deltas'])):
     """Information about a resource reservation."""
-
-    def __init__(self, reservation_id, tenant_id, expiration, deltas):
-        self._reservation_id = reservation_id
-        self._tenant_id = tenant_id
-        self._expiration = expiration
-        self._deltas = deltas
-
-    @property
-    def reservation_id(self):
-        return self._reservation_id
-
-    @property
-    def tenant_id(self):
-        return self._tenant_id
-
-    @property
-    def expiration(self):
-        return self._expiration
-
-    @property
-    def deltas(self):
-        return self._deltas
 
 
 def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
