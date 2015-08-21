@@ -892,7 +892,7 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                             [constants.FLOODING_ENTRY]}}
         self.assertEqual(expected_result, result)
 
-    def test_update_port_postcommit_mac_address_changed_raises(self):
+    def test_update_port_precommit_mac_address_changed_raises(self):
         port = {'status': u'ACTIVE',
                 'device_owner': u'compute:None',
                 'mac_address': u'12:34:56:78:4b:0e',
@@ -912,4 +912,4 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
 
         mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
         with testtools.ExpectedException(ml2_exc.MechanismDriverError):
-            mech_driver.update_port_postcommit(ctx)
+            mech_driver.update_port_precommit(ctx)
