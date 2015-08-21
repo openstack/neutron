@@ -50,7 +50,7 @@ def filter_fields(f):
         fields = kwargs.get('fields')
         if not fields:
             try:
-                pos = f.func_code.co_varnames.index('fields')
+                pos = f.__code__.co_varnames.index('fields')
                 fields = args[pos]
             except (IndexError, ValueError):
                 return result
