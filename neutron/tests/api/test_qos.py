@@ -390,13 +390,17 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             'policy', 200, 1337)
 
     @test.attr(type='smoke')
-    @test.idempotent_id('3ba4abf9-7976-4eaf-a5d0-a934a6e09b2d')
-    def test_rule_association_nonshared_policy(self):
-        policy = self.create_qos_policy(name='test-policy',
-                                        description='test policy',
-                                        shared=False,
-                                        tenant_id='tenant-id')
+    @test.idempotent_id('eed8e2a6-22da-421b-89b9-935a2c1a1b50')
+    def test_policy_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
-            exceptions.NotFound,
+            exceptions.Forbidden,
+            self.client.create_qos_policy,
+            'test-policy', 'test policy', False)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
+    def test_rule_create_forbidden_for_regular_tenants(self):
+        self.assertRaises(
+            exceptions.Forbidden,
             self.client.create_bandwidth_limit_rule,
-            policy['id'], 200, 1337)
+            'policy', 1, 2)
