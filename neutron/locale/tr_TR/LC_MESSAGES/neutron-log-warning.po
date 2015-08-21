@@ -1,0 +1,527 @@
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-08-21 06:08+0000\n"
+"PO-Revision-Date: 2015-08-21 01:06+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
+"language/tr_TR/)\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, python-format
+msgid "%(agent_type)s agent %(agent_id)s is not active"
+msgstr "%(agent_type)s ajanı %(agent_id)s etkin değil"
+
+#, python-format
+msgid ""
+"%(port_num)d router ports found on the metadata access network. Only the "
+"port %(port_id)s, for router %(router_id)s will be considered"
+msgstr ""
+"Metadata erişim ağında %(port_num)d yönlendirici bağlantı noktası bulundu. "
+"Yalnızca %(port_id)s bağlantı noktası, %(router_id)s yönlendiricisi için "
+"değerlendirilecek"
+
+#, python-format
+msgid "%(type)s tunnel %(id)s not found"
+msgstr "%(type)s tünel %(id)s bulunamadı"
+
+msgid "A concurrent port creation has occurred"
+msgstr "Eş zamanlı bağlantı noktası oluşturma meydana geldi"
+
+#, python-format
+msgid ""
+"Action %(action)s for network %(net_id)s could not complete successfully: "
+"%(reason)s"
+msgstr ""
+"%(net_id)s ağı için %(action)s eylemi başarıyla tamamlanamadı: %(reason)s"
+
+#, python-format
+msgid "Action %s not supported"
+msgstr "%s eylemi desteklenmiyor"
+
+#, python-format
+msgid "Attempted to get traffic counters of chain %s which does not exist"
+msgstr "%s zincirinin mevcut olmayan trafik sayaçları alınmaya çalışıldı"
+
+#, python-format
+msgid "Attempted to remove chain %s which does not exist"
+msgstr "Var olmayan %s zinciri kaldırılmaya çalışılıyor"
+
+#, python-format
+msgid "Attempting to bind with dead agent: %s"
+msgstr "Ölü ajanla bağlama deneniyor: %s"
+
+msgid ""
+"Authenticating to nova using nova_admin_* options is deprecated. This should "
+"be done using an auth plugin, like password"
+msgstr ""
+"Nova'ya nova_admin_* seçeneklerini kullanarak kimlik doğrulama artık "
+"kullanılmıyor. Bu parola gibi bir yetkilendirme eklentisi kullanılarak "
+"yapılmalı"
+
+#, python-format
+msgid "Cannot find vf index for pci slot %s"
+msgstr "%s pci yuvası için vf indisi bulunamıyor"
+
+#, python-format
+msgid "Cannot find vfs %(vfs)s in device %(dev_name)s"
+msgstr "%(dev_name)s aygıtında vfs %(vfs)s bulunamıyor"
+
+#, python-format
+msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
+msgstr ""
+"%(host)s istemcisi üstündeki %(agent_type)s ajanı için yapılandırma geçersiz."
+
+#, python-format
+msgid "Could not expand segment %s"
+msgstr "Dilim %s genişletilemedi"
+
+#, python-format
+msgid ""
+"Creating an interface named %(name)s exceeds the %(limit)d character "
+"limitation. It was shortened to %(new_name)s to fit."
+msgstr ""
+"%(name)s isimli bir arayüz oluşturmak %(limit)d karakter sınırını aşar. "
+"Sığması için %(new_name)s'e kısaltıldı."
+
+#, python-format
+msgid "DHCP agent %s is not active"
+msgstr "DHCP ajanı %s etkin değil"
+
+msgid "DVR functionality requires a server upgrade."
+msgstr "DVR işlevselliği sunucu yükseltmesi gerektiriyor."
+
+#, python-format
+msgid "Device %(device)s requested by agent %(agent_id)s not found in database"
+msgstr ""
+"%(agent_id)s ajanı tarafından istenen %(device)s aygıtı veri tabanında "
+"bulunamadı"
+
+#, python-format
+msgid ""
+"Device %(device)s requested by agent %(agent_id)s on network %(network_id)s "
+"not bound, vif_type: %(vif_type)s"
+msgstr ""
+"%(network_id)s ağı üstündeki %(agent_id)s ajanı tarafından istenen "
+"%(device)s aygıtı bağlı değil, vif_type: %(vif_type)s"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "Aygıt %s eklenti üzerinde tanımlanmamış"
+
+#, python-format
+msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
+msgstr "%(file)s içinde beklenen isim \"%(ext_name)s\" bulunamadı"
+
+msgid "Driver configuration doesn't match with enable_security_group"
+msgstr "Sürücü yapılandırması enable_security_group ile eşleşmiyor"
+
+#, python-format
+msgid "Endpoint with ip %s already exists"
+msgstr "%s ip'sine sahip son uç zaten mevcut"
+
+#, python-format
+msgid "Extension %s not supported by any of loaded plugins"
+msgstr "Eklenti %s yüklenen hiçbir eklenti tarafından desteklenmiyor"
+
+#, python-format
+msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
+msgstr "Eklenti dosyası %(f)s %(exception)s sebebiyle yüklenmedi"
+
+#, python-format
+msgid "Failed to delete namespace %s"
+msgstr "%s isim uzayı silme başarısız"
+
+#, python-format
+msgid "Failed trying to delete interface: %s"
+msgstr "Arayüzü silme denemesi başarısız: %s"
+
+#, python-format
+msgid "Failed trying to delete namespace: %s"
+msgstr "Bilinirlik alanı silme hatası: %s"
+
+#, python-format
+msgid "Found failed openvswitch port: %s"
+msgstr "Başarısız olmuş openvswitch bağlantı noktası bulundu: %s"
+
+#, python-format
+msgid "Found not yet ready openvswitch port: %s"
+msgstr "Henüz hazır olmayan openvswitch bağlantı noktası bulundu: %s"
+
+#, python-format
+msgid "Ignoring admin_state_up=False for router=%r.  Overriding with True"
+msgstr ""
+"router=%r için admin_state_up=False atlanıyor.  True ile üzerine yazılıyor"
+
+#, python-format
+msgid ""
+"In _notify_port_updated(), no bound segment for port %(port_id)s on network "
+"%(network_id)s"
+msgstr ""
+"_notify_port_updated() içinde, %(network_id)s ağı üzerindeki %(port_id)s "
+"bağlantı noktası için bağlı dilim yok"
+
+#, python-format
+msgid "Info for router %s was not found. Performing router cleanup"
+msgstr ""
+"%s yönlendiricisi için bilgi bulunamadı. Yönlendirici temizliği "
+"gerçekleştiriliyor"
+
+#, python-format
+msgid "Interface %s not found in the heleos back-end, likely already deleted"
+msgstr "Arayüz %s heleos arka-ucunda bulunamadı, muhtemelen zaten silinmiş"
+
+msgid "Invalid Interface ID, will lead to incorrect tap device name"
+msgstr "Geçersiz arayüz kimliği, geçersiz tap aygıt ismine yol açacak"
+
+msgid "Invalid Network ID, will lead to incorrect bridge name"
+msgstr "Geçersiz Ağ ID'si, geçersiz köprü ismine yol açacak"
+
+#, python-format
+msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
+msgstr ""
+"Geçersiz Dilimlendirme kimliği: %s, geçersiz vxlan aygıt ismine sebep olacak"
+
+msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
+msgstr "Geçersiz VLAN ID'si, geçersiz alt arayüz ismine yol açacak"
+
+#, python-format
+msgid "Invalid remote IP: %s"
+msgstr "Geçersiz uzak IP: %s"
+
+#, python-format
+msgid ""
+"Invalid value for pagination_max_limit: %s. It should be an integer greater "
+"to 0"
+msgstr ""
+"pagination_max_limit: %s için geçersiz değer. 0'dan büyük bir tam sayı olmalı"
+
+#, python-format
+msgid ""
+"L2 agent could not get DVR MAC address from server. Retrying. Detailed "
+"message: %s"
+msgstr ""
+"L2 ajanı sunucudan DVR MAC adresini alamadı. Tekrar deneniyor. Detaylı "
+"ileti: %s"
+
+#, python-format
+msgid "Loaded plugins do not implement extension %s interface"
+msgstr "Yüklü eklentiler eklenti %s arayüzünü uygulamıyor"
+
+#, python-format
+msgid "Network %s could not be found, it might have been deleted concurrently."
+msgstr "%s ağı bulunamadı, eş zamanlı olarak silinmiş olabilir."
+
+#, python-format
+msgid "Network %s has been deleted."
+msgstr "Ağ %s silindi."
+
+#, python-format
+msgid ""
+"Network %s may have been deleted and its resources may have already been "
+"disposed."
+msgstr "Ağ %s silinmiş ve kaynakları ortadan kaldırılmış olabilir."
+
+msgid ""
+"Neutron server does not support state report. State report for this agent "
+"will be disabled."
+msgstr ""
+"Neutron sunucusu durum raporu desteklemiyor. Bu ajan için durum raporu "
+"kapatılacak."
+
+msgid "No DHCP agents available, skipping rescheduling"
+msgstr "Uygun DHCP ajanı yok, yeniden zamanlama atlanıyor"
+
+#, python-format
+msgid "No L3 agents can host the router %s"
+msgstr "Hiçbir L3 ajanı %s yönlendiricisini sunamaz"
+
+msgid "No Token, Re-login"
+msgstr "Jeton yok, Yeniden-giriş"
+
+msgid "No active L3 agents"
+msgstr "Etkin L3 ajanı yok"
+
+msgid "No active L3 agents found for SNAT"
+msgstr "SNAT için etkin L3 ajanı bulunamadı"
+
+#, python-format
+msgid "No flat network found on physical network %s"
+msgstr "Fiziksel ağ %s üzerinde düz ağ bulunamadı"
+
+msgid "No more DHCP agents"
+msgstr "Daha fazla DHCP ajanı yok"
+
+msgid "No policy profile populated from VSM"
+msgstr "VSM'den herhangi bir ilke profili doldurulmadı"
+
+#, python-format
+msgid "No routers compatible with L3 agent configuration on host %s"
+msgstr ""
+"Hiçbir yönlendirici %s istemcisi üzerindeki L3 ajanı yapılandırmasıyla "
+"uyumlu değil"
+
+#, python-format
+msgid "No valid gateway port on subnet %s is found for IPv6 RA"
+msgstr ""
+"IPv6 RA için %s alt ağı üzerinde geçerli ağ geçidi bağlantı noktası "
+"bulunamadı"
+
+#, python-format
+msgid "No vlan_id %(vlan_id)s found on physical network %(physical_network)s"
+msgstr "%(physical_network)s fiziksel ağında vlan_id %(vlan_id)s bulunamadı"
+
+#, python-format
+msgid "Nova event: %s returned with failed status"
+msgstr "Nova olayı: %s başarısız durum döndürdü"
+
+#, python-format
+msgid "Nova returned NotFound for event: %s"
+msgstr "Nova %s eylemi için NotFound döndürdü"
+
+msgid ""
+"OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
+"periodically."
+msgstr ""
+"OVS ölü. OVSNeutronAgent çalışmaya devam edip OVS durumunu aralıklarla "
+"kontrol edecek."
+
+msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
+msgstr ""
+"OVS yeniden başlatıldı. OVSNeutronAgent köprüleri sıfırlayacak ve bağlantı "
+"noktalarını kurtaracak."
+
+#, python-format
+msgid ""
+"Only %(active)d of %(total)d DHCP agents associated with network "
+"'%(net_id)s' are marked as active, so notifications may be sent to inactive "
+"agents."
+msgstr ""
+"'%(net_id)s' ağıyla ilişkilendirilmiş %(total)d DHCP ajanından yalnızca "
+"%(active)d kadarı etkin olarak işaretlenmiş, yani iletiler etkin olmayan "
+"ajanlara gönderilebilir."
+
+#, python-format
+msgid ""
+"Option \"%(option)s\" must be supported by command \"%(command)s\" to enable "
+"%(mode)s mode"
+msgstr ""
+"\"%(option)s\" seçeneği %(mode)s kipini etkinleştirmek için \"%(command)s\" "
+"komutuyla desteklenmeli"
+
+#, python-format
+msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
+msgstr ""
+"%(agent)s ajanı tarafından güncellenen %(port)s bağlantı noktası herhangi "
+"bir dilime bağlı değil"
+
+#, python-format
+msgid "Port %s not found during update"
+msgstr "%s bağlantı noktası güncelleme sırasında bulunamadı"
+
+msgid "Port ID not set! Nova will not be notified of port status change."
+msgstr ""
+"Bağlantı noktası kimliği ayarlanmamış! Nova bağlantı noktası durumu "
+"değişikliğinde bilgilendirilmeyecek."
+
+msgid ""
+"Reading service_providers from legacy location in neutron.conf, and ignoring "
+"values in neutron_*aas.conf files; this override will be going away soon."
+msgstr ""
+"service_providers neutron.conf'daki eski yerinden okunuyor, ve neutron_*aas."
+"conf dosyalarındaki değerler atlanıyor; bu üzerine yazma yakında gidecek."
+
+msgid ""
+"Registering resources to apply quota limits to using the quota_items option "
+"is deprecated as of Liberty.Resource REST controllers should take care of "
+"registering resources with the quota engine."
+msgstr ""
+"quota_items seçeneğini kullanarak kota sınırlarını uygulamak için kaynak "
+"kaydetme Liberty itibariyle kullanılmıyor. Kaynakların kota motoruyla "
+"kaydında kaynak REST kontrolcüleri kullanılmalı."
+
+#, python-format
+msgid ""
+"Removing network %(network)s from agent %(agent)s because the agent did not "
+"report to the server in the last %(dead_time)s seconds."
+msgstr ""
+"%(network)s ağı %(agent)s ajanından çıkarılıyor çünkü ajan sunucuya son "
+"%(dead_time)s saniye rapor vermedi."
+
+#, python-format
+msgid ""
+"Rescheduling router %(router)s from agent %(agent)s because the agent did "
+"not report to the server in the last %(dead_time)s seconds."
+msgstr ""
+"Yönlendirici %(router)s %(agent)s ajanından yeniden zamanlanıyor çünkü ajan "
+"sunucuya son %(dead_time)s saniye rapor vermedi."
+
+msgid ""
+"Security group agent binding currently not set. This should be set by the "
+"end of the init process."
+msgstr ""
+"Güvenlik grubu ajan bağlama şu an ayarlanmış değil. Bu init sürecinin "
+"sonunda ayarlanmış olmalı."
+
+msgid "Server does not support metadata RPC, fallback to using neutron client"
+msgstr "Sunucu metadata RPC desteklemiyor, neutron istemcisine geri dönülüyor"
+
+#, python-format
+msgid ""
+"The configured driver %(driver)s has been moved, automatically using "
+"%(new_driver)s instead. Please update your config files, as this automatic "
+"fixup will be removed in a future release."
+msgstr ""
+"Yapılandırılan sürücü %(driver)s taşınnmış, yerine otomatik olarak "
+"%(new_driver)s kullanılıyor. Lütfen yapılandırma dosyalarınızı güncelleyin, "
+"çünkü bu otomatik düzeltme ileri sürümlerde kaldırılacak."
+
+msgid ""
+"The remote metadata server responded with Forbidden. This response usually "
+"occurs when shared secrets do not match."
+msgstr ""
+"Uzak metadata sunucu Yasaklı yanıtı döndü. Bu yanıt genellikle paylaşılan "
+"gizler eşleşmediğinde oluşur."
+
+#, python-format
+msgid "The router %s had no physical representation, likely already deleted"
+msgstr "%s yönlendiricisinin fiziksel temsili yoktu, muhtemelen zaten silinmiş"
+
+msgid ""
+"The user that is executing neutron can read the namespaces without using the "
+"root_helper. Disable the use_helper_for_ns_read option to avoid a "
+"performance impact."
+msgstr ""
+"Neutron'u çalıştıran kullanıcı root_helper kullanmadan isim uzaylarını "
+"okuyabilir. Performansı etkilememesi için use_helper_for_ns_read seçeneğini "
+"kapatın."
+
+#, python-format
+msgid ""
+"Time since last %s agent reschedule check has exceeded the interval between "
+"checks. Waiting before check to allow agents to send a heartbeat in case "
+"there was a clock adjustment."
+msgstr ""
+"Son %s ajan yeniden zamanlama kontrolünden sonra geçen zaman kontroller "
+"arası zaman aralığını aştı. Bir saat ayarlama yapılmış olması durumunu "
+"hesaba katmak için ajanların kalp atışı gönderebilmesi için kontrolden önce "
+"bekleniyor."
+
+#, python-format
+msgid ""
+"Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r %(top)r"
+msgstr ""
+"Mevcut olmayan kural silinmeye çalışıldı: %(chain)r %(rule)r %(wrap)r %(top)r"
+
+msgid "Tunnel synchronization requires a server upgrade."
+msgstr "Tünel eş zamanlama sunucu yükseltmesi gerektiriyor."
+
+#, python-format
+msgid ""
+"Unable to %(action)s dhcp for %(net_id)s: there is a conflict with its "
+"current state; please check that the network and/or its subnet(s) still "
+"exist."
+msgstr ""
+"%(net_id)s için %(action)s dhcp yapılamadı: mevcut durumuyla ilgili bir "
+"çatışma var; lütfen ağ ve/veya alt ağ(lar)ının hala mevcut olduğunu kontrol "
+"edin."
+
+#, python-format
+msgid "Unable to configure IP address for floating IP: %s"
+msgstr "Değişken IP için IP adresi yapılandırılamıyor: %s"
+
+#, python-format
+msgid "Unable to find data type descriptor for attribute %s"
+msgstr "%s özniteliği için veri türü tanımlayıcısı bulunamadı"
+
+msgid "Unable to retrieve the agent ip, check the agent configuration."
+msgstr "Ajan ip'si alınamıyor, ajan yapılandırmasını kontrol edin."
+
+#, python-format
+msgid ""
+"Unable to schedule network %s: no agents available; will retry on subsequent "
+"port and subnet creation events."
+msgstr ""
+"Ağ %s zamanlanamadı: hiçbir ajan uygun değil; sonraki bağlantı noktası "
+"üzerinden ve alt ağ oluşturma olayları tekrar denenecek."
+
+#, python-format
+msgid "Updating lease expiration is now deprecated. Issued  from host %s."
+msgstr ""
+"Kira sona erme tarihlerini güncelleme artık kullanılmıyor. %s istemcisinden  "
+"yayınlandı."
+
+#, python-format
+msgid ""
+"VIF port: %s has no ofport configured, and might not be able to transmit"
+msgstr ""
+"VIF bağlantı noktası: %s'in yapılandırılmış bir ofport'u yok, aktarım "
+"yapamayabilir"
+
+msgid "VXLAN is enabled, a valid local_ip must be provided"
+msgstr "VXLAN etkin, geçerli bir local_ip sağlanmalı"
+
+#, python-format
+msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"
+msgstr "aygıt pci uyuşmazlığı: %(device_mac)s - %(pci_slot)s"
+
+#, python-format
+msgid "failed to parse vf link show line %(line)s: for %(device)s"
+msgstr ""
+"vf bağlantısı gösteri satırı %(line)s: %(device)s için ayrıştırma başarısız"
+
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled at the neutron server when "
+"startup due to RPC error. It happens when the server does not support this "
+"RPC API. If the error is UnsupportedVersion you can ignore this warning. "
+"Detail message: %s"
+msgstr ""
+"RPC hatası sebebiyle l3-agent açılışta neutron sunucusundaki neutron servis "
+"eklentilerinin etkinliğini kontrol edemiyor. Bu durum sunucu bu RPC API'sini "
+"desteklemediğinde olabilir. Hata UnsupportedVersion ise bu uyarıyı göz ardı "
+"edebilirsiniz. Detaylı ileti: %s"
+
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled on the neutron server. "
+"Retrying. Detail message: %s"
+msgstr ""
+"l3-agent neutron sunucusunda etkin servis eklentilerini kontrol edemiyor. "
+"Tekrar deneniyor. Detaylı ileti: %s"
+
+#, python-format
+msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
+msgstr "VIF: %(vif)s için ofport: %(ofport)s pozitif tam sayı değil"
+
+msgid ""
+"security_group_info_for_devices rpc call not supported by the server, "
+"falling back to old security_group_rules_for_devices which scales worse."
+msgstr ""
+"security_group_info_for_devices rpc çağrısı sunucu tarafından "
+"desteklenmiyor, daha kötü ölçeklenen eski security_group_rules_for_devices'e "
+"dönülüyor."
+
+#, python-format
+msgid "unable to modify mac_address of ACTIVE port %s"
+msgstr "%s ETKİN bağlantı noktasının mac_address'i değiştirilemiyor"
+
+#, python-format
+msgid "vlan_id %(vlan)s on physical network %(network)s not found"
+msgstr "%(network)s fiziksel ağındaki vlan_id %(vlan)s bulunamadı"
+
+#, python-format
+msgid "vxlan_id %s not found"
+msgstr "vxlan_id %s bulunamadı"
