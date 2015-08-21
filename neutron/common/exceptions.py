@@ -521,3 +521,8 @@ class NetworkSubnetPoolAffinityError(BadRequest):
 
 class ObjectActionError(NeutronException):
     message = _('Object action %(action)s failed because: %(reason)s')
+
+
+class CTZoneExhaustedError(NeutronException):
+    message = _("IPtables conntrack zones exhausted, iptables rules cannot "
+                "be applied.")

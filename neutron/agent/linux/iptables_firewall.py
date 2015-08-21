@@ -28,6 +28,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.extensions import portsecurity as psec
 from neutron.i18n import _LI
@@ -817,7 +818,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         try:
             return self._device_zone_map[short_port_id]
         except KeyError:
-            self._free_zones_from_removed_ports()
             return self._generate_device_zone(short_port_id)
 
     def _free_zones_from_removed_ports(self):
@@ -833,7 +833,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _generate_device_zone(self, short_port_id):
         """Generates a unique conntrack zone for the passed in ID."""
-        zone = self._find_open_zone()
+        try:
+            zone = self._find_open_zone()
+        except n_exc.CTZoneExhaustedError:
+            # Free some zones and try again, repeat failure will not be caught
+            self._free_zones_from_removed_ports()
+            zone = self._find_open_zone()
+
         self._device_zone_map[short_port_id] = zone
         LOG.debug("Assigned CT zone %(z)s to port %(dev)s.",
                   {'z': zone, 'dev': short_port_id})
@@ -854,8 +860,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 # gap found, let's use it!
                 return index + 1
         # conntrack zones exhausted :( :(
-        raise RuntimeError("iptables conntrack zones exhausted. "
-                           "iptables rules cannot be applied.")
+        raise n_exc.CTZoneExhaustedError()
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
