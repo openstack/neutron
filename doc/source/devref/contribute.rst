@@ -439,7 +439,7 @@ should take these steps to move the models for the tables out of tree.
    third-party repo as is done in the neutron repo,
    i.e. ``networking_foo/db/migration/alembic_migrations/versions/*.py``
 #. Remove the models from the neutron repo.
-#. Add the names of the removed tables to ``DRIVER_TABLES`` in
+#. Add the names of the removed tables to ``REPO_FOO_TABLES`` in
    ``neutron/db/migration/alembic_migrations/external.py`` (this is used for
    testing, see below).
 
@@ -461,7 +461,7 @@ Liberty Steps
 +++++++++++++
 
 The model_sync test will be updated to ignore the models that have been moved
-out of tree. A ``DRIVER_TABLES`` list will be maintained in
+out of tree. ``REPO_FOO_TABLES`` lists will be maintained in
 ``neutron/db/migration/alembic_migrations/external.py``.
 
 
