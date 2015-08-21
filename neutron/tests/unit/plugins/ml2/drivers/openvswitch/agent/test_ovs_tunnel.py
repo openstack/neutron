@@ -19,6 +19,7 @@ import time
 import mock
 from oslo_config import cfg
 from oslo_log import log
+import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -27,6 +28,12 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
+
+def nonzero(f):
+    if six.PY3:
+        return f.__bool__()
+    else:
+        return f.__nonzero__()
 
 # Useful global dummy variables.
 NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'
@@ -203,15 +210,15 @@ class TunnelTest(object):
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.bridge_exists('br-tun'),
-            mock.call.bridge_exists().__nonzero__(),
+            nonzero(mock.call.bridge_exists()),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
-            mock.call.port_exists().__nonzero__(),
+            nonzero(mock.call.port_exists()),
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
             mock.call.port_exists('patch-tun'),
-            mock.call.port_exists().__nonzero__(),
+            nonzero(mock.call.port_exists()),
             mock.call.add_patch_port('patch-tun', 'patch-int'),
         ]
         self.mock_int_bridge_expected += [
@@ -609,15 +616,15 @@ class TunnelTestUseVethInterco(TunnelTest):
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.bridge_exists('br-tun'),
-            mock.call.bridge_exists().__nonzero__(),
+            nonzero(mock.call.bridge_exists()),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
-            mock.call.port_exists().__nonzero__(),
+            nonzero(mock.call.port_exists()),
             mock.call.add_patch_port('patch-int', 'patch-tun'),
         ]
         self.mock_int_bridge_expected += [
             mock.call.port_exists('patch-tun'),
-            mock.call.port_exists().__nonzero__(),
+            nonzero(mock.call.port_exists()),
             mock.call.add_patch_port('patch-tun', 'patch-int')
         ]
         self.mock_int_bridge_expected += [
