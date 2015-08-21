@@ -228,7 +228,8 @@ class SubnetPoolPrefix(model_base.BASEV2):
 
     cidr = sa.Column(sa.String(64), nullable=False, primary_key=True)
     subnetpool_id = sa.Column(sa.String(36),
-                              sa.ForeignKey('subnetpools.id'),
+                              sa.ForeignKey('subnetpools.id',
+                                            ondelete='CASCADE'),
                               nullable=False,
                               primary_key=True)
 
