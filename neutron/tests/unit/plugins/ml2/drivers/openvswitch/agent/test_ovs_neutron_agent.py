@@ -2129,7 +2129,6 @@ class TestOvsDvrNeutronAgent(object):
             ioport = self.agent.dvr_agent.int_ofports[physical_networks[0]]
             expected_on_int_br = [
                 # setup_dvr_flows_on_integ_br
-                mock.call.delete_flows(),
                 mock.call.setup_canary_table(),
                 mock.call.install_drop(table_id=constants.DVR_TO_SRC_MAC,
                                        priority=1),
