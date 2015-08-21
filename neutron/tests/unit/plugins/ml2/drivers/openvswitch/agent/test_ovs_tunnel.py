@@ -212,7 +212,7 @@ class TunnelTest(object):
 
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
-            mock.call.bridge_exists('br-tun'),
+            mock.call.bridge_exists(mock.ANY),
             nonzero(mock.call.bridge_exists()),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
@@ -621,7 +621,7 @@ class TunnelTestUseVethInterco(TunnelTest):
 
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
-            mock.call.bridge_exists('br-tun'),
+            mock.call.bridge_exists(mock.ANY),
             nonzero(mock.call.bridge_exists()),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),

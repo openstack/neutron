@@ -938,7 +938,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.tun_br = self.br_tun_cls(tun_br_name)
         self.tun_br.set_agent_uuid_stamp(self.agent_uuid_stamp)
 
-        if not self.tun_br.bridge_exists('br-tun'):
+        if not self.tun_br.bridge_exists(self.tun_br.br_name):
             self.tun_br.create(secure_mode=True)
         self.tun_br.setup_controllers(self.conf)
         if (not self.int_br.port_exists(self.conf.OVS.int_peer_patch_port) or
