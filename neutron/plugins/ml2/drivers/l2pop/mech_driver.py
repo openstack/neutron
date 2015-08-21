@@ -38,7 +38,6 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def initialize(self):
         LOG.debug("Experimental L2 population driver")
         self.rpc_ctx = n_context.get_admin_context_without_session()
-        self.migrated_ports = {}
 
     def _get_port_fdb_entries(self, port):
         return [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
@@ -48,8 +47,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def delete_port_postcommit(self, context):
         port = context.current
         agent_host = context.host
-
-        fdb_entries = self._get_agent_fdb(context, port, agent_host)
+        fdb_entries = self._get_agent_fdb(context.bottom_bound_segment,
+                                          port, agent_host)
         self.L2populationAgentNotify.remove_fdb_entries(self.rpc_ctx,
             fdb_entries)
 
@@ -122,50 +121,41 @@ class L2populationMechanismDriver(api.MechanismDriver):
             if context.status == const.PORT_STATUS_DOWN:
                 agent_host = context.host
                 fdb_entries = self._get_agent_fdb(
-                        context, port, agent_host)
+                        context.bottom_bound_segment, port, agent_host)
                 self.L2populationAgentNotify.remove_fdb_entries(
                     self.rpc_ctx, fdb_entries)
         elif (context.host != context.original_host
-            and context.status == const.PORT_STATUS_ACTIVE
-            and not self.migrated_ports.get(orig['id'])):
-            # The port has been migrated. We have to store the original
-            # binding to send appropriate fdb once the port will be set
-            # on the destination host
-            self.migrated_ports[orig['id']] = (
-                (orig, context.original_host))
+              and context.original_status == const.PORT_STATUS_ACTIVE
+              and context.status == const.PORT_STATUS_DOWN):
+            # The port has been migrated. Send notification about port
+            # removal from old host.
+            fdb_entries = self._get_agent_fdb(
+                context.original_bottom_bound_segment,
+                orig, context.original_host)
+            self.L2populationAgentNotify.remove_fdb_entries(
+                self.rpc_ctx, fdb_entries)
         elif context.status != context.original_status:
             if context.status == const.PORT_STATUS_ACTIVE:
                 self._update_port_up(context)
             elif context.status == const.PORT_STATUS_DOWN:
                 fdb_entries = self._get_agent_fdb(
-                    context, port, context.host)
+                    context.bottom_bound_segment, port, context.host)
                 self.L2populationAgentNotify.remove_fdb_entries(
                     self.rpc_ctx, fdb_entries)
-            elif context.status == const.PORT_STATUS_BUILD:
-                orig = self.migrated_ports.pop(port['id'], None)
-                if orig:
-                    original_port = orig[0]
-                    original_host = orig[1]
-                    # this port has been migrated: remove its entries from fdb
-                    fdb_entries = self._get_agent_fdb(
-                        context, original_port, original_host)
-                    self.L2populationAgentNotify.remove_fdb_entries(
-                        self.rpc_ctx, fdb_entries)
 
-    def _get_and_validate_segment(self, context, port_id, agent):
-        segment = context.bottom_bound_segment
+    def _validate_segment(self, segment, port_id, agent):
         if not segment:
             LOG.debug("Port %(port)s updated by agent %(agent)s isn't bound "
                       "to any segment", {'port': port_id, 'agent': agent})
-            return
+            return False
 
         network_types = l2pop_db.get_agent_l2pop_network_types(agent)
         if network_types is None:
             network_types = l2pop_db.get_agent_tunnel_types(agent)
         if segment['network_type'] not in network_types:
-            return
+            return False
 
-        return segment
+        return True
 
     def _create_agent_fdb(self, session, agent, segment, network_id):
         agent_fdb_entries = {network_id:
@@ -220,8 +210,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
             session, agent_host, network_id)
 
         agent_ip = l2pop_db.get_agent_ip(agent)
-        segment = self._get_and_validate_segment(context, port['id'], agent)
-        if not segment:
+        segment = context.bottom_bound_segment
+        if not self._validate_segment(segment, port['id'], agent):
             return
         other_fdb_entries = self._get_fdb_entries_template(
             segment, agent_ip, network_id)
@@ -250,7 +240,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         self.L2populationAgentNotify.add_fdb_entries(self.rpc_ctx,
                                                      other_fdb_entries)
 
-    def _get_agent_fdb(self, context, port, agent_host):
+    def _get_agent_fdb(self, segment, port, agent_host):
         if not agent_host:
             return
 
@@ -261,8 +251,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
             session, agent_host, network_id)
 
         agent = l2pop_db.get_agent_by_host(db_api.get_session(), agent_host)
-        segment = self._get_and_validate_segment(context, port['id'], agent)
-        if not segment:
+        if not self._validate_segment(segment, port['id'], agent):
             return
 
         agent_ip = l2pop_db.get_agent_ip(agent)

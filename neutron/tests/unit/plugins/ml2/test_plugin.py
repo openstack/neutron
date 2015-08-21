@@ -516,6 +516,16 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             plugin.update_port(ctx, port['port']['id'], port)
             self.assertTrue(sg_member_update.called)
 
+    def test_update_port_host_id_changed(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        host_id = {portbindings.HOST_ID: 'host1'}
+        with self.port(**host_id) as port:
+            plugin.update_port_status(ctx, port['port']['id'], 'UP')
+            port['port']['binding:host_id'] = 'host2'
+            result = plugin.update_port(ctx, port['port']['id'], port)
+            self.assertEqual(constants.PORT_STATUS_DOWN, result['status'])
+
     def test_update_port_status_with_network(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
@@ -1801,7 +1811,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
     def test_create_port_rpc_outside_transaction(self):
         with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
-                                  'create_port') as db_create_port:
+                                  'create_port') as db_create_port, \
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'update_port'):
             init.return_value = None
 
             new_port = mock.MagicMock()
