@@ -60,13 +60,14 @@ OPTIONS
 FILES
 ========
 
-plugins.ini file contains the plugin information
-neutron.conf file contains configuration information in the form of python-gflags.
+* plugins.ini file contains the plugin information.
+* neutron.conf file contains neutron-server's configuration information.
 
 SEE ALSO
 ========
 
-* `OpenStack Neutron <http://neutron.openstack.org>`__
+* `OpenStack Neutron Documents <http://docs.openstack.org/developer/neutron>`__
+* `OpenStack Neutron Wiki Page <https://wiki.openstack.org/wiki/Neutron>`__
 
 BUGS
 ====
