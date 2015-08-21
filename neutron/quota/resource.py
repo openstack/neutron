@@ -224,6 +224,7 @@ class TrackedResource(BaseResource):
                   {'tenant_id': tenant_id, 'resource': self.name})
         return usage_info
 
+    @lockutils.synchronized('dirty_tenants')
     def resync(self, context, tenant_id):
         if tenant_id not in self._out_of_sync_tenants:
             return
@@ -238,6 +239,7 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, tenant_id, in_use, reserved)
 
+    @lockutils.synchronized('dirty_tenants')
     def count(self, context, _plugin, tenant_id, resync_usage=False):
         """Return the current usage count for the resource.
 
