@@ -43,6 +43,13 @@ FAKE_MAC = '00:11:22:33:44:55'
 FAKE_IP1 = '10.0.0.1'
 FAKE_IP2 = '10.0.0.2'
 
+TEST_PORT_ID1 = 'port-id-1'
+TEST_PORT_ID2 = 'port-id-2'
+TEST_PORT_ID3 = 'port-id-3'
+
+TEST_NETWORK_ID1 = 'net-id-1'
+TEST_NETWORK_ID2 = 'net-id-2'
+
 
 class FakeVif(object):
     ofport = 99
@@ -629,15 +636,67 @@ class TestOvsNeutronAgent(object):
                                          self.agent.agent_state, True)
 
     def test_port_update(self):
-        port = {"id": "123",
-                "network_id": "124",
+        port = {"id": TEST_PORT_ID1,
+                "network_id": TEST_NETWORK_ID1,
                 "admin_state_up": False}
         self.agent.port_update("unused_context",
                                port=port,
                                network_type="vlan",
                                segmentation_id="1",
                                physical_network="physnet")
-        self.assertEqual(set(['123']), self.agent.updated_ports)
+        self.assertEqual(set([TEST_PORT_ID1]), self.agent.updated_ports)
+
+    def test_port_delete_after_update(self):
+        """Make sure a port is not marked for delete and update."""
+        port = {'id': TEST_PORT_ID1}
+
+        self.agent.port_update(context=None, port=port)
+        self.agent.port_delete(context=None, port_id=port['id'])
+        self.assertEqual(set(), self.agent.updated_ports)
+        self.assertEqual(set([port['id']]), self.agent.deleted_ports)
+
+    def test_process_deleted_ports_cleans_network_ports(self):
+        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID1)
+        self.agent.port_delete(context=None, port_id=TEST_PORT_ID1)
+        self.agent.sg_agent = mock.Mock()
+        self.agent.int_br = mock.Mock()
+        self.agent.process_deleted_ports(port_info={})
+        self.assertEqual(set(), self.agent.network_ports[TEST_NETWORK_ID1])
+
+    def test_network_update(self):
+        """Network update marks port for update. """
+        network = {'id': TEST_NETWORK_ID1}
+        port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
+
+        self.agent._update_port_network(port['id'], port['network_id'])
+        self.agent.network_update(context=None, network=network)
+        self.assertEqual(set([port['id']]), self.agent.updated_ports)
+
+    def test_network_update_outoforder(self):
+        """Network update arrives later than port_delete.
+
+        But the main agent loop still didn't process the ports,
+        so we ensure the port is not marked for update.
+        """
+        network = {'id': TEST_NETWORK_ID1}
+        port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
+
+        self.agent._update_port_network(port['id'], port['network_id'])
+        self.agent.port_delete(context=None, port_id=port['id'])
+        self.agent.network_update(context=None, network=network)
+        self.assertEqual(set(), self.agent.updated_ports)
+
+    def test_update_port_network(self):
+        """Ensure ports are associated and moved across networks correctly."""
+        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID1)
+        self.agent._update_port_network(TEST_PORT_ID2, TEST_NETWORK_ID1)
+        self.agent._update_port_network(TEST_PORT_ID3, TEST_NETWORK_ID2)
+        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID2)
+
+        self.assertEqual(set([TEST_PORT_ID2]),
+                         self.agent.network_ports[TEST_NETWORK_ID1])
+        self.assertEqual(set([TEST_PORT_ID1, TEST_PORT_ID3]),
+                         self.agent.network_ports[TEST_NETWORK_ID2])
 
     def test_port_delete(self):
         vif = FakeVif()

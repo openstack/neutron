@@ -665,6 +665,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_update(context, updated_network, net_data)
             self.type_manager.extend_network_dict_provider(context,
                                                            updated_network)
+
+            # TODO(QoS): Move out to the extension framework somehow.
+            need_network_update_notify = (
+                qos_consts.QOS_POLICY_ID in net_data and
+                original_network[qos_consts.QOS_POLICY_ID] !=
+                updated_network[qos_consts.QOS_POLICY_ID])
+
             mech_context = driver_context.NetworkContext(
                 self, context, updated_network,
                 original_network=original_network)
@@ -675,6 +682,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # now the error is propogated to the caller, which is expected to
         # either undo/retry the operation or delete the resource.
         self.mechanism_manager.update_network_postcommit(mech_context)
+        if need_network_update_notify:
+            self.notifier.network_update(context, updated_network)
         return updated_network
 
     def get_network(self, context, id, fields=None):
