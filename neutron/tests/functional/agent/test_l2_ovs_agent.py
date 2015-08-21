@@ -14,7 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
 
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
 
 
@@ -54,3 +56,13 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.create_agent(create_tunnels=False)
         self.assertTrue(self.ovs.bridge_exists(self.br_int))
         self.assertFalse(self.ovs.bridge_exists(self.br_tun))
+
+    def test_assert_pings_during_br_int_setup_not_lost(self):
+        self.setup_agent_and_ports(port_dicts=self.create_test_ports(),
+                                   create_tunnels=False)
+        self.wait_until_ports_state(self.ports, up=True)
+        ips = [port['fixed_ips'][0]['ip_address'] for port in self.ports]
+        with net_helpers.async_ping(self.namespace, ips) as running:
+            while running():
+                self.agent.setup_integration_br()
+                time.sleep(0.25)

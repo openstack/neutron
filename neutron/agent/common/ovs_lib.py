@@ -171,8 +171,12 @@ class OVSBridge(BaseOVS):
         self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
                               check_error=True)
 
-    def create(self):
-        self.ovsdb.add_br(self.br_name).execute()
+    def create(self, secure_mode=False):
+        with self.ovsdb.transaction() as txn:
+            txn.add(self.ovsdb.add_br(self.br_name))
+            if secure_mode:
+                txn.add(self.ovsdb.set_fail_mode(self.br_name,
+                                                 FAILMODE_SECURE))
         # Don't return until vswitchd sets up the internal port
         self.get_port_ofport(self.br_name)
 
@@ -267,6 +271,10 @@ class OVSBridge(BaseOVS):
             retval = '\n'.join(item for item in flows.splitlines()
                                if 'NXST' not in item)
         return retval
+
+    def dump_all_flows(self):
+        return [f for f in self.run_ofctl("dump-flows", []).splitlines()
+                if 'NXST' not in f]
 
     def deferred(self, **kwargs):
         return DeferredOVSBridge(self, **kwargs)

@@ -118,29 +118,36 @@ class OVS_Lib_Test(base.BaseTestCase):
         cidr = '192.168.1.0/24'
 
         flow_dict_1 = collections.OrderedDict([
+            ('cookie', 1234),
             ('priority', 2),
             ('dl_src', 'ca:fe:de:ad:be:ef'),
             ('actions', 'strip_vlan,output:0')])
         flow_dict_2 = collections.OrderedDict([
+            ('cookie', 1254),
             ('priority', 1),
             ('actions', 'normal')])
         flow_dict_3 = collections.OrderedDict([
+            ('cookie', 1257),
             ('priority', 2),
             ('actions', 'drop')])
         flow_dict_4 = collections.OrderedDict([
+            ('cookie', 1274),
             ('priority', 2),
             ('in_port', ofport),
             ('actions', 'drop')])
         flow_dict_5 = collections.OrderedDict([
+            ('cookie', 1284),
             ('priority', 4),
             ('in_port', ofport),
             ('dl_vlan', vid),
             ('actions', "strip_vlan,set_tunnel:%s,normal" % (lsw_id))])
         flow_dict_6 = collections.OrderedDict([
+            ('cookie', 1754),
             ('priority', 3),
             ('tun_id', lsw_id),
             ('actions', "mod_vlan_vid:%s,output:%s" % (vid, ofport))])
         flow_dict_7 = collections.OrderedDict([
+            ('cookie', 1256),
             ('priority', 4),
             ('nw_src', cidr),
             ('proto', 'arp'),
@@ -156,36 +163,39 @@ class OVS_Lib_Test(base.BaseTestCase):
         expected_calls = [
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1234,"
                                  "priority=2,dl_src=ca:fe:de:ad:be:ef,"
                                  "actions=strip_vlan,output:0")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1254,"
                                  "priority=1,actions=normal")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1257,"
                                  "priority=2,actions=drop")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=2,"
-                                 "in_port=%s,actions=drop" % ofport)),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1274,"
+                                 "priority=2,in_port=%s,actions=drop" % ofport
+                             )),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1284,"
                                  "priority=4,dl_vlan=%s,in_port=%s,"
                                  "actions=strip_vlan,set_tunnel:%s,normal" %
                                  (vid, ofport, lsw_id))),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=3,"
-                                 "tun_id=%s,actions=mod_vlan_vid:%s,"
-                                 "output:%s" % (lsw_id, vid, ofport))),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1754,"
+                                 "priority=3,"
+                                 "tun_id=%s,actions=mod_vlan_vid:%s,output:%s"
+                                 % (lsw_id, vid, ofport))),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=4,"
-                                 "nw_src=%s,arp,actions=drop" % cidr)),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1256,"
+                                 "priority=4,nw_src=%s,arp,actions=drop"
+                                 % cidr)),
         ]
         self.execute.assert_has_calls(expected_calls)
 
@@ -205,6 +215,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([
+            ('cookie', 1234),
             ('priority', 1),
             ('hard_timeout', 1000),
             ('idle_timeout', 2000),
@@ -213,17 +224,18 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.add_flow(**flow_dict)
         self._verify_ofctl_mock(
             "add-flows", self.BR_NAME, '-',
-            process_input="hard_timeout=1000,idle_timeout=2000,priority=1,"
-            "actions=normal")
+            process_input="hard_timeout=1000,idle_timeout=2000,"
+                          "priority=1,cookie=1234,actions=normal")
 
     def test_add_flow_default_priority(self):
-        flow_dict = collections.OrderedDict([('actions', 'normal')])
+        flow_dict = collections.OrderedDict([('actions', 'normal'),
+                                             ('cookie', 1234)])
 
         self.br.add_flow(**flow_dict)
         self._verify_ofctl_mock(
             "add-flows", self.BR_NAME, '-',
             process_input="hard_timeout=0,idle_timeout=0,priority=1,"
-                          "actions=normal")
+                          "cookie=1234,actions=normal")
 
     def _test_get_port_ofport(self, ofport, expected_result):
         pname = "tap99"
