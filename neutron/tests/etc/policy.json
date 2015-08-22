@@ -1,8 +1,10 @@
 {
     "context_is_admin":  "role:admin",
-    "admin_or_owner": "rule:context_is_admin or tenant_id:%(tenant_id)s",
+    "owner": "tenant_id:%(tenant_id)s",
+    "admin_or_owner": "rule:context_is_admin or rule:owner",
     "context_is_advsvc":  "role:advsvc",
     "admin_or_network_owner": "rule:context_is_admin or tenant_id:%(network:tenant_id)s",
+    "admin_owner_or_network_owner": "rule:admin_or_network_owner or rule:owner",
     "admin_only": "rule:context_is_admin",
     "regular_user": "",
     "shared": "field:networks:shared=True",
@@ -62,7 +64,7 @@
     "create_port:binding:profile": "rule:admin_only",
     "create_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "create_port:allowed_address_pairs": "rule:admin_or_network_owner",
-    "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
+    "get_port": "rule:admin_owner_or_network_owner or rule:context_is_advsvc",
     "get_port:queue_id": "rule:admin_only",
     "get_port:binding:vif_type": "rule:admin_only",
     "get_port:binding:vif_details": "rule:admin_only",
@@ -76,7 +78,7 @@
     "update_port:binding:profile": "rule:admin_only",
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner or rule:context_is_advsvc",
     "update_port:allowed_address_pairs": "rule:admin_or_network_owner",
-    "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
+    "delete_port": "rule:admin_owner_or_network_owner or rule:context_is_advsvc",
 
     "get_router:ha": "rule:admin_only",
     "create_router": "rule:regular_user",
@@ -183,6 +185,13 @@
     "get_policy_bandwidth_limit_rule": "rule:regular_user",
     "create_policy_bandwidth_limit_rule": "rule:admin_only",
     "delete_policy_bandwidth_limit_rule": "rule:admin_only",
-    "update_policy_bandwidth_limit_rule": "rule:admin_only"
+    "update_policy_bandwidth_limit_rule": "rule:admin_only",
 
+    "restrict_wildcard": "(not field:rbac_policy:target_tenant=*) or rule:admin_only",
+    "create_rbac_policy": "",
+    "create_rbac_policy:target_tenant": "rule:restrict_wildcard",
+    "update_rbac_policy": "rule:admin_or_owner",
+    "update_rbac_policy:target_tenant": "rule:restrict_wildcard and rule:admin_or_owner",
+    "get_rbac_policy": "rule:admin_or_owner",
+    "delete_rbac_policy": "rule:admin_or_owner"
 }

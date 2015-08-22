@@ -96,6 +96,34 @@ class CommonDbMixin(object):
         return model_query_scope(context, model)
 
     def _model_query(self, context, model):
+        if isinstance(model, UnionModel):
+            return self._union_model_query(context, model)
+        else:
+            return self._single_model_query(context, model)
+
+    def _union_model_query(self, context, model):
+        # A union query is a query that combines multiple sets of data
+        # together and represents them as one. So if a UnionModel was
+        # passed in, we generate the query for each model with the
+        # appropriate filters and then combine them together with the
+        # .union operator. This allows any subsequent users of the query
+        # to handle it like a normal query (e.g. add pagination/sorting/etc)
+        first_query = None
+        remaining_queries = []
+        for name, component_model in model.model_map.items():
+            query = self._single_model_query(context, component_model)
+            if model.column_type_name:
+                query.add_columns(
+                    sql.expression.column('"%s"' % name, is_literal=True).
+                    label(model.column_type_name)
+                )
+            if first_query is None:
+                first_query = query
+            else:
+                remaining_queries.append(query)
+        return first_query.union(*remaining_queries)
+
+    def _single_model_query(self, context, model):
         query = context.session.query(model)
         # define basic filter condition for model query
         query_filter = None
@@ -260,3 +288,14 @@ class CommonDbMixin(object):
         columns = [c.name for c in model.__table__.columns]
         return dict((k, v) for (k, v) in
                     six.iteritems(data) if k in columns)
+
+
+class UnionModel(object):
+    """Collection of models that _model_query can query as a single table."""
+
+    def __init__(self, model_map, column_type_name=None):
+        # model_map is a dictionary of models keyed by an arbitrary name.
+        # If column_type_name is specified, the resulting records will have a
+        # column with that name which identifies the source of each record
+        self.model_map = model_map
+        self.column_type_name = column_type_name

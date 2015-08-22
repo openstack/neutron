@@ -30,10 +30,8 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.common import exceptions
-from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
@@ -60,7 +58,7 @@ class ExtensionsTestApp(wsgi.Router):
         super(ExtensionsTestApp, self).__init__(mapper)
 
 
-class FakePluginWithExtension(db_base_plugin_v2.NeutronDbPluginV2):
+class FakePluginWithExtension(object):
     """A fake plugin used only for extension testing in this file."""
 
     supported_extension_aliases = ["FOXNSOX"]
@@ -736,8 +734,7 @@ class SimpleExtensionManager(object):
         return request_extensions
 
 
-class ExtensionExtendedAttributeTestPlugin(
-    ml2_plugin.Ml2Plugin):
+class ExtensionExtendedAttributeTestPlugin(object):
 
     supported_extension_aliases = [
         'ext-obj-test', "extended-ext-attr"
@@ -778,7 +775,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
 
         ext_mgr = extensions.PluginAwareExtensionManager(
             extensions_path,
-            {constants.CORE: ExtensionExtendedAttributeTestPlugin}
+            {constants.CORE: ExtensionExtendedAttributeTestPlugin()}
         )
         ext_mgr.extend_resources("2.0", {})
         extensions.PluginAwareExtensionManager._instance = ext_mgr
