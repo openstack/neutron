@@ -160,9 +160,9 @@ class L2DevicePluginBase(object):
                         fn_obj = base.__dict__[method]
                         if inspect.isfunction(fn_obj):
                             abstract_fn_obj = cls.__dict__[method]
-                            arg_count = fn_obj.func_code.co_argcount
+                            arg_count = fn_obj.__code__.co_argcount
                             expected_arg_count = \
-                                abstract_fn_obj.func_code.co_argcount
+                                abstract_fn_obj.__code__.co_argcount
                             method_ok = arg_count == expected_arg_count
                 if method_ok:
                     continue
