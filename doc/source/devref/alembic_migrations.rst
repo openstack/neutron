@@ -294,12 +294,12 @@ Applying database migration rules
 
 To apply just expansion rules, execute::
 
- neutron-db-manage upgrade liberty_expand@head
+ neutron-db-manage upgrade expand@head
 
 After the first step is done, you can stop neutron-server, apply remaining
 non-expansive migration rules, if any::
 
- neutron-db-manage upgrade liberty_contract@head
+ neutron-db-manage upgrade contract@head
 
 and finally, start your neutron-server again.
 

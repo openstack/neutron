@@ -376,15 +376,6 @@ class TestCli(base.BaseTestCase):
         self.assertRaises(
             SystemExit, cli._get_subproject_base, 'not-installed')
 
-    def test__get_branch_label_current(self):
-        self.assertEqual('%s_fakebranch' % cli.CURRENT_RELEASE,
-                         cli._get_branch_label('fakebranch'))
-
-    def test__get_branch_label_other_release(self):
-        self.assertEqual('fakerelease_fakebranch',
-                         cli._get_branch_label('fakebranch',
-                                               release='fakerelease'))
-
     def test__compare_labels_ok(self):
         labels = {'label1', 'label2'}
         fake_revision = FakeRevision(labels)
@@ -407,7 +398,7 @@ class TestCli(base.BaseTestCase):
         script_dir = mock.Mock()
         script_dir.get_revision.return_value = fake_down_revision
         cli._validate_single_revision_labels(script_dir, fake_revision,
-                                             branch=None)
+                                             label=None)
 
         expected_labels = set()
         compare_mock.assert_has_calls(
@@ -425,10 +416,9 @@ class TestCli(base.BaseTestCase):
         script_dir = mock.Mock()
         script_dir.get_revision.return_value = fake_down_revision
         cli._validate_single_revision_labels(
-            script_dir, fake_revision,
-            release='fakerelease', branch='fakebranch')
+            script_dir, fake_revision, label='fakebranch')
 
-        expected_labels = {'fakerelease_fakebranch'}
+        expected_labels = {'fakebranch'}
         compare_mock.assert_has_calls(
             [mock.call(revision, expected_labels)
              for revision in (fake_revision, fake_down_revision)]
@@ -438,12 +428,11 @@ class TestCli(base.BaseTestCase):
     def test__validate_revision_validates_branches(self, validate_mock):
         script_dir = mock.Mock()
         fake_revision = FakeRevision()
-        release = cli.RELEASES[0]
         branch = cli.MIGRATION_BRANCHES[0]
-        fake_revision.path = os.path.join('/fake/path', release, branch)
+        fake_revision.path = os.path.join('/fake/path', branch)
         cli._validate_revision(script_dir, fake_revision)
         validate_mock.assert_called_with(
-            script_dir, fake_revision, release=release, branch=branch)
+            script_dir, fake_revision, label=branch)
 
     @mock.patch.object(cli, '_validate_single_revision_labels')
     def test__validate_revision_validates_branchless_migrations(
