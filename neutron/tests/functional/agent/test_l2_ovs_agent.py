@@ -16,6 +16,7 @@
 
 import time
 
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
 
@@ -31,6 +32,35 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             self.agent.int_br.delete_port(port['vif_name'])
 
         self.wait_until_ports_state(self.ports, up=False)
+
+    def test_datapath_type_system(self):
+        expected = constants.OVS_DATAPATH_SYSTEM
+        agent = self.create_agent()
+        self.start_agent(agent)
+        actual = self.ovs.db_get_val('Bridge',
+                                     agent.int_br.br_name,
+                                     'datapath_type')
+        self.assertEqual(expected, actual)
+        actual = self.ovs.db_get_val('Bridge',
+                                     agent.tun_br.br_name,
+                                     'datapath_type')
+        self.assertEqual(expected, actual)
+
+    def test_datapath_type_netdev(self):
+        expected = constants.OVS_DATAPATH_NETDEV
+        self.config.set_override('datapath_type',
+                                 expected,
+                                 "OVS")
+        agent = self.create_agent()
+        self.start_agent(agent)
+        actual = self.ovs.db_get_val('Bridge',
+                                     agent.int_br.br_name,
+                                     'datapath_type')
+        self.assertEqual(expected, actual)
+        actual = self.ovs.db_get_val('Bridge',
+                                     agent.tun_br.br_name,
+                                     'datapath_type')
+        self.assertEqual(expected, actual)
 
     def test_resync_devices_set_up_after_exception(self):
         self.setup_agent_and_ports(

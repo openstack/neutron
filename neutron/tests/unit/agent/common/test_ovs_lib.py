@@ -22,6 +22,8 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.common import exceptions
 from neutron.plugins.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as p_const
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -254,6 +256,16 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_get_port_ofport_returns_invalid_for_invalid(self):
         self._test_get_port_ofport(ovs_lib.INVALID_OFPORT,
                                    ovs_lib.INVALID_OFPORT)
+
+    def test_default_datapath(self):
+        # verify kernel datapath is default
+        expected = p_const.OVS_DATAPATH_SYSTEM
+        self.assertEqual(expected, self.br.datapath_type)
+
+    def test_non_default_datapath(self):
+        expected = p_const.OVS_DATAPATH_NETDEV
+        self.br = ovs_lib.OVSBridge(self.BR_NAME, datapath_type=expected)
+        self.assertEqual(expected, self.br.datapath_type)
 
     def test_count_flows(self):
         self.execute.return_value = 'ignore\nflow-1\n'

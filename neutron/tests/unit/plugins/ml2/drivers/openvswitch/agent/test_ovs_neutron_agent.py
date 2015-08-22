@@ -187,6 +187,37 @@ class TestOvsNeutronAgent(object):
             else:
                 self.assertFalse(provision_local_vlan.called)
 
+    def test_datapath_type_system(self):
+        # verify kernel datapath is default
+        expected = constants.OVS_DATAPATH_SYSTEM
+        self.assertEqual(expected, self.agent.int_br.datapath_type)
+
+    def test_datapath_type_netdev(self):
+
+        with mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                               'setup_integration_br'), \
+            mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                           'setup_ancillary_bridges',
+                           return_value=[]), \
+            mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                    return_value='00:00:00:00:00:01'), \
+            mock.patch(
+                'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'), \
+            mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
+                       new=MockFixedIntervalLoopingCall), \
+            mock.patch(
+                'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                return_value=[]):
+            # validate setting non default datapath
+            expected = constants.OVS_DATAPATH_NETDEV
+            cfg.CONF.set_override('datapath_type',
+                                  expected,
+                                  group='OVS')
+            kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
+            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                **kwargs)
+            self.assertEqual(expected, self.agent.int_br.datapath_type)
+
     def test_restore_local_vlan_map_with_device_has_tag(self):
         self._test_restore_local_vlan_maps(2)
 

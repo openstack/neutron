@@ -90,3 +90,7 @@ OVS_NORMAL = 1
 OVS_DEAD = 2
 
 EXTENSION_DRIVER_TYPE = 'ovs'
+
+# ovs datapath types
+OVS_DATAPATH_SYSTEM = 'system'
+OVS_DATAPATH_NETDEV = 'netdev'

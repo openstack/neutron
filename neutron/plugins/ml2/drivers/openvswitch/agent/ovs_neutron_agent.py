@@ -19,6 +19,7 @@ import sys
 import time
 import uuid
 
+import functools
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -173,9 +174,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         :param conf: an instance of ConfigOpts
         '''
         super(OVSNeutronAgent, self).__init__()
-        self.br_int_cls = bridge_classes['br_int']
-        self.br_phys_cls = bridge_classes['br_phys']
-        self.br_tun_cls = bridge_classes['br_tun']
+        self.conf = conf or cfg.CONF
+
+        # init bridge classes with configured datapath type.
+        self.br_int_cls, self.br_phys_cls, self.br_tun_cls = (
+            functools.partial(bridge_classes[b],
+                              datapath_type=self.conf.OVS.datapath_type)
+            for b in ('br_int', 'br_phys', 'br_tun'))
+
         self.use_veth_interconnection = use_veth_interconnection
         self.veth_mtu = veth_mtu
         self.available_local_vlans = set(moves.range(p_const.MIN_VLAN_TAG,
@@ -188,7 +194,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.enable_distributed_routing = enable_distributed_routing
         self.arp_responder_enabled = arp_responder and self.l2_pop
         self.prevent_arp_spoofing = prevent_arp_spoofing
-        self.conf = conf or cfg.CONF
 
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',

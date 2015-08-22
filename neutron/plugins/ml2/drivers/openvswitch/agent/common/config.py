@@ -47,6 +47,10 @@ ovs_opts = [
                        "integration bridge to physical bridges.")),
     cfg.StrOpt('of_interface', default='ovs-ofctl', choices=['ovs-ofctl'],
                help=_("OpenFlow interface to use.")),
+    cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
+               choices=[constants.OVS_DATAPATH_SYSTEM,
+                        constants.OVS_DATAPATH_NETDEV],
+               help=_("OVS datapath to use.")),
 ]
 
 agent_opts = [

@@ -30,6 +30,8 @@ from neutron.agent.ovsdb import api as ovsdb
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants
 
 # Default timeout for ovs-vsctl command
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
@@ -102,8 +104,11 @@ class BaseOVS(object):
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
         self.ovsdb = ovsdb.API.get(self)
 
-    def add_bridge(self, bridge_name):
-        self.ovsdb.add_br(bridge_name).execute()
+    def add_bridge(self, bridge_name,
+                   datapath_type=constants.OVS_DATAPATH_SYSTEM):
+
+        self.ovsdb.add_br(bridge_name,
+                          datapath_type).execute()
         br = OVSBridge(bridge_name)
         # Don't return until vswitchd sets up the internal port
         br.get_port_ofport(bridge_name)
@@ -143,9 +148,10 @@ class BaseOVS(object):
 
 
 class OVSBridge(BaseOVS):
-    def __init__(self, br_name):
+    def __init__(self, br_name, datapath_type=constants.OVS_DATAPATH_SYSTEM):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
+        self.datapath_type = datapath_type
 
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
@@ -173,7 +179,9 @@ class OVSBridge(BaseOVS):
 
     def create(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
-            txn.add(self.ovsdb.add_br(self.br_name))
+            txn.add(
+                self.ovsdb.add_br(self.br_name,
+                datapath_type=self.datapath_type))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))
@@ -186,7 +194,8 @@ class OVSBridge(BaseOVS):
     def reset_bridge(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.del_br(self.br_name))
-            txn.add(self.ovsdb.add_br(self.br_name))
+            txn.add(self.ovsdb.add_br(self.br_name,
+                                      datapath_type=self.datapath_type))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))

@@ -163,13 +163,16 @@ class TunnelTest(object):
 
     def _define_expected_calls(self, arp_responder=False):
         self.mock_int_bridge_cls_expected = [
-            mock.call(self.INT_BRIDGE),
+            mock.call(self.INT_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
         self.mock_phys_bridge_cls_expected = [
-            mock.call(self.MAP_TUN_BRIDGE),
+            mock.call(self.MAP_TUN_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
         self.mock_tun_bridge_cls_expected = [
-            mock.call(self.TUN_BRIDGE),
+            mock.call(self.TUN_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
 
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
@@ -577,13 +580,16 @@ class TunnelTestUseVethInterco(TunnelTest):
 
     def _define_expected_calls(self, arp_responder=False):
         self.mock_int_bridge_cls_expected = [
-            mock.call(self.INT_BRIDGE),
+            mock.call(self.INT_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
         self.mock_phys_bridge_cls_expected = [
-            mock.call(self.MAP_TUN_BRIDGE),
+            mock.call(self.MAP_TUN_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
         self.mock_tun_bridge_cls_expected = [
-            mock.call(self.TUN_BRIDGE),
+            mock.call(self.TUN_BRIDGE,
+                      datapath_type=mock.ANY),
         ]
 
         self.mock_int_bridge_expected = [

@@ -144,8 +144,8 @@ class OvsdbIdl(api.API):
                            self.context.vsctl_timeout,
                            check_error, log_errors)
 
-    def add_br(self, name, may_exist=True):
-        return cmd.AddBridgeCommand(self, name, may_exist)
+    def add_br(self, name, may_exist=True, datapath_type=None):
+        return cmd.AddBridgeCommand(self, name, may_exist, datapath_type)
 
     def del_br(self, name, if_exists=True):
         return cmd.DelBridgeCommand(self, name, if_exists)
