@@ -114,16 +114,18 @@ class NeutronConfigFixture(ConfigFixture):
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
                 'service_plugins': ('neutron.services.l3_router.'
                                     'l3_router_plugin.L3RouterPlugin'),
-                'rabbit_userid': rabbitmq_environment.user,
-                'rabbit_password': rabbitmq_environment.password,
-                'rabbit_hosts': '127.0.0.1',
-                'rabbit_virtual_host': rabbitmq_environment.vhost,
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
             },
             'database': {
                 'connection': connection,
+            },
+            'oslo_messaging_rabbit': {
+                'rabbit_userid': rabbitmq_environment.user,
+                'rabbit_password': rabbitmq_environment.password,
+                'rabbit_hosts': '127.0.0.1',
+                'rabbit_virtual_host': rabbitmq_environment.vhost,
             }
         })
 
