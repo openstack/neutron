@@ -1,0 +1,684 @@
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
+# Alper Çiftçi <alprciftci@gmail.com>, 2015
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-08-21 06:07+0000\n"
+"PO-Revision-Date: 2015-08-21 01:06+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
+"language/tr_TR/)\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, python-format
+msgid "%(action)s failed (client error): %(exc)s"
+msgstr "%(action)s başarısız (istemci hatası): %(exc)s"
+
+#, python-format
+msgid "%(method)s %(url)s"
+msgstr "%(method)s %(url)s"
+
+#, python-format
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr ""
+"%(plugin_key)s: %(args)s bağımsız değişkenlerine sahip %(function_name)s "
+"atlandı"
+
+#, python-format
+msgid "%(prog)s version %(version)s"
+msgstr "%(prog)s sürüm %(version)s"
+
+#, python-format
+msgid "%(type)s ID ranges: %(range)s"
+msgstr "%(type)s ID aralığı: %(range)s"
+
+#, python-format
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s hata döndürdü: %(exception)s"
+
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s HTTP %(status)d ile geri döndü"
+
+#, python-format
+msgid "%d probe(s) deleted"
+msgstr "%d sonda silindi"
+
+#, python-format
+msgid ""
+"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
+msgstr "%(network_id)s ağı için %(network_type)s türünde %(id)s dilimi eklendi"
+
+#, python-format
+msgid "Adding %s to list of bridges."
+msgstr "%s köprü listesine ekleniyor."
+
+#, python-format
+msgid "Adding network %(net)s to agent %(agent)s on host %(host)s"
+msgstr "Ağ %(net)s %(host)s istemcisi üzerinde %(agent)s ajanına ekleniyor"
+
+#, python-format
+msgid "Agent %s already present"
+msgstr "Ajan %s zaten mevcut"
+
+#, python-format
+msgid "Agent Gateway port does not exist, so create one: %s"
+msgstr "Ajan geçit bağlantı noktası mevcut değil, bir tane oluştur: %s"
+
+msgid "Agent caught SIGHUP, resetting."
+msgstr "Ajan SIGHUP yakaladı, sıfırlanıyor."
+
+msgid "Agent caught SIGTERM, quitting daemon loop."
+msgstr "Ajan SIGTERM yakaladı, artalan işlemi döngüsünden çıkılıyor."
+
+msgid "Agent initialised successfully, now running... "
+msgstr "Ajan başarıyla ilklendirildi, şimdi çalıştırılıyor... "
+
+msgid "Agent initialized successfully, now running... "
+msgstr "Ajan başarıyla ilklendirildi, şimdi çalıştırılıyor... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "Ajan ve eklenti uyumsuz!"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "Ajan tüneli eklentiyle uyumsuz!"
+
+#, python-format
+msgid "Allocated vlan (%d) from the pool"
+msgstr "Havuzdan vlan (%d) ayrıldı"
+
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr ""
+"Sıralamaya izin verme etkin çünkü doğal sayfalama doğal sıralamaya ihtiyaç "
+"duyar"
+
+#, python-format
+msgid "Allowable flat physical_network names: %s"
+msgstr "İzin verilebilecek düz fiziksel ağ isimleri: %s"
+
+msgid "Arbitrary flat physical_network names allowed"
+msgstr "Rastgele seçilmiş düz fiziksel ağ isimlerine izin verilmez"
+
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "%(vlan_id)s net-id=%(net_uuid)s için yerel olarak atanıyor"
+
+#, python-format
+msgid "Attachment %s removed"
+msgstr "Eklenti %s kaldırıldı"
+
+#, python-format
+msgid ""
+"Attempt %(count)s to allocate a VRID in the network %(network)s for the "
+"router %(router)s"
+msgstr ""
+"%(network)s ağında %(router)s yönlendiricisi için VRID ayırmak için girişim "
+"%(count)s"
+
+#, python-format
+msgid "Attempt %(count)s to bind port %(port)s"
+msgstr "%(port)s bağlantı noktası bağlama için girişim %(count)s"
+
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr ""
+"Filtrelenmiş %r olmayan bağlantı noktası filtresi kaldırılmaya çalışıldı"
+
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "%s filtrelenmemiş bağlantı noktası filtresi güncellenmeye çalışıldı"
+
+msgid "Bad resource for forming a create request"
+msgstr "Oluşturma isteği oluşturmak için kötü kaynak"
+
+msgid "Bad resource for forming a delete request"
+msgstr "Silme isteği oluşturmak için kötü kaynak"
+
+msgid "Bad resource for forming a list request"
+msgstr "Liste isteği oluşturmak için kötü kaynak"
+
+msgid "Bad resource for forming a show request"
+msgstr "Gösterme isteği oluşturmak için kötü kaynak"
+
+msgid "Bad resource for forming a update request"
+msgstr "Güncelleme isteği oluşturmak için kötü kaynak"
+
+#, python-format
+msgid ""
+"Binding info for port %s was not found, it might have been deleted already."
+msgstr ""
+"Bağlantı noktası %s için bağlama bilgisi bulunamadı, zaten silinmiş olabilir."
+
+#, python-format
+msgid ""
+"Cannot apply dhcp option %(opt)s because it's ip_version %(version)d is not "
+"in port's address IP versions"
+msgstr ""
+"Dhcp seçeneği %(opt)s uygulanamıyor çünkü ip_version %(version)d bağlantı "
+"noktasının adres IP sürümleri içinde değil"
+
+#, python-format
+msgid "Centralizing distributed router %s is not supported"
+msgstr "Dağıtık yönlendirici %s merkezileştirme desteklenmiyor"
+
+#, python-format
+msgid "Cleaning bridge: %s"
+msgstr "Köprü temizleniyor: %s"
+
+#, python-format
+msgid "Clearing orphaned ARP spoofing entries for devices %s"
+msgstr "Aygıtlar %s için sahipsiz ARP aldatma girdileri temizleniyor"
+
+msgid ""
+"ConfDriver is used as quota_driver because the loaded plugin does not "
+"support 'quotas' table."
+msgstr ""
+"Yüklenen eklenti 'quotas' tablosunu desteklemediğinden ConfDriver "
+"quota_driver olarak kullanılıyor."
+
+#, python-format
+msgid "Config paste file: %s"
+msgstr "Yapılandırma yapıştırma dosyası: %s"
+
+#, python-format
+msgid "Configured extension driver names: %s"
+msgstr "Yapılandırılan eklenti sürücü isimleri: %s"
+
+#, python-format
+msgid "Configured mechanism driver names: %s"
+msgstr "Yapılandırılan mekanizma sürücü isimleri: %s"
+
+#, python-format
+msgid "Configured type driver names: %s"
+msgstr "Tür sürücü isimleri yapılandırıldı: %s"
+
+#, python-format
+msgid "Controller IPs: %s"
+msgstr "Kontrolcü IP'si: %s"
+
+msgid "DHCP agent started"
+msgstr "DHCP ajanı başlatıldı"
+
+#, python-format
+msgid "Default provider is not specified for service type %s"
+msgstr "%s servis türü için varsayılan sağlayıcı belirtilmemiş"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Bağlantı noktası siliniyor: %s"
+
+#, python-format
+msgid "Destroying IPset: %s"
+msgstr "IPset siliniyor: %s"
+
+#, python-format
+msgid "Destroying IPsets with prefix: %s"
+msgstr "Şu öneke sahip IPset'ler siliniyor: %s"
+
+#, python-format
+msgid "Device %s already exists"
+msgstr "Aygıt %s zaten mevcut"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "Aygıt %s eklentide tanımlanmamış"
+
+#, python-format
+msgid "Device with MAC %s not defined on plugin"
+msgstr "%s MAC'ine sahip aygıt eklentide tanımlanmadı"
+
+msgid "Disabled allowed-address-pairs extension."
+msgstr "allowed-address-pairs eklentisi kapatıldı."
+
+msgid "Disabled security-group extension."
+msgstr "Güvenlik grubu eklentisi kapatıldı."
+
+msgid "Disabled vlantransparent extension."
+msgstr "vlantransparent eklentisi kapalı."
+
+#, python-format
+msgid "Exclude Devices: %s"
+msgstr "Aygıtları Hariç Tut: %s"
+
+#, python-format
+msgid ""
+"Failed to schedule network %s, no eligible agents or it might be already "
+"scheduled by another server"
+msgstr ""
+"%s ağı zamanlanamadı, uygun ajan yok veya başka bir sunucu tarafından zaten "
+"zamanlanmış olabilir"
+
+msgid "Fake SDNVE controller initialized"
+msgstr "Sahte SDNVE kontrolcüsü ilklendirildi"
+
+msgid "Fake SDNVE controller: check and create tenant"
+msgstr "Sahte SDNVE kontrolcüsü: kiracıyı kontrol et ve oluştur"
+
+msgid "Fake SDNVE controller: create"
+msgstr "Sahte SDNVE kontrolcüsü: oluştur"
+
+msgid "Fake SDNVE controller: delete"
+msgstr "Sahte SDNVE kontrolcüsü: sil"
+
+msgid "Fake SDNVE controller: get controller"
+msgstr "Sahte SDNVE kontrolcüsü: kontrolcüyü al"
+
+msgid "Fake SDNVE controller: get tenant by id"
+msgstr "Sahte SDNVE kontrolcüsü: id ile kiracı al"
+
+msgid "Fake SDNVE controller: list"
+msgstr "Sahte SDNVE kontrolcüsü: listele"
+
+msgid "Fake SDNVE controller: show"
+msgstr "Sahte SDNVE kontrolcüsü: göster"
+
+msgid "Fake SDNVE controller: update"
+msgstr "Sahte SDNVE kontrolcüsü: güncelle"
+
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "Havuzda geçersiz IP adresi bulundu: %(start)s - %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "Kesişen aralıklar bulundu: %(l_range)s and %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "Alt ağ CIDR'den büyük havuz bulundu:%(start)s - %(end)s"
+
+#, python-format
+msgid ""
+"Found port (%(port_id)s, %(ip)s) having IP allocation on subnet %(subnet)s, "
+"cannot delete"
+msgstr ""
+"%(subnet)s alt ağında IP ayrılmış bağlantı noktası (%(port_id)s, %(ip)s) "
+"bulundu, silinemez"
+
+#, python-format
+msgid "Got %(alias)s extension from driver '%(drv)s'"
+msgstr "'%(drv)s' sürücüsünden %(alias)s eklentisi alındı"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP istisnası fırlatıldı: %s"
+
+#, python-format
+msgid ""
+"Heartbeat received from %(type)s agent on host %(host)s, uuid %(uuid)s after "
+"%(delta)s"
+msgstr ""
+"%(host)s istemcisi, uuid %(uuid)s üstündeki %(type)s ajandan %(delta)s sonra "
+"kalp atışı alındı"
+
+msgid "IPset cleanup completed successfully"
+msgstr "IPset temizliği başarıyla tamamlandı"
+
+msgid "IPv6 is not enabled on this system."
+msgstr "IPv6 bu sistemde etkin değil."
+
+msgid "Initializing CRD client... "
+msgstr "CRD istemcisi ilklendiriliyor... "
+
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr "'%s' türü için sürücü ilklendiriliyor"
+
+#, python-format
+msgid "Initializing extension driver '%s'"
+msgstr "Eklenti sürücüsü ilklendiriliyor '%s'"
+
+msgid "Initializing extension manager."
+msgstr "Genişletme yöneticisi başlatılıyor"
+
+#, python-format
+msgid "Initializing mechanism driver '%s'"
+msgstr "Mekanizma sürücüsü ilklendiriliyor '%s'"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "Arayüz eşleştirmeleri: %s"
+
+#, python-format
+msgid "L2 Agent operating in DVR Mode with MAC %s"
+msgstr "L2 Ajanı %s MAC'i ile DVR Kipinde çalışıyor"
+
+msgid "L3 agent started"
+msgstr "L3 ajanı başlatıldı"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "LinuxBridge Ajanı RPC Artalan İşlemleri Başlatıldı!"
+
+#, python-format
+msgid "Loaded extension driver names: %s"
+msgstr "Yüklenen eklenti sürücü isimleri: %s"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "Yüklenen bölüm: %s"
+
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr "Yüklenen mekanizma sürücü isimleri: %s"
+
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr "quota_driver yüklendi: %s."
+
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr "Tür sürücü isimleri yüklendi: %s"
+
+#, python-format
+msgid "Loading Metering driver %s"
+msgstr "Ölçme sürücüsü %s yükleniyor"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "Eklenti Yükleniyor: %s"
+
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr "Çekirdek eklenti yükleniyor: %s"
+
+#, python-format
+msgid "Loading interface driver %s"
+msgstr "Arayüz sürücüsü %s yükleniyor"
+
+msgid "Logging enabled!"
+msgstr "Günlükleme etkin!"
+
+#, python-format
+msgid ""
+"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr "Döngü yinelemsi aralığı aştı (%(polling_interval)s ile %(elapsed)s)!"
+
+msgid "ML2 FlatTypeDriver initialization complete"
+msgstr "ML2 FlatTypeDriver ilklendirmesi tamamlandı"
+
+msgid "ML2 LocalTypeDriver initialization complete"
+msgstr "ML2 LocalTypeDriver ilklendirmesi tamamlandı"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "Fiziksel ağ %(physical_network)s %(bridge)s köprüsüne eşleştiriliyor"
+
+#, python-format
+msgid ""
+"Mapping physical network %(physical_network)s to interface %(interface)s"
+msgstr ""
+"%(physical_network)s fiziksel ağını %(interface)s arayüzüne eşleştiriyor"
+
+msgid "Modular L2 Plugin initialization complete"
+msgstr "Modüler L2 Eklentisi ilklendirme tamamlandı"
+
+msgid "NVSD Agent initialized successfully, now running... "
+msgstr "NVSD Ajanı başarıyla ilklendirildi, şimdi çalıştırılıyor... "
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "Ağ VLAN aralığı: %s"
+
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Neutron servisi başlatıldı, %(host)s:%(port)s üzerinde dinliyor"
+
+#, python-format
+msgid "No %s Plugin loaded"
+msgstr "Hiçbir %s Eklenti yüklenmedi"
+
+#, python-format
+msgid "No device with MAC %s defined on agent."
+msgstr "Ajanda %s MAC'ine sahip bir aygıt tanımlanmamış."
+
+msgid "No ip allocation set"
+msgstr "Ip ayırma ayarlanmamış"
+
+msgid "No ports here to refresh firewall"
+msgstr "Burda güvenlik duvarını tazelemek için bağlantı noktası yok"
+
+#, python-format
+msgid "Non matching tenant and network types: %(ttype)s %(ntype)s"
+msgstr "Eşleşmeyen kiracı ve ağ türleri: %(ttype)s %(ntype)s"
+
+#, python-format
+msgid "Nova event response: %s"
+msgstr "Nova olay yanıtı: %s"
+
+#, python-format
+msgid ""
+"Number of active agents lower than max_l3_agents_per_router. L3 agents "
+"available: %s"
+msgstr ""
+"Etkin ajan sayısı max_l3_agents_per_router'den küçük. Kullanılabilir L3 "
+"ajanları: %s"
+
+msgid "OVS cleanup completed successfully"
+msgstr "OVS temizliği başarıyla tamamlandı"
+
+#, python-format
+msgid "Physical Devices mappings: %s"
+msgstr "Fiziksel Aygıtların eşleştirmeleri: %s"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "Bağlantı noktası %(device)s güncellendi. Detaylar: %(details)s"
+
+#, python-format
+msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr "Bağlantı noktası %(port_id)s %(br_name)s köprüsünde mevcut değil"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "Bağlantı noktası %s güncellendi."
+
+#, python-format
+msgid "Port %s was deleted concurrently"
+msgstr "Bağlantı noktası %s eş zamanlı olarak silindi"
+
+#, python-format
+msgid ""
+"Port %s was not found on the integration bridge and will therefore not be "
+"processed"
+msgstr ""
+"Bağlantı noktası %s tümleştirme köprüsünde bulunamadı ve bu yüzden "
+"işlenmeyecek"
+
+#, python-format
+msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
+msgstr ""
+"'%(port_name)s' bağlantı noktası '%(vlan_tag)d' vlan etiketini kaybetti!"
+
+msgid "PortSecurityExtensionDriver initialization complete"
+msgstr "PortSecurityExtensionDriver ilklendirme tamamlandı"
+
+#, python-format
+msgid "Ports %s removed"
+msgstr "Portlar %s  silindi"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "Aygıtlar için filtreler hazırlanıyor %s"
+
+#, python-format
+msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
+msgstr "Süreç şu uid/gid ile çalışıyor: %(uid)s/%(gid)s"
+
+msgid "Provider rule updated"
+msgstr "Sağlayıcı kuralı güncellendi"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id: %s"
+
+msgid "RPC was already started in parent process by plugin."
+msgstr "RPC üst süreçte eklenti tarafından zaten başlatılmıştı."
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr "vlan = %(vlan_id)s'in net-id = %(net_uuid)s'den iades isteniyor"
+
+msgid "Refresh firewall rules"
+msgstr "Güvenlik duvarı kurallarını tazele"
+
+#, python-format
+msgid "Registered extension drivers: %s"
+msgstr "Eklenti sürücüleri kaydedildi: %s"
+
+#, python-format
+msgid "Registered mechanism drivers: %s"
+msgstr "Kaydedilen mekanizma sürücüleri: %s"
+
+#, python-format
+msgid "Registered types: %s"
+msgstr "Kaydedilen türler: %s"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "%r için aygıt filtresini kaldır"
+
+#, python-format
+msgid "Removing device with mac_address %s"
+msgstr "%s mac_address'e sahip aygıt kaldırılıyor"
+
+#, python-format
+msgid "Removing iptables rule for IPset: %s"
+msgstr "IPset için iptables kuralı siliniyor: %s"
+
+#, python-format
+msgid "Router %(router_id)s transitioned to %(state)s"
+msgstr "Yönlendirici %(router_id)s %(state)s durumuna geçti"
+
+#, python-format
+msgid ""
+"Router %s is not managed by this agent. It was possibly deleted concurrently."
+msgstr ""
+"%s yönlendiricisi bu ajan tarafından yönetilmiyor. Muhtemelen eş zamanlı "
+"olarak silindi."
+
+msgid "SNAT already bound to a service node."
+msgstr "SNAT zaten bir servis düğümüne bağlı."
+
+#, python-format
+msgid "SNAT interface port list does not exist, so create one: %s"
+msgstr ""
+"SNAT arayüzü bağlantı noktası listesi mevcut değil, bir tane oluştur: %s"
+
+msgid "SRIOV NIC Agent RPC Daemon Started!"
+msgstr "SRIOV NIC Ajanı RPC Artalan İşlemleri Başlatıldı!"
+
+#, python-format
+msgid "Scheduling unhosted network %s"
+msgstr "Sunulmamış ağ %s zamanlanıyor"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "Güvenlik grubu üyesi güncellendi %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "Güvenlik grubu kuralı güncellendi %r"
+
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "Servis %s çekirdek eklenti tarafından destekleniyor"
+
+msgid "Set a new controller if needed."
+msgstr "Gerekirse yeni bir kontrolcü ayarla."
+
+#, python-format
+msgid "Set the controller to a new controller: %s"
+msgstr "Kontrolcüyü yeni kontrolcüye ayarla: %s"
+
+#, python-format
+msgid ""
+"Skipping ARP spoofing rules for port '%s' because it has port security "
+"disabled"
+msgstr ""
+"'%s' bağlantı noktası için ARP aldatma kuralları atlanıyor çünkü bağlanı "
+"noktası güvenliği kapalı"
+
+#, python-format
+msgid ""
+"Skipping method %s as firewall is disabled or configured as "
+"NoopFirewallDriver."
+msgstr ""
+"Güvenlik duvarı kapalı ya da NoopFirewallDriver olarak yapılandırıldığından "
+"%s metodu atlanıyor."
+
+msgid ""
+"Skipping period L3 agent status check because automatic router rescheduling "
+"is disabled."
+msgstr ""
+"Devre L3 ajan durum kontrolü atlanıyor çünkü otomatik yönlendirici yeniden "
+"zamanlama kapalı."
+
+msgid ""
+"Skipping periodic DHCP agent status check because automatic network "
+"rescheduling is disabled."
+msgstr ""
+"Aralıklı DHCP ajan durum kontrolü atlanıyor çünkü otomatik ağ yeniden "
+"zamanlama kapalı."
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "Bağlantı noktası %s atlanıyor çünkü üzerinde yapılandırılmış IP yok"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "Belirtilen IP adresleri alt ağ IP sürümüyle eşleşmiyor"
+
+msgid "Stopping linuxbridge agent."
+msgstr "Linuxbridge ajanı durduruluyor."
+
+#, python-format
+msgid "Subnet %s was deleted concurrently"
+msgstr "Alt ağ %s eş zamanlı olarak silindi"
+
+msgid "Synchronizing state"
+msgstr "Durum eşzamanlandırılıyor"
+
+msgid "Synchronizing state complete"
+msgstr "Durum eş zamanlandırma tamamlandı"
+
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr "Kiracı network_types: %s"
+
+#, python-format
+msgid "The IP addr of available SDN-VE controllers: %s"
+msgstr "Kullanılabilir SDN-VE kontrolcülerinin IP adresi: %s"
+
+#, python-format
+msgid "The SDN-VE controller IP address: %s"
+msgstr "SDN-VE kontrolcüsü IP adresi: %s"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"CIDR: %(new_cidr)s için doğrulama başarısız - %(subnet_id)s (CIDR: %(cidr)s) "
+"ile çakışıyor"
+
+msgid "VlanTypeDriver initialization complete"
+msgstr "VlanTypeDriver ilklendirme tamamlandı"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "ajan sunucu tarafında güncellendi %s!"
+
+#, python-format
+msgid "port_unbound(): net_uuid %s not in local_vlan_map"
+msgstr "port_unbound(): net_uuid %s local_vlan_map içinde değil"
