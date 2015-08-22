@@ -182,8 +182,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                               fake_field='xxx')
 
     def _validate_objects(self, expected, observed):
-        self.assertFalse(
-            filter(lambda obj: not self._is_test_class(obj), observed))
+        self.assertTrue(all(self._is_test_class(obj) for obj in observed))
         self.assertEqual(
             sorted(expected),
             sorted(get_obj_db_fields(obj) for obj in observed))
