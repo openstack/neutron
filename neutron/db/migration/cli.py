@@ -255,12 +255,7 @@ def validate_labels(config):
 
 def _get_sorted_heads(script):
     '''Get the list of heads for all branches, sorted.'''
-    heads = script.get_heads()
-    # +1 stands for the core 'kilo' branch, the one that didn't have branches
-    if len(heads) > len(MIGRATION_BRANCHES) + 1:
-        alembic_util.err(_('No new branches are allowed except: %s') %
-                         ' '.join(MIGRATION_BRANCHES))
-    return sorted(heads)
+    return sorted(script.get_heads())
 
 
 def validate_heads_file(config):

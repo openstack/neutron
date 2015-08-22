@@ -324,17 +324,6 @@ class TestCli(base.BaseTestCase):
                 mock_open.return_value.write.assert_called_once_with(
                     '\n'.join(sorted(heads)))
 
-    def test_update_heads_file_excessive_heads_negative(self):
-        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
-            heads = ('b', 'a', 'c', 'kilo')
-            fc.return_value.get_heads.return_value = heads
-            self.assertRaises(
-                SystemExit,
-                cli.update_heads_file,
-                mock.sentinel.config
-            )
-            self.mock_alembic_err.assert_called_once_with(mock.ANY)
-
     @mock.patch('os.path.exists')
     @mock.patch('os.remove')
     def test_update_heads_file_success(self, *os_mocks):

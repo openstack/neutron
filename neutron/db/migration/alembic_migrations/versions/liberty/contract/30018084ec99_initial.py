@@ -21,8 +21,7 @@ Create Date: 2015-06-22 00:00:00.000000
 
 # revision identifiers, used by Alembic.
 revision = '30018084ec99'
-down_revision = None
-depends_on = ('kilo',)
+down_revision = 'kilo'
 branch_labels = ('liberty_contract',)
 
 
