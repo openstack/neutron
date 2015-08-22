@@ -20,6 +20,22 @@ from neutron.tests.common import net_helpers
 
 
 class FakeMachineBase(fixtures.Fixture):
+    """Create a fake machine.
+
+    :ivar bridge: bridge on which the fake machine is bound
+    :ivar ip_cidr: fake machine ip_cidr
+    :type ip_cidr: str
+    :ivar ip: fake machine ip
+    :type ip: str
+    :ivar gateway_ip: fake machine gateway ip
+    :type gateway_ip: str
+
+    :ivar namespace: namespace emulating the machine
+    :type namespace: str
+    :ivar port: port binding the namespace to the bridge
+    :type port: IPDevice
+    """
+
     def __init__(self):
         self.port = None
 
@@ -52,21 +68,6 @@ class FakeMachineBase(fixtures.Fixture):
 
 
 class FakeMachine(FakeMachineBase):
-    """Create a fake machine.
-
-    :ivar bridge: bridge on which the fake machine is bound
-    :ivar ip_cidr: fake machine ip_cidr
-    :type ip_cidr: str
-    :ivar ip: fake machine ip
-    :type ip: str
-    :ivar gateway_ip: fake machine gateway ip
-    :type gateway_ip: str
-
-    :ivar namespace: namespace emulating the machine
-    :type namespace: str
-    :ivar port: port binding the namespace to the bridge
-    :type port: IPDevice
-    """
 
     def __init__(self, bridge, ip_cidr, gateway_ip=None):
         super(FakeMachine, self).__init__()
