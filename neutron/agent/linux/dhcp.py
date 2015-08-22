@@ -996,77 +996,111 @@ class DeviceManager(object):
 
             device.route.delete_gateway(gateway)
 
-    def setup_dhcp_port(self, network):
-        """Create/update DHCP port for the host if needed and return port."""
+    def _setup_existing_dhcp_port(self, network, device_id, dhcp_subnets):
+        """Set up the existing DHCP port, if there is one."""
 
-        device_id = self.get_device_id(network)
-        subnets = {subnet.id: subnet for subnet in network.subnets
-                   if subnet.enable_dhcp}
+        # To avoid pylint thinking that port might be undefined after
+        # the following loop...
+        port = None
 
-        dhcp_port = None
+        # Look for an existing DHCP for this network.
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == device_id:
-                dhcp_enabled_subnet_ids = set(subnets)
-                port_fixed_ips = []
-                for fixed_ip in port.fixed_ips:
-                    if fixed_ip.subnet_id in dhcp_enabled_subnet_ids:
-                        port_fixed_ips.append(
-                            {'subnet_id': fixed_ip.subnet_id,
-                             'ip_address': fixed_ip.ip_address})
-
-                port_subnet_ids = set(ip.subnet_id for ip in port.fixed_ips)
-                # If there is a new dhcp enabled subnet or a port that is no
-                # longer on a dhcp enabled subnet, we need to call update.
-                if dhcp_enabled_subnet_ids != port_subnet_ids:
-                    port_fixed_ips.extend(
-                        dict(subnet_id=s)
-                        for s in dhcp_enabled_subnet_ids - port_subnet_ids)
-                    dhcp_port = self.plugin.update_dhcp_port(
-                        port.id, {'port': {'network_id': network.id,
-                                           'fixed_ips': port_fixed_ips}})
-                    if not dhcp_port:
-                        raise exceptions.Conflict()
-                else:
-                    dhcp_port = port
-                # break since we found port that matches device_id
                 break
+        else:
+            return None
 
-        # check for a reserved DHCP port
-        if dhcp_port is None:
-            LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
-                      ' does not yet exist. Checking for a reserved port.',
-                      {'device_id': device_id, 'network_id': network.id})
-            for port in network.ports:
-                port_device_id = getattr(port, 'device_id', None)
-                if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
-                    dhcp_port = self.plugin.update_dhcp_port(
-                        port.id, {'port': {'network_id': network.id,
-                                           'device_id': device_id}})
-                    if dhcp_port:
-                        break
+        # Compare what the subnets should be against what is already
+        # on the port.
+        dhcp_enabled_subnet_ids = set(dhcp_subnets)
+        port_subnet_ids = set(ip.subnet_id for ip in port.fixed_ips)
 
-        # DHCP port has not yet been created.
-        if dhcp_port is None:
-            LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
-                      ' does not yet exist.', {'device_id': device_id,
-                                               'network_id': network.id})
-            port_dict = dict(
-                name='',
-                admin_state_up=True,
-                device_id=device_id,
-                network_id=network.id,
-                tenant_id=network.tenant_id,
-                fixed_ips=[dict(subnet_id=s) for s in subnets])
-            dhcp_port = self.plugin.create_dhcp_port({'port': port_dict})
+        # If those differ, we need to call update.
+        if dhcp_enabled_subnet_ids != port_subnet_ids:
+            # Collect the subnets and fixed IPs that the port already
+            # has, for subnets that are still in the DHCP-enabled set.
+            wanted_fixed_ips = []
+            for fixed_ip in port.fixed_ips:
+                if fixed_ip.subnet_id in dhcp_enabled_subnet_ids:
+                    wanted_fixed_ips.append(
+                        {'subnet_id': fixed_ip.subnet_id,
+                         'ip_address': fixed_ip.ip_address})
 
-        if not dhcp_port:
+            # Add subnet IDs for new DHCP-enabled subnets.
+            wanted_fixed_ips.extend(
+                dict(subnet_id=s)
+                for s in dhcp_enabled_subnet_ids - port_subnet_ids)
+
+            # Update the port to have the calculated subnets and fixed
+            # IPs.  The Neutron server will allocate a fresh IP for
+            # each subnet that doesn't already have one.
+            port = self.plugin.update_dhcp_port(
+                port.id,
+                {'port': {'network_id': network.id,
+                          'fixed_ips': wanted_fixed_ips}})
+            if not port:
+                raise exceptions.Conflict()
+
+        return port
+
+    def _setup_reserved_dhcp_port(self, network, device_id, dhcp_subnets):
+        """Setup the reserved DHCP port, if there is one."""
+        LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
+                  ' does not yet exist. Checking for a reserved port.',
+                  {'device_id': device_id, 'network_id': network.id})
+        for port in network.ports:
+            port_device_id = getattr(port, 'device_id', None)
+            if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
+                port = self.plugin.update_dhcp_port(
+                    port.id, {'port': {'network_id': network.id,
+                                       'device_id': device_id}})
+                if port:
+                    return port
+
+    def _setup_new_dhcp_port(self, network, device_id, dhcp_subnets):
+        """Create and set up new DHCP port for the specified network."""
+        LOG.debug('DHCP port %(device_id)s on network %(network_id)s'
+                  ' does not yet exist. Creating new one.',
+                  {'device_id': device_id, 'network_id': network.id})
+        port_dict = dict(
+            name='',
+            admin_state_up=True,
+            device_id=device_id,
+            network_id=network.id,
+            tenant_id=network.tenant_id,
+            fixed_ips=[dict(subnet_id=s) for s in dhcp_subnets])
+        return self.plugin.create_dhcp_port({'port': port_dict})
+
+    def setup_dhcp_port(self, network):
+        """Create/update DHCP port for the host if needed and return port."""
+
+        # The ID that the DHCP port will have (or already has).
+        device_id = self.get_device_id(network)
+
+        # Get the set of DHCP-enabled subnets on this network.
+        dhcp_subnets = {subnet.id: subnet for subnet in network.subnets
+                        if subnet.enable_dhcp}
+
+        # There are 3 cases: either the DHCP port already exists (but
+        # might need to be updated for a changed set of subnets); or
+        # some other code has already prepared a 'reserved' DHCP port,
+        # and we just need to adopt that; or we need to create a new
+        # DHCP port.  Try each of those in turn until we have a DHCP
+        # port.
+        for setup_method in (self._setup_existing_dhcp_port,
+                             self._setup_reserved_dhcp_port,
+                             self._setup_new_dhcp_port):
+            dhcp_port = setup_method(network, device_id, dhcp_subnets)
+            if dhcp_port:
+                break
+        else:
             raise exceptions.Conflict()
 
         # Convert subnet_id to subnet dict
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,
-                          subnet=subnets[fixed_ip.subnet_id])
+                          subnet=dhcp_subnets[fixed_ip.subnet_id])
                      for fixed_ip in dhcp_port.fixed_ips]
 
         ips = [DictModel(item) if isinstance(item, dict) else item
