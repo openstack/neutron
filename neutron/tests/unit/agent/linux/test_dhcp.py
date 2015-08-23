@@ -776,6 +776,8 @@ class TestBase(TestConfBase):
         self.mock_mgr = instance.start()
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
+        self.conf.register_opt(cfg.BoolOpt("force_metadata",
+                                           default=False))
         self.conf.register_opt(cfg.BoolOpt('enable_metadata_network',
                                            default=False))
         self.config_parse(self.conf)
@@ -1877,6 +1879,11 @@ class TestDnsmasq(TestBase):
         self.conf.set_override('enable_metadata_network', True)
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4MetadataNetwork()))
+
+    def test_should_force_metadata_returns_true(self):
+        self.conf.set_override("force_metadata", True)
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(self.conf,
+                                                            mock.ANY))
 
 
 class TestDeviceManager(TestConfBase):
