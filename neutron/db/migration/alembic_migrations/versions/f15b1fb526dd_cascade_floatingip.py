@@ -40,7 +40,7 @@ def _drop_constraint():
 def upgrade():
     _drop_constraint()
     op.create_foreign_key(
-        name=None,
-        source='floatingips', referent='ports',
+        constraint_name=None,
+        source_table='floatingips', referent_table='ports',
         local_cols=['floating_port_id'], remote_cols=['id'], ondelete='CASCADE'
     )

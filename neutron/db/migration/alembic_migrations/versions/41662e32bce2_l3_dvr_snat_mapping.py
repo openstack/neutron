@@ -40,10 +40,10 @@ def upgrade():
     prev_pk_name = prev_pk_const.get('name')
 
     with migration.remove_fks_from_table(TABLE_NAME):
-        op.drop_constraint(name=prev_pk_name,
+        op.drop_constraint(constraint_name=prev_pk_name,
                            table_name=TABLE_NAME,
                            type_='primary')
 
-        op.create_primary_key(name=None,
+        op.create_primary_key(constraint_name=None,
                               table_name=TABLE_NAME,
-                              cols=['router_id', 'l3_agent_id'])
+                              columns=['router_id', 'l3_agent_id'])

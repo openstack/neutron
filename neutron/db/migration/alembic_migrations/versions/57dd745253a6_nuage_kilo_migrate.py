@@ -44,10 +44,10 @@ def upgrade():
     op.add_column('nuage_subnet_l2dom_mapping',
         sa.Column('nuage_managed_subnet', sa.Boolean(), nullable=True))
     op.create_unique_constraint(
-        name=CONSTRAINT_NAME_NR,
-        source='nuage_net_partition_router_mapping',
-        local_cols=['nuage_router_id'])
+        constraint_name=CONSTRAINT_NAME_NR,
+        table_name='nuage_net_partition_router_mapping',
+        columns=['nuage_router_id'])
     op.create_unique_constraint(
-        name=CONSTRAINT_NAME_NS,
-        source='nuage_subnet_l2dom_mapping',
-        local_cols=['nuage_subnet_id'])
+        constraint_name=CONSTRAINT_NAME_NS,
+        table_name='nuage_subnet_l2dom_mapping',
+        columns=['nuage_subnet_id'])
