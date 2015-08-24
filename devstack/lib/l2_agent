@@ -1,0 +1,13 @@
+function plugin_agent_add_l2_agent_extension {
+    local l2_agent_extension=$1
+    if [[ -z "$L2_AGENT_EXTENSIONS" ]]; then
+        L2_AGENT_EXTENSIONS=$l2_agent_extension
+    elif [[ ! ,${L2_AGENT_EXTENSIONS}, =~ ,${l2_agent_extension}, ]]; then
+        L2_AGENT_EXTENSIONS+=",$l2_agent_extension"
+    fi
+}
+
+
+function configure_l2_agent {
+    iniset /$Q_PLUGIN_CONF_FILE agent extensions "$L2_AGENT_EXTENSIONS"
+}
