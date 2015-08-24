@@ -214,7 +214,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(db_api, 'create_object',
                                side_effect=obj_exc.DBDuplicateEntry):
             obj = self._test_class(self.context, **self.db_obj)
-            self.assertRaises(base.NeutronObjectDuplicateEntry, obj.create)
+            self.assertRaises(base.NeutronDbObjectDuplicateEntry, obj.create)
 
     @mock.patch.object(db_api, 'update_object')
     def test_update_no_changes(self, update_mock):
