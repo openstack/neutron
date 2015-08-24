@@ -83,7 +83,6 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
-    LOG.debug("Running command: %s", cmd)
     obj = utils.subprocess_popen(cmd, shell=False,
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -99,7 +98,6 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
     # In practice, no neutron code should be trying to execute something that
     # would throw those errors, and if it does it should be fixed as opposed to
     # just logging the execution error.
-    LOG.debug("Running command (rootwrap daemon): %s", cmd)
     client = RootwrapDaemonHelper.get_client()
     return client.execute(cmd, process_input)
 
