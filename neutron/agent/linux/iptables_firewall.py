@@ -50,6 +50,13 @@ MAX_CONNTRACK_ZONES = 65535
 comment_rule = iptables_manager.comment_rule
 
 
+def port_needs_l3_security(port):
+    if port['fixed_ips'] or port.get('allowed_address_pairs'):
+        return True
+    else:
+        return False
+
+
 class IptablesFirewallDriver(firewall.FirewallDriver):
     """Driver which enforces security groups through iptables rules."""
     IPTABLES_DIRECTION = {firewall.INGRESS_DIRECTION: 'physdev-out',
@@ -374,17 +381,20 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv6_pairs.append((mac, ip_address))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
-        # Allow dhcp client packets
-        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
-                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
-        # Drop Router Advts from the port.
-        ipv6_rules += [comment_rule('-p icmpv6 --icmpv6-type %s '
-                                    '-j DROP' % constants.ICMPV6_TYPE_RA,
-                                    comment=ic.IPV6_RA_DROP)]
-        ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
-                                    comment=ic.IPV6_ICMP_ALLOW)]
-        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport 547 '
-                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+        if port_needs_l3_security(port):
+            # Allow dhcp client packets
+            ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                        '-j RETURN', comment=ic.DHCP_CLIENT)]
+            # Drop Router Advts from the port.
+            ipv6_rules += [comment_rule('-p icmpv6 --icmpv6-type %s '
+                                        '-j DROP' % constants.ICMPV6_TYPE_RA,
+                                        comment=ic.IPV6_RA_DROP)]
+            ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
+                                        comment=ic.IPV6_ICMP_ALLOW)]
+            ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport '
+                                        '547 -j RETURN',
+                                        comment=ic.DHCP_CLIENT)]
+
         mac_ipv4_pairs = []
         mac_ipv6_pairs = []
 
@@ -490,11 +500,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                          ipv6_iptables_rules)
         elif direction == firewall.INGRESS_DIRECTION:
             ipv6_iptables_rules += self._accept_inbound_icmpv6()
-        # include IPv4 and IPv6 iptable rules from security group
-        ipv4_iptables_rules += self._convert_sgr_to_iptables_rules(
-            ipv4_sg_rules)
-        ipv6_iptables_rules += self._convert_sgr_to_iptables_rules(
-            ipv6_sg_rules)
+
+        if port_needs_l3_security(port):
+            # include IPv4 and IPv6 iptable rules from security group
+            ipv4_iptables_rules += self._convert_sgr_to_iptables_rules(
+                ipv4_sg_rules)
+            ipv6_iptables_rules += self._convert_sgr_to_iptables_rules(
+                ipv6_sg_rules)
+
         # finally add the rules to the port chain for a given direction
         self._add_rules_to_chain_v4v6(self._port_chain_name(port, direction),
                                       ipv4_iptables_rules,
@@ -505,7 +518,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self._spoofing_rule(port,
                             ipv4_iptables_rules,
                             ipv6_iptables_rules)
-        self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
+        if port_needs_l3_security(port):
+            self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
 
     def _update_ipset_members(self, security_group_ids):
         for ip_version, sg_ids in security_group_ids.items():
