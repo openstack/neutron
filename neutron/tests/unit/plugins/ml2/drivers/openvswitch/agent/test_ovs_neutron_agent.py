@@ -1259,7 +1259,8 @@ class TestOvsNeutronAgent(object):
             self.assertEqual(10, rpc_client.timeout)
 
     def test_cleanup_stale_flows_iter_0(self):
-        with mock.patch.object(self.agent, 'agent_uuid_stamp', new=1234),\
+        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
+                               new=1234),\
             mock.patch.object(self.agent.int_br,
                               'dump_flows_all_tables') as dump_flows,\
                 mock.patch.object(self.agent.int_br,
@@ -1271,10 +1272,11 @@ class TestOvsNeutronAgent(object):
                 'cookie=0x4d2, duration=52.112s, table=3, actions=drop',
             ]
             self.agent.cleanup_stale_flows()
-            del_flow.assert_has_calls([mock.call(cookie='0x4321/-1',
-                                                 table='2'),
-                                       mock.call(cookie='0x2345/-1',
-                                                 table='2')])
+            expected = [
+                mock.call(cookie='0x4321/-1', table='2'),
+                mock.call(cookie='0x2345/-1', table='2'),
+            ]
+            self.assertEqual(expected, del_flow.mock_calls)
 
     def test_set_rpc_timeout_no_value(self):
         self.agent.quitting_rpc_timeout = None
