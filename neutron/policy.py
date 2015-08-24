@@ -13,10 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Policy engine for neutron.  Largely copied from nova.
-"""
-
 import collections
 import re
 
