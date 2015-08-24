@@ -148,6 +148,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         :raises: DVRL3CannotAssignToDvrAgent if attempting to assign DVR
           router from one DVR Agent to another.
         """
+        if agent['agent_type'] != constants.AGENT_TYPE_L3:
+            raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
+
         is_distributed = router.get('distributed')
         agent_mode = self._get_agent_mode(agent)
         router_type = (
@@ -167,13 +170,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 router_type=router_type, router_id=router['id'],
                 agent_id=agent['id'])
 
-        is_wrong_type_or_unsuitable_agent = (
-            agent['agent_type'] != constants.AGENT_TYPE_L3 or
-            not agentschedulers_db.services_available(agent['admin_state_up'])
-            or
-            not self.get_l3_agent_candidates(context, router, [agent],
-                                             ignore_admin_state=True))
-        if is_wrong_type_or_unsuitable_agent:
+        is_suitable_agent = (
+            agentschedulers_db.services_available(agent['admin_state_up']) and
+            (self.get_l3_agent_candidates(context, router,
+                                         [agent],
+                                         ignore_admin_state=True) or
+            self.get_snat_candidates(router, [agent]))
+        )
+        if not is_suitable_agent:
             raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
 
     def check_agent_router_scheduling_needed(self, context, agent, router):
@@ -193,8 +197,6 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             if binding.l3_agent_id == agent_id:
                 # router already bound to the agent we need
                 return False
-        if router.get('distributed'):
-            return False
         if router.get('ha'):
             return True
         # legacy router case: router is already bound to some agent
