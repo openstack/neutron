@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import orm
@@ -21,28 +20,14 @@ from sqlalchemy import orm
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
 from neutron.db import model_base
+from neutron.db import rbac_db_models
 
 
-class HasTenant(object):
-    """Tenant mixin, add to subclasses that have a tenant."""
-
-    # NOTE(jkoelker) tenant_id is just a free form string ;(
-    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), index=True)
-
-
-class HasId(object):
-    """id mixin, add to subclasses that have an id."""
-
-    id = sa.Column(sa.String(36),
-                   primary_key=True,
-                   default=uuidutils.generate_uuid)
-
-
-class HasStatusDescription(object):
-    """Status with description mixin."""
-
-    status = sa.Column(sa.String(16), nullable=False)
-    status_description = sa.Column(sa.String(attr.DESCRIPTION_MAX_LEN))
+# NOTE(kevinbenton): these are here for external projects that expect them
+# to be found in this module.
+HasTenant = model_base.HasTenant
+HasId = model_base.HasId
+HasStatusDescription = model_base.HasStatusDescription
 
 
 class IPAvailabilityRange(model_base.BASEV2):
@@ -265,6 +250,6 @@ class Network(model_base.BASEV2, HasId, HasTenant):
     admin_state_up = sa.Column(sa.Boolean)
     mtu = sa.Column(sa.Integer, nullable=True)
     vlan_transparent = sa.Column(sa.Boolean, nullable=True)
-    rbac_entries = orm.relationship("NetworkRBAC", backref='network',
-                                    lazy='joined',
+    rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
+                                    backref='network', lazy='joined',
                                     cascade='all, delete, delete-orphan')

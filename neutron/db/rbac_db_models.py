@@ -20,7 +20,6 @@ from sqlalchemy.orm import validates
 
 from neutron.common import exceptions as n_exc
 from neutron.db import model_base
-from neutron.db import models_v2
 
 
 class InvalidActionForType(n_exc.InvalidInput):
@@ -28,7 +27,7 @@ class InvalidActionForType(n_exc.InvalidInput):
                 "'%(object_type)s'. Valid actions: %(valid_actions)s")
 
 
-class RBACColumns(models_v2.HasId, models_v2.HasTenant):
+class RBACColumns(model_base.HasId, model_base.HasTenant):
     """Mixin that object-specific RBAC tables should inherit.
 
     All RBAC tables should inherit directly from this one because
