@@ -96,6 +96,7 @@ class FipNamespace(namespaces.Namespace):
 
     def _gateway_added(self, ex_gw_port, interface_name):
         """Add Floating IP gateway port."""
+        LOG.debug("add gateway interface(%s)", interface_name)
         ns_name = self.get_name()
         self.driver.plug(ex_gw_port['network_id'],
                          ex_gw_port['id'],
@@ -129,6 +130,7 @@ class FipNamespace(namespaces.Namespace):
 
     def create(self):
         # TODO(Carl) Get this functionality from mlavelle's namespace baseclass
+        LOG.debug("add fip-namespace(%s)", self.name)
         ip_wrapper_root = ip_lib.IPWrapper()
         ip_wrapper_root.netns.execute(['sysctl',
                                        '-w',
@@ -175,7 +177,6 @@ class FipNamespace(namespaces.Namespace):
         """
         self.agent_gateway_port = agent_gateway_port
 
-        # add fip-namespace and agent_gateway_port
         self.create()
 
         iface_name = self.get_ext_device_name(agent_gateway_port['id'])
@@ -189,6 +190,7 @@ class FipNamespace(namespaces.Namespace):
 
     def create_rtr_2_fip_link(self, ri):
         """Create interface between router and Floating IP namespace."""
+        LOG.debug("Create FIP link interfaces for router %s", ri.router_id)
         rtr_2_fip_name = self.get_rtr_ext_device_name(ri.router_id)
         fip_2_rtr_name = self.get_int_device_name(ri.router_id)
         fip_ns_name = self.get_name()

@@ -373,8 +373,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         floating_ips = self.get_floating_ips()
         fip_agent_port = self.get_floating_agent_gw_interface(
             ex_gw_port['network_id'])
-        LOG.debug("FloatingIP agent gateway port received from the plugin: "
-                  "%s", fip_agent_port)
+        if fip_agent_port:
+            LOG.debug("FloatingIP agent gateway port received from the "
+                "plugin: %s", fip_agent_port)
         is_first = False
         if floating_ips:
             is_first = self.fip_ns.subscribe(self.router_id)
