@@ -13,25 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
-    import test_agent_scheduler
+from neutron.tests.unit.db import test_agentschedulers_db
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 class Ml2AgentSchedulerTestCase(
-    test_agent_scheduler.OvsAgentSchedulerTestCase):
+    test_agentschedulers_db.OvsAgentSchedulerTestCase):
     plugin_str = test_plugin.PLUGIN_NAME
     l3_plugin = ('neutron.services.l3_router.'
                  'l3_router_plugin.L3RouterPlugin')
 
 
 class Ml2L3AgentNotifierTestCase(
-    test_agent_scheduler.OvsL3AgentNotifierTestCase):
+    test_agentschedulers_db.OvsL3AgentNotifierTestCase):
     plugin_str = test_plugin.PLUGIN_NAME
     l3_plugin = ('neutron.services.l3_router.'
                  'l3_router_plugin.L3RouterPlugin')
 
 
 class Ml2DhcpAgentNotifierTestCase(
-    test_agent_scheduler.OvsDhcpAgentNotifierTestCase):
+    test_agentschedulers_db.OvsDhcpAgentNotifierTestCase):
     plugin_str = test_plugin.PLUGIN_NAME
