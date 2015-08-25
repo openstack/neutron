@@ -419,3 +419,27 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             exceptions.Forbidden,
             self.client.create_bandwidth_limit_rule,
             'policy', 1, 2)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
+    def test_get_rules_by_policy(self):
+        policy1 = self.create_qos_policy(name='test-policy1',
+                                         description='test policy1',
+                                         shared=False)
+        rule1 = self.create_qos_bandwidth_limit_rule(policy_id=policy1['id'],
+                                                     max_kbps=200,
+                                                     max_burst_kbps=1337)
+
+        policy2 = self.create_qos_policy(name='test-policy2',
+                                         description='test policy2',
+                                         shared=False)
+        rule2 = self.create_qos_bandwidth_limit_rule(policy_id=policy2['id'],
+                                                     max_kbps=5000,
+                                                     max_burst_kbps=2523)
+
+        # Test 'list rules'
+        rules = self.admin_client.list_bandwidth_limit_rules(policy1['id'])
+        rules = rules['bandwidth_limit_rules']
+        rules_ids = [r['id'] for r in rules]
+        self.assertIn(rule1['id'], rules_ids)
+        self.assertNotIn(rule2['id'], rules_ids)

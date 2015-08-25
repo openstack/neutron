@@ -111,6 +111,31 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.ctxt, self.rule.id, self.policy.id)
             self._validate_notif_driver_params('update_policy')
 
+    def test_get_policy_bandwidth_limit_rules_for_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosBandwidthLimitRule.'
+                            'get_objects') as get_object_mock:
+                self.qos_plugin.get_policy_bandwidth_limit_rules(
+                    self.ctxt, self.policy.id)
+                get_object_mock.assert_called_once_with(
+                    self.ctxt, qos_policy_id=self.policy.id)
+
+    def test_get_policy_bandwidth_limit_rules_for_policy_with_filters(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosBandwidthLimitRule.'
+                            'get_objects') as get_object_mock:
+
+                filters = {'filter': 'filter_id'}
+                self.qos_plugin.get_policy_bandwidth_limit_rules(
+                    self.ctxt, self.policy.id, filters=filters)
+                get_object_mock.assert_called_once_with(
+                    self.ctxt, qos_policy_id=self.policy.id,
+                    filter='filter_id')
+
     def test_get_policy_for_nonexistent_policy(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
                         return_value=None):
