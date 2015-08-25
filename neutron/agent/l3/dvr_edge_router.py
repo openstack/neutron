@@ -85,7 +85,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             return
 
         ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
-        interface_name = self.get_snat_int_device_name(sn_port['id'])
+        interface_name = self._get_snat_int_device_name(sn_port['id'])
         self._internal_network_added(
             ns_name,
             sn_port['network_id'],
@@ -110,7 +110,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         if not is_this_snat_host:
             return
 
-        snat_interface = self.get_snat_int_device_name(sn_port['id'])
+        snat_interface = self._get_snat_int_device_name(sn_port['id'])
         ns_name = self.snat_namespace.name
         prefix = dvr_snat_ns.SNAT_INT_DEV_PREFIX
         if ip_lib.device_exists(snat_interface, namespace=ns_name):
@@ -119,11 +119,11 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
     def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
         """Create SNAT namespace."""
-        snat_ns = self.create_snat_namespace()
+        snat_ns = self._create_snat_namespace()
         # connect snat_ports to br_int from SNAT namespace
         for port in self.get_snat_interfaces():
             # create interface_name
-            interface_name = self.get_snat_int_device_name(port['id'])
+            interface_name = self._get_snat_int_device_name(port['id'])
             self._internal_network_added(
                 snat_ns.name, port['network_id'],
                 port['id'], port['fixed_ips'],
@@ -137,7 +137,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         # kicks the FW Agent to add rules for the snat namespace
         self.agent.process_router_add(self)
 
-    def create_snat_namespace(self):
+    def _create_snat_namespace(self):
         # TODO(mlavalle): in the near future, this method should contain the
         # code in the L3 agent that creates a gateway for a dvr. The first step
         # is to move the creation of the snat namespace here
@@ -148,7 +148,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         self.snat_namespace.create()
         return self.snat_namespace
 
-    def get_snat_int_device_name(self, port_id):
+    def _get_snat_int_device_name(self, port_id):
         long_name = dvr_snat_ns.SNAT_INT_DEV_PREFIX + port_id
         return long_name[:self.driver.DEV_NAME_LEN]
 

@@ -355,7 +355,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 sn_port['id'],
                 sn_port['fixed_ips'],
                 sn_port['mac_address'],
-                ri.get_snat_int_device_name(sn_port['id']),
+                ri._get_snat_int_device_name(sn_port['id']),
                 dvr_snat_ns.SNAT_INT_DEV_PREFIX)
         elif action == 'remove':
             self.device_exists.return_value = False
@@ -453,7 +453,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                           **self.ri_kwargs)
             ri._create_dvr_gateway = mock.Mock()
             ri.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
-            ri.create_snat_namespace()
+            ri._create_snat_namespace()
             ri.fip_ns = agent.get_fip_ns(ex_net_id)
             ri.internal_ports = self.snat_ports
         else:
@@ -597,7 +597,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                       router,
                                       **self.ri_kwargs)
         if snat_hosted_before:
-            ri.create_snat_namespace()
+            ri._create_snat_namespace()
             snat_ns_name = ri.snat_namespace.name
         else:
             self.assertIsNone(ri.snat_namespace)
@@ -2002,7 +2002,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                        'network_id': _uuid(),
                        'mac_address': 'ca:fe:de:ad:be:ef'}
 
-        interface_name = ri.get_snat_int_device_name(port_id)
+        interface_name = ri._get_snat_int_device_name(port_id)
         self.device_exists.return_value = False
 
         with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
