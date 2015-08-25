@@ -42,6 +42,7 @@ LOG = logging.getLogger(__name__)
 
 
 MINIMUM_DNSMASQ_VERSION = 2.67
+MINIMUM_DIBBLER_VERSION = '1.0.1'
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
@@ -321,5 +322,21 @@ def ebtables_supported():
         return True
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking for installed ebtables. "
+                  "Exception: %s", e)
+        return False
+
+
+def get_minimal_dibbler_version_supported():
+    return MINIMUM_DIBBLER_VERSION
+
+
+def dibbler_version_supported():
+    try:
+        cmd = ['dibbler-client',
+               'help']
+        out = agent_utils.execute(cmd)
+        return '-w' in out
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking minimal dibbler version. "
                   "Exception: %s", e)
         return False
