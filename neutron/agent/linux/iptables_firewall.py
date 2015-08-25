@@ -757,7 +757,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             sec_group_change = False
             device_info = self.filtered_ports.get(device)
             pre_device_info = self._pre_defer_filtered_ports.get(device)
-            if not (device_info or pre_device_info):
+            if not device_info or not pre_device_info:
                 continue
             for sg_id in pre_device_info.get('security_groups', []):
                 if sg_id not in device_info.get('security_groups', []):
