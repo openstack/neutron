@@ -144,7 +144,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test__get_device_owner_distributed(self):
         self._test_get_device_owner(
             is_distributed=True,
-            expected=l3_dvr_db.DEVICE_OWNER_DVR_INTERFACE,
+            expected=l3_const.DEVICE_OWNER_DVR_INTERFACE,
             pass_router_id=False)
 
     def _test__is_distributed_router(self, router, expected):

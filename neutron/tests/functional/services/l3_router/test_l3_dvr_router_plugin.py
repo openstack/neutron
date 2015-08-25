@@ -14,7 +14,6 @@
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_const
-from neutron.db import l3_dvr_db
 from neutron.extensions import external_net
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
@@ -41,13 +40,13 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def test_get_device_owner_distributed_router_object(self):
         router = self._create_router()
         self.assertEqual(
-            l3_dvr_db.DEVICE_OWNER_DVR_INTERFACE,
+            l3_const.DEVICE_OWNER_DVR_INTERFACE,
             self.l3_plugin._get_device_owner(self.context, router))
 
     def test_get_device_owner_distributed_router_id(self):
         router = self._create_router()
         self.assertEqual(
-            l3_dvr_db.DEVICE_OWNER_DVR_INTERFACE,
+            l3_const.DEVICE_OWNER_DVR_INTERFACE,
             self.l3_plugin._get_device_owner(self.context, router['id']))
 
     def test_get_device_owner_centralized(self):
@@ -120,7 +119,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                       'mac_address': attributes.ATTR_NOT_SPECIFIED,
                       'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                       'device_id': self.l3_agent['id'],
-                      'device_owner': l3_dvr_db.DEVICE_OWNER_AGENT_GW,
+                      'device_owner': l3_const.DEVICE_OWNER_AGENT_GW,
                       'binding:host_id': '',
                       'admin_state_up': True,
                       'name': ''}})
