@@ -131,7 +131,7 @@ class CountableResource(BaseResource):
             name, flag=flag, plural_name=plural_name)
         self._count_func = count
 
-    def count(self, context, plugin, tenant_id):
+    def count(self, context, plugin, tenant_id, **kwargs):
         return self._count_func(context, plugin, self.plural_name, tenant_id)
 
 
@@ -176,10 +176,10 @@ class TrackedResource(BaseResource):
     def dirty(self):
         return self._dirty_tenants
 
-    def mark_dirty(self, context, nested=False):
+    def mark_dirty(self, context):
         if not self._dirty_tenants:
             return
-        with context.session.begin(nested=nested, subtransactions=True):
+        with db_api.autonested_transaction(context.session):
             # It is not necessary to protect this operation with a lock.
             # Indeed when this method is called the request has been processed
             # and therefore all resources created or deleted.
@@ -211,6 +211,7 @@ class TrackedResource(BaseResource):
     # ensure that an UPDATE statement is emitted rather than an INSERT one
     @oslo_db_api.wrap_db_retry(
         max_retries=db_api.MAX_RETRIES,
+        retry_on_deadlock=True,
         exception_checker=lambda exc:
         isinstance(exc, oslo_db_exception.DBDuplicateEntry))
     def _set_quota_usage(self, context, tenant_id, in_use):
@@ -239,7 +240,7 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, tenant_id, in_use)
 
-    def count(self, context, _plugin, tenant_id, resync_usage=False):
+    def count(self, context, _plugin, tenant_id, resync_usage=True):
         """Return the current usage count for the resource.
 
         This method will fetch aggregate information for resource usage
@@ -279,15 +280,14 @@ class TrackedResource(BaseResource):
             # Update quota usage, if requested (by default do not do that, as
             # typically one counts before adding a record, and that would mark
             # the usage counter as dirty again)
-            if resync_usage or not usage_info:
+            if resync_usage:
                 usage_info = self._resync(context, tenant_id, in_use)
             else:
-                # NOTE(salv-orlando): Passing 0 for reserved amount as
-                # reservations are currently not supported
-                usage_info = quota_api.QuotaUsageInfo(usage_info.resource,
-                                                      usage_info.tenant_id,
-                                                      in_use,
-                                                      usage_info.dirty)
+                resource = usage_info.resource if usage_info else self.name
+                tenant_id = usage_info.tenant_id if usage_info else tenant_id
+                dirty = usage_info.dirty if usage_info else True
+                usage_info = quota_api.QuotaUsageInfo(
+                    resource, tenant_id, in_use, dirty)
 
             LOG.debug(("Quota usage for %(resource)s was recalculated. "
                        "Used quota:%(used)d."),

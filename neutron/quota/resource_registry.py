@@ -67,7 +67,7 @@ def set_resources_dirty(context):
     for res in get_all_resources().values():
         with context.session.begin(subtransactions=True):
             if is_tracked(res.name) and res.dirty:
-                res.mark_dirty(context, nested=True)
+                res.mark_dirty(context)
 
 
 def resync_resource(context, resource_name, tenant_id):

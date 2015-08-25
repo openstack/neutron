@@ -263,22 +263,6 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self.assertIsNone(quota_api.get_reservations_for_resources(
             self.context, self.tenant_id, []))
 
-    def _test_remove_reservation(self, set_dirty):
-        resources = {'goals': 2, 'assists': 1}
-        resv = self._create_reservation(resources)
-        self.assertEqual(1, quota_api.remove_reservation(
-            self.context, resv.reservation_id, set_dirty=set_dirty))
-
-    def test_remove_reservation(self):
-        self._test_remove_reservation(False)
-
-    def test_remove_reservation_and_set_dirty(self):
-        routine = 'neutron.db.quota.api.set_resources_quota_usage_dirty'
-        with mock.patch(routine) as mock_routine:
-            self._test_remove_reservation(False)
-        mock_routine.assert_called_once_with(
-            self.context, mock.ANY, self.tenant_id)
-
     def test_remove_expired_reservations(self):
         with mock.patch('neutron.db.quota.api.utcnow') as mock_utcnow:
             mock_utcnow.return_value = datetime.datetime(
