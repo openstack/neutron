@@ -176,3 +176,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
             self._add_snat_rules(ex_gw_port, self.snat_iptables_manager,
                                  interface_name)
+
+    def update_routing_table(self, operation, route, namespace=None):
+        ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
+        super(DvrEdgeRouter, self).update_routing_table(operation, route,
+                                                        namespace=ns_name)

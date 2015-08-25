@@ -52,25 +52,40 @@ class TestRouterInfo(base.BaseTestCase):
         fake_route2 = {'destination': '135.207.111.111/32',
                        'nexthop': '1.2.3.4'}
 
-        ri._update_routing_table('replace', fake_route1)
+        ri.update_routing_table('replace', fake_route1)
         expected = [['ip', 'route', 'replace', 'to', '135.207.0.0/16',
                      'via', '1.2.3.4']]
         self._check_agent_method_called(expected)
 
-        ri._update_routing_table('delete', fake_route1)
+        ri.update_routing_table('delete', fake_route1)
         expected = [['ip', 'route', 'delete', 'to', '135.207.0.0/16',
                      'via', '1.2.3.4']]
         self._check_agent_method_called(expected)
 
-        ri._update_routing_table('replace', fake_route2)
+        ri.update_routing_table('replace', fake_route2)
         expected = [['ip', 'route', 'replace', 'to', '135.207.111.111/32',
                      'via', '1.2.3.4']]
         self._check_agent_method_called(expected)
 
-        ri._update_routing_table('delete', fake_route2)
+        ri.update_routing_table('delete', fake_route2)
         expected = [['ip', 'route', 'delete', 'to', '135.207.111.111/32',
                      'via', '1.2.3.4']]
         self._check_agent_method_called(expected)
+
+    def test_update_routing_table(self):
+        # Just verify the correct namespace was used in the call
+        uuid = _uuid()
+        netns = 'qrouter-' + uuid
+        fake_route1 = {'destination': '135.207.0.0/16',
+                       'nexthop': '1.2.3.4'}
+
+        ri = router_info.RouterInfo(uuid, {'id': uuid}, **self.ri_kwargs)
+        ri._update_routing_table = mock.Mock()
+
+        ri.update_routing_table('replace', fake_route1)
+        ri._update_routing_table.assert_called_once_with('replace',
+                                                         fake_route1,
+                                                         netns)
 
     def test_routes_updated(self):
         ri = router_info.RouterInfo(_uuid(), {}, **self.ri_kwargs)
