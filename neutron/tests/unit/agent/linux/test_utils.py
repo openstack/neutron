@@ -119,21 +119,32 @@ class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
 
 
 class AgentUtilsReplaceFile(base.BaseTestCase):
-    def test_replace_file(self):
+    def _test_replace_file_helper(self, explicit_perms=None):
         # make file to replace
         with mock.patch('tempfile.NamedTemporaryFile') as ntf:
             ntf.return_value.name = '/baz'
             with mock.patch('os.chmod') as chmod:
                 with mock.patch('os.rename') as rename:
-                    utils.replace_file('/foo', 'bar')
+                    if explicit_perms is None:
+                        expected_perms = 0o644
+                        utils.replace_file('/foo', 'bar')
+                    else:
+                        expected_perms = explicit_perms
+                        utils.replace_file('/foo', 'bar', explicit_perms)
 
                     expected = [mock.call('w+', dir='/', delete=False),
                                 mock.call().write('bar'),
                                 mock.call().close()]
 
                     ntf.assert_has_calls(expected)
-                    chmod.assert_called_once_with('/baz', 0o644)
+                    chmod.assert_called_once_with('/baz', expected_perms)
                     rename.assert_called_once_with('/baz', '/foo')
+
+    def test_replace_file_with_default_perms(self):
+        self._test_replace_file_helper()
+
+    def test_replace_file_with_0o600_perms(self):
+        self._test_replace_file_helper(0o600)
 
 
 class TestFindChildPids(base.BaseTestCase):
