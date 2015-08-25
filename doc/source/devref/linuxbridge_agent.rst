@@ -6,8 +6,8 @@ This Agent uses the `Linux Bridge
 <http://www.linuxfoundation.org/collaborate/workgroups/networking/bridge>`_ to
 provide L2 connectivity for VM instances running on the compute node to the
 public network.  A graphical illustration of the deployment can be found in
-`OpenStack Admin Guide Linux Bridge
-<http://docs.openstack.org/admin-guide-cloud/content/under_the_hood_linuxbridge.html>`_
+`Networking Guide
+<http://docs.openstack.org/networking-guide/scenario_legacy_lb.html>`_
 
 In most common deployments, there is a compute and a network node. On both the
 compute and the network node, the Linux Bridge Agent will manage virtual

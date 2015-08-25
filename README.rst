@@ -15,7 +15,10 @@ The latest and most in-depth documentation on how to use Neutron is
 available at: <http://docs.openstack.org>. This includes:
 
 Neutron Administrator Guide
-   http://docs.openstack.org/admin-guide-cloud/content/ch_networking.html
+   http://docs.openstack.org/admin-guide-cloud/networking.html
+
+Networking Guide
+   http://docs.openstack.org/networking-guide/
 
 Neutron API Reference:
    http://docs.openstack.org/api/openstack-network/2.0/content/
