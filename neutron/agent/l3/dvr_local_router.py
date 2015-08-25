@@ -302,7 +302,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         if not self.ex_gw_port:
             return
 
-        sn_port = self.get_snat_port_for_internal_port(port)
+        sn_port = self.get_snat_port_for_internal_port(port, self.snat_ports)
         if not sn_port:
             return
 

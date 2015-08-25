@@ -26,12 +26,18 @@ class DvrRouterBase(router.RouterInfo):
         self.agent = agent
         self.host = host
 
+    def process(self, agent):
+        super(DvrRouterBase, self).process(agent)
+        # NOTE:  Keep a copy of the interfaces around for when they are removed
+        self.snat_ports = self.get_snat_interfaces()
+
     def get_snat_interfaces(self):
         return self.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
 
-    def get_snat_port_for_internal_port(self, int_port):
+    def get_snat_port_for_internal_port(self, int_port, snat_ports=None):
         """Return the SNAT port for the given internal interface port."""
-        snat_ports = self.get_snat_interfaces()
+        if snat_ports is None:
+            snat_ports = self.get_snat_interfaces()
         fixed_ip = int_port['fixed_ips'][0]
         subnet_id = fixed_ip['subnet_id']
         match_port = [p for p in snat_ports
