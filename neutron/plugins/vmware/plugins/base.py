@@ -1418,12 +1418,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # becomes an asynchronous task
         neutron_router_id = str(uuid.uuid4())
         r['id'] = neutron_router_id
+        # Populate distributed attribute in order to ensure the appropriate
+        # type of router is created in the NSX backend
+        r['distributed'] = l3_dvr_db.is_distributed_router(r)
         lrouter = self._create_lrouter(context, r, nexthop)
-        # Update 'distributed' with value returned from NSX
-        # This will be useful for setting the value if the API request
-        # did not specify any value for the 'distributed' attribute
-        # Platforms older than 3.x do not support the attribute
-        r['distributed'] = lrouter.get('distributed', False)
         # TODO(salv-orlando): Deal with backend object removal in case
         # of db failures
         with context.session.begin(subtransactions=True):
