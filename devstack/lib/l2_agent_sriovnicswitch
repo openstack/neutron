@@ -1,0 +1,23 @@
+SRIOV_AGENT_CONF="${Q_PLUGIN_CONF_PATH}/sriov_agent.ini"
+SRIOV_AGENT_BINARY="${NEUTRON_BIN_DIR}/neutron-sriov-nic-agent"
+
+function configure_l2_agent_sriovnicswitch {
+    if [[ -n "$PHYSICAL_NETWORK" ]] && [[ -n "$PHYSICAL_INTERFACE" ]]; then
+        PHYSICAL_DEVICE_MAPPINGS=$PHYSICAL_NETWORK:$PHYSICAL_INTERFACE
+    fi
+    if [[ -n "$PHYSICAL_DEVICE_MAPPINGS" ]]; then
+        iniset /$SRIOV_AGENT_CONF sriov_nic physical_device_mappings $PHYSICAL_DEVICE_MAPPINGS
+    fi
+
+    iniset /$SRIOV_AGENT_CONF securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
+
+    iniset /$SRIOV_AGENT_CONF agent extensions "$L2_AGENT_EXTENSIONS"
+}
+
+function start_l2_agent_sriov {
+    run_process q-sriov-agt "$SRIOV_AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$SRIOV_AGENT_CONF"
+}
+
+function stop_l2_agent_sriov {
+    stop_process q-sriov-agt
+}
