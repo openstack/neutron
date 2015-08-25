@@ -85,7 +85,20 @@ REPO_VMWARE_TABLES = [
     'vcns_router_bindings',
 ]
 
+# NEC models moved to stackforge/networking-nec
+REPO_NEC_TABLES = [
+    'ofcnetworkmappings',
+    'ofcportmappings',
+    'ofcroutermappings',
+    'ofcfiltermappings',
+    'ofctenantmappings',
+    'portinfos',
+    'routerproviders',
+    'packetfilters',
+]
+
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_CISCO_TABLES +
-          REPO_VMWARE_TABLES)
+          REPO_VMWARE_TABLES +
+          REPO_NEC_TABLES)
