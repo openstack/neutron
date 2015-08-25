@@ -1417,11 +1417,32 @@ def _notify_routers_callback(resource, event, trigger, **kwargs):
     l3plugin.notify_routers_updated(context, router_ids)
 
 
+def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
+    l3plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
+    if not l3plugin:
+        return
+    context = kwargs['context']
+    network_id = kwargs['network_id']
+    subnet_id = kwargs['subnet_id']
+    query = context.session.query(models_v2.Port).filter_by(
+                network_id=network_id,
+                device_owner=l3_constants.DEVICE_OWNER_ROUTER_GW)
+    query = query.join(models_v2.Port.fixed_ips).filter(
+                models_v2.IPAllocation.subnet_id == subnet_id)
+    router_ids = set(port['device_id'] for port in query)
+    for router_id in router_ids:
+        l3plugin.notify_router_updated(context, router_id)
+
+
 def subscribe():
     registry.subscribe(
         _prevent_l3_port_delete_callback, resources.PORT, events.BEFORE_DELETE)
     registry.subscribe(
         _notify_routers_callback, resources.PORT, events.AFTER_DELETE)
+    registry.subscribe(
+        _notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+        events.AFTER_UPDATE)
 
 # NOTE(armax): multiple l3 service plugins (potentially out of tree) inherit
 # from l3_db and may need the callbacks to be processed. Having an implicit

@@ -715,12 +715,21 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             s['allocation_pools'] = range_pools
 
         # If either gateway_ip or allocation_pools were specified
-        gateway_ip = s.get('gateway_ip')
-        if gateway_ip is not None or s.get('allocation_pools') is not None:
-            if gateway_ip is None:
-                gateway_ip = db_subnet.gateway_ip
+        new_gateway_ip = s.get('gateway_ip')
+        gateway_ip_changed = (new_gateway_ip and
+                              new_gateway_ip != db_subnet.gateway_ip)
+        if gateway_ip_changed or s.get('allocation_pools') is not None:
+            gateway_ip = new_gateway_ip or db_subnet.gateway_ip
             pools = range_pools if range_pools is not None else db_pools
             self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
+
+        if gateway_ip_changed:
+            # Provide pre-update notification not to break plugins that don't
+            # support gateway ip change
+            kwargs = {'context': context, 'subnet_id': id,
+                      'network_id': db_subnet.network_id}
+            registry.notify(resources.SUBNET_GATEWAY, events.BEFORE_UPDATE,
+                            self, **kwargs)
 
         with context.session.begin(subtransactions=True):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
@@ -752,6 +761,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if routers:
                 l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
                 l3_rpc_notifier.routers_updated(context, routers)
+
+        if gateway_ip_changed:
+            kwargs = {'context': context, 'subnet_id': id,
+                      'network_id': db_subnet.network_id}
+            registry.notify(resources.SUBNET_GATEWAY, events.AFTER_UPDATE,
+                            self, **kwargs)
 
         return result
 
