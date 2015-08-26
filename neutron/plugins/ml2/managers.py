@@ -846,9 +846,6 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
                           {'name': driver.name, 'method': method_name})
                 raise ml2_exc.ExtensionDriverError(driver=driver.name)
 
-            LOG.debug("%(method)s succeeded for driver %(driver)s",
-                      {'method': method_name, 'driver': driver.name})
-
     def extend_network_dict(self, session, base_model, result):
         """Notify all extension drivers to extend network dictionary."""
         self._call_on_dict_driver("extend_network_dict", session, base_model,
