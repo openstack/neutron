@@ -751,7 +751,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True},
         'device_owner': {'allow_post': True, 'allow_put': True,
                          'validate': {'type:string': None},
-                         'default': '',
+                         'default': '', 'enforce_policy': True,
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},

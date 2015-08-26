@@ -241,6 +241,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "regular_user": "role:user",
             "shared": "field:networks:shared=True",
             "external": "field:networks:router:external=True",
+            "network_device": "field:port:device_owner=~^network:",
             "default": '@',
 
             "create_network": "rule:admin_or_owner",
@@ -251,7 +252,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "get_network": "rule:admin_or_owner or "
                            "rule:shared or "
                            "rule:external",
+            "create_port": "",
             "create_port:mac": "rule:admin_or_network_owner",
+            "create_port:device_owner": "not rule:network_device",
             "create_something": "rule:admin_or_owner",
             "create_something:attr": "rule:admin_or_owner",
             "create_something:attr:sub_attr_1": "rule:admin_or_owner",
@@ -312,6 +315,23 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_nonadmin_write_on_shared_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', True,
                                            exceptions.PolicyNotAuthorized)
+
+    def test_create_port_device_owner_regex(self):
+        uctx = context.Context('', "user", roles=['user'])
+        action = 'create_port'
+        target = {'tenant_id': 'user'}
+        blocked_values = ('network:', 'network:abdef', 'network:dhcp',
+                          'network:router_interface')
+        for val in blocked_values:
+            target['device_owner'] = val
+            self.assertRaises(
+                exceptions.PolicyNotAuthorized, policy.enforce,
+                uctx, action, target
+            )
+        ok_values = ('network', 'networks', 'my_network:test', 'my_network:')
+        for val in ok_values:
+            target['device_owner'] = val
+            self.assertTrue(policy.enforce(uctx, action, target))
 
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
