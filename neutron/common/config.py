@@ -82,6 +82,9 @@ core_opts = [
                deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
                       "dnsmasq to use infinite lease times.")),
+    cfg.StrOpt('dns_domain',
+               default='openstacklocal',
+               help=_('Domain to use for building the hostnames')),
     cfg.BoolOpt('dhcp_agent_notification', default=True,
                 help=_("Allow sending resource operation"
                        " notification to DHCP agent")),

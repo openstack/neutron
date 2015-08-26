@@ -160,6 +160,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 IpamPluggableBackend._store_ip_allocation(
                     context, ip_address, network_id,
                     subnet_id, port_id)
+            return ips
         except Exception:
             with excutils.save_and_reraise_exception():
                 if ips:

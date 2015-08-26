@@ -63,6 +63,9 @@ LOG = logging.getLogger(__name__)
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
+DNS_DOMAIN_DEFAULT = 'openstacklocal.'
+FQDN_MAX_LEN = 255
+
 
 def _check_subnet_not_used(context, subnet_id):
     try:
@@ -1034,6 +1037,54 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
+    def _get_dns_domain(self):
+        if not cfg.CONF.dns_domain:
+            return ''
+        if cfg.CONF.dns_domain.endswith('.'):
+            return cfg.CONF.dns_domain
+        return '%s.' % cfg.CONF.dns_domain
+
+    def _get_request_dns_name(self, port):
+        dns_domain = self._get_dns_domain()
+        if ((dns_domain and dns_domain != DNS_DOMAIN_DEFAULT)):
+            return port.get('dns_name', '')
+        return ''
+
+    def _get_dns_names_for_port(self, context, network_id, ips,
+                                request_dns_name):
+        filter = {'network_id': [network_id]}
+        subnets = self._get_subnets(context, filters=filter)
+        v6_subnets = {subnet['id']: subnet for subnet in subnets
+                      if subnet['ip_version'] == 6}
+        dns_assignment = []
+        dns_domain = self._get_dns_domain()
+        if request_dns_name:
+            request_fqdn = request_dns_name
+            if not request_dns_name.endswith('.'):
+                request_fqdn = '%s.%s' % (request_dns_name, dns_domain)
+
+        for ip in ips:
+            subnet_id = ip['subnet_id']
+            is_auto_address_subnet = (
+                subnet_id in v6_subnets and
+                ipv6_utils.is_auto_address_subnet(v6_subnets[subnet_id]))
+            if is_auto_address_subnet:
+                continue
+            if request_dns_name:
+                hostname = request_dns_name
+                fqdn = request_fqdn
+            else:
+                hostname = 'host-%s' % ip['ip_address'].replace(
+                    '.', '-').replace(':', '-')
+                fqdn = hostname
+                if dns_domain:
+                    fqdn = '%s.%s' % (hostname, dns_domain)
+            dns_assignment.append({'ip_address': ip['ip_address'],
+                                   'hostname': hostname,
+                                   'fqdn': fqdn})
+
+        return dns_assignment
+
     def _create_port_with_mac(self, context, network_id, port_data,
                               mac_address):
         try:
@@ -1081,6 +1132,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          status=p.get('status', constants.PORT_STATUS_ACTIVE),
                          device_id=p['device_id'],
                          device_owner=p['device_owner'])
+        if 'dns_name' in p:
+            request_dns_name = self._get_request_dns_name(p)
+            port_data['dns_name'] = request_dns_name
 
         with context.session.begin(subtransactions=True):
             # Ensure that the network exists.
@@ -1094,8 +1148,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 db_port = self._create_port_with_mac(
                     context, network_id, port_data, p['mac_address'])
 
-            self.ipam.allocate_ips_for_port_and_store(context, port, port_id)
+            ips = self.ipam.allocate_ips_for_port_and_store(context, port,
+                                                            port_id)
+            if 'dns_name' in p:
+                dns_assignment = []
+                if ips:
+                    dns_assignment = self._get_dns_names_for_port(
+                        context, network_id, ips, request_dns_name)
 
+        if 'dns_name' in p:
+            db_port['dns_assignment'] = dns_assignment
         return self._make_port_dict(db_port, process_extensions=False)
 
     def _validate_port_for_update(self, context, db_port, new_port, new_mac):
@@ -1114,20 +1176,45 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_mac_addr_update(context, db_port,
                                         new_mac, current_owner)
 
+    def _get_dns_names_for_updated_port(self, context, db_port,
+                                        original_ips, original_dns_name,
+                                        request_dns_name, changes):
+        if changes.original or changes.add or changes.remove:
+            return self._get_dns_names_for_port(
+                context, db_port['network_id'], changes.original + changes.add,
+                request_dns_name or original_dns_name)
+        if original_ips:
+            return self._get_dns_names_for_port(
+                context, db_port['network_id'], original_ips,
+                request_dns_name or original_dns_name)
+        return []
+
     def update_port(self, context, id, port):
         new_port = port['port']
 
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
+            if 'dns-integration' in self.supported_extension_aliases:
+                original_ips = self._make_fixed_ip_dict(port['fixed_ips'])
+                original_dns_name = port.get('dns_name', '')
+                request_dns_name = self._get_request_dns_name(new_port)
+                if not request_dns_name:
+                    new_port['dns_name'] = ''
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, port, new_port, new_mac)
             changes = self.ipam.update_port_with_ips(context, port,
                                                      new_port, new_mac)
+            if 'dns-integration' in self.supported_extension_aliases:
+                dns_assignment = self._get_dns_names_for_updated_port(
+                    context, port, original_ips, original_dns_name,
+                    request_dns_name, changes)
         result = self._make_port_dict(port)
         # Keep up with fields that changed
         if changes.original or changes.add or changes.remove:
             result['fixed_ips'] = self._make_fixed_ip_dict(
                 changes.original + changes.add)
+        if 'dns-integration' in self.supported_extension_aliases:
+            result['dns_assignment'] = dns_assignment
         return result
 
     def delete_port(self, context, id):
@@ -1150,8 +1237,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           "The port has already been deleted.",
                           port_id)
 
+    def _get_dns_name_for_port_get(self, context, port):
+        if port['fixed_ips']:
+            return self._get_dns_names_for_port(
+                context, port['network_id'], port['fixed_ips'],
+                port['dns_name'])
+        return []
+
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)
+        if (('dns-integration' in self.supported_extension_aliases and
+             'dns_name' in port)):
+            port['dns_assignment'] = self._get_dns_name_for_port_get(context,
+                                                                     port)
         return self._make_port_dict(port, fields)
 
     def _get_ports_query(self, context, filters=None, sorts=None, limit=None,
@@ -1189,7 +1287,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,
                                       page_reverse=page_reverse)
-        items = [self._make_port_dict(c, fields) for c in query]
+        items = []
+        for c in query:
+            if (('dns-integration' in self.supported_extension_aliases and
+                 'dns_name' in c)):
+                c['dns_assignment'] = self._get_dns_name_for_port_get(context,
+                                                                      c)
+            items.append(self._make_port_dict(c, fields))
         if limit and page_reverse:
             items.reverse()
         return items
