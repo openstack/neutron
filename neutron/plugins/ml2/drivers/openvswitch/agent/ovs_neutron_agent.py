@@ -793,7 +793,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         devices_down = []
         port_names = [p['vif_port'].port_name for p in need_binding_ports]
         port_info = self.int_br.get_ports_attributes(
-            "Port", columns=["name", "tag"], ports=port_names)
+            "Port", columns=["name", "tag"], ports=port_names, if_exists=True)
         tags_by_name = {x['name']: x['tag'] for x in port_info}
         for port_detail in need_binding_ports:
             lvm = self.local_vlan_map.get(port_detail['network_id'])
@@ -805,6 +805,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             device = port_detail['device']
             # Do not bind a port if it's already bound
             cur_tag = tags_by_name.get(port.port_name)
+            if cur_tag is None:
+                LOG.info(_LI("Port %s was deleted concurrently, skipping it"),
+                         port.port_name)
+                continue
             if cur_tag != lvm.vlan:
                 self.int_br.delete_flows(in_port=port.ofport)
             if self.prevent_arp_spoofing:
