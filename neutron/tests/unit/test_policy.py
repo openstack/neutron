@@ -232,6 +232,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "regular_user": "role:user",
             "shared": "field:networks:shared=True",
             "external": "field:networks:router:external=True",
+            "network_device": "field:port:device_owner=~^network:",
             "default": '@',
 
             "create_network": "rule:admin_or_owner",
@@ -243,6 +244,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "create_subnet": "rule:admin_or_network_owner",
             "create_port:mac": "rule:admin_or_network_owner or "
                                "rule:context_is_advsvc",
+            "create_port:device_owner": "not rule:network_device",
             "update_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "get_port": "rule:admin_or_owner or rule:context_is_advsvc",
             "delete_port": "rule:admin_or_owner or rule:context_is_advsvc",
@@ -311,6 +313,20 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_nonadmin_write_on_shared_fails(self):
         self._test_nonadmin_action_on_attr('create', 'shared', True,
                                            common_policy.PolicyNotAuthorized)
+
+    def test_create_port_device_owner_regex(self):
+        blocked_values = ('network:', 'network:abdef', 'network:dhcp',
+                          'network:router_interface')
+        for val in blocked_values:
+            self._test_advsvc_action_on_attr(
+                'create', 'port', 'device_owner', val,
+                common_policy.PolicyNotAuthorized
+            )
+        ok_values = ('network', 'networks', 'my_network:test', 'my_network:')
+        for val in ok_values:
+            self._test_advsvc_action_on_attr(
+                'create', 'port', 'device_owner', val
+            )
 
     def test_advsvc_get_network_works(self):
         self._test_advsvc_action_on_attr('get', 'network', 'shared', False)

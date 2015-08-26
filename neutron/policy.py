@@ -335,6 +335,7 @@ class FieldCheck(policy.Check):
 
         self.field = field
         self.value = conv_func(value)
+        self.regex = re.compile(value[1:]) if value.startswith('~') else None
 
     def __call__(self, target_dict, cred_dict, enforcer):
         target_value = target_dict.get(self.field)
@@ -344,6 +345,8 @@ class FieldCheck(policy.Check):
                       "%(target_dict)s",
                       {'field': self.field, 'target_dict': target_dict})
             return False
+        if self.regex:
+            return bool(self.regex.match(target_value))
         return target_value == self.value
 
 
