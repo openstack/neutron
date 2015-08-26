@@ -50,8 +50,9 @@ class HostDescription(object):
     What agents should the host spawn? What mode should each agent operate
     under?
     """
-    def __init__(self, l3_agent=False):
+    def __init__(self, l3_agent=False, of_interface='ovs-ofctl'):
         self.l3_agent = l3_agent
+        self.of_interface = of_interface
 
 
 class Host(fixtures.Fixture):

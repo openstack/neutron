@@ -26,13 +26,18 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
 
-    scenarios = [
+    network_scenarios = [
         ('VXLAN', {'network_type': 'vxlan',
                    'l2_pop': False}),
         ('GRE and l2pop', {'network_type': 'gre',
                            'l2_pop': True}),
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
+    interface_scenarios = [
+        ('Ofctl', {'of_interface': 'ovs-ofctl'}),
+        ('Native', {'of_interface': 'native'})]
+    scenarios = testscenarios.multiply_scenarios(
+        network_scenarios, interface_scenarios)
 
     def setUp(self):
         host_descriptions = [
@@ -40,7 +45,8 @@ class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
             # is enabled, because l2pop code makes assumptions about the
             # agent types present on machines.
             environment.HostDescription(
-                l3_agent=self.l2_pop) for _ in range(2)]
+                l3_agent=self.l2_pop,
+                of_interface=self.of_interface) for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type,

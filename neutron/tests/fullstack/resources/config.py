@@ -23,6 +23,16 @@ from neutron.tests.common import helpers as c_helpers
 from neutron.tests.common import net_helpers
 
 
+def _generate_port():
+    """Get a free TCP port from the Operating System and return it.
+
+    This might fail if some other process occupies this port after this
+    function finished but before the neutron-server process started.
+    """
+    return str(net_helpers.get_free_namespace_port(
+        constants.PROTO_NAME_TCP))
+
+
 class ConfigFixture(fixtures.Fixture):
     """A fixture that holds an actual Neutron configuration.
 
@@ -62,7 +72,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'host': self._generate_host(),
                 'state_path': self._generate_state_path(self.temp_dir),
                 'lock_path': '$state_path/lock',
-                'bind_port': self._generate_port(),
+                'bind_port': _generate_port(),
                 'api_paste_config': self._generate_api_paste(),
                 'policy_file': self._generate_policy_json(),
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
@@ -89,15 +99,6 @@ class NeutronConfigFixture(ConfigFixture):
         # Assume that temp_dir will be removed by the caller
         self.state_path = tempfile.mkdtemp(prefix='state_path', dir=temp_dir)
         return self.state_path
-
-    def _generate_port(self):
-        """Get a free TCP port from the Operating System and return it.
-
-        This might fail if some other process occupies this port after this
-        function finished but before the neutron-server process started.
-        """
-        return str(net_helpers.get_free_namespace_port(
-            constants.PROTO_NAME_TCP))
 
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')
@@ -148,6 +149,7 @@ class OVSConfigFixture(ConfigFixture):
             'ovs': {
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
+                'of_interface': host_desc.of_interface,
             },
             'securitygroup': {
                 'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
@@ -157,6 +159,10 @@ class OVSConfigFixture(ConfigFixture):
                 'l2_population': str(self.env_desc.l2_pop),
             }
         })
+
+        if self.config['ovs']['of_interface'] == 'native':
+            self.config['ovs'].update({
+                'of_listen_port': _generate_port()})
 
         if self.tunneling_enabled:
             self.config['agent'].update({
