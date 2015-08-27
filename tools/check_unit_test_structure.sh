@@ -14,7 +14,6 @@ ignore_regexes=(
     # The following vendor plugins are not required to confrm to the
     # structural requirements.
     "^plugins/brocade.*$"
-    "^plugins/cisco.*$"
     "^plugins/embrane.*$"
     "^plugins/ibm.*$"
     "^plugins/oneconvergence.*$"

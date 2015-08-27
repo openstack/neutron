@@ -18,8 +18,6 @@
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.plugins.cisco.common import cisco_constants
-
 segment_type = sa.Enum('vlan', 'overlay', 'trunk', 'multi-segment',
                        name='segment_type')
 profile_type = sa.Enum('network', 'policy', name='profile_type')
@@ -93,7 +91,7 @@ def upgrade():
         'cisco_n1kv_profile_bindings',
         sa.Column('profile_type', profile_type, nullable=True),
         sa.Column('tenant_id', sa.String(length=36), nullable=False,
-                  server_default=cisco_constants.TENANT_ID_NOT_SET),
+                  server_default='TENANT_ID_NOT_SET'),
         sa.Column('profile_id', sa.String(length=36), nullable=False),
         sa.PrimaryKeyConstraint('tenant_id', 'profile_id'))
 
