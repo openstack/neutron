@@ -26,17 +26,21 @@ from neutron.i18n import _LE, _LW
 
 
 LOG = logging.getLogger(__name__)
-cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
-                      'agent.common.config')
-cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.'
-                      'agent.common.config')
-cfg.CONF.import_group('VXLAN', 'neutron.plugins.ml2.drivers.linuxbridge.'
-                      'agent.common.config')
-cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
-cfg.CONF.import_group('ml2_sriov',
-                      'neutron.plugins.ml2.drivers.mech_sriov.mech_driver')
-dhcp_agent.register_options()
-cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
+
+
+def setup_conf():
+    cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
+                          'agent.common.config')
+    cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.'
+                          'agent.common.config')
+    cfg.CONF.import_group('VXLAN', 'neutron.plugins.ml2.drivers.linuxbridge.'
+                          'agent.common.config')
+    cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
+    cfg.CONF.import_group('ml2_sriov',
+                          'neutron.plugins.ml2.drivers.mech_sriov.mech_driver.'
+                          'mech_driver')
+    dhcp_agent.register_options()
+    cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
 
 class BoolOptCallback(cfg.BoolOpt):
@@ -260,6 +264,7 @@ def all_tests_passed():
 
 
 def main():
+    setup_conf()
     cfg.CONF.register_cli_opts(OPTS)
     cfg.CONF.set_override('use_stderr', True)
     config.setup_logging()
