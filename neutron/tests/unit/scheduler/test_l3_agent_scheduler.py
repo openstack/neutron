@@ -1529,6 +1529,101 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         core_plugin.assert_called_once_with()
         l3_notifier.assert_called_once_with()
 
+    def _test_remove_router_from_l3_agent_dvr_snat(self, ursn_return):
+        agent_id = 'dvr_snat_l3_agent_id'
+        router_id = 'dvr-router-1'
+        router = {
+            'id': router_id,
+            'distributed': True,
+            'external_gateway_info': {'network_id': str(uuid.uuid4()),
+                                      'enable_snat': True}
+        }
+
+        binding = l3_dvrscheduler_db.CentralizedSnatL3AgentBinding(
+            router_id=router_id, l3_agent_id=agent_id,
+            l3_agent=agents_db.Agent())
+
+        self.dut.l3_rpc_notifier = mock.Mock()
+        with mock.patch.object(self.dut, 'get_router') as mock_gr,\
+                mock.patch.object(self.dut, 'unbind_snat') as mock_us,\
+                mock.patch.object(
+                    self.dut,
+                    'unbind_router_servicenode') as mock_ursn,\
+                mock.patch('neutron.db.l3_agentschedulers_db.'
+                           'L3AgentSchedulerDbMixin.'
+                           'remove_router_from_l3_agent') as mock_super_rrl3a:
+            mock_gr.return_value = router
+            mock_us.return_value = binding
+            mock_ursn.return_value = ursn_return
+
+            self.dut.remove_router_from_l3_agent(self.adminContext,
+                                                 agent_id,
+                                                 router_id)
+            mock_gr.assert_called_once_with(self.adminContext, router_id)
+
+            us_params = {'agent_id': agent_id}
+            mock_us.assert_called_once_with(self.adminContext,
+                                            router_id,
+                                            **us_params)
+            mock_ursn.assert_called_once_with(self.adminContext,
+                                              router_id,
+                                              binding)
+            self.assertFalse(mock_super_rrl3a.called)
+
+            if ursn_return:
+                routers_updated_params = {'schedule_routers': False}
+                (self.dut.l3_rpc_notifier.routers_updated.
+                 assert_called_once_with(self.adminContext,
+                                         [router_id],
+                                         **routers_updated_params))
+            else:
+                self.assertFalse(self.dut.l3_rpc_notifier.
+                                 routers_updated.called)
+
+    def test_remove_router_from_l3_agent_dvr_snat_mode(self):
+        self._test_remove_router_from_l3_agent_dvr_snat(True)
+        self._test_remove_router_from_l3_agent_dvr_snat(False)
+
+    def test_remove_router_from_l3_agent_dvr_mode(self):
+        agent_id = 'dvr_l3_agent_id'
+        router_id = 'dvr-router-1'
+        router = {
+            'id': router_id,
+            'distributed': True,
+            'external_gateway_info': {'network_id': str(uuid.uuid4()),
+                                      'enable_snat': True}
+        }
+
+        self.dut.l3_rpc_notifier = mock.Mock()
+        with mock.patch.object(self.dut, 'get_router') as mock_gr,\
+                mock.patch.object(self.dut, 'unbind_snat') as mock_us,\
+                mock.patch.object(
+                    self.dut,
+                    'unbind_router_servicenode') as mock_ursn,\
+                mock.patch('neutron.db.l3_agentschedulers_db.'
+                           'L3AgentSchedulerDbMixin.'
+                           'remove_router_from_l3_agent') as mock_super_rrl3a:
+            mock_gr.return_value = router
+            mock_us.return_value = None
+            mock_ursn.return_value = True
+
+            self.dut.remove_router_from_l3_agent(self.adminContext,
+                                                 agent_id,
+                                                 router_id)
+
+            mock_gr.assert_called_once_with(self.adminContext, router_id)
+
+            us_params = {'agent_id': agent_id}
+            mock_us.assert_called_once_with(self.adminContext,
+                                            router_id,
+                                            **us_params)
+
+            self.assertFalse(self.dut.l3_rpc_notifier.routers_updated.called)
+            self.assertFalse(mock_ursn.called)
+            mock_super_rrl3a.assert_called_with(self.adminContext,
+                                                agent_id,
+                                                router_id)
+
 
 class L3HAPlugin(db_v2.NeutronDbPluginV2,
                  l3_hamode_db.L3_HA_NAT_db_mixin,
