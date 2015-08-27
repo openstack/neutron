@@ -186,6 +186,7 @@
     "create_policy_bandwidth_limit_rule": "rule:admin_only",
     "delete_policy_bandwidth_limit_rule": "rule:admin_only",
     "update_policy_bandwidth_limit_rule": "rule:admin_only",
+    "get_rule_type": "rule:regular_user",
 
     "restrict_wildcard": "(not field:rbac_policy:target_tenant=*) or rule:admin_only",
     "create_rbac_policy": "",
