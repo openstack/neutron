@@ -86,6 +86,11 @@ names, which were moved out of Neutron: ::
            + REPO_ARISTA_TABLES + REPO_CISCO_TABLES)
 
 
+Also the test uses **VERSION_TABLE**, it is the name of table in database which
+contains revision id of head migration. It is preferred to keep this variable in
+``networking_foo/db/migration/alembic_migrations/__init__.py`` so it will be easy
+to use in test.
+
 Create a module ``networking_foo/tests/functional/db/test_migrations.py``
 with the following content: ::
 
@@ -96,7 +101,7 @@ with the following content: ::
  from neutron.tests.common import base
  from neutron.tests.functional.db import test_migrations
 
- from networking_foo.db.migration.alembic_migrations import env
+ from networking_foo.db.migration import alembic_migrations
  from networking_foo.db.models import head
 
  # EXTERNAL_TABLES should contain all names of tables that are not related to
@@ -118,7 +123,7 @@ with the following content: ::
 
    def include_object(self, object_, name, type_, reflected, compare_to):
        if type_ == 'table' and (name == 'alembic' or
-                                name == env.VERSION_TABLE or
+                                name == alembic_migrations.VERSION_TABLE or
                                 name in EXTERNAL_TABLES):
            return False
        else:
