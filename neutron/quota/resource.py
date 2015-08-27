@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as oslo_db_exception
@@ -177,20 +176,26 @@ class TrackedResource(BaseResource):
     def dirty(self):
         return self._dirty_tenants
 
-    @lockutils.synchronized('dirty_tenants')
     def mark_dirty(self, context, nested=False):
         if not self._dirty_tenants:
             return
         with context.session.begin(nested=nested, subtransactions=True):
-            for tenant_id in self._dirty_tenants:
+            # It is not necessary to protect this operation with a lock.
+            # Indeed when this method is called the request has been processed
+            # and therefore all resources created or deleted.
+            # dirty_tenants will contain all the tenants for which the
+            # resource count is changed. The list might contain also tenants
+            # for which resource count was altered in other requests, but this
+            # won't be harmful.
+            dirty_tenants_snap = self._dirty_tenants.copy()
+            for tenant_id in dirty_tenants_snap:
                 quota_api.set_quota_usage_dirty(context, self.name, tenant_id)
                 LOG.debug(("Persisted dirty status for tenant:%(tenant_id)s "
                            "on resource:%(resource)s"),
                           {'tenant_id': tenant_id, 'resource': self.name})
-        self._out_of_sync_tenants |= self._dirty_tenants
-        self._dirty_tenants.clear()
+        self._out_of_sync_tenants |= dirty_tenants_snap
+        self._dirty_tenants = self._dirty_tenants - dirty_tenants_snap
 
-    @lockutils.synchronized('dirty_tenants')
     def _db_event_handler(self, mapper, _conn, target):
         try:
             tenant_id = target['tenant_id']
@@ -224,7 +229,6 @@ class TrackedResource(BaseResource):
                   {'tenant_id': tenant_id, 'resource': self.name})
         return usage_info
 
-    @lockutils.synchronized('dirty_tenants')
     def resync(self, context, tenant_id):
         if tenant_id not in self._out_of_sync_tenants:
             return
@@ -236,7 +240,6 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, tenant_id, in_use, reserved=0)
 
-    @lockutils.synchronized('dirty_tenants')
     def count(self, context, _plugin, tenant_id, resync_usage=False):
         """Return the current usage count for the resource.
 
