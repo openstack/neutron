@@ -36,8 +36,8 @@ from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.sql import expression as sa_expr
 
-from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.hyperv import constants
 
 FLAT_VLAN_ID = -1
 LOCAL_VLAN_ID = -2
@@ -114,7 +114,7 @@ def _migrate_port_bindings(engine):
         sa_expr.select(['*'], from_obj=port_binding_ports))
     ml2_bindings = [dict(x) for x in source_bindings]
     for binding in ml2_bindings:
-        binding['vif_type'] = portbindings.VIF_TYPE_HYPERV
+        binding['vif_type'] = constants.VIF_TYPE_HYPERV
         binding['driver'] = HYPERV
         segment = port_segment_map.get(binding['port_id'])
         if segment:

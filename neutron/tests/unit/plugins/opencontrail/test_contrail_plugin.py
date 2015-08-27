@@ -30,8 +30,8 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import securitygroups_db
-from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
+from neutron.plugins.opencontrail import contrail_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
@@ -286,7 +286,7 @@ class TestContrailSecurityGroups(test_sg.TestSecurityGroups,
 
 class TestContrailPortBinding(ContrailPluginTestCase,
                               test_bindings.PortBindingsTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_VROUTER
+    VIF_TYPE = contrail_plugin.VIF_TYPE_VROUTER
     HAS_PORT_FILTER = True
 
     def setUp(self):
