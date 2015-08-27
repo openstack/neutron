@@ -44,6 +44,8 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('SDNVE', 'neutron.plugins.ibm.common.config')
 cfg.CONF.import_group('SDNVE_AGENT', 'neutron.plugins.ibm.common.config')
 
+AGENT_TYPE_SDNVE = 'IBM SDN-VE agent'
+
 
 class SdnvePluginApi(agent_rpc.PluginApi):
 
@@ -87,7 +89,7 @@ class SdnveNeutronAgent(object):
                                'reset_br': self.reset_br,
                                'out_of_band': self.out_of_band,
                                'controller_ip': self.controller_ip},
-            'agent_type': n_const.AGENT_TYPE_SDNVE,
+            'agent_type': AGENT_TYPE_SDNVE,
             'start_flag': True}
 
         if self.int_bridge_name:

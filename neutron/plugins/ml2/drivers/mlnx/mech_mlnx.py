@@ -16,13 +16,13 @@
 
 from oslo_log import log
 
-from neutron.common import constants as n_const
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
 
 LOG = log.getLogger(__name__)
+AGENT_TYPE_MLNX = 'Mellanox plugin agent'
 VIF_TYPE_IB_HOSTDEV = 'ib_hostdev'
 
 
@@ -38,7 +38,7 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def __init__(self):
         super(MlnxMechanismDriver, self).__init__(
-            agent_type=n_const.AGENT_TYPE_MLNX,
+            agent_type=AGENT_TYPE_MLNX,
             vif_type=VIF_TYPE_IB_HOSTDEV,
             vif_details={portbindings.CAP_PORT_FILTER: False},
             supported_vnic_types=[portbindings.VNIC_DIRECT])
