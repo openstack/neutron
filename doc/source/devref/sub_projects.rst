@@ -102,6 +102,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | kuryr_                        |         docker        |
 +-------------------------------+-----------------------+
+| networking-ale-omniswitch_    |          ml2          |
++-------------------------------+-----------------------+
 | networking-arista_            |         ml2,l3        |
 +-------------------------------+-----------------------+
 | networking-bagpipe-l2_        |          ml2          |
@@ -167,6 +169,15 @@ Functionality legend
 - lb: a Load Balancer service plugin;
 - intent: a service plugin that provides a declarative API to realize networking;
 - docker: a Docker network plugin that uses Neutron to provide networking services to Docker containers;
+
+.. _networking-ale-omniswitch:
+
+ALE Omniswitch
+++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-ale-omniswitch
+* Launchpad: https://launchpad.net/networking-ale-omniswitch
+* Pypi: https://pypi.python.org/pypi/networking-ale-omniswitch
 
 .. _networking-arista:
 
