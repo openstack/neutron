@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_config import cfg
+from webob import exc as web_exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.db import allowedaddresspairs_db as addr_pair_db
@@ -23,7 +25,6 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as secgroup
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
-from oslo_config import cfg
 
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.db.test_allowedaddresspairs_db.'
@@ -96,6 +97,16 @@ class AllowedAddressPairDBTestCase(AllowedAddressPairTestCase):
 
 
 class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
+
+    def test_create_port_allowed_address_pairs_bad_format(self):
+        with self.network() as net:
+            bad_values = [False, True, None, 1.1, 1]
+            for value in bad_values:
+                self._create_port(
+                    self.fmt, net['network']['id'],
+                    expected_res_status=web_exc.HTTPBadRequest.code,
+                    arg_list=(addr_pair.ADDRESS_PAIRS,),
+                    allowed_address_pairs=value)
 
     def test_create_port_allowed_address_pairs(self):
         with self.network() as net:
