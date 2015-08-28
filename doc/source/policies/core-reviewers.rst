@@ -127,6 +127,8 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-ofagent     | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
+| networking-onos        | Vikram Choudhary          | vikram               |
++------------------------+---------------------------+----------------------+
 | networking-ovn         | Russell Bryant            | russellb             |
 +------------------------+---------------------------+----------------------+
 | networking-plumgrid    | Fawad Khaliq              | fawadkhaliq          |
