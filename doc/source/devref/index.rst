@@ -43,6 +43,7 @@ Programming HowTos and Tutorials
     contribute
     neutron_api
     sub_projects
+    sub_project_guidelines
     client_command_extensions
     alembic_migrations
 

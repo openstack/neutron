@@ -67,6 +67,9 @@ working on testing.
 By being included, the project accepts oversight by the TC as a part of
 being in OpenStack, and also accepts oversight by the Neutron PTL.
 
+It is also assumed the respective review teams will make sure their projects
+stay in line with `current best practices <sub_project_guidelines.html>`_.
+
 Inclusion Criteria
 ------------------
 
