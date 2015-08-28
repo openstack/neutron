@@ -117,11 +117,9 @@ More info on stable branch process can be found on `the following page
 Releases
 --------
 
-It is suggested that you release new subproject tarballs on PyPI from time to
-time, especially for stable branches. It will make life of packagers and other
-consumers of your code easier.
-
-Make sure you tag you release commits in git.
+It is suggested that sub-projects release new tarballs on PyPI from time to
+time, especially for stable branches. It will make the life of packagers and
+other consumers of your code easier.
 
 It is highly suggested that you do not strip pieces of the source tree (tests,
 executables, tools) before releasing on PyPI: those missing pieces may be
@@ -129,4 +127,22 @@ needed to validate the package, or make the packaging easier or more complete.
 As a rule of thumb, don't strip anything from the source tree unless completely
 needed.
 
-TODO: fill in details on release process.
+Sub-Project Release Process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To release a sub-project, follow the following steps:
+
+* Only members of the `neutron-release
+  <https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can
+  do releases. Make sure you talk to a member of neutron-release to perform
+  your release.
+* For projects which have not moved to post-versioning, we need to push an
+  alpha tag to avoid pbr complaining. The neutron-release group will handle
+  this.
+* Modify setup.cfg to remove the version (if you have one), which moves your
+  project to post-versioning, similar to all the other Neutron projects. You
+  can skip this step if you don't have a version in setup.cfg.
+* Have neutron-release push the tag to gerrit.
+* Have neutron-release `tag the release
+  <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_,
+  which will release the code to PyPi.
