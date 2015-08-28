@@ -194,9 +194,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _get_host_port_if_changed(self, mech_context, attrs):
         binding = mech_context._binding
-        host = attrs and attrs.get(portbindings.HOST_ID)
-        if (attributes.is_attr_set(host) and binding.host != host):
-            return mech_context.current
+        if attrs and portbindings.HOST_ID in attrs:
+            if binding.host != attrs.get(portbindings.HOST_ID):
+                return mech_context.current
 
     def _check_mac_update_allowed(self, orig_port, port, binding):
         unplugged_types = (portbindings.VIF_TYPE_BINDING_FAILED,
@@ -1208,6 +1208,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             'context': context,
             'port': new_host_port,
             'mac_address_updated': mac_address_updated,
+            'original_port': original_port,
         }
         registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
 
