@@ -151,6 +151,7 @@ class FlavorManager(common_db_mixin.CommonDbMixin):
         res = {'id': flavor_db['id'],
                'name': flavor_db['name'],
                'description': flavor_db['description'],
+               'service_type': flavor_db['service_type'],
                'enabled': flavor_db['enabled'],
                'service_profiles': []}
         if flavor_db.service_profiles:
@@ -190,6 +191,7 @@ class FlavorManager(common_db_mixin.CommonDbMixin):
             fl_db = Flavor(id=uuidutils.generate_uuid(),
                            name=fl['name'],
                            description=fl['description'],
+                           service_type=fl['service_type'],
                            enabled=fl['enabled'])
             context.session.add(fl_db)
         return self._make_flavor_dict(fl_db)
