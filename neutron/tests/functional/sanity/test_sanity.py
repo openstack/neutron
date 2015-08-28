@@ -50,6 +50,9 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     def test_ovs_vxlan_support_runs(self):
         checks.ovs_vxlan_supported()
 
+    def test_ovs_geneve_support_runs(self):
+        checks.ovs_geneve_supported()
+
     def test_iproute2_vxlan_support_runs(self):
         checks.iproute2_vxlan_supported()
 

@@ -239,7 +239,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
-        self.tun_br_ofports = {p_const.TYPE_GRE: {},
+
+        self.tun_br_ofports = {p_const.TYPE_GENEVE: {},
+                               p_const.TYPE_GRE: {},
                                p_const.TYPE_VXLAN: {}}
 
         self.polling_interval = polling_interval
@@ -584,7 +586,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         :param net_uuid: the uuid of the network associated with this vlan.
         :param network_type: the network type ('gre', 'vxlan', 'vlan', 'flat',
-                                               'local')
+                                               'local', 'geneve')
         :param physical_network: the physical network for 'vlan' or 'flat'
         :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         '''
@@ -1738,9 +1740,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _check_agent_configurations(self):
         if (self.enable_distributed_routing and self.enable_tunneling
             and not self.l2_pop):
-            raise ValueError(_("DVR deployments for VXLAN/GRE underlays "
-                               "require L2-pop to be enabled, in both the "
-                               "Agent and Server side."))
+
+            raise ValueError(_("DVR deployments for VXLAN/GRE/Geneve "
+                               "underlays require L2-pop to be enabled, "
+                               "in both the Agent and Server side."))
 
 
 def create_agent_config_map(config):

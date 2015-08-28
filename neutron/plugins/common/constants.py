@@ -56,6 +56,7 @@ ACTIVE_PENDING_STATUSES = (
 
 # Network Type constants
 TYPE_FLAT = 'flat'
+TYPE_GENEVE = 'geneve'
 TYPE_GRE = 'gre'
 TYPE_LOCAL = 'local'
 TYPE_VXLAN = 'vxlan'
@@ -68,6 +69,10 @@ TYPE_NONE = 'none'
 MIN_VLAN_TAG = 1
 MAX_VLAN_TAG = 4094
 
+# For Geneve Tunnel
+MIN_GENEVE_VNI = 1
+MAX_GENEVE_VNI = 2 ** 24 - 1
+
 # For GRE Tunnel
 MIN_GRE_ID = 1
 MAX_GRE_ID = 2 ** 32 - 1
@@ -78,5 +83,6 @@ MAX_VXLAN_VNI = 2 ** 24 - 1
 VXLAN_UDP_PORT = 4789
 
 # Network Type MTU overhead
+GENEVE_ENCAP_MIN_OVERHEAD = 50
 GRE_ENCAP_OVERHEAD = 42
 VXLAN_ENCAP_OVERHEAD = 50
