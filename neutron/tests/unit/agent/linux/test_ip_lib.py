@@ -959,13 +959,34 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
+    def test_list_routes(self):
+        self.parent._run.return_value = (
+            "default via 172.124.4.1 dev eth0 metric 100\n"
+            "10.0.0.0/22 dev eth0 scope link\n"
+            "172.24.4.0/24 dev eth0 proto kernel src 172.24.4.2\n")
+        routes = self.route_cmd.table(self.table).list_routes(self.ip_version)
+        self.assertEqual([{'cidr': '0.0.0.0/0',
+                           'dev': 'eth0',
+                           'metric': '100',
+                           'table': 14,
+                           'via': '172.124.4.1'},
+                          {'cidr': '10.0.0.0/22',
+                           'dev': 'eth0',
+                           'scope': 'link',
+                           'table': 14},
+                          {'cidr': '172.24.4.0/24',
+                           'dev': 'eth0',
+                           'proto': 'kernel',
+                           'src': '172.24.4.2',
+                           'table': 14}], routes)
+
     def test_list_onlink_routes_subtable(self):
         self.parent._run.return_value = (
             "10.0.0.0/22\n"
             "172.24.4.0/24 proto kernel src 172.24.4.2\n")
         routes = self.route_cmd.table(self.table).list_onlink_routes(
             self.ip_version)
-        self.assertEqual(['10.0.0.0/22'], routes)
+        self.assertEqual(['10.0.0.0/22'], [r['cidr'] for r in routes])
         self._assert_call([self.ip_version],
                           ('list', 'dev', self.parent.name, 'scope', 'link',
                            'table', self.table))
@@ -1011,6 +1032,22 @@ class TestIPv6IpRouteCommand(TestIpRouteCommand):
                             'expected':
                             {'gateway': '2001:470:9:1224:4508:b885:5fb:740b',
                              'metric': 1024}}]
+
+    def test_list_routes(self):
+        self.parent._run.return_value = (
+            "default via 2001:db8::1 dev eth0 metric 100\n"
+            "2001:db8::/64 dev eth0 proto kernel src 2001:db8::2\n")
+        routes = self.route_cmd.table(self.table).list_routes(self.ip_version)
+        self.assertEqual([{'cidr': '::/0',
+                           'dev': 'eth0',
+                           'metric': '100',
+                           'table': 14,
+                           'via': '2001:db8::1'},
+                          {'cidr': '2001:db8::/64',
+                           'dev': 'eth0',
+                           'proto': 'kernel',
+                           'src': '2001:db8::2',
+                           'table': 14}], routes)
 
 
 class TestIPRoute(TestIpRouteCommand):

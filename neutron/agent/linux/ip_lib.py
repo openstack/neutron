@@ -597,19 +597,45 @@ class IpRouteCommand(IpDeviceCommandBase):
                     raise exceptions.DeviceNotFoundError(
                         device_name=self.name)
 
-    def list_onlink_routes(self, ip_version):
-        def iterate_routes():
-            args = ['list']
-            args += self._dev_args()
-            args += ['scope', 'link']
-            args += self._table_args()
-            output = self._run([ip_version], tuple(args))
-            for line in output.split('\n'):
-                line = line.strip()
-                if line and not line.count('src'):
-                    yield line
+    def _parse_routes(self, ip_version, output, **kwargs):
+        for line in output.splitlines():
+            parts = line.split()
 
-        return [x for x in iterate_routes()]
+            # Format of line is: "<cidr>|default [<key> <value>] ..."
+            route = {k: v for k, v in zip(parts[1::2], parts[2::2])}
+            route['cidr'] = parts[0]
+            # Avoids having to explicitly pass around the IP version
+            if route['cidr'] == 'default':
+                route['cidr'] = constants.IP_ANY[ip_version]
+
+            # ip route drops things like scope and dev from the output if it
+            # was specified as a filter.  This allows us to add them back.
+            if self.name:
+                route['dev'] = self.name
+            if self._table:
+                route['table'] = self._table
+            # Callers add any filters they use as kwargs
+            route.update(kwargs)
+
+            yield route
+
+    def list_routes(self, ip_version):
+        args = ['list']
+        args += self._dev_args()
+        args += self._table_args()
+
+        output = self._run([ip_version], tuple(args))
+        return [r for r in self._parse_routes(ip_version, output)]
+
+    def list_onlink_routes(self, ip_version):
+        args = ['list']
+        args += self._dev_args()
+        args += ['scope', 'link']
+        args += self._table_args()
+
+        output = self._run([ip_version], tuple(args))
+        return [r for r in self._parse_routes(ip_version, output, scope='link')
+                if 'src' not in r]
 
     def add_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
