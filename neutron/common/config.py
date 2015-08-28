@@ -155,13 +155,18 @@ cfg.CONF.register_cli_opts(core_cli_opts)
 
 # Ensure that the control exchange is set correctly
 oslo_messaging.set_transport_defaults(control_exchange='neutron')
-_SQL_CONNECTION_DEFAULT = 'sqlite://'
-# Update the default QueuePool parameters. These can be tweaked by the
-# configuration variables - max_pool_size, max_overflow and pool_timeout
-db_options.set_defaults(cfg.CONF,
-                        connection=_SQL_CONNECTION_DEFAULT,
-                        sqlite_db='', max_pool_size=10,
-                        max_overflow=20, pool_timeout=10)
+
+
+def set_db_defaults():
+    # Update the default QueuePool parameters. These can be tweaked by the
+    # conf variables - max_pool_size, max_overflow and pool_timeout
+    db_options.set_defaults(
+        cfg.CONF,
+        connection='sqlite://',
+        sqlite_db='', max_pool_size=10,
+        max_overflow=20, pool_timeout=10)
+
+set_db_defaults()
 
 NOVA_CONF_SECTION = 'nova'
 
