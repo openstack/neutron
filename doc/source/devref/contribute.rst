@@ -452,7 +452,7 @@ DB Model/Migration Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is a `template functional test
-<https://bugs.launchpad.net/neutron/+bug/1470678>`_ (TODO:Ann) third-party
+<http://docs.openstack.org/developer/neutron/devref/template_model_sync_test.html>`_ third-party
 maintainers can use to develop tests for model-vs-migration sync in their
 repos. It is recommended that each third-party CI sets up such a test, and runs
 it regularly against Neutron master.
