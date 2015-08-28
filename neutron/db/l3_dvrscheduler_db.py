@@ -192,10 +192,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                           [n_const.DEVICE_OWNER_DVR_INTERFACE]}
             int_ports = self._core_plugin.get_ports(
                 admin_context, filters=filter_rtr)
-            for prt in int_ports:
+            for port in int_ports:
                 dvr_binding = (ml2_db.
                                get_dvr_port_binding_by_host(context.session,
-                                                            prt['id'],
+                                                            port['id'],
                                                             port_host))
                 if dvr_binding:
                     # unbind this port from router
