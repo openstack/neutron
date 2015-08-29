@@ -1475,6 +1475,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     '--physdev-is-bridged '
                                     '-j $ifake_dev',
                                     comment=ic.SG_TO_VM_SG),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     comment=None),
+                 mock.call.add_rule('ifake_dev', '-j $sg-fallback',
+                                    comment=None),
                  mock.call.add_chain('ofake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-in tapfake_dev '
@@ -1496,7 +1505,25 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sfake_dev', '-j DROP',
                      comment=ic.PAIR_DROP),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
+                                    comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 67 --dport 68 -j DROP',
+                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state INVALID -j DROP',
+                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     comment=None),
+                 mock.call.add_rule('ofake_dev', '-j $sg-fallback',
                                     comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
