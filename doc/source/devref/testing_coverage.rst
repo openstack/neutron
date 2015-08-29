@@ -82,6 +82,8 @@ such as what L2 agent to use or what type of routers to create.
 +------------------------+------------+------------+------------+------------+------------+------------+
 | VLAN transparency      | V          |            | X          | X          |            |            |
 +------------------------+------------+------------+------------+------------+------------+------------+
+| Prefix delegation      | V          | X          |            | X          |            |            |
++------------------------+------------+------------+------------+------------+------------+------------+
 
 * DVR DB unit tests often assert that internal methods were called instead of
   testing functionality. A lot of our unit tests are flawed in this way,
@@ -90,6 +92,8 @@ such as what L2 agent to use or what type of routers to create.
 * OVS ARP responder cannot be tested at the gate because the gate uses Ubuntu
   14.04 that only packages OVS 2.0. OVS added ARP manipulation support in
   version 2.1.
+* Prefix delegation doesn't have functional tests for the dibbler and pd
+  layers, nor for the L3 agent changes.
 
 Missing Infrastructure
 ----------------------
