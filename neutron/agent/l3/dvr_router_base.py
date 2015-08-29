@@ -39,4 +39,8 @@ class DvrRouterBase(router.RouterInfo):
         if match_port:
             return match_port[0]
         else:
-            LOG.error(_LE('DVR: no map match_port found!'))
+            LOG.error(_LE('DVR: SNAT port not found in the list '
+                          '%(snat_list)s for the given router '
+                          ' internal port %(int_p)s'), {
+                              'snat_list': snat_ports,
+                              'int_p': int_port})

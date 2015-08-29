@@ -265,7 +265,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if is_add:
                 exc = _LE('DVR: error adding redirection logic')
             else:
-                exc = _LE('DVR: removed snat failed')
+                exc = _LE('DVR: snat remove failed to clear the rule '
+                          'and device')
             LOG.exception(exc)
 
     def _snat_redirect_add(self, gateway, sn_port, sn_int):
