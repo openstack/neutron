@@ -92,6 +92,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                            "to centralized"))
         elif (not router_db.extra_attributes.distributed and
               router_res.get('distributed')):
+            # router should be disabled in order for upgrade
+            if router_db.admin_state_up:
+                msg = _('Cannot upgrade active router to distributed. Please '
+                        'set router admin_state_up to False prior to upgrade.')
+                raise n_exc.BadRequest(resource='router', msg=msg)
+
             # Notify advanced services of the imminent state transition
             # for the router.
             try:
