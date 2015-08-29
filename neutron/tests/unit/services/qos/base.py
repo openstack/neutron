@@ -15,10 +15,10 @@ import mock
 from neutron.api.rpc.callbacks.consumer import registry as cons_registry
 from neutron.api.rpc.callbacks.producer import registry as prod_registry
 from neutron.api.rpc.callbacks import resource_manager
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class BaseQosTestCase(base.BaseTestCase):
+class BaseQosTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(BaseQosTestCase, self).setUp()
 
