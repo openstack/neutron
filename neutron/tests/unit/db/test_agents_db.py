@@ -16,6 +16,7 @@
 import datetime
 import mock
 
+from oslo_config import cfg
 from oslo_db import exception as exc
 from oslo_utils import timeutils
 import testscenarios
@@ -153,6 +154,12 @@ class TestAgentsDbMixin(TestAgentsDbBase):
 
             self.assertEqual(add_mock.call_count, 2,
                              "Agent entry creation hasn't been retried")
+
+    def test_create_or_update_agent_disable_new_agents(self):
+        cfg.CONF.set_override('enable_new_agents', False)
+        self.plugin.create_or_update_agent(self.context, self.agent_status)
+        agent = self.plugin.get_agents(self.context)[0]
+        self.assertFalse(agent['admin_state_up'])
 
 
 class TestAgentsDbGetAgents(TestAgentsDbBase):
