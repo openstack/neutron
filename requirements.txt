@@ -1,7 +1,7 @@
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
-pbr<2.0,>=1.4
+pbr<2.0,>=1.6
 
 Paste
 PasteDeploy>=1.5.0
@@ -24,17 +24,17 @@ alembic>=0.8.0
 six>=1.9.0
 stevedore>=1.5.0 # Apache-2.0
 oslo.concurrency>=2.3.0 # Apache-2.0
-oslo.config>=2.1.0 # Apache-2.0
+oslo.config>=2.3.0 # Apache-2.0
 oslo.context>=0.2.0 # Apache-2.0
-oslo.db>=2.0 # Apache-2.0
+oslo.db>=2.4.1 # Apache-2.0
 oslo.i18n>=1.5.0 # Apache-2.0
 oslo.log>=1.8.0 # Apache-2.0
 oslo.messaging!=1.17.0,!=1.17.1,>=1.16.0 # Apache-2.0
-oslo.middleware>=2.4.0 # Apache-2.0
+oslo.middleware>=2.8.0 # Apache-2.0
 oslo.policy>=0.5.0 # Apache-2.0
 oslo.rootwrap>=2.0.0 # Apache-2.0
 oslo.serialization>=1.4.0 # Apache-2.0
-oslo.service>=0.6.0 # Apache-2.0
+oslo.service>=0.7.0 # Apache-2.0
 oslo.utils>=2.0.0 # Apache-2.0
 oslo.versionedobjects>=0.6.0
 
