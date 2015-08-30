@@ -438,7 +438,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         elif ip_proto == constants.PROTO_NUM_ICMP:
             for attr, field in [('port_range_min', 'type'),
                                 ('port_range_max', 'code')]:
-                if rule[attr] is not None and rule[attr] > 255:
+                if rule[attr] is not None and not (0 <= rule[attr] <= 255):
                     raise ext_sg.SecurityGroupInvalidIcmpValue(
                         field=field, attr=attr, value=rule[attr])
             if (rule['port_range_min'] is None and
