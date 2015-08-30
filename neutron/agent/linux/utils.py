@@ -132,19 +132,20 @@ def execute(cmd, process_input=None, addl_env=None,
                 except UnicodeError:
                     pass
 
-        m = _("\nCommand: {cmd}\nExit code: {code}\nStdin: {stdin}\n"
-              "Stdout: {stdout}\nStderr: {stderr}").format(
+        m = _("\nCommand: {cmd}\nExit code: {code}\n").format(
                   cmd=cmd,
-                  code=returncode,
-                  stdin=process_input or '',
-                  stdout=_stdout,
-                  stderr=_stderr)
+                  code=returncode)
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode in extra_ok_codes:
             returncode = None
 
         if returncode and log_fail_as_error:
+            m += ("Stdin: {stdin}\n"
+                  "Stdout: {stdout}\nStderr: {stderr}").format(
+                stdin=process_input or '',
+                stdout=_stdout,
+                stderr=_stderr)
             LOG.error(m)
         else:
             LOG.debug(m)
