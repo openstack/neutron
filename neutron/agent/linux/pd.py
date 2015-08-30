@@ -302,10 +302,17 @@ class PrefixDelegation(object):
 
 @utils.synchronized("l3-agent-pd")
 def remove_router(resource, event, l3_agent, **kwargs):
-    router = l3_agent.pd.routers.get(kwargs['router'].router_id)
+    router_id = kwargs['router'].router_id
+    router = l3_agent.pd.routers.get(router_id)
     l3_agent.pd.delete_router_pd(router)
-    del l3_agent.pd.routers[router['id']]['subnets']
-    del l3_agent.pd.routers[router['id']]
+    del l3_agent.pd.routers[router_id]['subnets']
+    del l3_agent.pd.routers[router_id]
+
+
+def get_router_entry(ns_name):
+    return {'gw_interface': None,
+            'ns_name': ns_name,
+            'subnets': {}}
 
 
 @utils.synchronized("l3-agent-pd")
@@ -313,10 +320,8 @@ def add_router(resource, event, l3_agent, **kwargs):
     added_router = kwargs['router']
     router = l3_agent.pd.routers.get(added_router.router_id)
     if not router:
-        l3_agent.pd.routers[added_router.router_id] = {
-                            'gw_interface': None,
-                            'ns_name': added_router.ns_name,
-                            'subnets': {}}
+        l3_agent.pd.routers[added_router.router_id] = (
+            get_router_entry(added_router.ns_name))
     else:
         # This will happen during l3 agent restart
         router['ns_name'] = added_router.ns_name
