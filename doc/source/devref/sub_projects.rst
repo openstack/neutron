@@ -141,6 +141,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-ofagent_           |          ml2          |
 +-------------------------------+-----------------------+
+| networking-onos_              |          ml2          |
++-------------------------------+-----------------------+
 | networking-ovn_               |          ml2          |
 +-------------------------------+-----------------------+
 | networking-ovs-dpdk_          |          ml2          |
@@ -351,6 +353,15 @@ OpenFlow Agent (ofagent)
 * Git: https://git.openstack.org/cgit/openstack/networking-ofagent
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
+
+.. _networking-onos:
+
+Open Network Operating System (onos)
+++++++++++++++++++++++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-onos
+* Launchpad: https://launchpad.net/networking-onos
+* PyPI: https://pypi.python.org/pypi/networking-onos
 
 .. _networking-ovn:
 
