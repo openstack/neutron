@@ -174,11 +174,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, None)
         tenant_id = self._get_tenant_id_for_create(context, r)
-        with context.session.begin(subtransactions=True):
-            router_db = self._create_router_db(context, r, tenant_id)
+        router_db = self._create_router_db(context, r, tenant_id)
+        try:
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'],
                                             gw_info, router=router_db)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_LE("An exception occurred while creating "
+                                  "the router: %s"), router)
+                self.delete_router(context, router_db.id)
+
         return self._make_router_dict(router_db)
 
     def _update_router_db(self, context, router_id, data, gw_info):
