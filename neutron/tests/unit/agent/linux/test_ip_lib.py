@@ -965,6 +965,12 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'scope', 'link'))
 
+    def test_add_route_no_device(self):
+        self.parent._as_root.side_effect = RuntimeError("Cannot find device")
+        self.assertRaises(exceptions.DeviceNotFoundError,
+                          self.route_cmd.add_route,
+                          self.cidr, self.ip, self.table)
+
     def test_delete_route(self):
         self.route_cmd.delete_route(self.cidr, self.ip, self.table)
         self._assert_sudo([self.ip_version],
@@ -986,6 +992,12 @@ class TestIpRouteCommand(TestIPCmdBase):
                           ('del', self.cidr,
                            'dev', self.parent.name,
                            'scope', 'link'))
+
+    def test_delete_route_no_device(self):
+        self.parent._as_root.side_effect = RuntimeError("Cannot find device")
+        self.assertRaises(exceptions.DeviceNotFoundError,
+                          self.route_cmd.delete_route,
+                          self.cidr, self.ip, self.table)
 
     def test_list_routes(self):
         self.parent._run.return_value = (
