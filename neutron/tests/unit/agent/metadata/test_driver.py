@@ -121,7 +121,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 router_id]
             if not watch_log:
                 netns_execute_args.append(
-                    '--metadata_proxy_watch_log=false')
+                    '--nometadata_proxy_watch_log')
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
                 mock.call().netns.execute(netns_execute_args, addl_env=None,
