@@ -143,8 +143,7 @@ class LinuxBridgeManager(object):
         try:
             # Ensure the configured group address/range is valid and multicast
             net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
-            if not (net.network.is_multicast() and
-                    net.broadcast.is_multicast()):
+            if not net.is_multicast():
                 raise ValueError()
             # Map the segmentation ID to (one of) the group address(es)
             return str(net.network +
