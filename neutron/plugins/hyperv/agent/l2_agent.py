@@ -29,6 +29,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.i18n import _LE
+from neutron.plugins.ml2.drivers.hyperv import constants as h_const
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -82,7 +83,7 @@ class HyperVNeutronAgent(hyperv_neutron_agent.HyperVNeutronAgentMixin):
             'host': CONF.host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': configurations,
-            'agent_type': n_const.AGENT_TYPE_HYPERV,
+            'agent_type': h_const.AGENT_TYPE_HYPERV,
             'start_flag': True}
 
     def _report_state(self):

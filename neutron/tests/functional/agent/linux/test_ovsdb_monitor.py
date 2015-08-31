@@ -135,12 +135,9 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         devices = self.monitor.get_events()
         self.assertTrue(devices.get('added'),
                         'Initial call should always be true')
-        p_attrs = [('external_ids', {'iface-status': 'active'})]
         br = self.useFixture(net_helpers.OVSBridgeFixture())
-        p1 = self.useFixture(net_helpers.OVSPortFixture(
-            br.bridge, None, p_attrs))
-        p2 = self.useFixture(net_helpers.OVSPortFixture(
-            br.bridge, None, p_attrs))
+        p1 = self.useFixture(net_helpers.OVSPortFixture(br.bridge))
+        p2 = self.useFixture(net_helpers.OVSPortFixture(br.bridge))
         added_devices = [p1.port.name, p2.port.name]
         utils.wait_until_true(
             lambda: self._expected_devices_events(added_devices, 'added'))

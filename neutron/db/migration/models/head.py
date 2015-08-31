@@ -41,6 +41,7 @@ from neutron.db import model_base
 from neutron.db import models_v2  # noqa
 from neutron.db import portbindings_db  # noqa
 from neutron.db import portsecurity_db  # noqa
+from neutron.db.qos import models as qos_models  # noqa
 from neutron.db.quota import models  # noqa
 from neutron.db import rbac_db_models  # noqa
 from neutron.db import securitygroups_db  # noqa
@@ -54,19 +55,13 @@ from neutron.plugins.cisco.db import n1kv_models_v2  # noqa
 from neutron.plugins.cisco.db import network_models_v2  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
-from neutron.plugins.ml2.drivers.cisco.nexus import (  # noqa
-    nexus_models_v2 as ml2_nexus_models_v2)
-from neutron.plugins.ml2.drivers.cisco.ucsm import ucsm_model  # noqa
 from neutron.plugins.ml2.drivers import type_flat  # noqa
+from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.plugins.ml2.drivers import type_gre  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
 from neutron.plugins.ml2.drivers import type_vxlan  # noqa
 from neutron.plugins.ml2 import models  # noqa
-from neutron.plugins.nec.db import models as nec_models  # noqa
 from neutron.plugins.nuage import nuage_models  # noqa
-from neutron.plugins.vmware.dbexts import nsx_models  # noqa
-from neutron.plugins.vmware.dbexts import nsxv_models  # noqa
-from neutron.plugins.vmware.dbexts import vcns_models  # noqa
 
 
 def get_metadata():

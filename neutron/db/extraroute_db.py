@@ -108,7 +108,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         ips = []
         for port in ports:
             for ip in port['fixed_ips']:
-                cidrs.append(self._core_plugin._get_subnet(
+                cidrs.append(self._core_plugin.get_subnet(
                     context, ip['subnet_id'])['cidr'])
                 ips.append(ip['ip_address'])
         for route in routes:
@@ -162,8 +162,8 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         super(ExtraRoute_dbonly_mixin,
             self)._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
-        subnet_db = self._core_plugin._get_subnet(context, subnet_id)
-        subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
+        subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         extra_routes = self._get_extra_routes_by_router_id(context, router_id)
         for route in extra_routes:
             if netaddr.all_matching_cidrs(route['nexthop'], [subnet_cidr]):

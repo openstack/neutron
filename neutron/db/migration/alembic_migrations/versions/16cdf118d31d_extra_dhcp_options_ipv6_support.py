@@ -38,7 +38,7 @@ TABLE_NAME = 'extradhcpopts'
 def upgrade():
     with migration.remove_fks_from_table(TABLE_NAME):
         op.drop_constraint(
-            name=CONSTRAINT_NAME_OLD,
+            constraint_name=CONSTRAINT_NAME_OLD,
             table_name=TABLE_NAME,
             type_='unique'
         )
@@ -48,7 +48,7 @@ def upgrade():
         op.execute("UPDATE extradhcpopts SET ip_version = 4")
 
     op.create_unique_constraint(
-        name=CONSTRAINT_NAME_NEW,
-        source='extradhcpopts',
-        local_cols=['port_id', 'opt_name', 'ip_version']
+        constraint_name=CONSTRAINT_NAME_NEW,
+        table_name='extradhcpopts',
+        columns=['port_id', 'opt_name', 'ip_version']
     )

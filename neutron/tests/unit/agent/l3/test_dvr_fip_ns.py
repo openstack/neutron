@@ -57,13 +57,15 @@ class TestDvrFipNs(base.BaseTestCase):
         self.assertFalse(is_last)
 
     def test_allocate_rule_priority(self):
-        pr = self.fip_ns.allocate_rule_priority()
-        self.assertNotIn(pr, self.fip_ns._rule_priorities)
+        pr = self.fip_ns.allocate_rule_priority('20.0.0.30')
+        self.assertIn('20.0.0.30', self.fip_ns._rule_priorities.allocations)
+        self.assertNotIn(pr, self.fip_ns._rule_priorities.pool)
 
     def test_deallocate_rule_priority(self):
-        pr = self.fip_ns.allocate_rule_priority()
-        self.fip_ns.deallocate_rule_priority(pr)
-        self.assertIn(pr, self.fip_ns._rule_priorities)
+        pr = self.fip_ns.allocate_rule_priority('20.0.0.30')
+        self.fip_ns.deallocate_rule_priority('20.0.0.30')
+        self.assertNotIn('20.0.0.30', self.fip_ns._rule_priorities.allocations)
+        self.assertIn(pr, self.fip_ns._rule_priorities.pool)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'IPDevice')
@@ -179,6 +181,7 @@ class TestDvrFipNs(base.BaseTestCase):
         device_exists.return_value = True
         ri = mock.Mock()
         ri.dist_fip_count = None
+        ri.floating_ips_dict = {}
         ip_list = [{'cidr': '111.2.3.4/32'}, {'cidr': '111.2.3.5/32'}]
         self._test_scan_fip_ports(ri, ip_list)
         self.assertEqual(2, ri.dist_fip_count)
@@ -188,6 +191,7 @@ class TestDvrFipNs(base.BaseTestCase):
         device_exists.return_value = True
         ri = mock.Mock()
         ri.dist_fip_count = None
+        ri.floating_ips_dict = {}
         self._test_scan_fip_ports(ri, [])
         self.assertEqual(0, ri.dist_fip_count)
 

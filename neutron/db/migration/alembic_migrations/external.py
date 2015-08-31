@@ -24,12 +24,15 @@ LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
 
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 
-DRIVER_TABLES = [
-    # Arista ML2 driver Models moved to openstack/networking-arista
+# Arista ML2 driver Models moved to openstack/networking-arista
+REPO_ARISTA_TABLES = [
     'arista_provisioned_nets',
     'arista_provisioned_vms',
     'arista_provisioned_tenants',
-    # Models moved to openstack/networking-cisco
+]
+
+# Models moved to openstack/networking-cisco
+REPO_CISCO_TABLES = [
     'cisco_ml2_apic_contracts',
     'cisco_ml2_apic_names',
     'cisco_ml2_apic_host_links',
@@ -40,7 +43,62 @@ DRIVER_TABLES = [
     'cisco_ml2_n1kv_vxlan_allocations',
     'cisco_ml2_n1kv_vlan_allocations',
     'cisco_ml2_n1kv_profile_bindings',
-    # Add your tables with moved models here^. Please end with a comma.
+    'cisco_ml2_nexusport_bindings',
+    'cisco_ml2_nexus_nve',
+    'ml2_nexus_vxlan_allocations',
+    'ml2_nexus_vxlan_mcast_groups',
+    'ml2_ucsm_port_profiles',
 ]
 
-TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES + DRIVER_TABLES)
+# VMware-NSX models moved to openstack/vmware-nsx
+REPO_VMWARE_TABLES = [
+    'tz_network_bindings',
+    'neutron_nsx_network_mappings',
+    'neutron_nsx_security_group_mappings',
+    'neutron_nsx_port_mappings',
+    'neutron_nsx_router_mappings',
+    'multi_provider_networks',
+    'networkconnections',
+    'networkgatewaydevicereferences',
+    'networkgatewaydevices',
+    'networkgateways',
+    'maclearningstates',
+    'qosqueues',
+    'portqueuemappings',
+    'networkqueuemappings',
+    'lsn_port',
+    'lsn',
+    'nsxv_router_bindings',
+    'nsxv_edge_vnic_bindings',
+    'nsxv_edge_dhcp_static_bindings',
+    'nsxv_internal_networks',
+    'nsxv_internal_edges',
+    'nsxv_security_group_section_mappings',
+    'nsxv_rule_mappings',
+    'nsxv_port_vnic_mappings',
+    'nsxv_router_ext_attributes',
+    'nsxv_tz_network_bindings',
+    'nsxv_port_index_mappings',
+    'nsxv_firewall_rule_bindings',
+    'nsxv_spoofguard_policy_network_mappings',
+    'nsxv_vdr_dhcp_bindings',
+    'vcns_router_bindings',
+]
+
+# NEC models moved to stackforge/networking-nec
+REPO_NEC_TABLES = [
+    'ofcnetworkmappings',
+    'ofcportmappings',
+    'ofcroutermappings',
+    'ofcfiltermappings',
+    'ofctenantmappings',
+    'portinfos',
+    'routerproviders',
+    'packetfilters',
+]
+
+TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
+          REPO_ARISTA_TABLES +
+          REPO_CISCO_TABLES +
+          REPO_VMWARE_TABLES +
+          REPO_NEC_TABLES)

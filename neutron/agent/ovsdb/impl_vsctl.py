@@ -160,9 +160,13 @@ class OvsdbVsctl(ovsdb.API):
     def transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self.context, check_error, log_errors, **kwargs)
 
-    def add_br(self, name, may_exist=True):
+    def add_br(self, name, may_exist=True, datapath_type=None):
         opts = ['--may-exist'] if may_exist else None
-        return BaseCommand(self.context, 'add-br', opts, [name])
+        params = [name]
+        if datapath_type:
+            params += ['--', 'set', 'Bridge', name,
+                       'datapath_type=%s' % datapath_type]
+        return BaseCommand(self.context, 'add-br', opts, params)
 
     def del_br(self, name, if_exists=True):
         opts = ['--if-exists'] if if_exists else None
@@ -183,6 +187,15 @@ class OvsdbVsctl(ovsdb.API):
     def br_get_external_id(self, name, field):
         return BaseCommand(self.context, 'br-get-external-id',
                            args=[name, field])
+
+    def db_create(self, table, **col_values):
+        args = [table]
+        args += _set_colval_args(*col_values.items())
+        return BaseCommand(self.context, 'create', args=args)
+
+    def db_destroy(self, table, record):
+        args = [table, record]
+        return BaseCommand(self.context, 'destroy', args=args)
 
     def db_set(self, table, record, *col_values):
         args = [table, record]
@@ -259,8 +272,11 @@ def _set_colval_args(*col_values):
                 col, k, op, ovsdb.py_to_val(v)) for k, v in val.items()]
         elif (isinstance(val, collections.Sequence)
                 and not isinstance(val, six.string_types)):
-            args.append(
-                "%s%s%s" % (col, op, ",".join(map(ovsdb.py_to_val, val))))
+            if len(val) == 0:
+                args.append("%s%s%s" % (col, op, "[]"))
+            else:
+                args.append(
+                    "%s%s%s" % (col, op, ",".join(map(ovsdb.py_to_val, val))))
         else:
             args.append("%s%s%s" % (col, op, ovsdb.py_to_val(val)))
     return args

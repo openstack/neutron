@@ -13,7 +13,7 @@
 #    under the License.
 
 import netaddr
-from oslo_db import exception
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
@@ -430,6 +430,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         ip_proto = self._get_ip_proto_number(rule['protocol'])
         if ip_proto in [constants.PROTO_NUM_TCP, constants.PROTO_NUM_UDP]:
             if (rule['port_range_min'] is not None and
+                rule['port_range_max'] is not None and
                 rule['port_range_min'] <= rule['port_range_max']):
                 pass
             else:
@@ -437,7 +438,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         elif ip_proto == constants.PROTO_NUM_ICMP:
             for attr, field in [('port_range_min', 'type'),
                                 ('port_range_max', 'code')]:
-                if rule[attr] > 255:
+                if rule[attr] is not None and rule[attr] > 255:
                     raise ext_sg.SecurityGroupInvalidIcmpValue(
                         field=field, attr=attr, value=rule[attr])
             if (rule['port_range_min'] is None and
@@ -648,14 +649,23 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def _ensure_default_security_group(self, context, tenant_id):
         """Create a default security group if one doesn't exist.
 
-        :returns: the default security group id.
+        :returns: the default security group id for given tenant.
         """
-        query = self._model_query(context, DefaultSecurityGroup)
-        # the next loop should do 2 iterations at max
-        while True:
+        # Make no more than two attempts
+        for attempts in (1, 2):
             try:
+                query = self._model_query(context, DefaultSecurityGroup)
                 default_group = query.filter_by(tenant_id=tenant_id).one()
-            except exc.NoResultFound:
+                return default_group['security_group_id']
+            except exc.NoResultFound as ex:
+                if attempts > 1:
+                    # the second iteration means that attempt to add default
+                    # group failed with duplicate error. Since we're still
+                    # not seeing this group we're most probably inside a
+                    # transaction with REPEATABLE READ isolation level ->
+                    # need to restart the whole transaction
+                    raise db_exc.RetryRequest(ex)
+
                 security_group = {
                     'security_group':
                         {'name': 'default',
@@ -663,16 +673,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                          'description': _('Default security group')}
                 }
                 try:
-                    ret = self.create_security_group(
+                    security_group = self.create_security_group(
                         context, security_group, default_sg=True)
-                except exception.DBDuplicateEntry as ex:
+                    return security_group['id']
+                except db_exc.DBDuplicateEntry as ex:
+                    # default security group was created concurrently
                     LOG.debug("Duplicate default security group %s was "
                               "not created", ex.value)
-                    continue
-                else:
-                    return ret['id']
-            else:
-                return default_group['security_group_id']
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
@@ -709,11 +716,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         tenant_id = self._get_tenant_id_for_create(context,
                                                    port['port'])
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if attributes.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
-            sgids = port['port'].get(ext_sg.SECURITYGROUPS)
-        else:
-            sgids = [default_sg]
-        port['port'][ext_sg.SECURITYGROUPS] = sgids
+        if not attributes.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
+            port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
         """Return True if port has as a security group and it's value

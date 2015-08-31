@@ -96,15 +96,20 @@ class ProcessManager(MonitoredProcess):
     def reload_cfg(self):
         self.disable('HUP')
 
-    def disable(self, sig='9'):
+    def disable(self, sig='9', get_stop_command=None):
         pid = self.pid
 
         if self.active:
-            cmd = ['kill', '-%s' % (sig), pid]
-            utils.execute(cmd, run_as_root=True)
-            # In the case of shutting down, remove the pid file
-            if sig == '9':
-                fileutils.delete_if_exists(self.get_pid_file_name())
+            if get_stop_command:
+                cmd = get_stop_command(self.get_pid_file_name())
+                ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
+                ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env)
+            else:
+                cmd = ['kill', '-%s' % (sig), pid]
+                utils.execute(cmd, run_as_root=True)
+                # In the case of shutting down, remove the pid file
+                if sig == '9':
+                    fileutils.delete_if_exists(self.get_pid_file_name())
         elif pid:
             LOG.debug('Process for %(uuid)s pid %(pid)d is stale, ignoring '
                       'signal %(signal)s', {'uuid': self.uuid, 'pid': pid,

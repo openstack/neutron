@@ -77,6 +77,8 @@ IP_VERSION_6 = 6
 IPv4_BITS = 32
 IPv6_BITS = 128
 
+INVALID_MAC_ADDRESSES = ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF']
+
 IPv4_ANY = '0.0.0.0/0'
 IPv6_ANY = '::/0'
 IP_ANY = {IP_VERSION_4: IPv4_ANY, IP_VERSION_6: IPv6_ANY}
@@ -88,15 +90,12 @@ FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
 AGENT_TYPE_DHCP = 'DHCP agent'
 AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
-AGENT_TYPE_HYPERV = 'HyperV agent'
 AGENT_TYPE_NEC = 'NEC plugin agent'
 AGENT_TYPE_OFA = 'OFA driver agent'
 AGENT_TYPE_L3 = 'L3 agent'
 AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
-AGENT_TYPE_MLNX = 'Mellanox plugin agent'
 AGENT_TYPE_METERING = 'Metering agent'
 AGENT_TYPE_METADATA = 'Metadata agent'
-AGENT_TYPE_SDNVE = 'IBM SDN-VE agent'
 AGENT_TYPE_NIC_SWITCH = 'NIC Switch agent'
 L2_AGENT_TOPIC = 'N/A'
 
@@ -146,6 +145,9 @@ IPV6_PD_POOL_ID = 'prefix_delegation'
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
 
+# Timeout in seconds for getting an IPv6 LLA
+LLA_TASK_TIMEOUT = 40
+
 # Linux interface max length
 DEVICE_NAME_MAX_LEN = 15
 
@@ -183,9 +185,12 @@ RPC_NAMESPACE_SECGROUP = None
 RPC_NAMESPACE_DVR = None
 # RPC interface for reporting state back to the plugin
 RPC_NAMESPACE_STATE = None
+# RPC interface for agent to plugin resources API
+RPC_NAMESPACE_RESOURCES = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 0
+IPV6_MIN_MTU = 1280
 
 ROUTER_MARK_MASK = "0xffff"
 

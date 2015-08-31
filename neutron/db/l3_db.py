@@ -40,6 +40,7 @@ from neutron.extensions import l3
 from neutron.i18n import _LI, _LE
 from neutron import manager
 from neutron.plugins.common import constants
+from neutron.plugins.common import utils as p_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -173,11 +174,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, None)
         tenant_id = self._get_tenant_id_for_create(context, r)
-        with context.session.begin(subtransactions=True):
-            router_db = self._create_router_db(context, r, tenant_id)
+        router_db = self._create_router_db(context, r, tenant_id)
+        try:
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'],
                                             gw_info, router=router_db)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_LE("An exception occurred while creating "
+                                  "the router: %s"), router)
+                self.delete_router(context, router_db.id)
+
         return self._make_router_dict(router_db)
 
     def _update_router_db(self, context, router_id, data, gw_info):
@@ -278,15 +285,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips):
         # Port has no 'tenant-id', as it is hidden from user
-        gw_port = self._core_plugin.create_port(context.elevated(), {
-            'port': {'tenant_id': '',  # intentionally not set
+        port_data = {'tenant_id': '',  # intentionally not set
                      'network_id': network_id,
-                     'mac_address': attributes.ATTR_NOT_SPECIFIED,
                      'fixed_ips': ext_ips or attributes.ATTR_NOT_SPECIFIED,
                      'device_id': router['id'],
                      'device_owner': DEVICE_OWNER_ROUTER_GW,
                      'admin_state_up': True,
-                     'name': ''}})
+                     'name': ''}
+        gw_port = p_utils.create_port(self._core_plugin,
+                                      context.elevated(), {'port': port_data})
 
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
@@ -311,8 +318,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 msg = _("Network %s is not an external network") % network_id
                 raise n_exc.BadRequest(resource='router', msg=msg)
             if ext_ips:
-                subnets = self._core_plugin._get_subnets_by_network(context,
-                                                                    network_id)
+                subnets = self._core_plugin.get_subnets_by_network(context,
+                                                                   network_id)
                 for s in subnets:
                     if not s['gateway_ip']:
                         continue
@@ -362,8 +369,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             new_network and (not router.gw_port or
                              router.gw_port['network_id'] != new_network))
         if new_valid_gw_port_attachment:
-            subnets = self._core_plugin._get_subnets_by_network(context,
-                                                                new_network)
+            subnets = self._core_plugin.get_subnets_by_network(context,
+                                                               new_network)
             for subnet in subnets:
                 self._check_for_dup_router_subnet(context, router,
                                                   new_network, subnet['id'],
@@ -475,8 +482,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                     if subnet_cidr == l3_constants.PROVISIONAL_IPV6_PD_PREFIX:
                         continue
                     sub_id = ip['subnet_id']
-                    cidr = self._core_plugin._get_subnet(context.elevated(),
-                                                         sub_id)['cidr']
+                    cidr = self._core_plugin.get_subnet(context.elevated(),
+                                                        sub_id)['cidr']
                     ipnet = netaddr.IPNetwork(cidr)
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
                     match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
@@ -537,8 +544,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             fixed_ips = [ip for ip in port['fixed_ips']]
             subnets = []
             for fixed_ip in fixed_ips:
-                subnet = self._core_plugin._get_subnet(context,
-                                                       fixed_ip['subnet_id'])
+                subnet = self._core_plugin.get_subnet(context,
+                                                      fixed_ip['subnet_id'])
                 subnets.append(subnet)
                 self._check_for_dup_router_subnet(context, router,
                                                   port['network_id'],
@@ -566,7 +573,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 return port
 
     def _add_interface_by_subnet(self, context, router, subnet_id, owner):
-        subnet = self._core_plugin._get_subnet(context, subnet_id)
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
         if not subnet['gateway_ip']:
             msg = _('Subnet for router interface must have a gateway IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -596,16 +603,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                         port['port_id'], {'port':
                             {'fixed_ips': fixed_ips}}), [subnet], False
 
-        return self._core_plugin.create_port(context, {
-            'port':
-            {'tenant_id': subnet['tenant_id'],
-             'network_id': subnet['network_id'],
-             'fixed_ips': [fixed_ip],
-             'mac_address': attributes.ATTR_NOT_SPECIFIED,
-             'admin_state_up': True,
-             'device_id': router.id,
-             'device_owner': owner,
-             'name': ''}}), [subnet], True
+        port_data = {'tenant_id': subnet['tenant_id'],
+                     'network_id': subnet['network_id'],
+                     'fixed_ips': [fixed_ip],
+                     'admin_state_up': True,
+                     'device_id': router.id,
+                     'device_owner': owner,
+                     'name': ''}
+        return p_utils.create_port(self._core_plugin, context,
+                                   {'port': port_data}), [subnet], True
 
     @staticmethod
     def _make_router_interface_info(
@@ -650,8 +656,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
-        subnet_db = self._core_plugin._get_subnet(context, subnet_id)
-        subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
+        subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         fip_qry = context.session.query(FloatingIP)
         try:
             kwargs = {'context': context, 'subnet_id': subnet_id}
@@ -687,7 +693,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if subnet_id and subnet_id not in port_subnet_ids:
             raise n_exc.SubnetMismatchForPort(
                 port_id=port_id, subnet_id=subnet_id)
-        subnets = [self._core_plugin._get_subnet(context, port_subnet_id)
+        subnets = [self._core_plugin.get_subnet(context, port_subnet_id)
                    for port_subnet_id in port_subnet_ids]
         for port_subnet_id in port_subnet_ids:
             self._confirm_router_interface_not_in_use(
@@ -700,7 +706,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                     router_id, subnet_id, owner):
         self._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
-        subnet = self._core_plugin._get_subnet(context, subnet_id)
+        subnet = self._core_plugin.get_subnet(context, subnet_id)
 
         try:
             rport_qry = context.session.query(models_v2.Port).join(RouterPort)
@@ -782,9 +788,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _get_router_for_floatingip(self, context, internal_port,
                                    internal_subnet_id,
                                    external_network_id):
-        subnet_db = self._core_plugin._get_subnet(context,
-                                                  internal_subnet_id)
-        if not subnet_db['gateway_ip']:
+        subnet = self._core_plugin.get_subnet(context, internal_subnet_id)
+        if not subnet['gateway_ip']:
             msg = (_('Cannot add floating IP to port on subnet %s '
                      'which has no gateway_ip') % internal_subnet_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
@@ -823,7 +828,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         Retrieve information concerning the internal port where
         the floating IP should be associated to.
         """
-        internal_port = self._core_plugin._get_port(context, fip['port_id'])
+        internal_port = self._core_plugin.get_port(context, fip['port_id'])
         if not internal_port['tenant_id'] == fip['tenant_id']:
             port_id = fip['port_id']
             if 'id' in fip:
@@ -956,14 +961,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
             port = {'tenant_id': '',  # tenant intentionally not set
                     'network_id': f_net_id,
-                    'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                    'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                     'admin_state_up': True,
                     'device_id': fip_id,
                     'device_owner': DEVICE_OWNER_FLOATINGIP,
                     'status': l3_constants.PORT_STATUS_NOTAPPLICABLE,
                     'name': ''}
-
             if fip.get('floating_ip_address'):
                 port['fixed_ips'] = [
                     {'ip_address': fip['floating_ip_address']}]
@@ -971,9 +973,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             if fip.get('subnet_id'):
                 port['fixed_ips'] = [
                     {'subnet_id': fip['subnet_id']}]
-            external_port = self._core_plugin.create_port(context.elevated(),
-                                                          {'port': port})
 
+            # 'status' in port dict could not be updated by default, use
+            # check_allow_post to stop the verification of system
+            external_port = p_utils.create_port(self._core_plugin,
+                                                context.elevated(),
+                                                {'port': port},
+                                                check_allow_post=False)
             # Ensure IPv4 addresses are allocated on external port
             external_ipv4_ips = self._port_ipv4_fixed_ips(external_port)
             if not external_ipv4_ips:
@@ -1085,23 +1091,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         deletion checks.
         """
         try:
-            port_db = self._core_plugin._get_port(context, port_id)
+            port = self._core_plugin.get_port(context, port_id)
         except n_exc.PortNotFound:
             # non-existent ports don't need to be protected from deletion
             return
-        if port_db['device_owner'] in self.router_device_owners:
+        if port['device_owner'] in self.router_device_owners:
             # Raise port in use only if the port has IP addresses
             # Otherwise it's a stale port that can be removed
-            fixed_ips = port_db['fixed_ips']
+            fixed_ips = port['fixed_ips']
             if fixed_ips:
-                reason = _('has device owner %s') % port_db['device_owner']
-                raise n_exc.ServicePortInUse(port_id=port_db['id'],
+                reason = _('has device owner %s') % port['device_owner']
+                raise n_exc.ServicePortInUse(port_id=port['id'],
                                              reason=reason)
             else:
                 LOG.debug("Port %(port_id)s has owner %(port_owner)s, but "
                           "no IP address, so it can be deleted",
-                          {'port_id': port_db['id'],
-                           'port_owner': port_db['device_owner']})
+                          {'port_id': port['id'],
+                           'port_owner': port['device_owner']})
 
     def disassociate_floatingips(self, context, port_id):
         """Disassociate all floating IPs linked to specific port.

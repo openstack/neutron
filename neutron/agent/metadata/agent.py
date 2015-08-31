@@ -269,9 +269,12 @@ class MetadataProxyHandler(object):
             raise Exception(_('Unexpected response code: %s') % resp.status)
 
     def _sign_instance_id(self, instance_id):
-        return hmac.new(self.conf.metadata_proxy_shared_secret,
-                        instance_id,
-                        hashlib.sha256).hexdigest()
+        secret = self.conf.metadata_proxy_shared_secret
+        if isinstance(secret, six.text_type):
+            secret = secret.encode('utf-8')
+        if isinstance(instance_id, six.text_type):
+            instance_id = instance_id.encode('utf-8')
+        return hmac.new(secret, instance_id, hashlib.sha256).hexdigest()
 
 
 class UnixDomainMetadataProxy(object):

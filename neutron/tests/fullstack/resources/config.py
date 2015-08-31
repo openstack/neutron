@@ -81,9 +81,11 @@ class ConfigFixture(fixtures.Fixture):
     then the dynamic configuration values won't change. The correct usage
     is initializing a new instance of the class.
     """
-    def __init__(self, temp_dir, base_filename):
+    def __init__(self, env_desc, host_desc, temp_dir, base_filename):
         super(ConfigFixture, self).__init__()
         self.config = ConfigDict()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
         self.temp_dir = temp_dir
         self.base_filename = base_filename
 
@@ -96,14 +98,15 @@ class ConfigFixture(fixtures.Fixture):
 
 class NeutronConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir, connection, rabbitmq_environment):
+    def __init__(self, env_desc, host_desc, temp_dir,
+                 connection, rabbitmq_environment):
         super(NeutronConfigFixture, self).__init__(
-            temp_dir, base_filename='neutron.conf')
+            env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
         self.config.update({
             'DEFAULT': {
                 'host': self._generate_host(),
-                'state_path': self._generate_state_path(temp_dir),
+                'state_path': self._generate_state_path(self.temp_dir),
                 'lock_path': '$state_path/lock',
                 'bind_port': self._generate_port(),
                 'api_paste_config': self._generate_api_paste(),
@@ -111,16 +114,18 @@ class NeutronConfigFixture(ConfigFixture):
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
                 'service_plugins': ('neutron.services.l3_router.'
                                     'l3_router_plugin.L3RouterPlugin'),
-                'rabbit_userid': rabbitmq_environment.user,
-                'rabbit_password': rabbitmq_environment.password,
-                'rabbit_hosts': '127.0.0.1',
-                'rabbit_virtual_host': rabbitmq_environment.vhost,
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
             },
             'database': {
                 'connection': connection,
+            },
+            'oslo_messaging_rabbit': {
+                'rabbit_userid': rabbitmq_environment.user,
+                'rabbit_password': rabbitmq_environment.password,
+                'rabbit_hosts': '127.0.0.1',
+                'rabbit_virtual_host': rabbitmq_environment.vhost,
             }
         })
 
@@ -150,9 +155,9 @@ class NeutronConfigFixture(ConfigFixture):
 
 class ML2ConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir, tenant_network_types):
+    def __init__(self, env_desc, host_desc, temp_dir, tenant_network_types):
         super(ML2ConfigFixture, self).__init__(
-            temp_dir, base_filename='ml2_conf.ini')
+            env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
         self.config.update({
             'ml2': {
@@ -173,9 +178,10 @@ class ML2ConfigFixture(ConfigFixture):
 
 class OVSConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir):
+    def __init__(self, env_desc, host_desc, temp_dir):
         super(OVSConfigFixture, self).__init__(
-            temp_dir, base_filename='openvswitch_agent.ini')
+            env_desc, host_desc, temp_dir,
+            base_filename='openvswitch_agent.ini')
 
         self.config.update({
             'ovs': {
@@ -205,9 +211,9 @@ class OVSConfigFixture(ConfigFixture):
 
 class L3ConfigFixture(ConfigFixture):
 
-    def __init__(self, temp_dir, integration_bridge):
+    def __init__(self, env_desc, host_desc, temp_dir, integration_bridge):
         super(L3ConfigFixture, self).__init__(
-            temp_dir, base_filename='l3_agent.ini')
+            env_desc, host_desc, temp_dir, base_filename='l3_agent.ini')
 
         self.config.update({
             'DEFAULT': {

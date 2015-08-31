@@ -103,6 +103,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                           l3_attrs_db.RouterExtraAttributes.ha == sql.null())))
         try:
             for binding in down_bindings:
+                agent_mode = self._get_agent_mode(binding.l3_agent)
+                if agent_mode == constants.L3_AGENT_MODE_DVR:
+                    # rescheduling from l3 dvr agent on compute node doesn't
+                    # make sense. Router will be removed from that agent once
+                    # there are no dvr serviceable ports on that compute node
+                    LOG.warn(_LW('L3 DVR agent on node %(host)s is down. '
+                                 'Not rescheduling from agent in \'dvr\' '
+                                 'mode.'), {'host': binding.l3_agent.host})
+                    continue
                 LOG.warn(_LW(
                     "Rescheduling router %(router)s from agent %(agent)s "
                     "because the agent did not report to the server in "
@@ -124,6 +133,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             LOG.exception(_LE("Exception encountered during router "
                               "rescheduling."))
 
+    def _get_agent_mode(self, agent_db):
+        agent_conf = self.get_configuration_dict(agent_db)
+        return agent_conf.get(constants.L3_AGENT_MODE,
+                              constants.L3_AGENT_MODE_LEGACY)
+
     def validate_agent_router_combination(self, context, agent, router):
         """Validate if the router can be correctly assigned to the agent.
 
@@ -134,10 +148,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         :raises: DVRL3CannotAssignToDvrAgent if attempting to assign DVR
           router from one DVR Agent to another.
         """
+        if agent['agent_type'] != constants.AGENT_TYPE_L3:
+            raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
+
         is_distributed = router.get('distributed')
-        agent_conf = self.get_configuration_dict(agent)
-        agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
-                                    constants.L3_AGENT_MODE_LEGACY)
+        agent_mode = self._get_agent_mode(agent)
         router_type = (
             'distributed' if is_distributed else
             'centralized')
@@ -155,13 +170,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 router_type=router_type, router_id=router['id'],
                 agent_id=agent['id'])
 
-        is_wrong_type_or_unsuitable_agent = (
-            agent['agent_type'] != constants.AGENT_TYPE_L3 or
-            not agentschedulers_db.services_available(agent['admin_state_up'])
-            or
-            not self.get_l3_agent_candidates(context, router, [agent],
-                                             ignore_admin_state=True))
-        if is_wrong_type_or_unsuitable_agent:
+        is_suitable_agent = (
+            agentschedulers_db.services_available(agent['admin_state_up']) and
+            (self.get_l3_agent_candidates(context, router,
+                                         [agent],
+                                         ignore_admin_state=True) or
+            self.get_snat_candidates(router, [agent]))
+        )
+        if not is_suitable_agent:
             raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
 
     def check_agent_router_scheduling_needed(self, context, agent, router):
@@ -181,8 +197,6 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             if binding.l3_agent_id == agent_id:
                 # router already bound to the agent we need
                 return False
-        if router.get('distributed'):
-            return False
         if router.get('ha'):
             return True
         # legacy router case: router is already bound to some agent
@@ -407,9 +421,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         # This optimization is valid assuming that the L3
         # DVR_SNAT node will be the one hosting the DHCP
         # Agent.
-        agent_conf = self.get_configuration_dict(l3_agent)
-        agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
-                                    constants.L3_AGENT_MODE_LEGACY)
+        agent_mode = self._get_agent_mode(l3_agent)
 
         for subnet_id in subnet_ids:
             subnet_dict = core_plugin.get_subnet(context, subnet_id)

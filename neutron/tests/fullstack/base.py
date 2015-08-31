@@ -15,8 +15,7 @@
 from oslo_config import cfg
 from oslo_db.sqlalchemy import test_base
 
-from neutron.db.migration.models import head  # noqa
-from neutron.db import model_base
+from neutron.db.migration import cli as migration
 from neutron.tests.common import base
 from neutron.tests.fullstack.resources import client as client_resource
 
@@ -24,17 +23,12 @@ from neutron.tests.fullstack.resources import client as client_resource
 class BaseFullStackTestCase(base.MySQLTestCase):
     """Base test class for full-stack tests."""
 
-    def __init__(self, environment, *args, **kwargs):
-        super(BaseFullStackTestCase, self).__init__(*args, **kwargs)
-        self.environment = environment
-
-    def setUp(self):
+    def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
         self.create_db_tables()
-
+        self.environment = environment
         self.environment.test_name = self.get_name()
         self.useFixture(self.environment)
-
         self.client = self.environment.neutron_server.client
         self.safe_client = self.useFixture(
             client_resource.ClientFixture(self.client))
@@ -62,11 +56,13 @@ class BaseFullStackTestCase(base.MySQLTestCase):
                     'password': test_base.DbFixture.PASSWORD,
                     'db_name': self.engine.url.database})
 
+        alembic_config = migration.get_neutron_config()
+        alembic_config.neutron_config = cfg.CONF
         self.original_conn = cfg.CONF.database.connection
         self.addCleanup(self._revert_connection_address)
         cfg.CONF.set_override('connection', conn, group='database')
 
-        model_base.BASEV2.metadata.create_all(self.engine)
+        migration.do_alembic_command(alembic_config, 'upgrade', 'heads')
 
     def _revert_connection_address(self):
         cfg.CONF.set_override('connection',

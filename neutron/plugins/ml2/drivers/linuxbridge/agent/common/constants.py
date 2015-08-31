@@ -12,10 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-from neutron.plugins.common import constants as p_const
-
-
 FLAT_VLAN_ID = -1
 LOCAL_VLAN_ID = -2
 
@@ -23,16 +19,3 @@ LOCAL_VLAN_ID = -2
 VXLAN_NONE = 'not_supported'
 VXLAN_MCAST = 'multicast_flooding'
 VXLAN_UCAST = 'unicast_flooding'
-
-
-# TODO(rkukura): Eventually remove this function, which provides
-# temporary backward compatibility with pre-Havana RPC and DB vlan_id
-# encoding.
-def interpret_vlan_id(vlan_id):
-    """Return (network_type, segmentation_id) tuple for encoded vlan_id."""
-    if vlan_id == LOCAL_VLAN_ID:
-        return (p_const.TYPE_LOCAL, None)
-    elif vlan_id == FLAT_VLAN_ID:
-        return (p_const.TYPE_FLAT, None)
-    else:
-        return (p_const.TYPE_VLAN, vlan_id)

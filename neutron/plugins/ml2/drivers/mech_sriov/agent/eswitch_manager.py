@@ -20,6 +20,7 @@ import re
 from oslo_log import log as logging
 import six
 
+from neutron.common import utils
 from neutron.i18n import _LE, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -144,11 +145,7 @@ class EmbSwitch(object):
 
         @param pci_slot: Virtual Function address
         """
-        vf_index = self.pci_slot_map.get(pci_slot)
-        if vf_index is None:
-            LOG.warning(_LW("Cannot find vf index for pci slot %s"),
-                        pci_slot)
-            raise exc.InvalidPciSlotError(pci_slot=pci_slot)
+        vf_index = self._get_vf_index(pci_slot)
         return self.pci_dev_wrapper.get_vf_state(vf_index)
 
     def set_device_state(self, pci_slot, state):
@@ -157,12 +154,48 @@ class EmbSwitch(object):
         @param pci_slot: Virtual Function address
         @param state: link state
         """
+        vf_index = self._get_vf_index(pci_slot)
+        return self.pci_dev_wrapper.set_vf_state(vf_index, state)
+
+    def set_device_max_rate(self, pci_slot, max_kbps):
+        """Set device max rate.
+
+        @param pci_slot: Virtual Function address
+        @param max_kbps: device max rate in kbps
+        """
+        vf_index = self._get_vf_index(pci_slot)
+        #(Note): ip link set max rate in Mbps therefore
+        #we need to convert the max_kbps to Mbps.
+        #Zero means to disable the rate so the lowest rate
+        #available is 1Mbps. Floating numbers are not allowed
+        if max_kbps > 0 and max_kbps < 1000:
+            max_mbps = 1
+        else:
+            max_mbps = utils.round_val(max_kbps / 1000.0)
+
+        log_dict = {
+            'max_rate': max_mbps,
+            'max_kbps': max_kbps,
+            'vf_index': vf_index
+        }
+        if max_kbps % 1000 != 0:
+            LOG.debug("Maximum rate for SR-IOV ports is counted in Mbps; "
+                      "setting %(max_rate)s Mbps limit for port %(vf_index)s "
+                      "instead of %(max_kbps)s kbps",
+                      log_dict)
+        else:
+            LOG.debug("Setting %(max_rate)s Mbps limit for port %(vf_index)s",
+                      log_dict)
+
+        return self.pci_dev_wrapper.set_vf_max_rate(vf_index, max_mbps)
+
+    def _get_vf_index(self, pci_slot):
         vf_index = self.pci_slot_map.get(pci_slot)
         if vf_index is None:
             LOG.warning(_LW("Cannot find vf index for pci slot %s"),
                         pci_slot)
             raise exc.InvalidPciSlotError(pci_slot=pci_slot)
-        return self.pci_dev_wrapper.set_vf_state(vf_index, state)
+        return vf_index
 
     def set_device_spoofcheck(self, pci_slot, enabled):
         """Set device spoofchecking
@@ -194,16 +227,13 @@ class EmbSwitch(object):
 class ESwitchManager(object):
     """Manages logical Embedded Switch entities for physical network."""
 
-    def __init__(self, device_mappings, exclude_devices):
-        """Constructor.
-
-        Create Embedded Switch logical entities for all given device mappings,
-        using exclude devices.
-        """
-        self.emb_switches_map = {}
-        self.pci_slot_map = {}
-
-        self._discover_devices(device_mappings, exclude_devices)
+    def __new__(cls):
+        # make it a singleton
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(ESwitchManager, cls).__new__(cls)
+            cls.emb_switches_map = {}
+            cls.pci_slot_map = {}
+        return cls._instance
 
     def device_exists(self, device_mac, pci_slot):
         """Verify if device exists.
@@ -250,6 +280,19 @@ class ESwitchManager(object):
             return embedded_switch.get_device_state(pci_slot)
         return False
 
+    def set_device_max_rate(self, device_mac, pci_slot, max_kbps):
+        """Set device max rate
+
+        Sets the device max rate in kbps
+        @param device_mac: device mac
+        @param pci_slot: pci slot
+        @param max_kbps: device max rate in kbps
+        """
+        embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
+        if embedded_switch:
+            embedded_switch.set_device_max_rate(pci_slot,
+                                                max_kbps)
+
     def set_device_state(self, device_mac, pci_slot, admin_state_up):
         """Set device state
 
@@ -276,7 +319,7 @@ class ESwitchManager(object):
             embedded_switch.set_device_spoofcheck(pci_slot,
                                                   enabled)
 
-    def _discover_devices(self, device_mappings, exclude_devices):
+    def discover_devices(self, device_mappings, exclude_devices):
         """Discover which Virtual functions to manage.
 
         Discover devices, and create embedded switch object for network device
@@ -311,3 +354,17 @@ class ESwitchManager(object):
                             {"device_mac": device_mac, "pci_slot": pci_slot})
                 embedded_switch = None
         return embedded_switch
+
+    def get_pci_slot_by_mac(self, device_mac):
+        """Get pci slot by mac.
+
+        Get pci slot by device mac
+        @param device_mac: device mac
+        """
+        result = None
+        for pci_slot, embedded_switch in self.pci_slot_map.items():
+            used_device_mac = embedded_switch.get_pci_device(pci_slot)
+            if used_device_mac == device_mac:
+                result = pci_slot
+                break
+        return result

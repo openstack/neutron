@@ -26,6 +26,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 
+from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
@@ -34,7 +35,7 @@ from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
-from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
@@ -72,12 +73,13 @@ class SriovNicSwitchAgent(object):
                  polling_interval):
 
         self.polling_interval = polling_interval
+        self.conf = cfg.CONF
         self.setup_eswitch_mgr(physical_devices_mappings,
                                exclude_devices)
         configurations = {'device_mappings': physical_devices_mappings}
         self.agent_state = {
             'binary': 'neutron-sriov-nic-agent',
-            'host': cfg.CONF.host,
+            'host': self.conf.host,
             'topic': n_constants.L2_AGENT_TOPIC,
             'configurations': configurations,
             'agent_type': n_constants.AGENT_TYPE_NIC_SWITCH,
@@ -92,6 +94,10 @@ class SriovNicSwitchAgent(object):
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc)
         self._setup_rpc()
+        self.ext_manager = self._create_agent_extension_manager(
+            self.connection)
+        # The initialization is complete; we can start receiving messages
+        self.connection.consume_in_threads()
         # Initialize iteration counter
         self.iter_num = 0
 
@@ -111,7 +117,8 @@ class SriovNicSwitchAgent(object):
                      [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
-                                                     consumers)
+                                                     consumers,
+                                                     start_listening=False)
 
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
@@ -129,8 +136,15 @@ class SriovNicSwitchAgent(object):
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
+    def _create_agent_extension_manager(self, connection):
+        ext_manager.register_opts(self.conf)
+        mgr = ext_manager.AgentExtensionsManager(self.conf)
+        mgr.initialize(connection, 'sriov')
+        return mgr
+
     def setup_eswitch_mgr(self, device_mappings, exclude_devices={}):
-        self.eswitch_mgr = esm.ESwitchManager(device_mappings, exclude_devices)
+        self.eswitch_mgr = esm.ESwitchManager()
+        self.eswitch_mgr.discover_devices(device_mappings, exclude_devices)
 
     def scan_devices(self, registered_devices, updated_devices):
         curr_devices = self.eswitch_mgr.get_assigned_devices()
@@ -224,6 +238,7 @@ class SriovNicSwitchAgent(object):
                                   profile.get('pci_slot'),
                                   device_details['admin_state_up'],
                                   spoofcheck)
+                self.ext_manager.handle_port(self.context, device_details)
             else:
                 LOG.info(_LI("Device with MAC %s not defined on plugin"),
                          device)
@@ -234,6 +249,16 @@ class SriovNicSwitchAgent(object):
         for device in devices:
             LOG.info(_LI("Removing device with mac_address %s"), device)
             try:
+                pci_slot = self.eswitch_mgr.get_pci_slot_by_mac(device)
+                if pci_slot:
+                    profile = {'pci_slot': pci_slot}
+                    port = {'device': device, 'profile': profile}
+                    self.ext_manager.delete_port(self.context, port)
+                else:
+                    LOG.warning(_LW("Failed to find pci slot for device "
+                                    "%(device)s; skipping extension port "
+                                    "cleanup"), device)
+
                 dev_details = self.plugin_rpc.update_device_down(self.context,
                                                                  device,
                                                                  self.agent_id,

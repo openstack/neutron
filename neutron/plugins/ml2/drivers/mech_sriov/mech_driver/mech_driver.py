@@ -24,9 +24,11 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
+from neutron.services.qos import qos_consts
 
 
 LOG = log.getLogger(__name__)
+VIF_TYPE_HW_VEB = 'hw_veb'
 FLAT_VLAN = 0
 
 sriov_opts = [
@@ -61,9 +63,11 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
 
     """
 
+    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
+
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,
-                 vif_type=portbindings.VIF_TYPE_HW_VEB,
+                 vif_type=VIF_TYPE_HW_VEB,
                  vif_details={portbindings.CAP_PORT_FILTER: False},
                  supported_vnic_types=[portbindings.VNIC_DIRECT,
                                        portbindings.VNIC_MACVTAP],

@@ -47,7 +47,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         floating_ips = super(DvrLocalRouter, self).get_floating_ips()
         return [i for i in floating_ips if i['host'] == self.host]
 
-    def _handle_fip_nat_rules(self, interface_name, action):
+    def _handle_fip_nat_rules(self, interface_name):
         """Configures NAT rules for Floating IPs for DVR.
 
            Remove all the rules. This is safe because if
@@ -61,20 +61,20 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # Add back the jump to float-snat
         self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
 
-        # And add them back if the action is add_rules
-        if action == 'add_rules' and interface_name:
-            rule = ('POSTROUTING', '! -i %(interface_name)s '
-                    '! -o %(interface_name)s -m conntrack ! '
-                    '--ctstate DNAT -j ACCEPT' %
-                    {'interface_name': interface_name})
-            self.iptables_manager.ipv4['nat'].add_rule(*rule)
+        # And add the NAT rule back
+        rule = ('POSTROUTING', '! -i %(interface_name)s '
+                '! -o %(interface_name)s -m conntrack ! '
+                '--ctstate DNAT -j ACCEPT' %
+                {'interface_name': interface_name})
+        self.iptables_manager.ipv4['nat'].add_rule(*rule)
+
         self.iptables_manager.apply()
 
     def floating_ip_added_dist(self, fip, fip_cidr):
         """Add floating IP to FIP namespace."""
         floating_ip = fip['floating_ip_address']
         fixed_ip = fip['fixed_ip_address']
-        rule_pr = self.fip_ns.allocate_rule_priority()
+        rule_pr = self.fip_ns.allocate_rule_priority(floating_ip)
         self.floating_ips_dict[floating_ip] = rule_pr
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
         ip_rule = ip_lib.IPRule(namespace=self.ns_name)
@@ -113,7 +113,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             ip_rule.rule.delete(ip=floating_ip,
                                 table=dvr_fip_ns.FIP_RT_TBL,
                                 priority=rule_pr)
-            self.fip_ns.deallocate_rule_priority(rule_pr)
+            self.fip_ns.deallocate_rule_priority(floating_ip)
             #TODO(rajeev): Handle else case - exception/log?
 
         device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
@@ -265,7 +265,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if is_add:
                 exc = _LE('DVR: error adding redirection logic')
             else:
-                exc = _LE('DVR: removed snat failed')
+                exc = _LE('DVR: snat remove failed to clear the rule '
+                          'and device')
             LOG.exception(exc)
 
     def _snat_redirect_add(self, gateway, sn_port, sn_int):
@@ -373,8 +374,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         floating_ips = self.get_floating_ips()
         fip_agent_port = self.get_floating_agent_gw_interface(
             ex_gw_port['network_id'])
-        LOG.debug("FloatingIP agent gateway port received from the plugin: "
-                  "%s", fip_agent_port)
+        if fip_agent_port:
+            LOG.debug("FloatingIP agent gateway port received from the "
+                "plugin: %s", fip_agent_port)
         is_first = False
         if floating_ips:
             is_first = self.fip_ns.subscribe(self.router_id)

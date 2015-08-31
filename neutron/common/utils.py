@@ -19,16 +19,17 @@
 """Utilities and helper functions."""
 
 import datetime
+import decimal
 import errno
 import functools
 import hashlib
-import logging as std_logging
 import multiprocessing
 import netaddr
 import os
 import random
 import signal
 import socket
+import tempfile
 import uuid
 
 from eventlet.green import subprocess
@@ -263,7 +264,7 @@ def str2dict(string):
 
 
 def dict2tuple(d):
-    items = d.items()
+    items = list(d.items())
     items.sort()
     return tuple(items)
 
@@ -282,7 +283,7 @@ def is_extension_supported(plugin, ext_alias):
 
 
 def log_opt_values(log):
-    cfg.CONF.log_opt_values(log, std_logging.DEBUG)
+    cfg.CONF.log_opt_values(log, logging.DEBUG)
 
 
 def get_random_mac(base_mac):
@@ -438,3 +439,32 @@ class DelayedStringRenderer(object):
 
     def __str__(self):
         return str(self.function(*self.args, **self.kwargs))
+
+
+def camelize(s):
+    return ''.join(s.replace('_', ' ').title().split())
+
+
+def round_val(val):
+    # we rely on decimal module since it behaves consistently across Python
+    # versions (2.x vs. 3.x)
+    return int(decimal.Decimal(val).quantize(decimal.Decimal('1'),
+                                             rounding=decimal.ROUND_HALF_UP))
+
+
+def replace_file(file_name, data):
+    """Replaces the contents of file_name with data in a safe manner.
+
+    First write to a temp file and then rename. Since POSIX renames are
+    atomic, the file is unlikely to be corrupted by competing writes.
+
+    We create the tempfile on the same device to ensure that it can be renamed.
+    """
+
+    base_dir = os.path.dirname(os.path.abspath(file_name))
+    with tempfile.NamedTemporaryFile('w+',
+                                     dir=base_dir,
+                                     delete=False) as tmp_file:
+        tmp_file.write(data)
+    os.chmod(tmp_file.name, 0o644)
+    os.rename(tmp_file.name, file_name)

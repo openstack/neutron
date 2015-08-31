@@ -67,6 +67,9 @@ working on testing.
 By being included, the project accepts oversight by the TC as a part of
 being in OpenStack, and also accepts oversight by the Neutron PTL.
 
+It is also assumed the respective review teams will make sure their projects
+stay in line with `current best practices <sub_project_guidelines.html>`_.
+
 Inclusion Criteria
 ------------------
 
@@ -99,6 +102,10 @@ repo but are summarized here to describe the functionality they provide.
 | dragonflow_                   |           l3          |
 +-------------------------------+-----------------------+
 | group-based-policy_           |         intent        |
++-------------------------------+-----------------------+
+| kuryr_                        |         docker        |
++-------------------------------+-----------------------+
+| networking-ale-omniswitch_    |          ml2          |
 +-------------------------------+-----------------------+
 | networking-arista_            |         ml2,l3        |
 +-------------------------------+-----------------------+
@@ -134,6 +141,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-ofagent_           |          ml2          |
 +-------------------------------+-----------------------+
+| networking-onos_              |          ml2          |
++-------------------------------+-----------------------+
 | networking-ovn_               |          ml2          |
 +-------------------------------+-----------------------+
 | networking-ovs-dpdk_          |          ml2          |
@@ -164,13 +173,23 @@ Functionality legend
 - vpn: a VPN service plugin;
 - lb: a Load Balancer service plugin;
 - intent: a service plugin that provides a declarative API to realize networking;
+- docker: a Docker network plugin that uses Neutron to provide networking services to Docker containers;
+
+.. _networking-ale-omniswitch:
+
+ALE Omniswitch
+++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-ale-omniswitch
+* Launchpad: https://launchpad.net/networking-ale-omniswitch
+* Pypi: https://pypi.python.org/pypi/networking-ale-omniswitch
 
 .. _networking-arista:
 
 Arista
 ++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-arista
+* Git: https://git.openstack.org/cgit/openstack/networking-arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
 
@@ -212,7 +231,7 @@ Brocade
 Cisco
 +++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-cisco
+* Git: https://git.openstack.org/cgit/openstack/networking-cisco
 * Launchpad: https://launchpad.net/networking-cisco
 * PyPI: https://pypi.python.org/pypi/networking-cisco
 
@@ -267,6 +286,15 @@ IBM SDNVE
 
 * Git: https://git.openstack.org/cgit/stackforge/networking-ibm
 * Launchpad: https://launchpad.net/networking-ibm
+
+.. _kuryr:
+
+Kuryr
++++++
+
+* Git: https://git.openstack.org/cgit/openstack/kuryr/
+* Launchpad: https://launchpad.net/kuryr
+* PyPI: https://pypi.python.org/pypi/kuryr/
 
 .. _networking-l2gw:
 
@@ -326,6 +354,15 @@ OpenFlow Agent (ofagent)
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
 
+.. _networking-onos:
+
+Open Network Operating System (onos)
+++++++++++++++++++++++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-onos
+* Launchpad: https://launchpad.net/networking-onos
+* PyPI: https://pypi.python.org/pypi/networking-onos
+
 .. _networking-ovn:
 
 Open Virtual Network
@@ -348,7 +385,7 @@ Open DPDK
 PLUMgrid
 ++++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-plumgrid
+* Git: https://git.openstack.org/cgit/openstack/networking-plumgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
 

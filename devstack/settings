@@ -1,0 +1,3 @@
+L2_AGENT_EXTENSIONS=${L2_AGENT_EXTENSIONS:-}
+
+enable_service q-qos

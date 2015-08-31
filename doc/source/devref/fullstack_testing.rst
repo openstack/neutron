@@ -28,20 +28,23 @@ Why?
 ----
 
 The idea behind "fullstack" testing is to fill a gap between unit + functional
-tests and Tempest. Tempest tests are expensive to run, difficult to run in
-a multi node environment, and are often very high level and provide little
-indication to what is wrong, only that something is wrong. Developers further
-benefit from full stack testing as it can sufficiently simulate a real
-environment and provide a rapidly reproducible way to verify code as you're
-still writing it.
+tests and Tempest. Tempest tests are expensive to run, and operate only
+through the REST API. So they can only provide an explanation of what went wrong
+gets reported to an end user via the REST API, which is often too high level.
+Additionally, Tempest requires an OpenStack deployment to be run against, which
+can be difficult to configure and setup. The full stack testing addresses
+these issues by taking care of the deployment itself, according to the topology
+that the test requires. Developers further benefit from full stack testing as
+it can sufficiently simulate a real environment and provide a rapidly
+reproducible way to verify code as you're still writing it.
 
 How?
 ----
 
 Full stack tests set up their own Neutron processes (Server & agents). They
 assume a working Rabbit and MySQL server before the run starts. Instructions
-on how to run fullstack tests on a VM are available at TESTING.rst:
-http://git.openstack.org/cgit/openstack/neutron/tree/TESTING.rst
+on how to run fullstack tests on a VM are available in our
+`TESTING.rst. <development.environment.html#id2>`_
 
 Each test defines its own topology (What and how many servers and agents should
 be running).
@@ -52,10 +55,10 @@ through the API and then assert that a namespace was created for it.
 
 Full stack tests run in the Neutron tree with Neutron resources alone. You
 may use the Neutron API (The Neutron server is set to NOAUTH so that Keystone
-is out of the picture). instances may be simulated with a helper class that
-contains a container-like object in its own namespace and IP address. It has
-helper methods to send different kinds of traffic. The "instance" may be
-connected to br-int or br-ex, to simulate internal or external traffic.
+is out of the picture). VMs may be simulated with a container-like class:
+neutron.tests.fullstack.resources.machine.FakeFullstackMachine.
+An example of its usage may be found at:
+neutron/tests/fullstack/test_connectivity.py.
 
 Full stack testing can simulate multi node testing by starting an agent
 multiple times. Specifically, each node would have its own copy of the
@@ -63,7 +66,7 @@ OVS/DHCP/L3 agents, all configured with the same "host" value. Each OVS agent
 is connected to its own pair of br-int/br-ex, and those bridges are then
 interconnected.
 
-.. image:: images/fullstack-multinode-simulation.png
+.. image:: images/fullstack_multinode_simulation.png
 
 When?
 -----

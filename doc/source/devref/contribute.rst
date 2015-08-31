@@ -439,7 +439,7 @@ should take these steps to move the models for the tables out of tree.
    third-party repo as is done in the neutron repo,
    i.e. ``networking_foo/db/migration/alembic_migrations/versions/*.py``
 #. Remove the models from the neutron repo.
-#. Add the names of the removed tables to ``DRIVER_TABLES`` in
+#. Add the names of the removed tables to ``REPO_FOO_TABLES`` in
    ``neutron/db/migration/alembic_migrations/external.py`` (this is used for
    testing, see below).
 
@@ -452,7 +452,7 @@ DB Model/Migration Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is a `template functional test
-<https://bugs.launchpad.net/neutron/+bug/1470678>`_ (TODO:Ann) third-party
+<http://docs.openstack.org/developer/neutron/devref/template_model_sync_test.html>`_ third-party
 maintainers can use to develop tests for model-vs-migration sync in their
 repos. It is recommended that each third-party CI sets up such a test, and runs
 it regularly against Neutron master.
@@ -461,7 +461,7 @@ Liberty Steps
 +++++++++++++
 
 The model_sync test will be updated to ignore the models that have been moved
-out of tree. A ``DRIVER_TABLES`` list will be maintained in
+out of tree. ``REPO_FOO_TABLES`` lists will be maintained in
 ``neutron/db/migration/alembic_migrations/external.py``.
 
 
@@ -520,9 +520,11 @@ the installer to configure this item in the ``[default]`` section. For example::
     interface_driver = networking_foo.agent.linux.interface.FooInterfaceDriver
 
 **ToDo: Interface Driver port bindings.**
-    These are currently defined by the ``VIF_TYPES`` in
-    ``neutron/extensions/portbindings.py``. We could make this config-driven
-    for agents. For Nova, selecting the VIF driver can be done outside of
+    ``VIF_TYPE_*`` constants in ``neutron/extensions/portbindings.py`` should be
+    moved from neutron core to the repositories where their drivers are
+    implemented. We need to provide some config or hook mechanism for VIF types
+    to be registered by external interface drivers. For Nova, selecting the VIF
+    driver can be done outside of
     Neutron (using the new `os-vif python library
     <https://review.openstack.org/193668>`_?). Armando and Akihiro to discuss.
 

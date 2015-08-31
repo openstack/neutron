@@ -19,7 +19,6 @@ Utility methods for working with WSGI servers
 from __future__ import print_function
 
 import errno
-import logging as std_logging
 import os
 import socket
 import ssl
@@ -91,6 +90,16 @@ CONF = cfg.CONF
 CONF.register_opts(socket_opts)
 
 LOG = logging.getLogger(__name__)
+
+
+def encode_body(body):
+    """Encode unicode body.
+
+    WebOb requires to encode unicode body used to update response body.
+    """
+    if isinstance(body, six.text_type):
+        return body.encode('utf-8')
+    return body
 
 
 class WorkerService(common_service.ServiceBase):
@@ -240,7 +249,7 @@ class Server(object):
             # The API service should run in the current process.
             self._server = service
             # Dump the initial option values
-            cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
+            cfg.CONF.log_opt_values(LOG, logging.DEBUG)
             service.start()
             systemd.notify_once()
         else:
@@ -427,7 +436,7 @@ class JSONDictSerializer(DictSerializer):
     def default(self, data):
         def sanitizer(obj):
             return six.text_type(obj)
-        return jsonutils.dumps(data, default=sanitizer)
+        return encode_body(jsonutils.dumps(data, default=sanitizer))
 
 
 class ResponseHeaderSerializer(ActionDispatcher):

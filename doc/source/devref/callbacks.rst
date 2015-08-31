@@ -300,6 +300,14 @@ The output is:
 FAQ
 ===
 
+Can I use the callbacks registry to subscribe and notify non-core resources and events?
+
+   Short answer is yes. The callbacks module defines literals for what are considered core Neutron
+   resources and events. However, the ability to subscribe/notify is not limited to these as you
+   can use your own defined resources and/or events. Just make sure you use string literals, as
+   typos are common, and the registry does not provide any runtime validation. Therefore, make
+   sure you test your code!
+
 What is the relationship between Callbacks and Taskflow?
 
    There is no overlap between Callbacks and Taskflow or mutual exclusion; as matter of fact they
@@ -314,6 +322,16 @@ Is there any ordering guarantee during notifications?
   notified and its outcome should always be the same regardless as to in which order is it
   notified. Priorities can be a future extension, if a use case arises that require enforced
   ordering.
+
+How is the the notifying object expected to interact with the subscribing objects?
+
+  The ``notify`` method implements a one-way communication paradigm: the notifier sends a message
+  without expecting a response back (in other words it fires and forget). However, due to the nature
+  of Python, the payload can be mutated by the subscribing objects, and this can lead to unexpected
+  behavior of your code, if you assume that this is the intentional design. Bear in mind, that
+  passing-by-value using deepcopy was not chosen for efficiency reasons. Having said that, if you
+  intend for the notifier object to expect a response, then the notifier itself would need to act
+  as a subscriber.
 
 Is the registry thread-safe?
 

@@ -309,6 +309,10 @@ current unit tests coverage by running::
 
     $ ./run_tests.sh -c
 
+Since the coverage command can only show unit test coverage, a coverage
+document is maintained that shows test coverage per area of code in:
+doc/source/devref/testing_coverage.rst.
+
 Debugging
 ---------
 

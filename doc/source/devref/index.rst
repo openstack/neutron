@@ -43,7 +43,9 @@ Programming HowTos and Tutorials
     contribute
     neutron_api
     sub_projects
+    sub_project_guidelines
     client_command_extensions
+    alembic_migrations
 
 
 Neutron Internals
@@ -53,12 +55,15 @@ Neutron Internals
 
    services_and_agents
    api_layer
+   quota
    api_extensions
    plugin-api
    db_layer
    rpc_api
+   rpc_callbacks
    layer3
    l2_agents
+   quality_of_service
    advanced_services
    oslo-incubator
    callbacks
@@ -70,6 +75,8 @@ Testing
    :maxdepth: 3
 
    fullstack_testing
+   testing_coverage
+   template_model_sync_test
 
 Module Reference
 ----------------

@@ -40,6 +40,7 @@ from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
+from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
@@ -62,6 +63,9 @@ LOG = logging.getLogger(__name__)
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
+DNS_DOMAIN_DEFAULT = 'openstacklocal.'
+FQDN_MAX_LEN = 255
+
 
 def _check_subnet_not_used(context, subnet_id):
     try:
@@ -73,7 +77,8 @@ def _check_subnet_not_used(context, subnet_id):
 
 
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
-                        neutron_plugin_base_v2.NeutronPluginBaseV2):
+                        neutron_plugin_base_v2.NeutronPluginBaseV2,
+                        rbac_mixin.RbacPluginMixin):
     """V2 Neutron plugin interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
@@ -102,6 +107,79 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          self.nova_notifier.send_port_status)
             event.listen(models_v2.Port.status, 'set',
                          self.nova_notifier.record_port_status_changed)
+        for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
+                  events.BEFORE_DELETE):
+            registry.subscribe(self.validate_network_rbac_policy_change,
+                               rbac_mixin.RBAC_POLICY, e)
+
+    def validate_network_rbac_policy_change(self, resource, event, trigger,
+                                            context, object_type, policy,
+                                            **kwargs):
+        """Validates network RBAC policy changes.
+
+        On creation, verify that the creator is an admin or that it owns the
+        network it is sharing.
+
+        On update and delete, make sure the tenant losing access does not have
+        resources that depend on that access.
+        """
+        if object_type != 'network':
+            # we only care about network policies
+            return
+        # The object a policy targets cannot be changed so we can look
+        # at the original network for the update event as well.
+        net = self._get_network(context, policy['object_id'])
+        if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
+            # we still have to verify that the caller owns the network because
+            # _get_network will succeed on a shared network
+            if not context.is_admin and net['tenant_id'] != context.tenant_id:
+                msg = _("Only admins can manipulate policies on networks "
+                        "they do not own.")
+                raise n_exc.InvalidInput(error_message=msg)
+
+        tenant_to_check = None
+        if event == events.BEFORE_UPDATE:
+            new_tenant = kwargs['policy_update']['target_tenant']
+            if policy['target_tenant'] != new_tenant:
+                tenant_to_check = policy['target_tenant']
+
+        if event == events.BEFORE_DELETE:
+            tenant_to_check = policy['target_tenant']
+
+        if tenant_to_check:
+            self.ensure_no_tenant_ports_on_network(net['id'], net['tenant_id'],
+                                                   tenant_to_check)
+
+    def ensure_no_tenant_ports_on_network(self, network_id, net_tenant_id,
+                                          tenant_id):
+        ctx_admin = ctx.get_admin_context()
+        rb_model = rbac_db.NetworkRBAC
+        other_rbac_entries = self._model_query(ctx_admin, rb_model).filter(
+            and_(rb_model.object_id == network_id,
+                 rb_model.action == 'access_as_shared'))
+        ports = self._model_query(ctx_admin, models_v2.Port).filter(
+            models_v2.Port.network_id == network_id)
+        if tenant_id == '*':
+            # for the wildcard we need to get all of the rbac entries to
+            # see if any allow the remaining ports on the network.
+            other_rbac_entries = other_rbac_entries.filter(
+                rb_model.target_tenant != tenant_id)
+            # any port with another RBAC entry covering it or one belonging to
+            # the same tenant as the network owner is ok
+            allowed_tenants = [entry['target_tenant']
+                               for entry in other_rbac_entries]
+            allowed_tenants.append(net_tenant_id)
+            ports = ports.filter(
+                ~models_v2.Port.tenant_id.in_(allowed_tenants))
+        else:
+            # if there is a wildcard rule, we can return early because it
+            # allows any ports
+            query = other_rbac_entries.filter(rb_model.target_tenant == '*')
+            if query.count():
+                return
+            ports = ports.filter(models_v2.Port.tenant_id == tenant_id)
+        if ports.count():
+            raise n_exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
         if cfg.CONF.ipam_driver:
@@ -471,7 +549,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
             router_ids = [p['device_id'] for p in gw_ports]
-            ctx_admin = ctx.get_admin_context()
+            ctx_admin = context.elevated()
             ext_subnets_dict = {s['id']: s for s in network['subnets']}
             for id in router_ids:
                 router = l3plugin.get_router(ctx_admin, id)
@@ -590,9 +668,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _update_allocation_pools(self, subnet):
         """Gets new allocation pools and formats them correctly"""
-        allocation_pools = self.ipam.generate_allocation_pools(
-                                    subnet['cidr'],
-                                    subnet['gateway_ip'])
+        allocation_pools = self.ipam.generate_pools(subnet['cidr'],
+                                                    subnet['gateway_ip'])
         return [{'start': str(netaddr.IPAddress(p.first,
                                                 subnet['ip_version'])),
                  'end': str(netaddr.IPAddress(p.last, subnet['ip_version']))}
@@ -619,13 +696,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         db_pools = [netaddr.IPRange(p['first_ip'], p['last_ip'])
                     for p in db_subnet.allocation_pools]
 
-        range_pools = None
-        if s.get('allocation_pools') is not None:
-            # Convert allocation pools to IPRange to simplify future checks
-            range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
-            self.ipam.validate_allocation_pools(range_pools, s['cidr'])
-            s['allocation_pools'] = range_pools
-
         update_ports_needed = False
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
@@ -636,6 +706,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # Update gateway_ip and allocation pools based on new cidr
             s['gateway_ip'] = utils.get_first_host_ip(net, s['ip_version'])
             s['allocation_pools'] = self._update_allocation_pools(s)
+
+        range_pools = None
+        if s.get('allocation_pools') is not None:
+            # Convert allocation pools to IPRange to simplify future checks
+            range_pools = self.ipam.pools_to_ip_range(s['allocation_pools'])
+            self.ipam.validate_allocation_pools(range_pools, s['cidr'])
+            s['allocation_pools'] = range_pools
 
         # If either gateway_ip or allocation_pools were specified
         gateway_ip = s.get('gateway_ip')
@@ -768,6 +845,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def get_subnets_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Subnet,
                                           filters=filters)
+
+    def get_subnets_by_network(self, context, network_id):
+        return [self._make_subnet_dict(subnet_db) for subnet_db in
+                self._get_subnets_by_network(context, network_id)]
 
     def _create_subnetpool_prefix(self, context, cidr, subnetpool_id):
         prefix_args = {'cidr': cidr, 'subnetpool_id': subnetpool_id}
@@ -956,6 +1037,54 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
+    def _get_dns_domain(self):
+        if not cfg.CONF.dns_domain:
+            return ''
+        if cfg.CONF.dns_domain.endswith('.'):
+            return cfg.CONF.dns_domain
+        return '%s.' % cfg.CONF.dns_domain
+
+    def _get_request_dns_name(self, port):
+        dns_domain = self._get_dns_domain()
+        if ((dns_domain and dns_domain != DNS_DOMAIN_DEFAULT)):
+            return port.get('dns_name', '')
+        return ''
+
+    def _get_dns_names_for_port(self, context, network_id, ips,
+                                request_dns_name):
+        filter = {'network_id': [network_id]}
+        subnets = self._get_subnets(context, filters=filter)
+        v6_subnets = {subnet['id']: subnet for subnet in subnets
+                      if subnet['ip_version'] == 6}
+        dns_assignment = []
+        dns_domain = self._get_dns_domain()
+        if request_dns_name:
+            request_fqdn = request_dns_name
+            if not request_dns_name.endswith('.'):
+                request_fqdn = '%s.%s' % (request_dns_name, dns_domain)
+
+        for ip in ips:
+            subnet_id = ip['subnet_id']
+            is_auto_address_subnet = (
+                subnet_id in v6_subnets and
+                ipv6_utils.is_auto_address_subnet(v6_subnets[subnet_id]))
+            if is_auto_address_subnet:
+                continue
+            if request_dns_name:
+                hostname = request_dns_name
+                fqdn = request_fqdn
+            else:
+                hostname = 'host-%s' % ip['ip_address'].replace(
+                    '.', '-').replace(':', '-')
+                fqdn = hostname
+                if dns_domain:
+                    fqdn = '%s.%s' % (hostname, dns_domain)
+            dns_assignment.append({'ip_address': ip['ip_address'],
+                                   'hostname': hostname,
+                                   'fqdn': fqdn})
+
+        return dns_assignment
+
     def _create_port_with_mac(self, context, network_id, port_data,
                               mac_address):
         try:
@@ -1003,6 +1132,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          status=p.get('status', constants.PORT_STATUS_ACTIVE),
                          device_id=p['device_id'],
                          device_owner=p['device_owner'])
+        if 'dns_name' in p:
+            request_dns_name = self._get_request_dns_name(p)
+            port_data['dns_name'] = request_dns_name
 
         with context.session.begin(subtransactions=True):
             # Ensure that the network exists.
@@ -1016,8 +1148,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 db_port = self._create_port_with_mac(
                     context, network_id, port_data, p['mac_address'])
 
-            self.ipam.allocate_ips_for_port_and_store(context, port, port_id)
+            ips = self.ipam.allocate_ips_for_port_and_store(context, port,
+                                                            port_id)
+            if 'dns_name' in p:
+                dns_assignment = []
+                if ips:
+                    dns_assignment = self._get_dns_names_for_port(
+                        context, network_id, ips, request_dns_name)
 
+        if 'dns_name' in p:
+            db_port['dns_assignment'] = dns_assignment
         return self._make_port_dict(db_port, process_extensions=False)
 
     def _validate_port_for_update(self, context, db_port, new_port, new_mac):
@@ -1036,20 +1176,45 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_mac_addr_update(context, db_port,
                                         new_mac, current_owner)
 
+    def _get_dns_names_for_updated_port(self, context, db_port,
+                                        original_ips, original_dns_name,
+                                        request_dns_name, changes):
+        if changes.original or changes.add or changes.remove:
+            return self._get_dns_names_for_port(
+                context, db_port['network_id'], changes.original + changes.add,
+                request_dns_name or original_dns_name)
+        if original_ips:
+            return self._get_dns_names_for_port(
+                context, db_port['network_id'], original_ips,
+                request_dns_name or original_dns_name)
+        return []
+
     def update_port(self, context, id, port):
         new_port = port['port']
 
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
+            if 'dns-integration' in self.supported_extension_aliases:
+                original_ips = self._make_fixed_ip_dict(port['fixed_ips'])
+                original_dns_name = port.get('dns_name', '')
+                request_dns_name = self._get_request_dns_name(new_port)
+                if not request_dns_name:
+                    new_port['dns_name'] = ''
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, port, new_port, new_mac)
             changes = self.ipam.update_port_with_ips(context, port,
                                                      new_port, new_mac)
+            if 'dns-integration' in self.supported_extension_aliases:
+                dns_assignment = self._get_dns_names_for_updated_port(
+                    context, port, original_ips, original_dns_name,
+                    request_dns_name, changes)
         result = self._make_port_dict(port)
         # Keep up with fields that changed
         if changes.original or changes.add or changes.remove:
             result['fixed_ips'] = self._make_fixed_ip_dict(
                 changes.original + changes.add)
+        if 'dns-integration' in self.supported_extension_aliases:
+            result['dns_assignment'] = dns_assignment
         return result
 
     def delete_port(self, context, id):
@@ -1072,8 +1237,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           "The port has already been deleted.",
                           port_id)
 
+    def _get_dns_name_for_port_get(self, context, port):
+        if port['fixed_ips']:
+            return self._get_dns_names_for_port(
+                context, port['network_id'], port['fixed_ips'],
+                port['dns_name'])
+        return []
+
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)
+        if (('dns-integration' in self.supported_extension_aliases and
+             'dns_name' in port)):
+            port['dns_assignment'] = self._get_dns_name_for_port_get(context,
+                                                                     port)
         return self._make_port_dict(port, fields)
 
     def _get_ports_query(self, context, filters=None, sorts=None, limit=None,
@@ -1111,7 +1287,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,
                                       page_reverse=page_reverse)
-        items = [self._make_port_dict(c, fields) for c in query]
+        items = []
+        for c in query:
+            if (('dns-integration' in self.supported_extension_aliases and
+                 'dns_name' in c)):
+                c['dns_assignment'] = self._get_dns_name_for_port_get(context,
+                                                                      c)
+            items.append(self._make_port_dict(c, fields))
         if limit and page_reverse:
             items.reverse()
         return items
@@ -1134,7 +1316,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if device_id:
                 if hasattr(self, 'get_router'):
                     try:
-                        ctx_admin = ctx.get_admin_context()
+                        ctx_admin = context.elevated()
                         router = self.get_router(ctx_admin, device_id)
                     except l3.RouterNotFound:
                         return
@@ -1144,7 +1326,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             service_constants.L3_ROUTER_NAT))
                     if l3plugin:
                         try:
-                            ctx_admin = ctx.get_admin_context()
+                            ctx_admin = context.elevated()
                             router = l3plugin.get_router(ctx_admin,
                                                          device_id)
                         except l3.RouterNotFound:

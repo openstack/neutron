@@ -83,14 +83,23 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
             self.client.namespace, self.server.namespace,
             self.server.ip, self.port, protocol)
         self.addCleanup(netcat.stop_processes)
-        self.assertTrue(netcat.test_connectivity())
+        filter_params = 'direction %s, port %s and protocol %s' % (
+            direction, port, protocol)
+        self.assertTrue(netcat.test_connectivity(),
+                        'Failed connectivity check before applying a filter '
+                        'with %s' % filter_params)
         self.filter_add_rule(
             fw_manager, self.server.ip, direction, protocol, port)
-        with testtools.ExpectedException(RuntimeError):
+        with testtools.ExpectedException(
+                RuntimeError,
+                msg='Wrongfully passed a connectivity check after applying '
+                    'a filter with %s' % filter_params):
             netcat.test_connectivity()
         self.filter_remove_rule(
             fw_manager, self.server.ip, direction, protocol, port)
-        self.assertTrue(netcat.test_connectivity(True))
+        self.assertTrue(netcat.test_connectivity(True),
+                        'Failed connectivity check after removing a filter '
+                        'with %s' % filter_params)
 
     def test_icmp(self):
         self.client.assert_ping(self.server.ip)

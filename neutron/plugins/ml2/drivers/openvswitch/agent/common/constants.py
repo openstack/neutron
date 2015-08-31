@@ -32,7 +32,9 @@ PEER_PHYSICAL_PREFIX = 'phy-'
 NONEXISTENT_PEER = 'nonexistent-peer'
 
 # The different types of tunnels
-TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN]
+TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN,
+                        p_const.TYPE_GENEVE]
+
 
 # Various tables for DVR use of integration bridge flows
 LOCAL_SWITCHING = 0
@@ -44,6 +46,8 @@ DVR_PROCESS = 1
 PATCH_LV_TO_TUN = 2
 GRE_TUN_TO_LV = 3
 VXLAN_TUN_TO_LV = 4
+GENEVE_TUN_TO_LV = 6
+
 DVR_NOT_LEARN = 9
 LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
@@ -67,7 +71,9 @@ ARP_REPLY = '0x2'
 
 # Map tunnel types to tables number
 TUN_TABLE = {p_const.TYPE_GRE: GRE_TUN_TO_LV,
-             p_const.TYPE_VXLAN: VXLAN_TUN_TO_LV}
+             p_const.TYPE_VXLAN: VXLAN_TUN_TO_LV,
+             p_const.TYPE_GENEVE: GENEVE_TUN_TO_LV}
+
 
 # The default respawn interval for the ovsdb monitor
 DEFAULT_OVSDBMON_RESPAWN = 30
@@ -88,3 +94,9 @@ ARP_RESPONDER_ACTIONS = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
 OVS_RESTARTED = 0
 OVS_NORMAL = 1
 OVS_DEAD = 2
+
+EXTENSION_DRIVER_TYPE = 'ovs'
+
+# ovs datapath types
+OVS_DATAPATH_SYSTEM = 'system'
+OVS_DATAPATH_NETDEV = 'netdev'

@@ -95,14 +95,16 @@ class API(object):
         """
 
     @abc.abstractmethod
-    def add_br(self, name, may_exist=True):
+    def add_br(self, name, may_exist=True, datapath_type=None):
         """Create an command to add an OVS bridge
 
-        :param name:      The name of the bridge
-        :type name:       string
-        :param may_exist: Do not fail if bridge already exists
-        :type may_exist:  bool
-        :returns:        :class:`Command` with no result
+        :param name:            The name of the bridge
+        :type name:             string
+        :param may_exist:       Do not fail if bridge already exists
+        :type may_exist:        bool
+        :param datapath_type:   The datapath_type of the bridge
+        :type datapath_type:    string
+        :returns:               :class:`Command` with no result
         """
 
     @abc.abstractmethod
@@ -159,6 +161,29 @@ class API(object):
         :param field: The external_ids field to return
         :type field:  string
         :returns:     :class:`Command` with field value result
+        """
+
+    @abc.abstractmethod
+    def db_create(self, table, **col_values):
+        """Create a command to create new record
+
+        :param table:      The OVS table containing the record to be created
+        :type table:       string
+        :param col_values: The columns and their associated values
+                           to be set after create
+        :type col_values:  Dictionary of columns id's and values
+        :returns:          :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
+    def db_destroy(self, table, record):
+        """Create a command to destroy a record
+
+        :param table:      The OVS table containing the record to be destroyed
+        :type table:       string
+        :param record:     The record id (name/uuid) to be destroyed
+        :type record:      uuid/string
+        :returns:          :class:`Command` with no result
         """
 
     @abc.abstractmethod

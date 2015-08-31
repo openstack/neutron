@@ -19,7 +19,7 @@ from neutron.agent.linux import ip_lib
 from neutron.tests.common import net_helpers
 
 
-class FakeMachine(fixtures.Fixture):
+class FakeMachineBase(fixtures.Fixture):
     """Create a fake machine.
 
     :ivar bridge: bridge on which the fake machine is bound
@@ -36,6 +36,39 @@ class FakeMachine(fixtures.Fixture):
     :type port: IPDevice
     """
 
+    def __init__(self):
+        self.port = None
+
+    def _setUp(self):
+        ns_fixture = self.useFixture(
+            net_helpers.NamespaceFixture())
+        self.namespace = ns_fixture.name
+
+    def execute(self, *args, **kwargs):
+        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        return ns_ip_wrapper.netns.execute(*args, **kwargs)
+
+    def assert_ping(self, dst_ip):
+        net_helpers.assert_ping(self.namespace, dst_ip)
+
+    def assert_no_ping(self, dst_ip):
+        net_helpers.assert_no_ping(self.namespace, dst_ip)
+
+    @property
+    def ip(self):
+        raise NotImplementedError()
+
+    @property
+    def ip_cidr(self):
+        raise NotImplementedError()
+
+    @property
+    def mac_address(self):
+        return self.port.link.address
+
+
+class FakeMachine(FakeMachineBase):
+
     def __init__(self, bridge, ip_cidr, gateway_ip=None):
         super(FakeMachine, self).__init__()
         self.bridge = bridge
@@ -43,9 +76,7 @@ class FakeMachine(fixtures.Fixture):
         self.gateway_ip = gateway_ip
 
     def _setUp(self):
-        ns_fixture = self.useFixture(
-            net_helpers.NamespaceFixture())
-        self.namespace = ns_fixture.name
+        super(FakeMachine, self)._setUp()
 
         self.port = self.useFixture(
             net_helpers.PortFixture.get(self.bridge, self.namespace)).port
@@ -68,25 +99,11 @@ class FakeMachine(fixtures.Fixture):
         self.port.addr.delete(self._ip_cidr)
         self._ip_cidr = ip_cidr
 
-    @property
-    def mac_address(self):
-        return self.port.link.address
-
-    @mac_address.setter
+    @FakeMachineBase.mac_address.setter
     def mac_address(self, mac_address):
         self.port.link.set_down()
         self.port.link.set_address(mac_address)
         self.port.link.set_up()
-
-    def execute(self, *args, **kwargs):
-        ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        return ns_ip_wrapper.netns.execute(*args, **kwargs)
-
-    def assert_ping(self, dst_ip):
-        net_helpers.assert_ping(self.namespace, dst_ip)
-
-    def assert_no_ping(self, dst_ip):
-        net_helpers.assert_no_ping(self.namespace, dst_ip)
 
 
 class PeerMachines(fixtures.Fixture):

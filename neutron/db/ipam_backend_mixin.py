@@ -158,9 +158,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def _update_subnet_allocation_pools(self, context, subnet_id, s):
         context.session.query(models_v2.IPAllocationPool).filter_by(
             subnet_id=subnet_id).delete()
-        pools = ((netaddr.IPAddress(p.first, p.version).format(),
+        pools = [(netaddr.IPAddress(p.first, p.version).format(),
                   netaddr.IPAddress(p.last, p.version).format())
-                 for p in s['allocation_pools'])
+                 for p in s['allocation_pools']]
         new_pools = [models_v2.IPAllocationPool(first_ip=p[0],
                                                 last_ip=p[1],
                                                 subnet_id=subnet_id)

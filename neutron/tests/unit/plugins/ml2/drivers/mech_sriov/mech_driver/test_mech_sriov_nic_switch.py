@@ -56,7 +56,7 @@ class TestFakePortContext(base.FakePortContext):
 
 
 class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_HW_VEB
+    VIF_TYPE = mech_driver.VIF_TYPE_HW_VEB
     CAP_PORT_FILTER = False
     AGENT_TYPE = constants.AGENT_TYPE_NIC_SWITCH
     VLAN_SEGMENTS = base.AgentMechanismVlanTestCase.VLAN_SEGMENTS
@@ -143,11 +143,11 @@ class SriovSwitchMechVnicTypeTestCase(SriovNicSwitchMechanismBaseTestCase):
 
     def test_vnic_type_direct(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT,
-                                           portbindings.VIF_TYPE_HW_VEB)
+                                           mech_driver.VIF_TYPE_HW_VEB)
 
     def test_vnic_type_macvtap(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_MACVTAP,
-                                           portbindings.VIF_TYPE_HW_VEB)
+                                           mech_driver.VIF_TYPE_HW_VEB)
 
 
 class SriovSwitchMechProfileTestCase(SriovNicSwitchMechanismBaseTestCase):
@@ -162,7 +162,7 @@ class SriovSwitchMechProfileTestCase(SriovNicSwitchMechanismBaseTestCase):
 
     def test_profile_supported_pci_info(self):
         self._check_vif_for_pci_info(MELLANOX_CONNECTX3_PCI_INFO,
-                                     portbindings.VIF_TYPE_HW_VEB)
+                                     mech_driver.VIF_TYPE_HW_VEB)
 
     def test_profile_unsupported_pci_info(self):
         with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'

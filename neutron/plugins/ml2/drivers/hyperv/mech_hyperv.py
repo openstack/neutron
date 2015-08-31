@@ -15,8 +15,8 @@
 
 from hyperv.neutron.ml2 import mech_hyperv
 
-from neutron.common import constants
 from neutron.extensions import portbindings
+from neutron.plugins.ml2.drivers.hyperv import constants as constants
 from neutron.plugins.ml2.drivers import mech_agent
 
 
@@ -33,5 +33,5 @@ class HypervMechanismDriver(mech_hyperv.HypervMechanismDriver,
     def __init__(self):
         super(HypervMechanismDriver, self).__init__(
             constants.AGENT_TYPE_HYPERV,
-            portbindings.VIF_TYPE_HYPERV,
+            constants.VIF_TYPE_HYPERV,
             {portbindings.CAP_PORT_FILTER: False})

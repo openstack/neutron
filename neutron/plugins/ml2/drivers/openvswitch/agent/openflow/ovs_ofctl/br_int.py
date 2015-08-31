@@ -29,7 +29,6 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     """openvswitch agent br-int specific logic."""
 
     def setup_default_table(self):
-        self.delete_flows()
         self.install_normal()
         self.setup_canary_table()
         self.install_drop(table_id=constants.ARP_SPOOF_TABLE)

@@ -44,12 +44,16 @@ class NeutronDbSubnet(ipam_base.Subnet):
     """
 
     @classmethod
-    def create_allocation_pools(cls, subnet_manager, session, pools):
+    def create_allocation_pools(cls, subnet_manager, session, pools, cidr):
         for pool in pools:
+            # IPv6 addresses that start '::1', '::2', etc cause IP version
+            # ambiguity when converted to integers by pool.first and pool.last.
+            # Infer the IP version from the subnet cidr.
+            ip_version = cidr.version
             subnet_manager.create_pool(
                 session,
-                netaddr.IPAddress(pool.first).format(),
-                netaddr.IPAddress(pool.last).format())
+                netaddr.IPAddress(pool.first, ip_version).format(),
+                netaddr.IPAddress(pool.last, ip_version).format())
 
     @classmethod
     def create_from_subnet_request(cls, subnet_request, ctx):
@@ -68,7 +72,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
         else:
             pools = subnet_request.allocation_pools
         # Create IPAM allocation pools and availability ranges
-        cls.create_allocation_pools(subnet_manager, session, pools)
+        cls.create_allocation_pools(subnet_manager, session, pools,
+                                    subnet_request.subnet_cidr)
 
         return cls(ipam_subnet_id,
                    ctx,
@@ -347,13 +352,13 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 subnet_id=self.subnet_manager.neutron_id,
                 ip_address=address)
 
-    def update_allocation_pools(self, pools):
+    def update_allocation_pools(self, pools, cidr):
         # Pools have already been validated in the subnet request object which
         # was sent to the subnet pool driver. Further validation should not be
         # required.
         session = db_api.get_session()
         self.subnet_manager.delete_allocation_pools(session)
-        self.create_allocation_pools(self.subnet_manager, session, pools)
+        self.create_allocation_pools(self.subnet_manager, session, pools, cidr)
         self._pools = pools
 
     def get_details(self):
@@ -414,7 +419,8 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
                       subnet_request.subnet_id)
             return
         subnet = NeutronDbSubnet.load(subnet_request.subnet_id, self._context)
-        subnet.update_allocation_pools(subnet_request.allocation_pools)
+        cidr = netaddr.IPNetwork(subnet._cidr)
+        subnet.update_allocation_pools(subnet_request.allocation_pools, cidr)
         return subnet
 
     def remove_subnet(self, subnet_id):

@@ -162,15 +162,25 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return ports_by_host
 
     @log_helpers.log_method_call
-    def get_subnet_for_dvr(self, context, subnet):
+    def get_subnet_for_dvr(self, context, subnet, fixed_ips=None):
+        if fixed_ips:
+            subnet_data = fixed_ips[0]['subnet_id']
+        else:
+            subnet_data = subnet
         try:
-            subnet_info = self.plugin.get_subnet(context, subnet)
+            subnet_info = self.plugin.get_subnet(
+                context, subnet_data)
         except n_exc.SubnetNotFound:
             return {}
         else:
             # retrieve the gateway port on this subnet
-            filter = {'fixed_ips': {'subnet_id': [subnet],
-                                    'ip_address': [subnet_info['gateway_ip']]}}
+            if fixed_ips:
+                filter = fixed_ips[0]
+            else:
+                filter = {'fixed_ips': {'subnet_id': [subnet],
+                                        'ip_address':
+                                        [subnet_info['gateway_ip']]}}
+
             internal_gateway_ports = self.plugin.get_ports(
                 context, filters=filter)
             if not internal_gateway_ports:

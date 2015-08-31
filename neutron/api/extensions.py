@@ -17,7 +17,6 @@
 import abc
 import collections
 import imp
-import itertools
 import os
 
 from oslo_config import cfg
@@ -560,10 +559,7 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     def _plugins_support(self, extension):
         alias = extension.get_alias()
-        supports_extension = any((hasattr(plugin,
-                                          "supported_extension_aliases") and
-                                  alias in plugin.supported_extension_aliases)
-                                 for plugin in self.plugins.values())
+        supports_extension = alias in self.get_supported_extension_aliases()
         if not supports_extension:
             LOG.warn(_LW("Extension %s not supported by any of loaded "
                          "plugins"),
@@ -588,11 +584,25 @@ class PluginAwareExtensionManager(ExtensionManager):
                                 manager.NeutronManager.get_service_plugins())
         return cls._instance
 
+    def get_supported_extension_aliases(self):
+        """Gets extension aliases supported by all plugins."""
+        aliases = set()
+        for plugin in self.plugins.values():
+            # we also check all classes that the plugins inherit to see if they
+            # directly provide support for an extension
+            for item in [plugin] + plugin.__class__.mro():
+                try:
+                    aliases |= set(
+                        getattr(item, "supported_extension_aliases", []))
+                except TypeError:
+                    # we land here if a class has an @property decorator for
+                    # supported extension aliases. They only work on objects.
+                    pass
+        return aliases
+
     def check_if_plugin_extensions_loaded(self):
         """Check if an extension supported by a plugin has been loaded."""
-        plugin_extensions = set(itertools.chain.from_iterable([
-            getattr(plugin, "supported_extension_aliases", [])
-            for plugin in self.plugins.values()]))
+        plugin_extensions = self.get_supported_extension_aliases()
         missing_aliases = plugin_extensions - set(self.extensions)
         if missing_aliases:
             raise exceptions.ExtensionsNotFound(

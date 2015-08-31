@@ -13,8 +13,8 @@
 #    under the License.
 
 import functools
-import logging
 import pprint
+import six
 
 import alembic
 import alembic.autogenerate
@@ -26,14 +26,12 @@ from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_base
 from oslo_db.sqlalchemy import test_migrations
 import sqlalchemy
+from sqlalchemy import event
 
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 from neutron.tests.common import base
-
-LOG = logging.getLogger(__name__)
-
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
@@ -116,13 +114,12 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin=CORE_PLUGIN)
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def db_sync(self, engine):
         cfg.CONF.set_override('connection', engine.url, group='database')
         migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
-        cfg.CONF.clear_override('connection', group='database')
 
     def get_engine(self):
         return self.engine
@@ -210,7 +207,35 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
 class TestModelsMigrationsMysql(_TestModelsMigrations,
                                 base.MySQLTestCase):
-    pass
+
+    # There is no use to run this against both dialects, so add this test just
+    # for MySQL tests
+    def test_external_tables_not_changed(self):
+
+        def block_external_tables(conn, clauseelement, multiparams, params):
+            if isinstance(clauseelement, sqlalchemy.sql.selectable.Select):
+                return
+
+            if (isinstance(clauseelement, six.string_types) and
+                    any(name in clauseelement for name in external.TABLES)):
+                self.fail("External table referenced by neutron core "
+                          "migration.")
+
+            if hasattr(clauseelement, 'element'):
+                if (clauseelement.element.name in external.TABLES or
+                        (hasattr(clauseelement, 'table') and
+                         clauseelement.element.table.name in external.TABLES)):
+                    self.fail("External table referenced by neutron core "
+                              "migration.")
+
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        migration.do_alembic_command(self.alembic_config, 'upgrade', 'kilo')
+
+        event.listen(engine, 'before_execute', block_external_tables)
+        migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
+
+        event.remove(engine, 'before_execute', block_external_tables)
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,
@@ -222,7 +247,7 @@ class TestSanityCheck(test_base.DbTestCase):
 
     def setUp(self):
         super(TestSanityCheck, self).setUp()
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def test_check_sanity_14be42f3d0a5(self):
@@ -250,7 +275,7 @@ class TestWalkMigrations(test_base.DbTestCase):
 
     def setUp(self):
         super(TestWalkMigrations, self).setUp()
-        self.alembic_config = migration.get_alembic_config()
+        self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
     def test_no_downgrade(self):

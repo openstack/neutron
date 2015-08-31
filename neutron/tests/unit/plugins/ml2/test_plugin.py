@@ -49,6 +49,7 @@ from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron.services.qos import qos_consts
 from neutron.tests import base
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
@@ -94,12 +95,12 @@ class Ml2ConfFixture(PluginConfFixture):
 class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     _mechanism_drivers = ['logger', 'test']
+    l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
+                 'TestL3NatServicePlugin')
 
     def setup_parent(self):
         """Perform parent setup with the common plugin configuration class."""
-        l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
-                     'TestL3NatServicePlugin')
-        service_plugins = {'l3_plugin_name': l3_plugin}
+        service_plugins = {'l3_plugin_name': self.l3_plugin}
         # Ensure that the parent setup can be called without arguments
         # by the common configuration setUp.
         parent_setup = functools.partial(
@@ -137,6 +138,37 @@ class TestMl2BulkToggleWithoutBulkless(Ml2PluginV2TestCase):
 
     def test_bulk_enabled_with_bulk_drivers(self):
         self.assertFalse(self._skip_native_bulk)
+
+
+class TestMl2SupportedQosRuleTypes(Ml2PluginV2TestCase):
+
+    def test_empty_driver_list(self, *mocks):
+        mech_drivers_mock = mock.PropertyMock(return_value=[])
+        with mock.patch.object(self.driver.mechanism_manager,
+                               'ordered_mech_drivers',
+                               new_callable=mech_drivers_mock):
+            self.assertEqual(
+                [], self.driver.mechanism_manager.supported_qos_rule_types)
+
+    def test_no_rule_types_in_common(self):
+        self.assertEqual(
+            [], self.driver.mechanism_manager.supported_qos_rule_types)
+
+    @mock.patch.object(mech_logger.LoggerMechanismDriver,
+                       'supported_qos_rule_types',
+                       new_callable=mock.PropertyMock,
+                       create=True)
+    @mock.patch.object(mech_test.TestMechanismDriver,
+                       'supported_qos_rule_types',
+                       new_callable=mock.PropertyMock,
+                       create=True)
+    def test_rule_type_in_common(self, *mocks):
+        # make sure both plugins have the same supported qos rule types
+        for mock_ in mocks:
+            mock_.return_value = qos_consts.VALID_RULE_TYPES
+        self.assertEqual(
+            qos_consts.VALID_RULE_TYPES,
+            self.driver.mechanism_manager.supported_qos_rule_types)
 
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,

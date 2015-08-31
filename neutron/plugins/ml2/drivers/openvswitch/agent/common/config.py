@@ -47,6 +47,10 @@ ovs_opts = [
                        "integration bridge to physical bridges.")),
     cfg.StrOpt('of_interface', default='ovs-ofctl', choices=['ovs-ofctl'],
                help=_("OpenFlow interface to use.")),
+    cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
+               choices=[constants.OVS_DATAPATH_SYSTEM,
+                        constants.OVS_DATAPATH_NETDEV],
+               help=_("OVS datapath to use.")),
 ]
 
 agent_opts = [
@@ -97,7 +101,10 @@ agent_opts = [
     cfg.IntOpt('quitting_rpc_timeout', default=10,
                help=_("Set new timeout in seconds for new rpc calls after "
                       "agent receives SIGTERM. If value is set to 0, rpc "
-                      "timeout won't be changed"))
+                      "timeout won't be changed")),
+    cfg.BoolOpt('drop_flows_on_start', default=False,
+                help=_("Reset flow table on start. Setting this to True will "
+                       "cause brief traffic interruption."))
 ]
 
 

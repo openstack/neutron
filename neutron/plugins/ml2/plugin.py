@@ -31,6 +31,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
+from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -76,6 +77,7 @@ from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
 from neutron.quota import resource_registry
+from neutron.services.qos import qos_consts
 
 LOG = log.getLogger(__name__)
 
@@ -116,7 +118,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "multi-provider", "allowed-address-pairs",
                                     "extra_dhcp_opt", "subnet_allocation",
                                     "net-mtu", "vlan-transparent",
-                                    "address-scope"]
+                                    "address-scope", "dns-integration"]
 
     @property
     def supported_extension_aliases(self):
@@ -161,7 +163,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dvr_rpc.DVRServerRpcCallback(),
             dhcp_rpc.DhcpRpcCallback(),
             agents_db.AgentExtRpcCallback(),
-            metadata_rpc.MetadataRpcCallback()
+            metadata_rpc.MetadataRpcCallback(),
+            resources_rpc.ResourcesPullRpcCallback()
         ]
 
     def _setup_dhcp(self):
@@ -170,6 +173,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.network_scheduler_driver
         )
         self.start_periodic_dhcp_agent_status_check()
+
+    @property
+    def supported_qos_rule_types(self):
+        return self.mechanism_manager.supported_qos_rule_types
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
@@ -259,9 +266,29 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _bind_port_if_needed(self, context, allow_notify=False,
                              need_notify=False):
-        plugin_context = context._plugin_context
-        port_id = context.current['id']
+        # Binding limit does not need to be tunable because no
+        # more than a couple of attempts should ever be required in
+        # normal operation.
+        for count in range(1, MAX_BIND_TRIES + 1):
+            if count > 1:
+                # multiple attempts shouldn't happen very often so we log each
+                # attempt after the 1st.
+                greenthread.sleep(0)  # yield
+                LOG.info(_LI("Attempt %(count)s to bind port %(port)s"),
+                         {'count': count, 'port': context.current['id']})
+            context, need_notify, try_again = self._attempt_binding(
+                context, need_notify)
+            if not try_again:
+                if allow_notify and need_notify:
+                    self._notify_port_updated(context)
+                return context
 
+        LOG.error(_LE("Failed to commit binding results for %(port)s "
+                      "after %(max)s tries"),
+                  {'port': context.current['id'], 'max': MAX_BIND_TRIES})
+        return context
+
+    def _attempt_binding(self, context, need_notify):
         # Since the mechanism driver bind_port() calls must be made
         # outside a DB transaction locking the port state, it is
         # possible (but unlikely) that the port's state could change
@@ -270,57 +297,41 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # thread commits its results, the already committed results are
         # used. If attributes such as binding:host_id,
         # binding:profile, or binding:vnic_type are updated
-        # concurrently, this loop retries binding using the new
-        # values.
-        count = 0
-        while True:
-            # First, determine whether it is necessary and possible to
-            # bind the port.
-            binding = context._binding
-            if (binding.vif_type != portbindings.VIF_TYPE_UNBOUND
+        # concurrently, the try_again flag is returned to indicate that
+        # the commit was unsuccessful.
+        plugin_context = context._plugin_context
+        port_id = context.current['id']
+        binding = context._binding
+        try_again = False
+        # First, determine whether it is necessary and possible to
+        # bind the port.
+        if (binding.vif_type != portbindings.VIF_TYPE_UNBOUND
                 or not binding.host):
-                # We either don't need to bind the port, or can't, so
-                # notify if needed and return.
-                if allow_notify and need_notify:
-                    self._notify_port_updated(context)
-                return context
+            # We either don't need to bind the port or can't
+            return context, need_notify, try_again
 
-            # Limit binding attempts to avoid any possibility of
-            # infinite looping and to ensure an error is logged
-            # instead. This does not need to be tunable because no
-            # more than a couple attempts should ever be required in
-            # normal operation. Log at info level if not 1st attempt.
-            count += 1
-            if count > MAX_BIND_TRIES:
-                LOG.error(_LE("Failed to commit binding results for %(port)s "
-                              "after %(max)s tries"),
-                          {'port': port_id, 'max': MAX_BIND_TRIES})
-                return context
-            if count > 1:
-                greenthread.sleep(0)  # yield
-                LOG.info(_LI("Attempt %(count)s to bind port %(port)s"),
-                         {'count': count, 'port': port_id})
-
-            # The port isn't already bound and the necessary
-            # information is available, so attempt to bind the port.
-            bind_context = self._bind_port(context)
-
-            # Now try to commit result of attempting to bind the port.
-            new_context, did_commit = self._commit_port_binding(
-                plugin_context, port_id, binding, bind_context)
-            if not new_context:
-                # The port has been deleted concurrently, so just
-                # return the unbound result from the initial
-                # transaction that completed before the deletion.
-                LOG.debug("Port %s has been deleted concurrently",
-                          port_id)
-                return context
-            # Need to notify if we succeed and our results were
-            # committed.
-            if did_commit and (new_context._binding.vif_type !=
-                               portbindings.VIF_TYPE_BINDING_FAILED):
-                need_notify = True
-            context = new_context
+        # The port isn't already bound and the necessary
+        # information is available, so attempt to bind the port.
+        bind_context = self._bind_port(context)
+        # Now try to commit result of attempting to bind the port.
+        new_context, did_commit = self._commit_port_binding(
+            plugin_context, port_id, binding, bind_context)
+        if not new_context:
+            # The port has been deleted concurrently, so just
+            # return the unbound result from the initial
+            # transaction that completed before the deletion.
+            LOG.debug("Port %s has been deleted concurrently",
+                      port_id)
+            need_notify = False
+            return context, need_notify, try_again
+        # Need to notify if we succeed and our results were
+        # committed.
+        if did_commit and (new_context._binding.vif_type !=
+                           portbindings.VIF_TYPE_BINDING_FAILED):
+            need_notify = True
+            return new_context, need_notify, try_again
+        try_again = True
+        return new_context, need_notify, try_again
 
     def _bind_port(self, orig_context):
         # Construct a new PortContext from the one from the previous
@@ -360,7 +371,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                                   port_id)
             if not port_db:
                 # The port has been deleted concurrently.
-                return (None, None)
+                return (None, False)
             oport = self._make_port_dict(port_db)
             port = self._make_port_dict(port_db)
             network = new_context.network.current
@@ -552,6 +563,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                               {'res': resource,
                                'id': obj['result']['id']})
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
     def _create_bulk_ml2(self, resource, context, request_items):
         objects = []
         collection = "%ss" % resource
@@ -993,6 +1006,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return result, mech_context
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
     def create_port(self, context, port):
         attrs = port[attributes.PORT]
         result, mech_context = self._create_port_db(context, port)
@@ -1118,6 +1133,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if (psec.PORTSECURITY in attrs) and (
                         original_port[psec.PORTSECURITY] !=
                         updated_port[psec.PORTSECURITY]):
+                need_port_update_notify = True
+            # TODO(QoS): Move out to the extension framework somehow.
+            # Follow https://review.openstack.org/#/c/169223 for a solution.
+            if (qos_consts.QOS_POLICY_ID in attrs and
+                    original_port[qos_consts.QOS_POLICY_ID] !=
+                    updated_port[qos_consts.QOS_POLICY_ID]):
                 need_port_update_notify = True
 
             if addr_pair.ADDRESS_PAIRS in attrs:
@@ -1402,10 +1423,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._bind_port_if_needed(port_context)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_on_deadlock=True,
-                               retry_on_request=True)
-    @db_api.convert_db_exception_to_retry(stale_data=True)
+    @oslo_db_api.wrap_db_retry(
+        max_retries=db_api.MAX_RETRIES,
+        retry_on_deadlock=True, retry_on_request=True,
+        exception_checker=lambda e: isinstance(e, sa_exc.StaleDataError)
+    )
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
         """

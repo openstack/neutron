@@ -137,7 +137,7 @@ class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
 class UtilTestParseVlanRanges(base.BaseTestCase):
     _err_prefix = "Invalid network VLAN range: '"
     _err_too_few = "' - 'need more than 2 values to unpack'"
-    _err_too_many = "' - 'too many values to unpack'"
+    _err_too_many_prefix = "' - 'too many values to unpack"
     _err_not_int = "' - 'invalid literal for int() with base 10: '%s''"
     _err_bad_vlan = "' - '%s is not a valid VLAN tag'"
     _err_range = "' - 'End of VLAN range is less than start of VLAN range'"
@@ -145,8 +145,8 @@ class UtilTestParseVlanRanges(base.BaseTestCase):
     def _range_too_few_err(self, nv_range):
         return self._err_prefix + nv_range + self._err_too_few
 
-    def _range_too_many_err(self, nv_range):
-        return self._err_prefix + nv_range + self._err_too_many
+    def _range_too_many_err_prefix(self, nv_range):
+        return self._err_prefix + nv_range + self._err_too_many_prefix
 
     def _vlan_not_int_err(self, nv_range, vlan):
         return self._err_prefix + nv_range + (self._err_not_int % vlan)
@@ -267,10 +267,13 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
 
     def test_parse_one_net_range_too_many(self):
         config_str = "net1:100:150:200"
-        expected_msg = self._range_too_many_err(config_str)
+        expected_msg_prefix = self._range_too_many_err_prefix(config_str)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        # The error message is not same in Python 2 and Python 3. In Python 3,
+        # it depends on the amount of values used when unpacking, so it cannot
+        # be predicted as a fixed string.
+        self.assertTrue(str(err).startswith(expected_msg_prefix))
 
     def test_parse_one_net_vlan1_not_int(self):
         config_str = "net1:foo:199"
@@ -463,8 +466,8 @@ class TestCachingDecorator(base.BaseTestCase):
 
 class TestDict2Tuples(base.BaseTestCase):
     def test_dict(self):
-        input_dict = {'foo': 'bar', 42: 'baz', 'aaa': 'zzz'}
-        expected = ((42, 'baz'), ('aaa', 'zzz'), ('foo', 'bar'))
+        input_dict = {'foo': 'bar', '42': 'baz', 'aaa': 'zzz'}
+        expected = (('42', 'baz'), ('aaa', 'zzz'), ('foo', 'bar'))
         output_tuple = utils.dict2tuple(input_dict)
         self.assertEqual(expected, output_tuple)
 
@@ -679,3 +682,24 @@ class TestEnsureDir(base.BaseTestCase):
     def test_ensure_dir_calls_makedirs(self, makedirs):
         utils.ensure_dir("/etc/create/directory")
         makedirs.assert_called_once_with("/etc/create/directory", 0o755)
+
+
+class TestCamelize(base.BaseTestCase):
+    def test_camelize(self):
+        data = {'bandwidth_limit': 'BandwidthLimit',
+                'test': 'Test',
+                'some__more__dashes': 'SomeMoreDashes',
+                'a_penguin_walks_into_a_bar': 'APenguinWalksIntoABar'}
+
+        for s, expected in data.items():
+            self.assertEqual(expected, utils.camelize(s))
+
+
+class TestRoundVal(base.BaseTestCase):
+    def test_round_val_ok(self):
+        for expected, value in ((0, 0),
+                                (0, 0.1),
+                                (1, 0.5),
+                                (1, 1.49),
+                                (2, 1.5)):
+            self.assertEqual(expected, utils.round_val(value))

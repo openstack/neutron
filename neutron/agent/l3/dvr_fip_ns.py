@@ -14,13 +14,13 @@
 
 import os
 
-from oslo_log import log as logging
-
+from neutron.agent.l3 import fip_rule_priority_allocator as frpa
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +49,10 @@ class FipNamespace(namespaces.Namespace):
         self.use_ipv6 = use_ipv6
         self.agent_gateway_port = None
         self._subscribers = set()
-        self._rule_priorities = set(range(FIP_PR_START, FIP_PR_END))
+        path = os.path.join(agent_conf.state_path, 'fip-priorities')
+        self._rule_priorities = frpa.FipRulePriorityAllocator(path,
+                                                              FIP_PR_START,
+                                                              FIP_PR_END)
         self._iptables_manager = iptables_manager.IptablesManager(
             namespace=self.get_name(),
             use_ipv6=self.use_ipv6)
@@ -85,14 +88,15 @@ class FipNamespace(namespaces.Namespace):
         self._subscribers.discard(router_id)
         return not self.has_subscribers()
 
-    def allocate_rule_priority(self):
-        return self._rule_priorities.pop()
+    def allocate_rule_priority(self, floating_ip):
+        return self._rule_priorities.allocate(floating_ip)
 
-    def deallocate_rule_priority(self, rule_pr):
-        self._rule_priorities.add(rule_pr)
+    def deallocate_rule_priority(self, floating_ip):
+        self._rule_priorities.release(floating_ip)
 
     def _gateway_added(self, ex_gw_port, interface_name):
         """Add Floating IP gateway port."""
+        LOG.debug("add gateway interface(%s)", interface_name)
         ns_name = self.get_name()
         self.driver.plug(ex_gw_port['network_id'],
                          ex_gw_port['id'],
@@ -126,6 +130,7 @@ class FipNamespace(namespaces.Namespace):
 
     def create(self):
         # TODO(Carl) Get this functionality from mlavelle's namespace baseclass
+        LOG.debug("add fip-namespace(%s)", self.name)
         ip_wrapper_root = ip_lib.IPWrapper()
         ip_wrapper_root.netns.execute(['sysctl',
                                        '-w',
@@ -172,7 +177,6 @@ class FipNamespace(namespaces.Namespace):
         """
         self.agent_gateway_port = agent_gateway_port
 
-        # add fip-namespace and agent_gateway_port
         self.create()
 
         iface_name = self.get_ext_device_name(agent_gateway_port['id'])
@@ -186,6 +190,7 @@ class FipNamespace(namespaces.Namespace):
 
     def create_rtr_2_fip_link(self, ri):
         """Create interface between router and Floating IP namespace."""
+        LOG.debug("Create FIP link interfaces for router %s", ri.router_id)
         rtr_2_fip_name = self.get_rtr_ext_device_name(ri.router_id)
         fip_2_rtr_name = self.get_int_device_name(ri.router_id)
         fip_ns_name = self.get_name()
@@ -217,7 +222,7 @@ class FipNamespace(namespaces.Namespace):
         device = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
         device.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
         #setup the NAT rules and chains
-        ri._handle_fip_nat_rules(rtr_2_fip_name, 'add_rules')
+        ri._handle_fip_nat_rules(rtr_2_fip_name)
 
     def scan_fip_ports(self, ri):
         # don't scan if not dvr or count is not None
@@ -232,4 +237,8 @@ class FipNamespace(namespaces.Namespace):
             existing_cidrs = [addr['cidr'] for addr in device.addr.list()]
             fip_cidrs = [c for c in existing_cidrs if
                          common_utils.is_cidr_host(c)]
+            for fip_cidr in fip_cidrs:
+                fip_ip = fip_cidr.split('/')[0]
+                rule_pr = self._rule_priorities.allocate(fip_ip)
+                ri.floating_ips_dict[fip_ip] = rule_pr
             ri.dist_fip_count = len(fip_cidrs)

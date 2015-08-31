@@ -30,6 +30,8 @@ from neutron.agent.ovsdb import api as ovsdb
 from neutron.common import exceptions
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants
 
 # Default timeout for ovs-vsctl command
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
@@ -102,8 +104,11 @@ class BaseOVS(object):
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
         self.ovsdb = ovsdb.API.get(self)
 
-    def add_bridge(self, bridge_name):
-        self.ovsdb.add_br(bridge_name).execute()
+    def add_bridge(self, bridge_name,
+                   datapath_type=constants.OVS_DATAPATH_SYSTEM):
+
+        self.ovsdb.add_br(bridge_name,
+                          datapath_type).execute()
         br = OVSBridge(bridge_name)
         # Don't return until vswitchd sets up the internal port
         br.get_port_ofport(bridge_name)
@@ -143,9 +148,10 @@ class BaseOVS(object):
 
 
 class OVSBridge(BaseOVS):
-    def __init__(self, br_name):
+    def __init__(self, br_name, datapath_type=constants.OVS_DATAPATH_SYSTEM):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
+        self.datapath_type = datapath_type
 
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
@@ -171,8 +177,14 @@ class OVSBridge(BaseOVS):
         self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
                               check_error=True)
 
-    def create(self):
-        self.ovsdb.add_br(self.br_name).execute()
+    def create(self, secure_mode=False):
+        with self.ovsdb.transaction() as txn:
+            txn.add(
+                self.ovsdb.add_br(self.br_name,
+                datapath_type=self.datapath_type))
+            if secure_mode:
+                txn.add(self.ovsdb.set_fail_mode(self.br_name,
+                                                 FAILMODE_SECURE))
         # Don't return until vswitchd sets up the internal port
         self.get_port_ofport(self.br_name)
 
@@ -182,7 +194,8 @@ class OVSBridge(BaseOVS):
     def reset_bridge(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.del_br(self.br_name))
-            txn.add(self.ovsdb.add_br(self.br_name))
+            txn.add(self.ovsdb.add_br(self.br_name,
+                                      datapath_type=self.datapath_type))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))
@@ -267,6 +280,10 @@ class OVSBridge(BaseOVS):
             retval = '\n'.join(item for item in flows.splitlines()
                                if 'NXST' not in item)
         return retval
+
+    def dump_all_flows(self):
+        return [f for f in self.run_ofctl("dump-flows", []).splitlines()
+                if 'NXST' not in f]
 
     def deferred(self, **kwargs):
         return DeferredOVSBridge(self, **kwargs)
@@ -488,6 +505,36 @@ class OVSBridge(BaseOVS):
             for controller_uuid in controllers:
                 txn.add(self.ovsdb.db_set('Controller',
                                           controller_uuid, *attr))
+
+    def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
+                                      max_burst_kbps):
+        with self.ovsdb.transaction(check_error=True) as txn:
+            txn.add(self.ovsdb.db_set('Interface', port_name,
+                                      ('ingress_policing_rate', max_kbps)))
+            txn.add(self.ovsdb.db_set('Interface', port_name,
+                                      ('ingress_policing_burst',
+                                       max_burst_kbps)))
+
+    def create_egress_bw_limit_for_port(self, port_name, max_kbps,
+                                        max_burst_kbps):
+        self._set_egress_bw_limit_for_port(
+            port_name, max_kbps, max_burst_kbps)
+
+    def get_egress_bw_limit_for_port(self, port_name):
+
+        max_kbps = self.db_get_val('Interface', port_name,
+                                   'ingress_policing_rate')
+        max_burst_kbps = self.db_get_val('Interface', port_name,
+                                         'ingress_policing_burst')
+
+        max_kbps = max_kbps or None
+        max_burst_kbps = max_burst_kbps or None
+
+        return max_kbps, max_burst_kbps
+
+    def delete_egress_bw_limit_for_port(self, port_name):
+        self._set_egress_bw_limit_for_port(
+            port_name, 0, 0)
 
     def __enter__(self):
         self.create()

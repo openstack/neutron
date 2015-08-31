@@ -62,9 +62,10 @@ gate and bug triage for their area of focus is under control.
 The following are the current Neutron Lieutenants.
 
 +------------------------+---------------------------+----------------------+
-| Area                   | Lieutenant                | IRC nic              |
+| Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | API and DB             | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
 |                        | Henry Gessau              | HenryG               |
 +------------------------+---------------------------+----------------------+
 | Built-In Control Plane | Kevin Benton              | kevinbenton          |
@@ -72,6 +73,10 @@ The following are the current Neutron Lieutenants.
 | Client                 | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
 | Docs                   | Edgar Magana              | emagana              |
++------------------------+---------------------------+----------------------+
+| Infra                  | Armando Migliaccio        | armax                |
+|                        +---------------------------+----------------------+
+|                        | Doug Wiegley              | dougwig              |
 +------------------------+---------------------------+----------------------+
 | L3                     | Carl Baldwin              | carl_baldwin         |
 +------------------------+---------------------------+----------------------+
@@ -89,6 +94,7 @@ Some notes on the above:
 * Services includes FWaaS, LBaaS, and VPNaaS.
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
+* Infra means interactions with infra from a neutron perspective
 
 Neutron also consists of several plugins, drivers, and agents that are developed
 effectively as sub-projects within Neutron in their own git repositories.
@@ -100,18 +106,28 @@ updating the core review team for the sub-project's repositories.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | dragonflow             | Eran Gampel               | gampel               |
+|                        +---------------------------+----------------------+
+|                        | Gal Sagie                 | gsagie               |
++------------------------+---------------------------+----------------------+
+| kuryr                  | Antoni Segura Puimedon    | apuimedo             |
+|                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
+|                        +---------------------------+----------------------+
 |                        | Jaume Devesa              | devvesa              |
+|                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
 | networking-odl         | Flavio Fernandes          | flaviof              |
+|                        +---------------------------+----------------------+
 |                        | Kyle Mestery              | mestery              |
 +------------------------+---------------------------+----------------------+
 | networking-ofagent     | YAMAMOTO Takashi          | yamamoto             |
++------------------------+---------------------------+----------------------+
+| networking-onos        | Vikram Choudhary          | vikram               |
 +------------------------+---------------------------+----------------------+
 | networking-ovn         | Russell Bryant            | russellb             |
 +------------------------+---------------------------+----------------------+

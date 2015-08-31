@@ -82,6 +82,9 @@ core_opts = [
                deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
                       "dnsmasq to use infinite lease times.")),
+    cfg.StrOpt('dns_domain',
+               default='openstacklocal',
+               help=_('Domain to use for building the hostnames')),
     cfg.BoolOpt('dhcp_agent_notification', default=True,
                 help=_("Allow sending resource operation"
                        " notification to DHCP agent")),
@@ -152,13 +155,18 @@ cfg.CONF.register_cli_opts(core_cli_opts)
 
 # Ensure that the control exchange is set correctly
 oslo_messaging.set_transport_defaults(control_exchange='neutron')
-_SQL_CONNECTION_DEFAULT = 'sqlite://'
-# Update the default QueuePool parameters. These can be tweaked by the
-# configuration variables - max_pool_size, max_overflow and pool_timeout
-db_options.set_defaults(cfg.CONF,
-                        connection=_SQL_CONNECTION_DEFAULT,
-                        sqlite_db='', max_pool_size=10,
-                        max_overflow=20, pool_timeout=10)
+
+
+def set_db_defaults():
+    # Update the default QueuePool parameters. These can be tweaked by the
+    # conf variables - max_pool_size, max_overflow and pool_timeout
+    db_options.set_defaults(
+        cfg.CONF,
+        connection='sqlite://',
+        sqlite_db='', max_pool_size=10,
+        max_overflow=20, pool_timeout=10)
+
+set_db_defaults()
 
 NOVA_CONF_SECTION = 'nova'
 

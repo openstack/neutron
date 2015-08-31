@@ -30,10 +30,8 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.common import exceptions
-from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
@@ -60,7 +58,7 @@ class ExtensionsTestApp(wsgi.Router):
         super(ExtensionsTestApp, self).__init__(mapper)
 
 
-class FakePluginWithExtension(db_base_plugin_v2.NeutronDbPluginV2):
+class FakePluginWithExtension(object):
     """A fake plugin used only for extension testing in this file."""
 
     supported_extension_aliases = ["FOXNSOX"]
@@ -168,7 +166,7 @@ class ResourceExtensionTest(base.BaseTestCase):
         test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
-        self.assertEqual("resource index", index_response.body)
+        self.assertEqual(b"resource index", index_response.body)
 
         show_response = test_app.get("/tweedles/25266")
         self.assertEqual({'data': {'id': "25266"}}, show_response.json)
@@ -365,7 +363,7 @@ class ActionExtensionTest(base.BaseTestCase):
         response = self.extension_app.post('/dummy_resources/1/action',
                                            req_body,
                                            content_type='application/json')
-        self.assertEqual("Tweedle Beetle Added.", response.body)
+        self.assertEqual(b"Tweedle Beetle Added.", response.body)
 
     def test_extended_action_for_deleting_extra_data(self):
         action_name = 'FOXNSOX:delete_tweedle'
@@ -374,7 +372,7 @@ class ActionExtensionTest(base.BaseTestCase):
         response = self.extension_app.post("/dummy_resources/1/action",
                                            req_body,
                                            content_type='application/json')
-        self.assertEqual("Tweedle Bailey Deleted.", response.body)
+        self.assertEqual(b"Tweedle Bailey Deleted.", response.body)
 
     def test_returns_404_for_non_existent_action(self):
         non_existent_action = 'blah_action'
@@ -418,7 +416,7 @@ class RequestExtensionTest(base.BaseTestCase):
         def extend_response_data(req, res):
             data = jsonutils.loads(res.body)
             data['FOXNSOX:extended_key'] = req.GET.get('extended_key')
-            res.body = jsonutils.dumps(data)
+            res.body = jsonutils.dumps(data).encode('utf-8')
             return res
 
         app = self._setup_app_with_request_handler(extend_response_data, 'GET')
@@ -444,7 +442,7 @@ class RequestExtensionTest(base.BaseTestCase):
         def _update_handler(req, res):
             data = jsonutils.loads(res.body)
             data['uneditable'] = req.params['uneditable']
-            res.body = jsonutils.dumps(data)
+            res.body = jsonutils.dumps(data).encode('utf-8')
             return res
 
         base_app = webtest.TestApp(setup_base_app(self))
@@ -736,8 +734,7 @@ class SimpleExtensionManager(object):
         return request_extensions
 
 
-class ExtensionExtendedAttributeTestPlugin(
-    ml2_plugin.Ml2Plugin):
+class ExtensionExtendedAttributeTestPlugin(object):
 
     supported_extension_aliases = [
         'ext-obj-test', "extended-ext-attr"
@@ -778,7 +775,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
 
         ext_mgr = extensions.PluginAwareExtensionManager(
             extensions_path,
-            {constants.CORE: ExtensionExtendedAttributeTestPlugin}
+            {constants.CORE: ExtensionExtendedAttributeTestPlugin()}
         )
         ext_mgr.extend_resources("2.0", {})
         extensions.PluginAwareExtensionManager._instance = ext_mgr

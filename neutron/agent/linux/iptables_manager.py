@@ -426,6 +426,13 @@ class IptablesManager(object):
         with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
             return self._apply_synchronized()
 
+    def get_rules_for_table(self, table):
+        """Runs iptables-save on a table and returns the results."""
+        args = ['iptables-save', '-t', table]
+        if self.namespace:
+            args = ['ip', 'netns', 'exec', self.namespace] + args
+        return self.execute(args, run_as_root=True).split('\n')
+
     def _apply_synchronized(self):
         """Apply the current in-memory set of iptables rules.
 

@@ -1,0 +1,313 @@
+..
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+
+      Convention for heading levels in Neutron devref:
+      =======  Heading 0 (reserved for the title in a document)
+      -------  Heading 1
+      ~~~~~~~  Heading 2
+      +++++++  Heading 3
+      '''''''  Heading 4
+      (Avoid deeper levels because they do not render well.)
+
+
+Alembic Migrations
+==================
+
+Introduction
+------------
+
+The migrations in the alembic/versions contain the changes needed to migrate
+from older Neutron releases to newer versions. A migration occurs by executing
+a script that details the changes needed to upgrade the database. The migration
+scripts are ordered so that multiple scripts can run sequentially to update the
+database.
+
+
+The Migration Wrapper
+---------------------
+
+The scripts are executed by Neutron's migration wrapper ``neutron-db-manage``
+which uses the Alembic library to manage the migration. Pass the ``--help``
+option to the wrapper for usage information.
+
+The wrapper takes some options followed by some commands::
+
+ neutron-db-manage <options> <commands>
+
+The wrapper needs to be provided with the database connection string, which is
+usually provided in the ``neutron.conf`` configuration file in an installation.
+The wrapper automatically reads from ``/etc/neutron/neutron.conf`` if it is
+present. If the configuration is in a different location::
+
+ neutron-db-manage --config-file /path/to/neutron.conf <commands>
+
+Multiple ``--config-file`` options can be passed if needed.
+
+Instead of reading the DB connection from the configuration file(s) the
+``--database-connection`` option can be used::
+
+ neutron-db-manage --database-connection mysql+pymysql://root:secret@127.0.0.1/neutron?charset=utf8 <commands>
+
+For some commands the wrapper needs to know the entrypoint of the core plugin
+for the installation. This can be read from the configuration file(s) or
+specified using the ``--core_plugin`` option::
+
+ neutron-db-manage --core_plugin neutron.plugins.ml2.plugin.Ml2Plugin <commands>
+
+When giving examples below of using the wrapper the options will not be shown.
+It is assumed you will use the options that you need for your environment.
+
+For new deployments you will start with an empty database. You then upgrade
+to the latest database version via::
+
+ neutron-db-manage upgrade heads
+
+For existing deployments the database will already be at some version. To
+check the current database version::
+
+ neutron-db-manage current
+
+After installing a new version of Neutron server, upgrading the database is
+the same command::
+
+ neutron-db-manage upgrade heads
+
+To create a script to run the migration offline::
+
+ neutron-db-manage upgrade heads --sql
+
+To run the offline migration between specific migration versions::
+
+ neutron-db-manage upgrade <start version>:<end version> --sql
+
+Upgrade the database incrementally::
+
+ neutron-db-manage upgrade --delta <# of revs>
+
+**NOTE:** Database downgrade is not supported.
+
+
+Migration Branches
+------------------
+
+Neutron makes use of alembic branches for two purposes.
+
+1. Indepedent Sub-Project Tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Various `sub-projects <sub_projects.html>`_ can be installed with Neutron. Each
+sub-project registers its own alembic branch which is responsible for migrating
+the schemas of the tables owned by the sub-project.
+
+The neutron-db-manage script detects which sub-projects have been installed by
+enumerating the ``neutron.db.alembic_migrations`` entrypoints. For more details
+see the `Entry Points section of Contributing extensions to Neutron
+<contribute.html#entry-points>`_.
+
+The neutron-db-manage script runs the given alembic command against all
+installed sub-projects. (An exception is the ``revision`` command, which is
+discussed in the `Developers`_ section below.)
+
+2. Offline/Online Migrations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since Liberty, Neutron maintains two parallel alembic migration branches.
+
+The first one, called 'expand', is used to store expansion-only migration
+rules. Those rules are strictly additive and can be applied while
+neutron-server is running. Examples of additive database schema changes are:
+creating a new table, adding a new table column, adding a new index, etc.
+
+The second branch, called 'contract', is used to store those migration rules
+that are not safe to apply while neutron-server is running. Those include:
+column or table removal, moving data from one part of the database into another
+(renaming a column, transforming single table into multiple, etc.), introducing
+or modifying constraints, etc.
+
+The intent of the split is to allow invoking those safe migrations from
+'expand' branch while neutron-server is running, reducing downtime needed to
+upgrade the service.
+
+For more details, see the `Expand and Contract Scripts`_ section below.
+
+
+Developers
+----------
+
+A database migration script is required when you submit a change to Neutron or
+a sub-project that alters the database model definition. The migration script
+is a special python file that includes code to upgrade the database to match
+the changes in the model definition. Alembic will execute these scripts in
+order to provide a linear migration path between revisions. The
+neutron-db-manage command can be used to generate migration scripts for you to
+complete. The operations in the template are those supported by the Alembic
+migration library.
+
+
+Script Auto-generation
+~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+ neutron-db-manage revision -m "description of revision" --autogenerate
+
+This generates a prepopulated template with the changes needed to match the
+database state with the models.  You should inspect the autogenerated template
+to ensure that the proper models have been altered.
+
+In rare circumstances, you may want to start with an empty migration template
+and manually author the changes necessary for an upgrade.  You can create a
+blank file via::
+
+ neutron-db-manage revision -m "description of revision"
+
+The timeline on each alembic branch should remain linear and not interleave
+with other branches, so that there is a clear path when upgrading. To verify
+that alembic branches maintain linear timelines, you can run this command::
+
+ neutron-db-manage check_migration
+
+If this command reports an error, you can troubleshoot by showing the migration
+timelines using the ``history`` command::
+
+ neutron-db-manage history
+
+
+Expand and Contract Scripts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The obsolete "branchless" design of a migration script included that it
+indicates a specific "version" of the schema, and includes directives that
+apply all necessary changes to the database at once.  If we look for example at
+the script ``2d2a8a565438_hierarchical_binding.py``, we will see::
+
+    # .../alembic_migrations/versions/2d2a8a565438_hierarchical_binding.py
+
+    def upgrade():
+
+        # .. inspection code ...
+
+        op.create_table(
+            'ml2_port_binding_levels',
+            sa.Column('port_id', sa.String(length=36), nullable=False),
+            sa.Column('host', sa.String(length=255), nullable=False),
+            # ... more columns ...
+        )
+
+        for table in port_binding_tables:
+            op.execute((
+                "INSERT INTO ml2_port_binding_levels "
+                "SELECT port_id, host, 0 AS level, driver, segment AS segment_id "
+                "FROM %s "
+                "WHERE host <> '' "
+                "AND driver <> '';"
+            ) % table)
+
+        op.drop_constraint(fk_name_dvr[0], 'ml2_dvr_port_bindings', 'foreignkey')
+        op.drop_column('ml2_dvr_port_bindings', 'cap_port_filter')
+        op.drop_column('ml2_dvr_port_bindings', 'segment')
+        op.drop_column('ml2_dvr_port_bindings', 'driver')
+
+        # ... more DROP instructions ...
+
+The above script contains directives that are both under the "expand"
+and "contract" categories, as well as some data migrations.  the ``op.create_table``
+directive is an "expand"; it may be run safely while the old version of the
+application still runs, as the old code simply doesn't look for this table.
+The ``op.drop_constraint`` and ``op.drop_column`` directives are
+"contract" directives (the drop column moreso than the drop constraint); running
+at least the ``op.drop_column`` directives means that the old version of the
+application will fail, as it will attempt to access these columns which no longer
+exist.
+
+The data migrations in this script are adding new
+rows to the newly added ``ml2_port_binding_levels`` table.
+
+Under the new migration script directory structure, the above script would be
+stated as two scripts; an "expand" and a "contract" script::
+
+    # expansion operations
+    # .../alembic_migrations/versions/liberty/expand/2bde560fc638_hierarchical_binding.py
+
+    def upgrade():
+
+        op.create_table(
+            'ml2_port_binding_levels',
+            sa.Column('port_id', sa.String(length=36), nullable=False),
+            sa.Column('host', sa.String(length=255), nullable=False),
+            # ... more columns ...
+        )
+
+
+    # contraction operations
+    # .../alembic_migrations/versions/liberty/contract/4405aedc050e_hierarchical_binding.py
+
+    def upgrade():
+
+        for table in port_binding_tables:
+            op.execute((
+                "INSERT INTO ml2_port_binding_levels "
+                "SELECT port_id, host, 0 AS level, driver, segment AS segment_id "
+                "FROM %s "
+                "WHERE host <> '' "
+                "AND driver <> '';"
+            ) % table)
+
+        op.drop_constraint(fk_name_dvr[0], 'ml2_dvr_port_bindings', 'foreignkey')
+        op.drop_column('ml2_dvr_port_bindings', 'cap_port_filter')
+        op.drop_column('ml2_dvr_port_bindings', 'segment')
+        op.drop_column('ml2_dvr_port_bindings', 'driver')
+
+        # ... more DROP instructions ...
+
+The two scripts would be present in different subdirectories and also part of
+entirely separate versioning streams.  The "expand" operations are in the
+"expand" script, and the "contract" operations are in the "contract" script.
+
+For the time being, data migration rules also belong to contract branch. There
+is expectation that eventually live data migrations move into middleware that
+will be aware about different database schema elements to converge on, but
+Neutron is still not there.
+
+Scripts that contain only expansion or contraction rules do not require a split
+into two parts.
+
+If a contraction script depends on a script from expansion stream, the
+following directive should be added in the contraction script::
+
+    depends_on = ('<expansion-revision>',)
+
+
+Applying database migration rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To apply just expansion rules, execute::
+
+ neutron-db-manage upgrade expand@head
+
+After the first step is done, you can stop neutron-server, apply remaining
+non-expansive migration rules, if any::
+
+ neutron-db-manage upgrade contract@head
+
+and finally, start your neutron-server again.
+
+If you are not interested in applying safe migration rules while the service is
+running, you can still upgrade database the old way, by stopping the service,
+and then applying all available rules::
+
+ neutron-db-manage upgrade head[s]
+
+It will apply all the rules from both the expand and the contract branches, in
+proper order.

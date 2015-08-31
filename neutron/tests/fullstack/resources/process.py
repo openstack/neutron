@@ -90,7 +90,10 @@ class NeutronServerFixture(fixtures.Fixture):
 
     NEUTRON_SERVER = "neutron-server"
 
-    def __init__(self, test_name, neutron_cfg_fixture, plugin_cfg_fixture):
+    def __init__(self, env_desc, host_desc,
+                 test_name, neutron_cfg_fixture, plugin_cfg_fixture):
+        self.env_desc = env_desc
+        self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.plugin_cfg_fixture = plugin_cfg_fixture
@@ -125,7 +128,10 @@ class OVSAgentFixture(fixtures.Fixture):
 
     NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
 
-    def __init__(self, test_name, neutron_cfg_fixture, agent_cfg_fixture):
+    def __init__(self, env_desc, host_desc,
+                 test_name, neutron_cfg_fixture, agent_cfg_fixture):
+        self.env_desc = env_desc
+        self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.neutron_config = self.neutron_cfg_fixture.config
@@ -151,8 +157,11 @@ class L3AgentFixture(fixtures.Fixture):
 
     NEUTRON_L3_AGENT = "neutron-l3-agent"
 
-    def __init__(self, test_name, neutron_cfg_fixture, l3_agent_cfg_fixture):
+    def __init__(self, env_desc, host_desc,
+                 test_name, neutron_cfg_fixture, l3_agent_cfg_fixture):
         super(L3AgentFixture, self).__init__()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.l3_agent_cfg_fixture = l3_agent_cfg_fixture

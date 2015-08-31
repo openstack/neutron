@@ -33,7 +33,7 @@ CONSTRAINT_NAME = 'uniq_ports0network_id0mac_address'
 
 def upgrade():
     op.create_unique_constraint(
-        name=CONSTRAINT_NAME,
-        source=TABLE_NAME,
-        local_cols=['network_id', 'mac_address']
+        constraint_name=CONSTRAINT_NAME,
+        table_name=TABLE_NAME,
+        columns=['network_id', 'mac_address']
     )

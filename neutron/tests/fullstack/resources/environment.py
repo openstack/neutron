@@ -25,13 +25,21 @@ from neutron.tests.fullstack.resources import process
 LOG = logging.getLogger(__name__)
 
 
+class EnvironmentDescription(object):
+    """A set of characteristics of an environment setup.
+
+    Does the setup, as a whole, support tunneling? How about l2pop?
+    """
+    pass
+
+
 class HostDescription(object):
     """A set of characteristics of an environment Host.
 
     What agents should the host spawn? What mode should each agent operate
     under?
     """
-    def __init__(self, l3_agent=True):
+    def __init__(self, l3_agent=False):
         self.l3_agent = l3_agent
 
 
@@ -50,18 +58,20 @@ class Host(fixtures.Fixture):
     and disconnects the host from other hosts.
     """
 
-    def __init__(self, test_name, neutron_config, host_description,
+    def __init__(self, env_desc, host_desc,
+                 test_name, neutron_config,
                  central_data_bridge, central_external_bridge):
+        self.env_desc = env_desc
+        self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_config = neutron_config
-        self.host_description = host_description
         self.central_data_bridge = central_data_bridge
         self.central_external_bridge = central_external_bridge
         self.agents = {}
 
     def _setUp(self):
         agent_cfg_fixture = config.OVSConfigFixture(
-            self.neutron_config.temp_dir)
+            self.env_desc, self.host_desc, self.neutron_config.temp_dir)
         self.useFixture(agent_cfg_fixture)
 
         br_phys = self.useFixture(
@@ -71,11 +81,13 @@ class Host(fixtures.Fixture):
 
         self.ovs_agent = self.useFixture(
             process.OVSAgentFixture(
+                self.env_desc, self.host_desc,
                 self.test_name, self.neutron_config, agent_cfg_fixture))
 
-        if self.host_description.l3_agent:
+        if self.host_desc.l3_agent:
             l3_agent_cfg_fixture = self.useFixture(
                 config.L3ConfigFixture(
+                    self.env_desc, self.host_desc,
                     self.neutron_config.temp_dir,
                     self.ovs_agent.agent_cfg_fixture.get_br_int_name()))
             br_ex = self.useFixture(
@@ -84,6 +96,7 @@ class Host(fixtures.Fixture):
             self.connect_to_external_network(br_ex)
             self.l3_agent = self.useFixture(
                 process.L3AgentFixture(
+                    self.env_desc, self.host_desc,
                     self.test_name,
                     self.neutron_config,
                     l3_agent_cfg_fixture))
@@ -97,6 +110,10 @@ class Host(fixtures.Fixture):
     def connect_to_external_network(self, host_external_bridge):
         net_helpers.create_patch_ports(
             self.central_external_bridge, host_external_bridge)
+
+    @property
+    def hostname(self):
+        return self.neutron_config.config.DEFAULT.host
 
     @property
     def l3_agent(self):
@@ -124,13 +141,15 @@ class Environment(fixtures.Fixture):
     the type of Host to create.
     """
 
-    def __init__(self, hosts_descriptions):
+    def __init__(self, env_desc, hosts_desc):
         """
-        :param hosts_descriptions: A list of HostDescription instances.
+        :param env_desc: An EnvironmentDescription instance.
+        :param hosts_desc: A list of HostDescription instances.
         """
 
         super(Environment, self).__init__()
-        self.hosts_descriptions = hosts_descriptions
+        self.env_desc = env_desc
+        self.hosts_desc = hosts_desc
         self.hosts = []
 
     def wait_until_env_is_up(self):
@@ -144,33 +163,37 @@ class Environment(fixtures.Fixture):
         except nc_exc.NeutronClientException:
             return False
 
-    def _create_host(self, description):
+    def _create_host(self, host_desc):
         temp_dir = self.useFixture(fixtures.TempDir()).path
         neutron_config = config.NeutronConfigFixture(
-            temp_dir, cfg.CONF.database.connection,
-            self.rabbitmq_environment)
+            self.env_desc, host_desc, temp_dir,
+            cfg.CONF.database.connection, self.rabbitmq_environment)
         self.useFixture(neutron_config)
 
         return self.useFixture(
-            Host(self.test_name,
+            Host(self.env_desc,
+                 host_desc,
+                 self.test_name,
                  neutron_config,
-                 description,
                  self.central_data_bridge,
                  self.central_external_bridge))
 
     def _setUp(self):
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
+
         self.rabbitmq_environment = self.useFixture(
             process.RabbitmqEnvironmentFixture())
+
         plugin_cfg_fixture = self.useFixture(
-            config.ML2ConfigFixture(self.temp_dir, 'vlan'))
+            config.ML2ConfigFixture(
+                self.env_desc, None, self.temp_dir, 'vlan'))
         neutron_cfg_fixture = self.useFixture(
             config.NeutronConfigFixture(
-                self.temp_dir,
-                cfg.CONF.database.connection,
-                self.rabbitmq_environment))
+                self.env_desc, None, self.temp_dir,
+                cfg.CONF.database.connection, self.rabbitmq_environment))
         self.neutron_server = self.useFixture(
             process.NeutronServerFixture(
+                self.env_desc, None,
                 self.test_name, neutron_cfg_fixture, plugin_cfg_fixture))
 
         self.central_data_bridge = self.useFixture(
@@ -178,7 +201,6 @@ class Environment(fixtures.Fixture):
         self.central_external_bridge = self.useFixture(
             net_helpers.OVSBridgeFixture('cnt-ex')).bridge
 
-        self.hosts = [self._create_host(description) for description in
-                      self.hosts_descriptions]
+        self.hosts = [self._create_host(desc) for desc in self.hosts_desc]
 
         self.wait_until_env_is_up()

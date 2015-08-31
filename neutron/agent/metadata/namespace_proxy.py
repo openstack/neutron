@@ -92,7 +92,7 @@ class NetworkMetadataProxyHandler(object):
             response = webob.Response()
             response.status = resp.status
             response.headers['Content-Type'] = resp['content-type']
-            response.body = content
+            response.body = wsgi.encode_body(content)
             return response
         elif resp.status == 400:
             return webob.exc.HTTPBadRequest()

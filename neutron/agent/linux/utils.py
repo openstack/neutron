@@ -33,6 +33,7 @@ from oslo_log import log as logging
 from oslo_log import loggers
 from oslo_rootwrap import client
 from oslo_utils import excutils
+import six
 from six.moves import http_client as httplib
 
 from neutron.agent.common import config
@@ -82,7 +83,6 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
-    LOG.debug("Running command: %s", cmd)
     obj = utils.subprocess_popen(cmd, shell=False,
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -98,7 +98,6 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
     # In practice, no neutron code should be trying to execute something that
     # would throw those errors, and if it does it should be fixed as opposed to
     # just logging the execution error.
-    LOG.debug("Running command (rootwrap daemon): %s", cmd)
     client = RootwrapDaemonHelper.get_client()
     return client.execute(cmd, process_input)
 
@@ -107,29 +106,46 @@ def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
     try:
+        if (process_input is None or
+            isinstance(process_input, six.binary_type)):
+            _process_input = process_input
+        else:
+            _process_input = process_input.encode('utf-8')
         if run_as_root and cfg.CONF.AGENT.root_helper_daemon:
             returncode, _stdout, _stderr = (
                 execute_rootwrap_daemon(cmd, process_input, addl_env))
         else:
             obj, cmd = create_process(cmd, run_as_root=run_as_root,
                                       addl_env=addl_env)
-            _stdout, _stderr = obj.communicate(process_input)
+            _stdout, _stderr = obj.communicate(_process_input)
             returncode = obj.returncode
             obj.stdin.close()
+        if six.PY3:
+            if isinstance(_stdout, bytes):
+                try:
+                    _stdout = _stdout.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
+            if isinstance(_stderr, bytes):
+                try:
+                    _stderr = _stderr.decode(encoding='utf-8')
+                except UnicodeError:
+                    pass
 
-        m = _("\nCommand: {cmd}\nExit code: {code}\nStdin: {stdin}\n"
-              "Stdout: {stdout}\nStderr: {stderr}").format(
+        m = _("\nCommand: {cmd}\nExit code: {code}\n").format(
                   cmd=cmd,
-                  code=returncode,
-                  stdin=process_input or '',
-                  stdout=_stdout,
-                  stderr=_stderr)
+                  code=returncode)
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode in extra_ok_codes:
             returncode = None
 
         if returncode and log_fail_as_error:
+            m += ("Stdin: {stdin}\n"
+                  "Stdout: {stdout}\nStderr: {stderr}").format(
+                stdin=process_input or '',
+                stdout=_stdout,
+                stderr=_stderr)
             LOG.error(m)
         else:
             LOG.debug(m)
@@ -149,13 +165,15 @@ def get_interface_mac(interface):
     MAC_START = 18
     MAC_END = 24
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,
-        struct.pack('256s', interface[:constants.DEVICE_NAME_MAX_LEN]))
+    dev = interface[:constants.DEVICE_NAME_MAX_LEN]
+    if isinstance(dev, six.text_type):
+        dev = dev.encode('utf-8')
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]
 
 
-def replace_file(file_name, data):
+def replace_file(file_name, data, file_mode=0o644):
     """Replaces the contents of file_name with data in a safe manner.
 
     First write to a temp file and then rename. Since POSIX renames are
@@ -168,7 +186,7 @@ def replace_file(file_name, data):
     tmp_file = tempfile.NamedTemporaryFile('w+', dir=base_dir, delete=False)
     tmp_file.write(data)
     tmp_file.close()
-    os.chmod(tmp_file.name, 0o644)
+    os.chmod(tmp_file.name, file_mode)
     os.rename(tmp_file.name, file_name)
 
 

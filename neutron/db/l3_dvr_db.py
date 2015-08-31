@@ -35,6 +35,7 @@ from neutron.extensions import portbindings
 from neutron.i18n import _LI
 from neutron import manager
 from neutron.plugins.common import constants
+from neutron.plugins.common import utils as p_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -91,6 +92,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                            "to centralized"))
         elif (not router_db.extra_attributes.distributed and
               router_res.get('distributed')):
+            # router should be disabled in order for upgrade
+            if router_db.admin_state_up:
+                msg = _('Cannot upgrade active router to distributed. Please '
+                        'set router admin_state_up to False prior to upgrade.')
+                raise n_exc.BadRequest(resource='router', msg=msg)
+
             # Notify advanced services of the imminent state transition
             # for the router.
             try:
@@ -319,6 +326,28 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return super(L3_NAT_with_dvr_db_mixin,
                      self)._port_has_ipv6_address(port)
 
+    def _check_dvr_router_remove_required_and_notify_agent(
+        self, context, router, port, subnets):
+        if router.extra_attributes.distributed:
+            if router.gw_port and subnets[0]['id']:
+                self.delete_csnat_router_interface_ports(
+                    context.elevated(), router, subnet_id=subnets[0]['id'])
+            plugin = manager.NeutronManager.get_service_plugins().get(
+                        constants.L3_ROUTER_NAT)
+            l3_agents = plugin.get_l3_agents_hosting_routers(context,
+                                                             [router['id']])
+            for l3_agent in l3_agents:
+                if not plugin.check_ports_exist_on_l3agent(context, l3_agent,
+                                                           router['id']):
+                    plugin.remove_router_from_l3_agent(
+                        context, l3_agent['id'], router['id'])
+        router_interface_info = self._make_router_interface_info(
+            router['id'], port['tenant_id'], port['id'], subnets[0]['id'],
+            [subnet['id'] for subnet in subnets])
+        self.notify_router_interface_action(
+            context, router_interface_info, 'remove')
+        return router_interface_info
+
     def remove_router_interface(self, context, router_id, interface_info):
         remove_by_port, remove_by_subnet = (
             self._validate_interface_info(interface_info, for_removal=True)
@@ -331,32 +360,16 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if remove_by_port:
             port, subnets = self._remove_interface_by_port(
                     context, router_id, port_id, subnet_id, device_owner)
+
         # remove_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that at least one of remote_by_*
         # is True.
         else:
             port, subnets = self._remove_interface_by_subnet(
                     context, router_id, subnet_id, device_owner)
-
-        if router.extra_attributes.distributed:
-            if router.gw_port:
-                self.delete_csnat_router_interface_ports(
-                    context.elevated(), router, subnet_id=subnet_id)
-            plugin = manager.NeutronManager.get_service_plugins().get(
-                        constants.L3_ROUTER_NAT)
-            l3_agents = plugin.get_l3_agents_hosting_routers(context,
-                                                             [router_id])
-            for l3_agent in l3_agents:
-                if not plugin.check_ports_exist_on_l3agent(context, l3_agent,
-                                                           router_id):
-                    plugin.remove_router_from_l3_agent(
-                        context, l3_agent['id'], router_id)
-
-        router_interface_info = self._make_router_interface_info(
-            router_id, port['tenant_id'], port['id'], subnets[0]['id'],
-            [subnet['id'] for subnet in subnets])
-        self.notify_router_interface_action(
-            context, router_interface_info, 'remove')
+        router_interface_info = (
+            self._check_dvr_router_remove_required_and_notify_agent(
+                context, router, port, subnets))
         return router_interface_info
 
     def _get_snat_sync_interfaces(self, context, router_ids):
@@ -557,17 +570,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if not f_port:
                 LOG.info(_LI('Agent Gateway port does not exist,'
                              ' so create one: %s'), f_port)
-                agent_port = self._core_plugin.create_port(
-                    context,
-                    {'port': {'tenant_id': '',
-                              'network_id': network_id,
-                              'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                              'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                              'device_id': l3_agent_db['id'],
-                              'device_owner': DEVICE_OWNER_AGENT_GW,
-                              'binding:host_id': host,
-                              'admin_state_up': True,
-                              'name': ''}})
+                port_data = {'tenant_id': '',
+                             'network_id': network_id,
+                             'device_id': l3_agent_db['id'],
+                             'device_owner': DEVICE_OWNER_AGENT_GW,
+                             'binding:host_id': host,
+                             'admin_state_up': True,
+                             'name': ''}
+                agent_port = p_utils.create_port(self._core_plugin, context,
+                                                 {'port': port_data})
                 if agent_port:
                     self._populate_subnets_for_ports(context, [agent_port])
                     return agent_port
@@ -592,16 +603,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def _add_csnat_router_interface_port(
             self, context, router, network_id, subnet_id, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
-        snat_port = self._core_plugin.create_port(
-            context,
-            {'port': {'tenant_id': '',
-                      'network_id': network_id,
-                      'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                      'fixed_ips': [{'subnet_id': subnet_id}],
-                      'device_id': router.id,
-                      'device_owner': DEVICE_OWNER_DVR_SNAT,
-                      'admin_state_up': True,
-                      'name': ''}})
+        port_data = {'tenant_id': '',
+                     'network_id': network_id,
+                     'fixed_ips': [{'subnet_id': subnet_id}],
+                     'device_id': router.id,
+                     'device_owner': DEVICE_OWNER_DVR_SNAT,
+                     'admin_state_up': True,
+                     'name': ''}
+        snat_port = p_utils.create_port(self._core_plugin, context,
+                                        {'port': port_data})
         if not snat_port:
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)

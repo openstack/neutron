@@ -10,9 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
 import time
+import urllib
 
+
+from oslo_serialization import jsonutils as json
 from six.moves.urllib import parse
 from tempest_lib.common.utils import misc
 from tempest_lib import exceptions as lib_exc
@@ -65,7 +67,11 @@ class NetworkClientJSON(service_client.ServiceClient):
             'metering_label_rules': 'metering',
             'firewall_rules': 'fw',
             'firewall_policies': 'fw',
-            'firewalls': 'fw'
+            'firewalls': 'fw',
+            'policies': 'qos',
+            'bandwidth_limit_rules': 'qos',
+            'rule_types': 'qos',
+            'rbac-policies': '',
         }
         service_prefix = service_resource_prefix_map.get(
             plural_name)
@@ -90,7 +96,9 @@ class NetworkClientJSON(service_client.ServiceClient):
             'ikepolicy': 'ikepolicies',
             'ipsec_site_connection': 'ipsec-site-connections',
             'quotas': 'quotas',
-            'firewall_policy': 'firewall_policies'
+            'firewall_policy': 'firewall_policies',
+            'qos_policy': 'policies',
+            'rbac_policy': 'rbac_policies',
         }
         return resource_plural_map.get(resource_name, resource_name + 's')
 
@@ -617,6 +625,91 @@ class NetworkClientJSON(service_client.ServiceClient):
         update_body = {"firewall_rule_id": firewall_rule_id}
         update_body = json.dumps(update_body)
         resp, body = self.put(uri, update_body)
+        self.expected_success(200, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_qos_policies(self, **filters):
+        if filters:
+            uri = '%s/qos/policies?%s' % (self.uri_prefix,
+                                          urllib.urlencode(filters))
+        else:
+            uri = '%s/qos/policies' % self.uri_prefix
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def create_qos_policy(self, name, description, shared, tenant_id=None):
+        uri = '%s/qos/policies' % self.uri_prefix
+        post_data = {'policy': {
+                'name': name,
+                'description': description,
+                'shared': shared
+            }}
+        if tenant_id is not None:
+            post_data['policy']['tenant_id'] = tenant_id
+        resp, body = self.post(uri, self.serialize(post_data))
+        body = self.deserialize_single(body)
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_qos_policy(self, policy_id, **kwargs):
+        uri = '%s/qos/policies/%s' % (self.uri_prefix, policy_id)
+        post_data = self.serialize({'policy': kwargs})
+        resp, body = self.put(uri, post_data)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def create_bandwidth_limit_rule(self, policy_id, max_kbps, max_burst_kbps):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
+            self.uri_prefix, policy_id)
+        post_data = self.serialize(
+            {'bandwidth_limit_rule': {
+                'max_kbps': max_kbps,
+                'max_burst_kbps': max_burst_kbps}
+            })
+        resp, body = self.post(uri, post_data)
+        self.expected_success(201, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_bandwidth_limit_rules(self, policy_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
+            self.uri_prefix, policy_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def show_bandwidth_limit_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_bandwidth_limit_rule(self, policy_id, rule_id, **kwargs):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        post_data = {'bandwidth_limit_rule': kwargs}
+        resp, body = self.put(uri, json.dumps(post_data))
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_bandwidth_limit_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_qos_rule_types(self):
+        uri = '%s/qos/rule-types' % self.uri_prefix
+        resp, body = self.get(uri)
         self.expected_success(200, resp.status)
         body = json.loads(body)
         return service_client.ResponseBody(resp, body)

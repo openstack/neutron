@@ -19,6 +19,7 @@ import netaddr
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
+import webob.exc
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -170,6 +171,10 @@ def _validate_mac_address(data, valid_values=None):
         valid_mac = netaddr.valid_mac(_validate_no_whitespace(data))
     except Exception:
         valid_mac = False
+
+    if valid_mac:
+        valid_mac = not netaddr.EUI(data) in map(netaddr.EUI,
+                    constants.INVALID_MAC_ADDRESSES)
     # TODO(arosen): The code in this file should be refactored
     # so it catches the correct exceptions. _validate_no_whitespace
     # raises AttributeError if data is None.
@@ -825,7 +830,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True},
         'tenant_id': {'allow_post': True,
                       'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'prefixes': {'allow_post': True,
@@ -884,3 +889,65 @@ PLURALS = {NETWORKS: NETWORK,
            'allocation_pools': 'allocation_pool',
            'fixed_ips': 'fixed_ip',
            'extensions': 'extension'}
+
+
+def fill_default_value(attr_info, res_dict,
+                       exc_cls=ValueError,
+                       check_allow_post=True):
+    for attr, attr_vals in six.iteritems(attr_info):
+        if attr_vals['allow_post']:
+            if ('default' not in attr_vals and
+                attr not in res_dict):
+                msg = _("Failed to parse request. Required "
+                        "attribute '%s' not specified") % attr
+                raise exc_cls(msg)
+            res_dict[attr] = res_dict.get(attr,
+                                          attr_vals.get('default'))
+        elif check_allow_post:
+            if attr in res_dict:
+                msg = _("Attribute '%s' not allowed in POST") % attr
+                raise exc_cls(msg)
+
+
+def convert_value(attr_info, res_dict, exc_cls=ValueError):
+    for attr, attr_vals in six.iteritems(attr_info):
+        if (attr not in res_dict or
+            res_dict[attr] is ATTR_NOT_SPECIFIED):
+            continue
+        # Convert values if necessary
+        if 'convert_to' in attr_vals:
+            res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
+        # Check that configured values are correct
+        if 'validate' not in attr_vals:
+            continue
+        for rule in attr_vals['validate']:
+            res = validators[rule](res_dict[attr], attr_vals['validate'][rule])
+            if res:
+                msg_dict = dict(attr=attr, reason=res)
+                msg = _("Invalid input for %(attr)s. "
+                        "Reason: %(reason)s.") % msg_dict
+                raise exc_cls(msg)
+
+
+def populate_tenant_id(context, res_dict, attr_info, is_create):
+    if (('tenant_id' in res_dict and
+         res_dict['tenant_id'] != context.tenant_id and
+         not context.is_admin)):
+        msg = _("Specifying 'tenant_id' other than authenticated "
+                "tenant in request requires admin privileges")
+        raise webob.exc.HTTPBadRequest(msg)
+
+    if is_create and 'tenant_id' not in res_dict:
+        if context.tenant_id:
+            res_dict['tenant_id'] = context.tenant_id
+        elif 'tenant_id' in attr_info:
+            msg = _("Running without keystone AuthN requires "
+                    "that tenant_id is specified")
+            raise webob.exc.HTTPBadRequest(msg)
+
+
+def verify_attributes(res_dict, attr_info):
+    extra_keys = set(res_dict.keys()) - set(attr_info.keys())
+    if extra_keys:
+        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+        raise webob.exc.HTTPBadRequest(msg)

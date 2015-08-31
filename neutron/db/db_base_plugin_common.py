@@ -29,6 +29,40 @@ from neutron.db import models_v2
 LOG = logging.getLogger(__name__)
 
 
+def convert_result_to_dict(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        result = f(*args, **kwargs)
+
+        if result is None:
+            return None
+        elif isinstance(result, list):
+            return [r.to_dict() for r in result]
+        else:
+            return result.to_dict()
+    return inner
+
+
+def filter_fields(f):
+    @functools.wraps(f)
+    def inner_filter(*args, **kwargs):
+        result = f(*args, **kwargs)
+        fields = kwargs.get('fields')
+        if not fields:
+            try:
+                pos = f.__code__.co_varnames.index('fields')
+                fields = args[pos]
+            except (IndexError, ValueError):
+                return result
+
+        do_filter = lambda d: {k: v for k, v in d.items() if k in fields}
+        if isinstance(result, list):
+            return [do_filter(obj) for obj in result]
+        else:
+            return do_filter(result)
+    return inner_filter
+
+
 class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     """Stores getters and helper methods for db_base_plugin_v2
 
@@ -134,6 +168,13 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                              for ip in port["fixed_ips"]],
                "device_id": port["device_id"],
                "device_owner": port["device_owner"]}
+        if "dns_name" in port:
+            res["dns_name"] = port["dns_name"]
+        if "dns_assignment" in port:
+            res["dns_assignment"] = [{"ip_address": a["ip_address"],
+                                      "hostname": a["hostname"],
+                                      "fqdn": a["fqdn"]}
+                                     for a in port["dns_assignment"]]
         # Call auxiliary extend functions, if any
         if process_extensions:
             self._apply_dict_extend_functions(

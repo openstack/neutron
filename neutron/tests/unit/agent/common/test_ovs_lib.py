@@ -22,6 +22,8 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.common import exceptions
 from neutron.plugins.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as p_const
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -108,72 +110,8 @@ class OVS_Lib_Test(base.BaseTestCase):
         # test __str__
         str(port)
 
-    def test_set_controller(self):
-        controller_names = ['tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555']
-        self.br.set_controller(controller_names)
-        self._verify_vsctl_mock('set-controller', self.BR_NAME,
-                                'tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555')
-
-    def test_del_controller(self):
-        self.br.del_controller()
-        self._verify_vsctl_mock('del-controller', self.BR_NAME)
-
-    def test_get_controller(self):
-        self.execute.return_value = (
-            'tcp:127.0.0.1:6633\\ntcp:172.17.16.10:5555')
-        names = self.br.get_controller()
-        self.assertEqual(names,
-                         ['tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555'])
-        self._verify_vsctl_mock('get-controller', self.BR_NAME)
-
-    def test_set_secure_mode(self):
-        self.br.set_secure_mode()
-        self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'secure')
-
-    def test_set_standalone_mode(self):
-        self.br.set_standalone_mode()
-        self._verify_vsctl_mock('set-fail-mode', self.BR_NAME, 'standalone')
-
-    def test_set_protocols(self):
-        protocols = 'OpenFlow13'
-        self.br.set_protocols(protocols)
-        self._verify_vsctl_mock('set', 'Bridge', self.BR_NAME,
-                                "protocols=%s" % protocols)
-
-    def test_create(self):
-        self.br.add_bridge(self.BR_NAME)
-
-        self.br.create()
-
-    def test_destroy(self):
-        self.br.delete_bridge(self.BR_NAME)
-
-        self.br.destroy()
-
-    def test_reset_bridge(self):
-        self.br.destroy()
-        self.br.create()
-
-        self.br.reset_bridge()
-
     def _build_timeout_opt(self, exp_timeout):
         return "--timeout=%d" % exp_timeout if exp_timeout else self.TO
-
-    def _test_delete_port(self, exp_timeout=None):
-        pname = "tap5"
-        self.br.delete_port(pname)
-        self._verify_vsctl_mock("--if-exists", "del-port", self.BR_NAME, pname)
-
-    def test_delete_port(self):
-        self._test_delete_port()
-
-    def test_call_command_non_default_timeput(self):
-        # This test is only for verifying a non-default timeout
-        # is correctly applied. Does not need to be repeated for
-        # every ovs_lib method
-        new_timeout = 5
-        self.br.vsctl_timeout = new_timeout
-        self._test_delete_port(new_timeout)
 
     def test_add_flow(self):
         ofport = "99"
@@ -182,29 +120,36 @@ class OVS_Lib_Test(base.BaseTestCase):
         cidr = '192.168.1.0/24'
 
         flow_dict_1 = collections.OrderedDict([
+            ('cookie', 1234),
             ('priority', 2),
             ('dl_src', 'ca:fe:de:ad:be:ef'),
             ('actions', 'strip_vlan,output:0')])
         flow_dict_2 = collections.OrderedDict([
+            ('cookie', 1254),
             ('priority', 1),
             ('actions', 'normal')])
         flow_dict_3 = collections.OrderedDict([
+            ('cookie', 1257),
             ('priority', 2),
             ('actions', 'drop')])
         flow_dict_4 = collections.OrderedDict([
+            ('cookie', 1274),
             ('priority', 2),
             ('in_port', ofport),
             ('actions', 'drop')])
         flow_dict_5 = collections.OrderedDict([
+            ('cookie', 1284),
             ('priority', 4),
             ('in_port', ofport),
             ('dl_vlan', vid),
             ('actions', "strip_vlan,set_tunnel:%s,normal" % (lsw_id))])
         flow_dict_6 = collections.OrderedDict([
+            ('cookie', 1754),
             ('priority', 3),
             ('tun_id', lsw_id),
             ('actions', "mod_vlan_vid:%s,output:%s" % (vid, ofport))])
         flow_dict_7 = collections.OrderedDict([
+            ('cookie', 1256),
             ('priority', 4),
             ('nw_src', cidr),
             ('proto', 'arp'),
@@ -220,36 +165,39 @@ class OVS_Lib_Test(base.BaseTestCase):
         expected_calls = [
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1234,"
                                  "priority=2,dl_src=ca:fe:de:ad:be:ef,"
                                  "actions=strip_vlan,output:0")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1254,"
                                  "priority=1,actions=normal")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1257,"
                                  "priority=2,actions=drop")),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=2,"
-                                 "in_port=%s,actions=drop" % ofport)),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1274,"
+                                 "priority=2,in_port=%s,actions=drop" % ofport
+                             )),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,"
+                                 "hard_timeout=0,idle_timeout=0,cookie=1284,"
                                  "priority=4,dl_vlan=%s,in_port=%s,"
                                  "actions=strip_vlan,set_tunnel:%s,normal" %
                                  (vid, ofport, lsw_id))),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=3,"
-                                 "tun_id=%s,actions=mod_vlan_vid:%s,"
-                                 "output:%s" % (lsw_id, vid, ofport))),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1754,"
+                                 "priority=3,"
+                                 "tun_id=%s,actions=mod_vlan_vid:%s,output:%s"
+                                 % (lsw_id, vid, ofport))),
             self._ofctl_mock("add-flows", self.BR_NAME, '-',
                              process_input=OFCTLParamListMatcher(
-                                 "hard_timeout=0,idle_timeout=0,priority=4,"
-                                 "nw_src=%s,arp,actions=drop" % cidr)),
+                                 "hard_timeout=0,idle_timeout=0,cookie=1256,"
+                                 "priority=4,nw_src=%s,arp,actions=drop"
+                                 % cidr)),
         ]
         self.execute.assert_has_calls(expected_calls)
 
@@ -269,6 +217,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([
+            ('cookie', 1234),
             ('priority', 1),
             ('hard_timeout', 1000),
             ('idle_timeout', 2000),
@@ -277,17 +226,18 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.add_flow(**flow_dict)
         self._verify_ofctl_mock(
             "add-flows", self.BR_NAME, '-',
-            process_input="hard_timeout=1000,idle_timeout=2000,priority=1,"
-            "actions=normal")
+            process_input="hard_timeout=1000,idle_timeout=2000,"
+                          "priority=1,cookie=1234,actions=normal")
 
     def test_add_flow_default_priority(self):
-        flow_dict = collections.OrderedDict([('actions', 'normal')])
+        flow_dict = collections.OrderedDict([('actions', 'normal'),
+                                             ('cookie', 1234)])
 
         self.br.add_flow(**flow_dict)
         self._verify_ofctl_mock(
             "add-flows", self.BR_NAME, '-',
             process_input="hard_timeout=0,idle_timeout=0,priority=1,"
-                          "actions=normal")
+                          "cookie=1234,actions=normal")
 
     def _test_get_port_ofport(self, ofport, expected_result):
         pname = "tap99"
@@ -307,13 +257,15 @@ class OVS_Lib_Test(base.BaseTestCase):
         self._test_get_port_ofport(ovs_lib.INVALID_OFPORT,
                                    ovs_lib.INVALID_OFPORT)
 
-    def test_get_datapath_id(self):
-        datapath_id = '"0000b67f4fbcc149"'
-        self.execute.return_value = self._encode_ovs_json(['datapath_id'],
-                                                          [[datapath_id]])
-        self.assertEqual(self.br.get_datapath_id(), datapath_id)
-        self._verify_vsctl_mock("--columns=datapath_id", "list", "Bridge",
-                                self.BR_NAME)
+    def test_default_datapath(self):
+        # verify kernel datapath is default
+        expected = p_const.OVS_DATAPATH_SYSTEM
+        self.assertEqual(expected, self.br.datapath_type)
+
+    def test_non_default_datapath(self):
+        expected = p_const.OVS_DATAPATH_NETDEV
+        self.br = ovs_lib.OVSBridge(self.BR_NAME, datapath_type=expected)
+        self.assertEqual(expected, self.br.datapath_type)
 
     def test_count_flows(self):
         self.execute.return_value = 'ignore\nflow-1\n'
@@ -446,25 +398,6 @@ class OVS_Lib_Test(base.BaseTestCase):
                                     dont_fragment),
             ofport)
 
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_add_patch_port(self):
-        pname = "tap99"
-        peer = "bar10"
-        ofport = 6
-
-        # Each element is a tuple of (expected mock call, return_value)
-        command = ["--may-exist", "add-port", self.BR_NAME, pname]
-        command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=patch", "options:peer=" + peer])
-        expected_calls_and_values = [
-            (self._vsctl_mock(*command), None),
-            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
-             self._encode_ovs_json(['ofport'], [[ofport]]))
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.assertEqual(self.br.add_patch_port(pname, peer), ofport)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def _test_get_vif_ports(self, is_xen=False):
@@ -683,19 +616,12 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertRaises(RuntimeError, self.br.delete_ports, all_ports=False)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def _test_get_bridges(self, exp_timeout=None):
+    def test_get_bridges_not_default_timeout(self):
         bridges = ['br-int', 'br-ex']
-        if exp_timeout:
-            self.br.vsctl_timeout = exp_timeout
+        self.br.vsctl_timeout = 5
         self.execute.return_value = 'br-int\\nbr-ex\n'
         self.assertEqual(self.br.get_bridges(), bridges)
         self._verify_vsctl_mock("list-br")
-
-    def test_get_bridges(self):
-        self._test_get_bridges()
-
-    def test_get_bridges_not_default_timeout(self):
-        self._test_get_bridges(5)
 
     def test_get_local_port_mac_succeeds(self):
         with mock.patch('neutron.agent.linux.ip_lib.IpLinkCommand',

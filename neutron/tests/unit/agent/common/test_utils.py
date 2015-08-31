@@ -27,6 +27,7 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
     def setUp(self):
         super(TestLoadInterfaceDriver, self).setUp()
         self.conf = config.setup_conf()
+        self.conf.register_opts(interface.OPTS)
         config.register_interface_driver_opts_helper(self.conf)
 
     def test_load_interface_driver_not_set(self):

@@ -52,78 +52,85 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
 
     def setup_default_table(self, patch_int_ofport, arp_responder_enabled):
         # Table 0 (default) will sort incoming traffic depending on in_port
-        self.add_flow(priority=1,
-                      in_port=patch_int_ofport,
-                      actions="resubmit(,%s)" %
-                      constants.PATCH_LV_TO_TUN)
-        self.add_flow(priority=0, actions="drop")
+        with self.deferred() as deferred_br:
+            deferred_br.add_flow(priority=1,
+                                 in_port=patch_int_ofport,
+                                 actions="resubmit(,%s)" %
+                                 constants.PATCH_LV_TO_TUN)
+            deferred_br.add_flow(priority=0, actions="drop")
 
-        if arp_responder_enabled:
-            # ARP broadcast-ed request go to the local ARP_RESPONDER table to
-            # be locally resolved
-            # REVISIT(yamamoto): arp_op=arp.ARP_REQUEST
-            self.add_flow(table=constants.PATCH_LV_TO_TUN,
-                          priority=1,
-                          proto='arp',
-                          dl_dst="ff:ff:ff:ff:ff:ff",
-                          actions=("resubmit(,%s)" %
-                                   constants.ARP_RESPONDER))
+            if arp_responder_enabled:
+                # ARP broadcast-ed request go to the local ARP_RESPONDER
+                # table to be locally resolved
+                # REVISIT(yamamoto): arp_op=arp.ARP_REQUEST
+                deferred_br.add_flow(table=constants.PATCH_LV_TO_TUN,
+                                     priority=1,
+                                     proto='arp',
+                                     dl_dst="ff:ff:ff:ff:ff:ff",
+                                     actions=("resubmit(,%s)" %
+                                       constants.ARP_RESPONDER))
 
-        # PATCH_LV_TO_TUN table will handle packets coming from patch_int
-        # unicasts go to table UCAST_TO_TUN where remote addresses are learnt
-        self.add_flow(table=constants.PATCH_LV_TO_TUN,
-                      priority=0,
-                      dl_dst="00:00:00:00:00:00/01:00:00:00:00:00",
-                      actions="resubmit(,%s)" % constants.UCAST_TO_TUN)
+            # PATCH_LV_TO_TUN table will handle packets coming from patch_int
+            # unicasts go to table UCAST_TO_TUN where remote addresses are
+            # learnt
+            deferred_br.add_flow(table=constants.PATCH_LV_TO_TUN,
+                                 priority=0,
+                                 dl_dst="00:00:00:00:00:00/01:00:00:00:00:00",
+                                 actions=("resubmit(,%s)" %
+                                   constants.UCAST_TO_TUN))
 
-        # Broadcasts/multicasts go to table FLOOD_TO_TUN that handles flooding
-        self.add_flow(table=constants.PATCH_LV_TO_TUN,
-                      priority=0,
-                      dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
-                      actions="resubmit(,%s)" % constants.FLOOD_TO_TUN)
+            # Broadcasts/multicasts go to table FLOOD_TO_TUN that handles
+            # flooding
+            deferred_br.add_flow(table=constants.PATCH_LV_TO_TUN,
+                                 priority=0,
+                                 dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
+                                 actions=("resubmit(,%s)" %
+                                   constants.FLOOD_TO_TUN))
 
-        # Tables [tunnel_type]_TUN_TO_LV will set lvid depending on tun_id
-        # for each tunnel type, and resubmit to table LEARN_FROM_TUN where
-        # remote mac addresses will be learnt
-        for tunnel_type in constants.TUNNEL_NETWORK_TYPES:
-            self.add_flow(table=constants.TUN_TABLE[tunnel_type],
-                          priority=0,
-                          actions="drop")
+            # Tables [tunnel_type]_TUN_TO_LV will set lvid depending on tun_id
+            # for each tunnel type, and resubmit to table LEARN_FROM_TUN where
+            # remote mac addresses will be learnt
+            for tunnel_type in constants.TUNNEL_NETWORK_TYPES:
+                deferred_br.add_flow(table=constants.TUN_TABLE[tunnel_type],
+                                     priority=0, actions="drop")
 
-        # LEARN_FROM_TUN table will have a single flow using a learn action to
-        # dynamically set-up flows in UCAST_TO_TUN corresponding to remote mac
-        # addresses (assumes that lvid has already been set by a previous flow)
-        learned_flow = ("table=%s,"
-                        "priority=1,"
-                        "hard_timeout=300,"
-                        "NXM_OF_VLAN_TCI[0..11],"
-                        "NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],"
-                        "load:0->NXM_OF_VLAN_TCI[],"
-                        "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
-                        "output:NXM_OF_IN_PORT[]" %
-                        constants.UCAST_TO_TUN)
-        # Once remote mac addresses are learnt, output packet to patch_int
-        self.add_flow(table=constants.LEARN_FROM_TUN,
-                      priority=1,
-                      actions="learn(%s),output:%s" %
-                      (learned_flow, patch_int_ofport))
+            # LEARN_FROM_TUN table will have a single flow using a learn action
+            # to dynamically set-up flows in UCAST_TO_TUN corresponding to
+            # remote mac addresses (assumes that lvid has already been set by
+            # a previous flow)
+            learned_flow = ("cookie=%(cookie)s,"
+                            "table=%(table)s,"
+                            "priority=1,"
+                            "hard_timeout=300,"
+                            "NXM_OF_VLAN_TCI[0..11],"
+                            "NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],"
+                            "load:0->NXM_OF_VLAN_TCI[],"
+                            "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
+                            "output:NXM_OF_IN_PORT[]" %
+                            {'cookie': self.agent_uuid_stamp,
+                             'table': constants.UCAST_TO_TUN})
+            # Once remote mac addresses are learnt, output packet to patch_int
+            deferred_br.add_flow(table=constants.LEARN_FROM_TUN,
+                                 priority=1,
+                                 actions="learn(%s),output:%s" %
+                                 (learned_flow, patch_int_ofport))
 
-        # Egress unicast will be handled in table UCAST_TO_TUN, where remote
-        # mac addresses will be learned. For now, just add a default flow that
-        # will resubmit unknown unicasts to table FLOOD_TO_TUN to treat them
-        # as broadcasts/multicasts
-        self.add_flow(table=constants.UCAST_TO_TUN,
-                      priority=0,
-                      actions="resubmit(,%s)" %
-                      constants.FLOOD_TO_TUN)
+            # Egress unicast will be handled in table UCAST_TO_TUN, where
+            # remote mac addresses will be learned. For now, just add a
+            # default flow that will resubmit unknown unicasts to table
+            #  FLOOD_TO_TUN to treat them as broadcasts/multicasts
+            deferred_br.add_flow(table=constants.UCAST_TO_TUN,
+                                 priority=0,
+                                 actions="resubmit(,%s)" %
+                                 constants.FLOOD_TO_TUN)
 
-        if arp_responder_enabled:
-            # If none of the ARP entries correspond to the requested IP, the
-            # broadcast-ed packet is resubmitted to the flooding table
-            self.add_flow(table=constants.ARP_RESPONDER,
-                          priority=0,
-                          actions="resubmit(,%s)" %
-                          constants.FLOOD_TO_TUN)
+            if arp_responder_enabled:
+                # If none of the ARP entries correspond to the requested IP,
+                # the broadcast-ed packet is resubmitted to the flooding table
+                deferred_br.add_flow(table=constants.ARP_RESPONDER,
+                                     priority=0,
+                                     actions="resubmit(,%s)" %
+                                     constants.FLOOD_TO_TUN)
 
         # FLOOD_TO_TUN will handle flooding in tunnels based on lvid,
         # for now, add a default drop action

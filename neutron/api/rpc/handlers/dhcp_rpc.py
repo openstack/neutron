@@ -30,7 +30,9 @@ from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron.i18n import _LW
 from neutron import manager
+from neutron.plugins.common import utils as p_utils
 from neutron.quota import resource_registry
+
 
 LOG = logging.getLogger(__name__)
 
@@ -77,7 +79,7 @@ class DhcpRpcCallback(object):
         """Perform port operations taking care of concurrency issues."""
         try:
             if action == 'create_port':
-                return plugin.create_port(context, port)
+                return p_utils.create_port(plugin, context, port)
             elif action == 'update_port':
                 return plugin.update_port(context, port['id'], port)
             else:

@@ -333,7 +333,7 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             self.remove_networks_from_down_agents()
 
     def test_reschedule_doesnt_occur_if_no_agents(self):
-        agents = self._create_and_set_agents_down(['host-a'], 1)
+        agents = self._create_and_set_agents_down(['host-a', 'host-b'], 2)
         self._test_schedule_bind_network([agents[0]], self.network_id)
         with mock.patch.object(
             self, 'remove_network_from_dhcp_agent') as rn:

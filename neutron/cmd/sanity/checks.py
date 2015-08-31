@@ -42,12 +42,20 @@ LOG = logging.getLogger(__name__)
 
 
 MINIMUM_DNSMASQ_VERSION = 2.67
+MINIMUM_DIBBLER_VERSION = '1.0.1'
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
     name = "vxlantest-" + utils.get_random_string(6)
     with ovs_lib.OVSBridge(name) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
+        return port != ovs_lib.INVALID_OFPORT
+
+
+def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
+    name = "genevetest-" + utils.get_random_string(6)
+    with ovs_lib.OVSBridge(name) as br:
+        port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_GENEVE)
         return port != ovs_lib.INVALID_OFPORT
 
 
@@ -127,22 +135,24 @@ def arp_header_match_supported():
 
 
 def vf_management_supported():
+    is_supported = True
     required_caps = (
         ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK)
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
     try:
         vf_section = ip_link_support.IpLinkSupport.get_vf_mgmt_section()
         for cap in required_caps:
             if not ip_link_support.IpLinkSupport.vf_mgmt_capability_supported(
                    vf_section, cap):
+                is_supported = False
                 LOG.debug("ip link command does not support "
                           "vf capability '%(cap)s'", cap)
-                return False
     except ip_link_support.UnsupportedIpLinkCommand:
         LOG.exception(_LE("Unexpected exception while checking supported "
                           "ip link command"))
         return False
-    return True
+    return is_supported
 
 
 def netns_read_requires_helper():
@@ -319,5 +329,21 @@ def ebtables_supported():
         return True
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking for installed ebtables. "
+                  "Exception: %s", e)
+        return False
+
+
+def get_minimal_dibbler_version_supported():
+    return MINIMUM_DIBBLER_VERSION
+
+
+def dibbler_version_supported():
+    try:
+        cmd = ['dibbler-client',
+               'help']
+        out = agent_utils.execute(cmd)
+        return '-w' in out
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking minimal dibbler version. "
                   "Exception: %s", e)
         return False

@@ -32,6 +32,9 @@ class DVRServerRpcApi(object):
     can be found below: DVRServerRpcCallback.  For more information on changing
     rpc interfaces, see doc/source/devref/rpc_api.rst.
     """
+    # 1.0 Initial Version
+    # 1.1 Support for passing 'fixed_ips' in get_subnet_for_dvr function.
+    #     Passing 'subnet" will be deprecated in the next release.
 
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.0',
@@ -55,9 +58,10 @@ class DVRServerRpcApi(object):
                           host=host, subnet=subnet)
 
     @log_helpers.log_method_call
-    def get_subnet_for_dvr(self, context, subnet):
+    def get_subnet_for_dvr(self, context, subnet, fixed_ips):
         cctxt = self.client.prepare()
-        return cctxt.call(context, 'get_subnet_for_dvr', subnet=subnet)
+        return cctxt.call(
+            context, 'get_subnet_for_dvr', subnet=subnet, fixed_ips=fixed_ips)
 
 
 class DVRServerRpcCallback(object):
@@ -70,8 +74,10 @@ class DVRServerRpcCallback(object):
 
     # History
     #   1.0 Initial version
+    #   1.1 Support for passing the 'fixed_ips" in get_subnet_for_dvr.
+    #       Passing subnet will be deprecated in the next release.
 
-    target = oslo_messaging.Target(version='1.0',
+    target = oslo_messaging.Target(version='1.1',
                                    namespace=constants.RPC_NAMESPACE_DVR)
 
     @property
@@ -96,8 +102,10 @@ class DVRServerRpcCallback(object):
             host, subnet)
 
     def get_subnet_for_dvr(self, context, **kwargs):
+        fixed_ips = kwargs.get('fixed_ips')
         subnet = kwargs.get('subnet')
-        return self.plugin.get_subnet_for_dvr(context, subnet)
+        return self.plugin.get_subnet_for_dvr(
+            context, subnet, fixed_ips=fixed_ips)
 
 
 class DVRAgentRpcApiMixin(object):

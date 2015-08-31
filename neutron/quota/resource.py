@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as oslo_db_exception
@@ -177,20 +176,26 @@ class TrackedResource(BaseResource):
     def dirty(self):
         return self._dirty_tenants
 
-    @lockutils.synchronized('dirty_tenants')
     def mark_dirty(self, context, nested=False):
         if not self._dirty_tenants:
             return
         with context.session.begin(nested=nested, subtransactions=True):
-            for tenant_id in self._dirty_tenants:
+            # It is not necessary to protect this operation with a lock.
+            # Indeed when this method is called the request has been processed
+            # and therefore all resources created or deleted.
+            # dirty_tenants will contain all the tenants for which the
+            # resource count is changed. The list might contain also tenants
+            # for which resource count was altered in other requests, but this
+            # won't be harmful.
+            dirty_tenants_snap = self._dirty_tenants.copy()
+            for tenant_id in dirty_tenants_snap:
                 quota_api.set_quota_usage_dirty(context, self.name, tenant_id)
                 LOG.debug(("Persisted dirty status for tenant:%(tenant_id)s "
                            "on resource:%(resource)s"),
                           {'tenant_id': tenant_id, 'resource': self.name})
-        self._out_of_sync_tenants |= self._dirty_tenants
-        self._dirty_tenants.clear()
+        self._out_of_sync_tenants |= dirty_tenants_snap
+        self._dirty_tenants = self._dirty_tenants - dirty_tenants_snap
 
-    @lockutils.synchronized('dirty_tenants')
     def _db_event_handler(self, mapper, _conn, target):
         try:
             tenant_id = target['tenant_id']
@@ -208,14 +213,15 @@ class TrackedResource(BaseResource):
         max_retries=db_api.MAX_RETRIES,
         exception_checker=lambda exc:
         isinstance(exc, oslo_db_exception.DBDuplicateEntry))
-    def _set_quota_usage(self, context, tenant_id, in_use):
-        return quota_api.set_quota_usage(context, self.name,
-                                         tenant_id, in_use=in_use)
+    def _set_quota_usage(self, context, tenant_id, in_use, reserved):
+        return quota_api.set_quota_usage(context, self.name, tenant_id,
+                                         in_use=in_use, reserved=reserved)
 
-    def _resync(self, context, tenant_id, in_use):
+    def _resync(self, context, tenant_id, in_use, reserved):
         # Update quota usage
         usage_info = self._set_quota_usage(
-            context, tenant_id, in_use=in_use)
+            context, tenant_id, in_use, reserved)
+
         self._dirty_tenants.discard(tenant_id)
         self._out_of_sync_tenants.discard(tenant_id)
         LOG.debug(("Unset dirty status for tenant:%(tenant_id)s on "
@@ -232,39 +238,57 @@ class TrackedResource(BaseResource):
         in_use = context.session.query(self._model_class).filter_by(
             tenant_id=tenant_id).count()
         # Update quota usage
-        return self._resync(context, tenant_id, in_use)
+        return self._resync(context, tenant_id, in_use, reserved=0)
 
     def count(self, context, _plugin, tenant_id, resync_usage=False):
-        """Return the current usage count for the resource."""
-        # Load current usage data
+        """Return the current usage count for the resource.
+
+        This method will fetch the information from resource usage data,
+        unless usage data are marked as "dirty", in which case both used and
+        reserved resource are explicitly counted.
+
+        The _plugin and _resource parameters are unused but kept for
+        compatibility with the signature of the count method for
+        CountableResource instances.
+        """
+        # Load current usage data, setting a row-level lock on the DB
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
-            context, self.name, tenant_id)
+            context, self.name, tenant_id, lock_for_update=True)
         # If dirty or missing, calculate actual resource usage querying
         # the database and set/create usage info data
         # NOTE: this routine "trusts" usage counters at service startup. This
         # assumption is generally valid, but if the database is tampered with,
         # or if data migrations do not take care of usage counters, the
         # assumption will not hold anymore
-        if (tenant_id in self._dirty_tenants or not usage_info
-            or usage_info.dirty):
+        if (tenant_id in self._dirty_tenants or
+            not usage_info or usage_info.dirty):
             LOG.debug(("Usage tracker for resource:%(resource)s and tenant:"
                        "%(tenant_id)s is out of sync, need to count used "
                        "quota"), {'resource': self.name,
                                   'tenant_id': tenant_id})
             in_use = context.session.query(self._model_class).filter_by(
                 tenant_id=tenant_id).count()
+
             # Update quota usage, if requested (by default do not do that, as
             # typically one counts before adding a record, and that would mark
             # the usage counter as dirty again)
             if resync_usage or not usage_info:
-                usage_info = self._resync(context, tenant_id, in_use)
+                usage_info = self._resync(context, tenant_id,
+                                          in_use, reserved=0)
             else:
+                # NOTE(salv-orlando): Passing 0 for reserved amount as
+                # reservations are currently not supported
                 usage_info = quota_api.QuotaUsageInfo(usage_info.resource,
                                                       usage_info.tenant_id,
                                                       in_use,
-                                                      usage_info.reserved,
+                                                      0,
                                                       usage_info.dirty)
 
+            LOG.debug(("Quota usage for %(resource)s was recalculated. "
+                       "Used quota:%(used)d; Reserved quota:%(reserved)d"),
+                      {'resource': self.name,
+                       'used': usage_info.used,
+                       'reserved': usage_info.reserved})
         return usage_info.total
 
     def register_events(self):

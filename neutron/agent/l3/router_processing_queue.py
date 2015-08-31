@@ -21,7 +21,9 @@ from oslo_utils import timeutils
 # Lower value is higher priority
 PRIORITY_RPC = 0
 PRIORITY_SYNC_ROUTERS_TASK = 1
+PRIORITY_PD_UPDATE = 2
 DELETE_ROUTER = 1
+PD_UPDATE = 2
 
 
 class RouterUpdate(object):

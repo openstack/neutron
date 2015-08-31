@@ -56,6 +56,11 @@ AGENT_OPTS = [
                       'dhcp_load_type can be configured to represent the '
                       'choice for the resource being balanced. '
                       'Example: dhcp_load_type=networks')),
+    cfg.BoolOpt('enable_new_agents', default=True,
+                help=_("Agent starts with admin_state_up=False when "
+                       "enable_new_agents=False. In the case, user's "
+                       "resources will not be scheduled automatically to the "
+                       "agent until admin changes admin_state_up to True.")),
 ]
 cfg.CONF.register_opts(AGENT_OPTS)
 
@@ -236,7 +241,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                 res['created_at'] = current_time
                 res['started_at'] = current_time
                 res['heartbeat_timestamp'] = current_time
-                res['admin_state_up'] = True
+                res['admin_state_up'] = cfg.CONF.enable_new_agents
                 agent_db = Agent(**res)
                 greenthread.sleep(0)
                 context.session.add(agent_db)

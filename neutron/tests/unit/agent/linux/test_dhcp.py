@@ -39,6 +39,19 @@ class FakeIPAllocation(object):
         self.subnet_id = subnet_id
 
 
+class FakeDNSAssignment(object):
+    def __init__(self, ip_address, dns_name='', domain='openstacklocal'):
+        if dns_name:
+            self.hostname = dns_name
+        else:
+            self.hostname = 'host-%s' % ip_address.replace(
+                '.', '-').replace(':', '-')
+        self.ip_address = ip_address
+        self.fqdn = self.hostname
+        if domain:
+            self.fqdn = '%s.%s.' % (self.hostname, domain)
+
+
 class DhcpOpt(object):
     def __init__(self, **kwargs):
         self.__dict__.update(ip_version=4)
@@ -46,6 +59,13 @@ class DhcpOpt(object):
 
     def __str__(self):
         return str(self.__dict__)
+
+
+# A base class where class attributes can also be accessed by treating
+# an instance as a dict.
+class Dictable(object):
+    def __getitem__(self, k):
+        return self.__class__.__dict__.get(k)
 
 
 class FakeDhcpPort(object):
@@ -61,6 +81,19 @@ class FakeDhcpPort(object):
         self.extra_dhcp_opts = []
 
 
+class FakeReservedPort(object):
+    admin_state_up = True
+    device_owner = 'network:dhcp'
+    fixed_ips = [FakeIPAllocation('192.168.0.6',
+                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    mac_address = '00:00:80:aa:bb:ee'
+    device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
+
+    def __init__(self, id='reserved-aaaa-aaaa-aaaa-aaaaaaaaaaa'):
+        self.extra_dhcp_opts = []
+        self.id = id
+
+
 class FakePort1(object):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     admin_state_up = True
@@ -70,8 +103,9 @@ class FakePort1(object):
     mac_address = '00:00:80:aa:bb:cc'
     device_id = 'fake_port1'
 
-    def __init__(self):
+    def __init__(self, domain='openstacklocal'):
         self.extra_dhcp_opts = []
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.2', domain=domain)]
 
 
 class FakePort2(object):
@@ -82,6 +116,7 @@ class FakePort2(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:f3:aa:bb:cc'
     device_id = 'fake_port2'
+    dns_assignment = [FakeDNSAssignment('192.168.0.3')]
 
     def __init__(self):
         self.extra_dhcp_opts = []
@@ -95,6 +130,8 @@ class FakePort3(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd'),
                  FakeIPAllocation('192.168.1.2',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.4'),
+                      FakeDNSAssignment('192.168.1.2')]
     mac_address = '00:00:0f:aa:bb:cc'
     device_id = 'fake_port3'
 
@@ -111,6 +148,7 @@ class FakePort4(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd'),
                  FakeIPAllocation('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.4')]
     mac_address = '00:16:3E:C2:77:1D'
     device_id = 'fake_port4'
 
@@ -124,6 +162,7 @@ class FakePort5(object):
     device_owner = 'foo5'
     fixed_ips = [FakeIPAllocation('192.168.0.5',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.5')]
     mac_address = '00:00:0f:aa:bb:55'
     device_id = 'fake_port5'
 
@@ -139,6 +178,7 @@ class FakePort6(object):
     device_owner = 'foo6'
     fixed_ips = [FakeIPAllocation('192.168.0.6',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.6')]
     mac_address = '00:00:0f:aa:bb:66'
     device_id = 'fake_port6'
 
@@ -161,8 +201,10 @@ class FakeV6Port(object):
     mac_address = '00:00:f3:aa:bb:cc'
     device_id = 'fake_port6'
 
-    def __init__(self):
+    def __init__(self, domain='openstacklocal'):
         self.extra_dhcp_opts = []
+        self.dns_assignment = [FakeDNSAssignment('fdca:3ba5:a17a:4ba3::2',
+                               domain=domain)]
 
 
 class FakeV6PortExtraOpt(object):
@@ -171,6 +213,7 @@ class FakeV6PortExtraOpt(object):
     device_owner = 'foo3'
     fixed_ips = [FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    dns_assignment = []
     mac_address = '00:16:3e:c2:77:1d'
     device_id = 'fake_port6'
 
@@ -189,6 +232,7 @@ class FakeDualPortWithV6ExtraOpt(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd'),
                  FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.3')]
     mac_address = '00:16:3e:c2:77:1d'
     device_id = 'fake_port6'
 
@@ -210,8 +254,11 @@ class FakeDualPort(object):
     mac_address = '00:00:0f:aa:bb:cc'
     device_id = 'fake_dual_port'
 
-    def __init__(self):
+    def __init__(self, domain='openstacklocal'):
         self.extra_dhcp_opts = []
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.3', domain=domain),
+                               FakeDNSAssignment('fdca:3ba5:a17a:4ba3::3',
+                                                 domain=domain)]
 
 
 class FakeRouterPort(object):
@@ -220,13 +267,16 @@ class FakeRouterPort(object):
     device_owner = constants.DEVICE_OWNER_ROUTER_INTF
     mac_address = '00:00:0f:rr:rr:rr'
     device_id = 'fake_router_port'
+    dns_assignment = []
 
     def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
-                 ip_address='192.168.0.1'):
+                 ip_address='192.168.0.1', domain='openstacklocal'):
         self.extra_dhcp_opts = []
         self.device_owner = dev_owner
         self.fixed_ips = [FakeIPAllocation(
             ip_address, 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment(ip.ip_address, domain=domain)
+                               for ip in self.fixed_ips]
 
 
 class FakeRouterPort2(object):
@@ -235,6 +285,7 @@ class FakeRouterPort2(object):
     device_owner = constants.DEVICE_OWNER_ROUTER_INTF
     fixed_ips = [FakeIPAllocation('192.168.1.1',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    dns_assignment = [FakeDNSAssignment('192.168.1.1')]
     mac_address = '00:00:0f:rr:rr:r2'
     device_id = 'fake_router_port2'
 
@@ -248,6 +299,7 @@ class FakePortMultipleAgents1(object):
     device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.5',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.5')]
     mac_address = '00:00:0f:dd:dd:dd'
     device_id = 'fake_multiple_agents_port'
 
@@ -261,6 +313,7 @@ class FakePortMultipleAgents2(object):
     device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.6',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    dns_assignment = [FakeDNSAssignment('192.168.0.6')]
     mac_address = '00:00:0f:ee:ee:ee'
     device_id = 'fake_multiple_agents_port2'
 
@@ -283,7 +336,7 @@ class FakeV6HostRoute(object):
     nexthop = '2001:0200:feed:7ac0::1'
 
 
-class FakeV4Subnet(object):
+class FakeV4Subnet(Dictable):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
@@ -293,52 +346,29 @@ class FakeV4Subnet(object):
     dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4Subnet2(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
+class FakeV4Subnet2(FakeV4Subnet):
     cidr = '192.168.1.0/24'
     gateway_ip = '192.168.1.1'
-    enable_dhcp = True
     host_routes = []
-    dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4MetadataSubnet(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
+class FakeV4MetadataSubnet(FakeV4Subnet):
     cidr = '169.254.169.254/30'
     gateway_ip = '169.254.169.253'
-    enable_dhcp = True
     host_routes = []
     dns_nameservers = []
 
 
-class FakeV4SubnetGatewayRoute(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetGatewayRoute(FakeV4Subnet):
     host_routes = [FakeV4HostRouteGateway]
-    dns_nameservers = ['8.8.8.8']
 
 
-class FakeV4SubnetMultipleAgentsWithoutDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetMultipleAgentsWithoutDnsProvided(FakeV4Subnet):
     dns_nameservers = []
     host_routes = []
 
 
-class FakeV4SubnetAgentWithManyDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+class FakeV4SubnetAgentWithManyDnsProvided(FakeV4Subnet):
     dns_nameservers = ['2.2.2.2', '9.9.9.9', '1.1.1.1',
                        '3.3.3.3']
     host_routes = []
@@ -360,13 +390,7 @@ class FakeV4AgentWithManyDnsProvided(object):
     namespace = 'qdhcp-ns'
 
 
-class FakeV4SubnetMultipleAgentsWithDnsProvided(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
-    dns_nameservers = ['8.8.8.8']
+class FakeV4SubnetMultipleAgentsWithDnsProvided(FakeV4Subnet):
     host_routes = []
 
 
@@ -400,7 +424,7 @@ class FakeV4SubnetNoDHCP(object):
     dns_nameservers = []
 
 
-class FakeV6SubnetDHCPStateful(object):
+class FakeV6SubnetDHCPStateful(Dictable):
     id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     ip_version = 6
     cidr = 'fdca:3ba5:a17a:4ba3::/64'
@@ -435,9 +459,8 @@ class FakeV6SubnetStateless(object):
     ipv6_ra_mode = None
 
 
-class FakeV4SubnetNoGateway(object):
+class FakeV4SubnetNoGateway(FakeV4Subnet):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
     cidr = '192.168.1.0/24'
     gateway_ip = None
     enable_dhcp = True
@@ -445,12 +468,10 @@ class FakeV4SubnetNoGateway(object):
     dns_nameservers = []
 
 
-class FakeV4SubnetNoRouter(object):
+class FakeV4SubnetNoRouter(FakeV4Subnet):
     id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
     cidr = '192.168.1.0/24'
     gateway_ip = '192.168.1.1'
-    enable_dhcp = True
     host_routes = []
     dns_nameservers = []
 
@@ -479,7 +500,35 @@ class FakeV6Network(object):
 class FakeDualNetwork(object):
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+    # ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort()]
+    namespace = 'qdhcp-ns'
+
+    def __init__(self, domain='openstacklocal'):
+        self.ports = [FakePort1(domain=domain), FakeV6Port(domain=domain),
+                      FakeDualPort(domain=domain),
+                      FakeRouterPort(domain=domain)]
+
+
+class FakeDeviceManagerNetwork(object):
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
     ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort()]
+    namespace = 'qdhcp-ns'
+
+
+class FakeDualNetworkReserved(object):
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+    ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort(),
+             FakeReservedPort()]
+    namespace = 'qdhcp-ns'
+
+
+class FakeDualNetworkReserved2(object):
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+    ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort(),
+             FakeReservedPort(), FakeReservedPort(id='reserved-2')]
     namespace = 'qdhcp-ns'
 
 
@@ -714,9 +763,9 @@ class LocalChild(dhcp.DhcpLocalProcess):
         self.called.append('spawn')
 
 
-class TestBase(base.BaseTestCase):
+class TestConfBase(base.BaseTestCase):
     def setUp(self):
-        super(TestBase, self).setUp()
+        super(TestConfBase, self).setUp()
         self.conf = config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp_config.DHCP_OPTS)
@@ -724,10 +773,17 @@ class TestBase(base.BaseTestCase):
         self.conf.register_opts(external_process.OPTS)
         config.register_interface_driver_opts_helper(self.conf)
         config.register_use_namespaces_opts_helper(self.conf)
+
+
+class TestBase(TestConfBase):
+    def setUp(self):
+        super(TestBase, self).setUp()
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
         self.mock_mgr = instance.start()
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
+        self.conf.register_opt(cfg.BoolOpt("force_metadata",
+                                           default=False))
         self.conf.register_opt(cfg.BoolOpt('enable_metadata_network',
                                            default=False))
         self.config_parse(self.conf)
@@ -1029,7 +1085,8 @@ class TestDnsmasq(TestBase):
         (exp_host_name, exp_host_data,
          exp_addn_name, exp_addn_data) = self._test_no_dhcp_domain_alloc_data
         self.conf.set_override('dhcp_domain', '')
-        self._test_spawn(['--conf-file='])
+        network = FakeDualNetwork(domain=self.conf.dhcp_domain)
+        self._test_spawn(['--conf-file='], network=network)
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_addn_name, exp_addn_data)])
 
@@ -1425,30 +1482,30 @@ class TestDnsmasq(TestBase):
     @property
     def _test_reload_allocation_data(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
                          '192.168.0.2\n'
                          '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
-                         'openstacklocal,[fdca:3ba5:a17a:4ba3::2]\n'
-                         '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
+                         'openstacklocal.,[fdca:3ba5:a17a:4ba3::2]\n'
+                         '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal.,'
                          '192.168.0.3\n'
                          '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
-                         'openstacklocal,[fdca:3ba5:a17a:4ba3::3]\n'
-                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
+                         'openstacklocal.,[fdca:3ba5:a17a:4ba3::3]\n'
+                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal.,'
                          '192.168.0.1\n').lstrip()
         exp_addn_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/addn_hosts'
         exp_addn_data = (
             '192.168.0.2\t'
-            'host-192-168-0-2.openstacklocal host-192-168-0-2\n'
+            'host-192-168-0-2.openstacklocal. host-192-168-0-2\n'
             'fdca:3ba5:a17a:4ba3::2\t'
-            'host-fdca-3ba5-a17a-4ba3--2.openstacklocal '
+            'host-fdca-3ba5-a17a-4ba3--2.openstacklocal. '
             'host-fdca-3ba5-a17a-4ba3--2\n'
-            '192.168.0.3\thost-192-168-0-3.openstacklocal '
+            '192.168.0.3\thost-192-168-0-3.openstacklocal. '
             'host-192-168-0-3\n'
             'fdca:3ba5:a17a:4ba3::3\t'
-            'host-fdca-3ba5-a17a-4ba3--3.openstacklocal '
+            'host-fdca-3ba5-a17a-4ba3--3.openstacklocal. '
             'host-fdca-3ba5-a17a-4ba3--3\n'
             '192.168.0.1\t'
-            'host-192-168-0-1.openstacklocal '
+            'host-192-168-0-1.openstacklocal. '
             'host-192-168-0-1\n'
         ).lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
@@ -1724,11 +1781,11 @@ class TestDnsmasq(TestBase):
 
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
                          '192.168.0.2\n'
-                         '00:16:3E:C2:77:1D,host-192-168-0-4.openstacklocal,'
+                         '00:16:3E:C2:77:1D,host-192-168-0-4.openstacklocal.,'
                          '192.168.0.4\n'
-                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
+                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal.,'
                          '192.168.0.1\n').lstrip()
         dm = self._get_dnsmasq(FakeDualStackNetworkSingleDHCP())
         dm._output_hosts_file()
@@ -1737,13 +1794,13 @@ class TestDnsmasq(TestBase):
 
     def test_only_populates_dhcp_client_id(self):
         exp_host_name = '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
                          '192.168.0.2\n'
                          '00:00:0f:aa:bb:55,id:test5,'
-                         'host-192-168-0-5.openstacklocal,'
+                         'host-192-168-0-5.openstacklocal.,'
                          '192.168.0.5\n'
                          '00:00:0f:aa:bb:66,id:test6,'
-                         'host-192-168-0-6.openstacklocal,192.168.0.6,'
+                         'host-192-168-0-6.openstacklocal.,192.168.0.6,'
                          'set:ccccccccc-cccc-cccc-cccc-ccccccccc\n').lstrip()
 
         dm = self._get_dnsmasq(FakeV4NetworkClientId)
@@ -1753,13 +1810,13 @@ class TestDnsmasq(TestBase):
 
     def test_only_populates_dhcp_enabled_subnet_on_a_network(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,'
                          '192.168.0.2\n'
-                         '00:00:f3:aa:bb:cc,host-192-168-0-3.openstacklocal,'
+                         '00:00:f3:aa:bb:cc,host-192-168-0-3.openstacklocal.,'
                          '192.168.0.3\n'
-                         '00:00:0f:aa:bb:cc,host-192-168-0-4.openstacklocal,'
+                         '00:00:0f:aa:bb:cc,host-192-168-0-4.openstacklocal.,'
                          '192.168.0.4\n'
-                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
+                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal.,'
                          '192.168.0.1\n').lstrip()
         dm = self._get_dnsmasq(FakeDualNetworkSingleDHCP())
         dm._output_hosts_file()
@@ -1785,10 +1842,10 @@ class TestDnsmasq(TestBase):
         exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
         exp_host_data = (
             '00:16:3e:c2:77:1d,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
-            '00:16:3e:c2:77:1d,host-192-168-0-3.openstacklocal,'
+            '00:16:3e:c2:77:1d,host-192-168-0-3.openstacklocal.,'
             '192.168.0.3,set:hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh\n'
             '00:00:0f:rr:rr:rr,'
-            'host-192-168-0-1.openstacklocal,192.168.0.1\n').lstrip()
+            'host-192-168-0-1.openstacklocal.,192.168.0.1\n').lstrip()
         exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
         exp_opt_data = (
             'tag:tag0,option6:domain-search,openstacklocal\n'
@@ -1829,3 +1886,143 @@ class TestDnsmasq(TestBase):
         self.conf.set_override('enable_metadata_network', True)
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4MetadataNetwork()))
+
+    def test_should_force_metadata_returns_true(self):
+        self.conf.set_override("force_metadata", True)
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(self.conf,
+                                                            mock.ANY))
+
+
+class TestDeviceManager(TestConfBase):
+
+    @mock.patch('neutron.agent.linux.dhcp.ip_lib')
+    @mock.patch('neutron.agent.linux.dhcp.common_utils.load_interface_driver')
+    def test_setup(self, load_interface_driver, ip_lib):
+        """Test new and existing cases of DeviceManager's DHCP port setup
+        logic.
+        """
+
+        # Create DeviceManager.
+        self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                           default=False))
+        plugin = mock.Mock()
+        mgr = dhcp.DeviceManager(self.conf, plugin)
+        load_interface_driver.assert_called_with(self.conf)
+
+        # Setup with no existing DHCP port - expect a new DHCP port to
+        # be created.
+        network = FakeDeviceManagerNetwork()
+        network.tenant_id = 'Tenant A'
+
+        def mock_create(dict):
+            port = dhcp.DictModel(dict['port'])
+            port.id = 'abcd-123456789'
+            port.mac_address = '00-12-34-56-78-90'
+            port.fixed_ips = [
+                dhcp.DictModel({'subnet_id': ip['subnet_id'],
+                                'ip_address': 'unique-IP-address'})
+                for ip in port.fixed_ips
+            ]
+            return port
+
+        plugin.create_dhcp_port.side_effect = mock_create
+        mgr.driver.get_device_name.return_value = 'ns-XXX'
+        ip_lib.ensure_device_is_ready.return_value = True
+        mgr.setup(network)
+        plugin.create_dhcp_port.assert_called_with(mock.ANY)
+
+        mgr.driver.init_l3.assert_called_with('ns-XXX',
+                                              mock.ANY,
+                                              namespace='qdhcp-ns')
+        cidrs = set(mgr.driver.init_l3.call_args[0][1])
+        self.assertEqual(cidrs, set(['unique-IP-address/24',
+                                     'unique-IP-address/64']))
+
+        # Now call setup again.  This time we go through the existing
+        # port code path, and the driver's init_l3 method is called
+        # again.
+        plugin.create_dhcp_port.reset_mock()
+        mgr.driver.init_l3.reset_mock()
+        mgr.setup(network)
+        mgr.driver.init_l3.assert_called_with('ns-XXX',
+                                              mock.ANY,
+                                              namespace='qdhcp-ns')
+        cidrs = set(mgr.driver.init_l3.call_args[0][1])
+        self.assertEqual(cidrs, set(['unique-IP-address/24',
+                                     'unique-IP-address/64']))
+        self.assertFalse(plugin.create_dhcp_port.called)
+
+    @mock.patch('neutron.agent.linux.dhcp.ip_lib')
+    @mock.patch('neutron.agent.linux.dhcp.common_utils.load_interface_driver')
+    def test_setup_reserved(self, load_interface_driver, ip_lib):
+        """Test reserved port case of DeviceManager's DHCP port setup
+        logic.
+        """
+
+        # Create DeviceManager.
+        self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                           default=False))
+        plugin = mock.Mock()
+        mgr = dhcp.DeviceManager(self.conf, plugin)
+        load_interface_driver.assert_called_with(self.conf)
+
+        # Setup with a reserved DHCP port.
+        network = FakeDualNetworkReserved()
+        network.tenant_id = 'Tenant A'
+        reserved_port = network.ports[-1]
+
+        def mock_update(port_id, dict):
+            port = reserved_port
+            port.network_id = dict['port']['network_id']
+            port.device_id = dict['port']['device_id']
+            return port
+
+        plugin.update_dhcp_port.side_effect = mock_update
+        mgr.driver.get_device_name.return_value = 'ns-XXX'
+        ip_lib.ensure_device_is_ready.return_value = True
+        mgr.setup(network)
+        plugin.update_dhcp_port.assert_called_with(reserved_port.id, mock.ANY)
+
+        mgr.driver.init_l3.assert_called_with('ns-XXX',
+                                              ['192.168.0.6/24'],
+                                              namespace='qdhcp-ns')
+
+    @mock.patch('neutron.agent.linux.dhcp.ip_lib')
+    @mock.patch('neutron.agent.linux.dhcp.common_utils.load_interface_driver')
+    def test_setup_reserved_2(self, load_interface_driver, ip_lib):
+        """Test scenario where a network has two reserved ports, and
+        update_dhcp_port fails for the first of those.
+        """
+
+        # Create DeviceManager.
+        self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                           default=False))
+        plugin = mock.Mock()
+        mgr = dhcp.DeviceManager(self.conf, plugin)
+        load_interface_driver.assert_called_with(self.conf)
+
+        # Setup with a reserved DHCP port.
+        network = FakeDualNetworkReserved2()
+        network.tenant_id = 'Tenant A'
+        reserved_port_1 = network.ports[-2]
+        reserved_port_2 = network.ports[-1]
+
+        def mock_update(port_id, dict):
+            if port_id == reserved_port_1.id:
+                return None
+
+            port = reserved_port_2
+            port.network_id = dict['port']['network_id']
+            port.device_id = dict['port']['device_id']
+            return port
+
+        plugin.update_dhcp_port.side_effect = mock_update
+        mgr.driver.get_device_name.return_value = 'ns-XXX'
+        ip_lib.ensure_device_is_ready.return_value = True
+        mgr.setup(network)
+        plugin.update_dhcp_port.assert_called_with(reserved_port_2.id,
+                                                   mock.ANY)
+
+        mgr.driver.init_l3.assert_called_with('ns-XXX',
+                                              ['192.168.0.6/24'],
+                                              namespace='qdhcp-ns')
