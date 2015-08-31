@@ -342,7 +342,7 @@ class IpAddrCommand(IpDeviceCommandBase):
                 'scope', scope,
                 'dev', self.name]
         if net.version == 4:
-            args += ['brd', str(net.broadcast)]
+            args += ['brd', str(net[-1])]
         self._as_root([net.version], tuple(args))
 
     def delete(self, cidr):

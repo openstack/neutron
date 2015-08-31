@@ -22,8 +22,10 @@ class LinkLocalAddressPair(netaddr.IPNetwork):
 
     def get_pair(self):
         """Builds an address pair from the first and last addresses. """
+        # TODO(kevinbenton): the callers of this seem only interested in an IP,
+        # so we should just return two IPAddresses.
         return (netaddr.IPNetwork("%s/%s" % (self.network, self.prefixlen)),
-                netaddr.IPNetwork("%s/%s" % (self.broadcast, self.prefixlen)))
+                netaddr.IPNetwork("%s/%s" % (self[-1], self.prefixlen)))
 
 
 class LinkLocalAllocator(object):

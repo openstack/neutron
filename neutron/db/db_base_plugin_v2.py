@@ -343,7 +343,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         # Check that the IP is valid on subnet. This cannot be the
         # network or the broadcast address
         if (ip != net.network and
-                ip != net.broadcast and
+                ip != net[-1] and
                 net.netmask & ip == net.network):
             return True
         return False
