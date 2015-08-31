@@ -113,6 +113,8 @@ updating the core review team for the sub-project's repositories.
 |                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
+| networking-calico      | Neil Jerram               | neiljerram           |
++------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
