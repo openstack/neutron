@@ -117,6 +117,8 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-brocade_           |        ml2,l3         |
 +-------------------------------+-----------------------+
+| networking-calico_            |          ml2          |
++-------------------------------+-----------------------+
 | networking-cisco_             |  core,ml2,l3,fw,vpn   |
 +-------------------------------+-----------------------+
 | networking-edge-vpn_          |          vpn          |
@@ -225,6 +227,14 @@ Brocade
 * Git: https://git.openstack.org/cgit/stackforge/networking-brocade
 * Launchpad: https://launchpad.net/networking-brocade
 * PyPI: https://pypi.python.org/pypi/networking-brocade
+
+.. _networking-calico:
+
+Calico
+++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-calico
+* Launchpad: https://launchpad.net/networking-calico
 
 .. _networking-cisco:
 
