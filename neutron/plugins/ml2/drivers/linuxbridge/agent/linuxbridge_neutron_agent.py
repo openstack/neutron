@@ -459,14 +459,14 @@ class LinuxBridgeManager(object):
                                       physical_network, segmentation_id,
                                       tap_device_name)
 
-    def delete_vlan_bridge(self, bridge_name):
+    def delete_bridge(self, bridge_name):
         if ip_lib.device_exists(bridge_name):
             interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
             for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
 
                 if interface.startswith(VXLAN_INTERFACE_PREFIX):
-                    self.delete_vxlan(interface)
+                    self.delete_interface(interface)
                     continue
 
                 for physical_interface in self.interface_mappings.values():
@@ -480,7 +480,7 @@ class LinuxBridgeManager(object):
                                                              bridge_name,
                                                              ips, gateway)
                         elif physical_interface != interface:
-                            self.delete_vlan(interface)
+                            self.delete_interface(interface)
 
             LOG.debug("Deleting bridge %s", bridge_name)
             bridge_device = bridge_lib.BridgeDevice(bridge_name)
@@ -498,7 +498,7 @@ class LinuxBridgeManager(object):
         for network_id in list(self.network_map.keys()):
             bridge_name = self.get_bridge_name(network_id)
             if not self.get_tap_devices_count(bridge_name):
-                self.delete_vlan_bridge(bridge_name)
+                self.delete_bridge(bridge_name)
                 del self.network_map[network_id]
 
     def remove_interface(self, bridge_name, interface_name):
@@ -523,25 +523,14 @@ class LinuxBridgeManager(object):
                        'bridge_name': bridge_name})
             return False
 
-    def delete_vlan(self, interface):
+    def delete_interface(self, interface):
         if ip_lib.device_exists(interface):
-            LOG.debug("Deleting subinterface %s for vlan", interface)
-            if utils.execute(['ip', 'link', 'set', interface, 'down'],
-                             run_as_root=True):
-                return
-            if utils.execute(['ip', 'link', 'delete', interface],
-                             run_as_root=True):
-                return
-            LOG.debug("Done deleting subinterface %s", interface)
-
-    def delete_vxlan(self, interface):
-        if ip_lib.device_exists(interface):
-            LOG.debug("Deleting vxlan interface %s for vlan",
+            LOG.debug("Deleting interface %s",
                       interface)
-            int_vxlan = self.ip.device(interface)
-            int_vxlan.link.set_down()
-            int_vxlan.link.delete()
-            LOG.debug("Done deleting vxlan interface %s", interface)
+            device = self.ip.device(interface)
+            device.link.set_down()
+            device.link.delete()
+            LOG.debug("Done deleting interface %s", interface)
 
     def get_tap_devices(self):
         devices = set()
@@ -582,7 +571,7 @@ class LinuxBridgeManager(object):
         except RuntimeError:
             return False
         finally:
-            self.delete_vxlan(test_iface)
+            self.delete_interface(test_iface)
 
     def vxlan_mcast_supported(self):
         if not cfg.CONF.VXLAN.vxlan_group:
@@ -692,7 +681,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         network_id = kwargs.get('network_id')
         bridge_name = self.agent.br_mgr.get_bridge_name(network_id)
         LOG.debug("Delete %s", bridge_name)
-        self.agent.br_mgr.delete_vlan_bridge(bridge_name)
+        self.agent.br_mgr.delete_bridge(bridge_name)
 
     def port_update(self, context, **kwargs):
         port_id = kwargs['port']['id']

@@ -716,7 +716,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             add_tap.assert_called_with("123", p_const.TYPE_VLAN, "physnet-1",
                                        "1", "tap234")
 
-    def test_delete_vlan_bridge(self):
+    def test_delete_bridge(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
                 mock.patch.object(self.lbm,
@@ -726,22 +726,22 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   "get_interface_details") as if_det_fn,\
                 mock.patch.object(self.lbm,
                                   "update_interface_ip_details") as updif_fn,\
-                mock.patch.object(self.lbm, "delete_vxlan") as del_vxlan,\
+                mock.patch.object(self.lbm, "delete_interface") as del_interface,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = False
-            self.lbm.delete_vlan_bridge("br0")
+            self.lbm.delete_bridge("br0")
             self.assertFalse(getif_fn.called)
 
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1", "vxlan-1002"]
             if_det_fn.return_value = ("ips", "gateway")
             bridge_device.link.set_down.return_value = False
-            self.lbm.delete_vlan_bridge("br0")
+            self.lbm.delete_bridge("br0")
             updif_fn.assert_called_with("eth1", "br0", "ips", "gateway")
-            del_vxlan.assert_called_with("vxlan-1002")
+            del_interface.assert_called_with("vxlan-1002")
 
-    def test_delete_vlan_bridge_with_ip(self):
+    def test_delete_bridge_with_ip(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
                 mock.patch.object(self.lbm,
@@ -751,18 +751,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   "get_interface_details") as if_det_fn,\
                 mock.patch.object(self.lbm,
                                   "update_interface_ip_details") as updif_fn,\
-                mock.patch.object(self.lbm, "delete_vlan") as del_vlan,\
+                mock.patch.object(self.lbm, "delete_interface") as del_interface,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1.1"]
             if_det_fn.return_value = ("ips", "gateway")
             bridge_device.link.set_down.return_value = False
-            self.lbm.delete_vlan_bridge("br0")
+            self.lbm.delete_bridge("br0")
             updif_fn.assert_called_with("eth1.1", "br0", "ips", "gateway")
-            self.assertFalse(del_vlan.called)
+            self.assertFalse(del_interface.called)
 
-    def test_delete_vlan_bridge_no_ip(self):
+    def test_delete_bridge_no_ip(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
                 mock.patch.object(self.lbm,
@@ -772,18 +772,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   "get_interface_details") as if_det_fn,\
                 mock.patch.object(self.lbm,
                                   "update_interface_ip_details") as updif_fn,\
-                mock.patch.object(self.lbm, "delete_vlan") as del_vlan,\
+                mock.patch.object(self.lbm, "delete_interface") as del_interface,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1.1"]
             bridge_device.link.set_down.return_value = False
             if_det_fn.return_value = ([], None)
-            self.lbm.delete_vlan_bridge("br0")
-            del_vlan.assert_called_with("eth1.1")
+            self.lbm.delete_bridge("br0")
+            del_interface.assert_called_with("eth1.1")
             self.assertFalse(updif_fn.called)
 
-    def test_delete_vxlan_bridge_no_int_mappings(self):
+    def test_delete_bridge_no_int_mappings(self):
         interface_mappings = {}
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_device_by_ip', return_value=None):
@@ -795,18 +795,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(lbm,
                                   "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(lbm, "remove_interface"),\
-                mock.patch.object(lbm, "delete_vxlan") as del_vxlan,\
+                mock.patch.object(lbm, "delete_interface") as del_interface,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = False
-            lbm.delete_vlan_bridge("br0")
+            lbm.delete_bridge("br0")
             self.assertFalse(getif_fn.called)
 
             de_fn.return_value = True
             getif_fn.return_value = ["vxlan-1002"]
             bridge_device.link.set_down.return_value = False
-            lbm.delete_vlan_bridge("br0")
-            del_vxlan.assert_called_with("vxlan-1002")
+            lbm.delete_bridge("br0")
+            del_interface.assert_called_with("vxlan-1002")
 
     def test_remove_empty_bridges(self):
         self.lbm.network_map = {'net1': mock.Mock(), 'net2': mock.Mock()}
@@ -814,7 +814,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         def tap_count_side_effect(*args):
             return 0 if args[0] == 'brqnet1' else 1
 
-        with mock.patch.object(self.lbm, "delete_vlan_bridge") as del_br_fn,\
+        with mock.patch.object(self.lbm, "delete_bridge") as del_br_fn,\
                 mock.patch.object(self.lbm,
                                   "get_tap_devices_count",
                                   side_effect=tap_count_side_effect):
@@ -843,17 +843,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             bridge_device.delif.return_value = False
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
 
-    def test_delete_vlan(self):
+    def test_delete_interface(self):
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
-                mock.patch.object(utils, "execute") as exec_fn:
+                mock.patch.object(ip_lib.IpLinkCommand, "set_down") as down_fn,\
+                mock.patch.object(ip_lib.IpLinkCommand, "delete") as delete_fn:
             de_fn.return_value = False
-            self.lbm.delete_vlan("eth1.1")
-            self.assertFalse(exec_fn.called)
+            self.lbm.delete_interface("eth1.1")
+            self.assertFalse(down_fn.called)
+            self.assertFalse(delete_fn.called)
 
             de_fn.return_value = True
-            exec_fn.return_value = True
-            self.lbm.delete_vlan("eth1.1")
-            self.assertTrue(exec_fn.called)
+            self.lbm.delete_interface("eth1.1")
+            self.assertTrue(down_fn.called)
+            self.assertTrue(delete_fn.called)
 
     def _check_vxlan_support(self, expected, vxlan_ucast_supported,
                              vxlan_mcast_supported):
@@ -892,7 +894,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         with mock.patch.object(ip_lib, 'device_exists', return_value=False),\
                 mock.patch.object(ip_lib, 'vxlan_in_use', return_value=False),\
                 mock.patch.object(self.lbm,
-                                  'delete_vxlan',
+                                  'delete_interface',
                                   return_value=None),\
                 mock.patch.object(self.lbm,
                                   'ensure_vxlan',
@@ -975,7 +977,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         with mock.patch.object(self.lb_rpc.agent.br_mgr,
                                "get_bridge_name") as get_br_fn,\
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
-                                  "delete_vlan_bridge") as del_fn:
+                                  "delete_bridge") as del_fn:
             get_br_fn.return_value = "br0"
             self.lb_rpc.network_delete("anycontext", network_id="123")
             get_br_fn.assert_called_with("123")
