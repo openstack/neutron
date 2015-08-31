@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron.common import exceptions
-from neutron.newapi.hooks import attribute_population
+from neutron.pecan_wsgi.hooks import attribute_population
 from neutron import quota
 
 from oslo_log import log as logging

@@ -19,8 +19,8 @@ from oslo_middleware import request_id
 import pecan
 
 from neutron.common import exceptions as n_exc
-from neutron.newapi import hooks
-from neutron.newapi import startup
+from neutron.pecan_wsgi import hooks
+from neutron.pecan_wsgi import startup
 
 CONF = cfg.CONF
 CONF.import_opt('bind_host', 'neutron.common.config')
@@ -34,8 +34,8 @@ def setup_app(*args, **kwargs):
             'host': CONF.bind_host
         },
         'app': {
-            'root': 'neutron.newapi.controllers.root.RootController',
-            'modules': ['neutron.newapi'],
+            'root': 'neutron.pecan_wsgi.controllers.root.RootController',
+            'modules': ['neutron.pecan_wsgi'],
         }
         #TODO(kevinbenton): error templates
     }
