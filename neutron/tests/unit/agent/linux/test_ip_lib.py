@@ -958,6 +958,13 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
+    def test_add_route_with_scope(self):
+        self.route_cmd.add_route(self.cidr, scope='link')
+        self._assert_sudo([self.ip_version],
+                          ('replace', self.cidr,
+                           'dev', self.parent.name,
+                           'scope', 'link'))
+
     def test_delete_route(self):
         self.route_cmd.delete_route(self.cidr, self.ip, self.table)
         self._assert_sudo([self.ip_version],
@@ -972,6 +979,13 @@ class TestIpRouteCommand(TestIPCmdBase):
                           ('del', self.cidr,
                            'dev', self.parent.name,
                            'table', self.table))
+
+    def test_delete_route_with_scope(self):
+        self.route_cmd.delete_route(self.cidr, scope='link')
+        self._assert_sudo([self.ip_version],
+                          ('del', self.cidr,
+                           'dev', self.parent.name,
+                           'scope', 'link'))
 
     def test_list_routes(self):
         self.parent._run.return_value = (
@@ -1002,24 +1016,24 @@ class TestIpRouteCommand(TestIPCmdBase):
             self.ip_version)
         self.assertEqual(['10.0.0.0/22'], [r['cidr'] for r in routes])
         self._assert_call([self.ip_version],
-                          ('list', 'dev', self.parent.name, 'scope', 'link',
-                           'table', self.table))
+                          ('list', 'dev', self.parent.name,
+                           'table', self.table, 'scope', 'link'))
 
     def test_add_onlink_route_subtable(self):
         self.route_cmd.table(self.table).add_onlink_route(self.cidr)
         self._assert_sudo([self.ip_version],
                           ('replace', self.cidr,
                            'dev', self.parent.name,
-                           'scope', 'link',
-                           'table', self.table))
+                           'table', self.table,
+                           'scope', 'link'))
 
     def test_delete_onlink_route_subtable(self):
         self.route_cmd.table(self.table).delete_onlink_route(self.cidr)
         self._assert_sudo([self.ip_version],
                           ('del', self.cidr,
                            'dev', self.parent.name,
-                           'scope', 'link',
-                           'table', self.table))
+                           'table', self.table,
+                           'scope', 'link'))
 
 
 class TestIPv6IpRouteCommand(TestIpRouteCommand):

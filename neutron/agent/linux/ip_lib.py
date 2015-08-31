@@ -619,39 +619,25 @@ class IpRouteCommand(IpDeviceCommandBase):
 
             yield route
 
-    def list_routes(self, ip_version):
+    def list_routes(self, ip_version, **kwargs):
         args = ['list']
         args += self._dev_args()
         args += self._table_args()
+        for k, v in kwargs.items():
+            args += [k, v]
 
         output = self._run([ip_version], tuple(args))
-        return [r for r in self._parse_routes(ip_version, output)]
+        return [r for r in self._parse_routes(ip_version, output, **kwargs)]
 
     def list_onlink_routes(self, ip_version):
-        args = ['list']
-        args += self._dev_args()
-        args += ['scope', 'link']
-        args += self._table_args()
-
-        output = self._run([ip_version], tuple(args))
-        return [r for r in self._parse_routes(ip_version, output, scope='link')
-                if 'src' not in r]
+        routes = self.list_routes(ip_version, scope='link')
+        return [r for r in routes if 'src' not in r]
 
     def add_onlink_route(self, cidr):
-        ip_version = get_ip_version(cidr)
-        args = ['replace', cidr]
-        args += self._dev_args()
-        args += ['scope', 'link']
-        args += self._table_args()
-        self._as_root([ip_version], tuple(args))
+        self.add_route(cidr, scope='link')
 
     def delete_onlink_route(self, cidr):
-        ip_version = get_ip_version(cidr)
-        args = ['del', cidr]
-        args += self._dev_args()
-        args += ['scope', 'link']
-        args += self._table_args()
-        self._as_root([ip_version], tuple(args))
+        self.delete_route(cidr, scope='link')
 
     def get_gateway(self, scope=None, filters=None, ip_version=None):
         options = [ip_version] if ip_version else []
@@ -733,22 +719,26 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    'proto', 'kernel',
                                    'dev', device))
 
-    def add_route(self, cidr, via=None, table=None):
+    def add_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
         args = ['replace', cidr]
         if via:
             args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
+        for k, v in kwargs.items():
+            args += [k, v]
         self._as_root([ip_version], tuple(args))
 
-    def delete_route(self, cidr, via=None, table=None):
+    def delete_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
         args = ['del', cidr]
         if via:
             args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
+        for k, v in kwargs.items():
+            args += [k, v]
         self._as_root([ip_version], tuple(args))
 
 
