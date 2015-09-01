@@ -980,9 +980,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Leave part of the bridge name on for easier identification
         hashlen = 6
         namelen = n_const.DEVICE_NAME_MAX_LEN - len(prefix) - hashlen
+        if isinstance(name, six.text_type):
+            hashed_name = hashlib.sha1(name.encode('utf-8'))
+        else:
+            hashed_name = hashlib.sha1(name)
         new_name = ('%(prefix)s%(truncated)s%(hash)s' %
                     {'prefix': prefix, 'truncated': name[0:namelen],
-                     'hash': hashlib.sha1(name).hexdigest()[0:hashlen]})
+                     'hash': hashed_name.hexdigest()[0:hashlen]})
         LOG.warning(_LW("Creating an interface named %(name)s exceeds the "
                         "%(limit)d character limitation. It was shortened to "
                         "%(new_name)s to fit."),

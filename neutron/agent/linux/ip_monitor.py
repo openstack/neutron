@@ -64,7 +64,7 @@ class IPMonitor(async_process.AsyncProcess):
         m.start()
         for iterable in m:
             event = IPMonitorEvent.from_text(iterable)
-            print event, event.added, event.interface, event.cidr
+            print(event, event.added, event.interface, event.cidr)
     """
 
     def __init__(self,
