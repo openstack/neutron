@@ -18,9 +18,23 @@ import contextlib
 
 import six
 
+from neutron.common import utils
+from neutron.extensions import portsecurity as psec
 
 INGRESS_DIRECTION = 'ingress'
 EGRESS_DIRECTION = 'egress'
+
+DIRECTION_IP_PREFIX = {INGRESS_DIRECTION: 'source_ip_prefix',
+                       EGRESS_DIRECTION: 'dest_ip_prefix'}
+
+
+def port_sec_enabled(port):
+    return port.get(psec.PORTSECURITY, True)
+
+
+def load_firewall_driver_class(driver):
+    return utils.load_class_by_alias_or_classname(
+        'neutron.agent.firewall_drivers', driver)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -56,6 +70,10 @@ class FirewallDriver(object):
         remote_group_id will be a list of dest_ip_prefix
       remote_group_id will also remaining membership update management
     """
+
+    # OVS agent installs arp spoofing openflow rules. If firewall is capable
+    # of handling that, ovs agent doesn't need to install the protection.
+    provides_arp_spoofing_protection = False
 
     @abc.abstractmethod
     def prepare_port_filter(self, port):

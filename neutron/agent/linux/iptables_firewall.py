@@ -32,7 +32,6 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
-from neutron.extensions import portsecurity as psec
 
 
 LOG = logging.getLogger(__name__)
@@ -41,8 +40,6 @@ SPOOF_FILTER = 'spoof-filter'
 CHAIN_NAME_PREFIX = {firewall.INGRESS_DIRECTION: 'i',
                      firewall.EGRESS_DIRECTION: 'o',
                      SPOOF_FILTER: 's'}
-DIRECTION_IP_PREFIX = {firewall.INGRESS_DIRECTION: 'source_ip_prefix',
-                       firewall.EGRESS_DIRECTION: 'dest_ip_prefix'}
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
 # length of all device prefixes (e.g. qvo, tap, qvb)
@@ -146,11 +143,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug("Update members of security group (%s)", sg_id)
         self.sg_members[sg_id] = collections.defaultdict(list, sg_members)
 
-    def _ps_enabled(self, port):
-        return port.get(psec.PORTSECURITY, True)
-
     def _set_ports(self, port):
-        if not self._ps_enabled(port):
+        if not firewall.port_sec_enabled(port):
             self.unfiltered_ports[port['device']] = port
             self.filtered_ports.pop(port['device'], None)
         else:
@@ -466,7 +460,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             for ip in self.sg_members[remote_group_id][ethertype]:
                 if ip not in port_ips:
                     ip_rule = rule.copy()
-                    direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
+                    direction_ip_prefix = firewall.DIRECTION_IP_PREFIX[
+                        direction]
                     ip_prefix = str(netaddr.IPNetwork(ip).cidr)
                     ip_rule[direction_ip_prefix] = ip_prefix
                     yield ip_rule

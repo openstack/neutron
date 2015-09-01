@@ -193,6 +193,18 @@ def check_ovsdb_native():
     return result
 
 
+def check_ovs_conntrack():
+    result = checks.ovs_conntrack_supported()
+    if not result:
+        LOG.error(_LE('Check for Open vSwitch support of conntrack support '
+                      'failed. OVS/CT firewall will not work. A newer '
+                      'version of OVS (2.5+) and linux kernel (4.3+) are '
+                      'required. See '
+                      'https://github.com/openvswitch/ovs/blob/master/FAQ.md'
+                      'for more information.'))
+    return result
+
+
 def check_ebtables():
     result = checks.ebtables_supported()
     if not result:
@@ -242,6 +254,8 @@ OPTS = [
                     help=_('Check minimal dnsmasq version')),
     BoolOptCallback('ovsdb_native', check_ovsdb_native,
                     help=_('Check ovsdb native interface support')),
+    BoolOptCallback('ovs_conntrack', check_ovs_conntrack,
+                    help=_('Check ovs conntrack support')),
     BoolOptCallback('ebtables_installed', check_ebtables,
                     help=_('Check ebtables installation')),
     BoolOptCallback('keepalived_ipv6_support', check_keepalived_ipv6_support,

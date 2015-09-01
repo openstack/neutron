@@ -16,6 +16,8 @@
 
 
 from neutron.agent.common import ovs_lib
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
+        as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import ofswitch
 
@@ -24,7 +26,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin, ovs_lib.OVSBridge):
     """Common code for bridges used by OVS agent"""
 
     def setup_controllers(self, conf):
-        self.set_protocols("[OpenFlow10]")
+        self.set_protocols(ovs_consts.OPENFLOW10)
         self.del_controller()
 
     def drop_port(self, in_port):

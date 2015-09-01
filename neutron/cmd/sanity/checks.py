@@ -332,6 +332,20 @@ def ovsdb_native_supported():
     return False
 
 
+def ovs_conntrack_supported():
+    random_str = utils.get_random_string(6)
+    br_name = "ovs-test-" + random_str
+
+    with ovs_lib.OVSBridge(br_name) as br:
+        try:
+            br.set_protocols(
+                "OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13,OpenFlow14")
+        except RuntimeError as e:
+            LOG.debug("Exception while checking ovs conntrack support: %s", e)
+            return False
+    return ofctl_arg_supported(cmd='add-flow', ct_state='+trk', actions='drop')
+
+
 def ebtables_supported():
     try:
         cmd = ['ebtables', '--version']

@@ -50,6 +50,21 @@ CANARY_TABLE = 23
 # Table for ARP poison/spoofing prevention rules
 ARP_SPOOF_TABLE = 24
 
+# Tables used for ovs firewall
+BASE_EGRESS_TABLE = 71
+RULES_EGRESS_TABLE = 72
+ACCEPT_OR_INGRESS_TABLE = 73
+BASE_INGRESS_TABLE = 81
+RULES_INGRESS_TABLE = 82
+
+OVS_FIREWALL_TABLES = (
+    BASE_EGRESS_TABLE,
+    RULES_EGRESS_TABLE,
+    ACCEPT_OR_INGRESS_TABLE,
+    BASE_INGRESS_TABLE,
+    RULES_INGRESS_TABLE,
+)
+
 ## Tunnel bridge (tun_br)
 
 # Various tables for tunneling flows
@@ -114,3 +129,10 @@ OVS_DPDK_VHOST_USER = 'dpdkvhostuser'
 VHOST_USER_SOCKET_DIR = '/var/run/openvswitch'
 
 MAX_DEVICE_RETRIES = 5
+
+# OpenFlow version constants
+OPENFLOW10 = "OpenFlow10"
+OPENFLOW11 = "OpenFlow11"
+OPENFLOW12 = "OpenFlow12"
+OPENFLOW13 = "OpenFlow13"
+OPENFLOW14 = "OpenFlow14"
