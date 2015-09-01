@@ -98,18 +98,47 @@ class TestQosPlugin(base.BaseQosTestCase):
             self._validate_notif_driver_params('update_policy')
 
     def test_update_policy_rule(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
-                        return_value=self.policy):
+                        return_value=_policy):
+            setattr(_policy, "rules", [self.rule])
             self.qos_plugin.update_policy_bandwidth_limit_rule(
                 self.ctxt, self.rule.id, self.policy.id, self.rule_data)
             self._validate_notif_driver_params('update_policy')
 
-    def test_delete_policy_rule(self):
+    def test_update_policy_rule_bad_policy(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
-                        return_value=self.policy):
+                        return_value=_policy):
+            setattr(_policy, "rules", [])
+            self.assertRaises(
+                n_exc.QosRuleNotFound,
+                self.qos_plugin.update_policy_bandwidth_limit_rule,
+                self.ctxt, self.rule.id, self.policy.id,
+                self.rule_data)
+
+    def test_delete_policy_rule(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
+                        return_value=_policy):
+            setattr(_policy, "rules", [self.rule])
             self.qos_plugin.delete_policy_bandwidth_limit_rule(
-                self.ctxt, self.rule.id, self.policy.id)
+                        self.ctxt, self.rule.id, _policy.id)
             self._validate_notif_driver_params('update_policy')
+
+    def test_delete_policy_rule_bad_policy(self):
+        _policy = policy_object.QosPolicy(
+            self.ctxt, **self.policy_data['policy'])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',
+                        return_value=_policy):
+            setattr(_policy, "rules", [])
+            self.assertRaises(
+                n_exc.QosRuleNotFound,
+                self.qos_plugin.delete_policy_bandwidth_limit_rule,
+                self.ctxt, self.rule.id, _policy.id)
 
     def test_get_policy_bandwidth_limit_rules_for_policy(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_by_id',

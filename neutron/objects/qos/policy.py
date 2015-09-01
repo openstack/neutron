@@ -64,6 +64,18 @@ class QosPolicy(base.NeutronDbObject):
         setattr(self, 'rules', rules)
         self.obj_reset_changes(['rules'])
 
+    def get_rule_by_id(self, rule_id):
+        """Return rule specified by rule_id.
+
+        @raise QosRuleNotFound: if there is no such rule in the policy.
+        """
+
+        for rule in self.rules:
+            if rule_id == rule.id:
+                return rule
+        raise exceptions.QosRuleNotFound(policy_id=self.id,
+                                         rule_id=rule_id)
+
     @staticmethod
     def _is_policy_accessible(context, db_obj):
         #TODO(QoS): Look at I3426b13eede8bfa29729cf3efea3419fb91175c4 for
