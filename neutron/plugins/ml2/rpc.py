@@ -279,7 +279,7 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         1.0 - Initial version.
         1.1 - Added get_active_networks_info, create_dhcp_port,
               update_dhcp_port, and removed get_dhcp_port methods.
-
+        1.4 - Added network_update
     """
 
     def __init__(self, topic):
@@ -293,6 +293,9 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         self.topic_port_delete = topics.get_topic_name(topic,
                                                        topics.PORT,
                                                        topics.DELETE)
+        self.topic_network_update = topics.get_topic_name(topic,
+                                                          topics.NETWORK,
+                                                          topics.UPDATE)
 
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
@@ -314,3 +317,8 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         cctxt = self.client.prepare(topic=self.topic_port_delete,
                                     fanout=True)
         cctxt.cast(context, 'port_delete', port_id=port_id)
+
+    def network_update(self, context, network):
+        cctxt = self.client.prepare(topic=self.topic_network_update,
+                                    fanout=True, version='1.4')
+        cctxt.cast(context, 'network_update', network=network)
