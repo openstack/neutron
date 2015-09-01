@@ -110,11 +110,6 @@ class ResourcesPullRpcCallback(object):
     def pull(self, context, resource_type, version, resource_id):
         obj = prod_registry.pull(resource_type, resource_id, context=context)
         if obj:
-            #TODO(QoS): Remove in the future with new version of
-            #           versionedobjects containing
-            #           https://review.openstack.org/#/c/207998/
-            if version == obj.VERSION:
-                version = None
             return obj.obj_to_primitive(target_version=version)
 
 
