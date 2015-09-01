@@ -2516,9 +2516,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_sort_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with self.network(admin_status_up=True, name='net1') as net1,\
-                self.network(admin_status_up=False, name='net2') as net2,\
-                self.network(admin_status_up=False, name='net3') as net3:
+        with self.network(admin_state_up=True, name='net1') as net1,\
+                self.network(admin_state_up=False, name='net2') as net2,\
+                self.network(admin_state_up=False, name='net3') as net3:
             self._test_list_with_sort('network', (net3, net2, net1),
                                       [('admin_state_up', 'asc'),
                                        ('name', 'desc')])
@@ -2526,9 +2526,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_sort_extended_attr_native_returns_400(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with self.network(admin_status_up=True, name='net1'),\
-                self.network(admin_status_up=False, name='net2'),\
-                self.network(admin_status_up=False, name='net3'):
+        with self.network(admin_state_up=True, name='net1'),\
+                self.network(admin_state_up=False, name='net2'),\
+                self.network(admin_state_up=False, name='net3'):
             req = self.new_list_request(
                 'networks',
                 params='sort_key=provider:segmentation_id&sort_dir=asc')
@@ -2538,9 +2538,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_list_networks_with_sort_remote_key_native_returns_400(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        with self.network(admin_status_up=True, name='net1'),\
-                self.network(admin_status_up=False, name='net2'),\
-                self.network(admin_status_up=False, name='net3'):
+        with self.network(admin_state_up=True, name='net1'),\
+                self.network(admin_state_up=False, name='net2'),\
+                self.network(admin_state_up=False, name='net3'):
             req = self.new_list_request(
                 'networks', params='sort_key=subnets&sort_dir=asc')
             res = req.get_response(self.api)
@@ -2551,9 +2551,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        with self.network(admin_status_up=True, name='net1') as net1,\
-                self.network(admin_status_up=False, name='net2') as net2,\
-                self.network(admin_status_up=False, name='net3') as net3:
+        with self.network(admin_state_up=True, name='net1') as net1,\
+                self.network(admin_state_up=False, name='net2') as net2,\
+                self.network(admin_state_up=False, name='net3') as net3:
             self._test_list_with_sort('network', (net3, net2, net1),
                                       [('admin_state_up', 'asc'),
                                        ('name', 'desc')])
