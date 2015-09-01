@@ -87,6 +87,17 @@ class V2Controller(object):
 
     extensions = ExtensionsController()
 
+    @expose(generic=True)
+    def index(self):
+        builder = versions_view.get_view_builder(pecan.request)
+        return dict(version=builder.build(self.version_info))
+
+    @when(index, method='POST')
+    @when(index, method='PUT')
+    @when(index, method='DELETE')
+    def not_supported(self):
+        pecan.abort(405)
+
     @expose()
     def _lookup(self, endpoint, *remainder):
         return CollectionsController(endpoint), remainder
