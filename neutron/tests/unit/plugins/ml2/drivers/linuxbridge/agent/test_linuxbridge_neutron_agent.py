@@ -808,6 +808,23 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             lbm.delete_bridge("br0")
             del_interface.assert_called_with("vxlan-1002")
 
+    def test_delete_bridge_with_physical_vlan(self):
+        self.lbm.interface_mappings.update({"physnet2": "eth1.4000"})
+        bridge_device = mock.Mock()
+        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+                mock.patch.object(self.lbm, "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(self.lbm, "remove_interface"),\
+                mock.patch.object(self.lbm, "get_interface_details") as if_det_fn,\
+                mock.patch.object(self.lbm, "delete_interface") as del_int,\
+                mock.patch.object(bridge_lib, "BridgeDevice",
+                                  return_value=bridge_device):
+            de_fn.return_value = True
+            getif_fn.return_value = ["eth1.1", "eth1.4000"]
+            if_det_fn.return_value = ([], None)
+            bridge_device.link.set_down.return_value = False
+            self.lbm.delete_bridge("br0")
+            del_int.assert_called_once_with("eth1.1")
+
     def test_remove_empty_bridges(self):
         self.lbm.network_map = {'net1': mock.Mock(), 'net2': mock.Mock()}
 

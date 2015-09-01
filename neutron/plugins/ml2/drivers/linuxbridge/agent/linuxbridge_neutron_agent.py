@@ -461,26 +461,25 @@ class LinuxBridgeManager(object):
 
     def delete_bridge(self, bridge_name):
         if ip_lib.device_exists(bridge_name):
+            physical_interfaces = set(self.interface_mappings.values())
             interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
             for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
 
                 if interface.startswith(VXLAN_INTERFACE_PREFIX):
                     self.delete_interface(interface)
-                    continue
-
-                for physical_interface in self.interface_mappings.values():
-                    if (interface.startswith(physical_interface)):
-                        ips, gateway = self.get_interface_details(bridge_name)
-                        if ips:
-                            # This is a flat network or a VLAN interface that
-                            # was setup outside of neutron => return IP's from
-                            # bridge to interface
-                            self.update_interface_ip_details(interface,
-                                                             bridge_name,
-                                                             ips, gateway)
-                        elif physical_interface != interface:
-                            self.delete_interface(interface)
+                else:
+                    # Match the vlan/flat interface in the bridge.
+                    # If the bridge has an IP, it mean that this IP was moved
+                    # from the current interface, which also mean that this
+                    # interface was not created by the agent.
+                    ips, gateway = self.get_interface_details(bridge_name)
+                    if ips:
+                        self.update_interface_ip_details(interface,
+                                                         bridge_name,
+                                                         ips, gateway)
+                    elif interface not in physical_interfaces:
+                        self.delete_interface(interface)
 
             LOG.debug("Deleting bridge %s", bridge_name)
             bridge_device = bridge_lib.BridgeDevice(bridge_name)
