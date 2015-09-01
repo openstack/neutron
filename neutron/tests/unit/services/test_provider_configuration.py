@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from oslo_config import cfg
 
 from neutron.common import exceptions as n_exc
@@ -22,15 +24,22 @@ from neutron.tests import base
 
 
 class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(ParseServiceProviderConfigurationTestCase, self).setUp()
+        self.service_providers = mock.patch.object(
+            provconf.NeutronModule, 'service_providers').start()
+
+    def _set_override(self, service_providers):
+        self.service_providers.return_value = service_providers
+
     def test_default_service_provider_configuration(self):
         providers = cfg.CONF.service_providers.service_provider
         self.assertEqual(providers, [])
 
     def test_parse_single_service_provider_opt(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                           ':lbaas:driver_path'])
         expected = {'service_type': constants.LOADBALANCER,
                     'name': 'lbaas',
                     'driver': 'driver_path',
@@ -40,10 +49,8 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual(res, [expected])
 
     def test_parse_single_default_service_provider_opt(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path:default'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                           ':lbaas:driver_path:default'])
         expected = {'service_type': constants.LOADBALANCER,
                     'name': 'lbaas',
                     'driver': 'driver_path',
@@ -53,56 +60,46 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual(res, [expected])
 
     def test_parse_multi_service_provider_opt(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path',
-                               constants.LOADBALANCER + ':name1:path1',
-                               constants.LOADBALANCER +
-                               ':name2:path2:default'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                            ':lbaas:driver_path',
+                            constants.LOADBALANCER + ':name1:path1',
+                            constants.LOADBALANCER +
+                            ':name2:path2:default'])
         res = provconf.parse_service_provider_opt()
         # This parsing crosses repos if additional projects are installed,
         # so check that at least what we expect is there; there may be more.
         self.assertTrue(len(res) >= 3)
 
-    def test_parse_service_provider_opt_not_allowed_raises(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path',
-                               'svc_type:name1:path1'],
-                              'service_providers')
-        self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
-
     def test_parse_service_provider_invalid_format(self):
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':lbaas:driver_path',
-                               'svc_type:name1:path1:def'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                           ':lbaas:driver_path',
+                           'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':',
-                               'svc_type:name1:path1:def'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                           ':',
+                           'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
     def test_parse_service_provider_name_too_long(self):
         name = 'a' * 256
-        cfg.CONF.set_override('service_provider',
-                              [constants.LOADBALANCER +
-                               ':' + name + ':driver_path',
-                               'svc_type:name1:path1:def'],
-                              'service_providers')
+        self._set_override([constants.LOADBALANCER +
+                           ':' + name + ':driver_path',
+                           'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
 
 class ProviderConfigurationTestCase(base.BaseTestCase):
+
     def setUp(self):
         super(ProviderConfigurationTestCase, self).setUp()
+        self.service_providers = mock.patch.object(
+            provconf.NeutronModule, 'service_providers').start()
+
+    def _set_override(self, service_providers):
+        self.service_providers.return_value = service_providers
 
     def test_ensure_driver_unique(self):
-        pconf = provconf.ProviderConfiguration([])
+        pconf = provconf.ProviderConfiguration()
         pconf.providers[('svctype', 'name')] = {'driver': 'driver',
                                                 'default': True}
         self.assertRaises(n_exc.Invalid,
@@ -110,7 +107,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         self.assertIsNone(pconf._ensure_driver_unique('another_driver1'))
 
     def test_ensure_default_unique(self):
-        pconf = provconf.ProviderConfiguration([])
+        pconf = provconf.ProviderConfiguration()
         pconf.providers[('svctype', 'name')] = {'driver': 'driver',
                                                 'default': True}
         self.assertRaises(n_exc.Invalid,
@@ -121,7 +118,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         self.assertIsNone(pconf._ensure_default_unique('svctype1', False))
 
     def test_add_provider(self):
-        pconf = provconf.ProviderConfiguration([])
+        pconf = provconf.ProviderConfiguration()
         prov = {'service_type': constants.LOADBALANCER,
                 'name': 'name',
                 'driver': 'path',
@@ -134,7 +131,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                          [{'driver': 'path', 'default': False}])
 
     def test_add_duplicate_provider(self):
-        pconf = provconf.ProviderConfiguration([])
+        pconf = provconf.ProviderConfiguration()
         prov = {'service_type': constants.LOADBALANCER,
                 'name': 'name',
                 'driver': 'path',
@@ -144,6 +141,10 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         self.assertEqual(len(pconf.providers), 1)
 
     def test_get_service_providers(self):
+        self._set_override([constants.LOADBALANCER + ':name:path',
+                            constants.LOADBALANCER + ':name2:path2',
+                            'st2:name:driver:default',
+                            'st3:name2:driver2:default'])
         provs = [{'service_type': constants.LOADBALANCER,
                   'name': 'name',
                   'driver': 'path',
@@ -161,7 +162,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                   'name': 'name2',
                   'driver': 'driver2',
                   'default': True}]
-        pconf = provconf.ProviderConfiguration(provs)
+        pconf = provconf.ProviderConfiguration()
         for prov in provs:
             p = pconf.get_service_providers(
                 filters={'name': [prov['name']],
@@ -170,6 +171,8 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
             self.assertEqual(p, [prov])
 
     def test_get_service_providers_with_fields(self):
+        self._set_override([constants.LOADBALANCER + ":name:path",
+                            constants.LOADBALANCER + ":name2:path2"])
         provs = [{'service_type': constants.LOADBALANCER,
                   'name': 'name',
                   'driver': 'path',
@@ -178,7 +181,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                   'name': 'name2',
                   'driver': 'path2',
                   'default': False}]
-        pconf = provconf.ProviderConfiguration(provs)
+        pconf = provconf.ProviderConfiguration()
         for prov in provs:
             p = pconf.get_service_providers(
                 filters={'name': [prov['name']],
