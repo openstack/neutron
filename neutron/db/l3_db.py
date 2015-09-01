@@ -511,6 +511,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                       port_id=port['id'],
                                       device_id=port['device_id'])
 
+            if not port['fixed_ips']:
+                msg = _LE('Router port must have at least one fixed IP')
+                raise n_exc.BadRequest(resource='router', msg=msg)
+
             # Only allow one router port with IPv6 subnets per network id
             if self._port_has_ipv6_address(port):
                 for existing_port in (rp.port for rp in router.attached_ports):

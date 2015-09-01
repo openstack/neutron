@@ -1323,6 +1323,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   p['port']['id'],
                                                   err_code)
 
+    def test_router_add_interface_port_without_ips(self):
+        with self.network() as network, self.router() as r:
+            # Create a router port without ips
+            p = self._make_port(self.fmt, network['network']['id'],
+                device_owner=l3_constants.DEVICE_OWNER_ROUTER_INTF)
+            err_code = exc.HTTPBadRequest.code
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          None,
+                                          p['port']['id'],
+                                          expected_code=err_code)
+
     def test_router_add_interface_dup_subnet1_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
