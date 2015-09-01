@@ -94,7 +94,7 @@ def get_log_args(conf, log_file_name, **kwargs):
         if log_dir:
             cmd_args.append('--log-dir=%s' % log_dir)
         if kwargs.get('metadata_proxy_watch_log') is False:
-            cmd_args.append('--metadata_proxy_watch_log=false')
+            cmd_args.append('--nometadata_proxy_watch_log')
     else:
         if conf.use_syslog:
             cmd_args.append('--use-syslog')
