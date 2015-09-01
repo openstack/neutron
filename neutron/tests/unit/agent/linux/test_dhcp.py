@@ -800,6 +800,8 @@ class TestBase(TestConfBase):
         self.external_process = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager').start()
 
+        self.mock_mgr.return_value.driver.bridged = True
+
 
 class TestDhcpBase(TestBase):
 
@@ -998,15 +1000,16 @@ class TestDnsmasq(TestBase):
             '--no-hosts',
             '--no-resolv',
             '--strict-order',
-            '--bind-interfaces',
-            '--interface=tap0',
             '--except-interface=lo',
             '--pid-file=%s' % expected_pid_file,
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
             '--addn-hosts=/dhcp/%s/addn_hosts' % network.id,
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
-            '--dhcp-match=set:ipxe,175']
+            '--dhcp-match=set:ipxe,175',
+            '--bind-interfaces',
+            '--interface=tap0',
+        ]
 
         seconds = ''
         if lease_duration == -1:

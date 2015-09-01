@@ -98,10 +98,18 @@ CONF.register_cli_opts(_db_opts, 'database')
 CONF.register_opts(_quota_opts, 'QUOTAS')
 
 
-def do_alembic_command(config, cmd, *args, **kwargs):
+def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
+    args = []
+    if revision:
+        args.append(revision)
+
     project = config.get_main_option('neutron_project')
-    alembic_util.msg(_('Running %(cmd)s for %(project)s ...') %
-                     {'cmd': cmd, 'project': project})
+    if desc:
+        alembic_util.msg(_('Running %(cmd)s (%(desc)s) for %(project)s ...') %
+                         {'cmd': cmd, 'desc': desc, 'project': project})
+    else:
+        alembic_util.msg(_('Running %(cmd)s for %(project)s ...') %
+                         {'cmd': cmd, 'project': project})
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
     except alembic_util.CommandError as e:
@@ -126,30 +134,48 @@ def add_alembic_subparser(sub, cmd):
 
 
 def do_upgrade(config, cmd):
-    if not CONF.command.revision and not CONF.command.delta:
+    desc = None
+
+    if ((CONF.command.revision or CONF.command.delta) and
+        (CONF.command.expand or CONF.command.contract)):
+        raise SystemExit(_(
+            'Phase upgrade options do not accept revision specification'))
+
+    if CONF.command.expand:
+        desc = EXPAND_BRANCH
+        revision = _get_branch_head(EXPAND_BRANCH)
+
+    elif CONF.command.contract:
+        desc = CONTRACT_BRANCH
+        revision = _get_branch_head(CONTRACT_BRANCH)
+
+    elif not CONF.command.revision and not CONF.command.delta:
         raise SystemExit(_('You must provide a revision or relative delta'))
 
-    revision = CONF.command.revision or ''
-    if '-' in revision:
-        raise SystemExit(_('Negative relative revision (downgrade) not '
-                           'supported'))
+    else:
+        revision = CONF.command.revision or ''
+        if '-' in revision:
+            raise SystemExit(_('Negative relative revision (downgrade) not '
+                               'supported'))
 
-    delta = CONF.command.delta
-    if delta:
-        if '+' in revision:
-            raise SystemExit(_('Use either --delta or relative revision, '
-                               'not both'))
-        if delta < 0:
-            raise SystemExit(_('Negative delta (downgrade) not supported'))
-        revision = '%s+%d' % (revision, delta)
+        delta = CONF.command.delta
+        if delta:
+            if '+' in revision:
+                raise SystemExit(_('Use either --delta or relative revision, '
+                                   'not both'))
+            if delta < 0:
+                raise SystemExit(_('Negative delta (downgrade) not supported'))
+            revision = '%s+%d' % (revision, delta)
 
-    # leave branchless 'head' revision request backward compatible by applying
-    # all heads in all available branches.
-    if revision == 'head':
-        revision = 'heads'
+        # leave branchless 'head' revision request backward compatible by
+        # applying all heads in all available branches.
+        if revision == 'head':
+            revision = 'heads'
+
     if not CONF.command.sql:
         run_sanity_checks(config, revision)
-    do_alembic_command(config, cmd, revision, sql=CONF.command.sql)
+    do_alembic_command(config, cmd, revision=revision,
+                       desc=desc, sql=CONF.command.sql)
 
 
 def no_downgrade(config, cmd):
@@ -158,7 +184,7 @@ def no_downgrade(config, cmd):
 
 def do_stamp(config, cmd):
     do_alembic_command(config, cmd,
-                       CONF.command.revision,
+                       revision=CONF.command.revision,
                        sql=CONF.command.sql)
 
 
@@ -311,6 +337,11 @@ def add_command_parsers(subparsers):
                         default='',
                         help='Change MySQL storage engine of current '
                              'existing tables')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--expand', action='store_true')
+    group.add_argument('--contract', action='store_true')
+
     parser.set_defaults(func=do_upgrade)
 
     parser = subparsers.add_parser('downgrade', help="(No longer supported)")

@@ -25,6 +25,7 @@ import pkg_resources
 from neutron.db import migration
 from neutron.db.migration import cli
 from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class FakeConfig(object):
@@ -135,14 +136,14 @@ class TestCli(base.BaseTestCase):
                                                   attrs=attrs)
             cli.migration_entrypoints[project] = entrypoint
 
-    def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs=[{}]):
+    def _main_test_helper(self, argv, func_name, exp_kwargs=[{}]):
         with mock.patch.object(sys, 'argv', argv),\
             mock.patch.object(cli, 'run_sanity_checks'),\
             mock.patch.object(cli, 'validate_labels'):
 
             cli.main()
             self.do_alembic_cmd.assert_has_calls(
-                [mock.call(mock.ANY, func_name, *exp_args, **kwargs)
+                [mock.call(mock.ANY, func_name, **kwargs)
                  for kwargs in exp_kwargs]
             )
 
@@ -150,15 +151,13 @@ class TestCli(base.BaseTestCase):
         self._main_test_helper(
             ['prog', 'stamp', 'foo'],
             'stamp',
-            ('foo',),
-            [{'sql': False}]
+            [{'revision': 'foo', 'sql': False}]
         )
 
         self._main_test_helper(
             ['prog', 'stamp', 'foo', '--sql'],
             'stamp',
-            ('foo',),
-            [{'sql': True}]
+            [{'revision': 'foo', 'sql': True}]
         )
 
     def test_current(self):
@@ -192,7 +191,7 @@ class TestCli(base.BaseTestCase):
             self._main_test_helper(
                 ['prog', 'revision', '--autogenerate', '-m', 'message'],
                 'revision',
-                (), expected_kwargs
+                expected_kwargs
             )
             self.assertEqual(len(self.projects), update.call_count)
             update.reset_mock()
@@ -204,7 +203,7 @@ class TestCli(base.BaseTestCase):
             self._main_test_helper(
                 ['prog', 'revision', '--sql', '-m', 'message'],
                 'revision',
-                (), expected_kwargs
+                expected_kwargs
             )
             self.assertEqual(len(self.projects), update.call_count)
 
@@ -215,26 +214,70 @@ class TestCli(base.BaseTestCase):
         # Test that old branchless approach is still supported
         self._test_database_sync_revision(separate_branches=False)
 
-    def test_upgrade(self):
+    def test_upgrade_revision(self):
         self._main_test_helper(
             ['prog', 'upgrade', '--sql', 'head'],
             'upgrade',
-            ('heads',),
-            [{'sql': True}]
+            [{'desc': None, 'revision': 'heads', 'sql': True}]
         )
 
+    def test_upgrade_delta(self):
         self._main_test_helper(
             ['prog', 'upgrade', '--delta', '3'],
             'upgrade',
-            ('+3',),
-            [{'sql': False}]
+            [{'desc': None, 'revision': '+3', 'sql': False}]
         )
 
+    def test_upgrade_revision_delta(self):
         self._main_test_helper(
             ['prog', 'upgrade', 'kilo', '--delta', '3'],
             'upgrade',
-            ('kilo+3',),
-            [{'sql': False}]
+            [{'desc': None, 'revision': 'kilo+3', 'sql': False}]
+        )
+
+    def test_upgrade_expand(self):
+        self._main_test_helper(
+            ['prog', 'upgrade', '--expand'],
+            'upgrade',
+            [{'desc': cli.EXPAND_BRANCH,
+              'revision': 'expand@head',
+              'sql': False}]
+        )
+
+    def test_upgrade_expand_contract_are_mutually_exclusive(self):
+        with testlib_api.ExpectedException(SystemExit):
+            self._main_test_helper(
+                ['prog', 'upgrade', '--expand --contract'], 'upgrade')
+
+    def _test_upgrade_conflicts_with_revision(self, mode):
+        with testlib_api.ExpectedException(SystemExit):
+            self._main_test_helper(
+                ['prog', 'upgrade', '--%s revision1' % mode], 'upgrade')
+
+    def _test_upgrade_conflicts_with_delta(self, mode):
+        with testlib_api.ExpectedException(SystemExit):
+            self._main_test_helper(
+                ['prog', 'upgrade', '--%s +3' % mode], 'upgrade')
+
+    def test_upgrade_expand_conflicts_with_revision(self):
+        self._test_upgrade_conflicts_with_revision('expand')
+
+    def test_upgrade_contract_conflicts_with_revision(self):
+        self._test_upgrade_conflicts_with_revision('contract')
+
+    def test_upgrade_expand_conflicts_with_delta(self):
+        self._test_upgrade_conflicts_with_delta('expand')
+
+    def test_upgrade_contract_conflicts_with_delta(self):
+        self._test_upgrade_conflicts_with_delta('contract')
+
+    def test_upgrade_contract(self):
+        self._main_test_helper(
+            ['prog', 'upgrade', '--contract'],
+            'upgrade',
+            [{'desc': cli.CONTRACT_BRANCH,
+              'revision': 'contract@head',
+              'sql': False}]
         )
 
     def assert_command_fails(self, command):

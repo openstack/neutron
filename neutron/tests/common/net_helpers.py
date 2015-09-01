@@ -69,7 +69,7 @@ def increment_ip_cidr(ip_cidr, offset=1):
     net0 = netaddr.IPNetwork(ip_cidr)
     net = netaddr.IPNetwork(ip_cidr)
     net.value += offset
-    if not net0.network < net.ip < net0.broadcast:
+    if not net0.network < net.ip < net0[-1]:
         tools.fail(
             'Incorrect ip_cidr,offset tuple (%s,%s): "incremented" ip_cidr is '
             'outside ip_cidr' % (ip_cidr, offset))
