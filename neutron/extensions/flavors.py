@@ -16,9 +16,66 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
+from neutron.common import exceptions as nexception
 from neutron import manager
 from neutron.plugins.common import constants
 
+
+# Flavor Exceptions
+class FlavorNotFound(nexception.NotFound):
+    message = _("Flavor %(flavor_id)s could not be found.")
+
+
+class FlavorInUse(nexception.InUse):
+    message = _("Flavor %(flavor_id)s is used by some service instance.")
+
+
+class ServiceProfileNotFound(nexception.NotFound):
+    message = _("Service Profile %(sp_id)s could not be found.")
+
+
+class ServiceProfileInUse(nexception.InUse):
+    message = _("Service Profile %(sp_id)s is used by some service instance.")
+
+
+class FlavorServiceProfileBindingExists(nexception.Conflict):
+    message = _("Service Profile %(sp_id)s is already associated "
+                "with flavor %(fl_id)s.")
+
+
+class FlavorServiceProfileBindingNotFound(nexception.NotFound):
+    message = _("Service Profile %(sp_id)s is not associated "
+                "with flavor %(fl_id)s.")
+
+
+class ServiceProfileDriverNotFound(nexception.NotFound):
+    message = _("Service Profile driver %(driver)s could not be found.")
+
+
+class ServiceProfileEmpty(nexception.InvalidInput):
+    message = _("Service Profile needs either a driver or metainfo.")
+
+
+class FlavorDisabled(nexception.ServiceUnavailable):
+    message = _("Flavor is not enabled.")
+
+
+class ServiceProfileDisabled(nexception.ServiceUnavailable):
+    message = _("Service Profile is not enabled.")
+
+
+class InvalidFlavorServiceType(nexception.InvalidInput):
+    message = _("Invalid service type %(service_type)s.")
+
+
+def _validate_flavor_service_type(validate_type, valid_values=None):
+    """Ensure requested flavor service type plugin is loaded."""
+    plugins = manager.NeutronManager.get_service_plugins()
+    if validate_type not in plugins:
+        raise InvalidFlavorServiceType(service_type=validate_type)
+
+attr.validators['type:validate_flavor_service_type'] = (
+    _validate_flavor_service_type)
 
 FLAVORS = 'flavors'
 SERVICE_PROFILES = 'service_profiles'
@@ -31,13 +88,15 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': attr.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'description': {'allow_post': True, 'allow_put': True,
-                        'validate': {'type:string': None},
+                        'validate': {'type:string_or_none':
+                                     attr.LONG_DESCRIPTION_MAX_LEN},
                         'is_visible': True, 'default': ''},
         'service_type': {'allow_post': True, 'allow_put': False,
-                         'validate': {'type:string': None},
+                         'validate':
+                         {'type:validate_flavor_service_type': None},
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
@@ -47,38 +106,57 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'validate': {'type:uuid_list': None},
                              'is_visible': True, 'default': []},
         'enabled': {'allow_post': True, 'allow_put': True,
-                    'validate': {'type:boolean': None},
+                    'convert_to': attr.convert_to_boolean_if_not_none,
                     'default': True,
                     'is_visible': True},
     },
     SERVICE_PROFILES: {
         'id': {'allow_post': False, 'allow_put': False,
+               'validate': {'type:uuid': None},
                'is_visible': True,
                'primary_key': True},
         'description': {'allow_post': True, 'allow_put': True,
-                        'validate': {'type:string': None},
-                        'is_visible': True},
-        # service_profile belong to one service type for now
-        #'service_types': {'allow_post': False, 'allow_put': False,
-        #                  'is_visible': True},
-        'driver': {'allow_post': True, 'allow_put': False,
-                   'validate': {'type:string': None},
+                        'validate': {'type:string_or_none':
+                                     attr.LONG_DESCRIPTION_MAX_LEN},
+                        'is_visible': True, 'default': ''},
+        'driver': {'allow_post': True, 'allow_put': True,
+                   'validate': {'type:string':
+                                attr.LONG_DESCRIPTION_MAX_LEN},
                    'is_visible': True,
-                   'default': attr.ATTR_NOT_SPECIFIED},
+                   'default': ''},
         'metainfo': {'allow_post': True, 'allow_put': True,
-                     'is_visible': True},
+                     'is_visible': True,
+                     'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
         'enabled': {'allow_post': True, 'allow_put': True,
-                    'validate': {'type:boolean': None},
+                    'convert_to': attr.convert_to_boolean_if_not_none,
                     'is_visible': True, 'default': True},
     },
 }
 
 
 SUB_RESOURCE_ATTRIBUTE_MAP = {
+    'next_providers': {
+        'parent': {'collection_name': 'flavors',
+                   'member_name': 'flavor'},
+        'parameters': {'provider': {'allow_post': False,
+                                    'allow_put': False,
+                                    'is_visible': True},
+                       'driver': {'allow_post': False,
+                                  'allow_put': False,
+                                  'is_visible': True},
+                       'metainfo': {'allow_post': False,
+                                    'allow_put': False,
+                                    'is_visible': True},
+                       'tenant_id': {'allow_post': True, 'allow_put': False,
+                                     'required_by_policy': True,
+                                     'validate': {'type:string':
+                                                  attr.TENANT_ID_MAX_LEN},
+                                     'is_visible': True}}
+    },
     'service_profiles': {
         'parent': {'collection_name': 'flavors',
                    'member_name': 'flavor'},
@@ -106,11 +184,11 @@ class Flavors(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return "Service specification for advanced services"
+        return "Flavor specification for Neutron advanced services"
 
     @classmethod
     def get_updated(cls):
-        return "2014-07-06T10:00:00-00:00"
+        return "2015-09-17T10:00:00-00:00"
 
     @classmethod
     def get_resources(cls):

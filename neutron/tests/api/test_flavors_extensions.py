@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_log import log as logging
+from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
 from neutron.tests.tempest import test
@@ -37,14 +38,25 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         if not test.is_extension_enabled('flavors', 'network'):
             msg = "flavors extension not enabled."
             raise cls.skipException(msg)
-        service_type = "LOADBALANCER"
+
+        # Use flavors service type as know this is loaded
+        service_type = "FLAVORS"
         description_flavor = "flavor is created by tempest"
         name_flavor = "Best flavor created by tempest"
-        cls.flavor = cls.create_flavor(name_flavor, description_flavor,
-                                       service_type)
+
+        # The check above will pass if api_extensions=all, which does
+        # not mean flavors extension itself is present.
+        try:
+            cls.flavor = cls.create_flavor(name_flavor, description_flavor,
+                                           service_type)
+        except lib_exc.NotFound:
+            msg = "flavors plugin not enabled."
+            raise cls.skipException(msg)
+
         description_sp = "service profile created by tempest"
-        # Future TODO(madhu_ak): Right now the dummy driver is loaded. Will
-        # make changes as soon I get to know the flavor supported drivers
+        # Drivers are supported as is an empty driver field.  Use an
+        # empty field for now since otherwise driver is validated against the
+        # servicetype configuration which may differ in test scenarios.
         driver = ""
         metainfo = '{"data": "value"}'
         cls.service_profile = cls.create_service_profile(
@@ -86,7 +98,7 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
     def test_create_update_delete_flavor(self):
         # Creates a flavor
         description = "flavor created by tempest"
-        service = "LOADBALANCERS"
+        service = "FLAVORS"
         name = "Best flavor created by tempest"
         body = self.admin_client.create_flavor(name=name, service_type=service,
                                                description=description)
