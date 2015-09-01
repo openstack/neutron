@@ -34,10 +34,6 @@ _keywords = {
 
 class OpenFlowSwitchMixin(object):
     """Mixin to provide common convenient routines for an openflow switch."""
-    agent_uuid_stamp = '0x0'
-
-    def set_agent_uuid_stamp(self, val):
-        self.agent_uuid_stamp = val
 
     @staticmethod
     def _conv_args(kwargs):
@@ -87,14 +83,6 @@ class OpenFlowSwitchMixin(object):
                 **self._conv_args(kwargs))
         else:
             super(OpenFlowSwitchMixin, self).remove_all_flows()
-
-    def add_flow(self, **kwargs):
-        kwargs['cookie'] = self.agent_uuid_stamp
-        super(OpenFlowSwitchMixin, self).add_flow(**self._conv_args(kwargs))
-
-    def mod_flow(self, **kwargs):
-        kwargs['cookie'] = self.agent_uuid_stamp
-        super(OpenFlowSwitchMixin, self).mod_flow(**self._conv_args(kwargs))
 
     def _filter_flows(self, flows):
         LOG.debug("Agent uuid stamp used to filter flows: %s",
