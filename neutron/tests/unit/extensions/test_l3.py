@@ -2797,6 +2797,76 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         fip['floatingip']['floating_ip_address'])
                 self.assertEqual(4, floating_ip.version)
 
+    def test_create_router_gateway_fails_nested(self):
+        # Force _update_router_gw_info failure
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not isinstance(plugin, l3_db.L3_NAT_dbonly_mixin):
+            self.skipTest("Plugin is not L3_NAT_dbonly_mixin")
+        ctx = context.Context('', 'foo')
+        data = {'router': {
+            'name': 'router1', 'admin_state_up': True,
+            'external_gateway_info': {'network_id': 'some_uuid'},
+            'tenant_id': 'some_tenant'}}
+
+        def mock_fail__update_router_gw_info(ctx, router_id, info,
+                                             router=None):
+            # Fail with breaking transaction
+            with ctx.session.begin(subtransactions=True):
+                raise n_exc.NeutronException
+
+        mock.patch.object(plugin, '_update_router_gw_info',
+                          side_effect=mock_fail__update_router_gw_info).start()
+
+        def create_router_with_transaction(ctx, data):
+            # Emulates what many plugins do
+            with ctx.session.begin(subtransactions=True):
+                plugin.create_router(ctx, data)
+
+        # Verify router doesn't persist on failure
+        self.assertRaises(n_exc.NeutronException,
+                          create_router_with_transaction, ctx, data)
+        routers = plugin.get_routers(ctx)
+        self.assertEqual(0, len(routers))
+
+    def test_create_router_gateway_fails_nested_delete_router_failed(self):
+        # Force _update_router_gw_info failure
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not isinstance(plugin, l3_db.L3_NAT_dbonly_mixin):
+            self.skipTest("Plugin is not L3_NAT_dbonly_mixin")
+        ctx = context.Context('', 'foo')
+        data = {'router': {
+            'name': 'router1', 'admin_state_up': True,
+            'external_gateway_info': {'network_id': 'some_uuid'},
+            'tenant_id': 'some_tenant'}}
+
+        def mock_fail__update_router_gw_info(ctx, router_id, info,
+                                             router=None):
+            # Fail with breaking transaction
+            with ctx.session.begin(subtransactions=True):
+                raise n_exc.NeutronException
+
+        def mock_fail_delete_router(ctx, router_id):
+            with ctx.session.begin(subtransactions=True):
+                raise Exception()
+
+        mock.patch.object(plugin, '_update_router_gw_info',
+                          side_effect=mock_fail__update_router_gw_info).start()
+        mock.patch.object(plugin, 'delete_router',
+                          mock_fail_delete_router).start()
+
+        def create_router_with_transaction(ctx, data):
+            # Emulates what many plugins do
+            with ctx.session.begin(subtransactions=True):
+                plugin.create_router(ctx, data)
+
+        # Verify router doesn't persist on failure
+        self.assertRaises(n_exc.NeutronException,
+                          create_router_with_transaction, ctx, data)
+        routers = plugin.get_routers(ctx)
+        self.assertEqual(0, len(routers))
+
     def test_update_subnet_gateway_for_external_net(self):
         """Test to make sure notification to routers occurs when the gateway
             ip address of a subnet of the external network is changed.
