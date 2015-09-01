@@ -502,30 +502,29 @@ class IpRouteCommand(IpDeviceCommandBase):
         """Return an instance of IpRouteCommand which works on given table"""
         return IpRouteCommand(self._parent, table)
 
-    def _table_args(self):
+    def _table_args(self, override=None):
+        if override:
+            return ['table', override]
         return ['table', self._table] if self._table else []
+
+    def _dev_args(self):
+        return ['dev', self.name] if self.name else []
 
     def add_gateway(self, gateway, metric=None, table=None):
         ip_version = get_ip_version(gateway)
         args = ['replace', 'default', 'via', gateway]
         if metric:
             args += ['metric', metric]
-        args += ['dev', self.name]
-        if table:
-            args += ['table', table]
-        else:
-            args += self._table_args()
+        args += self._dev_args()
+        args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
 
     def delete_gateway(self, gateway, table=None):
         ip_version = get_ip_version(gateway)
         args = ['del', 'default',
-                'via', gateway,
-                'dev', self.name]
-        if table:
-            args += ['table', table]
-        else:
-            args += self._table_args()
+                'via', gateway]
+        args += self._dev_args()
+        args += self._table_args(table)
         try:
             self._as_root([ip_version], tuple(args))
         except RuntimeError as rte:
@@ -537,7 +536,9 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def list_onlink_routes(self, ip_version):
         def iterate_routes():
-            args = ['list', 'dev', self.name, 'scope', 'link']
+            args = ['list']
+            args += self._dev_args()
+            args += ['scope', 'link']
             args += self._table_args()
             output = self._run([ip_version], tuple(args))
             for line in output.split('\n'):
@@ -549,20 +550,25 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def add_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        args = ['replace', cidr, 'dev', self.name, 'scope', 'link']
+        args = ['replace', cidr]
+        args += self._dev_args()
+        args += ['scope', 'link']
         args += self._table_args()
         self._as_root([ip_version], tuple(args))
 
     def delete_onlink_route(self, cidr):
         ip_version = get_ip_version(cidr)
-        args = ['del', cidr, 'dev', self.name, 'scope', 'link']
+        args = ['del', cidr]
+        args += self._dev_args()
+        args += ['scope', 'link']
         args += self._table_args()
         self._as_root([ip_version], tuple(args))
 
     def get_gateway(self, scope=None, filters=None, ip_version=None):
         options = [ip_version] if ip_version else []
 
-        args = ['list', 'dev', self.name]
+        args = ['list']
+        args += self._dev_args()
         args += self._table_args()
         if filters:
             args += filters
@@ -640,17 +646,24 @@ class IpRouteCommand(IpDeviceCommandBase):
 
     def add_route(self, cidr, ip, table=None):
         ip_version = get_ip_version(cidr)
-        args = ['replace', cidr, 'via', ip, 'dev', self.name]
-        if table:
-            args += ['table', table]
+        args = ['replace', cidr, 'via', ip]
+        args += self._dev_args()
+        args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
 
     def delete_route(self, cidr, ip, table=None):
         ip_version = get_ip_version(cidr)
-        args = ['del', cidr, 'via', ip, 'dev', self.name]
-        if table:
-            args += ['table', table]
+        args = ['del', cidr, 'via', ip]
+        args += self._dev_args()
+        args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
+
+
+class IPRoute(SubProcessBase):
+    def __init__(self, namespace=None, table=None):
+        super(IPRoute, self).__init__(namespace=namespace)
+        self.name = None
+        self.route = IpRouteCommand(self, table=table)
 
 
 class IpNeighCommand(IpDeviceCommandBase):
