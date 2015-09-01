@@ -147,16 +147,6 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         self.assertEqual(self.resource_obj.obj_to_primitive(), primitive)
 
     @mock.patch.object(FakeResource, 'obj_to_primitive')
-    def test_pull_no_backport_for_latest_version(self, to_prim_mock):
-        with mock.patch.object(resources_rpc.prod_registry, 'pull',
-                               return_value=self.resource_obj):
-            self.callbacks.pull(
-                self.context, resource_type=FakeResource.obj_name(),
-                version=FakeResource.VERSION,
-                resource_id=self.resource_obj.id)
-        to_prim_mock.assert_called_with(target_version=None)
-
-    @mock.patch.object(FakeResource, 'obj_to_primitive')
     def test_pull_backports_to_older_version(self, to_prim_mock):
         with mock.patch.object(resources_rpc.prod_registry, 'pull',
                                return_value=self.resource_obj):
