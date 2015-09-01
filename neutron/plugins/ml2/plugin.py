@@ -947,7 +947,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     break
 
             for a in allocated:
-                if a.port_id:
+                if a.port:
                     # calling update_port() for each allocation to remove the
                     # IP from the port and call the MechanismDrivers
                     data = {attributes.PORT:
@@ -957,6 +957,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                            if ip.subnet_id != id]}}
                     try:
                         self.update_port(context, a.port_id, data)
+                    except exc.PortNotFound:
+                        LOG.debug("Port %s deleted concurrently", a.port_id)
                     except Exception:
                         with excutils.save_and_reraise_exception():
                             LOG.exception(_LE("Exception deleting fixed_ip "
