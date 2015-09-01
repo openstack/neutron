@@ -60,10 +60,13 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
 class SubnetContext(MechanismDriverContext, api.SubnetContext):
 
-    def __init__(self, plugin, plugin_context, subnet, original_subnet=None):
+    def __init__(self, plugin, plugin_context, subnet, network,
+                 original_subnet=None):
         super(SubnetContext, self).__init__(plugin, plugin_context)
         self._subnet = subnet
         self._original_subnet = original_subnet
+        self._network_context = NetworkContext(plugin, plugin_context,
+                                               network)
 
     @property
     def current(self):
@@ -72,6 +75,10 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
     @property
     def original(self):
         return self._original_subnet
+
+    @property
+    def network(self):
+        return self._network_context
 
 
 class PortContext(MechanismDriverContext, api.PortContext):

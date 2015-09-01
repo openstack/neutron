@@ -814,7 +814,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             result = super(Ml2Plugin, self).create_subnet(context, subnet)
             self.extension_manager.process_create_subnet(
                 context, subnet[attributes.SUBNET], result)
-            mech_context = driver_context.SubnetContext(self, context, result)
+            network = self.get_network(context, result['network_id'])
+            mech_context = driver_context.SubnetContext(self, context,
+                                                        result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
 
         return result, mech_context
@@ -842,8 +844,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 context, id, subnet)
             self.extension_manager.process_update_subnet(
                 context, subnet[attributes.SUBNET], updated_subnet)
+            network = self.get_network(context, updated_subnet['network_id'])
             mech_context = driver_context.SubnetContext(
-                self, context, updated_subnet, original_subnet=original_subnet)
+                self, context, updated_subnet, network,
+                original_subnet=original_subnet)
             self.mechanism_manager.update_subnet_precommit(mech_context)
 
         # TODO(apech) - handle errors raised by update_subnet, potentially
@@ -920,8 +924,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # If allocated is None, then all the IPAllocation were
                 # correctly deleted during the previous pass.
                 if not allocated:
+                    network = self.get_network(context, subnet['network_id'])
                     mech_context = driver_context.SubnetContext(self, context,
-                                                                subnet)
+                                                                subnet,
+                                                                network)
                     self.mechanism_manager.delete_subnet_precommit(
                         mech_context)
 
