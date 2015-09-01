@@ -307,8 +307,6 @@ class Dnsmasq(DhcpLocalProcess):
             '--no-hosts',
             '--no-resolv',
             '--strict-order',
-            '--bind-interfaces',
-            '--interface=%s' % self.interface_name,
             '--except-interface=lo',
             '--pid-file=%s' % pid_file,
             '--dhcp-hostsfile=%s' % self.get_conf_file_name('host'),
@@ -317,6 +315,18 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
             '--dhcp-match=set:ipxe,175',
         ]
+        if self.device_manager.driver.bridged:
+            cmd += [
+                '--bind-interfaces',
+                '--interface=%s' % self.interface_name,
+            ]
+        else:
+            cmd += [
+                '--bind-dynamic',
+                '--interface=%s' % self.interface_name,
+                '--interface=tap*',
+                '--bridge-interface=%s,tap*' % self.interface_name,
+            ]
 
         possible_leases = 0
         for i, subnet in enumerate(self.network.subnets):
