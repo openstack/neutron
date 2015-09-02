@@ -42,7 +42,9 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend as non_ipam
+from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.db import securitygroups_db as sgdb
 from neutron import manager
 from neutron.tests import base
 from neutron.tests import tools
@@ -5595,7 +5597,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(res.status_int, 400)
 
 
-class DbModelTestCase(base.BaseTestCase):
+class DbModelTestCase(testlib_api.SqlTestCase):
     """DB model tests."""
     def test_repr(self):
         """testing the string representation of 'model' classes."""
@@ -5607,9 +5609,140 @@ class DbModelTestCase(base.BaseTestCase):
         exp_end_with = (" {tenant_id=None, id=None, "
                         "name='net_net', status='OK', "
                         "admin_state_up=True, mtu=None, "
-                        "vlan_transparent=None}>")
+                        "vlan_transparent=None, standard_attr_id=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
-        self.assertEqual(actual_repr_output, final_exp)
+        self.assertEqual(final_exp, actual_repr_output)
+
+    def _make_network(self, ctx):
+        with ctx.session.begin():
+            network = models_v2.Network(name="net_net", status="OK",
+                                        tenant_id='dbcheck',
+                                        admin_state_up=True)
+            ctx.session.add(network)
+        return network
+
+    def _make_subnet(self, ctx, network_id):
+        with ctx.session.begin():
+            subnet = models_v2.Subnet(name="subsub", ip_version=4,
+                                      tenant_id='dbcheck',
+                                      cidr='turn_down_for_what',
+                                      network_id=network_id)
+            ctx.session.add(subnet)
+        return subnet
+
+    def _make_port(self, ctx, network_id):
+        with ctx.session.begin():
+            port = models_v2.Port(network_id=network_id, mac_address='1',
+                                  tenant_id='dbcheck',
+                                  admin_state_up=True, status="COOL",
+                                  device_id="devid", device_owner="me")
+            ctx.session.add(port)
+        return port
+
+    def _make_subnetpool(self, ctx):
+        with ctx.session.begin():
+            subnetpool = models_v2.SubnetPool(
+                ip_version=4, default_prefixlen=4, min_prefixlen=4,
+                max_prefixlen=4, shared=False, default_quota=4,
+                address_scope_id='f', tenant_id='dbcheck',
+                is_default=False
+            )
+            ctx.session.add(subnetpool)
+        return subnetpool
+
+    def _make_security_group_and_rule(self, ctx):
+        with ctx.session.begin():
+            sg = sgdb.SecurityGroup(name='sg', description='sg')
+            rule = sgdb.SecurityGroupRule(security_group=sg, port_range_min=1,
+                                          port_range_max=2, protocol='TCP',
+                                          ethertype='v4', direction='ingress',
+                                          remote_ip_prefix='0.0.0.0/0')
+            ctx.session.add(sg)
+            ctx.session.add(rule)
+        return sg, rule
+
+    def _make_floating_ip(self, ctx, port_id):
+        with ctx.session.begin():
+            flip = l3_db.FloatingIP(floating_ip_address='1.2.3.4',
+                                    floating_network_id='somenet',
+                                    floating_port_id=port_id)
+            ctx.session.add(flip)
+        return flip
+
+    def _make_router(self, ctx):
+        with ctx.session.begin():
+            router = l3_db.Router()
+            ctx.session.add(router)
+        return router
+
+    def _get_neutron_attr(self, ctx, attr_id):
+        return ctx.session.query(
+            models_v2.model_base.StandardAttribute).filter(
+            models_v2.model_base.StandardAttribute.id == attr_id).one()
+
+    def _test_standardattr_removed_on_obj_delete(self, ctx, obj):
+        attr_id = obj.standard_attr_id
+        self.assertEqual(
+            obj.__table__.name,
+            self._get_neutron_attr(ctx, attr_id).resource_type)
+        with ctx.session.begin():
+            ctx.session.delete(obj)
+        with testtools.ExpectedException(orm.exc.NoResultFound):
+            # we want to make sure that the attr resource was removed
+            self._get_neutron_attr(ctx, attr_id)
+
+    def test_standardattr_removed_on_subnet_delete(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        subnet = self._make_subnet(ctx, network.id)
+        self._test_standardattr_removed_on_obj_delete(ctx, subnet)
+
+    def test_standardattr_removed_on_network_delete(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        self._test_standardattr_removed_on_obj_delete(ctx, network)
+
+    def test_standardattr_removed_on_subnetpool_delete(self):
+        ctx = context.get_admin_context()
+        spool = self._make_subnetpool(ctx)
+        self._test_standardattr_removed_on_obj_delete(ctx, spool)
+
+    def test_standardattr_removed_on_port_delete(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        self._test_standardattr_removed_on_obj_delete(ctx, port)
+
+    def test_standardattr_removed_on_sg_delete(self):
+        ctx = context.get_admin_context()
+        sg, rule = self._make_security_group_and_rule(ctx)
+        self._test_standardattr_removed_on_obj_delete(ctx, sg)
+        # make sure the attr entry was wiped out for the rule as well
+        with testtools.ExpectedException(orm.exc.NoResultFound):
+            self._get_neutron_attr(ctx, rule.standard_attr_id)
+
+    def test_standardattr_removed_on_floating_ip_delete(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        flip = self._make_floating_ip(ctx, port.id)
+        self._test_standardattr_removed_on_obj_delete(ctx, flip)
+
+    def test_standardattr_removed_on_router_delete(self):
+        ctx = context.get_admin_context()
+        router = self._make_router(ctx)
+        self._test_standardattr_removed_on_obj_delete(ctx, router)
+
+    def test_resource_type_fields(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        subnet = self._make_subnet(ctx, network.id)
+        spool = self._make_subnetpool(ctx)
+        for disc, obj in (('ports', port), ('networks', network),
+                          ('subnets', subnet), ('subnetpools', spool)):
+            self.assertEqual(
+                disc, obj.standard_attr.resource_type)
 
 
 class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,

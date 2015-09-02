@@ -60,3 +60,34 @@ Tests to verify that database migrations and models are in sync
 
 .. autoclass:: _TestModelsMigrations
    :members:
+
+
+The Standard Attribute Table
+----------------------------
+
+There are many attributes that we would like to store in the database which
+are common across many Neutron objects (e.g. tags, timestamps, rbac entries).
+We have previously been handling this by duplicating the schema to every table
+via model mixins. This means that a DB migration is required for each object
+that wants to adopt one of these common attributes. This becomes even more
+cumbersome when the relationship between the attribute and the object is
+many-to-one because each object then needs its own table for the attributes
+(assuming referential integrity is a concern).
+
+To address this issue, the 'standardattribute' table is available. Any model
+can add support for this table by inheriting the 'HasStandardAttributes' mixin
+in neutron.db.model_base. This mixin will add a standard_attr_id BigInteger
+column to the model with a foreign key relationship to the 'standardattribute'
+table. The model will then be able to access any columns of the
+'standardattribute' table and any tables related to it.
+
+The introduction of a new standard attribute only requires one column addition
+to the 'standardattribute' table for one-to-one relationships or a new table
+for one-to-many or one-to-zero relationships. Then all of the models using the
+'HasStandardAttribute' mixin will automatically gain access to the new attribute.
+
+Any attributes that will apply to every neutron resource (e.g. timestamps)
+can be added directly to the 'standardattribute' table. For things that will
+frequently be NULL for most entries (e.g. a column to store an error reason),
+a new table should be added and joined to in a query to prevent a bunch of
+NULL entries in the database.

@@ -43,7 +43,8 @@ IP_PROTOCOL_MAP = {constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
                    constants.PROTO_NAME_ICMP_V6: constants.PROTO_NUM_ICMP_V6}
 
 
-class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
+                    models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(255))
@@ -84,8 +85,8 @@ class SecurityGroupPortBinding(model_base.BASEV2):
                             lazy='joined', cascade='delete'))
 
 
-class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
-                        models_v2.HasTenant):
+class SecurityGroupRule(model_base.HasStandardAttributes, model_base.BASEV2,
+                        models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron security group rule."""
 
     security_group_id = sa.Column(sa.String(36),
