@@ -34,16 +34,14 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         return quota_api.create_reservation(
             self.context, tenant_id, resource_deltas, expiration)
 
-    def _create_quota_usage(self, resource, used, reserved, tenant_id=None):
+    def _create_quota_usage(self, resource, used, tenant_id=None):
         tenant_id = tenant_id or self.tenant_id
         return quota_api.set_quota_usage(
-            self.context, resource, tenant_id,
-            in_use=used, reserved=reserved)
+            self.context, resource, tenant_id, in_use=used)
 
     def _verify_quota_usage(self, usage_info,
                             expected_resource=None,
                             expected_used=None,
-                            expected_reserved=None,
                             expected_dirty=None):
         self.assertEqual(self.tenant_id, usage_info.tenant_id)
         if expected_resource:
@@ -52,57 +50,42 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
                 self.assertEqual(expected_dirty, usage_info.dirty)
         if expected_used is not None:
             self.assertEqual(expected_used, usage_info.used)
-        if expected_reserved is not None:
-            self.assertEqual(expected_reserved, usage_info.reserved)
-        if expected_used is not None and expected_reserved is not None:
-            self.assertEqual(expected_used + expected_reserved,
-                             usage_info.total)
 
     def setUp(self):
         super(TestQuotaDbApi, self).setUp()
         self._set_context()
 
     def test_create_quota_usage(self):
-        usage_info = self._create_quota_usage('goals', 26, 10)
+        usage_info = self._create_quota_usage('goals', 26)
         self._verify_quota_usage(usage_info,
                                  expected_resource='goals',
-                                 expected_used=26,
-                                 expected_reserved=10)
+                                 expected_used=26)
 
     def test_update_quota_usage(self):
-        self._create_quota_usage('goals', 26, 10)
+        self._create_quota_usage('goals', 26)
         # Higuain scores a double
         usage_info_1 = quota_api.set_quota_usage(
             self.context, 'goals', self.tenant_id,
             in_use=28)
         self._verify_quota_usage(usage_info_1,
-                                 expected_used=28,
-                                 expected_reserved=10)
+                                 expected_used=28)
         usage_info_2 = quota_api.set_quota_usage(
             self.context, 'goals', self.tenant_id,
-            reserved=8)
+            in_use=24)
         self._verify_quota_usage(usage_info_2,
-                                 expected_used=28,
-                                 expected_reserved=8)
+                                 expected_used=24)
 
     def test_update_quota_usage_with_deltas(self):
-        self._create_quota_usage('goals', 26, 10)
+        self._create_quota_usage('goals', 26)
         # Higuain scores a double
         usage_info_1 = quota_api.set_quota_usage(
             self.context, 'goals', self.tenant_id,
             in_use=2, delta=True)
         self._verify_quota_usage(usage_info_1,
-                                 expected_used=28,
-                                 expected_reserved=10)
-        usage_info_2 = quota_api.set_quota_usage(
-            self.context, 'goals', self.tenant_id,
-            reserved=-2, delta=True)
-        self._verify_quota_usage(usage_info_2,
-                                 expected_used=28,
-                                 expected_reserved=8)
+                                 expected_used=28)
 
     def test_set_quota_usage_dirty(self):
-        self._create_quota_usage('goals', 26, 10)
+        self._create_quota_usage('goals', 26)
         # Higuain needs a shower after the match
         self.assertEqual(1, quota_api.set_quota_usage_dirty(
             self.context, 'goals', self.tenant_id))
@@ -123,9 +106,9 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
             self.context, 'meh', self.tenant_id))
 
     def test_set_resources_quota_usage_dirty(self):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('assists', 11, 5)
-        self._create_quota_usage('bookings', 3, 1)
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('assists', 11)
+        self._create_quota_usage('bookings', 3)
         self.assertEqual(2, quota_api.set_resources_quota_usage_dirty(
             self.context, ['goals', 'bookings'], self.tenant_id))
         usage_info_goals = quota_api.get_quota_usage_by_resource_and_tenant(
@@ -139,9 +122,9 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self._verify_quota_usage(usage_info_bookings, expected_dirty=True)
 
     def test_set_resources_quota_usage_dirty_with_empty_list(self):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('assists', 11, 5)
-        self._create_quota_usage('bookings', 3, 1)
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('assists', 11)
+        self._create_quota_usage('bookings', 3)
         # Expect all the resources for the tenant to be set dirty
         self.assertEqual(3, quota_api.set_resources_quota_usage_dirty(
             self.context, [], self.tenant_id))
@@ -164,8 +147,8 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
                                  expected_dirty=False)
 
     def _test_set_all_quota_usage_dirty(self, expected):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('goals', 12, 6, tenant_id='Callejon')
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('goals', 12, tenant_id='Callejon')
         self.assertEqual(expected, quota_api.set_all_quota_usage_dirty(
             self.context, 'goals'))
 
@@ -175,10 +158,10 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self._test_set_all_quota_usage_dirty(expected=1)
 
     def test_get_quota_usage_by_tenant(self):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('assists', 11, 5)
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('assists', 11)
         # Create a resource for a different tenant
-        self._create_quota_usage('mehs', 99, 99, tenant_id='buffon')
+        self._create_quota_usage('mehs', 99, tenant_id='buffon')
         usage_infos = quota_api.get_quota_usage_by_tenant_id(
             self.context, self.tenant_id)
 
@@ -188,26 +171,24 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self.assertIn('assists', resources)
 
     def test_get_quota_usage_by_resource(self):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('assists', 11, 5)
-        self._create_quota_usage('goals', 12, 6, tenant_id='Callejon')
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('assists', 11)
+        self._create_quota_usage('goals', 12, tenant_id='Callejon')
         usage_infos = quota_api.get_quota_usage_by_resource(
             self.context, 'goals')
         # Only 1 result expected in tenant context
         self.assertEqual(1, len(usage_infos))
         self._verify_quota_usage(usage_infos[0],
                                  expected_resource='goals',
-                                 expected_used=26,
-                                 expected_reserved=10)
+                                 expected_used=26)
 
     def test_get_quota_usage_by_tenant_and_resource(self):
-        self._create_quota_usage('goals', 26, 10)
+        self._create_quota_usage('goals', 26)
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
             self.context, 'goals', self.tenant_id)
         self._verify_quota_usage(usage_info,
                                  expected_resource='goals',
-                                 expected_used=26,
-                                 expected_reserved=10)
+                                 expected_used=26)
 
     def test_get_non_existing_quota_usage_returns_none(self):
         self.assertIsNone(quota_api.get_quota_usage_by_resource_and_tenant(
@@ -226,29 +207,13 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self.assertEqual(self.tenant_id, resv.tenant_id)
         self._verify_reserved_resources(resources, resv.deltas)
 
-    def test_create_reservation_with_expirtion(self):
+    def test_create_reservation_with_expiration(self):
         resources = {'goals': 2, 'assists': 1}
         exp_date = datetime.datetime(2016, 3, 31, 14, 30)
         resv = self._create_reservation(resources, expiration=exp_date)
         self.assertEqual(self.tenant_id, resv.tenant_id)
         self.assertEqual(exp_date, resv.expiration)
         self._verify_reserved_resources(resources, resv.deltas)
-
-    def _test_remove_reservation(self, set_dirty):
-        resources = {'goals': 2, 'assists': 1}
-        resv = self._create_reservation(resources)
-        self.assertEqual(1, quota_api.remove_reservation(
-            self.context, resv.reservation_id, set_dirty=set_dirty))
-
-    def test_remove_reservation(self):
-        self._test_remove_reservation(False)
-
-    def test_remove_reservation_and_set_dirty(self):
-        routine = 'neutron.db.quota.api.set_resources_quota_usage_dirty'
-        with mock.patch(routine) as mock_routine:
-            self._test_remove_reservation(False)
-        mock_routine.assert_called_once_with(
-            self.context, mock.ANY, self.tenant_id)
 
     def test_remove_non_existent_reservation(self):
         self.assertIsNone(quota_api.remove_reservation(self.context, 'meh'))
@@ -298,6 +263,22 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self.assertIsNone(quota_api.get_reservations_for_resources(
             self.context, self.tenant_id, []))
 
+    def _test_remove_reservation(self, set_dirty):
+        resources = {'goals': 2, 'assists': 1}
+        resv = self._create_reservation(resources)
+        self.assertEqual(1, quota_api.remove_reservation(
+            self.context, resv.reservation_id, set_dirty=set_dirty))
+
+    def test_remove_reservation(self):
+        self._test_remove_reservation(False)
+
+    def test_remove_reservation_and_set_dirty(self):
+        routine = 'neutron.db.quota.api.set_resources_quota_usage_dirty'
+        with mock.patch(routine) as mock_routine:
+            self._test_remove_reservation(False)
+        mock_routine.assert_called_once_with(
+            self.context, mock.ANY, self.tenant_id)
+
     def test_remove_expired_reservations(self):
         with mock.patch('neutron.db.quota.api.utcnow') as mock_utcnow:
             mock_utcnow.return_value = datetime.datetime(
@@ -342,9 +323,9 @@ class TestQuotaDbApiAdminContext(TestQuotaDbApi):
                                        load_admin_roles=False)
 
     def test_get_quota_usage_by_resource(self):
-        self._create_quota_usage('goals', 26, 10)
-        self._create_quota_usage('assists', 11, 5)
-        self._create_quota_usage('goals', 12, 6, tenant_id='Callejon')
+        self._create_quota_usage('goals', 26)
+        self._create_quota_usage('assists', 11)
+        self._create_quota_usage('goals', 12, tenant_id='Callejon')
         usage_infos = quota_api.get_quota_usage_by_resource(
             self.context, 'goals')
         # 2 results expected in admin context

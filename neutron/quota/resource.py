@@ -213,14 +213,13 @@ class TrackedResource(BaseResource):
         max_retries=db_api.MAX_RETRIES,
         exception_checker=lambda exc:
         isinstance(exc, oslo_db_exception.DBDuplicateEntry))
-    def _set_quota_usage(self, context, tenant_id, in_use, reserved):
-        return quota_api.set_quota_usage(context, self.name, tenant_id,
-                                         in_use=in_use, reserved=reserved)
+    def _set_quota_usage(self, context, tenant_id, in_use):
+        return quota_api.set_quota_usage(
+            context, self.name, tenant_id, in_use=in_use)
 
-    def _resync(self, context, tenant_id, in_use, reserved):
+    def _resync(self, context, tenant_id, in_use):
         # Update quota usage
-        usage_info = self._set_quota_usage(
-            context, tenant_id, in_use, reserved)
+        usage_info = self._set_quota_usage(context, tenant_id, in_use)
 
         self._dirty_tenants.discard(tenant_id)
         self._out_of_sync_tenants.discard(tenant_id)
@@ -238,14 +237,17 @@ class TrackedResource(BaseResource):
         in_use = context.session.query(self._model_class).filter_by(
             tenant_id=tenant_id).count()
         # Update quota usage
-        return self._resync(context, tenant_id, in_use, reserved=0)
+        return self._resync(context, tenant_id, in_use)
 
     def count(self, context, _plugin, tenant_id, resync_usage=False):
         """Return the current usage count for the resource.
 
-        This method will fetch the information from resource usage data,
-        unless usage data are marked as "dirty", in which case both used and
-        reserved resource are explicitly counted.
+        This method will fetch aggregate information for resource usage
+        data, unless usage data are marked as "dirty".
+        In the latter case resource usage will be calculated counting
+        rows for tenant_id in the resource's database model.
+        Active reserved amount are instead always calculated by summing
+        amounts for matching records in the 'reservations' database model.
 
         The _plugin and _resource parameters are unused but kept for
         compatibility with the signature of the count method for
@@ -254,6 +256,11 @@ class TrackedResource(BaseResource):
         # Load current usage data, setting a row-level lock on the DB
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
             context, self.name, tenant_id, lock_for_update=True)
+        # Always fetch reservations, as they are not tracked by usage counters
+        reservations = quota_api.get_reservations_for_resources(
+            context, tenant_id, [self.name])
+        reserved = reservations.get(self.name, 0)
+
         # If dirty or missing, calculate actual resource usage querying
         # the database and set/create usage info data
         # NOTE: this routine "trusts" usage counters at service startup. This
@@ -273,23 +280,20 @@ class TrackedResource(BaseResource):
             # typically one counts before adding a record, and that would mark
             # the usage counter as dirty again)
             if resync_usage or not usage_info:
-                usage_info = self._resync(context, tenant_id,
-                                          in_use, reserved=0)
+                usage_info = self._resync(context, tenant_id, in_use)
             else:
                 # NOTE(salv-orlando): Passing 0 for reserved amount as
                 # reservations are currently not supported
                 usage_info = quota_api.QuotaUsageInfo(usage_info.resource,
                                                       usage_info.tenant_id,
                                                       in_use,
-                                                      0,
                                                       usage_info.dirty)
 
             LOG.debug(("Quota usage for %(resource)s was recalculated. "
-                       "Used quota:%(used)d; Reserved quota:%(reserved)d"),
+                       "Used quota:%(used)d."),
                       {'resource': self.name,
-                       'used': usage_info.used,
-                       'reserved': usage_info.reserved})
-        return usage_info.total
+                       'used': usage_info.used})
+        return usage_info.used + reserved
 
     def register_events(self):
         event.listen(self._model_class, 'after_insert', self._db_event_handler)

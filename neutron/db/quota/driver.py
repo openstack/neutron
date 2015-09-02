@@ -126,21 +126,8 @@ class DbQuotaDriver(object):
 
         return dict((k, v) for k, v in quotas.items())
 
-    def _handle_expired_reservations(self, context, tenant_id,
-                                     resource, expired_amount):
-        LOG.debug(("Adjusting usage for resource %(resource)s: "
-                   "removing %(expired)d reserved items"),
-                  {'resource': resource,
-                   'expired': expired_amount})
-        # TODO(salv-orlando): It should be possible to do this
-        # operation for all resources with a single query.
-        # Update reservation usage
-        quota_api.set_quota_usage(
-            context,
-            resource,
-            tenant_id,
-            reserved=-expired_amount,
-            delta=True)
+    def _handle_expired_reservations(self, context, tenant_id):
+        LOG.debug("Deleting expired reservations for tenant:%s" % tenant_id)
         # Delete expired reservations (we don't want them to accrue
         # in the database)
         quota_api.remove_expired_reservations(
@@ -209,8 +196,7 @@ class DbQuotaDriver(object):
                 if res_headroom < deltas[resource]:
                     resources_over_limit.append(resource)
                 if expired_reservations:
-                    self._handle_expired_reservations(
-                        context, tenant_id, resource, expired_reservations)
+                    self._handle_expired_reservations(context, tenant_id)
 
             if resources_over_limit:
                 raise exceptions.OverQuota(overs=sorted(resources_over_limit))
