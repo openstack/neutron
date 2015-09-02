@@ -87,6 +87,8 @@ expected_calls_and_values is a list of (expected_call, return_value):
 
 import unittest
 
+from neutron.common import utils
+
 
 def setup_mock_calls(mocked_call, expected_calls_and_values):
     return_values = [call[1] for call in expected_calls_and_values]
@@ -114,7 +116,8 @@ class UnorderedList(list):
     def __eq__(self, other):
         if not isinstance(other, list):
             return False
-        return sorted(self) == sorted(other)
+        return (sorted(self, key=utils.safe_sort_key) ==
+                sorted(other, key=utils.safe_sort_key))
 
     def __neq__(self, other):
         return not self == other

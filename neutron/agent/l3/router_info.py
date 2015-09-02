@@ -344,8 +344,10 @@ class RouterInfo(object):
         for existing_port in existing_ports:
             current_port = current_ports_dict.get(existing_port['id'])
             if current_port:
-                if sorted(existing_port['fixed_ips']) != (
-                        sorted(current_port['fixed_ips'])):
+                if (sorted(existing_port['fixed_ips'],
+                           key=common_utils.safe_sort_key) !=
+                        sorted(current_port['fixed_ips'],
+                               key=common_utils.safe_sort_key)):
                     updated_ports[current_port['id']] = current_port
         return updated_ports
 

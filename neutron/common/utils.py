@@ -18,6 +18,7 @@
 
 """Utilities and helper functions."""
 
+import collections
 import datetime
 import decimal
 import errno
@@ -248,6 +249,13 @@ def compare_elements(a, b):
     if b is None:
         b = []
     return set(a) == set(b)
+
+
+def safe_sort_key(value):
+    """Return value hash or build one for dictionaries."""
+    if isinstance(value, collections.Mapping):
+        return sorted(value.items())
+    return value
 
 
 def dict2str(dic):
