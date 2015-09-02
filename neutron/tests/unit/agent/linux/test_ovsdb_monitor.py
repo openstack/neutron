@@ -14,6 +14,7 @@
 
 import mock
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
 from neutron.tests import base
 
@@ -93,3 +94,13 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
             self.monitor.get_events()
             self.assertTrue(process_events.called)
             self.assertFalse(self.monitor.has_updates)
+
+    def process_event_unassigned_of_port(self):
+        output = '{"data":[["e040fbec-0579-4990-8324-d338da33ae88","insert",'
+        output += '"m50",["set",[]],["map",[]]]],"headings":["row","action",'
+        output += '"name","ofport","external_ids"]}'
+        with mock.patch.object(
+                self.monitor, 'iter_stdout', return_value=[output]):
+            self.monitor.process_events()
+            self.assertEqual(self.monitor.new_events['added'][0]['ofport'],
+                             ovs_lib.UNASSIGNED_OFPORT)

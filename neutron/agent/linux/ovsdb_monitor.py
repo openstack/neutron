@@ -104,6 +104,8 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
             for ovs_id, action, name, ofport, external_ids in json:
                 if external_ids:
                     external_ids = ovsdb.val_to_py(external_ids)
+                if ofport:
+                    ofport = ovsdb.val_to_py(ofport)
                 device = {'name': name,
                           'ofport': ofport,
                           'external_ids': external_ids}

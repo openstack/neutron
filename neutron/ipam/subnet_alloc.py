@@ -211,7 +211,8 @@ class IpamSubnet(driver.Subnet):
 class SubnetPoolReader(object):
     '''Class to assist with reading a subnetpool, loading defaults, and
        inferring IP version from prefix list. Provides a common way of
-       reading a stored model or a create request with defaultable attributes.
+       reading a stored model or a create request with default table
+       attributes.
     '''
     MIN_PREFIX_TYPE = 'min'
     MAX_PREFIX_TYPE = 'max'

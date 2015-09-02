@@ -48,7 +48,7 @@ class TestMetadataDriverRules(base.BaseTestCase):
             metadata_driver.MetadataDriver.metadata_filter_rules(8775, '0x1'))
 
     def test_metadata_mangle_rules(self):
-        rule = ('PREROUTING', '-d 169.254.169.254/32 '
+        rule = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
                 '-p tcp -m tcp --dport 80 '
                 '-j MARK --set-xmark 0x1/%s' %
                 constants.ROUTER_MARK_MASK)
@@ -121,7 +121,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 router_id]
             if not watch_log:
                 netns_execute_args.append(
-                    '--metadata_proxy_watch_log=false')
+                    '--nometadata_proxy_watch_log')
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
                 mock.call().netns.execute(netns_execute_args, addl_env=None,

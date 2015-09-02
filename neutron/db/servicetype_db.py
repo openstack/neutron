@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from itertools import chain
+
 from oslo_log import log as logging
 import sqlalchemy as sa
 
@@ -42,14 +44,36 @@ class ServiceTypeManager(object):
         return cls._instance
 
     def __init__(self):
-        self._load_conf()
+        self.config = {}
+        # TODO(armax): remove these as soon as *-aaS start using
+        # the newly introduced add_provider_configuration API
+        self.config['LOADBALANCER'] = (
+            pconf.ProviderConfiguration('neutron_lbaas'))
+        self.config['LOADBALANCERV2'] = (
+            pconf.ProviderConfiguration('neutron_lbaas'))
+        self.config['FIREWALL'] = (
+            pconf.ProviderConfiguration('neutron_fwaas'))
+        self.config['VPN'] = (
+            pconf.ProviderConfiguration('neutron_vpnaas'))
 
-    def _load_conf(self):
-        self.conf = pconf.ProviderConfiguration(
-            pconf.parse_service_provider_opt())
+    def add_provider_configuration(self, service_type, configuration):
+        """Add or update the provider configuration for the service type."""
+        LOG.debug('Adding provider configuration for service %s', service_type)
+        self.config.update({service_type: configuration})
 
     def get_service_providers(self, context, filters=None, fields=None):
-        return self.conf.get_service_providers(filters, fields)
+        if filters and 'service_type' in filters:
+            return list(
+                chain.from_iterable(self.config[svc_type].
+                                    get_service_providers(filters, fields)
+                    for svc_type in filters['service_type']
+                        if svc_type in self.config)
+            )
+        return list(
+            chain.from_iterable(
+                self.config[p].get_service_providers(filters, fields)
+                for p in self.config)
+        )
 
     def get_default_service_provider(self, context, service_type):
         """Return the default provider for a given service type."""
@@ -65,7 +89,7 @@ class ServiceTypeManager(object):
 
     def add_resource_association(self, context, service_type, provider_name,
                                  resource_id):
-        r = self.conf.get_service_providers(
+        r = self.get_service_providers(context,
             filters={'service_type': [service_type], 'name': [provider_name]})
         if not r:
             raise pconf.ServiceProviderNotFound(provider=provider_name,

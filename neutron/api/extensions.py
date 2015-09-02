@@ -27,10 +27,10 @@ import webob.dec
 import webob.exc
 
 from neutron.common import exceptions
-from neutron.common import repos
 import neutron.extensions
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
+from neutron.services import provider_configuration
 from neutron import wsgi
 
 
@@ -580,8 +580,9 @@ class PluginAwareExtensionManager(ExtensionManager):
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = cls(get_extensions_path(),
-                                manager.NeutronManager.get_service_plugins())
+            service_plugins = manager.NeutronManager.get_service_plugins()
+            cls._instance = cls(get_extensions_path(service_plugins),
+                                service_plugins)
         return cls._instance
 
     def get_supported_extension_aliases(self):
@@ -648,31 +649,30 @@ class ResourceExtension(object):
 
 # Returns the extension paths from a config entry and the __path__
 # of neutron.extensions
-def get_extensions_path():
-    paths = neutron.extensions.__path__
+def get_extensions_path(service_plugins=None):
+    paths = collections.OrderedDict()
 
-    neutron_mods = repos.NeutronModules()
-    for x in neutron_mods.installed_list():
-        try:
-            paths += neutron_mods.module(x).extensions.__path__
-        except AttributeError:
-            # Occurs normally if module has no extensions sub-module
-            pass
+    # Add Neutron core extensions
+    paths[neutron.extensions.__path__[0]] = 1
+    if service_plugins:
+        # Add Neutron *-aas extensions
+        for plugin in service_plugins.values():
+            neutron_mod = provider_configuration.NeutronModule(
+                plugin.__module__.split('.')[0])
+            try:
+                paths[neutron_mod.module().extensions.__path__[0]] = 1
+            except AttributeError:
+                # Occurs normally if module has no extensions sub-module
+                pass
 
+    # Add external/other plugins extensions
     if cfg.CONF.api_extensions_path:
-        paths.append(cfg.CONF.api_extensions_path)
-
-    # If the path has dups in it, from discovery + conf file, the duplicate
-    # import of the same module and super() do not play nicely, so weed
-    # out the duplicates, preserving search order.
-
-    z = collections.OrderedDict()
-    for x in paths:
-        z[x] = 1
-    paths = z.keys()
+        for path in cfg.CONF.api_extensions_path.split(":"):
+            paths[path] = 1
 
     LOG.debug("get_extension_paths = %s", paths)
 
+    # Re-build the extension string
     path = ':'.join(paths)
     return path
 

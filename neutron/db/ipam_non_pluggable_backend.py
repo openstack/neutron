@@ -270,7 +270,6 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 # listed explicitly here by subnet ID) are associated
                 # with the port.
                 if (device_owner in constants.ROUTER_INTERFACE_OWNERS_SNAT or
-                    ipv6_utils.is_ipv6_pd_enabled(subnet) or
                     not is_auto_addr_subnet):
                     fixed_ip_set.append({'subnet_id': subnet['id']})
 

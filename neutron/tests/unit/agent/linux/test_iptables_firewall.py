@@ -26,6 +26,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
 
@@ -1079,7 +1080,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 cmd.extend(['-d', 'fe80::1'])
             else:
                 cmd.extend(['-s', 'fe80::1'])
-        cmd.extend(['-w', 1])
+        # initial data has 1, 2, and 9 in use, CT zone will start at 10.
+        cmd.extend(['-w', 10])
         calls = [
             mock.call(cmd, run_as_root=True, check_exit_code=True,
                       extra_ok_codes=[1])]
@@ -1108,12 +1110,13 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.filtered_ports[port['device']] = new_port
         self.firewall.filter_defer_apply_off()
         calls = [
+            # initial data has 1, 2, and 9 in use, CT zone will start at 10.
             mock.call(['conntrack', '-D', '-f', 'ipv4', '-d', '10.0.0.1',
-                       '-w', 1],
+                       '-w', 10],
                       run_as_root=True, check_exit_code=True,
                       extra_ok_codes=[1]),
             mock.call(['conntrack', '-D', '-f', 'ipv6', '-d', 'fe80::1',
-                       '-w', 1],
+                       '-w', 10],
                       run_as_root=True, check_exit_code=True,
                       extra_ok_codes=[1])]
         self.utils_exec.assert_has_calls(calls)
@@ -1836,11 +1839,12 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
     def setUp(self):
         super(OVSHybridIptablesFirewallTestCase, self).setUp()
         self.firewall = iptables_firewall.OVSHybridIptablesFirewallDriver()
+        # inital data has 1, 2, and 9 in use, see RAW_TABLE_OUTPUT above.
+        self._dev_zone_map = {'61634509-31': 2, '8f46cf18-12': 9,
+                              '95c24827-02': 2, 'e804433b-61': 1}
 
     def test__populate_initial_zone_map(self):
-        expected = {'61634509-31': 2, '8f46cf18-12': 9,
-                    '95c24827-02': 2, 'e804433b-61': 1}
-        self.assertEqual(expected, self.firewall._device_zone_map)
+        self.assertEqual(self._dev_zone_map, self.firewall._device_zone_map)
 
     def test__generate_device_zone(self):
         # inital data has 1, 2, and 9 in use.
@@ -1863,12 +1867,17 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         # fill it up and then make sure an extra throws an error
         for i in range(1, 65536):
             self.firewall._device_zone_map['dev-%s' % i] = i
-        with testtools.ExpectedException(RuntimeError):
+        with testtools.ExpectedException(n_exc.CTZoneExhaustedError):
             self.firewall._find_open_zone()
 
+        # with it full, try again, this should trigger a cleanup and return 1
+        self.assertEqual(1, self.firewall._generate_device_zone('p12'))
+        self.assertEqual({'p12': 1}, self.firewall._device_zone_map)
+
     def test_get_device_zone(self):
-        # calling get_device_zone should clear out all of the other entries
-        # since they aren't in the filtered ports list
-        self.assertEqual(1, self.firewall.get_device_zone('12345678901234567'))
+        # initial data has 1, 2, and 9 in use.
+        self.assertEqual(10,
+                         self.firewall.get_device_zone('12345678901234567'))
         # should have been truncated to 11 chars
-        self.assertEqual({'12345678901': 1}, self.firewall._device_zone_map)
+        self._dev_zone_map.update({'12345678901': 10})
+        self.assertEqual(self._dev_zone_map, self.firewall._device_zone_map)

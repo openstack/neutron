@@ -17,6 +17,7 @@ import webob.exc
 
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
+from neutron.common import utils
 from neutron import context
 import neutron.db.api as db
 from neutron.extensions import portbindings
@@ -945,7 +946,7 @@ class TestN1kvPolicyProfiles(N1kvPluginTestCase):
                                   is_admin=False)
         res = self._list(resource, neutron_context=ctx)
         self.assertEqual(len(expected_profiles), len(res[resource]))
-        profiles = sorted(res[resource])
+        profiles = sorted(res[resource], key=utils.safe_sort_key)
         for i in range(len(profiles)):
             self.assertEqual(expected_profiles[i].id,
                              profiles[i]['id'])
@@ -1179,8 +1180,10 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             subnet = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(sorted(subnet['subnet']['host_routes']),
-                             sorted(host_routes))
+            self.assertEqual(
+                sorted(subnet['subnet']['host_routes'],
+                       key=utils.safe_sort_key),
+                sorted(host_routes, key=utils.safe_sort_key))
             self.assertEqual(sorted(subnet['subnet']['dns_nameservers']),
                              sorted(dns_nameservers))
             # In N1K we need to delete the subnet before the network

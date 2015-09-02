@@ -109,6 +109,8 @@ class QoSPlugin(qos.QoSPluginBase):
         with db_api.autonested_transaction(context.session):
             # first, validate that we have access to the policy
             policy = self._get_policy_obj(context, policy_id)
+            # check if the rule belong to the policy
+            policy.get_rule_by_id(rule_id)
             rule = rule_object.QosBandwidthLimitRule(
                 context, **bandwidth_limit_rule['bandwidth_limit_rule'])
             rule.id = rule_id
@@ -122,8 +124,7 @@ class QoSPlugin(qos.QoSPluginBase):
         with db_api.autonested_transaction(context.session):
             # first, validate that we have access to the policy
             policy = self._get_policy_obj(context, policy_id)
-            rule = rule_object.QosBandwidthLimitRule(context)
-            rule.id = rule_id
+            rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.reload_rules()
         self.notification_driver_manager.update_policy(context, policy)

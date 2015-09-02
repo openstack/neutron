@@ -152,6 +152,10 @@ class OVSBridge(BaseOVS):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
+        self.agent_uuid_stamp = '0x0'
+
+    def set_agent_uuid_stamp(self, val):
+        self.agent_uuid_stamp = val
 
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
@@ -260,6 +264,10 @@ class OVSBridge(BaseOVS):
                                self.br_name, 'datapath_id')
 
     def do_action_flows(self, action, kwargs_list):
+        if action != 'del':
+            for kw in kwargs_list:
+                if 'cookie' not in kw:
+                    kw['cookie'] = self.agent_uuid_stamp
         flow_strs = [_build_flow_expr_str(kw, action) for kw in kwargs_list]
         self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
 

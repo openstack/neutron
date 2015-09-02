@@ -62,6 +62,9 @@ class TestMechanismDriver(api.MechanismDriver):
             assert(context.current['id'] == context.original['id'])
         else:
             assert(not context.original)
+        network_context = context.network
+        assert(isinstance(network_context, api.NetworkContext))
+        self._check_network_context(network_context, False)
 
     def create_subnet_precommit(self, context):
         self._check_subnet_context(context, False)

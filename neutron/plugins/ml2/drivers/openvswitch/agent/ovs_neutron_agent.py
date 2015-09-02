@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import hashlib
 import signal
 import sys
@@ -129,7 +130,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     #   1.1 Support Security Group RPC
     #   1.2 Support DVR (Distributed Virtual Router) RPC
     #   1.3 Added param devices_to_update to security_groups_provider_updated
-    target = oslo_messaging.Target(version='1.3')
+    #   1.4 Added support for network_update
+    target = oslo_messaging.Target(version='1.4')
 
     def __init__(self, bridge_classes, integ_br, tun_br, local_ip,
                  bridge_mappings, polling_interval, tunnel_types=None,
@@ -231,6 +233,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.updated_ports = set()
         # Stores port delete notifications
         self.deleted_ports = set()
+
+        self.network_ports = collections.defaultdict(set)
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
@@ -368,7 +372,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                      [constants.TUNNEL, topics.UPDATE],
                      [constants.TUNNEL, topics.DELETE],
                      [topics.SECURITY_GROUP, topics.UPDATE],
-                     [topics.DVR, topics.UPDATE]]
+                     [topics.DVR, topics.UPDATE],
+                     [topics.NETWORK, topics.UPDATE]]
         if self.l2_pop:
             consumers.append([topics.L2POPULATION,
                               topics.UPDATE, self.conf.host])
@@ -401,7 +406,26 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
         self.deleted_ports.add(port_id)
+        self.updated_ports.discard(port_id)
         LOG.debug("port_delete message processed for port %s", port_id)
+
+    def network_update(self, context, **kwargs):
+        network_id = kwargs['network']['id']
+        for port_id in self.network_ports[network_id]:
+            # notifications could arrive out of order, if the port is deleted
+            # we don't want to update it anymore
+            if port_id not in self.deleted_ports:
+                self.updated_ports.add(port_id)
+        LOG.debug("network_update message processed for network "
+                  "%(network_id)s, with ports: %(ports)s",
+                  {'network_id': network_id,
+                   'ports': self.network_ports[network_id]})
+
+    def _clean_network_ports(self, port_id):
+        for port_set in self.network_ports.values():
+            if port_id in port_set:
+                port_set.remove(port_id)
+                break
 
     def process_deleted_ports(self, port_info):
         # don't try to process removed ports as deleted ports since
@@ -414,6 +438,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # longer have access to the network
             self.sg_agent.remove_devices_filter([port_id])
             port = self.int_br.get_vif_port_by_id(port_id)
+            self._clean_network_ports(port_id)
             self.ext_manager.delete_port(self.context,
                                          {"vif_port": port,
                                           "port_id": port_id})
@@ -1304,13 +1329,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 has_sgs = 'security_groups' in details
                 if not port_security or not has_sgs:
                     security_disabled_devices.append(device)
-
+                self._update_port_network(details['port_id'],
+                                          details['network_id'])
                 self.ext_manager.handle_port(self.context, details)
             else:
                 LOG.warn(_LW("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):
                     self.port_dead(port)
         return skipped_devices, need_binding_devices, security_disabled_devices
+
+    def _update_port_network(self, port_id, network_id):
+        self._clean_network_ports(port_id)
+        self.network_ports[network_id].add(port_id)
 
     def treat_ancillary_devices_added(self, devices):
         devices_details_list = (

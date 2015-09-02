@@ -33,8 +33,11 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
         self.wait_until_ports_state(self.ports, up=False)
 
-    def test_datapath_type_system(self):
-        expected = constants.OVS_DATAPATH_SYSTEM
+    def _check_datapath_type_netdev(self, expected, default=False):
+        if not default:
+            self.config.set_override('datapath_type',
+                                     expected,
+                                     "OVS")
         agent = self.create_agent()
         self.start_agent(agent)
         actual = self.ovs.db_get_val('Bridge',
@@ -47,20 +50,16 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.assertEqual(expected, actual)
 
     def test_datapath_type_netdev(self):
-        expected = constants.OVS_DATAPATH_NETDEV
-        self.config.set_override('datapath_type',
-                                 expected,
-                                 "OVS")
-        agent = self.create_agent()
-        self.start_agent(agent)
-        actual = self.ovs.db_get_val('Bridge',
-                                     agent.int_br.br_name,
-                                     'datapath_type')
-        self.assertEqual(expected, actual)
-        actual = self.ovs.db_get_val('Bridge',
-                                     agent.tun_br.br_name,
-                                     'datapath_type')
-        self.assertEqual(expected, actual)
+        self._check_datapath_type_netdev(
+            constants.OVS_DATAPATH_NETDEV)
+
+    def test_datapath_type_system(self):
+        self._check_datapath_type_netdev(
+            constants.OVS_DATAPATH_SYSTEM)
+
+    def test_datapath_type_default(self):
+        self._check_datapath_type_netdev(
+            constants.OVS_DATAPATH_SYSTEM, default=True)
 
     def test_resync_devices_set_up_after_exception(self):
         self.setup_agent_and_ports(
