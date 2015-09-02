@@ -858,6 +858,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                          "it has port security disabled"), vif.port_name)
             return
+        if port_details['device_owner'].startswith('network:'):
+            LOG.debug("Skipping ARP spoofing rules for network owned port "
+                      "'%s'.", vif.port_name)
+            return
         # collect all of the addresses and cidrs that belong to the port
         addresses = {f['ip_address'] for f in port_details['fixed_ips']}
         if port_details.get('allowed_address_pairs'):
