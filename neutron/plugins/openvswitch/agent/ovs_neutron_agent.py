@@ -745,6 +745,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                          "it has port security disabled"), vif.port_name)
             return
+        if port_details['device_owner'].startswith('network:'):
+            bridge.delete_flows(table=constants.LOCAL_SWITCHING,
+                                in_port=vif.ofport, proto='arp')
+            LOG.debug("Skipping ARP spoofing rules for network owned port "
+                      "'%s'.", vif.port_name)
+            return
         # all of the rules here are based on 'in_port' match criteria
         # so their cleanup will be handled by 'update_stale_ofport_rules'
 

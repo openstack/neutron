@@ -111,7 +111,18 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         self.pinger.assert_ping(self.dst_addr)
 
-    def _setup_arp_spoof_for_port(self, port, addrs, psec=True):
+    def test_arp_spoof_disable_network_port(self):
+        # block first and then disable port security to make sure old rules
+        # are cleared
+        self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'])
+        self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'],
+                                       device_owner='network:router_gateway')
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
+
+    def _setup_arp_spoof_for_port(self, port, addrs, psec=True,
+                                  device_owner='nobody'):
         of_port_map = self.br.get_vif_port_to_ofport_map()
 
         class VifPort(object):
@@ -121,6 +132,7 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         ip_addr = addrs.pop()
         details = {'port_security_enabled': psec,
                    'fixed_ips': [{'ip_address': ip_addr}],
+                   'device_owner': device_owner,
                    'allowed_address_pairs': [
                         dict(ip_address=ip) for ip in addrs]}
         ovsagt.OVSNeutronAgent.setup_arp_spoofing_protection(
