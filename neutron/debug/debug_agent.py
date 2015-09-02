@@ -38,6 +38,7 @@ class NeutronDebugAgent(object):
     OPTS = [
         # Needed for drivers
         cfg.StrOpt('external_network_bridge', default='br-ex',
+                   deprecated_for_removal=True,
                    help=_("Name of bridge used for external network "
                           "traffic.")),
     ]
