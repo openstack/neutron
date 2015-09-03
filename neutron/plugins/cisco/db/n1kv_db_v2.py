@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,24 +11,25 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Aruna Kushwaha, Cisco Systems Inc.
-# @author: Abhishek Raut, Cisco Systems Inc.
-# @author: Rudrajit Tapadar, Cisco Systems Inc.
-# @author: Sergey Sudakovich, Cisco Systems Inc.
+
+import re
 
 import netaddr
-import re
+from oslo_log import log as logging
 from sqlalchemy.orm import exc
-from sqlalchemy.sql import and_
+from sqlalchemy import sql
 
+from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LW
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import n1kv_models_v2
+from neutron.plugins.common import constants as p_const
+
 
 LOG = logging.getLogger(__name__)
 
@@ -326,7 +325,7 @@ def get_segment_range(network_profile):
     # Sort the range to ensure min, max is in order
     seg_min, seg_max = sorted(
         int(i) for i in network_profile.segment_range.split('-'))
-    LOG.debug(_("seg_min %(seg_min)s, seg_max %(seg_max)s"),
+    LOG.debug("seg_min %(seg_min)s, seg_max %(seg_max)s",
               {'seg_min': seg_min, 'seg_max': seg_max})
     return seg_min, seg_max
 
@@ -393,69 +392,51 @@ def add_port_binding(db_session, port_id, policy_profile_id):
         db_session.add(binding)
 
 
-def _get_sorted_vlan_ids(vlan_ranges):
-    """Return sorted allocatable VLAN IDs."""
-    vlan_ids = set()
-    for vlan_range in vlan_ranges:
-        vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
-    return sorted(vlan_ids)
+def delete_segment_allocations(db_session, net_p):
+    """
+    Delete the segment allocation entry from the table.
+
+    :params db_session: database session
+    :params net_p: network profile object
+    """
+    with db_session.begin(subtransactions=True):
+        seg_min, seg_max = get_segment_range(net_p)
+        if net_p['segment_type'] == c_const.NETWORK_TYPE_VLAN:
+            db_session.query(n1kv_models_v2.N1kvVlanAllocation).filter(
+                (n1kv_models_v2.N1kvVlanAllocation.physical_network ==
+                 net_p['physical_network']),
+                (n1kv_models_v2.N1kvVlanAllocation.vlan_id >= seg_min),
+                (n1kv_models_v2.N1kvVlanAllocation.vlan_id <=
+                 seg_max)).delete()
+        elif net_p['segment_type'] == c_const.NETWORK_TYPE_OVERLAY:
+            db_session.query(n1kv_models_v2.N1kvVxlanAllocation).filter(
+                (n1kv_models_v2.N1kvVxlanAllocation.vxlan_id >= seg_min),
+                (n1kv_models_v2.N1kvVxlanAllocation.vxlan_id <=
+                 seg_max)).delete()
 
 
-def sync_vlan_allocations(db_session, network_vlan_ranges):
+def sync_vlan_allocations(db_session, net_p):
     """
     Synchronize vlan_allocations table with configured VLAN ranges.
 
     Sync the network profile range with the vlan_allocations table for each
     physical network.
     :param db_session: database session
-    :param network_vlan_ranges: dictionary of network vlan ranges with the
-                                physical network name as key.
+    :param net_p: network profile dictionary
     """
-
-    with db_session.begin():
-        # process vlan ranges for each physical network separately
-        for physical_network, vlan_ranges in network_vlan_ranges.items():
-
-            # determine current configured allocatable vlans for this
-            # physical network
-            vlan_ids = _get_sorted_vlan_ids(vlan_ranges)
-
-            # add missing allocatable vlans to table
-            for vlan_id in vlan_ids:
-                try:
-                    alloc = get_vlan_allocation(db_session,
-                                                physical_network,
-                                                vlan_id)
-                except c_exc.VlanIDNotFound:
-                    alloc = n1kv_models_v2.N1kvVlanAllocation(
-                        physical_network=physical_network, vlan_id=vlan_id)
-                    db_session.add(alloc)
-
-
-def delete_vlan_allocations(db_session, network_vlan_ranges):
-    """
-    Delete vlan_allocations for deleted network profile range.
-
-    :param db_session: database session
-    :param network_vlan_ranges: dictionary of network vlan ranges with the
-                                physical network name as key.
-    """
-
-    with db_session.begin():
-        # process vlan ranges for each physical network separately
-        for physical_network, vlan_ranges in network_vlan_ranges.items():
-            # Determine the set of vlan ids which need to be deleted.
-            vlan_ids = _get_sorted_vlan_ids(vlan_ranges)
-            allocs = (db_session.query(n1kv_models_v2.N1kvVlanAllocation).
-                      filter_by(physical_network=physical_network).
-                      filter_by(allocated=False))
-            for alloc in allocs:
-                if alloc.vlan_id in vlan_ids:
-                    LOG.debug(_("Removing vlan %(vlan)s on physical "
-                                "network %(network)s from pool"),
-                              {"vlan": alloc.vlan_id,
-                               "network": physical_network})
-                    db_session.delete(alloc)
+    with db_session.begin(subtransactions=True):
+        seg_min, seg_max = get_segment_range(net_p)
+        for vlan_id in range(seg_min, seg_max + 1):
+            try:
+                get_vlan_allocation(db_session,
+                                    net_p['physical_network'],
+                                    vlan_id)
+            except c_exc.VlanIDNotFound:
+                alloc = n1kv_models_v2.N1kvVlanAllocation(
+                    physical_network=net_p['physical_network'],
+                    vlan_id=vlan_id,
+                    network_profile_id=net_p['id'])
+                db_session.add(alloc)
 
 
 def get_vlan_allocation(db_session, physical_network, vlan_id):
@@ -487,12 +468,13 @@ def reserve_vlan(db_session, network_profile):
 
     with db_session.begin(subtransactions=True):
         alloc = (db_session.query(n1kv_models_v2.N1kvVlanAllocation).
-                 filter(and_(
+                 filter(sql.and_(
                         n1kv_models_v2.N1kvVlanAllocation.vlan_id >= seg_min,
                         n1kv_models_v2.N1kvVlanAllocation.vlan_id <= seg_max,
                         n1kv_models_v2.N1kvVlanAllocation.physical_network ==
                         network_profile['physical_network'],
-                        n1kv_models_v2.N1kvVlanAllocation.allocated == False)
+                        n1kv_models_v2.N1kvVlanAllocation.allocated ==
+                        sql.false())
                         )).first()
         if alloc:
             segment_id = alloc.vlan_id
@@ -516,12 +498,13 @@ def reserve_vxlan(db_session, network_profile):
 
     with db_session.begin(subtransactions=True):
         alloc = (db_session.query(n1kv_models_v2.N1kvVxlanAllocation).
-                 filter(and_(
+                 filter(sql.and_(
                         n1kv_models_v2.N1kvVxlanAllocation.vxlan_id >=
                         seg_min,
                         n1kv_models_v2.N1kvVxlanAllocation.vxlan_id <=
                         seg_max,
-                        n1kv_models_v2.N1kvVxlanAllocation.allocated == False)
+                        n1kv_models_v2.N1kvVxlanAllocation.allocated ==
+                        sql.false())
                         ).first())
         if alloc:
             segment_id = alloc.vxlan_id
@@ -535,7 +518,7 @@ def reserve_vxlan(db_session, network_profile):
         raise n_exc.NoNetworkAvailable()
 
 
-def alloc_network(db_session, network_profile_id):
+def alloc_network(db_session, network_profile_id, tenant_id):
     """
     Allocate network using first available free segment ID in segment range.
 
@@ -544,7 +527,7 @@ def alloc_network(db_session, network_profile_id):
     """
     with db_session.begin(subtransactions=True):
         network_profile = get_network_profile(db_session,
-                                              network_profile_id)
+                                              network_profile_id, tenant_id)
         if network_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
             return reserve_vlan(db_session, network_profile)
         if network_profile.segment_type == c_const.NETWORK_TYPE_OVERLAY:
@@ -573,28 +556,22 @@ def reserve_specific_vlan(db_session, physical_network, vlan_id):
                 else:
                     raise n_exc.VlanIdInUse(vlan_id=vlan_id,
                                             physical_network=physical_network)
-            LOG.debug(_("Reserving specific vlan %(vlan)s on physical "
-                        "network %(network)s from pool"),
+            LOG.debug("Reserving specific vlan %(vlan)s on physical network "
+                      "%(network)s from pool",
                       {"vlan": vlan_id, "network": physical_network})
-        except exc.NoResultFound:
-            LOG.debug(_("Reserving specific vlan %(vlan)s on physical "
-                        "network %(network)s outside pool"),
-                      {"vlan": vlan_id, "network": physical_network})
-            alloc = n1kv_models_v2.N1kvVlanAllocation(
-                physical_network=physical_network, vlan_id=vlan_id)
+            alloc.allocated = True
             db_session.add(alloc)
-        alloc.allocated = True
+        except exc.NoResultFound:
+            raise c_exc.VlanIDOutsidePool()
 
 
-def release_vlan(db_session, physical_network, vlan_id, network_vlan_ranges):
+def release_vlan(db_session, physical_network, vlan_id):
     """
     Release a given VLAN ID.
 
     :param db_session: database session
     :param physical_network: string representing the name of physical network
     :param vlan_id: integer value of the segmentation ID to be released
-    :param network_vlan_ranges: dictionary of network vlan ranges with the
-                                physical network name as key.
     """
     with db_session.begin(subtransactions=True):
         try:
@@ -603,68 +580,32 @@ def release_vlan(db_session, physical_network, vlan_id, network_vlan_ranges):
                                vlan_id=vlan_id).
                      one())
             alloc.allocated = False
-            for vlan_range in network_vlan_ranges.get(physical_network, []):
-                if vlan_range[0] <= vlan_id <= vlan_range[1]:
-                    msg = _("Releasing vlan %(vlan)s on physical "
-                            "network %(network)s to pool")
-                    break
-            else:
-                db_session.delete(alloc)
-                msg = _("Releasing vlan %(vlan)s on physical "
-                        "network %(network)s outside pool")
-            LOG.debug(msg, {"vlan": vlan_id, "network": physical_network})
         except exc.NoResultFound:
-            LOG.warning(_("vlan_id %(vlan)s on physical network %(network)s "
+            LOG.warning(_LW("vlan_id %(vlan)s on physical network %(network)s "
                           "not found"),
                         {"vlan": vlan_id, "network": physical_network})
 
 
-def _get_sorted_vxlan_ids(vxlan_id_ranges):
-    """Return sorted VXLAN IDs."""
-    vxlan_ids = set()
-    for vxlan_min, vxlan_max in vxlan_id_ranges:
-        if vxlan_max + 1 - vxlan_min > c_const.MAX_VXLAN_RANGE:
-            LOG.error(_("Skipping unreasonable vxlan ID range %(vxlan_min)s - "
-                        "%(vxlan_max)s"),
-                      {"vxlan_min": vxlan_min, "vxlan_max": vxlan_max})
-        else:
-            vxlan_ids |= set(xrange(vxlan_min, vxlan_max + 1))
-    return sorted(vxlan_ids)
-
-
-def sync_vxlan_allocations(db_session, vxlan_id_ranges):
+def sync_vxlan_allocations(db_session, net_p):
     """
     Synchronize vxlan_allocations table with configured vxlan ranges.
 
     :param db_session: database session
-    :param vxlan_id_ranges: list of segment range tuples
+    :param net_p: network profile dictionary
     """
-
-    vxlan_ids = _get_sorted_vxlan_ids(vxlan_id_ranges)
-    with db_session.begin():
-        for vxlan_id in vxlan_ids:
-            alloc = get_vxlan_allocation(db_session, vxlan_id)
-            if not alloc:
-                alloc = n1kv_models_v2.N1kvVxlanAllocation(vxlan_id=vxlan_id)
+    seg_min, seg_max = get_segment_range(net_p)
+    if seg_max + 1 - seg_min > c_const.MAX_VXLAN_RANGE:
+        msg = (_("Unreasonable vxlan ID range %(vxlan_min)s - %(vxlan_max)s") %
+               {"vxlan_min": seg_min, "vxlan_max": seg_max})
+        raise n_exc.InvalidInput(error_message=msg)
+    with db_session.begin(subtransactions=True):
+        for vxlan_id in range(seg_min, seg_max + 1):
+            try:
+                get_vxlan_allocation(db_session, vxlan_id)
+            except c_exc.VxlanIDNotFound:
+                alloc = n1kv_models_v2.N1kvVxlanAllocation(
+                    network_profile_id=net_p['id'], vxlan_id=vxlan_id)
                 db_session.add(alloc)
-
-
-def delete_vxlan_allocations(db_session, vxlan_id_ranges):
-    """
-    Delete vxlan_allocations for deleted network profile range.
-
-    :param db_session: database session
-    :param vxlan_id_ranges: list of segment range tuples
-    """
-    vxlan_ids = _get_sorted_vxlan_ids(vxlan_id_ranges)
-    with db_session.begin():
-        allocs = (db_session.query(n1kv_models_v2.N1kvVxlanAllocation).
-                  filter_by(allocated=False))
-        for alloc in allocs:
-            if alloc.vxlan_id in vxlan_ids:
-                LOG.debug(_("Removing vxlan %s from pool"),
-                          alloc.vxlan_id)
-                db_session.delete(alloc)
 
 
 def get_vxlan_allocation(db_session, vxlan_id):
@@ -675,8 +616,11 @@ def get_vxlan_allocation(db_session, vxlan_id):
     :param vxlan_id: integer value representing the segmentation ID
     :returns: allocation object
     """
-    return (db_session.query(n1kv_models_v2.N1kvVxlanAllocation).
-            filter_by(vxlan_id=vxlan_id).first())
+    try:
+        return (db_session.query(n1kv_models_v2.N1kvVxlanAllocation).
+                filter_by(vxlan_id=vxlan_id).one())
+    except exc.NoResultFound:
+        raise c_exc.VxlanIDNotFound(vxlan_id=vxlan_id)
 
 
 def reserve_specific_vxlan(db_session, vxlan_id):
@@ -692,22 +636,20 @@ def reserve_specific_vxlan(db_session, vxlan_id):
                      filter_by(vxlan_id=vxlan_id).
                      one())
             if alloc.allocated:
-                raise c_exc.VxlanIdInUse(vxlan_id=vxlan_id)
-            LOG.debug(_("Reserving specific vxlan %s from pool"), vxlan_id)
-        except exc.NoResultFound:
-            LOG.debug(_("Reserving specific vxlan %s outside pool"), vxlan_id)
-            alloc = n1kv_models_v2.N1kvVxlanAllocation(vxlan_id=vxlan_id)
+                raise c_exc.VxlanIDInUse(vxlan_id=vxlan_id)
+            LOG.debug("Reserving specific vxlan %s from pool", vxlan_id)
+            alloc.allocated = True
             db_session.add(alloc)
-        alloc.allocated = True
+        except exc.NoResultFound:
+            raise c_exc.VxlanIDOutsidePool()
 
 
-def release_vxlan(db_session, vxlan_id, vxlan_id_ranges):
+def release_vxlan(db_session, vxlan_id):
     """
     Release a given VXLAN ID.
 
     :param db_session: database session
     :param vxlan_id: integer value representing the segmentation ID
-    :param vxlan_id_ranges: list of the segment range tuples.
     """
     with db_session.begin(subtransactions=True):
         try:
@@ -715,16 +657,8 @@ def release_vxlan(db_session, vxlan_id, vxlan_id_ranges):
                      filter_by(vxlan_id=vxlan_id).
                      one())
             alloc.allocated = False
-            for vxlan_id_range in vxlan_id_ranges:
-                if vxlan_id_range[0] <= vxlan_id <= vxlan_id_range[1]:
-                    msg = _("Releasing vxlan %s to pool")
-                    break
-            else:
-                db_session.delete(alloc)
-                msg = _("Releasing vxlan %s outside pool")
-            LOG.debug(msg, vxlan_id)
         except exc.NoResultFound:
-            LOG.warning(_("vxlan_id %s not found"), vxlan_id)
+            LOG.warning(_LW("vxlan_id %s not found"), vxlan_id)
 
 
 def set_port_status(port_id, status):
@@ -785,6 +719,7 @@ def add_vm_network(db_session,
             network_id=network_id,
             port_count=port_count)
         db_session.add(vm_network)
+        return vm_network
 
 
 def update_vm_network_port_count(db_session, name, port_count):
@@ -832,7 +767,7 @@ def delete_vm_network(db_session, policy_profile_id, network_id):
 
 def create_network_profile(db_session, network_profile):
     """Create a network profile."""
-    LOG.debug(_("create_network_profile()"))
+    LOG.debug("create_network_profile()")
     with db_session.begin(subtransactions=True):
         kwargs = {"name": network_profile["name"],
                   "segment_type": network_profile["segment_type"]}
@@ -852,12 +787,12 @@ def create_network_profile(db_session, network_profile):
         return net_profile
 
 
-def delete_network_profile(db_session, id):
+def delete_network_profile(db_session, id, tenant_id=None):
     """Delete Network Profile."""
-    LOG.debug(_("delete_network_profile()"))
+    LOG.debug("delete_network_profile()")
     with db_session.begin(subtransactions=True):
         try:
-            network_profile = get_network_profile(db_session, id)
+            network_profile = get_network_profile(db_session, id, tenant_id)
             db_session.delete(network_profile)
             (db_session.query(n1kv_models_v2.ProfileBinding).
              filter_by(profile_id=id).delete())
@@ -866,21 +801,27 @@ def delete_network_profile(db_session, id):
             raise c_exc.ProfileTenantBindingNotFound(profile_id=id)
 
 
-def update_network_profile(db_session, id, network_profile):
+def update_network_profile(db_session, id, network_profile, tenant_id=None):
     """Update Network Profile."""
-    LOG.debug(_("update_network_profile()"))
+    LOG.debug("update_network_profile()")
     with db_session.begin(subtransactions=True):
-        profile = get_network_profile(db_session, id)
+        profile = get_network_profile(db_session, id, tenant_id)
         profile.update(network_profile)
         return profile
 
 
-def get_network_profile(db_session, id):
+def get_network_profile(db_session, id, tenant_id=None):
     """Get Network Profile."""
-    LOG.debug(_("get_network_profile()"))
+    LOG.debug("get_network_profile()")
+    if tenant_id and c_conf.CISCO_N1K.restrict_network_profiles:
+        if _profile_binding_exists(db_session=db_session,
+                                   tenant_id=tenant_id,
+                                   profile_id=id,
+                                   profile_type=c_const.NETWORK) is None:
+            raise c_exc.ProfileTenantBindingNotFound(profile_id=id)
     try:
-        return db_session.query(
-            n1kv_models_v2.NetworkProfile).filter_by(id=id).one()
+        return db_session.query(n1kv_models_v2.NetworkProfile).filter_by(
+                   id=id).one()
     except exc.NoResultFound:
         raise c_exc.NetworkProfileNotFound(profile=id)
 
@@ -902,7 +843,7 @@ def _get_network_profiles(db_session=None, physical_network=None):
 
 def create_policy_profile(policy_profile):
     """Create Policy Profile."""
-    LOG.debug(_("create_policy_profile()"))
+    LOG.debug("create_policy_profile()")
     db_session = db.get_session()
     with db_session.begin(subtransactions=True):
         p_profile = n1kv_models_v2.PolicyProfile(id=policy_profile["id"],
@@ -913,7 +854,7 @@ def create_policy_profile(policy_profile):
 
 def delete_policy_profile(id):
     """Delete Policy Profile."""
-    LOG.debug(_("delete_policy_profile()"))
+    LOG.debug("delete_policy_profile()")
     db_session = db.get_session()
     with db_session.begin(subtransactions=True):
         policy_profile = get_policy_profile(db_session, id)
@@ -922,7 +863,7 @@ def delete_policy_profile(id):
 
 def update_policy_profile(db_session, id, policy_profile):
     """Update a policy profile."""
-    LOG.debug(_("update_policy_profile()"))
+    LOG.debug("update_policy_profile()")
     with db_session.begin(subtransactions=True):
         _profile = get_policy_profile(db_session, id)
         _profile.update(policy_profile)
@@ -931,12 +872,19 @@ def update_policy_profile(db_session, id, policy_profile):
 
 def get_policy_profile(db_session, id):
     """Get Policy Profile."""
-    LOG.debug(_("get_policy_profile()"))
+    LOG.debug("get_policy_profile()")
     try:
         return db_session.query(
             n1kv_models_v2.PolicyProfile).filter_by(id=id).one()
     except exc.NoResultFound:
         raise c_exc.PolicyProfileIdNotFound(profile_id=id)
+
+
+def get_policy_profiles():
+    """Retrieve all policy profiles."""
+    db_session = db.get_session()
+    with db_session.begin(subtransactions=True):
+        return db_session.query(n1kv_models_v2.PolicyProfile)
 
 
 def create_profile_binding(db_session, tenant_id, profile_id, profile_type):
@@ -960,7 +908,9 @@ def create_profile_binding(db_session, tenant_id, profile_id, profile_type):
 
 
 def _profile_binding_exists(db_session, tenant_id, profile_id, profile_type):
-    LOG.debug(_("_profile_binding_exists()"))
+    """Check if the profile-tenant binding exists."""
+    LOG.debug("_profile_binding_exists()")
+    db_session = db_session or db.get_session()
     return (db_session.query(n1kv_models_v2.ProfileBinding).
             filter_by(tenant_id=tenant_id, profile_id=profile_id,
                       profile_type=profile_type).first())
@@ -968,27 +918,44 @@ def _profile_binding_exists(db_session, tenant_id, profile_id, profile_type):
 
 def get_profile_binding(db_session, tenant_id, profile_id):
     """Get Network/Policy Profile - Tenant binding."""
-    LOG.debug(_("get_profile_binding()"))
+    LOG.debug("get_profile_binding()")
     try:
         return (db_session.query(n1kv_models_v2.ProfileBinding).filter_by(
             tenant_id=tenant_id, profile_id=profile_id).one())
     except exc.NoResultFound:
-        c_exc.ProfileTenantBindingNotFound(profile_id=profile_id)
+        raise c_exc.ProfileTenantBindingNotFound(profile_id=profile_id)
 
 
 def delete_profile_binding(db_session, tenant_id, profile_id):
     """Delete Policy Binding."""
-    LOG.debug(_("delete_profile_binding()"))
+    LOG.debug("delete_profile_binding()")
     db_session = db_session or db.get_session()
     try:
         binding = get_profile_binding(db_session, tenant_id, profile_id)
         with db_session.begin(subtransactions=True):
             db_session.delete(binding)
     except c_exc.ProfileTenantBindingNotFound:
-        LOG.debug(_("Profile-Tenant binding missing for profile ID "
-                    "%(profile_id)s and tenant ID %(tenant_id)s"),
+        LOG.debug("Profile-Tenant binding missing for profile ID "
+                  "%(profile_id)s and tenant ID %(tenant_id)s",
                   {"profile_id": profile_id, "tenant_id": tenant_id})
         return
+
+
+def update_profile_binding(db_session, profile_id, tenants, profile_type):
+    """Updating Profile Binding."""
+    LOG.debug('update_profile_binding()')
+    if profile_type not in ("network", "policy"):
+        raise n_exc.NeutronException(_("Invalid profile type"))
+    db_session = db_session or db.get_session()
+    with db_session.begin(subtransactions=True):
+        db_session.query(n1kv_models_v2.ProfileBinding).filter_by(
+            profile_id=profile_id, profile_type=profile_type).delete()
+        new_tenants_set = set(tenants)
+        for tenant_id in new_tenants_set:
+            tenant = n1kv_models_v2.ProfileBinding(profile_type=profile_type,
+                                                   tenant_id=tenant_id,
+                                                   profile_id=profile_id)
+            db_session.add(tenant)
 
 
 def _get_profile_bindings(db_session, profile_type=None):
@@ -999,12 +966,20 @@ def _get_profile_bindings(db_session, profile_type=None):
     If profile type is None, return profile-tenant binding for all
     profile types.
     """
-    LOG.debug(_("_get_profile_bindings()"))
     if profile_type:
-        profile_bindings = (db_session.query(n1kv_models_v2.ProfileBinding).
-                            filter_by(profile_type=profile_type))
-        return profile_bindings
+        return (db_session.query(n1kv_models_v2.ProfileBinding).
+                filter_by(profile_type=profile_type))
     return db_session.query(n1kv_models_v2.ProfileBinding)
+
+
+def _get_profile_bindings_by_uuid(db_session, profile_id):
+    """
+    Retrieve a list of profile bindings.
+
+    Get all profile-tenant bindings based on profile UUID.
+    """
+    return (db_session.query(n1kv_models_v2.ProfileBinding).
+            filter_by(profile_id=profile_id))
 
 
 class NetworkProfile_db_mixin(object):
@@ -1031,7 +1006,9 @@ class NetworkProfile_db_mixin(object):
         net_profile_ids = (db_session.query(n1kv_models_v2.ProfileBinding.
                                             profile_id).
                            filter_by(tenant_id=tenant_id).
-                           filter_by(profile_type=c_const.NETWORK))
+                           filter_by(profile_type=c_const.NETWORK).all())
+        if not net_profile_ids:
+            return []
         network_profiles = (db_session.query(model).filter(model.id.in_(
             pid[0] for pid in net_profile_ids)))
         return [self._make_network_profile_dict(p) for p in network_profiles]
@@ -1051,6 +1028,12 @@ class NetworkProfile_db_mixin(object):
                "multicast_ip_range": network_profile["multicast_ip_range"],
                "physical_network": network_profile["physical_network"]}
         return self._fields(res, fields)
+
+    def _segment_in_use(self, db_session, network_profile):
+        """Verify whether a segment is allocated for given network profile."""
+        with db_session.begin(subtransactions=True):
+            return (db_session.query(n1kv_models_v2.N1kvNetworkBinding).
+                    filter_by(profile_id=network_profile['id'])).first()
 
     def get_network_profile_bindings(self, context, filters=None, fields=None):
         """
@@ -1085,15 +1068,21 @@ class NetworkProfile_db_mixin(object):
         self._replace_fake_tenant_id_with_real(context)
         p = network_profile["network_profile"]
         self._validate_network_profile_args(context, p)
-        net_profile = create_network_profile(context.session, p)
-        create_profile_binding(context.session,
-                               context.tenant_id,
-                               net_profile.id,
-                               c_const.NETWORK)
-        if p.get("add_tenant"):
-            self.add_network_profile_tenant(context.session,
-                                            net_profile.id,
-                                            p["add_tenant"])
+        with context.session.begin(subtransactions=True):
+            net_profile = create_network_profile(context.session, p)
+            if net_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
+                sync_vlan_allocations(context.session, net_profile)
+            elif net_profile.segment_type == c_const.NETWORK_TYPE_OVERLAY:
+                sync_vxlan_allocations(context.session, net_profile)
+            create_profile_binding(context.session,
+                                   context.tenant_id,
+                                   net_profile.id,
+                                   c_const.NETWORK)
+            if p.get(c_const.ADD_TENANTS):
+                for tenant in p[c_const.ADD_TENANTS]:
+                    self.add_network_profile_tenant(context.session,
+                                                    net_profile.id,
+                                                    tenant)
         return self._make_network_profile_dict(net_profile)
 
     def delete_network_profile(self, context, id):
@@ -1104,7 +1093,14 @@ class NetworkProfile_db_mixin(object):
         :param id: UUID representing network profile to delete
         :returns: deleted network profile dictionary
         """
-        _profile = delete_network_profile(context.session, id)
+        # Check whether the network profile is in use.
+        if self._segment_in_use(context.session,
+                                get_network_profile(context.session, id,
+                                                    context.tenant_id)):
+            raise c_exc.NetworkProfileInUse(profile=id)
+        # Delete and return the network profile if it is not in use.
+        _profile = delete_network_profile(context.session, id,
+                                          context.tenant_id)
         return self._make_network_profile_dict(_profile)
 
     def update_network_profile(self, context, id, network_profile):
@@ -1118,19 +1114,71 @@ class NetworkProfile_db_mixin(object):
         :param network_profile: network profile dictionary
         :returns: updated network profile dictionary
         """
+        # Flag to check whether network profile is updated or not.
+        is_updated = False
         p = network_profile["network_profile"]
-        if context.is_admin and "add_tenant" in p:
-            self.add_network_profile_tenant(context.session,
-                                            id,
-                                            p["add_tenant"])
-            return self._make_network_profile_dict(get_network_profile(
-                context.session, id))
-        if context.is_admin and "remove_tenant" in p:
-            delete_profile_binding(context.session, p["remove_tenant"], id)
-            return self._make_network_profile_dict(get_network_profile(
-                context.session, id))
-        return self._make_network_profile_dict(
-            update_network_profile(context.session, id, p))
+        original_net_p = get_network_profile(context.session, id,
+                                             context.tenant_id)
+        # Update network profile to tenant id binding.
+        if context.is_admin and c_const.ADD_TENANTS in p:
+            profile_bindings = _get_profile_bindings_by_uuid(context.session,
+                                                             profile_id=id)
+            for bindings in profile_bindings:
+                p[c_const.ADD_TENANTS].append(bindings.tenant_id)
+            update_profile_binding(context.session, id,
+                                   p[c_const.ADD_TENANTS], c_const.NETWORK)
+            is_updated = True
+        if context.is_admin and c_const.REMOVE_TENANTS in p:
+            for remove_tenant in p[c_const.REMOVE_TENANTS]:
+                if remove_tenant == context.tenant_id:
+                    continue
+                delete_profile_binding(context.session, remove_tenant, id)
+            is_updated = True
+        if original_net_p.segment_type == c_const.NETWORK_TYPE_TRUNK:
+            #TODO(abhraut): Remove check when Trunk supports segment range.
+            if p.get('segment_range'):
+                msg = _("segment_range not required for TRUNK")
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
+        if original_net_p.segment_type in [c_const.NETWORK_TYPE_VLAN,
+                                           c_const.NETWORK_TYPE_TRUNK]:
+            if p.get("multicast_ip_range"):
+                msg = _("multicast_ip_range not required")
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
+        # Update segment range if network profile is not in use.
+        if (p.get("segment_range") and
+            p.get("segment_range") != original_net_p.segment_range):
+            if not self._segment_in_use(context.session, original_net_p):
+                delete_segment_allocations(context.session, original_net_p)
+                updated_net_p = update_network_profile(context.session, id, p,
+                                                       context.tenant_id)
+                self._validate_segment_range_uniqueness(context,
+                                                        updated_net_p, id)
+                if original_net_p.segment_type == c_const.NETWORK_TYPE_VLAN:
+                    sync_vlan_allocations(context.session, updated_net_p)
+                if original_net_p.segment_type == c_const.NETWORK_TYPE_OVERLAY:
+                    sync_vxlan_allocations(context.session, updated_net_p)
+                is_updated = True
+            else:
+                raise c_exc.NetworkProfileInUse(profile=id)
+        if (p.get('multicast_ip_range') and
+            (p.get("multicast_ip_range") !=
+             original_net_p.get("multicast_ip_range"))):
+            self._validate_multicast_ip_range(p)
+            if not self._segment_in_use(context.session, original_net_p):
+                is_updated = True
+            else:
+                raise c_exc.NetworkProfileInUse(profile=id)
+        # Update network profile if name is updated and the network profile
+        # is not yet updated.
+        if "name" in p and not is_updated:
+            is_updated = True
+        # Return network profile if it is successfully updated.
+        if is_updated:
+            return self._make_network_profile_dict(
+                update_network_profile(context.session, id, p,
+                                       context.tenant_id))
 
     def get_network_profile(self, context, id, fields=None):
         """
@@ -1142,7 +1190,7 @@ class NetworkProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: network profile dictionary
         """
-        profile = get_network_profile(context.session, id)
+        profile = get_network_profile(context.session, id, context.tenant_id)
         return self._make_network_profile_dict(profile, fields)
 
     def get_network_profiles(self, context, filters=None, fields=None):
@@ -1197,14 +1245,13 @@ class NetworkProfile_db_mixin(object):
         :returns: true if network profile exist else False
         """
         try:
-            get_network_profile(context.session, id)
+            get_network_profile(context.session, id, context.tenant_id)
             return True
         except c_exc.NetworkProfileNotFound(profile=id):
             return False
 
     def _get_segment_range(self, data):
-        # Sort the range to ensure min, max is in order
-        return sorted(int(seg) for seg in data.split("-")[:2])
+        return (int(seg) for seg in data.split("-")[:2])
 
     def _validate_network_profile_args(self, context, p):
         """
@@ -1214,7 +1261,9 @@ class NetworkProfile_db_mixin(object):
         :param p: network profile object
         """
         self._validate_network_profile(p)
-        self._validate_segment_range_uniqueness(context, p)
+        segment_type = p['segment_type'].lower()
+        if segment_type != c_const.NETWORK_TYPE_TRUNK:
+            self._validate_segment_range_uniqueness(context, p)
 
     def _validate_segment_range(self, network_profile):
         """
@@ -1226,16 +1275,51 @@ class NetworkProfile_db_mixin(object):
             msg = _("Invalid segment range. example range: 500-550")
             raise n_exc.InvalidInput(error_message=msg)
 
+    def _validate_multicast_ip_range(self, network_profile):
+        """
+        Validate multicast ip range values.
+
+        :param network_profile: network profile object
+        """
+        try:
+            min_ip, max_ip = (network_profile
+                              ['multicast_ip_range'].split('-', 1))
+        except ValueError:
+            msg = _("Invalid multicast ip address range. "
+                    "example range: 224.1.1.1-224.1.1.10")
+            LOG.error(msg)
+            raise n_exc.InvalidInput(error_message=msg)
+        for ip in [min_ip, max_ip]:
+            try:
+                if not netaddr.IPAddress(ip).is_multicast():
+                    msg = _("%s is not a valid multicast ip address") % ip
+                    LOG.error(msg)
+                    raise n_exc.InvalidInput(error_message=msg)
+                if netaddr.IPAddress(ip) <= netaddr.IPAddress('224.0.0.255'):
+                    msg = _("%s is reserved multicast ip address") % ip
+                    LOG.error(msg)
+                    raise n_exc.InvalidInput(error_message=msg)
+            except netaddr.AddrFormatError:
+                msg = _("%s is not a valid ip address") % ip
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
+        if netaddr.IPAddress(min_ip) > netaddr.IPAddress(max_ip):
+            msg = (_("Invalid multicast IP range '%(min_ip)s-%(max_ip)s':"
+                     " Range should be from low address to high address") %
+                   {'min_ip': min_ip, 'max_ip': max_ip})
+            LOG.error(msg)
+            raise n_exc.InvalidInput(error_message=msg)
+
     def _validate_network_profile(self, net_p):
         """
         Validate completeness of a network profile arguments.
 
         :param net_p: network profile object
         """
-        if any(net_p[arg] == "" for arg in ["segment_type"]):
+        if net_p["segment_type"] == "":
             msg = _("Arguments segment_type missing"
                     " for network profile")
-            LOG.exception(msg)
+            LOG.error(msg)
             raise n_exc.InvalidInput(error_message=msg)
         segment_type = net_p["segment_type"].lower()
         if segment_type not in [c_const.NETWORK_TYPE_VLAN,
@@ -1244,58 +1328,103 @@ class NetworkProfile_db_mixin(object):
                                 c_const.NETWORK_TYPE_MULTI_SEGMENT]:
             msg = _("segment_type should either be vlan, overlay, "
                     "multi-segment or trunk")
-            LOG.exception(msg)
+            LOG.error(msg)
             raise n_exc.InvalidInput(error_message=msg)
         if segment_type == c_const.NETWORK_TYPE_VLAN:
             if "physical_network" not in net_p:
                 msg = _("Argument physical_network missing "
                         "for network profile")
-                LOG.exception(msg)
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
+        if segment_type == c_const.NETWORK_TYPE_TRUNK:
+            if net_p["segment_range"]:
+                msg = _("segment_range not required for trunk")
+                LOG.error(msg)
                 raise n_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_TRUNK,
                             c_const.NETWORK_TYPE_OVERLAY]:
-            if "sub_type" not in net_p:
+            if not attributes.is_attr_set(net_p.get("sub_type")):
                 msg = _("Argument sub_type missing "
                         "for network profile")
-                LOG.exception(msg)
+                LOG.error(msg)
                 raise n_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_VLAN,
                             c_const.NETWORK_TYPE_OVERLAY]:
             if "segment_range" not in net_p:
                 msg = _("Argument segment_range missing "
                         "for network profile")
-                LOG.exception(msg)
+                LOG.error(msg)
                 raise n_exc.InvalidInput(error_message=msg)
             self._validate_segment_range(net_p)
         if segment_type == c_const.NETWORK_TYPE_OVERLAY:
             if net_p['sub_type'] != c_const.NETWORK_SUBTYPE_NATIVE_VXLAN:
                 net_p['multicast_ip_range'] = '0.0.0.0'
+            else:
+                multicast_ip_range = net_p.get("multicast_ip_range")
+                if not attributes.is_attr_set(multicast_ip_range):
+                    msg = _("Argument multicast_ip_range missing"
+                            " for VXLAN multicast network profile")
+                    LOG.error(msg)
+                    raise n_exc.InvalidInput(error_message=msg)
+                self._validate_multicast_ip_range(net_p)
         else:
             net_p['multicast_ip_range'] = '0.0.0.0'
 
-    def _validate_segment_range_uniqueness(self, context, net_p):
+    def _validate_segment_range_uniqueness(self, context, net_p, id=None):
         """
         Validate that segment range doesn't overlap.
 
         :param context: neutron api request context
         :param net_p: network profile dictionary
+        :param id: UUID representing the network profile being updated
         """
         segment_type = net_p["segment_type"].lower()
+        seg_min, seg_max = self._get_segment_range(net_p['segment_range'])
         if segment_type == c_const.NETWORK_TYPE_VLAN:
+            if not ((seg_min <= seg_max) and
+                    ((seg_min in range(p_const.MIN_VLAN_TAG,
+                                       c_const.N1KV_VLAN_RESERVED_MIN) and
+                      seg_max in range(p_const.MIN_VLAN_TAG,
+                                       c_const.N1KV_VLAN_RESERVED_MIN)) or
+                     (seg_min in range(c_const.N1KV_VLAN_RESERVED_MAX + 1,
+                                       p_const.MAX_VLAN_TAG) and
+                      seg_max in range(c_const.N1KV_VLAN_RESERVED_MAX + 1,
+                                       p_const.MAX_VLAN_TAG)))):
+                msg = (_("Segment range is invalid, select from "
+                         "%(min)s-%(nmin)s, %(nmax)s-%(max)s") %
+                       {"min": p_const.MIN_VLAN_TAG,
+                        "nmin": c_const.N1KV_VLAN_RESERVED_MIN - 1,
+                        "nmax": c_const.N1KV_VLAN_RESERVED_MAX + 1,
+                        "max": p_const.MAX_VLAN_TAG - 1})
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
             profiles = _get_network_profiles(
                 db_session=context.session,
                 physical_network=net_p["physical_network"]
             )
-        else:
+        elif segment_type in [c_const.NETWORK_TYPE_OVERLAY,
+                              c_const.NETWORK_TYPE_MULTI_SEGMENT,
+                              c_const.NETWORK_TYPE_TRUNK]:
+            if (seg_min > seg_max or
+                seg_min < c_const.N1KV_VXLAN_MIN or
+                seg_max > c_const.N1KV_VXLAN_MAX):
+                msg = (_("segment range is invalid. Valid range is : "
+                         "%(min)s-%(max)s") %
+                       {"min": c_const.N1KV_VXLAN_MIN,
+                        "max": c_const.N1KV_VXLAN_MAX})
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
             profiles = _get_network_profiles(db_session=context.session)
         if profiles:
             for profile in profiles:
+                if id and profile.id == id:
+                    continue
                 name = profile.name
                 segment_range = profile.segment_range
                 if net_p["name"] == name:
-                    msg = (_("NetworkProfile name %s already exists"),
+                    msg = (_("NetworkProfile name %s already exists") %
                            net_p["name"])
-                    LOG.exception(msg)
+                    LOG.error(msg)
                     raise n_exc.InvalidInput(error_message=msg)
                 if (c_const.NETWORK_TYPE_MULTI_SEGMENT in
                     [profile.segment_type, net_p["segment_type"]] or
@@ -1311,7 +1440,7 @@ class NetworkProfile_db_mixin(object):
                     ((seg_min <= profile_seg_min) and
                      (seg_max >= profile_seg_max))):
                     msg = _("Segment range overlaps with another profile")
-                    LOG.exception(msg)
+                    LOG.error(msg)
                     raise n_exc.InvalidInput(error_message=msg)
 
     def _get_network_profile_by_name(self, db_session, name):
@@ -1339,6 +1468,8 @@ class PolicyProfile_db_mixin(object):
                        ProfileBinding.profile_id)
                        .filter_by(tenant_id=tenant_id).
                        filter_by(profile_type=c_const.POLICY).all())
+        if not profile_ids:
+            return []
         profiles = db_session.query(model).filter(model.id.in_(
             pid[0] for pid in profile_ids))
         return [self._make_policy_profile_dict(p) for p in profiles]
@@ -1387,7 +1518,7 @@ class PolicyProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: list of all policy profiles
         """
-        if context.is_admin:
+        if context.is_admin or not c_conf.CISCO_N1K.restrict_policy_profiles:
             return self._get_collection(context, n1kv_models_v2.PolicyProfile,
                                         self._make_policy_profile_dict,
                                         filters=filters, fields=fields)
@@ -1486,8 +1617,11 @@ class PolicyProfile_db_mixin(object):
         """
         db_session = db.get_session()
         with db_session.begin(subtransactions=True):
-            return (db_session.query(n1kv_models_v2.PolicyProfile).
-                    filter_by(name=name).one())
+            try:
+                return (db_session.query(n1kv_models_v2.PolicyProfile).
+                        filter_by(name=name).one())
+            except exc.NoResultFound:
+                raise c_exc.PolicyProfileNameNotFound(profile_name=name)
 
     def _remove_all_fake_policy_profiles(self):
         """
@@ -1504,16 +1638,18 @@ class PolicyProfile_db_mixin(object):
                                  profile_type=c_const.POLICY))
             a_set = set(i.profile_id for i in a_set_q)
             b_set_q = (db_session.query(n1kv_models_v2.ProfileBinding).
-                       filter(and_(n1kv_models_v2.ProfileBinding.
-                                   tenant_id != c_const.TENANT_ID_NOT_SET,
-                                   n1kv_models_v2.ProfileBinding.
-                                   profile_type == c_const.POLICY)))
+                       filter(sql.and_(n1kv_models_v2.ProfileBinding.
+                                       tenant_id != c_const.TENANT_ID_NOT_SET,
+                                       n1kv_models_v2.ProfileBinding.
+                                       profile_type == c_const.POLICY)))
             b_set = set(i.profile_id for i in b_set_q)
-            (db_session.query(n1kv_models_v2.ProfileBinding).
-             filter(and_(n1kv_models_v2.ProfileBinding.profile_id.
-                         in_(a_set & b_set), n1kv_models_v2.ProfileBinding.
-                         tenant_id == c_const.TENANT_ID_NOT_SET)).
-             delete(synchronize_session="fetch"))
+            if a_set & b_set:
+                (db_session.query(n1kv_models_v2.ProfileBinding).
+                 filter(sql.and_(n1kv_models_v2.ProfileBinding.profile_id.
+                                 in_(a_set & b_set),
+                                 n1kv_models_v2.ProfileBinding.tenant_id ==
+                                 c_const.TENANT_ID_NOT_SET)).
+                 delete(synchronize_session="fetch"))
 
     def _add_policy_profile(self,
                             policy_profile_name,

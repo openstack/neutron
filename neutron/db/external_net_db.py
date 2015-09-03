@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -27,6 +25,8 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import external_net
+from neutron import manager
+from neutron.plugins.common import constants as service_constants
 
 
 DEVICE_OWNER_ROUTER_GW = l3_constants.DEVICE_OWNER_ROUTER_GW
@@ -46,7 +46,7 @@ class ExternalNetwork(model_base.BASEV2):
 
 
 class External_net_db_mixin(object):
-    """Mixin class to add external network methods to db_plugin_base_v2."""
+    """Mixin class to add external network methods to db_base_plugin_v2."""
 
     def _network_model_hook(self, context, original_model, query):
         query = query.outerjoin(ExternalNetwork,
@@ -57,8 +57,9 @@ class External_net_db_mixin(object):
     def _network_filter_hook(self, context, original_model, conditions):
         if conditions is not None and not hasattr(conditions, '__iter__'):
             conditions = (conditions, )
-        # Apply the external network filter only in non-admin context
-        if not context.is_admin and hasattr(original_model, 'tenant_id'):
+        # Apply the external network filter only in non-admin and non-advsvc
+        # context
+        if self.model_query_scope(context, original_model):
             conditions = expr.or_(ExternalNetwork.network_id != expr.null(),
                                   *conditions)
         return conditions
@@ -137,17 +138,11 @@ class External_net_db_mixin(object):
                 network_id=net_id).delete()
             net_data[external_net.EXTERNAL] = False
 
-    def _filter_nets_l3(self, context, nets, filters):
-        vals = filters and filters.get(external_net.EXTERNAL, [])
-        if not vals:
-            return nets
-
-        ext_nets = set(en['network_id']
-                       for en in context.session.query(ExternalNetwork))
-        if vals[0]:
-            return [n for n in nets if n['id'] in ext_nets]
-        else:
-            return [n for n in nets if n['id'] not in ext_nets]
+    def _process_l3_delete(self, context, network_id):
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if l3plugin:
+            l3plugin.delete_disassociated_floatingips(context, network_id)
 
     def get_external_network_id(self, context):
         nets = self.get_networks(context, {external_net.EXTERNAL: [True]})

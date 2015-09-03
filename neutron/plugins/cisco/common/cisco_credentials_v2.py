@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,18 +11,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import logging as LOG
 
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
-
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class Store(object):

@@ -15,6 +15,16 @@
       License for the specific language governing permissions and limitations
       under the License.
 
+
+      Convention for heading levels in Neutron devref:
+      =======  Heading 0 (reserved for the title in a document)
+      -------  Heading 1
+      ~~~~~~~  Heading 2
+      +++++++  Heading 3
+      '''''''  Heading 4
+      (Avoid deeper levels because they do not render well.)
+
+
 Setting Up a Development Environment
 ====================================
 
@@ -23,24 +33,24 @@ environment that can be used in developing Neutron on Ubuntu, Fedora or
 Mac OS X. These instructions assume you're already familiar with
 Git and Gerrit, which is a code repository mirror and code review toolset
 , however if you aren't please see `this Git tutorial`_ for an introduction
-to using Git and `this wiki page`_ for a tutorial on using Gerrit and Git for
+to using Git and `this guide`_ for a tutorial on using Gerrit and Git for
 code contribution to Openstack projects.
 
 .. _this Git tutorial: http://git-scm.com/book/en/Getting-Started
-.. _this wiki page: https://wiki.openstack.org/wiki/Gerrit_Workflow
+.. _this guide: http://docs.openstack.org/infra/manual/developers.html#development-workflow
 
 Following these instructions will allow you to run the Neutron unit
 tests. If you want to be able to run Neutron in a full OpenStack environment,
 you can use the excellent `DevStack`_ project to do so. There is a wiki page
 that describes `setting up Neutron using DevStack`_.
 
-.. _DevStack: https://github.com/openstack-dev/devstack
+.. _DevStack: https://git.openstack.org/cgit/openstack-dev/devstack
 .. _setting up Neutron using Devstack: https://wiki.openstack.org/wiki/NeutronDevstack
 
 Getting the code
 ----------------
 
-Grab the code from GitHub::
+Grab the code::
 
     git clone git://git.openstack.org/openstack/neutron.git
     cd neutron

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2012,  Nachi Ueno,  NTT MCL,  Inc.
 # All Rights Reserved.
 #
@@ -17,13 +15,14 @@
 
 from cliff import lister
 from neutronclient.common import utils
-from neutronclient.neutron.v2_0 import NeutronCommand
-from neutronclient.neutron.v2_0.port import _format_fixed_ips
+from neutronclient.neutron import v2_0 as client
+from neutronclient.neutron.v2_0 import port
+from oslo_log import log as logging
 
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LI
 
 
-class ProbeCommand(NeutronCommand):
+class ProbeCommand(client.NeutronCommand):
     log = logging.getLogger(__name__ + '.ProbeCommand')
 
     def get_debug_agent(self):
@@ -51,11 +50,11 @@ class CreateProbe(ProbeCommand):
         return parser
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
+        self.log.debug('run(%s)', parsed_args)
         debug_agent = self.get_debug_agent()
-        port = debug_agent.create_probe(parsed_args.id,
-                                        parsed_args.device_owner)
-        self.log.info(_('Probe created : %s '), port.id)
+        probe_port = debug_agent.create_probe(parsed_args.id,
+                                              parsed_args.device_owner)
+        self.log.info(_('Probe created : %s '), probe_port.id)
 
 
 class DeleteProbe(ProbeCommand):
@@ -71,17 +70,17 @@ class DeleteProbe(ProbeCommand):
         return parser
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
+        self.log.debug('run(%s)', parsed_args)
         debug_agent = self.get_debug_agent()
         debug_agent.delete_probe(parsed_args.id)
         self.log.info(_('Probe %s deleted'), parsed_args.id)
 
 
-class ListProbe(NeutronCommand, lister.Lister):
+class ListProbe(client.NeutronCommand, lister.Lister):
     """List probes."""
 
     log = logging.getLogger(__name__ + '.ListProbe')
-    _formatters = {'fixed_ips': _format_fixed_ips, }
+    _formatters = {'fixed_ips': port._format_fixed_ips, }
 
     def get_debug_agent(self):
         return self.app.debug_agent
@@ -90,7 +89,7 @@ class ListProbe(NeutronCommand, lister.Lister):
 
         debug_agent = self.get_debug_agent()
         info = debug_agent.list_probes()
-        columns = len(info) > 0 and sorted(info[0].keys()) or []
+        columns = sorted(info[0].keys()) if info else []
         return (columns, (utils.get_item_properties(
             s, columns, formatters=self._formatters, )
             for s in info), )
@@ -102,10 +101,10 @@ class ClearProbe(ProbeCommand):
     log = logging.getLogger(__name__ + '.ClearProbe')
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
+        self.log.debug('run(%s)', parsed_args)
         debug_agent = self.get_debug_agent()
-        debug_agent.clear_probe()
-        self.log.info(_('All Probes deleted '))
+        cleared_probes_count = debug_agent.clear_probes()
+        self.log.info(_LI('%d probe(s) deleted'), cleared_probes_count)
 
 
 class ExecProbe(ProbeCommand):
@@ -126,7 +125,7 @@ class ExecProbe(ProbeCommand):
         return parser
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
+        self.log.debug('run(%s)', parsed_args)
         debug_agent = self.get_debug_agent()
         result = debug_agent.exec_command(parsed_args.id, parsed_args.command)
         self.app.stdout.write(result + '\n')
@@ -150,7 +149,7 @@ class PingAll(ProbeCommand):
         return parser
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
+        self.log.debug('run(%s)', parsed_args)
         debug_agent = self.get_debug_agent()
         result = debug_agent.ping_all(parsed_args.id,
                                       timeout=parsed_args.timeout)

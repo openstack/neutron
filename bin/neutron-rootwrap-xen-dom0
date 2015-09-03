@@ -23,8 +23,9 @@ responsible determining whether a command is safe to execute.
 """
 from __future__ import print_function
 
-import ConfigParser
-import json
+from six.moves import configparser as ConfigParser
+from oslo_serialization import jsonutils as json
+
 import os
 import select
 import sys
@@ -97,7 +98,7 @@ def filter_command(exec_name, filters_path, user_args, exec_dirs):
     if os.path.exists(os.path.join(possible_topdir, "neutron", "__init__.py")):
         sys.path.insert(0, possible_topdir)
 
-    from oslo.rootwrap import wrapper
+    from oslo_rootwrap import wrapper
 
     # Execute command if it matches any of the loaded filters
     filters = wrapper.load_filters(filters_path)

@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
 import routes as routes_mapper
+import six
 import six.moves.urllib.parse as urlparse
 import webob
 import webob.dec
@@ -24,7 +26,8 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
-from neutron.openstack.common import log as logging
+from neutron import policy
+from neutron.quota import resource_registry
 from neutron import wsgi
 
 
@@ -32,11 +35,12 @@ LOG = logging.getLogger(__name__)
 
 RESOURCES = {'network': 'networks',
              'subnet': 'subnets',
+             'subnetpool': 'subnetpools',
              'port': 'ports'}
 SUB_RESOURCES = {}
 COLLECTION_ACTIONS = ['index', 'create']
 MEMBER_ACTIONS = ['show', 'update', 'delete']
-REQUIREMENTS = {'id': attributes.UUID_PATTERN, 'format': 'xml|json'}
+REQUIREMENTS = {'id': attributes.UUID_PATTERN, 'format': 'json'}
 
 
 class Index(wsgi.Application):
@@ -45,12 +49,10 @@ class Index(wsgi.Application):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
-        metadata = {'application/xml': {'attributes': {
-                    'resource': ['name', 'collection'],
-                    'link': ['href', 'rel']}}}
+        metadata = {}
 
         layout = []
-        for name, collection in self.resources.iteritems():
+        for name, collection in six.iteritems(self.resources):
             href = urlparse.urljoin(req.path_url, collection)
             resource = {'name': name,
                         'collection': collection,
@@ -104,6 +106,7 @@ class APIRouter(wsgi.Router):
             _map_resource(RESOURCES[resource], resource,
                           attributes.RESOURCE_ATTRIBUTE_MAP.get(
                               RESOURCES[resource], dict()))
+            resource_registry.register_resource_by_name(resource)
 
         for resource in SUB_RESOURCES:
             _map_resource(SUB_RESOURCES[resource]['collection_name'], resource,
@@ -112,4 +115,12 @@ class APIRouter(wsgi.Router):
                               dict()),
                           SUB_RESOURCES[resource]['parent'])
 
+        # Certain policy checks require that the extensions are loaded
+        # and the RESOURCE_ATTRIBUTE_MAP populated before they can be
+        # properly initialized. This can only be claimed with certainty
+        # once this point in the code has been reached. In the event
+        # that the policies have been initialized before this point,
+        # calling reset will cause the next policy check to
+        # re-initialize with all of the required data in place.
+        policy.reset()
         super(APIRouter, self).__init__(mapper)

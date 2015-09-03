@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,33 +13,92 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_log import log as logging
+from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.openstack.common.db import exception as db_exc
-from neutron.openstack.common import log as logging
-
+from neutron.i18n import _LI, _LW
+from neutron.scheduler import base_resource_filter
+from neutron.scheduler import base_scheduler
 
 LOG = logging.getLogger(__name__)
 
 
-class ChanceScheduler(object):
-    """Allocate a DHCP agent for a network in a random way.
-    More sophisticated scheduler (similar to filter scheduler in nova?)
-    can be introduced later.
-    """
+class AutoScheduler(object):
 
-    def _schedule_bind_network(self, context, agents, network_id):
+    def auto_schedule_networks(self, plugin, context, host):
+        """Schedule non-hosted networks to the DHCP agent on the specified
+           host.
+        """
+        agents_per_network = cfg.CONF.dhcp_agents_per_network
+        # a list of (agent, net_ids) tuples
+        bindings_to_add = []
+        with context.session.begin(subtransactions=True):
+            fields = ['network_id', 'enable_dhcp']
+            subnets = plugin.get_subnets(context, fields=fields)
+            net_ids = set(s['network_id'] for s in subnets
+                          if s['enable_dhcp'])
+            if not net_ids:
+                LOG.debug('No non-hosted networks')
+                return False
+            query = context.session.query(agents_db.Agent)
+            query = query.filter(agents_db.Agent.agent_type ==
+                                 constants.AGENT_TYPE_DHCP,
+                                 agents_db.Agent.host == host,
+                                 agents_db.Agent.admin_state_up == sql.true())
+            dhcp_agents = query.all()
+            for dhcp_agent in dhcp_agents:
+                if agents_db.AgentDbMixin.is_agent_down(
+                    dhcp_agent.heartbeat_timestamp):
+                    LOG.warn(_LW('DHCP agent %s is not active'), dhcp_agent.id)
+                    continue
+                for net_id in net_ids:
+                    agents = plugin.get_dhcp_agents_hosting_networks(
+                        context, [net_id])
+                    if len(agents) >= agents_per_network:
+                        continue
+                    if any(dhcp_agent.id == agent.id for agent in agents):
+                        continue
+                    bindings_to_add.append((dhcp_agent, net_id))
+        # do it outside transaction so particular scheduling results don't
+        # make other to fail
+        for agent, net_id in bindings_to_add:
+            self.resource_filter.bind(context, [agent], net_id)
+        return True
+
+
+class ChanceScheduler(base_scheduler.BaseChanceScheduler, AutoScheduler):
+
+    def __init__(self):
+        super(ChanceScheduler, self).__init__(DhcpFilter())
+
+
+class WeightScheduler(base_scheduler.BaseWeightScheduler, AutoScheduler):
+
+    def __init__(self):
+        super(WeightScheduler, self).__init__(DhcpFilter())
+
+
+class DhcpFilter(base_resource_filter.BaseResourceFilter):
+
+    def bind(self, context, agents, network_id):
+        """Bind the network to the agents."""
+        # customize the bind logic
+        bound_agents = agents[:]
         for agent in agents:
             context.session.begin(subtransactions=True)
+            # saving agent_id to use it after rollback to avoid
+            # DetachedInstanceError
+            agent_id = agent.id
+            binding = agentschedulers_db.NetworkDhcpAgentBinding()
+            binding.dhcp_agent_id = agent_id
+            binding.network_id = network_id
             try:
-                binding = agentschedulers_db.NetworkDhcpAgentBinding()
-                binding.dhcp_agent = agent
-                binding.network_id = network_id
                 context.session.add(binding)
                 # try to actually write the changes and catch integrity
                 # DBDuplicateEntry
@@ -49,83 +106,70 @@ class ChanceScheduler(object):
             except db_exc.DBDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 context.session.rollback()
-                LOG.info(_('Agent %s already present'), agent)
-            LOG.debug(_('Network %(network_id)s is scheduled to be '
-                        'hosted by DHCP agent %(agent_id)s'),
+                bound_agents.remove(agent)
+                LOG.info(_LI('Agent %s already present'), agent_id)
+            LOG.debug('Network %(network_id)s is scheduled to be '
+                      'hosted by DHCP agent %(agent_id)s',
                       {'network_id': network_id,
-                       'agent_id': agent})
+                       'agent_id': agent_id})
+        super(DhcpFilter, self).bind(context, bound_agents, network_id)
 
-    def schedule(self, plugin, context, network):
-        """Schedule the network to active DHCP agent(s).
+    def filter_agents(self, plugin, context, network):
+        """Return the agents that can host the network."""
+        agents_dict = self._get_network_hostable_dhcp_agents(
+                                    plugin, context, network)
+        if not agents_dict['hostable_agents'] or agents_dict['n_agents'] <= 0:
+            return {'n_agents': 0, 'hostable_agents': []}
+        return agents_dict
 
-        A list of scheduled agents is returned.
+    def _get_dhcp_agents_hosting_network(self, plugin, context, network):
+        """Return dhcp agents hosting the given network or None if a given
+           network is already hosted by enough number of agents.
         """
         agents_per_network = cfg.CONF.dhcp_agents_per_network
-
         #TODO(gongysh) don't schedule the networks with only
         # subnets whose enable_dhcp is false
         with context.session.begin(subtransactions=True):
-            dhcp_agents = plugin.get_dhcp_agents_hosting_networks(
-                context, [network['id']], active=True)
-            if len(dhcp_agents) >= agents_per_network:
-                LOG.debug(_('Network %s is hosted already'),
+            network_hosted_agents = plugin.get_dhcp_agents_hosting_networks(
+                context, [network['id']])
+            if len(network_hosted_agents) >= agents_per_network:
+                LOG.debug('Network %s is already hosted by enough agents.',
                           network['id'])
                 return
-            n_agents = agents_per_network - len(dhcp_agents)
-            enabled_dhcp_agents = plugin.get_agents_db(
+        return network_hosted_agents
+
+    def _get_active_agents(self, plugin, context):
+        """Return a list of active dhcp agents."""
+        with context.session.begin(subtransactions=True):
+            active_dhcp_agents = plugin.get_agents_db(
                 context, filters={
                     'agent_type': [constants.AGENT_TYPE_DHCP],
                     'admin_state_up': [True]})
-            if not enabled_dhcp_agents:
-                LOG.warn(_('No more DHCP agents'))
-                return
-            active_dhcp_agents = [
-                agent for agent in set(enabled_dhcp_agents)
-                if not agents_db.AgentDbMixin.is_agent_down(
-                    agent['heartbeat_timestamp'])
-                and agent not in dhcp_agents
-            ]
             if not active_dhcp_agents:
-                LOG.warn(_('No more DHCP agents'))
-                return
-            n_agents = min(len(active_dhcp_agents), n_agents)
-            chosen_agents = random.sample(active_dhcp_agents, n_agents)
-        self._schedule_bind_network(context, chosen_agents, network['id'])
-        return chosen_agents
+                LOG.warn(_LW('No more DHCP agents'))
+                return []
+        return active_dhcp_agents
 
-    def auto_schedule_networks(self, plugin, context, host):
-        """Schedule non-hosted networks to the DHCP agent on
-        the specified host.
+    def _get_network_hostable_dhcp_agents(self, plugin, context, network):
+        """Return number of agents which will actually host the given network
+           and a list of dhcp agents which can host the given network
         """
-        agents_per_network = cfg.CONF.dhcp_agents_per_network
-        with context.session.begin(subtransactions=True):
-            query = context.session.query(agents_db.Agent)
-            query = query.filter(agents_db.Agent.agent_type ==
-                                 constants.AGENT_TYPE_DHCP,
-                                 agents_db.Agent.host == host,
-                                 agents_db.Agent.admin_state_up == True)
-            dhcp_agents = query.all()
-            for dhcp_agent in dhcp_agents:
-                if agents_db.AgentDbMixin.is_agent_down(
-                    dhcp_agent.heartbeat_timestamp):
-                    LOG.warn(_('DHCP agent %s is not active'), dhcp_agent.id)
-                    continue
-                fields = ['network_id', 'enable_dhcp']
-                subnets = plugin.get_subnets(context, fields=fields)
-                net_ids = set(s['network_id'] for s in subnets
-                              if s['enable_dhcp'])
-                if not net_ids:
-                    LOG.debug(_('No non-hosted networks'))
-                    return False
-                for net_id in net_ids:
-                    agents = plugin.get_dhcp_agents_hosting_networks(
-                        context, [net_id], active=True)
-                    if len(agents) >= agents_per_network:
-                        continue
-                    if any(dhcp_agent.id == agent.id for agent in agents):
-                        continue
-                    binding = agentschedulers_db.NetworkDhcpAgentBinding()
-                    binding.dhcp_agent = dhcp_agent
-                    binding.network_id = net_id
-                    context.session.add(binding)
-        return True
+        hosted_agents = self._get_dhcp_agents_hosting_network(plugin,
+                                                              context, network)
+        if hosted_agents is None:
+            return {'n_agents': 0, 'hostable_agents': []}
+        n_agents = cfg.CONF.dhcp_agents_per_network - len(hosted_agents)
+        active_dhcp_agents = self._get_active_agents(plugin, context)
+        if not active_dhcp_agents:
+            return {'n_agents': 0, 'hostable_agents': []}
+        hostable_dhcp_agents = [
+            agent for agent in set(active_dhcp_agents)
+            if agent not in hosted_agents and plugin.is_eligible_agent(
+                context, True, agent)
+        ]
+
+        if not hostable_dhcp_agents:
+            return {'n_agents': 0, 'hostable_agents': []}
+        n_agents = min(len(hostable_dhcp_agents), n_agents)
+        return {'n_agents': n_agents, 'hostable_agents':
+                hostable_dhcp_agents}

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011, Cisco Systems, Inc.
 # All Rights Reserved.
 #
@@ -14,13 +12,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 """stubs.py provides interface methods for the database test cases"""
 
+from oslo_log import log as logging
+
 from neutron.db import api as db
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
@@ -39,8 +36,8 @@ class NeutronDB(object):
                 net_dict["id"] = str(net.uuid)
                 net_dict["name"] = net.name
                 nets.append(net_dict)
-        except Exception as exc:
-            LOG.error("Failed to get all networks: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to get all networks.")
         return nets
 
     def get_network(self, network_id):
@@ -54,8 +51,8 @@ class NeutronDB(object):
                 net_dict["id"] = str(net.uuid)
                 net_dict["name"] = net.name
                 net.append(net_dict)
-        except Exception as exc:
-            LOG.error("Failed to get network: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to get network.")
         return net
 
     def create_network(self, tenant_id, net_name):
@@ -68,8 +65,8 @@ class NeutronDB(object):
             net_dict["id"] = str(res.uuid)
             net_dict["name"] = res.name
             return net_dict
-        except Exception as exc:
-            LOG.error("Failed to create network: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to create network.")
 
     def delete_network(self, net_id):
         """Delete a network."""
@@ -79,8 +76,8 @@ class NeutronDB(object):
             net_dict = {}
             net_dict["id"] = str(net.uuid)
             return net_dict
-        except Exception as exc:
-            LOG.error("Failed to delete network: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to delete network.")
 
     def update_network(self, tenant_id, net_id, param_data):
         """Rename a network."""
@@ -91,8 +88,8 @@ class NeutronDB(object):
             net_dict["id"] = str(net.uuid)
             net_dict["name"] = net.name
             return net_dict
-        except Exception as exc:
-            LOG.error("Failed to update network: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to update network.")
 
     def get_all_ports(self, net_id):
         """Get all ports."""
@@ -107,8 +104,8 @@ class NeutronDB(object):
                 port_dict["state"] = port.state
                 ports.append(port_dict)
             return ports
-        except Exception as exc:
-            LOG.error("Failed to get all ports: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to get all ports.")
 
     def get_port(self, net_id, port_id):
         """Get a port."""
@@ -123,8 +120,8 @@ class NeutronDB(object):
             port_dict["state"] = port.state
             port_list.append(port_dict)
             return port_list
-        except Exception as exc:
-            LOG.error("Failed to get port: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to get port.")
 
     def create_port(self, net_id):
         """Add a port."""
@@ -137,8 +134,8 @@ class NeutronDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception as exc:
-            LOG.error("Failed to create port: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to create port.")
 
     def delete_port(self, net_id, port_id):
         """Delete a port."""
@@ -148,8 +145,8 @@ class NeutronDB(object):
             port_dict = {}
             port_dict["id"] = str(port.uuid)
             return port_dict
-        except Exception as exc:
-            LOG.error("Failed to delete port: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to delete port.")
 
     def update_port(self, net_id, port_id, **kwargs):
         """Update a port."""
@@ -162,8 +159,8 @@ class NeutronDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception as exc:
-            LOG.error("Failed to update port state: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to update port state.")
 
     def plug_interface(self, net_id, port_id, int_id):
         """Plug interface to a port."""
@@ -176,13 +173,13 @@ class NeutronDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception as exc:
-            LOG.error("Failed to plug interface: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to plug interface.")
 
     def unplug_interface(self, net_id, port_id):
         """Unplug interface to a port."""
         try:
             db.port_unset_attachment(port_id, net_id)
             LOG.debug("Detached interface from port %s", port_id)
-        except Exception as exc:
-            LOG.error("Failed to unplug interface: %s", str(exc))
+        except Exception:
+            LOG.exception("Failed to unplug interface.")

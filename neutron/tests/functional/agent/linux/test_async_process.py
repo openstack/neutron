@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,19 +13,17 @@
 #    under the License.
 
 import eventlet
-import fixtures
 
 from neutron.agent.linux import async_process
 from neutron.tests import base
 
 
-class TestAsyncProcess(base.BaseTestCase):
+class AsyncProcessTestFramework(base.BaseTestCase):
 
     def setUp(self):
-        super(TestAsyncProcess, self).setUp()
-        self.test_file_path = self.useFixture(
-            fixtures.TempDir()).join("test_async_process.tmp")
-        self.data = [str(x) for x in xrange(4)]
+        super(AsyncProcessTestFramework, self).setUp()
+        self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
+        self.data = [str(x) for x in range(4)]
         with file(self.test_file_path, 'w') as f:
             f.writelines('%s\n' % item for item in self.data)
 
@@ -40,30 +36,36 @@ class TestAsyncProcess(base.BaseTestCase):
                 output += new_output
             eventlet.sleep(0.01)
 
-    def test_stopping_async_process_lifecycle(self):
-        with self.assert_max_execution_time():
-            proc = async_process.AsyncProcess(['tail', '-f',
-                                               self.test_file_path])
-            proc.start()
-            self._check_stdout(proc)
-            proc.stop()
 
-            # Ensure that the process and greenthreads have stopped
-            proc._process.wait()
-            self.assertEqual(proc._process.returncode, -9)
-            for watcher in proc._watchers:
-                watcher.wait()
+class TestAsyncProcess(AsyncProcessTestFramework):
+    def _safe_stop(self, proc):
+        try:
+            proc.stop()
+        except async_process.AsyncProcessException:
+            pass
+
+    def test_stopping_async_process_lifecycle(self):
+        proc = async_process.AsyncProcess(['tail', '-f',
+                                           self.test_file_path])
+        self.addCleanup(self._safe_stop, proc)
+        proc.start(block=True)
+        self._check_stdout(proc)
+        proc.stop(block=True)
+
+        # Ensure that the process and greenthreads have stopped
+        proc._process.wait()
+        self.assertEqual(proc._process.returncode, -9)
+        for watcher in proc._watchers:
+            watcher.wait()
 
     def test_async_process_respawns(self):
-        with self.assert_max_execution_time():
-            proc = async_process.AsyncProcess(['tail', '-f',
-                                               self.test_file_path],
-                                              respawn_interval=0)
-            proc.start()
+        proc = async_process.AsyncProcess(['tail', '-f',
+                                           self.test_file_path],
+                                          respawn_interval=0)
+        self.addCleanup(self._safe_stop, proc)
+        proc.start()
 
-            # Ensure that the same output is read twice
-            self._check_stdout(proc)
-            pid = proc._get_pid_to_kill()
-            proc._kill_process(pid)
-            self._check_stdout(proc)
-            proc.stop()
+        # Ensure that the same output is read twice
+        self._check_stdout(proc)
+        proc._kill_process(proc.pid)
+        self._check_stdout(proc)

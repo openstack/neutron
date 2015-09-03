@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -16,6 +14,10 @@
 #    under the License.
 
 import gettext
+import six
 
 
-gettext.install('neutron', unicode=1)
+if six.PY2:
+    gettext.install('neutron', unicode=1)
+else:
+    gettext.install('neutron')

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,9 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ying Liu, Cisco Systems, Inc.
-# @author: Abhishek Raut, Cisco Systems, Inc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -59,11 +54,6 @@ class Credential(extensions.ExtensionDescriptor):
     def get_description(cls):
         """Returns Extended Resource Description."""
         return "Credential include username and password"
-
-    @classmethod
-    def get_namespace(cls):
-        """Returns Extended Resource Namespace."""
-        return "http://docs.ciscocloud.com/api/ext/credential/v2.0"
 
     @classmethod
     def get_updated(cls):

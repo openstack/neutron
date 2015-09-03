@@ -1,2 +1,0 @@
-ca_certs directory for SSL unit tests
-No files will be generated here, but it should exist for the tests

@@ -1,0 +1,311 @@
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# Andre Campos Bezerra <andrecbezerra@gmail.com>, 2015
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"PO-Revision-Date: 2015-08-01 03:37+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"Language-Team: Portuguese (Brazil) (http://www.transifex.com/openstack/"
+"neutron/language/pt_BR/)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#, python-format
+msgid "%(method)s %(url)s"
+msgstr "%(method)s %(url)s"
+
+#, python-format
+msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
+msgstr "%(plugin_key)s: %(function_name)s com args %(args)s ignorado"
+
+#, python-format
+msgid "%(type)s ID ranges: %(range)s"
+msgstr "%(type)s faixas de ID: %(range)s"
+
+#, python-format
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s retornou uma falha: %(exception)s"
+
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s retornado com HTTP %(status)d"
+
+#, python-format
+msgid ""
+"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
+msgstr ""
+"Adicionado segmento %(id)s de tipo %(network_type)s para a rede "
+"%(network_id)s"
+
+#, python-format
+msgid "Adding %s to list of bridges."
+msgstr "Adicionando %s na lista de pontes."
+
+msgid "Agent initialized successfully, now running... "
+msgstr "Agente inicializado com êxito; em execução agora... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "Agente fora de sincronização com o plug-in!"
+
+msgid "Agent tunnel out of sync with plugin!"
+msgstr "Túnel do agente fora de sincronização com o plug-in!"
+
+#, python-format
+msgid "Allocated vlan (%d) from the pool"
+msgstr "alocada VLAN (%d) do pool"
+
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr ""
+"Permitir que a classificação seja ativada porque a paginação nativa requer "
+"classificação nativa"
+
+#, python-format
+msgid "Allowable flat physical_network names: %s"
+msgstr "Nomes permitidos de rede flat physical_network : %s"
+
+msgid "Arbitrary flat physical_network names allowed"
+msgstr "Nomes arbitrários de rede flat physical_network permitidos"
+
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "Designando %(vlan_id)s como vlan local para net-id=%(net_uuid)s"
+
+#, python-format
+msgid "Attachment %s removed"
+msgstr "Anexo %s removido"
+
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "Tentou remover o filtro de porta que não foi filtrado %r"
+
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "Tentou atualizar o filtro de porta que não foi filtrado %s"
+
+#, python-format
+msgid "Config paste file: %s"
+msgstr "Arquivo de colagem configurado: %s"
+
+#, python-format
+msgid "Configured mechanism driver names: %s"
+msgstr "Configurados nomes para o driver de mecanismo: %s"
+
+#, python-format
+msgid "Configured type driver names: %s"
+msgstr "Configurado nomes para o driver de tipo: %s"
+
+msgid "DHCP agent started"
+msgstr "Agente DHCP iniciado"
+
+#, python-format
+msgid "Default provider is not specified for service type %s"
+msgstr "Provedor padrão não foi especificado para o tipo de serviço %s"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "Deletando porta: %s"
+
+#, python-format
+msgid "Device %s already exists"
+msgstr "O dispositivo %s já existe"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "Dispositivo %s não definido no plug-in"
+
+msgid "Disabled security-group extension."
+msgstr "Extensão de grupo de segurança desativada."
+
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "Localizado endereço IP inválido no pool: %(start)s - %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "Localizados intervalos de sobreposição: %(l_range)s e %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "Localizado pool maior que a sub-rede CIDR:%(start)s - %(end)s"
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "Exceção de HTTP lançada: %s"
+
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr "inicializando driver para o tipo '%s'"
+
+msgid "Initializing extension manager."
+msgstr "Inicializando o Extension Manager."
+
+#, python-format
+msgid "Initializing mechanism driver '%s'"
+msgstr "Inicializando driver de mecanismo '%s'"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "Mapeamentos da interface: %s"
+
+msgid "L3 agent started"
+msgstr "Agente L3 iniciado"
+
+msgid "LinuxBridge Agent RPC Daemon Started!"
+msgstr "Daemon RPC do Agente LinuxBridge Iniciado!"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "Extensão carregada: %s"
+
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr "Carregados nomes do driver de mecanismo: %s"
+
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr "Carregados nomes do driver de tipo: %s"
+
+#, python-format
+msgid "Loading Metering driver %s"
+msgstr "Carregando driver de medição %s"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "Carregando Plug-in: %s"
+
+msgid "Logging enabled!"
+msgstr "Criação de log ativada!"
+
+#, python-format
+msgid ""
+"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
+msgstr ""
+"A iteração do loop excedeu o intervalo (%(polling_interval)s vs. "
+"%(elapsed)s)!"
+
+msgid "ML2 FlatTypeDriver initialization complete"
+msgstr "Inicialização do ML2 FlatTypeDriver concluída"
+
+msgid "ML2 LocalTypeDriver initialization complete"
+msgstr "Inicialização do ML2 LocalTypeDriver concluída"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "Mapeamento de rede física %(physical_network)s para a ponte %(bridge)s"
+
+msgid "Modular L2 Plugin initialization complete"
+msgstr "Inicialização de plug-in L2 modular concluída"
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "Intervalos de VLAN de rede: %s"
+
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Serviço Neutron iniciado, escutando em %(host)s:%(port)s"
+
+#, python-format
+msgid "No %s Plugin loaded"
+msgstr "Nenhum %s Plug-in carregado"
+
+msgid "No ports here to refresh firewall"
+msgstr "Nenhuma porta aqui para atualizar firewall"
+
+msgid "OVS cleanup completed successfully"
+msgstr "Limpeza de OVS concluída com êxito"
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "Porta %(device)s atualizada. Detalhes: %(details)s"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "Porta %s atualizada."
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "Preparando filtros para dispositivos %s"
+
+msgid "Provider rule updated"
+msgstr "Regra do provedor atualizada"
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "agent_id de RPC: %s"
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr "Recuperando vlan = %(vlan_id)s a partir de net-id = %(net_uuid)s"
+
+msgid "Refresh firewall rules"
+msgstr "Atualizar regras de firewall"
+
+#, python-format
+msgid "Registered mechanism drivers: %s"
+msgstr "Registrados drivers de mecanismo : %s"
+
+#, python-format
+msgid "Registered types: %s"
+msgstr "Tipos registrados: %s"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "Remover filtro de dispositivo para %r"
+
+msgid "SNAT already bound to a service node."
+msgstr "SNAT já conectado a um nó de serviço."
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "Membro do grupo de segurança atualizado %r"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "Regra do grupo de segurança atualizada %r"
+
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "Serviço %s é suportado pelo plugin núcleo"
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "Ignorando a porta %s porque nenhum IP está configurado nela"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "Endereços IP especificado não correspondem à versão do IP da sub-rede"
+
+msgid "Synchronizing state"
+msgstr "Sincronizando estado"
+
+msgid "Synchronizing state complete"
+msgstr "Sincronizando estado finalizado"
+
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr "Tipos de network_types: %s"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"A validação para CIDR: %(new_cidr)s falhou - se sobrepõe com a sub-rede "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+
+msgid "VlanTypeDriver initialization complete"
+msgstr "Inicialização do VlanTypeDriver concluída"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "agent_updated por lado do servidor %s!"

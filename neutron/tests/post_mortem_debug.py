@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 # All Rights Reserved.
 #
@@ -15,18 +13,36 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import pdb
+import functools
 import traceback
 
 
-def exception_handler(exc_info):
+def get_exception_handler(debugger_name):
+    debugger = _get_debugger(debugger_name)
+    return functools.partial(_exception_handler, debugger)
+
+
+def _get_debugger(debugger_name):
+    try:
+        debugger = __import__(debugger_name)
+    except ImportError:
+        raise ValueError("can't import %s module as a post mortem debugger" %
+                         debugger_name)
+    if 'post_mortem' in dir(debugger):
+        return debugger
+    else:
+        raise ValueError("%s is not a supported post mortem debugger" %
+                         debugger_name)
+
+
+def _exception_handler(debugger, exc_info):
     """Exception handler enabling post-mortem debugging.
 
     A class extending testtools.TestCase can add this handler in setUp():
 
         self.addOnException(post_mortem_debug.exception_handler)
 
-    When an exception occurs, the user will be dropped into a pdb
+    When an exception occurs, the user will be dropped into a debugger
     session in the execution environment of the failure.
 
     Frames associated with the testing framework are excluded so that
@@ -39,7 +55,7 @@ def exception_handler(exc_info):
     if ignored_traceback:
         tb = FilteredTraceback(tb, ignored_traceback)
     traceback.print_exception(exc_info[0], exc_info[1], tb)
-    pdb.post_mortem(tb)
+    debugger.post_mortem(tb)
 
 
 def get_ignored_traceback(tb):

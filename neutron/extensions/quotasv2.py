@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,26 +13,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_utils import importutils
 import webob
 
 from neutron.api import extensions
-from neutron.api.v2.attributes import convert_to_int
+from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
+from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
-from neutron.manager import NeutronManager
-from neutron.openstack.common import importutils
+from neutron import manager
 from neutron import quota
+from neutron.quota import resource_registry
 from neutron import wsgi
 
 
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
 QUOTAS = quota.QUOTAS
-DB_QUOTA_DRIVER = 'neutron.db.quota_db.DbQuotaDriver'
+DB_QUOTA_DRIVER = 'neutron.db.quota.driver.DbQuotaDriver'
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
@@ -51,19 +49,21 @@ class QuotaSetsController(wsgi.Controller):
         self._update_extended_attributes = True
 
     def _update_attributes(self):
-        for quota_resource in QUOTAS.resources.iterkeys():
+        for quota_resource in resource_registry.get_all_resources().keys():
             attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
-            attr_dict[quota_resource] = {'allow_post': False,
-                                         'allow_put': True,
-                                         'convert_to': convert_to_int,
-                                         'validate': {'type:range':
-                                                      [-1, sys.maxsize]},
-                                         'is_visible': True}
+            attr_dict[quota_resource] = {
+                'allow_post': False,
+                'allow_put': True,
+                'convert_to': attributes.convert_to_int,
+                'validate': {'type:range': [-1, const.DB_INTEGER_MAX_VALUE]},
+                'is_visible': True}
         self._update_extended_attributes = False
 
     def _get_quotas(self, request, tenant_id):
         return self._driver.get_tenant_quotas(
-            request.context, QUOTAS.resources, tenant_id)
+            request.context,
+            resource_registry.get_all_resources(),
+            tenant_id)
 
     def create(self, request, body=None):
         msg = _('POST requests are not supported on this resource.')
@@ -73,7 +73,8 @@ class QuotaSetsController(wsgi.Controller):
         context = request.context
         self._check_admin(context)
         return {self._resource_name + "s":
-                self._driver.get_all_quotas(context, QUOTAS.resources)}
+                self._driver.get_all_quotas(
+                    context, resource_registry.get_all_resources())}
 
     def tenant(self, request):
         """Retrieve the tenant info in context."""
@@ -85,7 +86,7 @@ class QuotaSetsController(wsgi.Controller):
     def show(self, request, id):
         if id != request.context.tenant_id:
             self._check_admin(request.context,
-                              reason=_("Non-admin is not authorised "
+                              reason=_("Only admin is authorized "
                                        "to access quotas for another tenant"))
         return {self._resource_name: self._get_quotas(request, id)}
 
@@ -129,10 +130,6 @@ class Quotasv2(extensions.ExtensionDescriptor):
         return description
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/network/ext/quotas-sets/api/v2.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-07-29T10:00:00-00:00"
 
@@ -140,7 +137,7 @@ class Quotasv2(extensions.ExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         controller = resource.Resource(
-            QuotaSetsController(NeutronManager.get_plugin()),
+            QuotaSetsController(manager.NeutronManager.get_plugin()),
             faults=base.FAULT_MAP)
         return [extensions.ResourceExtension(
             Quotasv2.get_alias(),

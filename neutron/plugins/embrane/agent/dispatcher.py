@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,15 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ivar Lazzaro, Embrane, Inc.
 
 from eventlet import greenthread
 from eventlet import queue
 from heleosapi import constants as h_con
 from heleosapi import exceptions as h_exc
+from oslo_log import log as logging
 
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LE
 from neutron.plugins.embrane.agent.operations import router_operations
 from neutron.plugins.embrane.common import constants as p_con
 from neutron.plugins.embrane.common import contexts as ctx
@@ -40,7 +37,7 @@ class Dispatcher(object):
     def dispatch_l3(self, d_context, args=(), kwargs={}):
         item = d_context.item
         event = d_context.event
-        q_context = d_context.q_context
+        n_context = d_context.n_context
         chain = d_context.chain
 
         item_id = item["id"]
@@ -52,7 +49,7 @@ class Dispatcher(object):
                     self.sync_items[item_id] = (queue.Queue(),)
                     first_run = True
                 self.sync_items[item_id][0].put(
-                    ctx.OperationContext(event, q_context, item, chain, f,
+                    ctx.OperationContext(event, n_context, item, chain, f,
                                          args, kwargs))
                 t = None
                 if first_run:
@@ -93,7 +90,7 @@ class Dispatcher(object):
                 try:
                     dva_state = operation_context.function(
                         plugin._esm_api,
-                        operation_context.q_context.tenant_id,
+                        operation_context.n_context.tenant_id,
                         operation_context.item,
                         *operation_context.args,
                         **operation_context.kwargs)
@@ -111,10 +108,10 @@ class Dispatcher(object):
                         h_exc.BrokenInterface, h_exc.DvaCreationFailed,
                         h_exc.DvaCreationPending, h_exc.BrokenDva,
                         h_exc.ConfigurationFailed) as ex:
-                    LOG.warning(p_con.error_map[type(ex)] % ex.message)
+                    LOG.warning(p_con.error_map[type(ex)], ex)
                     transient_state = p_con.Status.ERROR
                 except h_exc.DvaDeleteFailed as ex:
-                    LOG.warning(p_con.error_map[type(ex)] % ex.message)
+                    LOG.warning(p_con.error_map[type(ex)], ex)
                     transient_state = p_con.Status.DELETED
                 finally:
                     # if the returned transient state is None, no operations
@@ -122,13 +119,13 @@ class Dispatcher(object):
                     if transient_state:
                         if transient_state == p_con.Status.DELETED:
                             current_state = plugin._delete_router(
-                                operation_context.q_context,
+                                operation_context.n_context,
                                 operation_context.item["id"])
                         # Error state cannot be reverted
                         elif transient_state != p_con.Status.ERROR:
                             current_state = plugin._update_neutron_state(
-                                operation_context.q_context,
+                                operation_context.n_context,
                                 operation_context.item,
                                 transient_state)
             except Exception:
-                LOG.exception(_("Unhandled exception occurred"))
+                LOG.exception(_LE("Unhandled exception occurred"))

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,22 +16,21 @@ import contextlib
 
 import eventlet
 
+from neutron.agent.common import base_polling
 from neutron.agent.linux import ovsdb_monitor
-from neutron.plugins.openvswitch.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 @contextlib.contextmanager
 def get_polling_manager(minimize_polling=False,
-                        root_helper=None,
                         ovsdb_monitor_respawn_interval=(
                             constants.DEFAULT_OVSDBMON_RESPAWN)):
     if minimize_polling:
         pm = InterfacePollingMinimizer(
-            root_helper=root_helper,
             ovsdb_monitor_respawn_interval=ovsdb_monitor_respawn_interval)
         pm.start()
     else:
-        pm = AlwaysPoll()
+        pm = base_polling.AlwaysPoll()
     try:
         yield pm
     finally:
@@ -41,64 +38,15 @@ def get_polling_manager(minimize_polling=False,
             pm.stop()
 
 
-class BasePollingManager(object):
-
-    def __init__(self):
-        self._force_polling = False
-        self._polling_completed = True
-
-    def force_polling(self):
-        self._force_polling = True
-
-    def polling_completed(self):
-        self._polling_completed = True
-
-    def _is_polling_required(self):
-        raise NotImplemented
-
-    @property
-    def is_polling_required(self):
-        # Always consume the updates to minimize polling.
-        polling_required = self._is_polling_required()
-
-        # Polling is required regardless of whether updates have been
-        # detected.
-        if self._force_polling:
-            self._force_polling = False
-            polling_required = True
-
-        # Polling is required if not yet done for previously detected
-        # updates.
-        if not self._polling_completed:
-            polling_required = True
-
-        if polling_required:
-            # Track whether polling has been completed to ensure that
-            # polling can be required until the caller indicates via a
-            # call to polling_completed() that polling has been
-            # successfully performed.
-            self._polling_completed = False
-
-        return polling_required
-
-
-class AlwaysPoll(BasePollingManager):
-
-    @property
-    def is_polling_required(self):
-        return True
-
-
-class InterfacePollingMinimizer(BasePollingManager):
+class InterfacePollingMinimizer(base_polling.BasePollingManager):
     """Monitors ovsdb to determine when polling is required."""
 
-    def __init__(self, root_helper=None,
-                 ovsdb_monitor_respawn_interval=(
-                     constants.DEFAULT_OVSDBMON_RESPAWN)):
+    def __init__(
+            self,
+            ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN):
 
         super(InterfacePollingMinimizer, self).__init__()
         self._monitor = ovsdb_monitor.SimpleInterfaceMonitor(
-            root_helper=root_helper,
             respawn_interval=ovsdb_monitor_respawn_interval)
 
     def start(self):
@@ -112,3 +60,6 @@ class InterfacePollingMinimizer(BasePollingManager):
         # collect output.
         eventlet.sleep()
         return self._monitor.has_updates
+
+    def get_events(self):
+        return self._monitor.get_events()

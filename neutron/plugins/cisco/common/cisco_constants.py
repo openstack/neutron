@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,8 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 
 # Attachment attributes
@@ -42,7 +38,6 @@ PASSWORD = 'password'
 
 LOGGER_COMPONENT_NAME = "cisco_plugin"
 
-NEXUS_PLUGIN = 'nexus_plugin'
 VSWITCH_PLUGIN = 'vswitch_plugin'
 
 DEVICE_IP = 'device_ip'
@@ -83,7 +78,6 @@ NETWORK_SUBTYPE_TRUNK_VXLAN = NETWORK_TYPE_OVERLAY
 # Prefix for VM Network name
 VM_NETWORK_NAME_PREFIX = 'vmn_'
 
-DEFAULT_HTTP_TIMEOUT = 15
 SET = 'set'
 INSTANCE = 'instance'
 PROPERTIES = 'properties'
@@ -103,3 +97,22 @@ LOGICAL_NETWORK_SUFFIX = '_log_net'
 ENCAPSULATION_PROFILE_SUFFIX = '_profile'
 
 UUID_LENGTH = 36
+
+# N1KV vlan and vxlan segment range
+N1KV_VLAN_RESERVED_MIN = 3968
+N1KV_VLAN_RESERVED_MAX = 4047
+N1KV_VXLAN_MIN = 4096
+N1KV_VXLAN_MAX = 16000000
+
+# Type and topic for Cisco cfg agent
+# ==================================
+AGENT_TYPE_CFG = 'Cisco cfg agent'
+
+# Topic for Cisco configuration agent
+CFG_AGENT = 'cisco_cfg_agent'
+# Topic for routing service helper in Cisco configuration agent
+CFG_AGENT_L3_ROUTING = 'cisco_cfg_agent_l3_routing'
+
+# Values for network profile fields
+ADD_TENANTS = 'add_tenants'
+REMOVE_TENANTS = 'remove_tenants'

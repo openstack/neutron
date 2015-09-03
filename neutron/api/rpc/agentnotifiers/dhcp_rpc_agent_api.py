@@ -13,20 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_config import cfg
+from oslo_log import log as logging
+import oslo_messaging
+
 from neutron.common import constants
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.i18n import _LE, _LW
 from neutron import manager
-from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 
 
 LOG = logging.getLogger(__name__)
 
 
-class DhcpAgentNotifyAPI(proxy.RpcProxy):
-    """API for plugin to notify DHCP agent."""
-    BASE_RPC_API_VERSION = '1.0'
+class DhcpAgentNotifyAPI(object):
+    """API for plugin to notify DHCP agent.
+
+    This class implements the client side of an rpc interface.  The server side
+    is neutron.agent.dhcp_agent.DhcpAgent.  For more information about changing
+    rpc interfaces, please see doc/source/devref/rpc_api.rst.
+    """
     # It seems dhcp agent does not support bulk operation
     VALID_RESOURCES = ['network', 'subnet', 'port']
     VALID_METHOD_NAMES = ['network.create.end',
@@ -39,100 +47,128 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
                           'port.update.end',
                           'port.delete.end']
 
-    def __init__(self, topic=topics.DHCP_AGENT):
-        super(DhcpAgentNotifyAPI, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+    def __init__(self, topic=topics.DHCP_AGENT, plugin=None):
+        self._plugin = plugin
+        target = oslo_messaging.Target(topic=topic, version='1.0')
+        self.client = n_rpc.get_client(target)
 
-    def _get_enabled_dhcp_agents(self, context, network_id):
-        """Return enabled dhcp agents associated with the given network."""
-        plugin = manager.NeutronManager.get_plugin()
-        agents = plugin.get_dhcp_agents_hosting_networks(context, [network_id])
-        return [x for x in agents if x.admin_state_up]
+    @property
+    def plugin(self):
+        if self._plugin is None:
+            self._plugin = manager.NeutronManager.get_plugin()
+        return self._plugin
 
-    def _notification_host(self, context, method, payload, host):
-        """Notify the agent on host."""
-        self.cast(
-            context, self.make_msg(method,
-                                   payload=payload),
-            topic='%s.%s' % (topics.DHCP_AGENT, host))
+    def _schedule_network(self, context, network, existing_agents):
+        """Schedule the network to new agents
 
-    def _notification(self, context, method, payload, network_id):
+        :return: all agents associated with the network
+        """
+        new_agents = self.plugin.schedule_network(context, network) or []
+        if new_agents:
+            for agent in new_agents:
+                self._cast_message(
+                    context, 'network_create_end',
+                    {'network': {'id': network['id']}}, agent['host'])
+        elif not existing_agents:
+            LOG.warn(_LW('Unable to schedule network %s: no agents available; '
+                         'will retry on subsequent port and subnet creation '
+                         'events.'), network['id'])
+        return new_agents + existing_agents
+
+    def _get_enabled_agents(self, context, network, agents, method, payload):
+        """Get the list of agents who can provide services."""
+        network_id = network['id']
+        enabled_agents = agents
+        if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
+            enabled_agents = [x for x in agents if x.admin_state_up]
+        active_agents = [x for x in agents if x.is_active]
+        len_enabled_agents = len(enabled_agents)
+        len_active_agents = len(active_agents)
+        if len_active_agents < len_enabled_agents:
+            LOG.warn(_LW("Only %(active)d of %(total)d DHCP agents associated "
+                         "with network '%(net_id)s' are marked as active, so "
+                         "notifications may be sent to inactive agents."),
+                     {'active': len_active_agents,
+                      'total': len_enabled_agents,
+                      'net_id': network_id})
+        if not enabled_agents:
+            num_ports = self.plugin.get_ports_count(
+                context, {'network_id': [network_id]})
+            notification_required = (
+                num_ports > 0 and len(network['subnets']) >= 1)
+            if notification_required:
+                LOG.error(_LE("Will not send event %(method)s for network "
+                              "%(net_id)s: no agent available. Payload: "
+                              "%(payload)s"),
+                          {'method': method,
+                           'net_id': network_id,
+                           'payload': payload})
+        return enabled_agents
+
+    def _is_reserved_dhcp_port(self, port):
+        return port.get('device_id') == constants.DEVICE_ID_RESERVED_DHCP_PORT
+
+    def _notify_agents(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network."""
-        plugin = manager.NeutronManager.get_plugin()
-        if (method != 'network_delete_end' and utils.is_extension_supported(
-                plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS)):
-            if method == 'port_create_end':
-                # we don't schedule when we create network
-                # because we want to give admin a chance to
-                # schedule network manually by API
-                adminContext = (context if context.is_admin else
-                                context.elevated())
-                network = plugin.get_network(adminContext, network_id)
-                chosen_agents = plugin.schedule_network(adminContext, network)
-                if chosen_agents:
-                    for agent in chosen_agents:
-                        self._notification_host(
-                            context, 'network_create_end',
-                            {'network': {'id': network_id}},
-                            agent['host'])
-            agents = self._get_enabled_dhcp_agents(context, network_id)
-            if not agents:
-                LOG.error(_("No DHCP agents are associated with network "
-                            "'%(net_id)s'. Unable to send notification "
-                            "for '%(method)s' with payload: %(payload)s"),
-                          {
-                              'net_id': network_id,
-                              'method': method,
-                              'payload': payload,
-                          })
-                return
-            active_agents = [x for x in agents if x.is_active]
-            if active_agents != agents:
-                LOG.warning(_("Only %(active)d of %(total)d DHCP agents "
-                              "associated with network '%(net_id)s' are "
-                              "marked as active, so notifications may "
-                              "be sent to inactive agents."),
-                            {
-                                'active': len(active_agents),
-                                'total': len(agents),
-                                'net_id': network_id,
-                            })
-            for agent in agents:
-                self.cast(
-                    context, self.make_msg(method,
-                                           payload=payload),
-                    topic='%s.%s' % (agent.topic, agent.host))
-        else:
-            # besides the non-agentscheduler plugin,
-            # There is no way to query who is hosting the network
-            # when the network is deleted, so we need to fanout
-            self._notification_fanout(context, method, payload)
+        # fanout is required as we do not know who is "listening"
+        no_agents = not utils.is_extension_supported(
+            self.plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS)
+        fanout_required = method == 'network_delete_end' or no_agents
 
-    def _notification_fanout(self, context, method, payload):
+        # we do nothing on network creation because we want to give the
+        # admin the chance to associate an agent to the network manually
+        cast_required = method != 'network_create_end'
+
+        if fanout_required:
+            self._fanout_message(context, method, payload)
+        elif cast_required:
+            admin_ctx = (context if context.is_admin else context.elevated())
+            network = self.plugin.get_network(admin_ctx, network_id)
+            agents = self.plugin.get_dhcp_agents_hosting_networks(
+                context, [network_id])
+
+            # schedule the network first, if needed
+            schedule_required = (
+                method == 'subnet_create_end' or
+                method == 'port_create_end' and
+                not self._is_reserved_dhcp_port(payload['port']))
+            if schedule_required:
+                agents = self._schedule_network(admin_ctx, network, agents)
+
+            enabled_agents = self._get_enabled_agents(
+                context, network, agents, method, payload)
+            for agent in enabled_agents:
+                self._cast_message(
+                    context, method, payload, agent.host, agent.topic)
+
+    def _cast_message(self, context, method, payload, host,
+                      topic=topics.DHCP_AGENT):
+        """Cast the payload to the dhcp agent running on the host."""
+        cctxt = self.client.prepare(topic=topic, server=host)
+        cctxt.cast(context, method, payload=payload)
+
+    def _fanout_message(self, context, method, payload):
         """Fanout the payload to all dhcp agents."""
-        self.fanout_cast(
-            context, self.make_msg(method,
-                                   payload=payload),
-            topic=topics.DHCP_AGENT)
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, method, payload=payload)
 
     def network_removed_from_agent(self, context, network_id, host):
-        self._notification_host(context, 'network_delete_end',
-                                {'network_id': network_id}, host)
+        self._cast_message(context, 'network_delete_end',
+                           {'network_id': network_id}, host)
 
     def network_added_to_agent(self, context, network_id, host):
-        self._notification_host(context, 'network_create_end',
-                                {'network': {'id': network_id}}, host)
+        self._cast_message(context, 'network_create_end',
+                           {'network': {'id': network_id}}, host)
 
     def agent_updated(self, context, admin_state_up, host):
-        self._notification_host(context, 'agent_updated',
-                                {'admin_state_up': admin_state_up},
-                                host)
+        self._cast_message(context, 'agent_updated',
+                           {'admin_state_up': admin_state_up}, host)
 
     def notify(self, context, data, method_name):
         # data is {'key' : 'value'} with only one key
         if method_name not in self.VALID_METHOD_NAMES:
             return
-        obj_type = data.keys()[0]
+        obj_type = list(data.keys())[0]
         if obj_type not in self.VALID_RESOURCES:
             return
         obj_value = data[obj_type]
@@ -146,8 +182,8 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         method_name = method_name.replace(".", "_")
         if method_name.endswith("_delete_end"):
             if 'id' in obj_value:
-                self._notification(context, method_name,
-                                   {obj_type + '_id': obj_value['id']},
-                                   network_id)
+                self._notify_agents(context, method_name,
+                                    {obj_type + '_id': obj_value['id']},
+                                    network_id)
         else:
-            self._notification(context, method_name, data, network_id)
+            self._notify_agents(context, method_name, data, network_id)

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,10 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Abhishek Raut, Cisco Systems, Inc.
-# @author: Sergey Sudakovich, Cisco Systems, Inc.
-# @author: Rudrajit Tapadar, Cisco Systems, Inc.
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -40,17 +34,22 @@ RESOURCE_ATTRIBUTE_MAP = {
         'segment_range': {'allow_post': True, 'allow_put': True,
                           'is_visible': True, 'default': ''},
         'multicast_ip_range': {'allow_post': True, 'allow_put': True,
-                               'is_visible': True, 'default': '0.0.0.0'},
+                               'is_visible': True,
+                               'default': attributes.ATTR_NOT_SPECIFIED},
         'multicast_ip_index': {'allow_post': False, 'allow_put': False,
                                'is_visible': False, 'default': '0'},
         'physical_network': {'allow_post': True, 'allow_put': False,
                              'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'is_visible': False, 'default': ''},
-        'add_tenant': {'allow_post': True, 'allow_put': True,
-                       'is_visible': True, 'default': None},
-        'remove_tenant': {'allow_post': True, 'allow_put': True,
-                          'is_visible': True, 'default': None},
+        'add_tenants': {'allow_post': True, 'allow_put': True,
+                        'is_visible': True, 'default': None,
+                        'convert_to': attributes.convert_none_to_empty_list},
+        'remove_tenants': {
+            'allow_post': True, 'allow_put': True,
+            'is_visible': True, 'default': None,
+            'convert_to': attributes.convert_none_to_empty_list,
+        },
     },
     'network_profile_bindings': {
         'profile_id': {'allow_post': False, 'allow_put': False,
@@ -75,10 +74,6 @@ class Network_profile(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Profile includes the type of profile for N1kv")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/n1kv/network-profile/api/v2.0"
 
     @classmethod
     def get_updated(cls):

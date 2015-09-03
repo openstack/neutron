@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2013 Brocade Communications System, Inc.
 # All rights reserved.
 #
@@ -14,10 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# Authors:
-# Varma Bhupatiraju (vbhupati@#brocade.com)
-# Shiv Haris (sharis@brocade.com)
 
 
 """Brocade NOS Driver implements NETCONF over SSHv2 for
@@ -25,9 +19,10 @@ Neutron network life-cycle management.
 """
 
 from ncclient import manager
+from oslo_log import log as logging
+from oslo_utils import excutils
 
-from neutron.openstack.common import excutils
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LE
 from neutron.plugins.brocade.nos import nctemplates as template
 
 
@@ -45,7 +40,7 @@ def nos_unknown_host_cb(host, fingerprint):
     return True
 
 
-class NOSdriver():
+class NOSdriver(object):
     """NOS NETCONF interface driver for Neutron network.
 
     Handles life-cycle management of Neutron network (leverages AMPP on NOS)
@@ -67,10 +62,10 @@ class NOSdriver():
                                        username=username, password=password,
                                        unknown_host_cb=nos_unknown_host_cb)
         except Exception as e:
-            LOG.error(_("Connect failed to switch: %s"), e)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.error(_LE("Connect failed to switch: %s"), e)
 
-        LOG.debug(_("Connect success to host %(host)s:%(ssh_port)d"),
+        LOG.debug("Connect success to host %(host)s:%(ssh_port)d",
                   dict(host=host, ssh_port=SSH_PORT))
         return self.mgr
 
@@ -95,7 +90,7 @@ class NOSdriver():
             self.activate_port_profile(mgr, name)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def delete_network(self, host, username, password, net_id):
@@ -109,7 +104,7 @@ class NOSdriver():
             self.delete_vlan_interface(mgr, net_id)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def associate_mac_to_network(self, host, username, password,
@@ -122,7 +117,7 @@ class NOSdriver():
             self.associate_mac_to_port_profile(mgr, name, mac)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def dissociate_mac_from_network(self, host, username, password,
@@ -135,7 +130,7 @@ class NOSdriver():
             self.dissociate_mac_from_port_profile(mgr, name, mac)
         except Exception as ex:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error: %s"), ex)
                 self.close_session()
 
     def create_vlan_interface(self, mgr, vlan_id):

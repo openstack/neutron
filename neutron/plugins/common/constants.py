@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2012 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,68 +13,76 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# service type constants:
+# Neutron well-known service type constants:
 CORE = "CORE"
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
+LOADBALANCERV2 = "LOADBALANCERV2"
 FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
 L3_ROUTER_NAT = "L3_ROUTER_NAT"
+FLAVORS = "FLAVORS"
+QOS = "QOS"
 
-
-#maps extension alias to service type
+# Maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
     'dummy': DUMMY,
     'lbaas': LOADBALANCER,
+    'lbaasv2': LOADBALANCERV2,
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
-    'router': L3_ROUTER_NAT
-}
-
-# TODO(salvatore-orlando): Move these (or derive them) from conf file
-ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING,
-                    L3_ROUTER_NAT]
-
-COMMON_PREFIXES = {
-    CORE: "",
-    DUMMY: "/dummy_svc",
-    LOADBALANCER: "/lb",
-    FIREWALL: "/fw",
-    VPN: "/vpn",
-    METERING: "/metering",
-    L3_ROUTER_NAT: "",
+    'router': L3_ROUTER_NAT,
+    'flavors': FLAVORS,
+    'qos': QOS,
 }
 
 # Service operation status constants
 ACTIVE = "ACTIVE"
 DOWN = "DOWN"
+CREATED = "CREATED"
 PENDING_CREATE = "PENDING_CREATE"
 PENDING_UPDATE = "PENDING_UPDATE"
 PENDING_DELETE = "PENDING_DELETE"
 INACTIVE = "INACTIVE"
 ERROR = "ERROR"
 
-ACTIVE_PENDING = (
+ACTIVE_PENDING_STATUSES = (
     ACTIVE,
     PENDING_CREATE,
     PENDING_UPDATE
 )
 
-# FWaaS firewall rule action
-FWAAS_ALLOW = "allow"
-FWAAS_DENY = "deny"
-
-# L3 Protocol name constants
-TCP = "tcp"
-UDP = "udp"
-ICMP = "icmp"
-
 # Network Type constants
 TYPE_FLAT = 'flat'
+TYPE_GENEVE = 'geneve'
 TYPE_GRE = 'gre'
 TYPE_LOCAL = 'local'
 TYPE_VXLAN = 'vxlan'
 TYPE_VLAN = 'vlan'
 TYPE_NONE = 'none'
+
+# Values for network_type
+
+# For VLAN Network
+MIN_VLAN_TAG = 1
+MAX_VLAN_TAG = 4094
+
+# For Geneve Tunnel
+MIN_GENEVE_VNI = 1
+MAX_GENEVE_VNI = 2 ** 24 - 1
+
+# For GRE Tunnel
+MIN_GRE_ID = 1
+MAX_GRE_ID = 2 ** 32 - 1
+
+# For VXLAN Tunnel
+MIN_VXLAN_VNI = 1
+MAX_VXLAN_VNI = 2 ** 24 - 1
+VXLAN_UDP_PORT = 4789
+
+# Network Type MTU overhead
+GENEVE_ENCAP_MIN_OVERHEAD = 50
+GRE_ENCAP_OVERHEAD = 42
+VXLAN_ENCAP_OVERHEAD = 50

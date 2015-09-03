@@ -14,10 +14,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# Authors:
-# Varma Bhupatiraju (vbhupati@#brocade.com)
-# Shiv Haris (sharis@brocade.com)
 
 
 """Brocade NOS Driver CLI."""
@@ -25,7 +21,8 @@ from __future__ import print_function
 
 import argparse
 
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
+
 from neutron.plugins.brocade.nos import nosdriver as nos
 
 LOG = logging.getLogger(__name__)

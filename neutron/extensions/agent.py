@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -52,7 +52,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'is_visible': True},
         'description': {'allow_post': False, 'allow_put': True,
                         'is_visible': True,
-                        'validate': {'type:string': None}},
+                        'validate': {
+                            'type:string_or_none': attr.DESCRIPTION_MAX_LEN}},
     },
 }
 
@@ -71,7 +72,7 @@ class MultipleAgentFoundByTypeHost(exceptions.Conflict):
                 "host=%(host)s found")
 
 
-class Agent(object):
+class Agent(extensions.ExtensionDescriptor):
     """Agent management extension."""
 
     @classmethod
@@ -85,10 +86,6 @@ class Agent(object):
     @classmethod
     def get_description(cls):
         return "The agent management extension."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/agent/api/v2.0"
 
     @classmethod
     def get_updated(cls):
@@ -130,9 +127,9 @@ class AgentPluginBase(object):
         This operation is not allow in REST API.
         @raise exceptions.BadRequest:
         """
-        raise exceptions.BadRequest
+        raise exceptions.BadRequest()
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_agent(self, context, id):
         """Delete agent.
 
@@ -144,7 +141,7 @@ class AgentPluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_agent(self, context, agent):
         """Disable or Enable the agent.
 
@@ -154,10 +151,10 @@ class AgentPluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_agents(self, context, filters=None, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_agent(self, context, id, fields=None):
         pass

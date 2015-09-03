@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,6 +14,7 @@
 
 import mock
 
+from neutron.agent.common import base_polling
 from neutron.agent.linux import polling
 from neutron.tests import base
 
@@ -24,67 +23,17 @@ class TestGetPollingManager(base.BaseTestCase):
 
     def test_return_always_poll_by_default(self):
         with polling.get_polling_manager() as pm:
-            self.assertEqual(pm.__class__, polling.AlwaysPoll)
+            self.assertEqual(pm.__class__, base_polling.AlwaysPoll)
 
     def test_manage_polling_minimizer(self):
         mock_target = 'neutron.agent.linux.polling.InterfacePollingMinimizer'
         with mock.patch('%s.start' % mock_target) as mock_start:
             with mock.patch('%s.stop' % mock_target) as mock_stop:
-                with polling.get_polling_manager(minimize_polling=True,
-                                                 root_helper='test') as pm:
-                    self.assertEqual(pm._monitor.root_helper, 'test')
+                with polling.get_polling_manager(minimize_polling=True) as pm:
                     self.assertEqual(pm.__class__,
                                      polling.InterfacePollingMinimizer)
-                mock_stop.assert_has_calls(mock.call())
-            mock_start.assert_has_calls(mock.call())
-
-
-class TestBasePollingManager(base.BaseTestCase):
-
-    def setUp(self):
-        super(TestBasePollingManager, self).setUp()
-        self.pm = polling.BasePollingManager()
-
-    def test_force_polling_sets_interval_attribute(self):
-        self.assertFalse(self.pm._force_polling)
-        self.pm.force_polling()
-        self.assertTrue(self.pm._force_polling)
-
-    def test_polling_completed_sets_interval_attribute(self):
-        self.pm._polling_completed = False
-        self.pm.polling_completed()
-        self.assertTrue(self.pm._polling_completed)
-
-    def mock_is_polling_required(self, return_value):
-        return mock.patch.object(self.pm, '_is_polling_required',
-                                 return_value=return_value)
-
-    def test_is_polling_required_returns_true_when_forced(self):
-        with self.mock_is_polling_required(False):
-            self.pm.force_polling()
-            self.assertTrue(self.pm.is_polling_required)
-            self.assertFalse(self.pm._force_polling)
-
-    def test_is_polling_required_returns_true_when_polling_not_completed(self):
-        with self.mock_is_polling_required(False):
-            self.pm._polling_completed = False
-            self.assertTrue(self.pm.is_polling_required)
-
-    def test_is_polling_required_returns_true_when_updates_are_present(self):
-        with self.mock_is_polling_required(True):
-            self.assertTrue(self.pm.is_polling_required)
-            self.assertFalse(self.pm._polling_completed)
-
-    def test_is_polling_required_returns_false_for_no_updates(self):
-        with self.mock_is_polling_required(False):
-            self.assertFalse(self.pm.is_polling_required)
-
-
-class TestAlwaysPoll(base.BaseTestCase):
-
-    def test_is_polling_required_always_returns_true(self):
-        pm = polling.AlwaysPoll()
-        self.assertTrue(pm.is_polling_required)
+                mock_stop.assert_has_calls([mock.call()])
+            mock_start.assert_has_calls([mock.call()])
 
 
 class TestInterfacePollingMinimizer(base.BaseTestCase):

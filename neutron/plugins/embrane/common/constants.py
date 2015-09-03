@@ -1,5 +1,3 @@
-# vim:  tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author:  Ivar Lazzaro, Embrane, Inc.
 
 from heleosapi import exceptions as h_exc
 
@@ -27,7 +23,7 @@ UTIF_LIMIT = 7
 QUEUE_TIMEOUT = 300
 
 
-class Status:
+class Status(object):
     # Transient
     CREATING = constants.PENDING_CREATE
     UPDATING = constants.PENDING_UPDATE
@@ -39,7 +35,7 @@ class Status:
     DELETED = "DELETED"  # not visible
 
 
-class Events:
+class Events(object):
     CREATE_ROUTER = "create_router"
     UPDATE_ROUTER = "update_router"
     DELETE_ROUTER = "delete_router"

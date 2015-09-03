@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All rights reserved.
 #
@@ -15,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
+from oslo_log import log as logging
 import webob.exc
 
 from neutron.api import extensions
@@ -24,9 +23,10 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
+from neutron.i18n import _LE
 from neutron import manager
-from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron import policy
 from neutron import wsgi
@@ -46,8 +46,8 @@ class RouterSchedulerController(wsgi.Controller):
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if not plugin:
-            LOG.error(_('No plugin for L3 routing registered to handle '
-                        'router scheduling'))
+            LOG.error(_LE('No plugin for L3 routing registered to handle '
+                          'router scheduling'))
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
         return plugin
@@ -65,18 +65,23 @@ class RouterSchedulerController(wsgi.Controller):
         policy.enforce(request.context,
                        "create_%s" % L3_ROUTER,
                        {})
-        return plugin.add_router_to_l3_agent(
-            request.context,
-            kwargs['agent_id'],
-            body['router_id'])
+        agent_id = kwargs['agent_id']
+        router_id = body['router_id']
+        result = plugin.add_router_to_l3_agent(request.context, agent_id,
+                                               router_id)
+        notify(request.context, 'l3_agent.router.add', router_id, agent_id)
+        return result
 
     def delete(self, request, id, **kwargs):
         plugin = self.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % L3_ROUTER,
                        {})
-        return plugin.remove_router_from_l3_agent(
-            request.context, kwargs['agent_id'], id)
+        agent_id = kwargs['agent_id']
+        result = plugin.remove_router_from_l3_agent(request.context, agent_id,
+                                                    id)
+        notify(request.context, 'l3_agent.router.remove', id, agent_id)
+        return result
 
 
 class L3AgentsHostingRouterController(wsgi.Controller):
@@ -84,15 +89,14 @@ class L3AgentsHostingRouterController(wsgi.Controller):
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if not plugin:
-            LOG.error(_('No plugin for L3 routing registered to handle '
-                        'router scheduling'))
+            LOG.error(_LE('No plugin for L3 routing registered to handle '
+                          'router scheduling'))
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
         return plugin
 
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = self.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % L3_AGENTS,
                        {})
@@ -115,10 +119,6 @@ class L3agentscheduler(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return "Schedule routers among l3 agents"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/l3_agent_scheduler/api/v1.0"
 
     @classmethod
     def get_updated(cls):
@@ -163,9 +163,20 @@ class RouterSchedulingFailed(exceptions.Conflict):
                 " the L3 Agent %(agent_id)s.")
 
 
-class RouterNotHostedByL3Agent(exceptions.Conflict):
-    message = _("The router %(router_id)s is not hosted"
-                " by L3 agent %(agent_id)s.")
+class RouterReschedulingFailed(exceptions.Conflict):
+    message = _("Failed rescheduling router %(router_id)s: "
+                "no eligible l3 agent found.")
+
+
+class RouterL3AgentMismatch(exceptions.Conflict):
+    message = _("Cannot host %(router_type)s router %(router_id)s "
+                "on %(agent_mode)s L3 agent %(agent_id)s.")
+
+
+class DVRL3CannotAssignToDvrAgent(exceptions.Conflict):
+    message = _("Not allowed to manually assign a %(router_type)s "
+                "router %(router_id)s from an existing DVR node "
+                "to another L3 agent %(agent_id)s.")
 
 
 class L3AgentSchedulerPluginBase(object):
@@ -174,18 +185,24 @@ class L3AgentSchedulerPluginBase(object):
     All of method must be in an admin context.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_router_to_l3_agent(self, context, id, router_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def remove_router_from_l3_agent(self, context, id, router_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_routers_on_l3_agent(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_l3_agents_hosting_router(self, context, router_id):
         pass
+
+
+def notify(context, action, router_id, agent_id):
+    info = {'id': agent_id, 'router_id': router_id}
+    notifier = n_rpc.get_notifier('router')
+    notifier.info(context, action, {'agent': info})

@@ -76,7 +76,7 @@ the configuration file specified in the brocade.ini files:
         ostype   = NOS
 
         [database]
-        connection = mysql://root:pass@localhost/brocade_neutron?charset=utf8
+        connection = mysql+pymysql://root:pass@localhost/brocade_neutron?charset=utf8
 
         (please see list of more configuration parameters in the brocade.ini file)
 
@@ -100,7 +100,7 @@ http://wiki.openstack.org/brocade-neutron-plugin
 In order to use Brocade Neutron Plugin, add the following lines in localrc, if localrc file doe
  not exist create one:
 
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,quantum,q-svc,q-agt
+ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,n-cond,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,rabbit,neutron,q-svc,q-agt
 Q_PLUGIN=brocade
 
 As part of running devstack/stack.sh, the configuration files is copied as:

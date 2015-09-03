@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012 New Dream Network, LLC (DreamHost)
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,39 +11,23 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Mark McClain, DreamHost
 
-import httplib
-import socket
-
-import eventlet
 import httplib2
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
+import six
 import six.moves.urllib.parse as urlparse
 import webob
 
 from neutron.agent.linux import daemon
+from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
+from neutron.common import exceptions
 from neutron.common import utils
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LE
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
-
-
-class UnixDomainHTTPConnection(httplib.HTTPConnection):
-    """Connection class for HTTP over UNIX domain socket."""
-    def __init__(self, host, port=None, strict=None, timeout=None,
-                 proxy_info=None):
-        httplib.HTTPConnection.__init__(self, host, port, strict)
-        self.timeout = timeout
-
-    def connect(self):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        if self.timeout:
-            self.sock.settimeout(self.timeout)
-        self.sock.connect(cfg.CONF.metadata_proxy_socket)
 
 
 class NetworkMetadataProxyHandler(object):
@@ -60,12 +42,11 @@ class NetworkMetadataProxyHandler(object):
         self.router_id = router_id
 
         if network_id is None and router_id is None:
-            msg = _('network_id and router_id are None. One must be provided.')
-            raise ValueError(msg)
+            raise exceptions.NetworkIdOrRouterIdRequiredError()
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
-        LOG.debug(_("Request: %s"), req)
+        LOG.debug("Request: %s", req)
         try:
             return self._proxy_request(req.remote_addr,
                                        req.method,
@@ -73,10 +54,11 @@ class NetworkMetadataProxyHandler(object):
                                        req.query_string,
                                        req.body)
         except Exception:
-            LOG.exception(_("Unexpected error."))
+            LOG.exception(_LE("Unexpected error."))
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
-            return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
+            explanation = six.text_type(msg)
+            return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _proxy_request(self, remote_address, method, path_info,
                        query_string, body):
@@ -102,7 +84,7 @@ class NetworkMetadataProxyHandler(object):
             method=method,
             headers=headers,
             body=body,
-            connection_type=UnixDomainHTTPConnection)
+            connection_type=agent_utils.UnixDomainHTTPConnection)
 
         if resp.status == 200:
             LOG.debug(resp)
@@ -110,8 +92,10 @@ class NetworkMetadataProxyHandler(object):
             response = webob.Response()
             response.status = resp.status
             response.headers['Content-Type'] = resp['content-type']
-            response.body = content
+            response.body = wsgi.encode_body(content)
             return response
+        elif resp.status == 400:
+            return webob.exc.HTTPBadRequest()
         elif resp.status == 404:
             return webob.exc.HTTPNotFound()
         elif resp.status == 409:
@@ -121,15 +105,18 @@ class NetworkMetadataProxyHandler(object):
                 'Remote metadata server experienced an internal server error.'
             )
             LOG.debug(msg)
-            return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
+            explanation = six.text_type(msg)
+            return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
             raise Exception(_('Unexpected response code: %s') % resp.status)
 
 
 class ProxyDaemon(daemon.Daemon):
-    def __init__(self, pidfile, port, network_id=None, router_id=None):
+    def __init__(self, pidfile, port, network_id=None, router_id=None,
+                 user=None, group=None, watch_log=True):
         uuid = network_id or router_id
-        super(ProxyDaemon, self).__init__(pidfile, uuid=uuid)
+        super(ProxyDaemon, self).__init__(pidfile, uuid=uuid, user=user,
+                                         group=group, watch_log=watch_log)
         self.network_id = network_id
         self.router_id = router_id
         self.port = port
@@ -140,16 +127,26 @@ class ProxyDaemon(daemon.Daemon):
             self.router_id)
         proxy = wsgi.Server('neutron-network-metadata-proxy')
         proxy.start(handler, self.port)
+
+        # Drop privileges after port bind
+        super(ProxyDaemon, self).run()
+
         proxy.wait()
 
 
 def main():
-    eventlet.monkey_patch()
     opts = [
-        cfg.StrOpt('network_id'),
-        cfg.StrOpt('router_id'),
-        cfg.StrOpt('pid_file'),
-        cfg.BoolOpt('daemonize', default=True),
+        cfg.StrOpt('network_id',
+                   help=_('Network that will have instance metadata '
+                          'proxied.')),
+        cfg.StrOpt('router_id',
+                   help=_('Router that will have connected instances\' '
+                          'metadata proxied.')),
+        cfg.StrOpt('pid_file',
+                   help=_('Location of pid file of this process.')),
+        cfg.BoolOpt('daemonize',
+                    default=True,
+                    help=_('Run as daemon.')),
         cfg.IntOpt('metadata_port',
                    default=9697,
                    help=_("TCP Port to listen for metadata server "
@@ -157,18 +154,35 @@ def main():
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
                    help=_('Location of Metadata Proxy UNIX domain '
-                          'socket'))
+                          'socket')),
+        cfg.StrOpt('metadata_proxy_user',
+                   default=None,
+                   help=_("User (uid or name) running metadata proxy after "
+                          "its initialization")),
+        cfg.StrOpt('metadata_proxy_group',
+                   default=None,
+                   help=_("Group (gid or name) running metadata proxy after "
+                          "its initialization")),
+        cfg.BoolOpt('metadata_proxy_watch_log',
+                    default=True,
+                    help=_("Watch file log. Log watch should be disabled when "
+                           "metadata_proxy_user/group has no read/write "
+                           "permissions on metadata proxy log file.")),
     ]
 
     cfg.CONF.register_cli_opts(opts)
     # Don't get the default configuration file
     cfg.CONF(project='neutron', default_config_files=[])
-    config.setup_logging(cfg.CONF)
+    config.setup_logging()
     utils.log_opt_values(LOG)
+
     proxy = ProxyDaemon(cfg.CONF.pid_file,
                         cfg.CONF.metadata_port,
                         network_id=cfg.CONF.network_id,
-                        router_id=cfg.CONF.router_id)
+                        router_id=cfg.CONF.router_id,
+                        user=cfg.CONF.metadata_proxy_user,
+                        group=cfg.CONF.metadata_proxy_group,
+                        watch_log=cfg.CONF.metadata_proxy_watch_log)
 
     if cfg.CONF.daemonize:
         proxy.start()

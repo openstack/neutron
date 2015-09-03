@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012, Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,21 +11,15 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
+from oslo_log import log as logging
+from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 
 from neutron.db import api as db
-from neutron.openstack.common import log as logging
-from neutron.openstack.common import uuidutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2
-# Do NOT remove this import. It is required for all the models to be seen
-# by db.initialize() when called from VirtualPhysicalSwitchModelV2.__init__.
-from neutron.plugins.cisco.db import nexus_models_v2  # noqa
-from neutron.plugins.openvswitch import ovs_models_v2
 
 
 LOG = logging.getLogger(__name__)
@@ -35,7 +27,7 @@ LOG = logging.getLogger(__name__)
 
 def get_all_qoss(tenant_id):
     """Lists all the qos to tenant associations."""
-    LOG.debug(_("get_all_qoss() called"))
+    LOG.debug("get_all_qoss() called")
     session = db.get_session()
     return (session.query(network_models_v2.QoS).
             filter_by(tenant_id=tenant_id).all())
@@ -43,7 +35,7 @@ def get_all_qoss(tenant_id):
 
 def get_qos(tenant_id, qos_id):
     """Lists the qos given a tenant_id and qos_id."""
-    LOG.debug(_("get_qos() called"))
+    LOG.debug("get_qos() called")
     session = db.get_session()
     try:
         return (session.query(network_models_v2.QoS).
@@ -56,7 +48,7 @@ def get_qos(tenant_id, qos_id):
 
 def add_qos(tenant_id, qos_name, qos_desc):
     """Adds a qos to tenant association."""
-    LOG.debug(_("add_qos() called"))
+    LOG.debug("add_qos() called")
     session = db.get_session()
     try:
         qos = (session.query(network_models_v2.QoS).
@@ -187,6 +179,11 @@ def get_all_n1kv_credentials():
             filter_by(type='n1kv'))
 
 
+def delete_all_n1kv_credentials():
+    session = db.get_session()
+    session.query(network_models_v2.Credential).filter_by(type='n1kv').delete()
+
+
 def add_provider_network(network_id, network_type, segmentation_id):
     """Add a network to the provider network table."""
     session = db.get_session()
@@ -234,13 +231,6 @@ def is_provider_vlan(vlan_id):
             filter_by(network_type=const.NETWORK_TYPE_VLAN,
                       segmentation_id=vlan_id).first()):
         return True
-
-
-def get_ovs_vlans():
-    session = db.get_session()
-    bindings = (session.query(ovs_models_v2.VlanAllocation.vlan_id).
-                filter_by(allocated=True))
-    return [binding.vlan_id for binding in bindings]
 
 
 class Credential_db_mixin(object):

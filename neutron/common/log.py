@@ -1,7 +1,5 @@
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Sylvain Afchain <sylvain.afchain@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -16,20 +14,10 @@
 
 """Log helper functions."""
 
-from neutron.openstack.common import log as logging
+from oslo_log import helpers
+from oslo_log import versionutils
 
-LOG = logging.getLogger(__name__)
 
-
-def log(method):
-    """Decorator helping to log method calls."""
-    def wrapper(*args, **kwargs):
-        instance = args[0]
-        data = {"class_name": (instance.__class__.__module__ + '.'
-                               + instance.__class__.__name__),
-                "method_name": method.__name__,
-                "args": args[1:], "kwargs": kwargs}
-        LOG.debug(_('%(class_name)s method %(method_name)s'
-                    ' called with arguments %(args)s %(kwargs)s'), data)
-        return method(*args, **kwargs)
-    return wrapper
+log = versionutils.deprecated(
+    as_of=versionutils.deprecated.LIBERTY,
+    in_favor_of='oslo_log.helpers.log_method_call')(helpers.log_method_call)

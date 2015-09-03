@@ -1,8 +1,0 @@
-PLUMgrid Neutron Plugin for Virtual Network Infrastructure (VNI)
-
-This plugin implements Neutron v2 APIs and helps configure
-L2/L3 virtual networks consisting of PLUMgrid Platform.
-Implements External Networks and Port Binding Extension
-
-For more details on use please refer to:
-http://wiki.openstack.org/PLUMgrid-Neutron

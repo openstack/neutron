@@ -13,65 +13,65 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.plugins.common import constants
 
 
 # L3 Exceptions
-class RouterNotFound(qexception.NotFound):
+class RouterNotFound(nexception.NotFound):
     message = _("Router %(router_id)s could not be found")
 
 
-class RouterInUse(qexception.InUse):
-    message = _("Router %(router_id)s still has active ports")
+class RouterInUse(nexception.InUse):
+    message = _("Router %(router_id)s %(reason)s")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = "still has ports"
+        super(RouterInUse, self).__init__(**kwargs)
 
 
-class RouterInterfaceNotFound(qexception.NotFound):
+class RouterInterfaceNotFound(nexception.NotFound):
     message = _("Router %(router_id)s does not have "
                 "an interface with id %(port_id)s")
 
 
-class RouterInterfaceNotFoundForSubnet(qexception.NotFound):
+class RouterInterfaceNotFoundForSubnet(nexception.NotFound):
     message = _("Router %(router_id)s has no interface "
                 "on subnet %(subnet_id)s")
 
 
-class RouterInterfaceInUseByFloatingIP(qexception.InUse):
+class RouterInterfaceInUseByFloatingIP(nexception.InUse):
     message = _("Router interface for subnet %(subnet_id)s on router "
                 "%(router_id)s cannot be deleted, as it is required "
                 "by one or more floating IPs.")
 
 
-class FloatingIPNotFound(qexception.NotFound):
+class FloatingIPNotFound(nexception.NotFound):
     message = _("Floating IP %(floatingip_id)s could not be found")
 
 
-class ExternalGatewayForFloatingIPNotFound(qexception.NotFound):
+class ExternalGatewayForFloatingIPNotFound(nexception.NotFound):
     message = _("External network %(external_network_id)s is not reachable "
                 "from subnet %(subnet_id)s.  Therefore, cannot associate "
                 "Port %(port_id)s with a Floating IP.")
 
 
-class FloatingIPPortAlreadyAssociated(qexception.InUse):
+class FloatingIPPortAlreadyAssociated(nexception.InUse):
     message = _("Cannot associate floating IP %(floating_ip_address)s "
                 "(%(fip_id)s) with port %(port_id)s "
                 "using fixed IP %(fixed_ip)s, as that fixed IP already "
                 "has a floating IP on external network %(net_id)s.")
 
 
-class L3PortInUse(qexception.InUse):
-    message = _("Port %(port_id)s has owner %(device_owner)s and therefore"
-                " cannot be deleted directly via the port API.")
-
-
-class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
+class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
     message = _("Gateway cannot be updated for router %(router_id)s, since a "
                 "gateway to external network %(net_id)s is required by one or "
                 "more floating IPs.")
@@ -86,7 +86,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': attr.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
@@ -96,20 +96,38 @@ RESOURCE_ATTRIBUTE_MAP = {
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
         EXTERNAL_GW_INFO: {'allow_post': True, 'allow_put': True,
                            'is_visible': True, 'default': None,
-                           'enforce_policy': True}
+                           'enforce_policy': True,
+                           'validate': {
+                               'type:dict_or_nodata': {
+                                   'network_id': {'type:uuid': None,
+                                                  'required': True},
+                                   'external_fixed_ips': {
+                                       'convert_list_to':
+                                       attr.convert_kvp_list_to_dict,
+                                       'type:fixed_ips': None,
+                                       'default': None,
+                                       'required': False,
+                                   }
+                               }
+                           }}
     },
     'floatingips': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
                'primary_key': True},
-        'floating_ip_address': {'allow_post': False, 'allow_put': False,
+        'floating_ip_address': {'allow_post': True, 'allow_put': False,
                                 'validate': {'type:ip_address_or_none': None},
-                                'is_visible': True},
+                                'is_visible': True, 'default': None,
+                                'enforce_policy': True},
+        'subnet_id': {'allow_post': True, 'allow_put': False,
+                      'validate': {'type:uuid_or_none': None},
+                      'is_visible': False,  # Use False for input only attr
+                      'default': None},
         'floating_network_id': {'allow_post': True, 'allow_put': False,
                                 'validate': {'type:uuid': None},
                                 'is_visible': True},
@@ -118,13 +136,14 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True, 'default': None},
         'port_id': {'allow_post': True, 'allow_put': True,
                     'validate': {'type:uuid_or_none': None},
-                    'is_visible': True, 'default': None},
+                    'is_visible': True, 'default': None,
+                    'required_by_policy': True},
         'fixed_ip_address': {'allow_post': True, 'allow_put': True,
                              'validate': {'type:ip_address_or_none': None},
                              'is_visible': True, 'default': None},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
@@ -161,10 +180,6 @@ class L3(extensions.ExtensionDescriptor):
                 " networks via a NAT gateway.")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/router/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2012-07-20T10:00:00-00:00"
 
@@ -173,6 +188,7 @@ class L3(extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
             {}, RESOURCE_ATTRIBUTE_MAP)
+        plural_mappings['external_fixed_ips'] = 'external_fixed_ip'
         attr.PLURALS.update(plural_mappings)
         action_map = {'router': {'add_router_interface': 'PUT',
                                  'remove_router_interface': 'PUT'}}
@@ -195,52 +211,52 @@ class L3(extensions.ExtensionDescriptor):
 
 class RouterPluginBase(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_router(self, context, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_router(self, context, id, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_router(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_router(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_router_interface(self, context, router_id, interface_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def remove_router_interface(self, context, router_id, interface_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_floatingip(self, context, floatingip):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_floatingip(self, context, id, floatingip):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_floatingip(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_floatingip(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_floatingips(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,12 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
-from oslo.config import cfg
+from oslo_config import cfg
 
 
-reldir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-absdir = os.path.abspath(reldir)
-cfg.CONF.state_path = absdir
 cfg.CONF.use_stderr = False

@@ -1,0 +1,3 @@
+The files in this directory are intended for use by the
+Neutron infra jobs that run the various functional test
+suites in the gate.

@@ -24,61 +24,79 @@ PORT_STATUS_ACTIVE = 'ACTIVE'
 PORT_STATUS_BUILD = 'BUILD'
 PORT_STATUS_DOWN = 'DOWN'
 PORT_STATUS_ERROR = 'ERROR'
+PORT_STATUS_NOTAPPLICABLE = 'N/A'
 
 FLOATINGIP_STATUS_ACTIVE = 'ACTIVE'
 FLOATINGIP_STATUS_DOWN = 'DOWN'
 FLOATINGIP_STATUS_ERROR = 'ERROR'
 
+DEVICE_OWNER_ROUTER_HA_INTF = "network:router_ha_interface"
 DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
 DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
 DEVICE_OWNER_FLOATINGIP = "network:floatingip"
 DEVICE_OWNER_DHCP = "network:dhcp"
+DEVICE_OWNER_DVR_INTERFACE = "network:router_interface_distributed"
+DEVICE_OWNER_AGENT_GW = "network:floatingip_agent_gateway"
+DEVICE_OWNER_ROUTER_SNAT = "network:router_centralized_snat"
+DEVICE_OWNER_LOADBALANCER = "neutron:LOADBALANCER"
+DEVICE_OWNER_LOADBALANCERV2 = "neutron:LOADBALANCERV2"
+
+# Collection used to identify devices owned by router interfaces.
+# DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.
+ROUTER_INTERFACE_OWNERS = (DEVICE_OWNER_ROUTER_INTF,
+                           DEVICE_OWNER_DVR_INTERFACE)
+ROUTER_INTERFACE_OWNERS_SNAT = (DEVICE_OWNER_ROUTER_INTF,
+                                DEVICE_OWNER_DVR_INTERFACE,
+                                DEVICE_OWNER_ROUTER_SNAT)
+L3_AGENT_MODE_DVR = 'dvr'
+L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
+L3_AGENT_MODE_LEGACY = 'legacy'
+L3_AGENT_MODE = 'agent_mode'
+
+DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
 
 FLOATINGIP_KEY = '_floatingips'
 INTERFACE_KEY = '_interfaces'
+HA_INTERFACE_KEY = '_ha_interface'
+HA_ROUTER_STATE_KEY = '_ha_state'
 METERING_LABEL_KEY = '_metering_labels'
+FLOATINGIP_AGENT_INTF_KEY = '_floatingip_agent_interfaces'
+SNAT_ROUTER_INTF_KEY = '_snat_router_interfaces'
+
+HA_NETWORK_NAME = 'HA network tenant %s'
+HA_SUBNET_NAME = 'HA subnet tenant %s'
+HA_PORT_NAME = 'HA port tenant %s'
+MINIMUM_AGENTS_FOR_HA = 2
+HA_ROUTER_STATE_ACTIVE = 'active'
+HA_ROUTER_STATE_STANDBY = 'standby'
 
 IPv4 = 'IPv4'
 IPv6 = 'IPv6'
+IP_VERSION_4 = 4
+IP_VERSION_6 = 6
+IPv4_BITS = 32
+IPv6_BITS = 128
+
+INVALID_MAC_ADDRESSES = ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF']
+
+IPv4_ANY = '0.0.0.0/0'
+IPv6_ANY = '::/0'
+IP_ANY = {IP_VERSION_4: IPv4_ANY, IP_VERSION_6: IPv6_ANY}
 
 DHCP_RESPONSE_PORT = 68
 
-MIN_VLAN_TAG = 1
-MAX_VLAN_TAG = 4094
-MAX_VXLAN_VNI = 16777215
-FLOODING_ENTRY = ['00:00:00:00:00:00', '0.0.0.0']
-
-EXT_NS_COMP = '_backward_comp_e_ns'
-EXT_NS = '_extension_ns'
-XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
-XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"
-XSI_ATTR = "xsi:nil"
-XSI_NIL_ATTR = "xmlns:xsi"
-ATOM_NAMESPACE = "http://www.w3.org/2005/Atom"
-ATOM_XMLNS = "xmlns:atom"
-ATOM_LINK_NOTATION = "{%s}link" % ATOM_NAMESPACE
-TYPE_XMLNS = "xmlns:quantum"
-TYPE_ATTR = "quantum:type"
-VIRTUAL_ROOT_KEY = "_v_root"
-
-TYPE_BOOL = "bool"
-TYPE_INT = "int"
-TYPE_LONG = "long"
-TYPE_FLOAT = "float"
-TYPE_LIST = "list"
-TYPE_DICT = "dict"
+FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
 
 AGENT_TYPE_DHCP = 'DHCP agent'
 AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
-AGENT_TYPE_HYPERV = 'HyperV agent'
 AGENT_TYPE_NEC = 'NEC plugin agent'
 AGENT_TYPE_OFA = 'OFA driver agent'
 AGENT_TYPE_L3 = 'L3 agent'
 AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
-AGENT_TYPE_MLNX = 'Mellanox plugin agent'
 AGENT_TYPE_METERING = 'Metering agent'
 AGENT_TYPE_METADATA = 'Metadata agent'
+AGENT_TYPE_NIC_SWITCH = 'NIC Switch agent'
 L2_AGENT_TOPIC = 'N/A'
 
 PAGINATION_INFINITE = 'infinite'
@@ -90,6 +108,9 @@ PORT_BINDING_EXT_ALIAS = 'binding'
 L3_AGENT_SCHEDULER_EXT_ALIAS = 'l3_agent_scheduler'
 DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'
 LBAAS_AGENT_SCHEDULER_EXT_ALIAS = 'lbaas_agent_scheduler'
+L3_DISTRIBUTED_EXT_ALIAS = 'dvr'
+L3_HA_MODE_EXT_ALIAS = 'l3-ha'
+SUBNET_ALLOCATION_EXT_ALIAS = 'subnet_allocation'
 
 # Protocol names and numbers for Security Groups/Firewalls
 PROTO_NAME_TCP = 'tcp'
@@ -105,7 +126,73 @@ PROTO_NUM_UDP = 17
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
 # Multicast Listener Done (132),
-# Router Advertisement (134),
 # Neighbor Solicitation (135),
 # Neighbor Advertisement (136)
-ICMPV6_ALLOWED_TYPES = [130, 131, 132, 134, 135, 136]
+ICMPV6_ALLOWED_TYPES = [130, 131, 132, 135, 136]
+ICMPV6_TYPE_RA = 134
+
+DHCPV6_STATEFUL = 'dhcpv6-stateful'
+DHCPV6_STATELESS = 'dhcpv6-stateless'
+IPV6_SLAAC = 'slaac'
+IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
+
+IPV6_LLA_PREFIX = 'fe80::/64'
+
+# Human-readable ID to which default_ipv6_subnet_pool should be set to
+# indicate that IPv6 Prefix Delegation should be used to allocate subnet CIDRs
+IPV6_PD_POOL_ID = 'prefix_delegation'
+
+# Special provisional prefix for IPv6 Prefix Delegation
+PROVISIONAL_IPV6_PD_PREFIX = '::/64'
+
+# Timeout in seconds for getting an IPv6 LLA
+LLA_TASK_TIMEOUT = 40
+
+# Linux interface max length
+DEVICE_NAME_MAX_LEN = 15
+
+# Device names start with "tap"
+TAP_DEVICE_PREFIX = 'tap'
+# The vswitch side of a veth pair for a nova iptables filter setup
+VETH_DEVICE_PREFIX = 'qvo'
+# prefix for SNAT interface in DVR
+SNAT_INT_DEV_PREFIX = 'sg-'
+
+# Possible prefixes to partial port IDs in interface names used by the OVS,
+# Linux Bridge, and IVS VIF drivers in Nova and the neutron agents. See the
+# 'get_ovs_interfaceid' method in Nova (nova/virt/libvirt/vif.py) for details.
+INTERFACE_PREFIXES = (TAP_DEVICE_PREFIX, VETH_DEVICE_PREFIX,
+                      SNAT_INT_DEV_PREFIX)
+
+ATTRIBUTES_TO_UPDATE = 'attributes_to_update'
+
+# Maximum value integer can take in MySQL and PostgreSQL
+# In SQLite integer can be stored in 1, 2, 3, 4, 6, or 8 bytes,
+# but here it will be limited by this value for consistency.
+DB_INTEGER_MAX_VALUE = 2 ** 31 - 1
+
+# TODO(amuller): Re-define the RPC namespaces once Oslo messaging supports
+# Targets with multiple namespaces. Neutron will then implement callbacks
+# for its RPC clients in order to support rolling upgrades.
+
+# RPC Interface for agents to call DHCP API implemented on the plugin side
+RPC_NAMESPACE_DHCP_PLUGIN = None
+# RPC interface for the metadata service to get info from the plugin side
+RPC_NAMESPACE_METADATA = None
+# RPC interface for agent to plugin security group API
+RPC_NAMESPACE_SECGROUP = None
+# RPC interface for agent to plugin DVR api
+RPC_NAMESPACE_DVR = None
+# RPC interface for reporting state back to the plugin
+RPC_NAMESPACE_STATE = None
+# RPC interface for agent to plugin resources API
+RPC_NAMESPACE_RESOURCES = None
+
+# Default network MTU value when not configured
+DEFAULT_NETWORK_MTU = 0
+IPV6_MIN_MTU = 1280
+
+ROUTER_MARK_MASK = "0xffff"
+
+# Time format
+ISO8601_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'

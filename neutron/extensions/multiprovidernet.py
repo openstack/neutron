@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All rights reserved.
 #
@@ -19,30 +17,24 @@ import webob.exc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 from neutron.extensions import providernet as pnet
 
 SEGMENTS = 'segments'
 
 
-class SegmentsSetInConjunctionWithProviders(qexception.InvalidInput):
+class SegmentsSetInConjunctionWithProviders(nexception.InvalidInput):
     message = _("Segments and provider values cannot both be set.")
 
 
-class SegmentsContainDuplicateEntry(qexception.InvalidInput):
+class SegmentsContainDuplicateEntry(nexception.InvalidInput):
     message = _("Duplicate segment entry in request.")
 
 
 def _convert_and_validate_segments(segments, valid_values=None):
-    unique = set()
     for segment in segments:
-        unique.add(tuple(segment.iteritems()))
-        network_type = segment.get(pnet.NETWORK_TYPE,
-                                   attr.ATTR_NOT_SPECIFIED)
-        segment[pnet.NETWORK_TYPE] = network_type
-        physical_network = segment.get(pnet.PHYSICAL_NETWORK,
-                                       attr.ATTR_NOT_SPECIFIED)
-        segment[pnet.PHYSICAL_NETWORK] = physical_network
+        segment.setdefault(pnet.NETWORK_TYPE, attr.ATTR_NOT_SPECIFIED)
+        segment.setdefault(pnet.PHYSICAL_NETWORK, attr.ATTR_NOT_SPECIFIED)
         segmentation_id = segment.get(pnet.SEGMENTATION_ID)
         if segmentation_id:
             segment[pnet.SEGMENTATION_ID] = attr.convert_to_int(
@@ -55,7 +47,21 @@ def _convert_and_validate_segments(segments, valid_values=None):
                              set([pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                                   pnet.SEGMENTATION_ID])))
             raise webob.exc.HTTPBadRequest(msg)
-    if len(unique) != len(segments):
+
+
+def check_duplicate_segments(segments, is_partial_func=None):
+    """Helper function checking duplicate segments.
+
+    If is_partial_funcs is specified and not None, then
+    SegmentsContainDuplicateEntry is raised if two segments are identical and
+    non partially defined (is_partial_func(segment) == False).
+    Otherwise SegmentsContainDuplicateEntry is raised if two segment are
+    identical.
+    """
+    if is_partial_func is not None:
+        segments = [s for s in segments if not is_partial_func(s)]
+    fully_specifieds = [tuple(sorted(s.items())) for s in segments]
+    if len(set(fully_specifieds)) != len(fully_specifieds):
         raise SegmentsContainDuplicateEntry()
 
 
@@ -82,10 +88,10 @@ class Multiprovidernet(extensions.ExtensionDescriptor):
     metadata about the multiple provider network extension available to
     clients. No new resources are defined by this extension. Instead,
     the existing network resource's request and response messages are
-    extended with attributes in the provider namespace.
+    extended with 'segments' attribute.
 
     With admin rights, network dictionaries returned will also include
-    provider attributes.
+    'segments' attribute.
     """
 
     @classmethod
@@ -100,10 +106,6 @@ class Multiprovidernet(extensions.ExtensionDescriptor):
     def get_description(cls):
         return ("Expose mapping of virtual networks to multiple physical "
                 "networks")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/multi-provider/api/v1.0"
 
     @classmethod
     def get_updated(cls):

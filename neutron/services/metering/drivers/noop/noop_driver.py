@@ -1,7 +1,5 @@
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Sylvain Afchain <sylvain.afchain@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -14,32 +12,41 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron.common import log
+from oslo_log import helpers as log_helpers
+
 from neutron.services.metering.drivers import abstract_driver
 
 
 class NoopMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
-    @log.log
+    @log_helpers.log_method_call
     def update_routers(self, context, routers):
         pass
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_router(self, context, router_id):
         pass
 
-    @log.log
+    @log_helpers.log_method_call
     def update_metering_label_rules(self, context, routers):
         pass
 
-    @log.log
+    @log_helpers.log_method_call
+    def add_metering_label_rule(self, context, routers):
+        pass
+
+    @log_helpers.log_method_call
+    def remove_metering_label_rule(self, context, routers):
+        pass
+
+    @log_helpers.log_method_call
     def add_metering_label(self, context, routers):
         pass
 
-    @log.log
+    @log_helpers.log_method_call
     def remove_metering_label(self, context, routers):
         pass
 
-    @log.log
+    @log_helpers.log_method_call
     def get_traffic_counters(self, context, routers):
         pass

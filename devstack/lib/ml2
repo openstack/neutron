@@ -1,0 +1,13 @@
+function enable_ml2_extension_driver {
+    local extension_driver=$1
+    if [[ -z "$Q_ML2_PLUGIN_EXT_DRIVERS" ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS=$extension_driver
+    elif [[ ! ,${Q_ML2_PLUGIN_EXT_DRIVERS}, =~ ,${extension_driver}, ]]; then
+        Q_ML2_PLUGIN_EXT_DRIVERS+=",$extension_driver"
+    fi
+}
+
+
+function configure_qos_ml2 {
+    enable_ml2_extension_driver "qos"
+}

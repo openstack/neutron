@@ -12,8 +12,6 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# @Author Don Kehn, dekehn@gmail.com
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -44,6 +42,12 @@ attr.validators['type:list_of_dict_or_none'] = _validate_list_of_dict_or_none
 # Attribute Map
 EXTRADHCPOPTS = 'extra_dhcp_opts'
 
+# Common definitions for maximum string field length
+DHCP_OPT_NAME_MAX_LEN = 64
+DHCP_OPT_VALUE_MAX_LEN = 255
+
+CLIENT_ID = "client-id"
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         EXTRADHCPOPTS:
@@ -54,10 +58,14 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'validate': {
              'type:list_of_dict_or_none': {
                  'id': {'type:uuid': None, 'required': False},
-                 'opt_name': {'type:not_empty_string': None,
+                 'opt_name': {'type:not_empty_string': DHCP_OPT_NAME_MAX_LEN,
                               'required': True},
-                 'opt_value': {'type:not_empty_string_or_none': None,
-                               'required': True}}}}}}
+                 'opt_value': {'type:not_empty_string_or_none':
+                               DHCP_OPT_VALUE_MAX_LEN,
+                               'required': True},
+                 'ip_version': {'convert_to': attr.convert_to_int,
+                                'type:values': [4, 6],
+                                'required': False}}}}}}
 
 
 class Extra_dhcp_opt(extensions.ExtensionDescriptor):
@@ -75,10 +83,6 @@ class Extra_dhcp_opt(extensions.ExtensionDescriptor):
                 "For example PXE boot options to DHCP clients can "
                 "be specified (e.g. tftp-server, server-ip-address, "
                 "bootfile-name)")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/extra_dhcp_opt/api/v1.0"
 
     @classmethod
     def get_updated(cls):

@@ -13,23 +13,32 @@
 #    under the License.
 #
 
+from oslo_config import cfg
+from oslo_log import log as logging
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.extensions import l3
-from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
+OPTS = [
+    cfg.BoolOpt('enable_snat_by_default', default=True,
+                help=_('Define the default value of enable_snat if not '
+                       'provided in external_gateway_info.'))
+]
+cfg.CONF.register_opts(OPTS)
 EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Modify the Router Data Model adding the enable_snat attribute
 setattr(l3_db.Router, 'enable_snat',
-        sa.Column(sa.Boolean, default=True, nullable=False))
+        sa.Column(sa.Boolean, default=True, server_default=sql.true(),
+                  nullable=False))
 
 
-class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
+class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to add configurable gateway modes."""
 
     # Register dict extend functions for ports and networks
@@ -41,33 +50,45 @@ class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
             nw_id = router_db.gw_port['network_id']
             router_res[EXTERNAL_GW_INFO] = {
                 'network_id': nw_id,
-                'enable_snat': router_db.enable_snat}
+                'enable_snat': router_db.enable_snat,
+                'external_fixed_ips': [
+                    {'subnet_id': ip["subnet_id"],
+                     'ip_address': ip["ip_address"]}
+                    for ip in router_db.gw_port['fixed_ips']
+                ]
+            }
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         # Load the router only if necessary
         if not router:
             router = self._get_router(context, router_id)
-        # if enable_snat is not specified use the value
-        # stored in the database (default:True)
-        enable_snat = not info or info.get('enable_snat', router.enable_snat)
         with context.session.begin(subtransactions=True):
-            router.enable_snat = enable_snat
+            router.enable_snat = self._get_enable_snat(info)
 
         # Calls superclass, pass router db object for avoiding re-loading
-        super(L3_NAT_db_mixin, self)._update_router_gw_info(
+        super(L3_NAT_dbonly_mixin, self)._update_router_gw_info(
             context, router_id, info, router=router)
         # Returning the router might come back useful if this
-        # method is overriden in child classes
+        # method is overridden in child classes
         return router
 
-    def _build_routers_list(self, routers, gw_ports):
-        gw_port_id_gw_port_dict = {}
-        for gw_port in gw_ports:
-            gw_port_id_gw_port_dict[gw_port['id']] = gw_port
+    @staticmethod
+    def _get_enable_snat(info):
+        if info and 'enable_snat' in info:
+            return info['enable_snat']
+        # if enable_snat is not specified then use the default value
+        return cfg.CONF.enable_snat_by_default
+
+    def _build_routers_list(self, context, routers, gw_ports):
         for rtr in routers:
             gw_port_id = rtr['gw_port_id']
-            if gw_port_id:
-                rtr['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
+            # Collect gw ports only if available
+            if gw_port_id and gw_ports.get(gw_port_id):
+                rtr['gw_port'] = gw_ports[gw_port_id]
                 # Add enable_snat key
                 rtr['enable_snat'] = rtr[EXTERNAL_GW_INFO]['enable_snat']
         return routers
+
+
+class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, l3_db.L3_NAT_db_mixin):
+    pass

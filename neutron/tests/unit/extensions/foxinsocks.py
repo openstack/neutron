@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
+
+from oslo_serialization import jsonutils
 
 from neutron.api import extensions
-from neutron.openstack.common import jsonutils
 from neutron import wsgi
 
 
@@ -30,7 +29,7 @@ class FoxInSocksController(wsgi.Controller):
 
 class FoxInSocksPluginInterface(extensions.PluginInterface):
 
-    @abstractmethod
+    @abc.abstractmethod
     def method_to_support_foxnsox_extension(self):
         pass
 
@@ -51,9 +50,6 @@ class Foxinsocks(object):
 
     def get_description(self):
         return "The Fox In Socks Extension"
-
-    def get_namespace(self):
-        return "http://www.fox.in.socks/api/ext/pie/v1.0"
 
     def get_updated(self):
         return "2011-01-22T13:25:27-06:00"
@@ -81,7 +77,7 @@ class Foxinsocks(object):
             # You can use content type header to test for XML.
             data = jsonutils.loads(res.body)
             data['FOXNSOX:googoose'] = req.GET.get('chewing')
-            res.body = jsonutils.dumps(data)
+            res.body = jsonutils.dumps(data).encode('utf-8')
             return res
 
         req_ext1 = extensions.RequestExtension('GET', '/dummy_resources/:(id)',
@@ -93,7 +89,7 @@ class Foxinsocks(object):
             # You can use content type header to test for XML.
             data = jsonutils.loads(res.body)
             data['FOXNSOX:big_bands'] = 'Pig Bands!'
-            res.body = jsonutils.dumps(data)
+            res.body = jsonutils.dumps(data).encode('utf-8')
             return res
 
         req_ext2 = extensions.RequestExtension('GET', '/dummy_resources/:(id)',

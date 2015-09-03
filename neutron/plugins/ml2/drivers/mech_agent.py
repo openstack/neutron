@@ -13,18 +13,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import ABCMeta, abstractmethod
-
+import abc
 import six
 
+from oslo_log import log
+
 from neutron.extensions import portbindings
-from neutron.openstack.common import log
+from neutron.i18n import _LW
+from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class AgentMechanismDriverBase(api.MechanismDriver):
     """Base class for drivers that attach to networks using an L2 agent.
 
@@ -35,8 +37,7 @@ class AgentMechanismDriverBase(api.MechanismDriver):
     at least one segment of the port's network.
 
     MechanismDrivers using this base class must pass the agent type to
-    __init__(), and must implement try_to_bind_segment_for_agent() and
-    check_segment_for_agent().
+    __init__(), and must implement try_to_bind_segment_for_agent().
     """
 
     def __init__(self, agent_type,
@@ -53,49 +54,29 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         pass
 
     def bind_port(self, context):
-        LOG.debug(_("Attempting to bind port %(port)s on "
-                    "network %(network)s"),
+        LOG.debug("Attempting to bind port %(port)s on "
+                  "network %(network)s",
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_NORMAL)
         if vnic_type not in self.supported_vnic_types:
-            LOG.debug(_("Refusing to bind due to unsupported vnic_type: %s"),
+            LOG.debug("Refusing to bind due to unsupported vnic_type: %s",
                       vnic_type)
             return
         for agent in context.host_agents(self.agent_type):
-            LOG.debug(_("Checking agent: %s"), agent)
+            LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
-                for segment in context.network.network_segments:
+                for segment in context.segments_to_bind:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
-                        LOG.debug(_("Bound using segment: %s"), segment)
+                        LOG.debug("Bound using segment: %s", segment)
                         return
             else:
-                LOG.warning(_("Attempting to bind with dead agent: %s"),
+                LOG.warning(_LW("Attempting to bind with dead agent: %s"),
                             agent)
 
-    def validate_port_binding(self, context):
-        LOG.debug(_("Validating binding for port %(port)s on "
-                    "network %(network)s"),
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-        for agent in context.host_agents(self.agent_type):
-            LOG.debug(_("Checking agent: %s"), agent)
-            if agent['alive'] and self.check_segment_for_agent(
-                context.bound_segment, agent):
-                LOG.debug(_("Binding valid"))
-                return True
-        LOG.warning(_("Binding invalid for port: %s"), context.current)
-        return False
-
-    def unbind_port(self, context):
-        LOG.debug(_("Unbinding port %(port)s on "
-                    "network %(network)s"),
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-
-    @abstractmethod
+    @abc.abstractmethod
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         """Try to bind with segment for agent.
 
@@ -104,33 +85,19 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         :param agent: agents_db entry describing agent to bind
         :returns: True iff segment has been bound for agent
 
-        Called inside transaction during bind_port() so that derived
-        MechanismDrivers can use agent_db data along with built-in
-        knowledge of the corresponding agent's capabilities to attempt
-        to bind to the specified network segment for the agent.
+        Called outside any transaction during bind_port() so that
+        derived MechanismDrivers can use agent_db data along with
+        built-in knowledge of the corresponding agent's capabilities
+        to attempt to bind to the specified network segment for the
+        agent.
 
         If the segment can be bound for the agent, this function must
         call context.set_binding() with appropriate values and then
         return True. Otherwise, it must return False.
         """
 
-    @abstractmethod
-    def check_segment_for_agent(self, segment, agent):
-        """Check if segment can be bound for agent.
 
-        :param segment: segment dictionary describing segment to bind
-        :param agent: agents_db entry describing agent to bind
-        :returns: True iff segment can be bound for agent
-
-        Called inside transaction during validate_port_binding() so
-        that derived MechanismDrivers can use agent_db data along with
-        built-in knowledge of the corresponding agent's capabilities
-        to determine whether or not the specified network segment can
-        be bound for the agent.
-        """
-
-
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
     """Base class for simple drivers using an L2 agent.
 
@@ -144,9 +111,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
 
     MechanismDrivers using this base class must pass the agent type
     and the values for binding:vif_type and binding:vif_details to
-    __init__(). They must implement check_segment_for_agent() as
-    defined in AgentMechanismDriverBase, which will be called during
-    both binding establishment and validation.
+    __init__(), and must implement check_segment_for_agent().
     """
 
     def __init__(self, agent_type, vif_type, vif_details,
@@ -168,3 +133,79 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
             context.set_binding(segment[api.ID],
                                 self.vif_type,
                                 self.vif_details)
+            return True
+        else:
+            return False
+
+    @abc.abstractmethod
+    def get_allowed_network_types(self, agent=None):
+        """Return the agent's or driver's allowed network types.
+
+        For example: return ('flat', ...). You can also refer to the
+        configuration the given agent exposes.
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_mappings(self, agent):
+        """Return the agent's bridge or interface mappings.
+
+        For example: agent['configurations'].get('bridge_mappings', {}).
+        """
+        pass
+
+    def physnet_in_mappings(self, physnet, mappings):
+        """Is the physical network part of the given mappings?"""
+        return physnet in mappings
+
+    def check_segment_for_agent(self, segment, agent):
+        """Check if segment can be bound for agent.
+
+        :param segment: segment dictionary describing segment to bind
+        :param agent: agents_db entry describing agent to bind
+        :returns: True iff segment can be bound for agent
+
+        Called outside any transaction during bind_port so that derived
+        MechanismDrivers can use agent_db data along with built-in
+        knowledge of the corresponding agent's capabilities to
+        determine whether or not the specified network segment can be
+        bound for the agent.
+        """
+
+        mappings = self.get_mappings(agent)
+        allowed_network_types = self.get_allowed_network_types(agent)
+
+        LOG.debug("Checking segment: %(segment)s "
+                  "for mappings: %(mappings)s "
+                  "with network types: %(network_types)s",
+                  {'segment': segment, 'mappings': mappings,
+                   'network_types': allowed_network_types})
+
+        network_type = segment[api.NETWORK_TYPE]
+        if network_type not in allowed_network_types:
+            LOG.debug(
+                'Network %(network_id)s is of type %(network_type)s '
+                'but agent %(agent)s or mechanism driver only '
+                'support %(allowed_network_types)s.',
+                {'network_id': segment['id'],
+                 'network_type': network_type,
+                 'agent': agent['host'],
+                 'allowed_network_types': allowed_network_types})
+            return False
+
+        if network_type in [p_constants.TYPE_FLAT, p_constants.TYPE_VLAN]:
+            physnet = segment[api.PHYSICAL_NETWORK]
+            if not self.physnet_in_mappings(physnet, mappings):
+                LOG.debug(
+                    'Network %(network_id)s is connected to physical '
+                    'network %(physnet)s, but agent %(agent)s reported '
+                    'physical networks %(mappings)s. '
+                    'The physical network must be configured on the '
+                    'agent if binding is to succeed.',
+                    {'network_id': segment['id'],
+                     'physnet': physnet,
+                     'agent': agent['host'],
+                     'mappings': mappings})
+                return False
+
+        return True

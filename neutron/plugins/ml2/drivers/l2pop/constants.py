@@ -12,12 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sylvain Afchain, eNovance SAS
-# @author: Francois Eleouet, Orange
-# @author: Mathieu Rohon, Orange
 
 from neutron.common import constants
 
 SUPPORTED_AGENT_TYPES = [constants.AGENT_TYPE_OVS,
-                         constants.AGENT_TYPE_LINUXBRIDGE]
+                         constants.AGENT_TYPE_LINUXBRIDGE,
+                         constants.AGENT_TYPE_OFA]

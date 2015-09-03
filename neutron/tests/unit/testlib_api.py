@@ -13,9 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fixtures
+import six
 import testtools
 
-from neutron.api.v2 import attributes
+from neutron.db import api as db_api
+# Import all data models
+from neutron.db.migration.models import head  # noqa
+from neutron.db import model_base
 from neutron.tests import base
 from neutron import wsgi
 
@@ -43,23 +48,59 @@ def create_request(path, body, content_type, method='GET',
     req.method = method
     req.headers = {}
     req.headers['Accept'] = content_type
-    req.body = body
+    if isinstance(body, six.text_type):
+        req.body = body.encode()
+    else:
+        req.body = body
     if context:
         req.environ['neutron.context'] = context
     return req
 
 
-class WebTestCase(base.BaseTestCase):
+class SqlFixture(fixtures.Fixture):
+
+    # flag to indicate that the models have been loaded
+    _TABLES_ESTABLISHED = False
+
+    def _setUp(self):
+        # Register all data models
+        engine = db_api.get_engine()
+        if not SqlFixture._TABLES_ESTABLISHED:
+            model_base.BASEV2.metadata.create_all(engine)
+            SqlFixture._TABLES_ESTABLISHED = True
+
+        def clear_tables():
+            with engine.begin() as conn:
+                for table in reversed(
+                        model_base.BASEV2.metadata.sorted_tables):
+                    conn.execute(table.delete())
+
+        self.addCleanup(clear_tables)
+
+
+class SqlTestCaseLight(base.DietTestCase):
+    """All SQL taste, zero plugin/rpc sugar"""
+
+    def setUp(self):
+        super(SqlTestCaseLight, self).setUp()
+        self.useFixture(SqlFixture())
+
+
+class SqlTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(SqlTestCase, self).setUp()
+        self.useFixture(SqlFixture())
+
+
+class WebTestCase(SqlTestCase):
     fmt = 'json'
 
     def setUp(self):
         super(WebTestCase, self).setUp()
         json_deserializer = wsgi.JSONDeserializer()
-        xml_deserializer = wsgi.XMLDeserializer(
-            attributes.get_attr_metadata())
         self._deserializers = {
             'application/json': json_deserializer,
-            'application/xml': xml_deserializer,
         }
 
     def deserialize(self, response):
@@ -69,8 +110,7 @@ class WebTestCase(base.BaseTestCase):
 
     def serialize(self, data):
         ctype = 'application/%s' % self.fmt
-        result = wsgi.Serializer(
-            attributes.get_attr_metadata()).serialize(data, ctype)
+        result = wsgi.Serializer().serialize(data, ctype)
         return result
 
 

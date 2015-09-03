@@ -17,7 +17,8 @@
 Neutron base exception handling.
 """
 
-from neutron.openstack.common import excutils
+from oslo_utils import excutils
+import six
 
 
 class NeutronException(Exception):
@@ -40,8 +41,9 @@ class NeutronException(Exception):
                     # at least get the core message out if something happened
                     super(NeutronException, self).__init__(self.message)
 
-    def __unicode__(self):
-        return unicode(self.msg)
+    if six.PY2:
+        def __unicode__(self):
+            return unicode(self.msg)
 
     def use_fatal_exceptions(self):
         return False
@@ -67,12 +69,16 @@ class ServiceUnavailable(NeutronException):
     message = _("The service is unavailable")
 
 
+class NotSupported(NeutronException):
+    message = _('Not supported: %(msg)s')
+
+
 class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
 
-class PolicyNotAuthorized(NotAuthorized):
-    message = _("Policy doesn't allow %(action)s to be performed.")
+class ObjectNotFound(NotFound):
+    message = _("Object %(id)s not found.")
 
 
 class NetworkNotFound(NotFound):
@@ -83,8 +89,21 @@ class SubnetNotFound(NotFound):
     message = _("Subnet %(subnet_id)s could not be found")
 
 
+class SubnetPoolNotFound(NotFound):
+    message = _("Subnet pool %(subnetpool_id)s could not be found")
+
+
 class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found")
+
+
+class QosPolicyNotFound(NotFound):
+    message = _("QoS policy %(policy_id)s could not be found")
+
+
+class QosRuleNotFound(NotFound):
+    message = _("QoS rule %(rule_id)s for policy %(policy_id)s "
+                "could not be found")
 
 
 class PortNotFoundOnNetwork(NotFound):
@@ -92,12 +111,18 @@ class PortNotFoundOnNetwork(NotFound):
                 "on network %(net_id)s")
 
 
+class PortQosBindingNotFound(NotFound):
+    message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
+                "could not be found")
+
+
+class NetworkQosBindingNotFound(NotFound):
+    message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
+                "could not be found")
+
+
 class PolicyFileNotFound(NotFound):
     message = _("Policy configuration policy.json could not be found")
-
-
-class PolicyRuleNotFound(NotFound):
-    message = _("Requested rule:%(rule)s cannot be found")
 
 
 class PolicyInitError(NeutronException):
@@ -116,6 +141,11 @@ class InUse(NeutronException):
     message = _("The resource is inuse")
 
 
+class QosPolicyInUse(InUse):
+    message = _("QoS Policy %(policy_id)s is used by "
+                "%(object_type)s %(object_id)s.")
+
+
 class NetworkInUse(InUse):
     message = _("Unable to complete operation on network %(net_id)s. "
                 "There are one or more ports still in use on the network.")
@@ -123,13 +153,30 @@ class NetworkInUse(InUse):
 
 class SubnetInUse(InUse):
     message = _("Unable to complete operation on subnet %(subnet_id)s. "
-                "One or more ports have an IP allocation from this subnet.")
+                "%(reason)s")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = _("One or more ports have an IP allocation "
+                                 "from this subnet.")
+        super(SubnetInUse, self).__init__(**kwargs)
 
 
 class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
-                "for network %(net_id)s. Port already has an attached"
+                "for network %(net_id)s. Port already has an attached "
                 "device %(device_id)s.")
+
+
+class ServicePortInUse(InUse):
+    message = _("Port %(port_id)s cannot be deleted directly via the "
+                "port API: %(reason)s")
+
+
+class PortBound(InUse):
+    message = _("Unable to complete operation on port %(port_id)s, "
+                "port is already bound, port type: %(vif_type)s, "
+                "old_mac %(old_mac)s, new_mac %(new_mac)s")
 
 
 class MacAddressInUse(InUse):
@@ -147,6 +194,16 @@ class DNSNameServersExhausted(BadRequest):
     # NOTE(xchenum): probably make sense to use quota exceeded exception?
     message = _("Unable to complete operation for %(subnet_id)s. "
                 "The number of DNS nameservers exceeds the limit %(quota)s.")
+
+
+class InvalidIpForNetwork(BadRequest):
+    message = _("IP address %(ip_address)s is not a valid IP "
+                "for any of the subnets on the specified network.")
+
+
+class InvalidIpForSubnet(BadRequest):
+    message = _("IP address %(ip_address)s is not a valid IP "
+                "for the specified subnet.")
 
 
 class IpAddressInUse(InUse):
@@ -183,6 +240,11 @@ class NoNetworkAvailable(ResourceExhausted):
                 "No tenant network is available for allocation.")
 
 
+class NoNetworkFoundInMaximumAllowedAttempts(ServiceUnavailable):
+    message = _("Unable to create the network. "
+                "No available network found in maximum allowed attempts.")
+
+
 class SubnetMismatchForPort(BadRequest):
     message = _("Subnet on port %(port_id)s does not match "
                 "the requested subnet %(subnet_id)s")
@@ -206,8 +268,13 @@ class InvalidAllocationPool(BadRequest):
     message = _("The allocation pool %(pool)s is not valid.")
 
 
+class UnsupportedPortDeviceOwner(Conflict):
+    message = _("Operation %(op)s is not supported for device_owner "
+                "%(device_owner)s on port %(port_id)s.")
+
+
 class OverlappingAllocationPools(Conflict):
-    message = _("Found overlapping allocation pools:"
+    message = _("Found overlapping allocation pools: "
                 "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
 
 
@@ -230,10 +297,6 @@ class BridgeDoesNotExist(NeutronException):
 
 class PreexistingDeviceFailure(NeutronException):
     message = _("Creation failed. %(dev_name)s already exists.")
-
-
-class SudoRequired(NeutronException):
-    message = _("Sudo privilege is required to run this command.")
 
 
 class QuotaResourceUnknown(NotFound):
@@ -304,9 +367,162 @@ class NetworkVlanRangeError(NeutronException):
         super(NetworkVlanRangeError, self).__init__(**kwargs)
 
 
+class PhysicalNetworkNameError(NeutronException):
+    message = _("Empty physical network name.")
+
+
+class NetworkTunnelRangeError(NeutronException):
+    message = _("Invalid network Tunnel range: "
+                "'%(tunnel_range)s' - %(error)s")
+
+    def __init__(self, **kwargs):
+        # Convert tunnel_range tuple to 'start:end' format for display
+        if isinstance(kwargs['tunnel_range'], tuple):
+            kwargs['tunnel_range'] = "%d:%d" % kwargs['tunnel_range']
+        super(NetworkTunnelRangeError, self).__init__(**kwargs)
+
+
 class NetworkVxlanPortRangeError(NeutronException):
     message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
 
 
+class VxlanNetworkUnsupported(NeutronException):
+    message = _("VXLAN Network unsupported.")
+
+
 class DuplicatedExtension(NeutronException):
     message = _("Found duplicate extension: %(alias)s")
+
+
+class DeviceIDNotOwnedByTenant(Conflict):
+    message = _("The following device_id %(device_id)s is not owned by your "
+                "tenant or matches another tenants router.")
+
+
+class InvalidCIDR(BadRequest):
+    message = _("Invalid CIDR %(input)s given as IP prefix")
+
+
+class RouterNotCompatibleWithAgent(NeutronException):
+    message = _("Router '%(router_id)s' is not compatible with this agent")
+
+
+class DvrHaRouterNotSupported(NeutronException):
+    message = _("Router '%(router_id)s' cannot be both DVR and HA")
+
+
+class FailToDropPrivilegesExit(SystemExit):
+    """Exit exception raised when a drop privileges action fails."""
+    code = 99
+
+
+class FloatingIpSetupException(NeutronException):
+    def __init__(self, message=None):
+        self.message = message
+        super(FloatingIpSetupException, self).__init__()
+
+
+class IpTablesApplyException(NeutronException):
+    def __init__(self, message=None):
+        self.message = message
+        super(IpTablesApplyException, self).__init__()
+
+
+class NetworkIdOrRouterIdRequiredError(NeutronException):
+    message = _('network_id and router_id are None. One must be provided.')
+
+
+class AbortSyncRouters(NeutronException):
+    message = _("Aborting periodic_sync_routers_task due to an error")
+
+
+# Shared *aas exceptions, pending them being refactored out of Neutron
+# proper.
+
+class FirewallInternalDriverError(NeutronException):
+    """Fwaas exception for all driver errors.
+
+    On any failure or exception in the driver, driver should log it and
+    raise this exception to the agent
+    """
+    message = _("%(driver)s: Internal driver error.")
+
+
+class MissingMinSubnetPoolPrefix(BadRequest):
+    message = _("Unspecified minimum subnet pool prefix")
+
+
+class EmptySubnetPoolPrefixList(BadRequest):
+    message = _("Empty subnet pool prefix list")
+
+
+class PrefixVersionMismatch(BadRequest):
+    message = _("Cannot mix IPv4 and IPv6 prefixes in a subnet pool")
+
+
+class UnsupportedMinSubnetPoolPrefix(BadRequest):
+    message = _("Prefix '%(prefix)s' not supported in IPv%(version)s pool")
+
+
+class IllegalSubnetPoolPrefixBounds(BadRequest):
+    message = _("Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, "
+                "%(base_prefix_type)s=%(base_prefixlen)s")
+
+
+class IllegalSubnetPoolPrefixUpdate(BadRequest):
+    message = _("Illegal update to prefixes: %(msg)s")
+
+
+class SubnetAllocationError(NeutronException):
+    message = _("Failed to allocate subnet: %(reason)s")
+
+
+class AddressScopePrefixConflict(Conflict):
+    message = _("Failed to associate address scope: subnetpools "
+                "within an address scope must have unique prefixes")
+
+
+class IllegalSubnetPoolAssociationToAddressScope(BadRequest):
+    message = _("Illegal subnetpool association: subnetpool %(subnetpool_id)s "
+                " cannot be associated with address scope"
+                " %(address_scope_id)s")
+
+
+class IllegalSubnetPoolUpdate(BadRequest):
+    message = _("Illegal subnetpool update : %(reason)s")
+
+
+class MinPrefixSubnetAllocationError(BadRequest):
+    message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
+                "minimum allowed prefix is %(min_prefixlen)s")
+
+
+class MaxPrefixSubnetAllocationError(BadRequest):
+    message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
+                "maximum allowed prefix is %(max_prefixlen)s")
+
+
+class SubnetPoolDeleteError(BadRequest):
+    message = _("Unable to delete subnet pool: %(reason)s")
+
+
+class SubnetPoolQuotaExceeded(OverQuota):
+    message = _("Per-tenant subnet pool prefix quota exceeded")
+
+
+class DeviceNotFoundError(NeutronException):
+    message = _("Device '%(device_name)s' does not exist")
+
+
+class NetworkSubnetPoolAffinityError(BadRequest):
+    message = _("Subnets hosted on the same network must be allocated from "
+                "the same subnet pool")
+
+
+class ObjectActionError(NeutronException):
+    message = _('Object action %(action)s failed because: %(reason)s')
+
+
+class CTZoneExhaustedError(NeutronException):
+    message = _("IPtables conntrack zones exhausted, iptables rules cannot "
+                "be applied.")

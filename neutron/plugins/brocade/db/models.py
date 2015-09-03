@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2013 Brocade Communications System, Inc.
 # All rights reserved.
 #
@@ -14,10 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# Authors:
-# Shiv Haris (sharis@brocade.com)
-# Varma Bhupatiraju (vbhupati@#brocade.com)
 
 
 """Brocade specific database schema/model."""
@@ -37,7 +31,8 @@ class BrocadeNetwork(model_base.BASEV2, models_v2.HasId):
 class BrocadePort(model_base.BASEV2):
     """Schema for brocade port."""
 
-    port_id = sa.Column(sa.String(36), primary_key=True, default="")
+    port_id = sa.Column(sa.String(36), primary_key=True, default="",
+                        server_default='')
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("brocadenetworks.id"),
                            nullable=False)

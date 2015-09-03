@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,13 +12,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ivar Lazzaro, Embrane, Inc.
 
 from heleosapi import backend_operations as h_op
 from heleosapi import constants as h_con
 from heleosapi import exceptions as h_exc
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as l3_constants
@@ -29,7 +26,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import l3
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LE
 from neutron.plugins.embrane.agent import dispatcher
 from neutron.plugins.embrane.common import config  # noqa
 from neutron.plugins.embrane.common import constants as p_con
@@ -106,7 +103,7 @@ class EmbranePlugin(object):
         try:
             self._update_db_interfaces_state(context, neutron_router)
         except Exception:
-            LOG.exception(_("Unhandled exception occurred"))
+            LOG.exception(_LE("Unhandled exception occurred"))
         return self._set_db_router_state(context, neutron_router, state)
 
     def _retrieve_prefix_from_port(self, context, neutron_port):
@@ -171,12 +168,12 @@ class EmbranePlugin(object):
                 self._esm_api.get_dva(id)
         except h_exc.DvaNotFound:
 
-            LOG.error(_("The following routers have not physical match: %s"),
+            LOG.error(_LE("The following routers have not physical match: %s"),
                       id)
             self._set_db_router_state(context, neutron_router,
                                       p_con.Status.ERROR)
 
-        LOG.debug(_("Requested router: %s"), neutron_router)
+        LOG.debug("Requested router: %s", neutron_router)
         return self._make_router_dict(neutron_router, fields)
 
     def get_routers(self, context, filters=None, fields=None, sorts=None,
@@ -190,7 +187,7 @@ class EmbranePlugin(object):
         try:
             self._esm_api.get_dvas(id_list)
         except h_exc.DvaNotFound:
-            LOG.error(_("The following routers have not physical match: %s"),
+            LOG.error(_LE("The following routers have not physical match: %s"),
                       repr(id_list))
             error_routers = []
             for id in id_list:
@@ -228,7 +225,7 @@ class EmbranePlugin(object):
             d_context=embrane_ctx.DispatcherContext(
                 p_con.Events.DELETE_ROUTER, neutron_router, context,
                 state_change), args=())
-        LOG.debug(_("Deleting router=%s"), neutron_router)
+        LOG.debug("Deleting router=%s", neutron_router)
         return neutron_router
 
     def add_router_interface(self, context, router_id, interface_info):
@@ -353,14 +350,15 @@ class EmbranePlugin(object):
                 args=(nat_info,))
         return result
 
-    def disassociate_floatingips(self, context, port_id):
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
             floating_ip = fip_qry.filter_by(fixed_port_id=port_id).one()
             router_id = floating_ip["router_id"]
         except exc.NoResultFound:
             return
-        self._l3super.disassociate_floatingips(self, context, port_id)
+        router_ids = self._l3super.disassociate_floatingips(
+            self, context, port_id, do_notify=do_notify)
         if router_id:
             neutron_router = self._get_router(context, router_id)
             fip_id = floating_ip["id"]
@@ -373,3 +371,4 @@ class EmbranePlugin(object):
                     p_con.Events.RESET_NAT_RULE, neutron_router, context,
                     state_change),
                 args=(fip_id,))
+        return router_ids

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 Citrix System.
 # All Rights Reserved.
 #
@@ -15,14 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import urllib
+import functools
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
+import six
+from six.moves.urllib import parse
 from webob import exc
 
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LW
 
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def get_filters(request, attr_info, skips=[]):
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
     res = {}
-    for key, values in request.GET.dict_of_lists().iteritems():
+    for key, values in six.iteritems(request.GET.dict_of_lists()):
         if key in skips:
             continue
         values = [v for v in values if v]
@@ -59,7 +60,7 @@ def get_previous_link(request, items, id_key):
         marker = items[0][id_key]
         params['marker'] = marker
     params['page_reverse'] = True
-    return "%s?%s" % (request.path_url, urllib.urlencode(params))
+    return "%s?%s" % (request.path_url, parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -69,7 +70,7 @@ def get_next_link(request, items, id_key):
         marker = items[-1][id_key]
         params['marker'] = marker
     params.pop('page_reverse', None)
-    return "%s?%s" % (request.path_url, urllib.urlencode(params))
+    return "%s?%s" % (request.path_url, parse.urlencode(params))
 
 
 def get_limit_and_marker(request):
@@ -100,8 +101,8 @@ def _get_pagination_max_limit():
             if max_limit == 0:
                 raise ValueError()
         except ValueError:
-            LOG.warn(_("Invalid value for pagination_max_limit: %s. It "
-                       "should be an integer greater to 0"),
+            LOG.warn(_LW("Invalid value for pagination_max_limit: %s. It "
+                         "should be an integer greater to 0"),
                      cfg.CONF.pagination_max_limit)
     return max_limit
 
@@ -146,8 +147,8 @@ def get_sorts(request, attr_info):
                 'asc': constants.SORT_DIRECTION_ASC,
                 'desc': constants.SORT_DIRECTION_DESC})
         raise exc.HTTPBadRequest(explanation=msg)
-    return zip(sort_keys,
-               [x == constants.SORT_DIRECTION_ASC for x in sort_dirs])
+    return list(zip(sort_keys,
+                    [x == constants.SORT_DIRECTION_ASC for x in sort_dirs]))
 
 
 def get_page_reverse(request):
@@ -272,11 +273,21 @@ class SortingEmulatedHelper(SortingHelper):
     def sort(self, items):
         def cmp_func(obj1, obj2):
             for key, direction in self.sort_dict:
-                ret = cmp(obj1[key], obj2[key])
+                o1 = obj1[key]
+                o2 = obj2[key]
+
+                if o1 is None and o2 is None:
+                    ret = 0
+                elif o1 is None and o2 is not None:
+                    ret = -1
+                elif o1 is not None and o2 is None:
+                    ret = 1
+                else:
+                    ret = (o1 > o2) - (o1 < o2)
                 if ret:
                     return ret * (1 if direction else -1)
             return 0
-        return sorted(items, cmp=cmp_func)
+        return sorted(items, key=functools.cmp_to_key(cmp_func))
 
 
 class SortingNativeHelper(SortingHelper):

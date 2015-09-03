@@ -15,9 +15,7 @@
 
 """ Register the configuration options"""
 
-from oslo.config import cfg
-
-from neutron.agent.common import config
+from oslo_config import cfg
 
 
 NVSD_OPT = [
@@ -50,8 +48,6 @@ agent_opts = [
 
 cfg.CONF.register_opts(NVSD_OPT, "nvsd")
 cfg.CONF.register_opts(agent_opts, "AGENT")
-
-config.register_root_helper(cfg.CONF)
 
 CONF = cfg.CONF
 AGENT = cfg.CONF.AGENT

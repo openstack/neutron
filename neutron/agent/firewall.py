@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012, Nachi Ueno, NTT MCL, Inc.
 # All Rights Reserved.
 #
@@ -19,6 +17,10 @@ import abc
 import contextlib
 
 import six
+
+
+INGRESS_DIRECTION = 'ingress'
+EGRESS_DIRECTION = 'egress'
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -107,6 +109,19 @@ class FirewallDriver(object):
         finally:
             self.filter_defer_apply_off()
 
+    def update_security_group_members(self, sg_id, ips):
+        """Update group members in a security group."""
+        raise NotImplementedError()
+
+    def update_security_group_rules(self, sg_id, rules):
+        """Update rules in a security group."""
+        raise NotImplementedError()
+
+    def security_group_updated(self, action_type, sec_group_ids,
+                               device_id=None):
+        """Called when a security group is updated."""
+        raise NotImplementedError()
+
 
 class NoopFirewallDriver(FirewallDriver):
     """Noop Firewall Driver.
@@ -136,3 +151,13 @@ class NoopFirewallDriver(FirewallDriver):
     @property
     def ports(self):
         return {}
+
+    def update_security_group_members(self, sg_id, ips):
+        pass
+
+    def update_security_group_rules(self, sg_id, rules):
+        pass
+
+    def security_group_updated(self, action_type, sec_group_ids,
+                               device_id=None):
+        pass

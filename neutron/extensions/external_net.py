@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -17,11 +15,10 @@
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as qexception
-from neutron.extensions import l3
+from neutron.common import exceptions as nexception
 
 
-class ExternalNetworkInUse(qexception.InUse):
+class ExternalNetworkInUse(nexception.InUse):
     message = _("External network %(net_id)s cannot be updated to be made "
                 "non-external, since it has existing gateway ports")
 
@@ -31,7 +28,7 @@ EXTERNAL = 'router:external'
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {EXTERNAL: {'allow_post': True,
                             'allow_put': True,
-                            'default': attr.ATTR_NOT_SPECIFIED,
+                            'default': False,
                             'is_visible': True,
                             'convert_to': attr.convert_to_boolean,
                             'enforce_policy': True,
@@ -53,10 +50,6 @@ class External_net(extensions.ExtensionDescriptor):
         return _("Adds external network attribute to network resource.")
 
     @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/external_net/api/v1.0"
-
-    @classmethod
     def get_updated(cls):
         return "2013-01-14T10:00:00-00:00"
 
@@ -65,6 +58,3 @@ class External_net(extensions.ExtensionDescriptor):
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}
-
-    def get_alias_namespace_compatibility_map(self):
-        return {l3.L3.get_alias(): l3.L3.get_namespace()}

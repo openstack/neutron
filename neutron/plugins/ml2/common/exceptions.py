@@ -21,3 +21,8 @@ from neutron.common import exceptions
 class MechanismDriverError(exceptions.NeutronException):
     """Mechanism driver call failed."""
     message = _("%(method)s failed.")
+
+
+class ExtensionDriverError(exceptions.InvalidInput):
+    """Extension driver call failed."""
+    message = _("Extension %(driver)s failed.")

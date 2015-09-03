@@ -18,24 +18,93 @@
 
 """Utilities and helper functions."""
 
-import logging as std_logging
+import collections
+import datetime
+import decimal
+import errno
+import functools
+import hashlib
+import multiprocessing
+import netaddr
 import os
+import random
 import signal
 import socket
+import tempfile
+import uuid
 
 from eventlet.green import subprocess
-from oslo.config import cfg
+from oslo_concurrency import lockutils
+from oslo_config import cfg
+from oslo_log import log as logging
+from oslo_utils import excutils
+import six
 
-from neutron.common import constants as q_const
-from neutron.openstack.common import lockutils
-from neutron.openstack.common import log as logging
-
+from neutron.common import constants as n_const
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
 
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
+
+
+class cache_method_results(object):
+    """This decorator is intended for object methods only."""
+
+    def __init__(self, func):
+        self.func = func
+        functools.update_wrapper(self, func)
+        self._first_call = True
+        self._not_cached = object()
+
+    def _get_from_cache(self, target_self, *args, **kwargs):
+        func_name = "%(module)s.%(class)s.%(func_name)s" % {
+            'module': target_self.__module__,
+            'class': target_self.__class__.__name__,
+            'func_name': self.func.__name__,
+        }
+        key = (func_name,) + args
+        if kwargs:
+            key += dict2tuple(kwargs)
+        try:
+            item = target_self._cache.get(key, self._not_cached)
+        except TypeError:
+            LOG.debug("Method %(func_name)s cannot be cached due to "
+                      "unhashable parameters: args: %(args)s, kwargs: "
+                      "%(kwargs)s",
+                      {'func_name': func_name,
+                       'args': args,
+                       'kwargs': kwargs})
+            return self.func(target_self, *args, **kwargs)
+
+        if item is self._not_cached:
+            item = self.func(target_self, *args, **kwargs)
+            target_self._cache.set(key, item, None)
+
+        return item
+
+    def __call__(self, target_self, *args, **kwargs):
+        if not hasattr(target_self, '_cache'):
+            raise NotImplementedError(
+                "Instance of class %(module)s.%(class)s must contain _cache "
+                "attribute" % {
+                    'module': target_self.__module__,
+                    'class': target_self.__class__.__name__})
+        if not target_self._cache:
+            if self._first_call:
+                LOG.debug("Instance of class %(module)s.%(class)s doesn't "
+                          "contain attribute _cache therefore results "
+                          "cannot be cached for %(func_name)s.",
+                          {'module': target_self.__module__,
+                           'class': target_self.__class__.__name__,
+                           'func_name': self.func.__name__})
+                self._first_call = False
+            return self.func(target_self, *args, **kwargs)
+        return self._get_from_cache(target_self, *args, **kwargs)
+
+    def __get__(self, obj, objtype):
+        return functools.partial(self.__call__, obj)
 
 
 def read_cached_file(filename, cache_info, reload_func=None):
@@ -50,7 +119,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
     """
     mtime = os.path.getmtime(filename)
     if not cache_info or mtime != cache_info.get('mtime'):
-        LOG.debug(_("Reloading cached file %s"), filename)
+        LOG.debug("Reloading cached file %s", filename)
         with open(filename) as fap:
             cache_info['data'] = fap.read()
         cache_info['mtime'] = mtime
@@ -86,10 +155,6 @@ def find_config_file(options, config_file):
                         '/usr/etc/neutron',
                         '/usr/local/etc/neutron',
                         '/etc/neutron/',
-                        # TODO(markmcclain) remove in Icehouse
-                        '/usr/etc/quantum',
-                        '/usr/local/etc/quantum',
-                        '/etc/quantum/',
                         '/etc']
 
     if 'plugin' in options:
@@ -110,6 +175,16 @@ def find_config_file(options, config_file):
             return cfg_file
 
 
+def ensure_dir(dir_path):
+    """Ensure a directory with 755 permissions mode."""
+    try:
+        os.makedirs(dir_path, 0o755)
+    except OSError as e:
+        # If the directory already existed, don't raise the error.
+        if e.errno != errno.EEXIST:
+            raise
+
+
 def _subprocess_setup():
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
@@ -117,14 +192,15 @@ def _subprocess_setup():
 
 
 def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
-                     env=None):
+                     env=None, preexec_fn=_subprocess_setup, close_fds=True):
+
     return subprocess.Popen(args, shell=shell, stdin=stdin, stdout=stdout,
-                            stderr=stderr, preexec_fn=_subprocess_setup,
-                            close_fds=True, env=env)
+                            stderr=stderr, preexec_fn=preexec_fn,
+                            close_fds=close_fds, env=env)
 
 
 def parse_mappings(mapping_list, unique_values=True):
-    """Parse a list of of mapping strings into a dictionary.
+    """Parse a list of mapping strings into a dictionary.
 
     :param mapping_list: a list of strings of the form '<key>:<value>'
     :param unique_values: values must be unique if True
@@ -147,7 +223,7 @@ def parse_mappings(mapping_list, unique_values=True):
         if key in mappings:
             raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
                                "unique") % {'key': key, 'mapping': mapping})
-        if unique_values and value in mappings.itervalues():
+        if unique_values and value in mappings.values():
             raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
                                "not unique") % {'value': value,
                                                 'mapping': mapping})
@@ -157,6 +233,10 @@ def parse_mappings(mapping_list, unique_values=True):
 
 def get_hostname():
     return socket.gethostname()
+
+
+def get_first_host_ip(net, ip_version):
+    return str(netaddr.IPAddress(net.first + 1, ip_version))
 
 
 def compare_elements(a, b):
@@ -171,9 +251,16 @@ def compare_elements(a, b):
     return set(a) == set(b)
 
 
+def safe_sort_key(value):
+    """Return value hash or build one for dictionaries."""
+    if isinstance(value, collections.Mapping):
+        return sorted(value.items())
+    return value
+
+
 def dict2str(dic):
     return ','.join("%s=%s" % (key, val)
-                    for key, val in sorted(dic.iteritems()))
+                    for key, val in sorted(six.iteritems(dic)))
 
 
 def str2dict(string):
@@ -182,6 +269,12 @@ def str2dict(string):
         (key, value) = keyvalue.split('=', 1)
         res_dict[key] = value
     return res_dict
+
+
+def dict2tuple(d):
+    items = list(d.items())
+    items.sort()
+    return tuple(items)
 
 
 def diff_list_of_dict(old_list, new_list):
@@ -198,8 +291,188 @@ def is_extension_supported(plugin, ext_alias):
 
 
 def log_opt_values(log):
-    cfg.CONF.log_opt_values(log, std_logging.DEBUG)
+    cfg.CONF.log_opt_values(log, logging.DEBUG)
 
 
-def is_valid_vlan_tag(vlan):
-    return q_const.MIN_VLAN_TAG <= vlan <= q_const.MAX_VLAN_TAG
+def get_random_mac(base_mac):
+    mac = [int(base_mac[0], 16), int(base_mac[1], 16),
+           int(base_mac[2], 16), random.randint(0x00, 0xff),
+           random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+    if base_mac[3] != '00':
+        mac[3] = int(base_mac[3], 16)
+    return ':'.join(["%02x" % x for x in mac])
+
+
+def get_random_string(length):
+    """Get a random hex string of the specified length.
+
+    based on Cinder library
+      cinder/transfer/api.py
+    """
+    rndstr = ""
+    random.seed(datetime.datetime.now().microsecond)
+    while len(rndstr) < length:
+        rndstr += hashlib.sha224(str(random.random())).hexdigest()
+
+    return rndstr[0:length]
+
+
+def get_dhcp_agent_device_id(network_id, host):
+    # Split host so as to always use only the hostname and
+    # not the domain name. This will guarantee consistentcy
+    # whether a local hostname or an fqdn is passed in.
+    local_hostname = host.split('.')[0]
+    host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
+    return 'dhcp%s-%s' % (host_uuid, network_id)
+
+
+def cpu_count():
+    try:
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        return 1
+
+
+class exception_logger(object):
+    """Wrap a function and log raised exception
+
+    :param logger: the logger to log the exception default is LOG.exception
+
+    :returns: origin value if no exception raised; re-raise the exception if
+              any occurred
+
+    """
+    def __init__(self, logger=None):
+        self.logger = logger
+
+    def __call__(self, func):
+        if self.logger is None:
+            LOG = logging.getLogger(func.__module__)
+            self.logger = LOG.exception
+
+        def call(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                with excutils.save_and_reraise_exception():
+                    self.logger(e)
+        return call
+
+
+def is_dvr_serviced(device_owner):
+    """Check if the port need to be serviced by DVR
+
+    Helper function to check the device owners of the
+    ports in the compute and service node to make sure
+    if they are required for DVR or any service directly or
+    indirectly associated with DVR.
+    """
+    dvr_serviced_device_owners = (n_const.DEVICE_OWNER_LOADBALANCER,
+                                  n_const.DEVICE_OWNER_DHCP)
+    return (device_owner.startswith('compute:') or
+            device_owner in dvr_serviced_device_owners)
+
+
+def get_keystone_url(conf):
+    if conf.auth_uri:
+        auth_uri = conf.auth_uri.rstrip('/')
+    else:
+        auth_uri = ('%(protocol)s://%(host)s:%(port)s' %
+            {'protocol': conf.auth_protocol,
+             'host': conf.auth_host,
+             'port': conf.auth_port})
+    # NOTE(ihrachys): all existing consumers assume version 2.0
+    return '%s/v2.0/' % auth_uri
+
+
+def ip_to_cidr(ip, prefix=None):
+    """Convert an ip with no prefix to cidr notation
+
+    :param ip: An ipv4 or ipv6 address.  Convertable to netaddr.IPNetwork.
+    :param prefix: Optional prefix.  If None, the default 32 will be used for
+        ipv4 and 128 for ipv6.
+    """
+    net = netaddr.IPNetwork(ip)
+    if prefix is not None:
+        # Can't pass ip and prefix separately.  Must concatenate strings.
+        net = netaddr.IPNetwork(str(net.ip) + '/' + str(prefix))
+    return str(net)
+
+
+def fixed_ip_cidrs(fixed_ips):
+    """Create a list of a port's fixed IPs in cidr notation.
+
+    :param fixed_ips: A neutron port's fixed_ips dictionary
+    """
+    return [ip_to_cidr(fixed_ip['ip_address'], fixed_ip.get('prefixlen'))
+            for fixed_ip in fixed_ips]
+
+
+def is_cidr_host(cidr):
+    """Determines if the cidr passed in represents a single host network
+
+    :param cidr: Either an ipv4 or ipv6 cidr.
+    :returns: True if the cidr is /32 for ipv4 or /128 for ipv6.
+    :raises ValueError: raises if cidr does not contain a '/'.  This disallows
+        plain IP addresses specifically to avoid ambiguity.
+    """
+    if '/' not in str(cidr):
+        raise ValueError("cidr doesn't contain a '/'")
+    net = netaddr.IPNetwork(cidr)
+    if net.version == 4:
+        return net.prefixlen == n_const.IPv4_BITS
+    return net.prefixlen == n_const.IPv6_BITS
+
+
+def ip_version_from_int(ip_version_int):
+    if ip_version_int == 4:
+        return n_const.IPv4
+    if ip_version_int == 6:
+        return n_const.IPv6
+    raise ValueError(_('Illegal IP version number'))
+
+
+class DelayedStringRenderer(object):
+    """Takes a callable and its args and calls when __str__ is called
+
+    Useful for when an argument to a logging statement is expensive to
+    create. This will prevent the callable from being called if it's
+    never converted to a string.
+    """
+
+    def __init__(self, function, *args, **kwargs):
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return str(self.function(*self.args, **self.kwargs))
+
+
+def camelize(s):
+    return ''.join(s.replace('_', ' ').title().split())
+
+
+def round_val(val):
+    # we rely on decimal module since it behaves consistently across Python
+    # versions (2.x vs. 3.x)
+    return int(decimal.Decimal(val).quantize(decimal.Decimal('1'),
+                                             rounding=decimal.ROUND_HALF_UP))
+
+
+def replace_file(file_name, data):
+    """Replaces the contents of file_name with data in a safe manner.
+
+    First write to a temp file and then rename. Since POSIX renames are
+    atomic, the file is unlikely to be corrupted by competing writes.
+
+    We create the tempfile on the same device to ensure that it can be renamed.
+    """
+
+    base_dir = os.path.dirname(os.path.abspath(file_name))
+    with tempfile.NamedTemporaryFile('w+',
+                                     dir=base_dir,
+                                     delete=False) as tmp_file:
+        tmp_file.write(data)
+    os.chmod(tmp_file.name, 0o644)
+    os.rename(tmp_file.name, file_name)

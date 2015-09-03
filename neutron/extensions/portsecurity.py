@@ -12,21 +12,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as qexception
+from neutron.common import exceptions as nexception
 
 
-class PortSecurityPortHasSecurityGroup(qexception.InUse):
+class PortSecurityPortHasSecurityGroup(nexception.InUse):
     message = _("Port has security group associated. Cannot disable port "
                 "security or ip address until security group is removed")
 
 
-class PortSecurityAndIPRequiredForSecurityGroups(qexception.InvalidInput):
+class PortSecurityAndIPRequiredForSecurityGroups(nexception.InvalidInput):
     message = _("Port security must be enabled and port must have an IP"
                 " address in order to use security groups.")
 
 
-class PortSecurityBindingNotFound(qexception.InvalidExtensionEnv):
+class PortSecurityBindingNotFound(nexception.InvalidExtensionEnv):
     message = _("Port does not have port security binding.")
 
 PORTSECURITY = 'port_security_enabled'
@@ -48,7 +49,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class Portsecurity(object):
+class Portsecurity(extensions.ExtensionDescriptor):
     """Extension class supporting port security."""
 
     @classmethod
@@ -62,10 +63,6 @@ class Portsecurity(object):
     @classmethod
     def get_description(cls):
         return "Provides port security"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/portsecurity/api/v1.0"
 
     @classmethod
     def get_updated(cls):

@@ -1,7 +1,5 @@
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Sylvain Afchain <sylvain.afchain@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -16,32 +14,32 @@
 
 import abc
 
+from oslo_log import log as logging
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as qexception
-from neutron.openstack.common import log as logging
+from neutron.common import exceptions as nexception
 from neutron.plugins.common import constants
 from neutron.services import service_base
 
 LOG = logging.getLogger(__name__)
 
 
-class MeteringLabelNotFound(qexception.NotFound):
+class MeteringLabelNotFound(nexception.NotFound):
     message = _("Metering label %(label_id)s does not exist")
 
 
-class DuplicateMeteringRuleInPost(qexception.InUse):
+class DuplicateMeteringRuleInPost(nexception.InUse):
     message = _("Duplicate Metering Rule in POST.")
 
 
-class MeteringLabelRuleNotFound(qexception.NotFound):
+class MeteringLabelRuleNotFound(nexception.NotFound):
     message = _("Metering label rule %(rule_id)s does not exist")
 
 
-class MeteringLabelRuleOverlaps(qexception.NotFound):
+class MeteringLabelRuleOverlaps(nexception.Conflict):
     message = _("Metering label rule with remote_ip_prefix "
                 "%(remote_ip_prefix)s overlaps another")
 
@@ -51,13 +49,17 @@ RESOURCE_ATTRIBUTE_MAP = {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True,
                'primary_key': True},
-        'name': {'allow_post': True, 'allow_put': True,
+        'name': {'allow_post': True, 'allow_put': False,
                  'is_visible': True, 'default': ''},
-        'description': {'allow_post': True, 'allow_put': True,
+        'description': {'allow_post': True, 'allow_put': False,
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'is_visible': True}
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'is_visible': True},
+        'shared': {'allow_post': True, 'allow_put': False,
+                   'is_visible': True, 'default': False,
+                   'convert_to': attr.convert_to_boolean}
     },
     'metering_label_rules': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -66,10 +68,10 @@ RESOURCE_ATTRIBUTE_MAP = {
         'metering_label_id': {'allow_post': True, 'allow_put': False,
                               'validate': {'type:uuid': None},
                               'is_visible': True, 'required_by_policy': True},
-        'direction': {'allow_post': True, 'allow_put': True,
+        'direction': {'allow_post': True, 'allow_put': False,
                       'is_visible': True,
                       'validate': {'type:values': ['ingress', 'egress']}},
-        'excluded': {'allow_post': True, 'allow_put': True,
+        'excluded': {'allow_post': True, 'allow_put': False,
                      'is_visible': True, 'default': False,
                      'convert_to': attr.convert_to_boolean},
         'remote_ip_prefix': {'allow_post': True, 'allow_put': False,
@@ -77,6 +79,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'validate': {'type:subnet': None}},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
+                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True}
     }
 }
@@ -95,10 +98,6 @@ class Metering(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return "Neutron Metering extension."
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://wiki.openstack.org/wiki/Neutron/Metering/Bandwidth#API"
 
     @classmethod
     def get_updated(cls):
@@ -135,9 +134,6 @@ class Metering(extensions.ExtensionDescriptor):
 
 @six.add_metaclass(abc.ABCMeta)
 class MeteringPluginBase(service_base.ServicePluginBase):
-
-    def get_plugin_name(self):
-        return constants.METERING
 
     def get_plugin_description(self):
         return constants.METERING

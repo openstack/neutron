@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -14,15 +12,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-#    @author: Salvatore Orlando, VMware
-#
+
+from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -61,10 +57,6 @@ class Servicetype(extensions.ExtensionDescriptor):
     def get_description(cls):
         return _("API for retrieving service providers for "
                  "Neutron advanced services")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/service-type/api/v1.0"
 
     @classmethod
     def get_updated(cls):

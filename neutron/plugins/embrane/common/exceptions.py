@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,11 +12,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ivar Lazzaro, Embrane, Inc.
 
 from neutron.common import exceptions as neutron_exec
 
 
 class EmbranePluginException(neutron_exec.NeutronException):
     message = _("An unexpected error occurred:%(err_msg)s")
+
+
+class UnsupportedException(EmbranePluginException):
+    message = _("%(err_msg)s")

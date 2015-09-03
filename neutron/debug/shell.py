@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012,  Nachi Ueno,  NTT MCL,  Inc.
 # All Rights Reserved.
 #
@@ -17,36 +15,34 @@
 
 import sys
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_utils import importutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
-from neutron.common import legacy
-from neutron.debug.debug_agent import NeutronDebugAgent
-from neutron.openstack.common import importutils
+from neutron.debug import debug_agent
 from neutronclient.common import exceptions as exc
-from neutronclient.common import utils
-from neutronclient.shell import env, NeutronShell, NEUTRON_API_VERSION
+from neutronclient import shell
 
 COMMAND_V2 = {
-    'probe-create': utils.import_class(
+    'probe-create': importutils.import_class(
         'neutron.debug.commands.CreateProbe'),
-    'probe-delete': utils.import_class(
+    'probe-delete': importutils.import_class(
         'neutron.debug.commands.DeleteProbe'),
-    'probe-list': utils.import_class(
+    'probe-list': importutils.import_class(
         'neutron.debug.commands.ListProbe'),
-    'probe-clear': utils.import_class(
+    'probe-clear': importutils.import_class(
         'neutron.debug.commands.ClearProbe'),
-    'probe-exec': utils.import_class(
+    'probe-exec': importutils.import_class(
         'neutron.debug.commands.ExecProbe'),
-    'ping-all': utils.import_class(
+    'ping-all': importutils.import_class(
         'neutron.debug.commands.PingAll'),
     #TODO(nati)  ping, netcat , nmap, bench
 }
 COMMANDS = {'2.0': COMMAND_V2}
 
 
-class NeutronDebugShell(NeutronShell):
+class NeutronDebugShell(shell.NeutronShell):
     def __init__(self, api_version):
         super(NeutronDebugShell, self).__init__(api_version)
         for k, v in COMMANDS[api_version].items():
@@ -56,7 +52,8 @@ class NeutronDebugShell(NeutronShell):
         parser = super(NeutronDebugShell, self).build_option_parser(
             description, version)
         default = (
-            env('NEUTRON_TEST_CONFIG_FILE') or env('QUANTUM_TEST_CONFIG_FILE')
+            shell.env('NEUTRON_TEST_CONFIG_FILE') or
+            shell.env('QUANTUM_TEST_CONFIG_FILE')
         )
         parser.add_argument(
             '--config-file',
@@ -73,16 +70,17 @@ class NeutronDebugShell(NeutronShell):
                   " either --config-file or env[NEUTRON_TEST_CONFIG_FILE]"))
         client = self.client_manager.neutron
         cfg.CONF.register_opts(interface.OPTS)
-        cfg.CONF.register_opts(NeutronDebugAgent.OPTS)
+        cfg.CONF.register_opts(debug_agent.NeutronDebugAgent.OPTS)
         config.register_interface_driver_opts_helper(cfg.CONF)
         config.register_use_namespaces_opts_helper(cfg.CONF)
-        config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
-        config.setup_logging(cfg.CONF)
-        legacy.modernize_quantum_config(cfg.CONF)
+        config.setup_logging()
         driver = importutils.import_object(cfg.CONF.interface_driver, cfg.CONF)
-        self.debug_agent = NeutronDebugAgent(cfg.CONF, client, driver)
+        self.debug_agent = debug_agent.NeutronDebugAgent(cfg.CONF,
+                                                         client,
+                                                         driver)
 
 
 def main(argv=None):
-    return NeutronDebugShell(NEUTRON_API_VERSION).run(argv or sys.argv[1:])
+    return NeutronDebugShell(shell.NEUTRON_API_VERSION).run(
+        argv or sys.argv[1:])

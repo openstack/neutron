@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet.event
 import mock
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
 from neutron.tests import base
 
@@ -25,9 +23,7 @@ class TestOvsdbMonitor(base.BaseTestCase):
 
     def setUp(self):
         super(TestOvsdbMonitor, self).setUp()
-        self.root_helper = 'sudo'
-        self.monitor = ovsdb_monitor.OvsdbMonitor('Interface',
-                                                  root_helper=self.root_helper)
+        self.monitor = ovsdb_monitor.OvsdbMonitor('Interface')
 
     def read_output_queues_and_returns_result(self, output_type, output):
         with mock.patch.object(self.monitor, '_process') as mock_process:
@@ -42,13 +38,6 @@ class TestOvsdbMonitor(base.BaseTestCase):
     def test__read_stdout_returns_none_for_empty_read(self):
         result = self.read_output_queues_and_returns_result('stdout', '')
         self.assertIsNone(result)
-
-    def test__read_stdout_queues_root_wrapper_errors_to_stderr_output(self):
-        result = self.read_output_queues_and_returns_result('stdout',
-                                                            self.root_helper)
-        self.assertIsNone(result)
-        self.assertEqual(self.monitor._stderr_lines.get_nowait(),
-                         self.root_helper)
 
     def test__read_stdout_queues_normal_output_to_stdout_queue(self):
         output = 'foo'
@@ -65,26 +54,12 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
 
     def setUp(self):
         super(TestSimpleInterfaceMonitor, self).setUp()
-        self.root_helper = 'sudo'
-        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor(
-            root_helper=self.root_helper)
-
-    def test_is_active_is_false_by_default(self):
-        self.assertFalse(self.monitor.is_active)
-
-    def test_is_active_can_be_true(self):
-        self.monitor.data_received = True
-        self.monitor._kill_event = eventlet.event.Event()
-        self.assertTrue(self.monitor.is_active)
-
-    def test_has_updates_is_true_by_default(self):
-        self.assertTrue(self.monitor.has_updates)
+        self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
 
     def test_has_updates_is_false_if_active_with_no_output(self):
         target = ('neutron.agent.linux.ovsdb_monitor.SimpleInterfaceMonitor'
                   '.is_active')
-        with mock.patch(target,
-                        new_callable=mock.PropertyMock(return_value=True)):
+        with mock.patch(target, return_value=True):
             self.assertFalse(self.monitor.has_updates)
 
     def test__kill_sets_data_received_to_false(self):
@@ -110,3 +85,22 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
                 return_value=output):
             self.monitor._read_stdout()
         self.assertFalse(self.monitor.data_received)
+
+    def test_has_updates_after_calling_get_events_is_false(self):
+        with mock.patch.object(
+                self.monitor, 'process_events') as process_events:
+            self.monitor.new_events = {'added': ['foo'], 'removed': ['foo1']}
+            self.assertTrue(self.monitor.has_updates)
+            self.monitor.get_events()
+            self.assertTrue(process_events.called)
+            self.assertFalse(self.monitor.has_updates)
+
+    def process_event_unassigned_of_port(self):
+        output = '{"data":[["e040fbec-0579-4990-8324-d338da33ae88","insert",'
+        output += '"m50",["set",[]],["map",[]]]],"headings":["row","action",'
+        output += '"name","ofport","external_ids"]}'
+        with mock.patch.object(
+                self.monitor, 'iter_stdout', return_value=[output]):
+            self.monitor.process_events()
+            self.assertEqual(self.monitor.new_events['added'][0]['ofport'],
+                             ovs_lib.UNASSIGNED_OFPORT)

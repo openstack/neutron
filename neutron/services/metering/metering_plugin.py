@@ -1,7 +1,5 @@
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Sylvain Afchain <sylvain.afchain@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -15,41 +13,26 @@
 # under the License.
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
-from neutron.common import rpc as p_rpc
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db.metering import metering_db
-from neutron.openstack.common import rpc
-
-
-class MeteringCallbacks(metering_db.MeteringDbMixin):
-
-    RPC_API_VERSION = '1.0'
-
-    def __init__(self, plugin):
-        self.plugin = plugin
-
-    def create_rpc_dispatcher(self):
-        return p_rpc.PluginRpcDispatcher([self])
-
-    def get_sync_data_metering(self, context, **kwargs):
-        return super(MeteringCallbacks, self).get_sync_data_metering(context)
+from neutron.db.metering import metering_rpc
 
 
 class MeteringPlugin(metering_db.MeteringDbMixin):
     """Implementation of the Neutron Metering Service Plugin."""
     supported_extension_aliases = ["metering"]
+    path_prefix = "/metering"
 
     def __init__(self):
         super(MeteringPlugin, self).__init__()
 
-        self.callbacks = MeteringCallbacks(self)
+        self.endpoints = [metering_rpc.MeteringRpcCallbacks(self)]
 
-        self.conn = rpc.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(
-            topics.METERING_PLUGIN,
-            self.callbacks.create_rpc_dispatcher(),
-            fanout=False)
-        self.conn.consume_in_thread()
+            topics.METERING_PLUGIN, self.endpoints, fanout=False)
+        self.conn.consume_in_threads()
 
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
 
@@ -75,8 +58,8 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         rule = super(MeteringPlugin, self).create_metering_label_rule(
             context, metering_label_rule)
 
-        data = self.get_sync_data_metering(context)
-        self.meter_rpc.update_metering_label_rules(context, data)
+        data = self.get_sync_data_for_rule(context, rule)
+        self.meter_rpc.add_metering_label_rule(context, data)
 
         return rule
 
@@ -84,7 +67,6 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         rule = super(MeteringPlugin, self).delete_metering_label_rule(
             context, rule_id)
 
-        data = self.get_sync_data_metering(context)
-        self.meter_rpc.update_metering_label_rules(context, data)
-
+        data = self.get_sync_data_for_rule(context, rule)
+        self.meter_rpc.remove_metering_label_rule(context, data)
         return rule

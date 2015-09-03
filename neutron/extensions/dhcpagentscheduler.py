@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2013 OpenStack Foundation.
 # All rights reserved.
 #
@@ -15,13 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
 from neutron import manager
 from neutron import policy
@@ -47,16 +46,23 @@ class NetworkSchedulerController(wsgi.Controller):
         policy.enforce(request.context,
                        "create_%s" % DHCP_NET,
                        {})
-        return plugin.add_network_to_dhcp_agent(
-            request.context, kwargs['agent_id'], body['network_id'])
+        agent_id = kwargs['agent_id']
+        network_id = body['network_id']
+        result = plugin.add_network_to_dhcp_agent(request.context, agent_id,
+                                                  network_id)
+        notify(request.context, 'dhcp_agent.network.add', network_id, agent_id)
+        return result
 
     def delete(self, request, id, **kwargs):
         plugin = manager.NeutronManager.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % DHCP_NET,
                        {})
-        return plugin.remove_network_from_dhcp_agent(
-            request.context, kwargs['agent_id'], id)
+        agent_id = kwargs['agent_id']
+        result = plugin.remove_network_from_dhcp_agent(request.context,
+                                                       agent_id, id)
+        notify(request.context, 'dhcp_agent.network.remove', id, agent_id)
+        return result
 
 
 class DhcpAgentsHostingNetworkController(wsgi.Controller):
@@ -84,10 +90,6 @@ class Dhcpagentscheduler(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return "Schedule networks among dhcp agents"
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/dhcp_agent_scheduler/api/v1.0"
 
     @classmethod
     def get_updated(cls):
@@ -137,18 +139,24 @@ class DhcpAgentSchedulerPluginBase(object):
     All of method must be in an admin context.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_network_to_dhcp_agent(self, context, id, network_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def remove_network_from_dhcp_agent(self, context, id, network_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_networks_on_dhcp_agent(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_dhcp_agents_hosting_network(self, context, network_id):
         pass
+
+
+def notify(context, action, network_id, agent_id):
+    info = {'id': agent_id, 'network_id': network_id}
+    notifier = n_rpc.get_notifier('network')
+    notifier.info(context, action, {'agent': info})

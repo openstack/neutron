@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -eu
 
@@ -14,6 +14,8 @@ function usage {
   echo "  -f, --force                 Force a clean re-build of the virtual environment. Useful when dependencies have been added."
   echo "  -u, --update                Update the virtual environment with any newer package versions"
   echo "  -p, --pep8                  Just run PEP8 and HACKING compliance check"
+  echo "  -8, --pep8-only-changed [<basecommit>]"
+  echo "                              Just run PEP8 and HACKING compliance check on files changed since HEAD~1 (or <basecommit>)"
   echo "  -P, --no-pep8               Don't run static code checks"
   echo "  -c, --coverage              Generate coverage report"
   echo "  -d, --debug                 Run tests with testtools instead of testr. This allows you to use the debugger."
@@ -44,6 +46,7 @@ function process_options {
       -f|--force) force=1;;
       -u|--update) update=1;;
       -p|--pep8) just_pep8=1;;
+      -8|--pep8-only-changed) just_pep8_changed=1;;
       -P|--no-pep8) no_pep8=1;;
       -c|--coverage) coverage=1;;
       -d|--debug) debug=1;;
@@ -59,8 +62,8 @@ function process_options {
         (( i++ ))
         tools_path=${!i}
         ;;
-      -*) testropts="$testropts ${!i}";;
-      *) testrargs="$testrargs ${!i}"
+      -*) testopts="$testopts ${!i}";;
+      *) testargs="$testargs ${!i}"
     esac
     (( i++ ))
   done
@@ -75,10 +78,11 @@ never_venv=0
 force=0
 no_site_packages=0
 installvenvopts=
-testrargs=
-testropts=
+testargs=
+testopts=
 wrapper=""
 just_pep8=0
+just_pep8_changed=0
 no_pep8=0
 coverage=0
 debug=0
@@ -107,12 +111,12 @@ function run_tests {
   ${wrapper} find . -type f -name "*.pyc" -delete
 
   if [ $debug -eq 1 ]; then
-    if [ "$testropts" = "" ] && [ "$testrargs" = "" ]; then
+    if [ "$testopts" = "" ] && [ "$testargs" = "" ]; then
       # Default to running all tests if specific test is not
       # provided.
-      testrargs="discover ./neutron/tests"
+      testargs="discover ./neutron/tests"
     fi
-    ${wrapper} python -m testtools.run $testropts $testrargs
+    ${wrapper} python -m testtools.run $testopts $testargs
 
     # Short circuit because all of the testr and coverage stuff
     # below does not make sense when running testtools.run for
@@ -128,8 +132,19 @@ function run_tests {
 
   # Just run the test suites in current environment
   set +e
-  testrargs=`echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/'`
-  TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testropts $testrargs'"
+  testargs=`echo "$testargs" | sed -e's/^\s*\(.*\)\s*$/\1/'`
+  TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testopts $testargs'"
+  OS_TEST_PATH=`echo $testargs|grep -o 'neutron\.tests[^[:space:]:]\+'|tr . /`
+  if [ -n "$OS_TEST_PATH" ]; then
+      os_test_dir=$(dirname "$OS_TEST_PATH")
+  else
+      os_test_dir=''
+  fi
+  if [ -d "$OS_TEST_PATH" ]; then
+      wrapper="OS_TEST_PATH=$OS_TEST_PATH $wrapper"
+  elif [ -d "$os_test_dir" ]; then
+      wrapper="OS_TEST_PATH=$os_test_dir $wrapper"
+  fi
   echo "Running \`${wrapper} $TESTRTESTS\`"
   bash -c "${wrapper} $TESTRTESTS | ${wrapper} subunit2pyunit"
   RESULT=$?
@@ -154,14 +169,34 @@ function copy_subunit_log {
   cp $LOGNAME subunit.log
 }
 
+function warn_on_flake8_without_venv {
+  if [ $never_venv -eq 1 ]; then
+    echo "**WARNING**:"
+    echo "Running flake8 without virtual env may miss OpenStack HACKING detection"
+  fi
+}
+
 function run_pep8 {
   echo "Running flake8 ..."
-
+  warn_on_flake8_without_venv
   ${wrapper} flake8
 }
 
+function run_pep8_changed {
+    # NOTE(gilliard) We want use flake8 to check the entirety of every file that has
+    # a change in it. Unfortunately the --filenames argument to flake8 only accepts
+    # file *names* and there are no files named (eg) "nova/compute/manager.py".  The
+    # --diff argument behaves surprisingly as well, because although you feed it a
+    # diff, it actually checks the file on disk anyway.
+    local target=${testargs:-HEAD~1}
+    local files=$(git diff --name-only $target | tr '\n' ' ')
+    echo "Running flake8 on ${files}"
+    warn_on_flake8_without_venv
+    diff -u --from-file /dev/null ${files} | ${wrapper} flake8 --diff
+}
 
-TESTRTESTS="python -m neutron.openstack.common.lockutils python setup.py testr"
+
+TESTRTESTS="python setup.py testr"
 
 if [ $never_venv -eq 0 ]
 then
@@ -203,6 +238,11 @@ if [ $just_pep8 -eq 1 ]; then
     exit
 fi
 
+if [ $just_pep8_changed -eq 1 ]; then
+    run_pep8_changed
+    exit
+fi
+
 if [ $recreate_db -eq 1 ]; then
     rm -f tests.sqlite
 fi
@@ -211,9 +251,9 @@ run_tests
 
 # NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
 # not when we're running tests individually. To handle this, we need to
-# distinguish between options (testropts), which begin with a '-', and
-# arguments (testrargs).
-if [ -z "$testrargs" ]; then
+# distinguish between options (testopts), which begin with a '-', and
+# arguments (testargs).
+if [ -z "$testargs" ]; then
   if [ $no_pep8 -eq 0 ]; then
     run_pep8
   fi

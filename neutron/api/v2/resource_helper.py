@@ -12,15 +12,17 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-# @author: Paul Michali Cisco Systems, Inc.
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron import quota
+from neutron.quota import resource_registry
+
+LOG = logging.getLogger(__name__)
 
 
 def build_plural_mappings(special_mappings, resource_map):
@@ -52,8 +54,8 @@ def build_resource_info(plural_mappings, resource_map, which_service,
     :param which_service: The name of the service for which the WSGI resources
                           are being created. This name will be used to pass
                           the appropriate plugin to the WSGI resource.
-                          It can be set to None or "CORE"to create WSGI
-                          resources for the the core plugin
+                          It can be set to None or "CORE" to create WSGI
+                          resources for the core plugin
     :param action_map: custom resource actions
     :param register_quota: it can be set to True to register quotas for the
                            resource(s) being created
@@ -69,13 +71,16 @@ def build_resource_info(plural_mappings, resource_map, which_service,
         plugin = manager.NeutronManager.get_service_plugins()[which_service]
     else:
         plugin = manager.NeutronManager.get_plugin()
+    path_prefix = getattr(plugin, "path_prefix", "")
+    LOG.debug('Service %(service)s assigned prefix: %(prefix)s'
+              % {'service': which_service, 'prefix': path_prefix})
     for collection_name in resource_map:
         resource_name = plural_mappings[collection_name]
         params = resource_map.get(collection_name, {})
         if translate_name:
             collection_name = collection_name.replace('_', '-')
         if register_quota:
-            quota.QUOTAS.register_resource_by_name(resource_name)
+            resource_registry.register_resource_by_name(resource_name)
         member_actions = action_map.get(resource_name, {})
         controller = base.create_resource(
             collection_name, resource_name, plugin, params,
@@ -86,7 +91,7 @@ def build_resource_info(plural_mappings, resource_map, which_service,
         resource = extensions.ResourceExtension(
             collection_name,
             controller,
-            path_prefix=constants.COMMON_PREFIXES[which_service],
+            path_prefix=path_prefix,
             member_actions=member_actions,
             attr_map=params)
         resources.append(resource)

@@ -20,15 +20,14 @@ v2 Neutron Plug-in API specification.
 methods that needs to be implemented by a v2 Neutron Plug-in.
 """
 
-from abc import ABCMeta, abstractmethod
-
+import abc
 import six
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class NeutronPluginBaseV2(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_subnet(self, context, subnet):
         """Create a subnet.
 
@@ -43,7 +42,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_subnet(self, context, id, subnet):
         """Update values of a subnet.
 
@@ -57,7 +56,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_subnet(self, context, id, fields=None):
         """Retrieve a subnet.
 
@@ -71,7 +70,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of subnets.
@@ -117,9 +116,9 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_subnet(self, context, id):
         """Delete a subnet.
 
@@ -128,7 +127,46 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    def create_subnetpool(self, context, subnetpool):
+        """Create a subnet pool.
+
+        :param context: neutron api request context
+        :param subnetpool: Dictionary representing the subnetpool to create.
+        """
+        raise NotImplementedError()
+
+    def update_subnetpool(self, context, id, subnetpool):
+        """Update a subnet pool.
+
+        :param context: neutron api request context
+        :param subnetpool: Dictionary representing the subnetpool attributes
+                           to update.
+        """
+        raise NotImplementedError()
+
+    def get_subnetpool(self, context, id, fields=None):
+        """Show a subnet pool.
+
+        :param context: neutron api request context
+        :param id: The UUID of the subnetpool to show.
+        """
+        raise NotImplementedError()
+
+    def get_subnetpools(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        """Retrieve list of subnet pools."""
+        raise NotImplementedError()
+
+    def delete_subnetpool(self, context, id):
+        """Delete a subnet pool.
+
+        :param context: neutron api request context
+        :param id: The UUID of the subnet pool to delete.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def create_network(self, context, network):
         """Create a network.
 
@@ -144,7 +182,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_network(self, context, id, network):
         """Update values of a network.
 
@@ -158,7 +196,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_network(self, context, id, fields=None):
         """Retrieve a network.
 
@@ -172,7 +210,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of networks.
@@ -218,9 +256,9 @@ class NeutronPluginBaseV2(object):
         NOTE: this method is optional, as it was not part of the originally
               defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_network(self, context, id):
         """Delete a network.
 
@@ -229,7 +267,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_port(self, context, port):
         """Create a port.
 
@@ -244,7 +282,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_port(self, context, id, port):
         """Update values of a port.
 
@@ -257,7 +295,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_port(self, context, id, fields=None):
         """Retrieve a port.
 
@@ -271,7 +309,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of ports.
@@ -314,9 +352,9 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_port(self, context, id):
         """Delete a port.
 
@@ -325,14 +363,29 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    def start_rpc_listener(self):
-        """Start the rpc listener.
+    def start_rpc_listeners(self):
+        """Start the RPC listeners.
 
-        Most plugins start an RPC listener implicitly on initialization.  In
+        Most plugins start RPC listeners implicitly on initialization.  In
         order to support multiple process RPC, the plugin needs to expose
         control over when this is started.
 
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
+
+    def rpc_workers_supported(self):
+        """Return whether the plugin supports multiple RPC workers.
+
+        A plugin that supports multiple RPC workers should override the
+        start_rpc_listeners method to ensure that this method returns True and
+        that start_rpc_listeners is called at the appropriate time.
+        Alternately, a plugin can override this method to customize detection
+        of support for multiple rpc workers
+
+        .. note:: this method is optional, as it was not part of the originally
+                  defined plugin API.
+        """
+        return (self.__class__.start_rpc_listeners !=
+                NeutronPluginBaseV2.start_rpc_listeners)

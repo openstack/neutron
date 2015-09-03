@@ -11,14 +11,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Kedar Kulkarni, One Convergence, Inc.
 
 """Intermidiate NVSD Library."""
 
-from neutron.openstack.common import excutils
-from neutron.openstack.common import jsonutils as json
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
+from oslo_serialization import jsonutils
+from oslo_utils import excutils
+
 import neutron.plugins.oneconvergence.lib.exception as nvsdexception
 from neutron.plugins.oneconvergence.lib import plugin_helper
 
@@ -101,12 +100,13 @@ class NVSDApi(object):
 
         uri = NETWORKS_URI % tenant_id
 
-        response = self.send_request("POST", uri, body=json.dumps(network_obj),
+        response = self.send_request("POST", uri,
+                                     body=jsonutils.dumps(network_obj),
                                      resource='network', tenant_id=tenant_id)
 
         nvsd_net = response.json()
 
-        LOG.debug(_("Network %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s created under tenant %(tenant_id)s",
                   {'id': nvsd_net['id'], 'tenant_id': tenant_id})
 
         return nvsd_net
@@ -119,11 +119,11 @@ class NVSDApi(object):
         uri = NETWORK_URI % (tenant_id, network_id)
 
         self.send_request("PUT", uri,
-                          body=json.dumps(network_update),
+                          body=jsonutils.dumps(network_update),
                           resource='network', tenant_id=tenant_id,
                           resource_id=network_id)
 
-        LOG.debug(_("Network %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s updated under tenant %(tenant_id)s",
                   {'id': network_id, 'tenant_id': tenant_id})
 
     def delete_network(self, network, subnets=[]):
@@ -144,7 +144,7 @@ class NVSDApi(object):
         self.send_request("DELETE", path, resource='network',
                           tenant_id=tenant_id, resource_id=network_id)
 
-        LOG.debug(_("Network %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Network %(id)s deleted under tenant %(tenant_id)s",
                   {'id': network_id, 'tenant_id': tenant_id})
 
     def create_subnet(self, subnet):
@@ -154,10 +154,10 @@ class NVSDApi(object):
 
         uri = SUBNETS_URI % (tenant_id, network_id)
 
-        self.send_request("POST", uri, body=json.dumps(subnet),
+        self.send_request("POST", uri, body=jsonutils.dumps(subnet),
                           resource='subnet', tenant_id=tenant_id)
 
-        LOG.debug(_("Subnet %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s created under tenant %(tenant_id)s",
                   {'id': subnet['id'], 'tenant_id': tenant_id})
 
     def delete_subnet(self, subnet):
@@ -171,7 +171,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='subnet',
                           tenant_id=tenant_id, resource_id=subnet_id)
 
-        LOG.debug(_("Subnet %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s deleted under tenant %(tenant_id)s",
                   {'id': subnet_id, 'tenant_id': tenant_id})
 
     def update_subnet(self, subnet, subnet_update):
@@ -183,11 +183,11 @@ class NVSDApi(object):
         uri = SUBNET_URI % (tenant_id, network_id, subnet_id)
 
         self.send_request("PUT", uri,
-                          body=json.dumps(subnet_update),
+                          body=jsonutils.dumps(subnet_update),
                           resource='subnet', tenant_id=tenant_id,
                           resource_id=subnet_id)
 
-        LOG.debug(_("Subnet %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Subnet %(id)s updated under tenant %(tenant_id)s",
                   {'id': subnet_id, 'tenant_id': tenant_id})
 
     def create_port(self, tenant_id, port):
@@ -216,10 +216,10 @@ class NVSDApi(object):
 
         path = PORTS_URI % (tenant_id, network_id)
 
-        self.send_request("POST", path, body=json.dumps(lport),
+        self.send_request("POST", path, body=jsonutils.dumps(lport),
                           resource='port', tenant_id=tenant_id)
 
-        LOG.debug(_("Port %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s created under tenant %(tenant_id)s",
                   {'id': port['id'], 'tenant_id': tenant_id})
 
     def update_port(self, tenant_id, port, port_update):
@@ -239,11 +239,11 @@ class NVSDApi(object):
 
         uri = PORT_URI % (tenant_id, network_id, port_id)
 
-        self.send_request("PUT", uri, body=json.dumps(lport),
+        self.send_request("PUT", uri, body=jsonutils.dumps(lport),
                           resource='port', tenant_id=tenant_id,
                           resource_id=port_id)
 
-        LOG.debug(_("Port %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s updated under tenant %(tenant_id)s",
                   {'id': port_id, 'tenant_id': tenant_id})
 
     def delete_port(self, port_id, port):
@@ -256,7 +256,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='port', tenant_id=tenant_id,
                           resource_id=port_id)
 
-        LOG.debug(_("Port %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Port %(id)s deleted under tenant %(tenant_id)s",
                   {'id': port_id, 'tenant_id': tenant_id})
 
     def _get_ports(self, tenant_id, network_id):
@@ -274,11 +274,11 @@ class NVSDApi(object):
 
         uri = FLOATING_IPS_URI % tenant_id
 
-        self.send_request("POST", uri, body=json.dumps(floating_ip),
+        self.send_request("POST", uri, body=jsonutils.dumps(floating_ip),
                           resource='floating_ip',
                           tenant_id=tenant_id)
 
-        LOG.debug(_("Flatingip %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s created under tenant %(tenant_id)s",
                   {'id': floating_ip['id'], 'tenant_id': tenant_id})
 
     def update_floatingip(self, floating_ip, floating_ip_update):
@@ -290,12 +290,13 @@ class NVSDApi(object):
         uri = FLOATING_IP_URI % (tenant_id, floating_ip_id)
 
         self.send_request("PUT", uri,
-                          body=json.dumps(floating_ip_update['floatingip']),
+                          body=jsonutils.dumps(
+                              floating_ip_update['floatingip']),
                           resource='floating_ip',
                           tenant_id=tenant_id,
                           resource_id=floating_ip_id)
 
-        LOG.debug(_("Flatingip %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s updated under tenant %(tenant_id)s",
                   {'id': floating_ip_id, 'tenant_id': tenant_id})
 
     def delete_floatingip(self, floating_ip):
@@ -309,7 +310,7 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='floating_ip',
                           tenant_id=tenant_id, resource_id=floating_ip_id)
 
-        LOG.debug(_("Flatingip %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Flatingip %(id)s deleted under tenant %(tenant_id)s",
                   {'id': floating_ip_id, 'tenant_id': tenant_id})
 
     def create_router(self, router):
@@ -318,11 +319,11 @@ class NVSDApi(object):
 
         uri = ROUTERS_URI % tenant_id
 
-        self.send_request("POST", uri, body=json.dumps(router),
+        self.send_request("POST", uri, body=jsonutils.dumps(router),
                           resource='router',
                           tenant_id=tenant_id)
 
-        LOG.debug(_("Router %(id)s created under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s created under tenant %(tenant_id)s",
                   {'id': router['id'], 'tenant_id': tenant_id})
 
     def update_router(self, router):
@@ -334,11 +335,11 @@ class NVSDApi(object):
         uri = ROUTER_URI % (tenant_id, router_id)
 
         self.send_request("PUT", uri,
-                          body=json.dumps(router),
+                          body=jsonutils.dumps(router),
                           resource='router', tenant_id=tenant_id,
                           resource_id=router_id)
 
-        LOG.debug(_("Router %(id)s updated under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s updated under tenant %(tenant_id)s",
                   {'id': router_id, 'tenant_id': tenant_id})
 
     def delete_router(self, tenant_id, router_id):
@@ -348,5 +349,5 @@ class NVSDApi(object):
         self.send_request("DELETE", uri, resource='router',
                           tenant_id=tenant_id, resource_id=router_id)
 
-        LOG.debug(_("Router %(id)s deleted under tenant %(tenant_id)s"),
+        LOG.debug("Router %(id)s deleted under tenant %(tenant_id)s",
                   {'id': router_id, 'tenant_id': tenant_id})

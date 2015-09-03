@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,9 +15,11 @@
 import eventlet
 import eventlet.event
 import eventlet.queue
+from oslo_log import log as logging
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)
@@ -53,17 +53,21 @@ class AsyncProcess(object):
     ...     print line
     """
 
-    def __init__(self, cmd, root_helper=None, respawn_interval=None):
+    def __init__(self, cmd, run_as_root=False, respawn_interval=None,
+                 namespace=None):
         """Constructor.
 
         :param cmd: The list of command arguments to invoke.
-        :param root_helper: Optional, utility to use when running shell cmds.
+        :param run_as_root: The process should run with elevated privileges.
         :param respawn_interval: Optional, the interval in seconds to wait
                to respawn after unexpected process death. Respawn will
                only be attempted if a value of 0 or greater is provided.
+        :param namespace: Optional, start the command in the specified
+               namespace.
         """
-        self.cmd = cmd
-        self.root_helper = root_helper
+        self.cmd_without_namespace = cmd
+        self.cmd = ip_lib.add_namespace_to_cmd(cmd, namespace)
+        self.run_as_root = run_as_root
         if respawn_interval is not None and respawn_interval < 0:
             raise ValueError(_('respawn_interval must be >= 0 if provided.'))
         self.respawn_interval = respawn_interval
@@ -76,27 +80,50 @@ class AsyncProcess(object):
         self._stdout_lines = eventlet.queue.LightQueue()
         self._stderr_lines = eventlet.queue.LightQueue()
 
-    def start(self):
-        """Launch a process and monitor it asynchronously."""
+    def is_active(self):
+        # If using sudo rootwrap as a root_helper, we have to wait until sudo
+        # spawns rootwrap and rootwrap spawns the process.
+
+        return utils.pid_invoked_with_cmdline(
+            self.pid, self.cmd_without_namespace)
+
+    def start(self, block=False):
+        """Launch a process and monitor it asynchronously.
+
+        :param block: Block until the process has started.
+        :raises eventlet.timeout.Timeout if blocking is True and the process
+                did not start in time.
+        """
         if self._kill_event:
             raise AsyncProcessException(_('Process is already started'))
         else:
-            LOG.debug(_('Launching async process [%s].'), self.cmd)
+            LOG.debug('Launching async process [%s].', self.cmd)
             self._spawn()
 
-    def stop(self):
-        """Halt the process and watcher threads."""
+        if block:
+            utils.wait_until_true(self.is_active)
+
+    def stop(self, block=False):
+        """Halt the process and watcher threads.
+
+        :param block: Block until the process has stopped.
+        :raises eventlet.timeout.Timeout if blocking is True and the process
+                did not stop in time.
+        """
         if self._kill_event:
-            LOG.debug(_('Halting async process [%s].'), self.cmd)
+            LOG.debug('Halting async process [%s].', self.cmd)
             self._kill()
         else:
             raise AsyncProcessException(_('Process is not running.'))
+
+        if block:
+            utils.wait_until_true(lambda: not self.is_active())
 
     def _spawn(self):
         """Spawn a process and its watchers."""
         self._kill_event = eventlet.event.Event()
         self._process, cmd = utils.create_process(self.cmd,
-                                                  root_helper=self.root_helper)
+                                                  run_as_root=self.run_as_root)
         self._watchers = []
         for reader in (self._read_stdout, self._read_stderr):
             # Pass the stop event directly to the greenthread to
@@ -108,6 +135,13 @@ class AsyncProcess(object):
                                      self._kill_event)
             self._watchers.append(watcher)
 
+    @property
+    def pid(self):
+        if self._process:
+            return utils.get_root_helper_child_pid(
+                self._process.pid,
+                run_as_root=self.run_as_root)
+
     def _kill(self, respawning=False):
         """Kill the process and the associated watcher greenthreads.
 
@@ -117,7 +151,7 @@ class AsyncProcess(object):
         # Halt the greenthreads
         self._kill_event.send()
 
-        pid = self._get_pid_to_kill()
+        pid = self.pid
         if pid:
             self._kill_process(pid)
 
@@ -126,66 +160,46 @@ class AsyncProcess(object):
             # explicitly started again.
             self._kill_event = None
 
-    def _get_pid_to_kill(self):
-        pid = self._process.pid
-        # If root helper was used, two or more processes will be created:
-        #
-        #  - a root helper process (e.g. sudo myscript)
-        #  - possibly a rootwrap script (e.g. neutron-rootwrap)
-        #  - a child process (e.g. myscript)
-        #
-        # Killing the root helper process will leave the child process
-        # running, re-parented to init, so the only way to ensure that both
-        # die is to target the child process directly.
-        if self.root_helper:
-            try:
-                pid = utils.find_child_pids(pid)[0]
-            except IndexError:
-                # Process is already dead
-                return None
-            while True:
-                try:
-                    # We shouldn't have more than one child per process
-                    # so keep getting the children of the first one
-                    pid = utils.find_child_pids(pid)[0]
-                except IndexError:
-                    # Last process in the tree, return it
-                    break
-        return pid
-
     def _kill_process(self, pid):
         try:
             # A process started by a root helper will be running as
             # root and need to be killed via the same helper.
-            utils.execute(['kill', '-9', pid], root_helper=self.root_helper)
+            utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
         except Exception as ex:
             stale_pid = (isinstance(ex, RuntimeError) and
                          'No such process' in str(ex))
             if not stale_pid:
-                LOG.exception(_('An error occurred while killing [%s].'),
+                LOG.exception(_LE('An error occurred while killing [%s].'),
                               self.cmd)
                 return False
+
+        if self._process:
+            self._process.wait()
         return True
 
     def _handle_process_error(self):
         """Kill the async process and respawn if necessary."""
-        LOG.debug(_('Halting async process [%s] in response to an error.'),
+        LOG.debug('Halting async process [%s] in response to an error.',
                   self.cmd)
-        respawning = self.respawn_interval >= 0
+        if self.respawn_interval is not None and self.respawn_interval >= 0:
+            respawning = True
+        else:
+            respawning = False
         self._kill(respawning=respawning)
         if respawning:
             eventlet.sleep(self.respawn_interval)
-            LOG.debug(_('Respawning async process [%s].'), self.cmd)
+            LOG.debug('Respawning async process [%s].', self.cmd)
             self._spawn()
 
     def _watch_process(self, callback, kill_event):
         while not kill_event.ready():
             try:
-                if not callback():
+                output = callback()
+                if not output and output != "":
                     break
             except Exception:
-                LOG.exception(_('An error occurred while communicating '
-                                'with async process [%s].'), self.cmd)
+                LOG.exception(_LE('An error occurred while communicating '
+                                  'with async process [%s].'), self.cmd)
                 break
             # Ensure that watching a process with lots of output does
             # not block execution of other greenthreads.
@@ -209,15 +223,15 @@ class AsyncProcess(object):
     def _read_stderr(self):
         return self._read(self._process.stderr, self._stderr_lines)
 
-    def _iter_queue(self, queue):
+    def _iter_queue(self, queue, block):
         while True:
             try:
-                yield queue.get_nowait()
+                yield queue.get(block=block)
             except eventlet.queue.Empty:
                 break
 
-    def iter_stdout(self):
-        return self._iter_queue(self._stdout_lines)
+    def iter_stdout(self, block=False):
+        return self._iter_queue(self._stdout_lines, block)
 
-    def iter_stderr(self):
-        return self._iter_queue(self._stderr_lines)
+    def iter_stderr(self, block=False):
+        return self._iter_queue(self._stderr_lines, block)

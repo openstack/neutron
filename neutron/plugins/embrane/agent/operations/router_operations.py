@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,14 +12,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ivar Lazzaro, Embrane, Inc.
 
-from functools import wraps
+import functools
 
 from heleosapi import exceptions as h_exc
+from oslo_log import log as logging
 
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LW
 from neutron.plugins.embrane.common import constants as p_con
 
 LOG = logging.getLogger(__name__)
@@ -36,7 +33,7 @@ def handler(event, handler):
         else:
             handler[event].append(f)
 
-        @wraps(f)
+        @functools.wraps(f)
         def wrapped_f(*args, **kwargs):
             return f(*args, **kwargs)
         return wrapped_f
@@ -63,7 +60,7 @@ def _create_dva_and_assign_address(api, tenant_id, neutron_router,
                                        neutron_router["admin_state_up"],
                                        ip_allocation_info)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
 
     state = api.extract_dva_state(dva)
     return state
@@ -96,8 +93,8 @@ def _delete_dva(api, tenant_id, neutron_router):
     try:
         api.delete_dva(tenant_id, neutron_router["id"])
     except h_exc.DvaNotFound:
-        LOG.warning(_("The router %s had no physical representation,"
-                      "likely already deleted"), neutron_router["id"])
+        LOG.warning(_LW("The router %s had no physical representation, "
+                        "likely already deleted"), neutron_router["id"])
     return p_con.Status.DELETED
 
 
@@ -113,7 +110,7 @@ def _grow_dva_iface_and_assign_address(api, tenant_id, neutron_router,
                                        neutron_router["admin_state_up"],
                                        ip_allocation_info)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
 
     state = api.extract_dva_state(dva)
     return state
@@ -125,12 +122,12 @@ def _shrink_dva_iface(api, tenant_id, neutron_router, port_id):
         dva = api.shrink_interface(tenant_id, neutron_router["id"],
                                    neutron_router["admin_state_up"], port_id)
     except h_exc.InterfaceNotFound:
-        LOG.warning(_("Interface %s not found in the heleos back-end,"
-                      "likely already deleted"), port_id)
+        LOG.warning(_LW("Interface %s not found in the heleos back-end, "
+                        "likely already deleted"), port_id)
         return (p_con.Status.ACTIVE if neutron_router["admin_state_up"] else
                 p_con.Status.READY)
     except h_exc.PreliminaryOperationsFailed as ex:
-        raise h_exc.BrokenInterface(err_msg=ex.message)
+        raise h_exc.BrokenInterface(err_msg=str(ex))
     state = api.extract_dva_state(dva)
     return state
 

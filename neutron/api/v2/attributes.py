@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (c) 2012 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -15,13 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import re
+
+import netaddr
+from oslo_log import log as logging
+from oslo_utils import uuidutils
+import six
+import webob.exc
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
-from neutron.openstack.common import log as logging
-from neutron.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
@@ -32,6 +33,15 @@ SHARED = 'shared'
 
 # Used by range check to indicate no limit for a bound.
 UNLIMITED = None
+
+# TODO(watanabe.isao): A fix like in neutron/db/models_v2.py needs to be
+# done in other db modules, to reuse the following constants.
+# Common definitions for maximum string field length
+NAME_MAX_LEN = 255
+TENANT_ID_MAX_LEN = 255
+DESCRIPTION_MAX_LEN = 255
+DEVICE_ID_MAX_LEN = 255
+DEVICE_OWNER_MAX_LEN = 255
 
 
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
@@ -46,6 +56,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
         msg = (_("Invalid input. '%(target_dict)s' must be a dictionary "
                  "with keys: %(expected_keys)s") %
                {'target_dict': target_dict, 'expected_keys': expected_keys})
+        LOG.debug(msg)
         return msg
 
     expected_keys = set(expected_keys)
@@ -54,11 +65,12 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     predicate = expected_keys.__eq__ if strict else expected_keys.issubset
 
     if not predicate(provided_keys):
-        msg = (_("Validation of dictionary's keys failed."
+        msg = (_("Validation of dictionary's keys failed. "
                  "Expected keys: %(expected_keys)s "
                  "Provided keys: %(provided_keys)s") %
                {'expected_keys': expected_keys,
                 'provided_keys': provided_keys})
+        LOG.debug(msg)
         return msg
 
 
@@ -84,7 +96,9 @@ def _validate_not_empty_string(data, max_len=None):
     if msg:
         return msg
     if not data.strip():
-        return _("'%s' Blank strings are not permitted") % data
+        msg = _("'%s' Blank strings are not permitted") % data
+        LOG.debug(msg)
+        return msg
 
 
 def _validate_string_or_none(data, max_len=None):
@@ -93,7 +107,7 @@ def _validate_string_or_none(data, max_len=None):
 
 
 def _validate_string(data, max_len=None):
-    if not isinstance(data, basestring):
+    if not isinstance(data, six.string_types):
         msg = _("'%s' is not a valid string") % data
         LOG.debug(msg)
         return msg
@@ -145,7 +159,7 @@ def _validate_range(data, valid_values=None):
 
 def _validate_no_whitespace(data):
     """Validates that input has no whitespace."""
-    if len(data.split()) > 1:
+    if re.search(r'\s', data):
         msg = _("'%s' contains whitespace") % data
         LOG.debug(msg)
         raise n_exc.InvalidInput(error_message=msg)
@@ -154,22 +168,45 @@ def _validate_no_whitespace(data):
 
 def _validate_mac_address(data, valid_values=None):
     try:
-        netaddr.EUI(_validate_no_whitespace(data))
+        valid_mac = netaddr.valid_mac(_validate_no_whitespace(data))
     except Exception:
+        valid_mac = False
+
+    if valid_mac:
+        valid_mac = not netaddr.EUI(data) in map(netaddr.EUI,
+                    constants.INVALID_MAC_ADDRESSES)
+    # TODO(arosen): The code in this file should be refactored
+    # so it catches the correct exceptions. _validate_no_whitespace
+    # raises AttributeError if data is None.
+    if not valid_mac:
         msg = _("'%s' is not a valid MAC address") % data
         LOG.debug(msg)
         return msg
 
 
 def _validate_mac_address_or_none(data, valid_values=None):
-    if data is None:
-        return
-    return _validate_mac_address(data, valid_values)
+    if data is not None:
+        return _validate_mac_address(data, valid_values)
 
 
 def _validate_ip_address(data, valid_values=None):
     try:
         netaddr.IPAddress(_validate_no_whitespace(data))
+        # The followings are quick checks for IPv6 (has ':') and
+        # IPv4.  (has 3 periods like 'xx.xx.xx.xx')
+        # NOTE(yamamoto): netaddr uses libraries provided by the underlying
+        # platform to convert addresses.  For example, inet_aton(3).
+        # Some platforms, including NetBSD and OS X, have inet_aton
+        # implementation which accepts more varying forms of addresses than
+        # we want to accept here.  The following check is to reject such
+        # addresses.  For Example:
+        #   >>> netaddr.IPAddress('1' * 59)
+        #   IPAddress('199.28.113.199')
+        #   >>> netaddr.IPAddress(str(int('1' * 59) & 0xffffffff))
+        #   IPAddress('199.28.113.199')
+        #   >>>
+        if ':' not in data and data.count('.') != 3:
+            raise ValueError()
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
         LOG.debug(msg)
@@ -190,12 +227,10 @@ def _validate_ip_pools(data, valid_values=None):
     for ip_pool in data:
         msg = _verify_dict_keys(expected_keys, ip_pool)
         if msg:
-            LOG.debug(msg)
             return msg
         for k in expected_keys:
             msg = _validate_ip_address(ip_pool[k])
             if msg:
-                LOG.debug(msg)
                 return msg
 
 
@@ -217,16 +252,15 @@ def _validate_fixed_ips(data, valid_values=None):
             fixed_ip_address = fixed_ip['ip_address']
             if fixed_ip_address in ips:
                 msg = _("Duplicate IP address '%s'") % fixed_ip_address
+                LOG.debug(msg)
             else:
                 msg = _validate_ip_address(fixed_ip_address)
             if msg:
-                LOG.debug(msg)
                 return msg
             ips.append(fixed_ip_address)
         if 'subnet_id' in fixed_ip:
             msg = _validate_uuid(fixed_ip['subnet_id'])
             if msg:
-                LOG.debug(msg)
                 return msg
 
 
@@ -236,21 +270,20 @@ def _validate_nameservers(data, valid_values=None):
         LOG.debug(msg)
         return msg
 
-    ips = []
-    for ip in data:
-        msg = _validate_ip_address(ip)
+    hosts = []
+    for host in data:
+        # This must be an IP address only
+        msg = _validate_ip_address(host)
         if msg:
-            # This may be a hostname
-            msg = _validate_regex(ip, HOSTNAME_PATTERN)
-            if msg:
-                msg = _("'%s' is not a valid nameserver") % ip
-                LOG.debug(msg)
-                return msg
-        if ip in ips:
-            msg = _("Duplicate nameserver '%s'") % ip
+            msg = _("'%(host)s' is not a valid nameserver. %(msg)s") % {
+                'host': host, 'msg': msg}
             LOG.debug(msg)
             return msg
-        ips.append(ip)
+        if host in hosts:
+            msg = _("Duplicate nameserver '%s'") % host
+            LOG.debug(msg)
+            return msg
+        hosts.append(host)
 
 
 def _validate_hostroutes(data, valid_values=None):
@@ -264,15 +297,12 @@ def _validate_hostroutes(data, valid_values=None):
     for hostroute in data:
         msg = _verify_dict_keys(expected_keys, hostroute)
         if msg:
-            LOG.debug(msg)
             return msg
         msg = _validate_subnet(hostroute['destination'])
         if msg:
-            LOG.debug(msg)
             return msg
         msg = _validate_ip_address(hostroute['nexthop'])
         if msg:
-            LOG.debug(msg)
             return msg
         if hostroute in hostroutes:
             msg = _("Duplicate hostroute '%s'") % hostroute
@@ -282,16 +312,15 @@ def _validate_hostroutes(data, valid_values=None):
 
 
 def _validate_ip_address_or_none(data, valid_values=None):
-    if data is None:
-        return None
-    return _validate_ip_address(data, valid_values)
+    if data is not None:
+        return _validate_ip_address(data, valid_values)
 
 
 def _validate_subnet(data, valid_values=None):
     msg = None
     try:
         net = netaddr.IPNetwork(_validate_no_whitespace(data))
-        if ('/' not in data or net.network != net.ip):
+        if '/' not in data:
             msg = _("'%(data)s' isn't a recognized IP subnet cidr,"
                     " '%(cidr)s' is recommended") % {"data": data,
                                                      "cidr": net.cidr}
@@ -322,9 +351,8 @@ def _validate_subnet_list(data, valid_values=None):
 
 
 def _validate_subnet_or_none(data, valid_values=None):
-    if data is None:
-        return
-    return _validate_subnet(data, valid_values)
+    if data is not None:
+        return _validate_subnet(data, valid_values)
 
 
 def _validate_regex(data, valid_values=None):
@@ -340,9 +368,18 @@ def _validate_regex(data, valid_values=None):
 
 
 def _validate_regex_or_none(data, valid_values=None):
-    if data is None:
-        return
-    return _validate_regex(data, valid_values)
+    if data is not None:
+        return _validate_regex(data, valid_values)
+
+
+def _validate_subnetpool_id(data, valid_values=None):
+    if data != constants.IPV6_PD_POOL_ID:
+        return _validate_uuid_or_none(data, valid_values)
+
+
+def _validate_subnetpool_id_or_none(data, valid_values=None):
+    if data is not None:
+        return _validate_subnetpool_id(data, valid_values)
 
 
 def _validate_uuid(data, valid_values=None):
@@ -366,7 +403,6 @@ def _validate_uuid_list(data, valid_values=None):
     for item in data:
         msg = _validate_uuid(item)
         if msg:
-            LOG.debug(msg)
             return msg
 
     if len(set(data)) != len(data):
@@ -384,13 +420,15 @@ def _validate_dict_item(key, key_validator, data):
     # TODO(salv-orlando): Structure of dict attributes should be improved
     # to avoid iterating over items
     val_func = val_params = None
-    for (k, v) in key_validator.iteritems():
+    for (k, v) in six.iteritems(key_validator):
         if k.startswith('type:'):
             # ask forgiveness, not permission
             try:
                 val_func = validators[k]
             except KeyError:
-                return _("Validator '%s' does not exist.") % k
+                msg = _("Validator '%s' does not exist.") % k
+                LOG.debug(msg)
+                return msg
             val_params = v
             break
     # Process validation
@@ -408,22 +446,20 @@ def _validate_dict(data, key_specs=None):
         return
 
     # Check whether all required keys are present
-    required_keys = [key for key, spec in key_specs.iteritems()
+    required_keys = [key for key, spec in six.iteritems(key_specs)
                      if spec.get('required')]
 
     if required_keys:
         msg = _verify_dict_keys(required_keys, data, False)
         if msg:
-            LOG.debug(msg)
             return msg
 
     # Perform validation and conversion of all values
     # according to the specifications.
-    for key, key_validator in [(k, v) for k, v in key_specs.iteritems()
+    for key, key_validator in [(k, v) for k, v in six.iteritems(key_specs)
                                if k in data]:
         msg = _validate_dict_item(key, key_validator, data)
         if msg:
-            LOG.debug(msg)
             return msg
 
 
@@ -457,7 +493,7 @@ def _validate_non_negative(data, valid_values=None):
 
 
 def convert_to_boolean(data):
-    if isinstance(data, basestring):
+    if isinstance(data, six.string_types):
         val = data.lower()
         if val == "true" or val == "1":
             return True
@@ -474,12 +510,41 @@ def convert_to_boolean(data):
     raise n_exc.InvalidInput(error_message=msg)
 
 
+def convert_to_boolean_if_not_none(data):
+    if data is not None:
+        return convert_to_boolean(data)
+
+
 def convert_to_int(data):
     try:
         return int(data)
     except (ValueError, TypeError):
         msg = _("'%s' is not a integer") % data
         raise n_exc.InvalidInput(error_message=msg)
+
+
+def convert_to_int_if_not_none(data):
+    if data is not None:
+        return convert_to_int(data)
+    return data
+
+
+def convert_to_positive_float_or_none(val):
+    # NOTE(salv-orlando): This conversion function is currently used by
+    # a vendor specific extension only at the moment  It is used for
+    # port's RXTX factor in neutron.plugins.vmware.extensions.qos.
+    # It is deemed however generic enough to be in this module as it
+    # might be used in future for other API attributes.
+    if val is None:
+        return
+    try:
+        val = float(val)
+        if val < 0:
+            raise ValueError()
+    except (ValueError, TypeError):
+        msg = _("'%s' must be a non negative decimal.") % val
+        raise n_exc.InvalidInput(error_message=msg)
+    return val
 
 
 def convert_kvp_str_to_list(data):
@@ -510,7 +575,7 @@ def convert_kvp_list_to_dict(kvp_list):
         key, value = convert_kvp_str_to_list(kvp_str)
         kvp_map.setdefault(key, set())
         kvp_map[key].add(value)
-    return dict((x, list(y)) for x, y in kvp_map.iteritems())
+    return dict((x, list(y)) for x, y in six.iteritems(kvp_map))
 
 
 def convert_none_to_empty_list(value):
@@ -524,14 +589,11 @@ def convert_none_to_empty_dict(value):
 def convert_to_list(data):
     if data is None:
         return []
-    elif hasattr(data, '__iter__'):
+    elif hasattr(data, '__iter__') and not isinstance(data, six.string_types):
         return list(data)
     else:
         return [data]
 
-
-HOSTNAME_PATTERN = ("(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]"
-                    "{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)")
 
 HEX_ELEM = '[0-9A-Fa-f]'
 UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
@@ -566,6 +628,8 @@ validators = {'type:dict': _validate_dict,
               'type:subnet': _validate_subnet,
               'type:subnet_list': _validate_subnet_list,
               'type:subnet_or_none': _validate_subnet_or_none,
+              'type:subnetpool_id': _validate_subnetpool_id,
+              'type:subnetpool_id_or_none': _validate_subnetpool_id_or_none,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
               'type:uuid_list': _validate_uuid_list,
@@ -579,6 +643,8 @@ PORT = 'port'
 PORTS = '%ss' % PORT
 SUBNET = 'subnet'
 SUBNETS = '%ss' % SUBNET
+SUBNETPOOL = 'subnetpool'
+SUBNETPOOLS = '%ss' % SUBNETPOOL
 # Note: a default of ATTR_NOT_SPECIFIED indicates that an
 # attribute is not required, but will be generated by the plugin
 # if it is not specified.  Particularly, a value of ATTR_NOT_SPECIFIED
@@ -609,7 +675,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'default': '', 'is_visible': True},
         'subnets': {'allow_post': False, 'allow_put': False,
                     'default': [],
@@ -621,7 +687,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         SHARED: {'allow_post': True,
@@ -638,7 +704,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'is_visible': True},
         'network_id': {'allow_post': True, 'allow_put': False,
                        'required_by_policy': True,
@@ -648,7 +714,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': True,
                            'convert_to': convert_to_boolean,
                            'is_visible': True},
-        'mac_address': {'allow_post': True, 'allow_put': False,
+        'mac_address': {'allow_post': True, 'allow_put': True,
                         'default': ATTR_NOT_SPECIFIED,
                         'validate': {'type:mac_address': None},
                         'enforce_policy': True,
@@ -660,15 +726,15 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'enforce_policy': True,
                       'is_visible': True},
         'device_id': {'allow_post': True, 'allow_put': True,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': DEVICE_ID_MAX_LEN},
                       'default': '',
                       'is_visible': True},
         'device_owner': {'allow_post': True, 'allow_put': True,
-                         'validate': {'type:string': None},
+                         'validate': {'type:string': DEVICE_OWNER_MAX_LEN},
                          'default': '',
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
@@ -680,7 +746,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': None},
+                 'validate': {'type:string': NAME_MAX_LEN},
                  'is_visible': True},
         'ip_version': {'allow_post': True, 'allow_put': False,
                        'convert_to': convert_to_int,
@@ -690,15 +756,30 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'required_by_policy': True,
                        'validate': {'type:uuid': None},
                        'is_visible': True},
-        'cidr': {'allow_post': True, 'allow_put': False,
-                 'validate': {'type:subnet': None},
+        'subnetpool_id': {'allow_post': True,
+                          'allow_put': False,
+                          'default': ATTR_NOT_SPECIFIED,
+                          'required_by_policy': False,
+                          'validate': {'type:subnetpool_id_or_none': None},
+                          'is_visible': True},
+        'prefixlen': {'allow_post': True,
+                      'allow_put': False,
+                      'validate': {'type:non_negative': None},
+                      'convert_to': convert_to_int,
+                      'default': ATTR_NOT_SPECIFIED,
+                      'required_by_policy': False,
+                      'is_visible': False},
+        'cidr': {'allow_post': True,
+                 'allow_put': False,
+                 'default': ATTR_NOT_SPECIFIED,
+                 'validate': {'type:subnet_or_none': None},
+                 'required_by_policy': False,
                  'is_visible': True},
         'gateway_ip': {'allow_post': True, 'allow_put': True,
                        'default': ATTR_NOT_SPECIFIED,
                        'validate': {'type:ip_address_or_none': None},
                        'is_visible': True},
-        #TODO(salvatore-orlando): Enable PUT on allocation_pools
-        'allocation_pools': {'allow_post': True, 'allow_put': False,
+        'allocation_pools': {'allow_post': True, 'allow_put': True,
                              'default': ATTR_NOT_SPECIFIED,
                              'validate': {'type:ip_pools': None},
                              'is_visible': True},
@@ -713,18 +794,81 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:hostroutes': None},
                         'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': None},
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
                       'required_by_policy': True,
                       'is_visible': True},
         'enable_dhcp': {'allow_post': True, 'allow_put': True,
                         'default': True,
                         'convert_to': convert_to_boolean,
                         'is_visible': True},
+        'ipv6_ra_mode': {'allow_post': True, 'allow_put': False,
+                         'default': ATTR_NOT_SPECIFIED,
+                         'validate': {'type:values': constants.IPV6_MODES},
+                         'is_visible': True},
+        'ipv6_address_mode': {'allow_post': True, 'allow_put': False,
+                              'default': ATTR_NOT_SPECIFIED,
+                              'validate': {'type:values':
+                                           constants.IPV6_MODES},
+                              'is_visible': True},
         SHARED: {'allow_post': False,
                  'allow_put': False,
                  'default': False,
                  'convert_to': convert_to_boolean,
                  'is_visible': False,
+                 'required_by_policy': True,
+                 'enforce_policy': True},
+    },
+    SUBNETPOOLS: {
+        'id': {'allow_post': False,
+               'allow_put': False,
+               'validate': {'type:uuid': None},
+               'is_visible': True,
+               'primary_key': True},
+        'name': {'allow_post': True,
+                 'allow_put': True,
+                 'validate': {'type:not_empty_string': None},
+                 'is_visible': True},
+        'tenant_id': {'allow_post': True,
+                      'allow_put': False,
+                      'validate': {'type:string': TENANT_ID_MAX_LEN},
+                      'required_by_policy': True,
+                      'is_visible': True},
+        'prefixes': {'allow_post': True,
+                     'allow_put': True,
+                     'validate': {'type:subnet_list': None},
+                     'is_visible': True},
+        'default_quota': {'allow_post': True,
+                          'allow_put': True,
+                          'validate': {'type:non_negative': None},
+                          'convert_to': convert_to_int,
+                          'default': ATTR_NOT_SPECIFIED,
+                          'is_visible': True},
+        'ip_version': {'allow_post': False,
+                       'allow_put': False,
+                       'is_visible': True},
+        'default_prefixlen': {'allow_post': True,
+                              'allow_put': True,
+                              'validate': {'type:non_negative': None},
+                              'convert_to': convert_to_int,
+                              'default': ATTR_NOT_SPECIFIED,
+                              'is_visible': True},
+        'min_prefixlen': {'allow_post': True,
+                          'allow_put': True,
+                          'default': ATTR_NOT_SPECIFIED,
+                          'validate': {'type:non_negative': None},
+                          'convert_to': convert_to_int,
+                          'is_visible': True},
+        'max_prefixlen': {'allow_post': True,
+                          'allow_put': True,
+                          'default': ATTR_NOT_SPECIFIED,
+                          'validate': {'type:non_negative': None},
+                          'convert_to': convert_to_int,
+                          'is_visible': True},
+        SHARED: {'allow_post': True,
+                 'allow_put': False,
+                 'default': False,
+                 'convert_to': convert_to_boolean,
+                 'is_visible': True,
                  'required_by_policy': True,
                  'enforce_policy': True},
     }
@@ -739,21 +883,71 @@ RESOURCE_FOREIGN_KEYS = {
 PLURALS = {NETWORKS: NETWORK,
            PORTS: PORT,
            SUBNETS: SUBNET,
+           SUBNETPOOLS: SUBNETPOOL,
            'dns_nameservers': 'dns_nameserver',
            'host_routes': 'host_route',
            'allocation_pools': 'allocation_pool',
            'fixed_ips': 'fixed_ip',
            'extensions': 'extension'}
-EXT_NSES = {}
-
-# Namespaces to be added for backward compatibility
-# when existing extended resource attributes are
-# provided by other extension than original one.
-EXT_NSES_BC = {}
 
 
-def get_attr_metadata():
-    return {'plurals': PLURALS,
-            'xmlns': constants.XML_NS_V20,
-            constants.EXT_NS: EXT_NSES,
-            constants.EXT_NS_COMP: EXT_NSES_BC}
+def fill_default_value(attr_info, res_dict,
+                       exc_cls=ValueError,
+                       check_allow_post=True):
+    for attr, attr_vals in six.iteritems(attr_info):
+        if attr_vals['allow_post']:
+            if ('default' not in attr_vals and
+                attr not in res_dict):
+                msg = _("Failed to parse request. Required "
+                        "attribute '%s' not specified") % attr
+                raise exc_cls(msg)
+            res_dict[attr] = res_dict.get(attr,
+                                          attr_vals.get('default'))
+        elif check_allow_post:
+            if attr in res_dict:
+                msg = _("Attribute '%s' not allowed in POST") % attr
+                raise exc_cls(msg)
+
+
+def convert_value(attr_info, res_dict, exc_cls=ValueError):
+    for attr, attr_vals in six.iteritems(attr_info):
+        if (attr not in res_dict or
+            res_dict[attr] is ATTR_NOT_SPECIFIED):
+            continue
+        # Convert values if necessary
+        if 'convert_to' in attr_vals:
+            res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
+        # Check that configured values are correct
+        if 'validate' not in attr_vals:
+            continue
+        for rule in attr_vals['validate']:
+            res = validators[rule](res_dict[attr], attr_vals['validate'][rule])
+            if res:
+                msg_dict = dict(attr=attr, reason=res)
+                msg = _("Invalid input for %(attr)s. "
+                        "Reason: %(reason)s.") % msg_dict
+                raise exc_cls(msg)
+
+
+def populate_tenant_id(context, res_dict, attr_info, is_create):
+    if (('tenant_id' in res_dict and
+         res_dict['tenant_id'] != context.tenant_id and
+         not context.is_admin)):
+        msg = _("Specifying 'tenant_id' other than authenticated "
+                "tenant in request requires admin privileges")
+        raise webob.exc.HTTPBadRequest(msg)
+
+    if is_create and 'tenant_id' not in res_dict:
+        if context.tenant_id:
+            res_dict['tenant_id'] = context.tenant_id
+        elif 'tenant_id' in attr_info:
+            msg = _("Running without keystone AuthN requires "
+                    "that tenant_id is specified")
+            raise webob.exc.HTTPBadRequest(msg)
+
+
+def verify_attributes(res_dict, attr_info):
+    extra_keys = set(res_dict.keys()) - set(attr_info.keys())
+    if extra_keys:
+        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+        raise webob.exc.HTTPBadRequest(msg)

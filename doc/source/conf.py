@@ -44,10 +44,10 @@ sys.path.insert(0, NEUTRON_DIR)
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
-              'sphinx.ext.intersphinx',
               'sphinx.ext.pngmath',
               'sphinx.ext.graphviz',
-              'sphinx.ext.todo']
+              'sphinx.ext.todo',
+              'oslosphinx']
 
 todo_include_todos = True
 
@@ -133,8 +133,8 @@ man_pages = [
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme_path = ["."]
-html_theme = '_theme'
+# html_theme_path = ["."]
+# html_theme = '_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -163,7 +163,7 @@ html_theme = '_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -238,12 +238,3 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('http://docs.python.org/', None),
-                       'nova': ('http://nova.openstack.org', None),
-                       'swift': ('http://swift.openstack.org', None),
-                       'glance': ('http://glance.openstack.org', None),
-                       'horizon': ('http://horizon.openstack.org', None),
-                       'keystone': ('http://keystone.openstack.org', None),
-                      }

@@ -24,29 +24,14 @@ Create Date: ${create_date}
 # revision identifiers, used by Alembic.
 revision = ${repr(up_revision)}
 down_revision = ${repr(down_revision)}
-
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    '${config.neutron_config.core_plugin}'
-]
+% if branch_labels:
+branch_labels = ${repr(branch_labels)}
+% endif
 
 from alembic import op
 import sqlalchemy as sa
 ${imports if imports else ""}
 
-from neutron.db import migration
 
-
-def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
+def upgrade():
     ${upgrades if upgrades else "pass"}
-
-
-def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    ${downgrades if downgrades else "pass"}

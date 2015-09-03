@@ -29,7 +29,13 @@ EXTENDED_ATTRIBUTES_2_0 = {
                  {'type:dict_or_nodata':
                   {'network_id': {'type:uuid': None, 'required': True},
                    'enable_snat': {'type:boolean': None, 'required': False,
-                                   'convert_to': attrs.convert_to_boolean}}
+                                   'convert_to': attrs.convert_to_boolean},
+                   'external_fixed_ips': {
+                       'convert_list_to': attrs.convert_kvp_list_to_dict,
+                       'validate': {'type:fixed_ips': None},
+                       'default': None,
+                       'required': False}
+                   }
                   }}}}
 
 
@@ -47,10 +53,6 @@ class L3_ext_gw_mode(extensions.ExtensionDescriptor):
     def get_description(cls):
         return ("Extension of the router abstraction for specifying whether "
                 "SNAT should occur on the external gateway")
-
-    @classmethod
-    def get_namespace(cls):
-        return "http://docs.openstack.org/ext/neutron/ext-gw-mode/api/v1.0"
 
     @classmethod
     def get_updated(cls):

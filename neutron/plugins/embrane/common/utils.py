@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
 #
@@ -14,14 +12,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Ivar Lazzaro, Embrane, Inc.
 
 from heleosapi import info as h_info
+from oslo_log import log as logging
 
 from neutron.common import constants
 from neutron.db import models_v2
-from neutron.openstack.common import log as logging
+from neutron.i18n import _LI
 
 LOG = logging.getLogger(__name__)
 
@@ -44,7 +41,7 @@ def retrieve_ip_allocation_info(context, neutron_port):
     try:
         subnet_id = neutron_port["fixed_ips"][0]["subnet_id"]
     except (KeyError, IndexError):
-        LOG.info(_("No ip allocation set"))
+        LOG.info(_LI("No ip allocation set"))
         return
     subnet = retrieve_subnet(context, subnet_id)
     allocated_ip = neutron_port["fixed_ips"][0]["ip_address"]
