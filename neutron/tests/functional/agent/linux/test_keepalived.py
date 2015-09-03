@@ -14,12 +14,16 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.unit.agent.linux import test_keepalived
+
+
+LOG = logging.getLogger(__name__)
 
 
 class KeepalivedManagerTestCase(base.BaseTestCase,
@@ -49,11 +53,17 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
         self.assertEqual(self.expected_config.get_config_str(),
                          self.manager.get_conf_on_disk())
 
+    def _log_pid(self, pid):
+        # TODO(amuller): Remove when bug 1490043 is solved.
+        LOG.info(utils.execute(['ps', '-F', pid]))
+
     def test_keepalived_respawns(self):
         self.manager.spawn()
         process = self.manager.get_process()
+        pid = process.pid
+        self._log_pid(pid)
         self.assertTrue(process.active)
-
+        self._log_pid(pid)
         process.disable(sig='15')
 
         utils.wait_until_true(
