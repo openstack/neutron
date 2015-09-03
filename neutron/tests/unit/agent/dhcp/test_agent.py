@@ -1193,6 +1193,7 @@ class TestDeviceManager(base.BaseTestCase):
         self.mock_driver = mock.MagicMock()
         self.mock_driver.DEV_NAME_LEN = (
             interface.LinuxInterfaceDriver.DEV_NAME_LEN)
+        self.mock_driver.use_gateway_ips = False
         self.mock_iproute = mock.MagicMock()
         driver_cls.return_value = self.mock_driver
         iproute_cls.return_value = self.mock_iproute
