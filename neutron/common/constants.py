@@ -63,6 +63,8 @@ HA_NETWORK_NAME = 'HA network tenant %s'
 HA_SUBNET_NAME = 'HA subnet tenant %s'
 HA_PORT_NAME = 'HA port tenant %s'
 MINIMUM_AGENTS_FOR_HA = 2
+HA_ROUTER_STATE_ACTIVE = 'active'
+HA_ROUTER_STATE_STANDBY = 'standby'
 
 IPv4 = 'IPv4'
 IPv6 = 'IPv6'

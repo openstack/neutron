@@ -15,6 +15,7 @@
 import mock
 from oslo_config import cfg
 
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
@@ -24,6 +25,7 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.scheduler import l3_agent_scheduler
@@ -420,6 +422,20 @@ class L3HATestCase(L3HATestFramework):
         routers_after = self.plugin.get_routers(self.admin_ctx)
         self.assertEqual(routers_before, routers_after)
 
+    def test_get_active_host_for_ha_router(self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        self.assertEqual(
+            None,
+            self.plugin.get_active_host_for_ha_router(
+                self.admin_ctx, router['id']))
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: 'active'}, self.agent2['host'])
+        self.assertEqual(
+            self.agent2['host'],
+            self.plugin.get_active_host_for_ha_router(
+                self.admin_ctx, router['id']))
+
     def test_update_routers_states(self):
         router1 = self._create_router()
         self._bind_router(router1['id'])
@@ -519,6 +535,76 @@ class L3HAModeDbTestCase(L3HATestFramework):
         bindings = self.plugin.get_ha_router_port_bindings(
             self.admin_ctx, [router['id']])
         self.assertEqual(2, len(bindings))
+
+    def test_update_router_port_bindings_no_ports(self):
+        self.plugin._update_router_port_bindings(
+            self.admin_ctx, {}, self.agent1['host'])
+
+    def _get_first_interface(self, router_id):
+        device_filter = {'device_id': [router_id],
+                         'device_owner':
+                         [constants.DEVICE_OWNER_ROUTER_INTF]}
+        return self.core_plugin.get_ports(
+            self.admin_ctx,
+            filters=device_filter)[0]
+
+    def test_update_router_port_bindings_updates_host(self):
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router()
+        self._bind_router(router['id'])
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        self.plugin._update_router_port_bindings(
+            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+
+        port = self._get_first_interface(router['id'])
+        self.assertEqual(self.agent1['host'], port[portbindings.HOST_ID])
+
+        self.plugin._update_router_port_bindings(
+            self.admin_ctx, {router['id']: 'active'}, self.agent2['host'])
+        port = self._get_first_interface(router['id'])
+        self.assertEqual(self.agent2['host'], port[portbindings.HOST_ID])
+
+    def test_ensure_host_set_on_ports_binds_correctly(self):
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router()
+        self._bind_router(router['id'])
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        port = self._get_first_interface(router['id'])
+        self.assertEqual('', port[portbindings.HOST_ID])
+
+        # Update the router object to include the first interface
+        router = (
+            self.plugin.list_active_sync_routers_on_active_l3_agent(
+                self.admin_ctx, self.agent1['host'], [router['id']]))[0]
+
+        # ensure_host_set_on_ports binds an unbound port
+        callback = l3_rpc.L3RpcCallback()
+        callback._l3plugin = self.plugin
+        callback._ensure_host_set_on_ports(
+            self.admin_ctx, self.agent1['host'], [router])
+        port = self._get_first_interface(router['id'])
+        self.assertEqual(self.agent1['host'], port[portbindings.HOST_ID])
+
+        # ensure_host_set_on_ports does not rebind a bound port
+        router = (
+            self.plugin.list_active_sync_routers_on_active_l3_agent(
+                self.admin_ctx, self.agent1['host'], [router['id']]))[0]
+        callback._ensure_host_set_on_ports(
+            self.admin_ctx, self.agent2['host'], [router])
+        port = self._get_first_interface(router['id'])
+        self.assertEqual(self.agent1['host'], port[portbindings.HOST_ID])
 
 
 class L3HAUserTestCase(L3HATestFramework):
