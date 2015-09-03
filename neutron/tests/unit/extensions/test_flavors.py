@@ -308,6 +308,7 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         res = self.ctx.session.query(flavors_db.Flavor).all()
         self.assertEqual(1, len(res))
         self.assertEqual('GOLD', res[0]['name'])
+        self.assertEqual(constants.LOADBALANCER, res[0]['service_type'])
 
     def test_update_flavor(self):
         fl, flavor = self._create_flavor()
