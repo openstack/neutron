@@ -28,8 +28,10 @@ from webob import exc
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -2493,6 +2495,41 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                           plugin.create_router, ctx, data)
         routers = plugin.get_routers(ctx)
         self.assertEqual(0, len(routers))
+
+    def test_update_subnet_gateway_for_external_net(self):
+        """Test to make sure notification to routers occurs when the gateway
+            ip address of a subnet of the external network is changed.
+        """
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not hasattr(plugin, 'l3_rpc_notifier'):
+            self.skipTest("Plugin does not support l3_rpc_notifier")
+        # make sure the callback is registered.
+        registry.subscribe(
+            l3_db._notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+            events.AFTER_UPDATE)
+        with mock.patch.object(plugin.l3_rpc_notifier,
+                               'routers_updated') as chk_method:
+            with self.network() as network:
+                allocation_pools = [{'start': '120.0.0.3',
+                                     'end': '120.0.0.254'}]
+                with self.subnet(network=network,
+                                 gateway_ip='120.0.0.1',
+                                 allocation_pools=allocation_pools,
+                                 cidr='120.0.0.0/24') as subnet:
+                    kwargs = {
+                        'device_owner': l3_constants.DEVICE_OWNER_ROUTER_GW,
+                        'device_id': 'fake_device'}
+                    with self.port(subnet=subnet, **kwargs):
+                        data = {'subnet': {'gateway_ip': '120.0.0.2'}}
+                        req = self.new_update_request('subnets', data,
+                                                      subnet['subnet']['id'])
+                        res = self.deserialize(self.fmt,
+                                               req.get_response(self.api))
+                        self.assertEqual(res['subnet']['gateway_ip'],
+                                         data['subnet']['gateway_ip'])
+                        chk_method.assert_called_with(mock.ANY,
+                                                      ['fake_device'], None)
 
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
