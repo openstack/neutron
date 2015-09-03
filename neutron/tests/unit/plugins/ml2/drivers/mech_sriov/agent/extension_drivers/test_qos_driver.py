@@ -22,6 +22,7 @@ from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent.extension_drivers import (
     qos_driver)
+from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 
@@ -42,7 +43,7 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         self.clear_max_rate_mock = self.qos_driver.eswitch_mgr.clear_max_rate
         self.rule = self._create_bw_limit_rule_obj()
         self.qos_policy = self._create_qos_policy_obj([self.rule])
-        self.port = self._create_fake_port()
+        self.port = self._create_fake_port(self.qos_policy.id)
 
     def _create_bw_limit_rule_obj(self):
         rule_obj = rule.QosBandwidthLimitRule()
@@ -61,12 +62,18 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
                 'rules': rules}
         policy_obj = policy.QosPolicy(self.context, **policy_dict)
         policy_obj.obj_reset_changes()
+        for policy_rule in policy_obj.rules:
+            policy_rule.qos_policy_id = policy_obj.id
+            policy_rule.obj_reset_changes()
+
         return policy_obj
 
-    def _create_fake_port(self):
+    def _create_fake_port(self, qos_policy_id):
         return {'port_id': uuidutils.generate_uuid(),
                 'profile': {'pci_slot': self.PCI_SLOT},
-                'device': self.ASSIGNED_MAC}
+                'device': self.ASSIGNED_MAC,
+                qos_consts.QOS_POLICY_ID: qos_policy_id,
+                'device_owner': uuidutils.generate_uuid()}
 
     def test_create_rule(self):
         self.qos_driver.create(self.port, self.qos_policy)

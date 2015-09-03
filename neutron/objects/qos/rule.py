@@ -20,6 +20,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import six
 
+from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
@@ -56,6 +57,22 @@ class QosRule(base.NeutronDbObject):
         dict_ = super(QosRule, self).to_dict()
         dict_['type'] = self.rule_type
         return dict_
+
+    def should_apply_to_port(self, port):
+        """Check whether a rule can be applied to a specific port.
+
+        This function has the logic to decide whether a rule should
+        be applied to a port or not, depending on the source of the
+        policy (network, or port). Eventually rules could override
+        this method, or we could make it abstract to allow different
+        rule behaviour.
+        """
+        is_network_rule = self.qos_policy_id != port[qos_consts.QOS_POLICY_ID]
+        is_network_device_port = any(port['device_owner'].startswith(prefix)
+                                     for prefix
+                                     in constants.DEVICE_OWNER_PREFIXES)
+
+        return not (is_network_rule and is_network_device_port)
 
 
 @obj_base.VersionedObjectRegistry.register
