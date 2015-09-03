@@ -1482,6 +1482,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _agent_has_updates(self, polling_manager):
         return (polling_manager.is_polling_required or
                 self.updated_ports or
+                self.deleted_ports or
                 self.sg_agent.firewall_refresh_needed())
 
     def _port_info_has_changes(self, port_info):
