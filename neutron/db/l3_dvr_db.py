@@ -30,7 +30,6 @@ from neutron.common import utils as n_utils
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
-from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron import manager
@@ -201,15 +200,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return l3_const.DEVICE_OWNER_DVR_INTERFACE
         return super(L3_NAT_with_dvr_db_mixin,
                      self)._get_device_owner(context, router)
-
-    def _get_interface_ports_for_network(self, context, network_id):
-        router_intf_qry = context.session.query(l3_db.RouterPort)
-        router_intf_qry = router_intf_qry.join(models_v2.Port)
-
-        return router_intf_qry.filter(
-            models_v2.Port.network_id == network_id,
-            l3_db.RouterPort.port_type.in_(l3_const.ROUTER_INTERFACE_OWNERS)
-        )
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
         """Override to create floating agent gw port for DVR.

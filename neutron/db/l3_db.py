@@ -788,14 +788,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                'status': floatingip['status']}
         return self._fields(res, fields)
 
-    def _get_interface_ports_for_network(self, context, network_id):
-        router_intf_qry = context.session.query(RouterPort)
-        router_intf_qry = router_intf_qry.join(models_v2.Port)
-        return router_intf_qry.filter(
-            models_v2.Port.network_id == network_id,
-            RouterPort.port_type == DEVICE_OWNER_ROUTER_INTF
-        )
-
     def _get_router_for_floatingip(self, context, internal_port,
                                    internal_subnet_id,
                                    external_network_id):
@@ -805,24 +797,29 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                      'which has no gateway_ip') % internal_subnet_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        router_intf_ports = self._get_interface_ports_for_network(
-            context, internal_port['network_id'])
-
-        # This joins on port_id so is not a cross-join
-        routerport_qry = router_intf_ports.join(models_v2.IPAllocation)
-        routerport_qry = routerport_qry.filter(
+        # Find routers(with router_id and interface address) that
+        # connect given internal subnet and the external network.
+        # Among them, if the router's interface address matches
+        # with subnet's gateway-ip, return that router.
+        # Otherwise return the first router.
+        gw_port = orm.aliased(models_v2.Port, name="gw_port")
+        routerport_qry = context.session.query(
+            RouterPort.router_id, models_v2.IPAllocation.ip_address).join(
+            models_v2.Port, models_v2.IPAllocation).filter(
+            models_v2.Port.network_id == internal_port['network_id'],
+            RouterPort.port_type.in_(l3_constants.ROUTER_INTERFACE_OWNERS),
             models_v2.IPAllocation.subnet_id == internal_subnet_id
-        )
+        ).join(gw_port, gw_port.device_id == RouterPort.router_id).filter(
+            gw_port.network_id == external_network_id).distinct()
 
-        for router_port in routerport_qry:
-            router_id = router_port.router.id
-            router_gw_qry = context.session.query(models_v2.Port)
-            has_gw_port = router_gw_qry.filter_by(
-                network_id=external_network_id,
-                device_id=router_id,
-                device_owner=DEVICE_OWNER_ROUTER_GW).count()
-            if has_gw_port:
+        first_router_id = None
+        for router_id, interface_ip in routerport_qry:
+            if interface_ip == subnet['gateway_ip']:
                 return router_id
+            if not first_router_id:
+                first_router_id = router_id
+        if first_router_id:
+            return first_router_id
 
         raise l3.ExternalGatewayForFloatingIPNotFound(
             subnet_id=internal_subnet_id,
