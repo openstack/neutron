@@ -224,7 +224,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertEqual(expected, res)
 
     def test_associate_service_profile_with_flavor(self):
-        expected = {'service_profile': {'id': _uuid()}}
+        tenant_id = uuidutils.generate_uuid()
+        expected = {'service_profile': {'id': _uuid(),
+                                        'tenant_id': tenant_id}}
         instance = self.plugin.return_value
         instance.create_flavor_service_profile.return_value = (
             expected['service_profile'])
