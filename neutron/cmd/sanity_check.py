@@ -39,7 +39,7 @@ def setup_conf():
     cfg.CONF.import_group('ml2_sriov',
                           'neutron.plugins.ml2.drivers.mech_sriov.mech_driver.'
                           'mech_driver')
-    dhcp_agent.register_options()
+    dhcp_agent.register_options(cfg.CONF)
     cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
 
