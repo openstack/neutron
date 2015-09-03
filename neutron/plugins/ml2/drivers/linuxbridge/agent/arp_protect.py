@@ -18,6 +18,7 @@ from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
+from neutron.common import utils
 from neutron.i18n import _LI
 
 LOG = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def setup_arp_spoofing_protection(vif, port_details):
         LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                      "it has port security disabled"), vif)
         return
-    if port_details['device_owner'].startswith('network:'):
+    if utils.is_port_trusted(port_details):
         # clear any previous entries related to this port
         delete_arp_spoofing_protection([vif], current_rules)
         LOG.debug("Skipping ARP spoofing rules for network owned port "
