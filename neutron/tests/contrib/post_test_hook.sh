@@ -8,6 +8,19 @@ SCRIPTS_DIR="/usr/os-testr-env/bin/"
 
 venv=${1:-"dsvm-functional"}
 
+function generate_test_logs {
+    local path="$1"
+    # Compress all $path/*.txt files and move the directories holding those
+    # files to /opt/stack/logs. Files with .log suffix have their
+    # suffix changed to .txt (so browsers will know to open the compressed
+    # files and not download them).
+    if [ -d "$path" ]
+    then
+        sudo find $path -iname "*.log" -type f -exec mv {} {}.txt \; -exec gzip -9 {}.txt \;
+        sudo mv $path/* /opt/stack/logs/
+    fi
+}
+
 function generate_testr_results {
     # Give job user rights to access tox logs
     sudo -H -u $owner chmod o+rw .
@@ -20,13 +33,9 @@ function generate_testr_results {
         sudo mv ./*.gz /opt/stack/logs/
     fi
 
-    # Compress all /tmp/fullstack-*/*.txt files and move the directories
-    # holding those files to /opt/stack/logs. Files with .log suffix have their
-    # suffix changed to .txt (so browsers will know to open the compressed
-    # files and not download them).
-    if [ "$venv" == "dsvm-fullstack" ] && [ -d /tmp/fullstack-logs/ ]; then
-        sudo find /tmp/fullstack-logs -iname "*.log" -type f -exec mv {} {}.txt \; -exec gzip -9 {}.txt \;
-        sudo mv /tmp/fullstack-logs/* /opt/stack/logs/
+    if [ "$venv" == "dsvm-functional" ] || [ "$venv" == "dsvm-fullstack" ]
+    then
+        generate_test_logs "/tmp/${venv}-logs"
     fi
 }
 

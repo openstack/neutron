@@ -29,8 +29,8 @@ from neutron.tests.common import net_helpers
 
 LOG = logging.getLogger(__name__)
 
-# This should correspond the directory from which infra retrieves log files
-DEFAULT_LOG_DIR = '/tmp/fullstack-logs/'
+# This is the directory from which infra fetches log files for fullstack tests
+DEFAULT_LOG_DIR = '/tmp/dsvm-fullstack-logs/'
 
 
 class ProcessFixture(fixtures.Fixture):
