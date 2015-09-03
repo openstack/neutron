@@ -61,10 +61,7 @@ class NeutronModule(object):
     def module(self):
         return self.repo['mod']
 
-    # Return an INI parser for the child module. oslo.config is a bit too
-    # magical in its INI loading, and in one notable case, we need to merge
-    # together the [service_providers] section across at least four
-    # repositories.
+    # Return an INI parser for the child module
     def ini(self):
         if self.repo['ini'] is None:
             neutron_dir = None
@@ -86,17 +83,34 @@ class NeutronModule(object):
         return self.repo['ini']
 
     def service_providers(self):
-        ini = self.ini()
-
-        sp = []
+        """Return the service providers for the extension module."""
+        providers = []
+        # Attempt to read the config from cfg.CONF; this is possible
+        # when passing --config-dir. Since the multiStr config option
+        # gets merged, extract only the providers pertinent to this
+        # service module.
         try:
-            for name, value in ini.items('service_providers'):
-                if name == 'service_provider':
-                    sp.append(value)
-        except ConfigParser.NoSectionError:
+            providers = [
+                sp for sp in cfg.CONF.service_providers.service_provider
+                if self.module_name in sp
+            ]
+        except cfg.NoSuchOptError:
             pass
 
-        return sp
+        # Alternatively, if the option is not avaialable, load the
+        # config option using the module's built-in ini parser.
+        # this may be necessary, if modules are loaded on the fly
+        # (DevStack may be an example)
+        if not providers:
+            ini = self.ini()
+            try:
+                for name, value in ini.items('service_providers'):
+                    if name == 'service_provider':
+                        providers.append(value)
+            except ConfigParser.NoSectionError:
+                pass
+
+        return providers
 
 
 #global scope function that should be used in service APIs
