@@ -67,6 +67,15 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             trigger_resync=True)
         self.wait_until_ports_state(self.ports, up=True)
 
+    def test_reprocess_port_when_ovs_restarts(self):
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports())
+        self.wait_until_ports_state(self.ports, up=True)
+        self.agent.check_ovs_status.return_value = constants.OVS_RESTARTED
+        # OVS restarted, the agent should reprocess all the ports
+        self.agent.plugin_rpc.update_device_list.reset_mock()
+        self.wait_until_ports_state(self.ports, up=True)
+
     def test_port_vlan_tags(self):
         self.setup_agent_and_ports(
             port_dicts=self.create_test_ports(),
