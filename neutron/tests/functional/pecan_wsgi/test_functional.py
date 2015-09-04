@@ -28,7 +28,7 @@ from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.newapi.controllers import root as controllers
+from neutron.pecan_wsgi.controllers import root as controllers
 from neutron.tests.unit import testlib_api
 
 
@@ -154,15 +154,17 @@ class TestExceptionTranslationHook(PecanFunctionalTest):
         # this endpoint raises a Neutron notfound exception. make sure it gets
         # translated into a 404 error
         with mock.patch(
-                'neutron.newapi.controllers.root.CollectionsController.get',
-                side_effect=n_exc.NotFound()):
+            'neutron.pecan_wsgi.controllers.root.CollectionsController.get',
+            side_effect=n_exc.NotFound()
+        ):
             response = self.app.get('/v2.0/ports.json', expect_errors=True)
             self.assertEqual(response.status_int, 404)
 
     def test_unexpected_exception(self):
         with mock.patch(
-                'neutron.newapi.controllers.root.CollectionsController.get',
-                side_effect=ValueError('secretpassword')):
+            'neutron.pecan_wsgi.controllers.root.CollectionsController.get',
+            side_effect=ValueError('secretpassword')
+        ):
             response = self.app.get('/v2.0/ports.json', expect_errors=True)
             self.assertNotIn(response.body, 'secretpassword')
             self.assertEqual(response.status_int, 500)
@@ -184,7 +186,7 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
                 'plugin': request.plugin
             }
         mock.patch(
-            'neutron.newapi.controllers.root.CollectionsController.get',
+            'neutron.pecan_wsgi.controllers.root.CollectionsController.get',
             side_effect=capture_request_details
         ).start()
 

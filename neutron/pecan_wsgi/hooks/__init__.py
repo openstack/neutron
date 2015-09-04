@@ -13,14 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.newapi.hooks import attribute_population
-from neutron.newapi.hooks import context
-from neutron.newapi.hooks import notifier
-from neutron.newapi.hooks import ownership_validation
-from neutron.newapi.hooks import policy_enforcement
-from neutron.newapi.hooks import quota_enforcement
-from neutron.newapi.hooks import resource_identifier
-from neutron.newapi.hooks import translation
+from neutron.pecan_wsgi.hooks import attribute_population
+from neutron.pecan_wsgi.hooks import context
+from neutron.pecan_wsgi.hooks import notifier
+from neutron.pecan_wsgi.hooks import ownership_validation
+from neutron.pecan_wsgi.hooks import policy_enforcement
+from neutron.pecan_wsgi.hooks import quota_enforcement
+from neutron.pecan_wsgi.hooks import resource_identifier
+from neutron.pecan_wsgi.hooks import translation
 
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook

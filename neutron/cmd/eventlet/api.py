@@ -26,7 +26,7 @@ from oslo_log import log as logging
 from six.moves import socketserver
 
 from neutron.common import config
-from neutron.newapi import app
+from neutron.pecan_wsgi import app
 from neutron.i18n import _LI, _LW
 
 

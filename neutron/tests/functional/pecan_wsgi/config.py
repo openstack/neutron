@@ -16,8 +16,8 @@
 # use main app settings except for the port number so testing doesn't need to
 # listen on the main neutron port
 app = {
-    'root': 'neutron.newapi.controllers.root.RootController',
-    'modules': ['neutron.newapi'],
+    'root': 'neutron.pecan_wsgi.controllers.root.RootController',
+    'modules': ['neutron.pecan_wsgi'],
     'errors': {
         400: '/error',
         '__force_dict__': True

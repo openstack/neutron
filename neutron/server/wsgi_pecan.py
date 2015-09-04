@@ -20,7 +20,7 @@ from six.moves import socketserver
 
 from neutron.common import rpc as n_rpc
 from neutron.i18n import _LI, _LW
-from neutron.newapi import app as pecan_app
+from neutron.pecan_wsgi import app as pecan_app
 from neutron import server
 
 LOG = log.getLogger(__name__)
