@@ -174,12 +174,12 @@ class L3Scheduler(object):
                           ' by L3 agent %(agent_id)s',
                           {'router_id': sync_router['id'],
                            'agent_id': l3_agents[0]['id']})
-                return
+                return []
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
                 LOG.warn(_LW('No active L3 agents'))
-                return
+                return []
             new_l3agents = plugin.get_l3_agent_candidates(context,
                                                           sync_router,
                                                           active_l3_agents)

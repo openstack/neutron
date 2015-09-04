@@ -268,6 +268,17 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
     def test__bind_routers_ha_no_binding(self):
         self._test__bind_routers_ha(has_binding=False)
 
+    def test__get_candidates_iterable_on_early_returns(self):
+        plugin = mock.MagicMock()
+        # non-distributed router already hosted
+        plugin.get_l3_agents_hosting_routers.return_value = [{'id': 'a1'}]
+        router = {'distributed': False, 'id': 'falafel'}
+        iter(self.scheduler._get_candidates(plugin, mock.MagicMock(), router))
+        # distributed router but no agents
+        router['distributed'] = True
+        plugin.get_l3_agents.return_value = []
+        iter(self.scheduler._get_candidates(plugin, mock.MagicMock(), router))
+
 
 class L3SchedulerBaseMixin(object):
 
