@@ -103,6 +103,11 @@ def get_test_timeout(default=0):
     return int(os.environ.get('OS_TEST_TIMEOUT', 0))
 
 
+def sanitize_log_path(path):
+    # Sanitize the string so that it's log path is shell friendly
+    return path.replace(' ', '-').replace('(', '_').replace(')', '_')
+
+
 class AttributeDict(dict):
 
     """

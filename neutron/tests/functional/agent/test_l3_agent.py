@@ -81,8 +81,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _configure_agent(self, host):
         conf = self._get_config_opts()
         l3_agent_main.register_opts(conf)
-        cfg.CONF.set_override('debug', False)
-        agent_config.setup_logging()
         conf.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
