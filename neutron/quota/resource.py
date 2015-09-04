@@ -211,9 +211,9 @@ class TrackedResource(BaseResource):
     # ensure that an UPDATE statement is emitted rather than an INSERT one
     @oslo_db_api.wrap_db_retry(
         max_retries=db_api.MAX_RETRIES,
-        retry_on_deadlock=True,
         exception_checker=lambda exc:
-        isinstance(exc, oslo_db_exception.DBDuplicateEntry))
+        isinstance(exc, (oslo_db_exception.DBDuplicateEntry,
+                         oslo_db_exception.DBDeadlock)))
     def _set_quota_usage(self, context, tenant_id, in_use):
         return quota_api.set_quota_usage(
             context, self.name, tenant_id, in_use=in_use)
