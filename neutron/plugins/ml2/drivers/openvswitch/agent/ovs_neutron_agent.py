@@ -1162,7 +1162,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         port_info = self._get_port_info(registered_ports, cur_ports)
         if updated_ports is None:
             updated_ports = set()
-        updated_ports.update(self.check_changed_vlans(registered_ports))
+        updated_ports.update(self.check_changed_vlans())
         if updated_ports:
             # Some updated ports might have been removed in the
             # meanwhile, and therefore should not be processed.
@@ -1179,7 +1179,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             cur_ports |= bridge.get_vif_port_set()
         return self._get_port_info(registered_ports, cur_ports)
 
-    def check_changed_vlans(self, registered_ports):
+    def check_changed_vlans(self):
         """Return ports which have lost their vlan tag.
 
         The returned value is a set of port ids of the ports concerned by a
@@ -1188,19 +1188,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         port_tags = self.int_br.get_port_tag_dict()
         changed_ports = set()
         for lvm in self.local_vlan_map.values():
-            for port in registered_ports:
+            for port in lvm.vif_ports.values():
                 if (
-                    port in lvm.vif_ports
-                    and lvm.vif_ports[port].port_name in port_tags
-                    and port_tags[lvm.vif_ports[port].port_name] != lvm.vlan
+                    port.port_name in port_tags
+                    and port_tags[port.port_name] != lvm.vlan
                 ):
                     LOG.info(
                         _LI("Port '%(port_name)s' has lost "
                             "its vlan tag '%(vlan_tag)d'!"),
-                        {'port_name': lvm.vif_ports[port].port_name,
+                        {'port_name': port.port_name,
                          'vlan_tag': lvm.vlan}
                     )
-                    changed_ports.add(port)
+                    changed_ports.add(port.vif_id)
         return changed_ports
 
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
