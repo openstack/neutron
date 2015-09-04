@@ -575,6 +575,10 @@ class TunnelTestOFCtl(TunnelTest, ovs_test_base.OVSOFCtlTestBase):
     pass
 
 
+class TunnelTestRyu(TunnelTest, ovs_test_base.OVSRyuTestBase):
+    pass
+
+
 class TunnelTestUseVethInterco(TunnelTest):
     USE_VETH_INTERCONNECTION = True
 
@@ -669,6 +673,11 @@ class TunnelTestUseVethIntercoOFCtl(TunnelTestUseVethInterco,
     pass
 
 
+class TunnelTestUseVethIntercoRyu(TunnelTestUseVethInterco,
+                                  ovs_test_base.OVSRyuTestBase):
+    pass
+
+
 class TunnelTestWithMTU(TunnelTestUseVethInterco):
     VETH_MTU = 1500
 
@@ -680,4 +689,9 @@ class TunnelTestWithMTU(TunnelTestUseVethInterco):
 
 class TunnelTestWithMTUOFCtl(TunnelTestWithMTU,
                              ovs_test_base.OVSOFCtlTestBase):
+    pass
+
+
+class TunnelTestWithMTURyu(TunnelTestWithMTU,
+                           ovs_test_base.OVSRyuTestBase):
     pass

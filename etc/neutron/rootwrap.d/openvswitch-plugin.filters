@@ -12,6 +12,7 @@
 # unclear whether both variants are necessary, but I'm transliterating
 # from the old mechanism
 ovs-vsctl: CommandFilter, ovs-vsctl, root
+# NOTE(yamamoto): of_interface=native doesn't use ovs-ofctl
 ovs-ofctl: CommandFilter, ovs-ofctl, root
 kill_ovsdb_client: KillFilter, root, /usr/bin/ovsdb-client, -9
 ovsdb-client: CommandFilter, ovsdb-client, root

@@ -33,6 +33,8 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
 _main_modules = {
     'ovs-ofctl': 'neutron.plugins.ml2.drivers.openvswitch.agent.openflow.'
                  'ovs_ofctl.main',
+    'native': 'neutron.plugins.ml2.drivers.openvswitch.agent.openflow.'
+                 'native.main',
 }
 
 

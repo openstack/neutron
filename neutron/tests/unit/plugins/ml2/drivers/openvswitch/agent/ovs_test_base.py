@@ -15,9 +15,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
+import mock
 from oslo_utils import importutils
 
 from neutron.tests import base
+from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
+    import fake_oflib
 
 
 _AGENT_PACKAGE = 'neutron.plugins.ml2.drivers.openvswitch.agent'
@@ -53,3 +58,20 @@ class OVSOFCtlTestBase(OVSAgentTestBase):
     _BR_INT_CLASS = _DRIVER_PACKAGE + '.br_int.OVSIntegrationBridge'
     _BR_TUN_CLASS = _DRIVER_PACKAGE + '.br_tun.OVSTunnelBridge'
     _BR_PHYS_CLASS = _DRIVER_PACKAGE + '.br_phys.OVSPhysicalBridge'
+
+
+class OVSRyuTestBase(OVSAgentTestBase):
+    _DRIVER_PACKAGE = _AGENT_PACKAGE + '.openflow.native'
+    _BR_INT_CLASS = _DRIVER_PACKAGE + '.br_int.OVSIntegrationBridge'
+    _BR_TUN_CLASS = _DRIVER_PACKAGE + '.br_tun.OVSTunnelBridge'
+    _BR_PHYS_CLASS = _DRIVER_PACKAGE + '.br_phys.OVSPhysicalBridge'
+
+    def setUp(self):
+        self.fake_oflib_of = fake_oflib.patch_fake_oflib_of()
+        self.fake_oflib_of.start()
+        self.addCleanup(self.fake_oflib_of.stop)
+        super(OVSRyuTestBase, self).setUp()
+        ryu_app = mock.Mock()
+        self.br_int_cls = functools.partial(self.br_int_cls, ryu_app=ryu_app)
+        self.br_phys_cls = functools.partial(self.br_phys_cls, ryu_app=ryu_app)
+        self.br_tun_cls = functools.partial(self.br_tun_cls, ryu_app=ryu_app)

@@ -351,7 +351,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.provision_local_vlan(local_vlan_map['net_uuid'],
                                           local_vlan_map['network_type'],
                                           local_vlan_map['physical_network'],
-                                          local_vlan_map['segmentation_id'],
+                                          int(local_vlan_map[
+                                              'segmentation_id']),
                                           local_vlan)
 
     def setup_rpc(self):

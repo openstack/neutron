@@ -152,7 +152,7 @@ class OVSBridge(BaseOVS):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
-        self.agent_uuid_stamp = '0x0'
+        self.agent_uuid_stamp = 0
 
     def set_agent_uuid_stamp(self, val):
         self.agent_uuid_stamp = val
