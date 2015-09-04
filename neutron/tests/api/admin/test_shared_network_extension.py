@@ -182,17 +182,8 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(RBACSharedNetworksTest, cls).resource_setup()
-        extensions = cls.admin_client.list_extensions()
         if not test.is_extension_enabled('rbac_policies', 'network'):
             msg = "rbac extension not enabled."
-            raise cls.skipException(msg)
-        # NOTE(kevinbenton): the following test seems to be necessary
-        # since the default is 'all' for the above check and these tests
-        # need to get into the gate and be disabled until the service plugin
-        # is enabled in devstack. Is there a better way to do this?
-        if 'rbac-policies' not in [x['alias']
-                                   for x in extensions['extensions']]:
-            msg = "rbac extension is not in extension listing."
             raise cls.skipException(msg)
         creds = cls.isolated_creds.get_alt_creds()
         cls.client2 = clients.Manager(credentials=creds).network_client
