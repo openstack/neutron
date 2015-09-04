@@ -37,6 +37,7 @@ OPTS = [
                       "running on a centralized node (or in single-host "
                       "deployments, e.g. devstack)")),
     cfg.StrOpt('external_network_bridge', default='br-ex',
+               deprecated_for_removal=True,
                help=_("Name of bridge used for external network "
                       "traffic.")),
     cfg.IntOpt('metadata_port',
