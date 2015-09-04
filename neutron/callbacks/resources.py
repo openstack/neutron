@@ -12,6 +12,7 @@
 
 # String literals representing core resources.
 PORT = 'port'
+PROCESS = 'process'
 ROUTER = 'router'
 ROUTER_GATEWAY = 'router_gateway'
 ROUTER_INTERFACE = 'router_interface'

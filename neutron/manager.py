@@ -246,3 +246,8 @@ class NeutronManager(object):
         service_plugins = cls.get_instance().service_plugins
         return dict((x, weakref.proxy(y))
                     for x, y in six.iteritems(service_plugins))
+
+    @classmethod
+    def get_unique_service_plugins(cls):
+        service_plugins = cls.get_instance().service_plugins
+        return tuple(weakref.proxy(x) for x in set(service_plugins.values()))

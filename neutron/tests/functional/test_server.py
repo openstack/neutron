@@ -27,6 +27,7 @@ import psutil
 from neutron.agent.linux import utils
 from neutron import service
 from neutron.tests import base
+from neutron import worker
 from neutron import wsgi
 
 
@@ -245,3 +246,41 @@ class TestRPCServer(TestNeutronServer):
     def test_restart_rpc_on_sighup_multiple_workers(self):
         self._test_restart_service_on_sighup(service=self._serve_rpc,
                                              workers=2)
+
+
+class TestPluginWorker(TestNeutronServer):
+    """Ensure that a plugin returning Workers spawns workers"""
+
+    def setUp(self):
+        super(TestPluginWorker, self).setUp()
+        self.setup_coreplugin(TARGET_PLUGIN)
+        self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
+        self.plugin = self._plugin_patcher.start()
+
+    def _start_plugin(self, workers=0):
+        with mock.patch('neutron.manager.NeutronManager.get_plugin') as gp:
+            gp.return_value = self.plugin
+            launchers = service.start_plugin_workers()
+            for launcher in launchers:
+                launcher.wait()
+
+    def test_start(self):
+        class FakeWorker(worker.NeutronWorker):
+            def start(self):
+                pass
+
+            def wait(self):
+                pass
+
+            def stop(self):
+                pass
+
+            def reset(self):
+                pass
+
+        # Make both ABC happy and ensure 'self' is correct
+        FakeWorker.reset = self._fake_reset
+        workers = [FakeWorker()]
+        self.plugin.return_value.get_workers.return_value = workers
+        self._test_restart_service_on_sighup(service=self._start_plugin,
+                                             workers=len(workers))
