@@ -20,6 +20,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as common_utils
 from neutron import context
 from neutron.db import api as db_api
 from neutron.objects import base
@@ -184,8 +185,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
     def _validate_objects(self, expected, observed):
         self.assertTrue(all(self._is_test_class(obj) for obj in observed))
         self.assertEqual(
-            sorted(expected),
-            sorted(get_obj_db_fields(obj) for obj in observed))
+            sorted(expected,
+                   key=common_utils.safe_sort_key),
+            sorted([get_obj_db_fields(obj) for obj in observed],
+                   key=common_utils.safe_sort_key))
 
     def _check_equal(self, obj, db_obj):
         self.assertEqual(

@@ -94,18 +94,18 @@ In practical terms this scenario would be translated in the code below:
 
 
   def callback1(resource, event, trigger, **kwargs):
-      print 'Callback1 called by trigger: ', trigger
-      print 'kwargs: ', kwargs
+      print('Callback1 called by trigger: ', trigger)
+      print('kwargs: ', kwargs)
 
   def callback2(resource, event, trigger, **kwargs):
-      print 'Callback2 called by trigger: ', trigger
-      print 'kwargs: ', kwargs
+      print('Callback2 called by trigger: ', trigger)
+      print('kwargs: ', kwargs)
 
 
   # B and C express interest with I
   registry.subscribe(callback1, resources.ROUTER, events.BEFORE_CREATE)
   registry.subscribe(callback2, resources.ROUTER, events.BEFORE_CREATE)
-  print 'Subscribed'
+  print('Subscribed')
 
 
   # A notifies
@@ -114,7 +114,7 @@ In practical terms this scenario would be translated in the code below:
       registry.notify(resources.ROUTER, events.BEFORE_CREATE, do_notify, **kwargs)
 
 
-  print 'Notifying...'
+  print('Notifying...')
   do_notify()
 
 
@@ -171,13 +171,13 @@ to abort events are ignored. The snippet below shows this in action:
       raise Exception('I am failing!')
 
   def callback2(resource, event, trigger, **kwargs):
-      print 'Callback2 called by %s on event  %s' % (trigger, event)
+      print('Callback2 called by %s on event  %s' % (trigger, event))
 
 
   registry.subscribe(callback1, resources.ROUTER, events.BEFORE_CREATE)
   registry.subscribe(callback2, resources.ROUTER, events.BEFORE_CREATE)
   registry.subscribe(callback2, resources.ROUTER, events.ABORT_CREATE)
-  print 'Subscribed'
+  print('Subscribed')
 
 
   def do_notify():
@@ -185,11 +185,11 @@ to abort events are ignored. The snippet below shows this in action:
       registry.notify(resources.ROUTER, events.BEFORE_CREATE, do_notify, **kwargs)
 
 
-  print 'Notifying...'
+  print('Notifying...')
   try:
       do_notify()
   except exceptions.CallbackFailure as e:
-      print 'Error: ', e
+      print('Error: ', e)
 
 The output is:
 
@@ -237,11 +237,11 @@ The snippet below shows these concepts in action:
 
 
   def callback1(resource, event, trigger, **kwargs):
-      print 'Callback1 called by %s on event %s for resource %s' % (trigger, event, resource)
+      print('Callback1 called by %s on event %s for resource %s' % (trigger, event, resource))
 
 
   def callback2(resource, event, trigger, **kwargs):
-      print 'Callback2 called by %s on event %s for resource %s' % (trigger, event, resource)
+      print('Callback2 called by %s on event %s for resource %s' % (trigger, event, resource))
 
 
   registry.subscribe(callback1, resources.ROUTER, events.BEFORE_READ)
@@ -249,11 +249,11 @@ The snippet below shows these concepts in action:
   registry.subscribe(callback1, resources.ROUTER, events.AFTER_DELETE)
   registry.subscribe(callback1, resources.PORT, events.BEFORE_UPDATE)
   registry.subscribe(callback2, resources.ROUTER_GATEWAY, events.BEFORE_UPDATE)
-  print 'Subscribed'
+  print('Subscribed')
 
 
   def do_notify():
-      print 'Notifying...'
+      print('Notifying...')
       kwargs = {'foo': 'bar'}
       registry.notify(resources.ROUTER, events.BEFORE_READ, do_notify, **kwargs)
       registry.notify(resources.ROUTER, events.BEFORE_CREATE, do_notify, **kwargs)
@@ -356,17 +356,17 @@ What kind of function can be a callback?
 
 
   def callback1(resource, event, trigger, **kwargs):
-      print 'module callback'
+      print('module callback')
 
 
   class MyCallback(object):
 
       def callback2(self, resource, event, trigger, **kwargs):
-          print 'object callback'
+          print('object callback')
 
       @classmethod
       def callback3(cls, resource, event, trigger, **kwargs):
-          print 'class callback'
+          print('class callback')
 
 
   c = MyCallback()
@@ -376,7 +376,7 @@ What kind of function can be a callback?
 
   def do_notify():
       def nested_subscribe(resource, event, trigger, **kwargs):
-          print 'nested callback'
+          print('nested callback')
 
       registry.subscribe(nested_subscribe, resources.ROUTER, events.BEFORE_CREATE)
 
@@ -384,7 +384,7 @@ What kind of function can be a callback?
       registry.notify(resources.ROUTER, events.BEFORE_CREATE, do_notify, **kwargs)
 
 
-  print 'Notifying...'
+  print('Notifying...')
   do_notify()
 
 And the output is going to be:

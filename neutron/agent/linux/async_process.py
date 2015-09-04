@@ -50,7 +50,7 @@ class AsyncProcess(object):
     >>> time.sleep(5)
     >>> proc.stop()
     >>> for line in proc.iter_stdout():
-    ...     print line
+    ...     print(line)
     """
 
     def __init__(self, cmd, run_as_root=False, respawn_interval=None,
