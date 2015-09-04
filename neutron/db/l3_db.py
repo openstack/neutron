@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
@@ -179,10 +180,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'],
                                             gw_info, router=router_db)
-        except Exception:
+        except Exception as e:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("An exception occurred while creating "
-                                  "the router: %s"), router)
+                # NOTE(kevinbenton): db errors will be retried by the decorator
+                # at the API layer so it's not a complete failure scenario.
+                if not isinstance(e, (db_exc.DBDeadlock, db_exc.RetryRequest)):
+                    LOG.exception(_LE("An exception occurred while creating "
+                                      "the router: %s"), router)
                 self.delete_router(context, router_db.id)
 
         return self._make_router_dict(router_db)
