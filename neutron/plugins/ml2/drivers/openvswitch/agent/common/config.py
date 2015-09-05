@@ -119,7 +119,11 @@ agent_opts = [
                       "timeout won't be changed")),
     cfg.BoolOpt('drop_flows_on_start', default=False,
                 help=_("Reset flow table on start. Setting this to True will "
-                       "cause brief traffic interruption."))
+                       "cause brief traffic interruption.")),
+    cfg.BoolOpt('tunnel_csum', default=False,
+                help=_("Set or un-set the tunnel header checksum  on "
+                       "outgoing IP packet carrying GRE/VXLAN tunnel."))
+
 ]
 
 

@@ -484,7 +484,7 @@ class TunnelTest(object):
         self.mock_tun_bridge.add_tunnel_port.return_value = tunnel_port
         self.mock_tun_bridge_expected += [
             mock.call.add_tunnel_port('gre-0a000a01', '10.0.10.1', '10.0.0.1',
-                                      'gre', 4789, True),
+                                      'gre', 4789, True, False),
             mock.call.setup_tunnel_port('gre', tunnel_port),
         ]
 
