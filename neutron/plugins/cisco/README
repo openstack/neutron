@@ -1,7 +1,0 @@
-Cisco Neutron Virtual Network Plugin
-
-This plugin implements Neutron v2 APIs and helps configure
-topologies consisting of virtual and physical switches.
-
-For more details on use please refer to:
-http://wiki.openstack.org/cisco-neutron
