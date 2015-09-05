@@ -368,11 +368,17 @@ class TestOvsNeutronAgent(object):
         devices_up = ['tap1']
         devices_down = ['tap2']
         self.agent.local_vlan_map["net1"] = mock.Mock()
+        ovs_db_list = [{'name': 'tap1', 'tag': []},
+                       {'name': 'tap2', 'tag': []}]
+        vif_port1 = mock.Mock()
+        vif_port1.port_name = 'tap1'
+        vif_port2 = mock.Mock()
+        vif_port2.port_name = 'tap2'
         port_details = [
-            {'network_id': 'net1', 'vif_port': mock.Mock(),
+            {'network_id': 'net1', 'vif_port': vif_port1,
              'device': devices_up[0],
              'admin_state_up': True},
-            {'network_id': 'net1', 'vif_port': mock.Mock(),
+            {'network_id': 'net1', 'vif_port': vif_port2,
              'device': devices_down[0],
              'admin_state_up': False}]
         with mock.patch.object(
@@ -383,7 +389,7 @@ class TestOvsNeutronAgent(object):
                           'failed_devices_down': []}) as update_devices, \
                 mock.patch.object(self.agent,
                                   'int_br') as int_br:
-            int_br.db_list.return_value = []
+            int_br.get_ports_attributes.return_value = ovs_db_list
             self.agent._bind_devices(port_details)
             update_devices.assert_called_once_with(mock.ANY, devices_up,
                                                    devices_down,
@@ -413,7 +419,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(
                     self.agent,
                     'setup_arp_spoofing_protection') as setup_arp:
-            int_br.db_list.return_value = ovs_db_list
+            int_br.get_ports_attributes.return_value = ovs_db_list
             self.agent._bind_devices(need_binding_ports)
             self.assertEqual(enable_prevent_arp_spoofing, setup_arp.called)
 
