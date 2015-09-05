@@ -506,6 +506,28 @@ Extensions can be loaded in two ways:
    variable is commented.
 
 
+Service Providers
+~~~~~~~~~~~~~~~~~
+
+If your project uses service provider(s) the same way VPNAAS and LBAAS do, you
+specify your service provider in your ``project_name.conf`` file like so::
+
+    [service_providers]
+    # Must be in form:
+    # service_provider=<service_type>:<name>:<driver>[:default][,...]
+
+In order for Neutron to load this correctly, make sure you do the following in
+your code::
+
+    from neutron.db import servicetype_db
+    service_type_manager = servicetype_db.ServiceTypeManager.get_instance()
+    service_type_manager.add_provider_configuration(
+        YOUR_SERVICE_TYPE,
+        pconf.ProviderConfiguration(YOUR_SERVICE_MODULE))
+
+This is typically required when you instantiate your service plugin class.
+
+
 Interface Drivers
 ~~~~~~~~~~~~~~~~~
 
