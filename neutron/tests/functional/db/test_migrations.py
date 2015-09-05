@@ -106,8 +106,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     def setUp(self):
         patch = mock.patch.dict('sys.modules', {
             'heleosapi': mock.MagicMock(),
-            'midonetclient': mock.MagicMock(),
-            'midonetclient.neutron': mock.MagicMock(),
         })
         patch.start()
         self.addCleanup(patch.stop)
