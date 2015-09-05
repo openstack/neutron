@@ -100,7 +100,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                                    create_tunnels=False)
         self.wait_until_ports_state(self.ports, up=True)
         ips = [port['fixed_ips'][0]['ip_address'] for port in self.ports]
-        with net_helpers.async_ping(self.namespace, ips) as running:
-            while running():
+        with net_helpers.async_ping(self.namespace, ips) as done:
+            while not done():
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
