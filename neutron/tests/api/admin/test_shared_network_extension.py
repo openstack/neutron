@@ -341,3 +341,22 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         with testtools.ExpectedException(lib_exc.Forbidden):
             self.client.update_rbac_policy(pol['rbac_policy']['id'],
                                            target_tenant='*')
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('86c3529b-1231-40de-803c-aeeeeeee7fff')
+    def test_filtering_works_with_rbac_records_present(self):
+        resp = self._make_admin_net_and_subnet_shared_to_tenant_id(
+            self.client.tenant_id)
+        net = resp['network']
+        sub = resp['subnet']
+        self.admin_client.create_rbac_policy(
+            object_type='network', object_id=net['id'],
+            action='access_as_shared', target_tenant='*')
+        for state, assertion in ((False, self.assertNotIn),
+                                 (True, self.assertIn)):
+            nets = [n['id'] for n in
+                    self.admin_client.list_networks(shared=state)['networks']]
+            assertion(net['id'], nets)
+            subs = [s['id'] for s in
+                    self.admin_client.list_subnets(shared=state)['subnets']]
+            assertion(sub['id'], subs)
