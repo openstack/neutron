@@ -48,6 +48,9 @@ REPO_CISCO_TABLES = [
     'ml2_nexus_vxlan_allocations',
     'ml2_nexus_vxlan_mcast_groups',
     'ml2_ucsm_port_profiles',
+    'cisco_hosting_devices',
+    'cisco_port_mappings',
+    'cisco_router_mappings',
 ]
 
 # VMware-NSX models moved to openstack/vmware-nsx
