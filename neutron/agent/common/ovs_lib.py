@@ -299,7 +299,8 @@ class OVSBridge(BaseOVS):
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=p_const.TYPE_GRE,
                         vxlan_udp_port=p_const.VXLAN_UDP_PORT,
-                        dont_fragment=True):
+                        dont_fragment=True,
+                        tunnel_csum=False):
         attrs = [('type', tunnel_type)]
         # TODO(twilson) This is an OrderedDict solely to make a test happy
         options = collections.OrderedDict()
@@ -314,6 +315,8 @@ class OVSBridge(BaseOVS):
         options['local_ip'] = local_ip
         options['in_key'] = 'flow'
         options['out_key'] = 'flow'
+        if tunnel_csum:
+            options['csum'] = str(tunnel_csum).lower()
         attrs.append(('options', options))
 
         return self.add_port(port_name, *attrs)

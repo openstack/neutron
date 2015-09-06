@@ -254,6 +254,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.tunnel_count = 0
         self.vxlan_udp_port = self.conf.AGENT.vxlan_udp_port
         self.dont_fragment = self.conf.AGENT.dont_fragment
+        self.tunnel_csum = cfg.CONF.AGENT.tunnel_csum
         self.tun_br = None
         self.patch_int_ofport = constants.OFPORT_INVALID
         self.patch_tun_ofport = constants.OFPORT_INVALID
@@ -1243,7 +1244,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                     self.local_ip,
                                     tunnel_type,
                                     self.vxlan_udp_port,
-                                    self.dont_fragment)
+                                    self.dont_fragment,
+                                    self.tunnel_csum)
         if ofport == ovs_lib.INVALID_OFPORT:
             LOG.error(_LE("Failed to set-up %(type)s tunnel port to %(ip)s"),
                       {'type': tunnel_type, 'ip': remote_ip})
