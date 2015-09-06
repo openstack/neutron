@@ -194,7 +194,7 @@ class TrackedResource(BaseResource):
                            "on resource:%(resource)s"),
                           {'tenant_id': tenant_id, 'resource': self.name})
         self._out_of_sync_tenants |= dirty_tenants_snap
-        self._dirty_tenants = self._dirty_tenants - dirty_tenants_snap
+        self._dirty_tenants -= dirty_tenants_snap
 
     def _db_event_handler(self, mapper, _conn, target):
         try:
