@@ -105,9 +105,15 @@ class TestNeutronServer(base.BaseTestCase):
     def _get_workers(self):
         """Get the list of processes in which WSGI server is running."""
 
+        def safe_ppid(proc):
+            try:
+                return proc.ppid
+            except psutil.NoSuchProcess:
+                return None
+
         if self.workers > 0:
             return [proc.pid for proc in psutil.process_iter()
-                    if proc.ppid == self.service_pid]
+                    if safe_ppid(proc) == self.service_pid]
         else:
             return [proc.pid for proc in psutil.process_iter()
                     if proc.pid == self.service_pid]
