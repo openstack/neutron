@@ -69,8 +69,7 @@ class QosSRIOVAgentDriver(qos.QosAgentDriver):
 
     def _delete_bandwidth_limit(self, port):
         pci_slot = port['profile'].get('pci_slot')
-        device = port['device']
-        self._set_vf_max_rate(device, pci_slot)
+        self.eswitch_mgr.clear_max_rate(pci_slot)
 
     def _set_vf_max_rate(self, device, pci_slot, max_kbps=0):
         if self.eswitch_mgr.device_exists(device, pci_slot):

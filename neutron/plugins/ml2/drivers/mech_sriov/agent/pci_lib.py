@@ -50,7 +50,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         """Get assigned mac addresses for vf list.
 
         @param vf_list: list of vf indexes
-        @return: list of assigned mac addresses
+        @return: dict mapping of vf to mac
         """
         try:
             out = self._as_root([], "link", ("show", self.dev_name))
@@ -58,14 +58,16 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             LOG.exception(_LE("Failed executing ip command"))
             raise exc.IpCommandError(dev_name=self.dev_name,
                                      reason=e)
+        vf_to_mac_mapping = {}
         vf_lines = self._get_vf_link_show(vf_list, out)
-        vf_details_list = []
         if vf_lines:
             for vf_line in vf_lines:
                 vf_details = self._parse_vf_link_show(vf_line)
                 if vf_details:
-                    vf_details_list.append(vf_details)
-        return [details.get("MAC") for details in vf_details_list]
+                    vf_num = vf_details.get('vf')
+                    vf_mac = vf_details.get("MAC")
+                    vf_to_mac_mapping[vf_num] = vf_mac
+        return vf_to_mac_mapping
 
     def get_vf_state(self, vf_index):
         """Get vf state {True/False}

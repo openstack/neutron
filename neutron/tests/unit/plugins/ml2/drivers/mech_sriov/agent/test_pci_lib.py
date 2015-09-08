@@ -53,7 +53,8 @@ class TestPciLib(base.BaseTestCase):
                                "_as_root") as mock_as_root:
             mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_assigned_macs([self.VF_INDEX])
-            self.assertEqual([self.MAC_MAPPING[self.VF_INDEX]], result)
+            self.assertEqual(
+                {self.VF_INDEX: self.MAC_MAPPING[self.VF_INDEX]}, result)
 
     def test_get_assigned_macs_fail(self):
         with mock.patch.object(self.pci_wrapper,
