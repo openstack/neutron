@@ -28,20 +28,20 @@ from neutron.common import topics
 from neutron import service as neutron_service
 
 
-def register_options():
-    config.register_interface_driver_opts_helper(cfg.CONF)
-    config.register_use_namespaces_opts_helper(cfg.CONF)
-    config.register_agent_state_opts_helper(cfg.CONF)
-    cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
-    cfg.CONF.register_opts(dhcp_config.DHCP_OPTS)
-    cfg.CONF.register_opts(dhcp_config.DNSMASQ_OPTS)
-    cfg.CONF.register_opts(metadata_config.DRIVER_OPTS)
-    cfg.CONF.register_opts(metadata_config.SHARED_OPTS)
-    cfg.CONF.register_opts(interface.OPTS)
+def register_options(conf):
+    config.register_interface_driver_opts_helper(conf)
+    config.register_use_namespaces_opts_helper(conf)
+    config.register_agent_state_opts_helper(conf)
+    conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
+    conf.register_opts(dhcp_config.DHCP_OPTS)
+    conf.register_opts(dhcp_config.DNSMASQ_OPTS)
+    conf.register_opts(metadata_config.DRIVER_OPTS)
+    conf.register_opts(metadata_config.SHARED_OPTS)
+    conf.register_opts(interface.OPTS)
 
 
 def main():
-    register_options()
+    register_options(cfg.CONF)
     common_config.init(sys.argv[1:])
     config.setup_logging()
     server = neutron_service.Service.create(

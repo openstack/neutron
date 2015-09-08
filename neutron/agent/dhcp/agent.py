@@ -51,15 +51,16 @@ class DhcpAgent(manager.Manager):
     """
     target = oslo_messaging.Target(version='1.0')
 
-    def __init__(self, host=None):
+    def __init__(self, host=None, conf=None):
         super(DhcpAgent, self).__init__(host=host)
         self.needs_resync_reasons = collections.defaultdict(list)
-        self.conf = cfg.CONF
+        self.conf = conf or cfg.CONF
         self.cache = NetworkCache()
         self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
         ctx = context.get_admin_context_without_session()
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN,
-                                        ctx, self.conf.use_namespaces)
+                                        ctx, self.conf.use_namespaces,
+                                        self.conf.host)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
         utils.ensure_dir(dhcp_dir)
@@ -149,7 +150,7 @@ class DhcpAgent(manager.Manager):
         """
         only_nets = set([] if (not networks or None in networks) else networks)
         LOG.info(_LI('Synchronizing state'))
-        pool = eventlet.GreenPool(cfg.CONF.num_sync_threads)
+        pool = eventlet.GreenPool(self.conf.num_sync_threads)
         known_network_ids = set(self.cache.get_network_ids())
 
         try:
@@ -399,9 +400,9 @@ class DhcpPluginApi(object):
 
     """
 
-    def __init__(self, topic, context, use_namespaces):
+    def __init__(self, topic, context, use_namespaces, host):
         self.context = context
-        self.host = cfg.CONF.host
+        self.host = host
         self.use_namespaces = use_namespaces
         target = oslo_messaging.Target(
                 topic=topic,
@@ -537,21 +538,21 @@ class NetworkCache(object):
 
 
 class DhcpAgentWithStateReport(DhcpAgent):
-    def __init__(self, host=None):
-        super(DhcpAgentWithStateReport, self).__init__(host=host)
+    def __init__(self, host=None, conf=None):
+        super(DhcpAgentWithStateReport, self).__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         self.agent_state = {
             'binary': 'neutron-dhcp-agent',
             'host': host,
             'topic': topics.DHCP_AGENT,
             'configurations': {
-                'dhcp_driver': cfg.CONF.dhcp_driver,
-                'use_namespaces': cfg.CONF.use_namespaces,
-                'dhcp_lease_duration': cfg.CONF.dhcp_lease_duration,
-                'log_agent_heartbeats': cfg.CONF.AGENT.log_agent_heartbeats},
+                'dhcp_driver': self.conf.dhcp_driver,
+                'use_namespaces': self.conf.use_namespaces,
+                'dhcp_lease_duration': self.conf.dhcp_lease_duration,
+                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
             'start_flag': True,
             'agent_type': constants.AGENT_TYPE_DHCP}
-        report_interval = cfg.CONF.AGENT.report_interval
+        report_interval = self.conf.AGENT.report_interval
         self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
