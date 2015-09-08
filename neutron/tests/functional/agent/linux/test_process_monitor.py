@@ -96,6 +96,7 @@ class BaseTestProcessMonitor(base.BaseTestCase):
             exception=RuntimeError('Not all children respawned.'))
 
     def cleanup_spawned_children(self):
+        self._process_monitor.stop()
         for pm in self._child_processes:
             pm.disable()
 
