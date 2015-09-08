@@ -9,9 +9,7 @@ ping_filter: CommandFilter, ping, root
 ping6_filter: CommandFilter, ping6, root
 
 # enable curl from namespace
-curl_filter: CommandFilter, curl, root
-tee_filter: CommandFilter, tee, root
-tee_kill: KillFilter, root, tee, -9
+curl_filter: RegExpFilter, /usr/bin/curl, root, curl, --max-time, \d+, -D-, http://[0-9a-z:./-]+
 nc_filter: CommandFilter, nc, root
 # netcat has different binaries depending on linux distribution
 nc_kill: KillFilter, root, nc, -9
