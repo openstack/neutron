@@ -518,10 +518,14 @@ class LinuxBridgeFixture(fixtures.Fixture):
     :type namespace: str
     """
 
+    def __init__(self, prefix=BR_PREFIX):
+        super(LinuxBridgeFixture, self).__init__()
+        self.prefix = prefix
+
     def _setUp(self):
         self.namespace = self.useFixture(NamespaceFixture()).name
         self.bridge = common_base.create_resource(
-            BR_PREFIX,
+            self.prefix,
             bridge_lib.BridgeDevice.addbr,
             namespace=self.namespace)
         self.addCleanup(self.bridge.delbr)
