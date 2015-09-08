@@ -156,4 +156,4 @@ class TestAuxiliaryFunctions(base.DietTestCase):
             # This ensures dirty is true
             res._dirty_tenants.add('tenant_id')
             resource_registry.set_resources_dirty(ctx)
-            mock_mark_dirty.assert_called_once_with(ctx, nested=True)
+            mock_mark_dirty.assert_called_once_with(ctx)

@@ -19,6 +19,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc as orm_exc
 from sqlalchemy import sql
 
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin as common_db_api
 from neutron.db.quota import models as quota_models
 
@@ -96,10 +97,11 @@ def set_quota_usage(context, resource, tenant_id,
     :param delta: Specifies whether in_use is an absolute number
                   or a delta (default to False)
     """
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource).filter_by(tenant_id=tenant_id)
-    usage_data = query.first()
-    with context.session.begin(subtransactions=True):
+    with db_api.autonested_transaction(context.session):
+        query = common_db_api.model_query(context, quota_models.QuotaUsage)
+        query = query.filter_by(resource=resource).filter_by(
+            tenant_id=tenant_id)
+        usage_data = query.first()
         if not usage_data:
             # Must create entry
             usage_data = quota_models.QuotaUsage(
@@ -174,10 +176,6 @@ def create_reservation(context, tenant_id, deltas, expiration=None):
                 quota_models.ResourceDelta(resource=resource,
                                            amount=delta,
                                            reservation=resv))
-        # quota_usage for all resources involved in this reservation must
-        # be marked as dirty
-        set_resources_quota_usage_dirty(
-            context, deltas.keys(), tenant_id)
     return ReservationInfo(resv['id'],
                            resv['tenant_id'],
                            resv['expiration'],
@@ -249,7 +247,7 @@ def get_reservations_for_resources(context, tenant_id, resources,
         quota_models.ResourceDelta.resource,
         quota_models.Reservation.expiration)
     return dict((resource, total_reserved)
-           for (resource, exp, total_reserved) in resv_query)
+            for (resource, exp, total_reserved) in resv_query)
 
 
 def remove_expired_reservations(context, tenant_id=None):
