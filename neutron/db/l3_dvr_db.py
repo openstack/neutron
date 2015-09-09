@@ -144,12 +144,34 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return router_db
 
     def _delete_current_gw_port(self, context, router_id, router, new_network):
+        """
+        Overriden here to handle deletion of dvr internal ports.
+
+        If there is a valid router update with gateway port to be deleted,
+        then go ahead and delete the csnat ports and the floatingip
+        agent gateway port associated with the dvr router.
+        """
+
+        gw_ext_net_id = (
+            router.gw_port['network_id'] if router.gw_port else None)
+
         super(L3_NAT_with_dvr_db_mixin,
               self)._delete_current_gw_port(context, router_id,
                                             router, new_network)
-        if router.extra_attributes.distributed:
+        if (is_distributed_router(router) and
+            gw_ext_net_id != new_network):
             self.delete_csnat_router_interface_ports(
                 context.elevated(), router)
+            # NOTE(Swami): Delete the Floatingip agent gateway port
+            # on all hosts when it is the last gateway port in the
+            # given external network.
+            filters = {'network_id': [gw_ext_net_id],
+                       'device_owner': [l3_const.DEVICE_OWNER_ROUTER_GW]}
+            ext_net_gw_ports = self._core_plugin.get_ports(
+                context.elevated(), filters)
+            if not ext_net_gw_ports:
+                self._delete_floatingip_agent_gateway_port(
+                    context.elevated(), None, gw_ext_net_id)
 
     def _create_gw_port(self, context, router_id, router, new_network,
                         ext_ips):
@@ -540,9 +562,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports = self._core_plugin.get_ports(context,
                                             filters=device_filter)
         for p in ports:
-            if self._get_vm_port_hostid(context, p['id'], p) == host_id:
+            if not host_id or p[portbindings.HOST_ID] == host_id:
                 self._core_plugin.ipam.delete_port(context, p['id'])
-                return
+                if host_id:
+                    return
 
     def create_fip_agent_gw_port_if_not_exists(
         self, context, network_id, host):
