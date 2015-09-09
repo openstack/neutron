@@ -283,7 +283,7 @@ class TestOvsNeutronAgent(object):
         self._test_port_dead(self.mod_agent.DEAD_VLAN_TAG)
 
     def mock_scan_ports(self, vif_port_set=None, registered_ports=None,
-                        updated_ports=None, port_tags_dict=None):
+                        updated_ports=None, port_tags_dict=None, sync=False):
         if port_tags_dict is None:  # Because empty dicts evaluate as False.
             port_tags_dict = {}
         with mock.patch.object(self.agent.int_br,
@@ -292,7 +292,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent.int_br,
                                   'get_port_tag_dict',
                                   return_value=port_tags_dict):
-            return self.agent.scan_ports(registered_ports, updated_ports)
+            return self.agent.scan_ports(registered_ports, sync, updated_ports)
 
     def test_scan_ports_returns_current_only_for_unchanged_ports(self):
         vif_port_set = set([1, 3])
@@ -306,6 +306,15 @@ class TestOvsNeutronAgent(object):
         registered_ports = set([1, 2])
         expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
+    def test_scan_ports_returns_port_changes_with_sync(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set, added=vif_port_set,
+                        removed=set([2]))
+        actual = self.mock_scan_ports(vif_port_set, registered_ports,
+                                      sync=True)
         self.assertEqual(expected, actual)
 
     def _test_scan_ports_with_updated_ports(self, updated_ports):
@@ -1315,8 +1324,8 @@ class TestOvsNeutronAgent(object):
                 pass
 
             scan_ports.assert_has_calls([
-                mock.call(set(), set()),
-                mock.call(set(), set())
+                mock.call(set(), True, set()),
+                mock.call(set(), False, set())
             ])
             process_network_ports.assert_has_calls([
                 mock.call(reply2, False),
@@ -1556,7 +1565,7 @@ class AncillaryBridgesTest(object):
         self._test_ancillary_bridges(bridges, ['br-ex1', 'br-ex2'])
 
     def mock_scan_ancillary_ports(self, vif_port_set=None,
-                                  registered_ports=None):
+                                  registered_ports=None, sync=False):
         bridges = ['br-int', 'br-ex']
         ancillary = ['br-ex']
 
@@ -1574,7 +1583,7 @@ class AncillaryBridgesTest(object):
                            return_value=vif_port_set):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         **self.kwargs)
-            return self.agent.scan_ancillary_ports(registered_ports)
+            return self.agent.scan_ancillary_ports(registered_ports, sync)
 
     def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
         vif_port_set = set([1, 2])
@@ -1588,6 +1597,15 @@ class AncillaryBridgesTest(object):
         registered_ports = set([1, 2])
         expected = dict(current=vif_port_set, added=set([3]), removed=set([2]))
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports)
+        self.assertEqual(expected, actual)
+
+    def test_scan_ancillary_ports_returns_port_changes_with_sync(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set, added=vif_port_set,
+                        removed=set([2]))
+        actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports,
+                                                sync=True)
         self.assertEqual(expected, actual)
 
 

@@ -100,3 +100,5 @@ EXTENSION_DRIVER_TYPE = 'ovs'
 # ovs datapath types
 OVS_DATAPATH_SYSTEM = 'system'
 OVS_DATAPATH_NETDEV = 'netdev'
+
+MAX_DEVICE_RETRIES = 5

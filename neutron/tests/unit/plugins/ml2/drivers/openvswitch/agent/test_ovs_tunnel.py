@@ -554,8 +554,8 @@ class TunnelTest(object):
             log_exception.assert_called_once_with(
                 "Error while processing VIF ports")
             scan_ports.assert_has_calls([
-                mock.call(set(), set()),
-                mock.call(set(['tap0']), set())
+                mock.call(set(), True, set()),
+                mock.call(set(['tap0']), False, set())
             ])
             process_network_ports.assert_has_calls([
                 mock.call({'current': set(['tap0']),
