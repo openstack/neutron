@@ -20,7 +20,6 @@ from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import importutils
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
@@ -94,18 +93,14 @@ class Notifier(object):
                                                             'nova',
                                                             auth=auth)
 
-        # NOTE(andreykurilin): novaclient.v1_1 was renamed to v2 and there is
-        # no way to import the contrib module directly without referencing v2,
-        # which would only work for novaclient >= 2.21.0.
-        novaclient_cls = nova_client.get_client_class(NOVA_API_VERSION)
-        server_external_events = importutils.import_module(
-            novaclient_cls.__module__.replace(
-                ".client", ".contrib.server_external_events"))
-
-        self.nclient = novaclient_cls(
+        extensions = [
+            ext for ext in nova_client.discover_extensions(NOVA_API_VERSION)
+            if ext.name == "server_external_events"]
+        self.nclient = nova_client.Client(
+            NOVA_API_VERSION,
             session=session,
             region_name=cfg.CONF.nova.region_name,
-            extensions=[server_external_events])
+            extensions=extensions)
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)
 
