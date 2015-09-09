@@ -19,7 +19,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
-from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 
 from neutron.callbacks import events
@@ -256,7 +255,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     def unbind_snat(self, context, router_id, agent_id=None):
         """Unbind snat from the chosen l3 service agent.
 
-        Unbinds from any L3 agent hosting SNAT if passed agent_id is None
+        Unbinds from all L3 agents hosting SNAT if passed agent_id is None
         """
         with context.session.begin(subtransactions=True):
             query = (context.session.
@@ -264,19 +263,15 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                      filter_by(router_id=router_id))
             if agent_id:
                 query = query.filter_by(l3_agent_id=agent_id)
-            try:
-                binding = query.one()
-            except exc.NoResultFound:
-                LOG.debug('no snat router binding found for router: %('
-                          'router)s, agent: %(agent)s',
+            binding = query.first()
+            if not binding:
+                LOG.debug('no SNAT router binding found for router: '
+                          '%(router)s, agent: %(agent)s',
                           {'router': router_id, 'agent': agent_id or 'any'})
                 return
 
-            agent_id = binding.l3_agent_id
-            LOG.debug('Delete binding of the SNAT router %(router_id)s '
-                      'from agent %(id)s', {'router_id': router_id,
-                                            'id': agent_id})
-            context.session.delete(binding)
+            query.delete()
+        LOG.debug('Deleted binding of the SNAT router %s', router_id)
 
         return binding
 

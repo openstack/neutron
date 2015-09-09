@@ -1523,18 +1523,15 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         binding = l3_dvrscheduler_db.CentralizedSnatL3AgentBinding(
             router_id=router_id, l3_agent_id='foo_l3_agent_id',
             l3_agent=agents_db.Agent())
-        with mock.patch.object(query.Query, 'one') as mock_query,\
-                mock.patch.object(self.adminContext.session,
-                                  'delete') as mock_session,\
+        with mock.patch.object(query.Query, 'first') as mock_first,\
                 mock.patch.object(query.Query, 'delete') as mock_delete,\
                 mock.patch.object(
                     self.dut,
                     'get_subnet_ids_on_router') as mock_get_subnets:
-            mock_query.return_value = binding
+            mock_first.return_value = binding
             mock_get_subnets.return_value = ['foo_subnet_id']
             self.dut.unbind_snat_servicenode(self.adminContext, router_id)
             mock_get_subnets.assert_called_with(self.adminContext, router_id)
-            self.assertTrue(mock_session.call_count)
             self.assertTrue(mock_delete.call_count)
         core_plugin.assert_called_once_with()
         l3_notifier.assert_called_once_with()
