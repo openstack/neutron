@@ -40,14 +40,14 @@ class TestResourceRegistry(base.DietTestCase):
         self.test_set_tracked_resource_new_resource()
         self.registry.set_tracked_resource('meh', test_quota.OtherMehModel,
                                            override=True)
-        # Overidde is set to True, the model class should change
+        # Override is set to True, the model class should change
         self.assertEqual(test_quota.OtherMehModel,
                          self.registry._tracked_resource_mappings['meh'])
 
     def test_set_tracked_resource_existing_no_override(self):
         self.test_set_tracked_resource_new_resource()
         self.registry.set_tracked_resource('meh', test_quota.OtherMehModel)
-        # Overidde is set to false, the model class should not change
+        # Override is set to false, the model class should not change
         self.assertEqual(test_quota.MehModel,
                          self.registry._tracked_resource_mappings['meh'])
 
