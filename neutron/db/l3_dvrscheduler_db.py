@@ -106,7 +106,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             filter_sub = {'fixed_ips': {'subnet_id': [subnet]},
                           'device_owner':
                           [n_const.DEVICE_OWNER_DVR_INTERFACE]}
-            router_id = None
             ports = self._core_plugin.get_ports(context, filters=filter_sub)
             for port in ports:
                 router_id = port['device_id']
@@ -115,8 +114,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     payload = {'subnet_id': subnet}
                     self.l3_rpc_notifier.routers_updated(
                         context, [router_id], None, payload)
-                    break
-            LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
+                    LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
 
     def get_dvr_routers_by_portid(self, context, port_id):
         """Gets the dvr routers on vmport subnets."""
