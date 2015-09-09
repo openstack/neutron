@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
 from neutron.tests import base
 
@@ -219,6 +220,31 @@ class TestSriovAgent(base.BaseTestCase):
                                         '1:2:3.0',
                                         False)
         self.assertTrue(agent.plugin_rpc.update_device_up.called)
+
+    def test_treat_device_ip_link_state_not_supported(self):
+        agent = self.agent
+        agent.plugin_rpc = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = True
+        agent.eswitch_mgr.set_device_state.side_effect = (
+            exceptions.IpCommandOperationNotSupportedError(
+                dev_name='aa:bb:cc:dd:ee:ff'))
+
+        agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
+                           admin_state_up=True)
+        self.assertTrue(agent.plugin_rpc.update_device_up.called)
+
+    def test_treat_device_set_device_state_exception(self):
+        agent = self.agent
+        agent.plugin_rpc = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = True
+        agent.eswitch_mgr.set_device_state.side_effect = (
+            exceptions.SriovNicError())
+
+        agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
+                           admin_state_up=True)
+        self.assertFalse(agent.plugin_rpc.update_device_up.called)
 
     def test_treat_devices_added_updated_admin_state_up_false(self):
         agent = self.agent
