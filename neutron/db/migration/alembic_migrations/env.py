@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from sqlalchemy import event
 
 from neutron.db.migration.alembic_migrations import external
+from neutron.db.migration import autogen
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 
@@ -109,7 +110,8 @@ def run_migrations_online():
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_object=include_object
+        include_object=include_object,
+        process_revision_directives=autogen.process_revision_directives
     )
 
     try:
