@@ -20,6 +20,7 @@ import alembic
 import alembic.autogenerate
 import alembic.migration
 from alembic import script as alembic_script
+from contextlib import contextmanager
 import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
@@ -205,6 +206,14 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
 class TestModelsMigrationsMysql(_TestModelsMigrations,
                                 base.MySQLTestCase):
+    @contextmanager
+    def _listener(self, engine, listener_func):
+        try:
+            event.listen(engine, 'before_execute', listener_func)
+            yield
+        finally:
+            event.remove(engine, 'before_execute',
+                         listener_func)
 
     # There is no use to run this against both dialects, so add this test just
     # for MySQL tests
@@ -220,20 +229,30 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                           "migration.")
 
             if hasattr(clauseelement, 'element'):
-                if (clauseelement.element.name in external.TABLES or
+                element = clauseelement.element
+                if (element.name in external.TABLES or
                         (hasattr(clauseelement, 'table') and
-                         clauseelement.element.table.name in external.TABLES)):
+                            element.table.name in external.TABLES)):
+                    # Table 'nsxv_vdr_dhcp_bindings' was created in liberty,
+                    # before NSXV has moved to separate repo.
+                    if ((isinstance(clauseelement,
+                                    sqlalchemy.sql.ddl.CreateTable) and
+                            element.name == 'nsxv_vdr_dhcp_bindings')):
+                        return
                     self.fail("External table referenced by neutron core "
                               "migration.")
 
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'kilo')
+        with engine.begin() as connection:
+            self.alembic_config.attributes['connection'] = connection
+            migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                         'kilo')
 
-        event.listen(engine, 'before_execute', block_external_tables)
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
-
-        event.remove(engine, 'before_execute', block_external_tables)
+            with self._listener(engine,
+                                block_external_tables):
+                migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                             'heads')
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,

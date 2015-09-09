@@ -108,9 +108,11 @@ def run_migrations_online():
 
     """
     set_mysql_engine()
-    engine = session.create_engine(neutron_config.database.connection)
-
-    connection = engine.connect()
+    connection = config.attributes.get('connection')
+    new_engine = connection is None
+    if new_engine:
+        engine = session.create_engine(neutron_config.database.connection)
+        connection = engine.connect()
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -122,8 +124,9 @@ def run_migrations_online():
         with context.begin_transaction():
             context.run_migrations()
     finally:
-        connection.close()
-        engine.dispose()
+        if new_engine:
+            connection.close()
+            engine.dispose()
 
 
 if context.is_offline_mode():
