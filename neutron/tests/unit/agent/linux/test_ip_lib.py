@@ -562,7 +562,9 @@ class TestIpRuleCommand(TestIPCmdBase):
         self.rule_cmd.add(ip, table=table, priority=priority)
         self._assert_sudo([ip_version], (['show']))
         self._assert_sudo([ip_version], ('add', 'from', ip,
-                                         'priority', priority, 'table', table))
+                                         'priority', str(priority),
+                                         'table', str(table),
+                                         'type', 'unicast'))
 
     def _test_add_rule_exists(self, ip, table, priority, output):
         self.parent._as_root.return_value = output
@@ -574,8 +576,8 @@ class TestIpRuleCommand(TestIPCmdBase):
         ip_version = netaddr.IPNetwork(ip).version
         self.rule_cmd.delete(ip, table=table, priority=priority)
         self._assert_sudo([ip_version],
-                          ('del', 'priority', priority,
-                           'table', table))
+                          ('del', 'priority', str(priority),
+                           'table', str(table), 'type', 'unicast'))
 
     def test__parse_line(self):
         def test(ip_version, line, expected):
@@ -585,12 +587,48 @@ class TestIpRuleCommand(TestIPCmdBase):
         test(4, "4030201:\tfrom 1.2.3.4/24 lookup 10203040",
              {'from': '1.2.3.4/24',
               'table': '10203040',
+              'type': 'unicast',
               'priority': '4030201'})
         test(6, "1024:    from all iif qg-c43b1928-48 lookup noscope",
              {'priority': '1024',
               'from': '::/0',
+              'type': 'unicast',
               'iif': 'qg-c43b1928-48',
               'table': 'noscope'})
+
+    def test__make_canonical_all_v4(self):
+        actual = self.rule_cmd._make_canonical(4, {'from': 'all'})
+        self.assertEqual({'from': '0.0.0.0/0', 'type': 'unicast'}, actual)
+
+    def test__make_canonical_all_v6(self):
+        actual = self.rule_cmd._make_canonical(6, {'from': 'all'})
+        self.assertEqual({'from': '::/0', 'type': 'unicast'}, actual)
+
+    def test__make_canonical_lookup(self):
+        actual = self.rule_cmd._make_canonical(6, {'lookup': 'table'})
+        self.assertEqual({'table': 'table', 'type': 'unicast'}, actual)
+
+    def test__make_canonical_iif(self):
+        actual = self.rule_cmd._make_canonical(6, {'iif': 'iface_name'})
+        self.assertEqual({'iif': 'iface_name', 'type': 'unicast'}, actual)
+
+    def test__make_canonical_fwmark(self):
+        actual = self.rule_cmd._make_canonical(6, {'fwmark': '0x400'})
+        self.assertEqual({'fwmark': '0x400/0xffffffff',
+                          'type': 'unicast'}, actual)
+
+    def test__make_canonical_fwmark_with_mask(self):
+        actual = self.rule_cmd._make_canonical(6, {'fwmark': '0x400/0x00ff'})
+        self.assertEqual({'fwmark': '0x400/0xff', 'type': 'unicast'}, actual)
+
+    def test__make_canonical_fwmark_integer(self):
+        actual = self.rule_cmd._make_canonical(6, {'fwmark': 0x400})
+        self.assertEqual({'fwmark': '0x400/0xffffffff',
+                          'type': 'unicast'}, actual)
+
+    def test__make_canonical_fwmark_iterable(self):
+        actual = self.rule_cmd._make_canonical(6, {'fwmark': (0x400, 0xffff)})
+        self.assertEqual({'fwmark': '0x400/0xffff', 'type': 'unicast'}, actual)
 
     def test_add_rule_v4(self):
         self._test_add_rule('192.168.45.100', 2, 100)
