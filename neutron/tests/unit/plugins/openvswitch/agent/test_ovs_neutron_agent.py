@@ -1618,6 +1618,16 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
 
+    def test_port_bound_for_dvr_with_lbaasv2_vip_ports(self):
+        self._test_port_bound_for_dvr_on_vlan_network(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
+        self._test_port_bound_for_dvr_on_vlan_network(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
+        self._test_port_bound_for_dvr_on_vxlan_network(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
+        self._test_port_bound_for_dvr_on_vxlan_network(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
+
     def test_port_bound_for_dvr_with_dhcp_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
             device_owner=n_const.DEVICE_OWNER_DHCP)
@@ -1827,6 +1837,12 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER)
         self._test_treat_devices_removed_for_dvr(
             device_owner=n_const.DEVICE_OWNER_LOADBALANCER, ip_version=6)
+
+    def test_treat_devices_removed_for_dvr_with_lbaasv2_vip_ports(self):
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2)
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=n_const.DEVICE_OWNER_LOADBALANCERV2, ip_version=6)
 
     def test_treat_devices_removed_for_dvr_with_dhcp_ports(self):
         self._test_treat_devices_removed_for_dvr(
