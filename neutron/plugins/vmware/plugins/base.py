@@ -1549,26 +1549,11 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # transaction, and it should be restored on rollback
             self.handle_router_metadata_access(
                 context, router_id, interface=None)
-            # Pre-delete checks
             # NOTE(salv-orlando): These checks will be repeated anyway when
             # calling the superclass. This is wasteful, but is the simplest
             # way of ensuring a consistent removal of the router both in
             # the neutron Database and in the NSX backend.
-            # TODO(salv-orlando): split pre-delete checks and actual
-            # deletion in superclass.
-
-            # Ensure that the router is not used
-            fips = self.get_floatingips_count(
-                context.elevated(), filters={'router_id': [router_id]})
-            if fips:
-                raise l3.RouterInUse(router_id=router_id)
-
-            device_filter = {'device_id': [router_id],
-                             'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
-            ports = self._core_plugin.get_ports_count(context.elevated(),
-                                                      filters=device_filter)
-            if ports:
-                raise l3.RouterInUse(router_id=router_id)
+            self._ensure_router_not_in_use(context, router_id)
 
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, router_id)
