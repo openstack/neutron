@@ -28,8 +28,9 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
 
     def setUp(self):
         host_descriptions = [environment.HostDescription(l3_agent=True)]
-        env = environment.Environment(environment.EnvironmentDescription(),
-                                      host_descriptions)
+        env = environment.Environment(
+            environment.EnvironmentDescription(network_type='vlan'),
+            host_descriptions)
         super(TestLegacyL3Agent, self).setUp(env)
 
     def _get_namespace(self, router_id):
@@ -59,8 +60,9 @@ class TestHAL3Agent(base.BaseFullStackTestCase):
     def setUp(self):
         host_descriptions = [
             environment.HostDescription(l3_agent=True) for _ in range(2)]
-        env = environment.Environment(environment.EnvironmentDescription(),
-                                      host_descriptions)
+        env = environment.Environment(
+            environment.EnvironmentDescription(network_type='vxlan'),
+            host_descriptions)
         super(TestHAL3Agent, self).setUp(env)
 
     def _is_ha_router_active_on_one_agent(self, router_id):
