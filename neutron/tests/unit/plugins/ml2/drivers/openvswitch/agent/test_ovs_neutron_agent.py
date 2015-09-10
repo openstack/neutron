@@ -1360,6 +1360,13 @@ class TestOvsNeutronAgent(object):
             self.agent._handle_sigterm(None, None)
         self.assertFalse(mock_set_rpc.called)
 
+    def test_arp_spoofing_network_port(self):
+        int_br = mock.create_autospec(self.agent.int_br)
+        self.agent.setup_arp_spoofing_protection(
+            int_br, FakeVif(), {'device_owner': 'network:router_interface'})
+        self.assertTrue(int_br.delete_arp_spoofing_protection.called)
+        self.assertFalse(int_br.install_arp_spoofing_protection.called)
+
     def test_arp_spoofing_port_security_disabled(self):
         int_br = mock.create_autospec(self.agent.int_br)
         self.agent.setup_arp_spoofing_protection(
@@ -1369,7 +1376,7 @@ class TestOvsNeutronAgent(object):
 
     def test_arp_spoofing_basic_rule_setup(self):
         vif = FakeVif()
-        fake_details = {'fixed_ips': []}
+        fake_details = {'fixed_ips': [], 'device_owner': 'nobody'}
         self.agent.prevent_arp_spoofing = True
         int_br = mock.create_autospec(self.agent.int_br)
         self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
@@ -1383,6 +1390,7 @@ class TestOvsNeutronAgent(object):
     def test_arp_spoofing_fixed_and_allowed_addresses(self):
         vif = FakeVif()
         fake_details = {
+            'device_owner': 'nobody',
             'fixed_ips': [{'ip_address': '192.168.44.100'},
                           {'ip_address': '192.168.44.101'}],
             'allowed_address_pairs': [{'ip_address': '192.168.44.102/32'},
