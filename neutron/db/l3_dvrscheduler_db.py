@@ -159,12 +159,17 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 return True
         return False
 
-    def dvr_deletens_if_no_port(self, context, port_id):
+    def dvr_deletens_if_no_port(self, context, port_id, port_host=None):
         """Delete the DVR namespace if no dvr serviced port exists."""
         admin_context = context.elevated()
         router_ids = self.get_dvr_routers_by_portid(admin_context, port_id)
-        port_host = ml2_db.get_port_binding_host(admin_context.session,
-                                                 port_id)
+        if not port_host:
+            port_host = ml2_db.get_port_binding_host(admin_context.session,
+                                                     port_id)
+            if not port_host:
+                LOG.debug('Host name not found for port %s', port_id)
+                return []
+
         if not router_ids:
             LOG.debug('No namespaces available for this DVR port %(port)s '
                       'on host %(host)s', {'port': port_id,
@@ -506,9 +511,37 @@ def _notify_port_delete(event, resource, trigger, **kwargs):
             context, router['agent_id'], router['router_id'])
 
 
+def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
+    new_port = kwargs.get('port')
+    original_port = kwargs.get('original_port')
+
+    if new_port and original_port:
+        original_device_owner = original_port.get('device_owner', '')
+        if (original_device_owner.startswith('compute') and
+            not new_port.get('device_owner')):
+            l3plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            context = kwargs['context']
+            removed_routers = l3plugin.dvr_deletens_if_no_port(
+                context,
+                original_port['id'],
+                port_host=original_port['binding:host_id'])
+            if removed_routers:
+                removed_router_args = {
+                    'context': context,
+                    'port': original_port,
+                    'removed_routers': removed_routers,
+                }
+                _notify_port_delete(
+                    event, resource, trigger, **removed_router_args)
+            return
+
+    _notify_l3_agent_new_port(resource, event, trigger, **kwargs)
+
+
 def subscribe():
     registry.subscribe(
-        _notify_l3_agent_new_port, resources.PORT, events.AFTER_UPDATE)
+        _notify_l3_agent_port_update, resources.PORT, events.AFTER_UPDATE)
     registry.subscribe(
         _notify_l3_agent_new_port, resources.PORT, events.AFTER_CREATE)
     registry.subscribe(
