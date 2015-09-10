@@ -26,15 +26,21 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
 
-    scenarios = [('VXLAN', {'network_type': 'vxlan'}),
-                 ('VLANs', {'network_type': 'vlan'})]
+    scenarios = [
+        ('VXLAN', {'network_type': 'vxlan',
+                   'l2_pop': False}),
+        ('GRE and l2pop', {'network_type': 'gre',
+                           'l2_pop': True}),
+        ('VLANs', {'network_type': 'vlan',
+                   'l2_pop': False})]
 
     def setUp(self):
         host_descriptions = [
             environment.HostDescription() for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
-                network_type=self.network_type),
+                network_type=self.network_type,
+                l2_pop=self.l2_pop),
             host_descriptions)
         super(TestConnectivitySameNetwork, self).setUp(env)
 

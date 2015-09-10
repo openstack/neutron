@@ -159,10 +159,14 @@ class ML2ConfigFixture(ConfigFixture):
         super(ML2ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
+        mechanism_drivers = 'openvswitch'
+        if self.env_desc.l2_pop:
+            mechanism_drivers += ',l2population'
+
         self.config.update({
             'ml2': {
                 'tenant_network_types': tenant_network_types,
-                'mechanism_drivers': 'openvswitch',
+                'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
                 'network_vlan_ranges': 'physnet1:1000:2999',
@@ -193,12 +197,15 @@ class OVSConfigFixture(ConfigFixture):
             'securitygroup': {
                 'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
                                     'OVSHybridIptablesFirewallDriver'),
+            },
+            'agent': {
+                'l2_population': str(self.env_desc.l2_pop),
             }
         })
 
         if self.tunneling_enabled:
-            self.config['agent'] = {
-                'tunnel_types': self.env_desc.network_type}
+            self.config['agent'].update({
+                'tunnel_types': self.env_desc.network_type})
             self.config['ovs'].update({
                 'tunnel_bridge': self._generate_tunnel_bridge(),
                 'int_peer_patch_port': self._generate_int_peer(),

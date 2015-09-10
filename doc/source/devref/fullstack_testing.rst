@@ -119,3 +119,4 @@ Long Term Goals
   mechanism driver. We may modularize the topology configuration further to
   allow to rerun full stack tests against different Neutron plugins or ML2
   mechanism drivers.
+* Add OVS ARP responder coverage when the gate supports OVS 2.1+
