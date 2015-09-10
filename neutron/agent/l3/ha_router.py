@@ -192,7 +192,7 @@ class HaRouter(router.RouterInfo):
         self.routes = new_routes
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
-        gateway_ips, enable_ra_on_gw = self._get_external_gw_ips(ex_gw_port)
+        gateway_ips = self._get_external_gw_ips(ex_gw_port)
         for gw_ip in gateway_ips:
                 # TODO(Carl) This is repeated everywhere.  A method would
                 # be nice.
@@ -206,9 +206,6 @@ class HaRouter(router.RouterInfo):
                 instance.virtual_routes.append(
                     keepalived.KeepalivedVirtualRoute(
                         default_gw, gw_ip, interface_name))
-
-        if enable_ra_on_gw:
-            self.driver.configure_ipv6_ra(self.ns_name, interface_name)
 
     def _should_delete_ipv6_lladdr(self, ipv6_lladdr):
         """Only the master should have any IP addresses configured.

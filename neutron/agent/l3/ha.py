@@ -122,9 +122,22 @@ class AgentMixin(object):
                          'possibly deleted concurrently.'), router_id)
             return
 
+        self._configure_ipv6_ra_on_ext_gw_port_if_necessary(ri, state)
         self._update_metadata_proxy(ri, router_id, state)
         self._update_radvd_daemon(ri, state)
         self.state_change_notifier.queue_event((router_id, state))
+
+    def _configure_ipv6_ra_on_ext_gw_port_if_necessary(self, ri, state):
+        # If ipv6 is enabled on the platform, ipv6_gateway config flag is
+        # not set and external_network associated to the router does not
+        # include any IPv6 subnet, enable the gateway interface to accept
+        # Router Advts from upstream router for default route.
+        ex_gw_port_id = ri.ex_gw_port and ri.ex_gw_port['id']
+        if state == 'master' and ex_gw_port_id and ri.use_ipv6:
+            gateway_ips = ri._get_external_gw_ips(ri.ex_gw_port)
+            if not ri.is_v6_gateway_set(gateway_ips):
+                interface_name = ri.get_external_device_name(ex_gw_port_id)
+                ri.driver.configure_ipv6_ra(ri.ns_name, interface_name)
 
     def _update_metadata_proxy(self, ri, router_id, state):
         if state == 'master':

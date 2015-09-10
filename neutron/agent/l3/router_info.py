@@ -434,7 +434,6 @@ class RouterInfo(object):
 
     def _get_external_gw_ips(self, ex_gw_port):
         gateway_ips = []
-        enable_ra_on_gw = False
         if 'subnets' in ex_gw_port:
             gateway_ips = [subnet['gateway_ip']
                            for subnet in ex_gw_port['subnets']
@@ -444,11 +443,7 @@ class RouterInfo(object):
             if self.agent_conf.ipv6_gateway:
                 # ipv6_gateway configured, use address for default route.
                 gateway_ips.append(self.agent_conf.ipv6_gateway)
-            else:
-                # ipv6_gateway is also not configured.
-                # Use RA for default route.
-                enable_ra_on_gw = True
-        return gateway_ips, enable_ra_on_gw
+        return gateway_ips
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
@@ -458,7 +453,11 @@ class RouterInfo(object):
         # will be added to the interface.
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
 
-        gateway_ips, enable_ra_on_gw = self._get_external_gw_ips(ex_gw_port)
+        gateway_ips = self._get_external_gw_ips(ex_gw_port)
+        enable_ra_on_gw = False
+        if self.use_ipv6 and not self.is_v6_gateway_set(gateway_ips):
+            # There is no IPv6 gw_ip, use RouterAdvt for default route.
+            enable_ra_on_gw = True
         self.driver.init_l3(interface_name,
                             ip_cidrs,
                             namespace=ns_name,
