@@ -187,7 +187,7 @@ class HaRouter(router.RouterInfo):
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
         default_gw_rts = []
-        gateway_ips, enable_ra_on_gw = self._get_external_gw_ips(ex_gw_port)
+        gateway_ips = self._get_external_gw_ips(ex_gw_port)
         for gw_ip in gateway_ips:
                 # TODO(Carl) This is repeated everywhere.  A method would
                 # be nice.
@@ -196,9 +196,6 @@ class HaRouter(router.RouterInfo):
                 default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
                     default_gw, gw_ip, interface_name))
         instance.virtual_routes.gateway_routes = default_gw_rts
-
-        if enable_ra_on_gw:
-            self.driver.configure_ipv6_ra(self.ns_name, interface_name)
 
     def _add_extra_subnet_onlink_routes(self, ex_gw_port, interface_name):
         extra_subnets = ex_gw_port.get('extra_subnets', [])
