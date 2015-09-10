@@ -130,19 +130,33 @@ needed.
 Sub-Project Release Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Only members of the `neutron-release
+<https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can do
+releases. Make sure you talk to a member of neutron-release to perform your
+release.
+
 To release a sub-project, follow the following steps:
 
-* Only members of the `neutron-release
-  <https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can
-  do releases. Make sure you talk to a member of neutron-release to perform
-  your release.
 * For projects which have not moved to post-versioning, we need to push an
-  alpha tag to avoid pbr complaining. The neutron-release group will handle
-  this.
-* Modify setup.cfg to remove the version (if you have one), which moves your
-  project to post-versioning, similar to all the other Neutron projects. You
-  can skip this step if you don't have a version in setup.cfg.
-* Have neutron-release push the tag to gerrit.
-* Have neutron-release `tag the release
+  alpha tag to avoid pbr complaining. A member of the neutron-release group
+  will handle this.
+* A sub-project owner should modify setup.cfg to remove the version (if you
+  have one), which moves your project to post-versioning, similar to all the
+  other Neutron projects. You can skip this step if you don't have a version in
+  setup.cfg.
+* A member of neutron-release will then `tag the release
   <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_,
   which will release the code to PyPi.
+* The releases will now be on PyPi. A sub-project owner should verify this by
+  going to an URL similar to
+  `this <https://pypi.python.org/pypi/networking-odl>`_.
+* A sub-project owner should next go to Launchpad and release this version
+  using the "Release Now" button for the release itself.
+* A sub-project owner should update any bugs that were fixed with this
+  release to "Fix Released" in Launchpad.
+* A sub-project owner should add the tarball to the Launchpad page for the
+  release using the "Add download file" link.
+* A sub-project owner should add the next milestone to the Launchpad series, or
+  if a new series is required, create the new series and a new milestone.
+* Finally a sub-project owner should send an email to the openstack-announce
+  mailing list announcing the new release.
