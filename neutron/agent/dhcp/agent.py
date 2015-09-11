@@ -137,11 +137,11 @@ class DhcpAgent(manager.Manager):
                 LOG.exception(_LE('Unable to %(action)s dhcp for %(net_id)s.'),
                               {'net_id': network.id, 'action': action})
 
-    def schedule_resync(self, reason, network=None):
+    def schedule_resync(self, reason, network_id=None):
         """Schedule a resync for a given network and reason. If no network is
         specified, resync all networks.
         """
-        self.needs_resync_reasons[network].append(reason)
+        self.needs_resync_reasons[network_id].append(reason)
 
     @utils.synchronized('dhcp-agent')
     def sync_state(self, networks=None):
@@ -173,7 +173,11 @@ class DhcpAgent(manager.Manager):
             LOG.info(_LI('Synchronizing state complete'))
 
         except Exception as e:
-            self.schedule_resync(e)
+            if only_nets:
+                for network_id in only_nets:
+                    self.schedule_resync(e, network_id)
+            else:
+                self.schedule_resync(e)
             LOG.exception(_LE('Unable to sync network state.'))
 
     @utils.exception_logger()
