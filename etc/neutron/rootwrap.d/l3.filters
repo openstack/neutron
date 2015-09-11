@@ -30,7 +30,7 @@ find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -p
 ip_exec: IpNetnsExecFilter, ip, root
 
 # For ip monitor
-kill_ip_monitor: KillFilter, root, ip, -9
+kill_ip_monitor: KillFilter, root, ip, -9, -15
 
 # ovs_lib (if OVSInterfaceDriver is used)
 ovs-vsctl: CommandFilter, ovs-vsctl, root
