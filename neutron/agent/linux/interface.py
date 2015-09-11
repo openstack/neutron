@@ -183,14 +183,16 @@ class LinuxInterfaceDriver(object):
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
         # Manage on-link routes (routes without an associated address)
-        new_onlink_routes = set(s['cidr'] for s in extra_subnets or [])
-        existing_onlink_routes = set(
-            device.route.list_onlink_routes(n_const.IP_VERSION_4) +
-            device.route.list_onlink_routes(n_const.IP_VERSION_6))
-        for route in new_onlink_routes - existing_onlink_routes:
+        new_onlink_cidrs = set(s['cidr'] for s in extra_subnets or [])
+
+        v4_onlink = device.route.list_onlink_routes(n_const.IP_VERSION_4)
+        v6_onlink = device.route.list_onlink_routes(n_const.IP_VERSION_6)
+        existing_onlink_cidrs = set(r['cidr'] for r in v4_onlink + v6_onlink)
+
+        for route in new_onlink_cidrs - existing_onlink_cidrs:
             LOG.debug("adding onlink route(%s)", route)
             device.route.add_onlink_route(route)
-        for route in existing_onlink_routes - new_onlink_routes:
+        for route in existing_onlink_cidrs - new_onlink_cidrs:
             LOG.debug("deleting onlink route(%s)", route)
             device.route.delete_onlink_route(route)
 
