@@ -733,16 +733,20 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    'proto', 'kernel',
                                    'dev', device))
 
-    def add_route(self, cidr, ip, table=None):
+    def add_route(self, cidr, via=None, table=None):
         ip_version = get_ip_version(cidr)
-        args = ['replace', cidr, 'via', ip]
+        args = ['replace', cidr]
+        if via:
+            args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
 
-    def delete_route(self, cidr, ip, table=None):
+    def delete_route(self, cidr, via=None, table=None):
         ip_version = get_ip_version(cidr)
-        args = ['del', cidr, 'via', ip]
+        args = ['del', cidr]
+        if via:
+            args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
         self._as_root([ip_version], tuple(args))

@@ -951,11 +951,25 @@ class TestIpRouteCommand(TestIPCmdBase):
                            'dev', self.parent.name,
                            'table', self.table))
 
+    def test_add_route_no_via(self):
+        self.route_cmd.add_route(self.cidr, table=self.table)
+        self._assert_sudo([self.ip_version],
+                          ('replace', self.cidr,
+                           'dev', self.parent.name,
+                           'table', self.table))
+
     def test_delete_route(self):
         self.route_cmd.delete_route(self.cidr, self.ip, self.table)
         self._assert_sudo([self.ip_version],
                           ('del', self.cidr,
                            'via', self.ip,
+                           'dev', self.parent.name,
+                           'table', self.table))
+
+    def test_delete_route_no_via(self):
+        self.route_cmd.delete_route(self.cidr, table=self.table)
+        self._assert_sudo([self.ip_version],
+                          ('del', self.cidr,
                            'dev', self.parent.name,
                            'table', self.table))
 
