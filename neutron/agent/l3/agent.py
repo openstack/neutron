@@ -517,10 +517,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     @periodic_task.periodic_task(spacing=1)
     def periodic_sync_routers_task(self, context):
         self.process_services_sync(context)
-        LOG.debug("Starting periodic_sync_routers_task - fullsync:%s",
-                  self.fullsync)
         if not self.fullsync:
             return
+        LOG.debug("Starting fullsync periodic_sync_routers_task")
 
         # self.fullsync is True at this point. If an exception -- caught or
         # uncaught -- prevents setting it to False below then the next call
