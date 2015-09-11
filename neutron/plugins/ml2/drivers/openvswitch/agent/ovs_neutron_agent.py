@@ -576,8 +576,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if not self.arp_responder_enabled:
             return
 
+        ip = netaddr.IPAddress(ip_address)
+        if ip.version == 6:
+            return
+
+        ip = str(ip)
         mac = str(netaddr.EUI(mac_address, dialect=_mac_mydialect))
-        ip = str(netaddr.IPAddress(ip_address))
 
         if action == 'add':
             br.install_arp_responder(local_vid, ip, mac)
