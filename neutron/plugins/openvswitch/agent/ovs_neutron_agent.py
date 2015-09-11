@@ -432,8 +432,11 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         if not self.arp_responder_enabled:
             return
 
-        mac = netaddr.EUI(mac_address, dialect=netaddr.mac_unix)
         ip = netaddr.IPAddress(ip_address)
+        if ip.version == 6:
+            return
+
+        mac = netaddr.EUI(mac_address, dialect=netaddr.mac_unix)
 
         if action == 'add':
             actions = constants.ARP_RESPONDER_ACTIONS % {'mac': mac, 'ip': ip}
