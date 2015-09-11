@@ -1460,6 +1460,14 @@ class TestOvsNeutronAgent(object):
         self.agent._setup_tunnel_port(bridge, 1, 2, tunnel_type=tunnel_type)
         self.assertIn('bar', self.agent.local_vlan_map)
 
+    def test_setup_entry_for_arp_reply_ignores_ipv6_addresses(self):
+        self.agent.arp_responder_enabled = True
+        ip = '2001:db8::1'
+        br = mock.Mock()
+        self.agent.setup_entry_for_arp_reply(
+            br, 'add', mock.Mock(), mock.Mock(), ip)
+        self.assertFalse(br.install_arp_responder.called)
+
 
 class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
                                ovs_test_base.OVSOFCtlTestBase):
