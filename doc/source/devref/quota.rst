@@ -164,12 +164,6 @@ difference between CountableResource and TrackedResource.
 Quota Enforcement
 -----------------
 
-**NOTE: The reservation engine is currently not wired into the API controller
-as issues have been discovered with multiple workers. For more information
-see _bug1468134**
-
-.. _bug1468134: https://bugs.launchpad.net/neutron/+bug/1486134
-
 Before dispatching a request to the plugin, the Neutron 'base' controller [#]_
 attempts to make a reservation for requested resource(s).
 Reservations are made by calling the make_reservation method in
