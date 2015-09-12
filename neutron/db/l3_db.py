@@ -855,7 +855,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 if 'id' in fip:
                     data = {'floatingip_id': fip['id'],
                             'internal_ip': internal_ip_address}
-                    msg = (_('Floating IP %(floatingip_id) is associated '
+                    msg = (_('Floating IP %(floatingip_id)s is associated '
                              'with non-IPv4 address %s(internal_ip)s and '
                              'therefore cannot be bound.') % data)
                 else:
