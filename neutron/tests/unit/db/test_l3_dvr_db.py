@@ -735,3 +735,33 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         action = 'del'
         device_owner = l3_const.DEVICE_OWNER_LOADBALANCER
         self._test_dvr_vmarp_table_update(device_owner, action)
+
+    def test_add_router_interface_csnat_ports_failure(self):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as net_ext,\
+                self.subnet() as subnet:
+            ext_net_id = net_ext['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_id}}})
+            with mock.patch.object(
+                self.mixin, '_add_csnat_router_interface_port') as f:
+                f.side_effect = RuntimeError()
+                self.assertRaises(
+                    RuntimeError,
+                    self.mixin.add_router_interface,
+                    self.ctx, router['id'],
+                    {'subnet_id': subnet['subnet']['id']})
+                filters = {
+                    'device_id': [router['id']],
+                }
+                router_ports = self.core_plugin.get_ports(self.ctx, filters)
+                self.assertEqual(1, len(router_ports))
+                self.assertEqual(l3_const.DEVICE_OWNER_ROUTER_GW,
+                                 router_ports[0]['device_owner'])

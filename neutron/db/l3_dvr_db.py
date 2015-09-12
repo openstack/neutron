@@ -313,6 +313,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     context, router, interface_info['subnet_id'], device_owner)
 
         if new_port:
+            if router.extra_attributes.distributed and router.gw_port:
+                try:
+                    admin_context = context.elevated()
+                    self._add_csnat_router_interface_port(
+                        admin_context, router, port['network_id'],
+                        port['fixed_ips'][-1]['subnet_id'])
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        # we need to preserve the original state prior
+                        # the request by rolling back the port creation
+                        # that led to new_port=True
+                        self._core_plugin.delete_port(
+                            admin_context, port['id'])
+
             with context.session.begin(subtransactions=True):
                 router_port = l3_db.RouterPort(
                     port_id=port['id'],
@@ -320,11 +334,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     port_type=device_owner
                 )
                 context.session.add(router_port)
-
-            if router.extra_attributes.distributed and router.gw_port:
-                self._add_csnat_router_interface_port(
-                    context.elevated(), router, port['network_id'],
-                    port['fixed_ips'][-1]['subnet_id'])
 
         router_interface_info = self._make_router_interface_info(
             router_id, port['tenant_id'], port['id'], subnets[-1]['id'],
