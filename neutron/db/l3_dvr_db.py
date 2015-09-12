@@ -170,7 +170,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             ext_net_gw_ports = self._core_plugin.get_ports(
                 context.elevated(), filters)
             if not ext_net_gw_ports:
-                self._delete_floatingip_agent_gateway_port(
+                self.delete_floatingip_agent_gateway_port(
                     context.elevated(), None, gw_ext_net_id)
 
     def _create_gw_port(self, context, router_id, router, new_network,
@@ -265,7 +265,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             context, fip_hostid, floatingip_db['floating_network_id']):
             LOG.debug('Deleting the Agent GW Port for ext-net: '
                       '%s', floatingip_db['floating_network_id'])
-            self._delete_floatingip_agent_gateway_port(
+            self.delete_floatingip_agent_gateway_port(
                 context, fip_hostid, floatingip_db['floating_network_id'])
 
     def delete_floatingip(self, context, id):
@@ -553,7 +553,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 return True
             return False
 
-    def _delete_floatingip_agent_gateway_port(
+    def delete_floatingip_agent_gateway_port(
         self, context, host_id, ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
         # delete any fip agent gw port

@@ -80,7 +80,8 @@ class L3PluginApi(object):
               to update_ha_routers_states
         1.5 - Added update_ha_routers_states
         1.6 - Added process_prefix_update
-
+        1.7 - DVR support: new L3 plugin methods added.
+              - delete_agent_gateway_port
     """
 
     def __init__(self, topic, host):
@@ -138,6 +139,12 @@ class L3PluginApi(object):
         cctxt = self.client.prepare(version='1.6')
         return cctxt.call(context, 'process_prefix_update',
                           subnets=prefix_update)
+
+    def delete_agent_gateway_port(self, context, fip_net):
+        """Delete Floatingip_agent_gateway_port."""
+        cctxt = self.client.prepare(version='1.7')
+        return cctxt.call(context, 'delete_agent_gateway_port',
+                          host=self.host, network_id=fip_net)
 
 
 class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,

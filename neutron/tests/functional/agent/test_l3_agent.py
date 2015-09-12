@@ -1460,3 +1460,27 @@ class TestDvrRouter(L3AgentTestFramework):
             router_updated, internal_dev_name=internal_device_name)
         self.assertFalse(sg_device)
         self.assertTrue(qg_device)
+
+    def test_dvr_router_calls_delete_agent_gateway_if_last_fip(self):
+        """Test to validate delete fip if it is last fip managed by agent."""
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(enable_snat=True)
+        router1 = self.manage_router(self.agent, router_info)
+        floating_agent_gw_port = (
+            router1.router[l3_constants.FLOATINGIP_AGENT_INTF_KEY])
+        self.assertTrue(floating_agent_gw_port)
+        fip_ns = router1.fip_ns.get_name()
+        router1.fip_ns.agent_gw_port = floating_agent_gw_port
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_dvr_floating_ips(router1)
+        self._assert_dvr_snat_gateway(router1)
+        router1.router[l3_constants.FLOATINGIP_KEY] = []
+        rpc_mock = mock.patch.object(
+            self.agent.plugin_rpc, 'delete_agent_gateway_port').start()
+        self.agent._process_updated_router(router1.router)
+        self.assertTrue(rpc_mock.called)
+        rpc_mock.assert_called_once_with(
+            self.agent.context,
+            floating_agent_gw_port[0]['network_id'])
+        self.assertFalse(self._namespace_exists(fip_ns))

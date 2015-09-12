@@ -145,27 +145,27 @@ class TestDvrRouterOperations(base.BaseTestCase):
                           'interface_driver': self.mock_driver}
 
     def _create_router(self, router=None, **kwargs):
-        agent_conf = mock.Mock()
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.router_id = _uuid()
         if not router:
             router = mock.MagicMock()
-        return dvr_router.DvrLocalRouter(mock.sentinel.agent,
-                                    mock.sentinel.myhost,
+        return dvr_router.DvrLocalRouter(agent,
+                                    HOSTNAME,
                                     self.router_id,
                                     router,
-                                    agent_conf,
-                                    mock.sentinel.interface_driver,
+                                    self.conf,
+                                    mock.Mock(),
                                     **kwargs)
 
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
-        router.get.return_value = [{'host': mock.sentinel.myhost},
+        router.get.return_value = [{'host': HOSTNAME},
                                    {'host': mock.sentinel.otherhost}]
         ri = self._create_router(router)
 
         fips = ri.get_floating_ips()
 
-        self.assertEqual([{'host': mock.sentinel.myhost}], fips)
+        self.assertEqual([{'host': HOSTNAME}], fips)
 
     @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
     @mock.patch.object(ip_lib, 'IPDevice')
@@ -242,15 +242,16 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('15.1.2.3/32')
         _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
         fip_ns = ri.fip_ns
-
-        ri.floating_ip_removed_dist(fip_cidr)
-
-        self.assertTrue(fip_ns.destroyed)
-        mIPWrapper().del_veth.assert_called_once_with(
-            fip_ns.get_int_device_name(router['id']))
-        mIPDevice().route.delete_gateway.assert_called_once_with(
-            str(fip_to_rtr.ip), table=16)
-        fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
+        with mock.patch.object(self.plugin_api,
+                               'delete_agent_gateway_port') as del_fip_gw:
+            ri.floating_ip_removed_dist(fip_cidr)
+            self.assertTrue(del_fip_gw.called)
+            self.assertTrue(fip_ns.destroyed)
+            mIPWrapper().del_veth.assert_called_once_with(
+                fip_ns.get_int_device_name(router['id']))
+            mIPDevice().route.delete_gateway.assert_called_once_with(
+                str(fip_to_rtr.ip), table=16)
+            fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
 
     def _test_add_floating_ip(self, ri, fip, is_failure):
         ri._add_fip_addr_to_device = mock.Mock(return_value=is_failure)

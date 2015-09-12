@@ -198,7 +198,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                               self.ctx,
                               port['id'])
 
-    def test_prevent__delete_floatingip_agent_gateway_port(self):
+    def test_prevent_delete_floatingip_agent_gateway_port(self):
         port = {
             'id': 'my_port_id',
             'fixed_ips': mock.ANY,
@@ -253,7 +253,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     '_check_fips_availability_on_host_ext_net') as cfips,\
                 mock.patch.object(
                     self.mixin,
-                    '_delete_floatingip_agent_gateway_port') as dfips:
+                    'delete_floatingip_agent_gateway_port') as dfips:
             gfips.return_value = floatingip
             gvm.return_value = 'my-host'
             cfips.return_value = True
@@ -305,7 +305,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             plugin = mock.Mock()
             gp.return_value = plugin
             plugin.get_ports.return_value = ports
-            self.mixin._delete_floatingip_agent_gateway_port(
+            self.mixin.delete_floatingip_agent_gateway_port(
                 self.ctx, port_host, 'ext_network_id')
         plugin.get_ports.assert_called_with(self.ctx, filters={
             'network_id': ['ext_network_id'],
@@ -317,10 +317,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             plugin.ipam.delete_port.assert_called_with(
                 self.ctx, 'my_new_port_id')
 
-    def test__delete_floatingip_agent_gateway_port_without_host_id(self):
+    def test_delete_floatingip_agent_gateway_port_without_host_id(self):
         self._helper_delete_floatingip_agent_gateway_port(None)
 
-    def test__delete_floatingip_agent_gateway_port_with_host_id(self):
+    def test_delete_floatingip_agent_gateway_port_with_host_id(self):
         self._helper_delete_floatingip_agent_gateway_port(
             'foo_host')
 
@@ -346,7 +346,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 'delete_csnat_router_interface_ports') as del_csnat_port,\
             mock.patch.object(
                 self.mixin,
-                '_delete_floatingip_agent_gateway_port') as del_agent_gw_port:
+                'delete_floatingip_agent_gateway_port') as del_agent_gw_port:
             plugin = mock.Mock()
             gp.return_value = plugin
             plugin.get_ports.return_value = port
