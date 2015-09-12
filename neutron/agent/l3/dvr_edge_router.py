@@ -105,9 +105,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         if not sn_port:
             return
 
-        is_this_snat_host = ('binding:host_id' in self.ex_gw_port) and (
-            self.ex_gw_port['binding:host_id'] == self.host)
-        if not is_this_snat_host:
+        if not self._is_this_snat_host():
             return
 
         snat_interface = self._get_snat_int_device_name(sn_port['id'])
