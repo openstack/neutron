@@ -36,7 +36,8 @@ class LinuxBridgeARPSpoofTestCase(functional_base.BaseSudoTestCase):
             machine_fixtures.PeerMachines(bridge, amount=3)).machines
 
     def _add_arp_protection(self, machine, addresses, extra_port_dict=None):
-        port_dict = {'fixed_ips': [{'ip_address': a} for a in addresses]}
+        port_dict = {'fixed_ips': [{'ip_address': a} for a in addresses],
+                     'device_owner': 'nobody'}
         if extra_port_dict:
             port_dict.update(extra_port_dict)
         name = net_helpers.VethFixture.get_peer_name(machine.port.name)
@@ -86,6 +87,13 @@ class LinuxBridgeARPSpoofTestCase(functional_base.BaseSudoTestCase):
         no_arping(self.observer.namespace, self.source.ip)
         self._add_arp_protection(self.source, ['1.1.1.1'],
                                  {'port_security_enabled': False})
+        arping(self.observer.namespace, self.source.ip)
+
+    def test_arp_protection_network_owner(self):
+        self._add_arp_protection(self.source, ['1.1.1.1'])
+        no_arping(self.observer.namespace, self.source.ip)
+        self._add_arp_protection(self.source, ['1.1.1.1'],
+                                 {'device_owner': 'network:router_gateway'})
         arping(self.observer.namespace, self.source.ip)
 
     def test_arp_protection_dead_reference_removal(self):

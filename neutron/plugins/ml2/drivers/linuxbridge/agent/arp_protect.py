@@ -32,6 +32,12 @@ def setup_arp_spoofing_protection(vif, port_details):
         LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                      "it has port security disabled"), vif)
         return
+    if port_details['device_owner'].startswith('network:'):
+        # clear any previous entries related to this port
+        delete_arp_spoofing_protection([vif], current_rules)
+        LOG.debug("Skipping ARP spoofing rules for network owned port "
+                  "'%s'.", vif)
+        return
     # collect all of the addresses and cidrs that belong to the port
     addresses = {f['ip_address'] for f in port_details['fixed_ips']}
     if port_details.get('allowed_address_pairs'):
