@@ -453,9 +453,8 @@ class LinuxBridgeManager(object):
                       "this host, skipped", tap_device_name)
             return False
 
-        if physical_network:
-            bridge_name = self.get_existing_bridge_name(physical_network)
-        else:
+        bridge_name = self.get_existing_bridge_name(physical_network)
+        if not bridge_name:
             bridge_name = self.get_bridge_name(network_id)
 
         if network_type == p_const.TYPE_LOCAL:
@@ -936,10 +935,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         self.br_mgr = LinuxBridgeManager(bridge_mappings, interface_mappings)
 
     def remove_port_binding(self, network_id, physical_network, interface_id):
-        if physical_network:
-            bridge_name = self.br_mgr.get_existing_bridge_name(
-                physical_network)
-        else:
+        bridge_name = self.br_mgr.get_existing_bridge_name(physical_network)
+        if not bridge_name:
             bridge_name = self.br_mgr.get_bridge_name(network_id)
         tap_device_name = self.br_mgr.get_tap_device_name(interface_id)
         return self.br_mgr.remove_interface(bridge_name, tap_device_name)
