@@ -48,6 +48,15 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
 
         device.delete_addr_and_conntrack_state.assert_called_once_with(cidr)
 
+    def test_remove_external_gateway_ip(self):
+        ri = self._create_router(mock.MagicMock())
+        device = mock.Mock()
+        cidr = '172.16.0.0/24'
+
+        ri.remove_external_gateway_ip(device, cidr)
+
+        device.delete_addr_and_conntrack_state.assert_called_once_with(cidr)
+
 
 @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
 class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):

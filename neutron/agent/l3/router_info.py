@@ -202,6 +202,9 @@ class RouterInfo(object):
     def remove_floating_ip(self, device, ip_cidr):
         device.delete_addr_and_conntrack_state(ip_cidr)
 
+    def remove_external_gateway_ip(self, device, ip_cidr):
+        device.delete_addr_and_conntrack_state(ip_cidr)
+
     def get_router_cidrs(self, device):
         return set([addr['cidr'] for addr in device.addr.list()])
 
@@ -538,6 +541,12 @@ class RouterInfo(object):
     def external_gateway_removed(self, ex_gw_port, interface_name):
         LOG.debug("External gateway removed: port(%s), interface(%s)",
                   ex_gw_port, interface_name)
+        device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
+        for ip_addr in ex_gw_port['fixed_ips']:
+            self.remove_external_gateway_ip(device,
+                                            common_utils.ip_to_cidr(
+                                                ip_addr['ip_address'],
+                                                ip_addr['prefixlen']))
         self.driver.unplug(interface_name,
                            bridge=self.agent_conf.external_network_bridge,
                            namespace=self.ns_name,

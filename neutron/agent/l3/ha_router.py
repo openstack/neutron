@@ -359,10 +359,10 @@ class HaRouter(router.RouterInfo):
                                                        interface_name)
 
     def delete(self, agent):
+        super(HaRouter, self).delete(agent)
         self.destroy_state_change_monitor(self.process_monitor)
         self.ha_network_removed()
         self.disable_keepalived()
-        super(HaRouter, self).delete(agent)
 
     def process(self, agent):
         super(HaRouter, self).process(agent)

@@ -232,9 +232,10 @@ class IPDevice(SubProcessBase):
 
         This terminates any active connections through an IP.
 
-        cidr: the IP address for which state should be removed.  This can be
-            passed as a string with or without /NN.  A netaddr.IPAddress or
-            netaddr.Network representing the IP address can also be passed.
+        :param cidr: the IP address for which state should be removed.
+            This can be passed as a string with or without /NN.
+            A netaddr.IPAddress or netaddr.Network representing the IP address
+            can also be passed.
         """
         self.addr.delete(cidr)
 
