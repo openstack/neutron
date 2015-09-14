@@ -17,6 +17,7 @@ import contextlib
 
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
+from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import session
 from oslo_utils import uuidutils
 from sqlalchemy import exc
@@ -28,8 +29,11 @@ from neutron.db import common_db_mixin
 _FACADE = None
 
 MAX_RETRIES = 10
-retry_db_errors = oslo_db_api.wrap_db_retry(max_retries=MAX_RETRIES,
-                                            retry_on_deadlock=True)
+is_deadlock = lambda e: isinstance(e, db_exc.DBDeadlock)
+retry_db_errors = oslo_db_api.wrap_db_retry(
+    max_retries=MAX_RETRIES,
+    exception_checker=is_deadlock
+)
 
 
 def _create_facade_lazily():

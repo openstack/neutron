@@ -124,7 +124,8 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
                  {'type': self.get_type(), 'range': current_range})
 
     @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES, retry_on_deadlock=True)
+        max_retries=db_api.MAX_RETRIES,
+        exception_checker=db_api.is_deadlock)
     def sync_allocations(self):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()

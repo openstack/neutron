@@ -1443,9 +1443,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._bind_port_if_needed(port_context)
 
     @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES,
-        retry_on_deadlock=True, retry_on_request=True,
-        exception_checker=lambda e: isinstance(e, sa_exc.StaleDataError)
+        max_retries=db_api.MAX_RETRIES, retry_on_request=True,
+        exception_checker=lambda e: isinstance(e, (sa_exc.StaleDataError,
+                                                   os_db_exception.DBDeadlock))
     )
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
