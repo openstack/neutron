@@ -314,7 +314,7 @@ class NetcatTester(object):
 
     def establish_connection(self):
         if self._client_process:
-            raise RuntimeError('%(proto)s connection to $(ip_addr)s is already'
+            raise RuntimeError('%(proto)s connection to %(ip_addr)s is already'
                                ' established' %
                                {'proto': self.protocol,
                                 'ip_addr': self.address})
