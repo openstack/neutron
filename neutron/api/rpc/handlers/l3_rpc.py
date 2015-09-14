@@ -289,4 +289,4 @@ class L3RpcCallback(object):
         host = kwargs.get('host')
         admin_ctx = neutron_context.get_admin_context()
         self.l3plugin.delete_floatingip_agent_gateway_port(
-            admin_ctx, network_id, host_id=host)
+            admin_ctx, host, network_id)
