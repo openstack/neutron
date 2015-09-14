@@ -42,7 +42,8 @@ LOG = logging.getLogger(__name__)
 
 L3_AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('router_scheduler_driver',
-               default='neutron.scheduler.l3_agent_scheduler.ChanceScheduler',
+               default='neutron.scheduler.l3_agent_scheduler.'
+                       'LeastRoutersScheduler',
                help=_('Driver to use for scheduling '
                       'router to a default L3 agent')),
     cfg.BoolOpt('router_auto_schedule', default=True,
