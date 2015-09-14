@@ -502,6 +502,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             func.count(
                 RouterL3AgentBinding.router_id
             ).label('count')).outerjoin(RouterL3AgentBinding).group_by(
+                agents_db.Agent.id,
                 RouterL3AgentBinding.l3_agent_id).order_by('count')
         res = query.filter(agents_db.Agent.id.in_(agent_ids)).first()
         return res[0]
