@@ -490,10 +490,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 (self.dist_fip_count == 0)):
                 self.fip_ns.create_rtr_2_fip_link(self)
 
-                # kicks the FW Agent to add rules for the IR namespace if
-                # configured
-                self.agent.process_router_add(self)
-
     def process(self, agent):
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:

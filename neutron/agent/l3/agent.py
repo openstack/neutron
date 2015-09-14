@@ -52,13 +52,6 @@ from neutron.common import topics
 from neutron import context as n_context
 from neutron import manager
 
-try:
-    from neutron_fwaas.services.firewall.agents.l3reference \
-        import firewall_l3_agent
-except Exception:
-    # TODO(dougw) - REMOVE THIS FROM NEUTRON; during l3_agent refactor only
-    from neutron.services.firewall.agents.l3reference import firewall_l3_agent
-
 LOG = logging.getLogger(__name__)
 # TODO(Carl) Following constants retained to increase SNR during refactoring
 NS_PREFIX = namespaces.NS_PREFIX
@@ -160,8 +153,7 @@ class L3PluginApi(object):
                           host=self.host, network_id=fip_net)
 
 
-class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
-                 ha.AgentMixin,
+class L3NATAgent(ha.AgentMixin,
                  dvr.AgentMixin,
                  manager.Manager):
     """Manager for L3NatAgent
@@ -243,7 +235,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.metadata_driver)
 
         self._queue = queue.RouterProcessingQueue()
-        super(L3NATAgent, self).__init__(conf=self.conf)
+        super(L3NATAgent, self).__init__(host=self.conf.host)
 
         self.target_ex_net_id = None
         self.use_ipv6 = ipv6_utils.is_enabled()
@@ -345,9 +337,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.router_info[router_id] = ri
 
         ri.initialize(self.process_monitor)
-
-        # TODO(Carl) This is a hook in to fwaas.  It should be cleaned up.
-        self.process_router_add(ri)
 
     def _safe_router_removed(self, router_id):
         """Try to delete a router and return True if successful."""
@@ -523,7 +512,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     # is responsible for task execution.
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def periodic_sync_routers_task(self, context):
-        self.process_services_sync(context)
         if not self.fullsync:
             return
         LOG.debug("Starting fullsync periodic_sync_routers_task")

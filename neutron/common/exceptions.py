@@ -227,18 +227,6 @@ class AbortSyncRouters(e.NeutronException):
     message = _("Aborting periodic_sync_routers_task due to an error.")
 
 
-# Shared *aas exceptions, pending them being refactored out of Neutron
-# proper.
-
-class FirewallInternalDriverError(e.NeutronException):
-    """Fwaas exception for all driver errors.
-
-    On any failure or exception in the driver, driver should log it and
-    raise this exception to the agent
-    """
-    message = _("%(driver)s: Internal driver error.")
-
-
 class MissingMinSubnetPoolPrefix(e.BadRequest):
     message = _("Unspecified minimum subnet pool prefix.")
 
