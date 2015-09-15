@@ -27,7 +27,7 @@ fi
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../
 source "$DIR/.tox/py27/bin/activate"
-COMMAND="python -c 'from neutron.cmd.eventlet import api; api.main()'"
+COMMAND="python -c 'from neutron.cmd.eventlet import server; server.main_wsgi_pecan()'"
 
 function cleanup() {
   kill $PID
