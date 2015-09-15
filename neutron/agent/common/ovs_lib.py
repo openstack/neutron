@@ -195,15 +195,6 @@ class OVSBridge(BaseOVS):
     def destroy(self):
         self.delete_bridge(self.br_name)
 
-    def reset_bridge(self, secure_mode=False):
-        with self.ovsdb.transaction() as txn:
-            txn.add(self.ovsdb.del_br(self.br_name))
-            txn.add(self.ovsdb.add_br(self.br_name,
-                                      datapath_type=self.datapath_type))
-            if secure_mode:
-                txn.add(self.ovsdb.set_fail_mode(self.br_name,
-                                                 FAILMODE_SECURE))
-
     def add_port(self, port_name, *interface_attr_tuples):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.add_port(self.br_name, port_name))
