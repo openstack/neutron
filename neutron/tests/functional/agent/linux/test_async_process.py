@@ -54,7 +54,7 @@ class TestAsyncProcess(AsyncProcessTestFramework):
 
         # Ensure that the process and greenthreads have stopped
         proc._process.wait()
-        self.assertEqual(proc._process.returncode, -15)
+        self.assertEqual(proc._process.returncode, -9)
         for watcher in proc._watchers:
             watcher.wait()
 
