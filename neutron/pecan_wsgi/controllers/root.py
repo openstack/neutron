@@ -128,10 +128,12 @@ class CollectionsController(object):
 
     def get(self, *args, **kwargs):
         # list request
-        # TODO(kevinbenton): allow fields after policy enforced fields present
+        # TODO(kevinbenton): use user-provided fields in call to plugin
+        # after making sure policy enforced fields remain
         kwargs.pop('fields', None)
         _listify = lambda x: x if isinstance(x, list) else [x]
         filters = {k: _listify(v) for k, v in kwargs.items()}
+        # TODO(kevinbenton): convert these using api_common.get_filters
         lister = getattr(request.plugin, 'get_%s' % self.collection)
         return {self.collection: lister(request.context, filters=filters)}
 
