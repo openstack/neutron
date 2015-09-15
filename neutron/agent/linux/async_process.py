@@ -161,26 +161,20 @@ class AsyncProcess(object):
             self._kill_event = None
 
     def _kill_process(self, pid):
-        for sig, timeout in [('-15', 5), ('-9', -1)]:
-            try:
-                # A process started by a root helper will be running as
-                # root and need to be killed via the same helper.
-                utils.execute(['kill', sig, pid], run_as_root=self.run_as_root)
-            except Exception as ex:
-                stale_pid = (isinstance(ex, RuntimeError) and
-                             'No such process' in str(ex))
-                if not stale_pid:
-                    LOG.exception(_LE('An error occurred while killing [%s].'),
-                                  self.cmd)
-                    return False
-                return True
+        try:
+            # A process started by a root helper will be running as
+            # root and need to be killed via the same helper.
+            utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
+        except Exception as ex:
+            stale_pid = (isinstance(ex, RuntimeError) and
+                         'No such process' in str(ex))
+            if not stale_pid:
+                LOG.exception(_LE('An error occurred while killing [%s].'),
+                              self.cmd)
+                return False
 
-            if self._process:
-                while timeout != 0:
-                    if self._process.poll() is not None:
-                        return True
-                    eventlet.sleep(1)
-                    timeout -= 1
+        if self._process:
+            self._process.wait()
         return True
 
     def _handle_process_error(self):

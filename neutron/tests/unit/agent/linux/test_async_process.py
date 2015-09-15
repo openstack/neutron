@@ -192,9 +192,8 @@ class TestAsyncProcess(base.BaseTestCase):
             actual = self.proc._kill_process(pid)
 
         self.assertEqual(expected, actual)
-        mock_execute.assert_has_calls(
-            [mock.call(['kill', '-15', pid],
-                       run_as_root=self.proc.run_as_root)])
+        mock_execute.assert_called_with(['kill', '-9', pid],
+                                        run_as_root=self.proc.run_as_root)
 
     def test__kill_process_returns_true_for_valid_pid(self):
         self._test__kill_process('1', True)
@@ -204,29 +203,6 @@ class TestAsyncProcess(base.BaseTestCase):
 
     def test__kill_process_returns_false_for_execute_exception(self):
         self._test__kill_process('1', False, 'Invalid')
-
-    def test__kill_process_with_9(self):
-        class Mockpoll(object):
-            # This must be larger than timeout (5)
-            i = 6
-
-            def __call__(self):
-                self.i -= 1
-                return None if self.i >= 0 else 0
-
-        self.proc.run_as_root = True
-        pid = '1'
-        with mock.patch.object(utils, 'execute') as mock_execute,\
-            mock.patch.object(self.proc, '_process') as mock_process,\
-            mock.patch.object(mock_process, 'poll', new=Mockpoll()):
-            actual = self.proc._kill_process(pid)
-
-        self.assertTrue(actual)
-        self.assertEqual([mock.call(['kill', '-15', pid],
-                                    run_as_root=self.proc.run_as_root),
-                          mock.call(['kill', '-9', pid],
-                                    run_as_root=self.proc.run_as_root)],
-                         mock_execute.mock_calls)
 
     def test_stop_calls_kill(self):
         self.proc._kill_event = True
