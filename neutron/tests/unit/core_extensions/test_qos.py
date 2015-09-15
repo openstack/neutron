@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.core_extensions import base as base_core
 from neutron.core_extensions import qos as qos_core
@@ -36,6 +37,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
         policy_p = mock.patch('neutron.objects.qos.policy.QosPolicy')
         self.policy_m = policy_p.start()
         self.context = context.get_admin_context()
+        self.non_admin_context = context.Context('user_id', 'tenant_id')
 
     def test_process_fields_no_qos_policy_id(self):
         self.core_extension.process_fields(
@@ -110,6 +112,51 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
             old_qos_policy.detach_port.assert_called_once_with(port_id)
             self.assertIsNone(actual_port['qos_policy_id'])
 
+    def _process_port_updated_policy(self, context, shared,
+                                     policy_tenant_id):
+        with self._mock_plugin_loaded(True):
+            port_id = mock.sentinel.port_id
+            qos_policy_id = mock.sentinel.policy_id
+            actual_port = {'id': port_id,
+                           qos_consts.QOS_POLICY_ID: qos_policy_id}
+            old_qos_policy = mock.MagicMock()
+            old_qos_policy.shared = shared
+            old_qos_policy.tenant_id = policy_tenant_id
+            self.policy_m.get_port_policy = mock.Mock(
+                return_value=old_qos_policy)
+            self.core_extension.process_fields(
+                context, base_core.PORT,
+                {qos_consts.QOS_POLICY_ID: None},
+                actual_port)
+
+            old_qos_policy.detach_port.assert_called_once_with(port_id)
+
+    def test_process_resource_port_updated_remove_own_policy(self):
+        self._process_port_updated_policy(
+            context=self.non_admin_context,
+            shared=False,
+            policy_tenant_id=self.non_admin_context.tenant_id)
+
+    def test_process_resource_port_updated_admin_remove_provided_policy(self):
+        self._process_port_updated_policy(
+            context=self.context,
+            shared=False,
+            policy_tenant_id=self.non_admin_context.tenant_id)
+
+    def test_process_resource_port_updated_remove_shared_policy(self):
+        self._process_port_updated_policy(
+            context=self.non_admin_context,
+            shared=True,
+            policy_tenant_id=self.context.tenant_id)
+
+    def test_process_resource_port_updated_remove_provided_policy(self):
+        self.policy_m.is_accessible.return_value = False
+        self.assertRaises(n_exc.PolicyRemoveAuthorizationError,
+                          self._process_port_updated_policy,
+                          context=self.non_admin_context,
+                          shared=False,
+                          policy_tenant_id=self.context.tenant_id)
+
     def test_process_resource_network_updated_no_policy(self):
         with self._mock_plugin_loaded(True):
             network_id = mock.Mock()
@@ -160,6 +207,49 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
 
             old_qos_policy.detach_network.assert_called_once_with(network_id)
             new_qos_policy.attach_network.assert_called_once_with(network_id)
+
+    def _process_network_updated_policy(self, context, shared,
+                                        policy_tenant_id):
+        with self._mock_plugin_loaded(True):
+            qos_policy_id = mock.sentinel.policy_id
+            network_id = mock.sentinel.net_id
+            actual_network = {'id': network_id,
+                              qos_consts.QOS_POLICY_ID: qos_policy_id}
+            old_qos_policy = mock.MagicMock()
+            old_qos_policy.shared = shared
+            old_qos_policy.tenant_id = policy_tenant_id
+            self.policy_m.get_network_policy.return_value = old_qos_policy
+            self.core_extension.process_fields(
+                context, base_core.NETWORK,
+                {qos_consts.QOS_POLICY_ID: None}, actual_network)
+
+            old_qos_policy.detach_network.assert_called_once_with(network_id)
+
+    def test_process_fields_network_updated_remove_shared_policy(self):
+        self._process_network_updated_policy(
+            context=self.non_admin_context,
+            shared=True,
+            policy_tenant_id=self.context.tenant_id)
+
+    def test_process_fields_network_updated_remove_own_policy(self):
+        self._process_network_updated_policy(
+            context=self.non_admin_context,
+            shared=True,
+            policy_tenant_id=self.non_admin_context.tenant_id)
+
+    def test_process_fields_network_updated_admin_remove_provided_policy(self):
+        self._process_network_updated_policy(
+            context=self.context,
+            shared=True,
+            policy_tenant_id=self.non_admin_context.tenant_id)
+
+    def test_process_fields_network_updated_remove_provided_policy(self):
+        self.policy_m.is_accessible.return_value = False
+        self.assertRaises(n_exc.PolicyRemoveAuthorizationError,
+                          self._process_network_updated_policy,
+                          context=self.non_admin_context,
+                          shared=False,
+                          policy_tenant_id=self.context.tenant_id)
 
     def test_extract_fields_plugin_not_loaded(self):
         with self._mock_plugin_loaded(False):

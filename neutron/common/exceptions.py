@@ -52,6 +52,11 @@ class PolicyCheckError(e.NeutronException):
     message = _("Failed to check policy %(policy)s because %(reason)s.")
 
 
+class PolicyRemoveAuthorizationError(e.NotAuthorized):
+    message = _("Failed to remove provided policy %(policy_id)s "
+                "because you are not authorized.")
+
+
 class StateInvalid(e.BadRequest):
     message = _("Unsupported port state: %(port_state)s.")
 
