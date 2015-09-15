@@ -34,7 +34,8 @@ class OwnershipValidationHook(hooks.PecanHook):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
         rtype = request.resource_type
-        if rtype not in ('port', 'subnet'):
+        if (request.context.is_admin or request.context.is_advsvc or
+                rtype not in ('port', 'subnet')):
             return
         plugin = manager.NeutronManager.get_plugin()
         network = plugin.get_network(request.context,
