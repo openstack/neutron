@@ -30,7 +30,7 @@ class ExceptionTranslationHook(hooks.PecanHook):
             return
         for exc_class, to_class in v2base.FAULT_MAP.items():
             if isinstance(e, exc_class):
-                raise to_class(e.message)
+                raise to_class(getattr(e, 'msg', e.message))
         # leaked unexpected exception, convert to boring old 500 error and
         # hide message from user in case it contained sensitive details
         LOG.exception(_("An unexpected exception was caught: %s") % e)
