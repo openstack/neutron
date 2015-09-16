@@ -20,21 +20,24 @@ from neutron.tests.common import net_helpers
 
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
-    def __init__(self, host, network_id, tenant_id, safe_client):
+    def __init__(self, host, network_id, tenant_id, safe_client,
+                 neutron_port=None):
         super(FakeFullstackMachine, self).__init__()
         self.bridge = host.ovs_agent.br_int
         self.host_binding = host.hostname
         self.tenant_id = tenant_id
         self.network_id = network_id
         self.safe_client = safe_client
+        self.neutron_port = neutron_port
 
     def _setUp(self):
         super(FakeFullstackMachine, self)._setUp()
 
-        self.neutron_port = self.safe_client.create_port(
-            network_id=self.network_id,
-            tenant_id=self.tenant_id,
-            hostname=self.host_binding)
+        if not self.neutron_port:
+            self.neutron_port = self.safe_client.create_port(
+                network_id=self.network_id,
+                tenant_id=self.tenant_id,
+                hostname=self.host_binding)
         self.neutron_port_id = self.neutron_port['id']
         mac_address = self.neutron_port['mac_address']
 

@@ -103,6 +103,10 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
+        service_plugins = ['router']
+        if env_desc.qos:
+            service_plugins.append('qos')
+
         self.config.update({
             'DEFAULT': {
                 'host': self._generate_host(),
@@ -112,8 +116,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'api_paste_config': self._generate_api_paste(),
                 'policy_file': self._generate_policy_json(),
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
-                'service_plugins': ('neutron.services.l3_router.'
-                                    'l3_router_plugin.L3RouterPlugin'),
+                'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
@@ -179,6 +182,9 @@ class ML2ConfigFixture(ConfigFixture):
             },
         })
 
+        if env_desc.qos:
+            self.config['ml2']['extension_drivers'] = 'qos'
+
 
 class OVSConfigFixture(ConfigFixture):
 
@@ -213,6 +219,9 @@ class OVSConfigFixture(ConfigFixture):
         else:
             self.config['ovs']['bridge_mappings'] = (
                 self._generate_bridge_mappings())
+
+        if env_desc.qos:
+            self.config['agent']['extensions'] = 'qos'
 
     def _generate_bridge_mappings(self):
         return 'physnet1:%s' % base.get_rand_device_name(prefix='br-eth')
