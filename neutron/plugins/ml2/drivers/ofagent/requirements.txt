@@ -1,1 +1,0 @@
-networking-ofagent>=2015.1,<2015.2
