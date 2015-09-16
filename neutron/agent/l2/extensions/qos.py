@@ -104,9 +104,13 @@ class QosAgentDriver(object):
 
     def _handle_update_create_rules(self, action, port, qos_policy):
         for rule in self._iterate_rules(qos_policy.rules):
-            handler_name = "".join((action, "_", rule.rule_type))
-            handler = getattr(self, handler_name)
-            handler(port, rule)
+            if rule.should_apply_to_port(port):
+                handler_name = "".join((action, "_", rule.rule_type))
+                handler = getattr(self, handler_name)
+                handler(port, rule)
+            else:
+                LOG.debug("Port %(port)s excluded from QoS rule %(rule)s",
+                          {'port': port, 'rule': rule.id})
 
 
 class PortPolicyMap(object):
@@ -204,7 +208,9 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         Update events are handled in _handle_notification.
         """
         port_id = port['port_id']
-        qos_policy_id = port.get('qos_policy_id')
+        port_qos_policy_id = port.get('qos_policy_id')
+        network_qos_policy_id = port.get('network_qos_policy_id')
+        qos_policy_id = port_qos_policy_id or network_qos_policy_id
         if qos_policy_id is None:
             self._process_reset_port(port)
             return

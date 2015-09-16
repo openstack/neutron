@@ -69,10 +69,14 @@ class QosAgentDriverTestCase(base.BaseTestCase):
         self.policy = TEST_POLICY
         self.rule = (
             rule.QosBandwidthLimitRule(context=None, id='fake_rule_id',
+                                       qos_policy_id=self.policy.id,
                                        max_kbps=100, max_burst_kbps=200))
         self.policy.rules = [self.rule]
-        self.port = object()
-        self.fake_rule = QosFakeRule(context=None, id='really_fake_rule_id')
+        self.port = {'qos_policy_id': None, 'network_qos_policy_id': None,
+                     'device_owner': 'random-device-owner'}
+
+        self.fake_rule = QosFakeRule(context=None, id='really_fake_rule_id',
+                                     qos_policy_id=self.policy.id)
 
     def test_create(self):
         self.driver.create(self.port, self.policy)
@@ -97,6 +101,15 @@ class QosAgentDriverTestCase(base.BaseTestCase):
         rules = list(self.driver._iterate_rules(self.policy.rules))
         self.assertEqual(1, len(rules))
         self.assertIsInstance(rules[0], rule.QosBandwidthLimitRule)
+
+    def test__handle_update_create_rules_checks_should_apply_to_port(self):
+        self.rule.should_apply_to_port = mock.Mock(return_value=False)
+        self.driver.create(self.port, self.policy)
+        self.assertFalse(self.driver.create_bandwidth_limit.called)
+
+        self.rule.should_apply_to_port = mock.Mock(return_value=True)
+        self.driver.create(self.port, self.policy)
+        self.assertTrue(self.driver.create_bandwidth_limit.called)
 
 
 class QosExtensionBaseTestCase(base.BaseTestCase):

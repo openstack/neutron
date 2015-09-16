@@ -10,11 +10,55 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.services.qos import qos_consts
+from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
+
+POLICY_ID_A = 'policy-id-a'
+POLICY_ID_B = 'policy-id-b'
+DEVICE_OWNER_COMPUTE = 'compute:None'
+
+
+class QosRuleObjectTestCase(neutron_test_base.BaseTestCase):
+
+    def _test_should_apply_to_port(self, rule_policy_id, port_policy_id,
+                                   device_owner, expected_result):
+        test_rule = rule.QosRule(qos_policy_id=rule_policy_id)
+        port = {qos_consts.QOS_POLICY_ID: port_policy_id,
+                'device_owner': device_owner}
+        self.assertEqual(expected_result, test_rule.should_apply_to_port(port))
+
+    def test_should_apply_to_port_with_network_port_and_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+            expected_result=False)
+
+    def test_should_apply_to_port_with_network_port_and_port_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_A,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+            expected_result=True)
+
+    def test_should_apply_to_port_with_compute_port_and_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=POLICY_ID_A,
+            device_owner=DEVICE_OWNER_COMPUTE,
+            expected_result=True)
+
+    def test_should_apply_to_port_with_compute_port_and_port_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_A,
+            port_policy_id=POLICY_ID_A,
+            device_owner=DEVICE_OWNER_COMPUTE,
+            expected_result=True)
 
 
 class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
