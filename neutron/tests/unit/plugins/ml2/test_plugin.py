@@ -633,6 +633,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertTrue(utils.is_dvr_serviced(
             constants.DEVICE_OWNER_LOADBALANCER))
 
+    def test_check_if_lbaasv2_vip_port_serviced_by_dvr(self):
+        self.assertTrue(utils.is_dvr_serviced(
+            constants.DEVICE_OWNER_LOADBALANCERV2))
+
     def test_check_if_dhcp_port_serviced_by_dvr(self):
         self.assertTrue(utils.is_dvr_serviced(constants.DEVICE_OWNER_DHCP))
 
@@ -784,6 +788,10 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
     def test_delete_lbaas_vip_port(self):
         self._test_delete_dvr_serviced_port(
             device_owner=constants.DEVICE_OWNER_LOADBALANCER)
+
+    def test_delete_lbaasv2_vip_port(self):
+        self._test_delete_dvr_serviced_port(
+            device_owner=constants.DEVICE_OWNER_LOADBALANCERV2)
 
     def test_concurrent_csnat_port_delete(self):
         plugin = manager.NeutronManager.get_service_plugins()[

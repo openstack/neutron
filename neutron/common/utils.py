@@ -368,6 +368,7 @@ def is_dvr_serviced(device_owner):
     indirectly associated with DVR.
     """
     dvr_serviced_device_owners = (n_const.DEVICE_OWNER_LOADBALANCER,
+                                  n_const.DEVICE_OWNER_LOADBALANCERV2,
                                   n_const.DEVICE_OWNER_DHCP)
     return (device_owner.startswith('compute:') or
             device_owner in dvr_serviced_device_owners)
