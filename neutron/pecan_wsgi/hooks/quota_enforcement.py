@@ -14,7 +14,6 @@
 #    under the License.
 
 from neutron.common import exceptions
-from neutron.pecan_wsgi.hooks import attribute_population
 from neutron import quota
 
 from oslo_log import log as logging
@@ -38,7 +37,6 @@ class QuotaEnforcementHook(hooks.PecanHook):
             try:
                 count = quota.QUOTAS.count(state.request.context, rtype,
                                            state.request.plugin,
-                                           attribute_population._plural(rtype),
                                            tenant_id)
                 delta = deltas.get(tenant_id, 0) + 1
                 kwargs = {rtype: count + delta}
