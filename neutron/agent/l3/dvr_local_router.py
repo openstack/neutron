@@ -368,7 +368,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 self.get_external_device_interface_name(ex_gw_port))
             self.process_floating_ip_addresses(to_fip_interface_name)
         for p in self.internal_ports:
-            gateway = self.get_snat_port_for_internal_port(p)
+            # NOTE: When removing the gateway port, pass in the snat_port
+            # cache along with the current ports.
+            gateway = self.get_snat_port_for_internal_port(p, self.snat_ports)
             internal_interface = self.get_internal_device_name(p['id'])
             self._snat_redirect_remove(gateway, p, internal_interface)
 

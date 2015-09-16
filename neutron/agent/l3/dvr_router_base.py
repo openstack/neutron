@@ -40,13 +40,14 @@ class DvrRouterBase(router.RouterInfo):
             snat_ports = self.get_snat_interfaces()
         fixed_ip = int_port['fixed_ips'][0]
         subnet_id = fixed_ip['subnet_id']
-        match_port = [p for p in snat_ports
-                      if p['fixed_ips'][0]['subnet_id'] == subnet_id]
-        if match_port:
-            return match_port[0]
-        else:
-            LOG.error(_LE('DVR: SNAT port not found in the list '
-                          '%(snat_list)s for the given router '
-                          ' internal port %(int_p)s'), {
-                              'snat_list': snat_ports,
-                              'int_p': int_port})
+        if snat_ports:
+            match_port = [p for p in snat_ports
+                          if p['fixed_ips'][0]['subnet_id'] == subnet_id]
+            if match_port:
+                return match_port[0]
+            else:
+                LOG.error(_LE('DVR: SNAT port not found in the list '
+                              '%(snat_list)s for the given router '
+                              ' internal port %(int_p)s'), {
+                                  'snat_list': snat_ports,
+                                  'int_p': int_port})
