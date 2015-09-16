@@ -236,6 +236,29 @@ class TestCli(base.BaseTestCase):
                 expected_kwargs
             )
             self.assertEqual(len(self.projects), update.call_count)
+            update.reset_mock()
+
+            for kwarg in expected_kwargs:
+                kwarg['sql'] = False
+                kwarg['head'] = 'expand@head'
+
+            self._main_test_helper(
+                ['prog', 'revision', '-m', 'message', '--expand'],
+                'revision',
+                expected_kwargs
+            )
+            self.assertEqual(len(self.projects), update.call_count)
+            update.reset_mock()
+
+            for kwarg in expected_kwargs:
+                kwarg['head'] = 'contract@head'
+
+            self._main_test_helper(
+                ['prog', 'revision', '-m', 'message', '--contract'],
+                'revision',
+                expected_kwargs
+            )
+            self.assertEqual(len(self.projects), update.call_count)
 
     def test_database_sync_revision(self):
         self._test_database_sync_revision()
