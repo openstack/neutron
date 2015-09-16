@@ -162,6 +162,21 @@ class _ARPSpoofTestCase(object):
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         net_helpers.assert_no_ping(self.src_namespace, self.dst_addr, count=2)
 
+    def test_arp_spoof_blocks_icmpv6_neigh_advt(self):
+        self.src_addr = '2000::1'
+        self.dst_addr = '2000::2'
+        # this will prevent the destination from responding (i.e., icmpv6
+        # neighbour advertisement) to the icmpv6 neighbour solicitation
+        # request for it's own address (2000::2) as spoofing rules added
+        # below only allow '2000::3'.
+        self._setup_arp_spoof_for_port(self.dst_p.name, ['2000::3'])
+        self.src_p.addr.add('%s/64' % self.src_addr)
+        self.dst_p.addr.add('%s/64' % self.dst_addr)
+        # make sure the IPv6 addresses are ready before pinging
+        self.src_p.addr.wait_until_address_ready(self.src_addr)
+        self.dst_p.addr.wait_until_address_ready(self.dst_addr)
+        net_helpers.assert_no_ping(self.src_namespace, self.dst_addr, count=2)
+
     def test_arp_spoof_blocks_request(self):
         # this will prevent the source from sending an ARP
         # request with its own address
@@ -182,6 +197,18 @@ class _ARPSpoofTestCase(object):
                                                          self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+
+    def test_arp_spoof_icmpv6_neigh_advt_allowed_address_pairs(self):
+        self.src_addr = '2000::1'
+        self.dst_addr = '2000::2'
+        self._setup_arp_spoof_for_port(self.dst_p.name, ['2000::3',
+                                                         self.dst_addr])
+        self.src_p.addr.add('%s/64' % self.src_addr)
+        self.dst_p.addr.add('%s/64' % self.dst_addr)
+        # make sure the IPv6 addresses are ready before pinging
+        self.src_p.addr.wait_until_address_ready(self.src_addr)
+        self.dst_p.addr.wait_until_address_ready(self.dst_addr)
         net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def test_arp_spoof_allowed_address_pairs_0cidr(self):

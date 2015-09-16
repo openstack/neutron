@@ -283,6 +283,60 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def test_install_icmpv6_na_spoofing_protection(self):
+        port = 8888
+        ip_addresses = ['2001:db8::1', 'fdf8:f53b:82e4::1/128']
+        self.br.install_icmpv6_na_spoofing_protection(port, ip_addresses)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=0,
+                instructions=[
+                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]),
+                ],
+                match=ofpp.OFPMatch(
+                    eth_type=self.ether_types.ETH_TYPE_IPV6,
+                    icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT,
+                    ip_proto=self.in_proto.IPPROTO_ICMPV6,
+                    ipv6_nd_target='2001:db8::1',
+                    in_port=8888,
+                ),
+                priority=2,
+                table_id=24)),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=0,
+                instructions=[
+                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]),
+                ],
+                match=ofpp.OFPMatch(
+                    eth_type=self.ether_types.ETH_TYPE_IPV6,
+                    icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT,
+                    ip_proto=self.in_proto.IPPROTO_ICMPV6,
+                    ipv6_nd_target='fdf8:f53b:82e4::1',
+                    in_port=8888,
+                ),
+                priority=2,
+                table_id=24)),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=0,
+                instructions=[
+                    ofpp.OFPInstructionGotoTable(table_id=24),
+                ],
+                match=ofpp.OFPMatch(
+                    eth_type=self.ether_types.ETH_TYPE_IPV6,
+                    icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT,
+                    ip_proto=self.in_proto.IPPROTO_ICMPV6,
+                    in_port=8888,
+                ),
+                priority=10,
+                table_id=0)),
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
     def test_install_arp_spoofing_protection(self):
         port = 8888
         ip_addresses = ['192.0.2.1', '192.0.2.2/32']
@@ -339,6 +393,11 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.delete_flows(table_id=0, match=ofpp.OFPMatch(
                 eth_type=self.ether_types.ETH_TYPE_ARP,
                 in_port=8888)),
+            call.delete_flows(table_id=0, match=ofpp.OFPMatch(
+                eth_type=self.ether_types.ETH_TYPE_IPV6,
+                icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT,
+                in_port=8888,
+                ip_proto=self.in_proto.IPPROTO_ICMPV6)),
             call.delete_flows(table_id=24, in_port=port),
         ]
         self.assertEqual(expected, self.mock.mock_calls)

@@ -21,6 +21,8 @@
 
 from oslo_log import log as logging
 from ryu.lib.packet import ether_types
+from ryu.lib.packet import icmpv6
+from ryu.lib.packet import in_proto
 
 from neutron.i18n import _LE
 from neutron.plugins.common import constants as p_const
@@ -146,6 +148,34 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         return ofpp.OFPMatch(in_port=port,
                              eth_type=ether_types.ETH_TYPE_ARP)
 
+    @staticmethod
+    def _icmpv6_reply_match(ofp, ofpp, port):
+        return ofpp.OFPMatch(in_port=port,
+                             eth_type=ether_types.ETH_TYPE_IPV6,
+                             ip_proto=in_proto.IPPROTO_ICMPV6,
+                             icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT)
+
+    def install_icmpv6_na_spoofing_protection(self, port, ip_addresses):
+        # Allow neighbor advertisements as long as they match addresses
+        # that actually belong to the port.
+        for ip in ip_addresses:
+            masked_ip = self._cidr_to_ryu(ip)
+            self.install_normal(
+                table_id=constants.ARP_SPOOF_TABLE, priority=2,
+                eth_type=ether_types.ETH_TYPE_IPV6,
+                ip_proto=in_proto.IPPROTO_ICMPV6,
+                icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT,
+                ipv6_nd_target=masked_ip, in_port=port)
+
+        # Now that the rules are ready, direct icmpv6 neighbor advertisement
+        # traffic from the port into the anti-spoof table.
+        (_dp, ofp, ofpp) = self._get_dp()
+        match = self._icmpv6_reply_match(ofp, ofpp, port=port)
+        self.install_goto(table_id=constants.LOCAL_SWITCHING,
+                          priority=10,
+                          match=match,
+                          dest_table_id=constants.ARP_SPOOF_TABLE)
+
     def install_arp_spoofing_protection(self, port, ip_addresses):
         # allow ARP replies as long as they match addresses that actually
         # belong to the port.
@@ -171,6 +201,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
     def delete_arp_spoofing_protection(self, port):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._arp_reply_match(ofp, ofpp, port=port)
+        self.delete_flows(table_id=constants.LOCAL_SWITCHING,
+                          match=match)
+        match = self._icmpv6_reply_match(ofp, ofpp, port=port)
         self.delete_flows(table_id=constants.LOCAL_SWITCHING,
                           match=match)
         self.delete_flows(table_id=constants.ARP_SPOOF_TABLE,
