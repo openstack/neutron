@@ -16,11 +16,19 @@
 Common utilities and helper functions for Openstack Networking Plugins.
 """
 
+import hashlib
 import webob.exc
 
+from oslo_log import log as logging
+import six
+
 from neutron.api.v2 import attributes
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
+from neutron.i18n import _LI
 from neutron.plugins.common import constants as p_const
+
+LOG = logging.getLogger(__name__)
 
 
 def is_valid_vlan_tag(vlan):
@@ -138,3 +146,40 @@ def create_port(core_plugin, context, port, check_allow_post=True):
                                 port.get('port', {}),
                                 check_allow_post=check_allow_post)
     return core_plugin.create_port(context, {'port': port_data})
+
+
+def get_interface_name(name, prefix='', postfix='',
+                       max_len=n_const.DEVICE_NAME_MAX_LEN):
+    """Construct an interface name based on the prefix, postfix and name.
+
+    The interface name can not exceed the maximum length passed in. Longer
+    names are hashed to help ensure uniqueness.
+    """
+    requested_name = prefix + name + postfix
+
+    if len(requested_name) <= max_len:
+        return requested_name
+    # We can't just truncate because interfaces may be distinguished
+    # by an ident at the end. A hash over the name should be unique.
+    # Leave part of the interface name on for easier identification
+    hashlen = 6
+
+    if (len(prefix + postfix) + hashlen) > max_len:
+        raise ValueError("Too long pre- and postfix provided. New name would "
+                         "exceed given length for an interface name.")
+
+    namelen = max_len - len(prefix) - hashlen - len(postfix)
+    if isinstance(name, six.text_type):
+        hashed_name = hashlib.sha1(name.encode('utf-8'))
+    else:
+        hashed_name = hashlib.sha1(name)
+    new_name = ('%(prefix)s%(truncated)s%(hash)s%(postfix)s' %
+                {'prefix': prefix, 'truncated': name[0:namelen],
+                 'hash': hashed_name.hexdigest()[0:hashlen],
+                 'postfix': postfix})
+    LOG.info(_LI("The requested interface name %(requested_name)s exceeds the "
+                 "%(limit)d character limitation. It was shortened to "
+                 "%(new_name)s to fit."),
+             {'requested_name': requested_name,
+              'limit': max_len, 'new_name': new_name})
+    return new_name

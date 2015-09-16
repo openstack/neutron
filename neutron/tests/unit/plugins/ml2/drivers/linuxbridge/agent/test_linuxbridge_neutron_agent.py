@@ -23,6 +23,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
@@ -396,11 +397,25 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.assertEqual(self.lbm.get_bridge_name(nw_id),
                          "brq")
 
-    def test_get_subinterface_name(self):
-        self.assertEqual(self.lbm.get_subinterface_name("eth0", "0"),
-                         "eth0.0")
-        self.assertEqual(self.lbm.get_subinterface_name("eth0", ""),
-                         "eth0.")
+    def test_get_vlan_device_name(self):
+        with mock.patch.object(p_utils, "get_interface_name",
+                               return_value="eth0.1") as mock_get_vlan:
+            self.assertEqual(self.lbm.get_vlan_device_name("eth0", 1),
+                             "eth0.1")
+            mock_get_vlan.assert_called_with("eth0", postfix=".1", max_len=12)
+
+        with mock.patch.object(p_utils, "get_interface_name",
+                               return_value="eth0.1111") as mock_get_vlan:
+            self.assertEqual(self.lbm.get_vlan_device_name("eth0", 1111),
+                             "eth0.1111")
+            mock_get_vlan.assert_called_with("eth0", postfix=".1111",
+                                             max_len=15)
+        invalid_vlan = 11111
+        self.assertRaises(ValueError, self.lbm.get_vlan_device_name, "eth0",
+                          invalid_vlan)
+        self.assertRaises(ValueError, self.lbm.get_vlan_device_name, "eth0", 0)
+        self.assertRaises(ValueError, self.lbm.get_vlan_device_name, "eth0",
+                          None)
 
     def test_get_tap_device_name(self):
         if_id = "123456789101112"
