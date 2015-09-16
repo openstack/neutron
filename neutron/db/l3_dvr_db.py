@@ -433,15 +433,22 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active,
             device_owners=l3_const.ROUTER_INTERFACE_OWNERS)
-        port_filter = {portbindings.HOST_ID: [host]}
-        ports = self._core_plugin.get_ports(context, port_filter)
-        port_dict = dict((port['id'], port) for port in ports)
-        # Add the port binding host to the floatingip dictionary
-        for fip in floating_ips:
-            vm_port = port_dict.get(fip['port_id'], None)
-            if vm_port:
-                fip['host'] = self._get_vm_port_hostid(context, fip['port_id'],
-                                                      port=vm_port)
+        dvr_router_ids = set(router['id'] for router in routers
+                             if is_distributed_router(router))
+        floating_ip_port_ids = [fip['port_id'] for fip in floating_ips
+                                if fip['router_id'] in dvr_router_ids]
+        if floating_ip_port_ids:
+            port_filter = {portbindings.HOST_ID: [host],
+                           'id': floating_ip_port_ids}
+            ports = self._core_plugin.get_ports(context, port_filter)
+            port_dict = dict((port['id'], port) for port in ports)
+            # Add the port binding host to the floatingip dictionary
+            for fip in floating_ips:
+                vm_port = port_dict.get(fip['port_id'], None)
+                if vm_port:
+                    fip['host'] = self._get_vm_port_hostid(context,
+                                                           fip['port_id'],
+                                                           port=vm_port)
         routers_dict = self._process_routers(context, routers)
         self._process_floating_ips_dvr(context, routers_dict,
                                        floating_ips, host, agent)
