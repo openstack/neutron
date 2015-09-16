@@ -384,7 +384,7 @@ class TestDhcpAgent(base.BaseTestCase):
             self._test_sync_state_helper(known_net_ids, active_net_ids)
             w.assert_called_once_with()
 
-    def test_sync_state_plugin_error(self):
+    def test_sync_state_for_all_networks_plugin_error(self):
         with mock.patch(DHCP_PLUGIN) as plug:
             mock_plugin = mock.Mock()
             mock_plugin.get_active_networks_info.side_effect = Exception
@@ -398,6 +398,22 @@ class TestDhcpAgent(base.BaseTestCase):
 
                     self.assertTrue(log.called)
                     self.assertTrue(schedule_resync.called)
+
+    def test_sync_state_for_one_network_plugin_error(self):
+        with mock.patch(DHCP_PLUGIN) as plug:
+            mock_plugin = mock.Mock()
+            exc = Exception()
+            mock_plugin.get_active_networks_info.side_effect = exc
+            plug.return_value = mock_plugin
+
+            with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+                dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+                with mock.patch.object(dhcp,
+                                       'schedule_resync') as schedule_resync:
+                    dhcp.sync_state(['foo_network'])
+
+                    self.assertTrue(log.called)
+                    schedule_resync.assert_called_with(exc, 'foo_network')
 
     def test_periodic_resync(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
