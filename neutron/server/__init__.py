@@ -18,47 +18,21 @@
 
 import sys
 
-import eventlet
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from neutron.common import config
-from neutron.i18n import _LI
-from neutron import service
-
-LOG = logging.getLogger(__name__)
 
 
-def main():
+def boot_server(server_func):
     # the configuration will be read into the cfg.CONF global data structure
     config.init(sys.argv[1:])
+    config.setup_logging()
     if not cfg.CONF.config_file:
         sys.exit(_("ERROR: Unable to find configuration file via the default"
                    " search paths (~/.neutron/, ~/, /etc/neutron/, /etc/) and"
                    " the '--config-file' option!"))
     try:
-        pool = eventlet.GreenPool()
-
-        neutron_api = service.serve_wsgi(service.NeutronApiService)
-        api_thread = pool.spawn(neutron_api.wait)
-
-        try:
-            neutron_rpc = service.serve_rpc()
-        except NotImplementedError:
-            LOG.info(_LI("RPC was already started in parent process by "
-                         "plugin."))
-        else:
-            rpc_thread = pool.spawn(neutron_rpc.wait)
-
-            plugin_workers = service.start_plugin_workers()
-            for worker in plugin_workers:
-                pool.spawn(worker.wait)
-
-            # api and rpc should die together.  When one dies, kill the other.
-            rpc_thread.link(lambda gt: api_thread.kill())
-            api_thread.link(lambda gt: rpc_thread.kill())
-
-        pool.waitall()
+        server_func()
     except KeyboardInterrupt:
         pass
     except RuntimeError as e:
