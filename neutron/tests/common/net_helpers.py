@@ -252,7 +252,6 @@ class RootHelperProcess(subprocess.Popen):
 
 
 class NetcatTester(object):
-    TESTING_STRING = 'foo'
     TCP = n_const.PROTO_NAME_TCP
     UDP = n_const.PROTO_NAME_UDP
 
@@ -325,21 +324,30 @@ class NetcatTester(object):
             self.client_namespace,
             address=self.address)
         if self.protocol == self.UDP:
-            # Create an entry in conntrack table for UDP packets
-            self.client_process.writeline(self.TESTING_STRING)
+            # Create an ASSURED entry in conntrack table for UDP packets,
+            # that requires 3-way communcation
+            # 1st transmission creates UNREPLIED
+            # 2nd transmission removes UNREPLIED
+            # 3rd transmission creates ASSURED
+            data = 'foo'
+            self.client_process.writeline(data)
+            self.server_process.read_stdout(READ_TIMEOUT)
+            self.server_process.writeline(data)
+            self.client_process.read_stdout(READ_TIMEOUT)
+            self.client_process.writeline(data)
+            self.server_process.read_stdout(READ_TIMEOUT)
 
     def test_connectivity(self, respawn=False):
-        stop_required = (respawn and self._client_process and
-                         self._client_process.poll() is not None)
-        if stop_required:
+        testing_string = uuidutils.generate_uuid()
+        if respawn:
             self.stop_processes()
 
-        self.client_process.writeline(self.TESTING_STRING)
+        self.client_process.writeline(testing_string)
         message = self.server_process.read_stdout(READ_TIMEOUT).strip()
         self.server_process.writeline(message)
         message = self.client_process.read_stdout(READ_TIMEOUT).strip()
 
-        return message == self.TESTING_STRING
+        return message == testing_string
 
     def _spawn_nc_in_namespace(self, namespace, address, listen=False):
         cmd = ['nc', address, self.dst_port]
