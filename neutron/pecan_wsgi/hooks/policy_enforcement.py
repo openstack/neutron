@@ -75,28 +75,41 @@ class PolicyHook(hooks.PecanHook):
             data = state.response.json
         except simplejson.JSONDecodeError:
             return
-        if not data:
+        action = '%s_%s' % (self.ACTION_MAP[state.request.method],
+                            resource_type)
+        plural = attribute_population._plural(resource_type)
+        if not data or (resource_type not in data and plural not in data):
             return
-        if resource_type in data:
-            # singular response
-            data[resource_type] = self._get_filtered_item(
-                state.request.context, resource_type, data[resource_type])
-        elif attribute_population._plural(resource_type) in data:
-            # plural response
-            plural = attribute_population._plural(resource_type)
-            data[plural] = [self._get_filtered_item(state.request.context,
-                                                    resource_type, item)
-                            for item in data[plural]]
+        is_single = resource_type in data
+        key = resource_type if is_single else plural
+        to_process = [data[resource_type]] if is_single else data[plural]
+        # in the single case, we enforce which raises on violation
+        # in the plural case, we just check so violating items are hidden
+        policy_method = policy.enforce if is_single else policy.check
+        resp = [self._get_filtered_item(state.request, resource_type, item)
+                for item in to_process
+                if (state.request.method != 'GET' or
+                    policy_method(state.request.context, action, item,
+                                  plugin=state.request.plugin,
+                                  pluralized=plural))]
+        if is_single:
+            resp = resp[0]
+        data[key] = resp
         state.response.json = data
 
-    def _get_filtered_item(self, context, resource_type, data):
-        to_exclude = self._exclude_attributes_by_policy(context,
+    def _get_filtered_item(self, request, resource_type, data):
+        to_exclude = self._exclude_attributes_by_policy(request.context,
                                                         resource_type, data)
-        return self._filter_attributes(context, data, to_exclude)
+        return self._filter_attributes(request, data, to_exclude)
 
-    def _filter_attributes(self, context, data, fields_to_strip):
+    def _filter_attributes(self, request, data, fields_to_strip):
+        # TODO(kevinbenton): this works but we didn't allow the plugin to
+        # only fetch the fields we are interested in. consider moving this
+        # to the call
+        user_fields = request.params.getall('fields')
         return dict(item for item in data.items()
-                    if (item[0] not in fields_to_strip))
+                    if (item[0] not in fields_to_strip and
+                        (not user_fields or item[0] in user_fields)))
 
     def _exclude_attributes_by_policy(self, context, resource_type, data):
         """Identifies attributes to exclude according to authZ policies.
