@@ -78,7 +78,7 @@ class TestV2Controller(PecanFunctionalTest):
                              'admin_state_up': True,
                              'tenant_id': 'tenid'}},
             headers={'X-Tenant-Id': 'tenid'})
-        self.assertEqual(response.status_int, 200)
+        self.assertEqual(response.status_int, 201)
 
     def test_put(self):
         response = self.app.put_json('/v2.0/ports/%s.json' % self.port['id'],
@@ -89,7 +89,7 @@ class TestV2Controller(PecanFunctionalTest):
     def test_delete(self):
         response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
                                    headers={'X-Tenant-Id': 'tenid'})
-        self.assertEqual(response.status_int, 200)
+        self.assertEqual(response.status_int, 204)
 
     def test_plugin_initialized(self):
         self.assertIsNotNone(manager.NeutronManager._instance)

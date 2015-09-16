@@ -151,6 +151,7 @@ class CollectionsController(object):
     @when(index, method='POST')
     def post(self, *args, **kwargs):
         # TODO(kevinbenton): emulated bulk!
+        pecan.response.status = 201
         if request.bulk:
             method = 'create_%s_bulk' % request.resource_type
         else:
@@ -186,5 +187,7 @@ class ItemController(object):
 
     @when(index, method='DELETE')
     def delete(self):
+        # TODO(kevinbenton): setting code could be in a decorator
+        pecan.response.status = 204
         deleter = getattr(request.plugin, 'delete_%s' % request.resource_type)
         return deleter(request.context, self.item)
