@@ -165,7 +165,8 @@ class ItemController(object):
                                         request.prepared_data)
         # TODO(kevinbenton): bulk?
         updater = getattr(request.plugin, 'update_%s' % request.resource_type)
-        return updater(request.context, self.item, request.prepared_data)
+        return {request.resource_type: updater(
+                    request.context, self.item, request.prepared_data)}
 
     @when(index, method='DELETE')
     def delete(self):
