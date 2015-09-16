@@ -239,7 +239,7 @@ class API(object):
         :type records:    list of record ids (names/uuids)
         :param columns:   Limit results to only columns, None means all columns
         :type columns:    list of column names or None
-        :param if_exists: Do not fail if the bridge does not exist
+        :param if_exists: Do not fail if the record does not exist
         :type if_exists:  bool
         :returns:         :class:`Command` with [{'column', value}, ...] result
         """
@@ -313,7 +313,7 @@ class API(object):
         :type bridge:     string
         :param port:      The name of the port
         :type port:       string
-        :param may_exist: Do not fail if bridge already exists
+        :param may_exist: Do not fail if the port already exists
         :type may_exist:  bool
         :returns:         :class:`Command` with no result
         """
@@ -326,7 +326,7 @@ class API(object):
         :type port:       string
         :param bridge:    Only delete port if it is attached to this bridge
         :type bridge:     string
-        :param if_exists: Do not fail if the bridge does not exist
+        :param if_exists: Do not fail if the port does not exist
         :type if_exists:  bool
         :returns:         :class:`Command` with no result
         """
