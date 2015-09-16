@@ -47,12 +47,6 @@ TRANSPORT_ALIASES = {
     'neutron.rpc.impl_zmq': 'zmq',
 }
 
-# NOTE(salv-orlando): I am afraid this is a global variable. While not ideal,
-# they're however widely used throughout the code base. It should be set to
-# true if the RPC server is not running in the current process space. This
-# will prevent get_connection from creating connections to the AMQP server
-RPC_DISABLED = False
-
 
 def init(conf):
     global TRANSPORT, NOTIFIER
@@ -207,25 +201,6 @@ class Connection(object):
             server.wait()
 
 
-class VoidConnection(object):
-
-    def create_consumer(self, topic, endpoints, fanout=False):
-        pass
-
-    def consume_in_threads(self):
-        pass
-
-    def close(self):
-        pass
-
-
 # functions
 def create_connection(new=True):
-    # NOTE(salv-orlando): This is a clever interpreation of the factory design
-    # patter aimed at preventing plugins from initializing RPC servers upon
-    # initialization when they are running in the REST over HTTP API server.
-    # The educated reader will perfectly be able that this a fairly dirty hack
-    # to avoid having to change the initialization process of every plugin.
-    if RPC_DISABLED:
-        return VoidConnection()
     return Connection()

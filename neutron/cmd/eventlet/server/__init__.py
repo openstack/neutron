@@ -10,14 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.server import wsgi_eventlet
-from neutron.server import wsgi_pecan
+from neutron import server
 
 
-def main_wsgi_eventlet():
-    # This also starts the RPC server
-    wsgi_eventlet.main()
-
-
-def main_wsgi_pecan():
-    wsgi_pecan.main()
+def main():
+    server.main()
