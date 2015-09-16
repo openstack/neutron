@@ -90,7 +90,6 @@ FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
 AGENT_TYPE_DHCP = 'DHCP agent'
 AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
-AGENT_TYPE_NEC = 'NEC plugin agent'
 AGENT_TYPE_OFA = 'OFA driver agent'
 AGENT_TYPE_L3 = 'L3 agent'
 AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
