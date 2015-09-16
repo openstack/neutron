@@ -23,9 +23,8 @@ import urlparse
 from oslo_log import log as logging
 import six
 
-from neutron.tests.tempest.services.identity.v2.json import token_client as json_v2id
-from neutron.tests.tempest.services.identity.v3.json import token_client as json_v3id
-
+from tempest_lib.services.identity.v2 import token_client as json_v2id
+from tempest_lib.services.identity.v3 import token_client as json_v3id
 
 LOG = logging.getLogger(__name__)
 
