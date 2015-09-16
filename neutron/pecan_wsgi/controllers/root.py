@@ -150,10 +150,14 @@ class CollectionsController(object):
 
     @when(index, method='POST')
     def post(self, *args, **kwargs):
-        # TODO(kevinbenton): bulk!
-        creator = getattr(request.plugin, 'create_%s' % request.resource_type)
-        return {request.resource_type: creator(request.context,
-                                               request.prepared_data)}
+        # TODO(kevinbenton): emulated bulk!
+        if request.bulk:
+            method = 'create_%s_bulk' % request.resource_type
+        else:
+            method = 'create_%s' % request.resource_type
+        creator = getattr(request.plugin, method)
+        key = self.collection if request.bulk else request.resource_type
+        return {key: creator(request.context, request.prepared_data)}
 
 
 class ItemController(object):
@@ -176,13 +180,11 @@ class ItemController(object):
                                            request.member_action)
             return member_action_method(request.context, self.item,
                                         request.prepared_data)
-        # TODO(kevinbenton): bulk?
         updater = getattr(request.plugin, 'update_%s' % request.resource_type)
         return {request.resource_type: updater(
                     request.context, self.item, request.prepared_data)}
 
     @when(index, method='DELETE')
     def delete(self):
-        # TODO(kevinbenton): bulk?
         deleter = getattr(request.plugin, 'delete_%s' % request.resource_type)
         return deleter(request.context, self.item)

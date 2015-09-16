@@ -42,7 +42,9 @@ class AttributePopulationHook(hooks.PecanHook):
             state.request.prepared_data = (
                 v2base.Controller.prepare_request_body(
                     state.request.context, state.request.json, is_create,
-                    resource, _attributes_for_resource(resource)))
+                    resource, _attributes_for_resource(resource),
+                    allow_bulk=True))
+            # TODO(kevinbenton): conditional allow_bulk
         state.request.resources = _extract_resources_from_state(state)
         # make the original object available:
         if not is_create and not state.request.member_action:
@@ -89,9 +91,11 @@ def _extract_resources_from_state(state):
     data = state.request.prepared_data
     # single item
     if resource_type in data:
+        state.request.bulk = False
         return [data[resource_type]]
     # multiple items
     if _plural(resource_type) in data:
-        return data[_plural(resource_type)]
+        state.request.bulk = True
+        return [x[resource_type] for x in data[_plural(resource_type)]]
 
     return []
