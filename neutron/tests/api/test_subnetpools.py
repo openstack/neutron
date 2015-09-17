@@ -31,7 +31,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
 
     min_prefixlen = '28'
     max_prefixlen = '31'
-    ip_version = 4
+    _ip_version = 4
     subnet_cidr = u'10.11.12.0/31'
     new_prefix = u'10.11.15.0/24'
     larger_prefix = u'10.11.0.0/16'
@@ -192,7 +192,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
             kwargs.update(subnet_values)
         body = self.client.create_subnet(
             network_id=network_id,
-            ip_version=self.ip_version,
+            ip_version=self._ip_version,
             **kwargs)
         subnet = body['subnet']
         self.addCleanup(self.client.delete_subnetpool, pool_id)
@@ -314,7 +314,7 @@ class SubnetPoolsTestV6(SubnetPoolsTest):
 
     min_prefixlen = '48'
     max_prefixlen = '64'
-    ip_version = 6
+    _ip_version = 6
     subnet_cidr = '2001:db8:3::/64'
     new_prefix = u'2001:db8:5::/64'
     larger_prefix = u'2001:db8::/32'
