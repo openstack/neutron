@@ -50,9 +50,6 @@ from neutron.ipam.drivers.neutrondb_ipam import db_models  # noqa
 from neutron.plugins.bigswitch.db import consistency_db  # noqa
 from neutron.plugins.bigswitch import routerrule_db  # noqa
 from neutron.plugins.brocade.db import models as brocade_models  # noqa
-from neutron.plugins.cisco.db.l3 import l3_models  # noqa
-from neutron.plugins.cisco.db import n1kv_models_v2  # noqa
-from neutron.plugins.cisco.db import network_models_v2  # noqa
 from neutron.plugins.ml2.drivers.brocade.db import (  # noqa
     models as ml2_brocade_models)
 from neutron.plugins.ml2.drivers import type_flat  # noqa

@@ -16,12 +16,15 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
+from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
 from neutron.tests import base
 
 DEVICE_MAC = '11:22:33:44:55:66'
+PCI_SLOT = "0000:06:00.1"
 
 
 class TestSriovAgent(base.BaseTestCase):
@@ -51,33 +54,30 @@ class TestSriovAgent(base.BaseTestCase):
 
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[DEVICE_MAC])
+                return_value=[(DEVICE_MAC, PCI_SLOT)])
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                 "eswitch_manager.PciOsWrapper.is_assigned_vf",
                 return_value=True)
     def test_treat_devices_removed_with_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
-        devices = [DEVICE_MAC]
+        devices = [(DEVICE_MAC, PCI_SLOT)]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.return_value = {'device': DEVICE_MAC,
                                    'exists': True}
-            with mock.patch.object(sriov_nic_agent.LOG,
-                                   'info') as log:
-                resync = agent.treat_devices_removed(devices)
-                self.assertEqual(2, log.call_count)
-                self.assertFalse(resync)
-                self.assertTrue(fn_udd.called)
+            resync = agent.treat_devices_removed(devices)
+            self.assertFalse(resync)
+            self.assertTrue(fn_udd.called)
 
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[DEVICE_MAC])
+                return_value=[(DEVICE_MAC, PCI_SLOT)])
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                 "eswitch_manager.PciOsWrapper.is_assigned_vf",
                 return_value=True)
     def test_treat_devices_removed_with_not_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
-        devices = [DEVICE_MAC]
+        devices = [(DEVICE_MAC, PCI_SLOT)]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.return_value = {'device': DEVICE_MAC,
@@ -91,13 +91,13 @@ class TestSriovAgent(base.BaseTestCase):
 
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.get_assigned_macs",
-                return_value=[DEVICE_MAC])
+                return_value=[(DEVICE_MAC, PCI_SLOT)])
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                 "eswitch_manager.PciOsWrapper.is_assigned_vf",
                 return_value=True)
     def test_treat_devices_removed_failed(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
-        devices = [DEVICE_MAC]
+        devices = [(DEVICE_MAC, PCI_SLOT)]
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.side_effect = Exception()
@@ -111,7 +111,8 @@ class TestSriovAgent(base.BaseTestCase):
     def mock_scan_devices(self, expected, mock_current,
                           registered_devices, updated_devices):
         self.agent.eswitch_mgr = mock.Mock()
-        self.agent.eswitch_mgr.get_assigned_devices.return_value = mock_current
+        self.agent.eswitch_mgr.get_assigned_devices_info.return_value = (
+            mock_current)
 
         results = self.agent.scan_devices(registered_devices, updated_devices)
         self.assertEqual(expected, results)
@@ -220,6 +221,31 @@ class TestSriovAgent(base.BaseTestCase):
                                         False)
         self.assertTrue(agent.plugin_rpc.update_device_up.called)
 
+    def test_treat_device_ip_link_state_not_supported(self):
+        agent = self.agent
+        agent.plugin_rpc = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = True
+        agent.eswitch_mgr.set_device_state.side_effect = (
+            exceptions.IpCommandOperationNotSupportedError(
+                dev_name='aa:bb:cc:dd:ee:ff'))
+
+        agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
+                           admin_state_up=True)
+        self.assertTrue(agent.plugin_rpc.update_device_up.called)
+
+    def test_treat_device_set_device_state_exception(self):
+        agent = self.agent
+        agent.plugin_rpc = mock.Mock()
+        agent.eswitch_mgr = mock.Mock()
+        agent.eswitch_mgr.device_exists.return_value = True
+        agent.eswitch_mgr.set_device_state.side_effect = (
+            exceptions.SriovNicError())
+
+        agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
+                           admin_state_up=True)
+        self.assertFalse(agent.plugin_rpc.update_device_up.called)
+
     def test_treat_devices_added_updated_admin_state_up_false(self):
         agent = self.agent
         mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
@@ -238,3 +264,38 @@ class TestSriovAgent(base.BaseTestCase):
 
         self.assertFalse(resync_needed)
         self.assertFalse(agent.plugin_rpc.update_device_up.called)
+
+
+class FakeAgent(object):
+    def __init__(self):
+        self.updated_devices = set()
+
+
+class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestSriovNicSwitchRpcCallbacks, self).setUp()
+        self.context = object()
+        self.agent = FakeAgent()
+        sg_agent = object()
+        self.sriov_rpc_callback = sriov_nic_agent.SriovNicSwitchRpcCallbacks(
+            self.context, self.agent, sg_agent)
+
+    def _create_fake_port(self):
+        return {'id': uuidutils.generate_uuid(),
+                'binding:profile': {'pci_slot': PCI_SLOT},
+                'mac_address': DEVICE_MAC}
+
+    def test_port_update_with_pci_slot(self):
+        port = self._create_fake_port()
+        kwargs = {'context': self.context, 'port': port}
+        self.sriov_rpc_callback.port_update(**kwargs)
+        self.assertEqual(set([(DEVICE_MAC, PCI_SLOT)]),
+                         self.agent.updated_devices)
+
+    def test_port_update_without_pci_slot(self):
+        port = self._create_fake_port()
+        port['binding:profile'] = None
+        kwargs = {'context': self.context, 'port': port}
+        self.sriov_rpc_callback.port_update(**kwargs)
+        self.assertEqual(set(), self.agent.updated_devices)

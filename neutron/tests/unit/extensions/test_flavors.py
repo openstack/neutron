@@ -224,7 +224,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertEqual(expected, res)
 
     def test_associate_service_profile_with_flavor(self):
-        expected = {'service_profile': {'id': _uuid()}}
+        tenant_id = uuidutils.generate_uuid()
+        expected = {'service_profile': {'id': _uuid(),
+                                        'tenant_id': tenant_id}}
         instance = self.plugin.return_value
         instance.create_flavor_service_profile.return_value = (
             expected['service_profile'])
@@ -306,6 +308,7 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         res = self.ctx.session.query(flavors_db.Flavor).all()
         self.assertEqual(1, len(res))
         self.assertEqual('GOLD', res[0]['name'])
+        self.assertEqual(constants.LOADBALANCER, res[0]['service_type'])
 
     def test_update_flavor(self):
         fl, flavor = self._create_flavor()

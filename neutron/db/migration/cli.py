@@ -47,16 +47,7 @@ neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 VALID_SERVICES = ['fwaas', 'lbaas', 'vpnaas']
 INSTALLED_SERVICES = [service_ for service_ in VALID_SERVICES
                       if 'neutron-%s' % service_ in migration_entrypoints]
-INSTALLED_SERVICE_PROJECTS = ['neutron-%s' % service_
-                              for service_ in INSTALLED_SERVICES]
-INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints
-                         if project_ not in INSTALLED_SERVICE_PROJECTS]
-
-service_help = (
-    _("Can be one of '%s'.") % "', '".join(INSTALLED_SERVICES)
-    if INSTALLED_SERVICES else
-    _("(No services are currently installed).")
-)
+INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints]
 
 _core_opts = [
     cfg.StrOpt('core_plugin',
@@ -64,12 +55,14 @@ _core_opts = [
                help=_('Neutron plugin provider module')),
     cfg.StrOpt('service',
                choices=INSTALLED_SERVICES,
-               help=(_("The advanced service to execute the command against. ")
-                     + service_help)),
+               help=(_("(Deprecated. Use '--subproject neutron-SERVICE' "
+                       "instead.) The advanced service to execute the "
+                       "command against."))),
     cfg.StrOpt('subproject',
                choices=INSTALLED_SUBPROJECTS,
                help=(_("The subproject to execute the command against. "
-                       "Can be one of %s.") % INSTALLED_SUBPROJECTS)),
+                       "Can be one of: '%s'.")
+                     % "', '".join(INSTALLED_SUBPROJECTS))),
     cfg.BoolOpt('split_branches',
                 default=False,
                 help=_("Enforce using split branches file structure."))
@@ -193,29 +186,21 @@ def _get_branch_head(branch):
     return '%s@head' % branch
 
 
+def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
+    addn_kwargs['version_path'] = version_path
+    addn_kwargs['head'] = _get_branch_head(branch)
+    if not os.path.exists(version_path):
+        # Bootstrap initial directory structure
+        utils.ensure_dir(version_path)
+        addn_kwargs['branch_label'] = branch
+
+
 def do_revision(config, cmd):
     '''Generate new revision files, one per branch.'''
-    addn_kwargs = {
-        'message': CONF.command.message,
-        'autogenerate': CONF.command.autogenerate,
-        'sql': CONF.command.sql,
-    }
-
-    if _use_separate_migration_branches(config):
-        for branch in MIGRATION_BRANCHES:
-            version_path = _get_version_branch_path(config, branch)
-            addn_kwargs['version_path'] = version_path
-            addn_kwargs['head'] = _get_branch_head(branch)
-
-            if not os.path.exists(version_path):
-                # Bootstrap initial directory structure
-                utils.ensure_dir(version_path)
-                # Mark the very first revision in the new branch with its label
-                addn_kwargs['branch_label'] = branch
-
-            do_alembic_command(config, cmd, **addn_kwargs)
-    else:
-        do_alembic_command(config, cmd, **addn_kwargs)
+    do_alembic_command(config, cmd,
+                       message=CONF.command.message,
+                       autogenerate=CONF.command.autogenerate,
+                       sql=CONF.command.sql)
     update_heads_file(config)
 
 
@@ -478,8 +463,8 @@ def get_alembic_configs():
     # Get the script locations for the specified or installed projects.
     # Which projects to get script locations for is determined by the CLI
     # options as follows:
-    #     --service X       # only subproject neutron-X
-    #     --subproject Y    # only subproject Y
+    #     --service X       # only subproject neutron-X (deprecated)
+    #     --subproject Y    # only subproject Y (where Y can be neutron)
     #     (none specified)  # neutron and all installed subprojects
     script_locations = {}
     if CONF.service:

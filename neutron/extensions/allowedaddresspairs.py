@@ -49,9 +49,13 @@ class AllowedAddressPairExhausted(nexception.BadRequest):
 
 def _validate_allowed_address_pairs(address_pairs, valid_values=None):
     unique_check = {}
-    if len(address_pairs) > cfg.CONF.max_allowed_address_pair:
-        raise AllowedAddressPairExhausted(
-            quota=cfg.CONF.max_allowed_address_pair)
+    try:
+        if len(address_pairs) > cfg.CONF.max_allowed_address_pair:
+            raise AllowedAddressPairExhausted(
+                quota=cfg.CONF.max_allowed_address_pair)
+    except TypeError:
+        raise webob.exc.HTTPBadRequest(
+            _("Allowed address pairs must be a list."))
 
     for address_pair in address_pairs:
         # mac_address is optional, if not set we use the mac on the port

@@ -64,6 +64,46 @@ class LinuxInterfaceDriver(object):
                           'current_mtu': self.conf.network_device_mtu})
             raise SystemExit(1)
 
+    @property
+    def use_gateway_ips(self):
+        """Whether to use gateway IPs instead of unique IP allocations.
+
+        In each place where the DHCP agent runs, and for each subnet for
+        which DHCP is handling out IP addresses, the DHCP port needs -
+        at the Linux level - to have an IP address within that subnet.
+        Generally this needs to be a unique Neutron-allocated IP
+        address, because the subnet's underlying L2 domain is bridged
+        across multiple compute hosts and network nodes, and for HA
+        there may be multiple DHCP agents running on that same bridged
+        L2 domain.
+
+        However, if the DHCP ports - on multiple compute/network nodes
+        but for the same network - are _not_ bridged to each other,
+        they do not need each to have a unique IP address.  Instead
+        they can all share the same address from the relevant subnet.
+        This works, without creating any ambiguity, because those
+        ports are not all present on the same L2 domain, and because
+        no data within the network is ever sent to that address.
+        (DHCP requests are broadcast, and it is the network's job to
+        ensure that such a broadcast will reach at least one of the
+        available DHCP servers.  DHCP responses will be sent _from_
+        the DHCP port address.)
+
+        Specifically, for networking backends where it makes sense,
+        the DHCP agent allows all DHCP ports to use the subnet's
+        gateway IP address, and thereby to completely avoid any unique
+        IP address allocation.  This behaviour is selected by running
+        the DHCP agent with a configured interface driver whose
+        'use_gateway_ips' property is True.
+
+        When an operator deploys Neutron with an interface driver that
+        makes use_gateway_ips True, they should also ensure that a
+        gateway IP address is defined for each DHCP-enabled subnet,
+        and that the gateway IP address doesn't change during the
+        subnet's lifetime.
+        """
+        return False
+
     def init_l3(self, device_name, ip_cidrs, namespace=None,
                 preserve_ips=[], gateway_ips=None,
                 clean_connections=False):
@@ -143,14 +183,16 @@ class LinuxInterfaceDriver(object):
         device = ip_lib.IPDevice(device_name, namespace=namespace)
 
         # Manage on-link routes (routes without an associated address)
-        new_onlink_routes = set(s['cidr'] for s in extra_subnets or [])
-        existing_onlink_routes = set(
-            device.route.list_onlink_routes(n_const.IP_VERSION_4) +
-            device.route.list_onlink_routes(n_const.IP_VERSION_6))
-        for route in new_onlink_routes - existing_onlink_routes:
+        new_onlink_cidrs = set(s['cidr'] for s in extra_subnets or [])
+
+        v4_onlink = device.route.list_onlink_routes(n_const.IP_VERSION_4)
+        v6_onlink = device.route.list_onlink_routes(n_const.IP_VERSION_6)
+        existing_onlink_cidrs = set(r['cidr'] for r in v4_onlink + v6_onlink)
+
+        for route in new_onlink_cidrs - existing_onlink_cidrs:
             LOG.debug("adding onlink route(%s)", route)
             device.route.add_onlink_route(route)
-        for route in existing_onlink_routes - new_onlink_routes:
+        for route in existing_onlink_cidrs - new_onlink_cidrs:
             LOG.debug("deleting onlink route(%s)", route)
             device.route.delete_onlink_route(route)
 

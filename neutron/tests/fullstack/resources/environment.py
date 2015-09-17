@@ -12,12 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+
 import fixtures
+import netaddr
 from neutronclient.common import exceptions as nc_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import config
 from neutron.tests.fullstack.resources import process
@@ -30,7 +34,14 @@ class EnvironmentDescription(object):
 
     Does the setup, as a whole, support tunneling? How about l2pop?
     """
-    pass
+    def __init__(self, network_type='vxlan', l2_pop=True, qos=False):
+        self.network_type = network_type
+        self.l2_pop = l2_pop
+        self.qos = qos
+
+    @property
+    def tunneling_enabled(self):
+        return self.network_type in ('vxlan', 'gre')
 
 
 class HostDescription(object):
@@ -65,19 +76,28 @@ class Host(fixtures.Fixture):
         self.host_desc = host_desc
         self.test_name = test_name
         self.neutron_config = neutron_config
+        # Use reserved class E addresses
+        self.local_ip = self.get_random_ip('240.0.0.1', '255.255.255.254')
         self.central_data_bridge = central_data_bridge
         self.central_external_bridge = central_external_bridge
         self.agents = {}
 
     def _setUp(self):
         agent_cfg_fixture = config.OVSConfigFixture(
-            self.env_desc, self.host_desc, self.neutron_config.temp_dir)
+            self.env_desc, self.host_desc, self.neutron_config.temp_dir,
+            self.local_ip)
         self.useFixture(agent_cfg_fixture)
 
-        br_phys = self.useFixture(
-            net_helpers.OVSBridgeFixture(
-                agent_cfg_fixture.get_br_phys_name())).bridge
-        self.connect_to_internal_network_via_vlans(br_phys)
+        if self.env_desc.tunneling_enabled:
+            self.useFixture(
+                net_helpers.OVSBridgeFixture(
+                    agent_cfg_fixture.get_br_tun_name())).bridge
+            self.connect_to_internal_network_via_tunneling()
+        else:
+            br_phys = self.useFixture(
+                net_helpers.OVSBridgeFixture(
+                    agent_cfg_fixture.get_br_phys_name())).bridge
+            self.connect_to_internal_network_via_vlans(br_phys)
 
         self.ovs_agent = self.useFixture(
             process.OVSAgentFixture(
@@ -101,6 +121,17 @@ class Host(fixtures.Fixture):
                     self.neutron_config,
                     l3_agent_cfg_fixture))
 
+    def connect_to_internal_network_via_tunneling(self):
+        veth_1, veth_2 = self.useFixture(
+            net_helpers.VethFixture()).ports
+
+        # NOTE: This sets an IP address on the host's root namespace
+        # which is cleaned up when the device is deleted.
+        veth_1.addr.add(common_utils.ip_to_cidr(self.local_ip, 32))
+
+        veth_1.link.set_up()
+        veth_2.link.set_up()
+
     def connect_to_internal_network_via_vlans(self, host_data_bridge):
         # If using VLANs as a segmentation device, it's needed to connect
         # a provider bridge to a centralized, shared bridge.
@@ -110,6 +141,11 @@ class Host(fixtures.Fixture):
     def connect_to_external_network(self, host_external_bridge):
         net_helpers.create_patch_ports(
             self.central_external_bridge, host_external_bridge)
+
+    @staticmethod
+    def get_random_ip(low, high):
+        parent_range = netaddr.IPRange(low, high)
+        return str(random.choice(parent_range))
 
     @property
     def hostname(self):
@@ -186,7 +222,8 @@ class Environment(fixtures.Fixture):
 
         plugin_cfg_fixture = self.useFixture(
             config.ML2ConfigFixture(
-                self.env_desc, None, self.temp_dir, 'vlan'))
+                self.env_desc, None, self.temp_dir,
+                self.env_desc.network_type))
         neutron_cfg_fixture = self.useFixture(
             config.NeutronConfigFixture(
                 self.env_desc, None, self.temp_dir,

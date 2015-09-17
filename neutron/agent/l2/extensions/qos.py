@@ -17,6 +17,7 @@ import abc
 import collections
 
 from oslo_concurrency import lockutils
+from oslo_log import log as logging
 import six
 
 from neutron.agent.l2 import agent_extension
@@ -24,7 +25,11 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import exceptions
+from neutron.i18n import _LW, _LI
 from neutron import manager
+
+LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -35,36 +40,130 @@ class QosAgentDriver(object):
     for applying QoS Rules on a port.
     """
 
+    # Each QoS driver should define the set of rule types that it supports, and
+    # correspoding handlers that has the following names:
+    #
+    # create_<type>
+    # update_<type>
+    # delete_<type>
+    #
+    # where <type> is one of VALID_RULE_TYPES
+    SUPPORTED_RULES = set()
+
     @abc.abstractmethod
     def initialize(self):
         """Perform QoS agent driver initialization.
         """
 
-    @abc.abstractmethod
     def create(self, port, qos_policy):
         """Apply QoS rules on port for the first time.
 
         :param port: port object.
         :param qos_policy: the QoS policy to be applied on port.
         """
-        #TODO(QoS) we may want to provide default implementations of calling
-        #delete and then update
+        self._handle_update_create_rules('create', port, qos_policy)
 
-    @abc.abstractmethod
     def update(self, port, qos_policy):
         """Apply QoS rules on port.
 
         :param port: port object.
         :param qos_policy: the QoS policy to be applied on port.
         """
+        self._handle_update_create_rules('update', port, qos_policy)
 
-    @abc.abstractmethod
-    def delete(self, port, qos_policy):
+    def delete(self, port, qos_policy=None):
         """Remove QoS rules from port.
 
         :param port: port object.
         :param qos_policy: the QoS policy to be removed from port.
         """
+        if qos_policy is None:
+            rule_types = self.SUPPORTED_RULES
+        else:
+            rule_types = set(
+                [rule.rule_type
+                 for rule in self._iterate_rules(qos_policy.rules)])
+
+        for rule_type in rule_types:
+            self._handle_rule_delete(port, rule_type)
+
+    def _iterate_rules(self, rules):
+        for rule in rules:
+            rule_type = rule.rule_type
+            if rule_type in self.SUPPORTED_RULES:
+                yield rule
+            else:
+                LOG.warning(_LW('Unsupported QoS rule type for %(rule_id)s: '
+                                '%(rule_type)s; skipping'),
+                            {'rule_id': rule.id, 'rule_type': rule_type})
+
+    def _handle_rule_delete(self, port, rule_type):
+        handler_name = "".join(("delete_", rule_type))
+        handler = getattr(self, handler_name)
+        handler(port)
+
+    def _handle_update_create_rules(self, action, port, qos_policy):
+        for rule in self._iterate_rules(qos_policy.rules):
+            if rule.should_apply_to_port(port):
+                handler_name = "".join((action, "_", rule.rule_type))
+                handler = getattr(self, handler_name)
+                handler(port, rule)
+            else:
+                LOG.debug("Port %(port)s excluded from QoS rule %(rule)s",
+                          {'port': port, 'rule': rule.id})
+
+
+class PortPolicyMap(object):
+    def __init__(self):
+        # we cannot use a dict of sets here because port dicts are not hashable
+        self.qos_policy_ports = collections.defaultdict(dict)
+        self.known_policies = {}
+        self.port_policies = {}
+
+    def get_ports(self, policy):
+        return self.qos_policy_ports[policy.id].values()
+
+    def get_policy(self, policy_id):
+        return self.known_policies.get(policy_id)
+
+    def update_policy(self, policy):
+        self.known_policies[policy.id] = policy
+
+    def has_policy_changed(self, port, policy_id):
+        return self.port_policies.get(port['port_id']) != policy_id
+
+    def get_port_policy(self, port):
+        policy_id = self.port_policies.get(port['port_id'])
+        if policy_id:
+            return self.get_policy(policy_id)
+
+    def set_port_policy(self, port, policy):
+        """Attach a port to policy and return any previous policy on port."""
+        port_id = port['port_id']
+        old_policy = self.get_port_policy(port)
+        self.known_policies[policy.id] = policy
+        self.port_policies[port_id] = policy.id
+        self.qos_policy_ports[policy.id][port_id] = port
+        if old_policy and old_policy.id != policy.id:
+            del self.qos_policy_ports[old_policy.id][port_id]
+        return old_policy
+
+    def clean_by_port(self, port):
+        """Detach port from policy and cleanup data we don't need anymore."""
+        port_id = port['port_id']
+        if port_id in self.port_policies:
+            del self.port_policies[port_id]
+            for qos_policy_id, port_dict in self.qos_policy_ports.items():
+                if port_id in port_dict:
+                    del port_dict[port_id]
+                    if not port_dict:
+                        self._clean_policy_info(qos_policy_id)
+                    return
+        raise exceptions.PortNotFound(port_id=port['port_id'])
+
+    def _clean_policy_info(self, qos_policy_id):
+        del self.qos_policy_ports[qos_policy_id]
+        del self.known_policies[qos_policy_id]
 
 
 class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
@@ -79,9 +178,7 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
             'neutron.qos.agent_drivers', driver_type)()
         self.qos_driver.initialize()
 
-        # we cannot use a dict of sets here because port dicts are not hashable
-        self.qos_policy_ports = collections.defaultdict(dict)
-        self.known_ports = set()
+        self.policy_map = PortPolicyMap()
 
         registry.subscribe(self._handle_notification, resources.QOS_POLICY)
         self._register_rpc_consumers(connection)
@@ -111,39 +208,50 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         Update events are handled in _handle_notification.
         """
         port_id = port['port_id']
-        qos_policy_id = port.get('qos_policy_id')
+        port_qos_policy_id = port.get('qos_policy_id')
+        network_qos_policy_id = port.get('network_qos_policy_id')
+        qos_policy_id = port_qos_policy_id or network_qos_policy_id
         if qos_policy_id is None:
             self._process_reset_port(port)
             return
 
-        #Note(moshele) check if we have seen this port
-        #and it has the same policy we do nothing.
-        if (port_id in self.known_ports and
-                port_id in self.qos_policy_ports[qos_policy_id]):
+        if not self.policy_map.has_policy_changed(port, qos_policy_id):
             return
 
-        self.qos_policy_ports[qos_policy_id][port_id] = port
-        self.known_ports.add(port_id)
         qos_policy = self.resource_rpc.pull(
             context, resources.QOS_POLICY, qos_policy_id)
-        self.qos_driver.create(port, qos_policy)
+        if qos_policy is None:
+            LOG.info(_LI("QoS policy %(qos_policy_id)s applied to port "
+                         "%(port_id)s is not available on server, "
+                         "it has been deleted. Skipping."),
+                     {'qos_policy_id': qos_policy_id, 'port_id': port_id})
+            self._process_reset_port(port)
+        else:
+            old_qos_policy = self.policy_map.set_port_policy(port, qos_policy)
+            if old_qos_policy:
+                self.qos_driver.delete(port, old_qos_policy)
+                self.qos_driver.update(port, qos_policy)
+            else:
+                self.qos_driver.create(port, qos_policy)
 
     def delete_port(self, context, port):
         self._process_reset_port(port)
 
     def _process_update_policy(self, qos_policy):
-        for port_id, port in self.qos_policy_ports[qos_policy.id].items():
-            # TODO(QoS): for now, just reflush the rules on the port. Later, we
-            # may want to apply the difference between the rules lists only.
-            self.qos_driver.delete(port, None)
+        old_qos_policy = self.policy_map.get_policy(qos_policy.id)
+        for port in self.policy_map.get_ports(qos_policy):
+            #NOTE(QoS): for now, just reflush the rules on the port. Later, we
+            #           may want to apply the difference between the old and
+            #           new rule lists.
+            self.qos_driver.delete(port, old_qos_policy)
             self.qos_driver.update(port, qos_policy)
+            self.policy_map.update_policy(qos_policy)
 
     def _process_reset_port(self, port):
-        port_id = port['port_id']
-        if port_id in self.known_ports:
-            self.known_ports.remove(port_id)
-            for qos_policy_id, port_dict in self.qos_policy_ports.items():
-                if port_id in port_dict:
-                    del port_dict[port_id]
-                    self.qos_driver.delete(port, None)
-                    return
+        try:
+            self.policy_map.clean_by_port(port)
+            self.qos_driver.delete(port)
+        except exceptions.PortNotFound:
+            LOG.info(_LI("QoS extension did have no information about the "
+                         "port %s that we were trying to reset"),
+                     port['port_id'])

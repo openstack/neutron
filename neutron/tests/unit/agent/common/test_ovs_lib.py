@@ -400,6 +400,40 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
+    def test_add_vxlan_csum_tunnel_port(self):
+        pname = "tap99"
+        local_ip = "1.1.1.1"
+        remote_ip = "9.9.9.9"
+        ofport = 6
+        vxlan_udp_port = "9999"
+        dont_fragment = True
+        tunnel_csum = True
+        command = ["--may-exist", "add-port", self.BR_NAME, pname]
+        command.extend(["--", "set", "Interface", pname])
+        command.extend(["type=" + constants.TYPE_VXLAN,
+                        "options:dst_port=" + vxlan_udp_port,
+                        "options:df_default=true",
+                        "options:remote_ip=" + remote_ip,
+                        "options:local_ip=" + local_ip,
+                        "options:in_key=flow",
+                        "options:out_key=flow",
+                        "options:csum=true"])
+        # Each element is a tuple of (expected mock call, return_value)
+        expected_calls_and_values = [
+            (self._vsctl_mock(*command), None),
+            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
+             self._encode_ovs_json(['ofport'], [[ofport]])),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        self.assertEqual(
+            self.br.add_tunnel_port(pname, remote_ip, local_ip,
+                                    constants.TYPE_VXLAN, vxlan_udp_port,
+                                    dont_fragment, tunnel_csum),
+            ofport)
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
     def _test_get_vif_ports(self, is_xen=False):
         pname = "tap99"
         ofport = 6

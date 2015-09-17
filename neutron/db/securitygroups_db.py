@@ -438,7 +438,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         elif ip_proto == constants.PROTO_NUM_ICMP:
             for attr, field in [('port_range_min', 'type'),
                                 ('port_range_max', 'code')]:
-                if rule[attr] is not None and rule[attr] > 255:
+                if rule[attr] is not None and not (0 <= rule[attr] <= 255):
                     raise ext_sg.SecurityGroupInvalidIcmpValue(
                         field=field, attr=attr, value=rule[attr])
             if (rule['port_range_min'] is None and
@@ -686,15 +686,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         :returns: all security groups IDs on port belonging to tenant.
         """
-        p = port['port']
-        if not attributes.is_attr_set(p.get(ext_sg.SECURITYGROUPS)):
+        port = port['port']
+        if not attributes.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             return
-        if p.get('device_owner') and p['device_owner'].startswith('network:'):
+        if port.get('device_owner') and utils.is_port_trusted(port):
             return
 
-        port_sg = p.get(ext_sg.SECURITYGROUPS, [])
+        port_sg = port.get(ext_sg.SECURITYGROUPS, [])
         filters = {'id': port_sg}
-        tenant_id = p.get('tenant_id')
+        tenant_id = port.get('tenant_id')
         if tenant_id:
             filters['tenant_id'] = [tenant_id]
         valid_groups = set(g['id'] for g in
@@ -710,14 +710,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _ensure_default_security_group_on_port(self, context, port):
         # we don't apply security groups for dhcp, router
-        if (port['port'].get('device_owner') and
-                port['port']['device_owner'].startswith('network:')):
+        port = port['port']
+        if port.get('device_owner') and utils.is_port_trusted(port):
             return
-        tenant_id = self._get_tenant_id_for_create(context,
-                                                   port['port'])
+        tenant_id = self._get_tenant_id_for_create(context, port)
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if not attributes.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
-            port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
+        if not attributes.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
+            port[ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
         """Return True if port has as a security group and it's value

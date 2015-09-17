@@ -31,11 +31,13 @@ TEST_POLICY_ID1 = "a2d72369-4246-4f19-bd3c-af51ec8d70cd"
 TEST_POLICY_ID2 = "46ebaec0-0570-43ac-82f6-60d2b03168c5"
 TEST_BW_LIMIT_RULE_1 = rule.QosBandwidthLimitRule(
         context=None,
+        qos_policy_id=TEST_POLICY_ID1,
         id="5f126d84-551a-4dcf-bb01-0e9c0df0c793",
         max_kbps=1000,
         max_burst_kbps=10)
 TEST_BW_LIMIT_RULE_2 = rule.QosBandwidthLimitRule(
         context=None,
+        qos_policy_id=TEST_POLICY_ID2,
         id="fa9128d9-44af-49b2-99bb-96548378ad42",
         max_kbps=900,
         max_burst_kbps=9)
@@ -80,6 +82,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         port_dict = super(OVSAgentQoSExtensionTestFramework,
                           self)._create_test_port_dict()
         port_dict['qos_policy_id'] = policy_id
+        port_dict['network_qos_policy_id'] = None
         return port_dict
 
     def _get_device_details(self, port, network):

@@ -749,6 +749,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 return False
         return True
 
+    def get_workers(self):
+        workers = []
+        for driver in self.ordered_mech_drivers:
+            workers += driver.obj.get_workers()
+        return workers
+
 
 class ExtensionManager(stevedore.named.NamedExtensionManager):
     """Manage extension drivers using drivers."""

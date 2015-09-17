@@ -112,8 +112,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self._test_remove_router_interface_leaves_snat_intact(
             by_subnet=False)
 
-    def setup_create_agent_gw_port_for_network(self):
-        network = self._make_network(self.fmt, '', True)
+    def setup_create_agent_gw_port_for_network(self, network=None):
+        if not network:
+            network = self._make_network(self.fmt, '', True)
         network_id = network['network']['id']
         port = self.core_plugin.create_port(
             self.context,
@@ -141,7 +142,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         network_id, port = (
             self.setup_create_agent_gw_port_for_network())
 
-        self.l3_plugin._delete_floatingip_agent_gateway_port(
+        self.l3_plugin.delete_floatingip_agent_gateway_port(
             self.context, "", network_id)
         self.assertIsNone(
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
@@ -168,3 +169,54 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self._create_router()
         self.assertEqual(
             2, len(self.l3_plugin._get_router_ids(self.context)))
+
+    def test_agent_gw_port_delete_when_last_gateway_for_ext_net_removed(self):
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        net1 = self._make_network(self.fmt, 'net1', True)
+        net2 = self._make_network(self.fmt, 'net2', True)
+        subnet1 = self._make_subnet(
+            self.fmt, net1, '10.1.0.1', '10.1.0.0/24', enable_dhcp=True)
+        subnet2 = self._make_subnet(
+            self.fmt, net2, '10.1.0.1', '10.1.0.0/24', enable_dhcp=True)
+        ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '20.0.0.1', '20.0.0.0/24', enable_dhcp=True)
+        # Create first router and add an interface
+        router1 = self._create_router()
+        ext_net_id = ext_net['network']['id']
+        self.l3_plugin.add_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': subnet1['subnet']['id']})
+        # Set gateway to first router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router1['id'],
+            {'network_id': ext_net_id})
+        # Create second router and add an interface
+        router2 = self._create_router()
+        self.l3_plugin.add_router_interface(
+            self.context, router2['id'],
+            {'subnet_id': subnet2['subnet']['id']})
+        # Set gateway to second router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router2['id'],
+            {'network_id': ext_net_id})
+        # Create an agent gateway port for the external network
+        net_id, agent_gw_port = (
+            self.setup_create_agent_gw_port_for_network(network=ext_net))
+        # Check for agent gateway ports
+        self.assertIsNotNone(
+            self.l3_plugin._get_agent_gw_ports_exist_for_network(
+                self.context, ext_net_id, "", self.l3_agent['id']))
+        self.l3_plugin._update_router_gw_info(
+            self.context, router1['id'], {})
+        # Check for agent gateway port after deleting one of the gw
+        self.assertIsNotNone(
+            self.l3_plugin._get_agent_gw_ports_exist_for_network(
+                self.context, ext_net_id, "", self.l3_agent['id']))
+        self.l3_plugin._update_router_gw_info(
+            self.context, router2['id'], {})
+        # Check for agent gateway port after deleting last gw
+        self.assertIsNone(
+            self.l3_plugin._get_agent_gw_ports_exist_for_network(
+                self.context, ext_net_id, "", self.l3_agent['id']))

@@ -16,6 +16,7 @@ from oslo_config import cfg
 
 from neutron.agent.common import config
 
+DEFAULT_BRIDGE_MAPPINGS = []
 DEFAULT_INTERFACE_MAPPINGS = []
 DEFAULT_VXLAN_GROUP = '224.0.0.1'
 
@@ -47,6 +48,9 @@ bridge_opts = [
     cfg.ListOpt('physical_interface_mappings',
                 default=DEFAULT_INTERFACE_MAPPINGS,
                 help=_("List of <physical_network>:<physical_interface>")),
+    cfg.ListOpt('bridge_mappings',
+                default=DEFAULT_BRIDGE_MAPPINGS,
+                help=_("List of <physical_network>:<physical_bridge>")),
 ]
 
 agent_opts = [

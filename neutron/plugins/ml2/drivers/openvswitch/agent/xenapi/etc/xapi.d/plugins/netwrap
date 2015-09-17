@@ -34,6 +34,7 @@ import XenAPIPlugin
 
 ALLOWED_CMDS = [
     'ip',
+    # NOTE(yamamoto): of_interface=native doesn't use ovs-ofctl
     'ovs-ofctl',
     'ovs-vsctl',
     'ovsdb-client',

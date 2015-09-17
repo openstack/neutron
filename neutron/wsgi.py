@@ -44,6 +44,7 @@ from neutron.common import exceptions as exception
 from neutron import context
 from neutron.db import api
 from neutron.i18n import _LE, _LI
+from neutron import worker
 
 socket_opts = [
     cfg.IntOpt('backlog',
@@ -102,7 +103,7 @@ def encode_body(body):
     return body
 
 
-class WorkerService(common_service.ServiceBase):
+class WorkerService(worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application):
         self._service = service
@@ -110,6 +111,7 @@ class WorkerService(common_service.ServiceBase):
         self._server = None
 
     def start(self):
+        super(WorkerService, self).start()
         # When api worker is stopped it kills the eventlet wsgi server which
         # internally closes the wsgi server socket object. This server socket
         # object becomes not usable which leads to "Bad file descriptor"

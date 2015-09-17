@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from sqlalchemy import event
 
 from neutron.db.migration.alembic_migrations import external
+from neutron.db.migration import autogen
 from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
 
@@ -58,8 +59,12 @@ def set_mysql_engine():
                     model_base.BASEV2.__table_args__['mysql_engine'])
 
 
-def include_object(object, name, type_, reflected, compare_to):
+def include_object(object_, name, type_, reflected, compare_to):
     if type_ == 'table' and name in external.TABLES:
+        return False
+    elif type_ == 'index' and reflected and name.startswith("idx_autoinc_"):
+        # skip indexes created by SQLAlchemy autoincrement=True
+        # on composite PK integer columns
         return False
     else:
         return True
@@ -103,21 +108,25 @@ def run_migrations_online():
 
     """
     set_mysql_engine()
-    engine = session.create_engine(neutron_config.database.connection)
-
-    connection = engine.connect()
+    connection = config.attributes.get('connection')
+    new_engine = connection is None
+    if new_engine:
+        engine = session.create_engine(neutron_config.database.connection)
+        connection = engine.connect()
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_object=include_object
+        include_object=include_object,
+        process_revision_directives=autogen.process_revision_directives
     )
 
     try:
         with context.begin_transaction():
             context.run_migrations()
     finally:
-        connection.close()
-        engine.dispose()
+        if new_engine:
+            connection.close()
+            engine.dispose()
 
 
 if context.is_offline_mode():

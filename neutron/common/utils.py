@@ -368,6 +368,7 @@ def is_dvr_serviced(device_owner):
     indirectly associated with DVR.
     """
     dvr_serviced_device_owners = (n_const.DEVICE_OWNER_LOADBALANCER,
+                                  n_const.DEVICE_OWNER_LOADBALANCERV2,
                                   n_const.DEVICE_OWNER_DHCP)
     return (device_owner.startswith('compute:') or
             device_owner in dvr_serviced_device_owners)
@@ -430,6 +431,15 @@ def ip_version_from_int(ip_version_int):
     if ip_version_int == 6:
         return n_const.IPv6
     raise ValueError(_('Illegal IP version number'))
+
+
+def is_port_trusted(port):
+    """Used to determine if port can be trusted not to attack network.
+
+    Trust is currently based on the device_owner field starting with 'network:'
+    since we restrict who can use that in the default policy.json file.
+    """
+    return port['device_owner'].startswith('network:')
 
 
 class DelayedStringRenderer(object):

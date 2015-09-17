@@ -104,7 +104,8 @@ class TestABCDriver(TestBase):
         addresses = [dict(scope='global',
                           dynamic=False, cidr='172.16.77.240/24')]
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
-        self.ip_dev().route.list_onlink_routes.return_value = ['172.20.0.0/24']
+        self.ip_dev().route.list_onlink_routes.return_value = [
+            {'cidr': '172.20.0.0/24'}]
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
@@ -218,7 +219,7 @@ class TestABCDriver(TestBase):
                           dynamic=False, cidr='2001:db8:a::123/64')]
         route = '2001:db8:a::/64'
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
-        self.ip_dev().route.list_onlink_routes.return_value = [route]
+        self.ip_dev().route.list_onlink_routes.return_value = [{'cidr': route}]
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'

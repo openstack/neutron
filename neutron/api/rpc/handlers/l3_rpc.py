@@ -45,7 +45,8 @@ class L3RpcCallback(object):
     #     since it was unused. The RPC version was not changed
     # 1.5 Added update_ha_routers_states
     # 1.6 Added process_prefix_update to support IPv6 Prefix Delegation
-    target = oslo_messaging.Target(version='1.6')
+    # 1.7 Added method delete_agent_gateway_port for DVR Routers
+    target = oslo_messaging.Target(version='1.7')
 
     @property
     def plugin(self):
@@ -281,3 +282,11 @@ class L3RpcCallback(object):
                                         subnet_id,
                                         {'subnet': {'cidr': prefix}}))
         return updated_subnets
+
+    def delete_agent_gateway_port(self, context, **kwargs):
+        """Delete Floatingip agent gateway port."""
+        network_id = kwargs.get('network_id')
+        host = kwargs.get('host')
+        admin_ctx = neutron_context.get_admin_context()
+        self.l3plugin.delete_floatingip_agent_gateway_port(
+            admin_ctx, host, network_id)

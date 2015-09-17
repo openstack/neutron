@@ -484,7 +484,7 @@ class TunnelTest(object):
         self.mock_tun_bridge.add_tunnel_port.return_value = tunnel_port
         self.mock_tun_bridge_expected += [
             mock.call.add_tunnel_port('gre-0a000a01', '10.0.10.1', '10.0.0.1',
-                                      'gre', 4789, True),
+                                      'gre', 4789, True, False),
             mock.call.setup_tunnel_port('gre', tunnel_port),
         ]
 
@@ -554,8 +554,8 @@ class TunnelTest(object):
             log_exception.assert_called_once_with(
                 "Error while processing VIF ports")
             scan_ports.assert_has_calls([
-                mock.call(set(), set()),
-                mock.call(set(['tap0']), set())
+                mock.call(set(), True, set()),
+                mock.call(set(['tap0']), False, set())
             ])
             process_network_ports.assert_has_calls([
                 mock.call({'current': set(['tap0']),
@@ -572,6 +572,10 @@ class TunnelTest(object):
 
 
 class TunnelTestOFCtl(TunnelTest, ovs_test_base.OVSOFCtlTestBase):
+    pass
+
+
+class TunnelTestRyu(TunnelTest, ovs_test_base.OVSRyuTestBase):
     pass
 
 
@@ -669,6 +673,11 @@ class TunnelTestUseVethIntercoOFCtl(TunnelTestUseVethInterco,
     pass
 
 
+class TunnelTestUseVethIntercoRyu(TunnelTestUseVethInterco,
+                                  ovs_test_base.OVSRyuTestBase):
+    pass
+
+
 class TunnelTestWithMTU(TunnelTestUseVethInterco):
     VETH_MTU = 1500
 
@@ -680,4 +689,9 @@ class TunnelTestWithMTU(TunnelTestUseVethInterco):
 
 class TunnelTestWithMTUOFCtl(TunnelTestWithMTU,
                              ovs_test_base.OVSOFCtlTestBase):
+    pass
+
+
+class TunnelTestWithMTURyu(TunnelTestWithMTU,
+                           ovs_test_base.OVSRyuTestBase):
     pass

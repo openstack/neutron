@@ -77,15 +77,58 @@ class ClientFixture(fixtures.Fixture):
 
         return self._create_resource(resource_type, spec)
 
-    def create_port(self, tenant_id, network_id, hostname):
-        return self._create_resource(
-            'port',
-            {'network_id': network_id,
-             'tenant_id': tenant_id,
-             'binding:host_id': hostname})
+    def create_port(self, tenant_id, network_id, hostname, qos_policy_id=None):
+        spec = {
+            'network_id': network_id,
+            'tenant_id': tenant_id,
+            'binding:host_id': hostname,
+        }
+        if qos_policy_id:
+            spec['qos_policy_id'] = qos_policy_id
+        return self._create_resource('port', spec)
 
     def add_router_interface(self, router_id, subnet_id):
         body = {'subnet_id': subnet_id}
         self.client.add_interface_router(router=router_id, body=body)
         self.addCleanup(_safe_method(self.client.remove_interface_router),
                         router=router_id, body=body)
+
+    def create_qos_policy(self, tenant_id, name, description, shared):
+        policy = self.client.create_qos_policy(
+            body={'policy': {'name': name,
+                             'description': description,
+                             'shared': shared,
+                             'tenant_id': tenant_id}})
+
+        def detach_and_delete_policy():
+            qos_policy_id = policy['policy']['id']
+            ports_with_policy = self.client.list_ports(
+                qos_policy_id=qos_policy_id)['ports']
+            for port in ports_with_policy:
+                self.client.update_port(
+                    port['id'],
+                    body={'port': {'qos_policy_id': None}})
+            self.client.delete_qos_policy(qos_policy_id)
+
+        # NOTE: We'll need to add support for detaching from network once
+        # create_network() supports qos_policy_id.
+        self.addCleanup(_safe_method(detach_and_delete_policy))
+
+        return policy['policy']
+
+    def create_bandwidth_limit_rule(self, tenant_id, qos_policy_id, limit=None,
+                                    burst=None):
+        rule = {'tenant_id': tenant_id}
+        if limit:
+            rule['max_kbps'] = limit
+        if burst:
+            rule['max_burst_kbps'] = burst
+        rule = self.client.create_bandwidth_limit_rule(
+            policy=qos_policy_id,
+            body={'bandwidth_limit_rule': rule})
+
+        self.addCleanup(_safe_method(self.client.delete_bandwidth_limit_rule),
+                        rule['bandwidth_limit_rule']['id'],
+                        qos_policy_id)
+
+        return rule['bandwidth_limit_rule']

@@ -1,3 +1,6 @@
+source $LIBDIR/ml2_drivers/sriovnicswitch
+
+
 function enable_ml2_extension_driver {
     local extension_driver=$1
     if [[ -z "$Q_ML2_PLUGIN_EXT_DRIVERS" ]]; then
@@ -10,4 +13,17 @@ function enable_ml2_extension_driver {
 
 function configure_qos_ml2 {
     enable_ml2_extension_driver "qos"
+}
+
+
+function configure_ml2 {
+    OIFS=$IFS;
+    IFS=",";
+    mechanism_drivers_array=($Q_ML2_PLUGIN_MECHANISM_DRIVERS);
+    IFS=$OIFS;
+    for mechanism_driver in "${mechanism_drivers_array[@]}"; do
+        if [ "$(type -t configure_ml2_$mechanism_driver)" = function ]; then
+            configure_ml2_$mechanism_driver
+        fi
+    done
 }

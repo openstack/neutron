@@ -53,7 +53,8 @@ class TestPciLib(base.BaseTestCase):
                                "_as_root") as mock_as_root:
             mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_assigned_macs([self.VF_INDEX])
-            self.assertEqual([self.MAC_MAPPING[self.VF_INDEX]], result)
+            self.assertEqual(
+                {self.VF_INDEX: self.MAC_MAPPING[self.VF_INDEX]}, result)
 
     def test_get_assigned_macs_fail(self):
         with mock.patch.object(self.pci_wrapper,
@@ -131,3 +132,13 @@ class TestPciLib(base.BaseTestCase):
                               self.pci_wrapper.set_vf_max_rate,
                               self.VF_INDEX,
                               1000)
+
+    def test_set_vf_state_not_supported(self):
+        with mock.patch.object(self.pci_wrapper,
+                               "_execute") as mock_exec:
+            mock_exec.side_effect = Exception(
+                pci_lib.PciDeviceIPWrapper.IP_LINK_OP_NOT_SUPPORTED)
+            self.assertRaises(exc.IpCommandOperationNotSupportedError,
+                              self.pci_wrapper.set_vf_state,
+                              self.VF_INDEX,
+                              state=True)

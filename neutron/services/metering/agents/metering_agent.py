@@ -77,7 +77,6 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         self.conf = conf or cfg.CONF
         self._load_drivers()
         self.context = context.get_admin_context_without_session()
-        self.metering_info = {}
         self.metering_loop = loopingcall.FixedIntervalLoopingCall(
             self._metering_loop
         )
@@ -118,11 +117,13 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
             info['time'] = 0
 
     def _purge_metering_info(self):
-        ts = int(time.time())
-        report_interval = self.conf.report_interval
-        for label_id, info in self.metering_info.items():
-            if info['last_update'] > ts + report_interval:
-                del self.metering_info[label_id]
+        deadline_timestamp = int(time.time()) - self.conf.report_interval
+        label_ids = [
+            label_id
+            for label_id, info in self.metering_infos.items()
+            if info['last_update'] < deadline_timestamp]
+        for label_id in label_ids:
+            del self.metering_infos[label_id]
 
     def _add_metering_info(self, label_id, pkts, bytes):
         ts = int(time.time())

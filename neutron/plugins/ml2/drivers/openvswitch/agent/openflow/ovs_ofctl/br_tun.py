@@ -62,7 +62,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
             if arp_responder_enabled:
                 # ARP broadcast-ed request go to the local ARP_RESPONDER
                 # table to be locally resolved
-                # REVISIT(yamamoto): arp_op=arp.ARP_REQUEST
+                # REVISIT(yamamoto): add arp_op=arp.ARP_REQUEST matcher?
                 deferred_br.add_flow(table=constants.PATCH_LV_TO_TUN,
                                      priority=1,
                                      proto='arp',

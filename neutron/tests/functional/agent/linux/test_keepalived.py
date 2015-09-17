@@ -14,12 +14,16 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
 from neutron.tests import base
 from neutron.tests.unit.agent.linux import test_keepalived
+
+
+LOG = logging.getLogger(__name__)
 
 
 class KeepalivedManagerTestCase(base.BaseTestCase,
@@ -52,12 +56,18 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
     def test_keepalived_respawns(self):
         self.manager.spawn()
         process = self.manager.get_process()
-        self.assertTrue(process.active)
-
-        process.disable(sig='15')
-
+        pid = process.pid
         utils.wait_until_true(
             lambda: process.active,
+            timeout=5,
+            sleep=0.01,
+            exception=RuntimeError(_("Keepalived didn't spawn")))
+
+        # force process crash, and see that when it comes back
+        # it's indeed a different process
+        utils.execute(['kill', '-9', pid], run_as_root=True)
+        utils.wait_until_true(
+            lambda: process.active and pid != process.pid,
             timeout=5,
             sleep=0.01,
             exception=RuntimeError(_("Keepalived didn't respawn")))

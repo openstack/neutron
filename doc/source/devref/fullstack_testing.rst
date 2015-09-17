@@ -83,6 +83,12 @@ When?
    stack testing can help here as the full stack infrastructure can restart an
    agent during the test.
 
+Prerequisites
+-------------
+
+Fullstack test suite assumes 240.0.0.0/3 range in root namespace of the test
+machine is available for its usage.
+
 Short Term Goals
 ----------------
 
@@ -103,9 +109,6 @@ the fact as there will probably be something to copy/paste from.
 Long Term Goals
 ---------------
 
-* Currently we configure the OVS agent with VLANs segmentation (Only because
-  it's easier). This allows us to validate most functionality, but we might
-  need to support tunneling somehow.
 * How will advanced services use the full stack testing infrastructure? Full
   stack tests infrastructure classes are expected to change quite a bit over
   the next coming months. This means that other repositories may import these
@@ -116,3 +119,4 @@ Long Term Goals
   mechanism driver. We may modularize the topology configuration further to
   allow to rerun full stack tests against different Neutron plugins or ML2
   mechanism drivers.
+* Add OVS ARP responder coverage when the gate supports OVS 2.1+

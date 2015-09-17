@@ -19,6 +19,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc as orm_exc
 from sqlalchemy import sql
 
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin as common_db_api
 from neutron.db.quota import models as quota_models
 
@@ -29,12 +30,8 @@ def utcnow():
 
 
 class QuotaUsageInfo(collections.namedtuple(
-    'QuotaUsageInfo', ['resource', 'tenant_id', 'used', 'reserved', 'dirty'])):
-
-    @property
-    def total(self):
-        """Total resource usage (reserved and used)."""
-        return self.reserved + self.used
+    'QuotaUsageInfo', ['resource', 'tenant_id', 'used', 'dirty'])):
+    """Information about resource quota usage."""
 
 
 class ReservationInfo(collections.namedtuple(
@@ -66,7 +63,6 @@ def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
     return QuotaUsageInfo(result.resource,
                           result.tenant_id,
                           result.in_use,
-                          result.reserved,
                           result.dirty)
 
 
@@ -76,7 +72,6 @@ def get_quota_usage_by_resource(context, resource):
     return [QuotaUsageInfo(item.resource,
                            item.tenant_id,
                            item.in_use,
-                           item.reserved,
                            item.dirty) for item in query]
 
 
@@ -86,12 +81,11 @@ def get_quota_usage_by_tenant_id(context, tenant_id):
     return [QuotaUsageInfo(item.resource,
                            item.tenant_id,
                            item.in_use,
-                           item.reserved,
                            item.dirty) for item in query]
 
 
 def set_quota_usage(context, resource, tenant_id,
-                    in_use=None, reserved=None, delta=False):
+                    in_use=None, delta=False):
     """Set resource quota usage.
 
     :param context: instance of neutron context with db session
@@ -100,15 +94,14 @@ def set_quota_usage(context, resource, tenant_id,
                       being set
     :param in_use: integer specifying the new quantity of used resources,
                    or a delta to apply to current used resource
-    :param reserved: integer specifying the new quantity of reserved resources,
-                     or a delta to apply to current reserved resources
-    :param delta: Specififies whether in_use or reserved are absolute numbers
-                  or deltas (default to False)
+    :param delta: Specifies whether in_use is an absolute number
+                  or a delta (default to False)
     """
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource).filter_by(tenant_id=tenant_id)
-    usage_data = query.first()
-    with context.session.begin(subtransactions=True):
+    with db_api.autonested_transaction(context.session):
+        query = common_db_api.model_query(context, quota_models.QuotaUsage)
+        query = query.filter_by(resource=resource).filter_by(
+            tenant_id=tenant_id)
+        usage_data = query.first()
         if not usage_data:
             # Must create entry
             usage_data = quota_models.QuotaUsage(
@@ -120,16 +113,11 @@ def set_quota_usage(context, resource, tenant_id,
             if delta:
                 in_use = usage_data.in_use + in_use
             usage_data.in_use = in_use
-        if reserved is not None:
-            if delta:
-                reserved = usage_data.reserved + reserved
-            usage_data.reserved = reserved
         # After an explicit update the dirty bit should always be reset
         usage_data.dirty = False
     return QuotaUsageInfo(usage_data.resource,
                           usage_data.tenant_id,
                           usage_data.in_use,
-                          usage_data.reserved,
                           usage_data.dirty)
 
 
@@ -188,10 +176,6 @@ def create_reservation(context, tenant_id, deltas, expiration=None):
                 quota_models.ResourceDelta(resource=resource,
                                            amount=delta,
                                            reservation=resv))
-        # quota_usage for all resources involved in this reservation must
-        # be marked as dirty
-        set_resources_quota_usage_dirty(
-            context, deltas.keys(), tenant_id)
     return ReservationInfo(resv['id'],
                            resv['tenant_id'],
                            resv['expiration'],
@@ -263,7 +247,7 @@ def get_reservations_for_resources(context, tenant_id, resources,
         quota_models.ResourceDelta.resource,
         quota_models.Reservation.expiration)
     return dict((resource, total_reserved)
-           for (resource, exp, total_reserved) in resv_query)
+            for (resource, exp, total_reserved) in resv_query)
 
 
 def remove_expired_reservations(context, tenant_id=None):

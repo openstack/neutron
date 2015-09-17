@@ -125,20 +125,25 @@ class EmbSwitch(object):
         """Get list of VF addresses."""
         return self.pci_slot_map.keys()
 
-    def get_assigned_devices(self):
-        """Get assigned Virtual Functions.
+    def get_assigned_devices_info(self):
+        """Get assigned Virtual Functions mac and pci slot
+        information and populates vf_to_pci_slot mappings
 
-        @return: list of VF mac addresses
+        @return: list of VF pair (mac address, pci slot)
         """
-        vf_list = []
-        assigned_macs = []
-        for vf_index in self.pci_slot_map.values():
+        vf_to_pci_slot_mapping = {}
+        assigned_devices_info = []
+        for pci_slot, vf_index in self.pci_slot_map.items():
             if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
                 continue
-            vf_list.append(vf_index)
-        if vf_list:
-            assigned_macs = self.pci_dev_wrapper.get_assigned_macs(vf_list)
-        return assigned_macs
+            vf_to_pci_slot_mapping[vf_index] = pci_slot
+        if vf_to_pci_slot_mapping:
+            vf_to_mac_mapping = self.pci_dev_wrapper.get_assigned_macs(
+                list(vf_to_pci_slot_mapping.keys()))
+            for vf_index, mac in vf_to_mac_mapping.items():
+                pci_slot = vf_to_pci_slot_mapping[vf_index]
+                assigned_devices_info.append((mac, pci_slot))
+        return assigned_devices_info
 
     def get_device_state(self, pci_slot):
         """Get device state.
@@ -219,8 +224,7 @@ class EmbSwitch(object):
         if vf_index is not None:
             if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
                 macs = self.pci_dev_wrapper.get_assigned_macs([vf_index])
-                if macs:
-                    mac = macs[0]
+                mac = macs.get(vf_index)
         return mac
 
 
@@ -247,12 +251,12 @@ class ESwitchManager(object):
             return True
         return False
 
-    def get_assigned_devices(self, phys_net=None):
+    def get_assigned_devices_info(self, phys_net=None):
         """Get all assigned devices.
 
         Get all assigned devices belongs to given embedded switch
         @param phys_net: physical network, if none get all assigned devices
-        @return: set of assigned VFs mac addresses
+        @return: set of assigned VFs (mac address, pci slot) pair
         """
         if phys_net:
             embedded_switch = self.emb_switches_map.get(phys_net, None)
@@ -263,8 +267,8 @@ class ESwitchManager(object):
             eswitch_objects = self.emb_switches_map.values()
         assigned_devices = set()
         for embedded_switch in eswitch_objects:
-            for device_mac in embedded_switch.get_assigned_devices():
-                assigned_devices.add(device_mac)
+            for device in embedded_switch.get_assigned_devices_info():
+                assigned_devices.add(device)
         return assigned_devices
 
     def get_device_state(self, device_mac, pci_slot):
@@ -272,7 +276,7 @@ class ESwitchManager(object):
 
         Get the device state (up/True or down/False)
         @param device_mac: device mac
-        @param pci_slot: VF pci slot
+        @param pci_slot: VF PCI slot
         @return: device state (True/False) None if failed
         """
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
@@ -355,16 +359,27 @@ class ESwitchManager(object):
                 embedded_switch = None
         return embedded_switch
 
-    def get_pci_slot_by_mac(self, device_mac):
-        """Get pci slot by mac.
+    def clear_max_rate(self, pci_slot):
+        """Clear the max rate
 
-        Get pci slot by device mac
-        @param device_mac: device mac
+        Clear the max rate configuration from VF by setting it to 0
+        @param pci_slot: VF PCI slot
         """
-        result = None
-        for pci_slot, embedded_switch in self.pci_slot_map.items():
-            used_device_mac = embedded_switch.get_pci_device(pci_slot)
-            if used_device_mac == device_mac:
-                result = pci_slot
-                break
-        return result
+        #(Note): we don't use the self._get_emb_eswitch here, because when
+        #clearing the VF it may be not assigned. This happens when libvirt
+        #releases the VF back to the hypervisor on delete VM. Therefore we
+        #should just clear the VF max rate according to pci_slot no matter
+        #if VF is assigned or not.
+        embedded_switch = self.pci_slot_map.get(pci_slot)
+        if embedded_switch:
+            #(Note): check the pci_slot is not assigned to some
+            # other port before resetting the max rate.
+            if embedded_switch.get_pci_device(pci_slot) is None:
+                embedded_switch.set_device_max_rate(pci_slot, 0)
+            else:
+                LOG.warning(_LW("VF with PCI slot %(pci_slot)s is already "
+                                "assigned; skipping reset maximum rate"),
+                            {'pci_slot': pci_slot})
+        else:
+            LOG.error(_LE("PCI slot %(pci_slot)s has no mapping to Embedded "
+                          "Switch; skipping"), {'pci_slot': pci_slot})

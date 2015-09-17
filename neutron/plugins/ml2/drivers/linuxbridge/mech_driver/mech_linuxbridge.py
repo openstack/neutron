@@ -47,7 +47,9 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                  p_constants.TYPE_VLAN])
 
     def get_mappings(self, agent):
-        return agent['configurations'].get('interface_mappings', {})
+        mappings = dict(agent['configurations'].get('interface_mappings', {}),
+                        **agent['configurations'].get('bridge_mappings', {}))
+        return mappings
 
     def check_vlan_transparency(self, context):
         """Linuxbridge driver vlan transparency support."""

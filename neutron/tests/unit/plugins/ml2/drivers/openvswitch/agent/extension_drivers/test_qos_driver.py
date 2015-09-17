@@ -39,7 +39,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.create = self.qos_driver.br_int.create_egress_bw_limit_for_port
         self.rule = self._create_bw_limit_rule_obj()
         self.qos_policy = self._create_qos_policy_obj([self.rule])
-        self.port = self._create_fake_port()
+        self.port = self._create_fake_port(self.qos_policy.id)
 
     def _create_bw_limit_rule_obj(self):
         rule_obj = rule.QosBandwidthLimitRule()
@@ -58,15 +58,21 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
                 'rules': rules}
         policy_obj = policy.QosPolicy(self.context, **policy_dict)
         policy_obj.obj_reset_changes()
+        for policy_rule in policy_obj.rules:
+            policy_rule.qos_policy_id = policy_obj.id
+            policy_rule.obj_reset_changes()
         return policy_obj
 
-    def _create_fake_port(self):
+    def _create_fake_port(self, policy_id):
         self.port_name = 'fakeport'
 
         class FakeVifPort(object):
             port_name = self.port_name
 
-        return {'vif_port': FakeVifPort()}
+        return {'vif_port': FakeVifPort(),
+                'qos_policy_id': policy_id,
+                'network_qos_policy_id': None,
+                'device_owner': uuidutils.generate_uuid()}
 
     def test_create_new_rule(self):
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(

@@ -12,9 +12,11 @@
 
 # String literals representing core resources.
 PORT = 'port'
+PROCESS = 'process'
 ROUTER = 'router'
 ROUTER_GATEWAY = 'router_gateway'
 ROUTER_INTERFACE = 'router_interface'
 SECURITY_GROUP = 'security_group'
 SECURITY_GROUP_RULE = 'security_group_rule'
 SUBNET = 'subnet'
+SUBNET_GATEWAY = 'subnet_gateway'

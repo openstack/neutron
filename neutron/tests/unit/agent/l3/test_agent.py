@@ -2236,9 +2236,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.pd_update.append(prefix_update)
             for intf in intfs:
                 for subnet in intf['subnets']:
-                    if subnet['id'] == prefix_update.keys()[0]:
+                    if subnet['id'] in prefix_update:
                         # Update the prefix
-                        subnet['cidr'] = prefix_update.values()[0]
+                        subnet['cidr'] = prefix_update[subnet['id']]
 
         # Process the router for removed interfaces
         agent.pd.notifier = pd_notifier
@@ -2266,7 +2266,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         external_process call is followed with either an enable() or disable()
         '''
 
-        num_ext_calls = len(expected) / 2
+        num_ext_calls = len(expected) // 2
         expected_ext_calls = []
         actual_ext_calls = []
         expected_action_calls = []

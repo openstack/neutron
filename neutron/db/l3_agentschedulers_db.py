@@ -42,7 +42,8 @@ LOG = logging.getLogger(__name__)
 
 L3_AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('router_scheduler_driver',
-               default='neutron.scheduler.l3_agent_scheduler.ChanceScheduler',
+               default='neutron.scheduler.l3_agent_scheduler.'
+                       'LeastRoutersScheduler',
                help=_('Driver to use for scheduling '
                       'router to a default L3 agent')),
     cfg.BoolOpt('router_auto_schedule', default=True,
@@ -501,6 +502,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             func.count(
                 RouterL3AgentBinding.router_id
             ).label('count')).outerjoin(RouterL3AgentBinding).group_by(
+                agents_db.Agent.id,
                 RouterL3AgentBinding.l3_agent_id).order_by('count')
         res = query.filter(agents_db.Agent.id.in_(agent_ids)).first()
         return res[0]

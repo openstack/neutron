@@ -152,7 +152,7 @@ class OVSBridge(BaseOVS):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
-        self.agent_uuid_stamp = '0x0'
+        self.agent_uuid_stamp = 0
 
     def set_agent_uuid_stamp(self, val):
         self.agent_uuid_stamp = val
@@ -194,15 +194,6 @@ class OVSBridge(BaseOVS):
 
     def destroy(self):
         self.delete_bridge(self.br_name)
-
-    def reset_bridge(self, secure_mode=False):
-        with self.ovsdb.transaction() as txn:
-            txn.add(self.ovsdb.del_br(self.br_name))
-            txn.add(self.ovsdb.add_br(self.br_name,
-                                      datapath_type=self.datapath_type))
-            if secure_mode:
-                txn.add(self.ovsdb.set_fail_mode(self.br_name,
-                                                 FAILMODE_SECURE))
 
     def add_port(self, port_name, *interface_attr_tuples):
         with self.ovsdb.transaction() as txn:
@@ -299,7 +290,8 @@ class OVSBridge(BaseOVS):
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=p_const.TYPE_GRE,
                         vxlan_udp_port=p_const.VXLAN_UDP_PORT,
-                        dont_fragment=True):
+                        dont_fragment=True,
+                        tunnel_csum=False):
         attrs = [('type', tunnel_type)]
         # TODO(twilson) This is an OrderedDict solely to make a test happy
         options = collections.OrderedDict()
@@ -314,6 +306,8 @@ class OVSBridge(BaseOVS):
         options['local_ip'] = local_ip
         options['in_key'] = 'flow'
         options['out_key'] = 'flow'
+        if tunnel_csum:
+            options['csum'] = str(tunnel_csum).lower()
         attrs.append(('options', options))
 
         return self.add_port(port_name, *attrs)

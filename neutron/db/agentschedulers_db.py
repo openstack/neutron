@@ -40,7 +40,7 @@ LOG = logging.getLogger(__name__)
 AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('network_scheduler_driver',
                default='neutron.scheduler.'
-                       'dhcp_agent_scheduler.ChanceScheduler',
+                       'dhcp_agent_scheduler.WeightScheduler',
                help=_('Driver to use for scheduling network to DHCP agent')),
     cfg.BoolOpt('network_auto_schedule', default=True,
                 help=_('Allow auto scheduling networks to DHCP agent.')),

@@ -19,10 +19,14 @@ from oslo_config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 
 SUDO_CMD = 'sudo -n'
+
+# This is the directory from which infra fetches log files for functional tests
+DEFAULT_LOG_DIR = '/tmp/dsvm-functional-logs/'
 
 
 class BaseSudoTestCase(base.BaseTestCase):
@@ -48,9 +52,16 @@ class BaseSudoTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(BaseSudoTestCase, self).setUp()
-
         if not base.bool_from_env('OS_SUDO_TESTING'):
             self.skipTest('Testing with sudo is not enabled')
+
+        # Have each test log into its own log file
+        cfg.CONF.set_override('debug', True)
+        common_utils.ensure_dir(DEFAULT_LOG_DIR)
+        log_file = base.sanitize_log_path(
+            os.path.join(DEFAULT_LOG_DIR, "%s.log" % self.id()))
+        cfg.CONF.set_override('log_file', log_file)
+        config.setup_logging()
 
         config.register_root_helper(cfg.CONF)
         self.config(group='AGENT',

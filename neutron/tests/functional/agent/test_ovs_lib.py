@@ -274,16 +274,6 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.br.delete_ports(all_ports=True)
         self.assertEqual(len(self.br.get_port_name_list()), 0)
 
-    def test_reset_bridge(self):
-        self.create_ovs_port()
-        self.br.reset_bridge()
-        self.assertEqual(len(self.br.get_port_name_list()), 0)
-        self._assert_br_fail_mode([])
-
-    def test_reset_bridge_secure_mode(self):
-        self.br.reset_bridge(secure_mode=True)
-        self._assert_br_fail_mode(ovs_lib.FAILMODE_SECURE)
-
     def test_set_controller_connection_mode(self):
         controllers = ['tcp:192.0.2.0:6633']
         self._set_controllers_connection_mode(controllers)

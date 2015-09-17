@@ -28,8 +28,10 @@ from webob import exc
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -2494,6 +2496,41 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         routers = plugin.get_routers(ctx)
         self.assertEqual(0, len(routers))
 
+    def test_update_subnet_gateway_for_external_net(self):
+        """Test to make sure notification to routers occurs when the gateway
+            ip address of a subnet of the external network is changed.
+        """
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not hasattr(plugin, 'l3_rpc_notifier'):
+            self.skipTest("Plugin does not support l3_rpc_notifier")
+        # make sure the callback is registered.
+        registry.subscribe(
+            l3_db._notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+            events.AFTER_UPDATE)
+        with mock.patch.object(plugin.l3_rpc_notifier,
+                               'routers_updated') as chk_method:
+            with self.network() as network:
+                allocation_pools = [{'start': '120.0.0.3',
+                                     'end': '120.0.0.254'}]
+                with self.subnet(network=network,
+                                 gateway_ip='120.0.0.1',
+                                 allocation_pools=allocation_pools,
+                                 cidr='120.0.0.0/24') as subnet:
+                    kwargs = {
+                        'device_owner': l3_constants.DEVICE_OWNER_ROUTER_GW,
+                        'device_id': 'fake_device'}
+                    with self.port(subnet=subnet, **kwargs):
+                        data = {'subnet': {'gateway_ip': '120.0.0.2'}}
+                        req = self.new_update_request('subnets', data,
+                                                      subnet['subnet']['id'])
+                        res = self.deserialize(self.fmt,
+                                               req.get_response(self.api))
+                        self.assertEqual(res['subnet']['gateway_ip'],
+                                         data['subnet']['gateway_ip'])
+                        chk_method.assert_called_with(mock.ANY,
+                                                      ['fake_device'], None)
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
@@ -2517,6 +2554,42 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 subnet_id = subnets[0]['id']
                 wanted_subnetid = p['port']['fixed_ips'][0]['subnet_id']
                 self.assertEqual(wanted_subnetid, subnet_id)
+
+    def test_l3_agent_sync_interfaces(self):
+        """Test L3 interfaces query return valid result"""
+        with self.router() as router1, self.router() as router2:
+            with self.port() as port1, self.port() as port2:
+                self._router_interface_action('add',
+                                              router1['router']['id'],
+                                              None,
+                                              port1['port']['id'])
+                self._router_interface_action('add',
+                                              router2['router']['id'],
+                                              None,
+                                              port2['port']['id'])
+                admin_ctx = context.get_admin_context()
+                router1_id = router1['router']['id']
+                router2_id = router2['router']['id']
+
+                # Verify if router1 pass in, return only interface from router1
+                ifaces = self.plugin._get_sync_interfaces(admin_ctx,
+                                                          [router1_id])
+                self.assertEqual(1, len(ifaces))
+                self.assertEqual(router1_id,
+                                 ifaces[0]['device_id'])
+
+                # Verify if router1 and router2 pass in, return both interfaces
+                ifaces = self.plugin._get_sync_interfaces(admin_ctx,
+                                                          [router1_id,
+                                                           router2_id])
+                self.assertEqual(2, len(ifaces))
+                device_list = [i['device_id'] for i in ifaces]
+                self.assertIn(router1_id, device_list)
+                self.assertIn(router2_id, device_list)
+
+                #Verify if no router pass in, return empty list
+                ifaces = self.plugin._get_sync_interfaces(admin_ctx, None)
+                self.assertEqual(0, len(ifaces))
 
     def test_l3_agent_routers_query_ignore_interfaces_with_moreThanOneIp(self):
         with self.router() as r:

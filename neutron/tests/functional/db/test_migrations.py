@@ -20,6 +20,7 @@ import alembic
 import alembic.autogenerate
 import alembic.migration
 from alembic import script as alembic_script
+from contextlib import contextmanager
 import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
@@ -28,6 +29,7 @@ from oslo_db.sqlalchemy import test_migrations
 import sqlalchemy
 from sqlalchemy import event
 
+import neutron.db.migration as migration_help
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
@@ -106,8 +108,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     def setUp(self):
         patch = mock.patch.dict('sys.modules', {
             'heleosapi': mock.MagicMock(),
-            'midonetclient': mock.MagicMock(),
-            'midonetclient.neutron': mock.MagicMock(),
         })
         patch.start()
         self.addCleanup(patch.stop)
@@ -207,6 +207,14 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
 class TestModelsMigrationsMysql(_TestModelsMigrations,
                                 base.MySQLTestCase):
+    @contextmanager
+    def _listener(self, engine, listener_func):
+        try:
+            event.listen(engine, 'before_execute', listener_func)
+            yield
+        finally:
+            event.remove(engine, 'before_execute',
+                         listener_func)
 
     # There is no use to run this against both dialects, so add this test just
     # for MySQL tests
@@ -222,20 +230,72 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                           "migration.")
 
             if hasattr(clauseelement, 'element'):
-                if (clauseelement.element.name in external.TABLES or
+                element = clauseelement.element
+                if (element.name in external.TABLES or
                         (hasattr(clauseelement, 'table') and
-                         clauseelement.element.table.name in external.TABLES)):
+                            element.table.name in external.TABLES)):
+                    # Table 'nsxv_vdr_dhcp_bindings' was created in liberty,
+                    # before NSXV has moved to separate repo.
+                    if ((isinstance(clauseelement,
+                                    sqlalchemy.sql.ddl.CreateTable) and
+                            element.name == 'nsxv_vdr_dhcp_bindings')):
+                        return
                     self.fail("External table referenced by neutron core "
                               "migration.")
 
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'kilo')
+        with engine.begin() as connection:
+            self.alembic_config.attributes['connection'] = connection
+            migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                         'kilo')
 
-        event.listen(engine, 'before_execute', block_external_tables)
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
+            with self._listener(engine,
+                                block_external_tables):
+                migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                             'heads')
 
-        event.remove(engine, 'before_execute', block_external_tables)
+    def test_branches(self):
+
+        def check_expand_branch(conn, clauseelement, multiparams, params):
+            if isinstance(clauseelement, migration_help.DROP_OPERATIONS):
+                self.fail("Migration from expand branch contains drop command")
+
+        def check_contract_branch(conn, clauseelement, multiparams, params):
+            if isinstance(clauseelement, migration_help.CREATION_OPERATIONS):
+                # Skip tables that were created by mistake in contract branch
+                if hasattr(clauseelement, 'element'):
+                    element = clauseelement.element
+                    if any([
+                        isinstance(element, sqlalchemy.Table) and
+                        element.name in ['ml2_geneve_allocations',
+                                         'ml2_geneve_endpoints'],
+                        isinstance(element, sqlalchemy.ForeignKeyConstraint)
+                        and
+                        element.table.name == 'flavorserviceprofilebindings',
+                        isinstance(element, sqlalchemy.Index) and
+                        element.table.name == 'ml2_geneve_allocations'
+                    ]):
+                        return
+                self.fail("Migration from contract branch contains create "
+                          "command")
+
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        with engine.begin() as connection:
+            self.alembic_config.attributes['connection'] = connection
+            migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                         'kilo')
+
+            with self._listener(engine, check_expand_branch):
+                migration.do_alembic_command(
+                    self.alembic_config, 'upgrade',
+                    '%s@head' % migration.EXPAND_BRANCH)
+
+            with self._listener(engine, check_contract_branch):
+                migration.do_alembic_command(
+                    self.alembic_config, 'upgrade',
+                    '%s@head' % migration.CONTRACT_BRANCH)
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,

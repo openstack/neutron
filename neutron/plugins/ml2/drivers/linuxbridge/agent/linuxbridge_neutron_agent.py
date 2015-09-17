@@ -77,9 +77,11 @@ class NetworkSegment(object):
 
 
 class LinuxBridgeManager(object):
-    def __init__(self, interface_mappings):
+    def __init__(self, bridge_mappings, interface_mappings):
+        self.bridge_mappings = bridge_mappings
         self.interface_mappings = interface_mappings
         self.validate_interface_mappings()
+        self.validate_bridge_mappings()
         self.ip = ip_lib.IPWrapper()
         # VXLAN related parameters:
         self.local_ip = cfg.CONF.VXLAN.local_ip
@@ -104,12 +106,25 @@ class LinuxBridgeManager(object):
                           {'intf': interface, 'net': physnet})
                 sys.exit(1)
 
+    def validate_bridge_mappings(self):
+        for physnet, bridge in self.bridge_mappings.items():
+            if not ip_lib.device_exists(bridge):
+                LOG.error(_LE("Bridge %(brq)s for physical network %(net)s"
+                              " does not exist. Agent terminated!"),
+                          {'brq': bridge, 'net': physnet})
+                sys.exit(1)
+
     def interface_exists_on_bridge(self, bridge, interface):
         directory = '/sys/class/net/%s/brif' % bridge
         for filename in os.listdir(directory):
             if filename == interface:
                 return True
         return False
+
+    def get_existing_bridge_name(self, physical_network):
+        if not physical_network:
+            return None
+        return self.bridge_mappings.get(physical_network)
 
     def get_bridge_name(self, network_id):
         if not network_id:
@@ -160,6 +175,11 @@ class LinuxBridgeManager(object):
         for bridge in bridge_list:
             if bridge.startswith(BRIDGE_NAME_PREFIX):
                 neutron_bridge_list.append(bridge)
+
+        # NOTE(nick-ma-z): Add pre-existing user-defined bridges
+        for bridge_name in self.bridge_mappings.values():
+            if bridge_name not in neutron_bridge_list:
+                neutron_bridge_list.append(bridge_name)
         return neutron_bridge_list
 
     def get_interfaces_on_bridge(self, bridge_name):
@@ -197,13 +217,17 @@ class LinuxBridgeManager(object):
                 DEVICE_NAME_PLACEHOLDER, device_name)
             return os.path.exists(bridge_port_path)
 
-    def ensure_vlan_bridge(self, network_id, physical_interface, vlan_id):
+    def ensure_vlan_bridge(self, network_id, phy_bridge_name,
+                           physical_interface, vlan_id):
         """Create a vlan and bridge unless they already exist."""
         interface = self.ensure_vlan(physical_interface, vlan_id)
-        bridge_name = self.get_bridge_name(network_id)
-        ips, gateway = self.get_interface_details(interface)
-        if self.ensure_bridge(bridge_name, interface, ips, gateway):
-            return interface
+        if phy_bridge_name:
+            return self.ensure_bridge(phy_bridge_name)
+        else:
+            bridge_name = self.get_bridge_name(network_id)
+            ips, gateway = self.get_interface_details(interface)
+            if self.ensure_bridge(bridge_name, interface, ips, gateway):
+                return interface
 
     def ensure_vxlan_bridge(self, network_id, segmentation_id):
         """Create a vxlan and bridge unless they already exist."""
@@ -225,16 +249,24 @@ class LinuxBridgeManager(object):
         gateway = device.route.get_gateway(scope='global')
         return ips, gateway
 
-    def ensure_flat_bridge(self, network_id, physical_interface):
+    def ensure_flat_bridge(self, network_id, phy_bridge_name,
+                           physical_interface):
         """Create a non-vlan bridge unless it already exists."""
-        bridge_name = self.get_bridge_name(network_id)
-        ips, gateway = self.get_interface_details(physical_interface)
-        if self.ensure_bridge(bridge_name, physical_interface, ips, gateway):
-            return physical_interface
+        if phy_bridge_name:
+            return self.ensure_bridge(phy_bridge_name)
+        else:
+            bridge_name = self.get_bridge_name(network_id)
+            ips, gateway = self.get_interface_details(physical_interface)
+            if self.ensure_bridge(bridge_name, physical_interface, ips,
+                                  gateway):
+                return physical_interface
 
-    def ensure_local_bridge(self, network_id):
+    def ensure_local_bridge(self, network_id, phy_bridge_name):
         """Create a local bridge unless it already exists."""
-        bridge_name = self.get_bridge_name(network_id)
+        if phy_bridge_name:
+            bridge_name = phy_bridge_name
+        else:
+            bridge_name = self.get_bridge_name(network_id)
         return self.ensure_bridge(bridge_name)
 
     def ensure_vlan(self, physical_interface, vlan_id):
@@ -389,15 +421,20 @@ class LinuxBridgeManager(object):
                 return
             return self.ensure_vxlan_bridge(network_id, segmentation_id)
 
+        # NOTE(nick-ma-z): Obtain mappings of physical bridge and interfaces
+        physical_bridge = self.get_existing_bridge_name(physical_network)
         physical_interface = self.interface_mappings.get(physical_network)
-        if not physical_interface:
-            LOG.error(_LE("No mapping for physical network %s"),
+        if not physical_bridge and not physical_interface:
+            LOG.error(_LE("No bridge or interface mappings"
+                          " for physical network %s"),
                       physical_network)
             return
         if network_type == p_const.TYPE_FLAT:
-            return self.ensure_flat_bridge(network_id, physical_interface)
+            return self.ensure_flat_bridge(network_id, physical_bridge,
+                                           physical_interface)
         elif network_type == p_const.TYPE_VLAN:
-            return self.ensure_vlan_bridge(network_id, physical_interface,
+            return self.ensure_vlan_bridge(network_id, physical_bridge,
+                                           physical_interface,
                                            segmentation_id)
         else:
             LOG.error(_LE("Unknown network_type %(network_type)s for network "
@@ -416,9 +453,13 @@ class LinuxBridgeManager(object):
                       "this host, skipped", tap_device_name)
             return False
 
-        bridge_name = self.get_bridge_name(network_id)
+        if physical_network:
+            bridge_name = self.get_existing_bridge_name(physical_network)
+        else:
+            bridge_name = self.get_bridge_name(network_id)
+
         if network_type == p_const.TYPE_LOCAL:
-            self.ensure_local_bridge(network_id)
+            self.ensure_local_bridge(network_id, bridge_name)
         else:
             phy_dev_name = self.ensure_physical_in_bridge(network_id,
                                                           network_type,
@@ -495,6 +536,11 @@ class LinuxBridgeManager(object):
 
     def remove_empty_bridges(self):
         for network_id in list(self.network_map.keys()):
+            # NOTE(nick-ma-z): Don't remove pre-existing user-defined bridges
+            phy_net = self.network_map[network_id].physical_network
+            if phy_net and phy_net in self.bridge_mappings:
+                continue
+
             bridge_name = self.get_bridge_name(network_id)
             if not self.get_tap_devices_count(bridge_name):
                 self.delete_bridge(bridge_name)
@@ -678,6 +724,19 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def network_delete(self, context, **kwargs):
         LOG.debug("network_delete received")
         network_id = kwargs.get('network_id')
+
+        # NOTE(nick-ma-z): Don't remove pre-existing user-defined bridges
+        if network_id in self.agent.br_mgr.network_map:
+            phynet = self.agent.br_mgr.network_map[network_id].physical_network
+            if phynet and phynet in self.agent.br_mgr.bridge_mappings:
+                LOG.info(_LI("Physical network %s is defined in "
+                             "bridge_mappings and cannot be deleted."),
+                         network_id)
+                return
+        else:
+            LOG.error(_LE("Network %s is not available."), network_id)
+            return
+
         bridge_name = self.agent.br_mgr.get_bridge_name(network_id)
         LOG.debug("Delete %s", bridge_name)
         self.agent.br_mgr.delete_bridge(bridge_name)
@@ -773,10 +832,12 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
 class LinuxBridgeNeutronAgentRPC(service.Service):
 
-    def __init__(self, interface_mappings, polling_interval,
+    def __init__(self, bridge_mappings, interface_mappings, polling_interval,
                  quitting_rpc_timeout):
         """Constructor.
 
+        :param bridge_mappings: dict mapping physical_networks to
+               physical_bridges.
         :param interface_mappings: dict mapping physical_networks to
                physical_interfaces.
         :param polling_interval: interval (secs) to poll DB.
@@ -785,13 +846,15 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         """
         super(LinuxBridgeNeutronAgentRPC, self).__init__()
         self.interface_mappings = interface_mappings
+        self.bridge_mappings = bridge_mappings
         self.polling_interval = polling_interval
         self.quitting_rpc_timeout = quitting_rpc_timeout
 
     def start(self):
         self.prevent_arp_spoofing = cfg.CONF.AGENT.prevent_arp_spoofing
-        self.setup_linux_bridge(self.interface_mappings)
-        configurations = {'interface_mappings': self.interface_mappings}
+        self.setup_linux_bridge(self.bridge_mappings, self.interface_mappings)
+        configurations = {'bridge_mappings': self.bridge_mappings,
+                          'interface_mappings': self.interface_mappings}
         if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.br_mgr.local_ip
             configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
@@ -858,8 +921,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                      [topics.NETWORK, topics.DELETE],
                      [topics.SECURITY_GROUP, topics.UPDATE]]
         if cfg.CONF.VXLAN.l2_population:
-            consumers.append([topics.L2POPULATION,
-                              topics.UPDATE, cfg.CONF.host])
+            consumers.append([topics.L2POPULATION, topics.UPDATE])
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
@@ -869,11 +931,15 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                 self._report_state)
             heartbeat.start(interval=report_interval)
 
-    def setup_linux_bridge(self, interface_mappings):
-        self.br_mgr = LinuxBridgeManager(interface_mappings)
+    def setup_linux_bridge(self, bridge_mappings, interface_mappings):
+        self.br_mgr = LinuxBridgeManager(bridge_mappings, interface_mappings)
 
-    def remove_port_binding(self, network_id, interface_id):
-        bridge_name = self.br_mgr.get_bridge_name(network_id)
+    def remove_port_binding(self, network_id, physical_network, interface_id):
+        if physical_network:
+            bridge_name = self.br_mgr.get_existing_bridge_name(
+                physical_network)
+        else:
+            bridge_name = self.br_mgr.get_bridge_name(network_id)
         tap_device_name = self.br_mgr.get_tap_device_name(interface_id)
         return self.br_mgr.remove_interface(bridge_name, tap_device_name)
 
@@ -941,7 +1007,9 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                                                            self.agent_id,
                                                            cfg.CONF.host)
                 else:
+                    physical_network = device_details['physical_network']
                     self.remove_port_binding(device_details['network_id'],
+                                             physical_network,
                                              device_details['port_id'])
             else:
                 LOG.info(_LI("Device %s not defined on plugin"), device)
@@ -1073,9 +1141,19 @@ def main():
         sys.exit(1)
     LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
+    try:
+        bridge_mappings = n_utils.parse_mappings(
+            cfg.CONF.LINUX_BRIDGE.bridge_mappings)
+    except ValueError as e:
+        LOG.error(_LE("Parsing bridge_mappings failed: %s. "
+                      "Agent terminated!"), e)
+        sys.exit(1)
+    LOG.info(_LI("Bridge mappings: %s"), bridge_mappings)
+
     polling_interval = cfg.CONF.AGENT.polling_interval
     quitting_rpc_timeout = cfg.CONF.AGENT.quitting_rpc_timeout
-    agent = LinuxBridgeNeutronAgentRPC(interface_mappings,
+    agent = LinuxBridgeNeutronAgentRPC(bridge_mappings,
+                                       interface_mappings,
                                        polling_interval,
                                        quitting_rpc_timeout)
     LOG.info(_LI("Agent initialized successfully, now running... "))

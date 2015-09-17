@@ -144,12 +144,34 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return router_db
 
     def _delete_current_gw_port(self, context, router_id, router, new_network):
+        """
+        Overriden here to handle deletion of dvr internal ports.
+
+        If there is a valid router update with gateway port to be deleted,
+        then go ahead and delete the csnat ports and the floatingip
+        agent gateway port associated with the dvr router.
+        """
+
+        gw_ext_net_id = (
+            router.gw_port['network_id'] if router.gw_port else None)
+
         super(L3_NAT_with_dvr_db_mixin,
               self)._delete_current_gw_port(context, router_id,
                                             router, new_network)
-        if router.extra_attributes.distributed:
+        if (is_distributed_router(router) and
+            gw_ext_net_id != new_network):
             self.delete_csnat_router_interface_ports(
                 context.elevated(), router)
+            # NOTE(Swami): Delete the Floatingip agent gateway port
+            # on all hosts when it is the last gateway port in the
+            # given external network.
+            filters = {'network_id': [gw_ext_net_id],
+                       'device_owner': [l3_const.DEVICE_OWNER_ROUTER_GW]}
+            ext_net_gw_ports = self._core_plugin.get_ports(
+                context.elevated(), filters)
+            if not ext_net_gw_ports:
+                self.delete_floatingip_agent_gateway_port(
+                    context.elevated(), None, gw_ext_net_id)
 
     def _create_gw_port(self, context, router_id, router, new_network,
                         ext_ips):
@@ -184,25 +206,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         )
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
-        """Override to create and delete floating agent gw port for DVR.
+        """Override to create floating agent gw port for DVR.
 
         Floating IP Agent gateway port will be created when a
         floatingIP association happens.
-        Floating IP Agent gateway port will be deleted when a
-        floatingIP disassociation happens.
         """
         fip_port = fip.get('port_id')
-        unused_fip_agent_gw_port = (
-            fip_port is None and floatingip_db['fixed_port_id'])
-        if unused_fip_agent_gw_port and floatingip_db.get('router_id'):
-            admin_ctx = context.elevated()
-            router_dict = self.get_router(
-                admin_ctx, floatingip_db['router_id'])
-            # Check if distributed router and then delete the
-            # FloatingIP agent gateway port
-            if router_dict.get('distributed'):
-                self._clear_unused_fip_agent_gw_port(
-                    admin_ctx, floatingip_db)
         super(L3_NAT_with_dvr_db_mixin, self)._update_fip_assoc(
             context, fip, floatingip_db, external_port)
         associate_fip = fip_port and floatingip_db['id']
@@ -227,53 +236,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                             vm_hostid))
                     LOG.debug("FIP Agent gateway port: %s", fip_agent_port)
 
-    def _clear_unused_fip_agent_gw_port(
-            self, context, floatingip_db):
-        """Helper function to check for fip agent gw port and delete.
-
-        This function checks on compute nodes to make sure if there
-        are any VMs using the FIP agent gateway port. If no VMs are
-        using the FIP agent gateway port, it will go ahead and delete
-        the FIP agent gateway port. If even a single VM is using the
-        port it will not delete.
-        """
-        fip_hostid = self._get_vm_port_hostid(
-            context, floatingip_db['fixed_port_id'])
-        if fip_hostid and self._check_fips_availability_on_host_ext_net(
-            context, fip_hostid, floatingip_db['floating_network_id']):
-            LOG.debug('Deleting the Agent GW Port for ext-net: '
-                      '%s', floatingip_db['floating_network_id'])
-            self._delete_floatingip_agent_gateway_port(
-                context, fip_hostid, floatingip_db['floating_network_id'])
-
-    def delete_floatingip(self, context, id):
-        floatingip = self._get_floatingip(context, id)
-        if floatingip['fixed_port_id']:
-            admin_ctx = context.elevated()
-            self._clear_unused_fip_agent_gw_port(
-                admin_ctx, floatingip)
-        super(L3_NAT_with_dvr_db_mixin,
-              self).delete_floatingip(context, id)
-
     def _get_floatingip_on_port(self, context, port_id=None):
         """Helper function to retrieve the fip associated with port."""
         fip_qry = context.session.query(l3_db.FloatingIP)
         floating_ip = fip_qry.filter_by(fixed_port_id=port_id)
         return floating_ip.first()
-
-    def disassociate_floatingips(self, context, port_id, do_notify=True):
-        """Override disassociate floatingips to delete fip agent gw port."""
-        with context.session.begin(subtransactions=True):
-            fip = self._get_floatingip_on_port(
-                context, port_id=port_id)
-            if fip:
-                admin_ctx = context.elevated()
-                self._clear_unused_fip_agent_gw_port(
-                    admin_ctx, fip)
-        return super(L3_NAT_with_dvr_db_mixin,
-                     self).disassociate_floatingips(context,
-                                                    port_id,
-                                                    do_notify=do_notify)
 
     def add_router_interface(self, context, router_id, interface_info):
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
@@ -291,6 +258,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     context, router, interface_info['subnet_id'], device_owner)
 
         if new_port:
+            if router.extra_attributes.distributed and router.gw_port:
+                try:
+                    admin_context = context.elevated()
+                    self._add_csnat_router_interface_port(
+                        admin_context, router, port['network_id'],
+                        port['fixed_ips'][-1]['subnet_id'])
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        # we need to preserve the original state prior
+                        # the request by rolling back the port creation
+                        # that led to new_port=True
+                        self._core_plugin.delete_port(
+                            admin_context, port['id'])
+
             with context.session.begin(subtransactions=True):
                 router_port = l3_db.RouterPort(
                     port_id=port['id'],
@@ -298,11 +279,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     port_type=device_owner
                 )
                 context.session.add(router_port)
-
-            if router.extra_attributes.distributed and router.gw_port:
-                self._add_csnat_router_interface_port(
-                    context.elevated(), router, port['network_id'],
-                    port['fixed_ips'][-1]['subnet_id'])
 
         router_interface_info = self._make_router_interface_info(
             router_id, port['tenant_id'], port['id'], subnets[-1]['id'],
@@ -511,27 +487,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         query = self._model_query(context, l3_db.Router.id)
         return [row[0] for row in query]
 
-    def _check_fips_availability_on_host_ext_net(
-        self, context, host_id, fip_ext_net_id):
-        """Query all floating_ips and filter on host and external net."""
-        fip_count_on_host = 0
-        with context.session.begin(subtransactions=True):
-            router_ids = self._get_router_ids(context)
-            floating_ips = self._get_sync_floating_ips(context, router_ids)
-            # Check for the active floatingip in the host
-            for fip in floating_ips:
-                f_host = self._get_vm_port_hostid(context, fip['port_id'])
-                if (f_host == host_id and
-                    (fip['floating_network_id'] == fip_ext_net_id)):
-                    fip_count_on_host += 1
-            # If fip_count greater than 1 or equal to zero no action taken
-            # if the fip_count is equal to 1, then this would be last active
-            # fip in the host, so the agent gateway port can be deleted.
-            if fip_count_on_host == 1:
-                return True
-            return False
-
-    def _delete_floatingip_agent_gateway_port(
+    def delete_floatingip_agent_gateway_port(
         self, context, host_id, ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
         # delete any fip agent gw port
@@ -540,9 +496,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports = self._core_plugin.get_ports(context,
                                             filters=device_filter)
         for p in ports:
-            if self._get_vm_port_hostid(context, p['id'], p) == host_id:
+            if not host_id or p[portbindings.HOST_ID] == host_id:
                 self._core_plugin.ipam.delete_port(context, p['id'])
-                return
+                if host_id:
+                    return
 
     def create_fip_agent_gw_port_if_not_exists(
         self, context, network_id, host):

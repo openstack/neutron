@@ -103,6 +103,10 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
+        service_plugins = ['router']
+        if env_desc.qos:
+            service_plugins.append('qos')
+
         self.config.update({
             'DEFAULT': {
                 'host': self._generate_host(),
@@ -112,8 +116,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'api_paste_config': self._generate_api_paste(),
                 'policy_file': self._generate_policy_json(),
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
-                'service_plugins': ('neutron.services.l3_router.'
-                                    'l3_router_plugin.L3RouterPlugin'),
+                'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
                 'verbose': 'True',
                 'debug': 'True',
@@ -159,10 +162,14 @@ class ML2ConfigFixture(ConfigFixture):
         super(ML2ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
+        mechanism_drivers = 'openvswitch'
+        if self.env_desc.l2_pop:
+            mechanism_drivers += ',l2population'
+
         self.config.update({
             'ml2': {
                 'tenant_network_types': tenant_network_types,
-                'mechanism_drivers': 'openvswitch',
+                'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
                 'network_vlan_ranges': 'physnet1:1000:2999',
@@ -175,26 +182,46 @@ class ML2ConfigFixture(ConfigFixture):
             },
         })
 
+        if env_desc.qos:
+            self.config['ml2']['extension_drivers'] = 'qos'
+
 
 class OVSConfigFixture(ConfigFixture):
 
-    def __init__(self, env_desc, host_desc, temp_dir):
+    def __init__(self, env_desc, host_desc, temp_dir, local_ip):
         super(OVSConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir,
             base_filename='openvswitch_agent.ini')
 
+        self.tunneling_enabled = self.env_desc.tunneling_enabled
         self.config.update({
             'ovs': {
-                'enable_tunneling': 'False',
-                'local_ip': '127.0.0.1',
-                'bridge_mappings': self._generate_bridge_mappings(),
+                'enable_tunneling': str(self.tunneling_enabled),
+                'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
             },
             'securitygroup': {
                 'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
                                     'OVSHybridIptablesFirewallDriver'),
+            },
+            'agent': {
+                'l2_population': str(self.env_desc.l2_pop),
             }
         })
+
+        if self.tunneling_enabled:
+            self.config['agent'].update({
+                'tunnel_types': self.env_desc.network_type})
+            self.config['ovs'].update({
+                'tunnel_bridge': self._generate_tunnel_bridge(),
+                'int_peer_patch_port': self._generate_int_peer(),
+                'tun_peer_patch_port': self._generate_tun_peer()})
+        else:
+            self.config['ovs']['bridge_mappings'] = (
+                self._generate_bridge_mappings())
+
+        if env_desc.qos:
+            self.config['agent']['extensions'] = 'qos'
 
     def _generate_bridge_mappings(self):
         return 'physnet1:%s' % base.get_rand_device_name(prefix='br-eth')
@@ -202,11 +229,23 @@ class OVSConfigFixture(ConfigFixture):
     def _generate_integration_bridge(self):
         return base.get_rand_device_name(prefix='br-int')
 
+    def _generate_tunnel_bridge(self):
+        return base.get_rand_device_name(prefix='br-tun')
+
+    def _generate_int_peer(self):
+        return base.get_rand_device_name(prefix='patch-tun')
+
+    def _generate_tun_peer(self):
+        return base.get_rand_device_name(prefix='patch-int')
+
     def get_br_int_name(self):
         return self.config.ovs.integration_bridge
 
     def get_br_phys_name(self):
         return self.config.ovs.bridge_mappings.split(':')[1]
+
+    def get_br_tun_name(self):
+        return self.config.ovs.tunnel_bridge
 
 
 class L3ConfigFixture(ConfigFixture):

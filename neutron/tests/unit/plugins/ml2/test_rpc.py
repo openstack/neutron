@@ -144,16 +144,16 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         res = self.callbacks.get_device_details(mock.Mock(), host='fake')
         self.assertIsNone(res['qos_policy_id'])
 
-    def test_get_device_details_qos_policy_id_inherited_from_network(self):
+    def test_get_device_details_network_qos_policy_id(self):
         port = collections.defaultdict(lambda: 'fake_port')
         self.plugin.get_bound_port_context().current = port
         self.plugin.get_bound_port_context().network._network = (
             {"id": "fake_network",
              qos_consts.QOS_POLICY_ID: 'test-policy-id'})
         res = self.callbacks.get_device_details(mock.Mock(), host='fake')
-        self.assertEqual('test-policy-id', res['qos_policy_id'])
+        self.assertEqual('test-policy-id', res['network_qos_policy_id'])
 
-    def test_get_device_details_qos_policy_id_taken_from_port(self):
+    def test_get_device_details_qos_policy_id_from_port(self):
         port = collections.defaultdict(
             lambda: 'fake_port',
             {qos_consts.QOS_POLICY_ID: 'test-port-policy-id'})

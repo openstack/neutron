@@ -45,6 +45,9 @@ class NeutronException(Exception):
         def __unicode__(self):
             return unicode(self.msg)
 
+    def __str__(self):
+        return self.msg
+
     def use_fatal_exceptions(self):
         return False
 

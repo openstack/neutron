@@ -15,13 +15,14 @@
 
 from oslo_log import log as logging
 
+from tempest_lib.services.identity.v2.token_client import TokenClient
+from tempest_lib.services.identity.v3.token_client import V3TokenClient
+
 from neutron.tests.tempest.common import cred_provider
 from neutron.tests.tempest import config
 from neutron.tests.tempest import manager
 from neutron.tests.tempest.services.identity.v2.json.identity_client import \
     IdentityClientJSON
-from neutron.tests.tempest.services.identity.v2.json.token_client import \
-     TokenClientJSON
 from neutron.tests.tempest.services.identity.v3.json.credentials_client \
      import CredentialsClientJSON
 from neutron.tests.tempest.services.identity.v3.json.endpoints_client import \
@@ -34,8 +35,6 @@ from neutron.tests.tempest.services.identity.v3.json.region_client import \
      RegionClientJSON
 from neutron.tests.tempest.services.identity.v3.json.service_client import \
     ServiceClientJSON
-from neutron.tests.tempest.services.identity.v3.json.token_client import \
-     V3TokenClientJSON
 from neutron.tests.tempest.services.network.json.network_client import \
      NetworkClientJSON
 
@@ -99,11 +98,11 @@ class Manager(manager.Manager):
         self.credentials_client = CredentialsClientJSON(self.auth_provider,
                                                         **params)
         # Token clients do not use the catalog. They only need default_params.
-        self.token_client = TokenClientJSON(CONF.identity.uri,
-                                            **self.default_params)
+        self.token_client = TokenClient(CONF.identity.uri,
+                                        **self.default_params)
         if CONF.identity_feature_enabled.api_v3:
-            self.token_v3_client = V3TokenClientJSON(CONF.identity.uri_v3,
-                                                     **self.default_params)
+            self.token_v3_client = V3TokenClient(CONF.identity.uri_v3,
+                                                 **self.default_params)
 
 
 class AdminManager(Manager):

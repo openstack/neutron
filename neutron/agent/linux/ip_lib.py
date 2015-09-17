@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 import re
+import six
 
 from neutron.agent.common import utils
 from neutron.common import constants
@@ -231,9 +232,10 @@ class IPDevice(SubProcessBase):
 
         This terminates any active connections through an IP.
 
-        cidr: the IP address for which state should be removed.  This can be
-            passed as a string with or without /NN.  A netaddr.IPAddress or
-            netaddr.Network representing the IP address can also be passed.
+        :param cidr: the IP address for which state should be removed.
+            This can be passed as a string with or without /NN.
+            A netaddr.IPAddress or netaddr.Network representing the IP address
+            can also be passed.
         """
         self.addr.delete(cidr)
 
@@ -287,6 +289,67 @@ class IPRule(SubProcessBase):
 class IpRuleCommand(IpCommandBase):
     COMMAND = 'rule'
 
+    @staticmethod
+    def _make_canonical(ip_version, settings):
+        """Converts settings to a canonical represention to compare easily"""
+        def canonicalize_fwmark_string(fwmark_mask):
+            """Reformats fwmark/mask in to a canonical form
+
+            Examples, these are all equivalent:
+                "0x1"
+                0x1
+                "0x1/0xfffffffff"
+                (0x1, 0xfffffffff)
+
+            :param fwmark_mask: The firewall and mask (default 0xffffffff)
+            :type fwmark_mask: A string with / as delimiter, an iterable, or a
+                single value.
+            """
+            # Turn the value we were passed in to an iterable: fwmark[, mask]
+            if isinstance(fwmark_mask, six.string_types):
+                # A / separates the optional mask in a string
+                iterable = fwmark_mask.split('/')
+            else:
+                try:
+                    iterable = iter(fwmark_mask)
+                except TypeError:
+                    # At this point, it must be a single integer
+                    iterable = [fwmark_mask]
+
+            def to_i(s):
+                if isinstance(s, six.string_types):
+                    # Passing 0 as "base" arg to "int" causes it to determine
+                    # the base automatically.
+                    return int(s, 0)
+                # s isn't a string, can't specify base argument
+                return int(s)
+
+            integers = [to_i(x) for x in iterable]
+
+            # The default mask is all ones, the mask is 32 bits.
+            if len(integers) == 1:
+                integers.append(0xffffffff)
+
+            # We now have two integers in a list.  Convert to canonical string.
+            return '/'.join(map(hex, integers))
+
+        def canonicalize(item):
+            k, v = item
+            # ip rule shows these as 'any'
+            if k == 'from' and v == 'all':
+                return k, constants.IP_ANY[ip_version]
+            # lookup and table are interchangeable.  Use table every time.
+            if k == 'lookup':
+                return 'table', v
+            if k == 'fwmark':
+                return k, canonicalize_fwmark_string(v)
+            return k, v
+
+        if 'type' not in settings:
+            settings['type'] = 'unicast'
+
+        return {k: str(v) for k, v in map(canonicalize, settings.items())}
+
     def _parse_line(self, ip_version, line):
         # Typical rules from 'ip rule show':
         # 4030201:  from 1.2.3.4/24 lookup 10203040
@@ -296,23 +359,21 @@ class IpRuleCommand(IpCommandBase):
         if not parts:
             return {}
 
-        # Format of line is: "priority: <key> <value> ..."
+        # Format of line is: "priority: <key> <value> ... [<type>]"
         settings = {k: v for k, v in zip(parts[1::2], parts[2::2])}
         settings['priority'] = parts[0][:-1]
+        if len(parts) % 2 == 0:
+            # When line has an even number of columns, last one is the type.
+            settings['type'] = parts[-1]
 
-        # Canonicalize some arguments
-        if settings.get('from') == "all":
-            settings['from'] = constants.IP_ANY[ip_version]
-        if 'lookup' in settings:
-            settings['table'] = settings.pop('lookup')
+        return self._make_canonical(ip_version, settings)
 
-        return settings
+    def list_rules(self, ip_version):
+        lines = self._as_root([ip_version], ['show']).splitlines()
+        return [self._parse_line(ip_version, line) for line in lines]
 
     def _exists(self, ip_version, **kwargs):
-        kwargs_strings = {k: str(v) for k, v in kwargs.items()}
-        lines = self._as_root([ip_version], ['show']).splitlines()
-        return kwargs_strings in (self._parse_line(ip_version, line)
-                                  for line in lines)
+        return kwargs in self.list_rules(ip_version)
 
     def _make__flat_args_tuple(self, *args, **kwargs):
         for kwargs_item in sorted(kwargs.items(), key=lambda i: i[0]):
@@ -323,9 +384,10 @@ class IpRuleCommand(IpCommandBase):
         ip_version = get_ip_version(ip)
 
         kwargs.update({'from': ip})
+        canonical_kwargs = self._make_canonical(ip_version, kwargs)
 
-        if not self._exists(ip_version, **kwargs):
-            args_tuple = self._make__flat_args_tuple('add', **kwargs)
+        if not self._exists(ip_version, **canonical_kwargs):
+            args_tuple = self._make__flat_args_tuple('add', **canonical_kwargs)
             self._as_root([ip_version], args_tuple)
 
     def delete(self, ip, **kwargs):
@@ -333,7 +395,9 @@ class IpRuleCommand(IpCommandBase):
 
         # TODO(Carl) ip ignored in delete, okay in general?
 
-        args_tuple = self._make__flat_args_tuple('del', **kwargs)
+        canonical_kwargs = self._make_canonical(ip_version, kwargs)
+
+        args_tuple = self._make__flat_args_tuple('del', **canonical_kwargs)
         self._as_root([ip_version], args_tuple)
 
 
@@ -534,35 +598,47 @@ class IpRouteCommand(IpDeviceCommandBase):
                     raise exceptions.DeviceNotFoundError(
                         device_name=self.name)
 
-    def list_onlink_routes(self, ip_version):
-        def iterate_routes():
-            args = ['list']
-            args += self._dev_args()
-            args += ['scope', 'link']
-            args += self._table_args()
-            output = self._run([ip_version], tuple(args))
-            for line in output.split('\n'):
-                line = line.strip()
-                if line and not line.count('src'):
-                    yield line
+    def _parse_routes(self, ip_version, output, **kwargs):
+        for line in output.splitlines():
+            parts = line.split()
 
-        return [x for x in iterate_routes()]
+            # Format of line is: "<cidr>|default [<key> <value>] ..."
+            route = {k: v for k, v in zip(parts[1::2], parts[2::2])}
+            route['cidr'] = parts[0]
+            # Avoids having to explicitly pass around the IP version
+            if route['cidr'] == 'default':
+                route['cidr'] = constants.IP_ANY[ip_version]
+
+            # ip route drops things like scope and dev from the output if it
+            # was specified as a filter.  This allows us to add them back.
+            if self.name:
+                route['dev'] = self.name
+            if self._table:
+                route['table'] = self._table
+            # Callers add any filters they use as kwargs
+            route.update(kwargs)
+
+            yield route
+
+    def list_routes(self, ip_version, **kwargs):
+        args = ['list']
+        args += self._dev_args()
+        args += self._table_args()
+        for k, v in kwargs.items():
+            args += [k, v]
+
+        output = self._run([ip_version], tuple(args))
+        return [r for r in self._parse_routes(ip_version, output, **kwargs)]
+
+    def list_onlink_routes(self, ip_version):
+        routes = self.list_routes(ip_version, scope='link')
+        return [r for r in routes if 'src' not in r]
 
     def add_onlink_route(self, cidr):
-        ip_version = get_ip_version(cidr)
-        args = ['replace', cidr]
-        args += self._dev_args()
-        args += ['scope', 'link']
-        args += self._table_args()
-        self._as_root([ip_version], tuple(args))
+        self.add_route(cidr, scope='link')
 
     def delete_onlink_route(self, cidr):
-        ip_version = get_ip_version(cidr)
-        args = ['del', cidr]
-        args += self._dev_args()
-        args += ['scope', 'link']
-        args += self._table_args()
-        self._as_root([ip_version], tuple(args))
+        self.delete_route(cidr, scope='link')
 
     def get_gateway(self, scope=None, filters=None, ip_version=None):
         options = [ip_version] if ip_version else []
@@ -644,18 +720,26 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    'proto', 'kernel',
                                    'dev', device))
 
-    def add_route(self, cidr, ip, table=None):
+    def add_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
-        args = ['replace', cidr, 'via', ip]
+        args = ['replace', cidr]
+        if via:
+            args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
+        for k, v in kwargs.items():
+            args += [k, v]
         self._as_root([ip_version], tuple(args))
 
-    def delete_route(self, cidr, ip, table=None):
+    def delete_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
-        args = ['del', cidr, 'via', ip]
+        args = ['del', cidr]
+        if via:
+            args += ['via', via]
         args += self._dev_args()
         args += self._table_args(table)
+        for k, v in kwargs.items():
+            args += [k, v]
         self._as_root([ip_version], tuple(args))
 
 

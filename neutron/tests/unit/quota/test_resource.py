@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
-
 import mock
+import uuid
+
 from oslo_config import cfg
 
 from neutron import context
@@ -28,7 +28,6 @@ from neutron.tests.unit import testlib_api
 
 meh_quota_flag = 'quota_meh'
 meh_quota_opts = [cfg.IntOpt(meh_quota_flag, default=99)]
-random.seed()
 
 
 class TestResource(base.DietTestCase):
@@ -64,12 +63,10 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
         session = db_api.get_session()
         with session.begin():
             tenant_id = tenant_id or self.tenant_id
-            session.add(test_quota.MehModel(
-                meh='meh_%d' % random.randint(0, 10000),
-                tenant_id=tenant_id))
-            session.add(test_quota.MehModel(
-                meh='meh_%d' % random.randint(0, 10000),
-                tenant_id=tenant_id))
+            session.add(test_quota.MehModel(meh='meh_%s' % uuid.uuid4(),
+                                            tenant_id=tenant_id))
+            session.add(test_quota.MehModel(meh='meh_%s' % uuid.uuid4(),
+                                            tenant_id=tenant_id))
 
     def _delete_data(self):
         session = db_api.get_session()
@@ -165,8 +162,7 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
             res.count(self.context, None, self.tenant_id,
                       resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id,
-                reserved=0, in_use=2)
+                self.context, self.resource, self.tenant_id, in_use=2)
 
     def test_count_with_dirty_true_no_usage_info(self):
         res = self._create_resource()
@@ -185,8 +181,7 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
                                             self.tenant_id)
             res.count(self.context, None, self.tenant_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id,
-                reserved=0, in_use=2)
+                self.context, self.resource, self.tenant_id, in_use=2)
 
     def test_add_delete_data_triggers_event(self):
         res = self._create_resource()
@@ -253,5 +248,4 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
             # and now it should be in sync
             self.assertNotIn(self.tenant_id, res._out_of_sync_tenants)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id,
-                reserved=0, in_use=2)
+                self.context, self.resource, self.tenant_id, in_use=2)

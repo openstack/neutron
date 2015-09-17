@@ -69,7 +69,7 @@ def _validate_dns_format(data, max_len=FQDN_MAX_LEN):
             raise TypeError(_("TLD '%s' must not be all numeric") % names[-1])
     except TypeError as e:
         msg = _("'%(data)s' not a valid PQDN or FQDN. Reason: %(reason)s") % {
-            'data': data, 'reason': e.message}
+            'data': data, 'reason': str(e)}
         return msg
 
 

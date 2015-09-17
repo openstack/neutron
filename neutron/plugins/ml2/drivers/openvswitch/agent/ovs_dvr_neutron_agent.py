@@ -352,9 +352,6 @@ class OVSDVRNeutronAgent(object):
     def in_distributed_mode(self):
         return self.dvr_mac_address is not None
 
-    def is_dvr_router_interface(self, device_owner):
-        return device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE
-
     def process_tunneled_network(self, network_type, lvid, segmentation_id):
         self.tun_br.provision_local_vlan(
             network_type=network_type,

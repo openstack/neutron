@@ -16,6 +16,7 @@
 import copy
 import functools
 import os.path
+import time
 
 import mock
 import netaddr
@@ -56,6 +57,7 @@ LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
 
 METADATA_REQUEST_TIMEOUT = 60
+METADATA_REQUEST_SLEEP = 5
 
 
 def get_ovs_bridge(br_name):
@@ -81,8 +83,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _configure_agent(self, host):
         conf = self._get_config_opts()
         l3_agent_main.register_opts(conf)
-        cfg.CONF.set_override('debug', False)
-        agent_config.setup_logging()
         conf.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
@@ -914,6 +914,28 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
                      self.agent.conf.metadata_proxy_socket,
                      workers=0, backlog=4096, mode=self.SOCKET_MODE)
 
+    def _query_metadata_proxy(self, machine):
+        url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
+                                            'port': dhcp.METADATA_PORT}
+        cmd = 'curl', '--max-time', METADATA_REQUEST_TIMEOUT, '-D-', url
+        i = 0
+        CONNECTION_REFUSED_TIMEOUT = METADATA_REQUEST_TIMEOUT // 2
+        while i <= CONNECTION_REFUSED_TIMEOUT:
+            try:
+                raw_headers = machine.execute(cmd)
+                break
+            except RuntimeError as e:
+                if 'Connection refused' in str(e):
+                    time.sleep(METADATA_REQUEST_SLEEP)
+                    i += METADATA_REQUEST_SLEEP
+                else:
+                    self.fail('metadata proxy unreachable '
+                              'on %s before timeout' % url)
+
+        if i > CONNECTION_REFUSED_TIMEOUT:
+            self.fail('Timed out waiting metadata proxy to become available')
+        return raw_headers.splitlines()[0]
+
     def test_access_to_metadata_proxy(self):
         """Test access to the l3-agent metadata proxy.
 
@@ -945,16 +967,9 @@ class MetadataL3AgentTestCase(L3AgentTestFramework):
                 router_ip_cidr.partition('/')[0]))
 
         # Query metadata proxy
-        url = 'http://%(host)s:%(port)s' % {'host': dhcp.METADATA_DEFAULT_IP,
-                                            'port': dhcp.METADATA_PORT}
-        cmd = 'curl', '--max-time', METADATA_REQUEST_TIMEOUT, '-D-', url
-        try:
-            raw_headers = machine.execute(cmd)
-        except RuntimeError:
-            self.fail('metadata proxy unreachable on %s before timeout' % url)
+        firstline = self._query_metadata_proxy(machine)
 
         # Check status code
-        firstline = raw_headers.splitlines()[0]
         self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())
 
 
@@ -1388,3 +1403,84 @@ class TestDvrRouter(L3AgentTestFramework):
         self.assertTrue(self._namespace_exists(router1.ns_name))
         self.assertTrue(self._namespace_exists(fip_ns))
         self._assert_snat_namespace_does_not_exist(router1)
+
+    def _assert_snat_namespace_exists(self, router):
+        namespace = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+            router.router_id)
+        self.assertTrue(self._namespace_exists(namespace))
+
+    def _get_dvr_snat_namespace_device_status(
+        self, router, internal_dev_name=None):
+        """Function returns the internal and external device status."""
+        snat_ns = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+            router.router_id)
+        external_port = router.get_ex_gw_port()
+        external_device_name = router.get_external_device_name(
+            external_port['id'])
+        qg_device_created_successfully = ip_lib.device_exists(
+            external_device_name, namespace=snat_ns)
+        sg_device_created_successfully = ip_lib.device_exists(
+            internal_dev_name, namespace=snat_ns)
+        return qg_device_created_successfully, sg_device_created_successfully
+
+    def test_dvr_router_snat_namespace_with_interface_remove(self):
+        """Test to validate the snat namespace with interface remove.
+
+        This test validates the snat namespace for all the external
+        and internal devices. It also validates if the internal
+        device corresponding to the router interface is removed
+        when the router interface is deleted.
+        """
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info()
+        snat_internal_port = router_info[l3_constants.SNAT_ROUTER_INTF_KEY]
+        router1 = self.manage_router(self.agent, router_info)
+        csnat_internal_port = (
+            router1.router[l3_constants.SNAT_ROUTER_INTF_KEY])
+        # Now save the internal device name to verify later
+        internal_device_name = router1._get_snat_int_device_name(
+            csnat_internal_port[0]['id'])
+        self._assert_snat_namespace_exists(router1)
+        qg_device, sg_device = self._get_dvr_snat_namespace_device_status(
+            router1, internal_dev_name=internal_device_name)
+        self.assertTrue(qg_device)
+        self.assertTrue(sg_device)
+        self.assertEqual(router1.snat_ports, snat_internal_port)
+        # Now let us not pass INTERFACE_KEY, to emulate
+        # the interface has been removed.
+        router1.router[l3_constants.INTERFACE_KEY] = []
+        # Now let us not pass the SNAT_ROUTER_INTF_KEY, to emulate
+        # that the server did not send it, since the interface has been
+        # removed.
+        router1.router[l3_constants.SNAT_ROUTER_INTF_KEY] = []
+        self.agent._process_updated_router(router1.router)
+        router_updated = self.agent.router_info[router_info['id']]
+        self._assert_snat_namespace_exists(router_updated)
+        qg_device, sg_device = self._get_dvr_snat_namespace_device_status(
+            router_updated, internal_dev_name=internal_device_name)
+        self.assertFalse(sg_device)
+        self.assertTrue(qg_device)
+
+    def test_dvr_router_calls_delete_agent_gateway_if_last_fip(self):
+        """Test to validate delete fip if it is last fip managed by agent."""
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(enable_snat=True)
+        router1 = self.manage_router(self.agent, router_info)
+        floating_agent_gw_port = (
+            router1.router[l3_constants.FLOATINGIP_AGENT_INTF_KEY])
+        self.assertTrue(floating_agent_gw_port)
+        fip_ns = router1.fip_ns.get_name()
+        router1.fip_ns.agent_gw_port = floating_agent_gw_port
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_dvr_floating_ips(router1)
+        self._assert_dvr_snat_gateway(router1)
+        router1.router[l3_constants.FLOATINGIP_KEY] = []
+        rpc_mock = mock.patch.object(
+            self.agent.plugin_rpc, 'delete_agent_gateway_port').start()
+        self.agent._process_updated_router(router1.router)
+        self.assertTrue(rpc_mock.called)
+        rpc_mock.assert_called_once_with(
+            self.agent.context,
+            floating_agent_gw_port[0]['network_id'])
+        self.assertFalse(self._namespace_exists(fip_ns))

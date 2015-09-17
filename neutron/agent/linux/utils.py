@@ -83,6 +83,7 @@ def create_process(cmd, run_as_root=False, addl_env=None):
     cmd = list(map(str, addl_env_args(addl_env) + cmd))
     if run_as_root:
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
+    LOG.debug("Running command: %s", cmd)
     obj = utils.subprocess_popen(cmd, shell=False,
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
@@ -98,6 +99,7 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
     # In practice, no neutron code should be trying to execute something that
     # would throw those errors, and if it does it should be fixed as opposed to
     # just logging the execution error.
+    LOG.debug("Running command (rootwrap daemon): %s", cmd)
     client = RootwrapDaemonHelper.get_client()
     return client.execute(cmd, process_input)
 
@@ -132,20 +134,24 @@ def execute(cmd, process_input=None, addl_env=None,
                 except UnicodeError:
                     pass
 
-        m = _("\nCommand: {cmd}\nExit code: {code}\n").format(
-                  cmd=cmd,
-                  code=returncode)
+        command_str = {
+            'cmd': cmd,
+            'code': returncode
+        }
+        m = _("\nCommand: %(cmd)s"
+              "\nExit code: %(code)d\n") % command_str
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode in extra_ok_codes:
             returncode = None
 
         if returncode and log_fail_as_error:
-            m += ("Stdin: {stdin}\n"
-                  "Stdout: {stdout}\nStderr: {stderr}").format(
-                stdin=process_input or '',
-                stdout=_stdout,
-                stderr=_stderr)
+            command_str['stdin'] = process_input or ''
+            command_str['stdout'] = _stdout
+            command_str['stderr'] = _stderr
+            m += _("Stdin: %(stdin)s\n"
+                  "Stdout: %(stdout)s\n"
+                  "Stderr: %(stderr)s") % command_str
             LOG.error(m)
         else:
             LOG.debug(m)

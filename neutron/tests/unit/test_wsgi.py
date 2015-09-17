@@ -19,6 +19,7 @@ import ssl
 
 import mock
 from oslo_config import cfg
+import six
 import six.moves.urllib.request as urlrequest
 import testtools
 import webob
@@ -170,7 +171,7 @@ class TestWSGIServer(base.BaseTestCase):
 
         response = open_no_proxy('http://127.0.0.1:%d/' % server.port)
 
-        self.assertEqual(greetings, response.read())
+        self.assertEqual(greetings.encode('utf-8'), response.read())
 
         server.stop()
 
@@ -495,6 +496,8 @@ class JSONDictSerializerTest(base.BaseTestCase):
 
         self.assertEqual(expected_json, result)
 
+    # TODO(cbrandily): support this test in py3K
+    @testtools.skipIf(six.PY3, "bug/1491824")
     def test_json_with_utf8(self):
         input_dict = dict(servers=dict(a=(2, '\xe7\xbd\x91\xe7\xbb\x9c')))
         expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
@@ -555,14 +558,14 @@ class JSONDeserializerTest(base.BaseTestCase):
             exception.MalformedRequestBody, deserializer.default, data_string)
 
     def test_json_with_utf8(self):
-        data = '{"a": "\xe7\xbd\x91\xe7\xbb\x9c"}'
+        data = b'{"a": "\xe7\xbd\x91\xe7\xbb\x9c"}'
         as_dict = {'body': {'a': u'\u7f51\u7edc'}}
         deserializer = wsgi.JSONDeserializer()
         self.assertEqual(as_dict,
                          deserializer.deserialize(data))
 
     def test_json_with_unicode(self):
-        data = '{"a": "\u7f51\u7edc"}'
+        data = b'{"a": "\u7f51\u7edc"}'
         as_dict = {'body': {'a': u'\u7f51\u7edc'}}
         deserializer = wsgi.JSONDeserializer()
         self.assertEqual(as_dict,
@@ -716,6 +719,11 @@ class FaultTest(base.BaseTestCase):
 
 class TestWSGIServerWithSSL(base.BaseTestCase):
     """WSGI server tests."""
+
+    def setUp(self):
+        super(TestWSGIServerWithSSL, self).setUp()
+        if six.PY3:
+            self.skip("bug/1482633")
 
     @mock.patch("exceptions.RuntimeError")
     @mock.patch("os.path.exists")

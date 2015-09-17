@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 
 import netaddr
@@ -416,13 +417,15 @@ class Controller(object):
         if self._collection in body:
             # Have to account for bulk create
             items = body[self._collection]
-            deltas = {}
-            bulk = True
         else:
             items = [body]
-            bulk = False
         # Ensure policy engine is initialized
         policy.init()
+        # Store requested resource amounts grouping them by tenant
+        # This won't work with multiple resources. However because of the
+        # current structure of this controller there will hardly be more than
+        # one resource for which reservations are being made
+        request_deltas = collections.defaultdict(int)
         for item in items:
             self._validate_network_tenant_ownership(request,
                                                     item[self._resource])
@@ -433,30 +436,31 @@ class Controller(object):
             if 'tenant_id' not in item[self._resource]:
                 # no tenant_id - no quota check
                 continue
-            try:
-                tenant_id = item[self._resource]['tenant_id']
-                count = quota.QUOTAS.count(request.context, self._resource,
-                                           self._plugin, tenant_id)
-                if bulk:
-                    delta = deltas.get(tenant_id, 0) + 1
-                    deltas[tenant_id] = delta
-                else:
-                    delta = 1
-                kwargs = {self._resource: count + delta}
-            except exceptions.QuotaResourceUnknown as e:
+            tenant_id = item[self._resource]['tenant_id']
+            request_deltas[tenant_id] += 1
+        # Quota enforcement
+        reservations = []
+        try:
+            for (tenant, delta) in request_deltas.items():
+                reservation = quota.QUOTAS.make_reservation(
+                    request.context,
+                    tenant,
+                    {self._resource: delta},
+                    self._plugin)
+                reservations.append(reservation)
+        except exceptions.QuotaResourceUnknown as e:
                 # We don't want to quota this resource
                 LOG.debug(e)
-            else:
-                quota.QUOTAS.limit_check(request.context,
-                                         item[self._resource]['tenant_id'],
-                                         **kwargs)
 
         def notify(create_result):
             # Ensure usage trackers for all resources affected by this API
             # operation are marked as dirty
-            # TODO(salv-orlando): This operation will happen in a single
-            # transaction with reservation commit once that is implemented
-            resource_registry.set_resources_dirty(request.context)
+            with request.context.session.begin():
+                # Commit the reservation(s)
+                for reservation in reservations:
+                    quota.QUOTAS.commit_reservation(
+                        request.context, reservation.reservation_id)
+                resource_registry.set_resources_dirty(request.context)
 
             notifier_method = self._resource + '.create.end'
             self._notifier.info(request.context,
@@ -467,11 +471,35 @@ class Controller(object):
                                          notifier_method)
             return create_result
 
-        kwargs = {self._parent_id_name: parent_id} if parent_id else {}
+        def do_create(body, bulk=False, emulated=False):
+            kwargs = {self._parent_id_name: parent_id} if parent_id else {}
+            if bulk and not emulated:
+                obj_creator = getattr(self._plugin, "%s_bulk" % action)
+            else:
+                obj_creator = getattr(self._plugin, action)
+            try:
+                if emulated:
+                    return self._emulate_bulk_create(obj_creator, request,
+                                                     body, parent_id)
+                else:
+                    if self._collection in body:
+                        # This is weird but fixing it requires changes to the
+                        # plugin interface
+                        kwargs.update({self._collection: body})
+                    else:
+                        kwargs.update({self._resource: body})
+                    return obj_creator(request.context, **kwargs)
+            except Exception:
+                # In case of failure the plugin will always raise an
+                # exception. Cancel the reservation
+                with excutils.save_and_reraise_exception():
+                    for reservation in reservations:
+                        quota.QUOTAS.cancel_reservation(
+                            request.context, reservation.reservation_id)
+
         if self._collection in body and self._native_bulk:
             # plugin does atomic bulk create operations
-            obj_creator = getattr(self._plugin, "%s_bulk" % action)
-            objs = obj_creator(request.context, body, **kwargs)
+            objs = do_create(body, bulk=True)
             # Use first element of list to discriminate attributes which
             # should be removed because of authZ policies
             fields_to_strip = self._exclude_attributes_by_policy(
@@ -480,15 +508,12 @@ class Controller(object):
                 request.context, obj, fields_to_strip=fields_to_strip)
                 for obj in objs]})
         else:
-            obj_creator = getattr(self._plugin, action)
             if self._collection in body:
                 # Emulate atomic bulk behavior
-                objs = self._emulate_bulk_create(obj_creator, request,
-                                                 body, parent_id)
+                objs = do_create(body, bulk=True, emulated=True)
                 return notify({self._collection: objs})
             else:
-                kwargs.update({self._resource: body})
-                obj = obj_creator(request.context, **kwargs)
+                obj = do_create(body)
                 self._send_nova_notification(action, {},
                                              {self._resource: obj})
                 return notify({self._resource: self._view(request.context,

@@ -42,7 +42,6 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
         self._configure()
 
     def _configure(self):
-        config.setup_logging()
         config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF.set_override(
             'interface_driver',

@@ -65,26 +65,26 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
             db_pools.append(db_pool)
         return db_pools
 
-    def _validate_ips(self, pool, db_pool):
-        self.assertEqual(pool[0], db_pool.first_ip)
-        self.assertEqual(pool[1], db_pool.last_ip)
+    def _validate_ips(self, pools, db_pool):
+        self.assertTrue(
+            any(pool == (db_pool.first_ip, db_pool.last_ip) for pool in pools))
 
     def test_create_pool(self):
         db_pools = self._create_pools([self.single_pool])
 
         ipam_pool = self.ctx.session.query(db_models.IpamAllocationPool).\
             filter_by(ipam_subnet_id=self.ipam_subnet_id).first()
-        self._validate_ips(self.single_pool, ipam_pool)
+        self._validate_ips([self.single_pool], ipam_pool)
 
         range = self.ctx.session.query(db_models.IpamAvailabilityRange).\
             filter_by(allocation_pool_id=db_pools[0].id).first()
-        self._validate_ips(self.single_pool, range)
+        self._validate_ips([self.single_pool], range)
 
     def _test_get_first_range(self, locking):
         self._create_pools(self.multi_pool)
         range = self.subnet_manager.get_first_range(self.ctx.session,
                                                     locking=locking)
-        self._validate_ips(self.multi_pool[0], range)
+        self._validate_ips(self.multi_pool, range)
 
     def test_get_first_range(self):
         self._test_get_first_range(False)
@@ -110,20 +110,20 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
             db_pools[0].id).all()
         self.assertEqual(1, len(db_ranges))
         self.assertEqual(db_models.IpamAvailabilityRange, type(db_ranges[0]))
-        self._validate_ips(self.single_pool, db_ranges[0])
+        self._validate_ips([self.single_pool], db_ranges[0])
 
     def test_create_range(self):
         self._create_pools([self.single_pool])
         pool = self.ctx.session.query(db_models.IpamAllocationPool).\
             filter_by(ipam_subnet_id=self.ipam_subnet_id).first()
-        self._validate_ips(self.single_pool, pool)
+        self._validate_ips([self.single_pool], pool)
         allocation_pool_id = pool.id
 
         # delete the range
         db_range = self.subnet_manager.list_ranges_by_allocation_pool(
             self.ctx.session,
             pool.id).first()
-        self._validate_ips(self.single_pool, db_range)
+        self._validate_ips([self.single_pool], db_range)
         self.ctx.session.delete(db_range)
 
         # create a new range
