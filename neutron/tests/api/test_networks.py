@@ -206,14 +206,19 @@ class NetworksTestJSON(base.BaseNetworkTest):
         # Verify the details of a network
         body = self.client.show_network(self.network['id'])
         network = body['network']
-        for key in ['id', 'name', 'mtu']:
+        fields = ['id', 'name']
+        if test.is_extension_enabled('net-mtu', 'network'):
+            fields.append('mtu')
+        for key in fields:
             self.assertEqual(network[key], self.network[key])
 
     @test.attr(type='smoke')
     @test.idempotent_id('867819bb-c4b6-45f7-acf9-90edcf70aa5e')
     def test_show_network_fields(self):
         # Verify specific fields of a network
-        fields = ['id', 'name', 'mtu']
+        fields = ['id', 'name']
+        if test.is_extension_enabled('net-mtu', 'network'):
+            fields.append('mtu')
         body = self.client.show_network(self.network['id'],
                                         fields=fields)
         network = body['network']
@@ -234,7 +239,9 @@ class NetworksTestJSON(base.BaseNetworkTest):
     @test.idempotent_id('6ae6d24f-9194-4869-9c85-c313cb20e080')
     def test_list_networks_fields(self):
         # Verify specific fields of the networks
-        fields = ['id', 'name', 'mtu']
+        fields = ['id', 'name']
+        if test.is_extension_enabled('net-mtu', 'network'):
+            fields.append('mtu')
         body = self.client.list_networks(fields=fields)
         networks = body['networks']
         self.assertNotEmpty(networks, "Network list returned is empty")
