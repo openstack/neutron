@@ -22,6 +22,8 @@ Tests in this module will be skipped unless:
  - sudo testing is enabled (see neutron.tests.functional.base for details)
 """
 
+import signal
+
 import eventlet
 from oslo_config import cfg
 
@@ -82,7 +84,7 @@ class TestOvsdbMonitor(BaseMonitorTest):
         old_pid = self.monitor._process.pid
         output1 = self.collect_initial_output()
         pid = utils.get_root_helper_child_pid(old_pid, run_as_root=True)
-        self.monitor._kill_process(pid)
+        self.monitor._kill_process(pid, signal.SIGKILL)
         self.monitor._reset_queues()
         while (self.monitor._process.pid == old_pid):
             eventlet.sleep(0.01)

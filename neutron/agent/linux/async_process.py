@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import signal
+
 import eventlet
 import eventlet.event
 import eventlet.queue
@@ -103,16 +105,18 @@ class AsyncProcess(object):
         if block:
             utils.wait_until_true(self.is_active)
 
-    def stop(self, block=False):
+    def stop(self, block=False, kill_signal=signal.SIGKILL):
         """Halt the process and watcher threads.
 
         :param block: Block until the process has stopped.
+        :param kill_signal: Number of signal that will be sent to the process
+                            when terminating the process
         :raises eventlet.timeout.Timeout if blocking is True and the process
                 did not stop in time.
         """
         if self._kill_event:
             LOG.debug('Halting async process [%s].', self.cmd)
-            self._kill()
+            self._kill(kill_signal)
         else:
             raise AsyncProcessException(_('Process is not running.'))
 
@@ -142,7 +146,7 @@ class AsyncProcess(object):
                 self._process.pid,
                 run_as_root=self.run_as_root)
 
-    def _kill(self, respawning=False):
+    def _kill(self, kill_signal, respawning=False):
         """Kill the process and the associated watcher greenthreads.
 
         :param respawning: Optional, whether respawn will be subsequently
@@ -153,18 +157,19 @@ class AsyncProcess(object):
 
         pid = self.pid
         if pid:
-            self._kill_process(pid)
+            self._kill_process(pid, kill_signal)
 
         if not respawning:
             # Clear the kill event to ensure the process can be
             # explicitly started again.
             self._kill_event = None
 
-    def _kill_process(self, pid):
+    def _kill_process(self, pid, kill_signal):
         try:
             # A process started by a root helper will be running as
             # root and need to be killed via the same helper.
-            utils.execute(['kill', '-9', pid], run_as_root=self.run_as_root)
+            utils.execute(['kill', '-%d' % kill_signal, pid],
+                          run_as_root=self.run_as_root)
         except Exception as ex:
             stale_pid = (isinstance(ex, RuntimeError) and
                          'No such process' in str(ex))
@@ -185,7 +190,7 @@ class AsyncProcess(object):
             respawning = True
         else:
             respawning = False
-        self._kill(respawning=respawning)
+        self._kill(signal.SIGKILL, respawning=respawning)
         if respawning:
             eventlet.sleep(self.respawn_interval)
             LOG.debug('Respawning async process [%s].', self.cmd)
