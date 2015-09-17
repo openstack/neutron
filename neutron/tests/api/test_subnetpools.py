@@ -241,6 +241,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('49b44c64-1619-4b29-b527-ffc3c3115dc4')
+    @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
@@ -253,6 +254,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('910b6393-db24-4f6f-87dc-b36892ad6c8c')
+    @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
@@ -269,6 +271,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('18302e80-46a3-4563-82ac-ccd1dd57f652')
+    @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_another_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
@@ -291,6 +294,7 @@ class SubnetPoolsTest(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('f8970048-e41b-42d6-934b-a1297b07706a')
+    @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_disassociate_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
