@@ -63,6 +63,11 @@ VHOST_USER_SOCKET = 'vhostuser_socket'
 #                        method should be used when binding the
 #                        vhost-user vif.
 VHOST_USER_OVS_PLUG = 'vhostuser_ovs_plug'
+# - vhost-user:  The vhost-user interface type is a standard virtio interface
+#                provided by qemu 2.1+. This constant defines the neutron side
+#                of the vif binding type to provide a common definition
+#                to enable reuse in multiple agents and drivers.
+VIF_TYPE_VHOST_USER = 'vhostuser'
 
 VIF_TYPE_UNBOUND = 'unbound'
 VIF_TYPE_BINDING_FAILED = 'binding_failed'
