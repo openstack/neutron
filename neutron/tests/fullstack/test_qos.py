@@ -20,6 +20,9 @@ from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 
+from neutron.plugins.ml2.drivers.openvswitch.mech_driver import \
+    mech_openvswitch as mech_ovs
+
 
 BANDWIDTH_LIMIT = 500
 BANDWIDTH_BURST = 100
@@ -117,3 +120,19 @@ class TestQoSWithOvsAgent(base.BaseFullStackTestCase):
             vm.neutron_port['id'],
             body={'port': {'qos_policy_id': None}})
         _wait_for_rule_removed(vm)
+
+
+class TestQoSWithL2Population(base.BaseFullStackTestCase):
+
+    def setUp(self):
+        host_desc = [environment.HostDescription()]
+        env_desc = environment.EnvironmentDescription(qos=True, l2_pop=True)
+        env = environment.Environment(env_desc, host_desc)
+        super(TestQoSWithL2Population, self).setUp(env)
+
+    def test_supported_qos_rule_types(self):
+        res = self.client.list_qos_rule_types()
+        rule_types = {t['type'] for t in res['rule_types']}
+        expected_rules = (
+            set(mech_ovs.OpenvswitchMechanismDriver.supported_qos_rule_types))
+        self.assertEqual(expected_rules, rule_types)

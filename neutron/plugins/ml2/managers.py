@@ -320,30 +320,38 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             return []
 
         rule_types = set(qos_consts.VALID_RULE_TYPES)
+        binding_driver_found = False
 
         # Recalculate on every call to allow drivers determine supported rule
         # types dynamically
         for driver in self.ordered_mech_drivers:
-            if hasattr(driver.obj, 'supported_qos_rule_types'):
-                new_rule_types = \
-                    rule_types & set(driver.obj.supported_qos_rule_types)
-                dropped_rule_types = new_rule_types - rule_types
-                if dropped_rule_types:
-                    LOG.info(
-                        _LI("%(rule_types)s rule types disabled for ml2 "
-                            "because %(driver)s does not support them"),
-                        {'rule_types': ', '.join(dropped_rule_types),
-                         'driver': driver.name})
-                rule_types = new_rule_types
-            else:
-                # at least one of drivers does not support QoS, meaning there
-                # are no rule types supported by all of them
-                LOG.warn(
-                    _LW("%s does not support QoS; no rule types available"),
-                    driver.name)
-                return []
+            driver_obj = driver.obj
+            if driver_obj._supports_port_binding:
+                binding_driver_found = True
+                if hasattr(driver_obj, 'supported_qos_rule_types'):
+                    new_rule_types = \
+                        rule_types & set(driver_obj.supported_qos_rule_types)
+                    dropped_rule_types = new_rule_types - rule_types
+                    if dropped_rule_types:
+                        LOG.info(
+                            _LI("%(rule_types)s rule types disabled for ml2 "
+                                "because %(driver)s does not support them"),
+                            {'rule_types': ', '.join(dropped_rule_types),
+                             'driver': driver.name})
+                    rule_types = new_rule_types
+                else:
+                    # at least one of drivers does not support QoS, meaning
+                    # there are no rule types supported by all of them
+                    LOG.warn(
+                        _LW("%s does not support QoS; "
+                            "no rule types available"),
+                        driver.name)
+                    return []
 
-        rule_types = list(rule_types)
+        if binding_driver_found:
+            rule_types = list(rule_types)
+        else:
+            rule_types = []
         LOG.debug("Supported QoS rule types "
                   "(common subset for all mech drivers): %s", rule_types)
         return rule_types
