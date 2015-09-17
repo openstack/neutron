@@ -52,30 +52,6 @@ class TestSimpleInterfaceMonitor(base.BaseTestCase):
         with mock.patch(target, return_value=True):
             self.assertFalse(self.monitor.has_updates)
 
-    def test__kill_sets_data_received_to_false(self):
-        self.monitor.data_received = True
-        with mock.patch(
-                'neutron.agent.linux.ovsdb_monitor.OvsdbMonitor._kill'):
-            self.monitor._kill()
-        self.assertFalse(self.monitor.data_received)
-
-    def test__read_stdout_sets_data_received_and_returns_output(self):
-        output = 'foo'
-        with mock.patch(
-                'neutron.agent.linux.ovsdb_monitor.OvsdbMonitor._read_stdout',
-                return_value=output):
-            result = self.monitor._read_stdout()
-        self.assertTrue(self.monitor.data_received)
-        self.assertEqual(result, output)
-
-    def test__read_stdout_does_not_set_data_received_for_empty_ouput(self):
-        output = None
-        with mock.patch(
-                'neutron.agent.linux.ovsdb_monitor.OvsdbMonitor._read_stdout',
-                return_value=output):
-            self.monitor._read_stdout()
-        self.assertFalse(self.monitor.data_received)
-
     def test_has_updates_after_calling_get_events_is_false(self):
         with mock.patch.object(
                 self.monitor, 'process_events') as process_events:
