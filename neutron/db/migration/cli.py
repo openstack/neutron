@@ -116,6 +116,11 @@ def _get_alembic_entrypoint(project):
     return migration_entrypoints[project]
 
 
+def do_generic_show(config, cmd):
+    kwargs = {'verbose': CONF.command.verbose}
+    do_alembic_command(config, cmd, **kwargs)
+
+
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
     validate_labels(config)
@@ -307,7 +312,11 @@ def update_heads_file(config):
 def add_command_parsers(subparsers):
     for name in ['current', 'history', 'branches']:
         parser = add_alembic_subparser(subparsers, name)
-        parser.set_defaults(func=do_alembic_command)
+        parser.set_defaults(func=do_generic_show)
+        parser.add_argument('--verbose',
+                            action='store_true',
+                            help='Display more verbose output for the '
+                                 'specified command')
 
     help_text = (getattr(alembic_command, 'branches').__doc__ +
                  ' and validate head file')
