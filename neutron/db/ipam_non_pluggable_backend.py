@@ -75,7 +75,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             LOG.debug("Allocated IP - %(ip_address)s from %(first_ip)s "
                       "to %(last_ip)s",
                       {'ip_address': ip_address,
-                       'first_ip': ip_address,
+                       'first_ip': ip_range['first_ip'],
                        'last_ip': ip_range['last_ip']})
             return {'ip_address': ip_address,
                     'subnet_id': subnet['id']}
