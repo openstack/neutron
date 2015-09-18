@@ -20,6 +20,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from sqlalchemy.orm import exc as orm_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -414,7 +415,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                  enable_eagerloads(False).filter_by(id=port_id))
         if not context.is_admin:
             query = query.filter_by(tenant_id=context.tenant_id)
-        query.delete(synchronize_session=False)
+        # Use of the ORM mapper is needed for ensuring appropriate resource
+        # tracking; otherwise SQL Alchemy events won't be triggered.
+        # For more info check 'caveats' in doc/source/devref/quota.rst
+        try:
+            context.session.delete(query.first())
+        except orm_exc.UnmappedInstanceError:
+            LOG.debug("Port %s was not found and therefore no delete "
+                      "operation was performed", port_id)
 
     def _save_subnet(self, context,
                      network,
