@@ -1,0 +1,3524 @@
+# Turkish (Turkey) translations for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
+# Alper Çiftçi <alprciftci@gmail.com>, 2015
+# Andreas Jaeger <jaegerandi@gmail.com>, 2015. #zanata
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"PO-Revision-Date: 2015-09-16 08:28+0000\n"
+"Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
+"Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
+"language/tr_TR/)\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0\n"
+
+#, python-format
+msgid ""
+"\n"
+"Command: %(cmd)s\n"
+"Exit code: %(code)s\n"
+"Stdin: %(stdin)s\n"
+"Stdout: %(stdout)s\n"
+"Stderr: %(stderr)s"
+msgstr ""
+"\n"
+"Komut: %(cmd)s\n"
+"Çıkış kodu: %(code)s\n"
+"Stdin: %(stdin)s\n"
+"Stdout: %(stdout)s\n"
+"Stderr: %(stderr)s"
+
+#, python-format
+msgid "%(driver)s: Internal driver error."
+msgstr "%(driver)s: Dahili sürücü hatası."
+
+#, python-format
+msgid "%(err_msg)s"
+msgstr "%(err_msg)s"
+
+#, python-format
+msgid "%(id)s is not a valid %(type)s identifier"
+msgstr "%(id)s geçerli bir %(type)s tanımlayıcı değil"
+
+#, python-format
+msgid ""
+"%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s' "
+"and '%(desc)s'"
+msgstr ""
+"%(invalid_dirs)s sort_dirs için geçersiz değer, geçerli değer '%(asc)s' ve "
+"'%(desc)s'"
+
+#, python-format
+msgid "%(key)s prohibited for %(tunnel)s provider network"
+msgstr "%(key)s %(tunnel)s sağlayıcı ağı için yasaklanmış"
+
+#, python-format
+msgid ""
+"%(method)s called with network settings %(current)s (original settings "
+"%(original)s) and network segments %(segments)s"
+msgstr ""
+"%(method)s ağ ayarları %(current)s (asıl ayarlar %(original)s) ve "
+"%(segments)s ağ dilimleri ile çağrıldı"
+
+#, python-format
+msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) host %(host)s (original host %(original_host)s) vif type "
+"%(vif_type)s (original vif type %(original_vif_type)s) vif details "
+"%(vif_details)s (original vif details %(original_vif_details)s) binding "
+"levels %(levels)s (original binding levels %(original_levels)s) on network "
+"%(network)s with segments to bind %(segments_to_bind)s"
+msgstr ""
+"%(method)s bağlantı noktası ayarları %(current)s (asıl ayarlar %(original)s) "
+"istemci %(host)s (asıl istemci %(original_host)s) vif türü %(vif_type)s "
+"(asıl vif türü %(original_vif_type)s) vif detayları %(vif_details)s (asıl "
+"vif detayları %(original_vif_details)s) bağlama seviyeleri %(levels)s (asıl "
+"bağlama seviyeleri %(original_levels)s) %(network)s ağı üzerinde bağlanacak "
+"%(segments_to_bind)s dilimleriyle çağrıldı"
+
+#, python-format
+msgid ""
+"%(method)s called with subnet settings %(current)s (original settings "
+"%(original)s)"
+msgstr ""
+"%(method)s alt ağ ayarları %(current)s (asıl ayarlar %(original)s) ile "
+"çağrıldı"
+
+#, python-format
+msgid "%(method)s failed."
+msgstr "%(method)s başarısız."
+
+#, python-format
+msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
+msgstr "%(name)s '%(addr)s' ip_version '%(ip_version)s' ile eşleşmiyor"
+
+#, python-format
+msgid "%s cannot be called while in offline mode"
+msgstr "%s çevrim dışı kipte çağrılamaz"
+
+#, python-format
+msgid "%s is invalid attribute for sort_key"
+msgstr "%s sort_key için geçersiz özniteliktir"
+
+#, python-format
+msgid "%s is invalid attribute for sort_keys"
+msgstr "%s sort_keys için geçersiz öznitelik"
+
+#, python-format
+msgid "%s is not a valid VLAN tag"
+msgstr "%s geçerli bir VLAN etiketi değil"
+
+#, python-format
+msgid "%s must implement get_port_from_device or get_ports_from_devices."
+msgstr "%s get_port_from_device veya get_ports_from_devices uygulamalıdır."
+
+#, python-format
+msgid "%s prohibited for VLAN provider network"
+msgstr "%s VLAN sağlayıcı ağı için yasaklanmış"
+
+#, python-format
+msgid "%s prohibited for flat provider network"
+msgstr "%s düz sağlayıcı ağı için yasaklanmış"
+
+#, python-format
+msgid "%s prohibited for local provider network"
+msgstr "%s yerel sağlayıcı ağı için yasaklanmış"
+
+#, python-format
+msgid "'%(data)s' exceeds maximum length of %(max_len)s"
+msgstr "'%(data)s' %(max_len)s azami uzunluğunu aşıyor"
+
+#, python-format
+msgid "'%(data)s' is not in %(valid_values)s"
+msgstr "'%(data)s' %(valid_values)s içinde değil"
+
+#, python-format
+msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
+msgstr "'%(data)s' çok büyük - en çok '%(limit)d' olmalı"
+
+#, python-format
+msgid "'%(data)s' is too small - must be at least '%(limit)d'"
+msgstr "'%(data)s' çok küçük - en az '%(limit)d' olmalı"
+
+#, python-format
+msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
+msgstr "'%(data)s' tanınan bir IP alt ağı cidr'i değil, '%(cidr)s' öneriliyor"
+
+#, python-format
+msgid "'%(host)s' is not a valid nameserver. %(msg)s"
+msgstr "'%(host)s' geçerli bir isim sunucu değil. %(msg)s"
+
+#, python-format
+msgid "'%s' Blank strings are not permitted"
+msgstr "'%s' boş karakter dizilerine izin verilmez"
+
+#, python-format
+msgid "'%s' cannot be converted to boolean"
+msgstr "'%s' bool değere çevrilemez"
+
+#, python-format
+msgid "'%s' contains whitespace"
+msgstr "'%s' boşluk içeriyor"
+
+#, python-format
+msgid "'%s' is not a dictionary"
+msgstr "'%s' bir dizin değil"
+
+#, python-format
+msgid "'%s' is not a integer"
+msgstr "'%s' tam sayı değil"
+
+#, python-format
+msgid "'%s' is not a list"
+msgstr "'%s' liste değil"
+
+#, python-format
+msgid "'%s' is not a valid IP address"
+msgstr "'%s' geçerli bir IP adresi değil"
+
+#, python-format
+msgid "'%s' is not a valid IP subnet"
+msgstr "'%s' geçerli IP alt ağ değil"
+
+#, python-format
+msgid "'%s' is not a valid MAC address"
+msgstr "'%s' geçerli bir MAC adresi değil"
+
+#, python-format
+msgid "'%s' is not a valid UUID"
+msgstr "'%s' geçerli bir UUID değil"
+
+#, python-format
+msgid "'%s' is not a valid boolean value"
+msgstr "'%s' geçerli bir bool değer değil"
+
+#, python-format
+msgid "'%s' is not a valid input"
+msgstr "'%s' geçerli bir girdi değil"
+
+#, python-format
+msgid "'%s' is not a valid string"
+msgstr "'%s' geçerli karakter dizisi değil"
+
+#, python-format
+msgid "'%s' is not an integer"
+msgstr "'%s' tam sayı değil"
+
+#, python-format
+msgid "'%s' is not an integer or uuid"
+msgstr "'%s' bir tam sayı ya da uuid değil"
+
+#, python-format
+msgid "'%s' is not of the form <key>=[value]"
+msgstr "'%s' <anahtar>=[değer] biçiminde olmalı"
+
+#, python-format
+msgid "'%s' must be a non negative decimal."
+msgstr "'%s' negatif olmayan ondalık olmalı."
+
+#, python-format
+msgid "'%s' should be non-negative"
+msgstr "'%s' negatif olmamalı"
+
+msgid "'.' searches are not implemented"
+msgstr "'.' aramaları uygulanmamış"
+
+msgid "0 is not allowed as CIDR prefix length"
+msgstr "0 CIDR önek uzunluğuna izin verilmez"
+
+msgid "A cidr must be specified in the absence of a subnet pool"
+msgstr "Alt ağ havuzu olmadığında bir cidr belirtilmelidir"
+
+msgid ""
+"A list of mappings of physical networks to MTU values. The format of the "
+"mapping is <physnet>:<mtu val>. This mapping allows specifying a physical "
+"network MTU value that differs from the default segment_mtu value."
+msgstr ""
+"Fiziksel ağların MTU değerlerine eşleştirilme listesi. Eşleştirme biçimi "
+"<physnet>:<mtu val>. Bu eşleştirme varsayılan segment_mtu değerinden farklı "
+"bir fiziksel ağ MTU değeri belirtmeye izin verir."
+
+msgid "A metering driver must be specified"
+msgstr "Bir ölçme sürücüsü belirtilmeli"
+
+#, python-format
+msgid "A resource is not found: %(reason)s"
+msgstr "Bir kaynak bulunamadı: %(reason)s"
+
+msgid "API for retrieving service providers for Neutron advanced services"
+msgstr "Neutron gelişmiş servisleri için servis sağlayıcıları alma API'si"
+
+msgid "Aborting periodic_sync_routers_task due to an error"
+msgstr "Bir hata sebebiyle periodic_sync_routers_task iptal ediliyor"
+
+msgid "Access to this resource was denied."
+msgstr "Bu kaynağa erişime izin verilmiyor."
+
+msgid "Action to be executed when a child process dies"
+msgstr "Alt süreç öldüğünde çalıştırılacak eylem"
+
+msgid "Add comments to iptables rules."
+msgstr "Iptables kurallarına yorum ekle."
+
+#, python-format
+msgid "Address scope %(address_scope_id)s could not be found"
+msgstr "Adres kapsamı %(address_scope_id)s bulunamadı"
+
+msgid "Adds external network attribute to network resource."
+msgstr "Ek ağ özniteliğini ağ kaynağına ekler."
+
+msgid "Adds test attributes to core resources."
+msgstr "Çekirdek kaynaklara test özniteliklerini ekler."
+
+msgid "Admin password"
+msgstr "Yönetici parolası"
+
+msgid "Admin tenant name"
+msgstr "Yönetici kiracı ismi"
+
+msgid "Admin user"
+msgstr "Yönetici kullanıcı"
+
+#, python-format
+msgid "Agent %(id)s could not be found"
+msgstr "Ajan %(id)s bulunamadı"
+
+#, python-format
+msgid "Agent %(id)s is not a L3 Agent or has been disabled"
+msgstr "Ajan %(id)s bir L3 Ajanı değil ya da kapalı"
+
+#, python-format
+msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
+msgstr "Ajan %(id)s geçerli bir DHCP Ajanı değil veya kapalı"
+
+msgid "Agent should implement routers with no gateway"
+msgstr "Ajan geçide sahip olmayan yönlendiricileri uygulamalıdır"
+
+#, python-format
+msgid "Agent updated: %(payload)s"
+msgstr "Ajan güncellendi: %(payload)s"
+
+#, python-format
+msgid ""
+"Agent with agent_type=%(agent_type)s and host=%(host)s could not be found"
+msgstr "agent_type=%(agent_type)s ve istemci=%(host)s olan ajan bulunamadı"
+
+msgid "Allow auto scheduling networks to DHCP agent."
+msgstr "Ağların DHCP ajanlarına otomatik zamanlanmasına izin ver."
+
+msgid "Allow auto scheduling of routers to L3 agent."
+msgstr "Yönlendiricilerin L3 ajanına otomatik zamanlanmasına izin ver."
+
+msgid "Allow overlapping IP support in Neutron"
+msgstr "Neutron'da çakışan IP desteğine izin ver"
+
+msgid ""
+"Allow overlapping IP. This option is deprecated and will be removed in a "
+"future release."
+msgstr ""
+"Çakışan IP'ye izin ver. Bu seçenek artık kullanılmıyor ve ileri bir sürümde "
+"kaldırılacak."
+
+msgid "Allow running metadata proxy."
+msgstr "Metadata vekili çalıştırmaya izin ver."
+
+msgid "Allow sending resource operation notification to DHCP agent"
+msgstr "DHCP ajanına kaynak işlem bildirimi göndermeye izin ver"
+
+msgid "Allow the usage of the bulk API"
+msgstr "Toplu API'nin kullanımına izin ver"
+
+msgid "Allow the usage of the pagination"
+msgstr "Sayfalama kullanımına izin ver"
+
+msgid "Allow the usage of the sorting"
+msgstr "Sıralama kullanımına izin ver"
+
+msgid "Allow to perform insecure SSL (https) requests to nova metadata"
+msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
+
+msgid "Allowed physical networks"
+msgstr "İzin verilen fiziksel ağlar"
+
+msgid "AllowedAddressPair must contain ip_address"
+msgstr "AllowedAddressPair ip_address içermeli"
+
+msgid ""
+"Allows for serving metadata requests from a dedicated network. Requires "
+"enable_isolated_metadata = True"
+msgstr ""
+"Adanmış bir ağdan metadata isteklerinin sunulmasına izin verir. "
+"enable_isolated_metadata = True gerektirir"
+
+msgid "An interface driver must be specified"
+msgstr "Bir arayüz sürücüsü belirtmeniz gerekmektedir"
+
+#, python-format
+msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
+msgstr "%(opt_name)s: %(opt_value)s için geçersiz bir değer sağlanmış"
+
+msgid ""
+"An ordered list of extension driver entrypoints to be loaded from the "
+"neutron.ml2.extension_drivers namespace."
+msgstr ""
+"neutron.ml2.extension_drivers isim uzayından yüklenecek eklenti sürücü giriş "
+"noktalarının sıralı listesi."
+
+msgid ""
+"An ordered list of networking mechanism driver entrypoints to be loaded from "
+"the neutron.ml2.mechanism_drivers namespace."
+msgstr ""
+"neutron.ml2.mechanism_drivers isim uzayından yüklenecek ağ mekanizması "
+"sürücü giriş noktalarının sıralı listesi."
+
+#, python-format
+msgid "An unexpected error occurred:%(err_msg)s"
+msgstr "Beklenmeyen hata oluştu:%(err_msg)s"
+
+msgid "An unknown error has occurred. Please try your request again."
+msgstr "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin."
+
+msgid "An unknown exception occurred."
+msgstr "Bilinmeyen bir istisna oluştu."
+
+#, python-format
+msgid "An unknown nvsd plugin exception occurred: %(reason)s"
+msgstr "Bilinmeyen bir nvsd eklenti istisnası oluştu: %(reason)s"
+
+#, python-format
+msgid "Attribute '%s' not allowed in POST"
+msgstr "'%s' özniteliğine POST içinde izin verilmez"
+
+msgid "Auth strategy for connecting to neutron in admin context."
+msgstr ""
+"Neutron'a yönetici içeriğinde bağlanmak için kimlik doğrulama stratejisi."
+
+msgid "Authentication URL"
+msgstr "Kimlik Doğrulama URL'si"
+
+msgid "Authentication region"
+msgstr "Kimlik doğrulama bölgesi"
+
+msgid ""
+"Authorization URL for connecting to nova in admin context. Deprecated in "
+"favour of an auth plugin in [nova]."
+msgstr ""
+"Nova'ya yönetici bağlamında bağlanmak için yetkilendirme URL'si. [nova] daki "
+"bir yetkilendirme eklentisi kullanılacağından artık kullanılmıyor."
+
+msgid "Automatically remove networks from offline DHCP agents."
+msgstr "Ağları çevrimdışı DHCP ajanlarından otomatik olarak çıkar."
+
+msgid ""
+"Automatically reschedule routers from offline L3 agents to online L3 agents."
+msgstr ""
+"Yönlendiricileri çevrimdışı L3 ajanlarından çevrimiçi L3 ajanlarına otomatik "
+"olarak yeniden zamanla."
+
+msgid "Available commands"
+msgstr "Kullanılabilir komutlar"
+
+msgid "Backend does not support VLAN Transparency."
+msgstr "Arka uç VLAN şeffaflığını desteklemiyor."
+
+#, python-format
+msgid "Bad %(resource)s request: %(msg)s"
+msgstr "Kötü %(resource)s isteği: %(msg)s"
+
+#, python-format
+msgid ""
+"Bad prefix or mac format for generating IPv6 address by EUI-64: %(prefix)s, "
+"%(mac)s:"
+msgstr ""
+"EUI-64 ile IPv6 adresi üretmek için kötü önek ya da mac biçimi: %(prefix)s, "
+"%(mac)s:"
+
+#, python-format
+msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
+msgstr "EUI-64 ile IPv6 adresi üretmek için kötü önek türü: %s"
+
+#, python-format
+msgid "Base MAC: %s"
+msgstr "Taban MAC: %s"
+
+msgid "Body contains invalid data"
+msgstr "Gövde geçersiz veri içeriyor"
+
+#, python-format
+msgid "Bridge %(bridge)s does not exist."
+msgstr "Köprü %(bridge)s mevcut değil."
+
+msgid "Brocade plugin raised exception, check logs"
+msgstr "Brocade eklentisi istisna yükseltti, kayıtları kontrol edin"
+
+msgid "Bulk operation not supported"
+msgstr "Toplu işlem desteklenmiyor"
+
+msgid "CA certificate file to use to verify connecting clients"
+msgstr "Bağlanan istemcileri doğrulamak için kullanılacak CA sertifika dosyası"
+
+msgid "CIDR to monitor"
+msgstr "İzlenecek CIDR"
+
+msgid "CRD Auth URL."
+msgstr "CRD Yetki URL'si."
+
+msgid "CRD Service Password."
+msgstr "CRD Servis Parolası."
+
+msgid "CRD Tenant Name."
+msgstr "CRD Kiracı İsmi."
+
+msgid "CRD service Username."
+msgstr "CRD servis Kullanıcıadı."
+
+#, python-format
+msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
+msgstr ""
+"gateway_ip'ye sahip olmayan %s alt ağının bağlantı noktasına değişken IP "
+"eklenemiyor"
+
+#, python-format
+msgid "Cannot allocate IPv%(req_ver)s subnet from IPv%(pool_ver)s subnet pool"
+msgstr "IPv%(pool_ver)s alt ağ havuzundan IPv%(req_ver)s alt ağı ayrılamaz"
+
+msgid "Cannot allocate requested subnet from the available set of prefixes"
+msgstr "İstenen alt ağ kullanılabilir önek kümesinden ayrılamıyor"
+
+#, python-format
+msgid ""
+"Cannot associate floating IP %(floating_ip_address)s (%(fip_id)s) with port "
+"%(port_id)s using fixed IP %(fixed_ip)s, as that fixed IP already has a "
+"floating IP on external network %(net_id)s."
+msgstr ""
+"Değişken IP %(floating_ip_address)s (%(fip_id)s) sabit IP %(fixed_ip)s "
+"kullanılarak %(port_id)s bağlantı noktasıyla ilişkilendirilemiyor, çünkü bu "
+"sabit IP %(net_id)s harici ağında zaten bir değişken IP'ye sahip."
+
+#, python-format
+msgid ""
+"Cannot create floating IP and bind it to Port %s, since that port is owned "
+"by a different tenant."
+msgstr ""
+"Değişken IP oluşturup %s bağlantı noktasına bağlanamıyor, çünkü bu bağlantı "
+"noktası başka bir kiracıya ait."
+
+msgid "Cannot create resource for another tenant"
+msgstr "Başka bir kiracı için kaynak oluşturulamıyor"
+
+msgid "Cannot disable enable_dhcp with ipv6 attributes set"
+msgstr "ipv6 öznitelikleri ayarlıyken enable_dhcp kapatılamaz"
+
+#, python-format
+msgid "Cannot find %(table)s with %(col)s=%(match)s"
+msgstr "%(col)s=%(match)s olan %(table)s bulunamadı"
+
+#, python-format
+msgid "Cannot handle subnet of type %(subnet_type)s"
+msgstr "%(subnet_type)s türünde alt ağ işlenemiyor"
+
+#, python-format
+msgid ""
+"Cannot have multiple router ports with the same network id if both contain "
+"IPv6 subnets. Existing port %(p)s has IPv6 subnet(s) and network id %(nid)s"
+msgstr ""
+"İkisi de IPv6 alt ağı içeriyorsa aynı ağ id'si ile birden fazla yönlendirici "
+"bağlantı noktası olamaz. Mevcut bağlantı noktası %(p)s IPv6 alt ağ(lar)ına "
+"ve %(nid)s ağ kimliğine sahip"
+
+#, python-format
+msgid ""
+"Cannot host %(router_type)s router %(router_id)s on %(agent_mode)s L3 agent "
+"%(agent_id)s."
+msgstr ""
+"%(router_type)s yönlendiricisi %(router_id)s %(agent_mode)s L3 ajanı "
+"%(agent_id)s üzerinde sunulamaz."
+
+msgid "Cannot match priority on flow deletion or modification"
+msgstr "Akış silme veya değiştirmede öncelik eşleştirilemedi"
+
+msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
+msgstr "IPv4 ve IPv6 önekleri alt ağ havuzunda karıştırılamaz"
+
+#, python-format
+msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
+msgstr "Şu sebepten utif bilgisi alınamıyor: %(err_msg)s"
+
+msgid "Cannot specify both subnet-id and port-id"
+msgstr "Hem subnet-id hem port-id belirtilemez"
+
+msgid "Cannot understand JSON"
+msgstr "JSON anlaşılamıyor"
+
+#, python-format
+msgid "Cannot update read-only attribute %s"
+msgstr "Yalnızca okunabilir öznitelik %s güncellenemez"
+
+msgid "Certificate Authority public key (CA cert) file for ssl"
+msgstr "Ssl için Sertifika Yetkilisi açık anahtarı (CA cert)"
+
+msgid "Certificate file to use when starting the server securely"
+msgstr "Sunucu güvenli şekilde başlatılırken kullanılacak sertifika dosyası"
+
+#, python-format
+msgid ""
+"Change would make usage less than 0 for the following resources: %(unders)s"
+msgstr "Değişiklik şu kaynaklar için kullanımı 0'ın altına düşürür: %(unders)s"
+
+msgid "Check ebtables installation"
+msgstr "Ebtables kurulumunu kontrol et"
+
+msgid "Check for ARP header match support"
+msgstr "ARP başlık eşleştirme desteğini kontrol et"
+
+msgid "Check for ARP responder support"
+msgstr "ARP yanıtlayıcısı desteğini kontrol et"
+
+msgid "Check for OVS vxlan support"
+msgstr "OVS vxlan desteğini kontrol et"
+
+msgid "Check for VF management support"
+msgstr "VF yönetim desteğini kontrol et"
+
+msgid "Check for iproute2 vxlan support"
+msgstr "Iproute2 vxlan desteğini kontrol et"
+
+msgid "Check for nova notification support"
+msgstr "Nova bildirim desteğini kontrol et"
+
+msgid "Check for patch port support"
+msgstr "Yama bağlantı noktası desteğini kontrol et"
+
+msgid "Check minimal dnsmasq version"
+msgstr "Asgari dnsmasq sürümünü kontrol et"
+
+msgid "Check netns permission settings"
+msgstr "Netns izin ayarlarını kontrol et"
+
+msgid "Check ovsdb native interface support"
+msgstr "Ovsdb doğal arayüz desteğini kontrol et"
+
+#, python-format
+msgid ""
+"Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s of "
+"subnet %(sub_id)s"
+msgstr ""
+"%(subnet_id)s alt ağının %(subnet_cidr)s cidr'i %(sub_id)s alt ağının "
+"%(cidr)s cidr'i ile çakışıyor"
+
+msgid "Client certificate for nova metadata api server."
+msgstr "Nova metadata api sunucusu için istemci sertifikası."
+
+msgid ""
+"Comma-separated list of <tun_min>:<tun_max> tuples enumerating ranges of GRE "
+"tunnel IDs that are available for tenant network allocation"
+msgstr ""
+"Kiracı ağ ayırma için kullanılabilir GRE tünel kimliklerinin aralığını "
+"numaralandıran <tun_min>:<tun_max> demetlerinin virgülle ayrılmış listesi"
+
+msgid ""
+"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
+"VXLAN VNI IDs that are available for tenant network allocation"
+msgstr ""
+"Kiracı ağı ayırmaları için kullanılabilir VXLAN VNI ID'lerinin aralıklarını "
+"numaralandıran <vni_min>:<vni_max> demetlerinin virgülle ayrılmış listesi"
+
+msgid ""
+"Comma-separated list of the DNS servers which will be used as forwarders."
+msgstr ""
+"Yönlendirici olarak kullanılacak DNS sunucularının virgülle ayrılmış listesi."
+
+msgid "Command to execute"
+msgstr "Çalıştırılacak komut"
+
+msgid "Config file for interface driver (You may also use l3_agent.ini)"
+msgstr ""
+"Arayüz sürücüsü için yapılandırma dosyası (l3_agent.ini de kullanabilirsiniz)"
+
+#, python-format
+msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
+msgstr "CIDR %(cidr)s için çatışan değer ethertype %(ethertype)s"
+
+msgid "Connection is closed by the server."
+msgstr "Bağlantı sunucu tarafından kapatıldı."
+
+msgid ""
+"Controls whether the neutron security group API is enabled in the server. It "
+"should be false when using no security groups or using the nova security "
+"group API."
+msgstr ""
+"Neutron güvenlik grubu API'sinin sunucuda etkin olup olmadığını kontrol "
+"eder. Güvenlik grubu kullanılmadığında veeya nova güvenlik grubu API'si "
+"kullanıldığında false olmalıdır."
+
+#, python-format
+msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
+msgstr "%(time)d  saniye denedikten sonra %(host)s:%(port)s'a bağlanamadı"
+
+#, python-format
+msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
+msgstr "%(tenant_id)s kiracısı altında bir %(resource)s oluşturulamadı"
+
+msgid "Could not deserialize data"
+msgstr "Veri serisi çözülemedi"
+
+#, python-format
+msgid "Creation failed. %(dev_name)s already exists."
+msgstr "Oluşturma başarısız. %(dev_name)s zaten mevcut."
+
+#, python-format
+msgid ""
+"Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
+"to update."
+msgstr ""
+"Mevcut geçit ip'si %(ip_address)s %(port_id)s bağlantı noktası tarafından "
+"zaten kullanılıyor. Güncellenemiyor."
+
+msgid "Currently distributed HA routers are not supported."
+msgstr "Şu anda dağıtık HA yönlendiriciler desteklenmiyor."
+
+msgid "Currently unused"
+msgstr "Şu an kullanılmıyor"
+
+msgid ""
+"DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
+"lease times."
+msgstr ""
+"DHCP kira süresi (saniye olarak). Dnsmasq'a süresiz kira zamanları "
+"kullanmasını söylemek için -1 kullanın."
+
+msgid "Database engine"
+msgstr "Veri tabanı motoru"
+
+msgid ""
+"Default IPv4 subnet-pool to be used for automatic subnet CIDR allocation"
+msgstr ""
+"Otomatik alt ağ CIDR ayırma için kullanılmak üzere varsayılan IPv4 alt ağ "
+"havuzu"
+
+msgid ""
+"Default IPv6 subnet-pool to be used for automatic subnet CIDR allocation"
+msgstr ""
+"Otomatik alt ağ CIDR ayırması için kullanılacak varsayılan IPv6 alt ağ havuzu"
+
+msgid "Default driver to use for quota checks"
+msgstr "Kota kontrolleri için kullanılacak varsayılan sürücü"
+
+msgid ""
+"Default network type for external networks when no provider attributes are "
+"specified. By default it is None, which means that if provider attributes "
+"are not specified while creating external networks then they will have the "
+"same type as tenant networks. Allowed values for external_network_type "
+"config option depend on the network type values configured in type_drivers "
+"config option."
+msgstr ""
+"Sağlayıcı öznitelikleri belirtilmediğinde harici ağlar için varsayılan ağ "
+"türü. Varsayılan olarak None'dir, bunun anlamı harici ağ oluştururken "
+"sağlayıcı öznitelikleri belirtilmemişse kiracı ağlarla aynı türe sahip "
+"olacaklarıdır. external_network_type yapılandırma seçeneği için izin verilen "
+"değerler type_drivers yapılandırma seçeneğinde yapılandırılan ağ türü "
+"değerlerine bağlıdır."
+
+msgid ""
+"Default number of resource allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
+"Kiracı başına izin verilecek varsayılan kaynak sayısı. Negatif değer "
+"sınırsız anlamına gelir."
+
+msgid "Default security group"
+msgstr "Varsayılan güvenlik grubu"
+
+msgid "Default security group already exists."
+msgstr "Varsayılan güvenlik grubu zaten mevcut."
+
+msgid "Define if the requests have run asynchronously or not"
+msgstr "İsteklerin eşzamansız olarak çalışıp çalışmadığını tanımla"
+
+msgid ""
+"Define the default value of enable_snat if not provided in "
+"external_gateway_info."
+msgstr ""
+"external_gateway_info'da sağlanmamışsa enable_snat'ın varsayılan değerini "
+"tanımla."
+
+msgid ""
+"Defines providers for advanced services using the format: <service_type>:"
+"<name>:<driver>[:default]"
+msgstr ""
+"Şu biçimi kullanarak gleişmiş servisler için sağlayıcılar tanımlar: "
+"<service_type>:<name>:<driver>[:default]"
+
+msgid ""
+"Delay within which agent is expected to update existing ports whent it "
+"restarts"
+msgstr ""
+"Yeniden başlatıldığında mevcut bağlantı noktalarını güncellemesi beklenen "
+"ajan içindeki gecikme"
+
+msgid ""
+"Delete namespace after removing a dhcp server.This option is deprecated and "
+"will be removed in a future release."
+msgstr ""
+"Dhcp sunucusunu kaldırdıktan sonra isim uzayını sil. Bu seçenek artık "
+"kullanılmıyor ve ileri bir sürümde kaldırılacak."
+
+msgid ""
+"Delete namespace after removing a router.This option is deprecated and will "
+"be removed in a future release."
+msgstr ""
+"Yönlendiriciyi kaldırdıktan sonra isim uzayını sil.Bu seçenek artık "
+"kullanılmıyor ve ileri bir sürümde kaldırılacak."
+
+msgid "Delete the namespace by removing all devices."
+msgstr "İsim uzayını tüm aygıtları kaldırarak sil."
+
+#, python-format
+msgid "Deleting port %s"
+msgstr "Bağlantı noktası %s siliniyor"
+
+msgid "Destroy IPsets even if there is an iptables reference."
+msgstr "Iptables referansı olsa bile IPset'leri sil."
+
+msgid "Destroy all IPsets."
+msgstr "Tüm IPset'leri sil."
+
+msgid ""
+"Determines if connections are allowed to be held open by clients after a "
+"request is fulfilled. A value of False will ensure that the socket "
+"connection will be explicitly closed once a response has been sent to the "
+"client."
+msgstr ""
+"Bir istek tamamlandıktan sonra istemciler tarafından bağlantıların açık "
+"tutulup tutulamayacağını belirler. False değeri yanıt istemciye "
+"gönderildikten sonra soket bağlantısının kapatılacağını garantiler."
+
+#, python-format
+msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
+msgstr "%(mapping)s eşleştirmesindeki aygıt %(dev_name)s benzersiz"
+
+#, python-format
+msgid "Device '%(device_name)s' does not exist"
+msgstr "Aygıt '%(device_name)s' mevcut değil"
+
+msgid "Device has no virtual functions"
+msgstr "Aygıt sanal fonksiyonlara sahip değil"
+
+#, python-format
+msgid "Device name %(dev_name)s is missing from physical_device_mappings"
+msgstr "Aygıt ismi %(dev_name)s physical_device_mappings'de eksik"
+
+msgid "Device not found"
+msgstr "Aygıt bulunamadı"
+
+#, python-format
+msgid ""
+"Distributed Virtual Router Mac Address for host %(host)s does not exist."
+msgstr ""
+"%(host)s istemcisi için Dağıtık Sanal Yönlendirici Mac Adresi mevcut değil."
+
+msgid "Domain to use for building the hostnames"
+msgstr "Makine adlarını inşa için kullanılacak alan"
+
+msgid "Downgrade no longer supported"
+msgstr "Alçaltma artık desteklenmiyor"
+
+#, python-format
+msgid "Driver %s is not unique across providers"
+msgstr "%s sürücüsü sağlayıcılar arasında benzersiz değil"
+
+msgid "Driver for security groups firewall in the L2 agent"
+msgstr "L2 ajanındaki güvenlik grubunun güvenlik duvarı için sürücü"
+
+msgid "Driver to use for scheduling network to DHCP agent"
+msgstr "Ağın DHCP ajanlarına zamanlanması için kullanılacak sürücü"
+
+msgid "Driver to use for scheduling router to a default L3 agent"
+msgstr "Yönlendiriciyi bir L3 ajanına zamanlamak için gerekli sürücü"
+
+msgid "Dummy user traffic Security Zone id"
+msgstr "Sahte kullanıcı trafiği Güvenlik Bölgesi kimliği"
+
+#, python-format
+msgid "Duplicate IP address '%s'"
+msgstr "Kopya IP adresi '%s'"
+
+msgid "Duplicate Metering Rule in POST."
+msgstr "POST'da kopya ölçme kuralı."
+
+msgid "Duplicate Security Group Rule in POST."
+msgstr "POST'da Kopya Güvenlik Grubu Kuralı."
+
+#, python-format
+msgid "Duplicate hostroute '%s'"
+msgstr "Kopya istemci rotası '%s'"
+
+#, python-format
+msgid "Duplicate items in the list: '%s'"
+msgstr "Listede kopya öğeler: '%s'"
+
+#, python-format
+msgid "Duplicate nameserver '%s'"
+msgstr "Kopya isim sunucu '%s'"
+
+msgid "Duplicate segment entry in request."
+msgstr "İstekte kopya dilim girdisi."
+
+msgid ""
+"Dva can't be found to execute the operation, probably was cancelled through "
+"the heleos UI"
+msgstr ""
+"Dva işlemi çalıştırmak için bulunamıyor, muhtemelen heleos UI üzerinden "
+"iptal edildi"
+
+#, python-format
+msgid "Dva configuration failed for reason %s"
+msgstr "Dva yapılandırması %s sebebiyle başarısız"
+
+#, python-format
+msgid "Dva creation failed reason %s"
+msgstr "Dva oluşturma başarısız sebep %s"
+
+#, python-format
+msgid "Dva creation is in pending state for reason %s"
+msgstr "Dva oluşturma %s sebebiyle bekleme durumunda"
+
+#, python-format
+msgid "Dva interface seems to be broken for reason %s"
+msgstr "Dva arayüzü şu sebepten bozuk görünüyor %s"
+
+#, python-format
+msgid "Dva is pending for the following reason: %s"
+msgstr "Dva şu sebepten bekliyor: %s"
+
+#, python-format
+msgid "Dva seems to be broken for reason %s"
+msgstr "Dva şu sebepten bozuk görünüyor %s"
+
+#, python-format
+msgid "ERROR: %s"
+msgstr "HATA: %s"
+
+msgid ""
+"ERROR: Unable to find configuration file via the default search paths (~/."
+"neutron/, ~/, /etc/neutron/, /etc/) and the '--config-file' option!"
+msgstr ""
+"HATA: Varsayılan arama yollarıyla ve (~/.neutron/, ~/, /etc/neutron/, /etc/) "
+"ve '--config-file' seçeneğiyle yapılandırma dosyası bulunamadı!"
+
+msgid "ESM admin password."
+msgstr "ESM yönetici parolası."
+
+msgid "ESM admin username."
+msgstr "ESM yönetici kullanıcı adı."
+
+msgid "ESM management root address"
+msgstr "ESM yönetim kök adresi"
+
+msgid ""
+"Either one of parameter network_id or router_id must be passed to _get_ports "
+"method."
+msgstr ""
+"_get_ports metoduna network_id veya router_id parametrelerinden biri "
+"verilmelidir."
+
+msgid "Either subnet_id or port_id must be specified"
+msgstr "subnet_id veya port_id belirtilmeli"
+
+msgid "Empty physical network name."
+msgstr "Boş fiziksel ağ ismi."
+
+msgid "Empty subnet pool prefix list"
+msgstr "Boş alt ağ havuz öneki listesi"
+
+msgid "Enable FWaaS"
+msgstr "FWaaS'ı etkinleştir"
+
+msgid "Enable HA mode for virtual routers."
+msgstr "Sanal yönlendiriciler için HA kipini etkinleştir."
+
+msgid "Enable SSL on the API server"
+msgstr "API sunucuda SSL etkinleştir"
+
+msgid ""
+"Enable VXLAN on the agent. Can be enabled when agent is managed by ml2 "
+"plugin using linuxbridge mechanism driver"
+msgstr ""
+"Ajanda VXLAN etkinleştir. Ajan linuxbridge mekanizma sürücüsünü kullanan ml2 "
+"eklentisi ile yönetildiğinde etkinleştirilebilir"
+
+msgid ""
+"Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
+"l2population driver. Allows the switch (when supporting an overlay) to "
+"respond to an ARP request locally without performing a costly ARP broadcast "
+"into the overlay."
+msgstr ""
+"Destekleniyorsa yerel ARP yanıtlayıcıyı etkinleştir. OVS 2.1 ve ML2 "
+"I2population sürücüsüne ihtiyaç duyar. Anahtarın (kaplama desteklediğinde) "
+"bir ARP isteğine yerel olarak, kaplamaya maliyetli ARP yayını yapmadan yanıt "
+"vermesini sağlar."
+
+msgid ""
+"Enable services on an agent with admin_state_up False. If this option is "
+"False, when admin_state_up of an agent is turned False, services on it will "
+"be disabled. Agents with admin_state_up False are not selected for automatic "
+"scheduling regardless of this option. But manual scheduling to such agents "
+"is available if this option is True."
+msgstr ""
+"admin_state_up False olan bir ajan üzerinde servisleri etkinleştir. Bu "
+"seçenek False ise, bir ajanın admin_state_up'u False yapıldığında, "
+"üzerindeki servisler kapatılacaktır. admin_state_up False olan ajanlar bu "
+"seçeneğe bakılmaksızın otomatik zamanlama için seçilmezler. Ama bu seçenek "
+"True ise bu tür ajanlara elle zamanlama yapılabilir."
+
+msgid ""
+"Enable suppression of ARP responses that don't match an IP address that "
+"belongs to the port from which they originate. Note: This prevents the VMs "
+"attached to this agent from spoofing, it doesn't protect them from other "
+"devices which have the capability to spoof (e.g. bare metal or VMs attached "
+"to agents without this flag set to True). Spoofing rules will not be added "
+"to any ports that have port security disabled. For LinuxBridge, this "
+"requires ebtables. For OVS, it requires a version that supports matching ARP "
+"headers."
+msgstr ""
+"Aslen geldikleri bağlantı noktasına ait IP adresiyle eşleşmeyen ARP "
+"yanıtlarının bastırılmasını etkinleştir. Not: Bu, bu ajana bağlı VM'lerin "
+"yanıltma yapmasını önler, yanıltma yeteneği olan başka aygıtlardan korumaz "
+"(örn. çıplak metal veya bu bayrağı True olarak ayarlanmamış ajanlara bağlı "
+"VM'ler). Yanıltma kuralları bağlantı noktası güvenliği kapalı bağlantı "
+"noktalarına eklenmeyecektir. LinuxBridge için, bu ebtables gerektirir. OVS "
+"için, ARP başlıklarını eşleştirmeyi destekleyen bir sürüm gerektirir."
+
+msgid ""
+"Enable/Disable log watch by metadata proxy. It should be disabled when "
+"metadata_proxy_user/group is not allowed to read/write its log file and "
+"copytruncate logrotate option must be used if logrotate is enabled on "
+"metadata proxy log files. Option default value is deduced from "
+"metadata_proxy_user: watch log is enabled if metadata_proxy_user is agent "
+"effective user id/name."
+msgstr ""
+"Metadata vekili tarafından kayıt etkinleştir/kapat. metadata_proxy_user/"
+"group kayıt dosyasına okuma/yazma iznine sahip olmadığında, kapatılmalıdır "
+"ve metadata vekil kayıt dosyaları üzerinde logrotate etkinse copytruncate "
+"logrotate seçeneği kullanılmalıdır. Seçeneğin varsayılan değeri "
+"metadata_proxy_user'den anlaşılır: metadata_proxy_user ajan etkin kullanıcı "
+"id/ismi ise izleme kaydı etkinleştirilir."
+
+msgid ""
+"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
+"Collected data can by retrieved by other apps and services, e.g.: "
+"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
+msgstr ""
+"Hyper-V'nin ölçüm API'sini kullanarak anahtar bağlantı noktaları için ölçüm "
+"toplamayı etkinleştirir. Toplanan veri diğer uygulama ve servislerce "
+"alınabilir, örn.:Silometre. Hyper-V / Windows Sunucu 2012 ve yukarısına "
+"ihtiyaç duyar"
+
+msgid "End of VLAN range is less than start of VLAN range"
+msgstr "VLAN aralığı sonu VLAN aralığı başından daha küçük"
+
+msgid "End of tunnel range is less than start of tunnel range"
+msgstr "Tünel aralığı sonu tünel aralığı başından daha küçük"
+
+msgid ""
+"Ensure that configured gateway is on subnet. For IPv6, validate only if "
+"gateway is not a link local address. Deprecated, to be removed during the K "
+"release, at which point the check will be mandatory."
+msgstr ""
+"Yapılandırılan geçidin alt ağda olduğundan emin ol. IPv6 için, yalnızca "
+"geçidin bağlantı yerel bir adres olduğunu doğrula. Artık kullanılmıyor, K "
+"sürümünde kaldırılacak, ki bu noktada kontrol mecburi olacak."
+
+#, python-format
+msgid "Error %(reason)s while attempting the operation."
+msgstr "İşlem denenirken %(reason)s hatası."
+
+#, python-format
+msgid "Error importing FWaaS device driver: %s"
+msgstr "FWaaS aygıt sürücüsünü içe aktarmada hata: %s"
+
+#, python-format
+msgid "Error parsing dns address %s"
+msgstr "%s dns adresinin ayrıştırılmasında hata"
+
+#, python-format
+msgid "Error while reading %s"
+msgstr "%s okunurken hata"
+
+msgid "Exceeded maximim amount of fixed ips per port"
+msgstr "Bağlantı noktası başına azami sabit ip miktarı aşıldı"
+
+msgid "Exceeded maximum amount of fixed ips per port"
+msgstr "Azami bağlantı noktası başına sabit ip miktarı aşıldı"
+
+msgid "Existing prefixes must be a subset of the new prefixes"
+msgstr "Mevcut önekler yeni öneklerin alt kümesi olmalıdır"
+
+msgid ""
+"Extension to use alongside ml2 plugin's l2population mechanism driver. It "
+"enables the plugin to populate VXLAN forwarding table."
+msgstr ""
+"ml2 eklentisinin l2population mekanizma sürücüsünün yanında kullanılacak "
+"eklenti. Eklentiyi VXLAN iletim tablosunu doldurması için etkinleştirir."
+
+#, python-format
+msgid "Extension with alias %s does not exist"
+msgstr "%s rumuzlu eklenti mevcut değil"
+
+#, python-format
+msgid "Extensions not found: %(extensions)s"
+msgstr "Eklentiler bulunamadı: %(extensions)s"
+
+#, python-format
+msgid "External IP %s is the same as the gateway IP"
+msgstr "Harici IP %s geçit IP ile aynı"
+
+#, python-format
+msgid ""
+"External network %(external_network_id)s is not reachable from subnet "
+"%(subnet_id)s.  Therefore, cannot associate Port %(port_id)s with a Floating "
+"IP."
+msgstr ""
+"Harici ağ %(external_network_id)s %(subnet_id)s alt ağından erişilebilir "
+"değil.  Bu yüzden, %(port_id)s bağlantı noktası bir Değişken IP ile "
+"ilişkilendirilemiyor."
+
+#, python-format
+msgid ""
+"External network %(net_id)s cannot be updated to be made non-external, since "
+"it has existing gateway ports"
+msgstr ""
+"Harici ağ %(net_id)s harici-olmayan şekilde olması için güncellenemez, çünkü "
+"mevcut geçit bağlantı noktaları var"
+
+#, python-format
+msgid "ExtraDhcpOpt %(id)s could not be found"
+msgstr "ExtraDhcpOpt %(id)s bulunamadı"
+
+msgid ""
+"FWaaS plugin is configured in the server side, but FWaaS is disabled in L3-"
+"agent."
+msgstr ""
+"FWaaS eklentisi sunucu tarafında yapılandırılmış, ama FWaaS L3-agent'de "
+"kapalı."
+
+#, python-format
+msgid "Failed rescheduling router %(router_id)s: no eligible l3 agent found."
+msgstr ""
+"%(router_id)s yönlendiricisini yeniden zamanlama başarısız: seçilebilir l3 "
+"ajanı bulunamadı."
+
+#, python-format
+msgid "Failed scheduling router %(router_id)s to the L3 Agent %(agent_id)s."
+msgstr ""
+"%(router_id)s yönlendiricisinin %(agent_id)s L3 Ajanına zamanlanması "
+"başarısız."
+
+#, python-format
+msgid "Failed to %(method)s %(resource)s"
+msgstr "%(method)s %(resource)s başarısız"
+
+#, python-format
+msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
+msgstr "%(method)s %(resource)s başarısız id=%(resource_id)s"
+
+#, python-format
+msgid ""
+"Failed to allocate a VRID in the network %(network_id)s for the router "
+"%(router_id)s after %(max_tries)s tries."
+msgstr ""
+"%(max_tries)s denemeden sonra %(router_id)s yönlendiricisi için "
+"%(network_id)s ağında VRID ayırma başarısız."
+
+#, python-format
+msgid "Failed to allocate subnet: %(reason)s"
+msgstr "Alt ağ ayırma başarısız: %(reason)s"
+
+#, python-format
+msgid "Failed to check policy %(policy)s because %(reason)s"
+msgstr "%(policy)s ilkesi kontrol edilemedi çünkü %(reason)s"
+
+#, python-format
+msgid ""
+"Failed to create port on network %(network_id)s, because fixed_ips included "
+"invalid subnet %(subnet_id)s"
+msgstr ""
+"%(network_id)s ağı üzerinde bağlantı noktası oluşturma başarısız, çünkü "
+"fixed_ips geçersiz %(subnet_id)s alt ağını içeriyor"
+
+#, python-format
+msgid ""
+"Failed to delete the backend router for reason %s. Please remove it manually "
+"through the heleos UI"
+msgstr ""
+"Arka uç yönlendirici %s sebebiyle silinemedi. Lütfen heleos UI ile elle "
+"kaldırın"
+
+#, python-format
+msgid "Failed to init policy %(policy)s because %(reason)s"
+msgstr "%(policy)s ilkesi ilklendirilemedi çünkü %(reason)s"
+
+#, python-format
+msgid "Failed to parse request. Parameter '%s' not specified"
+msgstr "İstek ayrıştırılamadı. '%s' parametresi belirtilmemiş"
+
+#, python-format
+msgid "Failed to parse request. Required attribute '%s' not specified"
+msgstr "İstek ayrıştırılamıyor. Gerekli öznitelik '%s' belirtilmemiş"
+
+msgid "Failed to remove supplemental groups"
+msgstr "Destekleyici gruplar kaldırılamadı"
+
+#, python-format
+msgid "Failed to set gid %s"
+msgstr "Gid %s ayarlanamadı"
+
+#, python-format
+msgid "Failed to set uid %s"
+msgstr "Uid %s ayarlanamadı"
+
+#, python-format
+msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
+msgstr "%(ip)s'ye %(type)s tünel bağlantı noktası kurulumu başarısız"
+
+#, python-format
+msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
+msgstr "%(address)s adresinin hazır olmasını bekleme başarısız: %(reason)s"
+
+#, python-format
+msgid "Floating IP %(floatingip_id)s could not be found"
+msgstr "Değişken IP %(floatingip_id)s bulunamadı"
+
+msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
+msgstr ""
+"TCP/UDP iletişim kuralları için, port_range_min <= port_range_max olmalı"
+
+msgid "Force ip_lib calls to use the root helper"
+msgstr "ip_lib çağrılarını kök yardımcıyı kullanmaya zorla"
+
+#, python-format
+msgid "Found duplicate extension: %(alias)s"
+msgstr "Kopya eklenti bulundu: %(alias)s"
+
+#, python-format
+msgid ""
+"Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
+"%(subnet_cidr)s."
+msgstr ""
+"%(subnet_cidr)s alt ağı için çakışan ayırma havuzları: %(pool_1)s %(pool_2)s "
+"bulundu."
+
+#, python-format
+msgid ""
+"Gateway cannot be updated for router %(router_id)s, since a gateway to "
+"external network %(net_id)s is required by one or more floating IPs."
+msgstr ""
+"Geçit %(router_id)s yönlendiricisi için güncellenemedi, çünkü bir ya da "
+"fazla değişken IP tarafından %(net_id)s harici ağına bir geçit gerekli."
+
+#, python-format
+msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
+msgstr "Geçit ip'si %(ip_address)s ayırma havuzu %(pool)s ile çatışıyor"
+
+msgid "Gateway is not valid on subnet"
+msgstr "Geçit alt ağda geçerli değil"
+
+msgid "Group (gid or name) running metadata proxy after its initialization"
+msgstr ""
+"İlklendirilmesinden sonra metadata vekilini çalıştıran grup (gid veya isim)"
+
+msgid ""
+"Group (gid or name) running metadata proxy after its initialization (if "
+"empty: agent effective group)."
+msgstr ""
+"İlklendirilmesinden sonra metadata vekilini çalıştıran grup (gid veya isim) "
+"(boşsa: ajan etkin grup)."
+
+msgid "Group (gid or name) running this process after its initialization"
+msgstr "İlklendirilmesinden sonra bu süreci çalıştıran grup (gid veya isim)"
+
+msgid "HTTP URL of OpenDaylight REST interface."
+msgstr "OpenDaylight REST arayüzü için HTTP URL'si."
+
+msgid "HTTP password for authentication"
+msgstr "Kimlik doğrulama için HTTP parolası"
+
+msgid "HTTP timeout in seconds."
+msgstr "Saniye olarak HTTP zaman aşımı."
+
+msgid "HTTP username for authentication"
+msgstr "Kimlik doğrulama için HTTP kullanıcı adı"
+
+msgid ""
+"Hostname to be used by the neutron server, agents and services running on "
+"this machine. All the agents and services running on this machine must use "
+"the same host value."
+msgstr ""
+"Neutron sunucusu, ajanlar ve bu makinede çalışan servisler tarafından "
+"kullanılacak makine adı. Bu makinede çalışan tüm ajan ve sunucular aynı "
+"istemci değerini kullanmalıdır."
+
+msgid "How many times Neutron will retry MAC generation"
+msgstr "Neutron kaç kere MAC üretmeyi deneyecek"
+
+#, python-format
+msgid ""
+"ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
+"min) is missing."
+msgstr ""
+"ICMP kodu (port-range-max) %(value)s sağlanmış ama ICMP türü (port-range-"
+"min) eksik."
+
+msgid "ID of network"
+msgstr "Ağ kimliği"
+
+msgid "ID of network to probe"
+msgstr "Sorgulanacak ağ ID'si"
+
+msgid "ID of probe port to delete"
+msgstr "Silinecek deneme bağlantı noktasının kimliği"
+
+msgid "ID of probe port to execute command"
+msgstr "Komutun çalıştırılacağı deneme bağlantı noktası kimliği"
+
+msgid "ID of the project that MidoNet admin user belongs to."
+msgstr "MidoNet yönetici kullanıcısının ait olduğu proje kimliği."
+
+msgid "ID of the router"
+msgstr "Yönetici kimliği"
+
+#, python-format
+msgid "IP address %(ip)s already allocated in subnet %(subnet_id)s"
+msgstr "%(ip)s IP adresi %(subnet_id)s alt ağında zaten ayrılmış"
+
+#, python-format
+msgid "IP address %(ip)s does not belong to subnet %(subnet_id)s"
+msgstr "%(ip)s IP adresi %(subnet_id)s alt ağına ait değil"
+
+#, python-format
+msgid ""
+"IP address %(ip_address)s is not a valid IP for any of the subnets on the "
+"specified network."
+msgstr ""
+"%(ip_address)s IP adresi belirtilen ağdaki alt ağlardan hiçbiri için geçerli "
+"bir IP değil."
+
+#, python-format
+msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
+msgstr "%(ip_address)s IP adresi belirtilen alt ağ için geçerli bir IP değil."
+
+msgid "IP address used by Nova metadata server."
+msgstr "Nova metadata sunucusu tarafından kullanılan IP adresi."
+
+msgid "IP allocation requires subnet_id or ip_address"
+msgstr "IP ayırma subnet_id veya ip_address gerektirir"
+
+msgid "IPAM driver to use."
+msgstr "Kullanılacak IPAM sürücüsü."
+
+#, python-format
+msgid ""
+"IPTablesManager.apply failed to apply the following set of iptables rules:\n"
+"%s"
+msgstr ""
+"IPTablesManager.apply aşağıdakı iptables bilgileri uygulanamadı\n"
+"%s"
+
+#, python-format
+msgid ""
+"IPv6 address %(address)s can not be directly assigned to a port on subnet "
+"%(id)s since the subnet is configured for automatic addresses"
+msgstr ""
+"Alt ağ otomatik adresler için yapılandırıldığından %(address)s IPv6 adresi "
+"%(id)s alt ağı üzerinde bir bağlantı noktasına doğrudan atanamaz"
+
+#, python-format
+msgid ""
+"IPv6 address %(ip)s cannot be directly assigned to a port on subnet "
+"%(subnet_id)s as the subnet is configured for automatic addresses"
+msgstr ""
+"Alt ağ otomatik adres olarak yapıladırıldığı için %(ip)s IPv6 adresi "
+"doğrudan %(subnet_id)s alt ağındaki bir bağlantı noktasına atanamaz."
+
+#, python-format
+msgid ""
+"IPv6 subnet %s configured to receive RAs from an external router cannot be "
+"added to Neutron Router."
+msgstr ""
+"Harici bir yönlendiriciden RA almak için yapılandırılmış %s IPv6 alt ağı "
+"Neutron Yönlendiriciye eklenemez."
+
+msgid ""
+"If True, effort is made to advertise MTU settings to VMs via network methods "
+"(DHCP and RA MTU options) when the network's preferred MTU is known."
+msgstr ""
+"True olduğunda, ağın tercih edilen MTU'su bilindiğinde MTU ayarları VM'lere "
+"ağ yöntemleriyle (DHCP ve RA MTU seçenekleri) dağıtılmaya çalışılır."
+
+msgid ""
+"If True, then allow plugins that support it to create VLAN transparent "
+"networks."
+msgstr ""
+"True ise, destekleyen eklentilerin VLAN şeffaf ağlar oluşturmasına izin ver."
+
+msgid ""
+"If namespaces is disabled, the l3 agent can only configure a router that has "
+"the matching router ID."
+msgstr ""
+"İsim uzayları kapalıysa, l3 ajanı yalnızca eşleşen yönlendirici ID'sine "
+"sahip yönlendiriciyi yapılandırabilir."
+
+msgid "If set, ignore any SSL validation issues."
+msgstr "Ayarlanırsa, tüm SSL doğrulama sorunlarını yoksay."
+
+msgid "Illegal IP version number"
+msgstr "Kuraldışı IP sürüm numarası"
+
+#, python-format
+msgid ""
+"Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
+"%(base_prefixlen)s"
+msgstr ""
+"Geçersiz önek sınırları: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
+"%(base_prefixlen)s"
+
+#, python-format
+msgid "Illegal update to prefixes: %(msg)s"
+msgstr "Öneklere geçersiz güncelleme: %(msg)s"
+
+msgid "In band Security Zone id"
+msgstr "Bant içi Güvenlik Bölgesi kimliği"
+
+#, python-format
+msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
+msgstr "Geçersiz pci_vendor_info: \"%s\", vendor_id:product_id çifti olmalı"
+
+#, python-format
+msgid "Insufficient prefix space to allocate subnet size /%s"
+msgstr "/%s boyutunda alt ağ ayırmak için yetersiz önek alanı"
+
+msgid "Insufficient rights for removing default security group."
+msgstr "Varsayılan güvenlik grubunu silmek için yeterli izin yok."
+
+msgid "Integration bridge to use."
+msgstr "Kullanılacak tümleştirme köprüsü."
+
+msgid "Interface to monitor"
+msgstr "İzlenecek arayüz"
+
+#, python-format
+msgid "Internal Server Error from NVSD controller: %(reason)s"
+msgstr "NVSD kontrolcüsünden Dahili Sunucu Hatası: %(reason)s"
+
+#, python-format
+msgid "Internal Server Error: %(reason)s"
+msgstr "Dahili Sunucu Hatası: %(reason)s"
+
+msgid ""
+"Interval between checks of child process liveness (seconds), use 0 to disable"
+msgstr ""
+"Alt süreç canlılığı kontrolleri aralığı (saniye), kapatmak için 0 kullanın"
+
+msgid "Interval between two metering measures"
+msgstr "İki ölçüm arasındaki aralık"
+
+msgid "Interval between two metering reports"
+msgstr "İki ölçme raporu arasındaki aralık"
+
+msgid "Interval to resync."
+msgstr "Yeniden zamanlama aralığı."
+
+#, python-format
+msgid "Invalid CIDR %(input)s given as IP prefix"
+msgstr "Geçersiz CIDR %(input)s IP öneki olarak verildi"
+
+#, python-format
+msgid ""
+"Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
+"format, which requires the prefix to be /64."
+msgstr ""
+"IPv6 adres kipi için geçersiz CIDR %s. OpenStack önekin /64 olmasına ihtiyaç "
+"duyan EUI-64 adres biçimini kullanır."
+
+#, python-format
+msgid "Invalid Device %(dev_name)s: %(reason)s"
+msgstr "Geçersiz Aygıt %(dev_name)s: %(reason)s"
+
+msgid "Invalid access credentials to the Server."
+msgstr "Sunucuya erişim kimlik bilgileri geçersiz."
+
+#, python-format
+msgid ""
+"Invalid authentication type: %(auth_type)s, valid types are: "
+"%(valid_auth_types)s"
+msgstr ""
+"Geçersiz kimlik doğrulama türü: %(auth_type)s, geçerli türler: "
+"%(valid_auth_types)s"
+
+#, python-format
+msgid "Invalid content type %(content_type)s"
+msgstr "Geçersiz içerik türü %(content_type)s"
+
+#, python-format
+msgid "Invalid data format for IP pool: '%s'"
+msgstr "IP havuzu: '%s' için geçersiz veri biçimi"
+
+#, python-format
+msgid "Invalid data format for extra-dhcp-opt: %(data)s"
+msgstr "extra-dhcp-opt için geçersiz veri biçimi: %(data)s"
+
+#, python-format
+msgid "Invalid data format for fixed IP: '%s'"
+msgstr "Sabit IP için geçersiz veri biçimi: '%s'"
+
+#, python-format
+msgid "Invalid data format for hostroute: '%s'"
+msgstr "İstemci rotası için geçersiz veri biçimi: '%s'"
+
+#, python-format
+msgid "Invalid data format for nameserver: '%s'"
+msgstr "İsim sunucu için geçersiz veri biçimi: '%s'"
+
+#, python-format
+msgid "Invalid extension environment: %(reason)s"
+msgstr "Geçersiz eklenti ortamı: %(reason)s"
+
+#, python-format
+msgid "Invalid format for routes: %(routes)s, %(reason)s"
+msgstr "Rotalar için geçersiz biçim: %(routes)s, %(reason)s"
+
+#, python-format
+msgid "Invalid format: %s"
+msgstr "Geçersiz biçim: %s"
+
+#, python-format
+msgid "Invalid input for %(attr)s. Reason: %(reason)s."
+msgstr "%(attr)s için geçersiz girdi. Sebep: %(reason)s."
+
+#, python-format
+msgid "Invalid input for operation: %(error_message)s."
+msgstr "İşlem için geçersiz girdi: %(error_message)s"
+
+#, python-format
+msgid ""
+"Invalid input. '%(target_dict)s' must be a dictionary with keys: "
+"%(expected_keys)s"
+msgstr ""
+"Geçersiz girdi. '%(target_dict)s' şu anahtarları içeren bir sözlük olmalı: "
+"%(expected_keys)s"
+
+#, python-format
+msgid "Invalid instance state: %(state)s, valid states are: %(valid_states)s"
+msgstr "Geçersiz sunucu durumu: %(state)s, geçerli durumlar: %(valid_states)s"
+
+#, python-format
+msgid "Invalid mapping: '%s'"
+msgstr "Geçersiz eşleştirme: '%s'"
+
+#, python-format
+msgid "Invalid network Tunnel range: '%(tunnel_range)s' - %(error)s"
+msgstr "Geçersiz ağ Tünel aralığı: '%(tunnel_range)s' - %(error)s"
+
+#, python-format
+msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
+msgstr "Geçersiz ağ VLAN aralığı: '%(vlan_range)s' - '%(error)s'"
+
+#, python-format
+msgid "Invalid network VXLAN port range: '%(vxlan_range)s'"
+msgstr "Geçersiz ağ VXLAN bağlantı noktası aralığı: '%(vxlan_range)s'"
+
+#, python-format
+msgid "Invalid pci slot %(pci_slot)s"
+msgstr "Geçersiz pci yuvası %(pci_slot)s"
+
+#, python-format
+msgid "Invalid provider format. Last part should be 'default' or empty: %s"
+msgstr "Geçersiz sağlayıcı biçimi. Son kısım 'default' ya da boş olmalı: %s"
+
+#, python-format
+msgid "Invalid route: %s"
+msgstr "Geçersiz rota: %s"
+
+msgid "Invalid service provider format"
+msgstr "Geçersiz servis sağlayıcı biçimi"
+
+#, python-format
+msgid "Invalid tunnel type specified: %s"
+msgstr "Geçersiz tünel türü belirtildi: %s"
+
+#, python-format
+msgid ""
+"Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
+msgstr ""
+"ICMP %(field)s (%(attr)s) %(value)s için geçersiz değer. 0 dan 255'e kadar "
+"olmalı."
+
+#, python-format
+msgid "Invalid value for port %(port)s"
+msgstr "%(port)s bağlantı noktası için geçersiz değer"
+
+msgid "Keepalived didn't respawn"
+msgstr "Keepalived yeniden başlamadı"
+
+#, python-format
+msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
+msgstr "'%(mapping)s' eşleştirmesindeki %(key)s anahtarı benzersiz değil"
+
+msgid "Keystone URL."
+msgstr "Keystone URL."
+
+#, python-format
+msgid "Limit must be an integer 0 or greater and not '%d'"
+msgstr "Sınır tam sayı 0 ya da daha büyüğü olmalı '%d' değil"
+
+msgid "Limit number of leases to prevent a denial-of-service."
+msgstr "Servis engellemeyi önlemek için kiralama sayısını sınırla."
+
+msgid ""
+"List of <network_device>:<excluded_devices> mapping network_device to the "
+"agent's node-specific list of virtual functions that should not be used for "
+"virtual networking. excluded_devices is a semicolon separated list of "
+"virtual functions (BDF format).to exclude from network_device. The "
+"network_device in the mapping should appear in the physical_device_mappings "
+"list."
+msgstr ""
+"Sanal ağlarda kullanılmaması gereken, network_device'yi ajanın düğüme özel "
+"sanal fonksiyonlar listesine eşleştiren <network_device>:<excluded_devices> "
+"listesi. excluded_devices network_device'den hariç tutulacak iki nokta üst "
+"üste ile ayrılmış sanal fonksiyonlar (BDF biçiminde) listesidir. "
+"Eşleştirmedeki network_device physical_device_mappings listesinde "
+"bulunmalıdır."
+
+msgid "List of <physical_network>:<bridge>. Deprecated for ofagent."
+msgstr "<physical_network>:<bridge> listesi. ofagent için artık kullanılmıyor."
+
+msgid ""
+"List of <physical_network>:<network_device> mapping physical network names "
+"to the agent's node-specific physical network device of SR-IOV physical "
+"function to be used for VLAN networks. All physical networks listed in "
+"network_vlan_ranges on the server should have mappings to appropriate "
+"interfaces on each agent"
+msgstr ""
+"VLAN ağlarında kullanılmak üzere SR-IOV fiziksel fonksiyonunun ajanın düğüme "
+"özel fiziksel ağına <physical_network>:<network_device> fiziksel ağ isminden "
+"eşleştirmesi listesi. Sunucuda network_vlan_ranges'de listelenen tüm "
+"fiziksel ağlar her bir ajanda uygun arayüzlere eşleştirmelere sahip olmalı"
+
+msgid "List of <physical_network>:<physical_interface>"
+msgstr "<physical_network>:<physical_interface> listesi"
+
+msgid ""
+"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
+"specifying physical_network names usable for VLAN provider and tenant "
+"networks, as well as ranges of VLAN tags on each available for allocation to "
+"tenant networks."
+msgstr ""
+"VLAN sağlayıcı ve kiracı ağlar için kullanılabilir physical_network "
+"isimlerini belirten <physical_network>:<vlan_min>:<vlan_max> veya "
+"<physical_network> listesi, aynı zamanda her birinde kiracı ağlara ayırma "
+"için VLAN etiketleri aralıkları."
+
+msgid ""
+"List of <physical_network>:<vswitch> where the physical networks can be "
+"expressed with wildcards, e.g.: .\"*:external\""
+msgstr ""
+"Fiziksel ağların joker karakterlerle ifade edilebildiği <physical_network>:"
+"<vswitch> listesi, örn.: .\"*:external\""
+
+msgid ""
+"List of network type driver entrypoints to be loaded from the neutron.ml2."
+"type_drivers namespace."
+msgstr ""
+"neutron.ml2.type_drivers isim uzayından yüklenecek ağ türü sürücü giriş "
+"noktaları listesi."
+
+msgid ""
+"List of physical_network names with which flat networks can be created. Use "
+"* to allow flat networks with arbitrary physical_network names."
+msgstr ""
+"Düz ağların oluşturulabileceği physical_network isimlerinin listesi. Keyfi "
+"physical_network isimlerine sahip düz ağlara izin vermek için * kullanın."
+
+msgid "Local IP address of the VXLAN endpoints."
+msgstr "VXLAN son uçlarının yerel IP adresi."
+
+msgid "Local IP address of tunnel endpoint."
+msgstr "Tünel uç noktasının yerel IP adresi."
+
+msgid "Location for Metadata Proxy UNIX domain socket."
+msgstr "Metadata Vekil UNIX alan soketi için konum."
+
+msgid "Location of Metadata Proxy UNIX domain socket"
+msgstr "Metadata Vekil UNIX alan soketi konumu"
+
+msgid "Location of ca certificates file to use for CRD client requests."
+msgstr ""
+"CRD istemci istekleri için kullanılmak üzere ca sertifikalarının konumu."
+
+msgid "Location of pid file of this process."
+msgstr "Bu sürecin pid dosyasının konumu."
+
+msgid "Location to store DHCP server config files"
+msgstr "DHCP sunucu yapılandırma dosyalarının depolanacağı konum"
+
+msgid "Location to store IPv6 RA config files"
+msgstr "IPv6 RA yapılandırma dosyalarının kaydedileceği konum"
+
+msgid "Location to store child pid files"
+msgstr "Alt süreç dosyalarının kaydedileceği konum"
+
+msgid "Location to store keepalived/conntrackd config files"
+msgstr "Keepalived/conntrackd yapılandırma dosyalarının tutulacağı konum"
+
+msgid "Log agent heartbeats"
+msgstr "Ajan kalp atışlarını kaydet"
+
+msgid "MTU setting for device."
+msgstr "Aygıt için MTU ayarı."
+
+msgid "MTU size of veth interfaces"
+msgstr "veth arayüzlerinin MTU boyutu"
+
+msgid "Make the l2 agent run in DVR mode."
+msgstr "L2 ajanın DVR kipinde çalışmasını sağla."
+
+msgid "Malformed request body"
+msgstr "Kusurlu istek gövdesi"
+
+#, python-format
+msgid "Malformed request body: %(reason)s"
+msgstr "Bozuk istek gövdesi: %(reason)s"
+
+msgid "Management Security Zone id"
+msgstr "Yönetim Güvenlik Bölgesi kimliği"
+
+msgid "Max header line to accommodate large tokens"
+msgstr "Büyük jetonlara yer ayırmak için azami başlık satırı"
+
+msgid "Maximum number of DNS nameservers"
+msgstr "Azami DNS isim sunucu sayısı"
+
+msgid "Maximum number of agents on which a router will be scheduled."
+msgstr "Bir yönlendiricinin zamanlanacağı azami ajan sayısı."
+
+msgid "Maximum number of allowed address pairs"
+msgstr "İzin verilen adres çiftlerinin azami sayısı"
+
+msgid "Maximum number of fixed ips per port"
+msgstr "Bağlantı noktası başına azami sabit ip sayısı"
+
+msgid "Maximum number of host routes per subnet"
+msgstr "Alt ağ başına azami istemci sayısı"
+
+msgid "Maximum number of routes"
+msgstr "Azami rota sayısı"
+
+msgid "Metering driver"
+msgstr "Ölçme sürücüsü"
+
+#, python-format
+msgid "Metering label %(label_id)s does not exist"
+msgstr "Ölçme etiketi %(label_id)s mevcut değil"
+
+#, python-format
+msgid "Metering label rule %(rule_id)s does not exist"
+msgstr "Ölçme etiketi kuralı %(rule_id)s mevcut değil"
+
+#, python-format
+msgid ""
+"Metering label rule with remote_ip_prefix %(remote_ip_prefix)s overlaps "
+"another"
+msgstr ""
+"remote_ip_prefix %(remote_ip_prefix)s sahip ölçme etiket kuralı başka bir "
+"tanesiyle çatışıyor"
+
+msgid "MidoNet API server URI."
+msgstr "MidoNet API sunucu URI'si."
+
+msgid "MidoNet admin password."
+msgstr "MidoNet yönetici parolası."
+
+msgid "MidoNet admin username."
+msgstr "MidoNet yönetici kullanıcı adı."
+
+msgid "Minimize polling by monitoring ovsdb for interface changes."
+msgstr ""
+"Sorgulamayı ovsdb arayüzünü değişiklikler için izleyerek olabildiğince azalt."
+
+msgid "Minimum number of agents on which a router will be scheduled."
+msgstr "Bir yönlendiricinin zamanlanacağı asgari ajan sayısı."
+
+#, python-format
+msgid "Missing key in mapping: '%s'"
+msgstr "Eşleştirmede anahtar eksik: '%s'"
+
+#, python-format
+msgid "Missing value in mapping: '%s'"
+msgstr "Eşleştirmede değer eksik: '%s'"
+
+msgid "More than one external network exists"
+msgstr "Birden fazla harici ağ mevcut"
+
+msgid "Multicast group for VXLAN. If unset, disables VXLAN multicast mode."
+msgstr ""
+"VXLAN için multicast grubu. Ayarlanmamışsa, VXLAN multicast kipini kapatır."
+
+#, python-format
+msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
+msgstr ""
+"agent_type=%(agent_type)s ve istemci=%(host)s olan birden fazla ajan bulundu"
+
+#, python-format
+msgid "Multiple default providers for service %s"
+msgstr "%s servisi için birden fazla varsayılan sağlayıcı"
+
+#, python-format
+msgid "Multiple plugins for service %s were configured"
+msgstr "%s servisi için birden fazla eklenti yapılandırılmış"
+
+#, python-format
+msgid "Multiple providers specified for service %s"
+msgstr "%s servisi için birden fazla sağlayıcı belirtilmiş"
+
+msgid "Multiple tenant_ids in bulk security group rule create not allowed"
+msgstr ""
+"Toplu güvenlik grubu kuralı oluşturmada birden çok tenant_id'ye izin "
+"verilmiyor"
+
+msgid "Must also specifiy protocol if port range is given."
+msgstr ""
+"Bağlantı noktası aralığı verilmişse aynı zamanda iletişim kuralı sağlanmalı."
+
+msgid "Must specify one or more actions on flow addition or modification"
+msgstr "Akış ekleme ya da değiştirmede bir ya da fazla eylem belirtilmeli"
+
+msgid "NVSD Controller IP address"
+msgstr "NVSD Kontrolcüsü IP adresi"
+
+msgid "NVSD Controller Port number"
+msgstr "NVSD Konrolcüsü Bağlantı noktası sayısı"
+
+msgid "NVSD Controller password"
+msgstr "NVSD Kontrolcüsü parolası"
+
+msgid "NVSD Controller username"
+msgstr "NVSD Kontrolcüsü kullanıcı adı"
+
+msgid "NVSD controller REST API request timeout in seconds"
+msgstr "Saniye cinsinden NVSD kontrolcüsü REST API'si isteği zaman aşımı"
+
+msgid "Name of Open vSwitch bridge to use"
+msgstr "Kullanılacak Open vSwitch köprüsünün ismi"
+
+msgid "Name of bridge used for external network traffic."
+msgstr "Harici ağ trafiği için kullanılan köprünün ismi."
+
+msgid ""
+"Name of nova region to use. Useful if keystone manages more than one region."
+msgstr ""
+"Kullanılacak nova gölgesinin ismi. Keystone birden fazla bölgeyi yönetiyorsa "
+"kullanışlıdır."
+
+msgid "Name of tenant admin user."
+msgstr "Kiracı yönetici kullanıcısı ismi."
+
+msgid "Name of the FWaaS Driver"
+msgstr "FWaaS Sürücüsü ismi"
+
+msgid "Namespace of the router"
+msgstr "Yönetici isim uzayı"
+
+msgid "Native pagination depend on native sorting"
+msgstr "Doğal sayfalama doğal sıralamaya bağlıdır"
+
+msgid "Negative delta (downgrade) not supported"
+msgstr "Negatif fark (alt sürüm) desteklenmiyor"
+
+msgid "Negative relative revision (downgrade) not supported"
+msgstr "Negatif ilişkili sürüm (alt sürüm) desteklenmiyor"
+
+#, python-format
+msgid "Network %(net_id)s could not be found"
+msgstr "Ağ %(net_id)s bulunamadı"
+
+#, python-format
+msgid "Network %s is not a valid external network"
+msgstr "%s ağı geçerli bir harici ağ değil"
+
+#, python-format
+msgid "Network %s is not an external network"
+msgstr "Ağ %s harici bir ağ değil"
+
+#, python-format
+msgid ""
+"Network of size %(size)s, from IP range %(parent_range)s excluding IP ranges "
+"%(excluded_ranges)s was not found."
+msgstr ""
+"%(excluded_ranges)s IP aralıkları hariç %(parent_range)s IP aralığından "
+"%(size)s botyutunda ağ bulunamadı."
+
+msgid "Network service endpoint type to pull from the keystone catalog"
+msgstr "Keystone kataloğundan çekmek için ağ servis uç noktası türü"
+
+msgid "Network that will have instance metadata proxied."
+msgstr "Sunucu metadata'sı vekillenecek ağ."
+
+#, python-format
+msgid ""
+"Network type %s not supported. Please be sure that tenant_network_type is "
+"vlan"
+msgstr ""
+"Ağ türü %s desteklenmiyor. Lütfen tenant_network_type'in vlan olduğundan "
+"emin olun"
+
+#, python-format
+msgid "Network type value '%s' not supported"
+msgstr "Ağ türü değeri '%s' desteklenmiyor"
+
+msgid "Network type value needed by the ML2 plugin"
+msgstr "ML2 eklentisi ağ türü değerine ihtiyaç duyuyor"
+
+msgid "Network types supported by the agent (gre and/or vxlan)."
+msgstr "Ajan tarafından desteklenen ağ türleri (gre ve/veya vxlan)."
+
+msgid "Neutron Service Type Management"
+msgstr "Neutron Servis Türü Yönetimi"
+
+msgid "Neutron core_plugin not configured!"
+msgstr "Neutron core_plugin yapılandırılmamış!"
+
+msgid "Neutron plugin provider module"
+msgstr "Neutron eklenti sağlayıcı modülü"
+
+msgid "Neutron quota driver class"
+msgstr "Neutron kota sürücü sınıf"
+
+#, python-format
+msgid "No eligible l3 agent associated with external network %s found"
+msgstr "%s harici ağıyla ilişkilendirilmiş uygun l3 ajanı bulunamadı"
+
+msgid "No fixed IP"
+msgstr "Sabit IP yok"
+
+#, python-format
+msgid "No more IP addresses available for subnet %(subnet_id)s."
+msgstr "%(subnet_id)s alt ağı için kullanılabilir başka IP adresi yok."
+
+#, python-format
+msgid "No more IP addresses available on network %(net_id)s."
+msgstr "%(net_id)s ağında başka kullanılabilir IP adresi yok."
+
+#, python-format
+msgid ""
+"No more Virtual Router Identifier (VRID) available when creating router "
+"%(router_id)s. The limit of number of HA Routers per tenant is 254."
+msgstr ""
+"%(router_id)s yönlendiricisi oluşturulurken kullanılabilir Sanal "
+"Yönlendirici Tanımlayıcı (VRID) yok. Kiracı başına HA Yönlendirici sayısı "
+"sınırı 254."
+
+msgid "No port ID"
+msgstr "Bağlantı noktası kimliği yok"
+
+#, python-format
+msgid "No providers specified for '%s' service, exiting"
+msgstr "'%s' servisi için sağlayıcı belirtilmemiş, çıkılıyor"
+
+#, python-format
+msgid ""
+"Not allowed to manually assign a %(router_type)s router %(router_id)s from "
+"an existing DVR node to another L3 agent %(agent_id)s."
+msgstr ""
+"Mevcut bir DVR düğümünden başka bir %(agent_id)s L3 ajanına elle "
+"%(router_type)s yönlendirici %(router_id)s atamaya izin verilmiyor."
+
+msgid "Not authorized."
+msgstr "Yetkiniz yok."
+
+#, python-format
+msgid ""
+"Not enough l3 agents available to ensure HA. Minimum required "
+"%(min_agents)s, available %(num_agents)s."
+msgstr ""
+"HA'dan emin olmak için yeterli l3 ajanı yok. Asgari %(min_agents)s gerekli, "
+"kullanılabilir %(num_agents)s var."
+
+#, python-format
+msgid "Not supported: %(msg)s"
+msgstr "desteklenmiyor:%(msg)s"
+
+msgid "Nova VM flavor for instances of Vyatta vRouter."
+msgstr "Vyatta vRouter sunucuları için Nova VM niteliği."
+
+msgid "Nova image id for instances of Vyatta vRouter."
+msgstr "Vyatta vRouter sunucuları için Nova imaj kimliği."
+
+msgid ""
+"Number of DHCP agents scheduled to host a tenant network. If this number is "
+"greater than 1, the scheduler automatically assigns multiple DHCP agents for "
+"a given tenant network, providing high availability for DHCP service."
+msgstr ""
+"Bir kiracı ağı sunmak için zamanlanan DHCP ajanları sayısı. Bu sayı 1'den "
+"büyükse, zamanlayıcı verilen bir kiracı ağa otomatik olarak birden çok DHCP "
+"ajanı atar, ve DHCP servisi için yüksek kullanılabilirlik sağlar."
+
+msgid "Number of RPC worker processes for service"
+msgstr "Servis için RPC işçi süreçlerinin sayısı"
+
+msgid "Number of backlog requests to configure the metadata server socket with"
+msgstr "Metadata sunucu soketinin yapılandırılacağı birikmiş isteklerin sayısı"
+
+msgid "Number of backlog requests to configure the socket with"
+msgstr "Soketin birlikte yapılandırılacağı backlog isteklerinin sayısı"
+
+msgid ""
+"Number of floating IPs allowed per tenant. A negative value means unlimited."
+msgstr ""
+"Kiracı başına izin verilen değişken IP sayısı. Negatif değer sınırsız "
+"demektir."
+
+msgid "Number of login retries to NVSD controller"
+msgstr "NVSD kontrolcüsüne giriş deneme sayısı"
+
+msgid ""
+"Number of networks allowed per tenant. A negative value means unlimited."
+msgstr ""
+"Kiracı başına izin verilen ağ sayısı. Negatif değer sınırsız anlamına gelir."
+
+msgid "Number of ports allowed per tenant. A negative value means unlimited."
+msgstr ""
+"Kiracı başına izin verilen bağlantı noktası sayısı. Negatif değer sınırsız "
+"anlamına gelir."
+
+msgid "Number of routers allowed per tenant. A negative value means unlimited."
+msgstr ""
+"Kiracı başına izin verilen yönlendirici sayısı. Negatif değer sınırsız "
+"anlamına gelir."
+
+msgid ""
+"Number of seconds between consecutive Nova queries when waiting for router "
+"instance status change."
+msgstr ""
+"Yönlendirici sunucu durum değişikliği için beklerken takip eden Nova "
+"sorguları arasındaki saniye sayısı."
+
+msgid ""
+"Number of seconds between consecutive Vyatta vRouter queries when waiting "
+"for router instance boot."
+msgstr ""
+"Yönlendirici sunucusunun önyüklemesini beklerken art arda gelen Vyatta "
+"vRouter sorguları arasındaki saniye sayısı."
+
+msgid ""
+"Number of seconds between sending events to nova if there are any events to "
+"send."
+msgstr ""
+"Gönderilecek olay varsa olayların nova'ya gönderilmesi arasında beklenecek "
+"saniye sayısı."
+
+msgid "Number of seconds to keep retrying to listen"
+msgstr "Dinlemeye devam etmek için saniye sayısı"
+
+msgid ""
+"Number of seconds to wait for Nova to activate instance before setting "
+"resource to error state."
+msgstr ""
+"Kaynağı hata durumuna ayarlamadan önce Nova'nın sunucuyu etkinleştirmek için "
+"bekleyeceği saniye sayısı."
+
+msgid ""
+"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
+"to error state."
+msgstr ""
+"Kaynağı hata durumuna sokmadan öcne Vyatta vRouter önyüklemesi için kaç "
+"saniye bekleneceği."
+
+msgid ""
+"Number of security groups allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
+"Kiracı başına izin verilen güvenlik grubu sayısı. Negatif değer sınırsız "
+"anlamına gelir."
+
+msgid ""
+"Number of security rules allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
+"Kiracı başına izin verilen güvenlik kuralı sayısı. Negatif bir değer "
+"sınırsız demektir."
+
+msgid ""
+"Number of separate API worker processes for service. If not specified, the "
+"default is equal to the number of CPUs available for best performance."
+msgstr ""
+"Servis için ayrı API işçi süreçlerinin sayısı. Belirtilmezse, varsayılan "
+"olarak en iyi performans için CPU sayısına eşit değerdir."
+
+msgid ""
+"Number of separate worker processes for metadata server (defaults to half of "
+"the number of CPUs)"
+msgstr ""
+"Metadata sunucu için ayrı işçi süreçleri sayısı (CPU sayısının yarısı "
+"varsayılır)"
+
+msgid "Number of subnets allowed per tenant, A negative value means unlimited."
+msgstr ""
+"Kiracı başına izin verilen alt ağ sayısı, negatif değer sınırsız anlamına "
+"gelir."
+
+msgid "Number of threads to use during sync process."
+msgstr "Eş zamanlama sürecinde kullanılacak iş ipliği sayısı."
+
+msgid "OK"
+msgstr "Tamam"
+
+msgid "OS Type of the switch"
+msgstr "Anahtarın OS türü"
+
+msgid "OS Version number"
+msgstr "OS Sürüm numarası"
+
+#, python-format
+msgid "Object action %(action)s failed because: %(reason)s"
+msgstr "Nesne eylemi %(action)s başarısız çünkü: %(reason)s"
+
+msgid "One or more ports have an IP allocation from this subnet."
+msgstr "Bir ya da fazla bağlantı noktasının bu alt ağdan ayrılmış IP'si var."
+
+msgid "Only admin can view or configure quota"
+msgstr "Yalnızca yönetici kotaları görüntüleyebilir ya da yapılandırabilir"
+
+msgid "Only admin is authorized to access quotas for another tenant"
+msgstr "Yalnızca yönetici başka bir kiracı için kotalara erişebilir"
+
+msgid "Only allowed to update rules for one security profile at a time"
+msgstr ""
+"Tek seferde bir güvenlik profili için kuralların güncellenmesine izin verilir"
+
+msgid "Only remote_ip_prefix or remote_group_id may be provided."
+msgstr "Yalnızca remote_ip_prefix veya remote_group_id sağlanabilir."
+
+msgid "OpenFlow interface to use."
+msgstr "Kullanılacak OpenFlow arayüzü."
+
+#, python-format
+msgid ""
+"Operation %(op)s is not supported for device_owner %(device_owner)s on port "
+"%(port_id)s."
+msgstr ""
+"İşlem %(op)s %(port_id)s bağlantı noktası üzerinde %(device_owner)s "
+"device_owner için  desteklenmiyor."
+
+msgid "Ordered list of network_types to allocate as tenant networks."
+msgstr "Kiracı ağlar olarak ayrılacak network_types'ın sıralı listesi."
+
+msgid "Out of band Security Zone id"
+msgstr "Bant dışı Güvenlik Bölgesi kimliği"
+
+msgid "Override the default dnsmasq settings with this file"
+msgstr "Bu dosyayla varsayılan dnsmasq ayarlarının üzerine yazın"
+
+msgid "Owner type of the device: network/compute"
+msgstr "Aygıt sahip türü: ağ/hesap"
+
+msgid "POST requests are not supported on this resource."
+msgstr "POST istekleri bu kaynakta desteklenmiyor."
+
+#, python-format
+msgid "Parsing bridge_mappings failed: %s."
+msgstr "bridge_mappins ayrıştırma başarısız: %s."
+
+msgid "Parsing supported pci_vendor_devs failed"
+msgstr "Desteklenen pci_vendor_devs ayrıştırması başarısız"
+
+msgid ""
+"Password for connection to nova in admin context. Deprecated in favour of an "
+"auth plugin in [nova]."
+msgstr ""
+"Nova'ya yönetici içeriğinde bağlanmak için parola. [nova] içindeki kimlik "
+"doğrulama eklentisi bunun yerini almıştır, artık kullanılmıyor."
+
+msgid "Path to PID file for this process"
+msgstr "Bu sürecin PID dosyasının yolu"
+
+msgid "Path to the router directory"
+msgstr "Yönlendirici dizininin yolu"
+
+msgid "Peer patch port in integration bridge for tunnel bridge."
+msgstr "Tünel köprüsü için tümleştirme köprüsündeki eş yama bağlantı noktası."
+
+msgid "Peer patch port in tunnel bridge for integration bridge."
+msgstr "Tümleştirme köprüsü için tünel köprüsündeki eş yama bağlantı noktası."
+
+msgid "Per-tenant subnet pool prefix quota exceeded"
+msgstr "Kiracı başına alt ağ havuzu öneki kotası aşıldı"
+
+msgid "Ping timeout"
+msgstr "Ping zaman aşımı"
+
+msgid "Plugin does not support updating provider attributes"
+msgstr "Eklenti sağlayıcı özniteliklerini güncellemeyi desteklemiyor"
+
+msgid "Plugin not found."
+msgstr "Eklenti bulunamadı."
+
+msgid "Policy configuration policy.json could not be found"
+msgstr "İlke yapılandırması policy.json bulunamadı"
+
+#, python-format
+msgid "Port %(id)s does not have fixed ip %(address)s"
+msgstr "%(id)s bağlantı noktası %(address)s sabit ip'sine sahip değil"
+
+#, python-format
+msgid ""
+"Port %(port_id)s cannot be deleted directly via the port API: %(reason)s"
+msgstr ""
+"Bağlantı noktası %(port_id)s bağlantı noktası API'si ile doğrudan silinemez: "
+"%(reason)s"
+
+#, python-format
+msgid "Port %(port_id)s could not be found"
+msgstr "Bağlantı noktası %(port_id)s bulunamadı"
+
+#, python-format
+msgid "Port %(port_id)s could not be found on network %(net_id)s"
+msgstr "%(port_id)s bağlantı noktası %(net_id)s ağında bulunamadı"
+
+#, python-format
+msgid ""
+"Port %(port_id)s is associated with a different tenant than Floating IP "
+"%(floatingip_id)s and therefore cannot be bound."
+msgstr ""
+"%(port_id)s bağlantı noktası %(floatingip_id)s değişken IP'sinden başka bir "
+"kiracı ile ilişkilendirilmiş bu yüzden bağlanamaz."
+
+msgid ""
+"Port Security must be enabled in order to have allowed address pairs on a "
+"port."
+msgstr ""
+"Bağlantı noktasında izin verilen adres çiftlerine sahip olmak için bağlantı "
+"noktası güvenliği etkin olmalı."
+
+msgid "Port does not have port security binding."
+msgstr "Bağlantı noktası bağlantı noktası güvenlik bağına sahip değil."
+
+msgid ""
+"Port has security group associated. Cannot disable port security or ip "
+"address until security group is removed"
+msgstr ""
+"Bağlantı noktasıyla ilişkili güvenlik grubu var. Güvenlik grubu kaldırılana "
+"kadar bağlantı noktası güvenliği ya da ip adresi kapatılamaz"
+
+msgid ""
+"Port security must be enabled and port must have an IP address in order to "
+"use security groups."
+msgstr ""
+"Güvenlik gruplarını kullanmak için bağlantı noktası güvenliği etkin olmalı "
+"ve bağlantı noktası bir IP adresine sahip olmalı."
+
+#, python-format
+msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
+msgstr "'%(prefix)s' öneki IPv%(version)s havuzunda desteklenmiyor"
+
+msgid "Private key file to use when starting the server securely"
+msgstr "Sunucu güvenli şekilde başlatılırken kullanılacak özel anahtar dosyası"
+
+msgid "Private key of client certificate."
+msgstr "İstemci sertifikasının özel anahtarı."
+
+msgid "Private vswitch name used for local networks"
+msgstr "Yerel ağlar için kullanılan özel vswitch ismi"
+
+#, python-format
+msgid "Probe %s deleted"
+msgstr "Deneme %s silindi"
+
+#, python-format
+msgid "Probe created : %s "
+msgstr "Deneme oluşturuldu: %s "
+
+msgid "Process is already started"
+msgstr "Süreç zaten başlamış"
+
+msgid "Process is not running."
+msgstr "Süreç çalışmıyor."
+
+msgid "Protocol to access nova metadata, http or https"
+msgstr "Nova metadata'ya erişmek için iletişim kuralı, http veya https"
+
+#, python-format
+msgid "Provider name is limited by 255 characters: %s"
+msgstr "Sağlayıcı ismi 255 karakterle sınırlıdır: %s"
+
+#, python-format
+msgid "Quota exceeded for resources: %(overs)s"
+msgstr "Kaynaklar için kota aşıldı: %(overs)s"
+
+msgid ""
+"Range of seconds to randomly delay when starting the periodic task scheduler "
+"to reduce stampeding. (Disable by setting to 0)"
+msgstr ""
+"Devresel görev zamanlayıcıyı başlatırken izdiham yaratmayı engellemek için "
+"beklenecek rastgele saniye aralığı. (0 olarak ayarlayıp kapatabilirsiniz)"
+
+msgid "Rbridge id of provider edge router(s)"
+msgstr "Sağlayıcı uç yönlendirici(ler)inin Rbridge kimliği"
+
+msgid "Region name for connecting to CRD Service in admin context."
+msgstr "CRD servisine yönetici bağlamında bağlanmak için bölge ismi."
+
+msgid "Remote metadata server experienced an internal server error."
+msgstr "Uzak metadata sunucu dahil sunucu hatası yaşadı."
+
+msgid ""
+"Representing the resource type whose load is being reported by the agent. "
+"This can be \"networks\", \"subnets\" or \"ports\". When specified (Default "
+"is networks), the server will extract particular load sent as part of its "
+"agent configuration object from the agent report state, which is the number "
+"of resources being consumed, at every report_interval.dhcp_load_type can be "
+"used in combination with network_scheduler_driver = neutron.scheduler."
+"dhcp_agent_scheduler.WeightScheduler When the network_scheduler_driver is "
+"WeightScheduler, dhcp_load_type can be configured to represent the choice "
+"for the resource being balanced. Example: dhcp_load_type=networks"
+msgstr ""
+"Ajan tarafından yükü rapor edilen kaynak türünü temsil eder. Bu \"ağlar\", "
+"\"alt ağlar\", veya \"bağlantı noktaları\" olabilir. Belirtildiğinde "
+"(varsayılanı ağlardır), sunucu ajan yapılandırma nesnesinin parçası olarak "
+"gönderilen belirli yükü ajan rapor durumundan çıkartır, ki bu her "
+"report_interval'da tüketilen kaynak sayısıdır. dhcp_load_type "
+"network_scheduler_driver WeightScheduler olduğunda network_scheduler_driver "
+"= neutron.scheduler.WeightScheduler ile birlikte kullanılabilir, "
+"dhcp_load_type dengelenen kaynak için seçimi temsil edecek şekilde "
+"yapılandırılabilir. Örneğin: dhcp_load_type=networks"
+
+msgid "Request Failed: internal server error while processing your request."
+msgstr "İstek Başarısız: isteğiniz işlenirken dahili sunucu hatası oluştu."
+
+#, python-format
+msgid ""
+"Request contains duplicate address pair: mac_address %(mac_address)s "
+"ip_address %(ip_address)s."
+msgstr ""
+"İstek kopya adres çifti içeriyor: mac_address %(mac_address)s ip_address "
+"%(ip_address)s."
+
+#, python-format
+msgid "Request sent to server is invalid: %(reason)s"
+msgstr "Sunucuya gönderilen istek geçersiz: %(reason)s"
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr ""
+"%(network_id)s ağı için istenen %(cidr)s cidr'e sahip alt ağ başka bir alt "
+"ağla çatışıyor"
+
+#, python-format
+msgid ""
+"Resource '%(resource_id)s' is already associated with provider "
+"'%(provider)s' for service type '%(service_type)s'"
+msgstr ""
+"'%(resource_id)s' kaynağı '%(service_type)s' servis türü için zaten "
+"'%(provider)s' sağlayıcısıyla ilişkilendirilmiş"
+
+msgid "Resource body required"
+msgstr "Kaynak gövdesi gerekiyor"
+
+msgid ""
+"Resource name(s) that are supported in quota features. This option is now "
+"deprecated for removal."
+msgstr ""
+"Kota özelliklerinde desteklenen kaynak isim(ler)i. Bu seçenek artık "
+"kaldırılmak üzere kullanılmıyor."
+
+msgid "Resource not found."
+msgstr "Kaynak bulunamadı."
+
+msgid "Resources required"
+msgstr "Kaynaklar gerekiyor"
+
+msgid "Root helper application."
+msgstr "Kök yardımcı uygulama."
+
+msgid "Root helper daemon application to use when possible."
+msgstr "Mümkün olduğunda kullanılacak kök yardımcı artalan işlemi uygulaması."
+
+msgid "Root permissions are required to drop privileges."
+msgstr "İzinlerin düşürülmesi için Root izinleri gerekli."
+
+#, python-format
+msgid "Router %(router_id)s %(reason)s"
+msgstr "Yönlendirici %(router_id)s %(reason)s"
+
+#, python-format
+msgid "Router %(router_id)s could not be found"
+msgstr "Yönlendirici %(router_id)s bulunamadı"
+
+#, python-format
+msgid "Router %(router_id)s does not have an interface with id %(port_id)s"
+msgstr ""
+"%(router_id)s yönlendiricisi %(port_id)s kimliğine sahip bir arayüze sahip "
+"değil"
+
+#, python-format
+msgid "Router %(router_id)s has no interface on subnet %(subnet_id)s"
+msgstr ""
+"%(router_id)s yönlendiricisi %(subnet_id)s alt ağı üzerinde arayüze sahip "
+"değil"
+
+#, python-format
+msgid "Router '%(router_id)s' cannot be both DVR and HA"
+msgstr "Yönlendirici '%(router_id)s' hem DVR hem HA olamaz"
+
+#, python-format
+msgid "Router '%(router_id)s' is not compatible with this agent"
+msgstr "Yönlendirici '%(router_id)s' bu ajanla uyumlu değil"
+
+#, python-format
+msgid "Router already has a port on subnet %s"
+msgstr "Yönlendirici zaten %s alt ağında bir bağlantı noktasına sahip"
+
+msgid "Router image id (Embrane FW/VPN)"
+msgstr "Yönlendirici imaj kimliği (Embrane FW/VPN)"
+
+#, python-format
+msgid ""
+"Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
+"deleted, as it is required by one or more floating IPs."
+msgstr ""
+"%(router_id)s yönlendiricisi üstündeki %(subnet_id)s alt ağı için "
+"yönlendirici arayüzü silinemez, bir ya da fazla değişken IP tarafından "
+"ihtiyaç duyuluyor."
+
+#, python-format
+msgid ""
+"Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
+"deleted, as it is required by one or more routes."
+msgstr ""
+"%(router_id)s yönlendiricisi üzerindeki %(subnet_id)s alt ağı için rota "
+"arayüzü silinemiyor, çünkü bir ya da fazla rota tarafından ihtiyaç duyuluyor."
+
+msgid "Router that will have connected instances' metadata proxied."
+msgstr "Bağlı sunucuların metadata'larının vekilleneceği yönlendirici."
+
+msgid "Run as daemon."
+msgstr "Artalan işlemi olarak çalış."
+
+msgid ""
+"Seconds between nodes reporting state to server; should be less than "
+"agent_down_time, best if it is half or less than agent_down_time."
+msgstr ""
+"Düğümlerin sunucuya durum raporu yapması arasında geçen saniye; "
+"agent_down_time'dan az olmalı, en iyisi agent_down_time'ın yarısı ya da daha "
+"azı olmasıdır."
+
+msgid "Seconds between running periodic tasks"
+msgstr "Devresel görevleri çalıştırma arasındaki saniye"
+
+msgid ""
+"Seconds to regard the agent is down; should be at least twice "
+"report_interval, to be sure the agent is down for good."
+msgstr ""
+"Ajanın çalışmıyor olduğuna karar vermek için geçmesi gereken saniye; ajanın "
+"gerçekten kapalı olduğundan emin olmak için report_interval değerinin en az "
+"iki katı olmalı."
+
+#, python-format
+msgid "Security Group %(id)s %(reason)s."
+msgstr "Güvenlik Grubu %(id)s %(reason)s."
+
+#, python-format
+msgid "Security Group Rule %(id)s %(reason)s."
+msgstr "Güvenlik Grubu Kuralı %(id)s %(reason)s."
+
+#, python-format
+msgid "Security group %(id)s does not exist"
+msgstr "%(id)s güvenlik grubu mevcut değil"
+
+#, python-format
+msgid "Security group rule %(id)s does not exist"
+msgstr "Güvenlik grubu kuralı %(id)s mevcut değil"
+
+#, python-format
+msgid "Security group rule already exists. Rule id is %(id)s."
+msgstr "Güvenlik grubu kuralı zaten mevcut. Kural kimliği %(id)s."
+
+#, python-format
+msgid ""
+"Security group rule protocol %(protocol)s not supported. Only protocol "
+"values %(values)s and integer representations [0 to 255] are supported."
+msgstr ""
+"Güvenlik grubu kuralı iletişim kuralı %(protocol)s desteklenmiyor. Yalnızca "
+"iletişim kuralı değerleri %(values)s ve tam sayı temsilleri [0 dan 255 e]  "
+"destekleniyor."
+
+msgid "Segments and provider values cannot both be set."
+msgstr "Dilimler ve sağlayıcı değerleri aynı anda ayarlanamaz."
+
+msgid ""
+"Send notification to nova when port data (fixed_ips/floatingip) changes so "
+"nova can update its cache."
+msgstr ""
+"Bağlantı noktası verisi (sabit_ipler/değişkenip) değiştiğinde nova'ya "
+"bildirim gönder ki nova zulasını güncelleyebilsin."
+
+msgid "Send notification to nova when port status changes"
+msgstr "Bağlantı noktası durumu değiştiğinde nova'ya bildirim gönder"
+
+msgid ""
+"Send this many gratuitous ARPs for HA setup, if less than or equal to 0, the "
+"feature is disabled"
+msgstr ""
+"HA kurulumu için bu kadar karşılıksız ARP gönder, 0'a eşit ya da küçükse, "
+"özellik kapatılır"
+
+#, python-format
+msgid ""
+"Service provider '%(provider)s' could not be found for service type "
+"%(service_type)s"
+msgstr ""
+"%(service_type)s servis türü için '%(provider)s' servis sağlayıcı bulunamadı"
+
+#, python-format
+msgid "Service type %(service_type)s does not have a default service provider"
+msgstr "%(service_type)s servis türü varsayılan servis sağlayıcıya sahip değil"
+
+msgid ""
+"Set new timeout in seconds for new rpc calls after agent receives SIGTERM. "
+"If value is set to 0, rpc timeout won't be changed"
+msgstr ""
+"Ajan SIGTERM aldıktan sonra yeni rpc çağrıları için saniye olarak yeni zaman "
+"aşımı ayarla. Değer 0 olarak ayarlanırsa, rpc zaman aşımı değiştirilmeyecek"
+
+msgid ""
+"Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying GRE/"
+"VXLAN tunnel."
+msgstr ""
+"Dışa giden IP paketi taşıyan GRE/VXLAN tünelinde bölümlenme yapma (DF) "
+"bitini ayarla ya da ayarlama."
+
+msgid ""
+"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
+"supported on OS X."
+msgstr ""
+"Her bir sunucu soketi için TCP_KEEPIDLE değerini saniye olarak ayarlar. OS "
+"X'de desteklenmez."
+
+msgid "Shared address scope can't be unshared"
+msgstr "Paylaşılan adres kapsamının paylaştırılması durdurulamaz"
+
+msgid "Shared resource pool id"
+msgstr "Paylaşılan kaynak havuz kimliği"
+
+msgid "Shared secret to sign instance-id request"
+msgstr "instance-id isteklerini imzalamak için paylaşımlı giz"
+
+#, python-format
+msgid ""
+"Some tenants have more than one security group named 'default': "
+"%(duplicates)s. All duplicate 'default' security groups must be resolved "
+"before upgrading the database."
+msgstr ""
+"Bazı kiracılar birden fazla 'default' isimli güvenlik grubuna sahip: "
+"%(duplicates)s. Veri tabanı yükseltilmeden önce tüm 'default' güvenlik "
+"grupları çözülmeli."
+
+msgid ""
+"Specifies the maximum number of retries to enable Hyper-V's port metrics "
+"collection. The agent will try to enable the feature once every "
+"polling_interval period for at most metrics_max_retries or until it "
+"succeedes."
+msgstr ""
+"Hyper-V'nin bağlantı noktası ölçüm toplamasını etkinleştirmek için azami "
+"deneme sayısını belirtir. Ajan özelliği her polling_interval devresi boyunca "
+"bir kere en fazla metrics_max_retries kere veya başarana kadar "
+"etkinleştirmeye çalışacaktır."
+
+msgid ""
+"Specifying 'tenant_id' other than authenticated tenant in request requires "
+"admin privileges"
+msgstr ""
+"İstekte doğrulanmış kiracıdan başka 'tenant_id' belirtme yönetici yetkileri "
+"gerektirir"
+
+msgid "String prefix used to match IPset names."
+msgstr "IPset isimleriyle eşleştirme için kullanılan karakter dizisi önekleri."
+
+#, python-format
+msgid "Subnet %(subnet_id)s could not be found"
+msgstr "Alt ağ %(subnet_id)s bulunamadı"
+
+msgid "Subnet for router interface must have a gateway IP"
+msgstr "Yönlendirici arayüzü için alt ağ bir geçit IP'ye sahip olmalı"
+
+msgid ""
+"Subnet has a prefix length that is incompatible with DHCP service enabled."
+msgstr "Alt ağ etkin DHCP servisiyle uyumsz bir önek uzunluğuna sahip."
+
+#, python-format
+msgid ""
+"Subnet on port %(port_id)s does not match the requested subnet %(subnet_id)s"
+msgstr ""
+"%(port_id)s bağlantı noktasında alt ağ istenen %(subnet_id)s alt ağıyla "
+"eşleşmiyor"
+
+#, python-format
+msgid "Subnet pool %(subnetpool_id)s could not be found"
+msgstr "Alt ağ havuzu %(subnetpool_id)s bulunamadı"
+
+msgid "Subnet pool has existing allocations"
+msgstr "Alt ağ havuzunun mevcut ayırmaları var"
+
+msgid "Subnet used for the l3 HA admin network."
+msgstr "L3 HA yönetici ağı için kullanılan alt ağ."
+
+msgid ""
+"Subnets hosted on the same network must be allocated from the same subnet "
+"pool"
+msgstr "Aynı ağda sunulan alt ağlar aynı alt ağ havuzundan ayrılmalıdır"
+
+msgid "Suffix to append to all namespace names."
+msgstr "Tüm isim uzaylarına eklenecek son ek."
+
+msgid "Support Metadata requests on isolated networks."
+msgstr "Yalıtılmış ağlarda Metadata isteklerini destekle."
+
+msgid ""
+"Supported PCI vendor devices, defined by vendor_id:product_id according to "
+"the PCI ID Repository. Default enables support for Intel and Mellanox SR-IOV "
+"capable NICs"
+msgstr ""
+"PCI ID Deposuna göre vendor_id:product_id ile tanımlanan desteklenen PCI "
+"üretici aygıtları. Varsayılan olarak Intel ve Mellanox SR-IOV yetenekli "
+"NIC'ler için destek etkinleştirir"
+
+msgid ""
+"System-wide flag to determine the type of router that tenants can create. "
+"Only admin can override."
+msgstr ""
+"Kiracıların oluşturabileceği yönlendirici türünü belirlemek için sistem "
+"genelinde bayrak. Yalnızca yönetici üzerine yazabilir."
+
+msgid "TCP Port to listen for metadata server requests."
+msgstr "Metadata sunucu istekleri için dinlenecek TCP bağlantı noktası."
+
+msgid "TCP Port used by Neutron metadata namespace proxy."
+msgstr ""
+"Neutron metadata isim uzayı vekili tarafından kullanılan TCP bağlantı "
+"noktası."
+
+msgid "TCP Port used by Nova metadata server."
+msgstr "Nova metadata sunucusu tarafından kullanılan TCP Bağlantı noktası."
+
+msgid "TOS for vxlan interface protocol packets."
+msgstr "Vxlan arayüz iletişim paketleri için TOS."
+
+msgid "TTL for vxlan interface protocol packets."
+msgstr "Vxlan arayüz iletişim kuralı paketleri için TTL."
+
+#, python-format
+msgid "Table %s can only be queried by UUID"
+msgstr "Tablo %s yalnızca UUID ile sorgulanabilir"
+
+#, python-format
+msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
+msgstr ""
+"Kiracı %(tenant_id)s'in bu ağda %(resource)s oluşturmasına izin verilmiyor"
+
+msgid "Tenant admin password."
+msgstr "Kiracı yönetici parolası."
+
+msgid "Tenant network creation is not enabled."
+msgstr "Kiracı ağ oluşturma etkin değil."
+
+msgid "Tenant-id was missing from Quota request"
+msgstr "Kota isteğinde tenant-id bulunamadı"
+
+msgid ""
+"The 'gateway_external_network_id' option must be configured for this agent "
+"as Neutron has more than one external network."
+msgstr ""
+"Neutron birden fazla harici ağa sahip olduğundan "
+"'gateway_external_network_id' seçeneği bu ajan için yapılandırılmalıdır."
+
+msgid "The API paste config file to use"
+msgstr "Kullanılacak API yapıştırma yapılandırma dosyası"
+
+#, python-format
+msgid ""
+"The HA Network CIDR specified in the configuration file isn't valid; "
+"%(cidr)s."
+msgstr ""
+"Yapılandırma dosyasında belirtilen HA Ağ CIDR'i geçerli değil; %(cidr)s."
+
+msgid "The SSH password to use"
+msgstr "Kullanılacak SSH parolası"
+
+msgid "The SSH username to use"
+msgstr "Kullanılacak SSH kullanıcı adı"
+
+msgid "The UDP port to use for VXLAN tunnels."
+msgstr "VXLAN tünelleri için kullanılacak UDP bağlantı noktası."
+
+#, python-format
+msgid ""
+"The address allocation request could not be satisfied because: %(reason)s"
+msgstr "Adres ayırma isteği sağlanamadı çünkü: %(reason)s"
+
+msgid "The address of the host to SSH to"
+msgstr "SSH yapılacak istemci adresi"
+
+msgid "The advertisement interval in seconds"
+msgstr "Saniye cinsinden duyuru aralığı"
+
+#, python-format
+msgid "The allocation pool %(pool)s is not valid."
+msgstr "Ayırma havuzu %(pool)s geçerli değil."
+
+#, python-format
+msgid ""
+"The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
+msgstr ""
+"Ayırma havuzu %(pool)s %(subnet_cidr)s alt ağ cidr'inin ötesine uzanıyor."
+
+#, python-format
+msgid ""
+"The attribute '%(attr)s' is reference to other resource, can't used by sort "
+"'%(resource)s'"
+msgstr ""
+"'%(attr)s' özniteliği başka kaynağa referans, '%(resource)s' sıralama "
+"tarafından kullanılamaz"
+
+msgid "The base MAC address Neutron will use for VIFs"
+msgstr "Neutron'un VIF'ler için kullanacağı taban MAC adresi"
+
+msgid "The connection string for the native OVSDB backend"
+msgstr "Doğal OVSDB arka ucu için bağlantı karakter dizisi"
+
+msgid "The core plugin Neutron will use"
+msgstr "Neutron'un kullanacağı çekirdek eklenti"
+
+msgid "The driver used to manage the DHCP server."
+msgstr "DHCP sunucusunu yönetmek için kullanılan sürücü."
+
+msgid "The driver used to manage the virtual interface."
+msgstr "Sanal arayüzü yönetmek için kullanılan sürücü."
+
+#, python-format
+msgid ""
+"The following device_id %(device_id)s is not owned by your tenant or matches "
+"another tenants router."
+msgstr ""
+"device_id %(device_id)s sizin kiracınıza ait değil veya başka bir kiracının "
+"yönlendiricisiyle eşleşiyor."
+
+msgid "The host IP to bind to"
+msgstr "Bağlanılacak istemci IP'si"
+
+msgid "The interface for interacting with the OVSDB"
+msgstr "OVSDB ile etkileşim için arayüz"
+
+msgid ""
+"The maximum number of items returned in a single response, value was "
+"'infinite' or negative integer means no limit"
+msgstr ""
+"Tek bir yanıtta döndürülecek azami öğe sayısı, 'infinite' değeri ya da "
+"negatif tam sayı sınır yok demektir"
+
+msgid ""
+"The maximum permissible size of an unfragmented packet travelling a L2 "
+"network segment.  If <= 0, the segment MTU is indeterminate."
+msgstr ""
+"Bir L2 ağ diliminden geçen parçalanmamış paketin izin verilen azami boyutu.  "
+"0'dan küçükse, dilim MTU'su belirsizdir."
+
+msgid ""
+"The maximum permissible size of an unfragmented packet travelling from and "
+"to addresses where encapsulated Neutron traffic is sent.  If <= 0, the path "
+"MTU is indeterminate."
+msgstr ""
+"kapsüllenmiş Neutron trafiğinin gönderildiği adreslerin geliş ve gidiş "
+"yönünde hareket eden parçalanmamış bir paketin izin verilen azami boyutu.  "
+"0'dan küçük ise, yol MTU'su belirsizdir."
+
+msgid ""
+"The name of the admin nova tenant. Deprecated in favour of an auth plugin in "
+"[nova]."
+msgstr ""
+"Yönetici nova kiracısının ismi. [nova] içindeki bir kimlik doğrulama "
+"eklentisi kullanılacağından artık kullanılmıyor."
+
+#, python-format
+msgid ""
+"The network %(network_id)s has been already hosted by the DHCP Agent "
+"%(agent_id)s."
+msgstr "Ağ %(network_id)s zaten %(agent_id)s DHCP Ajanı tarafından sunuluyor."
+
+#, python-format
+msgid ""
+"The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
+msgstr "Ağ %(network_id)s %(agent_id)s DHCP ajanı tarafından sunulmuyor."
+
+msgid "The network interface to use when creating a port"
+msgstr "Bağlantı noktası oluştururken kullanılacak ağ arayüzü"
+
+#, python-format
+msgid "The number of allowed address pair exceeds the maximum %(quota)s."
+msgstr "İzin verilen adres çifti sayısı %(quota)s azami değerini aşıyor."
+
+msgid ""
+"The number of milliseconds the agent will wait for response on request to "
+"daemon."
+msgstr ""
+"Artalan sürecine yapılan isteğe cevap için ajanın bekleyeceği milisaniye "
+"sayısı."
+
+msgid ""
+"The number of retries the agent will send request to daemon before giving up"
+msgstr "Ajanın pes etmeden önce artalan sürecine istek göndereceği azami sayı"
+
+msgid ""
+"The number of seconds the agent will wait between polling for local device "
+"changes."
+msgstr ""
+"Ajanın yerel aygıt değişiklikleri için sorgulama yapma aralığında "
+"bekleyeceği saniye sayısı."
+
+msgid ""
+"The number of seconds to wait before respawning the ovsdb monitor after "
+"losing communication with it."
+msgstr ""
+"İletişim koptuktan sonra ovsdb izleyiciyi yeniden başlatmak için beklenecek "
+"saniye sayısı."
+
+msgid "The number of sort_keys and sort_dirs must be same"
+msgstr "sort_keys ile sort_dirs sayıları aynı olmalı"
+
+msgid "The path for API extensions"
+msgstr "API eklentileri için yol"
+
+#, python-format
+msgid "The port '%s' was deleted"
+msgstr "Bağlantı noktası '%s' silinmiş"
+
+msgid "The port to bind to"
+msgstr "Bağlanılacak bağlantı noktası"
+
+msgid "The request has timed out."
+msgstr "İstek zaman aşımına uğradı."
+
+#, python-format
+msgid "The request is forbidden access to the resource: %(reason)s"
+msgstr "İsteğin kaynağa erişimine izin verilmiyor: %(reason)s"
+
+#, python-format
+msgid "The requested content type %s is invalid."
+msgstr "İstenen içerik türü %s geçersiz."
+
+msgid "The resource could not be found."
+msgstr "Kaynak bulunamadı."
+
+msgid "The resource is inuse"
+msgstr "Kaynak kullanımda"
+
+#, python-format
+msgid ""
+"The router %(router_id)s has been already hosted by the L3 Agent "
+"%(agent_id)s."
+msgstr ""
+"%(router_id)s yönlendiricisi zaten %(agent_id)s L3 Ajanı tarafından "
+"sunuluyor."
+
+msgid ""
+"The server has either erred or is incapable of performing the requested "
+"operation."
+msgstr ""
+"Sunucu ya hata verdi ya da istenen işlemi yapabilecek yeterlilikte değil."
+
+msgid "The service is unavailable"
+msgstr "Servis kullanılabilir değil"
+
+msgid "The service plugins Neutron will use"
+msgstr "Neutron'un kullanacağı servis eklentileri"
+
+#, python-format
+msgid "The subnet request could not be satisfied because: %(reason)s"
+msgstr "Alt ağ isteği sağlanamadı çünkü: %(reason)s"
+
+msgid "The type of authentication to use"
+msgstr "Kullanılacak kimlik doğrulama türü"
+
+msgid ""
+"The uuid of the admin nova tenant. Deprecated in favour of an auth plugin in "
+"[nova]."
+msgstr ""
+"Yönetici nova kiracısının uuid'i. [nova] içindeki bir kimlik doğrulama "
+"eklentisi kullanılacağından artık kullanılmıyor."
+
+#, python-format
+msgid "The value '%(value)s' for %(element)s is not valid."
+msgstr "%(element)s için '%(value)s' değeri geçerli değil."
+
+msgid ""
+"The working mode for the agent. Allowed modes are: 'legacy' - this preserves "
+"the existing behavior where the L3 agent is deployed on a centralized "
+"networking node to provide L3 services like DNAT, and SNAT. Use this mode if "
+"you do not want to adopt DVR. 'dvr' - this mode enables DVR functionality "
+"and must be used for an L3 agent that runs on a compute host. 'dvr_snat' - "
+"this enables centralized SNAT support in conjunction with DVR.  This mode "
+"must be used for an L3 agent running on a centralized node (or in single-"
+"host deployments, e.g. devstack)"
+msgstr ""
+"Ajanın çalışma kipi. İzin verilen kipler: 'legacy' - Bu L3 ajanının DNAT, ve "
+"SNAT gibi L3 servisleri sağlamak için merkezi ağ düğümüne kurulduğu mevcut "
+"davranışı korur. DVR'a geçmek istemiyorsanız bu kipi kullanın. 'dvr' - bu "
+"kip DVR işlevini etkinleştirir ve bir hesap istemcisi üzerinde çalışan L3 "
+"ajanı için kullanılmalıdır. 'dvr_snat' - bu DVR ile beraber merkezi SNAT "
+"desteğini etkinleştirir.  Bu kip merkezi bir düğümde çalışan L3 ajanı için "
+"kullanılmalıdır (veya tek-istemcili kurulumlarda, örn. devstack)"
+
+msgid ""
+"Timeout for client connections socket operations. If an incoming connection "
+"is idle for this number of seconds it will be closed. A value of '0' means "
+"wait forever."
+msgstr ""
+"İstemci bağlantıları soket işlemleri için zaman aşımı. Eğer gelen bağlantı "
+"bu kadar saniye boşta ise kapatılır. '0' değeri sonsua kadar bekle demektir."
+
+msgid "Timeout in seconds for ovs-vsctl commands"
+msgstr "ovs-vsctl komutları için saniye cinsinden zaman aşımı"
+
+msgid "Timeout value for connecting to CRD service in seconds."
+msgstr "CRD servisine bağlantı için zaman aşımı değeri."
+
+msgid "Tomcat session timeout in minutes."
+msgstr "Dakika olarak Tomcat oturum zaman aşımı."
+
+msgid "Top-level directory for maintaining dhcp state"
+msgstr "Dhcp durumunu yönetmek için üst düzey dizin"
+
+msgid ""
+"True to delete all ports on all the OpenvSwitch bridges. False to delete "
+"ports created by Neutron on integration and external network bridges."
+msgstr ""
+"Tüm OpenvSwitch köprülerinde tüm bağlantı noktalarını silmek için True. "
+"Neutron tarafından tümleştirme ve harici ağ köprüleri üzerinde oluşturulan "
+"bağlantı noktalarını silmek için False."
+
+#, python-format
+msgid "Tunnel IP %(ip)s in use with host %(host)s"
+msgstr "Tünel IP %(ip)s %(host)s istemcisi tarafından kullanılıyor"
+
+msgid "Tunnel IP value needed by the ML2 plugin"
+msgstr "Tünel IP değerine ML2 eklentisi tarafından ihtiyaç duyuluyor"
+
+msgid "Tunnel bridge to use."
+msgstr "Kullanılacak tünel köprüsü."
+
+msgid "Tunneling cannot be enabled without a valid local_ip."
+msgstr "Tünelleme geçerli bir local_ip olmadan etkinleştirilemez."
+
+msgid "Turn off verification of the certificate for ssl"
+msgstr "Ssl için sertifika doğrulamayı kapat"
+
+msgid "URL for connecting to CRD service."
+msgstr "CRD servisine bağlantı için URL."
+
+msgid ""
+"URL for connection to nova. Deprecated in favour of an auth plugin in [nova]."
+msgstr ""
+"Nova bağlantısı için URL. [nova] içindeki kimlik doğrulama eklentisi yerini "
+"almıştır, artık kullanılmıyor."
+
+msgid "URL to database"
+msgstr "Veri tabanı URL'si"
+
+msgid "UUID of external network for routers implemented by the agents."
+msgstr "Ajanlar tarafından uygulanan yönlendiriciler için harici ağın UUID'si."
+
+msgid "UUID of tenant that holds Vyatta vRouter instances."
+msgstr "Vyatta vRouter arayüzlerini tutan kiracının UUID'si."
+
+#, python-format
+msgid "Unable to access %s"
+msgstr "%s'e erişilemiyor"
+
+#, python-format
+msgid ""
+"Unable to allocate subnet with prefix length %(prefixlen)s, maximum allowed "
+"prefix is %(max_prefixlen)s"
+msgstr ""
+"%(prefixlen)s önek uzunluğuna sahip alt ağ ayrılamıyor, izin verilen azami "
+"önek uzunluğu %(max_prefixlen)s"
+
+#, python-format
+msgid ""
+"Unable to allocate subnet with prefix length %(prefixlen)s, minimum allowed "
+"prefix is %(min_prefixlen)s"
+msgstr ""
+"%(prefixlen)s önek uzunluğuna sahip alt ağ ayrılamıyor, izin verilen asgari "
+"önek uzunluğu %(min_prefixlen)s"
+
+#, python-format
+msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
+msgstr "%(reason)s sebebiyle %(address_type)s adresi hesaplanamıyor"
+
+#, python-format
+msgid ""
+"Unable to complete operation for %(router_id)s. The number of routes exceeds "
+"the maximum %(quota)s."
+msgstr ""
+"%(router_id)s için işlem tamamlanamıyor. Rota sayısı %(quota)s azami "
+"sayısını aşıyor."
+
+#, python-format
+msgid ""
+"Unable to complete operation for %(subnet_id)s. The number of DNS "
+"nameservers exceeds the limit %(quota)s."
+msgstr ""
+"%(subnet_id)s için işlem tamamlanamadı. DNS isim sunucuları sayısı %(quota)s "
+"sayısını aşıyor."
+
+#, python-format
+msgid ""
+"Unable to complete operation for %(subnet_id)s. The number of host routes "
+"exceeds the limit %(quota)s."
+msgstr ""
+"%(subnet_id)s için işlem tamamlanamadı. İstemci rotaları sayısı %(quota)s "
+"sınırını aşıyor."
+
+#, python-format
+msgid ""
+"Unable to complete operation for network %(net_id)s. The IP address "
+"%(ip_address)s is in use."
+msgstr ""
+"%(net_id)s ağı için işlem tamamlanamadı. %(ip_address)s IP adresi kullanımda."
+
+#, python-format
+msgid ""
+"Unable to complete operation for network %(net_id)s. The mac address %(mac)s "
+"is in use."
+msgstr ""
+"%(net_id)s ağı için işlem tamamlanamadı. Mac adresi %(mac)s kullanımda."
+
+#, python-format
+msgid ""
+"Unable to complete operation on network %(net_id)s. There are one or more "
+"ports still in use on the network."
+msgstr ""
+"%(net_id)s ağı üzerinde işlem tamamlanamadı. Ağda hala kullanımda olan bir "
+"ya da daha fazla bağlantı noktası var."
+
+#, python-format
+msgid ""
+"Unable to complete operation on port %(port_id)s for network %(net_id)s. "
+"Port already has an attached device %(device_id)s."
+msgstr ""
+"%(net_id)s ağı için %(port_id)s bağlantı noktası üzerinde işlem "
+"tamamlanamadı. Bağlantı noktasına eklenmiş aygıt %(device_id)s zaten var."
+
+#, python-format
+msgid ""
+"Unable to complete operation on port %(port_id)s, port is already bound, "
+"port type: %(vif_type)s, old_mac %(old_mac)s, new_mac %(new_mac)s"
+msgstr ""
+"%(port_id)s bağlantı noktası üzerinde işlem tamamlanamadı, bağlantı noktası "
+"zaten bağlı, bağlantı noktası türü: %(vif_type)s, old_mac %(old_mac)s, "
+"new_mac %(new_mac)s"
+
+#, python-format
+msgid "Unable to complete operation on subnet %(subnet_id)s. %(reason)s"
+msgstr "%(subnet_id)s alt ağında işlem tamamlanamadı. %(reason)s"
+
+#, python-format
+msgid ""
+"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
+msgstr ""
+"NVSD kontrolcüsüne bağlanılamıyor. %(retries)s girişimden sonra çıkılıyor"
+
+#, python-format
+msgid "Unable to convert value in %s"
+msgstr "%s degeri dönüştürülemiyor"
+
+msgid "Unable to create the Agent Gateway Port"
+msgstr "Ajan Geçit Bağlantı Noktası oluşturulamıyor"
+
+msgid "Unable to create the SNAT Interface Port"
+msgstr "SNAT Arayüz Bağlantı Noktası oluşturulamıyor"
+
+#, python-format
+msgid ""
+"Unable to create the flat network. Physical network %(physical_network)s is "
+"in use."
+msgstr "Düz ağ oluşturulamıyor. Fiziksel ağ %(physical_network)s kullanımda."
+
+msgid ""
+"Unable to create the network. No available network found in maximum allowed "
+"attempts."
+msgstr ""
+"Ağ oluşturulamıyor. İzin verilen azami deneme içinde kullanılabilir ağ "
+"bulunamadı."
+
+msgid ""
+"Unable to create the network. No tenant network is available for allocation."
+msgstr "Ağ oluşturulamıyor. Ayırma için hiçbir kiracı ağ kullanılabilir değil."
+
+#, python-format
+msgid ""
+"Unable to create the network. The VLAN %(vlan_id)s on physical network "
+"%(physical_network)s is in use."
+msgstr ""
+"Ağ oluşturulamıyor. %(physical_network)s fiziksel ağındaki %(vlan_id)s VLAN "
+"kullanımda."
+
+#, python-format
+msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
+msgstr "Ağ oluşturulamıyor. Tünel ID'si %(tunnel_id)s kullanımda."
+
+#, python-format
+msgid "Unable to delete subnet pool: %(reason)s"
+msgstr "Alt ağ havuzu silinemiyor: %(reason)s"
+
+#, python-format
+msgid "Unable to determine mac address for %s"
+msgstr "%s içim mac adresi tanımlanamadı"
+
+#, python-format
+msgid "Unable to find '%s' in request body"
+msgstr "İstek gövdesinde '%s' bulunamadı"
+
+#, python-format
+msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
+msgstr "%(subnet_id)s alt ağında %(ip_address)s IP adresi bulunamıyor"
+
+#, python-format
+msgid "Unable to find any IP address on external network %(net_id)s."
+msgstr "%(net_id)s harici ağında IP adresi bulunamadı."
+
+#, python-format
+msgid "Unable to find resource name in %s"
+msgstr "%s içinde kaynak ismi bulunamadı"
+
+#, python-format
+msgid "Unable to find ssl_ca_file : %s"
+msgstr "ssl_ca_file bulunamadı : %s"
+
+#, python-format
+msgid "Unable to find ssl_cert_file : %s"
+msgstr "ssl_cert_file bulunamadı: %s"
+
+#, python-format
+msgid "Unable to find ssl_key_file : %s"
+msgstr "ssl_key_file bulunamadı: %s"
+
+msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
+msgstr "IPv4 öneki için EUI64 ile IP adresi üretilemedi"
+
+#, python-format
+msgid "Unable to generate unique DVR mac for host %(host)s."
+msgstr "%(host)s istemcisi için benzersiz DVR mac üretilemedi."
+
+#, python-format
+msgid "Unable to generate unique mac on network %(net_id)s."
+msgstr "%(net_id)s ağı üzerinde benzersiz mac üretilemedi."
+
+#, python-format
+msgid ""
+"Unable to identify a target field from:%s. Match should be in the form "
+"%%(<field_name>)s"
+msgstr ""
+"%s den bir hedef alan tanımlanamadı. Eşleşme %%(<field_name>)s biçiminde "
+"olmalı"
+
+#, python-format
+msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
+msgstr "%(config_path)s yapılandırma dosyasından %(app_name)s  yüklenemedi."
+
+#, python-format
+msgid ""
+"Unable to reconfigure sharing settings for network %(network)s. Multiple "
+"tenants are using it"
+msgstr ""
+"%(network)s ağı için paylaşım ayarları yeniden yapılandırılamıyor. Birden "
+"fazla kiracı kullanıyor"
+
+#, python-format
+msgid "Unable to update address scope %(address_scope_id)s : %(reason)s"
+msgstr "Adres kapsamı %(address_scope_id)s güncellenemiyor: %(reason)s"
+
+#, python-format
+msgid ""
+"Unable to verify match:%(match)s as the parent resource: %(res)s was not "
+"found"
+msgstr "Eşleşme:%(match)s doğrulanamadı çünkü üst kaynak: %(res)s bulunamadı"
+
+#, python-format
+msgid "Unexpected response code: %s"
+msgstr "Beklenmedik yanıt kodu: %s"
+
+#, python-format
+msgid "Unexpected response: %s"
+msgstr "Beklenmeyen yanıt: %s"
+
+msgid "Unimplemented commands"
+msgstr "Uygulanmayan komutlar"
+
+msgid "Unknown API version specified"
+msgstr "Bilinmeyen API sürümü belirtildi"
+
+#, python-format
+msgid "Unknown address type %(address_type)s"
+msgstr "Bilinmeyen adres türü %(address_type)s"
+
+#, python-format
+msgid "Unknown attribute '%s'."
+msgstr "Bilinmeyen öznitelik '%s'."
+
+#, python-format
+msgid "Unknown chain: %r"
+msgstr "Tanınmayan zincir: %r"
+
+#, python-format
+msgid "Unknown quota resources %(unknown)s."
+msgstr "Bilinmeyen kota kaynakları %(unknown)s."
+
+msgid "Unmapped error"
+msgstr "Unmapped hata"
+
+msgid "Unrecognized action"
+msgstr "Tanınmayan eylem"
+
+#, python-format
+msgid "Unrecognized attribute(s) '%s'"
+msgstr "Tanınmayan öznitelik(ler) '%s'"
+
+msgid "Unspecified minimum subnet pool prefix"
+msgstr "Belirtilmemiş asgari alt ağ havuz öneki"
+
+msgid "Unsupported Content-Type"
+msgstr "Desteklenmeyen içerik türü"
+
+#, python-format
+msgid "Unsupported network type %(net_type)s."
+msgstr "Desteklenmeyen ağ türü %(net_type)s."
+
+#, python-format
+msgid "Unsupported port state: %(port_state)s"
+msgstr "Desteklenmeyen bağlantı noktası durumu: %(port_state)s"
+
+msgid "Unsupported request type"
+msgstr "Desteklenmeyen istek türü"
+
+msgid "Updating default security group not allowed."
+msgstr "Varsayılan güvenlik grubunu güncellemeye izin verilmiyor."
+
+msgid ""
+"Use ML2 l2population mechanism driver to learn remote MAC and IPs and "
+"improve tunnel scalability."
+msgstr ""
+"Uzak MAC ve IP'leri öğrenmek ve tünel ölçeklenebilirliğini artırmak için ML2 "
+"l2population mekanizması sürücüsünü kullan."
+
+msgid "Use broadcast in DHCP replies"
+msgstr "DHCP yanıtlarında yayın kullan"
+
+msgid "Use either --delta or relative revision, not both"
+msgstr "Ya --delta ya ilişkili sürüm kullanın, ikisini birden değil"
+
+msgid "Use ipset to speed-up the iptables based security groups."
+msgstr "iptables tabanlı güvenlik gruplarını hızlandırmak için ipset kullan."
+
+msgid "Use the root helper to read the namespaces from the operating system."
+msgstr ""
+"İşletim sisteminde isim uzaylarını okumak için kök yardımcısını kullan."
+
+msgid ""
+"Use veths instead of patch ports to interconnect the integration bridge to "
+"physical bridges."
+msgstr ""
+"Tümleştirme köprüsünü fiziksel köprülere dahili bağlama için yama bağlantı "
+"noktaları yerine veth'ler kullan."
+
+msgid "User (uid or name) running metadata proxy after its initialization"
+msgstr ""
+"İlklendirilmesinden sonra metadata vekili çalıştıran kullanıcı (uid veya "
+"isim)"
+
+msgid ""
+"User (uid or name) running metadata proxy after its initialization (if "
+"empty: agent effective user)."
+msgstr ""
+"İlklendirilmesinden sonra metadata vekilini çalıştıran kullanıcı (uid veya "
+"isim) (boşsa: ajan etkin kullanıcı)."
+
+msgid "User (uid or name) running this process after its initialization"
+msgstr ""
+"İlklendirilmesinden sonra bu süreci çalıştıran kullanıcı (uid veya isim)"
+
+#, python-format
+msgid "User does not have admin privileges: %(reason)s"
+msgstr "Kullanıcı yönetici haklarına sahip değil: %(reason)s"
+
+msgid ""
+"Username for connecting to nova in admin context. Deprecated in favour of an "
+"auth plugin in [nova]."
+msgstr ""
+"Nova'ya yönetici içeriğinde bağlanmak için kullanıcı adı. [nova] içindeki "
+"kimlik doğrulama eklentisi bunun yerini almıştır, artık kullanılmıyor."
+
+msgid "Uses veth for an interface or not"
+msgstr "Bir arayüz için veth kullanıp kullanmadığı"
+
+msgid "VRRP authentication password"
+msgstr "VRRP kimlik doğrulama parolası"
+
+msgid "VRRP authentication type"
+msgstr "VRRP kimlik doğrulama türü"
+
+msgid "VXLAN Network unsupported."
+msgstr "VXLAN Ağı desteklenmiyor."
+
+#, python-format
+msgid ""
+"Validation of dictionary's keys failed. Expected keys: %(expected_keys)s "
+"Provided keys: %(provided_keys)s"
+msgstr ""
+"Sözlük anahtarlarının doğrulanması başarısız. Beklenen anahtarlar: "
+"%(expected_keys)s Sağlanan anahtarlar: %(provided_keys)s"
+
+#, python-format
+msgid "Validator '%s' does not exist."
+msgstr "Onaylayan '%s' mevcut değil."
+
+#, python-format
+msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
+msgstr "'%(mapping)s' eşleştirmesindeki %(value)s değeri benzersiz değil"
+
+msgid "Vyatta vRouter login credentials"
+msgstr "Vyatta vRouter giriş kimlik bilgileri"
+
+msgid "Vyatta vRouter management network id."
+msgstr "Vyatta vRouter yönetim ağ kimliği."
+
+msgid ""
+"Watch file log. Log watch should be disabled when metadata_proxy_user/group "
+"has no read/write permissions on metadata proxy log file."
+msgstr ""
+"Dosya kaydını izle. Kayıt izleme metadata_proxy_user/group metadata vekil "
+"kayıt dosyasına okuyamıyorsa/yazamıyorsa kapatılmalıdır."
+
+msgid ""
+"Where to store Neutron state files. This directory must be writable by the "
+"agent."
+msgstr ""
+"Neutron durum dosyalarının nerede depolanacağı. Bu dizin ajan tarafından "
+"yazılabilir olmalıdır."
+
+msgid ""
+"With IPv6, the network used for the external gateway does not need to have "
+"an associated subnet, since the automatically assigned link-local address "
+"(LLA) can be used. However, an IPv6 gateway address is needed for use as the "
+"next-hop for the default route. If no IPv6 gateway address is configured "
+"here, (and only then) the neutron router will be configured to get its "
+"default route from router advertisements (RAs) from the upstream router; in "
+"which case the upstream router must also be configured to send these RAs. "
+"The ipv6_gateway, when configured, should be the LLA of the interface on the "
+"upstream router. If a next-hop using a global unique address (GUA) is "
+"desired, it needs to be done via a subnet allocated to the network and not "
+"through this parameter. "
+msgstr ""
+"IPv6 ile, harici geçit için kullanılan ağ ilişkili bir alt ağa sahip olmak "
+"zorunda değildir, çünkü otomatik olarak atanan bağlantı-yerel adres (LLA) "
+"kullanılabilir. Ancak bir IPv6 geçit adresine varsayılan rota için sonraki-"
+"nokta olarak kullanılmak üzere ihtiyaç vardır. Burada bir IPv6 geçit adresi "
+"yapılandırılmazsa, (ve yalnızca bu durumda) neutron yönlendirici, varsayılan "
+"rotasını üst seviye yönlendirici duyurularından (RA) alacak şekilde "
+"yapılandırılır; ki bu durumda üst seviye yönlendirici bu RA'ları gönderecek "
+"şekilde yapılandırılmalıdır. ipv6_gateway, yapılandırıldığında, üst seviye "
+"yönlendirici üzerindeki arayüzün LLA'sı olmalıdır. Eğer genel benzersiz "
+"adres (GUA) kullanan bir sonraki-nokta isteniyorsa, bu ağa ayrılmış bir alt "
+"ağ vasıtasıyla yapılmalıdır, bu parametre ile değil. "
+
+msgid "You must implement __call__"
+msgstr "__call__ fonksiyonunu uygulamalısınız."
+
+msgid ""
+"You must provide a config file for bridge - either --config-file or "
+"env[NEUTRON_TEST_CONFIG_FILE]"
+msgstr ""
+"Köprü için bir yapılandırma dosyası sağlamalısınız - ya --config-file ya da "
+"env[NEUTRON_TEST_CONFIG_FILE]"
+
+msgid "You must provide a revision or relative delta"
+msgstr "Bir sürüm ya da ilişkili fark sağlamalısınız"
+
+msgid "admin_state_up=False routers are not supported."
+msgstr "admin_state_up=False yönlendiriciler desteklenmiyor."
+
+msgid "allocation_pools allowed only for specific subnet requests."
+msgstr "allocation_pools yalnızca belirli alt ağ istekleri için izinli."
+
+msgid ""
+"backoff rate multiplier for waiting period between retries for request to "
+"daemon, i.e. value of 2 will  double the request timeout each retry"
+msgstr ""
+"artalan işlemine istek için yeniden denemeler arasındaki bekleme aralığı "
+"için geri çekilme oranı çarpanı  her yeniden denemeden istek zaman aşımını "
+"ikiye katlayacak"
+
+msgid "binding:profile value too large"
+msgstr "bağ:profil değeri çok büyük"
+
+#, python-format
+msgid "cannot be deleted due to %s"
+msgstr "%s sebebiyle silinemez"
+
+msgid "cidr and prefixlen must not be supplied together"
+msgstr "cidr ve prefixlen birlikte verilmemelidir"
+
+#, python-format
+msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
+msgstr "dhcp_agents_per_network >= 1 olmalı. '%s' geçersiz."
+
+msgid "eswitch daemon end point"
+msgstr "eswitch artalan işlemi uç noktası"
+
+msgid "fixed_ip_address cannot be specified without a port_id"
+msgstr "fixed_ip_addres port_id olmadan belirtilemez"
+
+#, python-format
+msgid "has device owner %s"
+msgstr "%s aygıt sahibine sahip"
+
+msgid "in use"
+msgstr "kullanımda"
+
+msgid "integration bridge"
+msgstr "tümleştirme köprüsü"
+
+#, python-format
+msgid "ip command failed on device %(dev_name)s: %(reason)s"
+msgstr "ip komutu %(dev_name)s aygıtı üzerinde başarısız: %(reason)s"
+
+#, python-format
+msgid "ip link capability %(capability)s is not supported"
+msgstr "ip bağlantı yeteneği %(capability)s desteklenmiyor"
+
+#, python-format
+msgid "ip link command is not supported: %(reason)s"
+msgstr "ip bağlantı komutu desteklenmiyor: %(reason)s"
+
+msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
+msgstr "subnetpool_id ve cidr olmadığında ip_version belirtilmelidir"
+
+msgid "ipv6_address_mode is not valid when ip_version is 4"
+msgstr "ip_version 4 olduğunda ipv6_address_mode geçerli değildir"
+
+msgid "ipv6_ra_mode is not valid when ip_version is 4"
+msgstr "ip_version 4 olduğunda ipv6_ra_mode geçerli değildir"
+
+msgid ""
+"ipv6_ra_mode or ipv6_address_mode cannot be set when enable_dhcp is set to "
+"False."
+msgstr ""
+"enable_dhcp False olarak ayarlıyken ipv6_ra_mode veya ipv6_address_mode "
+"ayarlanamaz."
+
+#, python-format
+msgid ""
+"ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode set to "
+"'%(addr_mode)s' is not valid. If both attributes are set, they must be the "
+"same value"
+msgstr ""
+"ipv6_ra_mode kipi '%(ra_mode)s' olarak ipv6_address_mode '%(addr_mode)s' "
+"olarak ayarlanması geçersizdir. İki öznitelik de ayarlanıyorsa, aynı değerde "
+"olmalılar"
+
+msgid "mac address update"
+msgstr "mac adres güncellemesi"
+
+#, python-format
+msgid ""
+"max_l3_agents_per_router %(max_agents)s config parameter is not valid. It "
+"has to be greater than or equal to min_l3_agents_per_router %(min_agents)s."
+msgstr ""
+"max_l3_agents_per_router %(max_agents)s yapılandırma parametresi geçerli "
+"değil. min_l3_agents_per_router %(min_agents)s den büyük ya da ona eşit "
+"olmalı."
+
+#, python-format
+msgid ""
+"min_l3_agents_per_router config parameter is not valid. It has to be equal "
+"to or more than %s for HA."
+msgstr ""
+"min_l3_agents_per_router yapılandırma parametresi geçerli değil. HA için %s "
+"den büyük ya da eşit olmalı."
+
+msgid "network_id and router_id are None. One must be provided."
+msgstr "network_id ve router_id None. Birisi sağlanmalı."
+
+msgid "network_type required"
+msgstr "network_type gerekli"
+
+#, python-format
+msgid "network_type value '%s' not supported"
+msgstr "network_type değeri '%s' desteklenmiyor"
+
+msgid "new subnet"
+msgstr "yeni alt ağ"
+
+msgid "physical network name is empty"
+msgstr "fiziksel ağ ismi boş"
+
+#, python-format
+msgid "physical_network '%s' unknown  for VLAN provider network"
+msgstr "physical_network '%s' VLAN sağlayıcı ağı için bilinmiyor"
+
+#, python-format
+msgid "physical_network '%s' unknown for flat provider network"
+msgstr "physical_network '%s' düz sağlayıcı ağı için bilinmiyor"
+
+msgid "physical_network required for flat provider network"
+msgstr "Düz sağlayıcı ağı için physical_network gerekir"
+
+#, python-format
+msgid "provider:physical_network specified for %s network"
+msgstr "sağlayıcı:physical_network %s ağı için belirtildi"
+
+msgid "record"
+msgstr "kayıt"
+
+msgid "respawn_interval must be >= 0 if provided."
+msgstr "eğer sağlanmışsa respawn_interval >= 0 olmalı."
+
+#, python-format
+msgid "segmentation_id out of range (%(min)s through %(max)s)"
+msgstr "segmentation_id aralık dışında (%(min)s %(max)s arasında)"
+
+msgid "segmentation_id requires physical_network for VLAN provider network"
+msgstr ""
+"segmentation_id VLAN sağlayıcı ağı için physical_network'e ihtiyaç duyar"
+
+msgid "the nexthop is not connected with router"
+msgstr "Sonraki nokta yönlendiriciyle bağlı değil"
+
+msgid "the nexthop is used by router"
+msgstr "sonraki nokta yönlendirici tarafından kullanılıyor"
+
+msgid ""
+"uuid provided from the command line so external_process can track us via /"
+"proc/cmdline interface."
+msgstr ""
+"external_process bizi /proc/cmdline arayüzünden takip edebilsin diye komut "
+"satırından sağlanan uuid."

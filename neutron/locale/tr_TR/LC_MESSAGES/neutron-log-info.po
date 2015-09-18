@@ -5,21 +5,23 @@
 # Translators:
 # ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
 # Alper Çiftçi <alprciftci@gmail.com>, 2015
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-21 06:07+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
 "language/tr_TR/)\n"
-"Language: tr_TR\n"
+"Language: tr-TR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
@@ -28,12 +30,6 @@ msgstr "%(action)s başarısız (istemci hatası): %(exc)s"
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr ""
-"%(plugin_key)s: %(args)s bağımsız değişkenlerine sahip %(function_name)s "
-"atlandı"
 
 #, python-format
 msgid "%(prog)s version %(version)s"
@@ -140,21 +136,6 @@ msgstr ""
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr "%s filtrelenmemiş bağlantı noktası filtresi güncellenmeye çalışıldı"
 
-msgid "Bad resource for forming a create request"
-msgstr "Oluşturma isteği oluşturmak için kötü kaynak"
-
-msgid "Bad resource for forming a delete request"
-msgstr "Silme isteği oluşturmak için kötü kaynak"
-
-msgid "Bad resource for forming a list request"
-msgstr "Liste isteği oluşturmak için kötü kaynak"
-
-msgid "Bad resource for forming a show request"
-msgstr "Gösterme isteği oluşturmak için kötü kaynak"
-
-msgid "Bad resource for forming a update request"
-msgstr "Güncelleme isteği oluşturmak için kötü kaynak"
-
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -203,10 +184,6 @@ msgstr "Yapılandırılan mekanizma sürücü isimleri: %s"
 #, python-format
 msgid "Configured type driver names: %s"
 msgstr "Tür sürücü isimleri yapılandırıldı: %s"
-
-#, python-format
-msgid "Controller IPs: %s"
-msgstr "Kontrolcü IP'si: %s"
 
 msgid "DHCP agent started"
 msgstr "DHCP ajanı başlatıldı"
@@ -259,33 +236,6 @@ msgid ""
 msgstr ""
 "%s ağı zamanlanamadı, uygun ajan yok veya başka bir sunucu tarafından zaten "
 "zamanlanmış olabilir"
-
-msgid "Fake SDNVE controller initialized"
-msgstr "Sahte SDNVE kontrolcüsü ilklendirildi"
-
-msgid "Fake SDNVE controller: check and create tenant"
-msgstr "Sahte SDNVE kontrolcüsü: kiracıyı kontrol et ve oluştur"
-
-msgid "Fake SDNVE controller: create"
-msgstr "Sahte SDNVE kontrolcüsü: oluştur"
-
-msgid "Fake SDNVE controller: delete"
-msgstr "Sahte SDNVE kontrolcüsü: sil"
-
-msgid "Fake SDNVE controller: get controller"
-msgstr "Sahte SDNVE kontrolcüsü: kontrolcüyü al"
-
-msgid "Fake SDNVE controller: get tenant by id"
-msgstr "Sahte SDNVE kontrolcüsü: id ile kiracı al"
-
-msgid "Fake SDNVE controller: list"
-msgstr "Sahte SDNVE kontrolcüsü: listele"
-
-msgid "Fake SDNVE controller: show"
-msgstr "Sahte SDNVE kontrolcüsü: göster"
-
-msgid "Fake SDNVE controller: update"
-msgstr "Sahte SDNVE kontrolcüsü: güncelle"
 
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
@@ -400,11 +350,6 @@ msgstr "Arayüz sürücüsü %s yükleniyor"
 msgid "Logging enabled!"
 msgstr "Günlükleme etkin!"
 
-#, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr "Döngü yinelemsi aralığı aştı (%(polling_interval)s ile %(elapsed)s)!"
-
 msgid "ML2 FlatTypeDriver initialization complete"
 msgstr "ML2 FlatTypeDriver ilklendirmesi tamamlandı"
 
@@ -414,12 +359,6 @@ msgstr "ML2 LocalTypeDriver ilklendirmesi tamamlandı"
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "Fiziksel ağ %(physical_network)s %(bridge)s köprüsüne eşleştiriliyor"
-
-#, python-format
-msgid ""
-"Mapping physical network %(physical_network)s to interface %(interface)s"
-msgstr ""
-"%(physical_network)s fiziksel ağını %(interface)s arayüzüne eşleştiriyor"
 
 msgid "Modular L2 Plugin initialization complete"
 msgstr "Modüler L2 Eklentisi ilklendirme tamamlandı"
@@ -436,10 +375,6 @@ msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr "Neutron servisi başlatıldı, %(host)s:%(port)s üzerinde dinliyor"
 
 #, python-format
-msgid "No %s Plugin loaded"
-msgstr "Hiçbir %s Eklenti yüklenmedi"
-
-#, python-format
 msgid "No device with MAC %s defined on agent."
 msgstr "Ajanda %s MAC'ine sahip bir aygıt tanımlanmamış."
 
@@ -448,10 +383,6 @@ msgstr "Ip ayırma ayarlanmamış"
 
 msgid "No ports here to refresh firewall"
 msgstr "Burda güvenlik duvarını tazelemek için bağlantı noktası yok"
-
-#, python-format
-msgid "Non matching tenant and network types: %(ttype)s %(ntype)s"
-msgstr "Eşleşmeyen kiracı ve ağ türleri: %(ttype)s %(ntype)s"
 
 #, python-format
 msgid "Nova event response: %s"
@@ -550,10 +481,6 @@ msgid "Remove device filter for %r"
 msgstr "%r için aygıt filtresini kaldır"
 
 #, python-format
-msgid "Removing device with mac_address %s"
-msgstr "%s mac_address'e sahip aygıt kaldırılıyor"
-
-#, python-format
 msgid "Removing iptables rule for IPset: %s"
 msgstr "IPset için iptables kuralı siliniyor: %s"
 
@@ -594,13 +521,6 @@ msgstr "Güvenlik grubu kuralı güncellendi %r"
 #, python-format
 msgid "Service %s is supported by the core plugin"
 msgstr "Servis %s çekirdek eklenti tarafından destekleniyor"
-
-msgid "Set a new controller if needed."
-msgstr "Gerekirse yeni bir kontrolcü ayarla."
-
-#, python-format
-msgid "Set the controller to a new controller: %s"
-msgstr "Kontrolcüyü yeni kontrolcüye ayarla: %s"
 
 #, python-format
 msgid ""
@@ -655,14 +575,6 @@ msgstr "Durum eş zamanlandırma tamamlandı"
 #, python-format
 msgid "Tenant network_types: %s"
 msgstr "Kiracı network_types: %s"
-
-#, python-format
-msgid "The IP addr of available SDN-VE controllers: %s"
-msgstr "Kullanılabilir SDN-VE kontrolcülerinin IP adresi: %s"
-
-#, python-format
-msgid "The SDN-VE controller IP address: %s"
-msgstr "SDN-VE kontrolcüsü IP adresi: %s"
 
 #, python-format
 msgid ""

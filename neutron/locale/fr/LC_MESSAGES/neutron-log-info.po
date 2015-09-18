@@ -5,11 +5,12 @@
 # Translators:
 # Maxime COQUEREL <max.coquerel@gmail.com>, 2014-2015
 # Patte D <pattedeph@gmail.com>, 2015
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French (http://www.transifex.com/openstack/neutron/language/"
@@ -20,6 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
@@ -28,10 +30,6 @@ msgstr "Échec %(action)s  (Erreur client): %(exc)s"
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s : %(function_name)s avec les arguments %(args)s ignoré"
 
 #, python-format
 msgid "%(prog)s version %(version)s"
@@ -124,10 +122,6 @@ msgstr "Supprimer le pont: %s"
 #, python-format
 msgid "Config paste file: %s"
 msgstr "Config du fichier de collage : %s"
-
-#, python-format
-msgid "Controller IPs: %s"
-msgstr "IPs du controlleur: %s"
 
 msgid "DHCP agent started"
 msgstr "Agent DHCP démarré"
@@ -222,13 +216,6 @@ msgid "Logging enabled!"
 msgstr "Consignation activée !"
 
 #, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-"L'itération de boucle a dépassé l'intervalle (%(polling_interval)s contre "
-"%(elapsed)s) !"
-
-#, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "Mappage du réseau physique %(physical_network)s sur le pont %(bridge)s"
 
@@ -239,10 +226,6 @@ msgstr "Plages de réseau local virtuel de réseau : %s"
 #, python-format
 msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr "Service Neutron démarré, en écoute sur %(host)s:%(port)s"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "Aucun plug-in %s chargé"
 
 #, python-format
 msgid "No device with MAC %s defined on agent."
@@ -305,10 +288,6 @@ msgstr "Régénération des règles de pare-feu"
 #, python-format
 msgid "Remove device filter for %r"
 msgstr "Suppression du filtre d'unités pour %r"
-
-#, python-format
-msgid "Removing device with mac_address %s"
-msgstr "Retrait de l'appareil ayant pour mac_address %s"
 
 #, python-format
 msgid "Security group member updated %r"

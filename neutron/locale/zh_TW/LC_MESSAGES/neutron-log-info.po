@@ -3,29 +3,27 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (Taiwan) (http://www.transifex.com/openstack/neutron/"
 "language/zh_TW/)\n"
-"Language: zh_TW\n"
+"Language: zh-TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s：已忽略帶有引數 %(args)s 的 %(function_name)s"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
@@ -127,21 +125,12 @@ msgid "Logging enabled!"
 msgstr "已啟用記載！"
 
 #, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）！"
-
-#, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
 
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "網路 VLAN 範圍：%s"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "未載入 %s 外掛程式"
 
 msgid "OVS cleanup completed successfully"
 msgstr "已順利完成 OVS 清理"

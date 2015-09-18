@@ -4,11 +4,12 @@
 #
 # Translators:
 # Sasuke(Kyohei MORIYAMA) <>, 2014
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Japanese (http://www.transifex.com/openstack/neutron/language/"
@@ -19,15 +20,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr ""
-"%(plugin_key)s: 引数 %(args)s が指定された %(function_name)s は無視されます"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
@@ -136,12 +133,6 @@ msgid "Logging enabled!"
 msgstr "ロギングは有効です"
 
 #, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-"ループ反復が間隔を超えました (%(polling_interval)s に対して %(elapsed)s)。"
-
-#, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 "物理ネットワーク %(physical_network)s をブリッジ %(bridge)s にマップしていま"
@@ -150,10 +141,6 @@ msgstr ""
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "ネットワーク VLAN の範囲: %s"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "%s プラグインはロードされませんでした"
 
 msgid "OVS cleanup completed successfully"
 msgstr "OVS のクリーンアップが正常に完了しました"
