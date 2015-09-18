@@ -39,6 +39,7 @@ Programming HowTos and Tutorials
 .. toctree::
     :maxdepth: 3
 
+    effective_neutron
     development.environment
     contribute
     neutron_api
