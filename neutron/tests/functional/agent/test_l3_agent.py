@@ -790,7 +790,7 @@ class L3HATestFramework(L3AgentTestFramework):
         get_ns_name = mock.patch.object(
             namespaces.RouterNamespace, '_get_ns_name').start()
         get_ns_name.return_value = "%s%s%s" % (
-            namespaces.RouterNamespace._get_ns_name(router_info['id']),
+            'qrouter-' + router_info['id'],
             self.NESTED_NAMESPACE_SEPARATOR, self.agent.host)
         router1 = self.manage_router(self.agent, router_info)
 
