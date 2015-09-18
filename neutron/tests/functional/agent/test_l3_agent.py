@@ -768,7 +768,7 @@ class L3HATestFramework(L3AgentTestFramework):
     def test_ha_router_failover(self):
         router_info = self.generate_router_info(enable_ha=True)
         ns_name = "%s%s%s" % (
-                namespaces.RouterNamespace._get_ns_name(router_info['id']),
+                'qrouter-' + router_info['id'],
                 self.NESTED_NAMESPACE_SEPARATOR, self.agent.host)
         mock.patch.object(namespaces.RouterNamespace, '_get_ns_name',
                 return_value=ns_name).start()
