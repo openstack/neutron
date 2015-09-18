@@ -453,6 +453,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                           **self.ri_kwargs)
             ri._create_dvr_gateway = mock.Mock()
             ri.get_snat_interfaces = mock.Mock(return_value=self.snat_ports)
+            ri.snat_ports = self.snat_ports
             ri._create_snat_namespace()
             ri.fip_ns = agent.get_fip_ns(ex_net_id)
             ri.internal_ports = self.snat_ports
@@ -535,6 +536,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 ri._snat_redirect_remove.assert_called_with(
                     sn_port, sn_port,
                     ri.get_internal_device_name(sn_port['id']))
+                ri.get_snat_port_for_internal_port.assert_called_with(
+                    mock.ANY, ri.snat_ports)
         else:
             raise Exception("Invalid action %s" % action)
 
