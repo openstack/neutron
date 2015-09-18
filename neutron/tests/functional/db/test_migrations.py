@@ -270,9 +270,6 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                         isinstance(element, sqlalchemy.Table) and
                         element.name in ['ml2_geneve_allocations',
                                          'ml2_geneve_endpoints'],
-                        isinstance(element, sqlalchemy.ForeignKeyConstraint)
-                        and
-                        element.table.name == 'flavorserviceprofilebindings',
                         isinstance(element, sqlalchemy.Index) and
                         element.table.name == 'ml2_geneve_allocations'
                     ]):

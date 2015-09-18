@@ -22,8 +22,7 @@ import sqlalchemy as sa
 from sqlalchemy.engine import reflection
 
 
-CREATION_OPERATIONS = (sa.sql.ddl.AddConstraint,
-                       sa.sql.ddl.CreateIndex,
+CREATION_OPERATIONS = (sa.sql.ddl.CreateIndex,
                        sa.sql.ddl.CreateTable,
                        sa.sql.ddl.CreateColumn,
                        )
