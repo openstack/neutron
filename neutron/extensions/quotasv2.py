@@ -25,10 +25,10 @@ from neutron.api.v2 import resource
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
 from neutron import manager
+from neutron.pecan_wsgi import controllers
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron import wsgi
-
 
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
@@ -144,6 +144,10 @@ class Quotasv2(extensions.ExtensionDescriptor):
             Quotasv2.get_alias(),
             controller,
             collection_actions={'tenant': 'GET'})]
+
+    @classmethod
+    def get_pecan_controllers(cls):
+        return ((RESOURCE_COLLECTION, controllers.QuotasController()), )
 
     def get_extended_resources(self, version):
         if version == "2.0":

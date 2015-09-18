@@ -22,6 +22,7 @@ from neutron._i18n import _, _LW
 from neutron.api import extensions
 from neutron.api.views import versions as versions_view
 from neutron import manager
+from neutron.pecan_wsgi.controllers import utils
 
 LOG = log.getLogger(__name__)
 _VERSION_INFO = {}
@@ -36,44 +37,30 @@ def _get_version_info():
     return _VERSION_INFO.values()
 
 
-def expose(*args, **kwargs):
-    """Helper function so we don't have to specify json for everything."""
-    kwargs.setdefault('content_type', 'application/json')
-    kwargs.setdefault('template', 'json')
-    return pecan.expose(*args, **kwargs)
-
-
-def when(index, *args, **kwargs):
-    """Helper function so we don't have to specify json for everything."""
-    kwargs.setdefault('content_type', 'application/json')
-    kwargs.setdefault('template', 'json')
-    return index.when(*args, **kwargs)
-
-
 class RootController(object):
 
-    @expose(generic=True)
+    @utils.expose(generic=True)
     def index(self):
         builder = versions_view.get_view_builder(pecan.request)
         versions = [builder.build(version) for version in _get_version_info()]
         return dict(versions=versions)
 
-    @when(index, method='HEAD')
-    @when(index, method='POST')
-    @when(index, method='PATCH')
-    @when(index, method='PUT')
-    @when(index, method='DELETE')
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PATCH')
+    @utils.when(index, method='PUT')
+    @utils.when(index, method='DELETE')
     def not_supported(self):
         pecan.abort(405)
 
 
 class ExtensionsController(object):
 
-    @expose()
+    @utils.expose()
     def _lookup(self, alias, *remainder):
         return ExtensionController(alias), remainder
 
-    @expose()
+    @utils.expose()
     def index(self):
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         exts = [extensions.ExtensionController._translate(ext)
@@ -93,20 +80,20 @@ class V2Controller(object):
 
     extensions = ExtensionsController()
 
-    @expose(generic=True)
+    @utils.expose(generic=True)
     def index(self):
         builder = versions_view.get_view_builder(pecan.request)
         return dict(version=builder.build(self.version_info))
 
-    @when(index, method='HEAD')
-    @when(index, method='POST')
-    @when(index, method='PATCH')
-    @when(index, method='PUT')
-    @when(index, method='DELETE')
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PATCH')
+    @utils.when(index, method='PUT')
+    @utils.when(index, method='DELETE')
     def not_supported(self):
         pecan.abort(405)
 
-    @expose()
+    @utils.expose()
     def _lookup(self, collection, *remainder):
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
@@ -131,7 +118,7 @@ class ExtensionController(object):
     def __init__(self, alias):
         self.alias = alias
 
-    @expose()
+    @utils.expose()
     def index(self):
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         ext = ext_mgr.extensions.get(self.alias, None)
@@ -142,24 +129,15 @@ class ExtensionController(object):
         return {'extension': extensions.ExtensionController._translate(ext)}
 
 
-class NeutronPecanController(object):
+class CollectionsController(utils.NeutronPecanController):
 
-    def __init__(self, collection, resource):
-        self.collection = collection
-        self.resource = resource
-        self.plugin = manager.NeutronManager.get_plugin_for_resource(
-            self.resource)
-
-
-class CollectionsController(NeutronPecanController):
-
-    @expose()
+    @utils.expose()
     def _lookup(self, item, *remainder):
         # Store resource identifier in request context
         request.context['resource_id'] = item
         return ItemController(self.resource, item), remainder
 
-    @expose(generic=True)
+    @utils.expose(generic=True)
     def index(self, *args, **kwargs):
         return self.get(*args, **kwargs)
 
@@ -175,14 +153,14 @@ class CollectionsController(NeutronPecanController):
         neutron_context = request.context['neutron_context']
         return {self.collection: lister(neutron_context, filters=filters)}
 
-    @when(index, method='HEAD')
-    @when(index, method='PATCH')
-    @when(index, method='PUT')
-    @when(index, method='DELETE')
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='PATCH')
+    @utils.when(index, method='PUT')
+    @utils.when(index, method='DELETE')
     def not_supported(self):
         pecan.abort(405)
 
-    @when(index, method='POST')
+    @utils.when(index, method='POST')
     def post(self, *args, **kwargs):
         # TODO(kevinbenton): emulated bulk!
         resources = request.context['resources']
@@ -204,13 +182,13 @@ class CollectionsController(NeutronPecanController):
         return {key: creator(neutron_context, data)}
 
 
-class ItemController(NeutronPecanController):
+class ItemController(utils.NeutronPecanController):
 
     def __init__(self, resource, item):
         super(ItemController, self).__init__(None, resource)
         self.item = item
 
-    @expose(generic=True)
+    @utils.expose(generic=True)
     def index(self, *args, **kwargs):
         return self.get()
 
@@ -219,13 +197,13 @@ class ItemController(NeutronPecanController):
         neutron_context = request.context['neutron_context']
         return {self.resource: getter(neutron_context, self.item)}
 
-    @when(index, method='HEAD')
-    @when(index, method='POST')
-    @when(index, method='PATCH')
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PATCH')
     def not_supported(self):
         pecan.abort(405)
 
-    @when(index, method='PUT')
+    @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
         neutron_context = request.context['neutron_context']
         resources = request.context['resources']
@@ -241,7 +219,7 @@ class ItemController(NeutronPecanController):
         data = {self.resource: resources[0]}
         return updater(neutron_context, self.item, data)
 
-    @when(index, method='DELETE')
+    @utils.when(index, method='DELETE')
     def delete(self):
         # TODO(kevinbenton): setting code could be in a decorator
         pecan.response.status = 204
