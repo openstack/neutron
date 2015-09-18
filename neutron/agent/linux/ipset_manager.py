@@ -120,7 +120,7 @@ class IpsetManager(object):
 
     def _del_member_from_set(self, set_name, member_ip):
         cmd = ['ipset', 'del', set_name, member_ip]
-        self._apply(cmd)
+        self._apply(cmd, fail_on_errors=False)
         self.ipset_sets[set_name].remove(member_ip)
 
     def _create_set(self, set_name, ethertype):
@@ -129,13 +129,14 @@ class IpsetManager(object):
         self._apply(cmd)
         self.ipset_sets[set_name] = []
 
-    def _apply(self, cmd, input=None):
+    def _apply(self, cmd, input=None, fail_on_errors=True):
         input = '\n'.join(input) if input else None
         cmd_ns = []
         if self.namespace:
             cmd_ns.extend(['ip', 'netns', 'exec', self.namespace])
         cmd_ns.extend(cmd)
-        self.execute(cmd_ns, run_as_root=True, process_input=input)
+        self.execute(cmd_ns, run_as_root=True, process_input=input,
+                     check_exit_code=fail_on_errors)
 
     def _get_new_set_ips(self, set_name, expected_ips):
         new_member_ips = (set(expected_ips) -
@@ -171,5 +172,5 @@ class IpsetManager(object):
     def _destroy(self, set_name, forced=False):
         if set_name in self.ipset_sets or forced:
             cmd = ['ipset', 'destroy', set_name]
-            self._apply(cmd)
+            self._apply(cmd, fail_on_errors=False)
             self.ipset_sets.pop(set_name, None)
