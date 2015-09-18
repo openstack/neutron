@@ -10,14 +10,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.server import rpc_eventlet
 from neutron.server import wsgi_eventlet
 from neutron.server import wsgi_pecan
 
 
 def main_wsgi_eventlet():
-    # This also starts the RPC server
     wsgi_eventlet.main()
 
 
+# Eventlet patching is not required for Pecan, but some plugins still spawn
+# eventlet threads
 def main_wsgi_pecan():
     wsgi_pecan.main()
+
+
+def main_rpc_eventlet():
+    rpc_eventlet.main()
