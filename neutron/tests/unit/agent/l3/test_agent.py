@@ -946,6 +946,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.dist_fip_count = 0
         ri.fip_ns.subscribe = mock.Mock()
         ri.fip_ns.agent_router_gateway = mock.Mock()
+        agent.process_router_add = mock.Mock()
 
         with mock.patch.object(ri, 'get_floating_ips') as fips, \
                 mock.patch.object(ri, 'get_floating_agent_gw_interface'
@@ -958,6 +959,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(ri.fip_ns.agent_gateway_port,
                              agent_gateway_port[0])
             self.assertTrue(ri.rtr_fip_subnet)
+            self.assertEqual(1, agent.process_router_add.call_count)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_create_dvr_fip_interfaces_for_restart_l3agent_case(self,

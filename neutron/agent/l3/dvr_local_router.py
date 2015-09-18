@@ -408,8 +408,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 else:
                     self.fip_ns.create_gateway_port(fip_agent_port)
 
-        if self.fip_ns.agent_gateway_port and floating_ips:
-            if self.dist_fip_count == 0 or is_first:
+            if (self.fip_ns.agent_gateway_port and
+                (self.dist_fip_count == 0 or is_first)):
                 self.fip_ns.create_rtr_2_fip_link(self)
 
                 # kicks the FW Agent to add rules for the IR namespace if
