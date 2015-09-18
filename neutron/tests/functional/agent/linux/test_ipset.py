@@ -97,6 +97,5 @@ class IpsetManagerTestCase(IpsetBase):
         self.source.assert_ping(self.destination.ip)
 
     def test_destroy_ipset_set(self):
-        self.assertRaises(RuntimeError, self.ipset._destroy, self.ipset_name)
         self._remove_iptables_ipset_rules()
         self.ipset._destroy(self.ipset_name)
