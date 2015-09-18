@@ -601,6 +601,10 @@ class PluginAwareExtensionManager(ExtensionManager):
                     pass
         return aliases
 
+    @classmethod
+    def clear_instance(cls):
+        cls._instance = None
+
     def check_if_plugin_extensions_loaded(self):
         """Check if an extension supported by a plugin has been loaded."""
         plugin_extensions = self.get_supported_extension_aliases()

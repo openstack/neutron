@@ -17,6 +17,7 @@ from pecan import hooks
 
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2base
+from neutron import manager
 
 
 class AttributePopulationHook(hooks.PecanHook):
@@ -29,7 +30,8 @@ class AttributePopulationHook(hooks.PecanHook):
         if state.request.method not in ('POST', 'PUT'):
             return
         is_create = state.request.method == 'POST'
-        resource = state.request.resource_type
+        resource = state.request.context.get('resource')
+        neutron_context = state.request.context['neutron_context']
         if not resource:
             return
         if state.request.member_action:
@@ -41,23 +43,24 @@ class AttributePopulationHook(hooks.PecanHook):
         else:
             state.request.prepared_data = (
                 v2base.Controller.prepare_request_body(
-                    state.request.context, state.request.json, is_create,
+                    neutron_context, state.request.json, is_create,
                     resource, _attributes_for_resource(resource),
                     allow_bulk=True))
             # TODO(kevinbenton): conditional allow_bulk
+
         state.request.resources = _extract_resources_from_state(state)
         # make the original object available:
         if not is_create and not state.request.member_action:
-            obj_id = _pull_id_from_request(state.request)
+            obj_id = _pull_id_from_request(state.request, resource)
             attrs = _attributes_for_resource(resource)
             field_list = [name for (name, value) in attrs.items()
                           if (value.get('required_by_policy') or
                               value.get('primary_key') or
                               'default' not in value)]
-            plugin = state.request.plugin
+            plugin = manager.NeutronManager.get_plugin_for_resource(resource)
             getter = getattr(plugin, 'get_%s' % resource)
             # TODO(kevinbenton): the parent_id logic currently in base.py
-            obj = getter(state.request.context, obj_id, fields=field_list)
+            obj = getter(neutron_context, obj_id, fields=field_list)
             state.request.original_object = obj
 
 
@@ -68,11 +71,11 @@ def _attributes_for_resource(resource):
         _plural(resource), {})
 
 
-def _pull_id_from_request(request):
+def _pull_id_from_request(request, resource):
     # NOTE(kevinbenton): this sucks
     # Converting /v2.0/ports/dbbdae29-82f6-49cf-b05e-3365bcc95b7a.json
     # into dbbdae29-82f6-49cf-b05e-3365bcc95b7a
-    resources = _plural(request.resource_type)
+    resources = _plural(resource)
     jsontrail = request.path_info.replace('/v2.0/%s/' % resources, '')
     obj_id = jsontrail.replace('.json', '')
     return obj_id
@@ -85,17 +88,17 @@ def _plural(rtype):
 
 
 def _extract_resources_from_state(state):
-    resource_type = state.request.resource_type
-    if not resource_type:
+    resource = state.request.context['resource']
+    if not resource:
         return []
     data = state.request.prepared_data
     # single item
-    if resource_type in data:
+    if resource in data:
         state.request.bulk = False
-        return [data[resource_type]]
+        return [data[resource]]
     # multiple items
-    if _plural(resource_type) in data:
+    if _plural(resource) in data:
         state.request.bulk = True
-        return [x[resource_type] for x in data[_plural(resource_type)]]
+        return data[_plural(resource)]
 
     return []

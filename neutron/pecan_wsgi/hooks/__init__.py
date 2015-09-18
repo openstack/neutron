@@ -15,17 +15,17 @@
 
 from neutron.pecan_wsgi.hooks import attribute_population
 from neutron.pecan_wsgi.hooks import context
+from neutron.pecan_wsgi.hooks import member_action
 from neutron.pecan_wsgi.hooks import notifier
 from neutron.pecan_wsgi.hooks import ownership_validation
 from neutron.pecan_wsgi.hooks import policy_enforcement
 from neutron.pecan_wsgi.hooks import quota_enforcement
-from neutron.pecan_wsgi.hooks import resource_identifier
 from neutron.pecan_wsgi.hooks import translation
 
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook
 ContextHook = context.ContextHook
-ResourceIdentifierHook = resource_identifier.ResourceIdentifierHook
+MemberActionHook = member_action.MemberActionHook
 AttributePopulationHook = attribute_population.AttributePopulationHook
 OwnershipValidationHook = ownership_validation.OwnershipValidationHook
 PolicyHook = policy_enforcement.PolicyHook

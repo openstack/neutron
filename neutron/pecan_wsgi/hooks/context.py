@@ -55,4 +55,4 @@ class ContextHook(hooks.PecanHook):
                               request_id=req_id, auth_token=auth_token)
 
         # Inject the context...
-        state.request.context = ctx
+        state.request.context['neutron_context'] = ctx

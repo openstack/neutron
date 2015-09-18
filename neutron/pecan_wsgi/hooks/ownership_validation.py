@@ -28,17 +28,18 @@ class OwnershipValidationHook(hooks.PecanHook):
             return
         items = state.request.resources
         for item in items:
-            self._validate_network_tenant_ownership(state.request, item)
+            self._validate_network_tenant_ownership(state, item)
 
-    def _validate_network_tenant_ownership(self, request, resource_item):
+    def _validate_network_tenant_ownership(self, state, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
-        rtype = request.resource_type
-        if (request.context.is_admin or request.context.is_advsvc or
-                rtype not in ('port', 'subnet')):
+        neutron_context = state.request.context.get('neutron_context')
+        resource = state.request.context.get('resource')
+        if (neutron_context.is_admin or neutron_context.is_advsvc or
+                resource not in ('port', 'subnet')):
             return
         plugin = manager.NeutronManager.get_plugin()
-        network = plugin.get_network(request.context,
+        network = plugin.get_network(neutron_context,
                                      resource_item['network_id'])
         # do not perform the check on shared networks
         if network.get('shared'):
@@ -51,5 +52,5 @@ class OwnershipValidationHook(hooks.PecanHook):
                     "create %(resource)s on this network")
             raise webob.exc.HTTPForbidden(msg % {
                 "tenant_id": resource_item['tenant_id'],
-                "resource": rtype,
+                "resource": resource,
             })
