@@ -356,7 +356,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def _is_ip_required_by_subnet(self, context, subnet_id, device_owner):
         # For ports that are not router ports, retain any automatic
         # (non-optional, e.g. IPv6 SLAAC) addresses.
-        if device_owner in constants.ROUTER_INTERFACE_OWNERS:
+        # NOTE: Need to check the SNAT ports for DVR routers here since
+        # they consume an IP.
+        if device_owner in constants.ROUTER_INTERFACE_OWNERS_SNAT:
             return True
 
         subnet = self._get_subnet(context, subnet_id)
