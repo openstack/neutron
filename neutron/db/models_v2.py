@@ -14,7 +14,6 @@
 #    under the License.
 
 import sqlalchemy as sa
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
@@ -205,7 +204,12 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
                                   constants.DHCPV6_STATEFUL,
                                   constants.DHCPV6_STATELESS,
                                   name='ipv6_address_modes'), nullable=True)
-    rbac_entries = association_proxy('networks', 'rbac_entries')
+    # subnets don't have their own rbac_entries, they just inherit from
+    # the network rbac entries
+    rbac_entries = orm.relationship(
+        rbac_db_models.NetworkRBAC, lazy='joined',
+        foreign_keys='Subnet.network_id',
+        primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
 
 
 class SubnetPoolPrefix(model_base.BASEV2):
