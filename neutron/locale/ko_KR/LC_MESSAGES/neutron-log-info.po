@@ -3,29 +3,27 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/openstack/neutron/"
 "language/ko_KR/)\n"
-"Language: ko_KR\n"
+"Language: ko-KR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s: %(args)s 인수를 갖는 %(function_name)s이(가) 무시됨"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
@@ -149,11 +147,6 @@ msgid "Logging enabled!"
 msgstr "로깅 사용!"
 
 #, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr "루프 반복이 간격을 초과했습니다(%(polling_interval)s 대 %(elapsed)s)!"
-
-#, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "실제 네트워크 %(physical_network)s을(를) 브릿지 %(bridge)s에 맵핑 중"
 
@@ -163,10 +156,6 @@ msgstr "모듈러 L2 플러그인 초기화를 완료했습니다"
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "네트워크 VLAN 범위: %s"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "로드된 %s 플러그인이 없음"
 
 msgid "OVS cleanup completed successfully"
 msgstr "OVS 정리가 완료됨"

@@ -4,21 +4,23 @@
 #
 # Translators:
 # 汪军 <wwyyzz08@sina.com>, 2015
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/openstack/neutron/"
 "language/zh_CN/)\n"
-"Language: zh_CN\n"
+"Language: zh-CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
@@ -27,10 +29,6 @@ msgstr "%(action)s 失败 (客户端错误): %(exc)s"
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s：已忽略具有自变量 %(args)s 的 %(function_name)s"
 
 #, python-format
 msgid "%(prog)s version %(version)s"
@@ -108,10 +106,6 @@ msgstr "配置装置驱动名称: %s"
 #, python-format
 msgid "Configured type driver names: %s"
 msgstr "配置类型驱动名字: %s"
-
-#, python-format
-msgid "Controller IPs: %s"
-msgstr "控制器IP: %s"
 
 msgid "DHCP agent started"
 msgstr "已启动 DHCP 代理"
@@ -201,11 +195,6 @@ msgstr "正在加载接口驱动 %s"
 msgid "Logging enabled!"
 msgstr "已启用日志记录！"
 
-#, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr "循环迭代超过时间间隔（%(polling_interval)s 对 %(elapsed)s）！"
-
 msgid "ML2 FlatTypeDriver initialization complete"
 msgstr "完成ML2 FlatTypeDriver的初始化"
 
@@ -226,10 +215,6 @@ msgstr "网络 VLAN 范围：%s"
 #, python-format
 msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr "Neutron服务启动，正在%(host)s:%(port)s上监听"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "未装入任何 %s 插件"
 
 #, python-format
 msgid "Nova event response: %s"
@@ -332,14 +317,6 @@ msgstr "同步状态完成"
 #, python-format
 msgid "Tenant network_types: %s"
 msgstr "项目网络类型: %s"
-
-#, python-format
-msgid "The IP addr of available SDN-VE controllers: %s"
-msgstr "可用的SDN-VE控制器IP地址: %s"
-
-#, python-format
-msgid "The SDN-VE controller IP address: %s"
-msgstr "SDN-VE 控制器 IP 地址: %s"
 
 #, python-format
 msgid ""

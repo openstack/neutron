@@ -4,11 +4,12 @@
 #
 # Translators:
 # Carsten Duch <cad@teuto.net>, 2014
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-10 06:10+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-01 03:37+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: German (http://www.transifex.com/openstack/neutron/language/"
@@ -19,14 +20,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
-
-#, python-format
-msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
-msgstr "%(plugin_key)s: %(function_name)s mit Argumenten %(args)s ignoriert"
 
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
@@ -131,13 +129,6 @@ msgid "Logging enabled!"
 msgstr "Protokollfunktion aktiviert!"
 
 #, python-format
-msgid ""
-"Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
-msgstr ""
-"Schleifeniteration hat Intervall (%(polling_interval)s contra %(elapsed)s) "
-"überschritten!"
-
-#, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 "Zuordnung von physischem Netz %(physical_network)s zu Brücke %(bridge)s"
@@ -145,10 +136,6 @@ msgstr ""
 #, python-format
 msgid "Network VLAN ranges: %s"
 msgstr "Bereiche für Netz-VLAN: %s"
-
-#, python-format
-msgid "No %s Plugin loaded"
-msgstr "Kein %s-Plug-in geladen"
 
 msgid "OVS cleanup completed successfully"
 msgstr "OVS-Bereinigungsprozedur erfolgreich abgeschlossen"

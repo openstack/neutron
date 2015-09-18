@@ -4,21 +4,23 @@
 #
 # Translators:
 # ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: Neutron\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-21 06:08+0000\n"
+"POT-Creation-Date: 2015-09-18 06:06+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
 "language/tr_TR/)\n"
-"Language: tr_TR\n"
+"Language: tr-TR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Zanata 3.7.1\n"
 
 #, python-format
 msgid "%(agent_type)s agent %(agent_id)s is not active"
@@ -54,10 +56,6 @@ msgstr "%s eylemi desteklenmiyor"
 #, python-format
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr "%s zincirinin mevcut olmayan trafik sayaçları alınmaya çalışıldı"
-
-#, python-format
-msgid "Attempted to remove chain %s which does not exist"
-msgstr "Var olmayan %s zinciri kaldırılmaya çalışılıyor"
 
 #, python-format
 msgid "Attempting to bind with dead agent: %s"
@@ -161,11 +159,6 @@ msgid "Found not yet ready openvswitch port: %s"
 msgstr "Henüz hazır olmayan openvswitch bağlantı noktası bulundu: %s"
 
 #, python-format
-msgid "Ignoring admin_state_up=False for router=%r.  Overriding with True"
-msgstr ""
-"router=%r için admin_state_up=False atlanıyor.  True ile üzerine yazılıyor"
-
-#, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on network "
 "%(network_id)s"
@@ -264,9 +257,6 @@ msgstr "Fiziksel ağ %s üzerinde düz ağ bulunamadı"
 msgid "No more DHCP agents"
 msgstr "Daha fazla DHCP ajanı yok"
 
-msgid "No policy profile populated from VSM"
-msgstr "VSM'den herhangi bir ilke profili doldurulmadı"
-
 #, python-format
 msgid "No routers compatible with L3 agent configuration on host %s"
 msgstr ""
@@ -335,13 +325,6 @@ msgid "Port ID not set! Nova will not be notified of port status change."
 msgstr ""
 "Bağlantı noktası kimliği ayarlanmamış! Nova bağlantı noktası durumu "
 "değişikliğinde bilgilendirilmeyecek."
-
-msgid ""
-"Reading service_providers from legacy location in neutron.conf, and ignoring "
-"values in neutron_*aas.conf files; this override will be going away soon."
-msgstr ""
-"service_providers neutron.conf'daki eski yerinden okunuyor, ve neutron_*aas."
-"conf dosyalarındaki değerler atlanıyor; bu üzerine yazma yakında gidecek."
 
 msgid ""
 "Registering resources to apply quota limits to using the quota_items option "
@@ -517,11 +500,3 @@ msgstr ""
 #, python-format
 msgid "unable to modify mac_address of ACTIVE port %s"
 msgstr "%s ETKİN bağlantı noktasının mac_address'i değiştirilemiyor"
-
-#, python-format
-msgid "vlan_id %(vlan)s on physical network %(network)s not found"
-msgstr "%(network)s fiziksel ağındaki vlan_id %(vlan)s bulunamadı"
-
-#, python-format
-msgid "vxlan_id %s not found"
-msgstr "vxlan_id %s bulunamadı"
