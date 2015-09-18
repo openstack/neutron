@@ -729,6 +729,19 @@ class FakeDualStackNetworkSingleDHCP(object):
     ports = [FakePort1(), FakePort4(), FakeRouterPort()]
 
 
+class FakeDualStackNetworkingSingleDHCPTags(object):
+    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+
+    subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
+    ports = [FakePort1(), FakePort4(), FakeRouterPort()]
+
+    def __init__(self):
+        for port in self.ports:
+            port.extra_dhcp_opts = [
+                DhcpOpt(opt_name='tag:ipxe,bootfile-name',
+                        opt_value='pxelinux.0')]
+
+
 class FakeV4NetworkMultipleTags(object):
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     subnets = [FakeV4Subnet()]
@@ -1851,6 +1864,19 @@ class TestDnsmasq(TestBase):
         dm._output_opts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
+
+    def test_host_file_on_net_with_v6_slaac_and_v4(self):
+        exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'
+        exp_host_data = (
+            '00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal.,192.168.0.2,'
+            'set:eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee\n'
+            '00:16:3E:C2:77:1D,host-192-168-0-4.openstacklocal.,192.168.0.4,'
+            'set:gggggggg-gggg-gggg-gggg-gggggggggggg\n00:00:0f:rr:rr:rr,'
+            'host-192-168-0-1.openstacklocal.,192.168.0.1,'
+            'set:rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr\n').lstrip()
+        dm = self._get_dnsmasq(FakeDualStackNetworkingSingleDHCPTags())
+        dm._output_hosts_file()
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data)])
 
     def test_host_and_opts_file_on_net_with_V6_stateless_and_V4_subnets(
                                                                     self):
