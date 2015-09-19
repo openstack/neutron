@@ -12,13 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
-import pprint
 import six
 
-import alembic
-import alembic.autogenerate
-import alembic.migration
 from alembic import script as alembic_script
 from contextlib import contextmanager
 import mock
@@ -135,52 +130,11 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         return super(_TestModelsMigrations, self).include_object(
             object_, name, type_, reflected, compare_to)
 
-    def test_models_sync(self):
-        # drop all tables after a test run
-        self.addCleanup(functools.partial(self.db.backend.drop_all_objects,
-                                          self.get_engine()))
-
-        # run migration scripts
-        self.db_sync(self.get_engine())
-
-        with self.get_engine().connect() as conn:
-            opts = {
-                'include_object': self.include_object,
-                'compare_type': self.compare_type,
-                'compare_server_default': self.compare_server_default,
-            }
-            mc = alembic.migration.MigrationContext.configure(conn, opts=opts)
-
-            # compare schemas and fail with diff, if it's not empty
-            diff = alembic.autogenerate.compare_metadata(mc,
-                                                         self.get_metadata())
-            insp = sqlalchemy.engine.reflection.Inspector.from_engine(
-                self.get_engine())
-            dialect = self.get_engine().dialect.name
-            self.check_mysql_engine(dialect, insp)
-
-        result = filter(self.remove_unrelated_errors, diff)
-        if result:
-            msg = pprint.pformat(result, indent=2, width=20)
-
-            self.fail("Models and migration scripts aren't in sync:\n%s" % msg)
-
-    def check_mysql_engine(self, dialect, insp):
-        if dialect != 'mysql':
-            return
-
-        # Test that table creation on mysql only builds InnoDB tables
-        tables = insp.get_table_names()
-        self.assertTrue(len(tables) > 0,
-                        "No tables found. Wrong schema?")
-        noninnodb = [table for table in tables if
-                     insp.get_table_options(table)['mysql_engine'] != 'InnoDB'
-                     and table != 'alembic_version']
-        self.assertEqual(0, len(noninnodb), "%s non InnoDB tables created" %
-                                            noninnodb)
+    def filter_metadata_diff(self, diff):
+        return filter(self.remove_unrelated_errors, diff)
 
     # Remove some difference that are not mistakes just specific of
-        # dialects, etc
+    # dialects, etc
     def remove_unrelated_errors(self, element):
         insp = sqlalchemy.engine.reflection.Inspector.from_engine(
             self.get_engine())
@@ -293,6 +247,23 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                 migration.do_alembic_command(
                     self.alembic_config, 'upgrade',
                     '%s@head' % migration.CONTRACT_BRANCH)
+
+    def test_check_mysql_engine(self):
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        with engine.begin() as connection:
+            self.alembic_config.attributes['connection'] = connection
+            migration.do_alembic_command(self.alembic_config, 'upgrade',
+                                         'heads')
+            insp = sqlalchemy.engine.reflection.Inspector.from_engine(engine)
+            # Test that table creation on mysql only builds InnoDB tables
+            tables = insp.get_table_names()
+            self.assertTrue(len(tables) > 0,
+                            "No tables found. Wrong schema?")
+            res = [table for table in tables if
+                   insp.get_table_options(table)['mysql_engine'] != 'InnoDB'
+                   and table != 'alembic_version']
+            self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,
