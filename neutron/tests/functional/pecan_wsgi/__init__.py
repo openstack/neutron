@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Mirantis, Inc.
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,20 +13,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.server import rpc_eventlet
-from neutron.server import wsgi_eventlet
-from neutron.server import wsgi_pecan
+
+import os
+from pecan import set_config
+from pecan.testing import load_test_app
+from unittest import TestCase
 
 
-def main_wsgi_eventlet():
-    wsgi_eventlet.main()
+__all__ = ['FunctionalTest']
 
 
-# Eventlet patching is not required for Pecan, but some plugins still spawn
-# eventlet threads
-def main_wsgi_pecan():
-    wsgi_pecan.main()
+class FunctionalTest(TestCase):
+    """
+    Used for functional tests where you need to test your
+    literal application and its integration with the framework.
+    """
 
+    def setUp(self):
+        self.app = load_test_app(os.path.join(
+            os.path.dirname(__file__),
+            'config.py'
+        ))
 
-def main_rpc_eventlet():
-    rpc_eventlet.main()
+    def tearDown(self):
+        set_config({}, overwrite=True)

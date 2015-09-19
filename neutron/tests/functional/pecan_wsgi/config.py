@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Mirantis, Inc.
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,20 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.server import rpc_eventlet
-from neutron.server import wsgi_eventlet
-from neutron.server import wsgi_pecan
-
-
-def main_wsgi_eventlet():
-    wsgi_eventlet.main()
-
-
-# Eventlet patching is not required for Pecan, but some plugins still spawn
-# eventlet threads
-def main_wsgi_pecan():
-    wsgi_pecan.main()
-
-
-def main_rpc_eventlet():
-    rpc_eventlet.main()
+# use main app settings except for the port number so testing doesn't need to
+# listen on the main neutron port
+app = {
+    'root': 'neutron.pecan_wsgi.controllers.root.RootController',
+    'modules': ['neutron.pecan_wsgi'],
+    'errors': {
+        400: '/error',
+        '__force_dict__': True
+    }
+}

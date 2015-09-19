@@ -9,6 +9,7 @@ Routes!=2.0,!=2.1,>=1.12.3;python_version=='2.7'
 Routes!=2.0,>=1.12.3;python_version!='2.7'
 debtcollector>=0.3.0 # Apache-2.0
 eventlet>=0.17.4
+pecan>=1.0.0
 greenlet>=0.3.2
 httplib2>=0.7.5
 requests>=2.5.2

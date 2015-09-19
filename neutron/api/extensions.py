@@ -207,7 +207,8 @@ class ExtensionController(wsgi.Controller):
     def __init__(self, extension_manager):
         self.extension_manager = extension_manager
 
-    def _translate(self, ext):
+    @staticmethod
+    def _translate(ext):
         ext_data = {}
         ext_data['name'] = ext.get_name()
         ext_data['alias'] = ext.get_alias()
@@ -599,6 +600,10 @@ class PluginAwareExtensionManager(ExtensionManager):
                     # supported extension aliases. They only work on objects.
                     pass
         return aliases
+
+    @classmethod
+    def clear_instance(cls):
+        cls._instance = None
 
     def check_if_plugin_extensions_loaded(self):
         """Check if an extension supported by a plugin has been loaded."""

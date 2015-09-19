@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Mirantis, Inc.
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,20 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.server import rpc_eventlet
-from neutron.server import wsgi_eventlet
-from neutron.server import wsgi_pecan
+from pecan import hooks
 
 
-def main_wsgi_eventlet():
-    wsgi_eventlet.main()
+class NotifierHook(hooks.PecanHook):
+    priority = 140
 
+    # TODO(kevinbenton): implement
+    # dhcp agent notifier
+    # ceilo notifier
+    # nova notifier
+    def before(self, state):
+        pass
 
-# Eventlet patching is not required for Pecan, but some plugins still spawn
-# eventlet threads
-def main_wsgi_pecan():
-    wsgi_pecan.main()
-
-
-def main_rpc_eventlet():
-    rpc_eventlet.main()
+    def after(self, state):
+        pass
