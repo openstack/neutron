@@ -1431,6 +1431,14 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent._handle_sigterm(None, None)
         self.assertFalse(mock_set_rpc.called)
 
+    def test_setup_entry_for_arp_reply_ignores_ipv6_addresses(self):
+        self.agent.arp_responder_enabled = True
+        ip = '2001:db8::1'
+        br = mock.Mock()
+        self.agent.setup_entry_for_arp_reply(
+            br, 'add', mock.Mock(), mock.Mock(), ip)
+        self.assertFalse(br.install_arp_responder.called)
+
 
 class AncillaryBridgesTest(base.BaseTestCase):
 
