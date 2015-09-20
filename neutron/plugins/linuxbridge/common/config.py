@@ -62,6 +62,16 @@ agent_opts = [
                       "polling for local device changes.")),
     cfg.BoolOpt('rpc_support_old_agents', default=False,
                 help=_("Enable server RPC compatibility with old agents")),
+    cfg.BoolOpt('prevent_arp_spoofing', default=False,
+                help=_("Enable suppression of ARP responses that don't match "
+                       "an IP address that belongs to the port from which "
+                       "they originate. Note: This prevents the VMs attached "
+                       "to this agent from spoofing, it doesn't protect them "
+                       "from other devices which have the capability to spoof "
+                       "(e.g. bare metal or VMs attached to agents without "
+                       "this flag set to True). Spoofing rules will not be "
+                       "added to any ports that have port security disabled. "
+                       "For LinuxBridge, this requires ebtables.")),
 ]
 
 

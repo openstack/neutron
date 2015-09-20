@@ -23,6 +23,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.extensions import portbindings
+from neutron.extensions import portsecurity as psec
 from neutron import manager
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as service_constants
@@ -102,6 +103,8 @@ class RpcCallbacks(n_rpc.RpcCallback,
                  'physical_network': segment[api.PHYSICAL_NETWORK],
                  'fixed_ips': port['fixed_ips'],
                  'device_owner': port['device_owner'],
+                 'allowed_address_pairs': port['allowed_address_pairs'],
+                 'port_security_enabled': port.get(psec.PORTSECURITY, True),
                  'profile': port[portbindings.PROFILE]}
         LOG.debug(_("Returning: %s"), entry)
         return entry
