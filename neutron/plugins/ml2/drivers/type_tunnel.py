@@ -21,6 +21,7 @@ from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log
 from six import moves
+from sqlalchemy import or_
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
@@ -100,6 +101,17 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
     def delete_endpoint(self, ip):
         """Delete the endpoint in the type_driver database.
 
+        param ip: the IP address of the endpoint
+        """
+
+    @abc.abstractmethod
+    def delete_endpoint_by_host_or_ip(self, host, ip):
+        """Delete the endpoint in the type_driver database.
+
+        This function will delete any endpoint matching the specified
+        ip or host.
+
+        param host: the host name of the endpoint
         param ip: the IP address of the endpoint
         """
 
@@ -266,6 +278,15 @@ class EndpointTunnelTypeDriver(TunnelTypeDriver):
             (session.query(self.endpoint_model).
              filter_by(ip_address=ip).delete())
 
+    def delete_endpoint_by_host_or_ip(self, host, ip):
+        LOG.debug("delete_endpoint_by_host_or_ip() called for "
+                  "host %(host)s or %(ip)s", {'host': host, 'ip': ip})
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            session.query(self.endpoint_model).filter(
+                    or_(self.endpoint_model.host == host,
+                        self.endpoint_model.ip_address == ip)).delete()
+
     def _get_endpoints(self):
         LOG.debug("_get_endpoints() called")
         session = db_api.get_session()
@@ -322,6 +343,13 @@ class TunnelRpcCallbackMixin(object):
             #    found, delete the endpoint belonging to that host and
             #    add endpoint with latest (tunnel_ip, host), it is a case
             #    where local_ip of an agent got changed.
+            # 5. If the passed host had another ip in the DB the host-id has
+            #    roamed to a different IP then delete any reference to the new
+            #    local_ip or the host id. Don't notify tunnel_delete for the
+            #    old IP since that one could have been taken by a different
+            #    agent host-id (neutron-ovs-cleanup should be used to clean up
+            #    the stale endpoints).
+            #    Finally create a new endpoint for the (tunnel_ip, host).
             if host:
                 host_endpoint = driver.obj.get_endpoint_by_host(host)
                 ip_endpoint = driver.obj.get_endpoint_by_ip(tunnel_ip)
@@ -330,10 +358,14 @@ class TunnelRpcCallbackMixin(object):
                     and host_endpoint is None):
                     driver.obj.delete_endpoint(ip_endpoint.ip_address)
                 elif (ip_endpoint and ip_endpoint.host != host):
-                    msg = (_("Tunnel IP %(ip)s in use with host %(host)s"),
-                           {'ip': ip_endpoint.ip_address,
-                            'host': ip_endpoint.host})
-                    raise exc.InvalidInput(error_message=msg)
+                    LOG.info(
+                        _LI("Tunnel IP %(ip)s was used by host %(host)s and "
+                            "will be assigned to %(new_host)s"),
+                        {'ip': ip_endpoint.ip_address,
+                         'host': ip_endpoint.host,
+                         'new_host': host})
+                    driver.obj.delete_endpoint_by_host_or_ip(
+                        host, ip_endpoint.ip_address)
                 elif (host_endpoint and host_endpoint.ip_address != tunnel_ip):
                     # Notify all other listening agents to delete stale tunnels
                     self._notifier.tunnel_delete(rpc_context,
