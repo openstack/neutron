@@ -461,6 +461,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     if not ip_range:
                         raise n_exc.IpAddressGenerationFailure(
                             net_id=cur_subnet.network_id)
+            net = netaddr.IPNetwork(s['cidr'])
+            if net.is_multicast():
+                error_message = _("Multicast IP subnet is not supported "
+                                  "if enable_dhcp is True.")
+                raise n_exc.InvalidInput(error_message=error_message)
+            elif net.is_loopback():
+                error_message = _("Loopback IP subnet is not supported "
+                                  "if enable_dhcp is True.")
+                raise n_exc.InvalidInput(error_message=error_message)
 
         if attributes.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')

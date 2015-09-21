@@ -4494,6 +4494,26 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
+    def _test_unsupported_subnet_cidr(self, subnet_cidr):
+        with self.network() as network:
+            subnet = {'network_id': network['network']['id'],
+                      'cidr': subnet_cidr,
+                      'ip_version': 4,
+                      'enable_dhcp': True,
+                      'tenant_id': network['network']['tenant_id']}
+            plugin = manager.NeutronManager.get_plugin()
+            if hasattr(plugin, '_validate_subnet'):
+                self.assertRaises(n_exc.InvalidInput,
+                                  plugin._validate_subnet,
+                                  context.get_admin_context(),
+                                  subnet)
+
+    def test_unsupported_subnet_cidr_multicast(self):
+        self._test_unsupported_subnet_cidr("224.0.0.1/16")
+
+    def test_unsupported_subnet_cidr_loopback(self):
+        self._test_unsupported_subnet_cidr("127.0.0.1/8")
+
     def test_invalid_ip_address(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
