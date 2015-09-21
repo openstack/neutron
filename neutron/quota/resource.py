@@ -18,8 +18,9 @@ from oslo_db import exception as oslo_db_exception
 from oslo_log import log
 from oslo_utils import excutils
 from sqlalchemy import event
+from sqlalchemy import exc as sql_exc
 
-from neutron._i18n import _LE
+from neutron._i18n import _LE, _LW
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 
@@ -300,5 +301,11 @@ class TrackedResource(BaseResource):
         event.listen(self._model_class, 'after_delete', self._db_event_handler)
 
     def unregister_events(self):
-        event.remove(self._model_class, 'after_insert', self._db_event_handler)
-        event.remove(self._model_class, 'after_delete', self._db_event_handler)
+        try:
+            event.remove(self._model_class, 'after_insert',
+                         self._db_event_handler)
+            event.remove(self._model_class, 'after_delete',
+                         self._db_event_handler)
+        except sql_exc.InvalidRequestError:
+            LOG.warning(_LW("No sqlalchemy event for resource %s found"),
+                        self.name)
