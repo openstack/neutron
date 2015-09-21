@@ -137,19 +137,6 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
         self.addCleanup(stop_agent, agent, t)
 
-    def _bind_ports(self, ports, network, agent):
-        devices = []
-        for port in ports:
-            dev = OVSAgentTestFramework._get_device_details(port, network)
-            vif_name = port.get('vif_name')
-            vif_id = uuidutils.generate_uuid(),
-            vif_port = ovs_lib.VifPort(
-                vif_name, "%s" % vif_id, 'id-%s' % vif_id,
-                port.get('mac_address'), agent.int_br)
-            dev['vif_port'] = vif_port
-            devices.append(dev)
-            agent._bind_devices(devices)
-
     def _create_test_port_dict(self):
         return {'id': uuidutils.generate_uuid(),
                 'mac_address': utils.get_random_mac(
