@@ -26,6 +26,7 @@ from neutron.db import l3_hamode_db
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
+from neutron.extensions import providernet
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.scheduler import l3_agent_scheduler
@@ -180,6 +181,16 @@ class L3HATestCase(L3HATestFramework):
     def test_no_ha_router_create(self):
         router = self._create_router(ha=False)
         self.assertFalse(router['ha'])
+
+    def test_add_ha_network_settings(self):
+        cfg.CONF.set_override('l3_ha_network_type', 'abc')
+        cfg.CONF.set_override('l3_ha_network_physical_name', 'def')
+
+        network = {}
+        self.plugin._add_ha_network_settings(network)
+
+        self.assertEqual('abc', network[providernet.NETWORK_TYPE])
+        self.assertEqual('def', network[providernet.PHYSICAL_NETWORK])
 
     def test_router_create_with_ha_conf_enabled(self):
         cfg.CONF.set_override('l3_ha', True)
