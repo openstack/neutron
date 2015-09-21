@@ -4,4 +4,4 @@ source = neutron
 omit = neutron/tests/*,neutron/openstack/*
 
 [report]
-ignore-errors = True
+ignore_errors = True
