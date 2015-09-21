@@ -739,7 +739,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                            p_const.TYPE_LOCAL,
                                                            "physnet1", None,
                                                            "tap1"))
-                en_fn.assert_called_with("123", None)
+                en_fn.assert_called_with("123", "brq123")
+
+                self.lbm.bridge_mappings = {"physnet1": "brq999"}
+                self.assertTrue(self.lbm.add_tap_interface("123",
+                                                           p_const.TYPE_LOCAL,
+                                                           "physnet1", None,
+                                                           "tap1"))
+                en_fn.assert_called_with("123", "brq999")
 
                 get_br.return_value = False
                 bridge_device.addif.retun_value = True
@@ -765,6 +772,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 self.lbm.add_tap_interface("123", p_const.TYPE_VLAN,
                                            "physnet1", "1", "tap1")
                 en_mtu_fn.assert_called_once_with("tap1", "eth0.1")
+                bridge_device.addif.assert_called_once_with("tap1")
 
     def test_add_interface(self):
         with mock.patch.object(self.lbm, "add_tap_interface") as add_tap:
