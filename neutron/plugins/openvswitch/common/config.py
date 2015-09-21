@@ -83,8 +83,9 @@ agent_opts = [
                        "(e.g. bare metal or VMs attached to agents without "
                        "this flag set to True). Spoofing rules will not be "
                        "added to any ports that have port security disabled. "
-                       "This requires a version of OVS that supports matching "
-                       "ARP headers.")),
+                       "For LinuxBridge, this requires ebtables. For OVS, it "
+                       "requires a version that supports matching ARP "
+                       "headers.")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
