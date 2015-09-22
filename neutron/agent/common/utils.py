@@ -15,9 +15,11 @@
 
 import os
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.agent.common import config
 from neutron.i18n import _LE
 
 
@@ -28,6 +30,7 @@ else:
 
 
 LOG = logging.getLogger(__name__)
+config.register_root_helper(cfg.CONF)
 
 
 execute = utils.execute
