@@ -876,8 +876,17 @@ class MechanismDriver(object):
         drivers should avoid making persistent state changes in
         bind_port, or else must ensure that such state changes are
         eventually cleaned up.
+
+        Implementing this method explicitly declares the mechanism
+        driver as having the intention to bind ports. This is inspected
+        by the QoS service to identify the available QoS rules you
+        can use with ports.
         """
         pass
+
+    @property
+    def _supports_port_binding(self):
+        return self.__class__.bind_port != MechanismDriver.bind_port
 
     def check_vlan_transparency(self, context):
         """Check if the network supports vlan transparency.

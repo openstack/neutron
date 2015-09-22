@@ -170,6 +170,21 @@ class TestMl2SupportedQosRuleTypes(Ml2PluginV2TestCase):
             qos_consts.VALID_RULE_TYPES,
             self.driver.mechanism_manager.supported_qos_rule_types)
 
+    @mock.patch.object(mech_test.TestMechanismDriver,
+                       'supported_qos_rule_types',
+                       new_callable=mock.PropertyMock,
+                       return_value=qos_consts.VALID_RULE_TYPES,
+                       create=True)
+    @mock.patch.object(mech_logger.LoggerMechanismDriver,
+                       '_supports_port_binding',
+                       new_callable=mock.PropertyMock,
+                       return_value=False)
+    def test_rule_types_with_driver_that_does_not_implement_binding(self,
+                                                                    *mocks):
+        self.assertEqual(
+            qos_consts.VALID_RULE_TYPES,
+            self.driver.mechanism_manager.supported_qos_rule_types)
+
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,
                       Ml2PluginV2TestCase):
