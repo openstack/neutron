@@ -17,6 +17,6 @@ testscenarios>=0.4
 WebTest>=2.0
 oslotest>=1.10.0 # Apache-2.0
 os-testr>=0.1.0
-tempest-lib>=0.6.1
+tempest-lib>=0.8.0
 ddt>=0.7.0
 pylint==1.4.4 # GNU GPL v2
