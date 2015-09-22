@@ -18,7 +18,6 @@ import os
 
 from oslo_config import cfg
 from oslo_log import log as logging
-from six.moves import configparser as ConfigParser
 import stevedore
 
 from neutron.common import exceptions as n_exc
@@ -62,23 +61,21 @@ class NeutronModule(object):
         return self.repo['mod']
 
     # Return an INI parser for the child module
-    def ini(self):
+    def ini(self, neutron_dir=None):
         if self.repo['ini'] is None:
-            neutron_dir = None
             try:
-                neutron_dir = cfg.CONF.config_dir
+                neutron_dir = neutron_dir or cfg.CONF.config_dir
             except cfg.NoSuchOptError:
                 pass
-
             if neutron_dir is None:
                 neutron_dir = '/etc/neutron'
 
-            ini = ConfigParser.SafeConfigParser()
+            ini_file = cfg.ConfigOpts()
+            ini_file.register_opts(serviceprovider_opts, 'service_providers')
             ini_path = os.path.join(neutron_dir, '%s.conf' % self.module_name)
             if os.path.exists(ini_path):
-                ini.read(ini_path)
-
-            self.repo['ini'] = ini
+                ini_file(['--config-file', ini_path])
+            self.repo['ini'] = ini_file
 
         return self.repo['ini']
 
@@ -102,13 +99,7 @@ class NeutronModule(object):
         # this may be necessary, if modules are loaded on the fly
         # (DevStack may be an example)
         if not providers:
-            ini = self.ini()
-            try:
-                for name, value in ini.items('service_providers'):
-                    if name == 'service_provider':
-                        providers.append(value)
-            except ConfigParser.NoSectionError:
-                pass
+            providers = self.ini().service_providers.service_provider
 
         return providers
 

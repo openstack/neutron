@@ -203,3 +203,12 @@ class GetProviderDriverClassTestCase(base.BaseTestCase):
     def test_get_provider_driver_class_miss(self):
         retval = provconf.get_provider_driver_class('foo')
         self.assertEqual('foo', retval)
+
+
+class NeutronModuleTestCase(base.BaseTestCase):
+
+    def test_can_parse_multi_opt_service_provider_from_conf_file(self):
+        mod = provconf.NeutronModule('neutron_test')
+        mod.ini(base.ETCDIR)
+        self.assertEqual(['foo', 'bar'], mod.service_providers(),
+                         'Expected two providers, only one read')
