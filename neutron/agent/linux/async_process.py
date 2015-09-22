@@ -56,7 +56,7 @@ class AsyncProcess(object):
     """
 
     def __init__(self, cmd, run_as_root=False, respawn_interval=None,
-                 namespace=None):
+                 namespace=None, log_output=False, die_on_error=False):
         """Constructor.
 
         :param cmd: The list of command arguments to invoke.
@@ -66,9 +66,11 @@ class AsyncProcess(object):
                only be attempted if a value of 0 or greater is provided.
         :param namespace: Optional, start the command in the specified
                namespace.
+        :param log_output: Optional, also log received output.
+        :param die_on_error: Optional, kills the process on stderr output.
         """
         self.cmd_without_namespace = cmd
-        self.cmd = ip_lib.add_namespace_to_cmd(cmd, namespace)
+        self._cmd = ip_lib.add_namespace_to_cmd(cmd, namespace)
         self.run_as_root = run_as_root
         if respawn_interval is not None and respawn_interval < 0:
             raise ValueError(_('respawn_interval must be >= 0 if provided.'))
@@ -77,6 +79,12 @@ class AsyncProcess(object):
         self._kill_event = None
         self._reset_queues()
         self._watchers = []
+        self.log_output = log_output
+        self.die_on_error = die_on_error
+
+    @property
+    def cmd(self):
+        return ' '.join(self._cmd)
 
     def _reset_queues(self):
         self._stdout_lines = eventlet.queue.LightQueue()
@@ -126,7 +134,7 @@ class AsyncProcess(object):
     def _spawn(self):
         """Spawn a process and its watchers."""
         self._kill_event = eventlet.event.Event()
-        self._process, cmd = utils.create_process(self.cmd,
+        self._process, cmd = utils.create_process(self._cmd,
                                                   run_as_root=self.run_as_root)
         self._watchers = []
         for reader in (self._read_stdout, self._read_stderr):
@@ -223,10 +231,28 @@ class AsyncProcess(object):
             return data
 
     def _read_stdout(self):
-        return self._read(self._process.stdout, self._stdout_lines)
+        data = self._read(self._process.stdout, self._stdout_lines)
+        if self.log_output:
+            LOG.debug('Output received from [%(cmd)s]: %(data)s',
+                      {'cmd': self.cmd,
+                       'data': data})
+        return data
 
     def _read_stderr(self):
-        return self._read(self._process.stderr, self._stderr_lines)
+        data = self._read(self._process.stderr, self._stderr_lines)
+        if self.log_output:
+            LOG.error(_LE('Error received from [%(cmd)s]: %(err)s'),
+                      {'cmd': self.cmd,
+                       'err': data})
+        if self.die_on_error:
+            LOG.error(_LE("Process [%(cmd)s] dies due to the error: %(err)s"),
+                      {'cmd': self.cmd,
+                       'err': data})
+            # the callback caller will use None to indicate the need to bail
+            # out of the thread
+            return None
+
+        return data
 
     def _iter_queue(self, queue, block):
         while True:

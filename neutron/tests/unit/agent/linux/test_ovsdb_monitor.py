@@ -21,33 +21,23 @@ from neutron.tests import base
 
 class TestOvsdbMonitor(base.BaseTestCase):
 
-    def setUp(self):
-        super(TestOvsdbMonitor, self).setUp()
-        self.monitor = ovsdb_monitor.OvsdbMonitor('Interface')
+    def test___init__(self):
+        ovsdb_monitor.OvsdbMonitor('Interface')
 
-    def read_output_queues_and_returns_result(self, output_type, output):
-        with mock.patch.object(self.monitor, '_process') as mock_process:
-            with mock.patch.object(mock_process, output_type) as mock_file:
-                with mock.patch.object(mock_file, 'readline') as mock_readline:
-                    mock_readline.return_value = output
-                    func = getattr(self.monitor,
-                                   '_read_%s' % output_type,
-                                   None)
-                    return func()
+    def test___init___with_columns(self):
+        columns = ['col1', 'col2']
+        with mock.patch(
+            'neutron.agent.linux.async_process.AsyncProcess.__init__') as init:
+            ovsdb_monitor.OvsdbMonitor('Interface', columns=columns)
+            cmd = init.call_args_list[0][0][0]
+            self.assertEqual('col1,col2', cmd[-1])
 
-    def test__read_stdout_returns_none_for_empty_read(self):
-        result = self.read_output_queues_and_returns_result('stdout', '')
-        self.assertIsNone(result)
-
-    def test__read_stdout_queues_normal_output_to_stdout_queue(self):
-        output = 'foo'
-        result = self.read_output_queues_and_returns_result('stdout', output)
-        self.assertEqual(result, output)
-        self.assertEqual(self.monitor._stdout_lines.get_nowait(), output)
-
-    def test__read_stderr_returns_none(self):
-        result = self.read_output_queues_and_returns_result('stderr', '')
-        self.assertIsNone(result)
+    def test___init___with_format(self):
+        with mock.patch(
+            'neutron.agent.linux.async_process.AsyncProcess.__init__') as init:
+            ovsdb_monitor.OvsdbMonitor('Interface', format='blob')
+            cmd = init.call_args_list[0][0][0]
+            self.assertEqual('--format=blob', cmd[-1])
 
 
 class TestSimpleInterfaceMonitor(base.BaseTestCase):

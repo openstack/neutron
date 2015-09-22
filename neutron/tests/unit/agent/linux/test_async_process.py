@@ -84,7 +84,7 @@ class TestAsyncProcess(base.BaseTestCase):
             func.assert_called_once_with()
 
     def test__watch_process_exits_on_callback_failure(self):
-        self._test__watch_process(lambda: False, eventlet.event.Event())
+        self._test__watch_process(lambda: None, eventlet.event.Event())
 
     def test__watch_process_exits_on_exception(self):
         def foo():
@@ -219,3 +219,51 @@ class TestAsyncProcess(base.BaseTestCase):
     def test_stop_raises_exception_if_already_started(self):
         with testtools.ExpectedException(async_process.AsyncProcessException):
             self.proc.stop()
+
+    def test_cmd(self):
+        for expected, cmd in (('ls -l file', ['ls', '-l', 'file']),
+                              ('fake', ['fake'])):
+            proc = async_process.AsyncProcess(cmd)
+            self.assertEqual(expected, proc.cmd)
+
+
+class TestAsyncProcessLogging(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestAsyncProcessLogging, self).setUp()
+        self.log_mock = mock.patch.object(async_process, 'LOG').start()
+
+    def _test__read_stdout_logging(self, enable):
+        proc = async_process.AsyncProcess(['fakecmd'], log_output=enable)
+        with mock.patch.object(proc, '_read', return_value='fakedata'),\
+            mock.patch.object(proc, '_process'):
+            proc._read_stdout()
+        self.assertEqual(enable, self.log_mock.debug.called)
+
+    def _test__read_stderr_logging(self, enable):
+        proc = async_process.AsyncProcess(['fake'], log_output=enable)
+        with mock.patch.object(proc, '_read', return_value='fakedata'),\
+                mock.patch.object(proc, '_process'):
+            proc._read_stderr()
+        self.assertEqual(enable, self.log_mock.error.called)
+
+    def test__read_stdout_logging_enabled(self):
+        self._test__read_stdout_logging(enable=True)
+
+    def test__read_stdout_logging_disabled(self):
+        self._test__read_stdout_logging(enable=False)
+
+    def test__read_stderr_logging_enabled(self):
+        self._test__read_stderr_logging(enable=True)
+
+    def test__read_stderr_logging_disabled(self):
+        self._test__read_stderr_logging(enable=False)
+
+
+class TestAsyncProcessDieOnError(base.BaseTestCase):
+
+    def test__read_stderr_returns_none_on_error(self):
+        proc = async_process.AsyncProcess(['fakecmd'], die_on_error=True)
+        with mock.patch.object(proc, '_read', return_value='fakedata'),\
+                mock.patch.object(proc, '_process'):
+            self.assertIsNone(proc._read_stderr())
