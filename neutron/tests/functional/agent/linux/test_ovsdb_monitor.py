@@ -22,9 +22,6 @@ Tests in this module will be skipped unless:
  - sudo testing is enabled (see neutron.tests.functional.base for details)
 """
 
-import signal
-
-import eventlet
 from oslo_config import cfg
 
 from neutron.agent.linux import ovsdb_monitor
@@ -69,28 +66,16 @@ class TestOvsdbMonitor(BaseMonitorTest):
         self.addCleanup(self.monitor.stop)
         self.monitor.start()
 
-    def collect_initial_output(self):
-        while True:
-            output = list(self.monitor.iter_stdout())
-            if output:
-                # Output[0] is header row with spaces for column separation.
-                # The column widths can vary depending on the data in the
-                # columns, so compress multiple spaces to one for testing.
-                return ' '.join(output[0].split())
-            eventlet.sleep(0.01)
+    def collect_monitor_output(self):
+        output = list(self.monitor.iter_stdout())
+        if output:
+            # Output[0] is header row with spaces for column separation.
+            # Use 'other_config' as an indication of the table header.
+            self.assertIn('other_config', output[0])
+            return True
 
-    def test_killed_monitor_respawns(self):
-        self.monitor.respawn_interval = 0
-        old_pid = self.monitor._process.pid
-        output1 = self.collect_initial_output()
-        pid = utils.get_root_helper_child_pid(old_pid, run_as_root=True)
-        self.monitor._kill_process(pid, signal.SIGKILL)
-        self.monitor._reset_queues()
-        while (self.monitor._process.pid == old_pid):
-            eventlet.sleep(0.01)
-        output2 = self.collect_initial_output()
-        # Initial output should appear twice
-        self.assertEqual(output1, output2)
+    def test_monitor_generates_initial_output(self):
+        utils.wait_until_true(self.collect_monitor_output, timeout=30)
 
 
 class TestSimpleInterfaceMonitor(BaseMonitorTest):
