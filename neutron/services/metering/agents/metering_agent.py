@@ -248,7 +248,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
     def __init__(self, host, conf=None):
         super(MeteringAgentWithStateReport, self).__init__(host=host,
                                                            conf=conf)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
             'binary': 'neutron-metering-agent',
             'host': host,

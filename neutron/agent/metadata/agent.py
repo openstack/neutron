@@ -287,7 +287,7 @@ class UnixDomainMetadataProxy(object):
 
     def _init_state_reporting(self):
         self.context = context.get_admin_context_without_session()
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
             'binary': 'neutron-metadata-agent',
             'host': cfg.CONF.host,
