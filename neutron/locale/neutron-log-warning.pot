@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev278\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-09-22 07:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -161,22 +161,22 @@ msgid ""
 "greater to 0"
 msgstr ""
 
-#: neutron/api/extensions.py:517
+#: neutron/api/extensions.py:518
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
 msgstr ""
 
-#: neutron/api/extensions.py:525
+#: neutron/api/extensions.py:526
 #, python-format
 msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
 msgstr ""
 
-#: neutron/api/extensions.py:563
+#: neutron/api/extensions.py:564
 #, python-format
 msgid "Extension %s not supported by any of loaded plugins"
 msgstr ""
 
-#: neutron/api/extensions.py:575
+#: neutron/api/extensions.py:576
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr ""
@@ -307,6 +307,16 @@ msgstr ""
 msgid "Nova event: %s returned with failed status"
 msgstr ""
 
+#: neutron/pecan_wsgi/startup.py:52
+#, python-format
+msgid "No plugin found for:%s"
+msgstr ""
+
+#: neutron/pecan_wsgi/controllers/root.py:110
+#, python-format
+msgid "No controller found for: %s - returning response code 404"
+msgstr ""
+
 #: neutron/plugins/embrane/agent/operations/router_operations.py:96
 #, python-format
 msgid "The router %s had no physical representation, likely already deleted"
@@ -327,18 +337,18 @@ msgstr ""
 msgid "%s does not support QoS; no rule types available"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:543
+#: neutron/plugins/ml2/plugin.py:547
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:805
+#: neutron/plugins/ml2/plugin.py:809
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1494
+#: neutron/plugins/ml2/plugin.py:1498
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -366,12 +376,12 @@ msgstr ""
 msgid "No flat network found on physical network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:226
+#: neutron/plugins/ml2/drivers/type_tunnel.py:238
 #, python-format
 msgid "%(type)s tunnel %(id)s not found"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:283
+#: neutron/plugins/ml2/drivers/type_tunnel.py:304
 #, python-format
 msgid "Endpoint with ip %s already exists"
 msgstr ""
@@ -423,15 +433,15 @@ msgid ""
 " in a multicast range"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:592
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:629
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:591
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:628
 #, python-format
 msgid ""
 "Option \"%(option)s\" must be supported by command \"%(command)s\" to "
 "enable %(mode)s mode"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:623
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:622
 msgid ""
 "VXLAN muticast group(s) must be provided in vxlan_group option to enable "
 "VXLAN MCAST mode"
@@ -499,44 +509,44 @@ msgid ""
 "message: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:595
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:594
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1052
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1051
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1259
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1258
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1381
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1380
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1555
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1554
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1599
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1598
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1602
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1601
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1668
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1667
 #, python-format
 msgid "Clearing cache of registered ports, retrials to resync were > %s"
 msgstr ""
@@ -596,7 +606,12 @@ msgstr ""
 msgid "No L3 agents can host the router %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:137
+#: neutron/server/wsgi_pecan.py:52
+#, python-format
+msgid "Development Server Serving on http://%(host)s:%(port)s"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:128
 #, python-format
 msgid ""
 "The configured driver %(driver)s has been moved, automatically using "

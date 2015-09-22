@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev278\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-09-22 07:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,11 +26,11 @@ msgstr ""
 msgid "Neutron core_plugin not configured!"
 msgstr ""
 
-#: neutron/manager.py:137 neutron/manager.py:149
+#: neutron/manager.py:140 neutron/manager.py:152
 msgid "Plugin not found."
 msgstr ""
 
-#: neutron/manager.py:197
+#: neutron/manager.py:200
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
@@ -156,6 +156,7 @@ msgstr ""
 #: neutron/api/v2/base.py:542 neutron/api/v2/base.py:606
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:94
+#: neutron/pecan_wsgi/hooks/policy_enforcement.py:66
 msgid "The resource could not be found."
 msgstr ""
 
@@ -483,15 +484,15 @@ msgstr ""
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:74
+#: neutron/agent/linux/async_process.py:76
 msgid "respawn_interval must be >= 0 if provided."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:100
+#: neutron/agent/linux/async_process.py:108
 msgid "Process is already started"
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:121
+#: neutron/agent/linux/async_process.py:129
 msgid "Process is not running."
 msgstr ""
 
@@ -870,12 +871,12 @@ msgstr ""
 msgid "Failed to parse request. Parameter '%s' not specified"
 msgstr ""
 
-#: neutron/api/extensions.py:230
+#: neutron/api/extensions.py:231 neutron/pecan_wsgi/controllers/root.py:135
 #, python-format
 msgid "Extension with alias %s does not exist"
 msgstr ""
 
-#: neutron/api/extensions.py:234 neutron/api/extensions.py:238
+#: neutron/api/extensions.py:235 neutron/api/extensions.py:239
 msgid "Resource not found."
 msgstr ""
 
@@ -1152,6 +1153,7 @@ msgid "Cannot update read-only attribute %s"
 msgstr ""
 
 #: neutron/api/v2/base.py:699
+#: neutron/pecan_wsgi/hooks/ownership_validation.py:51
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
@@ -2220,43 +2222,43 @@ msgstr ""
 msgid "Service Profile %(sp_id)s is not associated with flavor %(fl_id)s"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:81
+#: neutron/db/ipam_backend_mixin.py:82
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:92
+#: neutron/db/ipam_backend_mixin.py:93
 #, python-format
 msgid "Cannot allocate IPv%(req_ver)s subnet from IPv%(pool_ver)s subnet pool"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:212
+#: neutron/db/ipam_backend_mixin.py:213
 msgid "0 is not allowed as CIDR prefix length"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:223
+#: neutron/db/ipam_backend_mixin.py:224
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:301
+#: neutron/db/ipam_backend_mixin.py:302
 #: neutron/plugins/opencontrail/contrail_plugin.py:391
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:308
+#: neutron/db/ipam_backend_mixin.py:309
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:322
+#: neutron/db/ipam_backend_mixin.py:323
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: neutron/db/ipam_backend_mixin.py:370
+#: neutron/db/ipam_backend_mixin.py:371
 msgid "Exceeded maximum amount of fixed ips per port"
 msgstr ""
 
@@ -2496,7 +2498,7 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
-#: neutron/db/migration/__init__.py:52
+#: neutron/db/migration/__init__.py:51
 #, python-format
 msgid "%s cannot be called while in offline mode"
 msgstr ""
@@ -3300,6 +3302,15 @@ msgstr ""
 msgid "'%s' is not supported for filtering"
 msgstr ""
 
+#: neutron/pecan_wsgi/hooks/translation.py:36
+#, python-format
+msgid "An unexpected exception was caught: %s"
+msgstr ""
+
+#: neutron/pecan_wsgi/hooks/translation.py:38
+msgid "An unexpected internal error occured."
+msgstr ""
+
 #: neutron/plugins/brocade/NeutronPlugin.py:61
 #: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:22
 #: neutron/services/l3_router/brocade/l3_router_plugin.py:23
@@ -3569,7 +3580,7 @@ msgstr ""
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:246
+#: neutron/plugins/ml2/plugin.py:250
 msgid "binding:profile value too large"
 msgstr ""
 
@@ -3631,30 +3642,25 @@ msgstr ""
 msgid "%s prohibited for local provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:169
+#: neutron/plugins/ml2/drivers/type_tunnel.py:181
 #, python-format
 msgid "provider:physical_network specified for %s network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:176
+#: neutron/plugins/ml2/drivers/type_tunnel.py:188
 #, python-format
 msgid "%(key)s prohibited for %(tunnel)s provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:301
+#: neutron/plugins/ml2/drivers/type_tunnel.py:322
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:306
+#: neutron/plugins/ml2/drivers/type_tunnel.py:327
 msgid "Network type value needed by the ML2 plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:333
-#, python-format
-msgid "Tunnel IP %(ip)s in use with host %(host)s"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/type_tunnel.py:352
+#: neutron/plugins/ml2/drivers/type_tunnel.py:384
 #, python-format
 msgid "Network type value '%s' not supported"
 msgstr ""
@@ -3947,23 +3953,23 @@ msgstr ""
 msgid "Unable to retrieve port details for devices: %(devices)s "
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1826
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1825
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1840
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1839
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1862
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1861
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1865
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1864
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -4213,67 +4219,67 @@ msgstr ""
 msgid "Access to this resource was denied."
 msgstr ""
 
-#: neutron/server/__init__.py:36
+#: neutron/server/__init__.py:31
 msgid ""
 "ERROR: Unable to find configuration file via the default search paths "
 "(~/.neutron/, ~/, /etc/neutron/, /etc/) and the '--config-file' option!"
 msgstr ""
 
-#: neutron/server/__init__.py:65
+#: neutron/server/__init__.py:39
 #, python-format
 msgid "ERROR: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:33
+#: neutron/services/provider_configuration.py:32
 msgid ""
 "Defines providers for advanced services using the format: "
 "<service_type>:<name>:<driver>[:default]"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:151
+#: neutron/services/provider_configuration.py:142
 #, python-format
 msgid "Provider name is limited by 255 characters: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:164
+#: neutron/services/provider_configuration.py:155
 msgid "Invalid service provider format"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:172
+#: neutron/services/provider_configuration.py:163
 #, python-format
 msgid "Invalid provider format. Last part should be 'default' or empty: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:187
+#: neutron/services/provider_configuration.py:178
 #, python-format
 msgid ""
 "Service provider '%(provider)s' could not be found for service type "
 "%(service_type)s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:192
+#: neutron/services/provider_configuration.py:183
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:197
+#: neutron/services/provider_configuration.py:188
 #, python-format
 msgid ""
 "Resource '%(resource_id)s' is already associated with provider "
 "'%(provider)s' for service type '%(service_type)s'"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:211
+#: neutron/services/provider_configuration.py:202
 #, python-format
 msgid "Driver %s is not unique across providers"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:221
+#: neutron/services/provider_configuration.py:212
 #, python-format
 msgid "Multiple default providers for service %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:232
+#: neutron/services/provider_configuration.py:223
 #, python-format
 msgid "Multiple providers specified for service %s"
 msgstr ""

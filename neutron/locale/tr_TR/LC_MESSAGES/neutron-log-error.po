@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-09-22 07:42+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -322,10 +322,6 @@ msgstr "%s isimli plugin yüklenirken bir hata oluştu!"
 msgid "Error loading provider '%(provider)s' for service %(service_type)s"
 msgstr ""
 "%(service_type)s servisi için '%(provider)s' sağlayıcısını yüklemede hata"
-
-#, python-format
-msgid "Error received from ovsdb monitor: %s"
-msgstr "ovsdb monitör den hata alındı: %s"
 
 #, python-format
 msgid "Error response returned from nova: %s"
