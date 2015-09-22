@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-09-22 07:41+0000\n"
 "PO-Revision-Date: 2015-09-16 08:28+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -2915,10 +2915,6 @@ msgstr ""
 "Tüm OpenvSwitch köprülerinde tüm bağlantı noktalarını silmek için True. "
 "Neutron tarafından tümleştirme ve harici ağ köprüleri üzerinde oluşturulan "
 "bağlantı noktalarını silmek için False."
-
-#, python-format
-msgid "Tunnel IP %(ip)s in use with host %(host)s"
-msgstr "Tünel IP %(ip)s %(host)s istemcisi tarafından kullanılıyor"
 
 msgid "Tunnel IP value needed by the ML2 plugin"
 msgstr "Tünel IP değerine ML2 eklentisi tarafından ihtiyaç duyuluyor"
