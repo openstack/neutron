@@ -82,22 +82,18 @@ class NeutronModule(object):
     def service_providers(self):
         """Return the service providers for the extension module."""
         providers = []
-        # Attempt to read the config from cfg.CONF; this is possible
-        # when passing --config-dir. Since the multiStr config option
-        # gets merged, extract only the providers pertinent to this
-        # service module.
+        # Attempt to read the config from cfg.CONF first; when passing
+        # --config-dir, the option is merged from all the definitions
+        # made across all the imported config files
         try:
-            providers = [
-                sp for sp in cfg.CONF.service_providers.service_provider
-                if self.module_name in sp
-            ]
+            providers = cfg.CONF.service_providers.service_provider
         except cfg.NoSuchOptError:
             pass
 
-        # Alternatively, if the option is not avaialable, load the
-        # config option using the module's built-in ini parser.
-        # this may be necessary, if modules are loaded on the fly
-        # (DevStack may be an example)
+        # Alternatively, if the option is not available, try to load
+        # it from the provider module's config file; this may be
+        # necessary, if modules are loaded on the fly (DevStack may
+        # be an example)
         if not providers:
             providers = self.ini().service_providers.service_provider
 
