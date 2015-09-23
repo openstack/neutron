@@ -58,13 +58,13 @@ Developer Docs
 Dashboards
 ==========
 
-.. toctree::
-   :maxdepth: 1
-
 There is a collection of dashboards to help developers and reviewers
-located here_
+located here.
 
-.. _here: dashboards/index
+.. toctree::
+   :maxdepth: 2
+
+   dashboards/index
 
 API Extensions
 ==============

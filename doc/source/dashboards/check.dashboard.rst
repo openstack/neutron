@@ -1,6 +1,8 @@
 
-Neutron Check Pipeline Thumbnails - Click to see full size figure
-=================================================================
+Neutron Check Pipeline Thumbnails
+=================================
+
+Click to see full size figure.
 
 .. raw:: html
 
