@@ -557,6 +557,9 @@ class TestDvrServices(base.BaseTestCase):
     def test_is_dvr_serviced_with_lb_port(self):
         self._test_is_dvr_serviced(constants.DEVICE_OWNER_LOADBALANCER, True)
 
+    def test_is_dvr_serviced_with_lbv2_port(self):
+        self._test_is_dvr_serviced(constants.DEVICE_OWNER_LOADBALANCERV2, True)
+
     def test_is_dvr_serviced_with_dhcp_port(self):
         self._test_is_dvr_serviced(constants.DEVICE_OWNER_DHCP, True)
 

@@ -1108,13 +1108,13 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                                     'my-subnet-id')
             self.assertTrue(result)
 
-    def test_dvr_serviced_vip_port_exists_on_subnet(self):
+    def _test_dvr_serviced_vip_port_exists_on_subnet(self, device_owner):
         vip_port = {
                 'id': 'lbaas-vip-port1',
                 'device_id': 'vip-pool-id',
                 'status': 'ACTIVE',
                 'binding:host_id': 'thisHost',
-                'device_owner': constants.DEVICE_OWNER_LOADBALANCER,
+                'device_owner': device_owner,
                 'fixed_ips': [
                     {
                         'subnet_id': 'my-subnet-id',
@@ -1123,6 +1123,14 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 ]
         }
         self._test_dvr_serviced_port_exists_on_subnet(port=vip_port)
+
+    def test_dvr_serviced_lbaas_vip_port_exists_on_subnet(self):
+        self._test_dvr_serviced_vip_port_exists_on_subnet(
+                        device_owner=constants.DEVICE_OWNER_LOADBALANCER)
+
+    def test_dvr_serviced_lbaasv2_vip_port_exists_on_subnet(self):
+        self._test_dvr_serviced_vip_port_exists_on_subnet(
+                        device_owner=constants.DEVICE_OWNER_LOADBALANCERV2)
 
     def _create_port(self, port_name, tenant_id, host, subnet_id, ip_address,
                      status='ACTIVE',
