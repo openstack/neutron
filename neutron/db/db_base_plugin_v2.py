@@ -1065,12 +1065,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             return port.get('dns_name', '')
         return ''
 
-    def _get_dns_names_for_port(self, context, network_id, ips,
-                                request_dns_name):
-        filter = {'network_id': [network_id]}
-        subnets = self._get_subnets(context, filters=filter)
-        v6_subnets = {subnet['id']: subnet for subnet in subnets
-                      if subnet['ip_version'] == 6}
+    def _get_dns_names_for_port(self, context, ips, request_dns_name):
         dns_assignment = []
         dns_domain = self._get_dns_domain()
         if request_dns_name:
@@ -1079,12 +1074,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 request_fqdn = '%s.%s' % (request_dns_name, dns_domain)
 
         for ip in ips:
-            subnet_id = ip['subnet_id']
-            is_auto_address_subnet = (
-                subnet_id in v6_subnets and
-                ipv6_utils.is_auto_address_subnet(v6_subnets[subnet_id]))
-            if is_auto_address_subnet:
-                continue
             if request_dns_name:
                 hostname = request_dns_name
                 fqdn = request_fqdn
@@ -1169,7 +1158,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 dns_assignment = []
                 if ips:
                     dns_assignment = self._get_dns_names_for_port(
-                        context, network_id, ips, request_dns_name)
+                        context, ips, request_dns_name)
 
         if 'dns_name' in p:
             db_port['dns_assignment'] = dns_assignment
@@ -1191,16 +1180,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_mac_addr_update(context, db_port,
                                         new_mac, current_owner)
 
-    def _get_dns_names_for_updated_port(self, context, db_port,
-                                        original_ips, original_dns_name,
-                                        request_dns_name, changes):
+    def _get_dns_names_for_updated_port(self, context, original_ips,
+                                        original_dns_name, request_dns_name,
+                                        changes):
         if changes.original or changes.add or changes.remove:
             return self._get_dns_names_for_port(
-                context, db_port['network_id'], changes.original + changes.add,
+                context, changes.original + changes.add,
                 request_dns_name or original_dns_name)
         if original_ips:
             return self._get_dns_names_for_port(
-                context, db_port['network_id'], original_ips,
+                context, original_ips,
                 request_dns_name or original_dns_name)
         return []
 
@@ -1221,7 +1210,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                      new_port, new_mac)
             if 'dns-integration' in self.supported_extension_aliases:
                 dns_assignment = self._get_dns_names_for_updated_port(
-                    context, port, original_ips, original_dns_name,
+                    context, original_ips, original_dns_name,
                     request_dns_name, changes)
         result = self._make_port_dict(port)
         # Keep up with fields that changed
@@ -1255,7 +1244,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _get_dns_name_for_port_get(self, context, port):
         if port['fixed_ips']:
             return self._get_dns_names_for_port(
-                context, port['network_id'], port['fixed_ips'],
+                context, port['fixed_ips'],
                 port['dns_name'])
         return []
 

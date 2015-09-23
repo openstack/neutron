@@ -397,10 +397,12 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         self.assertEqual(1, addr_mode_count[constants.DHCPV6_STATEFUL])
         self.assertEqual(2, addr_mode_count[constants.IPV6_SLAAC])
         self._verify_dns_assigment(port['port'], exp_ips_ipv4=1,
-                                   exp_ips_ipv6=1,
+                                   exp_ips_ipv6=3,
                                    ipv4_cidrs=[sub_dicts[0]['cidr'],
                                                sub_dicts[1]['cidr']],
-                                   ipv6_cidrs=[sub_dicts[4]['cidr'],
+                                   ipv6_cidrs=[sub_dicts[2]['cidr'],
+                                               sub_dicts[3]['cidr'],
+                                               sub_dicts[4]['cidr'],
                                                sub_dicts[5]['cidr']],
                                    dns_name=dns_name)
         return res
