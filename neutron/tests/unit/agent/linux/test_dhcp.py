@@ -148,7 +148,9 @@ class FakePort4(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd'),
                  FakeIPAllocation('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.4')]
+    dns_assignment = [
+        FakeDNSAssignment('192.168.0.4'),
+        FakeDNSAssignment('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
     mac_address = '00:16:3E:C2:77:1D'
     device_id = 'fake_port4'
 
@@ -213,7 +215,8 @@ class FakeV6PortExtraOpt(object):
     device_owner = 'foo3'
     fixed_ips = [FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = []
+    dns_assignment = [
+        FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
     mac_address = '00:16:3e:c2:77:1d'
     device_id = 'fake_port6'
 
@@ -232,7 +235,9 @@ class FakeDualPortWithV6ExtraOpt(object):
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd'),
                  FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
                                   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.3')]
+    dns_assignment = [
+        FakeDNSAssignment('192.168.0.3'),
+        FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
     mac_address = '00:16:3e:c2:77:1d'
     device_id = 'fake_port6'
 
