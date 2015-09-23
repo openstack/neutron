@@ -312,7 +312,8 @@ def get_random_string(length):
     rndstr = ""
     random.seed(datetime.datetime.now().microsecond)
     while len(rndstr) < length:
-        rndstr += hashlib.sha224(str(random.random())).hexdigest()
+        base_str = str(random.random()).encode('utf-8')
+        rndstr += hashlib.sha224(base_str).hexdigest()
 
     return rndstr[0:length]
 
