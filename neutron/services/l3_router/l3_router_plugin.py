@@ -58,7 +58,6 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     @resource_registry.tracked_resources(router=l3_db.Router,
                                          floatingip=l3_db.FloatingIP)
     def __init__(self):
-        self.setup_rpc()
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
         self.start_periodic_l3_agent_status_check()
@@ -66,9 +65,10 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
         l3_db.subscribe()
+        self.start_rpc_listeners()
 
     @log_helpers.log_method_call
-    def setup_rpc(self):
+    def start_rpc_listeners(self):
         # RPC support
         self.topic = topics.L3PLUGIN
         self.conn = n_rpc.create_connection(new=True)
@@ -77,7 +77,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
-        self.conn.consume_in_threads()
+        return self.conn.consume_in_threads()
 
     def get_plugin_type(self):
         return constants.L3_ROUTER_NAT
