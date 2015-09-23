@@ -215,7 +215,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                self.enable_distributed_routing,
                                'log_agent_heartbeats':
                                self.conf.AGENT.log_agent_heartbeats},
-            'agent_type': n_const.AGENT_TYPE_OVS,
+            'agent_type': self.conf.AGENT.agent_type,
             'start_flag': True}
 
         if tunnel_types:
