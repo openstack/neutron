@@ -1,6 +1,8 @@
 
-Neutron Graphite Thumbnails - Click to see full size figure
-===========================================================
+Neutron Graphite Thumbnails
+===========================
+
+Click to see full size figure.
 
 .. raw:: html
 
