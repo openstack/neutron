@@ -120,8 +120,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         agent.sg_agent = mock.Mock()
         return agent
 
-    def start_agent(self, agent):
-        self.setup_agent_rpc_mocks(agent)
+    def start_agent(self, agent, unplug_ports=[]):
+        self.setup_agent_rpc_mocks(agent, unplug_ports)
         polling_manager = polling.InterfacePollingMinimizer()
         self.addCleanup(polling_manager.stop)
         polling_manager.start()
@@ -163,6 +163,11 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                 'ip_address'], ip_len)]
             self.driver.init_l3(port.get('vif_name'), ip_cidrs,
                                 namespace=self.namespace)
+
+    def _unplug_ports(self, ports, agent):
+        for port in ports:
+            self.driver.unplug(
+                port.get('vif_name'), agent.int_br.br_name, self.namespace)
 
     def _get_device_details(self, port, network):
         dev = {'device': port['id'],
@@ -236,15 +241,17 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                 'devices_down': dev_down,
                 'failed_devices_down': []}
 
-    def setup_agent_rpc_mocks(self, agent):
+    def setup_agent_rpc_mocks(self, agent, unplug_ports):
         def mock_device_details(context, devices, agent_id, host=None):
-
             details = []
             for port in self.ports:
                 if port['id'] in devices:
                     dev = self._get_device_details(
                         port, self.network)
                     details.append(dev)
+            ports_to_unplug = [x for x in unplug_ports if x['id'] in devices]
+            if ports_to_unplug:
+                self._unplug_ports(ports_to_unplug, self.agent)
             return {'devices': details, 'failed_devices': []}
 
         (agent.plugin_rpc.get_devices_details_list_and_failed_devices.
@@ -262,11 +269,12 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.agent.plugin_rpc.update_device_list.side_effect = (
             mock_device_raise_exception)
 
-    def wait_until_ports_state(self, ports, up):
+    def wait_until_ports_state(self, ports, up, timeout=60):
         port_ids = [p['id'] for p in ports]
         agent_utils.wait_until_true(
             lambda: self._expected_plugin_rpc_call(
-                self.agent.plugin_rpc.update_device_list, port_ids, up))
+                self.agent.plugin_rpc.update_device_list, port_ids, up),
+            timeout=timeout)
 
     def setup_agent_and_ports(self, port_dicts, create_tunnels=True,
                               trigger_resync=False):

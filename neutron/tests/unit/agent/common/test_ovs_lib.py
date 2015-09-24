@@ -691,6 +691,9 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual('pid2', by_id['pid2'].vif_id)
         self.assertEqual('qvo2', by_id['pid2'].port_name)
         self.assertEqual(2, by_id['pid2'].ofport)
+        self.br.get_ports_attributes.assert_has_calls(
+            [mock.call('Interface', columns=['name', 'external_ids', 'ofport'],
+                       if_exists=True)])
 
     def _test_get_vif_port_by_id(self, iface_id, data, br_name=None,
                                  extra_calls_and_values=None):
