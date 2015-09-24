@@ -201,23 +201,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.arp_responder_enabled = arp_responder and self.l2_pop
         self.prevent_arp_spoofing = prevent_arp_spoofing
 
-        self.agent_state = {
-            'binary': 'neutron-openvswitch-agent',
-            'host': self.conf.host,
-            'topic': n_const.L2_AGENT_TOPIC,
-            'configurations': {'bridge_mappings': bridge_mappings,
-                               'tunnel_types': self.tunnel_types,
-                               'tunneling_ip': local_ip,
-                               'l2_population': self.l2_pop,
-                               'arp_responder_enabled':
-                               self.arp_responder_enabled,
-                               'enable_distributed_routing':
-                               self.enable_distributed_routing,
-                               'log_agent_heartbeats':
-                               self.conf.AGENT.log_agent_heartbeats},
-            'agent_type': self.conf.AGENT.agent_type,
-            'start_flag': True}
-
         if tunnel_types:
             self.enable_tunneling = True
         else:
@@ -281,6 +264,24 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.conf.host,
             self.enable_tunneling,
             self.enable_distributed_routing)
+
+        self.agent_state = {
+            'binary': 'neutron-openvswitch-agent',
+            'host': self.conf.host,
+            'topic': n_const.L2_AGENT_TOPIC,
+            'configurations': {'bridge_mappings': bridge_mappings,
+                               'tunnel_types': self.tunnel_types,
+                               'tunneling_ip': local_ip,
+                               'l2_population': self.l2_pop,
+                               'arp_responder_enabled':
+                               self.arp_responder_enabled,
+                               'enable_distributed_routing':
+                               self.enable_distributed_routing,
+                               'log_agent_heartbeats':
+                               self.conf.AGENT.log_agent_heartbeats,
+                               'extensions': self.ext_manager.names()},
+            'agent_type': self.conf.AGENT.agent_type,
+            'start_flag': True}
 
         report_interval = self.conf.AGENT.report_interval
         if report_interval:

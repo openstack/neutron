@@ -104,3 +104,15 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             while not done():
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
+
+
+class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):
+    def setUp(self):
+        super(TestOVSAgentExtensionConfig, self).setUp()
+        self.config.set_override('extensions', ['qos'], 'agent')
+        self.agent = self.create_agent(create_tunnels=False)
+
+    def test_report_loaded_extension(self):
+        self.agent._report_state()
+        agent_state = self.agent.state_rpc.report_state.call_args[0][1]
+        self.assertEqual(['qos'], agent_state['configurations']['extensions'])
