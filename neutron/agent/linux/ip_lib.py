@@ -38,6 +38,7 @@ OPTS = [
 
 LOOPBACK_DEVNAME = 'lo'
 
+IP_NETNS_PATH = '/var/run/netns'
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
 METRIC_PATTERN = re.compile(r"metric (\S+)")
@@ -210,7 +211,10 @@ class IPWrapper(SubProcessBase):
 
     @classmethod
     def get_namespaces(cls):
-        output = cls._execute([], 'netns', ('list',))
+        if not cfg.CONF.AGENT.use_helper_for_ns_read:
+            return os.listdir(IP_NETNS_PATH)
+
+        output = cls._execute([], 'netns', ['list'], run_as_root=True)
         return [l.split()[0] for l in output.splitlines()]
 
 
@@ -833,9 +837,11 @@ class IpNetnsCommand(IpCommandBase):
                              extra_ok_codes=extra_ok_codes, **kwargs)
 
     def exists(self, name):
+        if not cfg.CONF.AGENT.use_helper_for_ns_read:
+            return name in os.listdir(IP_NETNS_PATH)
+
         output = self._parent._execute(
-            ['o'], 'netns', ['list'],
-            run_as_root=cfg.CONF.AGENT.use_helper_for_ns_read)
+            ['o'], 'netns', ['list'], run_as_root=True)
         for line in [l.split()[0] for l in output.splitlines()]:
             if name == line:
                 return True
