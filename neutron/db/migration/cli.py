@@ -21,13 +21,13 @@ from alembic import environment
 from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo_config import cfg
+from oslo_utils import fileutils
 from oslo_utils import importutils
 import pkg_resources
 
 from neutron.common import utils
 
 
-# TODO(ihrachyshka): maintain separate HEAD files per branch
 HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
 CURRENT_RELEASE = "liberty"
@@ -119,7 +119,7 @@ def _get_alembic_entrypoint(project):
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
     validate_revisions(config)
-    validate_heads_file(config)
+    validate_head_file(config)
 
 
 def add_alembic_subparser(sub, cmd):
@@ -201,7 +201,7 @@ def do_revision(config, cmd):
                        message=CONF.command.message,
                        autogenerate=CONF.command.autogenerate,
                        sql=CONF.command.sql)
-    update_heads_file(config)
+    update_head_file(config)
 
 
 def _get_release_labels(labels):
@@ -263,16 +263,12 @@ def _validate_revision(script_dir, revision):
 
 def validate_revisions(config):
     script_dir = alembic_script.ScriptDirectory.from_config(config)
-    revisions = [v for v in script_dir.walk_revisions(base='base',
-                                                      head='heads')]
+    revisions = _get_revisions(script_dir)
 
-    branchpoints = []
     for revision in revisions:
-        if revision.is_branch_point:
-            branchpoints.append(revision)
-
         _validate_revision(script_dir, revision)
 
+    branchpoints = _get_branch_points(script_dir)
     if len(branchpoints) > 1:
         branchpoints = ', '.join(p.revision for p in branchpoints)
         alembic_util.err(
@@ -281,39 +277,54 @@ def validate_revisions(config):
         )
 
 
-def _get_sorted_heads(script):
-    '''Get the list of heads for all branches, sorted.'''
-    return sorted(script.get_heads())
+def _get_revisions(script):
+    return list(script.walk_revisions(base='base', head='heads'))
 
 
-def validate_heads_file(config):
-    '''Check that HEADS file contains the latest heads for each branch.'''
+def _get_branch_points(script):
+    branchpoints = []
+    for revision in _get_revisions(script):
+        if revision.is_branch_point:
+            branchpoints.append(revision)
+    return branchpoints
+
+
+def validate_head_file(config):
+    '''Check that HEAD file contains the latest head for the branch.'''
+    if _use_separate_migration_branches(config):
+        return
+
     script = alembic_script.ScriptDirectory.from_config(config)
-    expected_heads = _get_sorted_heads(script)
-    heads_path = _get_active_head_file_path(config)
+    expected_head = script.get_heads()
+    head_path = _get_head_file_path(config)
     try:
-        with open(heads_path) as file_:
-            observed_heads = file_.read().split()
-            if observed_heads == expected_heads:
+        with open(head_path) as file_:
+            observed_head = file_.read().split()
+            if observed_head == expected_head:
                 return
     except IOError:
         pass
     alembic_util.err(
-        _('HEADS file does not match migration timeline heads, expected: %s')
-        % ', '.join(expected_heads))
+        _('HEAD file does not match migration timeline head, expected: %s')
+        % expected_head)
 
 
-def update_heads_file(config):
-    '''Update HEADS file with the latest branch heads.'''
-    script = alembic_script.ScriptDirectory.from_config(config)
-    heads = _get_sorted_heads(script)
-    heads_path = _get_active_head_file_path(config)
-    with open(heads_path, 'w+') as f:
-        f.write('\n'.join(heads))
+def update_head_file(config):
+    '''Update HEAD file with the latest branch head.'''
+    head_file = _get_head_file_path(config)
+
     if _use_separate_migration_branches(config):
-        old_head_file = _get_head_file_path(config)
-        if os.path.exists(old_head_file):
-            os.remove(old_head_file)
+        # Kill any HEAD(S) files because we don't rely on them for branch-aware
+        # chains anymore
+        files_to_remove = [head_file, _get_heads_file_path(config)]
+        for file_ in files_to_remove:
+            fileutils.delete_if_exists(file_)
+        return
+
+    script = alembic_script.ScriptDirectory.from_config(config)
+    head = script.get_heads()
+    with open(head_file, 'w+') as f:
+        f.write('\n'.join(head))
 
 
 def add_command_parsers(subparsers):
@@ -405,19 +416,13 @@ def _get_head_file_path(config):
 
 
 def _get_heads_file_path(config):
-    '''Return the path of the file that contains all latest heads, sorted.'''
+    '''
+    Return the path of the file that was once used to maintain the list of
+    latest heads.
+    '''
     return os.path.join(
         _get_root_versions_dir(config),
         HEADS_FILENAME)
-
-
-def _get_active_head_file_path(config):
-    '''Return the path of the file that contains latest head(s), depending on
-       whether multiple branches are used.
-    '''
-    if _use_separate_migration_branches(config):
-        return _get_heads_file_path(config)
-    return _get_head_file_path(config)
 
 
 def _get_version_branch_path(config, branch=None):
@@ -429,17 +434,23 @@ def _get_version_branch_path(config, branch=None):
 
 def _use_separate_migration_branches(config):
     '''Detect whether split migration branches should be used.'''
-    return (CONF.split_branches or
-            # Use HEADS file to indicate the new, split migration world
-            os.path.exists(_get_heads_file_path(config)))
+    if CONF.split_branches:
+        return True
+
+    script_dir = alembic_script.ScriptDirectory.from_config(config)
+    if _get_branch_points(script_dir):
+        return True
+
+    return False
 
 
 def _set_version_locations(config):
     '''Make alembic see all revisions in all migration branches.'''
     version_paths = [_get_version_branch_path(config)]
-    if _use_separate_migration_branches(config):
-        for branch in MIGRATION_BRANCHES:
-            version_paths.append(_get_version_branch_path(config, branch))
+    for branch in MIGRATION_BRANCHES:
+        version_path = _get_version_branch_path(config, branch)
+        if os.path.exists(version_path):
+            version_paths.append(version_path)
 
     config.set_main_option('version_locations', ' '.join(version_paths))
 

@@ -53,16 +53,12 @@ class FakeNeutronObject(base.NeutronDbObject):
     synthetic_fields = ['field2']
 
 
-def _random_boolean():
-    return bool(random.getrandbits(1))
-
-
 def _random_integer():
     return random.randint(0, 1000)
 
 
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
-    obj_fields.BooleanField: _random_boolean,
+    obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.IntegerField: _random_integer,
     obj_fields.StringField: tools.get_random_string,
     obj_fields.UUIDField: tools.get_random_string,
