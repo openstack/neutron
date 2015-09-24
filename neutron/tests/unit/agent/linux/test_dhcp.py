@@ -1933,6 +1933,36 @@ class TestDnsmasq(TestBase):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(self.conf,
                                                             mock.ANY))
 
+    def _test__generate_opts_per_subnet_helper(self, config_opts,
+                                               expected_mdt_ip):
+        for key, value in config_opts.items():
+            self.conf.set_override(key, value)
+        dm = self._get_dnsmasq(FakeNetworkDhcpPort)
+        with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ipdev_mock:
+            list_addr = ipdev_mock.return_value.addr.list
+            list_addr.return_value = [{'cidr': alloc.ip_address + '/24'}
+                                      for alloc in FakeDhcpPort.fixed_ips]
+            options, idx_map = dm._generate_opts_per_subnet()
+
+        contains_metadata_ip = any(['%s/32' % dhcp.METADATA_DEFAULT_IP in line
+                                    for line in options])
+        self.assertEqual(expected_mdt_ip, contains_metadata_ip)
+
+    def test__generate_opts_per_subnet_no_metadata(self):
+        config = {'enable_isolated_metadata': False,
+                  'force_metadata': False}
+        self._test__generate_opts_per_subnet_helper(config, False)
+
+    def test__generate_opts_per_subnet_isolated_metadata_with_router(self):
+        config = {'enable_isolated_metadata': True,
+                  'force_metadata': False}
+        self._test__generate_opts_per_subnet_helper(config, True)
+
+    def test__generate_opts_per_subnet_forced_metadata(self):
+        config = {'enable_isolated_metadata': False,
+                  'force_metadata': True}
+        self._test__generate_opts_per_subnet_helper(config, True)
+
 
 class TestDeviceManager(TestConfBase):
 
