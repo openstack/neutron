@@ -12,65 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os.path
 import tempfile
 
 import fixtures
-import six
 
 from neutron.common import constants
 from neutron.tests import base
+from neutron.tests.common import config_fixtures
 from neutron.tests.common import helpers as c_helpers
 from neutron.tests.common import net_helpers
-
-
-class ConfigDict(base.AttributeDict):
-    def update(self, other):
-        self.convert_to_attr_dict(other)
-        super(ConfigDict, self).update(other)
-
-    def convert_to_attr_dict(self, other):
-        """Convert nested dicts to AttributeDict.
-
-        :param other: dictionary to be directly modified.
-        """
-        for key, value in six.iteritems(other):
-            if isinstance(value, dict):
-                if not isinstance(value, base.AttributeDict):
-                    other[key] = base.AttributeDict(value)
-                self.convert_to_attr_dict(value)
-
-
-class ConfigFileFixture(fixtures.Fixture):
-    """A fixture that knows how to translate configurations to files.
-
-    :param base_filename: the filename to use on disk.
-    :param config: a ConfigDict instance.
-    :param temp_dir: an existing temporary directory to use for storage.
-    """
-
-    def __init__(self, base_filename, config, temp_dir):
-        super(ConfigFileFixture, self).__init__()
-        self.base_filename = base_filename
-        self.config = config
-        self.temp_dir = temp_dir
-
-    def _setUp(self):
-        config_parser = self.dict_to_config_parser(self.config)
-        # Need to randomly generate a unique folder to put the file in
-        self.filename = os.path.join(self.temp_dir, self.base_filename)
-        with open(self.filename, 'w') as f:
-            config_parser.write(f)
-            f.flush()
-
-    def dict_to_config_parser(self, config_dict):
-        config_parser = six.moves.configparser.SafeConfigParser()
-        for section, section_dict in six.iteritems(config_dict):
-            if section != 'DEFAULT':
-                config_parser.add_section(section)
-            for option, value in six.iteritems(section_dict):
-                config_parser.set(section, option, value)
-        return config_parser
 
 
 class ConfigFixture(fixtures.Fixture):
@@ -83,14 +33,14 @@ class ConfigFixture(fixtures.Fixture):
     """
     def __init__(self, env_desc, host_desc, temp_dir, base_filename):
         super(ConfigFixture, self).__init__()
-        self.config = ConfigDict()
+        self.config = config_fixtures.ConfigDict()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.temp_dir = temp_dir
         self.base_filename = base_filename
 
     def _setUp(self):
-        cfg_fixture = ConfigFileFixture(
+        cfg_fixture = config_fixtures.ConfigFileFixture(
             self.base_filename, self.config, self.temp_dir)
         self.useFixture(cfg_fixture)
         self.filename = cfg_fixture.filename
