@@ -614,8 +614,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             raise ext_sg.SecurityGroupRuleInUse(id=id, reason=reason)
 
         with context.session.begin(subtransactions=True):
-            query = self._model_query(context, SecurityGroupRule)
-            if query.filter(SecurityGroupRule.id == id).delete() == 0:
+            query = self._model_query(context, SecurityGroupRule).filter(
+                SecurityGroupRule.id == id)
+            try:
+                # As there is a filter on a primary key it is not possible for
+                # MultipleResultsFound to be raised
+                context.session.delete(query.one())
+            except exc.NoResultFound:
                 raise ext_sg.SecurityGroupRuleNotFound(id=id)
 
         registry.notify(
