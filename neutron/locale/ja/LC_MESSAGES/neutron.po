@@ -7,15 +7,16 @@
 # Sasuke(Kyohei MORIYAMA) <>, 2015
 # NachiUeno <nati.ueno@gmail.com>, 2013
 # Tomoyuki KATO <tomo@dream.daynight.jp>, 2013
+# Akihiro Motoki <amotoki@gmail.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
+"Project-Id-Version: neutron 8.0.0.dev305\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-22 07:41+0000\n"
-"PO-Revision-Date: 2015-09-06 10:15+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2015-09-24 06:21+0000\n"
+"PO-Revision-Date: 2015-09-23 08:01+0000\n"
+"Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language-Team: Japanese (http://www.transifex.com/openstack/neutron/language/"
 "ja/)\n"
 "Plural-Forms: nplurals=1; plural=0\n"
@@ -285,9 +286,9 @@ msgstr ""
 "ます"
 
 msgid "Agent should implement routers with no gateway"
-msgstr "エージェントは、ゲートウェイなしでルーターを実装する必要があります"
+msgstr "エージェントは、ゲートウェイなしのルーターを扱える必要があります"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Agent updated: %(payload)s"
 msgstr "エージェントがアップデートされました: %(payload)s"
 
@@ -316,7 +317,7 @@ msgstr ""
 "除される予定です。"
 
 msgid "Allow running metadata proxy."
-msgstr "メタデータプロキシの動作許可します"
+msgstr "メタデータプロキシーの動作許可します"
 
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr "DHCP エージェントへのリソース操作通知の送信を許可"
@@ -518,6 +519,7 @@ msgstr ""
 "%(router_type)s ルーター %(router_id)s を %(agent_mode)s L3 エージェント "
 "%(agent_id)s でホストできません。"
 
+#, fuzzy
 msgid "Cannot match priority on flow deletion or modification"
 msgstr "flowの削除か設定の優先度が一致できません"
 
@@ -542,6 +544,7 @@ msgstr "読み取り専用属性 %s を更新できません"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "ssl の認証局公開鍵 (CA cert) ファイル"
 
+#, fuzzy
 msgid "Certificate file to use when starting the server securely"
 msgstr "サーバーを安全に始動するときに使用される証明書ファイル"
 
@@ -621,6 +624,7 @@ msgstr "CIDR %(cidr)s のイーサネット・タイプ値 %(ethertype)s が競�
 msgid "Connection is closed by the server."
 msgstr "接続がサーバーによってクローズされました。"
 
+#, fuzzy
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
@@ -630,7 +634,7 @@ msgstr ""
 "す。セキュリティー・グループを使用しない場合、または Nova セキュリティー・グ"
 "ループ API を使用する場合には、False にする必要があります。"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr "%(time)d 秒間の試行後に %(host)s:%(port)s にバインドできませんでした"
 
@@ -638,6 +642,7 @@ msgstr "%(time)d 秒間の試行後に %(host)s:%(port)s にバインドでき�
 msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
 msgstr "%(resource)s をテナント %(tenant_id)s 下で作成できませんでした"
 
+#, fuzzy
 msgid "Could not deserialize data"
 msgstr "データを非直列化することができませんでした"
 
@@ -718,6 +723,7 @@ msgstr "すべてのデバイスを削除して、名前空間を削除します
 msgid "Deleting port %s"
 msgstr "ポート %s を削除しています"
 
+#, fuzzy
 msgid ""
 "Determines if connections are allowed to be held open by clients after a "
 "request is fulfilled. A value of False will ensure that the socket "
@@ -757,6 +763,7 @@ msgstr "ダウングレードは現在ではサポートされていません"
 msgid "Driver %s is not unique across providers"
 msgstr "ドライバー %s はプロバイダー全体で固有ではありません"
 
+#, fuzzy
 msgid "Driver for security groups firewall in the L2 agent"
 msgstr "L2エージェントのセキュリティグループファイアウォールのドライバ"
 
@@ -1109,7 +1116,7 @@ msgstr ""
 "ません"
 
 msgid "Force ip_lib calls to use the root helper"
-msgstr "ip_lib 呼び出しでルート・ヘルパーを強制的に使用します"
+msgstr "ip_lib 呼び出しでルートヘルパーを強制的に使用します"
 
 #, python-format
 msgid "Found duplicate extension: %(alias)s"
@@ -1151,7 +1158,7 @@ msgstr ""
 "場合: エージェント有効グループ)。"
 
 msgid "Group (gid or name) running this process after its initialization"
-msgstr "このプロセスを初期化後に実行しているグループ (gid または名前)"
+msgstr "初期化後にこのプロセスを実行するグループ (gid または名前)"
 
 msgid "HTTP URL of OpenDaylight REST interface."
 msgstr "OpenDaylight REST インターフェースの HTTP URL。"
@@ -1201,7 +1208,7 @@ msgid "ID of the project that MidoNet admin user belongs to."
 msgstr "MidoNet admin ユーザーが属するプロジェクトの ID。"
 
 msgid "ID of the router"
-msgstr "ルータのID"
+msgstr "ルータの ID"
 
 #, python-format
 msgid ""
@@ -1266,8 +1273,8 @@ msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that has "
 "the matching router ID."
 msgstr ""
-"名前空間が無効の場合、l3 エージェントは、一致するルーター ID を持つルーターの"
-"みを構成できます。"
+"名前空間が無効の場合、l3 エージェントは、このルーター ID に一致する ID を持つ"
+"ルーターのみを構成できます。"
 
 msgid "If set, ignore any SSL validation issues."
 msgstr "設定されている場合、すべての SSL 検証問題を無視します。"
@@ -1550,7 +1557,7 @@ msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "メタデータ・プロキシー UNIX ドメイン・ソケットのロケーション"
 
 msgid "Location of Metadata Proxy UNIX domain socket"
-msgstr "メタデータ・プロキシー UNIX ドメイン・ソケットのロケーション"
+msgstr "メタデータプロキシー UNIX ドメインソケットの場所"
 
 msgid "Location of ca certificates file to use for CRD client requests."
 msgstr "CRD クライアント要求に使用するための CA 証明書ファイルのロケーション。"
@@ -1579,6 +1586,7 @@ msgstr "veth インターフェースの MTU サイズ"
 msgid "Make the l2 agent run in DVR mode."
 msgstr "l2 エージェントを DVR モードで実行します。"
 
+#, fuzzy
 msgid "Malformed request body"
 msgstr "誤った形式の要求本体"
 
@@ -1590,7 +1598,7 @@ msgid "Management Security Zone id"
 msgstr "管理セキュリティー・ゾーン id"
 
 msgid "Max header line to accommodate large tokens"
-msgstr "ラージ・トークンを収容するための最大ヘッダー行"
+msgstr "ラージトークンを収容するための最大ヘッダー行"
 
 msgid "Maximum number of DNS nameservers"
 msgstr "DNS ネーム・サーバーの最大数"
@@ -1672,7 +1680,7 @@ msgstr ""
 msgid "Multiple default providers for service %s"
 msgstr "サービス %s のデフォルト・プロバイダーが複数あります"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr "サービス %s の複数のプラグインが構成されていました"
 
@@ -1722,7 +1730,7 @@ msgid "Name of Open vSwitch bridge to use"
 msgstr "使用する Open vSwitch ブリッジの名前"
 
 msgid "Name of bridge used for external network traffic."
-msgstr "外部ネットワーク・トラフィックに使用されるブリッジの名前。"
+msgstr "外部ネットワークトラフィックに使用されるブリッジの名前。"
 
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
@@ -1798,7 +1806,7 @@ msgid "Neutron Service Type Management"
 msgstr "Neutron サービス・タイプ管理"
 
 msgid "Neutron core_plugin not configured!"
-msgstr "Neutron core_plugin は設定されていません。"
+msgstr "Neutron core_plugin が設定されていません。"
 
 msgid "Neutron plugin provider module"
 msgstr "Neutronプラグインプロバイダモジュール"
@@ -1858,12 +1866,14 @@ msgstr "Vyatta vRouter のインスタンスの Nova VM フレーバー。"
 msgid "Nova image id for instances of Vyatta vRouter."
 msgstr "Vyatta vRouter のインスタンスの Nova イメージ ID。"
 
+#, fuzzy
 msgid "Number of RPC worker processes for service"
-msgstr "サービスのRPCワーカプロセスの数"
+msgstr "サービスの RPC ワーカプロセスの数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "メタデータ・サーバー・ソケットの構成に使用されるバックログ要求の数"
 
+#, fuzzy
 msgid "Number of backlog requests to configure the socket with"
 msgstr "ソケットを構成するためのバックログ要求の数"
 
@@ -1996,10 +2006,10 @@ msgstr ""
 "での認証プラグインが推奨されています。"
 
 msgid "Path to PID file for this process"
-msgstr "このプロセス用の PID ファイルへのパス"
+msgstr "このプロセス用の PID ファイルのパス"
 
 msgid "Path to the router directory"
-msgstr "ルーター・ディレクトリーへのパス"
+msgstr "ルーターディレクトリーのパス"
 
 msgid "Peer patch port in integration bridge for tunnel bridge."
 msgstr "トンネル・ブリッジの統合ブリッジ内のピア・パッチ・ポート。"
@@ -2080,6 +2090,7 @@ msgstr ""
 "プレフィックス「%(prefix)s」は IPv%(version)s プールではサポートされていませ"
 "ん"
 
+#, fuzzy
 msgid "Private key file to use when starting the server securely"
 msgstr "サーバーを安全に始動するときに使用される秘密鍵ファイル"
 
@@ -2098,10 +2109,10 @@ msgid "Probe created : %s "
 msgstr "作成されたプローブ: %s "
 
 msgid "Process is already started"
-msgstr "プロセスは既に実行されています"
+msgstr "プロセスが既に実行されています"
 
 msgid "Process is not running."
-msgstr "プロセスは実行されていません"
+msgstr "プロセスが実行されていません"
 
 msgid "Protocol to access nova metadata, http or https"
 msgstr "Nova メタデータ、http、または https にアクセスするためのプロトコル"
@@ -2118,8 +2129,8 @@ msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
-"集中状態を緩和するため、定期タスク・スケジューラーを開始するときにランダムに"
-"遅延する時間 (秒) の範囲。(無効にするには 0 に設定)"
+"集中状態を緩和するため、定期タスクスケジューラーの開始時に挿入するランダムな"
+"遅延時間 (秒) の範囲。(無効にするには 0 に設定)"
 
 msgid "Rbridge id of provider edge router(s)"
 msgstr "プロバイダー・エッジ・ルーターのブリッジ ID。"
@@ -2192,10 +2203,10 @@ msgid "Resources required"
 msgstr "リソースが必要です"
 
 msgid "Root helper application."
-msgstr "ルート・ヘルパー・アプリケーション。"
+msgstr "ルートヘルパーアプリケーション。"
 
 msgid "Root helper daemon application to use when possible."
-msgstr "可能な場合に使用するルート・ヘルパー・デーモン・アプリケーション。"
+msgstr "利用可能な場合に使用するルートヘルパーのデーモンアプリケーション。"
 
 msgid "Root permissions are required to drop privileges."
 msgstr "特権を除去するにはルート許可が必要です。"
@@ -2304,8 +2315,8 @@ msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, the "
 "feature is disabled"
 msgstr ""
-"HA セットアップ用に指定数の Gratuitous ARP を送信します。Gratuitous ARP が 0 "
-"以下の場合、この機能は無効です"
+"HA セットアップ用に指定数の Gratuitous ARP を送信します。値が 0 以下の場合、"
+"この機能は無効です"
 
 #, python-format
 msgid ""
@@ -2335,6 +2346,7 @@ msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
 
+#, fuzzy
 msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
@@ -2422,7 +2434,7 @@ msgid "TCP Port to listen for metadata server requests."
 msgstr "メタデータ・サーバー要求を listen するための TCP ポート。"
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
-msgstr "Neutronメタデータ名前空間ぷろきしによってしようされるTCP Port"
+msgstr "Neutron メタデータ名前空間プロキシーが使用する TCP Port"
 
 msgid "TCP Port used by Nova metadata server."
 msgstr "Nova メタデータ・サーバーによって使用される TCP ポート。"
@@ -2687,6 +2699,7 @@ msgstr ""
 "ます。中央ノード (または devstack などの単一ホスト・デプロイメント) 上で実行"
 "中の L3 の場合、このモードを使用する必要があります。"
 
+#, fuzzy
 msgid ""
 "Timeout for client connections socket operations. If an incoming connection "
 "is idle for this number of seconds it will be closed. A value of '0' means "
@@ -2696,7 +2709,7 @@ msgstr ""
 "であると閉じられます。値「0」は永続的に待機することを意味します。"
 
 msgid "Timeout in seconds for ovs-vsctl commands"
-msgstr "ovs-vsctlコマンドのタイムアウト(秒)"
+msgstr "ovs-vsctl コマンドのタイムアウト(秒)"
 
 msgid "Timeout value for connecting to CRD service in seconds."
 msgstr "CRD サービスへの接続用タイムアウト値 (秒)。"
@@ -2704,6 +2717,7 @@ msgstr "CRD サービスへの接続用タイムアウト値 (秒)。"
 msgid "Tomcat session timeout in minutes."
 msgstr "Tomcat セッション・タイムアウト (分)。"
 
+#, fuzzy
 msgid "Top-level directory for maintaining dhcp state"
 msgstr "DHCP の状態を維持するための最上位ディレクトリー"
 
@@ -2882,7 +2896,7 @@ msgstr "ネットワークを作成できません。トンネル ID %(tunnel_id
 msgid "Unable to delete subnet pool: %(reason)s"
 msgstr "サブネット・プールを削除できません: %(reason)s"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "%s のMACアドレス収集ができません"
 
@@ -2894,7 +2908,7 @@ msgstr "要求本体で '%s' が見つかりません"
 msgid "Unable to find any IP address on external network %(net_id)s."
 msgstr "外部ネットワーク %(net_id)s 上で IP アドレスが見つかりません"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Unable to find resource name in %s"
 msgstr "%sの中のリソース名を見つけることはできません"
 
@@ -2926,8 +2940,8 @@ msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
 msgstr ""
-"%s からターゲット・フィールドを特定できません。一致の形式は "
-"%%(<field_name>)s でなければなりません"
+"%s からターゲットフィールドを特定できません。一致の形式は %%(<field_name>)s "
+"でなければなりません"
 
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
@@ -2941,7 +2955,7 @@ msgstr ""
 "ネットワーク %(network)s の共有設定を再構成できません。複数のテナントによって"
 "使用されています"
 
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "Unable to verify match:%(match)s as the parent resource: %(res)s was not "
 "found"
@@ -3020,13 +3034,13 @@ msgstr "--delta と相対リビジョンの両方ではなく一方を使用し�
 
 msgid "Use ipset to speed-up the iptables based security groups."
 msgstr ""
-"iptables ベース・セキュリティー・グループの速度を上げるには、ipset を使用しま"
+"iptables ベースのセキュリティーグループの速度を向上するには、ipset を使用しま"
 "す。"
 
 msgid "Use the root helper to read the namespaces from the operating system."
 msgstr ""
-"オペレーティング・システムから名前空間を読み取るにはルート・ヘルパーを使用し"
-"ます。"
+"オペレーティングシステムから名前空間を読み取るにはルートヘルパーを使用しま"
+"す。"
 
 msgid ""
 "Use veths instead of patch ports to interconnect the integration bridge to "
@@ -3047,7 +3061,7 @@ msgstr ""
 "場合: エージェント有効ユーザー)。"
 
 msgid "User (uid or name) running this process after its initialization"
-msgstr "このプロセスを初期化後に実行しているユーザー (uid または名前)"
+msgstr "初期化後にこのプロセスを実行するユーザー (uid または名前)"
 
 #, python-format
 msgid "User does not have admin privileges: %(reason)s"
@@ -3064,7 +3078,7 @@ msgid "Uses veth for an interface or not"
 msgstr "インターフェースに veth を使用するかどうか"
 
 msgid "VRRP authentication password"
-msgstr "VRRP認証パスワード"
+msgstr "VRRP 認証パスワード"
 
 msgid "VRRP authentication type"
 msgstr "VRRP 認証タイプ"
@@ -3122,17 +3136,17 @@ msgid ""
 "desired, it needs to be done via a subnet allocated to the network and not "
 "through this parameter. "
 msgstr ""
-"IPv6 では、自動的に割り当てられたリンク・ローカル・アドレス (LLA) を使用でき"
-"るため、外部ゲートウェイに使用するネットワークにはサブネットを関連付ける必要"
-"はありません。ただし、IPv6 ゲートウェイ・アドレスはデフォルト経路のネクスト・"
-"ホップとして使用するために必要です。IPv6 ゲートウェイ・アドレスをここで構成し"
-"ない場合にのみ、アップストリーム・ルーターのルーター通知 (RA) からデフォルト"
-"経路を取得するように Neutron ルーターが構成されます。この場合、これらの RA を"
-"送信するようにアップストリーム・ルーターを構成することも必要です。"
-"ipv6_gateway を構成する場合、これはアップストリーム・ルーター上のインター"
-"フェースの LLA でなければなりません。グローバル・ユニーク・アドレス (GUA) を"
-"使用したネクスト・ホップが必要な場合は、このパラメーターを使用するのではな"
-"く、ネットワークに割り振られたサブネットを介してこれを行う必要があります。"
+"IPv6 では、自動的に割り当てられたリンクローカルアドレス (LLA) を使用できるた"
+"め、外部ゲートウェイに使用するネットワークにはサブネットを関連付ける必要はあ"
+"りません。ただし、IPv6 ゲートウェイアドレスはデフォルト経路のネクストホップと"
+"して使用するために必要です。IPv6 ゲートウェイアドレスをここで構成しない場合に"
+"のみ、上流ルーターのルーター広告 (RA) からデフォルト経路を取得するように "
+"Neutron ルーターが構成されます。この場合、これらの RA を送信するように上流"
+"ルーターを構成することも必要です。ipv6_gateway を構成する場合、これは上流ルー"
+"ター上のインターフェースの LLA でなければなりません。グローバルユニークアドレ"
+"ス (GUA) を使用したネクストホップが必要な場合は、このパラメーターを使用するの"
+"ではなく、ネットワークに割り振られたサブネットを介してこれを行う必要がありま"
+"す。"
 
 msgid "You must implement __call__"
 msgstr "__call__ を実装する必要があります"
