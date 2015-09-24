@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev278\n"
+"Project-Id-Version: neutron 7.0.0.dev347.g23e9734\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-22 07:41+0000\n"
+"POT-Creation-Date: 2015-09-24 20:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2423,11 +2423,11 @@ msgid ""
 "admin_state_up to False prior to upgrade."
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:534
+#: neutron/db/l3_dvr_db.py:541
 msgid "Unable to create the Agent Gateway Port"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:565
+#: neutron/db/l3_dvr_db.py:572
 msgid "Unable to create the SNAT Interface Port"
 msgstr ""
 
@@ -3481,7 +3481,7 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:58
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:58
 #: neutron/plugins/ml2/drivers/mlnx/agent/config.py:43
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:73
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:74
 #: neutron/plugins/oneconvergence/lib/config.py:45
 msgid ""
 "The number of seconds the agent will wait between polling for local "
@@ -3802,14 +3802,14 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:61
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:117
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:118
 msgid ""
 "Set new timeout in seconds for new rpc calls after agent receives "
 "SIGTERM. If value is set to 0, rpc timeout won't be changed"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:69
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:100
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:101
 msgid ""
 "Enable suppression of ARP responses that don't match an IP address that "
 "belongs to the port from which they originate. Note: This prevents the "
@@ -3973,95 +3973,95 @@ msgstr ""
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:30
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:31
 msgid "Integration bridge to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:32
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:33
 msgid "Tunnel bridge to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:34
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:35
 msgid "Peer patch port in integration bridge for tunnel bridge."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:37
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:38
 msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:40
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:41
 msgid "Local IP address of tunnel endpoint."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:43
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:44
 msgid "List of <physical_network>:<bridge>. Deprecated for ofagent."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:46
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:47
 msgid ""
 "Use veths instead of patch ports to interconnect the integration bridge "
 "to physical bridges."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:50
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:51
 msgid "OpenFlow interface to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:54
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:55
 msgid "OVS datapath to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:56
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:57
 msgid ""
 "Address to listen on for OpenFlow connections. Used only for 'native' "
 "driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:59
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:60
 msgid "Port to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:62
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:63
 msgid ""
 "Timeout in seconds to wait for the local switch connecting the "
 "controller. Used only for 'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:66
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:67
 msgid ""
 "Timeout in seconds to wait for a single OpenFlow request. Used only for "
 "'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:77
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:78
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:81
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:82
 msgid ""
 "The number of seconds to wait before respawning the ovsdb monitor after "
 "losing communication with it."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:84
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:85
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:87
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:88
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:89
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:90
 msgid "MTU size of veth interfaces"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:91
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:92
 msgid ""
 "Use ML2 l2population mechanism driver to learn remote MAC and IPs and "
 "improve tunnel scalability."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:94
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:95
 msgid ""
 "Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
 "l2population driver. Allows the switch (when supporting an overlay) to "
@@ -4069,26 +4069,30 @@ msgid ""
 "broadcast into the overlay."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:112
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:113
 msgid ""
 "Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying "
 "GRE/VXLAN tunnel."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:115
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:116
 msgid "Make the l2 agent run in DVR mode."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:121
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:122
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
 "interruption."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:124
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:125
 msgid ""
 "Set or un-set the tunnel header checksum  on outgoing IP packet carrying "
 "GRE/VXLAN tunnel."
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:129
+msgid "Selects the Agent Type reported"
 msgstr ""
 
 #: neutron/plugins/oneconvergence/lib/config.py:24
@@ -4236,50 +4240,50 @@ msgid ""
 "<service_type>:<name>:<driver>[:default]"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:142
+#: neutron/services/provider_configuration.py:138
 #, python-format
 msgid "Provider name is limited by 255 characters: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:155
+#: neutron/services/provider_configuration.py:151
 msgid "Invalid service provider format"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:163
+#: neutron/services/provider_configuration.py:159
 #, python-format
 msgid "Invalid provider format. Last part should be 'default' or empty: %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:178
+#: neutron/services/provider_configuration.py:174
 #, python-format
 msgid ""
 "Service provider '%(provider)s' could not be found for service type "
 "%(service_type)s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:183
+#: neutron/services/provider_configuration.py:179
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:188
+#: neutron/services/provider_configuration.py:184
 #, python-format
 msgid ""
 "Resource '%(resource_id)s' is already associated with provider "
 "'%(provider)s' for service type '%(service_type)s'"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:202
+#: neutron/services/provider_configuration.py:198
 #, python-format
 msgid "Driver %s is not unique across providers"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:212
+#: neutron/services/provider_configuration.py:208
 #, python-format
 msgid "Multiple default providers for service %s"
 msgstr ""
 
-#: neutron/services/provider_configuration.py:223
+#: neutron/services/provider_configuration.py:219
 #, python-format
 msgid "Multiple providers specified for service %s"
 msgstr ""
@@ -4455,12 +4459,12 @@ msgid ""
 "operation."
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:478
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:493
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:479
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:494
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -4490,9 +4494,9 @@ msgid ""
 "network %(network)s with segments to bind %(segments_to_bind)s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1185
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1204
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1223
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1217
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1236
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1255
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
