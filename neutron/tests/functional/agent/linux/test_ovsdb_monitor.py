@@ -91,9 +91,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         self.monitor.start(block=True, timeout=timeout)
 
     def test_has_updates(self):
-        utils.wait_until_true(lambda: self.monitor.data_received is True)
-        self.assertTrue(self.monitor.has_updates,
-                        'Initial call should always be true')
+        utils.wait_until_true(lambda: self.monitor.has_updates)
         # clear the event list
         self.monitor.get_events()
         self.useFixture(net_helpers.OVSPortFixture())
@@ -118,7 +116,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
                 return True
 
     def test_get_events(self):
-        utils.wait_until_true(lambda: self.monitor.data_received is True)
+        utils.wait_until_true(lambda: self.monitor.has_updates)
         devices = self.monitor.get_events()
         self.assertTrue(devices.get('added'),
                         'Initial call should always be true')
