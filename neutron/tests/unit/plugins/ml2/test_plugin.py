@@ -33,6 +33,7 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
+from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
@@ -1360,6 +1361,64 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
 
         return plugin
 
+    def _test__get_host_port_if_changed(
+        self, mech_context, attrs=None, expected_retval=None):
+        with mock.patch.object(ml2_plugin.Ml2Plugin,
+                               '__init__',
+                               return_value=None):
+            plugin = ml2_plugin.Ml2Plugin()
+            test_return = plugin._get_host_port_if_changed(mech_context, attrs)
+            self.assertEqual(expected_retval, test_return)
+
+    def test__get_host_port_if_changed_no_attrs(self):
+        mech_context = mock.Mock()
+        mech_context._binding.host = 'Host-1'
+        self._test__get_host_port_if_changed(
+            mech_context, attrs=None, expected_retval=None)
+
+    def test__get_host_port_if_changed_no_binding_change(self):
+        mech_context = mock.Mock()
+        mech_context._binding.host = 'Host-1'
+        mech_context.current = {
+            'id': 'fake-id',
+            'mac_address': '2a:2b:2c:2d:2e:2f'
+        }
+        attrs = {'mac_address': '0a:0b:0c:0d:0e:0f'}
+        self._test__get_host_port_if_changed(
+            mech_context, attrs=attrs, expected_retval=None)
+
+        attrs = {
+            portbindings.HOST_ID: 'Host-1',
+            'mac_address': '0a:0b:0c:0d:0e:0f',
+        }
+        self._test__get_host_port_if_changed(
+            mech_context, attrs=attrs, expected_retval=None)
+
+    def test__get_host_port_if_changed_with_binding_removed(self):
+        expected_return = {
+            'id': 'fake-id',
+            portbindings.HOST_ID: None,
+            'mac_address': '2a:2b:2c:2d:2e:2f'
+        }
+        mech_context = mock.Mock()
+        mech_context._binding.host = 'Host-1'
+        mech_context.current = expected_return
+        attrs = {portbindings.HOST_ID: None}
+        self._test__get_host_port_if_changed(
+            mech_context, attrs=attrs, expected_retval=expected_return)
+
+    def test__get_host_port_if_changed_with_binding_added(self):
+        expected_return = {
+            'id': 'fake-id',
+            portbindings.HOST_ID: 'host-1',
+            'mac_address': '2a:2b:2c:2d:2e:2f'
+        }
+        mech_context = mock.Mock()
+        mech_context.current = expected_return
+        attrs = {portbindings.HOST_ID: 'host-1'}
+        self._test__get_host_port_if_changed(
+            mech_context, attrs=attrs, expected_retval=expected_return)
+
     def test_create_port_rpc_outside_transaction(self):
         with contextlib.nested(
             mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
@@ -1377,20 +1436,43 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 plugin, **kwargs)
 
     def test_update_port_rpc_outside_transaction(self):
-        with contextlib.nested(
-            mock.patch.object(ml2_plugin.Ml2Plugin, '__init__'),
-            mock.patch.object(base_plugin.NeutronDbPluginV2, 'update_port'),
-        ) as (init, super_update_port):
+        port_id = 'fake_id'
+        net_id = 'mynet'
+        original_port_db = models_v2.Port(
+            id=port_id,
+            tenant_id='tenant',
+            network_id=net_id,
+            mac_address='08:00:01:02:03:04',
+            admin_state_up=True,
+            status='ACTIVE',
+            device_id='vm_id',
+            device_owner='compute:None')
+
+        binding = mock.Mock()
+        binding.port_id = port_id
+        binding.host = 'vm_host'
+        binding.vnic_type = portbindings.VNIC_NORMAL
+        binding.profile = ''
+        binding.vif_type = ''
+        binding.vif_details = ''
+
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
+                mock.patch.object(ml2_db, 'get_locked_port_and_binding',
+                                  return_value=(original_port_db, binding)),\
+                mock.patch.object(base_plugin.NeutronDbPluginV2,
+                                  'update_port'):
             init.return_value = None
             new_host_port = mock.Mock()
             plugin = self._create_plugin_for_create_update_port(new_host_port)
+            original_port = plugin._make_port_dict(original_port_db)
 
-            plugin.update_port(self.context, 'fake_id', mock.MagicMock())
+            plugin.update_port(self.context, port_id, mock.MagicMock())
 
             kwargs = {
                 'context': self.context,
                 'port': new_host_port,
                 'mac_address_updated': True,
+                'original_port': original_port,
             }
             self.notify.assert_called_once_with('port', 'after_update',
                 plugin, **kwargs)
