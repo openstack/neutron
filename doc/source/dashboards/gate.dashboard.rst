@@ -1,6 +1,6 @@
 
-Neutron Graphite Thumbnails
-===========================
+Neutron Gate Pipeline Thumbnails
+================================
 
 Click to see full size figure.
 
