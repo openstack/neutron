@@ -118,7 +118,7 @@ def _get_alembic_entrypoint(project):
 
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
-    validate_labels(config)
+    validate_revisions(config)
     validate_heads_file(config)
 
 
@@ -261,12 +261,24 @@ def _validate_revision(script_dir, revision):
     _validate_single_revision_labels(script_dir, revision)
 
 
-def validate_labels(config):
+def validate_revisions(config):
     script_dir = alembic_script.ScriptDirectory.from_config(config)
     revisions = [v for v in script_dir.walk_revisions(base='base',
                                                       head='heads')]
+
+    branchpoints = []
     for revision in revisions:
+        if revision.is_branch_point:
+            branchpoints.append(revision)
+
         _validate_revision(script_dir, revision)
+
+    if len(branchpoints) > 1:
+        branchpoints = ', '.join(p.revision for p in branchpoints)
+        alembic_util.err(
+            _('Unexpected number of alembic branch points: %(branchpoints)s') %
+            {'branchpoints': branchpoints}
+        )
 
 
 def _get_sorted_heads(script):
