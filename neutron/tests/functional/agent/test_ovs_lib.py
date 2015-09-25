@@ -232,6 +232,17 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         expected = set([vif_ports[0].vif_id])
         self.assertEqual(expected, ports)
 
+    def test_get_vif_port_set_on_empty_bridge_returns_empty_set(self):
+        # Create a port on self.br
+        self.create_ovs_vif_port()
+
+        # Create another, empty bridge
+        br_2 = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+
+        # Assert that get_vif_port_set on an empty bridge returns an empty set,
+        # and does not return the other bridge's ports.
+        self.assertEqual(set(), br_2.get_vif_port_set())
+
     def test_get_ports_attributes(self):
         port_names = [self.create_ovs_port()[0], self.create_ovs_port()[0]]
         db_ports = self.br.get_ports_attributes('Interface', columns=['name'])
