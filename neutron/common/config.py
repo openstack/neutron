@@ -17,7 +17,6 @@
 Routines for configuring Neutron
 """
 
-import os
 import sys
 
 from keystoneclient import auth
@@ -26,7 +25,8 @@ from oslo_config import cfg
 from oslo_db import options as db_options
 from oslo_log import log as logging
 import oslo_messaging
-from paste import deploy
+from oslo_service import _options
+from oslo_service import wsgi
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
@@ -42,8 +42,6 @@ core_opts = [
                help=_("The host IP to bind to")),
     cfg.IntOpt('bind_port', default=9696,
                help=_("The port to bind to")),
-    cfg.StrOpt('api_paste_config', default="api-paste.ini",
-               help=_("The API paste config file to use")),
     cfg.StrOpt('api_extensions_path', default="",
                help=_("The path for API extensions")),
     cfg.StrOpt('auth_strategy', default='keystone',
@@ -152,6 +150,9 @@ core_cli_opts = [
 # Register the configuration options
 cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_cli_opts(core_cli_opts)
+# TODO(eezhova): Replace it with wsgi.register_opts(CONF) when oslo.service
+# 0.10.0 releases.
+cfg.CONF.register_opts(_options.wsgi_opts)
 
 # Ensure that the control exchange is set correctly
 oslo_messaging.set_transport_defaults(control_exchange='neutron')
@@ -231,24 +232,7 @@ def load_paste_app(app_name):
     """Builds and returns a WSGI app from a paste config file.
 
     :param app_name: Name of the application to load
-    :raises ConfigFilesNotFoundError when config file cannot be located
-    :raises RuntimeError when application cannot be loaded from config file
     """
-
-    config_path = cfg.CONF.find_file(cfg.CONF.api_paste_config)
-    if not config_path:
-        raise cfg.ConfigFilesNotFoundError(
-            config_files=[cfg.CONF.api_paste_config])
-    config_path = os.path.abspath(config_path)
-    LOG.info(_LI("Config paste file: %s"), config_path)
-
-    try:
-        app = deploy.loadapp("config:%s" % config_path, name=app_name)
-    except (LookupError, ImportError):
-        msg = (_("Unable to load %(app_name)s from "
-                 "configuration file %(config_path)s.") %
-               {'app_name': app_name,
-                'config_path': config_path})
-        LOG.exception(msg)
-        raise RuntimeError(msg)
+    loader = wsgi.Loader(cfg.CONF)
+    app = loader.load_app(app_name)
     return app

@@ -19,6 +19,7 @@ import mock
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
+from oslo_service import wsgi as base_wsgi
 import routes
 import six
 import webob
@@ -48,7 +49,7 @@ _get_path = test_base._get_path
 extensions_path = ':'.join(neutron.tests.unit.extensions.__path__)
 
 
-class ExtensionsTestApp(wsgi.Router):
+class ExtensionsTestApp(base_wsgi.Router):
 
     def __init__(self, options={}):
         mapper = routes.Mapper()
