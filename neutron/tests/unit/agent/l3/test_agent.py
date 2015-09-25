@@ -1096,14 +1096,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                        router)
         self.assertEqual(1, self.send_adv_notif.call_count)
 
-    def test_update_routing_table(self):
-        # Just verify the correct namespace was used in the call
+    def _test_update_routing_table(self, is_snat_host=True):
         router = l3_test_common.prepare_router_data()
         uuid = router['id']
-        netns = 'snat-' + uuid
+        s_netns = 'snat-' + uuid
+        q_netns = 'qrouter-' + uuid
         fake_route1 = {'destination': '135.207.0.0/16',
-                       'nexthop': '1.2.3.4'}
-
+                       'nexthop': '19.4.4.200'}
+        calls = [mock.call('replace', fake_route1, q_netns)]
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = dvr_router.DvrEdgeRouter(
             agent,
@@ -1113,10 +1113,19 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             **self.ri_kwargs)
         ri._update_routing_table = mock.Mock()
 
-        ri.update_routing_table('replace', fake_route1)
-        ri._update_routing_table.assert_called_once_with('replace',
-                                                         fake_route1,
-                                                         netns)
+        with mock.patch.object(ri, '_is_this_snat_host') as snat_host:
+            snat_host.return_value = is_snat_host
+            ri.update_routing_table('replace', fake_route1)
+            if is_snat_host:
+                ri._update_routing_table('replace', fake_route1, s_netns)
+                calls += [mock.call('replace', fake_route1, s_netns)]
+            ri._update_routing_table.assert_has_calls(calls, any_order=True)
+
+    def test_process_update_snat_routing_table(self):
+        self._test_update_routing_table()
+
+    def test_process_not_update_snat_routing_table(self):
+        self._test_update_routing_table(is_snat_host=False)
 
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

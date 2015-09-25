@@ -179,15 +179,12 @@ class HaRouter(router.RouterInfo):
     def get_router_cidrs(self, device):
         return set(self._get_cidrs_from_keepalived(device.name))
 
-    def routes_updated(self):
-        new_routes = self.router['routes']
-
+    def routes_updated(self, old_routes, new_routes):
         instance = self._get_keepalived_instance()
         instance.virtual_routes.extra_routes = [
             keepalived.KeepalivedVirtualRoute(
                 route['destination'], route['nexthop'])
             for route in new_routes]
-        self.routes = new_routes
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
         gateway_ips = self._get_external_gw_ips(ex_gw_port)
