@@ -404,9 +404,9 @@ class OVSDVRNeutronAgent(object):
                   "get_ports_on_host_by_subnet %s",
                   local_compute_ports)
         vif_by_id = self.int_br.get_vifs_by_ids(
-            [prt['id'] for prt in local_compute_ports])
-        for prt in local_compute_ports:
-            vif = vif_by_id.get(prt['id'])
+            [local_port['id'] for local_port in local_compute_ports])
+        for local_port in local_compute_ports:
+            vif = vif_by_id.get(local_port['id'])
             if not vif:
                 continue
             ldm.add_compute_ofport(vif.vif_id, vif.ofport)
@@ -420,7 +420,7 @@ class OVSDVRNeutronAgent(object):
                 # the compute port is discovered first here that its on
                 # a dvr routed subnet queue this subnet to that port
                 comp_ovsport = OVSPort(vif.vif_id, vif.ofport,
-                                  vif.vif_mac, prt['device_owner'])
+                                  vif.vif_mac, local_port['device_owner'])
                 comp_ovsport.add_subnet(subnet_uuid)
                 self.local_ports[vif.vif_id] = comp_ovsport
             # create rule for just this vm port
