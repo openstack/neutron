@@ -1225,7 +1225,10 @@ class DeviceManager(object):
 
     def destroy(self, network, device_name):
         """Destroy the device used for the network's DHCP on this host."""
-        self.driver.unplug(device_name, namespace=network.namespace)
+        if device_name:
+            self.driver.unplug(device_name, namespace=network.namespace)
+        else:
+            LOG.debug('No interface exists for network %s', network.id)
 
         self.plugin.release_dhcp_port(network.id,
                                       self.get_device_id(network))
