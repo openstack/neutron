@@ -1784,7 +1784,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Start everything.
         LOG.info(_LI("Agent initialized successfully, now running... "))
         signal.signal(signal.SIGTERM, self._handle_sigterm)
-        signal.signal(signal.SIGHUP, self._handle_sighup)
+        if hasattr(signal, 'SIGHUP'):
+            signal.signal(signal.SIGHUP, self._handle_sighup)
         with polling.get_polling_manager(
             self.minimize_polling,
             self.ovsdb_monitor_respawn_interval) as pm:
