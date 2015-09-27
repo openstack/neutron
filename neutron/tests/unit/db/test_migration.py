@@ -49,6 +49,7 @@ class FakeRevision(object):
         self.down_revision = down_revision
         self.is_branch_point = is_branch_point
         self.revision = tools.get_random_string()
+        self.module = mock.MagicMock()
 
 
 class MigrationEntrypointsMemento(fixtures.Fixture):
@@ -642,6 +643,45 @@ class TestCli(base.BaseTestCase):
     @mock.patch.object(cli, '_get_branch_points', return_value=['fake1'])
     def test__use_separate_migration_branches_with_branch_points(self, *mocks):
         self.assertTrue(cli._use_separate_migration_branches(self.configs[0]))
+
+    @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
+    def test__find_milestone_revisions_one_branch(self, walk_mock):
+        c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
+        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+
+        walk_mock.return_value = c_revs
+        m = cli._find_milestone_revisions(self.configs[0], 'liberty',
+                                          cli.CONTRACT_BRANCH)
+        self.assertEqual(1, len(m))
+        m = cli._find_milestone_revisions(self.configs[0], 'liberty',
+                                          cli.EXPAND_BRANCH)
+        self.assertEqual(0, len(m))
+
+    @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
+    def test__find_milestone_revisions_two_branches(self, walk_mock):
+        c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
+        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+        e_revs = [FakeRevision(labels={cli.EXPAND_BRANCH}) for r in range(5)]
+        e_revs[3].module.neutron_milestone = [migration.LIBERTY]
+
+        walk_mock.return_value = c_revs + e_revs
+        m = cli._find_milestone_revisions(self.configs[0], 'liberty')
+        self.assertEqual(2, len(m))
+
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
+        self.assertEqual(0, len(m))
+
+    @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
+    def test__find_milestone_revisions_branchless(self, walk_mock):
+        revisions = [FakeRevision() for r in range(5)]
+        revisions[2].module.neutron_milestone = [migration.LIBERTY]
+
+        walk_mock.return_value = revisions
+        m = cli._find_milestone_revisions(self.configs[0], 'liberty')
+        self.assertEqual(1, len(m))
+
+        m = cli._find_milestone_revisions(self.configs[0], 'mitaka')
+        self.assertEqual(0, len(m))
 
 
 class TestSafetyChecks(base.BaseTestCase):

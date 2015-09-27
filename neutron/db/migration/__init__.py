@@ -21,6 +21,13 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.engine import reflection
 
+# Neutron milestones for upgrade aliases
+LIBERTY = 'liberty'
+
+NEUTRON_MILESTONES = [
+    # earlier milestones were not tagged
+    LIBERTY,
+]
 
 CREATION_OPERATIONS = (sa.sql.ddl.CreateIndex,
                        sa.sql.ddl.CreateTable,
