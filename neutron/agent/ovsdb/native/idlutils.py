@@ -49,8 +49,7 @@ def wait_for_change(_idl, timeout, seqno=None):
     if seqno is None:
         seqno = _idl.change_seqno
     stop = time.time() + timeout
-    while _idl.change_seqno == seqno:
-        _idl.run()
+    while _idl.change_seqno == seqno and not _idl.run():
         ovs_poller = poller.Poller()
         _idl.wait(ovs_poller)
         ovs_poller.timer_wait(timeout * 1000)
