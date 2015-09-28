@@ -38,9 +38,9 @@ tests, and so on and so forth...in a nutshell, how to become an effective Neutro
 developer.
 
 The notes below are meant to be free-form and brief by design. They are not meant
-to replace or duplicate `OpenStack documentation <http://docs.openstack.org>`,
-or any project-wide documentation initiative like `peer-review notes <http://docs.openstack.org/infra/manual/developers.html#peer-review>`
-or the `team guide <http://docs.openstack.org/project-team-guide/>`. For this
+to replace or duplicate `OpenStack documentation <http://docs.openstack.org>`_,
+or any project-wide documentation initiative like `peer-review notes <http://docs.openstack.org/infra/manual/developers.html#peer-review>`_
+or the `team guide <http://docs.openstack.org/project-team-guide/>`_. For this
 reason, references are acceptable and should be favored, if the shortcut is
 deemed useful to expand on the distilled information.
 We will try to keep these notes tidy by breaking them down into sections if it
@@ -128,7 +128,7 @@ Document common nits and pedantic comments to watch out for.
   clarify a review issue. This speeds up the feeback loop.
 * The odd pep8 error may cause an entire CI run to be wasted. Consider running
   validation (pep8 and/or tests) before submitting your patch. If you keep forgetting
-  consider installing a git `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`
+  consider installing a git `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_
   so that Git will do it for you.
 
 Reviewer comments
@@ -148,7 +148,7 @@ Commit messages
 ~~~~~~~~~~~~~~~
 
 Document common pitfalls as well as good practices done when writing commit messages.
-For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages`.
+For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages`_.
 
 * One liners are bad, unless the change is trivial.
 * Remember to use DocImpact, APIImpact, UpgradeImpact appropriately.
@@ -158,7 +158,7 @@ Dealing with Zuul
 
 Document common pitfalls as well as good practices done when dealing with OpenStack CI.
 
-* When you submit a patch, consider checking its `status <http://status.openstack.org/zuul/>`
+* When you submit a patch, consider checking its `status <http://status.openstack.org/zuul/>`_
   in the queue. If you see a job failures, you might as well save time and try to figure out
   in advance why it is failing.
 * Excessive use of 'recheck' to get test to pass is discouraged. Please examine the logs for
