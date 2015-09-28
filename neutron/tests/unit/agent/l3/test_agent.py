@@ -354,8 +354,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.device_exists.return_value = False
             ri.get_snat_port_for_internal_port = mock.Mock(
                 return_value=sn_port)
+            ri._delete_arp_cache_for_internal_port = mock.Mock()
             ri._snat_redirect_modify = mock.Mock()
             ri.internal_network_removed(port)
+            self.assertEqual(
+                1, ri._delete_arp_cache_for_internal_port.call_count)
             ri._snat_redirect_modify.assert_called_with(
                 sn_port, port,
                 ri.get_internal_device_name(port['id']),
