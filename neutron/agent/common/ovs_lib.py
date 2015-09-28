@@ -343,6 +343,8 @@ class OVSBridge(BaseOVS):
                              check_error=True, log_errors=True,
                              if_exists=False):
         port_names = ports or self.get_port_name_list()
+        if not port_names:
+            return []
         return (self.ovsdb.db_list(table, port_names, columns=columns,
                                    if_exists=if_exists).
                 execute(check_error=check_error, log_errors=log_errors))
