@@ -25,7 +25,7 @@ class AsyncProcessTestFramework(base.BaseTestCase):
         super(AsyncProcessTestFramework, self).setUp()
         self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
         self.data = [str(x) for x in range(4)]
-        with file(self.test_file_path, 'w') as f:
+        with open(self.test_file_path, 'w') as f:
             f.writelines('%s\n' % item for item in self.data)
 
     def _check_stdout(self, proc):
