@@ -21,6 +21,7 @@ import os
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_middleware import base
 import routes
 import six
 import webob.dec
@@ -240,7 +241,7 @@ class ExtensionController(wsgi.Controller):
         raise webob.exc.HTTPNotFound(msg)
 
 
-class ExtensionMiddleware(wsgi.Middleware):
+class ExtensionMiddleware(base.ConfigurableMiddleware):
     """Extensions middleware for WSGI."""
 
     def __init__(self, application,

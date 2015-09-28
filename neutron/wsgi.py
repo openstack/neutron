@@ -237,67 +237,6 @@ class Server(object):
                              socket_timeout=self.client_socket_timeout)
 
 
-class Middleware(object):
-    """Base WSGI middleware wrapper.
-
-    These classes require an application to be initialized that will be called
-    next.  By default the middleware will simply call its wrapped app, or you
-    can override __call__ to customize its behavior.
-    """
-
-    @classmethod
-    def factory(cls, global_config, **local_config):
-        """Used for paste app factories in paste.deploy config files.
-
-        Any local configuration (that is, values under the [filter:APPNAME]
-        section of the paste config) will be passed into the `__init__` method
-        as kwargs.
-
-        A hypothetical configuration would look like:
-
-            [filter:analytics]
-            redis_host = 127.0.0.1
-            paste.filter_factory = nova.api.analytics:Analytics.factory
-
-        which would result in a call to the `Analytics` class as
-
-            import nova.api.analytics
-            analytics.Analytics(app_from_paste, redis_host='127.0.0.1')
-
-        You could of course re-implement the `factory` method in subclasses,
-        but using the kwarg passing it shouldn't be necessary.
-
-        """
-        def _factory(app):
-            return cls(app, **local_config)
-        return _factory
-
-    def __init__(self, application):
-        self.application = application
-
-    def process_request(self, req):
-        """Called on each request.
-
-        If this returns None, the next application down the stack will be
-        executed. If it returns a response then that response will be returned
-        and execution will stop here.
-
-        """
-        return None
-
-    def process_response(self, response):
-        """Do whatever you'd like to the response."""
-        return response
-
-    @webob.dec.wsgify
-    def __call__(self, req):
-        response = self.process_request(req)
-        if response:
-            return response
-        response = req.get_response(self.application)
-        return self.process_response(response)
-
-
 class Request(wsgi.Request):
 
     def best_match_content_type(self):
@@ -618,41 +557,6 @@ class Application(object):
 
         """
         raise NotImplementedError(_('You must implement __call__'))
-
-
-class Debug(Middleware):
-    """Middleware for debugging.
-
-    Helper class that can be inserted into any WSGI application chain
-    to get information about the request and response.
-    """
-
-    @webob.dec.wsgify
-    def __call__(self, req):
-        print(("*" * 40) + " REQUEST ENVIRON")
-        for key, value in req.environ.items():
-            print(key, "=", value)
-        print()
-        resp = req.get_response(self.application)
-
-        print(("*" * 40) + " RESPONSE HEADERS")
-        for (key, value) in six.iteritems(resp.headers):
-            print(key, "=", value)
-        print()
-
-        resp.app_iter = self.print_generator(resp.app_iter)
-
-        return resp
-
-    @staticmethod
-    def print_generator(app_iter):
-        """Print contents of a wrapper string iterator when iterated."""
-        print(("*" * 40) + " BODY")
-        for part in app_iter:
-            sys.stdout.write(part)
-            sys.stdout.flush()
-            yield part
-        print()
 
 
 class Resource(Application):

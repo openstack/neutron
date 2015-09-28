@@ -52,6 +52,13 @@ repositories under the neutron tent. Below you can find a list of known
 incompatible changes that could or are known to trigger those breakages.
 The changes are listed in reverse chronological order (newer at the top).
 
+* change: Consume ConfigurableMiddleware from oslo_middleware.
+
+  - commit: If7360608f94625b7d0972267b763f3e7d7624fee
+  - solution: switch to oslo_middleware.base.ConfigurableMiddleware;
+              stop using neutron.wsgi.Middleware and neutron.wsgi.Debug.
+  - severity: Low (some out-of-tree plugins might be affected).
+
 * change: Consume sslutils and wsgi modules from oslo.service.
 
   - commit: Ibfdf07e665fcfcd093a0e31274e1a6116706aec2
