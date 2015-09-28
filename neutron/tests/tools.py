@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import platform
 import warnings
 
 import fixtures
@@ -121,3 +122,14 @@ class UnorderedList(list):
 
     def __neq__(self, other):
         return not self == other
+
+
+def is_bsd():
+    """Return True on BSD-based systems."""
+
+    system = platform.system()
+    if system == 'Darwin':
+        return True
+    if 'bsd' in system.lower():
+        return True
+    return False
