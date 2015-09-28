@@ -583,20 +583,22 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
 
+    def _run_as_root_detect_device_not_found(self, *args, **kwargs):
+        try:
+            return self._as_root(*args, **kwargs)
+        except RuntimeError as rte:
+            with excutils.save_and_reraise_exception() as ctx:
+                if "Cannot find device" in str(rte):
+                    ctx.reraise = False
+                    raise exceptions.DeviceNotFoundError(device_name=self.name)
+
     def delete_gateway(self, gateway, table=None):
         ip_version = get_ip_version(gateway)
         args = ['del', 'default',
                 'via', gateway]
         args += self._dev_args()
         args += self._table_args(table)
-        try:
-            self._as_root([ip_version], tuple(args))
-        except RuntimeError as rte:
-            with (excutils.save_and_reraise_exception()) as ctx:
-                if "Cannot find device" in str(rte):
-                    ctx.reraise = False
-                    raise exceptions.DeviceNotFoundError(
-                        device_name=self.name)
+        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
 
     def _parse_routes(self, ip_version, output, **kwargs):
         for line in output.splitlines():
@@ -729,7 +731,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         for k, v in kwargs.items():
             args += [k, v]
-        self._as_root([ip_version], tuple(args))
+        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
 
     def delete_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
@@ -740,7 +742,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         for k, v in kwargs.items():
             args += [k, v]
-        self._as_root([ip_version], tuple(args))
+        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
 
 
 class IPRoute(SubProcessBase):
