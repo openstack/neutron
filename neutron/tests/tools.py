@@ -127,3 +127,7 @@ class UnorderedList(list):
 
 def get_random_string(n=10):
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
+
+
+def get_random_boolean():
+    return bool(random.getrandbits(1))
