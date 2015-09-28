@@ -44,7 +44,6 @@ from neutron import wsgi
 
 
 LOG = logging.getLogger(__name__)
-config.register_root_helper(cfg.CONF)
 
 
 class RootwrapDaemonHelper(object):
