@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+import platform
 import random
 import string
 import warnings
@@ -176,3 +177,14 @@ def get_random_boolean():
 
 def get_random_integer(range_begin=0, range_end=1000):
     return random.randint(range_begin, range_end)
+
+
+def is_bsd():
+    """Return True on BSD-based systems."""
+
+    system = platform.system()
+    if system == 'Darwin':
+        return True
+    if 'bsd' in system.lower():
+        return True
+    return False

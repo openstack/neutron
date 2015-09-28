@@ -23,6 +23,7 @@ from oslo_config import cfg
 from oslo_utils import importutils
 import six
 from sqlalchemy import orm
+import testtools
 from testtools import matchers
 import webob.exc
 
@@ -3414,6 +3415,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  ipv6_ra_mode=constants.IPV6_SLAAC,
                                  ipv6_address_mode=constants.IPV6_SLAAC)
 
+    @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_ipv6_pd_gw_values(self):
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         # Gateway is last IP in IPv6 DHCPv6 Stateless subnet
@@ -3540,6 +3542,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  cidr=cidr, ip_version=6,
                                  allocation_pools=allocation_pools)
 
+    @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_with_v6_pd_allocation_pool(self):
         gateway_ip = '::1'
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
