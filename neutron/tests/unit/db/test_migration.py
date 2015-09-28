@@ -30,6 +30,7 @@ from neutron.db import migration
 from neutron.db.migration import autogen
 from neutron.db.migration import cli
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit import testlib_api
 
 
@@ -40,11 +41,13 @@ class FakeConfig(object):
 class FakeRevision(object):
     path = 'fakepath'
 
-    def __init__(self, labels=None, down_revision=None):
+    def __init__(self, labels=None, down_revision=None, is_branch_point=False):
         if not labels:
             labels = set()
         self.branch_labels = labels
         self.down_revision = down_revision
+        self.is_branch_point = is_branch_point
+        self.revision = tools.get_random_string()
 
 
 class MigrationEntrypointsMemento(fixtures.Fixture):
@@ -144,7 +147,7 @@ class TestCli(base.BaseTestCase):
     def _main_test_helper(self, argv, func_name, exp_kwargs=[{}]):
         with mock.patch.object(sys, 'argv', argv),\
             mock.patch.object(cli, 'run_sanity_checks'),\
-            mock.patch.object(cli, 'validate_labels'):
+            mock.patch.object(cli, 'validate_revisions'):
 
             cli.main()
             self.do_alembic_cmd.assert_has_calls(
@@ -512,15 +515,25 @@ class TestCli(base.BaseTestCase):
 
     @mock.patch.object(cli, '_validate_revision')
     @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
-    def test_validate_labels_walks_thru_all_revisions(
+    def test_validate_revisions_walks_thru_all_revisions(
         self, walk_mock, validate_mock):
 
-        revisions = [mock.Mock() for i in range(10)]
+        revisions = [FakeRevision() for i in range(10)]
         walk_mock.return_value = revisions
-        cli.validate_labels(self.configs[0])
+        cli.validate_revisions(self.configs[0])
         validate_mock.assert_has_calls(
             [mock.call(mock.ANY, revision) for revision in revisions]
         )
+
+    @mock.patch.object(cli, '_validate_revision')
+    @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
+    def test_validate_revisions_fails_on_multiple_branch_points(
+        self, walk_mock, validate_mock):
+
+        revisions = [FakeRevision(is_branch_point=True) for i in range(2)]
+        walk_mock.return_value = revisions
+        self.assertRaises(
+            SystemExit, cli.validate_revisions, self.configs[0])
 
     @mock.patch.object(cli, '_use_separate_migration_branches')
     @mock.patch.object(cli, '_get_version_branch_path')
@@ -631,5 +644,5 @@ class TestCli(base.BaseTestCase):
 
 class TestSafetyChecks(base.BaseTestCase):
 
-    def test_validate_labels(self, *mocks):
-        cli.validate_labels(cli.get_neutron_config())
+    def test_validate_revisions(self, *mocks):
+        cli.validate_revisions(cli.get_neutron_config())

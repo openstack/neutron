@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
+import string
 import warnings
 
 import fixtures
@@ -121,3 +123,7 @@ class UnorderedList(list):
 
     def __neq__(self, other):
         return not self == other
+
+
+def get_random_string(n=10):
+    return ''.join(random.choice(string.ascii_lowercase) for _ in range(n))

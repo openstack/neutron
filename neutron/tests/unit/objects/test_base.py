@@ -12,7 +12,6 @@
 
 import copy
 import random
-import string
 
 import mock
 from oslo_db import exception as obj_exc
@@ -25,6 +24,7 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.objects import base
 from neutron.tests import base as test_base
+from neutron.tests import tools
 
 
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
@@ -53,10 +53,6 @@ class FakeNeutronObject(base.NeutronDbObject):
     synthetic_fields = ['field2']
 
 
-def _random_string(n=10):
-    return ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
-
-
 def _random_boolean():
     return bool(random.getrandbits(1))
 
@@ -68,8 +64,8 @@ def _random_integer():
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: _random_boolean,
     obj_fields.IntegerField: _random_integer,
-    obj_fields.StringField: _random_string,
-    obj_fields.UUIDField: _random_string,
+    obj_fields.StringField: tools.get_random_string,
+    obj_fields.UUIDField: tools.get_random_string,
     obj_fields.ListOfObjectsField: lambda: []
 }
 
