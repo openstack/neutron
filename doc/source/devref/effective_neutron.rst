@@ -167,6 +167,13 @@ Reviewer comments
   quickly, so that the reviewer remains engaged. If you disappear for a week after
   you posted a patchset, it is very likely that the patch will end up being
   neglected.
+* Do not take negative feedback personally. Neutron is a large project with lots
+  of contributors with different opinions on how things should be done. Many come
+  from widely varying cultures and languages so the English, text-only feedback
+  can unintentionally come across as harsh. Getting a -1 means reviewers are
+  trying to help get the patch into a state that can be merged, it doesn't just
+  mean they are trying to block it. It's very rare to get a patch merged on the
+  first iteration that makes everyone happy.
 
 Commit messages
 ~~~~~~~~~~~~~~~
