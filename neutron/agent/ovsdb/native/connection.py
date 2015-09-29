@@ -19,7 +19,9 @@ import traceback
 
 from ovs.db import idl
 from ovs import poller
+import retrying
 
+from neutron.agent.ovsdb.native import helpers
 from neutron.agent.ovsdb.native import idlutils
 
 
@@ -62,8 +64,21 @@ class Connection(object):
             if self.idl is not None:
                 return
 
-            helper = idlutils.get_schema_helper(self.connection,
-                                                self.schema_name)
+            try:
+                helper = idlutils.get_schema_helper(self.connection,
+                                                    self.schema_name)
+            except Exception:
+                # We may have failed do to set-manager not being called
+                helpers.enable_connection_uri(self.connection)
+
+                # There is a small window for a race, so retry up to a second
+                @retrying.retry(wait_exponential_multiplier=10,
+                                stop_max_delay=1000)
+                def do_get_schema_helper():
+                    return idlutils.get_schema_helper(self.connection,
+                                                      self.schema_name)
+                helper = do_get_schema_helper()
+
             helper.register_all()
             self.idl = idl.Idl(self.connection, helper)
             idlutils.wait_for_change(self.idl, self.timeout)
