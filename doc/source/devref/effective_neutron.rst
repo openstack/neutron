@@ -133,6 +133,20 @@ Document common pitfalls as well as good practices done when writing docstrings.
 Landing patches more rapidly
 ----------------------------
 
+Scoping your patch appropriately
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Do not make multiple changes in one patch unless absolutely necessary.
+  Cleaning up nearby functions or fixing a small bug you noticed while working
+  on something else makes the patch very difficult to review. It also makes
+  cherry-picking and reverting very difficult.
+* If a fix or feature requires code refactoring, submit the refactoring as a
+  separate patch than the one that changes the logic. Otherwise
+  it's difficult for a reviewer to tell the difference between mistakes
+  in the refactor and changes required for the fix/feature. If it's a bug fix,
+  try to implement the fix before the refactor to avoid making cherry-picks to
+  stable branches difficult.
+
 Nits and pedantic comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
