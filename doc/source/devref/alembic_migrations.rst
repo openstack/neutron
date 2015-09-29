@@ -317,3 +317,20 @@ and then applying all available rules::
 
 It will apply all the rules from both the expand and the contract branches, in
 proper order.
+
+
+Tagging milestone revisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When named release (liberty, mitaka, etc.) is done for neutron or a
+sub-project, the alembic revision scripts at the head of each branch for that
+release must be tagged. This is referred to as a milestone revision tag.
+
+For example, `here <https://review.openstack.org/228272>`_ is a patch that tags
+the liberty milestone revisions for the neutron-fwaas sub-project. Note that
+each branch (expand and contract) is tagged.
+
+Tagging milestones allows neutron-db-manage to upgrade the schema to a
+milestone release, e.g.::
+
+ neutron-db-manage upgrade liberty
