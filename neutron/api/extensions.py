@@ -144,6 +144,10 @@ class ExtensionDescriptor(object):
         """
         return None
 
+    def get_required_extensions(self):
+        """Returns a list of extensions to be processed before this one."""
+        return []
+
     def update_attributes_map(self, extended_attributes,
                               extension_attrs_map=None):
         """Update attributes map for this extension.
@@ -389,36 +393,21 @@ class ExtensionManager(object):
         resources.append(ResourceExtension('extensions',
                                            ExtensionController(self)))
         for ext in self.extensions.values():
-            try:
-                resources.extend(ext.get_resources())
-            except AttributeError:
-                # NOTE(dprince): Extension aren't required to have resource
-                # extensions
-                pass
+            resources.extend(ext.get_resources())
         return resources
 
     def get_actions(self):
         """Returns a list of ActionExtension objects."""
         actions = []
         for ext in self.extensions.values():
-            try:
-                actions.extend(ext.get_actions())
-            except AttributeError:
-                # NOTE(dprince): Extension aren't required to have action
-                # extensions
-                pass
+            actions.extend(ext.get_actions())
         return actions
 
     def get_request_extensions(self):
         """Returns a list of RequestExtension objects."""
         request_exts = []
         for ext in self.extensions.values():
-            try:
-                request_exts.extend(ext.get_request_extensions())
-            except AttributeError:
-                # NOTE(dprince): Extension aren't required to have request
-                # extensions
-                pass
+            request_exts.extend(ext.get_request_extensions())
         return request_exts
 
     def extend_resources(self, version, attr_map):
@@ -430,33 +419,22 @@ class ExtensionManager(object):
         After this function, we will extend the attr_map if an extension
         wants to extend this map.
         """
-        update_exts = []
-        processed_exts = set()
+        processed_exts = {}
         exts_to_process = self.extensions.copy()
         # Iterate until there are unprocessed extensions or if no progress
         # is made in a whole iteration
         while exts_to_process:
             processed_ext_count = len(processed_exts)
             for ext_name, ext in list(exts_to_process.items()):
-                if not hasattr(ext, 'get_extended_resources'):
-                    del exts_to_process[ext_name]
+                # Process extension only if all required extensions
+                # have been processed already
+                required_exts_set = set(ext.get_required_extensions())
+                if required_exts_set - set(processed_exts):
                     continue
-                if hasattr(ext, 'update_attributes_map'):
-                    update_exts.append(ext)
-                if hasattr(ext, 'get_required_extensions'):
-                    # Process extension only if all required extensions
-                    # have been processed already
-                    required_exts_set = set(ext.get_required_extensions())
-                    if required_exts_set - processed_exts:
-                        continue
-                try:
-                    extended_attrs = ext.get_extended_resources(version)
-                    for res, resource_attrs in six.iteritems(extended_attrs):
-                        attr_map.setdefault(res, {}).update(resource_attrs)
-                except AttributeError:
-                    LOG.exception(_LE("Error fetching extended attributes for "
-                                      "extension '%s'"), ext.get_name())
-                processed_exts.add(ext_name)
+                extended_attrs = ext.get_extended_resources(version)
+                for res, resource_attrs in six.iteritems(extended_attrs):
+                    attr_map.setdefault(res, {}).update(resource_attrs)
+                processed_exts[ext_name] = ext
                 del exts_to_process[ext_name]
             if len(processed_exts) == processed_ext_count:
                 # Exit loop as no progress was made
@@ -468,7 +446,7 @@ class ExtensionManager(object):
                       ','.join(exts_to_process.keys()))
 
         # Extending extensions' attributes map.
-        for ext in update_exts:
+        for ext in processed_exts.values():
             ext.update_attributes_map(attr_map)
 
     def _check_extension(self, extension):
@@ -482,7 +460,7 @@ class ExtensionManager(object):
             LOG.exception(_LE("Exception loading extension: %s"),
                           six.text_type(ex))
             return False
-        return True
+        return isinstance(extension, ExtensionDescriptor)
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
@@ -567,8 +545,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         return supports_extension
 
     def _plugins_implement_interface(self, extension):
-        if(not hasattr(extension, "get_plugin_interface") or
-           extension.get_plugin_interface() is None):
+        if extension.get_plugin_interface() is None:
             return True
         for plugin in self.plugins.values():
             if isinstance(plugin, extension.get_plugin_interface()):
