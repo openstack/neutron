@@ -500,7 +500,8 @@ class LinuxBridgeManager(object):
                                       tap_device_name)
 
     def delete_bridge(self, bridge_name):
-        if ip_lib.device_exists(bridge_name):
+        bridge_device = bridge_lib.BridgeDevice(bridge_name)
+        if bridge_device.exists():
             physical_interfaces = set(self.interface_mappings.values())
             interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
             for interface in interfaces_on_bridge:
@@ -522,7 +523,6 @@ class LinuxBridgeManager(object):
                         self.delete_interface(interface)
 
             LOG.debug("Deleting bridge %s", bridge_name)
-            bridge_device = bridge_lib.BridgeDevice(bridge_name)
             if bridge_device.link.set_down():
                 return
             if bridge_device.delbr():
@@ -546,14 +546,15 @@ class LinuxBridgeManager(object):
                 del self.network_map[network_id]
 
     def remove_interface(self, bridge_name, interface_name):
-        if ip_lib.device_exists(bridge_name):
+        bridge_device = bridge_lib.BridgeDevice(bridge_name)
+        if bridge_device.exists():
             if not self.is_device_on_bridge(interface_name):
                 return True
             LOG.debug("Removing device %(interface_name)s from bridge "
                       "%(bridge_name)s",
                       {'interface_name': interface_name,
                        'bridge_name': bridge_name})
-            if bridge_lib.BridgeDevice(bridge_name).delif(interface_name):
+            if bridge_device.delif(interface_name):
                 return False
             LOG.debug("Done removing device %(interface_name)s from bridge "
                       "%(bridge_name)s",
@@ -568,10 +569,10 @@ class LinuxBridgeManager(object):
             return False
 
     def delete_interface(self, interface):
-        if ip_lib.device_exists(interface):
+        device = self.ip.device(interface)
+        if device.exists():
             LOG.debug("Deleting interface %s",
                       interface)
-            device = self.ip.device(interface)
             device.link.set_down()
             device.link.delete()
             LOG.debug("Done deleting interface %s", interface)

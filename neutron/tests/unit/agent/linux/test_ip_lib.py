@@ -1223,6 +1223,14 @@ class TestDeviceExists(base.BaseTestCase):
             _execute.assert_called_once_with(['o'], 'link', ('show', 'eth0'),
                                              log_fail_as_error=False)
 
+    def test_device_exists_reset_fail(self):
+        device = ip_lib.IPDevice('eth0')
+        device.set_log_fail_as_error(True)
+        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
+            _execute.return_value = LINK_SAMPLE[1]
+            self.assertTrue(device.exists())
+            self.assertTrue(device.get_log_fail_as_error())
+
     def test_device_does_not_exist(self):
         with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
             _execute.return_value = ''

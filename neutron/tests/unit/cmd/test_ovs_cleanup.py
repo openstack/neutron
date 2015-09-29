@@ -70,13 +70,14 @@ class TestOVSCleanup(base.BaseTestCase):
         ports = ['tap1234', 'tap5678', 'tap09ab']
         port_found = [True, False, True]
 
-        with mock.patch.object(
-                ip_lib, 'device_exists',
-                side_effect=port_found) as device_exists:
-            util.delete_neutron_ports(ports)
-            device_exists.assert_has_calls([mock.call(p) for p in ports])
-            mock_ip.assert_has_calls(
-                [mock.call('tap1234'),
+        mock_ip.return_value.exists.side_effect = port_found
+        util.delete_neutron_ports(ports)
+        mock_ip.assert_has_calls(
+            [mock.call('tap1234'),
+             mock.call().exists(),
              mock.call().link.delete(),
+             mock.call('tap5678'),
+             mock.call().exists(),
              mock.call('tap09ab'),
+             mock.call().exists(),
              mock.call().link.delete()])

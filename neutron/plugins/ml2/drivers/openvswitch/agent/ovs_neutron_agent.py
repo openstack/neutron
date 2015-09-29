@@ -1101,8 +1101,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if int_type == 'patch':
                     self.int_br.delete_port(int_if_name)
                     br.delete_port(phys_if_name)
-                if ip_lib.device_exists(int_if_name):
-                    ip_lib.IPDevice(int_if_name).link.delete()
+                device = ip_lib.IPDevice(int_if_name)
+                if device.exists():
+                    device.link.delete()
                     # Give udev a chance to process its rules here, to avoid
                     # race conditions between commands launched by udev rules
                     # and the subsequent call to ip_wrapper.add_veth

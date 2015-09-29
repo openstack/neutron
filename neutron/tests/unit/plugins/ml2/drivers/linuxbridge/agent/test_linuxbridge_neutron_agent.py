@@ -782,8 +782,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                        "1", "tap234")
 
     def test_delete_bridge(self):
-        bridge_device = mock.Mock()
-        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
+                mock.patch.object(ip_lib, "IpLinkCommand") as link_cmd,\
                 mock.patch.object(self.lbm,
                                   "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(self.lbm, "remove_interface"),\
@@ -791,9 +791,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   "get_interface_details") as if_det_fn,\
                 mock.patch.object(self.lbm,
                                   "update_interface_ip_details") as updif_fn,\
-                mock.patch.object(self.lbm, "delete_interface") as del_interface,\
-                mock.patch.object(bridge_lib, "BridgeDevice",
-                                  return_value=bridge_device):
+                mock.patch.object(self.lbm, "delete_interface") as delif_fn:
             de_fn.return_value = False
             self.lbm.delete_bridge("br0")
             self.assertFalse(getif_fn.called)
@@ -801,10 +799,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             de_fn.return_value = True
             getif_fn.return_value = ["eth0", "eth1", "vxlan-1002"]
             if_det_fn.return_value = ("ips", "gateway")
-            bridge_device.link.set_down.return_value = False
+            link_cmd.set_down.return_value = False
             self.lbm.delete_bridge("br0")
             updif_fn.assert_called_with("eth1", "br0", "ips", "gateway")
-            del_interface.assert_called_with("vxlan-1002")
+            delif_fn.assert_called_with("vxlan-1002")
 
     def test_delete_bridge_with_ip(self):
         bridge_device = mock.Mock()
@@ -856,21 +854,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
                 bridge_mappings, interface_mappings)
 
-        bridge_device = mock.Mock()
-        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
+                mock.patch.object(ip_lib, "IpLinkCommand") as link_cmd,\
                 mock.patch.object(lbm,
                                   "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(lbm, "remove_interface"),\
-                mock.patch.object(lbm, "delete_interface") as del_interface,\
-                mock.patch.object(bridge_lib, "BridgeDevice",
-                                  return_value=bridge_device):
+                mock.patch.object(lbm, "delete_interface") as del_interface:
             de_fn.return_value = False
             lbm.delete_bridge("br0")
             self.assertFalse(getif_fn.called)
 
             de_fn.return_value = True
             getif_fn.return_value = ["vxlan-1002"]
-            bridge_device.link.set_down.return_value = False
+            link_cmd.set_down.return_value = False
             lbm.delete_bridge("br0")
             del_interface.assert_called_with("vxlan-1002")
 
@@ -922,12 +918,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(2, del_br_fn.call_count)
 
     def test_remove_interface(self):
-        bridge_device = mock.Mock()
-        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(self.lbm,
                                   "is_device_on_bridge") as isdev_fn,\
-                mock.patch.object(bridge_lib, "BridgeDevice",
-                                  return_value=bridge_device):
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  "delif") as delif_fn:
             de_fn.return_value = False
             self.assertFalse(self.lbm.remove_interface("br0", "eth0"))
             self.assertFalse(isdev_fn.called)
@@ -937,14 +932,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
 
             isdev_fn.return_value = True
-            bridge_device.delif.return_value = True
+            delif_fn.return_value = True
             self.assertFalse(self.lbm.remove_interface("br0", "eth0"))
 
-            bridge_device.delif.return_value = False
+            delif_fn.return_value = False
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
 
     def test_delete_interface(self):
-        with mock.patch.object(ip_lib, "device_exists") as de_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(ip_lib.IpLinkCommand, "set_down") as down_fn,\
                 mock.patch.object(ip_lib.IpLinkCommand, "delete") as delete_fn:
             de_fn.return_value = False

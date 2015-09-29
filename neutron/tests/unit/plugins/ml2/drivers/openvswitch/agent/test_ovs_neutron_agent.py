@@ -802,7 +802,7 @@ class TestOvsNeutronAgent(object):
             self.assertFalse(int_br.drop_port.called)
 
     def test_setup_physical_bridges(self):
-        with mock.patch.object(ip_lib, "device_exists") as devex_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
                 mock.patch.object(utils, "execute"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
@@ -846,7 +846,7 @@ class TestOvsNeutronAgent(object):
 
     def test_setup_physical_bridges_using_veth_interconnection(self):
         self.agent.use_veth_interconnection = True
-        with mock.patch.object(ip_lib, "device_exists") as devex_fn,\
+        with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
                 mock.patch.object(utils, "execute") as utilsexec_fn,\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
