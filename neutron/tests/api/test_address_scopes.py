@@ -27,12 +27,6 @@ ADDRESS_SCOPE_NAME = 'smoke-address-scope'
 class AddressScopeTestBase(base.BaseNetworkTest):
 
     @classmethod
-    def skip_checks(cls):
-        super(AddressScopeTestBase, cls).skip_checks()
-        msg = "Address-Scope extension not enabled."
-        raise cls.skipException(msg)
-
-    @classmethod
     def resource_setup(cls):
         super(AddressScopeTestBase, cls).resource_setup()
         try:

@@ -144,7 +144,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('9589e332-638e-476e-81bd-013d964aa3cb')
     def test_create_subnetpool_associate_invalid_address_scope(self):
-        self.skipTest("until extension address-scope is re-enabled")
         subnetpool_data = copy.deepcopy(self._subnetpool_data)
         subnetpool_data['subnetpool']['address_scope_id'] = 'foo-addr-scope'
         self.assertRaises(lib_exc.BadRequest, self.client.create_subnetpool,
@@ -153,7 +152,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('3b6c5942-485d-4964-a560-55608af020b5')
     def test_create_subnetpool_associate_non_exist_address_scope(self):
-        self.skipTest("until extension address-scope is re-enabled")
         subnetpool_data = copy.deepcopy(self._subnetpool_data)
         non_exist_address_scope_id = str(uuid.uuid4())
         subnetpool_data['subnetpool']['address_scope_id'] = (
@@ -164,7 +162,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('2dfb4269-8657-485a-a053-b022e911456e')
     def test_create_subnetpool_associate_address_scope_prefix_intersect(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
         addr_scope_id = address_scope['id']
@@ -181,7 +178,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('83a19a13-5384-42e2-b579-43fc69c80914')
     def test_create_sp_associate_address_scope_multiple_prefix_intersect(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'))
         addr_scope_id = address_scope['id']
@@ -202,7 +198,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('f06d8e7b-908b-4e94-b570-8156be6a4bf1')
     def test_create_subnetpool_associate_address_scope_of_other_owner(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True)
         address_scope_id = address_scope['id']
@@ -214,7 +209,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('3396ec6c-cb80-4ebe-b897-84e904580bdf')
     def test_tenant_create_subnetpool_associate_shared_address_scope(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
             shared=True)
@@ -227,7 +221,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type='smoke')
     @test.idempotent_id('6d3d9ad5-32d4-4d63-aa00-8c62f73e2881')
     def test_update_subnetpool_associate_address_scope_of_other_owner(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True)
         address_scope_id = address_scope['id']
@@ -268,7 +261,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('96006292-7214-40e0-a471-153fb76e6b31')
     def test_update_subnetpool_prefix_intersect(self):
-        self.skipTest("until extension address-scope is re-enabled")
         pool_1_prefix = [u'20.0.0.0/18']
         pool_2_prefix = [u'20.10.0.0/24']
         pool_1_updated_prefix = [u'20.0.0.0/12']
@@ -278,7 +270,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('4d3f8a79-c530-4e59-9acf-6c05968adbfe')
     def test_update_subnetpool_multiple_prefix_intersect(self):
-        self.skipTest("until extension address-scope is re-enabled")
         pool_1_prefixes = [u'20.0.0.0/18', u'30.0.0.0/18']
         pool_2_prefixes = [u'20.10.0.0/24', u'40.0.0.0/18', '50.0.0.0/18']
         pool_1_updated_prefixes = [u'20.0.0.0/18', u'30.0.0.0/18',
@@ -289,7 +280,6 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('7438e49e-1351-45d8-937b-892059fb97f5')
     def test_tenant_update_sp_prefix_associated_with_shared_addr_scope(self):
-        self.skipTest("until extension address-scope is re-enabled")
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
             shared=True)

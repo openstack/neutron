@@ -118,7 +118,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "multi-provider", "allowed-address-pairs",
                                     "extra_dhcp_opt", "subnet_allocation",
                                     "net-mtu", "vlan-transparent",
-                                    "dns-integration"]
+                                    "address-scope", "dns-integration"]
 
     @property
     def supported_extension_aliases(self):
