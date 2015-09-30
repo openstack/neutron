@@ -148,7 +148,7 @@ Commit messages
 ~~~~~~~~~~~~~~~
 
 Document common pitfalls as well as good practices done when writing commit messages.
-For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages`_.
+For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages>`_.
 
 * One liners are bad, unless the change is trivial.
 * Remember to use DocImpact, APIImpact, UpgradeImpact appropriately.
