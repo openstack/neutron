@@ -378,7 +378,7 @@ def is_dvr_serviced(device_owner):
     dvr_serviced_device_owners = (n_const.DEVICE_OWNER_LOADBALANCER,
                                   n_const.DEVICE_OWNER_LOADBALANCERV2,
                                   n_const.DEVICE_OWNER_DHCP)
-    return (device_owner.startswith('compute:') or
+    return (device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX) or
             device_owner in dvr_serviced_device_owners)
 
 

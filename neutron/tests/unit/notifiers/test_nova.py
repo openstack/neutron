@@ -21,10 +21,12 @@ from sqlalchemy.orm import attributes as sql_attr
 
 from oslo_config import cfg
 
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.db import models_v2
 from neutron.notifiers import nova
 from neutron.tests import base
+
+DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class TestNovaNotify(base.BaseTestCase):
@@ -35,14 +37,14 @@ class TestNovaNotify(base.BaseTestCase):
             def get_port(self, context, port_id):
                 device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
                 return {'device_id': device_id,
-                        'device_owner': 'compute:None'}
+                        'device_owner': DEVICE_OWNER_COMPUTE}
 
         self.nova_notifier = nova.Notifier()
         self.nova_notifier._plugin_ref = FakePlugin()
 
     def test_notify_port_status_all_values(self):
-        states = [constants.PORT_STATUS_ACTIVE, constants.PORT_STATUS_DOWN,
-                  constants.PORT_STATUS_ERROR, constants.PORT_STATUS_BUILD,
+        states = [n_const.PORT_STATUS_ACTIVE, n_const.PORT_STATUS_DOWN,
+                  n_const.PORT_STATUS_ERROR, n_const.PORT_STATUS_BUILD,
                   sql_attr.NO_VALUE]
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         # test all combinations
@@ -50,7 +52,7 @@ class TestNovaNotify(base.BaseTestCase):
             for current_port_status in states:
 
                 port = models_v2.Port(id='port-uuid', device_id=device_id,
-                                      device_owner="compute:",
+                                      device_owner=DEVICE_OWNER_COMPUTE,
                                       status=current_port_status)
                 self._record_port_status_changed_helper(current_port_status,
                                                         previous_port_status,
@@ -58,33 +60,33 @@ class TestNovaNotify(base.BaseTestCase):
 
     def test_port_without_uuid_device_id_no_notify(self):
         port = models_v2.Port(id='port-uuid', device_id='compute_probe:',
-                              device_owner='compute:',
-                              status=constants.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(constants.PORT_STATUS_ACTIVE,
+                              device_owner=DEVICE_OWNER_COMPUTE,
+                              status=n_const.PORT_STATUS_ACTIVE)
+        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_port_without_device_owner_no_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port = models_v2.Port(id='port-uuid', device_id=device_id,
-                              status=constants.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(constants.PORT_STATUS_ACTIVE,
+                              status=n_const.PORT_STATUS_ACTIVE)
+        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_port_without_device_id_no_notify(self):
         port = models_v2.Port(id='port-uuid', device_owner="network:dhcp",
-                              status=constants.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(constants.PORT_STATUS_ACTIVE,
+                              status=n_const.PORT_STATUS_ACTIVE)
+        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_port_without_id_no_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port = models_v2.Port(device_id=device_id,
-                              device_owner="compute:",
-                              status=constants.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(constants.PORT_STATUS_ACTIVE,
+                              device_owner=DEVICE_OWNER_COMPUTE,
+                              status=n_const.PORT_STATUS_ACTIVE)
+        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
@@ -92,8 +94,8 @@ class TestNovaNotify(base.BaseTestCase):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port = models_v2.Port(id='port-uuid', device_id=device_id,
                               device_owner="network:dhcp",
-                              status=constants.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(constants.PORT_STATUS_ACTIVE,
+                              status=n_const.PORT_STATUS_ACTIVE)
+        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
@@ -101,19 +103,20 @@ class TestNovaNotify(base.BaseTestCase):
                                            previous_port_status, port):
 
         if not (port.device_id and port.id and port.device_owner and
-                port.device_owner.startswith('compute:') and
+                port.device_owner.startswith(
+                    n_const.DEVICE_OWNER_COMPUTE_PREFIX) and
                 uuidutils.is_uuid_like(port.device_id)):
             return
 
-        if (previous_port_status == constants.PORT_STATUS_ACTIVE and
-                current_port_status == constants.PORT_STATUS_DOWN):
+        if (previous_port_status == n_const.PORT_STATUS_ACTIVE and
+                current_port_status == n_const.PORT_STATUS_DOWN):
             event_name = nova.VIF_UNPLUGGED
 
         elif (previous_port_status in [sql_attr.NO_VALUE,
-                                       constants.PORT_STATUS_DOWN,
-                                       constants.PORT_STATUS_BUILD]
-              and current_port_status in [constants.PORT_STATUS_ACTIVE,
-                                          constants.PORT_STATUS_ERROR]):
+                                       n_const.PORT_STATUS_DOWN,
+                                       n_const.PORT_STATUS_BUILD]
+              and current_port_status in [n_const.PORT_STATUS_ACTIVE,
+                                          n_const.PORT_STATUS_ERROR]):
             event_name = nova.VIF_PLUGGED
 
         else:
@@ -132,7 +135,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_update_fixed_ip_changed(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         returned_obj = {'port':
-                        {'device_owner': u'compute:dfd',
+                        {'device_owner': DEVICE_OWNER_COMPUTE,
                          'id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222',
                          'device_id': device_id}}
 
@@ -295,7 +298,7 @@ class TestNovaNotify(base.BaseTestCase):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
         returned_obj = {'port':
-                        {'device_owner': 'compute:dfd',
+                        {'device_owner': DEVICE_OWNER_COMPUTE,
                          'id': port_id,
                          'device_id': device_id}}
 

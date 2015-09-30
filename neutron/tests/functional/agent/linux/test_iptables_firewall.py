@@ -18,10 +18,13 @@
 
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
+from neutron.common import constants
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from oslo_config import cfg
+
+DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class IptablesFirewallTestCase(base.BaseSudoTestCase):
@@ -51,7 +54,7 @@ class IptablesFirewallTestCase(base.BaseSudoTestCase):
             self.client.port.name)
         self.src_port_desc = {'admin_state_up': True,
                               'device': client_br_port_name,
-                              'device_owner': 'compute:None',
+                              'device_owner': DEVICE_OWNER_COMPUTE,
                               'fixed_ips': [self.client.ip],
                               'mac_address': self.MAC_REAL,
                               'port_security_enabled': True,

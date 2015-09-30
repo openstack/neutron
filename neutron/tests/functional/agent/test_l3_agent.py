@@ -59,6 +59,8 @@ _uuid = uuidutils.generate_uuid
 METADATA_REQUEST_TIMEOUT = 60
 METADATA_REQUEST_SLEEP = 5
 
+DEVICE_OWNER_COMPUTE = l3_constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+
 
 def get_ovs_bridge(br_name):
     return ovs_lib.OVSBridge(br_name)
@@ -1413,7 +1415,7 @@ class TestDvrRouter(L3AgentTestFramework):
         port_data = {
             'fixed_ips': [{'ip_address': expected_neighbor}],
             'mac_address': 'fa:3e:aa:bb:cc:dd',
-            'device_owner': 'compute:None'
+            'device_owner': DEVICE_OWNER_COMPUTE
         }
         self.agent.plugin_rpc.get_ports_by_subnet.return_value = [port_data]
         router1 = self.manage_router(self.agent, router_info)

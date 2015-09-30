@@ -69,7 +69,7 @@ config.cfg.CONF.import_opt('network_vlan_ranges',
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
-DEVICE_OWNER_COMPUTE = 'compute:None'
+DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 HOST = 'fake_host'
 
 
@@ -643,7 +643,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertTrue(notify.call_counts)
 
     def test_check_if_compute_port_serviced_by_dvr(self):
-        self.assertTrue(utils.is_dvr_serviced('compute:None'))
+        self.assertTrue(utils.is_dvr_serviced(DEVICE_OWNER_COMPUTE))
 
     def test_check_if_lbaas_vip_port_serviced_by_dvr(self):
         self.assertTrue(utils.is_dvr_serviced(
@@ -795,10 +795,10 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                                         port['port']['id'])
 
     def test_delete_last_vm_port(self):
-        self._test_delete_dvr_serviced_port(device_owner='compute:None')
+        self._test_delete_dvr_serviced_port(device_owner=DEVICE_OWNER_COMPUTE)
 
     def test_delete_last_vm_port_with_floatingip(self):
-        self._test_delete_dvr_serviced_port(device_owner='compute:None',
+        self._test_delete_dvr_serviced_port(device_owner=DEVICE_OWNER_COMPUTE,
                                             floating_ip=True)
 
     def test_delete_lbaas_vip_port(self):
@@ -1757,7 +1757,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             admin_state_up=True,
             status='ACTIVE',
             device_id='vm_id',
-            device_owner='compute:None')
+            device_owner=DEVICE_OWNER_COMPUTE)
 
         binding = mock.Mock()
         binding.port_id = port_id

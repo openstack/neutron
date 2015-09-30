@@ -56,6 +56,8 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 HOST_DVR = 'my_l3_host_dvr'
 HOST_DVR_SNAT = 'my_l3_host_dvr_snat'
+DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+DEVICE_OWNER_COMPUTE_NOVA = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'nova'
 
 
 class FakeL3Scheduler(l3_agent_scheduler.L3Scheduler):
@@ -740,7 +742,7 @@ class L3SchedulerTestBaseMixin(object):
         # matching subnet
         port = {'subnet_id': str(uuid.uuid4()),
                 'binding:host_id': 'host_1',
-                'device_owner': 'compute:',
+                'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX,
                 'id': 1234}
         subnet = {'id': str(uuid.uuid4()),
                   'enable_dhcp': False}
@@ -934,7 +936,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': port_id,
                 'binding:host_id': 'vm-host',
                 'device_id': 'vm-id',
-                'device_owner': 'compute:None',
+                'device_owner': DEVICE_OWNER_COMPUTE,
                 'mac_address': '02:04:05:17:18:19'
             },
             'mac_address_updated': True
@@ -973,7 +975,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': port_id,
                 'binding:host_id': 'vm-host',
                 'device_id': 'vm-id',
-                'device_owner': 'compute:None'
+                'device_owner': DEVICE_OWNER_COMPUTE
             }
         }
 
@@ -1028,7 +1030,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         port = {
                 'id': 'port1',
                 'device_id': 'abcd',
-                'device_owner': 'compute:nova',
+                'device_owner': DEVICE_OWNER_COMPUTE_NOVA,
                 'binding:host_id': 'host1',
                 'fixed_ips': [
                     {
@@ -1140,7 +1142,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'device_id': 'r1',
                 'status': port_status,
                 'binding:host_id': 'thisHost',
-                'device_owner': 'compute:nova',
+                'device_owner': DEVICE_OWNER_COMPUTE_NOVA,
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1215,7 +1217,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def _create_port(self, port_name, tenant_id, host, subnet_id, ip_address,
                      status='ACTIVE',
-                     device_owner='compute:nova'):
+                     device_owner=DEVICE_OWNER_COMPUTE_NOVA):
         return {
             'id': port_name + '-port-id',
             'tenant_id': tenant_id,
