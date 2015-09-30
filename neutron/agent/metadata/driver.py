@@ -18,6 +18,7 @@ import os
 from oslo_log import log as logging
 
 from neutron.agent.common import config
+from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
@@ -154,7 +155,7 @@ def after_router_added(resource, event, l3_agent, **kwargs):
         router.iptables_manager.ipv4['nat'].add_rule(c, r)
     router.iptables_manager.apply()
 
-    if not router.is_ha:
+    if not isinstance(router, ha_router.HaRouter):
         proxy.spawn_monitored_metadata_proxy(
             l3_agent.process_monitor,
             router.ns_name,
