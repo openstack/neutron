@@ -23,10 +23,12 @@ from sqlalchemy.engine import reflection
 
 # Neutron milestones for upgrade aliases
 LIBERTY = 'liberty'
+MITAKA = 'mitaka'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
     LIBERTY,
+    MITAKA,
 ]
 
 CREATION_OPERATIONS = (sa.sql.ddl.CreateIndex,

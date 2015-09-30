@@ -52,7 +52,8 @@ def _migration_script_ops(context, directive, phase):
     the correct branch labels/depends_on/head revision are set up.
 
     """
-    version_path = cli._get_version_branch_path(context.config, phase)
+    version_path = cli._get_version_branch_path(
+        context.config, release=cli.CURRENT_RELEASE, branch=phase)
     autogen_kwargs = {}
     cli._check_bootstrap_new_branch(phase, version_path, autogen_kwargs)
 
