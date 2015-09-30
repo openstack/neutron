@@ -167,7 +167,7 @@ Note that rules are loaded in a non lazy way, meaning they are all fetched from
 the database on policy fetch.
 
 For Qos<type>Rule objects, an extendable approach was taken to allow easy
-addition of objects for new rule types. To accomodate this, fields common to
+addition of objects for new rule types. To accommodate this, fields common to
 all types are put into a base class called QosRule that is then inherited into
 type-specific rule implementations that, ideally, only define additional fields
 and some other minor things.

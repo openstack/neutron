@@ -239,7 +239,7 @@ def _compare_labels(revision, expected_labels):
     # validate that the script has expected labels only
     bad_labels = revision.branch_labels - expected_labels
     if bad_labels:
-        # NOTE(ihrachyshka): this hack is temporary to accomodate those
+        # NOTE(ihrachyshka): this hack is temporary to accommodate those
         # projects that already initialized their branches with liberty_*
         # labels. Let's notify them about the deprecation for now and drop it
         # later.
