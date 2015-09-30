@@ -1518,3 +1518,26 @@ tag:tag0,option:router""".lstrip()
         self.conf.set_override('enable_metadata_network', True)
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4MetadataNetwork()))
+
+    def _test_output_opts_file(self, expected, network, ipm_retval=None):
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf, network)
+            if ipm_retval:
+                with mock.patch.object(
+                        dm, '_make_subnet_interface_ip_map') as ipm:
+                    ipm.return_value = ipm_retval
+                    dm._output_opts_file()
+                    self.assertTrue(ipm.called)
+            else:
+                dm._output_opts_file()
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_ipv6_address_mode_unset(self):
+        fake_v6 = '2001:0200:feed:7ac0::1'
+        expected = (
+            'tag:tag0,option6:dns-server,%s\n'
+            'tag:tag0,option6:domain-search,openstacklocal').lstrip() % (
+                '[' + fake_v6 + ']')
+
+        self._test_output_opts_file(expected, FakeV6Network())

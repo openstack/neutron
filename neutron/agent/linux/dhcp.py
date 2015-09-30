@@ -647,10 +647,10 @@ class Dnsmasq(DhcpLocalProcess):
         dhcp_ips = collections.defaultdict(list)
         subnet_idx_map = {}
         for i, subnet in enumerate(self.network.subnets):
+            addr_mode = getattr(subnet, 'ipv6_address_mode', None)
             if (not subnet.enable_dhcp or
                 (subnet.ip_version == 6 and
-                 getattr(subnet, 'ipv6_address_mode', None)
-                 in [None, constants.IPV6_SLAAC])):
+                 addr_mode == constants.IPV6_SLAAC)):
                 continue
             if subnet.dns_nameservers:
                 options.append(
