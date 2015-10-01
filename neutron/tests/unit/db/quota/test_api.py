@@ -303,8 +303,7 @@ class TestQuotaDbApiAdminContext(TestQuotaDbApi):
     def _set_context(self):
         self.tenant_id = 'Higuain'
         self.context = context.Context('Gonzalo', self.tenant_id,
-                                       is_admin=True, is_advsvc=True,
-                                       load_admin_roles=False)
+                                       is_admin=True, is_advsvc=True)
 
     def test_get_quota_usage_by_resource(self):
         self._create_quota_usage('goals', 26)

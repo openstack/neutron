@@ -348,7 +348,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         tenant_id = 'tenant_id1'
         self.assertRaises(exceptions.QuotaResourceUnknown,
                           quota.QUOTAS.make_reservation,
-                          context.get_admin_context(load_admin_roles=False),
+                          context.get_admin_context(),
                           tenant_id,
                           {'foobar': 1},
                           plugin=None)
@@ -357,7 +357,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         tenant_id = 'tenant_id1'
         self.assertRaises(exceptions.InvalidQuotaValue,
                           quota.QUOTAS.make_reservation,
-                          context.get_admin_context(load_admin_roles=False),
+                          context.get_admin_context(),
                           tenant_id,
                           {'network': -1},
                           plugin=None)
