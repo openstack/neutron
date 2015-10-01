@@ -120,15 +120,28 @@ class L3AgentNotifyAPI(object):
             cctxt = self.client.prepare(fanout=True)
             cctxt.cast(context, method, routers=router_ids)
 
-    def _notification_fanout(self, context, method, router_id):
-        """Fanout the deleted router to all L3 agents."""
-        LOG.debug('Fanout notify agent at %(topic)s the message '
-                  '%(method)s on router %(router_id)s',
-                  {'topic': topics.L3_AGENT,
-                   'method': method,
-                   'router_id': router_id})
+    def _notification_fanout(self, context, method, router_id=None, **kwargs):
+        """Fanout the information to all L3 agents.
+
+        This function will fanout the router_id or ext_net_id
+        to the L3 Agents.
+        """
+        ext_net_id = kwargs.get('ext_net_id')
+        if router_id:
+            kwargs['router_id'] = router_id
+            LOG.debug('Fanout notify agent at %(topic)s the message '
+                      '%(method)s on router %(router_id)s',
+                      {'topic': topics.L3_AGENT,
+                       'method': method,
+                       'router_id': router_id})
+        if ext_net_id:
+            LOG.debug('Fanout notify agent at %(topic)s the message '
+                      '%(method)s for external_network  %(ext_net_id)s',
+                      {'topic': topics.L3_AGENT,
+                       'method': method,
+                       'ext_net_id': ext_net_id})
         cctxt = self.client.prepare(fanout=True)
-        cctxt.cast(context, method, router_id=router_id)
+        cctxt.cast(context, method, **kwargs)
 
     def agent_updated(self, context, admin_state_up, host):
         self._notification_host(context, 'agent_updated', host,
@@ -150,6 +163,11 @@ class L3AgentNotifyAPI(object):
     def del_arp_entry(self, context, router_id, arp_table, operation=None):
         self._agent_notification_arp(context, 'del_arp_entry', router_id,
                                      operation, arp_table)
+
+    def delete_fipnamespace_for_ext_net(self, context, ext_net_id):
+        self._notification_fanout(
+            context, 'fipnamespace_delete_on_ext_net',
+            ext_net_id=ext_net_id)
 
     def router_removed_from_agent(self, context, router_id, host):
         self._notification_host(context, 'router_removed_from_agent', host,

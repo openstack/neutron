@@ -164,9 +164,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         1.2 - DVR support: new L3 agent methods added.
               - add_arp_entry
               - del_arp_entry
+        1.3 - fipnamespace_delete_on_ext_net - to delete fipnamespace
+              after the external network is removed
               Needed by the L3 service when dealing with DVR
     """
-    target = oslo_messaging.Target(version='1.2')
+    target = oslo_messaging.Target(version='1.3')
 
     def __init__(self, host, conf=None):
         if conf:
