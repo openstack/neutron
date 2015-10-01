@@ -325,10 +325,6 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.send_gratuitous_arp')
         self.send_arp = self.send_arp_p.start()
 
-        self.send_arp_proxyarp_p = mock.patch(
-            'neutron.agent.linux.ip_lib.send_garp_for_proxyarp')
-        self.send_arp_proxyarp = self.send_arp_proxyarp_p.start()
-
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         driver_cls = self.dvr_cls_p.start()
         self.mock_driver = mock.MagicMock()
