@@ -142,8 +142,8 @@ IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
 
 IPV6_LLA_PREFIX = 'fe80::/64'
 
-# Human-readable ID to which default_ipv6_subnet_pool should be set to
-# indicate that IPv6 Prefix Delegation should be used to allocate subnet CIDRs
+# Human-readable ID to which the subnetpool ID should be set to
+# indicate that IPv6 Prefix Delegation is enabled for a given subnet
 IPV6_PD_POOL_ID = 'prefix_delegation'
 
 # Special provisional prefix for IPv6 Prefix Delegation

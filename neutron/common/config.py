@@ -78,6 +78,9 @@ core_opts = [
     cfg.StrOpt('default_ipv6_subnet_pool',
                help=_("Default IPv6 subnet-pool to be used for automatic "
                       "subnet CIDR allocation")),
+    cfg.BoolOpt('ipv6_pd_enabled', default=False,
+                help=_("Enables IPv6 Prefix Delegation for automatic subnet "
+                       "CIDR allocation")),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
                deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
