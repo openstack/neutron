@@ -103,6 +103,9 @@ Translation and logging
 
 Document common pitfalls as well as good practices done when instrumenting your code.
 
+ * Make yourself familiar with `OpenStack logging guidelines <http://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
+   to avoid littering the logs with traces logged at inappropriate levels.
+
 Project interfaces
 ~~~~~~~~~~~~~~~~~~
 
