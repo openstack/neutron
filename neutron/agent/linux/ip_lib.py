@@ -331,7 +331,7 @@ class IpRuleCommand(IpCommandBase):
                 integers.append(0xffffffff)
 
             # We now have two integers in a list.  Convert to canonical string.
-            return '/'.join(map(hex, integers))
+            return '{0:#x}/{1:#x}'.format(*integers)
 
         def canonicalize(item):
             k, v = item
