@@ -188,6 +188,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
+        self.conn.create_consumer(topics.REPORTS,
+                                  [agents_db.AgentExtRpcCallback()],
+                                  fanout=False)
         return self.conn.consume_in_threads()
 
     def _filter_nets_provider(self, context, networks, filters):

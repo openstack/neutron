@@ -366,7 +366,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.dvr_plugin_rpc = dvr_rpc.DVRServerRpcApi(topics.PLUGIN)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
 
         # RPC network init
         self.context = context.get_admin_context_without_session()

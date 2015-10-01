@@ -611,7 +611,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
     def __init__(self, host, conf=None):
         self.use_call = True
         super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
             'binary': 'neutron-l3-agent',
             'host': host,

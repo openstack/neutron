@@ -544,7 +544,7 @@ class NetworkCache(object):
 class DhcpAgentWithStateReport(DhcpAgent):
     def __init__(self, host=None, conf=None):
         super(DhcpAgentWithStateReport, self).__init__(host=host, conf=conf)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
             'binary': 'neutron-dhcp-agent',
             'host': host,

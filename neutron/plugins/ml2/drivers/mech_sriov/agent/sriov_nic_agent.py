@@ -119,7 +119,7 @@ class SriovNicSwitchAgent(object):
         LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         # RPC network init
         # Handle updates from service
         self.endpoints = [SriovNicSwitchRpcCallbacks(self.context, self,
