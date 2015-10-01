@@ -22,6 +22,7 @@ from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root
 from neutron import policy
+from neutron.quota import resource_registry
 
 LOG = log.getLogger(__name__)
 
@@ -100,6 +101,19 @@ def initialize_all():
             LOG.debug("There are already controllers for resource:%s",
                       resource)
 
+    # NOTE(salv-orlando): If you are care about code quality, please read below
+    # Hackiness is strong with the piece of code below. It is used for
+    # populating resource plurals and registering resources with the quota
+    # engine, but the method it calls were not coinceived with this aim.
+    # Therefore it only leverages side-effects from those methods. Moreover,
+    # as it is really not advisable to load an instance of
+    # neutron.api.v2.router.APIRouter just to register resources with the
+    # quota  engine, core resources are explicitly registered here.
+    # TODO(salv-orlando): The Pecan WSGI support should provide its own
+    # solution to manage resource plurals and registration of resources with
+    # the quota engine
+    for resource in router.RESOURCES.keys():
+        resource_registry.register_resource_by_name(resource)
     for ext in ext_mgr.extensions.values():
         # make each extension populate its plurals
         if hasattr(ext, 'get_resources'):
