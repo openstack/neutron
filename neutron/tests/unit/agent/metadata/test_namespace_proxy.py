@@ -38,9 +38,6 @@ class FakeConf(object):
 class TestNetworkMetadataProxyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestNetworkMetadataProxyHandler, self).setUp()
-        self.log_p = mock.patch.object(ns_proxy, 'LOG')
-        self.log = self.log_p.start()
-
         self.handler = ns_proxy.NetworkMetadataProxyHandler('router_id')
 
     def test_call(self):
@@ -67,7 +64,6 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             proxy_req.side_effect = Exception
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
-            self.assertEqual(len(self.log.mock_calls), 2)
             self.assertTrue(proxy_req.called)
 
     def test_proxy_request_router_200(self):
@@ -100,13 +96,13 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             self.assertEqual(retval.headers['Content-Type'], 'text/plain')
             self.assertEqual(retval.body, 'content')
 
-    def test_proxy_request_network_200(self):
+    def _test_proxy_request_network_200(self, content):
         self.handler.network_id = 'network_id'
 
         resp = mock.MagicMock(status=200)
         with mock.patch('httplib2.Http') as mock_http:
             resp.__getitem__.return_value = "application/json"
-            mock_http.return_value.request.return_value = (resp, '{}')
+            mock_http.return_value.request.return_value = (resp, content)
 
             retval = self.handler._proxy_request('192.168.1.1',
                                                  'GET',
@@ -129,7 +125,13 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
 
             self.assertEqual(retval.headers['Content-Type'],
                              'application/json')
-            self.assertEqual(retval.body, '{}')
+            self.assertEqual(content, retval.body)
+
+    def test_proxy_request_network_200(self):
+        self._test_proxy_request_network_200('{}')
+
+    def test_proxy_request_network_200_unicode_in_content(self):
+        self._test_proxy_request_network_200('Gl\xfcck')
 
     def _test_proxy_request_network_4xx(self, status, method, expected):
         self.handler.network_id = 'network_id'
