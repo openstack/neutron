@@ -40,11 +40,6 @@ class HaRouter(router.RouterInfo):
         self.state_change_callback = state_change_callback
 
     @property
-    def is_ha(self):
-        # TODO(Carl) Remove when refactoring to use sub-classes is complete.
-        return self.router is not None
-
-    @property
     def ha_priority(self):
         return self.router.get('priority', keepalived.HA_DEFAULT_PRIORITY)
 
