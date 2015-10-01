@@ -130,6 +130,14 @@ Document common nits and pedantic comments to watch out for.
   validation (pep8 and/or tests) before submitting your patch. If you keep forgetting
   consider installing a git `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_
   so that Git will do it for you.
+* Sometimes, new contributors want to dip their toes with trivial patches, but we
+  at OpenStack *love* bike shedding and their patches may sometime stall. In
+  some extreme cases, the more trivial the patch, the higher the chances it fails
+  to merge. To ensure we as a team provide/have a frustration-free experience
+  new contributors should be redirected to fixing `low-hanging-fruit bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=low-hanging-fruit>`_
+  that have a tangible positive impact to the codebase. Spelling mistakes, and
+  docstring are fine, but there is a lot more that is relatively easy to fix
+  and has a direct impact to Neutron users.
 
 Reviewer comments
 ~~~~~~~~~~~~~~~~~
