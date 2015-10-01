@@ -531,7 +531,7 @@ class TestCli(base.BaseTestCase):
             use_separate_migration_branches):
 
         use_separate_migration_branches.return_value = True
-        get_version_branch_path.side_effect = lambda cfg, branch: (
+        get_version_branch_path.side_effect = lambda cfg, release, branch: (
             "/foo/expand" if branch == 'expand' else "/foo/contract")
 
         migration_script = alembic_ops.MigrationScript(

@@ -31,7 +31,12 @@ from neutron.db import migration
 
 HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
-CURRENT_RELEASE = migration.LIBERTY
+
+CURRENT_RELEASE = migration.MITAKA
+RELEASES = (
+    migration.LIBERTY,
+    migration.MITAKA,
+)
 
 EXPAND_BRANCH = 'expand'
 CONTRACT_BRANCH = 'contract'
@@ -216,7 +221,6 @@ def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
     if not os.path.exists(version_path):
         # Bootstrap initial directory structure
         utils.ensure_dir(version_path)
-        addn_kwargs['branch_label'] = branch
 
 
 def do_revision(config, cmd):
@@ -231,7 +235,9 @@ def do_revision(config, cmd):
 def _get_release_labels(labels):
     result = set()
     for label in labels:
-        result.add('%s_%s' % (CURRENT_RELEASE, label))
+        # release labels were introduced Liberty for a short time and dropped
+        # in that same release cycle
+        result.add('%s_%s' % (migration.LIBERTY, label))
     return result
 
 
@@ -453,10 +459,10 @@ def _get_heads_file_path(config):
         HEADS_FILENAME)
 
 
-def _get_version_branch_path(config, branch=None):
+def _get_version_branch_path(config, release=None, branch=None):
     version_path = _get_root_versions_dir(config)
-    if branch:
-        return os.path.join(version_path, CURRENT_RELEASE, branch)
+    if branch and release:
+        return os.path.join(version_path, release, branch)
     return version_path
 
 
@@ -474,11 +480,14 @@ def _use_separate_migration_branches(config):
 
 def _set_version_locations(config):
     '''Make alembic see all revisions in all migration branches.'''
+    split_branches = False
     version_paths = [_get_version_branch_path(config)]
-    for branch in MIGRATION_BRANCHES:
-        version_path = _get_version_branch_path(config, branch)
-        if os.path.exists(version_path):
-            version_paths.append(version_path)
+    for release in RELEASES:
+        for branch in MIGRATION_BRANCHES:
+            version_path = _get_version_branch_path(config, release, branch)
+            if split_branches or os.path.exists(version_path):
+                split_branches = True
+                version_paths.append(version_path)
 
     config.set_main_option('version_locations', ' '.join(version_paths))
 
