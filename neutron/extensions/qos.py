@@ -164,8 +164,8 @@ class Qos(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return dict(EXTENDED_ATTRIBUTES_2_0.items() +
-                        RESOURCE_ATTRIBUTE_MAP.items())
+            return dict(list(EXTENDED_ATTRIBUTES_2_0.items()) +
+                        list(RESOURCE_ATTRIBUTE_MAP.items()))
         else:
             return {}
 
