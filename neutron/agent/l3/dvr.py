@@ -77,3 +77,9 @@ class AgentMixin(object):
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
         ri._update_arp_entry(ip, mac, subnet_id, 'delete')
+
+    def fipnamespace_delete_on_ext_net(self, context, ext_net_id):
+        """Delete fip namespace after external network removed."""
+        fip_ns = self.get_fip_ns(ext_net_id)
+        if fip_ns.agent_gateway_port and not fip_ns.destroyed:
+            fip_ns.delete()

@@ -1145,6 +1145,7 @@ class TestDvrRouter(L3AgentTestFramework):
         # attach interfaces, etc...)
         router = self.manage_router(self.agent, router_info)
 
+        ext_gateway_port = router_info['gw_port']
         self.assertTrue(self._namespace_exists(router.ns_name))
         self.assertTrue(self._metadata_proxy_exists(self.agent.conf, router))
         self._assert_internal_devices(router)
@@ -1161,6 +1162,7 @@ class TestDvrRouter(L3AgentTestFramework):
             self._assert_extra_routes(router, namespace=snat_ns_name)
 
         self._delete_router(self.agent, router.router_id)
+        self._assert_fip_namespace_deleted(ext_gateway_port)
         self._assert_router_does_not_exist(router)
 
     def generate_dvr_router_info(self,
@@ -1522,6 +1524,12 @@ class TestDvrRouter(L3AgentTestFramework):
             router_updated, internal_dev_name=internal_device_name)
         self.assertFalse(sg_device)
         self.assertTrue(qg_device)
+
+    def _assert_fip_namespace_deleted(self, ext_gateway_port):
+        ext_net_id = ext_gateway_port['network_id']
+        self.agent.fipnamespace_delete_on_ext_net(
+            self.agent.context, ext_net_id)
+        self._assert_interfaces_deleted_from_ovs()
 
     def test_dvr_router_static_routes(self):
         """Test to validate the extra routes on dvr routers."""
