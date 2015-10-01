@@ -2479,23 +2479,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         fip['floatingip']['floating_ip_address'])
                 self.assertEqual(floating_ip.version, 4)
 
-    def test_create_router_gateway_fails(self):
-        # Force _update_router_gw_info failure
-        plugin = manager.NeutronManager.get_service_plugins()[
-            service_constants.L3_ROUTER_NAT]
-        ctx = context.Context('', 'foo')
-        plugin._update_router_gw_info = mock.Mock(
-            side_effect=n_exc.NeutronException)
-        data = {'router': {
-            'name': 'router1', 'admin_state_up': True,
-            'external_gateway_info': {'network_id': 'some_uuid'}}}
-
-        # Verify router doesn't persist on failure
-        self.assertRaises(n_exc.NeutronException,
-                          plugin.create_router, ctx, data)
-        routers = plugin.get_routers(ctx)
-        self.assertEqual(0, len(routers))
-
     def test_update_subnet_gateway_for_external_net(self):
         """Test to make sure notification to routers occurs when the gateway
             ip address of a subnet of the external network is changed.
@@ -2890,13 +2873,50 @@ class L3AgentDbSepTestCase(L3BaseForSepTests, L3AgentDbTestCaseBase):
         self.plugin = TestL3NatServicePlugin()
 
 
-class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase):
+class L3NatDBTestCaseMixin(object):
+    """L3_NAT_dbonly_mixin specific test cases."""
+
+    def setUp(self):
+        super(L3NatDBTestCaseMixin, self).setUp()
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not isinstance(plugin, l3_db.L3_NAT_dbonly_mixin):
+            self.skipTest("Plugin is not L3_NAT_dbonly_mixin")
+
+    def test_create_router_gateway_fails(self):
+        """Force _update_router_gw_info failure and see
+        the exception is propagated.
+        """
+
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        ctx = context.Context('', 'foo')
+
+        class MyException(Exception):
+            pass
+
+        mock.patch.object(plugin, '_update_router_gw_info',
+                          side_effect=MyException).start()
+        with self.network() as n:
+            data = {'router': {
+                'name': 'router1', 'admin_state_up': True,
+                'external_gateway_info': {'network_id': n['network']['id']}}}
+
+            self.assertRaises(MyException, plugin.create_router, ctx, data)
+            # Verify router doesn't persist on failure
+            routers = plugin.get_routers(ctx)
+            self.assertEqual(0, len(routers))
+
+
+class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase,
+                         L3NatDBTestCaseMixin):
 
     """Unit tests for core plugin with L3 routing integrated."""
     pass
 
 
-class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase):
+class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase,
+                         L3NatDBTestCaseMixin):
 
     """Unit tests for a separate L3 routing service plugin."""
 
