@@ -67,9 +67,10 @@ class TestDvrFipNs(base.BaseTestCase):
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'send_gratuitous_arp')
+    @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
     @mock.patch.object(ip_lib, 'device_exists')
-    def test_gateway_added(self, device_exists, send_arp, IPDevice, IPWrapper):
+    def test_gateway_added(self, device_exists, send_adv_notif,
+                           IPDevice, IPWrapper):
         subnet_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                         'prefixlen': 24,
@@ -86,10 +87,10 @@ class TestDvrFipNs(base.BaseTestCase):
                                    mock.sentinel.interface_name)
         self.assertEqual(self.driver.plug.call_count, 1)
         self.assertEqual(self.driver.init_l3.call_count, 1)
-        send_arp.assert_called_once_with(self.fip_ns.get_name(),
-                                         mock.sentinel.interface_name,
-                                         '20.0.0.30',
-                                         mock.ANY)
+        send_adv_notif.assert_called_once_with(self.fip_ns.get_name(),
+                                               mock.sentinel.interface_name,
+                                               '20.0.0.30',
+                                               mock.ANY)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     def test_destroy(self, IPWrapper):
