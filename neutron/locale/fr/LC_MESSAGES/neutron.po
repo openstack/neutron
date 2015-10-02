@@ -6,22 +6,24 @@
 # François Bureau, 2013
 # Maxime COQUEREL <max.coquerel@gmail.com>, 2014-2015
 # Patrice LACHANCE <patlachance@gmail.com>, 2013
+# Cedric Savignan <liced@liced.fr>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
+"Project-Id-Version: neutron 8.0.0.dev315\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-22 07:41+0000\n"
-"PO-Revision-Date: 2015-09-06 10:15+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2015-10-02 06:33+0000\n"
+"PO-Revision-Date: 2015-09-25 12:37+0000\n"
+"Last-Translator: Cedric Savignan <liced@liced.fr>\n"
+"Language: fr\n"
 "Language-Team: French (http://www.transifex.com/openstack/neutron/language/"
 "fr/)\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.1.1\n"
 
 #, python-format
 msgid ""
@@ -216,6 +218,9 @@ msgstr "'%s' doit être un nombre décimal non négatif."
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr "'%s' ne doit pas être négatif."
+
+msgid "'.' searches are not implemented"
+msgstr "'.' recherches ne sont pas implémentées. "
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "La longueur 0 n'est pas autorisée pour le préfixe CIDR"
@@ -512,6 +517,10 @@ msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "Impossible de désactiver enable_dhcp avec des attributs ipv6 définis"
 
 #, python-format
+msgid "Cannot find %(table)s with %(col)s=%(match)s"
+msgstr "Impossible de trouver %(table)s avec %(col)s=%(match)s"
+
+#, python-format
 msgid ""
 "Cannot have multiple router ports with the same network id if both contain "
 "IPv6 subnets. Existing port %(p)s has IPv6 subnet(s) and network id %(nid)s"
@@ -743,6 +752,12 @@ msgstr "Supprimez l'espace de nom en supprimant toutes les unités."
 msgid "Deleting port %s"
 msgstr "Suppression du port %s"
 
+msgid "Destroy IPsets even if there is an iptables reference."
+msgstr "Détruire les IPsets même s'il y a une référence iptables."
+
+msgid "Destroy all IPsets."
+msgstr "Destruction de tous les IPsets."
+
 msgid ""
 "Determines if connections are allowed to be held open by clients after a "
 "request is fulfilled. A value of False will ensure that the socket "
@@ -779,6 +794,15 @@ msgstr ""
 
 msgid "Domain to use for building the hostnames"
 msgstr "Domaine à utiliser pour générer les noms d'hôte"
+
+msgid ""
+"Domain to use for building the hostnames.This option is deprecated. It has "
+"been moved to neutron.conf as dns_domain. It will removed from here in a "
+"future release"
+msgstr ""
+"Domaine à utiliser pour construire les noms d’hôtes. Cette option est "
+"devenue obsolète.  Elle a été remplacée par dns_domain dans neutron.conf. "
+"Elle sera  supprimée dans une version future."
 
 msgid "Downgrade no longer supported"
 msgstr "La rétromigration n'est plus prise en charge"
@@ -1012,6 +1036,9 @@ msgstr ""
 #, python-format
 msgid "Extension with alias %s does not exist"
 msgstr "L'extension avec l'alias %s n'existe pas"
+
+msgid "Extensions list to use"
+msgstr "Liste d'extensions à utiliser."
 
 #, python-format
 msgid "Extensions not found: %(extensions)s"
@@ -1260,6 +1287,9 @@ msgstr "Adresse IP utilisée par le serveur de métadonnées Nova"
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "L'allocation d'adresse IP requiert subnet_id ou ip_address"
 
+msgid "IPAM driver to use."
+msgstr "Pilote IPAM à utiliser."
+
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables rules:\n"
@@ -1478,6 +1508,10 @@ msgid "Invalid provider format. Last part should be 'default' or empty: %s"
 msgstr ""
 "Format de fournisseur non valide. La dernière partie doit être 'default' ou "
 "vide : %s"
+
+#, python-format
+msgid "Invalid resource type %(resource_type)s"
+msgstr "Ressource type %(resource_type)s non valide"
 
 #, python-format
 msgid "Invalid route: %s"
@@ -2012,6 +2046,10 @@ msgid "OS Version number"
 msgstr "Numéro de version OS"
 
 #, python-format
+msgid "Object %(id)s not found."
+msgstr "Objet %(id)s non trouvé."
+
+#, python-format
 msgid "Object action %(action)s failed because: %(reason)s"
 msgstr "L'action de l'objet %(action)s a échoué car : %(reason)s"
 
@@ -2185,6 +2223,19 @@ msgid "Provider name is limited by 255 characters: %s"
 msgstr "Le nom de fournisseur est limité à 255 caractères : %s"
 
 #, python-format
+msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
+msgstr ""
+"Stratégie QoS %(policy_id)s est utilisée par %(object_type)s %(object_id)s."
+
+#, python-format
+msgid "QoS policy %(policy_id)s could not be found"
+msgstr "Stratégie QoS %(policy_id)s introuvable"
+
+#, python-format
+msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found"
+msgstr "Règle de QoS  %(rule_id)s pour la stratégie %(policy_id)s introuvable"
+
+#, python-format
 msgid "Quota exceeded for resources: %(overs)s"
 msgstr "Quota dépassé pour les ressources : %(overs)s"
 
@@ -2254,6 +2305,10 @@ msgid ""
 msgstr ""
 "Le sous-réseau demandé avec le routage CIDR : %(cidr)s pour le réseau : "
 "%(network_id)s chevauche un autre sous-réseau"
+
+#, python-format
+msgid "Resource %(resource_id)s of type %(resource_type)s not found"
+msgstr "Ressource %(resource_id)s de type %(resource_type)s non trouvée."
 
 #, python-format
 msgid ""
