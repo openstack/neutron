@@ -12,10 +12,10 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev321\n"
+"Project-Id-Version: neutron 8.0.0.dev362\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-28 06:25+0000\n"
-"PO-Revision-Date: 2015-09-25 05:54+0000\n"
+"POT-Creation-Date: 2015-10-01 06:30+0000\n"
+"PO-Revision-Date: 2015-09-28 04:52+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
 "Language-Team: Japanese (http://www.transifex.com/openstack/neutron/language/"
@@ -118,11 +118,11 @@ msgstr "%s は VLAN プロバイダーネットワークで禁止されていま
 
 #, python-format
 msgid "%s prohibited for flat provider network"
-msgstr "%s はフラット・プロバイダーネットワークで禁止されています"
+msgstr "%s は flat プロバイダーネットワークで禁止されています"
 
 #, python-format
 msgid "%s prohibited for local provider network"
-msgstr "%s はローカル・プロバイダーネットワークで禁止されています"
+msgstr "%s は local プロバイダーネットワークで禁止されています"
 
 #, python-format
 msgid "'%(data)s' exceeds maximum length of %(max_len)s"
@@ -251,10 +251,10 @@ msgid "Access to this resource was denied."
 msgstr "このリソースへのアクセスは拒否されました"
 
 msgid "Action to be executed when a child process dies"
-msgstr "子プロセスが停止したときに実行されるアクション"
+msgstr "子プロセスが異常終了したときに実行されるアクション"
 
 msgid "Add comments to iptables rules."
-msgstr "iptablesルールへコメントを追加"
+msgstr "iptables ルールへコメントを追加"
 
 msgid "Adds external network attribute to network resource."
 msgstr "外部ネットワーク属性がネットワークリソースに追加されます。"
@@ -361,15 +361,15 @@ msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
 "neutron.ml2.extension_drivers namespace."
 msgstr ""
-"neutron.ml2.extension_drivers 名前空間からロードする拡張ドライバー・エント"
-"リーポイントの順序付きリスト。"
+"neutron.ml2.extension_drivers 名前空間からロードする拡張ドライバーエントリー"
+"ポイントの順序付きリスト。"
 
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
-"neutron.ml2.mechanism_drivers 名前空間からロードするネットワーキング・メカニ"
-"ズムドライバー・エンドポイントの番号付きリスト。"
+"neutron.ml2.mechanism_drivers 名前空間からロードするネットワーキングメカニズ"
+"ムドライバーのエンドポイントの順序付きリスト。"
 
 #, python-format
 msgid "An unexpected error occurred:%(err_msg)s"
@@ -383,7 +383,7 @@ msgstr "不明な例外が発生しました。"
 
 #, python-format
 msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "不明な nvsd プラグイン例外が発生しました: %(reason)s"
+msgstr "不明な NVSD プラグイン例外が発生しました: %(reason)s"
 
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
@@ -455,7 +455,7 @@ msgid "CA certificate file to use to verify connecting clients"
 msgstr "接続クライアントを検査するために使用される CA 証明書ファイル"
 
 msgid "CIDR to monitor"
-msgstr "モニター対象 CIDR"
+msgstr "モニター対象の CIDR"
 
 msgid "CRD Auth URL."
 msgstr "CRD 認証 URL。"
@@ -471,7 +471,8 @@ msgstr "CRD サービスユーザー名。"
 
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
-msgstr "gateway_ip のないサブネット %s 上のポートには浮動 IP を追加できません"
+msgstr ""
+"gateway_ip のないサブネット %s 上のポートには Floating IP を追加できません"
 
 msgid "Cannot allocate requested subnet from the available set of prefixes"
 msgstr ""
@@ -484,17 +485,17 @@ msgid ""
 "%(port_id)s using fixed IP %(fixed_ip)s, as that fixed IP already has a "
 "floating IP on external network %(net_id)s."
 msgstr ""
-"固定 IP %(fixed_ip)s には、既に外部ネットワーク %(net_id)s 上の浮動 IP がある"
-"ため、その固定 IP を使用して浮動 IP %(floating_ip_address)s (%(fip_id)s) を"
-"ポート %(port_id)s と関連付けることはできません。"
+"Fixed IP %(fixed_ip)s には、既に外部ネットワーク %(net_id)s 上の Floating IP "
+"があるため、その Fixed IP を使用して Floating IP %(floating_ip_address)s "
+"(%(fip_id)s) をポート %(port_id)s と関連付けることはできません。"
 
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is owned "
 "by a different tenant."
 msgstr ""
-"ポート %s は別のテナントによって所有されているため、浮動 IP を作成して、その"
-"ポートにバインドすることはできません。"
+"ポート %s は別のテナントによって所有されているため、 Floating IP を作成して、"
+"そのポートにバインドすることはできません。"
 
 msgid "Cannot create resource for another tenant"
 msgstr "別のテナントのリソースを作成できません"
@@ -607,7 +608,7 @@ msgstr ""
 
 msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
-msgstr "転送機能として使用される DNS サーバーのコンマ区切りリスト。"
+msgstr "フォワーダーとして使用される DNS サーバーのカンマ区切りのリスト。"
 
 msgid "Command to execute"
 msgstr "実行するコマンド"
@@ -775,7 +776,7 @@ msgstr ""
 "イバー"
 
 msgid "Dummy user traffic Security Zone id"
-msgstr "ダミー・ユーザー・トラフィック・セキュリティーゾーン id"
+msgstr "ダミーユーザートラフィックセキュリティーゾーン id"
 
 #, python-format
 msgid "Duplicate IP address '%s'"
@@ -882,9 +883,9 @@ msgid ""
 "Enable VXLAN on the agent. Can be enabled when agent is managed by ml2 "
 "plugin using linuxbridge mechanism driver"
 msgstr ""
-"エージェントで VXLAN を有効にしてください。linuxbridge メカニズム・ドライバー"
-"を使用してエージェントが ml2 プラグインによって管理されているときに、VXLAN を"
-"有効にできます"
+"エージェントで VXLAN を有効にしてください。linuxbridge メカニズムドライバーを"
+"使用してエージェントが ml2 プラグインによって管理されているときに、VXLAN を有"
+"効にできます"
 
 msgid ""
 "Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
@@ -892,8 +893,8 @@ msgid ""
 "respond to an ARP request locally without performing a costly ARP broadcast "
 "into the overlay."
 msgstr ""
-"ローカル ARP 応答側がサポートされている場合、これを有効にします。OVS 2.1 およ"
-"び ML2 l2population ドライバーが必要です。スイッチが、コストのかかる、オー"
+"ローカルでの ARP 応答がサポートされている場合、これを有効にします。OVS 2.1 お"
+"よび ML2 l2population ドライバーが必要です。スイッチが、コストのかかる、オー"
 "バーレイへの ARP ブロードキャストを実行せずに、ARP 要求にローカルで応答するよ"
 "うにします (オーバーレイがサポートされている場合)。"
 
@@ -932,8 +933,8 @@ msgid ""
 "Collected data can by retrieved by other apps and services, e.g.: "
 "Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
 msgstr ""
-"このオプションにより、Hyper-V のメトリック API を使用することでスイッチ・ポー"
-"トのメトリックを収集できるようになります。収集されたデータは、他のアプリケー"
+"このオプションにより、Hyper-V のメトリック API を使用することでスイッチポート"
+"のメトリックを収集できるようになります。収集されたデータは、他のアプリケー"
 "ションやサービス (例: 雲高計) が取得できるデータです。Hyper-V / Windows "
 "Server 2012 以上が必要となります。"
 
@@ -969,7 +970,7 @@ msgid "Error while reading %s"
 msgstr "%s の読み取り中にエラーが発生しました"
 
 msgid "Exceeded maximim amount of fixed ips per port"
-msgstr "ポートごとの固定 IP の最大数を超えました"
+msgstr "ポートごとの Fixed IP の最大数を超えました"
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
@@ -1002,8 +1003,8 @@ msgid ""
 "IP."
 msgstr ""
 "外部ネットワーク %(external_network_id)s は、サブネット %(subnet_id)s から到"
-"達可能ではありません。そのため、ポート %(port_id)s を浮動 IP と関連付けること"
-"ができません。"
+"達可能ではありません。そのため、ポート %(port_id)s を Floating IP と関連付け"
+"ることができません。"
 
 #, python-format
 msgid ""
@@ -1021,8 +1022,8 @@ msgid ""
 "FWaaS plugin is configured in the server side, but FWaaS is disabled in L3-"
 "agent."
 msgstr ""
-"FWaaS プラグインはサーバー側で設定されていますが、FWaaS は L3 エージェントで"
-"無効になっています。"
+"FWaaS プラグインがサーバー側で設定されていますが、 L3 エージェントでは FWaaS "
+"は無効になっています。"
 
 #, python-format
 msgid "Failed rescheduling router %(router_id)s: no eligible l3 agent found."
@@ -1105,7 +1106,7 @@ msgstr "%(ip)s に対する %(type)s トンネルポートをセットアップ�
 
 #, python-format
 msgid "Floating IP %(floatingip_id)s could not be found"
-msgstr "浮動 IP %(floatingip_id)s が見つかりませんでした"
+msgstr "Floating IP %(floatingip_id)s が見つかりませんでした"
 
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr ""
@@ -1132,8 +1133,8 @@ msgid ""
 "Gateway cannot be updated for router %(router_id)s, since a gateway to "
 "external network %(net_id)s is required by one or more floating IPs."
 msgstr ""
-"外部ネットワーク %(net_id)s へのゲートウェイは、1 つ以上の浮動 IP で必要なた"
-"め、ルーター %(router_id)s のゲートウェイを更新できません。"
+"外部ネットワーク %(net_id)s へのゲートウェイは、1 つ以上の Floating IP で必要"
+"なため、ルーター %(router_id)s のゲートウェイを更新できません。"
 
 #, python-format
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
@@ -1291,12 +1292,11 @@ msgid "Illegal update to prefixes: %(msg)s"
 msgstr "プレフィックスに対する正しくない更新: %(msg)s"
 
 msgid "In band Security Zone id"
-msgstr "インバンド・セキュリティーゾーン id"
+msgstr "インバンドセキュリティーゾーン id"
 
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
-msgstr ""
-"サブネットサイズ /%s を割り振るためのプレフィックス・スペースが不十分です"
+msgstr "サブネットサイズ /%s を割り振るためのプレフィックス空間が不十分です"
 
 msgid "Insufficient rights for removing default security group."
 msgstr "デフォルトのセキュリティーグループを削除するための権限が不十分です。"
@@ -1305,7 +1305,7 @@ msgid "Integration bridge to use."
 msgstr "使用する統合ブリッジ。"
 
 msgid "Interface to monitor"
-msgstr "モニター対象インターフェース"
+msgstr "モニター対象のインターフェース"
 
 #, python-format
 msgid "Internal Server Error from NVSD controller: %(reason)s"
@@ -1317,7 +1317,7 @@ msgstr "内部サーバーエラー: %(reason)s"
 
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
-msgstr "子プロセスの活動状態を検査する間隔 (秒)、無効にするには 0 を使用"
+msgstr "子プロセスの動作状況を確認する間隔 (秒)、無効にするには 0 を指定します"
 
 msgid "Interval between two metering measures"
 msgstr "2 つの計測間の間隔"
@@ -1368,7 +1368,7 @@ msgstr "extra-dhcp-opt のデータ形式が無効です: %(data)s"
 
 #, python-format
 msgid "Invalid data format for fixed IP: '%s'"
-msgstr "固定 IP に無効なデータ形式: '%s'"
+msgstr "Fixed IP に無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid data format for hostroute: '%s'"
@@ -1474,7 +1474,7 @@ msgid "Limit must be an integer 0 or greater and not '%d'"
 msgstr "limit は整数 0 以上でなければならず、'%d' にはしないようにしてください"
 
 msgid "Limit number of leases to prevent a denial-of-service."
-msgstr "サービス妨害を防ぐためにリースの数を制限してください。"
+msgstr "Denial-of-Service を防ぐためにリースの数を制限してください。"
 
 msgid ""
 "List of <network_device>:<excluded_devices> mapping network_device to the "
@@ -1492,7 +1492,7 @@ msgstr ""
 "ます。"
 
 msgid "List of <physical_network>:<bridge>. Deprecated for ofagent."
-msgstr "<physical_network>:<bridge> のリスト。ofagent には推奨されません。"
+msgstr "<physical_network>:<bridge> のリスト。ofagent では廃止予定です。"
 
 msgid ""
 "List of <physical_network>:<network_device> mapping physical network names "
@@ -1517,9 +1517,9 @@ msgid ""
 "tenant networks."
 msgstr ""
 "<physical_network>:<vlan_min>:<vlan_max> または <physical_network> のリスト。"
-"このリストには、VLAN プロバイダー/テナント・ネットワークに使用できる "
-"physical_network 名が指定されるだけでなく、テナント・ネットワークに割り振るこ"
-"とができる各物理ネットワークの VLAN タグの範囲も指定されます。"
+"このリストには、VLAN プロバイダー/テナントネットワークに使用できる "
+"physical_network 名が指定されるだけでなく、テナントネットワークに割り振ること"
+"ができる各物理ネットワークの VLAN タグの範囲も指定されます。"
 
 msgid ""
 "List of <physical_network>:<vswitch> where the physical networks can be "
@@ -1532,8 +1532,8 @@ msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
-"neutron.ml2.type_drivers 名前空間からロードするネットワークタイプ・ドライ"
-"バー・エンドポイントのリスト。"
+"neutron.ml2.type_drivers 名前空間からロードするネットワークタイプドライバーエ"
+"ンドポイントのリスト。"
 
 msgid ""
 "List of physical_network names with which flat networks can be created. Use "
@@ -1553,7 +1553,7 @@ msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション"
 
 msgid "Location of Metadata Proxy UNIX domain socket"
-msgstr "メタデータプロキシー UNIX ドメインソケットの場所"
+msgstr "メタデータプロキシーの UNIX ドメインソケットの場所"
 
 msgid "Location of ca certificates file to use for CRD client requests."
 msgstr "CRD クライアント要求に使用するための CA 証明書ファイルのロケーション。"
@@ -1562,16 +1562,16 @@ msgid "Location of pid file of this process."
 msgstr "このプロセスの pid ファイルのロケーション。"
 
 msgid "Location to store DHCP server config files"
-msgstr "DHCP サーバー構成ファイルを保管するためのロケーション"
+msgstr "DHCP サーバー設定ファイルを保持する場所"
 
 msgid "Location to store IPv6 RA config files"
 msgstr "IPv6 設定ファイルを格納する場所"
 
 msgid "Location to store child pid files"
-msgstr "子 pid ファイルを保管するためのロケーション"
+msgstr "子プロセスの PID ファイルを保持する場所"
 
 msgid "Location to store keepalived/conntrackd config files"
-msgstr "keepalived/conntrackd 構成ファイルを保管するためのロケーション"
+msgstr "keepalived/conntrackd 設定ファイルを保持する場所"
 
 msgid "MTU setting for device."
 msgstr "デバイスの MTU 設定"
@@ -1580,7 +1580,7 @@ msgid "MTU size of veth interfaces"
 msgstr "veth インターフェースの MTU サイズ"
 
 msgid "Make the l2 agent run in DVR mode."
-msgstr "l2 エージェントを DVR モードで実行します。"
+msgstr "L2 エージェントを DVR モードで実行します。"
 
 #, fuzzy
 msgid "Malformed request body"
@@ -1606,7 +1606,7 @@ msgid "Maximum number of allowed address pairs"
 msgstr "許可されたアドレスペアの最大数"
 
 msgid "Maximum number of fixed ips per port"
-msgstr "ポートごとの固定 IP の最大数"
+msgstr "ポートごとの Fixed IP の最大数"
 
 msgid "Maximum number of host routes per subnet"
 msgstr "サブネットあたりのホスト経路の最大数"
@@ -1644,8 +1644,8 @@ msgstr "MidoNet admin ユーザー名。"
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
-"インターフェース変更について ovsdb をモニターすることでポーリングが最小化され"
-"ます。"
+"インターフェース変更の検出に関して ovsdb をモニターすることでポーリングが最小"
+"化されます。"
 
 msgid "Minimum number of agents on which a router will be scheduled."
 msgstr "ルーターがスケジュールされるエージェントの最小数。"
@@ -1686,7 +1686,7 @@ msgstr "複数のプロバイダーがサービス %s に対して指定され�
 
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr ""
-"バルク・セキュリティーグループルールの作成で複数の tenant_id は許可されません"
+"バルクセキュリティーグループルールの作成で複数の tenant_id は許可されません"
 
 msgid "Must also specifiy protocol if port range is given."
 msgstr "ポートの範囲を指定する場合は、プロトコルも指定する必要があります。"
@@ -1695,16 +1695,16 @@ msgid "Must specify one or more actions on flow addition or modification"
 msgstr "フローの追加または変更について、1 つ以上のアクションを指定してください"
 
 msgid "NVSD Controller IP address"
-msgstr "NVSD コントローラー IP アドレス"
+msgstr "NVSD コントローラーの IP アドレス"
 
 msgid "NVSD Controller Port number"
-msgstr "NVSD コントローラーポート番号"
+msgstr "NVSD コントローラーのポート番号"
 
 msgid "NVSD Controller password"
-msgstr "NVSD コントローラーパスワード"
+msgstr "NVSD コントローラーのパスワード"
 
 msgid "NVSD Controller username"
-msgstr "NVSD コントローラーユーザー名"
+msgstr "NVSD コントローラーのユーザー名"
 
 msgid "NVSD controller REST API request timeout in seconds"
 msgstr "NVSD コントローラー REST API 要求タイムアウト (秒)"
@@ -1793,8 +1793,8 @@ msgstr "ネットワークタイプ値が ML2 プラグインに必要です"
 
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr ""
-"エージェントによってサポートされるネットワークタイプ (gre および vxlan、また"
-"はそのいずれか)。"
+"エージェントによってサポートされるネットワークタイプ (gre と vxlan のいずれ"
+"か、または両方)。"
 
 msgid "Neutron Service Type Management"
 msgstr "Neutron サービスタイプ管理"
@@ -1814,7 +1814,7 @@ msgstr ""
 "外部ネットワーク %s に関連付けられる適格な L3 エージェントが見つかりません"
 
 msgid "No fixed IP"
-msgstr "固定 IP がありません"
+msgstr "Fixed IP がありません"
 
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
@@ -1873,7 +1873,8 @@ msgstr "ソケットを構成するためのバックログ要求の数"
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
-msgstr "テナント当たりに許可される浮動 IP 数。負の値は無制限を意味します。 "
+msgstr ""
+"テナント当たりに許可される Floating IP 数。負の値は無制限を意味します。 "
 
 msgid "Number of login retries to NVSD controller"
 msgstr "NVSD コントローラーへのログイン再試行回数"
@@ -1899,8 +1900,8 @@ msgid ""
 "Number of seconds between consecutive Vyatta vRouter queries when waiting "
 "for router instance boot."
 msgstr ""
-"ルーター・インスタンス・ブートを待機している場合の連続する Vyatta vRouter照会"
-"間の秒数。"
+"ルーターインスタンスブートを待機している場合の連続する Vyatta vRouter照会間の"
+"秒数。"
 
 msgid ""
 "Number of seconds between sending events to nova if there are any events to "
@@ -1942,7 +1943,7 @@ msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "テナント当たりに許可されるサブネット数。負の値は無制限を意味します。"
 
 msgid "Number of threads to use during sync process."
-msgstr "同期プロセスの間に使うスレッド数"
+msgstr "同期処理の実行時に使うスレッド数"
 
 msgid "OS Type of the switch"
 msgstr "スイッチの OS タイプ"
@@ -1974,10 +1975,10 @@ msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "テナントネットワークとして割り振る network_types の番号付きリスト。"
 
 msgid "Out of band Security Zone id"
-msgstr "アウト・オブ・バンド・セキュリティーゾーン id"
+msgstr "アウトオブバンドセキュリティーゾーン id"
 
 msgid "Override the default dnsmasq settings with this file"
-msgstr "デフォルトの dnsmasq 設定をこのファイルでオーバーライドします"
+msgstr "デフォルトの dnsmasq 設定をこのファイルで上書きします"
 
 msgid "Owner type of the device: network/compute"
 msgstr "デバイスの所有者タイプ: network/compute"
@@ -2000,16 +2001,16 @@ msgstr ""
 "での認証プラグインが推奨されています。"
 
 msgid "Path to PID file for this process"
-msgstr "このプロセス用の PID ファイルのパス"
+msgstr "このプロセスの PID ファイルのパス"
 
 msgid "Path to the router directory"
 msgstr "ルーターディレクトリーのパス"
 
 msgid "Peer patch port in integration bridge for tunnel bridge."
-msgstr "トンネル・ブリッジの統合ブリッジ内のピア・パッチポート。"
+msgstr "トンネルブリッジの統合ブリッジ内のピアパッチポート。"
 
 msgid "Peer patch port in tunnel bridge for integration bridge."
-msgstr "統合ブリッジのトンネルブリッジ内のピア・パッチポート。"
+msgstr "統合ブリッジのトンネルブリッジ内のピアパッチポート。"
 
 msgid "Per-tenant subnet pool prefix quota exceeded"
 msgstr ""
@@ -2029,7 +2030,7 @@ msgstr "ポリシー構成 policy.json が見つかりませんでした"
 
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
-msgstr "ポート %(id)s に固定 IP %(address)s がありません"
+msgstr "ポート %(id)s に Fixed IP %(address)s がありません"
 
 #, python-format
 msgid ""
@@ -2050,8 +2051,8 @@ msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
-"ポート %(port_id)s は、浮動 IP %(floatingip_id)s とは異なるテナントに関連付け"
-"られているため、バインドできません。"
+"ポート %(port_id)s は、Floating IP %(floatingip_id)s とは異なるテナントに関連"
+"付けられているため、バインドできません。"
 
 msgid ""
 "Port Security must be enabled in order to have allowed address pairs on a "
@@ -2061,15 +2062,15 @@ msgstr ""
 "る必要があります。"
 
 msgid "Port does not have port security binding."
-msgstr "ポートにポートセキュリティー・バインディングがありません。"
+msgstr "ポートにポートセキュリティーバインディングがありません。"
 
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
 "address until security group is removed"
 msgstr ""
 "ポートにセキュリティーグループが関連付けられています。セキュリティーグループ"
-"を削除するまで、ポート・セキュリティーおよび IP アドレスを使用不可にすること"
-"はできません"
+"を削除するまで、ポートセキュリティーおよび IP アドレスを使用不可にすることは"
+"できません"
 
 msgid ""
 "Port security must be enabled and port must have an IP address in order to "
@@ -2127,7 +2128,7 @@ msgstr ""
 "遅延時間 (秒) の範囲。(無効にするには 0 に設定)"
 
 msgid "Rbridge id of provider edge router(s)"
-msgstr "プロバイダー・エッジ・ルーターのブリッジ ID。"
+msgstr "プロバイダーエッジルーターのブリッジ ID。"
 
 msgid "Region name for connecting to CRD Service in admin context."
 msgstr "管理コンテキストでの CRD サービスへの接続用領域名。"
@@ -2169,7 +2170,7 @@ msgstr ""
 
 #, python-format
 msgid "Request sent to server is invalid: %(reason)s"
-msgstr "サーバーに送信された要求が無効です: %(reason)s"
+msgstr "サーバーに送信されたリクエストが無効です: %(reason)s"
 
 #, python-format
 msgid ""
@@ -2245,7 +2246,7 @@ msgid ""
 "deleted, as it is required by one or more floating IPs."
 msgstr ""
 "ルーター %(router_id)s 上のサブネット %(subnet_id)s のルーターインターフェー"
-"スは、1 つ以上の浮動 IP で必要なため削除できません。"
+"スは、1 つ以上の Floating IP で必要なため削除できません。"
 
 #, python-format
 msgid ""
@@ -2345,8 +2346,8 @@ msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
-"サーバー・ソケットごとに TCP_KEEPIDLE の値を秒単位で設定してください。OS X で"
-"はサポートされていません。"
+"サーバーソケットごとに TCP_KEEPIDLE の値を秒単位で設定してください。OS X では"
+"サポートされていません。"
 
 msgid "Shared resource pool id"
 msgstr "共有リソースプール id"
@@ -2370,7 +2371,7 @@ msgid ""
 "polling_interval period for at most metrics_max_retries or until it "
 "succeedes."
 msgstr ""
-"Hyper-V のポート・メトリックの収集を有効にするための最大再試行回数を指定しま"
+"Hyper-V のポートメトリックの収集を有効にするための最大再試行回数を指定しま"
 "す。エージェントでは、polling_interval 期間ごとに 1 回、最大で "
 "metrics_max_retries 回または成功するまで、機能の有効化が試行されます。"
 
@@ -2438,10 +2439,10 @@ msgid "TLD '%s' must not be all numeric"
 msgstr "TLD「%s」をすべて数値にすることはできません"
 
 msgid "TOS for vxlan interface protocol packets."
-msgstr "vxlan インターフェース・プロトコル・パケットの TOS。"
+msgstr "vxlan インターフェースプロトコルパケットの TOS。"
 
 msgid "TTL for vxlan interface protocol packets."
-msgstr "vxlan インターフェース・プロトコル・パケットの TTL。"
+msgstr "vxlan インターフェースプロトコルパケットの TTL。"
 
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
@@ -2462,8 +2463,8 @@ msgid ""
 "The 'gateway_external_network_id' option must be configured for this agent "
 "as Neutron has more than one external network."
 msgstr ""
-"Neutron には複数の外部ネットワークがあるため、このエージェントに対して "
-"'gateway_external_network_id' オプションを構成する必要があります。"
+"Neutron に複数の外部ネットワークがあるため、このエージェントに対して "
+"'gateway_external_network_id' オプションを設定する必要があります。"
 
 msgid "The API paste config file to use"
 msgstr "使用する API 貼り付け構成ファイル"
@@ -2481,7 +2482,7 @@ msgid "The SSH username to use"
 msgstr "使用する SSH ユーザー名"
 
 msgid "The UDP port to use for VXLAN tunnels."
-msgstr "VXLAN トンネルに使用する UDP ポート。"
+msgstr "VXLAN トンネルで使用する UDP ポート。"
 
 msgid "The address of the host to SSH to"
 msgstr "SSH の実行先となるホストのアドレス"
@@ -2517,10 +2518,10 @@ msgid "The core plugin Neutron will use"
 msgstr "Neutron が使用するコアプラグイン"
 
 msgid "The driver used to manage the DHCP server."
-msgstr "DHCP サーバーを管理するために使用されるドライバー。"
+msgstr "DHCP サーバーの管理に使用されるドライバー。"
 
 msgid "The driver used to manage the virtual interface."
-msgstr "仮想インターフェースを管理するために使用されるドライバー。"
+msgstr "仮想インターフェースの管理に使用されるドライバー。"
 
 #, python-format
 msgid ""
@@ -3018,7 +3019,7 @@ msgid ""
 "improve tunnel scalability."
 msgstr ""
 "リモート MAC および IP を認識してトンネルのスケーラビリティーを向上させるに"
-"は、ML2 l2population メカニズム・ドライバーを使用してください。"
+"は、ML2 l2population メカニズムドライバーを使用してください。"
 
 msgid "Use broadcast in DHCP replies"
 msgstr "DHCPリプライでブロードキャストを使う"
@@ -3041,7 +3042,7 @@ msgid ""
 "physical bridges."
 msgstr ""
 "統合ブリッジを物理ブリッジに相互接続するには、パッチポートではなく veth を使"
-"用してください。"
+"用します。"
 
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr "メタデータプロキシーを初期化後に実行しているユーザー (uid または名前)"
@@ -3155,7 +3156,7 @@ msgid "You must provide a revision or relative delta"
 msgstr "改訂または相対デルタを指定する必要があります"
 
 msgid "admin_state_up=False routers are not supported."
-msgstr "admin_state_up=False ルーターはサポートされていません。"
+msgstr "admin_state_up=False のルーターはサポートされていません。"
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr "allocation_pools は特定のサブネット要求にのみ許可されます。"
@@ -3179,7 +3180,7 @@ msgstr ""
 "dhcp_agents_per_network は 1 以上でなければなりません。'%s' は無効です。"
 
 msgid "eswitch daemon end point"
-msgstr "eswitch デーモン・エンドポイント"
+msgstr "eswitch デーモンエンドポイント"
 
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "fixed_ip_address は、port_id なしでは指定できません"
@@ -3271,10 +3272,10 @@ msgstr "VLAN プロバイダーネットワークの physical_network '%s' が�
 
 #, python-format
 msgid "physical_network '%s' unknown for flat provider network"
-msgstr "フラット・プロバイダーネットワークの physical_network '%s' が不明です"
+msgstr "flat プロバイダーネットワークの physical_network '%s' が不明です"
 
 msgid "physical_network required for flat provider network"
-msgstr "フラット・プロバイダーネットワークには physical_network が必要です"
+msgstr "flat プロバイダーネットワークには physical_network が必要です"
 
 #, python-format
 msgid "provider:physical_network specified for %s network"
