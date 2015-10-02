@@ -102,6 +102,13 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertFalse(
             ip_lib.device_exists(attr.name, namespace=attr.namespace))
 
+    def test_ipdevice_exists(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        self.assertTrue(device.exists())
+        device.link.delete()
+        self.assertFalse(device.exists())
+
     def test_vxlan_exists(self):
         attr = self.generate_device_details()
         ip = ip_lib.IPWrapper(namespace=attr.namespace)

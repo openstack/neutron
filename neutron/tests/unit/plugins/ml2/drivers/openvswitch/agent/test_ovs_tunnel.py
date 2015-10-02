@@ -142,9 +142,6 @@ class TunnelTest(object):
         self.mock_tun_bridge.add_port.return_value = self.INT_OFPORT
         self.mock_tun_bridge.add_patch_port.return_value = self.INT_OFPORT
 
-        self.device_exists = mock.patch.object(ip_lib, 'device_exists').start()
-        self.device_exists.return_value = True
-
         self.ipdevice = mock.patch.object(ip_lib, 'IPDevice').start()
 
         self.ipwrapper = mock.patch.object(ip_lib, 'IPWrapper').start()
@@ -234,8 +231,6 @@ class TunnelTest(object):
             mock.call.setup_default_table(self.INT_OFPORT, arp_responder),
         ]
 
-        self.device_exists_expected = []
-
         self.ipdevice_expected = []
         self.ipwrapper_expected = [mock.call()]
 
@@ -280,7 +275,6 @@ class TunnelTest(object):
                                self.mock_map_tun_bridge_expected)
         self._verify_mock_call(self.mock_tun_bridge,
                                self.mock_tun_bridge_expected)
-        self._verify_mock_call(self.device_exists, self.device_exists_expected)
         self._verify_mock_call(self.ipdevice, self.ipdevice_expected)
         self._verify_mock_call(self.ipwrapper, self.ipwrapper_expected)
         self._verify_mock_call(self.get_bridges, self.get_bridges_expected)
@@ -646,12 +640,10 @@ class TunnelTestUseVethInterco(TunnelTest):
             mock.call.setup_default_table(self.INT_OFPORT, arp_responder),
         ]
 
-        self.device_exists_expected = [
-            mock.call('int-%s' % self.MAP_TUN_BRIDGE),
-        ]
-
         self.ipdevice_expected = [
             mock.call('int-%s' % self.MAP_TUN_BRIDGE),
+            mock.call().exists(),
+            nonzero(mock.call().exists()),
             mock.call().link.delete()
         ]
         self.ipwrapper_expected = [

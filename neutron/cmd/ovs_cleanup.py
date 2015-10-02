@@ -67,8 +67,8 @@ def delete_neutron_ports(ports):
     Non-internal OVS ports need to be removed manually.
     """
     for port in ports:
-        if ip_lib.device_exists(port):
-            device = ip_lib.IPDevice(port)
+        device = ip_lib.IPDevice(port)
+        if device.exists():
             device.link.delete()
             LOG.info(_LI("Deleting port: %s"), port)
 

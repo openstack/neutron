@@ -232,8 +232,8 @@ class FipNamespace(namespaces.Namespace):
         # scan system for any existing fip ports
         ri.dist_fip_count = 0
         rtr_2_fip_interface = self.get_rtr_ext_device_name(ri.router_id)
-        if ip_lib.device_exists(rtr_2_fip_interface, namespace=ri.ns_name):
-            device = ip_lib.IPDevice(rtr_2_fip_interface, namespace=ri.ns_name)
+        device = ip_lib.IPDevice(rtr_2_fip_interface, namespace=ri.ns_name)
+        if device.exists():
             existing_cidrs = [addr['cidr'] for addr in device.addr.list()]
             fip_cidrs = [c for c in existing_cidrs if
                          common_utils.is_cidr_host(c)]

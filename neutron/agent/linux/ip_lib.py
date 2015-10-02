@@ -91,6 +91,9 @@ class SubProcessBase(object):
     def set_log_fail_as_error(self, fail_with_error):
         self.log_fail_as_error = fail_with_error
 
+    def get_log_fail_as_error(self):
+        return self.log_fail_as_error
+
 
 class IPWrapper(SubProcessBase):
     def __init__(self, namespace=None):
@@ -226,6 +229,22 @@ class IPDevice(SubProcessBase):
 
     def __str__(self):
         return self.name
+
+    def exists(self):
+        """Return True if the device exists in the namespace."""
+        # we must save and restore this before returning
+        orig_log_fail_as_error = self.get_log_fail_as_error()
+        self.set_log_fail_as_error(False)
+        try:
+            address = self.link.address
+        except RuntimeError:
+            exists = False
+        else:
+            exists = bool(address)
+        finally:
+            self.set_log_fail_as_error(orig_log_fail_as_error)
+
+        return exists
 
     def delete_addr_and_conntrack_state(self, cidr):
         """Delete an address along with its conntrack state
@@ -837,13 +856,7 @@ def vxlan_in_use(segmentation_id, namespace=None):
 
 def device_exists(device_name, namespace=None):
     """Return True if the device exists in the namespace."""
-    try:
-        dev = IPDevice(device_name, namespace=namespace)
-        dev.set_log_fail_as_error(False)
-        address = dev.link.address
-    except RuntimeError:
-        return False
-    return bool(address)
+    return IPDevice(device_name, namespace=namespace).exists()
 
 
 def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
