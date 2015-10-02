@@ -131,3 +131,7 @@ def get_random_string(n=10):
 
 def get_random_boolean():
     return bool(random.getrandbits(1))
+
+
+def get_random_integer(range_begin=0, range_end=1000):
+    return random.randint(range_begin, range_end)
