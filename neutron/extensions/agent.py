@@ -108,6 +108,10 @@ class Agent(extensions.ExtensionDescriptor):
 
         return [ex]
 
+    def update_attributes_map(self, attributes):
+        super(Agent, self).update_attributes_map(
+            attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
+
     def get_extended_resources(self, version):
         if version == "2.0":
             return RESOURCE_ATTRIBUTE_MAP

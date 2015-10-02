@@ -70,6 +70,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
+        agent_config.register_availability_zone_opts_helper(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.register_opts(external_process.OPTS)
         self.conf.set_override('router_id', 'fake_id')

@@ -548,6 +548,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
         self.agent_state = {
             'binary': 'neutron-dhcp-agent',
             'host': host,
+            'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.DHCP_AGENT,
             'configurations': {
                 'dhcp_driver': self.conf.dhcp_driver,
