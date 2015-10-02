@@ -160,9 +160,40 @@ Commit messages
 
 Document common pitfalls as well as good practices done when writing commit messages.
 For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages>`_.
+This is the TL;DR version with the important points for committing to Neutron.
+
 
 * One liners are bad, unless the change is trivial.
 * Remember to use DocImpact, APIImpact, UpgradeImpact appropriately.
+* Make sure the commit message doesn't have any spelling/grammar errors. This
+  is the first thing reviewers read and they can be distracting enough to
+  invite -1's.
+* Describe what the change accomplishes. If it's a bug fix, explain how this
+  code will fix the problem. If it's part of a feature implementation, explain
+  what component of the feature the patch implements. Do not just describe the
+  bug, that's what launchpad is for.
+* Use the "Closes-Bug: #BUG-NUMBER" tag if the patch addresses a bug. Submitting
+  a bugfix without a launchpad bug reference is unacceptable, even if it's
+  trivial. Launchpad is how bugs are tracked so fixes without a launchpad bug are
+  a nightmare when users report the bug from an older version and the Neutron team
+  can't tell if/why/how it's been fixed. Launchpad is also how backports are
+  identified and tracked so patches without a bug report cannot be picked to stable
+  branches.
+* Use the "Implements: blueprint NAME-OF-BLUEPRINT" or "Partially-Implements:
+  blueprint NAME-OF-BLUEPRINT" for features so reviewers can determine if the
+  code matches the spec that was agreed upon. This also updates the blueprint
+  on launchpad so it's easy to see all patches that are related to a feature.
+* If it's not immediately obvious, explain what the previous code was doing
+  that was incorrect. (e.g. code assumed it would never get 'None' from
+  a function call)
+* Be specific in your commit message about what the patch does and why it does
+  this. For example, "Fixes incorrect logic in security groups" is not helpful
+  because the code diff already shows that you are modifying security groups.
+  The message should be specific enough that a reviewer looking at the code can
+  tell if the patch does what the commit says in the most appropriate manner.
+  If the reviewer has to guess why you did something, lots of your time will be
+  wasted explaining why certain changes were made.
+
 
 Dealing with Zuul
 ~~~~~~~~~~~~~~~~~
