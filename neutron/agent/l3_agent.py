@@ -40,6 +40,7 @@ def register_opts(conf):
     config.register_agent_state_opts_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
+    config.register_availability_zone_opts_helper(conf)
 
 
 def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):

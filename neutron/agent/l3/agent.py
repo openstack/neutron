@@ -615,6 +615,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
         self.agent_state = {
             'binary': 'neutron-l3-agent',
             'host': host,
+            'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.L3_AGENT,
             'configurations': {
                 'agent_mode': self.conf.agent_mode,

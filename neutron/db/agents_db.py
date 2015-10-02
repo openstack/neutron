@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
+import six
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
@@ -29,6 +30,7 @@ from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
+from neutron.extensions import availability_zone as az_ext
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 
@@ -81,6 +83,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     topic = sa.Column(sa.String(255), nullable=False)
     # TOPIC.host is a target topic
     host = sa.Column(sa.String(255), nullable=False)
+    availability_zone = sa.Column(sa.String(255))
     admin_state_up = sa.Column(sa.Boolean, default=True,
                                server_default=sql.true(), nullable=False)
     # the time when first report came from agents
@@ -101,7 +104,60 @@ class Agent(model_base.BASEV2, models_v2.HasId):
         return not AgentDbMixin.is_agent_down(self.heartbeat_timestamp)
 
 
-class AgentDbMixin(ext_agent.AgentPluginBase):
+class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
+    """Mixin class to add availability_zone extension to AgentDbMixin."""
+
+    def _list_availability_zones(self, context, filters=None):
+        result = {}
+        query = self._get_collection_query(context, Agent, filters=filters)
+        for agent in query.group_by(Agent.admin_state_up,
+                                    Agent.availability_zone,
+                                    Agent.agent_type):
+            if not agent.availability_zone:
+                continue
+            if agent.agent_type == constants.AGENT_TYPE_DHCP:
+                resource = 'network'
+            elif agent.agent_type == constants.AGENT_TYPE_L3:
+                resource = 'router'
+            else:
+                continue
+            key = (agent.availability_zone, resource)
+            result[key] = agent.admin_state_up or result.get(key, False)
+        return result
+
+    def get_availability_zones(self, context, filters=None, fields=None,
+                               sorts=None, limit=None, marker=None,
+                               page_reverse=False):
+        """Return a list of availability zones."""
+        # NOTE(hichihara): 'tenant_id' is dummy for policy check.
+        # it is not visible via API.
+        return [{'state': 'available' if v else 'unavailable',
+                 'name': k[0], 'resource': k[1],
+                 'tenant_id': context.tenant_id}
+                for k, v in six.iteritems(self._list_availability_zones(
+                                           context, filters))]
+
+    def validate_availability_zones(self, context, resource_type,
+                                    availability_zones):
+        """Verify that the availability zones exist."""
+        if not availability_zones:
+            return
+        if resource_type == 'network':
+            agent_type = constants.AGENT_TYPE_DHCP
+        elif resource_type == 'router':
+            agent_type = constants.AGENT_TYPE_L3
+        else:
+            return
+        query = context.session.query(Agent.availability_zone).filter_by(
+                    agent_type=agent_type).group_by(Agent.availability_zone)
+        query = query.filter(Agent.availability_zone.in_(availability_zones))
+        azs = [item[0] for item in query]
+        diff = set(availability_zones) - set(azs)
+        if diff:
+            raise az_ext.AvailabilityZoneNotFound(availability_zone=diff.pop())
+
+
+class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     """Mixin class to add agent extension to db_base_plugin_v2."""
 
     def _get_agent(self, context, id):
@@ -162,6 +218,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         res['alive'] = not AgentDbMixin.is_agent_down(
             res['heartbeat_timestamp'])
         res['configurations'] = self.get_configuration_dict(agent)
+        res['availability_zone'] = agent['availability_zone']
         return self._fields(res, fields)
 
     def delete_agent(self, context, id):
@@ -222,7 +279,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         with context.session.begin(subtransactions=True):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
             res = dict((k, agent_state[k]) for k in res_keys)
-
+            if 'availability_zone' in agent_state:
+                res['availability_zone'] = agent_state['availability_zone']
             configurations_dict = agent_state.get('configurations', {})
             res['configurations'] = jsonutils.dumps(configurations_dict)
             res['load'] = self._get_agent_load(agent_state)

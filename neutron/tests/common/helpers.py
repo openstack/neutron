@@ -25,6 +25,7 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 
 HOST = 'localhost'
+DEFAULT_AZ = 'nova'
 
 
 def find_file(filename, path):
@@ -47,12 +48,14 @@ class FakePlugin(common_db_mixin.CommonDbMixin,
 
 
 def _get_l3_agent_dict(host, agent_mode, internal_only=True,
-                       ext_net_id='', ext_bridge='', router_id=None):
+                       ext_net_id='', ext_bridge='', router_id=None,
+                       az=DEFAULT_AZ):
     return {
         'agent_type': constants.AGENT_TYPE_L3,
         'binary': 'neutron-l3-agent',
         'host': host,
         'topic': topics.L3_AGENT,
+        'availability_zone': az,
         'configurations': {'agent_mode': agent_mode,
                            'handle_internal_only_routers': internal_only,
                            'external_network_bridge': ext_bridge,
@@ -71,18 +74,19 @@ def _register_agent(agent):
 
 def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
                       internal_only=True, ext_net_id='', ext_bridge='',
-                      router_id=None):
+                      router_id=None, az=DEFAULT_AZ):
     agent = _get_l3_agent_dict(host, agent_mode, internal_only, ext_net_id,
-                               ext_bridge, router_id)
+                               ext_bridge, router_id, az)
     return _register_agent(agent)
 
 
-def _get_dhcp_agent_dict(host, networks=0):
+def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ):
     agent = {
         'binary': 'neutron-dhcp-agent',
         'host': host,
         'topic': topics.DHCP_AGENT,
         'agent_type': constants.AGENT_TYPE_DHCP,
+        'availability_zone': az,
         'configurations': {'dhcp_driver': 'dhcp_driver',
                            'use_namespaces': True,
                            'networks': networks}}
@@ -90,9 +94,9 @@ def _get_dhcp_agent_dict(host, networks=0):
 
 
 def register_dhcp_agent(host=HOST, networks=0, admin_state_up=True,
-                        alive=True):
+                        alive=True, az=DEFAULT_AZ):
     agent = _register_agent(
-        _get_dhcp_agent_dict(host, networks))
+        _get_dhcp_agent_dict(host, networks, az=az))
 
     if not admin_state_up:
         set_agent_admin_state(agent['id'])
