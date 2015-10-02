@@ -190,7 +190,7 @@ def upgrade():
     op.create_table(
         'cisco_ml2_apic_contracts',
         sa.Column('tenant_id', sa.String(length=255)),
-        sa.Column('router_id', sa.String(length=64), nullable=False),
+        sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id']),
         sa.PrimaryKeyConstraint('router_id'))
 
