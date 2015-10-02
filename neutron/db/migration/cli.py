@@ -13,17 +13,18 @@
 #    under the License.
 
 import os
-import six
 
 from alembic import command as alembic_command
 from alembic import config as alembic_config
 from alembic import environment
 from alembic import script as alembic_script
 from alembic import util as alembic_util
+import debtcollector
 from oslo_config import cfg
 from oslo_utils import fileutils
 from oslo_utils import importutils
 import pkg_resources
+import six
 
 from neutron.common import utils
 from neutron.db import migration
@@ -47,6 +48,10 @@ migration_entrypoints = {
     entrypoint.name: entrypoint
     for entrypoint in pkg_resources.iter_entry_points(MIGRATION_ENTRYPOINTS)
 }
+
+
+BRANCHLESS_WARNING = 'Branchless migration chains are deprecated as of Mitaka.'
+
 
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 
@@ -323,7 +328,11 @@ def validate_head_file(config):
     '''Check that HEAD file contains the latest head for the branch.'''
     if _use_separate_migration_branches(config):
         return
+    _validate_head_file(config)
 
+
+@debtcollector.removals.remove(message=BRANCHLESS_WARNING)
+def _validate_head_file(config):
     script = alembic_script.ScriptDirectory.from_config(config)
     expected_head = script.get_heads()
     head_path = _get_head_file_path(config)
@@ -341,19 +350,23 @@ def validate_head_file(config):
 
 def update_head_file(config):
     '''Update HEAD file with the latest branch head.'''
-    head_file = _get_head_file_path(config)
-
     if _use_separate_migration_branches(config):
         # Kill any HEAD(S) files because we don't rely on them for branch-aware
         # chains anymore
-        files_to_remove = [head_file, _get_heads_file_path(config)]
+        files_to_remove = [
+            _get_head_file_path(config), _get_heads_file_path(config)
+        ]
         for file_ in files_to_remove:
             fileutils.delete_if_exists(file_)
         return
+    _update_head_file(config)
 
+
+@debtcollector.removals.remove(message=BRANCHLESS_WARNING)
+def _update_head_file(config):
     script = alembic_script.ScriptDirectory.from_config(config)
     head = script.get_heads()
-    with open(head_file, 'w+') as f:
+    with open(_get_head_file_path(config), 'w+') as f:
         f.write('\n'.join(head))
 
 
