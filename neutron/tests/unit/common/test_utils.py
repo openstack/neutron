@@ -13,6 +13,7 @@
 #    under the License.
 
 import errno
+import re
 
 import eventlet
 import mock
@@ -706,3 +707,12 @@ class TestRoundVal(base.BaseTestCase):
                                 (1, 1.49),
                                 (2, 1.5)):
             self.assertEqual(expected, utils.round_val(value))
+
+
+class TestGetRandomString(base.BaseTestCase):
+    def test_get_random_string(self):
+        length = 127
+        random_string = utils.get_random_string(length)
+        self.assertEqual(length, len(random_string))
+        regex = re.compile('^[0-9a-fA-F]+$')
+        self.assertIsNotNone(regex.match(random_string))
