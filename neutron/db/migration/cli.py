@@ -25,12 +25,13 @@ from oslo_utils import importutils
 import pkg_resources
 
 from neutron.common import utils
+from neutron.db import migration
 
 
 # TODO(ihrachyshka): maintain separate HEAD files per branch
 HEAD_FILENAME = 'HEAD'
 HEADS_FILENAME = 'HEADS'
-CURRENT_RELEASE = "liberty"
+CURRENT_RELEASE = migration.LIBERTY
 
 EXPAND_BRANCH = 'expand'
 CONTRACT_BRANCH = 'contract'
@@ -126,8 +127,20 @@ def add_alembic_subparser(sub, cmd):
     return sub.add_parser(cmd, help=getattr(alembic_command, cmd).__doc__)
 
 
+def _find_milestone_revisions(config, milestone, branch=None):
+    """Return the revision(s) for a given milestone."""
+    script = alembic_script.ScriptDirectory.from_config(config)
+    return [
+        (m.revision, label)
+        for m in script.walk_revisions(base='base', head='heads')
+        for label in (m.branch_labels or [None])
+        if milestone in getattr(m.module, 'neutron_milestone', []) and
+        (branch is None or branch in m.branch_labels)
+    ]
+
+
 def do_upgrade(config, cmd):
-    desc = None
+    branch = None
 
     if ((CONF.command.revision or CONF.command.delta) and
         (CONF.command.expand or CONF.command.contract)):
@@ -135,11 +148,11 @@ def do_upgrade(config, cmd):
             'Phase upgrade options do not accept revision specification'))
 
     if CONF.command.expand:
-        desc = EXPAND_BRANCH
+        branch = EXPAND_BRANCH
         revision = _get_branch_head(EXPAND_BRANCH)
 
     elif CONF.command.contract:
-        desc = CONTRACT_BRANCH
+        branch = CONTRACT_BRANCH
         revision = _get_branch_head(CONTRACT_BRANCH)
 
     elif not CONF.command.revision and not CONF.command.delta:
@@ -165,10 +178,16 @@ def do_upgrade(config, cmd):
         if revision == 'head':
             revision = 'heads'
 
-    if not CONF.command.sql:
-        run_sanity_checks(config, revision)
-    do_alembic_command(config, cmd, revision=revision,
-                       desc=desc, sql=CONF.command.sql)
+    if revision in migration.NEUTRON_MILESTONES:
+        revisions = _find_milestone_revisions(config, revision, branch)
+    else:
+        revisions = [(revision, branch)]
+
+    for revision, branch in revisions:
+        if not CONF.command.sql:
+            run_sanity_checks(config, revision)
+        do_alembic_command(config, cmd, revision=revision,
+                           desc=branch, sql=CONF.command.sql)
 
 
 def no_downgrade(config, cmd):
