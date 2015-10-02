@@ -18,7 +18,6 @@ from pecan import hooks
 
 from neutron.common import exceptions
 from neutron import manager
-from neutron.pecan_wsgi.hooks import attribute_population
 from neutron import quota
 
 
@@ -45,8 +44,6 @@ class QuotaEnforcementHook(hooks.PecanHook):
                 count = quota.QUOTAS.count(neutron_context,
                                            resource,
                                            plugin,
-                                           attribute_population._plural(
-                                               resource),
                                            tenant_id)
                 delta = deltas.get(tenant_id, 0) + 1
                 kwargs = {resource: count + delta}
