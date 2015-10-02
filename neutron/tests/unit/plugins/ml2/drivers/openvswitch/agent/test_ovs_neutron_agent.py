@@ -67,50 +67,37 @@ class MockFixedIntervalLoopingCall(object):
         self.f()
 
 
-class CreateAgentConfigMap(ovs_test_base.OVSAgentConfigTestBase):
+class ValidateTunnelTypes(ovs_test_base.OVSAgentConfigTestBase):
 
-    def test_create_agent_config_map_succeeds(self):
-        self.assertTrue(self.mod_agent.create_agent_config_map(cfg.CONF))
+    def test_validate_tunnel_types_succeeds(self):
+        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
+        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
+                              group='AGENT')
+        # ValueError will not raise
+        self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
+                                             cfg.CONF.OVS.local_ip)
 
-    def test_create_agent_config_map_fails_for_invalid_tunnel_config(self):
+    def test_validate_tunnel_types_fails_for_invalid_tunnel_config(self):
         # An ip address is required for tunneling but there is no default,
         # verify this for both gre and vxlan tunnels.
+        cfg.CONF.set_override('local_ip', None, group='OVS')
         cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
                               group='AGENT')
         with testtools.ExpectedException(ValueError):
-            self.mod_agent.create_agent_config_map(cfg.CONF)
+            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
+                                                 cfg.CONF.OVS.local_ip)
         cfg.CONF.set_override('tunnel_types', [p_const.TYPE_VXLAN],
                               group='AGENT')
         with testtools.ExpectedException(ValueError):
-            self.mod_agent.create_agent_config_map(cfg.CONF)
+            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
+                                                 cfg.CONF.OVS.local_ip)
 
-    def test_create_agent_config_map_fails_no_local_ip(self):
-        # An ip address is required for tunneling but there is no default
-        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_VXLAN],
-                              group='AGENT')
-        with testtools.ExpectedException(ValueError):
-            self.mod_agent.create_agent_config_map(cfg.CONF)
-
-    def test_create_agent_config_map_fails_for_invalid_tunnel_type(self):
+    def test_validate_tunnel_types_fails_for_invalid_tunnel_type(self):
+        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfg.CONF.set_override('tunnel_types', ['foobar'], group='AGENT')
         with testtools.ExpectedException(ValueError):
-            self.mod_agent.create_agent_config_map(cfg.CONF)
-
-    def test_create_agent_config_map_multiple_tunnel_types(self):
-        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
-        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE,
-                              p_const.TYPE_VXLAN], group='AGENT')
-        cfgmap = self.mod_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['tunnel_types'],
-                         [p_const.TYPE_GRE, p_const.TYPE_VXLAN])
-
-    def test_create_agent_config_map_enable_distributed_routing(self):
-        self.addCleanup(cfg.CONF.reset)
-        # Verify setting only enable_tunneling will default tunnel_type to GRE
-        cfg.CONF.set_override('enable_distributed_routing', True,
-                              group='AGENT')
-        cfgmap = self.mod_agent.create_agent_config_map(cfg.CONF)
-        self.assertTrue(cfgmap['enable_distributed_routing'])
+            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
+                                                 cfg.CONF.OVS.local_ip)
 
 
 class TestOvsNeutronAgent(object):
@@ -126,7 +113,6 @@ class TestOvsNeutronAgent(object):
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
-        kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
         mock.patch(
             'neutron.agent.common.ovs_lib.OVSBridge.get_ports_attributes',
             return_value=[]).start()
@@ -149,7 +135,7 @@ class TestOvsNeutronAgent(object):
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        **kwargs)
+                                                        cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
@@ -210,9 +196,8 @@ class TestOvsNeutronAgent(object):
             cfg.CONF.set_override('datapath_type',
                                   expected,
                                   group='OVS')
-            kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                **kwargs)
+                                                        cfg.CONF)
             self.assertEqual(expected, self.agent.int_br.datapath_type)
 
     def test_agent_type_ovs(self):
@@ -241,9 +226,8 @@ class TestOvsNeutronAgent(object):
             cfg.CONF.set_override('agent_type',
                                   expected,
                                   group='AGENT')
-            kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                **kwargs)
+                                                        cfg.CONF)
             self.assertEqual(expected,
                              self.agent.agent_state['agent_type'])
 
@@ -1679,7 +1663,6 @@ class AncillaryBridgesTest(object):
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
-        self.kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
                    return_value={}).start()
@@ -1713,7 +1696,7 @@ class AncillaryBridgesTest(object):
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        **self.kwargs)
+                                                        cfg.CONF)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
             if ancillary:
                 bridges = [br.br_name for br in self.agent.ancillary_brs]
@@ -1750,7 +1733,7 @@ class AncillaryBridgesTest(object):
                            'get_vif_port_set',
                            return_value=vif_port_set):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        **self.kwargs)
+                                                        cfg.CONF)
             return self.agent.scan_ancillary_ports(registered_ports, sync)
 
     def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
@@ -1798,7 +1781,6 @@ class TestOvsDvrNeutronAgent(object):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
 
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
@@ -1823,7 +1805,7 @@ class TestOvsDvrNeutronAgent(object):
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        **kwargs)
+                                                        cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
