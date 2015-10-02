@@ -236,15 +236,11 @@ class IPDevice(SubProcessBase):
         orig_log_fail_as_error = self.get_log_fail_as_error()
         self.set_log_fail_as_error(False)
         try:
-            address = self.link.address
+            return bool(self.link.address)
         except RuntimeError:
-            exists = False
-        else:
-            exists = bool(address)
+            return False
         finally:
             self.set_log_fail_as_error(orig_log_fail_as_error)
-
-        return exists
 
     def delete_addr_and_conntrack_state(self, cidr):
         """Delete an address along with its conntrack state
