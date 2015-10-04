@@ -116,7 +116,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             {"id": "fake_network"})
         self.callbacks.get_device_details(mock.Mock(), host='fake_host',
                                           cached_networks=cached_networks)
-        self.assertTrue('fake_port' in cached_networks)
+        self.assertIn('fake_port', cached_networks)
 
     def test_get_device_details_wrong_host(self):
         port = collections.defaultdict(lambda: 'fake')

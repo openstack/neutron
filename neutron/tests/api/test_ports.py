@@ -49,7 +49,7 @@ class PortsTestJSON(sec_base.BaseSecGroupTest):
         self.client.delete_port(port_id)
         body = self.client.list_ports()
         ports_list = body['ports']
-        self.assertFalse(port_id in [n['id'] for n in ports_list])
+        self.assertNotIn(port_id, [n['id'] for n in ports_list])
 
     @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-aaa4-b1442640f51c')

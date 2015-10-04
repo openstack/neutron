@@ -808,7 +808,7 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
 
     def test_get_tunnels(self):
         tunnels = self._test_get_tunnels('20.0.0.1')
-        self.assertTrue('20.0.0.1' in tunnels)
+        self.assertIn('20.0.0.1', tunnels)
 
     def test_get_tunnels_no_ip(self):
         tunnels = self._test_get_tunnels(None)
