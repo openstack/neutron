@@ -668,35 +668,32 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         :returns: the default security group id for given tenant.
         """
-        # Make no more than two attempts
-        for attempts in (1, 2):
-            try:
-                query = self._model_query(context, DefaultSecurityGroup)
-                default_group = query.filter_by(tenant_id=tenant_id).one()
-                return default_group['security_group_id']
-            except exc.NoResultFound as ex:
-                if attempts > 1:
-                    # the second iteration means that attempt to add default
-                    # group failed with duplicate error. Since we're still
-                    # not seeing this group we're most probably inside a
-                    # transaction with REPEATABLE READ isolation level ->
-                    # need to restart the whole transaction
-                    raise db_exc.RetryRequest(ex)
+        try:
+            query = self._model_query(context, DefaultSecurityGroup)
+            default_group = query.filter_by(tenant_id=tenant_id).one()
+            return default_group['security_group_id']
+        except exc.NoResultFound:
+            return self._create_default_security_group(context, tenant_id)
 
-                security_group = {
-                    'security_group':
-                        {'name': 'default',
-                         'tenant_id': tenant_id,
-                         'description': _('Default security group')}
-                }
-                try:
-                    security_group = self.create_security_group(
-                        context, security_group, default_sg=True)
-                    return security_group['id']
-                except db_exc.DBDuplicateEntry as ex:
-                    # default security group was created concurrently
-                    LOG.debug("Duplicate default security group %s was "
-                              "not created", ex.value)
+    def _create_default_security_group(self, context, tenant_id):
+        security_group = {
+            'security_group':
+                {'name': 'default',
+                 'tenant_id': tenant_id,
+                 'description': _('Default security group')}
+        }
+        try:
+            security_group = self.create_security_group(
+                context, security_group, default_sg=True)
+            return security_group['id']
+        except db_exc.DBDuplicateEntry as ex:
+            # default security group was created concurrently
+            LOG.debug("Duplicate default security group %s was "
+                      "not created", ex.value)
+            # raise a retry request to restart the whole process since
+            # we could be in a REPEATABLE READ isolation level and won't
+            # be able to see the SG group in this transaction.
+            raise db_exc.RetryRequest(ex)
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
