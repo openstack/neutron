@@ -653,7 +653,6 @@ class RouterInfo(object):
 
     def process_external(self, agent):
         fip_statuses = {}
-        existing_floating_ips = self.floating_ips
         try:
             with self.iptables_manager.defer_apply():
                 ex_gw_port = self.get_ex_gw_port()
@@ -676,8 +675,23 @@ class RouterInfo(object):
                 LOG.exception(_LE("Failed to process floating IPs."))
                 fip_statuses = self.put_fips_in_error_state()
         finally:
-            agent.update_fip_statuses(
-                self, existing_floating_ips, fip_statuses)
+            self.update_fip_statuses(agent, fip_statuses)
+
+    def update_fip_statuses(self, agent, fip_statuses):
+        # Identify floating IPs which were disabled
+        existing_floating_ips = self.floating_ips
+        self.floating_ips = set(fip_statuses.keys())
+        for fip_id in existing_floating_ips - self.floating_ips:
+            fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
+        # filter out statuses that didn't change
+        fip_statuses = {f: stat for f, stat in fip_statuses.items()
+                        if stat != FLOATINGIP_STATUS_NOCHANGE}
+        if not fip_statuses:
+            return
+        LOG.debug('Sending floating ip statuses: %s', fip_statuses)
+        # Update floating IP status on the neutron server
+        agent.plugin_rpc.update_floatingip_statuses(
+            agent.context, self.router_id, fip_statuses)
 
     @common_utils.exception_logger()
     def process(self, agent):
