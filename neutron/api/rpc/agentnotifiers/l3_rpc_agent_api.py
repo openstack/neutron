@@ -38,13 +38,13 @@ class L3AgentNotifyAPI(object):
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
-    def _notification_host(self, context, method, payload, host):
+    def _notification_host(self, context, method, host, **kwargs):
         """Notify the agent that is hosting the router."""
         LOG.debug('Notify agent at %(host)s the message '
                   '%(method)s', {'host': host,
                                  'method': method})
         cctxt = self.client.prepare(server=host)
-        cctxt.cast(context, method, payload=payload)
+        cctxt.cast(context, method, **kwargs)
 
     def _agent_notification(self, context, method, router_ids, operation,
                             shuffle_agents):
@@ -131,9 +131,8 @@ class L3AgentNotifyAPI(object):
         cctxt.cast(context, method, router_id=router_id)
 
     def agent_updated(self, context, admin_state_up, host):
-        self._notification_host(context, 'agent_updated',
-                                {'admin_state_up': admin_state_up},
-                                host)
+        self._notification_host(context, 'agent_updated', host,
+                                payload={'admin_state_up': admin_state_up})
 
     def router_deleted(self, context, router_id):
         self._notification_fanout(context, 'router_deleted', router_id)
@@ -153,9 +152,13 @@ class L3AgentNotifyAPI(object):
                                      operation, arp_table)
 
     def router_removed_from_agent(self, context, router_id, host):
-        self._notification_host(context, 'router_removed_from_agent',
-                                {'router_id': router_id}, host)
+        self._notification_host(context, 'router_removed_from_agent', host,
+                                payload={'router_id': router_id})
 
     def router_added_to_agent(self, context, router_ids, host):
-        self._notification_host(context, 'router_added_to_agent',
-                                router_ids, host)
+        self._notification_host(context, 'router_added_to_agent', host,
+                                payload=router_ids)
+
+    def routers_updated_on_host(self, context, router_ids, host):
+        self._notification_host(context, 'routers_updated', host,
+                                routers=router_ids)
