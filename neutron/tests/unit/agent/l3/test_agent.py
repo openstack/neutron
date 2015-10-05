@@ -204,7 +204,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
                                                        conf=self.conf)
 
-            self.assertEqual(agent.agent_state['start_flag'], True)
+            self.assertTrue(agent.agent_state['start_flag'])
             use_call_arg = agent.use_call
             agent.after_start()
             report_state.assert_called_once_with(agent.context,

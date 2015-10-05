@@ -133,7 +133,7 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                                     port_security_enabled=True,
                                     allowed_address_pairs=address_pairs)
             port = self.deserialize(self.fmt, res)
-            self.assertEqual(port['port'][psec.PORTSECURITY], True)
+            self.assertTrue(port['port'][psec.PORTSECURITY])
             self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS],
                              address_pairs)
             self._delete('ports', port['port']['id'])

@@ -108,7 +108,7 @@ class CreateAgentConfigMap(ovs_test_base.OVSAgentConfigTestBase):
         cfg.CONF.set_override('enable_distributed_routing', True,
                               group='AGENT')
         cfgmap = self.mod_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['enable_distributed_routing'], True)
+        self.assertTrue(cfgmap['enable_distributed_routing'])
 
 
 class TestOvsNeutronAgent(object):

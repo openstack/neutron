@@ -138,6 +138,7 @@ For anything more elaborate, please visit the testing section.
   reviewers to understand which one is the expected/observed value in non-trivial
   assertions. The expected and observed values are also labeled in the output when
   the assertion fails.
+* Prefer specific assertions (assertTrue, assertFalse) over assertEqual(True/False, observed).
 * Don't write tests that don't test the intended code. This might seem silly but
   it's easy to do with a lot of mocks in place. Ensure that your tests break as
   expected before your code change.

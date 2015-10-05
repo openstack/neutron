@@ -113,7 +113,7 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
                          service_profile['description'])
         self.assertEqual(self.service_profile['metainfo'],
                          service_profile['metainfo'])
-        self.assertEqual(True, service_profile['enabled'])
+        self.assertTrue(service_profile['enabled'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('30abb445-0eea-472e-bd02-8649f54a5968')
@@ -124,7 +124,7 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         self.assertEqual(self.flavor['id'], flavor['id'])
         self.assertEqual(self.flavor['description'], flavor['description'])
         self.assertEqual(self.flavor['name'], flavor['name'])
-        self.assertEqual(True, flavor['enabled'])
+        self.assertTrue(flavor['enabled'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('e2fb2f8c-45bf-429a-9f17-171c70444612')

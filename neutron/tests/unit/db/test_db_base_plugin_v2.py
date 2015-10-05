@@ -1303,7 +1303,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                              'device_id': port['port']['device_id']}}
             req = self.new_update_request('ports', data, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(res['port']['admin_state_up'], True)
+            self.assertTrue(res['port']['admin_state_up'])
 
     def test_update_device_id_null(self):
         with self.port() as port:
@@ -2306,7 +2306,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 ctx = context.Context('', '', is_admin=True)
                 subnet_db = manager.NeutronManager.get_plugin().get_subnet(
                     ctx, subnet['subnet']['id'])
-                self.assertEqual(subnet_db['shared'], True)
+                self.assertTrue(subnet_db['shared'])
 
     def test_update_network_set_not_shared_single_tenant(self):
         with self.network(shared=True) as network:

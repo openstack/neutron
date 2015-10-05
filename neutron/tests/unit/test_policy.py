@@ -103,7 +103,7 @@ class PolicyTestCase(base.BaseTestCase):
     def test_enforce_good_action(self):
         action = "example:allowed"
         result = policy.enforce(self.context, action, self.target)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     @mock.patch.object(urlrequest, 'urlopen',
                        return_value=six.StringIO("True"))
@@ -111,7 +111,7 @@ class PolicyTestCase(base.BaseTestCase):
         action = "example:get_http"
         target = {}
         result = policy.enforce(self.context, action, target)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_enforce_http_false(self):
 
@@ -305,7 +305,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                               context, action, target)
         else:
             result = policy.enforce(context, action, target)
-            self.assertEqual(result, True)
+            self.assertTrue(result)
 
     def _test_nonadmin_action_on_attr(self, action, attr, value,
                                       exception=None, **kwargs):
@@ -411,7 +411,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         if kwargs:
             target.update(kwargs)
         result = policy.enforce(admin_context, action, target)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_enforce_adminonly_attribute_create(self):
         self._test_enforce_adminonly_attribute('create_network')
@@ -469,7 +469,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
         result = policy.enforce(self.context, action, target, None)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_enforce_admin_only_subattribute(self):
         action = "create_" + FAKE_RESOURCE_NAME
@@ -477,7 +477,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                                 'sub_attr_2': 'y'}}
         result = policy.enforce(context.get_admin_context(),
                                 action, target, None)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_enforce_admin_only_subattribute_nonadminctx_returns_403(self):
         action = "create_" + FAKE_RESOURCE_NAME

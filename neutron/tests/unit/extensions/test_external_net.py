@@ -161,8 +161,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def test_create_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
-            self.assertEqual(ext_net['network'][external_net.EXTERNAL],
-                             True)
+            self.assertTrue(ext_net['network'][external_net.EXTERNAL])
 
     def test_delete_network_check_disassociated_floatingips(self):
         with mock.patch.object(manager.NeutronManager,

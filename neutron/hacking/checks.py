@@ -174,6 +174,18 @@ def check_python3_no_iteritems(logical_line):
         yield(0, msg)
 
 
+def check_asserttrue(logical_line, filename):
+    if 'neutron/tests/' in filename:
+        if re.search(r"assertEqual\(True,.*\)", logical_line):
+            msg = ("N328: Use assertTrue(observed) instead of"
+                   "assertEqual(True, observed)")
+            yield (0, msg)
+        if re.search(r"assertEqual\(.*, True\)", logical_line):
+            msg = ("N328: Use assertTrue(observed) instead of"
+                   "assertEqual(True, observed)")
+            yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -184,3 +196,4 @@ def factory(register):
     register(check_python3_xrange)
     register(check_no_basestring)
     register(check_python3_no_iteritems)
+    register(check_asserttrue)

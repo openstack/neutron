@@ -790,7 +790,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertIn('network', res)
         net = res['network']
         self.assertEqual(net['id'], net_id)
-        self.assertEqual(net['admin_state_up'], True)
+        self.assertTrue(net['admin_state_up'])
         self.assertEqual(net['status'], "ACTIVE")
 
     def test_create_no_keystone_env(self):
