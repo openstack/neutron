@@ -32,7 +32,7 @@ from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron.i18n import _LI
+from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
@@ -682,6 +682,45 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     self._core_plugin.delete_port(context,
                                                   p['id'],
                                                   l3_port_check=False)
+
+    def create_floatingip(self, context, floatingip,
+                          initial_status=l3_const.FLOATINGIP_STATUS_ACTIVE):
+        floating_ip = self._create_floatingip(
+            context, floatingip, initial_status)
+        self._notify_floating_ip_change(context, floating_ip)
+        return floating_ip
+
+    def _notify_floating_ip_change(self, context, floating_ip):
+        router_id = floating_ip['router_id']
+        fixed_port_id = floating_ip['port_id']
+        # we need to notify agents only in case Floating IP is associated
+        if not router_id or not fixed_port_id:
+            return
+
+        try:
+            # using admin context as router may belong to admin tenant
+            router = self._get_router(context.elevated(), router_id)
+        except l3.RouterNotFound:
+            LOG.warning(_LW("Router %s was not found. "
+                            "Skipping agent notification."),
+                        router_id)
+            return
+
+        if is_distributed_router(router):
+            host = self._get_vm_port_hostid(context, fixed_port_id)
+            self.l3_rpc_notifier.routers_updated_on_host(
+                context, [router_id], host)
+        else:
+            self.notify_router_updated(context, router_id)
+
+    def update_floatingip(self, context, id, floatingip):
+        old_floatingip, floatingip = self._update_floatingip(
+            context, id, floatingip)
+        self._notify_floating_ip_change(context, old_floatingip)
+        if (floatingip['router_id'] != old_floatingip['router_id'] or
+                floatingip['port_id'] != old_floatingip['port_id']):
+            self._notify_floating_ip_change(context, floatingip)
+        return floatingip
 
 
 def is_distributed_router(router):

@@ -938,7 +938,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         net = self._core_plugin._get_network(context, net_id)
         return any(s.ip_version == 4 for s in net.subnets)
 
-    def create_floatingip(self, context, floatingip,
+    def _create_floatingip(self, context, floatingip,
             initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         fip = floatingip['floatingip']
         tenant_id = self._get_tenant_id_for_create(context, fip)
@@ -1001,6 +1001,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             context.session.add(floatingip_db)
 
         return self._make_floatingip_dict(floatingip_db)
+
+    def create_floatingip(self, context, floatingip,
+            initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
+        return self._create_floatingip(context, floatingip, initial_status)
 
     def _update_floatingip(self, context, id, floatingip):
         fip = floatingip['floatingip']
