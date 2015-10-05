@@ -125,13 +125,17 @@ def start_plugin_workers():
 
 class RpcWorker(worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
-    def __init__(self, plugin):
-        self._plugin = plugin
+    start_listeners_method = 'start_rpc_listeners'
+
+    def __init__(self, plugins):
+        self._plugins = plugins
         self._servers = []
 
     def start(self):
-        super(RpcWorker, self).start()
-        self._servers = self._plugin.start_rpc_listeners()
+        for plugin in self._plugins:
+            if hasattr(plugin, self.start_listeners_method):
+                servers = getattr(plugin, self.start_listeners_method)()
+                self._servers.extend(servers)
 
     def wait(self):
         try:
@@ -164,6 +168,8 @@ class RpcWorker(worker.NeutronWorker):
 
 def serve_rpc():
     plugin = manager.NeutronManager.get_plugin()
+    service_plugins = (
+        manager.NeutronManager.get_service_plugins().values())
 
     if cfg.CONF.rpc_workers < 1:
         cfg.CONF.set_override('rpc_workers', 1)
@@ -181,7 +187,8 @@ def serve_rpc():
         raise NotImplementedError()
 
     try:
-        rpc = RpcWorker(plugin)
+        # passing service plugins only, because core plugin is among them
+        rpc = RpcWorker(service_plugins)
 
         # dispose the whole pool before os.fork, otherwise there will
         # be shared DB connections in child processes which may cause
