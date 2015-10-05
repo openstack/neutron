@@ -64,13 +64,15 @@ def comment_rule(rule, comment):
         return rule
     # iptables-save outputs the comment before the jump so we need to match
     # that order so _find_last_entry works
+    comment = '-m comment --comment "%s"' % comment
+    if rule.startswith('-j'):
+        # this is a jump only rule so we just put the comment first
+        return '%s %s' % (comment, rule)
     try:
-        start_of_jump = rule.index(' -j ')
+        jpos = rule.index(' -j ')
+        return ' '.join((rule[:jpos], comment, rule[jpos + 1:]))
     except ValueError:
-        return '%s -m comment --comment "%s"' % (rule, comment)
-    return ' '.join([rule[0:start_of_jump],
-                     '-m comment --comment "%s"' % comment,
-                     rule[start_of_jump + 1:]])
+        return '%s %s' % (rule, comment)
 
 
 def get_chain_name(chain_name, wrap=True):
