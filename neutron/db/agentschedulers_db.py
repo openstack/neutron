@@ -118,16 +118,19 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
                                          original_agent['host'])
         return result
 
-    def setup_agent_status_check(self, function):
-        self.periodic_agent_loop = loopingcall.FixedIntervalLoopingCall(
-            function)
+    def add_agent_status_check(self, function):
+        loop = loopingcall.FixedIntervalLoopingCall(function)
         # TODO(enikanorov): make interval configurable rather than computed
         interval = max(cfg.CONF.agent_down_time // 2, 1)
         # add random initial delay to allow agents to check in after the
         # neutron server first starts. random to offset multiple servers
         initial_delay = random.randint(interval, interval * 2)
-        self.periodic_agent_loop.start(interval=interval,
-            initial_delay=initial_delay)
+        loop.start(interval=interval, initial_delay=initial_delay)
+
+        if hasattr(self, 'periodic_agent_loops'):
+            self.periodic_agent_loops.append(loop)
+        else:
+            self.periodic_agent_loops = [loop]
 
     def agent_dead_limit_seconds(self):
         return cfg.CONF.agent_down_time * 2
@@ -166,7 +169,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                          "automatic network rescheduling is disabled."))
             return
 
-        self.setup_agent_status_check(self.remove_networks_from_down_agents)
+        self.add_agent_status_check(self.remove_networks_from_down_agents)
 
     def is_eligible_agent(self, context, active, agent):
         # eligible agent is active or starting up

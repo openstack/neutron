@@ -149,6 +149,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.initialize()
         self._setup_dhcp()
         self._start_rpc_notifiers()
+        self.add_agent_status_check(self.agent_health_check)
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
     def _setup_rpc(self):
