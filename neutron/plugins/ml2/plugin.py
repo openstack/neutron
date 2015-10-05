@@ -540,6 +540,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                               {'res': resource,
                                'id': obj['result']['id']})
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
     def _create_bulk_ml2(self, resource, context, request_items):
         objects = []
         collection = "%ss" % resource
@@ -969,6 +971,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return result, mech_context
 
+    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
+                               retry_on_request=True)
     def create_port(self, context, port):
         attrs = port[attributes.PORT]
         result, mech_context = self._create_port_db(context, port)
