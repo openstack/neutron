@@ -43,8 +43,8 @@ class TestIpamSubnetRequests(IpamSubnetRequestTestCase):
                                   self.subnet_id)
         self.assertEqual(self.tenant_id, pool.tenant_id)
         self.assertEqual(self.subnet_id, pool.subnet_id)
-        self.assertEqual(None, pool.gateway_ip)
-        self.assertEqual(None, pool.allocation_pools)
+        self.assertIsNone(pool.gateway_ip)
+        self.assertIsNone(pool.allocation_pools)
 
     def test_subnet_request_gateway(self):
         request = ipam_req.SubnetRequest(self.tenant_id,
@@ -364,8 +364,8 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
                               ipam_req.SpecificSubnetRequest)
         self.assertEqual(self.tenant_id, request.tenant_id)
         self.assertEqual(self.subnet_id, request.subnet_id)
-        self.assertEqual(None, request.gateway_ip)
-        self.assertEqual(None, request.allocation_pools)
+        self.assertIsNone(request.gateway_ip)
+        self.assertIsNone(request.allocation_pools)
 
 
 class TestGetRequestFactory(base.BaseTestCase):

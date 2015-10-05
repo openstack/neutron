@@ -178,7 +178,7 @@ class TestNovaNotify(base.BaseTestCase):
 
         event = self.nova_notifier.create_port_changed_event(
             'delete_floatingip', {}, returned_obj)
-        self.assertEqual(event, None)
+        self.assertIsNone(event)
 
     def test_associate_floatingip_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
