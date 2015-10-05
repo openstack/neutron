@@ -125,7 +125,7 @@ class TestQoSWithOvsAgent(base.BaseFullStackTestCase):
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
 
     def setUp(self):
-        host_desc = [environment.HostDescription()]
+        host_desc = []  # No need to register agents for this test case
         env_desc = environment.EnvironmentDescription(qos=True, l2_pop=True)
         env = environment.Environment(env_desc, host_desc)
         super(TestQoSWithL2Population, self).setUp(env)
