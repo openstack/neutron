@@ -70,7 +70,6 @@ class IpsetManager(object):
         set_name = self.get_name(id, ethertype)
         return set_name in self.ipset_sets
 
-    @utils.synchronized('ipset', external=True)
     def set_members(self, id, ethertype, member_ips):
         """Create or update a specific set by name and ethertype.
         It will make sure that a set is created, updated to
@@ -78,6 +77,16 @@ class IpsetManager(object):
         that's faster.
         """
         member_ips = self._sanitize_addresses(member_ips)
+        set_name = self.get_name(id, ethertype)
+        add_ips = self._get_new_set_ips(set_name, member_ips)
+        del_ips = self._get_deleted_set_ips(set_name, member_ips)
+        if not add_ips and not del_ips and self.set_exists(id, ethertype):
+            # nothing to do because no membership changes and the ipset exists
+            return
+        self.set_members_mutate(id, ethertype, member_ips)
+
+    @utils.synchronized('ipset', external=True)
+    def set_members_mutate(self, id, ethertype, member_ips):
         set_name = self.get_name(id, ethertype)
         if not self.set_exists(id, ethertype):
             # The initial creation is handled with create/refresh to
