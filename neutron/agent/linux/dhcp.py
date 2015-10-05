@@ -752,7 +752,7 @@ class Dnsmasq(DhcpLocalProcess):
     def _generate_opts_per_subnet(self):
         options = []
         subnet_index_map = {}
-        if self.conf.enable_isolated_metadata:
+        if self.conf.enable_isolated_metadata or self.conf.force_metadata:
             subnet_to_interface_ip = self._make_subnet_interface_ip_map()
         isolated_subnets = self.get_isolated_subnets(self.network)
         for i, subnet in enumerate(self.network.subnets):
