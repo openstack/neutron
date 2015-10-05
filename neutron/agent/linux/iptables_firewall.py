@@ -215,8 +215,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for port in ports.values():
             self._setup_chain(port, firewall.INGRESS_DIRECTION)
             self._setup_chain(port, firewall.EGRESS_DIRECTION)
-            self.iptables.ipv4['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
-            self.iptables.ipv6['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
+        self.iptables.ipv4['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
+        self.iptables.ipv6['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
 
         for port in unfiltered_ports.values():
             self._add_accept_rule_port_sec(port, firewall.INGRESS_DIRECTION)
