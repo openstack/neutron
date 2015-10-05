@@ -49,10 +49,10 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
         master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
         not_master_2 = l3_queue.ExclusiveRouterProcessor(FAKE_ID_2)
 
-        self.assertEqual(master._master, master)
-        self.assertEqual(not_master._master, master)
-        self.assertEqual(master_2._master, master_2)
-        self.assertEqual(not_master_2._master, master_2)
+        self.assertEqual(master, master._master)
+        self.assertEqual(master, not_master._master)
+        self.assertEqual(master_2, master_2._master)
+        self.assertEqual(master_2, not_master_2._master)
 
         master.__exit__(None, None, None)
         master_2.__exit__(None, None, None)
@@ -77,16 +77,16 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
 
     def test_data_fetched_since(self):
         master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
-        self.assertEqual(master._get_router_data_timestamp(),
-                         datetime.datetime.min)
+        self.assertEqual(datetime.datetime.min,
+                         master._get_router_data_timestamp())
 
         ts1 = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
         ts2 = datetime.datetime.utcnow()
 
         master.fetched_and_processed(ts2)
-        self.assertEqual(master._get_router_data_timestamp(), ts2)
+        self.assertEqual(ts2, master._get_router_data_timestamp())
         master.fetched_and_processed(ts1)
-        self.assertEqual(master._get_router_data_timestamp(), ts2)
+        self.assertEqual(ts2, master._get_router_data_timestamp())
 
         master.__exit__(None, None, None)
 

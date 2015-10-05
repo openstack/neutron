@@ -100,6 +100,10 @@ For anything more elaborate, please visit the testing section.
          self.assertTrue(3 in [1, 2])
          # raise meaningless error: "AssertionError: False is not true"
 
+* Use the pattern "self.assertEqual(expected, observed)" not the opposite, it helps
+  reviewers to understand which one is the expected/observed value in non-trivial
+  assertions.
+
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
 
