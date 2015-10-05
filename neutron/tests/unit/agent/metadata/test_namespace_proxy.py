@@ -24,18 +24,6 @@ from neutron.tests import base
 from neutron import wsgi
 
 
-class FakeConf(object):
-    admin_user = 'neutron'
-    admin_password = 'password'
-    admin_tenant_name = 'tenant'
-    auth_url = 'http://127.0.0.1'
-    auth_strategy = 'keystone'
-    auth_region = 'region'
-    nova_metadata_ip = '9.9.9.9'
-    nova_metadata_port = 8775
-    metadata_proxy_shared_secret = 'secret'
-
-
 class TestNetworkMetadataProxyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestNetworkMetadataProxyHandler, self).setUp()
