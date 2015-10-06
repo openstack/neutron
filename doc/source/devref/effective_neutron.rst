@@ -54,6 +54,25 @@ Happy hacking!
 Developing better software
 --------------------------
 
+Plugin development
+~~~~~~~~~~~~~~~~~~
+
+Document common pitfalls as well as good practices done during plugin development.
+
+* Use mixin classes as last resort. They can be a powerful tool to add behavior
+  but their strength is also a weakness, as they can introduce `unpredictable <https://review.openstack.org/#/c/121290/>`_
+  behavior to the `MRO <https://www.python.org/download/releases/2.3/mro/>`_,
+  amongst other issues.
+* If you make changes to the DB class methods, like calling methods that can
+  be inherited, think about what effect that may have to plugins that have
+  controller `backends <https://review.openstack.org/#/c/116924/>`_.
+* If you make changes to the ML2 plugin or components used by the ML2 plugin,
+  think about the `effect <http://lists.openstack.org/pipermail/openstack-dev/2015-October/076134.html>`_
+  that may have to other plugins.
+* When adding behavior to the L2 and L3 db base classes, do not assume that
+  there is an agent on the other side of the message broker that interacts
+  with the server. Plugins may not rely on `agents <https://review.openstack.org/#/c/174020/>`_ at all.
+
 Database interaction
 ~~~~~~~~~~~~~~~~~~~~
 
