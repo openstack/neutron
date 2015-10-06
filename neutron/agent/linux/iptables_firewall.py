@@ -492,13 +492,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []
-        self._drop_invalid_packets(iptables_rules)
         self._allow_established(iptables_rules)
         for rule in security_group_rules:
             args = self._convert_sg_rule_to_iptables_args(rule)
             if args:
                 iptables_rules += [' '.join(args)]
 
+        self._drop_invalid_packets(iptables_rules)
         iptables_rules += [comment_rule('-j $sg-fallback',
                                         comment=ic.UNMATCHED)]
         return iptables_rules

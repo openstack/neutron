@@ -94,11 +94,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     '-m state --state INVALID -j DROP',
                      comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
@@ -137,11 +137,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-j $sg-fallback',
@@ -930,10 +930,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         calls += [
             mock.call.add_rule(
                 'ifake_dev',
-                '-m state --state INVALID -j DROP', comment=None
-            ),
-            mock.call.add_rule(
-                'ifake_dev',
                 '-m state --state RELATED,ESTABLISHED -j RETURN',
                 comment=None
             )
@@ -942,7 +938,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         if ingress_expected_call:
             calls.append(ingress_expected_call)
 
-        calls += [mock.call.add_rule('ifake_dev',
+        calls += [mock.call.add_rule(
+                      'ifake_dev',
+                      '-m state --state INVALID -j DROP', comment=None),
+                  mock.call.add_rule('ifake_dev',
                                      '-j $sg-fallback', comment=None),
                   mock.call.add_chain('ofake_dev'),
                   mock.call.add_rule('FORWARD',
@@ -983,9 +982,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         calls += [
             mock.call.add_rule(
                 'ofake_dev',
-                '-m state --state INVALID -j DROP', comment=None),
-            mock.call.add_rule(
-                'ofake_dev',
                 '-m state --state RELATED,ESTABLISHED -j RETURN',
                 comment=None),
         ]
@@ -993,7 +989,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         if egress_expected_call:
             calls.append(egress_expected_call)
 
-        calls += [mock.call.add_rule('ofake_dev',
+        calls += [mock.call.add_rule(
+                      'ofake_dev',
+                      '-m state --state INVALID -j DROP', comment=None),
+                  mock.call.add_rule('ofake_dev',
                                      '-j $sg-fallback', comment=None),
                   mock.call.add_rule('sg-chain', '-j ACCEPT')]
 
@@ -1030,13 +1029,13 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
                  mock.call.add_rule('ifake_dev', '-j RETURN',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-j $sg-fallback', comment=None),
@@ -1076,11 +1075,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      '-p udp -m udp --sport 67 --dport 68 -j DROP',
                      comment=None),
                  mock.call.add_rule(
-                     'ofake_dev', '-m state --state INVALID -j DROP',
-                     comment=None),
-                 mock.call.add_rule(
                      'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev', '-m state --state INVALID -j DROP',
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
@@ -1104,11 +1103,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule(
                      'ifake_dev',
                      '-j $sg-fallback', comment=None),
@@ -1149,13 +1148,13 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j RETURN',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule('ofake_dev',
                                     '-j $sg-fallback',
                                     comment=None),
@@ -1277,11 +1276,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule('ifake_dev',
                                     '-j $sg-fallback', comment=None),
                  mock.call.add_chain('ofake_dev'),
@@ -1323,11 +1322,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ofake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule('ofake_dev',
                                     '-j $sg-fallback', comment=None),
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
@@ -1356,11 +1355,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.SG_TO_VM_SG),
                  mock.call.add_rule(
                      'ifake_dev',
-                     '-m state --state INVALID -j DROP', comment=None),
-                 mock.call.add_rule(
-                     'ifake_dev',
                      '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP', comment=None),
                  mock.call.add_rule('ifake_dev', '-j $sg-fallback',
                                     comment=None),
                  mock.call.add_chain('ofake_dev'),
@@ -1396,11 +1395,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state INVALID -j DROP',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
                      comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     '-m state --state INVALID -j DROP',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sg-fallback',
                                     comment=None),
