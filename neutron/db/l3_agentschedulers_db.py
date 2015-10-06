@@ -181,6 +181,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if not is_suitable_agent:
             raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
 
+    def check_l3_agent_router_binding(self, context, router_id, agent_id):
+        query = context.session.query(RouterL3AgentBinding)
+        bindings = query.filter_by(router_id=router_id,
+                                   l3_agent_id=agent_id).all()
+        return bool(bindings)
+
     def check_agent_router_scheduling_needed(self, context, agent, router):
         """Check if the router scheduling is needed.
 
