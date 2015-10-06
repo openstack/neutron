@@ -71,6 +71,7 @@ core_opts = [
     cfg.IntOpt('max_subnet_host_routes', default=20,
                help=_("Maximum number of host routes per subnet")),
     cfg.IntOpt('max_fixed_ips_per_port', default=5,
+               deprecated_for_removal=True,
                help=_("Maximum number of fixed ips per port")),
     cfg.StrOpt('default_ipv4_subnet_pool', default=None,
                help=_("Default IPv4 subnet-pool to be used for automatic "
