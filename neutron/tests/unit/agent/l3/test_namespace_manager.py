@@ -46,13 +46,13 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
 
         ns_prefix, ns_id = self.ns_manager.get_prefix_and_id(
             namespaces.NS_PREFIX + router_id)
-        self.assertEqual(ns_prefix, namespaces.NS_PREFIX)
-        self.assertEqual(ns_id, router_id)
+        self.assertEqual(namespaces.NS_PREFIX, ns_prefix)
+        self.assertEqual(router_id, ns_id)
 
         ns_prefix, ns_id = self.ns_manager.get_prefix_and_id(
             dvr_snat_ns.SNAT_NS_PREFIX + router_id)
-        self.assertEqual(ns_prefix, dvr_snat_ns.SNAT_NS_PREFIX)
-        self.assertEqual(ns_id, router_id)
+        self.assertEqual(dvr_snat_ns.SNAT_NS_PREFIX, ns_prefix)
+        self.assertEqual(router_id, ns_id)
 
         ns_name = 'dhcp-' + router_id
         self.assertIsNone(self.ns_manager.get_prefix_and_id(ns_name))

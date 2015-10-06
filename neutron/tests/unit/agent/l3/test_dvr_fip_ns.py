@@ -87,8 +87,8 @@ class TestDvrFipNs(base.BaseTestCase):
         device_exists.return_value = False
         self.fip_ns._gateway_added(agent_gw_port,
                                    mock.sentinel.interface_name)
-        self.assertEqual(self.driver.plug.call_count, 1)
-        self.assertEqual(self.driver.init_l3.call_count, 1)
+        self.assertEqual(1, self.driver.plug.call_count)
+        self.assertEqual(1, self.driver.init_l3.call_count)
         send_adv_notif.assert_called_once_with(self.fip_ns.get_name(),
                                                mock.sentinel.interface_name,
                                                '20.0.0.30',
@@ -144,7 +144,7 @@ class TestDvrFipNs(base.BaseTestCase):
 
         device = IPDevice()
         device.link.set_mtu.assert_called_with(2000)
-        self.assertEqual(device.link.set_mtu.call_count, 2)
+        self.assertEqual(2, device.link.set_mtu.call_count)
         device.route.add_gateway.assert_called_once_with(
             '169.254.31.29', table=16)
 
