@@ -194,6 +194,11 @@ Scoping your patch appropriately
   in the refactor and changes required for the fix/feature. If it's a bug fix,
   try to implement the fix before the refactor to avoid making cherry-picks to
   stable branches difficult.
+* Consider your reviewers' time before submitting your patch. A patch that
+  requires many hours or days to review will sit in the "todo" list until
+  someone has many hours or days free (which may never happen.) If you can
+  deliver your patch in small but incrementally understandable and testable
+  pieces you will be more likely to attract reviewers.
 
 Nits and pedantic comments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
