@@ -86,6 +86,19 @@ For anything more elaborate, please visit the testing section.
 * Preferring low level testing versus full path testing (e.g. not testing database
   via client calls). The former is to be favored in unit testing, whereas the latter
   is to be favored in functional testing.
+* Prefer specific assertions (assert(Not)In, assert(Not)IsInstance, assert(Not)IsNone,
+  etc) over generic ones (assertTrue/False, assertEqual) because they raise more
+  meaningful errors:
+
+  .. code:: python
+
+     def test_specific(self):
+         self.assertIn(3, [1, 2])
+         # raise meaningful error: "MismatchError: 3 not in [1, 2]"
+
+     def test_generic(self):
+         self.assertTrue(3 in [1, 2])
+         # raise meaningless error: "AssertionError: False is not true"
 
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~

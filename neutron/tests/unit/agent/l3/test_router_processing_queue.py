@@ -58,22 +58,22 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
         master_2.__exit__(None, None, None)
 
     def test__enter__(self):
-        self.assertFalse(FAKE_ID in l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertNotIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
         master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
         master.__enter__()
-        self.assertTrue(FAKE_ID in l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
         master.__exit__(None, None, None)
 
     def test__exit__(self):
         master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
         not_master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)
         master.__enter__()
-        self.assertTrue(FAKE_ID in l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
         not_master.__enter__()
         not_master.__exit__(None, None, None)
-        self.assertTrue(FAKE_ID in l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
         master.__exit__(None, None, None)
-        self.assertFalse(FAKE_ID in l3_queue.ExclusiveRouterProcessor._masters)
+        self.assertNotIn(FAKE_ID, l3_queue.ExclusiveRouterProcessor._masters)
 
     def test_data_fetched_since(self):
         master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)

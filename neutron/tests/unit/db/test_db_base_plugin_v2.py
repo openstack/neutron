@@ -2839,7 +2839,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 res = subnet_req.get_response(self.api)
                 subnet = self.deserialize(self.fmt, res)['subnet']
                 ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertTrue(ip_net in netaddr.IPNetwork(subnetpool_prefix))
+                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
                 self.assertEqual(27, ip_net.prefixlen)
                 self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
 
@@ -2863,7 +2863,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 subnet = self.deserialize(self.fmt, res)['subnet']
                 self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
                 ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertTrue(ip_net in netaddr.IPNetwork(subnetpool_prefix))
+                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
                 self.assertEqual(64, ip_net.prefixlen)
 
     def test_create_subnet_bad_V4_cidr_prefix_len(self):
@@ -4188,7 +4188,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             list(res['subnet']['allocation_pools'][1].values())
         )
         for pool_val in ['10', '20', '30', '40']:
-            self.assertTrue('192.168.0.%s' % (pool_val) in res_vals)
+            self.assertIn('192.168.0.%s' % (pool_val), res_vals)
         if with_gateway_ip:
             self.assertEqual((res['subnet']['gateway_ip']),
                              '192.168.0.9')
@@ -4777,7 +4777,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                                      subnet['subnet']['id'])
             delete_response = delete_request.get_response(self.api)
 
-            self.assertTrue('NeutronError' in delete_response.json)
+            self.assertIn('NeutronError', delete_response.json)
             self.assertEqual('SubnetInUse',
                              delete_response.json['NeutronError']['type'])
 
