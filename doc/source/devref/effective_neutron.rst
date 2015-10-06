@@ -126,8 +126,12 @@ Translation and logging
 
 Document common pitfalls as well as good practices done when instrumenting your code.
 
- * Make yourself familiar with `OpenStack logging guidelines <http://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
-   to avoid littering the logs with traces logged at inappropriate levels.
+* Make yourself familiar with `OpenStack logging guidelines <http://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
+  to avoid littering the logs with traces logged at inappropriate levels.
+* The logger should only be passed unicode values. For example, do not pass it
+  exceptions or other objects directly (LOG.error(exc), LOG.error(port), etc.).
+  See http://docs.openstack.org/developer/oslo.log/usage.html#no-more-implicit-conversion-to-unicode-str
+  for more details.
 
 Project interfaces
 ~~~~~~~~~~~~~~~~~~
