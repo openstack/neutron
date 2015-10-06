@@ -725,6 +725,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._notify_floating_ip_change(context, floatingip)
         return floatingip
 
+    def delete_floatingip(self, context, id):
+        floating_ip = self._delete_floatingip(context, id)
+        self._notify_floating_ip_change(context, floating_ip)
+
 
 def is_distributed_router(router):
     """Return True if router to be handled is distributed."""

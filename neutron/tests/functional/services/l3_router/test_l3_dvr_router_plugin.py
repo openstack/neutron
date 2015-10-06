@@ -345,3 +345,49 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
 
     def test_update_floating_ip_agent_notification_non_dvr(self):
         self._test_update_floating_ip_agent_notification(dvr=False)
+
+    def _test_delete_floating_ip_agent_notification(self, dvr=True):
+        with self.subnet() as ext_subnet,\
+                self.subnet(cidr='20.0.0.0/24') as int_subnet,\
+                self.port(subnet=int_subnet,
+                          device_owner='compute:None') as int_port:
+            # make net external
+            ext_net_id = ext_subnet['subnet']['network_id']
+            self._update('networks', ext_net_id,
+                     {'network': {external_net.EXTERNAL: True}})
+
+            router = self._create_router(distributed=dvr)
+            self.l3_plugin.update_router(
+                self.context, router['id'],
+                {'router': {
+                    'external_gateway_info': {'network_id': ext_net_id}}})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': int_subnet['subnet']['id']})
+
+            floating_ip = {'floating_network_id': ext_net_id,
+                           'router_id': router['id'],
+                           'port_id': int_port['port']['id'],
+                           'tenant_id': int_port['port']['tenant_id']}
+            floating_ip = self.l3_plugin.create_floatingip(
+                self.context, {'floatingip': floating_ip})
+            with mock.patch.object(
+                    self.l3_plugin, '_l3_rpc_notifier') as l3_notif:
+                self.l3_plugin.delete_floatingip(
+                    self.context, floating_ip['id'])
+                if dvr:
+                    l3_notif.routers_updated_on_host.assert_called_once_with(
+                        self.context, [router['id']],
+                        int_port['port']['binding:host_id'])
+                    self.assertFalse(l3_notif.routers_updated.called)
+                else:
+                    l3_notif.routers_updated.assert_called_once_with(
+                        self.context, [router['id']], None)
+                    self.assertFalse(
+                        l3_notif.routers_updated_on_host.called)
+
+    def test_delete_floating_ip_agent_notification(self):
+        self._test_delete_floating_ip_agent_notification()
+
+    def test_delete_floating_ip_agent_notification_non_dvr(self):
+        self._test_delete_floating_ip_agent_notification(dvr=False)
