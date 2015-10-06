@@ -303,7 +303,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         port = {'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id}]}
         router_ports = [port]
         ri.router.get.return_value = router_ports
-        self.assertEqual(None, ri._get_internal_port(mock.sentinel.subnet_id2))
+        self.assertIsNone(ri._get_internal_port(mock.sentinel.subnet_id2))
 
     def test__get_snat_idx_ipv4(self):
         ip_cidr = '101.12.13.00/24'

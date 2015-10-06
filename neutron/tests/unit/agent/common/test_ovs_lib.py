@@ -324,7 +324,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         run_ofctl = mock.patch.object(self.br, 'run_ofctl').start()
         run_ofctl.side_effect = ['']
         retflows = self.br.dump_flows_for_table(table)
-        self.assertEqual(None, retflows)
+        self.assertIsNone(retflows)
 
     def test_mod_flow_with_priority_set(self):
         params = {'in_port': '1',

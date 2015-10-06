@@ -210,7 +210,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             report_state.assert_called_once_with(agent.context,
                                                  agent.agent_state,
                                                  use_call_arg)
-            self.assertTrue(agent.agent_state.get('start_flag') is None)
+            self.assertIsNone(agent.agent_state.get('start_flag'))
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

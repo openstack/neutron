@@ -591,7 +591,7 @@ class NetworksIpV6TestJSON(NetworksTestJSON):
         # Verifies Subnet GW is set in IPv6
         self.assertEqual(subnet1['gateway_ip'], ipv6_gateway)
         # Verifies Subnet GW is None in IPv4
-        self.assertEqual(subnet2['gateway_ip'], None)
+        self.assertIsNone(subnet2['gateway_ip'])
         # Verifies all 2 subnets in the same network
         body = self.client.list_subnets()
         subnets = [sub['id'] for sub in body['subnets']
