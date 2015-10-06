@@ -99,27 +99,31 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     """
 
     def dvr_update_router_addvm(self, context, port):
-        ips = port['fixed_ips']
-        for ip in ips:
-            subnet = ip['subnet_id']
-            filter_sub = {'fixed_ips': {'subnet_id': [subnet]},
-                          'device_owner':
-                          [n_const.DEVICE_OWNER_DVR_INTERFACE]}
-            ports = self._core_plugin.get_ports(context, filters=filter_sub)
-            for port in ports:
-                router_id = port['device_id']
-                router_dict = self.get_router(context, router_id)
-                if router_dict.get('distributed', False):
-                    payload = {'subnet_id': subnet}
-                    self.l3_rpc_notifier.routers_updated(
-                        context, [router_id], None, payload)
-                    LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
+        port_dict = self._core_plugin.get_port(context, port['id'])
+        port_host = port_dict['binding:host_id']
+        l3_agent_on_host = (self.get_l3_agents(
+            context, filters={'host': [port_host]}) or [None])[0]
+        if not l3_agent_on_host:
+            return
 
-    def get_dvr_routers_by_portid(self, context, port_id):
+        ips = port['fixed_ips']
+        router_ids = self.get_dvr_routers_by_portid(context, port['id'], ips)
+        for router_id in router_ids:
+            if not self.check_l3_agent_router_binding(
+                    context, router_id, l3_agent_on_host['id']):
+                self.schedule_router(
+                    context, router_id, candidates=[l3_agent_on_host])
+            LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
+
+        self.l3_rpc_notifier.routers_updated_on_host(
+            context, router_ids, port_host)
+
+    def get_dvr_routers_by_portid(self, context, port_id, fixed_ips=None):
         """Gets the dvr routers on vmport subnets."""
         router_ids = set()
-        port_dict = self._core_plugin.get_port(context, port_id)
-        fixed_ips = port_dict['fixed_ips']
+        if fixed_ips is None:
+            port_dict = self._core_plugin.get_port(context, port_id)
+            fixed_ips = port_dict['fixed_ips']
         for fixedip in fixed_ips:
             vm_subnet = fixedip['subnet_id']
             filter_sub = {'fixed_ips': {'subnet_id': [vm_subnet]},
