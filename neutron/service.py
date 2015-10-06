@@ -132,6 +132,7 @@ class RpcWorker(worker.NeutronWorker):
         self._servers = []
 
     def start(self):
+        super(RpcWorker, self).start()
         for plugin in self._plugins:
             if hasattr(plugin, self.start_listeners_method):
                 servers = getattr(plugin, self.start_listeners_method)()
