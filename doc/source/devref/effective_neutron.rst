@@ -136,7 +136,25 @@ For anything more elaborate, please visit the testing section.
 
 * Use the pattern "self.assertEqual(expected, observed)" not the opposite, it helps
   reviewers to understand which one is the expected/observed value in non-trivial
-  assertions.
+  assertions. The expected and observed values are also labeled in the output when
+  the assertion fails.
+* Don't write tests that don't test the intended code. This might seem silly but
+  it's easy to do with a lot of mocks in place. Ensure that your tests break as
+  expected before your code change.
+* Avoid heavy use of the mock library to test your code. If your code requires more
+  than one mock to ensure that it does the correct thing, it needs to be refactored
+  into smaller, testable units. Otherwise we depend on fullstack/tempest/api tests
+  to test all of the real behavior and we end up with code containing way too many
+  hidden dependencies and side effects.
+* All behavior changes to fix bugs should include a test that prevents a
+  regression. If you made a change and it didn't break a test, it means the
+  code was not adequately tested in the first place, it's not an excuse to leave
+  it untested.
+* Test the failure cases. Use a mock side effect to throw the necessary
+  exceptions to test your 'except' clauses.
+* Don't mimic existing tests that violate these guidelines. We are attempting to
+  replace all of these so more tests like them create more work. If you need help
+  writing a test, reach out to the testing lieutenants and the team on IRC.
 
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
