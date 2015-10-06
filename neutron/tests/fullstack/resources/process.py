@@ -168,7 +168,8 @@ class OVSAgentFixture(fixtures.Fixture):
             exec_name=spawn.find_executable(
                 'ovs_agent.py',
                 path=os.path.join(base.ROOTDIR, 'common', 'agents')),
-            config_filenames=config_filenames))
+            config_filenames=config_filenames,
+            kill_signal=signal.SIGTERM))
 
 
 class LinuxBridgeAgentFixture(fixtures.Fixture):
