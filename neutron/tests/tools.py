@@ -67,6 +67,24 @@ class WarningsFixture(fixtures.Fixture):
                 "always", category=wtype, module='^neutron\\.')
 
 
+class SafeCleanupFixture(fixtures.Fixture):
+    """Catch errors in daughter fixture cleanup."""
+
+    def __init__(self, fixture):
+        self.fixture = fixture
+
+    def _setUp(self):
+
+        def cleanUp():
+            try:
+                self.fixture.cleanUp()
+            except Exception:
+                pass
+
+        self.fixture.setUp()
+        self.addCleanup(cleanUp)
+
+
 """setup_mock_calls and verify_mock_calls are convenient methods
 to setup a sequence of mock calls.
 

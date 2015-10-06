@@ -16,3 +16,6 @@ nc_kill: KillFilter, root, nc, -9
 ncbsd_kill: KillFilter, root, nc.openbsd, -9
 ncat_kill: KillFilter, root, ncat, -9
 ss_filter: CommandFilter, ss, root
+
+# enable neutron-linuxbridge-cleanup from namespace
+lb_cleanup_filter: RegExpFilter, neutron-linuxbridge-cleanup, root, neutron-linuxbridge-cleanup, --config-file, .*
