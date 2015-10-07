@@ -1191,11 +1191,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
         These ports already have fixed_ips populated.
         """
-        if not ports:
-            return
-
         def each_port_having_fixed_ips():
-            for port in ports:
+            for port in ports or []:
                 fixed_ips = port.get('fixed_ips', [])
                 if not fixed_ips:
                     # Skip ports without IPs, which can occur if a subnet
@@ -1208,6 +1205,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
         network_ids = set(p['network_id']
                           for p in each_port_having_fixed_ips())
+        if not network_ids:
+            return
+
         filters = {'network_id': [id for id in network_ids]}
         fields = ['id', 'cidr', 'gateway_ip',
                   'network_id', 'ipv6_ra_mode', 'subnetpool_id']
