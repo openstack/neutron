@@ -341,7 +341,7 @@ class TestCli(base.BaseTestCase):
                 mock.patch.object(cli, '_use_separate_migration_branches',
                                   return_value=not branchless):
             fc.return_value.get_heads.return_value = heads
-            with mock.patch('six.moves.builtins.open') as mock_open:
+            with mock.patch.object(cli, 'open') as mock_open:
                 mock_open.return_value.__enter__ = lambda s: s
                 mock_open.return_value.__exit__ = mock.Mock()
                 mock_open.return_value.read.return_value = (

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
 import weakref
 
 from oslo_config import cfg
@@ -136,19 +137,22 @@ class NeutronManager(object):
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
         if not plugin_provider:
-            LOG.exception(_LE("Error, plugin is not set"))
+            LOG.error(_LE("Error, plugin is not set"))
             raise ImportError(_("Plugin not found."))
         try:
             # Try to resolve plugin by name
             mgr = driver.DriverManager(namespace, plugin_provider)
             plugin_class = mgr.driver
-        except RuntimeError as e1:
+        except RuntimeError:
+            e1_info = sys.exc_info()
             # fallback to class name
             try:
                 plugin_class = importutils.import_class(plugin_provider)
-            except ImportError as e2:
-                LOG.exception(_LE("Error loading plugin by name, %s"), e1)
-                LOG.exception(_LE("Error loading plugin by class, %s"), e2)
+            except ImportError:
+                LOG.error(_LE("Error loading plugin by name"),
+                          exc_info=e1_info)
+                LOG.error(_LE("Error loading plugin by class"),
+                          exc_info=True)
                 raise ImportError(_("Plugin not found."))
         return plugin_class
 
