@@ -38,9 +38,10 @@ release however.
 Neutron Request for Feature Enhancements
 ----------------------------------------
 
-We are introducing the concept of feature requests. Feature requests are
-tracked as Launchpad bugs, tagged with the new 'rfe' tag, and allow for
-the submission and review of these feature requests before code is submitted.
+In Liberty the team introduced the concept of feature requests. Feature
+requests are tracked as Launchpad bugs, tagged with the new 'rfe' tag, and
+allow for the submission and review of these feature requests before code
+is submitted.
 This allows the team to verify the validity of a feature request before the
 process of submitting a neutron-spec is undertaken, or code is written.  It
 also allows the community to express interest in a feature by subscribing to
@@ -66,18 +67,45 @@ The workflow for the life an RFE in Launchpad is as follows:
 * As soon as a member of the neutron-drivers team acknowledges the bug, it will
   be moved into the "Confirmed" state. No priority, assignee, or milestone is
   set at this time.
-* The bug goes into the "Triaged" state once a discussion around the RFE has
-  taken place.
+* The bug goes into the "Triaged" state while the discussion is ongoing.
 * The neutron-drivers team will evaluate the RFE and may advise the submitter
   to file a spec in neutron-specs to elaborate on the feature request.
 * The PTL will work with the Lieutenant for the area being identified by the
   RFE to evaluate resources against the current workload.
 * In either case (a spec being required or not), once discussion has happened
   the bug will get an assignee, priority and milestone.
-* Once a patchset targeting the bug is submitted the bug will move into the
-  "In Progress" state.
-* When all patches targeting the bug are merged or abandoned, the bug will be
-  moved to the "Completed" state.
+* At this point, the RFE is 'approved', and its tag will move from 'rfe' to
+  'rfe-approved'. From now on, the bug becomes just a regular bug report and
+  it will follow the usual 'In Progress', 'Fix Committed', 'Fix Released'
+  transition when code gets posted/merged/released, respectively.
+* If the code fails to merge, the bug report may be marked as incomplete,
+  unassigned and untargeted, and it will be garbage collected by
+  the Launchpad Janitor if no-one takes over in time. Renewed interest in the
+  feature will have to go through RFE submission process once again.
+
+In summary:
+
++------------+-----------------------------------------------------------------------------+
+|State       | Meaning                                                                     |
++============+=============================================================================+
+|New         | This is where all RFE's start, as filed by the community.                   |
++------------+-----------------------------------------------------------------------------+
+|Confirmed   | Drivers/LTs - Move to this state to mean, "yeah, I see that you filed it"   |
++------------+-----------------------------------------------------------------------------+
+|Triaged     | Drivers/LTs - Move to this state to mean, "discussion is ongoing"           |
++------------+-----------------------------------------------------------------------------+
+|Won't Fix   | Drivers/LTs - Move to this state to reject an RFE.                          |
++------------+-----------------------------------------------------------------------------+
+
+Once the triaging (discussion is complete) and the RFE is approved, the tag goes from 'rfe'
+to 'rfe-approved', and at this point the bug report goes through the usual state transition.
+
+The drivers team will be discussing the following bug reports during their IRC meeting:
+
+* `New RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=NEW&field.tag=rfe>`_
+* `Confirmed RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=CONFIRMED&field.tag=rfe>`_
+* `Triaged RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=TRIAGED&field.tag=rfe>`_
+
 
 Cutover to RFEs From Pure Specs
 -------------------------------
