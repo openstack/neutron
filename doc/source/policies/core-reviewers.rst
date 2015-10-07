@@ -113,6 +113,10 @@ updating the core review team for the sub-project's repositories.
 |                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
+| networking-bgpvpn      | Mathieu Rohon             | matrohon             |
+|                        +---------------------------+----------------------+
+|                        | Thomas Morin              | tmorin               |
++------------------------+---------------------------+----------------------+
 | networking-calico      | Neil Jerram               | neiljerram           |
 +------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
