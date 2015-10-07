@@ -230,7 +230,7 @@ class OwnerCheck(policy.Check):
                 # If we are here split failed with both separators
                 err_reason = (_("Unable to find resource name in %s") %
                               self.target_field)
-                LOG.exception(err_reason)
+                LOG.error(err_reason)
                 raise exceptions.PolicyCheckError(
                     policy="%s:%s" % (self.kind, self.match),
                     reason=err_reason)
@@ -240,7 +240,7 @@ class OwnerCheck(policy.Check):
                 err_reason = (_("Unable to verify match:%(match)s as the "
                                 "parent resource: %(res)s was not found") %
                               {'match': self.match, 'res': parent_res})
-                LOG.exception(err_reason)
+                LOG.error(err_reason)
                 raise exceptions.PolicyCheckError(
                     policy="%s:%s" % (self.kind, self.match),
                     reason=err_reason)
