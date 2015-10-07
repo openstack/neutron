@@ -21,7 +21,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.linux import external_process
-from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
 
@@ -378,7 +377,7 @@ class KeepalivedManager(object):
     def _output_config_file(self):
         config_str = self.config.get_config_str()
         config_path = self.get_full_config_file_path('keepalived.conf')
-        utils.replace_file(config_path, config_str)
+        common_utils.replace_file(config_path, config_str)
 
         return config_path
 

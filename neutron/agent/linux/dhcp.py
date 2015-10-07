@@ -26,15 +26,14 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
 
-from neutron.agent.common import utils as common_utils
+from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import ipv6_utils
-from neutron.common import utils as commonutils
+from neutron.common import utils as common_utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.i18n import _LI, _LW, _LE
 
@@ -174,7 +173,7 @@ class DhcpLocalProcess(DhcpBase):
                                                version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
-        commonutils.ensure_dir(self.network_conf_dir)
+        common_utils.ensure_dir(self.network_conf_dir)
 
     @staticmethod
     def get_confs_dir(conf):
@@ -199,7 +198,7 @@ class DhcpLocalProcess(DhcpBase):
         if self.active:
             self.restart()
         elif self._enable_dhcp():
-            commonutils.ensure_dir(self.network_conf_dir)
+            common_utils.ensure_dir(self.network_conf_dir)
             interface_name = self.device_manager.setup(self.network)
             self.interface_name = interface_name
             self.spawn_process()
@@ -260,7 +259,7 @@ class DhcpLocalProcess(DhcpBase):
     @interface_name.setter
     def interface_name(self, value):
         interface_file_path = self.get_conf_file_name('interface')
-        utils.replace_file(interface_file_path, value)
+        common_utils.replace_file(interface_file_path, value)
 
     @property
     def active(self):
@@ -596,7 +595,7 @@ class Dnsmasq(DhcpLocalProcess):
             buf.write('%s %s %s * *\n' %
                       (timestamp, port.mac_address, ip_address))
         contents = buf.getvalue()
-        utils.replace_file(filename, contents)
+        common_utils.replace_file(filename, contents)
         LOG.debug('Done building initial lease file %s with contents:\n%s',
                   filename, contents)
         return filename
@@ -666,7 +665,7 @@ class Dnsmasq(DhcpLocalProcess):
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
 
-        utils.replace_file(filename, buf.getvalue())
+        common_utils.replace_file(filename, buf.getvalue())
         LOG.debug('Done building host file %s with contents:\n%s', filename,
                   buf.getvalue())
         return filename
@@ -737,7 +736,7 @@ class Dnsmasq(DhcpLocalProcess):
             if alloc:
                 buf.write('%s\t%s %s\n' % (alloc.ip_address, fqdn, hostname))
         addn_hosts = self.get_conf_file_name('addn_hosts')
-        utils.replace_file(addn_hosts, buf.getvalue())
+        common_utils.replace_file(addn_hosts, buf.getvalue())
         return addn_hosts
 
     def _output_opts_file(self):
@@ -746,7 +745,7 @@ class Dnsmasq(DhcpLocalProcess):
         options += self._generate_opts_per_port(subnet_index_map)
 
         name = self.get_conf_file_name('opts')
-        utils.replace_file(name, '\n'.join(options))
+        common_utils.replace_file(name, '\n'.join(options))
         return name
 
     def _generate_opts_per_subnet(self):
@@ -979,7 +978,7 @@ class DeviceManager(object):
     def __init__(self, conf, plugin):
         self.conf = conf
         self.plugin = plugin
-        self.driver = common_utils.load_interface_driver(conf)
+        self.driver = agent_common_utils.load_interface_driver(conf)
 
     def get_interface_name(self, network, port):
         """Return interface(device) name for use by the DHCP process."""
@@ -989,7 +988,8 @@ class DeviceManager(object):
         """Return a unique DHCP device ID for this host on the network."""
         # There could be more than one dhcp server per network, so create
         # a device id that combines host and network ids
-        return commonutils.get_dhcp_agent_device_id(network.id, self.conf.host)
+        return common_utils.get_dhcp_agent_device_id(network.id,
+                                                     self.conf.host)
 
     def _set_default_route(self, network, device_name):
         """Sets the default gateway for this dhcp namespace.

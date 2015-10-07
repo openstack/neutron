@@ -22,6 +22,7 @@ import six
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants
+from neutron.common import utils as common_utils
 
 
 RADVD_SERVICE_NAME = 'radvd'
@@ -94,7 +95,7 @@ class DaemonMonitor(object):
                 prefixes=auto_config_prefixes,
                 constants=constants))
 
-        utils.replace_file(radvd_conf, buf.getvalue())
+        common_utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf
 
     def _get_radvd_process_manager(self, callback=None):

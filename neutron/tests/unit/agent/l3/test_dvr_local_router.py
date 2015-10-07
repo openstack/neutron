@@ -75,7 +75,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.utils_exec = self.utils_exec_p.start()
 
         self.utils_replace_file_p = mock.patch(
-            'neutron.agent.linux.utils.replace_file')
+            'neutron.common.utils.replace_file')
         self.utils_replace_file = self.utils_replace_file_p.start()
 
         self.external_process_p = mock.patch(
