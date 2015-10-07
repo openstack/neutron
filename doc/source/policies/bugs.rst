@@ -308,6 +308,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | ovs-lib_                      | A bug affecting OVS Lib               | Terry Wilson         |
 +-------------------------------+---------------------------------------+----------------------+
+| py34_                         | Issues affecting the Python 3 porting | Cedric Brandily      |
++-------------------------------+---------------------------------------+----------------------+
 | qos_                          | A bug affecting ML2/QoS               | Miguel Ajo           |
 +-------------------------------+---------------------------------------+----------------------+
 | released-neutronclient_       | A bug affecting released clients      | Kyle Mestery         |
@@ -519,6 +521,14 @@ OVS Lib
 
 * `OVS Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs-lib>`_
 * `OVS Lib - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs-lib>`_
+
+.. _py34:
+
+PY34
+++++
+
+* `Py34 - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=py34>`_
+* `Py34 - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=py34>`_
 
 .. _qos:
 
