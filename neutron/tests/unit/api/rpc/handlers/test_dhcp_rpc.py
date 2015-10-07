@@ -211,17 +211,3 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
         self.plugin.assert_has_calls([
             mock.call.delete_ports_by_device_id(mock.ANY, 'devid', 'netid')])
-
-    def test_release_port_fixed_ip(self):
-        port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
-        port_update = dict(id='port_id', fixed_ips=[])
-        self.plugin.get_ports.return_value = [port_retval]
-
-        self.callbacks.release_port_fixed_ip(mock.ANY, network_id='netid',
-                                             device_id='devid', subnet_id='a')
-
-        self.plugin.assert_has_calls([
-            mock.call.get_ports(mock.ANY, filters=dict(network_id=['netid'],
-                                                       device_id=['devid'])),
-            mock.call.update_port(mock.ANY, 'port_id',
-                                  dict(port=port_update))])

@@ -452,13 +452,6 @@ class DhcpPluginApi(object):
                           network_id=network_id, device_id=device_id,
                           host=self.host)
 
-    def release_port_fixed_ip(self, network_id, device_id, subnet_id):
-        """Make a remote process call to release a fixed_ip on the port."""
-        cctxt = self.client.prepare()
-        return cctxt.call(self.context, 'release_port_fixed_ip',
-                          network_id=network_id, subnet_id=subnet_id,
-                          device_id=device_id, host=self.host)
-
 
 class NetworkCache(object):
     """Agent cache of the current network state."""
