@@ -316,7 +316,9 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | release-subproject_           | A request to release a subproject     | Kyle Mestery         |
 +-------------------------------+---------------------------------------+----------------------+
-| rfe_                          | Feature enhancements                  | Drivers Team         |
+| rfe_                          | Feature enhancements being screened   | Drivers Team         |
++-------------------------------+---------------------------------------+----------------------+
+| rfe-approved_                 | Approved feature enhancements         | Drivers Team         |
 +-------------------------------+---------------------------------------+----------------------+
 | sg-fw_                        | A bug affecting security groups       | Kevin Benton         |
 +-------------------------------+---------------------------------------+----------------------+
@@ -561,6 +563,14 @@ RFE
 
 * `RFE - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe>`_
 * `RFE - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=rfe>`_
+
+.. _rfe-approved:
+
+RFE-Approved
+++++++++++++
+
+* `RFE-Approved - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-approved>`_
+* `RFE-Approved - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=rfe-approved>`_
 
 .. _sriov-pci-pt:
 
