@@ -19,8 +19,6 @@ import mock
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
-import six
-import six.moves.urllib.request as urlrequest
 
 import neutron
 from neutron.api.v2 import attributes
@@ -105,25 +103,24 @@ class PolicyTestCase(base.BaseTestCase):
         result = policy.enforce(self.context, action, self.target)
         self.assertEqual(result, True)
 
-    @mock.patch.object(urlrequest, 'urlopen',
-                       return_value=six.StringIO("True"))
-    def test_enforce_http_true(self, mock_urlrequest):
+    #TODO(kevinbenton): replace these private method mocks with a fixture
+    @mock.patch.object(oslo_policy._checks.HttpCheck, '__call__',
+                       return_value=True)
+    def test_enforce_http_true(self, mock_httpcheck):
         action = "example:get_http"
         target = {}
         result = policy.enforce(self.context, action, target)
         self.assertEqual(result, True)
 
-    def test_enforce_http_false(self):
-
-        def fakeurlopen(url, post_data):
-            return six.StringIO("False")
-
-        with mock.patch.object(urlrequest, 'urlopen', new=fakeurlopen):
-            action = "example:get_http"
-            target = {}
-            self.assertRaises(oslo_policy.PolicyNotAuthorized,
-                              policy.enforce, self.context,
-                              action, target)
+    #TODO(kevinbenton): replace these private method mocks with a fixture
+    @mock.patch.object(oslo_policy._checks.HttpCheck, '__call__',
+                       return_value=False)
+    def test_enforce_http_false(self, mock_httpcheck):
+        action = "example:get_http"
+        target = {}
+        self.assertRaises(oslo_policy.PolicyNotAuthorized,
+                          policy.enforce, self.context,
+                          action, target)
 
     def test_templatized_enforcement(self):
         target_mine = {'tenant_id': 'fake'}
