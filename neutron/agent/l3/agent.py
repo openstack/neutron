@@ -25,6 +25,7 @@ from oslo_utils import timeutils
 
 from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
+from neutron.agent.l3 import dvr_edge_ha_router
 from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_local_router as dvr_local_router
 from neutron.agent.l3 import ha
@@ -297,11 +298,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     raise Exception(msg)
 
     def _create_router(self, router_id, router):
-        # TODO(Carl) We need to support a router that is both HA and DVR.  The
-        # patch that enables it will replace these lines.  See bug #1365473.
-        if router.get('distributed') and router.get('ha'):
-            raise n_exc.DvrHaRouterNotSupported(router_id=router_id)
-
         args = []
         kwargs = {
             'router_id': router_id,
@@ -314,6 +310,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if router.get('distributed'):
             kwargs['agent'] = self
             kwargs['host'] = self.host
+
+        if router.get('distributed') and router.get('ha'):
+            if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
+                kwargs['state_change_callback'] = self.enqueue_state_change
+                return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
+
+        if router.get('distributed'):
             if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
                 return dvr_router.DvrEdgeRouter(*args, **kwargs)
             else:

@@ -57,7 +57,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                                         self.snat_namespace.name,
                                         preserve_ips=[])
 
-    def external_gateway_removed(self, ex_gw_port, interface_name):
+    def _external_gateway_removed(self, ex_gw_port, interface_name):
         super(DvrEdgeRouter, self).external_gateway_removed(ex_gw_port,
                                                             interface_name)
         if not self._is_this_snat_host() and not self.snat_namespace:
@@ -69,8 +69,12 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                            bridge=self.agent_conf.external_network_bridge,
                            namespace=self.snat_namespace.name,
                            prefix=router.EXTERNAL_DEV_PREFIX)
-        self.snat_namespace.delete()
-        self.snat_namespace = None
+
+    def external_gateway_removed(self, ex_gw_port, interface_name):
+        self._external_gateway_removed(ex_gw_port, interface_name)
+        if self.snat_namespace:
+            self.snat_namespace.delete()
+            self.snat_namespace = None
 
     def internal_network_added(self, port):
         super(DvrEdgeRouter, self).internal_network_added(port)
@@ -115,18 +119,21 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             self.driver.unplug(snat_interface, namespace=ns_name,
                                prefix=prefix)
 
+    def _plug_snat_port(self, port):
+        interface_name = self._get_snat_int_device_name(port['id'])
+        self._internal_network_added(
+            self.snat_namespace.name, port['network_id'],
+            port['id'], port['fixed_ips'],
+            port['mac_address'], interface_name,
+            dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+
     def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
         """Create SNAT namespace."""
         snat_ns = self._create_snat_namespace()
         # connect snat_ports to br_int from SNAT namespace
         for port in self.get_snat_interfaces():
             # create interface_name
-            interface_name = self._get_snat_int_device_name(port['id'])
-            self._internal_network_added(
-                snat_ns.name, port['network_id'],
-                port['id'], port['fixed_ips'],
-                port['mac_address'], interface_name,
-                dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+            self._plug_snat_port(port)
         self._external_gateway_added(ex_gw_port, gw_interface_name,
                                      snat_ns.name, preserve_ips=[])
         self.snat_iptables_manager = iptables_manager.IptablesManager(

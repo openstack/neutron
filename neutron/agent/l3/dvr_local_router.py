@@ -298,7 +298,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # external_gateway port or the agent_mode.
         for subnet in port['subnets']:
             self._set_subnet_arp_info(subnet['id'])
+        self._snat_redirect_add_from_port(port)
 
+    def _snat_redirect_add_from_port(self, port):
         ex_gw_port = self.get_ex_gw_port()
         if not ex_gw_port:
             return

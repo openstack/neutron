@@ -137,7 +137,11 @@ class AgentMixin(object):
             gateway_ips = ri._get_external_gw_ips(ri.ex_gw_port)
             if not ri.is_v6_gateway_set(gateway_ips):
                 interface_name = ri.get_external_device_name(ex_gw_port_id)
-                ri.driver.configure_ipv6_ra(ri.ns_name, interface_name)
+                if ri.router.get('distributed', False):
+                    namespace = ri.ha_namespace
+                else:
+                    namespace = ri.ns_name
+                ri.driver.configure_ipv6_ra(namespace, interface_name)
 
     def _update_metadata_proxy(self, ri, router_id, state):
         if state == 'master':
