@@ -16,7 +16,6 @@ ignore_regexes=(
     "^plugins/brocade.*$"
     "^plugins/embrane.*$"
     "^plugins/ibm.*$"
-    "^plugins/oneconvergence.*$"
     # The following open source plugin tests are not actually unit
     # tests and are ignored pending their relocation to the functional
     # test tree.
