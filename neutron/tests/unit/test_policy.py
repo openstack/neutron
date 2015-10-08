@@ -16,6 +16,7 @@
 """Test of Policy Engine For Neutron"""
 
 import mock
+from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
@@ -103,19 +104,15 @@ class PolicyTestCase(base.BaseTestCase):
         result = policy.enforce(self.context, action, self.target)
         self.assertTrue(result)
 
-    #TODO(kevinbenton): replace these private method mocks with a fixture
-    @mock.patch.object(oslo_policy._checks.HttpCheck, '__call__',
-                       return_value=True)
-    def test_enforce_http_true(self, mock_httpcheck):
+    def test_enforce_http_true(self):
+        self.useFixture(op_fixture.HttpCheckFixture())
         action = "example:get_http"
         target = {}
         result = policy.enforce(self.context, action, target)
         self.assertTrue(result)
 
-    #TODO(kevinbenton): replace these private method mocks with a fixture
-    @mock.patch.object(oslo_policy._checks.HttpCheck, '__call__',
-                       return_value=False)
-    def test_enforce_http_false(self, mock_httpcheck):
+    def test_enforce_http_false(self):
+        self.useFixture(op_fixture.HttpCheckFixture(False))
         action = "example:get_http"
         target = {}
         self.assertRaises(oslo_policy.PolicyNotAuthorized,
