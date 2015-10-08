@@ -197,7 +197,7 @@ class ProviderConfiguration(object):
             if v['driver'] == driver:
                 msg = (_("Driver %s is not unique across providers") %
                        driver)
-                LOG.exception(msg)
+                LOG.error(msg)
                 raise n_exc.Invalid(msg)
 
     def _ensure_default_unique(self, type, default):
@@ -207,7 +207,7 @@ class ProviderConfiguration(object):
             if k[0] == type and v['default']:
                 msg = _("Multiple default providers "
                         "for service %s") % type
-                LOG.exception(msg)
+                LOG.error(msg)
                 raise n_exc.Invalid(msg)
 
     def add_provider(self, provider):
