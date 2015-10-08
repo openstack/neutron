@@ -15,6 +15,7 @@
 import httplib2
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import wsgi as base_wsgi
 from oslo_utils import encodeutils
 import six
 import six.moves.urllib.parse as urlparse
@@ -45,7 +46,7 @@ class NetworkMetadataProxyHandler(object):
         if network_id is None and router_id is None:
             raise exceptions.NetworkIdOrRouterIdRequiredError()
 
-    @webob.dec.wsgify(RequestClass=webob.Request)
+    @webob.dec.wsgify(RequestClass=base_wsgi.Request)
     def __call__(self, req):
         LOG.debug("Request: %s", req)
         try:

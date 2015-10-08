@@ -19,9 +19,7 @@ Utility methods for working with WSGI servers
 from __future__ import print_function
 
 import errno
-import os
 import socket
-import ssl
 import sys
 import time
 
@@ -30,10 +28,12 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
+from oslo_service import _options
 from oslo_service import service as common_service
+from oslo_service import sslutils
 from oslo_service import systemd
+from oslo_service import wsgi
 from oslo_utils import excutils
-import routes.middleware
 import six
 import webob.dec
 import webob.exc
@@ -50,44 +50,19 @@ socket_opts = [
                default=4096,
                help=_("Number of backlog requests to configure "
                       "the socket with")),
-    cfg.IntOpt('tcp_keepidle',
-               default=600,
-               help=_("Sets the value of TCP_KEEPIDLE in seconds for each "
-                      "server socket. Not supported on OS X.")),
     cfg.IntOpt('retry_until_window',
                default=30,
                help=_("Number of seconds to keep retrying to listen")),
-    cfg.IntOpt('max_header_line',
-               default=16384,
-               help=_("Max header line to accommodate large tokens")),
     cfg.BoolOpt('use_ssl',
                 default=False,
                 help=_('Enable SSL on the API server')),
-    cfg.StrOpt('ssl_ca_file',
-               help=_("CA certificate file to use to verify "
-                      "connecting clients")),
-    cfg.StrOpt('ssl_cert_file',
-               help=_("Certificate file to use when starting "
-                      "the server securely")),
-    cfg.StrOpt('ssl_key_file',
-               help=_("Private key file to use when starting "
-                      "the server securely")),
-    cfg.BoolOpt('wsgi_keep_alive',
-                default=True,
-                help=_("Determines if connections are allowed to be held "
-                     "open by clients after a request is fulfilled. A value "
-                     "of False will ensure that the socket connection will "
-                     "be explicitly closed once a response has been sent to "
-                     "the client.")),
-    cfg.IntOpt('client_socket_timeout', default=900,
-               help=_("Timeout for client connections socket operations. "
-                    "If an incoming connection is idle for this number of "
-                    "seconds it will be closed. A value of '0' means "
-                    "wait forever.")),
 ]
 
 CONF = cfg.CONF
 CONF.register_opts(socket_opts)
+# TODO(eezhova): Replace it with wsgi.register_opts(CONF) when oslo.service
+# 0.10.0 releases.
+CONF.register_opts(_options.wsgi_opts)
 
 LOG = logging.getLogger(__name__)
 
@@ -118,7 +93,7 @@ class WorkerService(worker.NeutronWorker):
         # Duplicate a socket object to keep a file descriptor usable.
         dup_sock = self._service._socket.dup()
         if CONF.use_ssl:
-            dup_sock = self._service.wrap_ssl(dup_sock)
+            dup_sock = sslutils.wrap(CONF, dup_sock)
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
                                                 dup_sock)
@@ -152,7 +127,7 @@ class Server(object):
         # wsgi server to wait forever.
         self.client_socket_timeout = CONF.client_socket_timeout or None
         if CONF.use_ssl:
-            self._check_ssl_settings()
+            sslutils.is_enabled(CONF)
 
     def _get_socket(self, host, port, backlog):
         bind_addr = (host, port)
@@ -200,37 +175,6 @@ class Server(object):
                             CONF.tcp_keepidle)
 
         return sock
-
-    @staticmethod
-    def _check_ssl_settings():
-        if not os.path.exists(CONF.ssl_cert_file):
-            raise RuntimeError(_("Unable to find ssl_cert_file "
-                                 ": %s") % CONF.ssl_cert_file)
-
-        # ssl_key_file is optional because the key may be embedded in the
-        # certificate file
-        if CONF.ssl_key_file and not os.path.exists(CONF.ssl_key_file):
-            raise RuntimeError(_("Unable to find "
-                                 "ssl_key_file : %s") % CONF.ssl_key_file)
-
-        # ssl_ca_file is optional
-        if CONF.ssl_ca_file and not os.path.exists(CONF.ssl_ca_file):
-            raise RuntimeError(_("Unable to find ssl_ca_file "
-                                 ": %s") % CONF.ssl_ca_file)
-
-    @staticmethod
-    def wrap_ssl(sock):
-        ssl_kwargs = {'server_side': True,
-                      'certfile': CONF.ssl_cert_file,
-                      'keyfile': CONF.ssl_key_file,
-                      'cert_reqs': ssl.CERT_NONE,
-                      }
-
-        if CONF.ssl_ca_file:
-            ssl_kwargs['ca_certs'] = CONF.ssl_ca_file
-            ssl_kwargs['cert_reqs'] = ssl.CERT_REQUIRED
-
-        return ssl.wrap_socket(sock, **ssl_kwargs)
 
     def start(self, application, port, host='0.0.0.0', workers=0):
         """Run a WSGI server with the given application."""
@@ -353,7 +297,7 @@ class Middleware(object):
         return self.process_response(response)
 
 
-class Request(webob.Request):
+class Request(wsgi.Request):
 
     def best_match_content_type(self):
         """Determine the most acceptable content-type.
@@ -708,63 +652,6 @@ class Debug(Middleware):
             sys.stdout.flush()
             yield part
         print()
-
-
-class Router(object):
-    """WSGI middleware that maps incoming requests to WSGI apps."""
-
-    def __init__(self, mapper):
-        """Create a router for the given routes.Mapper.
-
-        Each route in `mapper` must specify a 'controller', which is a
-        WSGI app to call.  You'll probably want to specify an 'action' as
-        well and have your controller be a wsgi.Controller, who will route
-        the request to the action method.
-
-        Examples:
-          mapper = routes.Mapper()
-          sc = ServerController()
-
-          # Explicit mapping of one route to a controller+action
-          mapper.connect(None, "/svrlist", controller=sc, action="list")
-
-          # Actions are all implicitly defined
-          mapper.resource("network", "networks", controller=nc)
-
-          # Pointing to an arbitrary WSGI app.  You can specify the
-          # {path_info:.*} parameter so the target app can be handed just that
-          # section of the URL.
-          mapper.connect(None, "/v1.0/{path_info:.*}", controller=BlogApp())
-        """
-        self.map = mapper
-        self._router = routes.middleware.RoutesMiddleware(self._dispatch,
-                                                          self.map)
-
-    @webob.dec.wsgify
-    def __call__(self, req):
-        """Route the incoming request to a controller based on self.map.
-
-        If no match, return a 404.
-        """
-        return self._router
-
-    @staticmethod
-    @webob.dec.wsgify(RequestClass=Request)
-    def _dispatch(req):
-        """Dispatch a Request.
-
-        Called by self._router after matching the incoming request to a route
-        and putting the information into req.environ. Either returns 404
-        or the routed WSGI app's response.
-        """
-        match = req.environ['wsgiorg.routing_args'][1]
-        if not match:
-            language = req.best_match_language()
-            msg = _('The resource could not be found.')
-            msg = oslo_i18n.translate(msg, language)
-            return webob.exc.HTTPNotFound(explanation=msg)
-        app = match['controller']
-        return app
 
 
 class Resource(Application):
