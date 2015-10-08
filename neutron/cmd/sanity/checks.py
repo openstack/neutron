@@ -21,7 +21,6 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import ha_router
@@ -327,8 +326,8 @@ def ovsdb_native_supported():
         LOG.error(_LE("Failed to import required modules. Ensure that the "
                       "python-openvswitch package is installed. Error: %s"),
                   ex)
-    except Exception as ex:
-        LOG.exception(six.text_type(ex))
+    except Exception:
+        LOG.exception(_LE("Unexpected exception occurred."))
 
     return False
 

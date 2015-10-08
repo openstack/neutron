@@ -244,10 +244,9 @@ class OVSBridge(BaseOVS):
         ofport = INVALID_OFPORT
         try:
             ofport = self._get_port_ofport(port_name)
-        except retrying.RetryError as e:
-            LOG.exception(_LE("Timed out retrieving ofport on port %(pname)s. "
-                              "Exception: %(exception)s"),
-                          {'pname': port_name, 'exception': e})
+        except retrying.RetryError:
+            LOG.exception(_LE("Timed out retrieving ofport on port %s."),
+                          port_name)
         return ofport
 
     def get_datapath_id(self):

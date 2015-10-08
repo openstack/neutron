@@ -478,9 +478,8 @@ class ExtensionManager(object):
             LOG.debug('Ext alias: %s', extension.get_alias())
             LOG.debug('Ext description: %s', extension.get_description())
             LOG.debug('Ext updated: %s', extension.get_updated())
-        except AttributeError as ex:
-            LOG.exception(_LE("Exception loading extension: %s"),
-                          six.text_type(ex))
+        except AttributeError:
+            LOG.exception(_LE("Exception loading extension"))
             return False
         return True
 

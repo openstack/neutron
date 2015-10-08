@@ -218,7 +218,7 @@ class ProviderConfiguration(object):
         if provider_type in self.providers:
             msg = (_("Multiple providers specified for service "
                      "%s") % provider['service_type'])
-            LOG.exception(msg)
+            LOG.error(msg)
             raise n_exc.Invalid(msg)
         self.providers[provider_type] = {'driver': provider['driver'],
                                          'default': provider['default']}
