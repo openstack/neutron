@@ -317,11 +317,6 @@ def register_resources_from_config():
     # This operation is now deprecated. All the neutron core and extended
     # resource for which  quota limits are enforced explicitly register
     # themselves with the quota engine.
-    versionutils.report_deprecated_feature(
-        LOG, _LW("Registering resources to apply quota limits to using the "
-                 "quota_items option is deprecated as of Liberty."
-                 "Resource REST controllers should take care of registering "
-                 "resources with the quota engine."))
     for resource_item in (set(cfg.CONF.QUOTAS.quota_items) -
                           set(default_quota_items)):
         resource_registry.register_resource_by_name(resource_item)
