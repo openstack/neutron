@@ -176,8 +176,7 @@ class TestWSGIServer(base.BaseTestCase):
         server.stop()
 
     @mock.patch.object(wsgi, 'eventlet')
-    @mock.patch.object(wsgi, 'loggers')
-    def test__run(self, logging_mock, eventlet_mock):
+    def test__run(self, eventlet_mock):
         server = wsgi.Server('test')
         server._run("app", "socket")
         eventlet_mock.wsgi.server.assert_called_once_with(
@@ -188,7 +187,6 @@ class TestWSGIServer(base.BaseTestCase):
             keepalive=CONF.wsgi_keep_alive,
             socket_timeout=server.client_socket_timeout
         )
-        self.assertTrue(len(logging_mock.mock_calls))
 
 
 class SerializerTest(base.BaseTestCase):
