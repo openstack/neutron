@@ -155,6 +155,14 @@ For anything more elaborate, please visit the testing section.
 * Don't mimic existing tests that violate these guidelines. We are attempting to
   replace all of these so more tests like them create more work. If you need help
   writing a test, reach out to the testing lieutenants and the team on IRC.
+* Mocking open() is a dangerous practice because it can lead to unexpected
+  bugs like `bug 1503847 <https://bugs.launchpad.net/neutron/+bug/1503847>`_.
+  In fact, when the built-in open method is mocked during tests, some
+  utilities (like debtcollector) may still rely on the real thing, and may
+  end up using the mock rather what they are really looking for. If you must,
+  consider scoping by `module https://review.openstack.org/#/c/232265/`_, but
+  it is better not to mock open() at all.
+
 
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
