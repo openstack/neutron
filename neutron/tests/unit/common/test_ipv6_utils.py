@@ -19,6 +19,7 @@ import mock
 from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.tests import base
+from neutron.tests import tools
 
 
 class IPv6byEUI64TestCase(base.BaseTestCase):
@@ -65,31 +66,31 @@ class TestIsEnabled(base.BaseTestCase):
         self.addCleanup(reset_detection_flag)
         self.mock_exists = mock.patch("os.path.exists",
                                       return_value=True).start()
-        mock_open = mock.patch("six.moves.builtins.open").start()
-        self.mock_read = mock_open.return_value.__enter__.return_value.read
+        self.proc_path = '/proc/sys/net/ipv6/conf/default/disable_ipv6'
 
     def test_enabled(self):
-        self.mock_read.return_value = "0"
+        self.useFixture(tools.OpenFixture(self.proc_path, '0'))
         enabled = ipv6_utils.is_enabled()
         self.assertTrue(enabled)
 
     def test_disabled(self):
-        self.mock_read.return_value = "1"
+        self.useFixture(tools.OpenFixture(self.proc_path, '1'))
         enabled = ipv6_utils.is_enabled()
         self.assertFalse(enabled)
 
     def test_disabled_non_exists(self):
+        mo = self.useFixture(tools.OpenFixture(self.proc_path, '1')).mock_open
         self.mock_exists.return_value = False
         enabled = ipv6_utils.is_enabled()
         self.assertFalse(enabled)
-        self.assertFalse(self.mock_read.called)
+        self.assertFalse(mo.called)
 
     def test_memoize(self):
-        self.mock_read.return_value = "0"
+        mo = self.useFixture(tools.OpenFixture(self.proc_path, '0')).mock_open
         ipv6_utils.is_enabled()
         enabled = ipv6_utils.is_enabled()
         self.assertTrue(enabled)
-        self.mock_read.assert_called_once_with()
+        mo.assert_called_once_with(self.proc_path, 'r')
 
 
 class TestIsAutoAddressSubnet(base.BaseTestCase):

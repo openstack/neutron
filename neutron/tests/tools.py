@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import random
 import string
 import warnings
@@ -65,6 +66,28 @@ class WarningsFixture(fixtures.Fixture):
         for wtype in self.warning_types:
             warnings.filterwarnings(
                 "always", category=wtype, module='^neutron\\.')
+
+
+class OpenFixture(fixtures.Fixture):
+    """Mock access to a specific file while preserving open for others."""
+
+    def __init__(self, filepath, contents=''):
+        self.path = filepath
+        self.contents = contents
+
+    def _setUp(self):
+        self.mock_open = mock.mock_open(read_data=self.contents)
+        self._orig_open = open
+
+        def replacement_open(name, *args, **kwargs):
+            if name == self.path:
+                return self.mock_open(name, *args, **kwargs)
+            return self._orig_open(name, *args, **kwargs)
+
+        self._patch = mock.patch('six.moves.builtins.open',
+                                 new=replacement_open)
+        self._patch.start()
+        self.addCleanup(self._patch.stop)
 
 
 class SafeCleanupFixture(fixtures.Fixture):
