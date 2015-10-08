@@ -29,7 +29,6 @@ from eventlet.green import subprocess
 from eventlet import greenthread
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_log import loggers
 from oslo_rootwrap import client
 from oslo_utils import excutils
 import six
@@ -418,4 +417,4 @@ class UnixDomainWSGIServer(wsgi.Server):
                              application,
                              max_size=self.num_threads,
                              protocol=UnixDomainHttpProtocol,
-                             log=loggers.WritableLogger(logger))
+                             log=logger)

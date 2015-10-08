@@ -29,7 +29,6 @@ import eventlet.wsgi
 from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
-from oslo_log import loggers
 from oslo_serialization import jsonutils
 from oslo_service import service as common_service
 from oslo_service import systemd
@@ -288,7 +287,7 @@ class Server(object):
         """Start a WSGI server in a new green thread."""
         eventlet.wsgi.server(socket, application,
                              max_size=self.num_threads,
-                             log=loggers.WritableLogger(LOG),
+                             log=LOG,
                              keepalive=CONF.wsgi_keep_alive,
                              socket_timeout=self.client_socket_timeout)
 
