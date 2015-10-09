@@ -2431,6 +2431,42 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 wanted_subnetid = p['port']['fixed_ips'][0]['subnet_id']
                 self.assertEqual(wanted_subnetid, subnet_id)
 
+    def test_l3_agent_sync_interfaces(self):
+        """Test L3 interfaces query return valid result"""
+        with self.router() as router1, self.router() as router2:
+            with self.port() as port1, self.port() as port2:
+                self._router_interface_action('add',
+                                              router1['router']['id'],
+                                              None,
+                                              port1['port']['id'])
+                self._router_interface_action('add',
+                                              router2['router']['id'],
+                                              None,
+                                              port2['port']['id'])
+                admin_ctx = context.get_admin_context()
+                router1_id = router1['router']['id']
+                router2_id = router2['router']['id']
+
+                # Verify if router1 pass in, return only interface from router1
+                ifaces = self.plugin.get_sync_interfaces(admin_ctx,
+                                                         [router1_id])
+                self.assertEqual(1, len(ifaces))
+                self.assertEqual(router1_id,
+                                 ifaces[0]['device_id'])
+
+                # Verify if router1 and router2 pass in, return both interfaces
+                ifaces = self.plugin.get_sync_interfaces(admin_ctx,
+                                                         [router1_id,
+                                                          router2_id])
+                self.assertEqual(2, len(ifaces))
+                device_list = [i['device_id'] for i in ifaces]
+                self.assertIn(router1_id, device_list)
+                self.assertIn(router2_id, device_list)
+
+                #Verify if no router pass in, return empty list
+                ifaces = self.plugin.get_sync_interfaces(admin_ctx, None)
+                self.assertEqual(0, len(ifaces))
+
     def test_l3_agent_routers_query_ignore_interfaces_with_moreThanOneIp(self):
         with self.router() as r:
             with self.subnet(cidr='9.0.1.0/24') as subnet:
