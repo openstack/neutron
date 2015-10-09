@@ -14,9 +14,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev321\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-28 06:25+0000\n"
+"POT-Creation-Date: 2015-10-09 06:20+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: zh_Hans_CN\n"
@@ -230,10 +230,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "必须指定测量驱动程序"
 
-#, python-format
-msgid "A resource is not found: %(reason)s"
-msgstr "找不到资源：%(reason)s"
-
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "用于为 Neutron 高级服务检索服务提供程序的 API"
 
@@ -365,10 +361,6 @@ msgid "An unknown exception occurred."
 msgstr "发生未知异常。"
 
 #, python-format
-msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "发生未知的 nvsd 插件异常：%(reason)s"
-
-#, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "在 POST 中，不允许属性“%s”"
 
@@ -430,9 +422,6 @@ msgstr "Brocade 插件发生异常，请查看日志"
 
 msgid "Bulk operation not supported"
 msgstr "成批操作不受支持"
-
-msgid "CA certificate file to use to verify connecting clients"
-msgstr "CA认证文件来使用验证连接的客户端"
 
 msgid "CIDR to monitor"
 msgstr "要监视的 CIDR"
@@ -517,9 +506,6 @@ msgstr "无法更新只读属性 %s"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "用于 SSL 的认证中心公用密钥（CA 证书）文件"
 
-msgid "Certificate file to use when starting the server securely"
-msgstr "当安全的启动服务器时使用证书文件"
-
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
@@ -591,9 +577,6 @@ msgstr "用于接口驱动程序的配置文件（还可使用 l3_agent.ini）"
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s 具有冲突值 ethertype %(ethertype)s "
 
-msgid "Connection is closed by the server."
-msgstr "服务器已关闭连接。"
-
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
@@ -605,10 +588,6 @@ msgstr ""
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr "在尝试%(time)d 秒之后不能绑定 %(host)s:%(port)s "
-
-#, python-format
-msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
-msgstr "未能在租户 %(tenant_id)s 下创建 %(resource)s"
 
 msgid "Could not deserialize data"
 msgstr "未能对数据进行反序列化"
@@ -680,15 +659,6 @@ msgstr "请通过除去所有设备来删除名称空间。"
 #, python-format
 msgid "Deleting port %s"
 msgstr "正在删除端口 %s"
-
-msgid ""
-"Determines if connections are allowed to be held open by clients after a "
-"request is fulfilled. A value of False will ensure that the socket "
-"connection will be explicitly closed once a response has been sent to the "
-"client."
-msgstr ""
-"确定在实现请求之后是否允许通过客户机使连接保持打开状态。值 False 将确保一旦响"
-"应发送到客户机，套接字连接就将显式关闭。"
 
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
@@ -966,14 +936,6 @@ msgid "Failed scheduling router %(router_id)s to the L3 Agent %(agent_id)s."
 msgstr "将路由器 %(router_id)s 调度到 L3 代理 %(agent_id)s 失败。"
 
 #, python-format
-msgid "Failed to %(method)s %(resource)s"
-msgstr "未能 %(method)s %(resource)s"
-
-#, python-format
-msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
-msgstr "未能 %(method)s %(resource)s（标识为 %(resource_id)s）"
-
-#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1121,9 +1083,6 @@ msgstr "要删除的探测器端口的标识"
 msgid "ID of probe port to execute command"
 msgstr "用于执行命令的探测器端口的标识"
 
-msgid "ID of the project that MidoNet admin user belongs to."
-msgstr "MidoNet 管理员用户所属的项目的标识。"
-
 msgid "ID of the router"
 msgstr "路由器ID"
 
@@ -1217,14 +1176,6 @@ msgstr "要使用的集成网桥。"
 msgid "Interface to monitor"
 msgstr "要监视的接口"
 
-#, python-format
-msgid "Internal Server Error from NVSD controller: %(reason)s"
-msgstr "NVSD 控制器中发生内部服务器错误：%(reason)s"
-
-#, python-format
-msgid "Internal Server Error: %(reason)s"
-msgstr "发生内部服务器错误：%(reason)s"
-
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr "子进程活性检查之间的时间间隔（秒），使用 0 来进行禁用"
@@ -1253,9 +1204,6 @@ msgstr ""
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "无效设备 %(dev_name)s：%(reason)s"
-
-msgid "Invalid access credentials to the Server."
-msgstr "针对服务器的访问凭证无效。"
 
 #, python-format
 msgid ""
@@ -1486,9 +1434,6 @@ msgstr "请求主体的格式不正确：%(reason)s"
 msgid "Management Security Zone id"
 msgstr "管理安全区域标识"
 
-msgid "Max header line to accommodate large tokens"
-msgstr "用于容纳大型令牌的最大标题行"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "最大 DNS 名称服务器数"
 
@@ -1525,15 +1470,6 @@ msgid ""
 msgstr ""
 "带有 remote_ip_prefix %(remote_ip_prefix)s 的测量标签规则与另一测量标签规则重"
 "叠"
-
-msgid "MidoNet API server URI."
-msgstr "MidoNet API 服务器 URI。"
-
-msgid "MidoNet admin password."
-msgstr "MidoNet 管理员密码。"
-
-msgid "MidoNet admin username."
-msgstr "MidoNet 管理员用户名。"
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr "请通过监视 ovsdb 以获取接口更改来最大程度地减少轮询。"
@@ -1580,21 +1516,6 @@ msgstr "还必须指定协议（如果给定了端口范围）。"
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "必须在添加或删除流时指定一个或多个操作"
-
-msgid "NVSD Controller IP address"
-msgstr "NVSD 控制器 IP 地址"
-
-msgid "NVSD Controller Port number"
-msgstr "NVSD 控制器端口号"
-
-msgid "NVSD Controller password"
-msgstr "NVSD 控制器密码"
-
-msgid "NVSD Controller username"
-msgstr "NVSD 控制器用户名"
-
-msgid "NVSD controller REST API request timeout in seconds"
-msgstr "NVSD 控制器 REST API 请求超时，以秒计"
 
 #, python-format
 msgid ""
@@ -1752,9 +1673,6 @@ msgstr "积压许多配置socket的请求"
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
 msgstr "每个租户允许的浮动 IP 数。负值表示无限。"
-
-msgid "Number of login retries to NVSD controller"
-msgstr "对 NVSD 控制器的登录重试次数"
 
 msgid ""
 "Number of networks allowed per tenant. A negative value means unlimited."
@@ -1951,9 +1869,6 @@ msgstr "必须启用端口安全性，并且端口必须具有 IP 地址，以�
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
 msgstr "在 IPV%(version)s 池中，不支持前缀“%(prefix)s”"
 
-msgid "Private key file to use when starting the server securely"
-msgstr "私有key文件用于安全的启动服务器时"
-
 msgid "Private key of client certificate."
 msgstr "客户机证书的专用密钥。"
 
@@ -2028,10 +1943,6 @@ msgid ""
 "ip_address %(ip_address)s."
 msgstr ""
 "请求包含重复地址对：mac_address %(mac_address)s ip_address %(ip_address)s。"
-
-#, python-format
-msgid "Request sent to server is invalid: %(reason)s"
-msgstr "发送至服务器的请求无效：%(reason)s"
 
 #, python-format
 msgid ""
@@ -2188,11 +2099,6 @@ msgid ""
 "VXLAN tunnel."
 msgstr "在承载 GRE/VXLAN 隧道的出局 IP 包上设置或取消设置不分段 (DF) 位。"
 
-msgid ""
-"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
-"supported on OS X."
-msgstr "为每个服务器socket 设置 TCP_KEEPIDLE 的秒值. 在OSX上不支持."
-
 msgid "Shared resource pool id"
 msgstr "共享资源池标识"
 
@@ -2299,9 +2205,6 @@ msgid ""
 msgstr ""
 "必须为此代理配置“gateway_external_network_id”选项，因为 Neutron 具有多个外部"
 "网络。"
-
-msgid "The API paste config file to use"
-msgstr "要使用的 API 粘贴配置文件"
 
 #, python-format
 msgid ""
@@ -2440,13 +2343,6 @@ msgstr "已删除端口“%s”"
 msgid "The port to bind to"
 msgstr "端口要绑定至"
 
-msgid "The request has timed out."
-msgstr "请求已超时。"
-
-#, python-format
-msgid "The request is forbidden access to the resource: %(reason)s"
-msgstr "已禁止请求访问资源：%(reason)s"
-
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr "请求的内容类型%s非法。"
@@ -2501,14 +2397,6 @@ msgstr ""
 "用此方式。“dvr”- 此方法启用 DVR 功能，并且必须用于计算主机上运行的 L3 代"
 "理。“dvr_snat”- 它允许中央 SNAT 支持与 DVR 配合使用。此方法必须用于中央节点或"
 "单主机部署（例如，devstack）上运行的 L3代理程序"
-
-msgid ""
-"Timeout for client connections socket operations. If an incoming connection "
-"is idle for this number of seconds it will be closed. A value of '0' means "
-"wait forever."
-msgstr ""
-"客户机连接套接字操作的超时。如果入局连接处于空闲状态的时间达到此秒数，那么它"
-"将关闭。值“0”意味着永远等待。"
 
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr "ovs-vsctl 命令的超时（以秒计）"
@@ -2629,11 +2517,6 @@ msgstr ""
 "old_mac %(old_mac)s，new_mac %(new_mac)s"
 
 #, python-format
-msgid ""
-"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
-msgstr "无法连接至 NVSD 控制器。正在退出（尝试 %(retries)s 次之后）"
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "无法转换 %s 中的值"
 
@@ -2690,18 +2573,6 @@ msgstr "在外部网络上找不到任何 IP 地址%(net_id)s."
 msgid "Unable to find resource name in %s"
 msgstr "在%s中找不到源的名称"
 
-#, python-format
-msgid "Unable to find ssl_ca_file : %s"
-msgstr "不能找到 ssl_ca_file: %s"
-
-#, python-format
-msgid "Unable to find ssl_cert_file : %s"
-msgstr "不能找到 ssl_cert_file: %s"
-
-#, python-format
-msgid "Unable to find ssl_key_file : %s"
-msgstr "不能找到 ssl_key_file: %s"
-
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "对于 IPv4 前缀，无法通过 EUI64 生成 IP 地址"
 
@@ -2718,10 +2589,6 @@ msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
 msgstr "无法从:%s中匹配目标域. 匹配应该使用以下形式%%(域名)s"
-
-#, python-format
-msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
-msgstr "无法从配置文件 %(config_path)s 装入 %(app_name)s。"
 
 #, python-format
 msgid ""
@@ -2948,9 +2815,6 @@ msgstr "在没有 port_id 的情况下，无法指定 fixed_ip_address"
 #, python-format
 msgid "has device owner %s"
 msgstr "具有设备所有者 %s"
-
-msgid "integration bridge"
-msgstr "集成网桥"
 
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"

@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-22 07:42+0000\n"
+"POT-Creation-Date: 2015-10-09 06:21+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -23,10 +23,6 @@ msgstr ""
 "Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Zanata 3.7.1\n"
-
-#, python-format
-msgid "%(method)s to %(url)s, unexpected response code: %(status)d"
-msgstr "%(url)s ye %(method)s, beklenmedik yanıt kodu: %(status)d"
 
 #, python-format
 msgid ""
@@ -108,10 +104,6 @@ msgstr "Köprü %s mevcut değil"
 
 msgid "Brocade NOS driver error"
 msgstr "Brocade NOS sürücüsü hatası"
-
-#, python-format
-msgid "Cannot delete bridge %s, does not exist"
-msgstr "%s köprüsü silinemiyor, mevcut değil"
 
 msgid "Cannot have multiple IPv4 subnets on router port"
 msgstr "Yönlendirici bağlantı noktasında birden fazla IPv4 alt ağı olamaz"
@@ -274,10 +266,6 @@ msgstr ""
 "başarısız oldu: %s"
 
 #, python-format
-msgid "Deleting newly created neutron port %s"
-msgstr "Yeni oluşturulmuş neutron bağlantısı %s siliniyor"
-
-#, python-format
 msgid "Driver %(driver)s does not implement %(func)s"
 msgstr "Sürücü %(driver)s %(func)s yi uygulamıyor"
 
@@ -303,20 +291,9 @@ msgstr " '%s' uzantısına dair özellikler getirilirken hata oluştu."
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr " '%(driver)s': %(inner)s arayüz sürücüsü dahil edilirken hata oluştu"
 
-msgid "Error in agent event loop"
-msgstr "Ajan olay döngüsünde hata"
-
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr "Ajan döngüsünde hata. Aygıt bilgisi: %s"
-
-#, python-format
-msgid "Error loading plugin by class, %s"
-msgstr "Plugin yüklenirken %s sınıfı tarafından bir hata oluştu!"
-
-#, python-format
-msgid "Error loading plugin by name, %s"
-msgstr "%s isimli plugin yüklenirken bir hata oluştu!"
 
 #, python-format
 msgid "Error loading provider '%(provider)s' for service %(service_type)s"
@@ -391,10 +368,6 @@ msgstr "Ağ yeniden zamanlama sırasında istisna oluştu"
 
 msgid "Exception encountered during router rescheduling."
 msgstr "Yönlendirici yeniden zamanlama sırasında istisna oluştu."
-
-#, python-format
-msgid "Exception loading extension: %s"
-msgstr "Uzantı yükleme hatası: %s"
 
 msgid "Exception occurs when timer stops"
 msgstr "Zamanlayıcı durmaya çalışırken hata oluşur."
@@ -494,15 +467,6 @@ msgstr ""
 "OVS yama bağlantı noktası oluşturma başarısız. Bu ajanda tünelleme "
 "etkinleştirilemez, çünkü bu OVS sürümü tünelleri ya da yama bağlantı "
 "noktalarını desteklemiyor. Ajan sonlandırıldı!"
-
-msgid "Failed to create floatingip"
-msgstr "Değişken ip oluşturma başarısız"
-
-msgid "Failed to create router"
-msgstr "Yönlendirici oluşturma başarısız"
-
-msgid "Failed to create subnet, deleting it from neutron"
-msgstr "Alt ağ oluşturma başarısız, neutron'dan siliniyor"
 
 #, python-format
 msgid "Failed to destroy stale namespace %s"
@@ -618,10 +582,6 @@ msgstr ""
 "ihtiyaclardan dolayı."
 
 #, python-format
-msgid "Login Failed: %s"
-msgstr "Giriş Başarısız: %s"
-
-#, python-format
 msgid "MAC generation error after %s attempts"
 msgstr "%s denemeden sonra MAC üretme hatası"
 
@@ -655,10 +615,6 @@ msgstr "Eksik subnet/agent_gateway_port"
 #, python-format
 msgid "Multiple ports have port_id starting with %s"
 msgstr "Birden çok bağlantı noktası %s port_id ile başlıyor"
-
-#, python-format
-msgid "NETCONF error: %s"
-msgstr "NETCONF hatası: %s"
 
 #, python-format
 msgid "Network %s has no segments"
@@ -769,25 +725,6 @@ msgstr "Bağlantı noktası %s mevcut değil"
 msgid "Removing incompatible router '%s'"
 msgstr "Uygunsuz '%s' yönlendirici bilgisi kaldırılıyor"
 
-#, python-format
-msgid ""
-"Request %(method)s %(uri)s body = %(body)s failed with status %(status)s. "
-"Reason: %(reason)s)"
-msgstr ""
-"İstek %(method)s %(uri)s body = %(body)s %(status)s durumu ile başarısız "
-"oldu. Sebep: %(reason)s)"
-
-#, python-format
-msgid "Request failed from Controller side with Status=%s"
-msgstr "İstek kontrolcü tarafından Durum=%s ile başarısız oldu"
-
-#, python-format
-msgid "Response is Null, Request timed out: %(method)s to %(uri)s"
-msgstr "Yanıt NULL, İstek zaman aşımına uğradı: %(uri)s ye %(method)s"
-
-msgid "Retrying after 1 second..."
-msgstr "1 saniye sonra tekrar deneniyor..."
-
 msgid "Router id is required if not using namespaces."
 msgstr ""
 "Eğer tanım alanı kullanmıyorsanız bir yönlendirici bilgisi belirtmeniz "
@@ -832,12 +769,6 @@ msgstr ""
 "use_helper_for_ns_read yapılandırma seçeneğini etkinleştirin."
 
 #, python-format
-msgid "Timed out retrieving ofport on port %(pname)s. Exception: %(exception)s"
-msgstr ""
-"%(pname)s portu üzerindeki ofportların çekilmesi zamana aşımına uğrandı. "
-"Hata: %(exception)s"
-
-#, python-format
 msgid ""
 "Type driver '%(new_driver)s' ignored because type driver '%(old_driver)s' is "
 "already registered for type '%(type)s'"
@@ -860,10 +791,6 @@ msgstr "%s ağı için vxlan arayüzü eklenemedi"
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s degeri dönüştürülemiyor"
-
-#, python-format
-msgid "Unable to establish connection with Controller %s"
-msgstr "Kontrolcü %s ile bağlantı kurulamadı"
 
 #, python-format
 msgid "Unable to execute %(cmd)s."
@@ -969,9 +896,6 @@ msgstr ""
 "_bind_port_if_needed başarısız. '%s' toplu oluşturmasından tüm bağlantı "
 "noktaları siliniyor"
 
-msgid "login failed"
-msgstr "giriş başarısız"
-
 #, python-format
 msgid ""
 "mechanism_manager.create_%(res)s_postcommit failed for %(res)s: "
@@ -1023,10 +947,6 @@ msgid ""
 msgstr ""
 "process_network_ports - yineleme:%d - sunucudan bağlantı noktası detaylarını "
 "alma başarısız"
-
-#, python-format
-msgid "request: Request failed from Controller side :%s"
-msgstr "istek: İstek Kontrolcü tarafında başarısız oldu: %s"
 
 #, python-format
 msgid "respawning %(service)s for uuid %(uuid)s"

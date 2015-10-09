@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev321\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-28 06:25+0000\n"
+"POT-Creation-Date: 2015-10-09 06:20+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: ko_KR\n"
@@ -233,10 +233,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "측정 드라이버를 지정해야 함"
 
-#, python-format
-msgid "A resource is not found: %(reason)s"
-msgstr "자원을 찾을 수 없음: %(reason)s"
-
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "Neutron 고급 서비스에 대한 서비스 제공자를 검색하기 위한 API"
 
@@ -369,10 +365,6 @@ msgid "An unknown exception occurred."
 msgstr "알 수 없는 예외가 발생했습니다. "
 
 #, python-format
-msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "알 수 없는 nvsd 플러그인 예외 발생: %(reason)s"
-
-#, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "'%s' 속성은 POST에서 허용되지 않음"
 
@@ -436,9 +428,6 @@ msgstr "Brocade 플러그인에서 예외 발생, 로그를 확인하십시오."
 
 msgid "Bulk operation not supported"
 msgstr "벌크 오퍼레이션은 지원되지 않음"
-
-msgid "CA certificate file to use to verify connecting clients"
-msgstr "클라이언트 연결을 검증하는데 사용할 CA 인증서 파일"
 
 msgid "CIDR to monitor"
 msgstr "모니터할 CIDR"
@@ -526,9 +515,6 @@ msgstr "읽기 전용 속성 %s을(를) 업데이트할 수 없음"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "ssl용 인증 기관 공개 키(CA cert) 파일 "
 
-msgid "Certificate file to use when starting the server securely"
-msgstr "서버를 안전하게 시작할 때 사용할 인증서 파일입니다"
-
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
@@ -600,9 +586,6 @@ msgstr "인터페이스 드라이버에 대한 구성 파일(l3_agent.ini도 사
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s에 대한 충돌하는 값 ethertype %(ethertype)s"
 
-msgid "Connection is closed by the server."
-msgstr "연결이 서버에 의해 닫힙니다."
-
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
@@ -614,10 +597,6 @@ msgstr ""
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr "%(time)d후 시도한 다음 %(host)s:%(port)s에 바인딩할 수 없습니다"
-
-#, python-format
-msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
-msgstr "테넌트 %(tenant_id)s 아래에 %(resource)s을(를) 작성할 수 없습니다. "
 
 msgid "Could not deserialize data"
 msgstr "데이터를 직렬화 해제할 수 없음"
@@ -695,16 +674,6 @@ msgstr "모든 디바이스를 제거하여 네임스페이스를 삭제하십�
 #, python-format
 msgid "Deleting port %s"
 msgstr "포트 %s 삭제 중"
-
-msgid ""
-"Determines if connections are allowed to be held open by clients after a "
-"request is fulfilled. A value of False will ensure that the socket "
-"connection will be explicitly closed once a response has been sent to the "
-"client."
-msgstr ""
-"요청을 이행한 후에 클라이언트에서 연결을 열어둘 수 있는지 판별합니다. False "
-"값을 사용하는 경우, 응답을  클라이언트에 전송하면 소켓 연결이 명시적으로 닫힙"
-"니다."
 
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
@@ -998,14 +967,6 @@ msgstr ""
 "다. "
 
 #, python-format
-msgid "Failed to %(method)s %(resource)s"
-msgstr "%(method)s %(resource)s 실패"
-
-#, python-format
-msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
-msgstr "%(method)s %(resource)s 실패, id=%(resource_id)s"
-
-#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1150,9 +1111,6 @@ msgstr "삭제할 프로브 포트의 ID"
 msgid "ID of probe port to execute command"
 msgstr "명령을 실행할 프로브 포트의 ID"
 
-msgid "ID of the project that MidoNet admin user belongs to."
-msgstr "MidoNet admin 사용자가 속한 프로젝트 ID. "
-
 msgid "ID of the router"
 msgstr "라우터의 ID"
 
@@ -1254,14 +1212,6 @@ msgstr "사용할 통합 브릿지입니다."
 msgid "Interface to monitor"
 msgstr "모니터할 인터페이스"
 
-#, python-format
-msgid "Internal Server Error from NVSD controller: %(reason)s"
-msgstr "NVSD 제어기에서의 내부 서버 오류: %(reason)s"
-
-#, python-format
-msgid "Internal Server Error: %(reason)s"
-msgstr "내부 서버 오류: %(reason)s"
-
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr ""
@@ -1291,9 +1241,6 @@ msgstr ""
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "올바르지 않은 디바이스 %(dev_name)s: %(reason)s"
-
-msgid "Invalid access credentials to the Server."
-msgstr "서버에 대한 액세스 신임 정보가 올바르지 않습니다."
 
 #, python-format
 msgid ""
@@ -1539,9 +1486,6 @@ msgstr "형식이 잘못된 요청 본문: %(reason)s"
 msgid "Management Security Zone id"
 msgstr "관리 보안 구역 id"
 
-msgid "Max header line to accommodate large tokens"
-msgstr "큰 토큰을 수용하는 최대 헤더 행"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "DNS 이름 서버의 최대 수"
 
@@ -1578,15 +1522,6 @@ msgid ""
 msgstr ""
 "remote_ip_prefix %(remote_ip_prefix)s을(를) 가진 측정 레이블 규칙이 다른 항목"
 "과 겹침"
-
-msgid "MidoNet API server URI."
-msgstr "MidoNet API 서버 URI."
-
-msgid "MidoNet admin password."
-msgstr "MidoNet admin 비밀번호."
-
-msgid "MidoNet admin username."
-msgstr "MidoNet admin 사용자 이름."
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr "인터페이스 변경사항에 대한 ovsdb를 모니터링하여 폴링을 최소화합니다."
@@ -1634,21 +1569,6 @@ msgstr "포트 범위가 제공되는 경우 프로토콜도 지정해야 합니
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "플로우 추가 또는 수정 시 하나 이상의 조치를 지정해야 함"
-
-msgid "NVSD Controller IP address"
-msgstr "NVSD 제어기 IP 주소"
-
-msgid "NVSD Controller Port number"
-msgstr "NVSD 제어기 포트 번호"
-
-msgid "NVSD Controller password"
-msgstr "NVSD 제어기 비밀번호"
-
-msgid "NVSD Controller username"
-msgstr "NVSD 제어기 사용자 이름"
-
-msgid "NVSD controller REST API request timeout in seconds"
-msgstr "NVSD 제어기 REST API 요청 제한시간(초)"
 
 #, python-format
 msgid ""
@@ -1810,9 +1730,6 @@ msgstr "소켓을 설정하려는 백로그 요청 횟수"
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
 msgstr "테넌트당 허용된 부동 IP 수입니다. 음수 값은 무제한을 의미합니다."
-
-msgid "Number of login retries to NVSD controller"
-msgstr "NVSD 제어기에 대한 로그인 재시도 수"
 
 msgid ""
 "Number of networks allowed per tenant. A negative value means unlimited."
@@ -2012,9 +1929,6 @@ msgstr ""
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
 msgstr "IPv%(version)s 풀에서 접두부 '%(prefix)s'이(가) 지원되지 않음"
 
-msgid "Private key file to use when starting the server securely"
-msgstr "서버를 안전하게 시작할 떄 사용할 개인 키 파일입니다"
-
 msgid "Private key of client certificate."
 msgstr "클라이언트 인증서의 개인 키입니다."
 
@@ -2092,10 +2006,6 @@ msgid ""
 msgstr ""
 "요청에 중복되는 주소 쌍이 포함됨: mac_address %(mac_address)s ip_address "
 "%(ip_address)s."
-
-#, python-format
-msgid "Request sent to server is invalid: %(reason)s"
-msgstr "서버로 보내진 요청이 올바르지 않음: %(reason)s"
 
 #, python-format
 msgid ""
@@ -2258,13 +2168,6 @@ msgstr ""
 "GRE/VXLAN 터널을 전송하는 발신 IP 패킷에 DF(Don't Fragment) 비트를 설정하거"
 "나 설정 해제하십시오."
 
-msgid ""
-"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
-"supported on OS X."
-msgstr ""
-"각각의 서버 소켓에 대해 초 단위로 TCP_KEEPIDLE 값을 설정합니다. OS X에서는 지"
-"원하지 않습니다."
-
 msgid "Shared resource pool id"
 msgstr "공유 자원 풀 id"
 
@@ -2381,9 +2284,6 @@ msgid ""
 msgstr ""
 "'gateway_external_network_id' 옵션은 Neutron이 두 개 이상의 외부 네트워크를 "
 "가지므로 이 에이전트에 대해구성되어야 합니다. "
-
-msgid "The API paste config file to use"
-msgstr "사용할 API 붙여넣기 구성 파일"
 
 #, python-format
 msgid ""
@@ -2539,13 +2439,6 @@ msgstr "포트 '%s'이(가) 삭제됨"
 msgid "The port to bind to"
 msgstr "바인드할 포트"
 
-msgid "The request has timed out."
-msgstr "요청이 제한시간 초과했습니다. "
-
-#, python-format
-msgid "The request is forbidden access to the resource: %(reason)s"
-msgstr "요청이 자원에 액세스하지 못하도록 금지됨: %(reason)s"
-
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr "요청한 컨텐츠 유형 %s이(가) 올바르지 않습니다."
@@ -2606,14 +2499,6 @@ msgstr ""
 "L3 에이전트에 사용해야 합니다. 'dvr_snat' - 이 모드는 DVR과 함께 중앙 SNAT 지"
 "원을 사용합니다. 중앙 노드에서(또는 devstack과 같은 단일 호스트 배치에서) 실"
 "행 중인 L3 에이전트에는 이 모드를 사용해야 합니다."
-
-msgid ""
-"Timeout for client connections socket operations. If an incoming connection "
-"is idle for this number of seconds it will be closed. A value of '0' means "
-"wait forever."
-msgstr ""
-"클라이언트 연결 소켓 조작의 제한시간입니다. 이 기간(초) 동안 수신 연결이 유"
-"휴 상태이면 연결이 종료됩니다. 값이 '0'이면 무기한 대기합니다."
 
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr "ovs-vsctl 명령에 대한 제한시간(초)입니다."
@@ -2749,11 +2634,6 @@ msgstr ""
 "트 유형: %(vif_type)s, old_mac %(old_mac)s, new_mac %(new_mac)s"
 
 #, python-format
-msgid ""
-"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
-msgstr "NVSD 제어기에 연결할 수 없습니다. %(retries)s 시도 후에 종료합니다."
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s의 값을 변환할 수 없음"
 
@@ -2816,18 +2696,6 @@ msgstr "외부 네트워크 %(net_id)s에서 IP 주소를 찾을 수 없음"
 msgid "Unable to find resource name in %s"
 msgstr "%s에서 자원 이름을 찾을 수 없음"
 
-#, python-format
-msgid "Unable to find ssl_ca_file : %s"
-msgstr "ssl_ca_file을 찾을 수 없습니다 : %s"
-
-#, python-format
-msgid "Unable to find ssl_cert_file : %s"
-msgstr "ssl_cert_file을 찾을 수 없습니다: %s"
-
-#, python-format
-msgid "Unable to find ssl_key_file : %s"
-msgstr "ssl_key_file을 찾을 수 없습니다 : %s"
-
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "IPv4 접두부에 대해 EUI64에 의해 IP 주소를 생성할 수 없습니다."
 
@@ -2846,10 +2714,6 @@ msgid ""
 msgstr ""
 "%s에서 대상 필드를 식별할 수 없음. 일치가 다음 양식이어야 함."
 "%%(<field_name>)s"
-
-#, python-format
-msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
-msgstr "구성 파일 %(config_path)s에서 %(app_name)s을(를) 로드할 수 없습니다."
 
 #, python-format
 msgid ""
@@ -3088,9 +2952,6 @@ msgstr "fixed_ip_address는 port_id 없이 지정할 수 없음"
 #, python-format
 msgid "has device owner %s"
 msgstr "디바이스 소유자 %s이(가) 있음"
-
-msgid "integration bridge"
-msgstr "통합 브릿지"
 
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"

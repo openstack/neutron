@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev321\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-28 06:25+0000\n"
+"POT-Creation-Date: 2015-10-09 06:20+0000\n"
 "PO-Revision-Date: 2015-09-16 08:28+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: tr_TR\n"
@@ -252,10 +252,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Bir ölçme sürücüsü belirtilmeli"
 
-#, python-format
-msgid "A resource is not found: %(reason)s"
-msgstr "Bir kaynak bulunamadı: %(reason)s"
-
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "Neutron gelişmiş servisleri için servis sağlayıcıları alma API'si"
 
@@ -393,10 +389,6 @@ msgid "An unknown exception occurred."
 msgstr "Bilinmeyen bir istisna oluştu."
 
 #, python-format
-msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "Bilinmeyen bir nvsd eklenti istisnası oluştu: %(reason)s"
-
-#, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "'%s' özniteliğine POST içinde izin verilmez"
 
@@ -464,9 +456,6 @@ msgstr "Brocade eklentisi istisna yükseltti, kayıtları kontrol edin"
 
 msgid "Bulk operation not supported"
 msgstr "Toplu işlem desteklenmiyor"
-
-msgid "CA certificate file to use to verify connecting clients"
-msgstr "Bağlanan istemcileri doğrulamak için kullanılacak CA sertifika dosyası"
 
 msgid "CIDR to monitor"
 msgstr "İzlenecek CIDR"
@@ -568,9 +557,6 @@ msgstr "Yalnızca okunabilir öznitelik %s güncellenemez"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "Ssl için Sertifika Yetkilisi açık anahtarı (CA cert)"
 
-msgid "Certificate file to use when starting the server securely"
-msgstr "Sunucu güvenli şekilde başlatılırken kullanılacak sertifika dosyası"
-
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
@@ -650,9 +636,6 @@ msgstr ""
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s için çatışan değer ethertype %(ethertype)s"
 
-msgid "Connection is closed by the server."
-msgstr "Bağlantı sunucu tarafından kapatıldı."
-
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
@@ -665,10 +648,6 @@ msgstr ""
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr "%(time)d  saniye denedikten sonra %(host)s:%(port)s'a bağlanamadı"
-
-#, python-format
-msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
-msgstr "%(tenant_id)s kiracısı altında bir %(resource)s oluşturulamadı"
 
 msgid "Could not deserialize data"
 msgstr "Veri serisi çözülemedi"
@@ -793,16 +772,6 @@ msgstr "Iptables referansı olsa bile IPset'leri sil."
 
 msgid "Destroy all IPsets."
 msgstr "Tüm IPset'leri sil."
-
-msgid ""
-"Determines if connections are allowed to be held open by clients after a "
-"request is fulfilled. A value of False will ensure that the socket "
-"connection will be explicitly closed once a response has been sent to the "
-"client."
-msgstr ""
-"Bir istek tamamlandıktan sonra istemciler tarafından bağlantıların açık "
-"tutulup tutulamayacağını belirler. False değeri yanıt istemciye "
-"gönderildikten sonra soket bağlantısının kapatılacağını garantiler."
 
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
@@ -1126,14 +1095,6 @@ msgstr ""
 "başarısız."
 
 #, python-format
-msgid "Failed to %(method)s %(resource)s"
-msgstr "%(method)s %(resource)s başarısız"
-
-#, python-format
-msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
-msgstr "%(method)s %(resource)s başarısız id=%(resource_id)s"
-
-#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1292,9 +1253,6 @@ msgstr "Silinecek deneme bağlantı noktasının kimliği"
 msgid "ID of probe port to execute command"
 msgstr "Komutun çalıştırılacağı deneme bağlantı noktası kimliği"
 
-msgid "ID of the project that MidoNet admin user belongs to."
-msgstr "MidoNet yönetici kullanıcısının ait olduğu proje kimliği."
-
 msgid "ID of the router"
 msgstr "Yönetici kimliği"
 
@@ -1417,14 +1375,6 @@ msgstr "Kullanılacak tümleştirme köprüsü."
 msgid "Interface to monitor"
 msgstr "İzlenecek arayüz"
 
-#, python-format
-msgid "Internal Server Error from NVSD controller: %(reason)s"
-msgstr "NVSD kontrolcüsünden Dahili Sunucu Hatası: %(reason)s"
-
-#, python-format
-msgid "Internal Server Error: %(reason)s"
-msgstr "Dahili Sunucu Hatası: %(reason)s"
-
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr ""
@@ -1454,9 +1404,6 @@ msgstr ""
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "Geçersiz Aygıt %(dev_name)s: %(reason)s"
-
-msgid "Invalid access credentials to the Server."
-msgstr "Sunucuya erişim kimlik bilgileri geçersiz."
 
 #, python-format
 msgid ""
@@ -1703,9 +1650,6 @@ msgstr "Bozuk istek gövdesi: %(reason)s"
 msgid "Management Security Zone id"
 msgstr "Yönetim Güvenlik Bölgesi kimliği"
 
-msgid "Max header line to accommodate large tokens"
-msgstr "Büyük jetonlara yer ayırmak için azami başlık satırı"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "Azami DNS isim sunucu sayısı"
 
@@ -1742,15 +1686,6 @@ msgid ""
 msgstr ""
 "remote_ip_prefix %(remote_ip_prefix)s sahip ölçme etiket kuralı başka bir "
 "tanesiyle çatışıyor"
-
-msgid "MidoNet API server URI."
-msgstr "MidoNet API sunucu URI'si."
-
-msgid "MidoNet admin password."
-msgstr "MidoNet yönetici parolası."
-
-msgid "MidoNet admin username."
-msgstr "MidoNet yönetici kullanıcı adı."
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
@@ -1802,21 +1737,6 @@ msgstr ""
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "Akış ekleme ya da değiştirmede bir ya da fazla eylem belirtilmeli"
-
-msgid "NVSD Controller IP address"
-msgstr "NVSD Kontrolcüsü IP adresi"
-
-msgid "NVSD Controller Port number"
-msgstr "NVSD Konrolcüsü Bağlantı noktası sayısı"
-
-msgid "NVSD Controller password"
-msgstr "NVSD Kontrolcüsü parolası"
-
-msgid "NVSD Controller username"
-msgstr "NVSD Kontrolcüsü kullanıcı adı"
-
-msgid "NVSD controller REST API request timeout in seconds"
-msgstr "Saniye cinsinden NVSD kontrolcüsü REST API'si isteği zaman aşımı"
 
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Kullanılacak Open vSwitch köprüsünün ismi"
@@ -1987,9 +1907,6 @@ msgid ""
 msgstr ""
 "Kiracı başına izin verilen değişken IP sayısı. Negatif değer sınırsız "
 "demektir."
-
-msgid "Number of login retries to NVSD controller"
-msgstr "NVSD kontrolcüsüne giriş deneme sayısı"
 
 msgid ""
 "Number of networks allowed per tenant. A negative value means unlimited."
@@ -2231,9 +2148,6 @@ msgstr ""
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
 msgstr "'%(prefix)s' öneki IPv%(version)s havuzunda desteklenmiyor"
 
-msgid "Private key file to use when starting the server securely"
-msgstr "Sunucu güvenli şekilde başlatılırken kullanılacak özel anahtar dosyası"
-
 msgid "Private key of client certificate."
 msgstr "İstemci sertifikasının özel anahtarı."
 
@@ -2312,10 +2226,6 @@ msgid ""
 msgstr ""
 "İstek kopya adres çifti içeriyor: mac_address %(mac_address)s ip_address "
 "%(ip_address)s."
-
-#, python-format
-msgid "Request sent to server is invalid: %(reason)s"
-msgstr "Sunucuya gönderilen istek geçersiz: %(reason)s"
 
 #, python-format
 msgid ""
@@ -2509,13 +2419,6 @@ msgstr ""
 "Dışa giden IP paketi taşıyan GRE/VXLAN tünelinde bölümlenme yapma (DF) "
 "bitini ayarla ya da ayarlama."
 
-msgid ""
-"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
-"supported on OS X."
-msgstr ""
-"Her bir sunucu soketi için TCP_KEEPIDLE değerini saniye olarak ayarlar. OS "
-"X'de desteklenmez."
-
 msgid "Shared address scope can't be unshared"
 msgstr "Paylaşılan adres kapsamının paylaştırılması durdurulamaz"
 
@@ -2652,9 +2555,6 @@ msgid ""
 msgstr ""
 "Neutron birden fazla harici ağa sahip olduğundan "
 "'gateway_external_network_id' seçeneği bu ajan için yapılandırılmalıdır."
-
-msgid "The API paste config file to use"
-msgstr "Kullanılacak API yapıştırma yapılandırma dosyası"
 
 #, python-format
 msgid ""
@@ -2816,13 +2716,6 @@ msgstr "Bağlantı noktası '%s' silinmiş"
 msgid "The port to bind to"
 msgstr "Bağlanılacak bağlantı noktası"
 
-msgid "The request has timed out."
-msgstr "İstek zaman aşımına uğradı."
-
-#, python-format
-msgid "The request is forbidden access to the resource: %(reason)s"
-msgstr "İsteğin kaynağa erişimine izin verilmiyor: %(reason)s"
-
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr "İstenen içerik türü %s geçersiz."
@@ -2888,14 +2781,6 @@ msgstr ""
 "ajanı için kullanılmalıdır. 'dvr_snat' - bu DVR ile beraber merkezi SNAT "
 "desteğini etkinleştirir.  Bu kip merkezi bir düğümde çalışan L3 ajanı için "
 "kullanılmalıdır (veya tek-istemcili kurulumlarda, örn. devstack)"
-
-msgid ""
-"Timeout for client connections socket operations. If an incoming connection "
-"is idle for this number of seconds it will be closed. A value of '0' means "
-"wait forever."
-msgstr ""
-"İstemci bağlantıları soket işlemleri için zaman aşımı. Eğer gelen bağlantı "
-"bu kadar saniye boşta ise kapatılır. '0' değeri sonsua kadar bekle demektir."
 
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr "ovs-vsctl komutları için saniye cinsinden zaman aşımı"
@@ -3039,12 +2924,6 @@ msgid "Unable to complete operation on subnet %(subnet_id)s. %(reason)s"
 msgstr "%(subnet_id)s alt ağında işlem tamamlanamadı. %(reason)s"
 
 #, python-format
-msgid ""
-"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
-msgstr ""
-"NVSD kontrolcüsüne bağlanılamıyor. %(retries)s girişimden sonra çıkılıyor"
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s degeri dönüştürülemiyor"
 
@@ -3107,18 +2986,6 @@ msgstr "%(net_id)s harici ağında IP adresi bulunamadı."
 msgid "Unable to find resource name in %s"
 msgstr "%s içinde kaynak ismi bulunamadı"
 
-#, python-format
-msgid "Unable to find ssl_ca_file : %s"
-msgstr "ssl_ca_file bulunamadı : %s"
-
-#, python-format
-msgid "Unable to find ssl_cert_file : %s"
-msgstr "ssl_cert_file bulunamadı: %s"
-
-#, python-format
-msgid "Unable to find ssl_key_file : %s"
-msgstr "ssl_key_file bulunamadı: %s"
-
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "IPv4 öneki için EUI64 ile IP adresi üretilemedi"
 
@@ -3137,10 +3004,6 @@ msgid ""
 msgstr ""
 "%s den bir hedef alan tanımlanamadı. Eşleşme %%(<field_name>)s biçiminde "
 "olmalı"
-
-#, python-format
-msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
-msgstr "%(config_path)s yapılandırma dosyasından %(app_name)s  yüklenemedi."
 
 #, python-format
 msgid ""
@@ -3400,9 +3263,6 @@ msgstr "%s aygıt sahibine sahip"
 
 msgid "in use"
 msgstr "kullanımda"
-
-msgid "integration bridge"
-msgstr "tümleştirme köprüsü"
 
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
