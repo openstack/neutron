@@ -1031,10 +1031,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self._test_dhcp_api('release_dhcp_port', network_id='fake_id',
                             device_id='fake_id_2')
 
-    def test_release_port_fixed_ip(self):
-        self._test_dhcp_api('release_port_fixed_ip', network_id='fake_id',
-                            device_id='fake_id_2', subnet_id='fake_id_3')
-
 
 class TestNetworkCache(base.BaseTestCase):
     def test_put_network(self):
