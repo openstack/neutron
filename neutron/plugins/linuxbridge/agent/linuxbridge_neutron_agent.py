@@ -459,7 +459,7 @@ class LinuxBridgeManager(object):
             LOG.debug("Done deleting bridge %s", bridge_name)
 
         else:
-            LOG.error(_LE("Cannot delete bridge %s, does not exist"),
+            LOG.debug("Cannot delete bridge %s; it does not exist",
                       bridge_name)
 
     def remove_empty_bridges(self):
