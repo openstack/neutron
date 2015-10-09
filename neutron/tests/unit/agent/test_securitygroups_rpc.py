@@ -1635,12 +1635,12 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
     def test_security_groups_rule_not_updated(self):
         self.notifier.security_groups_rule_updated(
             None, security_groups=[])
-        self.assertEqual(False, self.mock_cast.called)
+        self.assertFalse(self.mock_cast.called)
 
     def test_security_groups_member_not_updated(self):
         self.notifier.security_groups_member_updated(
             None, security_groups=[])
-        self.assertEqual(False, self.mock_cast.called)
+        self.assertFalse(self.mock_cast.called)
 
 #Note(nati) bn -> binary_name
 # id -> device_id

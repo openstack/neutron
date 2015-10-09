@@ -190,3 +190,26 @@ class HackingTestCase(base.BaseTestCase):
 
         self.assertEqual(0, len(list(checks.no_mutable_default_args(
             "defined, undefined = [], {}"))))
+
+    def test_assertfalse(self):
+        fail_code1 = """
+               test_bool = False
+               self.assertEqual(False, test_bool)
+               """
+        fail_code2 = """
+               test_bool = False
+               self.assertEqual(test_bool, False)
+               """
+        pass_code = """
+               test_bool = False
+               self.assertFalse(test_bool)
+               """
+        self.assertEqual(
+            1, len(list(checks.check_assertfalse(fail_code1,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(checks.check_assertfalse(fail_code2,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            0, len(list(checks.check_assertfalse(pass_code,
+                                            "neutron/tests/test_assert.py"))))

@@ -55,14 +55,14 @@ class RoutersTest(base.BaseRouterTest):
         self.assertEqual(
             create_body['router']['external_gateway_info']['network_id'],
             CONF.network.public_network_id)
-        self.assertEqual(create_body['router']['admin_state_up'], False)
+        self.assertFalse(create_body['router']['admin_state_up'])
         # Show details of the created router
         show_body = self.client.show_router(create_body['router']['id'])
         self.assertEqual(show_body['router']['name'], name)
         self.assertEqual(
             show_body['router']['external_gateway_info']['network_id'],
             CONF.network.public_network_id)
-        self.assertEqual(show_body['router']['admin_state_up'], False)
+        self.assertFalse(show_body['router']['admin_state_up'])
         # List routers and verify if created router is there in response
         list_body = self.client.list_routers()
         routers_list = list()

@@ -182,7 +182,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                                    arg_list=('port_security_enabled',),
                                    port_security_enabled=False)
         net = self.deserialize('json', res)
-        self.assertEqual(net['network'][psec.PORTSECURITY], False)
+        self.assertFalse(net['network'][psec.PORTSECURITY])
 
     def test_updating_network_port_security(self):
         res = self._create_network('json', 'net1', True,
@@ -193,10 +193,10 @@ class TestPortSecurity(PortSecurityDBTestCase):
         req = self.new_update_request('networks', update_net,
                                       net['network']['id'])
         net = self.deserialize('json', req.get_response(self.api))
-        self.assertEqual(net['network'][psec.PORTSECURITY], False)
+        self.assertFalse(net['network'][psec.PORTSECURITY])
         req = self.new_show_request('networks', net['network']['id'])
         net = self.deserialize('json', req.get_response(self.api))
-        self.assertEqual(net['network'][psec.PORTSECURITY], False)
+        self.assertFalse(net['network'][psec.PORTSECURITY])
 
     def test_create_port_default_true(self):
         with self.network() as net:
@@ -222,7 +222,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
         net = self.deserialize('json', res)
         res = self._create_port('json', net['network']['id'])
         port = self.deserialize('json', res)
-        self.assertEqual(port['port'][psec.PORTSECURITY], False)
+        self.assertFalse(port['port'][psec.PORTSECURITY])
         self._delete('ports', port['port']['id'])
 
     def test_create_port_security_overrides_network_value(self):
@@ -338,7 +338,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 req = self.new_update_request('ports', update_port,
                                               port['port']['id'])
                 port = self.deserialize('json', req.get_response(self.api))
-                self.assertEqual(port['port'][psec.PORTSECURITY], False)
+                self.assertFalse(port['port'][psec.PORTSECURITY])
                 self.assertEqual(len(port['port'][ext_sg.SECURITYGROUPS]), 0)
                 self._delete('ports', port['port']['id'])
 
