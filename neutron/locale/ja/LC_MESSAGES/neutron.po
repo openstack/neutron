@@ -12,9 +12,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev362\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-01 06:30+0000\n"
+"POT-Creation-Date: 2015-10-09 06:20+0000\n"
 "PO-Revision-Date: 2015-09-28 04:52+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
@@ -237,10 +237,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "計測ドライバーを指定する必要があります"
 
-#, python-format
-msgid "A resource is not found: %(reason)s"
-msgstr "リソースが見つかりません: %(reason)s"
-
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "Neutron 拡張サービス用のサービスプロバイダーを取得するための API"
 
@@ -382,10 +378,6 @@ msgid "An unknown exception occurred."
 msgstr "不明な例外が発生しました。"
 
 #, python-format
-msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "不明な NVSD プラグイン例外が発生しました: %(reason)s"
-
-#, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "属性 '%s' は POST では許可されません"
 
@@ -450,9 +442,6 @@ msgstr "Brocade プラグインで例外が発生しました。ログを確認�
 
 msgid "Bulk operation not supported"
 msgstr "バルク操作はサポートされていません"
-
-msgid "CA certificate file to use to verify connecting clients"
-msgstr "接続クライアントを検査するために使用される CA 証明書ファイル"
 
 msgid "CIDR to monitor"
 msgstr "モニター対象の CIDR"
@@ -545,10 +534,6 @@ msgstr "読み取り専用属性 %s を更新できません"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "ssl の認証局公開鍵 (CA cert) ファイル"
 
-#, fuzzy
-msgid "Certificate file to use when starting the server securely"
-msgstr "サーバーを安全に始動するときに使用される証明書ファイル"
-
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
@@ -622,9 +607,6 @@ msgstr ""
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s のイーサネットタイプ値 %(ethertype)s が競合しています"
 
-msgid "Connection is closed by the server."
-msgstr "接続がサーバーによってクローズされました。"
-
 #, fuzzy
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
@@ -638,10 +620,6 @@ msgstr ""
 #, fuzzy, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr "%(time)d 秒間の試行後に %(host)s:%(port)s にバインドできませんでした"
-
-#, python-format
-msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
-msgstr "%(resource)s をテナント %(tenant_id)s 下で作成できませんでした"
 
 #, fuzzy
 msgid "Could not deserialize data"
@@ -721,17 +699,6 @@ msgstr "すべてのデバイスを削除して、名前空間を削除します
 #, python-format
 msgid "Deleting port %s"
 msgstr "ポート %s を削除しています"
-
-#, fuzzy
-msgid ""
-"Determines if connections are allowed to be held open by clients after a "
-"request is fulfilled. A value of False will ensure that the socket "
-"connection will be explicitly closed once a response has been sent to the "
-"client."
-msgstr ""
-"要求が満たされた後でクライアントによって接続を開いたままにしておくことができ"
-"るかどうかを決定します。値 False を指定すると、ソケット接続は、応答がクライア"
-"ントへ送信されると明示的に閉じられます。"
 
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
@@ -1038,14 +1005,6 @@ msgstr ""
 "グに失敗しました。"
 
 #, python-format
-msgid "Failed to %(method)s %(resource)s"
-msgstr "%(method)s %(resource)s が失敗しました"
-
-#, python-format
-msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
-msgstr "%(method)s %(resource)s が失敗しました。id=%(resource_id)s"
-
-#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1201,9 +1160,6 @@ msgstr "削除するプローブポートの ID"
 msgid "ID of probe port to execute command"
 msgstr "コマンドを実行するプローブ ポートの ID"
 
-msgid "ID of the project that MidoNet admin user belongs to."
-msgstr "MidoNet admin ユーザーが属するプロジェクトの ID。"
-
 msgid "ID of the router"
 msgstr "ルータの ID"
 
@@ -1307,14 +1263,6 @@ msgstr "使用する統合ブリッジ。"
 msgid "Interface to monitor"
 msgstr "モニター対象のインターフェース"
 
-#, python-format
-msgid "Internal Server Error from NVSD controller: %(reason)s"
-msgstr "NVSD コントローラーからの内部サーバーエラー: %(reason)s"
-
-#, python-format
-msgid "Internal Server Error: %(reason)s"
-msgstr "内部サーバーエラー: %(reason)s"
-
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr "子プロセスの動作状況を確認する間隔 (秒)、無効にするには 0 を指定します"
@@ -1343,9 +1291,6 @@ msgstr ""
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "無効なデバイス %(dev_name)s: %(reason)s"
-
-msgid "Invalid access credentials to the Server."
-msgstr "サーバーに対するアクセス資格情報が無効です。"
 
 #, python-format
 msgid ""
@@ -1593,9 +1538,6 @@ msgstr "誤った形式の要求本体: %(reason)s"
 msgid "Management Security Zone id"
 msgstr "管理セキュリティーゾーン id"
 
-msgid "Max header line to accommodate large tokens"
-msgstr "ラージトークンを収容するための最大ヘッダー行"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "DNS ネームサーバーの最大数"
 
@@ -1632,15 +1574,6 @@ msgid ""
 msgstr ""
 "remote_ip_prefix %(remote_ip_prefix)s を持つ計測ラベル規則が他の計測ラベル規"
 "則と重なり合っています"
-
-msgid "MidoNet API server URI."
-msgstr "MidoNet API サーバー URI。"
-
-msgid "MidoNet admin password."
-msgstr "MidoNet admin パスワード。"
-
-msgid "MidoNet admin username."
-msgstr "MidoNet admin ユーザー名。"
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
@@ -1693,21 +1626,6 @@ msgstr "ポートの範囲を指定する場合は、プロトコルも指定す
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "フローの追加または変更について、1 つ以上のアクションを指定してください"
-
-msgid "NVSD Controller IP address"
-msgstr "NVSD コントローラーの IP アドレス"
-
-msgid "NVSD Controller Port number"
-msgstr "NVSD コントローラーのポート番号"
-
-msgid "NVSD Controller password"
-msgstr "NVSD コントローラーのパスワード"
-
-msgid "NVSD Controller username"
-msgstr "NVSD コントローラーのユーザー名"
-
-msgid "NVSD controller REST API request timeout in seconds"
-msgstr "NVSD コントローラー REST API 要求タイムアウト (秒)"
 
 #, python-format
 msgid ""
@@ -1875,9 +1793,6 @@ msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
 msgstr ""
 "テナント当たりに許可される Floating IP 数。負の値は無制限を意味します。 "
-
-msgid "Number of login retries to NVSD controller"
-msgstr "NVSD コントローラーへのログイン再試行回数"
 
 msgid ""
 "Number of networks allowed per tenant. A negative value means unlimited."
@@ -2085,10 +2000,6 @@ msgstr ""
 "プレフィックス「%(prefix)s」は IPv%(version)s プールではサポートされていませ"
 "ん"
 
-#, fuzzy
-msgid "Private key file to use when starting the server securely"
-msgstr "サーバーを安全に始動するときに使用される秘密鍵ファイル"
-
 msgid "Private key of client certificate."
 msgstr "クライアント証明書の秘密鍵。"
 
@@ -2167,10 +2078,6 @@ msgid ""
 msgstr ""
 "重複するアドレスペアが要求に含まれています: mac_address %(mac_address)s "
 "ip_address %(ip_address)s"
-
-#, python-format
-msgid "Request sent to server is invalid: %(reason)s"
-msgstr "サーバーに送信されたリクエストが無効です: %(reason)s"
 
 #, python-format
 msgid ""
@@ -2341,14 +2248,6 @@ msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
 
-#, fuzzy
-msgid ""
-"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
-"supported on OS X."
-msgstr ""
-"サーバーソケットごとに TCP_KEEPIDLE の値を秒単位で設定してください。OS X では"
-"サポートされていません。"
-
 msgid "Shared resource pool id"
 msgstr "共有リソースプール id"
 
@@ -2465,9 +2364,6 @@ msgid ""
 msgstr ""
 "Neutron に複数の外部ネットワークがあるため、このエージェントに対して "
 "'gateway_external_network_id' オプションを設定する必要があります。"
-
-msgid "The API paste config file to use"
-msgstr "使用する API 貼り付け構成ファイル"
 
 #, python-format
 msgid ""
@@ -2624,13 +2520,6 @@ msgstr "ポート '%s' が削除されました"
 msgid "The port to bind to"
 msgstr "バインド先のポート"
 
-msgid "The request has timed out."
-msgstr "要求がタイムアウトになりました。"
-
-#, python-format
-msgid "The request is forbidden access to the resource: %(reason)s"
-msgstr "要求はリソースに対する禁止アクセスです: %(reason)s"
-
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr "要求されたコンテンツタイプ %s は無効です"
@@ -2693,15 +2582,6 @@ msgstr ""
 "ます。「dvr_snat」- このモードは、DVR とともに中央 SNAT サポートを有効にしま"
 "す。中央ノード (または devstack などの単一ホストでのデプロイメント) 上で実行"
 "中の L3 の場合、このモードを使用する必要があります。"
-
-#, fuzzy
-msgid ""
-"Timeout for client connections socket operations. If an incoming connection "
-"is idle for this number of seconds it will be closed. A value of '0' means "
-"wait forever."
-msgstr ""
-"クライアント接続ソケット操作のタイムアウト。入力接続は、この秒数の間アイドル"
-"であると閉じられます。値「0」は永続的に待機することを意味します。"
 
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr "ovs-vsctl コマンドのタイムアウト(秒)"
@@ -2840,11 +2720,6 @@ msgstr ""
 "トタイプ: %(vif_type)s、old_mac %(old_mac)s、new_mac %(new_mac)s"
 
 #, python-format
-msgid ""
-"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
-msgstr "NVSD コントローラーに接続できません。%(retries)s 回試行後に終了します"
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s で値を変換できません"
 
@@ -2907,18 +2782,6 @@ msgstr "外部ネットワーク %(net_id)s 上で IP アドレスが見つか�
 msgid "Unable to find resource name in %s"
 msgstr "%sの中のリソース名を見つけることはできません"
 
-#, python-format
-msgid "Unable to find ssl_ca_file : %s"
-msgstr "ssl_ca_fileが見つかりません: %s"
-
-#, python-format
-msgid "Unable to find ssl_cert_file : %s"
-msgstr "ssl_cert_fileが見つかりません: %s"
-
-#, python-format
-msgid "Unable to find ssl_key_file : %s"
-msgstr "ssl_key_fileが見つかりません: %s"
-
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "EUI64 によって IPv4 プレフィックスの IP アドレスを生成できません"
 
@@ -2937,10 +2800,6 @@ msgid ""
 msgstr ""
 "%s からターゲットフィールドを特定できません。一致の形式は %%(<field_name>)s "
 "でなければなりません"
-
-#, python-format
-msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
-msgstr "構成ファイル %(config_path)s から %(app_name)s をロードできません。"
 
 #, python-format
 msgid ""
@@ -3188,9 +3047,6 @@ msgstr "fixed_ip_address は、port_id なしでは指定できません"
 #, python-format
 msgid "has device owner %s"
 msgstr "デバイス所有者 %s"
-
-msgid "integration bridge"
-msgstr "統合ブリッジ"
 
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"

@@ -8,9 +8,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-10-09 06:21+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -168,10 +168,6 @@ msgid ""
 msgstr ""
 "Yüklenen eklenti 'quotas' tablosunu desteklemediğinden ConfDriver "
 "quota_driver olarak kullanılıyor."
-
-#, python-format
-msgid "Config paste file: %s"
-msgstr "Yapılandırma yapıştırma dosyası: %s"
 
 #, python-format
 msgid "Configured extension driver names: %s"
@@ -362,9 +358,6 @@ msgstr "Fiziksel ağ %(physical_network)s %(bridge)s köprüsüne eşleştiriliy
 
 msgid "Modular L2 Plugin initialization complete"
 msgstr "Modüler L2 Eklentisi ilklendirme tamamlandı"
-
-msgid "NVSD Agent initialized successfully, now running... "
-msgstr "NVSD Ajanı başarıyla ilklendirildi, şimdi çalıştırılıyor... "
 
 #, python-format
 msgid "Network VLAN ranges: %s"

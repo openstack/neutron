@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev321\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-28 06:25+0000\n"
+"POT-Creation-Date: 2015-10-09 06:20+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: ru\n"
@@ -234,10 +234,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Необходимо указать драйвер измерений"
 
-#, python-format
-msgid "A resource is not found: %(reason)s"
-msgstr "Ресурс не найден: %(reason)s"
-
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "API для получения поставщиков служб для расширенных служб Neutron"
 
@@ -372,10 +368,6 @@ msgid "An unknown exception occurred."
 msgstr "Обнаружено неизвестное исключение."
 
 #, python-format
-msgid "An unknown nvsd plugin exception occurred: %(reason)s"
-msgstr "Возникла неизвестная исключительная ситуация модуля nvsd: %(reason)s"
-
-#, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "Атрибут '%s' недопустим в POST"
 
@@ -442,9 +434,6 @@ msgstr "Модуль Brocade выдал исключительную ситуа�
 
 msgid "Bulk operation not supported"
 msgstr "Групповая операция не поддерживается"
-
-msgid "CA certificate file to use to verify connecting clients"
-msgstr "Файл сертификата CA, применяемый для проверки подключающихся клиентов"
 
 msgid "CIDR to monitor"
 msgstr "CIDR для монитора"
@@ -535,9 +524,6 @@ msgstr "Невозможно обновить атрибут %s, доступн�
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "Файл общего ключа CA (CA cert) для ssl"
 
-msgid "Certificate file to use when starting the server securely"
-msgstr "Файл сертификата, применяемый при запуске сервера в защищенном режиме"
-
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
@@ -615,9 +601,6 @@ msgstr ""
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "Конфликтующее значение ethertype %(ethertype)s для CIDR %(cidr)s"
 
-msgid "Connection is closed by the server."
-msgstr "Соединение закрыто сервером."
-
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
@@ -632,10 +615,6 @@ msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 "Не удалось подключиться к порту %(host)s:%(port)s по истечении %(time)d "
 "секунд"
-
-#, python-format
-msgid "Could not create a %(resource)s under tenant %(tenant_id)s"
-msgstr "Не удалось создать %(resource)s под арендатором %(tenant_id)s"
 
 msgid "Could not deserialize data"
 msgstr "Не удалось десериализовать данные"
@@ -721,16 +700,6 @@ msgstr "Удалите пространство имен, удалив все у
 #, python-format
 msgid "Deleting port %s"
 msgstr "Удаление порта %s"
-
-msgid ""
-"Determines if connections are allowed to be held open by clients after a "
-"request is fulfilled. A value of False will ensure that the socket "
-"connection will be explicitly closed once a response has been sent to the "
-"client."
-msgstr ""
-"Определяет, разрешено ли клиентам удерживать соединения после обработки "
-"запроса. Значение False гарантирует явное закрытие сокета соединения после "
-"отправки ответа клиенту."
 
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
@@ -1032,14 +1001,6 @@ msgstr ""
 "%(agent_id)s."
 
 #, python-format
-msgid "Failed to %(method)s %(resource)s"
-msgstr "Не удалось выполнить %(method)s %(resource)s"
-
-#, python-format
-msgid "Failed to %(method)s %(resource)s id=%(resource_id)s"
-msgstr "Не удалось выполнить %(method)s %(resource)s id=%(resource_id)s"
-
-#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1197,9 +1158,6 @@ msgstr "ИД удаляемого тестового порта"
 msgid "ID of probe port to execute command"
 msgstr "ИД тестового порта для выполнения команды"
 
-msgid "ID of the project that MidoNet admin user belongs to."
-msgstr "ИД проекта, которому принадлежит администратор MidoNet."
-
 msgid "ID of the router"
 msgstr "ИД маршрутизатора"
 
@@ -1304,14 +1262,6 @@ msgstr "Используемый мост интеграции."
 msgid "Interface to monitor"
 msgstr "Интерфейс для монитора"
 
-#, python-format
-msgid "Internal Server Error from NVSD controller: %(reason)s"
-msgstr "Внутренняя ошибка сервера от контроллера NVSD: %(reason)s"
-
-#, python-format
-msgid "Internal Server Error: %(reason)s"
-msgstr "Внутренняя ошибка сервера: %(reason)s"
-
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr ""
@@ -1342,9 +1292,6 @@ msgstr ""
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
 msgstr "Недопустимое устройство %(dev_name)s: %(reason)s"
-
-msgid "Invalid access credentials to the Server."
-msgstr "Недопустимые идентификационные данные для доступа к серверу."
 
 #, python-format
 msgid ""
@@ -1592,10 +1539,6 @@ msgstr "Неправильно сформированное тело запро�
 msgid "Management Security Zone id"
 msgstr "ИД зоны защиты управления"
 
-msgid "Max header line to accommodate large tokens"
-msgstr ""
-"Максимальная длина строки заголовка для размещения маркеров большого размера"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "Максимальное количество серверов имен DNS"
 
@@ -1632,15 +1575,6 @@ msgid ""
 msgstr ""
 "Правило метки измерения с remote_ip_prefix %(remote_ip_prefix)s "
 "перекрывается другим правилом"
-
-msgid "MidoNet API server URI."
-msgstr "URI сервера API MidoNet."
-
-msgid "MidoNet admin password."
-msgstr "Пароль администратора MidoNet."
-
-msgid "MidoNet admin username."
-msgstr "Имя пользователя MidoNet с правами администратора."
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
@@ -1693,21 +1627,6 @@ msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 "Необходимо указать одно или несколько действий добавления или изменения "
 "потока"
-
-msgid "NVSD Controller IP address"
-msgstr "IP-адрес контроллера NVSD"
-
-msgid "NVSD Controller Port number"
-msgstr "Номер порта контроллера NVSD"
-
-msgid "NVSD Controller password"
-msgstr "Пароль контроллера NVSD"
-
-msgid "NVSD Controller username"
-msgstr "Имя пользователя контроллера NVSD"
-
-msgid "NVSD controller REST API request timeout in seconds"
-msgstr "Тайм-аут запроса REST API контроллера NVSD (в секундах)"
 
 #, python-format
 msgid ""
@@ -1874,9 +1793,6 @@ msgid ""
 msgstr ""
 "Количество нефиксированных IP-адресов на одного арендатора. Отрицательное "
 "значение - не ограничено."
-
-msgid "Number of login retries to NVSD controller"
-msgstr "Число повторных попыток входа в систему контроллера NVSD"
 
 msgid ""
 "Number of networks allowed per tenant. A negative value means unlimited."
@@ -2094,10 +2010,6 @@ msgstr ""
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
 msgstr "Префикс %(prefix)s не поддерживается в пуле IPv%(version)s"
 
-msgid "Private key file to use when starting the server securely"
-msgstr ""
-"Файл личного ключа, применяемый при запуске сервера в защищенном режиме"
-
 msgid "Private key of client certificate."
 msgstr "Личный ключ сертификата клиента."
 
@@ -2181,10 +2093,6 @@ msgid ""
 msgstr ""
 "В запросе содержится копия пары адресов: mac_address %(mac_address)s "
 "ip_address %(ip_address)s."
-
-#, python-format
-msgid "Request sent to server is invalid: %(reason)s"
-msgstr "Запрос, отправленный серверу, является недопустимым: %(reason)s"
 
 #, python-format
 msgid ""
@@ -2355,13 +2263,6 @@ msgstr ""
 "Установка/сброс бита Не разбивать на фрагменты (DF) в исходящем пакете IP, "
 "несущем туннель GRE/VXLAN."
 
-msgid ""
-"Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
-"supported on OS X."
-msgstr ""
-"Задает значение TCP_KEEPIDLE в секундах для каждого сокета сервера. Не "
-"поддерживается в OS X."
-
 msgid "Shared resource pool id"
 msgstr "ИД общего пула ресурсов"
 
@@ -2481,9 +2382,6 @@ msgid ""
 msgstr ""
 "Для этого агента необходимо настроить опцию 'gateway_external_network_id', "
 "так как Neutron имеет несколько внешних сетей."
-
-msgid "The API paste config file to use"
-msgstr "Используемый файл конфигурации вставки API"
 
 #, python-format
 msgid ""
@@ -2640,13 +2538,6 @@ msgstr "Порт '%s' был удален"
 msgid "The port to bind to"
 msgstr "Порт для подключения к"
 
-msgid "The request has timed out."
-msgstr "Истек срок действия запроса."
-
-#, python-format
-msgid "The request is forbidden access to the resource: %(reason)s"
-msgstr "Для запроса запрещен доступ к ресурсу: %(reason)s"
-
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr "Запрашиваемый тип содержимого %s является недопустимым."
@@ -2709,15 +2600,6 @@ msgstr ""
 "централизованного SNAT в дополнение к DVR. Данный режим должен "
 "использоваться для агентов L3, работающих на централизованном узле (или в "
 "однохостовых развертываниях, таких как devstack)"
-
-msgid ""
-"Timeout for client connections socket operations. If an incoming connection "
-"is idle for this number of seconds it will be closed. A value of '0' means "
-"wait forever."
-msgstr ""
-"Тайм-аут операций с сокетом соединения с клиентом. Если входящее соединение "
-"простаивает заданное число секунд, оно будет закрыто. Значение '0' означает "
-"постоянное ожидание."
 
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr "Тайм-аут команд ovs-vsctl, в секундах"
@@ -2852,12 +2734,6 @@ msgstr ""
 "тип порта: %(vif_type)s, old_mac: %(old_mac)s, new_mac: %(new_mac)s"
 
 #, python-format
-msgid ""
-"Unable to connect to NVSD controller. Exiting after %(retries)s attempts"
-msgstr ""
-"Не удается подключиться к контроллеру NVSD. Выход после %(retries)s попыток"
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "Невозможно преобразовать значение в %s"
 
@@ -2918,18 +2794,6 @@ msgstr "Во внешней сети %(net_id)s не найден ни один 
 msgid "Unable to find resource name in %s"
 msgstr "В %s не найдено имя ресурса"
 
-#, python-format
-msgid "Unable to find ssl_ca_file : %s"
-msgstr "Не удалось найти ssl_ca_file : %s"
-
-#, python-format
-msgid "Unable to find ssl_cert_file : %s"
-msgstr "Не удалось найти ssl_cert_file : %s"
-
-#, python-format
-msgid "Unable to find ssl_key_file : %s"
-msgstr "Не удалось найти ssl_key_file : %s"
-
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "Невозможно сгенерировать IP-адрес с помощью EUI64 для префикса IPv4"
 
@@ -2948,11 +2812,6 @@ msgid ""
 msgstr ""
 "Невозможно идентифицировать целевое поле из %s. Совпадение должно быть в "
 "форме %%(<field_name>)s"
-
-#, python-format
-msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
-msgstr ""
-"Невозможно загрузить %(app_name)s из файла конфигурации %(config_path)s."
 
 #, python-format
 msgid ""
@@ -3202,9 +3061,6 @@ msgstr "fixed_ip_address должен указываться вместе с por
 #, python-format
 msgid "has device owner %s"
 msgstr "имеет владельца устройства %s"
-
-msgid "integration bridge"
-msgstr "мост интеграции"
 
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"

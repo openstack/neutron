@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev207\n"
+"Project-Id-Version: neutron 8.0.0.dev498\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-18 06:06+0000\n"
+"POT-Creation-Date: 2015-10-09 06:21+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -85,14 +85,6 @@ msgstr ""
 #, python-format
 msgid "Could not expand segment %s"
 msgstr "Dilim %s genişletilemedi"
-
-#, python-format
-msgid ""
-"Creating an interface named %(name)s exceeds the %(limit)d character "
-"limitation. It was shortened to %(new_name)s to fit."
-msgstr ""
-"%(name)s isimli bir arayüz oluşturmak %(limit)d karakter sınırını aşar. "
-"Sığması için %(new_name)s'e kısaltıldı."
 
 #, python-format
 msgid "DHCP agent %s is not active"
@@ -187,9 +179,6 @@ msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
 msgstr ""
 "Geçersiz Dilimlendirme kimliği: %s, geçersiz vxlan aygıt ismine sebep olacak"
 
-msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
-msgstr "Geçersiz VLAN ID'si, geçersiz alt arayüz ismine yol açacak"
-
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr "Geçersiz uzak IP: %s"
@@ -240,9 +229,6 @@ msgstr "Uygun DHCP ajanı yok, yeniden zamanlama atlanıyor"
 #, python-format
 msgid "No L3 agents can host the router %s"
 msgstr "Hiçbir L3 ajanı %s yönlendiricisini sunamaz"
-
-msgid "No Token, Re-login"
-msgstr "Jeton yok, Yeniden-giriş"
 
 msgid "No active L3 agents"
 msgstr "Etkin L3 ajanı yok"
