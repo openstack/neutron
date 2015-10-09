@@ -913,6 +913,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                  'subnet_id': fake_subnet_id}],
              'subnets': [
                  {'id': fake_subnet_id,
+                  'cidr': '20.0.0.0/24',
                   'gateway_ip': '20.0.0.1'}],
              'id': _uuid(),
              'network_id': fake_network_id,
@@ -957,6 +958,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                  'subnet_id': subnet_id}],
              'subnets': [
                  {'id': subnet_id,
+                  'cidr': '20.0.0.0/24',
                   'gateway_ip': '20.0.0.1'}],
              'id': _uuid(),
              'network_id': fake_network_id,
@@ -1008,6 +1010,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                  'subnet_id': 'subnet_id'}],
              'subnets': [
                  {'id': 'subnet_id',
+                  'cidr': '20.0.0.0/24',
                   'gateway_ip': '20.0.0.1'}],
              'id': _uuid(),
              'network_id': 'fake_network_id',

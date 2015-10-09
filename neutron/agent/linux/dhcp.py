@@ -39,6 +39,7 @@ from neutron.common import ipv6_utils
 from neutron.common import utils as commonutils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.i18n import _LI, _LW, _LE
+from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -1020,6 +1021,27 @@ class DeviceManager(object):
                           '%(ip)s',
                           {'n': network.id, 'ip': subnet.gateway_ip})
 
+                # Check for and remove the on-link route for the old
+                # gateway being replaced, if it is outside the subnet
+                is_old_gateway_not_in_subnet = (gateway and
+                                                not ipam_utils.check_subnet_ip(
+                                                        subnet.cidr, gateway))
+                if is_old_gateway_not_in_subnet:
+                    v4_onlink = device.route.list_onlink_routes(
+                        constants.IP_VERSION_4)
+                    v6_onlink = device.route.list_onlink_routes(
+                        constants.IP_VERSION_6)
+                    existing_onlink_routes = set(
+                        r['cidr'] for r in v4_onlink + v6_onlink)
+                    if gateway in existing_onlink_routes:
+                        device.route.delete_route(gateway, scope='link')
+
+                is_new_gateway_not_in_subnet = (subnet.gateway_ip and
+                                                not ipam_utils.check_subnet_ip(
+                                                        subnet.cidr,
+                                                        subnet.gateway_ip))
+                if is_new_gateway_not_in_subnet:
+                    device.route.add_route(subnet.gateway_ip, scope='link')
                 device.route.add_gateway(subnet.gateway_ip)
 
             return
