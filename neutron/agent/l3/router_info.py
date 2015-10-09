@@ -504,11 +504,17 @@ class RouterInfo(object):
             interface_name,
             ip_cidrs,
             namespace=ns_name,
-            gateway_ips=gateway_ips,
             extra_subnets=ex_gw_port.get('extra_subnets', []),
             preserve_ips=preserve_ips,
-            enable_ra_on_gw=enable_ra_on_gw,
             clean_connections=True)
+
+        device = ip_lib.IPDevice(interface_name, namespace=ns_name)
+        for ip in gateway_ips or []:
+            device.route.add_gateway(ip)
+
+        if enable_ra_on_gw:
+            self.driver.configure_ipv6_ra(ns_name, interface_name)
+
         for fixed_ip in ex_gw_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,

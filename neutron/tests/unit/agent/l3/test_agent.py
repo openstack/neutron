@@ -382,7 +382,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._test_internal_network_action_dist('remove')
 
     def _add_external_gateway(self, ri, router, ex_gw_port, interface_name,
-                              enable_ra_on_gw=False,
                               use_fake_fip=False,
                               no_subnet=False, no_sub_gw=None,
                               dual_stack=False):
@@ -402,14 +401,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             if no_subnet and not dual_stack:
                 self.assertEqual(0, self.send_adv_notif.call_count)
                 ip_cidrs = []
-                gateway_ips = []
-                if no_sub_gw:
-                    gateway_ips.append(no_sub_gw)
                 kwargs = {'preserve_ips': [],
-                          'gateway_ips': gateway_ips,
                           'namespace': 'qrouter-' + router['id'],
                           'extra_subnets': [],
-                          'enable_ra_on_gw': enable_ra_on_gw,
                           'clean_connections': True}
             else:
                 exp_arp_calls = [mock.call(ri.ns_name, interface_name,
@@ -420,18 +414,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                 mock.ANY)]
                 self.send_adv_notif.assert_has_calls(exp_arp_calls)
                 ip_cidrs = ['20.0.0.30/24']
-                gateway_ips = ['20.0.0.1']
                 if dual_stack:
-                    if no_sub_gw:
-                        gateway_ips.append(no_sub_gw)
-                    else:
+                    if not no_sub_gw:
                         ip_cidrs.append('2001:192:168:100::2/64')
-                        gateway_ips.append('2001:192:168:100::1')
                 kwargs = {'preserve_ips': ['192.168.1.34/32'],
-                          'gateway_ips': gateway_ips,
                           'namespace': 'qrouter-' + router['id'],
                           'extra_subnets': [{'cidr': '172.16.0.0/24'}],
-                          'enable_ra_on_gw': enable_ra_on_gw,
                           'clean_connections': True}
             self.mock_driver.init_router_port.assert_called_with(
                 interface_name, ip_cidrs, **kwargs)
@@ -500,7 +488,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         elif action == 'add_no_sub':
             ri.use_ipv6 = True
             self._add_external_gateway(ri, router, ex_gw_port_no_sub,
-                                       interface_name, enable_ra_on_gw=True,
+                                       interface_name,
                                        no_subnet=True)
 
         elif action == 'add_no_sub_v6_gw':
@@ -570,10 +558,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ip_cidrs.append('2001:192:168:100::2/64')
             gateway_ips.append('2001:192:168:100::1')
         kwargs = {'preserve_ips': ['192.168.1.34/32'],
-                  'gateway_ips': gateway_ips,
                   'namespace': 'qrouter-' + router['id'],
                   'extra_subnets': [{'cidr': '172.16.0.0/24'}],
-                  'enable_ra_on_gw': False,
                   'clean_connections': True}
         self.mock_driver.init_router_port.assert_called_with(interface_name,
                                                              ip_cidrs,
