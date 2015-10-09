@@ -192,6 +192,10 @@ Document common pitfalls as well as good practices done when instrumenting your 
   exceptions or other objects directly (LOG.error(exc), LOG.error(port), etc.).
   See http://docs.openstack.org/developer/oslo.log/usage.html#no-more-implicit-conversion-to-unicode-str
   for more details.
+* Don't pass exceptions into LOG.exception: it is already implicitly included
+  in the log message by Python logging module.
+* Don't use LOG.exception when there is no exception registered in current
+  thread context: Python 3.x versions before 3.5 are known to fail on it.
 
 Project interfaces
 ~~~~~~~~~~~~~~~~~~

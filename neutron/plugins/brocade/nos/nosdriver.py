@@ -88,9 +88,9 @@ class NOSdriver(object):
             self.configure_trunk_mode_for_vlan_profile(mgr, name)
             self.configure_allowed_vlans_for_vlan_profile(mgr, name, net_id)
             self.activate_port_profile(mgr, name)
-        except Exception as ex:
+        except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def delete_network(self, host, username, password, net_id):
@@ -102,9 +102,9 @@ class NOSdriver(object):
             self.deactivate_port_profile(mgr, name)
             self.delete_port_profile(mgr, name)
             self.delete_vlan_interface(mgr, net_id)
-        except Exception as ex:
+        except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def associate_mac_to_network(self, host, username, password,
@@ -115,9 +115,9 @@ class NOSdriver(object):
         try:
             mgr = self.connect(host, username, password)
             self.associate_mac_to_port_profile(mgr, name, mac)
-        except Exception as ex:
+        except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def dissociate_mac_from_network(self, host, username, password,
@@ -128,9 +128,9 @@ class NOSdriver(object):
         try:
             mgr = self.connect(host, username, password)
             self.dissociate_mac_from_port_profile(mgr, name, mac)
-        except Exception as ex:
+        except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("NETCONF error: %s"), ex)
+                LOG.exception(_LE("NETCONF error"))
                 self.close_session()
 
     def create_vlan_interface(self, mgr, vlan_id):

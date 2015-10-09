@@ -24,7 +24,7 @@ from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
-from neutron.i18n import _LW
+from neutron.i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
@@ -666,9 +666,9 @@ class RouterInfo(object):
             fip_statuses = self.configure_fip_addresses(interface_name)
 
         except (n_exc.FloatingIpSetupException,
-                n_exc.IpTablesApplyException) as e:
+                n_exc.IpTablesApplyException):
                 # All floating IPs must be put in error state
-                LOG.exception(e)
+                LOG.exception(_LE("Failed to process floating IPs."))
                 fip_statuses = self.put_fips_in_error_state()
         finally:
             agent.update_fip_statuses(
