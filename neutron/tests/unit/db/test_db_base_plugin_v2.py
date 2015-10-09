@@ -3749,7 +3749,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def _test_validate_subnet_ipv6_pd_modes(self, cur_subnet=None,
                                          expect_success=True, **modes):
         plugin = manager.NeutronManager.get_plugin()
-        ctx = context.get_admin_context(load_admin_roles=False)
+        ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
                       'cidr': constants.PROVISIONAL_IPV6_PD_PREFIX,
                       'enable_dhcp': True,

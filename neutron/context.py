@@ -18,7 +18,6 @@
 import copy
 import datetime
 
-from debtcollector import removals
 from oslo_context import context as oslo_context
 from oslo_log import log as logging
 
@@ -36,7 +35,6 @@ class ContextBase(oslo_context.RequestContext):
 
     """
 
-    @removals.removed_kwarg('read_deleted')
     def __init__(self, user_id, tenant_id, is_admin=None, roles=None,
                  timestamp=None, request_id=None, tenant_name=None,
                  user_name=None, overwrite=True, auth_token=None,
@@ -105,8 +103,7 @@ class ContextBase(oslo_context.RequestContext):
     def from_dict(cls, values):
         return cls(**values)
 
-    @removals.removed_kwarg('read_deleted')
-    def elevated(self, read_deleted=None):
+    def elevated(self):
         """Return a version of this context with admin flag set."""
         context = copy.copy(self)
         context.is_admin = True
@@ -129,17 +126,14 @@ class Context(ContextBase):
         return self._session
 
 
-@removals.removed_kwarg('read_deleted')
-@removals.removed_kwarg('load_admin_roles')
-def get_admin_context(read_deleted="no", load_admin_roles=True):
+def get_admin_context():
     return Context(user_id=None,
                    tenant_id=None,
                    is_admin=True,
                    overwrite=False)
 
 
-@removals.removed_kwarg('read_deleted')
-def get_admin_context_without_session(read_deleted="no"):
+def get_admin_context_without_session():
     return ContextBase(user_id=None,
                        tenant_id=None,
                        is_admin=True)
