@@ -14,17 +14,17 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_middleware import base
 from oslo_middleware import request_id
 import webob.dec
 import webob.exc
 
 from neutron import context
-from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 
 
-class NeutronKeystoneContext(wsgi.Middleware):
+class NeutronKeystoneContext(base.ConfigurableMiddleware):
     """Make a request context from keystone headers."""
 
     @webob.dec.wsgify

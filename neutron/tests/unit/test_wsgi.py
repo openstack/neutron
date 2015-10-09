@@ -691,16 +691,6 @@ class ResourceTest(base.BaseTestCase):
         self.assertEqual(500, result.status_int)
 
 
-class MiddlewareTest(base.BaseTestCase):
-    def test_process_response(self):
-        def application(environ, start_response):
-            response = 'Success'
-            return response
-        response = application('test', 'fake')
-        result = wsgi.Middleware(application).process_response(response)
-        self.assertEqual('Success', result)
-
-
 class FaultTest(base.BaseTestCase):
     def test_call_fault(self):
         class MyException(object):
