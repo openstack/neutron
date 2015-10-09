@@ -425,7 +425,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []
-        self._drop_invalid_packets(iptables_rules)
         self._allow_established(iptables_rules)
         for rule in security_group_rules:
             if self.enable_ipset:
@@ -454,6 +453,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             args += ['-j RETURN']
             iptables_rules += [' '.join(args)]
 
+        self._drop_invalid_packets(iptables_rules)
         iptables_rules += ['-j $sg-fallback']
 
         return iptables_rules
