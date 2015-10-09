@@ -45,6 +45,7 @@
     "get_network:queue_id": "rule:admin_only",
     "create_network:shared": "rule:admin_only",
     "create_network:router:external": "rule:admin_only",
+    "create_network:is_default": "rule:admin_only",
     "create_network:segments": "rule:admin_only",
     "create_network:provider:network_type": "rule:admin_only",
     "create_network:provider:physical_network": "rule:admin_only",
@@ -203,5 +204,6 @@
 
     "create_flavor_service_profile": "rule:admin_only",
     "delete_flavor_service_profile": "rule:admin_only",
-    "get_flavor_service_profile": "rule:regular_user"
+    "get_flavor_service_profile": "rule:regular_user",
+    "get_auto_allocated_topology": "rule:admin_or_owner"
 }

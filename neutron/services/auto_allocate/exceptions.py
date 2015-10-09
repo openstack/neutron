@@ -1,3 +1,7 @@
+# Copyright 2015-2016 Hewlett Packard Enterprise Development Company, LP
+#
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,15 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# String literals representing core resources.
-EXTERNAL_NETWORK = 'external_network'
-FLOATING_IP = 'floating_ip'
-PORT = 'port'
-PROCESS = 'process'
-ROUTER = 'router'
-ROUTER_GATEWAY = 'router_gateway'
-ROUTER_INTERFACE = 'router_interface'
-SECURITY_GROUP = 'security_group'
-SECURITY_GROUP_RULE = 'security_group_rule'
-SUBNET = 'subnet'
-SUBNET_GATEWAY = 'subnet_gateway'
+from neutron._i18n import _
+from neutron.common import exceptions as n_exc
+
+
+class AutoAllocationFailure(n_exc.Conflict):
+    message = _("Deployment error: %(reason)s.")
+
+
+class DefaultExternalNetworkExists(n_exc.Conflict):
+    message = _("A default external network already exists: %(net_id)s.")
