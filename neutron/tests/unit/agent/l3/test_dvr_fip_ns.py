@@ -96,6 +96,39 @@ class TestDvrFipNs(base.BaseTestCase):
                                                '20.0.0.30',
                                                mock.ANY)
 
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    @mock.patch.object(ip_lib, 'IPDevice')
+    @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
+    @mock.patch.object(ip_lib, 'device_exists')
+    def test_gateway_outside_subnet_added(self, device_exists, send_adv_notif,
+                                          IPDevice, IPWrapper):
+        device = mock.Mock()
+        IPDevice.return_value = device
+
+        subnet_id = _uuid()
+        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
+                                        'prefixlen': 24,
+                                        'subnet_id': subnet_id}],
+                         'subnets': [{'id': subnet_id,
+                                      'cidr': '20.0.0.0/24',
+                                      'gateway_ip': '20.0.1.1'}],
+                         'id': _uuid(),
+                         'network_id': self.net_id,
+                         'mac_address': 'ca:fe:de:ad:be:ef'}
+
+        device_exists.return_value = False
+        self.fip_ns._gateway_added(agent_gw_port,
+                                   mock.sentinel.interface_name)
+        self.assertEqual(1, self.driver.plug.call_count)
+        self.assertEqual(1, self.driver.init_l3.call_count)
+        send_adv_notif.assert_called_once_with(self.fip_ns.get_name(),
+                                               mock.sentinel.interface_name,
+                                               '20.0.0.30',
+                                               mock.ANY)
+        device.route.add_route.assert_called_once_with('20.0.1.1',
+                                                       scope='link')
+        device.route.add_gateway.assert_called_once_with('20.0.1.1')
+
     @mock.patch.object(iptables_manager, 'IptablesManager')
     @mock.patch.object(utils, 'execute')
     @mock.patch.object(ip_lib.IpNetnsCommand, 'exists')

@@ -22,6 +22,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
+from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -120,8 +121,12 @@ class FipNamespace(namespaces.Namespace):
         for subnet in ex_gw_port['subnets']:
             gw_ip = subnet.get('gateway_ip')
             if gw_ip:
+                is_gateway_not_in_subnet = not ipam_utils.check_subnet_ip(
+                                                subnet.get('cidr'), gw_ip)
                 ipd = ip_lib.IPDevice(interface_name,
                                       namespace=ns_name)
+                if is_gateway_not_in_subnet:
+                    ipd.route.add_route(gw_ip, scope='link')
                 ipd.route.add_gateway(gw_ip)
 
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
