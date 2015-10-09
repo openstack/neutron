@@ -20,7 +20,7 @@ VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
 
 LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
                 'poolstatisticss', 'members', 'poolloadbalanceragentbindings',
-                'embrane_pool_port', 'poolmonitorassociations']
+                'poolmonitorassociations']
 
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 

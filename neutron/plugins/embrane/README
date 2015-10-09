@@ -1,9 +1,0 @@
-Embrane Neutron Plugin
-
-This plugin interfaces OpenStack Neutron with Embrane's heleos platform, which
-provides layer 3-7 network services for cloud environments.
-
-L2 connectivity is leveraged by one of the supported existing plugins.
-
-For more details on use, configuration and implementation please refer to:
-http://wiki.openstack.org/wiki/Neutron/EmbraneNeutronPlugin
