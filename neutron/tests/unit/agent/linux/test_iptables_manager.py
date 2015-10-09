@@ -143,6 +143,20 @@ class IptablesCommentsTestCase(base.BaseTestCase):
                 self.fail("Iptables comment %s is longer than 255 characters."
                           % attr)
 
+    def test_reordering_of_jump_rule_comments(self):
+        # jump at the start
+        self.assertEqual(
+            '-m comment --comment "aloha" -j sg-chain',
+            iptables_manager.comment_rule('-j sg-chain', 'aloha'))
+        # jump in the middle
+        self.assertEqual(
+            '-s source -m comment --comment "aloha" -j sg-chain',
+            iptables_manager.comment_rule('-s source -j sg-chain', 'aloha'))
+        # no jump rule
+        self.assertEqual(
+            '-s source -m comment --comment "aloha"',
+            iptables_manager.comment_rule('-s source', 'aloha'))
+
     def test_add_filter_rule(self):
         iptables_args = {}
         iptables_args.update(IPTABLES_ARG)
