@@ -33,6 +33,7 @@ class AddressScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
     name = sa.Column(sa.String(attr.NAME_MAX_LEN), nullable=False)
     shared = sa.Column(sa.Boolean, nullable=False)
+    ip_version = sa.Column(sa.Integer(), nullable=False)
 
 
 class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
@@ -44,7 +45,8 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         res = {'id': address_scope['id'],
                'name': address_scope['name'],
                'tenant_id': address_scope['tenant_id'],
-               'shared': address_scope['shared']}
+               'shared': address_scope['shared'],
+               'ip_version': address_scope['ip_version']}
         return self._fields(res, fields)
 
     def _get_address_scope(self, context, id):
@@ -68,6 +70,10 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         return context.is_admin or (
             address_scope.tenant_id == context.tenant_id)
 
+    def get_ip_version_for_address_scope(self, context, id):
+        address_scope = self._get_address_scope(context, id)
+        return address_scope.ip_version
+
     def create_address_scope(self, context, address_scope):
         """Create a address scope."""
         a_s = address_scope['address_scope']
@@ -77,7 +83,8 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
             pool_args = {'tenant_id': tenant_id,
                          'id': address_scope_id,
                          'name': a_s['name'],
-                         'shared': a_s['shared']}
+                         'shared': a_s['shared'],
+                         'ip_version': a_s['ip_version']}
             address_scope = AddressScope(**pool_args)
             context.session.add(address_scope)
 
