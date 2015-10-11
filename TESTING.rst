@@ -309,9 +309,20 @@ current unit tests coverage by running::
 
     $ ./run_tests.sh -c
 
+or by running::
+
+    $ tox -ecover
+
 Since the coverage command can only show unit test coverage, a coverage
 document is maintained that shows test coverage per area of code in:
-doc/source/devref/testing_coverage.rst.
+doc/source/devref/testing_coverage.rst. You could also rely on Zuul
+logs, that are generated post-merge (not every project builds coverage
+results). To access them, do the following:
+
+  * Check out the latest `merge commit <https://review.openstack.org/gitweb?p=openstack/neutron.git;a=search;s=Jenkins;st=author>`_
+  * Go to: http://logs.openstack.org/<first-2-digits-of-sha1>/<sha1>/post/neutron-coverage/.
+  * `Spec <https://review.openstack.org/#/c/221494/>`_ is a work in progress to
+    provide a better landing page.
 
 Debugging
 ---------
