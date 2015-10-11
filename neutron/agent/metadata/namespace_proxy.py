@@ -15,6 +15,7 @@
 import httplib2
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 import six.moves.urllib.parse as urlparse
 import webob
 
@@ -86,7 +87,7 @@ class NetworkMetadataProxyHandler(object):
 
         if resp.status == 200:
             LOG.debug(resp)
-            LOG.debug(content)
+            LOG.debug(encodeutils.safe_decode(content, errors='replace'))
             response = webob.Response()
             response.status = resp.status
             response.headers['Content-Type'] = resp['content-type']
