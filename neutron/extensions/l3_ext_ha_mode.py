@@ -29,7 +29,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class DistributedHARouterNotSupported(NotImplementedError):
+class DistributedHARouterNotSupported(exceptions.BadRequest):
     message = _("Currently distributed HA routers are "
                 "not supported.")
 
