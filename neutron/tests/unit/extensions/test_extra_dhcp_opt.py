@@ -106,6 +106,21 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             self._check_opts(expected,
                              port['port'][edo_ext.EXTRADHCPOPTS])
 
+    def test_create_port_with_empty_router_extradhcpopts(self):
+        opt_list = [{'opt_name': 'router',
+                     'opt_value': ''},
+                    {'opt_name': 'server-ip-address',
+                     'opt_value': '123.123.123.456'},
+                    {'opt_name': 'tftp-server',
+                     'opt_value': '123.123.123.123'}]
+
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
+                  'arg_list': (edo_ext.EXTRADHCPOPTS,)}
+
+        with self.port(**params) as port:
+            self._check_opts(opt_list,
+                             port['port'][edo_ext.EXTRADHCPOPTS])
+
     def test_create_port_with_extradhcpopts_ipv4_opt_version(self):
         opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0',
@@ -265,6 +280,28 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
                                           port['port']['id'])
             res = req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+    def test_update_port_with_blank_router_extradhcpopt(self):
+        opt_list = [{'opt_name': 'bootfile-name',
+                     'opt_value': 'pxelinux.0',
+                     'ip_version': 4},
+                    {'opt_name': 'tftp-server',
+                     'opt_value': '123.123.123.123',
+                     'ip_version': 4},
+                    {'opt_name': 'router',
+                     'opt_value': '123.123.123.1',
+                     'ip_version': 4}]
+        upd_opts = [{'opt_name': 'router',
+                     'opt_value': '',
+                     'ip_version': 4}]
+        expected_opts = copy.deepcopy(opt_list)
+        for i in expected_opts:
+            if i['opt_name'] == upd_opts[0]['opt_name']:
+                i['opt_value'] = upd_opts[0]['opt_value']
+                break
+
+        self._test_update_port_with_extradhcpopts(opt_list, upd_opts,
+                                                  expected_opts)
 
     def test_update_port_with_extradhcpopts_ipv6_change_value(self):
         opt_list = [{'opt_name': 'bootfile-name',
