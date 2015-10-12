@@ -124,13 +124,11 @@ function _install_databases {
 
     source $DEVSTACK_PATH/lib/database
 
-    disable_service postgresql
     enable_service mysql
     initialize_database_backends
     install_database
     configure_database_mysql
 
-    disable_service mysql
     enable_service postgresql
     initialize_database_backends
     install_database
