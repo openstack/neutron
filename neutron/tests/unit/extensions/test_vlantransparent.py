@@ -82,7 +82,7 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(net['network']['name'],
                              res['network']['name'])
-            self.assertEqual(True, res['network'][vlt.VLANTRANSPARENT])
+            self.assertTrue(res['network'][vlt.VLANTRANSPARENT])
 
     def test_network_create_with_bad_vlan_transparent_attr(self):
         vlantrans = {'vlan_transparent': "abc"}

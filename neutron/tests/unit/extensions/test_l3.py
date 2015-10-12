@@ -114,7 +114,7 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
         router = res['router']
         self.assertEqual(router['id'], router_id)
         self.assertEqual(router['status'], "ACTIVE")
-        self.assertEqual(router['admin_state_up'], True)
+        self.assertTrue(router['admin_state_up'])
 
     def test_router_list(self):
         router_id = _uuid()

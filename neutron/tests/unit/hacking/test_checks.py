@@ -154,3 +154,26 @@ class HackingTestCase(base.BaseTestCase):
         f = checks.check_python3_no_iteritems
         self.assertLineFails(f, "d.iteritems()")
         self.assertLinePasses(f, "six.iteritems(d)")
+
+    def test_asserttrue(self):
+        fail_code1 = """
+               test_bool = True
+               self.assertEqual(True, test_bool)
+               """
+        fail_code2 = """
+               test_bool = True
+               self.assertEqual(test_bool, True)
+               """
+        pass_code = """
+               test_bool = True
+               self.assertTrue(test_bool)
+               """
+        self.assertEqual(
+            1, len(list(checks.check_asserttrue(fail_code1,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(checks.check_asserttrue(fail_code2,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            0, len(list(checks.check_asserttrue(pass_code,
+                                            "neutron/tests/test_assert.py"))))
