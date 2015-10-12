@@ -551,7 +551,6 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'start_flag': True,
             'agent_type': constants.AGENT_TYPE_DHCP}
         report_interval = self.conf.AGENT.report_interval
-        self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
@@ -562,8 +561,12 @@ class DhcpAgentWithStateReport(DhcpAgent):
             self.agent_state.get('configurations').update(
                 self.cache.get_state())
             ctx = context.get_admin_context_without_session()
-            self.state_rpc.report_state(ctx, self.agent_state, self.use_call)
-            self.use_call = False
+            agent_status = self.state_rpc.report_state(
+                ctx, self.agent_state, True)
+            if agent_status == constants.AGENT_REVIVED:
+                LOG.info(_LI("Agent has just been revived. "
+                             "Scheduling full sync"))
+                self.schedule_resync("Agent has just been revived")
         except AttributeError:
             # This means the server does not support report_state
             LOG.warn(_LW("Neutron server does not support state report."
