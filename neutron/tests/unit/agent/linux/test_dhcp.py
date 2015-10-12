@@ -29,6 +29,7 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests import base
+from neutron.tests import tools
 
 LOG = logging.getLogger(__name__)
 
@@ -985,12 +986,11 @@ class TestDhcpLocalProcess(TestBase):
         parent.assert_has_calls(expected)
 
     def test_get_interface_name(self):
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            mock_open.return_value.read.return_value = 'tap0'
-            lp = LocalChild(self.conf, FakeDualNetwork())
-            self.assertEqual(lp.interface_name, 'tap0')
+        net = FakeDualNetwork()
+        path = '/dhcp/%s/interface' % net.id
+        self.useFixture(tools.OpenFixture(path, 'tap0'))
+        lp = LocalChild(self.conf, net)
+        self.assertEqual(lp.interface_name, 'tap0')
 
     def test_set_interface_name(self):
         with mock.patch('neutron.agent.linux.utils.replace_file') as replace:
@@ -1557,23 +1557,23 @@ class TestDnsmasq(TestBase):
          exp_addn_name, exp_addn_data,
          exp_opt_name, exp_opt_data,) = self._test_reload_allocation_data
 
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            mock_open.return_value.readline.return_value = None
+        net = FakeDualNetwork()
+        hpath = '/dhcp/%s/host' % net.id
+        ipath = '/dhcp/%s/interface' % net.id
+        self.useFixture(tools.OpenFixture(hpath))
+        self.useFixture(tools.OpenFixture(ipath))
+        test_pm = mock.Mock()
+        dm = self._get_dnsmasq(net, test_pm)
+        dm.reload_allocations()
+        self.assertTrue(test_pm.register.called)
+        self.external_process().enable.assert_called_once_with(
+            reload_cfg=True)
 
-            test_pm = mock.Mock()
-            dm = self._get_dnsmasq(FakeDualNetwork(), test_pm)
-            dm.reload_allocations()
-            self.assertTrue(test_pm.register.called)
-            self.external_process().enable.assert_called_once_with(
-                reload_cfg=True)
-
-            self.safe.assert_has_calls([
-                mock.call(exp_host_name, exp_host_data),
-                mock.call(exp_addn_name, exp_addn_data),
-                mock.call(exp_opt_name, exp_opt_data),
-            ])
+        self.safe.assert_has_calls([
+            mock.call(exp_host_name, exp_host_data),
+            mock.call(exp_addn_name, exp_addn_data),
+            mock.call(exp_opt_name, exp_opt_data),
+        ])
 
     def test_release_unused_leases(self):
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
@@ -1699,15 +1699,12 @@ class TestDnsmasq(TestBase):
 
     def test_read_hosts_file_leases(self):
         filename = '/path/to/file'
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
-                     "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
-            mock_open.return_value.readlines.return_value = lines
-
-            dnsmasq = self._get_dnsmasq(FakeDualNetwork())
-            leases = dnsmasq._read_hosts_file_leases(filename)
+        lines = ["00:00:80:aa:bb:cc,inst-name,192.168.0.1",
+                 "00:00:80:aa:bb:cc,inst-name,[fdca:3ba5:a17a::1]"]
+        mock_open = self.useFixture(
+            tools.OpenFixture(filename, '\n'.join(lines))).mock_open
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+        leases = dnsmasq._read_hosts_file_leases(filename)
 
         self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", None),
                               ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
@@ -1716,16 +1713,13 @@ class TestDnsmasq(TestBase):
 
     def test_read_hosts_file_leases_with_client_id(self):
         filename = '/path/to/file'
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            lines = ["00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
-                     "00:00:80:aa:bb:cc,id:client2,inst-name,"
-                     "[fdca:3ba5:a17a::1]"]
-            mock_open.return_value.readlines.return_value = lines
-
-            dnsmasq = self._get_dnsmasq(FakeDualNetwork())
-            leases = dnsmasq._read_hosts_file_leases(filename)
+        lines = ["00:00:80:aa:bb:cc,id:client1,inst-name,192.168.0.1",
+                 "00:00:80:aa:bb:cc,id:client2,inst-name,"
+                 "[fdca:3ba5:a17a::1]"]
+        mock_open = self.useFixture(
+            tools.OpenFixture(filename, '\n'.join(lines))).mock_open
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+        leases = dnsmasq._read_hosts_file_leases(filename)
 
         self.assertEqual(set([("192.168.0.1", "00:00:80:aa:bb:cc", 'client1'),
                               ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",

@@ -23,6 +23,7 @@ import testtools
 from neutron.agent.linux import daemon
 from neutron.common import exceptions
 from neutron.tests import base
+from neutron.tests import tools
 
 FAKE_FD = 8
 
@@ -171,43 +172,37 @@ class TestPidfile(base.BaseTestCase):
         self.assertEqual(34, p.read())
 
     def test_is_running(self):
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            p = daemon.Pidfile('thefile', 'python')
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            mock_open.return_value.readline.return_value = 'python'
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/34/cmdline', 'python')).mock_open
+        p = daemon.Pidfile('thefile', 'python')
 
-            with mock.patch.object(p, 'read') as read:
-                read.return_value = 34
-                self.assertTrue(p.is_running())
+        with mock.patch.object(p, 'read') as read:
+            read.return_value = 34
+            self.assertTrue(p.is_running())
 
-            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_true(self):
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            p = daemon.Pidfile('thefile', 'python', uuid='1234')
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            mock_open.return_value.readline.return_value = 'python 1234'
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/34/cmdline', 'python 1234')).mock_open
+        p = daemon.Pidfile('thefile', 'python', uuid='1234')
 
-            with mock.patch.object(p, 'read') as read:
-                read.return_value = 34
-                self.assertTrue(p.is_running())
+        with mock.patch.object(p, 'read') as read:
+            read.return_value = 34
+            self.assertTrue(p.is_running())
 
-            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_false(self):
-        with mock.patch('six.moves.builtins.open') as mock_open:
-            p = daemon.Pidfile('thefile', 'python', uuid='6789')
-            mock_open.return_value.__enter__ = lambda s: s
-            mock_open.return_value.__exit__ = mock.Mock()
-            mock_open.return_value.readline.return_value = 'python 1234'
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/34/cmdline', 'python 1234')).mock_open
+        p = daemon.Pidfile('thefile', 'python', uuid='6789')
 
-            with mock.patch.object(p, 'read') as read:
-                read.return_value = 34
-                self.assertFalse(p.is_running())
+        with mock.patch.object(p, 'read') as read:
+            read.return_value = 34
+            self.assertFalse(p.is_running())
 
-            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
 
 class TestDaemon(base.BaseTestCase):

@@ -337,35 +337,31 @@ class TestCli(base.BaseTestCase):
         if file_heads is None:
             file_heads = []
         fake_config = self.configs[0]
+        mock_open = self.useFixture(
+            tools.OpenFixture(cli._get_head_file_path(fake_config),
+                              '\n'.join(file_heads))
+        ).mock_open
         with mock.patch('alembic.script.ScriptDirectory.from_config') as fc,\
                 mock.patch.object(cli, '_use_separate_migration_branches',
                                   return_value=not branchless):
             fc.return_value.get_heads.return_value = heads
-            with mock.patch.object(cli, 'open') as mock_open:
-                mock_open.return_value.__enter__ = lambda s: s
-                mock_open.return_value.__exit__ = mock.Mock()
-                mock_open.return_value.read.return_value = (
-                    '\n'.join(file_heads))
 
-                if not branchless or all(head in file_heads for head in heads):
-                    cli.validate_head_file(fake_config)
-                else:
-                    self.assertRaises(
-                        SystemExit,
-                        cli.validate_head_file,
-                        fake_config
-                    )
-                    self.assertTrue(self.mock_alembic_err.called)
-
-                if branchless:
-                    mock_open.assert_called_with(
-                        cli._get_head_file_path(fake_config))
-                else:
-                    self.assertFalse(mock_open.called)
+            if not branchless or all(head in file_heads for head in heads):
+                cli.validate_head_file(fake_config)
+            else:
+                self.assertRaises(
+                    SystemExit,
+                    cli.validate_head_file,
+                    fake_config
+                )
+                self.assertTrue(self.mock_alembic_err.called)
 
             if branchless:
+                mock_open.assert_called_with(
+                    cli._get_head_file_path(fake_config))
                 fc.assert_called_once_with(fake_config)
             else:
+                self.assertFalse(mock_open.called)
                 self.assertFalse(fc.called)
 
     def test_validate_head_file_multiple_heads(self):
