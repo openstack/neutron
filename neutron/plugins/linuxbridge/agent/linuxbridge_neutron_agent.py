@@ -941,7 +941,6 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 LOG.info(_("Port %s updated."), device)
             else:
                 LOG.debug(_("Device %s not defined on plugin"), device)
-            self.br_mgr.remove_empty_bridges()
         if self.prevent_arp_spoofing:
             arp_protect.delete_arp_spoofing_protection(devices)
         return resync
