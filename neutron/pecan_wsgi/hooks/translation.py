@@ -35,4 +35,4 @@ class ExceptionTranslationHook(hooks.PecanHook):
         # hide message from user in case it contained sensitive details
         LOG.exception(_("An unexpected exception was caught: %s") % e)
         raise webob.exc.HTTPInternalServerError(
-            _("An unexpected internal error occured."))
+            _("An unexpected internal error occurred."))
