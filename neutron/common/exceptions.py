@@ -72,10 +72,6 @@ class ServiceUnavailable(NeutronException):
     message = _("The service is unavailable")
 
 
-class NotSupported(NeutronException):
-    message = _('Not supported: %(msg)s')
-
-
 class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
