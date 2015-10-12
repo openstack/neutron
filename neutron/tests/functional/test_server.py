@@ -239,6 +239,8 @@ class TestRPCServer(TestNeutronServer):
                 get_plugin.return_value = self.plugin
 
                 CONF.set_override("rpc_workers", workers)
+                # not interested in state report workers specifically
+                CONF.set_override("rpc_state_report_workers", 0)
 
                 launcher = service.serve_rpc()
                 launcher.wait()

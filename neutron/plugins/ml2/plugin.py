@@ -190,10 +190,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
+        # process state reports despite dedicated rpc workers
         self.conn.create_consumer(topics.REPORTS,
                                   [agents_db.AgentExtRpcCallback()],
                                   fanout=False)
         return self.conn.consume_in_threads()
+
+    def start_rpc_state_reports_listener(self):
+        self.conn_reports = n_rpc.create_connection(new=True)
+        self.conn_reports.create_consumer(topics.REPORTS,
+                                          [agents_db.AgentExtRpcCallback()],
+                                          fanout=False)
+        return self.conn_reports.consume_in_threads()
 
     def _filter_nets_provider(self, context, networks, filters):
         return [network

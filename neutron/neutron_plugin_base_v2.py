@@ -375,6 +375,16 @@ class NeutronPluginBaseV2(object):
         """
         raise NotImplementedError()
 
+    def start_rpc_state_reports_listener(self):
+        """Start the RPC listeners consuming state reports queue.
+
+        This optional method creates rpc consumer for REPORTS queue only.
+
+        .. note:: this method is optional, as it was not part of the originally
+                  defined plugin API.
+        """
+        raise NotImplementedError()
+
     def rpc_workers_supported(self):
         """Return whether the plugin supports multiple RPC workers.
 
@@ -389,6 +399,15 @@ class NeutronPluginBaseV2(object):
         """
         return (self.__class__.start_rpc_listeners !=
                 NeutronPluginBaseV2.start_rpc_listeners)
+
+    def rpc_state_report_workers_supported(self):
+        """Return whether the plugin supports state report RPC workers.
+
+        .. note:: this method is optional, as it was not part of the originally
+                  defined plugin API.
+        """
+        return (self.__class__.start_rpc_state_reports_listener !=
+                NeutronPluginBaseV2.start_rpc_state_reports_listener)
 
     def get_workers(self):
         """Returns a collection NeutronWorker instances
