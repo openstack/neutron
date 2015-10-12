@@ -407,28 +407,46 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         return router_dict
 
     def _update_router_db(self, context, router_id, data, gw_info):
-        ha = data.pop('ha', None)
+        router_db = self._get_router(context, router_id)
 
-        if ha and data.get('distributed'):
+        original_distributed_state = router_db.extra_attributes.distributed
+        original_ha_state = router_db.extra_attributes.ha
+
+        requested_ha_state = data.pop('ha', None)
+        requested_distributed_state = data.get('distributed', None)
+
+        if ((original_ha_state and requested_distributed_state) or
+            (requested_ha_state and original_distributed_state) or
+            (requested_ha_state and requested_distributed_state)):
             raise l3_ha.DistributedHARouterNotSupported()
 
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
                 context, router_id, data, gw_info)
 
-            ha_not_changed = ha is None or ha == router_db.extra_attributes.ha
+            ha_not_changed = (requested_ha_state is None or
+                              requested_ha_state == original_ha_state)
             if ha_not_changed:
                 return router_db
 
+            if router_db.admin_state_up:
+                msg = _('Cannot change HA attribute of active routers. Please '
+                        'set router admin_state_up to False prior to upgrade.')
+                raise n_exc.BadRequest(resource='router', msg=msg)
+
             ha_network = self.get_ha_network(context,
                                              router_db.tenant_id)
-            router_db.extra_attributes.ha = ha
-            if not ha:
+            router_db.extra_attributes.ha = requested_ha_state
+            if not requested_ha_state:
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
                 router_db.extra_attributes.ha_vr_id = None
 
-        if ha:
+        # The HA attribute has changed. First unbind the router from agents
+        # to force a proper re-scheduling to agents.
+        self._unbind_ha_router(context, router_id)
+
+        if requested_ha_state:
             if not ha_network:
                 ha_network = self._create_ha_network(context,
                                                      router_db.tenant_id)
@@ -493,6 +511,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                                      "%(tenant)s."),
                                  {'network': ha_network.network_id,
                                   'tenant': router_db.tenant_id})
+
+    def _unbind_ha_router(self, context, router_id):
+        for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
+            self.remove_router_from_l3_agent(context, agent['id'], router_id)
 
     def get_ha_router_port_bindings(self, context, router_ids, host=None):
         if not router_ids:

@@ -21,7 +21,7 @@ from neutron.common import exceptions
 HA_INFO = 'ha'
 EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {
-        HA_INFO: {'allow_post': True, 'allow_put': False,
+        HA_INFO: {'allow_post': True, 'allow_put': True,
                   'default': attributes.ATTR_NOT_SPECIFIED, 'is_visible': True,
                   'enforce_policy': True,
                   'convert_to': attributes.convert_to_boolean_if_not_none}
