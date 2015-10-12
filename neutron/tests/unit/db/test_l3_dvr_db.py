@@ -96,7 +96,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'distributed': True
         }
         router_db = self._create_router(router)
-        self.assertRaises(exceptions.NotSupported,
+        self.assertRaises(exceptions.BadRequest,
                           self.mixin._validate_router_migration,
                           self.ctx, router_db, {'distributed': False})
 
