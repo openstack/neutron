@@ -409,14 +409,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           agent.context)
         self.assertTrue(agent.fullsync)
 
-    def test_l3_initial_full_sync_done(self):
-        with mock.patch.object(l3_agent.L3NATAgent,
-                               'periodic_sync_routers_task') as router_sync:
-            with mock.patch.object(eventlet, 'spawn_n'):
-                agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-                agent.after_start()
-                router_sync.assert_called_once_with(agent.context)
-
     def test_l3_initial_report_state_done(self):
         with mock.patch.object(l3_agent.L3NATAgentWithStateReport,
                                'periodic_sync_routers_task'),\
