@@ -24,6 +24,7 @@ import struct
 import tempfile
 import threading
 
+import debtcollector
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
@@ -177,6 +178,7 @@ def get_interface_mac(interface):
                     for char in info[MAC_START:MAC_END]])[:-1]
 
 
+@debtcollector.removals.remove(message="Redundant in Mitaka release.")
 def replace_file(file_name, data, file_mode=0o644):
     """Replaces the contents of file_name with data in a safe manner.
 
