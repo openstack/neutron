@@ -130,16 +130,14 @@ class TestNeutronServer(base.BaseTestCase):
         1. Start a service with a given number of workers.
         2. Send SIGHUP to the service.
         3. Wait for workers (if any) to restart.
-        4. Assert that the pids of the workers didn't change after restart.
         """
 
-        start_workers = self._start_server(callback=service, workers=workers)
-
+        self._start_server(callback=service, workers=workers)
         os.kill(self.service_pid, signal.SIGHUP)
 
         # Wait for temp file to be created and its size become equal
-        # to size of FAKE_RESET_MSG repeated (workers + 1) times.
-        expected_size = len(FAKE_RESET_MSG) * (workers + 1)
+        # to size of FAKE_RESET_MSG
+        expected_size = len(FAKE_RESET_MSG)
         condition = lambda: (os.path.isfile(self.temp_file)
                              and os.stat(self.temp_file).st_size ==
                              expected_size)
@@ -153,15 +151,11 @@ class TestNeutronServer(base.BaseTestCase):
                  'size': expected_size}))
 
         # Verify that reset has been called for parent process in which
-        # a service was started and for each worker by checking that
-        # FAKE_RESET_MSG has been written to temp file workers + 1 times.
+        # a service was started. FAKE_RESET_MSG has been written to temp
+        # file.
         with open(self.temp_file, 'r') as f:
             res = f.readline()
-            self.assertEqual(FAKE_RESET_MSG * (workers + 1), res)
-
-        # Make sure worker pids don't change
-        end_workers = self._get_workers()
-        self.assertEqual(start_workers, end_workers)
+            self.assertEqual(FAKE_RESET_MSG, res)
 
 
 class TestWsgiServer(TestNeutronServer):
