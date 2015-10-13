@@ -24,7 +24,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
+from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
@@ -106,43 +106,37 @@ class TestLinuxBridge(base.BaseTestCase):
         self.assertTrue(vxlan_bridge_func.called)
 
 
-class TestLinuxBridgeAgent(base.BaseTestCase):
-
+class TestCommonAgentLoop(base.BaseTestCase):
     def setUp(self):
-        super(TestLinuxBridgeAgent, self).setUp()
+        super(TestCommonAgentLoop, self).setUp()
         # disable setting up periodic state reporting
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         cfg.CONF.set_override('prevent_arp_spoofing', False, 'AGENT')
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
-        self.get_devices_p = mock.patch.object(ip_lib.IPWrapper, 'get_devices')
-        self.get_devices = self.get_devices_p.start()
-        self.get_devices.return_value = [ip_lib.IPDevice('eth77')]
-        self.get_mac_p = mock.patch('neutron.agent.linux.utils.'
-                                    'get_interface_mac')
-        self.get_mac = self.get_mac_p.start()
-        self.get_mac.return_value = '00:00:00:00:00:01'
         self.get_bridge_names_p = mock.patch.object(bridge_lib,
                                                     'get_bridge_names')
         self.get_bridge_names = self.get_bridge_names_p.start()
         self.get_bridge_names.return_value = ["br-int", "brq1"]
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip',
-                               return_value=FAKE_DEFAULT_DEV):
-            self.agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC(
-                {}, {}, 0, cfg.CONF.AGENT.quitting_rpc_timeout)
-            with mock.patch.object(self.agent, "daemon_loop"),\
-                    mock.patch.object(
-                        linuxbridge_neutron_agent.LinuxBridgeManager,
-                        'check_vxlan_support'):
+
+        manager = mock.Mock()
+        manager.get_all_devices.return_value = []
+        manager.get_agent_configurations.return_value = {}
+        manager.get_rpc_consumers.return_value = []
+        with mock.patch.object(linuxbridge_neutron_agent.CommonAgentLoop,
+                               '_validate_manager_class'), \
+            mock.patch.object(linuxbridge_neutron_agent.CommonAgentLoop,
+                              '_validate_rpc_endpoints'):
+            self.agent = linuxbridge_neutron_agent.CommonAgentLoop(
+                manager, 0, 10, 'fake_agent', 'foo-binary')
+            with mock.patch.object(self.agent, "daemon_loop"):
                 self.agent.start()
 
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent
-        agent._ensure_port_admin_state = mock.Mock()
+        agent.mgr.ensure_port_admin_state = mock.Mock()
         devices = [DEVICE_1]
         agent.network_ports[NETWORK_ID].append(PORT_DATA)
         with mock.patch.object(agent.plugin_rpc,
@@ -220,17 +214,18 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                   "remove_devices_filter"):
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': True}
-            with mock.patch.object(arp_protect,
+            with mock.patch.object(agent.mgr,
                                    'delete_arp_spoofing_protection') as de_arp:
                 agent.treat_devices_removed(devices)
                 de_arp.assert_called_with(devices)
 
     def _test_scan_devices(self, previous, updated,
                            fake_current, expected, sync):
-        self.agent.br_mgr = mock.Mock()
-        self.agent.br_mgr.get_tap_devices.return_value = fake_current
+        self.agent.mgr = mock.Mock()
+        self.agent.mgr.get_all_devices.return_value = fake_current
 
-        self.agent.updated_devices = updated
+        self.agent.rpc_callbacks.get_and_clear_updated_devices.return_value =\
+            updated
         results = self.agent.scan_devices(previous, sync)
         self.assertEqual(expected, results)
 
@@ -371,11 +366,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                     'updated': set(),
                     'added': set([1, 2]),
                     'removed': set()}
-        with mock.patch.object(arp_protect,
-                               'delete_unreferenced_arp_protection') as de_arp:
-            self._test_scan_devices(previous, updated, fake_current, expected,
+        self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
-            de_arp.assert_called_with(fake_current)
+        self.agent.mgr.delete_unreferenced_arp_protection.assert_called_with(
+            fake_current)
 
     def test_process_network_devices(self):
         agent = self.agent
@@ -414,21 +408,29 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         agent.ext_manager = mock.Mock()
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
-        agent.br_mgr = mock.Mock()
-        agent.br_mgr.add_interface.return_value = True
-        agent._ensure_port_admin_state = mock.Mock()
-        resync_needed = agent.treat_devices_added_updated(set(['tap1']))
+        agent.mgr = mock.Mock()
+        agent.mgr.plug_interface.return_value = True
+        agent.mgr.ensure_port_admin_state = mock.Mock()
+        mock_segment = amb.NetworkSegment(mock_details['network_type'],
+                                          mock_details['physical_network'],
+                                          mock_details['segmentation_id'])
 
-        self.assertFalse(resync_needed)
-        agent.br_mgr.add_interface.assert_called_with(
-                                      'net123', 'vlan', 'physnet1',
-                                      100, 'port123',
-                                      constants.DEVICE_OWNER_NETWORK_PREFIX)
-        self.assertTrue(agent.plugin_rpc.update_device_up.called)
-        self.assertTrue(agent.ext_manager.handle_port.called)
-        self.assertTrue(
-            mock_port_data in agent.network_ports[mock_details['network_id']]
-        )
+        with mock.patch('neutron.plugins.ml2.drivers.agent.'
+                        '_agent_manager_base.NetworkSegment',
+                        return_value=mock_segment):
+            resync_needed = agent.treat_devices_added_updated(set(['tap1']))
+
+            self.assertFalse(resync_needed)
+            agent.rpc_callbacks.add_network.assert_called_with('net123',
+                                                               mock_segment)
+            agent.mgr.plug_interface.assert_called_with(
+                'net123', mock_segment, 'dev123',
+                constants.DEVICE_OWNER_NETWORK_PREFIX)
+            self.assertTrue(agent.plugin_rpc.update_device_up.called)
+            self.assertTrue(agent.ext_manager.handle_port.called)
+            self.assertTrue(mock_port_data in agent.network_ports[
+                mock_details['network_id']]
+                            )
 
     def test_treat_devices_added_updated_prevent_arp_spoofing_true(self):
         agent = self.agent
@@ -441,17 +443,14 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                         'segmentation_id': 100,
                         'physical_network': 'physnet1',
                         'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX}
-        tap_name = constants.TAP_DEVICE_PREFIX + mock_details['port_id']
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
-        agent.br_mgr = mock.Mock()
-        agent.br_mgr.add_interface.return_value = True
-        agent.br_mgr.get_tap_device_name.return_value = tap_name
-        agent._ensure_port_admin_state = mock.Mock()
-        with mock.patch.object(arp_protect,
+        agent.mgr = mock.Mock()
+        agent.mgr.plug_interface.return_value = True
+        with mock.patch.object(agent.mgr,
                                'setup_arp_spoofing_protection') as set_arp:
             agent.treat_devices_added_updated(set(['tap1']))
-            set_arp.assert_called_with(tap_name, mock_details)
+            set_arp.assert_called_with(mock_details['device'], mock_details)
 
     def test_set_rpc_timeout(self):
         self.agent.stop()
@@ -473,23 +472,6 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
             report_st.return_value = constants.AGENT_REVIVED
             self.agent._report_state()
             self.assertTrue(self.agent.fullsync)
-
-    def _test_ensure_port_admin_state(self, admin_state):
-        port_id = 'fake_id'
-        with mock.patch.object(ip_lib, 'IPDevice') as dev_mock:
-            self.agent._ensure_port_admin_state(port_id, admin_state)
-
-        tap_name = self.agent.br_mgr.get_tap_device_name(port_id)
-        self.assertEqual(admin_state,
-                         dev_mock(tap_name).link.set_up.called)
-        self.assertNotEqual(admin_state,
-                            dev_mock(tap_name).link.set_down.called)
-
-    def test_ensure_port_admin_state_up(self):
-        self._test_ensure_port_admin_state(True)
-
-    def test_ensure_port_admin_state_down(self):
-        self._test_ensure_port_admin_state(False)
 
     def test_update_network_ports(self):
         port_1_data = PORT_DATA
@@ -983,10 +965,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_add_tap_interface_owner_neutron(self):
         self._test_add_tap_interface(constants.DEVICE_OWNER_NEUTRON_PREFIX)
 
-    def test_add_interface(self):
+    def test_plug_interface(self):
+        segment = amb.NetworkSegment(p_const.TYPE_VLAN, "physnet-1", "1")
         with mock.patch.object(self.lbm, "add_tap_interface") as add_tap:
-            self.lbm.add_interface("123", p_const.TYPE_VLAN, "physnet-1",
-                                   "1", "234",
+            self.lbm.plug_interface("123", segment, "tap234",
                                    constants.DEVICE_OWNER_NETWORK_PREFIX)
             add_tap.assert_called_with("123", p_const.TYPE_VLAN, "physnet-1",
                                        "1", "tap234",
@@ -1211,6 +1193,23 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             vxlan_group='224.0.0.1',
             iproute_arg_supported=True)
 
+    def _test_ensure_port_admin_state(self, admin_state):
+        port_id = 'fake_id'
+        with mock.patch.object(ip_lib, 'IPDevice') as dev_mock:
+            self.lbm.ensure_port_admin_state(port_id, admin_state)
+
+        tap_name = self.lbm.get_tap_device_name(port_id)
+        self.assertEqual(admin_state,
+                         dev_mock(tap_name).link.set_up.called)
+        self.assertNotEqual(admin_state,
+                            dev_mock(tap_name).link.set_down.called)
+
+    def test_ensure_port_admin_state_up(self):
+        self._test_ensure_port_admin_state(True)
+
+    def test_ensure_port_admin_state_down(self):
+        self._test_ensure_port_admin_state(False)
+
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def setUp(self):
@@ -1219,15 +1218,10 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         class FakeLBAgent(object):
             def __init__(self):
                 self.agent_id = 1
-                self.br_mgr = get_linuxbridge_manager(
+                self.mgr = get_linuxbridge_manager(
                     BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
-                self.br_mgr.vxlan_mode = lconst.VXLAN_UCAST
-                segment = mock.Mock()
-                segment.network_type = 'vxlan'
-                segment.segmentation_id = 1
-                self.br_mgr.network_map['net_id'] = segment
-                self.updated_devices = set()
+                self.mgr.vxlan_mode = lconst.VXLAN_UCAST
                 self.network_ports = collections.defaultdict(list)
 
         self.lb_rpc = linuxbridge_neutron_agent.LinuxBridgeRpcCallbacks(
@@ -1236,15 +1230,20 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             object()
         )
 
+        segment = mock.Mock()
+        segment.network_type = 'vxlan'
+        segment.segmentation_id = 1
+        self.lb_rpc.network_map['net_id'] = segment
+
     def test_network_delete(self):
         mock_net = mock.Mock()
         mock_net.physical_network = None
 
-        self.lb_rpc.agent.br_mgr.network_map = {NETWORK_ID: mock_net}
+        self.lb_rpc.network_map = {NETWORK_ID: mock_net}
 
-        with mock.patch.object(self.lb_rpc.agent.br_mgr,
+        with mock.patch.object(self.lb_rpc.agent.mgr,
                                "get_bridge_name") as get_br_fn,\
-                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                mock.patch.object(self.lb_rpc.agent.mgr,
                                   "delete_bridge") as del_fn:
             get_br_fn.return_value = "br0"
             self.lb_rpc.network_delete("anycontext", network_id=NETWORK_ID)
@@ -1254,7 +1253,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def test_port_update(self):
         port = {'id': PORT_1}
         self.lb_rpc.port_update(context=None, port=port)
-        self.assertEqual(set([DEVICE_1]), self.lb_rpc.agent.updated_devices)
+        self.assertEqual(set([DEVICE_1]), self.lb_rpc.updated_devices)
 
     def test_network_update(self):
         updated_network = {'id': NETWORK_ID}
@@ -1262,16 +1261,16 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             NETWORK_ID: [PORT_DATA]
         }
         self.lb_rpc.network_update(context=None, network=updated_network)
-        self.assertEqual(set([DEVICE_1]), self.lb_rpc.agent.updated_devices)
+        self.assertEqual(set([DEVICE_1]), self.lb_rpc.updated_devices)
 
     def test_network_delete_with_existed_brq(self):
         mock_net = mock.Mock()
         mock_net.physical_network = 'physnet0'
 
-        self.lb_rpc.agent.br_mgr.network_map = {'123': mock_net}
+        self.lb_rpc.network_map = {'123': mock_net}
 
         with mock.patch.object(linuxbridge_neutron_agent.LOG, 'info') as log,\
-                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                mock.patch.object(self.lb_rpc.agent.mgr,
                                   "delete_bridge") as del_fn:
                 self.lb_rpc.network_delete("anycontext", network_id="123")
                 self.assertEqual(0, del_fn.call_count)
