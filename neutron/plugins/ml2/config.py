@@ -34,7 +34,8 @@ ml2_opts = [
                 default=[],
                 help=_("An ordered list of extension driver "
                        "entrypoints to be loaded from the "
-                       "neutron.ml2.extension_drivers namespace.")),
+                       "neutron.ml2.extension_drivers namespace. "
+                       "For example: extension_drivers = port_security,qos")),
     cfg.IntOpt('path_mtu', default=0,
                help=_('The maximum permissible size of an unfragmented '
                       'packet travelling from and to addresses where '
