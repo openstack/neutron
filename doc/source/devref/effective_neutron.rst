@@ -167,7 +167,7 @@ For anything more elaborate, please visit the testing section.
   In fact, when the built-in open method is mocked during tests, some
   utilities (like debtcollector) may still rely on the real thing, and may
   end up using the mock rather what they are really looking for. If you must,
-  consider scoping by `module https://review.openstack.org/#/c/232265/`_, but
+  consider using `OpenFixture <https://review.openstack.org/#/c/232716/>`_, but
   it is better not to mock open() at all.
 
 
