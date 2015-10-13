@@ -72,6 +72,13 @@ The workflow for the life an RFE in Launchpad is as follows:
   to file a spec in neutron-specs to elaborate on the feature request.
 * The PTL will work with the Lieutenant for the area being identified by the
   RFE to evaluate resources against the current workload.
+* If a spec is necessary, a member of the Neutron release team will register
+  a matching Launchpad blueprint to be used for milestone tracking purposes,
+  and as a landing page for the spec document, as available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_.
+  The blueprint will then be linked to the original RFE bug report. This
+  step will ensure higher visibility of the RFE over smaller RFEs (in scope)
+  and consistency accross the various fields required during the blueprint
+  registration process (Approver, Drafter, etc.).
 * In either case (a spec being required or not), once discussion has happened
   the bug will get an assignee, priority and milestone.
 * At this point, the RFE is 'approved', and its tag will move from 'rfe' to
@@ -106,23 +113,6 @@ The drivers team will be discussing the following bug reports during their IRC m
 * `Confirmed RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=CONFIRMED&field.tag=rfe>`_
 * `Triaged RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=TRIAGED&field.tag=rfe>`_
 
-
-Cutover to RFEs From Pure Specs
--------------------------------
-
-Prior to the Liberty release, Neutron relied purely on a waterfall model for
-handling specs. During Liberty, the goal is to move to the above referenced
-RFE process. This will allow for the separation of the "What" from the "How",
-and ideally allow for better scheduling of work by the PTL and Lieutenants.
-However, given the fact we have a backlog of specs already and new specs
-proposed, we need a path forward to not create extra work for everyone.
-
-For Liberty-1, we will allow the old specs to be reviewed as-is. The drivers
-team will ensure all specs submitted a week before the Liberty-1 deadline are
-given a review and approved or rejected. After Liberty-1, people will not be
-required to convert their specs over to RFE bugs during Liberty-1. Once
-Liberty-1 passes, all old specs will be moved to a "liberty-backlog" directory
-and anything new will follow the new RFE process fully.
 
 RFE Submission Guidelines
 -------------------------
