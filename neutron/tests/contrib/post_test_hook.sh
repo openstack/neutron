@@ -33,13 +33,13 @@ function generate_testr_results {
         sudo mv ./*.gz /opt/stack/logs/
     fi
 
-    if [ "$venv" == "dsvm-functional" ] || [ "$venv" == "dsvm-fullstack" ]
+    if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
     then
         generate_test_logs "/tmp/${venv}-logs"
     fi
 }
 
-if [ "$venv" == "dsvm-functional" ] || [ "$venv" == "dsvm-fullstack" ]
+if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
 then
     owner=stack
     sudo_env=
