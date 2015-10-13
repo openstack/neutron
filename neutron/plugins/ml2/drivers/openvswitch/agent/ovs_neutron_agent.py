@@ -201,6 +201,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.arp_responder_enabled = arp_responder and self.l2_pop
         self.prevent_arp_spoofing = prevent_arp_spoofing
 
+        host = self.conf.host
+        self.agent_id = 'ovs-agent-%s' % host
+
         if tunnel_types:
             self.enable_tunneling = True
         else:
@@ -261,13 +264,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.phys_ofports,
             self.patch_int_ofport,
             self.patch_tun_ofport,
-            self.conf.host,
+            host,
             self.enable_tunneling,
             self.enable_distributed_routing)
 
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
-            'host': self.conf.host,
+            'host': host,
             'topic': n_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'tunnel_types': self.tunnel_types,
@@ -362,8 +365,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                           local_vlan)
 
     def setup_rpc(self):
-        self.agent_id = 'ovs-agent-%s' % self.conf.host
-        self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.dvr_plugin_rpc = dvr_rpc.DVRServerRpcApi(topics.PLUGIN)
@@ -371,8 +372,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
-        # Handle updates from service
-        self.endpoints = [self]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.PORT, topics.DELETE],
@@ -383,8 +382,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                      [topics.NETWORK, topics.UPDATE]]
         if self.l2_pop:
             consumers.append([topics.L2POPULATION, topics.UPDATE])
-        self.connection = agent_rpc.create_consumers(self.endpoints,
-                                                     self.topic,
+        self.connection = agent_rpc.create_consumers([self],
+                                                     topics.AGENT,
                                                      consumers,
                                                      start_listening=False)
 
