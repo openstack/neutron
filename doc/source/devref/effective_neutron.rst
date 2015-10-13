@@ -111,6 +111,12 @@ Eventlet concurrent model
 Document common pitfalls as well as good practices done when using eventlet and monkey
 patching.
 
+* Do not use with_lockmode('update') on SQL queries without protecting the operation
+  with a lockutils semaphore. For some SQLAlchemy database drivers that operators may
+  choose (e.g. MySQLdb) it may result in a temporary deadlock by yielding to another
+  coroutine while holding the DB lock. The following wiki provides more details:
+  https://wiki.openstack.org/wiki/OpenStack_and_SQLAlchemy#MySQLdb_.2B_eventlet_.3D_sad
+
 Mocking and testing
 ~~~~~~~~~~~~~~~~~~~
 
