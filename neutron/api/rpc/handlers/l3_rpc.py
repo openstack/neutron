@@ -46,7 +46,8 @@ class L3RpcCallback(object):
     # 1.6 Added process_prefix_update to support IPv6 Prefix Delegation
     # 1.7 Added method delete_agent_gateway_port for DVR Routers
     # 1.8 Added address scope information
-    target = oslo_messaging.Target(version='1.8')
+    # 1.9 Added get_router_ids
+    target = oslo_messaging.Target(version='1.9')
 
     @property
     def plugin(self):
@@ -60,6 +61,10 @@ class L3RpcCallback(object):
             self._l3plugin = manager.NeutronManager.get_service_plugins()[
                 plugin_constants.L3_ROUTER_NAT]
         return self._l3plugin
+
+    def get_router_ids(self, context, host):
+        """Returns IDs of routers scheduled to l3 agent on <host>"""
+        return self.l3plugin.list_router_ids_on_host(context, host)
 
     @db_api.retry_db_errors
     def sync_routers(self, context, **kwargs):
