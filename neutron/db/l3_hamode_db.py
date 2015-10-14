@@ -404,16 +404,17 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         return router_dict
 
     def _update_router_db(self, context, router_id, data, gw_info):
-        ha = data.pop('ha', None)
-
-        if ha and data.get('distributed'):
+        router_db = self._get_router(context, router_id)
+        original_ha_state = router_db.extra_attributes.ha
+        if original_ha_state and data.get('distributed'):
             raise l3_ha.DistributedHARouterNotSupported()
 
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
                 context, router_id, data, gw_info)
 
-            ha_not_changed = ha is None or ha == router_db.extra_attributes.ha
+            ha = data.pop('ha', None)
+            ha_not_changed = ha is None or ha == original_ha_state
             if ha_not_changed:
                 return router_db
 
