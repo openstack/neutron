@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+
 from eventlet import greenthread
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -371,8 +373,8 @@ class AgentExtRpcCallback(object):
         agent_state = kwargs['agent_state']['agent_state']
         self._check_clock_sync_on_agent_start(agent_state, time)
         if self.START_TIME > time:
-            time_agent = timeutils.isotime(time)
-            time_server = timeutils.isotime(self.START_TIME)
+            time_agent = datetime.datetime.isoformat(time)
+            time_server = datetime.datetime.isoformat(self.START_TIME)
             log_dict = {'agent_time': time_agent, 'server_time': time_server}
             LOG.debug("Stale message received with timestamp: %(agent_time)s. "
                       "Skipping processing because it's older than the "
@@ -393,13 +395,15 @@ class AgentExtRpcCallback(object):
             diff = abs(timeutils.delta_seconds(time_server_now, agent_time))
             if diff > cfg.CONF.agent_down_time:
                 agent_name = agent_state['agent_type']
-                time_agent = timeutils.isotime(agent_time)
+                time_agent = datetime.datetime.isoformat(agent_time)
+
                 host = agent_state['host']
                 log_dict = {'host': host,
                             'agent_name': agent_name,
                             'agent_time': time_agent,
                             'threshold': cfg.CONF.agent_down_time,
-                            'serv_time': timeutils.isotime(time_server_now),
+                            'serv_time': (datetime.datetime.isoformat
+                                          (time_server_now)),
                             'diff': diff}
                 LOG.error(_LE("Message received from the host: %(host)s "
                               "during the registration of %(agent_name)s has "
