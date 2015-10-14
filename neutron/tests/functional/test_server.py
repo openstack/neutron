@@ -34,8 +34,8 @@ from neutron import wsgi
 CONF = cfg.CONF
 
 # This message will be written to temporary file each time
-# reset method is called.
-FAKE_RESET_MSG = "reset".encode("utf-8")
+# start method is called.
+FAKE_START_MSG = "start".encode("utf-8")
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
@@ -118,26 +118,26 @@ class TestNeutronServer(base.BaseTestCase):
             return [proc.pid for proc in psutil.process_iter()
                     if proc.pid == self.service_pid]
 
-    def _fake_reset(self):
-        """Writes FAKE_RESET_MSG to temporary file on each call."""
-
+    def _fake_start(self):
         with open(self.temp_file, 'a') as f:
-            f.write(FAKE_RESET_MSG)
+            f.write(FAKE_START_MSG)
 
     def _test_restart_service_on_sighup(self, service, workers=0):
-        """Test that a service correctly restarts on receiving SIGHUP.
+        """Test that a service correctly (re)starts on receiving SIGHUP.
 
         1. Start a service with a given number of workers.
         2. Send SIGHUP to the service.
-        3. Wait for workers (if any) to restart.
+        3. Wait for workers (if any) to (re)start.
         """
 
         self._start_server(callback=service, workers=workers)
         os.kill(self.service_pid, signal.SIGHUP)
 
-        # Wait for temp file to be created and its size become equal
-        # to size of FAKE_RESET_MSG
-        expected_size = len(FAKE_RESET_MSG)
+        expected_msg = FAKE_START_MSG * workers * 2
+
+        # Wait for temp file to be created and its size reaching the expected
+        # value
+        expected_size = len(expected_msg)
         condition = lambda: (os.path.isfile(self.temp_file)
                              and os.stat(self.temp_file).st_size ==
                              expected_size)
@@ -150,12 +150,12 @@ class TestNeutronServer(base.BaseTestCase):
                 {'filename': self.temp_file,
                  'size': expected_size}))
 
-        # Verify that reset has been called for parent process in which
-        # a service was started. FAKE_RESET_MSG has been written to temp
-        # file.
+        # Verify that start has been called twice for each worker (one for
+        # initial start, and the second one on SIGHUP after children were
+        # terminated).
         with open(self.temp_file, 'r') as f:
             res = f.readline()
-            self.assertEqual(FAKE_RESET_MSG, res)
+            self.assertEqual(expected_msg, res)
 
 
 class TestWsgiServer(TestNeutronServer):
@@ -191,10 +191,10 @@ class TestWsgiServer(TestNeutronServer):
     def _run_wsgi(self, workers=0):
         """Start WSGI server with a test application."""
 
-        # Mock reset method to check that it is being called
-        # on receiving SIGHUP.
-        with mock.patch("neutron.wsgi.WorkerService.reset") as reset_method:
-            reset_method.side_effect = self._fake_reset
+        # Mock start method to check that children are started again on
+        # receiving SIGHUP.
+        with mock.patch("neutron.wsgi.WorkerService.start") as start_method:
+            start_method.side_effect = self._fake_start
 
             server = wsgi.Server("Test")
             server.start(self.application, 0, "0.0.0.0",
@@ -229,13 +229,13 @@ class TestRPCServer(TestNeutronServer):
     def _serve_rpc(self, workers=0):
         """Start RPC server with a given number of workers."""
 
-        # Mock reset method to check that it is being called
-        # on receiving SIGHUP.
-        with mock.patch("neutron.service.RpcWorker.reset") as reset_method:
+        # Mock start method to check that children are started again on
+        # receiving SIGHUP.
+        with mock.patch("neutron.service.RpcWorker.start") as start_method:
             with mock.patch(
                     "neutron.manager.NeutronManager.get_plugin"
             ) as get_plugin:
-                reset_method.side_effect = self._fake_reset
+                start_method.side_effect = self._fake_start
                 get_plugin.return_value = self.plugin
 
                 CONF.set_override("rpc_workers", workers)
@@ -279,7 +279,7 @@ class TestPluginWorker(TestNeutronServer):
                 pass
 
         # Make both ABC happy and ensure 'self' is correct
-        FakeWorker.reset = self._fake_reset
+        FakeWorker.start = self._fake_start
         workers = [FakeWorker()]
         self.plugin.return_value.get_workers.return_value = workers
         self._test_restart_service_on_sighup(service=self._start_plugin,
