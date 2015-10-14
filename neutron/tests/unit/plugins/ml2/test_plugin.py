@@ -312,15 +312,13 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
     def test_create_network_segment_allocation_fails(self):
         plugin = manager.NeutronManager.get_plugin()
-        with mock.patch.object(plugin.type_manager, 'create_network_segments',
-            side_effect=db_exc.RetryRequest(ValueError())) as f:
-            self.assertRaises(ValueError,
-                              plugin.create_network,
-                              context.get_admin_context(),
-                              {'network': {'tenant_id': 'sometenant',
-                                           'name': 'dummy',
-                                           'admin_state_up': True,
-                                           'shared': False}})
+        with mock.patch.object(
+            plugin.type_manager, 'create_network_segments',
+            side_effect=db_exc.RetryRequest(ValueError())
+        ) as f:
+            data = {'network': {'tenant_id': 'sometenant', 'name': 'dummy',
+                                'admin_state_up': True, 'shared': False}}
+            self.new_create_request('networks', data).get_response(self.api)
             self.assertEqual(db_api.MAX_RETRIES + 1, f.call_count)
 
 
