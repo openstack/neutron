@@ -420,6 +420,17 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
 
+    def test_create_security_group_rule_ethertype_invalid_for_protocol(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress', const.PROTO_NAME_ICMP_V6)
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
     def test_create_security_group_rule_invalid_ip_prefix(self):
         name = 'webservers'
         description = 'my webservers'
