@@ -65,9 +65,8 @@ class IpsetManager(object):
         name = NET_PREFIX + ethertype + id
         return name[:IPSET_NAME_MAX_LENGTH]
 
-    def set_exists(self, id, ethertype):
-        """Returns true if the id+ethertype pair is known to the manager."""
-        set_name = self.get_name(id, ethertype)
+    def set_name_exists(self, set_name):
+        """Returns true if the set name is known to the manager."""
         return set_name in self.ipset_sets
 
     def set_members(self, id, ethertype, member_ips):
@@ -80,15 +79,14 @@ class IpsetManager(object):
         set_name = self.get_name(id, ethertype)
         add_ips = self._get_new_set_ips(set_name, member_ips)
         del_ips = self._get_deleted_set_ips(set_name, member_ips)
-        if not add_ips and not del_ips and self.set_exists(id, ethertype):
+        if not add_ips and not del_ips and self.set_name_exists(set_name):
             # nothing to do because no membership changes and the ipset exists
             return
-        self.set_members_mutate(id, ethertype, member_ips)
+        self.set_members_mutate(set_name, ethertype, member_ips)
 
     @utils.synchronized('ipset', external=True)
-    def set_members_mutate(self, id, ethertype, member_ips):
-        set_name = self.get_name(id, ethertype)
-        if not self.set_exists(id, ethertype):
+    def set_members_mutate(self, set_name, ethertype, member_ips):
+        if not self.set_name_exists(set_name):
             # The initial creation is handled with create/refresh to
             # avoid any downtime for existing sets (i.e. avoiding
             # a flush/restore), as the restore operation of ipset is

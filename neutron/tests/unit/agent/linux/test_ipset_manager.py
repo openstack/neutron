@@ -121,9 +121,10 @@ class BaseIpsetManagerTest(base.BaseTestCase):
 
 class IpsetManagerTestCase(BaseIpsetManagerTest):
 
-    def test_set_exists(self):
+    def test_set_name_exists(self):
         self.add_first_ip()
-        self.assertTrue(self.ipset.set_exists(TEST_SET_ID, ETHERTYPE))
+        self.assertTrue(self.ipset.set_name_exists('N' + ETHERTYPE +
+                                                   TEST_SET_ID))
 
     def test_set_members_with_first_add_member(self):
         self.add_first_ip()
