@@ -681,6 +681,27 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                                   p['id'],
                                                   l3_port_check=False)
 
+    def create_floatingip(self, context, floatingip,
+                          initial_status=l3_const.FLOATINGIP_STATUS_ACTIVE):
+        floating_ip = self._create_floatingip(
+            context, floatingip, initial_status)
+        router_id = floating_ip['router_id']
+        if not router_id:
+            return floating_ip
+
+        router = self._get_router(context, router_id)
+        # we need to notify agents only in case Floating IP is associated
+        fixed_port_id = floating_ip['port_id']
+        if fixed_port_id:
+            if is_distributed_router(router):
+                host = self._get_vm_port_hostid(context, fixed_port_id)
+                self.l3_rpc_notifier.routers_updated_on_host(
+                    context, [router_id], host)
+            else:
+                self.notify_router_updated(context, router_id,
+                                           'create_floatingip')
+        return floating_ip
+
 
 def is_distributed_router(router):
     """Return True if router to be handled is distributed."""
