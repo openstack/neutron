@@ -40,7 +40,8 @@ class NeutronDebugAgent(object):
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    deprecated_for_removal=True,
                    help=_("Name of bridge used for external network "
-                          "traffic.")),
+                          "traffic. This option is deprecated and will be "
+                          "removed in the M release.")),
     ]
 
     def __init__(self, conf, client, driver):
