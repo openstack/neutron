@@ -42,7 +42,7 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
     def test_load_interface_driver_does_not_consume_irrelevant_errors(self):
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
-        with mock.patch('oslo_utils.importutils.import_object',
+        with mock.patch('oslo_utils.importutils.import_class',
                         side_effect=RuntimeError()):
             with testlib_api.ExpectedException(RuntimeError):
                 utils.load_interface_driver(self.conf)
@@ -52,3 +52,38 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
                                'neutron.agent.linux.interface.NullDriver')
         self.assertIsInstance(utils.load_interface_driver(self.conf),
                               interface.NullDriver)
+
+    def test_load_null_interface_driver_success(self):
+        self.conf.set_override('interface_driver',
+                               'null')
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.NullDriver)
+
+    def test_load_ivs_interface_driver_success(self):
+        self.conf.set_override('interface_driver',
+                               'ivs')
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.IVSInterfaceDriver)
+
+    def test_load_linuxbridge_interface_driver_success(self):
+        self.conf.set_override('interface_driver',
+                               'linuxbridge')
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.BridgeInterfaceDriver)
+
+    def test_load_midonet_interface_driver_success(self):
+        self.conf.set_override('interface_driver',
+                               'midonet')
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.MidonetInterfaceDriver)
+
+    def test_load_ovs_interface_driver_success(self):
+        self.conf.set_override('interface_driver',
+                               'openvswitch')
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.OVSInterfaceDriver)
+
+    def test_load_interface_driver_as_alias_wrong_driver(self):
+        self.conf.set_override('interface_driver', 'openvswitchXX')
+        with testlib_api.ExpectedException(SystemExit):
+            utils.load_interface_driver(self.conf)

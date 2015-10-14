@@ -17,9 +17,9 @@ import os
 
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import importutils
 
 from neutron.agent.common import config
+from neutron.common import utils as neutron_utils
 from neutron.i18n import _LE
 
 
@@ -32,19 +32,24 @@ else:
 LOG = logging.getLogger(__name__)
 config.register_root_helper(cfg.CONF)
 
+INTERFACE_NAMESPACE = 'neutron.interface_drivers'
+
 
 execute = utils.execute
 
 
 def load_interface_driver(conf):
-    if not conf.interface_driver:
-        LOG.error(_LE('An interface driver must be specified'))
-        raise SystemExit(1)
+    """Load interface driver for agents like DHCP or L3 agent.
+
+    :param conf: driver configuration object
+    :raises SystemExit of 1 if driver cannot be loaded
+    """
+
     try:
-        return importutils.import_object(conf.interface_driver, conf)
-    except ImportError as e:
-        LOG.error(_LE("Error importing interface driver "
-                      "'%(driver)s': %(inner)s"),
-                  {'driver': conf.interface_driver,
-                   'inner': e})
+        loaded_class = neutron_utils.load_class_by_alias_or_classname(
+                INTERFACE_NAMESPACE, conf.interface_driver)
+        return loaded_class(conf)
+    except ImportError:
+        LOG.error(_LE("Error loading interface driver '%s'"),
+                  conf.interface_driver)
         raise SystemExit(1)
