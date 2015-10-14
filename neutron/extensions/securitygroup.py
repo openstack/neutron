@@ -44,6 +44,11 @@ class SecurityGroupInvalidIcmpValue(nexception.InvalidInput):
                 "%(value)s. It must be 0 to 255.")
 
 
+class SecurityGroupEthertypeConflictWithProtocol(nexception.InvalidInput):
+    message = ("Invalid ethertype %(ethertype)s for protocol "
+               "%(protocol)s .")
+
+
 class SecurityGroupMissingIcmpType(nexception.InvalidInput):
     message = _("ICMP code (port-range-max) %(value)s is provided"
                 " but ICMP type (port-range-min) is missing.")
