@@ -39,7 +39,8 @@ OPTS = [
     cfg.StrOpt('external_network_bridge', default='br-ex',
                deprecated_for_removal=True,
                help=_("Name of bridge used for external network "
-                      "traffic.")),
+                      "traffic. This option is deprecated and will be removed "
+                      "in the M release.")),
     cfg.IntOpt('metadata_port',
                default=9697,
                help=_("TCP Port used by Neutron metadata namespace "
