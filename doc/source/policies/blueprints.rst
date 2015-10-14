@@ -45,10 +45,12 @@ is submitted.
 This allows the team to verify the validity of a feature request before the
 process of submitting a neutron-spec is undertaken, or code is written.  It
 also allows the community to express interest in a feature by subscribing to
-the bug and posting a comment in Launchpad. Note the temptation to game the
-system exists, but given the history in Neutron for this type of activity, it
-will not be tolerated and will be called out as such in public on the mailing
-list.
+the bug and posting a comment in Launchpad. The 'rfe' tag should not be used
+for work that is already well-defined and has an assignee. If you are intending
+to submit code immediately, a simple bug report will suffice. Note the
+temptation to game the system exists, but given the history in Neutron for this
+type of activity, it will not be tolerated and will be called out as such in
+public on the mailing list.
 
 RFEs can be submitted by anyone and by having the community vote on them in
 Launchpad, we can gauge interest in features. The drivers team will evaluate
