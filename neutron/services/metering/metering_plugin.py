@@ -32,7 +32,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
 
     def start_rpc_listeners(self):
         self.endpoints = [metering_rpc.MeteringRpcCallbacks(self)]
-        self.conn = n_rpc.create_connection(new=True)
+        self.conn = n_rpc.create_connection()
         self.conn.create_consumer(
             topics.METERING_PLUGIN, self.endpoints, fanout=False)
         return self.conn.consume_in_threads()
