@@ -71,15 +71,16 @@ It also worth adding that that some of these projects are part of the so
 called Neutron `stadium <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
 Because of that, their release is managed centrally by the Neutron
 release team; requests for releases need to funnelled and screened
-properly before they can happen. To this aim, the process should be like
-the following:
+properly before they can happen. To this aim, the process to request a release
+is as follows:
 
 * Create a bug report to your Launchpad project: provide details as to what
   you would like to release;
 * Add Neutron to the list of affected projects.
 * Add 'release-subproject' tag to the list of tags for the bug report.
 * The Neutron release management team will watch these bugs, and work with
-  you to have the request fulfilled.
+  you to have the request fulfilled by following the instructions found `here
+<http://docs.openstack.org/developer/neutron/devref/sub_project_guidelines.html#sub-project-release-process>`_.
 
 
 .. _guidelines:
