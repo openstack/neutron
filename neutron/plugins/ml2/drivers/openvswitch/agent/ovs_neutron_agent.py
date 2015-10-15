@@ -817,8 +817,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # Do not bind a port if it's already bound
             cur_tag = tags_by_name.get(port.port_name)
             if cur_tag is None:
-                LOG.info(_LI("Port %s was deleted concurrently, skipping it"),
-                         port.port_name)
+                LOG.debug("Port %s was deleted concurrently, skipping it",
+                          port.port_name)
                 continue
             if cur_tag != lvm.vlan:
                 self.int_br.delete_flows(in_port=port.ofport)
