@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from oslo_config import cfg
 from oslo_log import log as logging
 import testtools
 
@@ -31,6 +32,7 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
         agent_rpc = ('neutron.agent.rpc.PluginApi')
         mock.patch(agent_rpc).start()
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        cfg.CONF.set_override('enable_vxlan', False, 'VXLAN')
 
     def test_validate_interface_mappings(self):
         mappings = {'physnet1': 'int1', 'physnet2': 'int2'}
