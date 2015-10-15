@@ -100,5 +100,9 @@ EXTENSION_DRIVER_TYPE = 'ovs'
 # ovs datapath types
 OVS_DATAPATH_SYSTEM = 'system'
 OVS_DATAPATH_NETDEV = 'netdev'
+OVS_DPDK_VHOST_USER = 'dpdkvhostuser'
+
+# default ovs vhost-user socket location
+VHOST_USER_SOCKET_DIR = '/var/run/openvswitch'
 
 MAX_DEVICE_RETRIES = 5

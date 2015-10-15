@@ -53,6 +53,8 @@ ovs_opts = [
                choices=[constants.OVS_DATAPATH_SYSTEM,
                         constants.OVS_DATAPATH_NETDEV],
                help=_("OVS datapath to use.")),
+    cfg.StrOpt('vhostuser_socket_dir', default=constants.VHOST_USER_SOCKET_DIR,
+               help=_("OVS vhost-user socket directory.")),
     cfg.IPOpt('of_listen_address', default='127.0.0.1',
               help=_("Address to listen on for OpenFlow connections. "
                      "Used only for 'native' driver.")),

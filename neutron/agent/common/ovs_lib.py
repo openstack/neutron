@@ -53,6 +53,11 @@ cfg.CONF.register_opts(OPTS)
 
 LOG = logging.getLogger(__name__)
 
+OVS_DEFAULT_CAPS = {
+    'datapath_types': [],
+    'iface_types': [],
+}
+
 
 def _ofport_result_pending(result):
     """Return True if ovs-vsctl indicates the result is still pending."""
@@ -145,6 +150,23 @@ class BaseOVS(object):
                    log_errors=True):
         return self.ovsdb.db_get(table, record, column).execute(
             check_error=check_error, log_errors=log_errors)
+
+    @property
+    def config(self):
+        """A dict containing the only row from the root Open_vSwitch table
+
+        This row contains several columns describing the Open vSwitch install
+        and the system on which it is installed. Useful keys include:
+            datapath_types: a list of supported datapath types
+            iface_types: a list of supported interface types
+            ovs_version: the OVS version
+        """
+        return self.ovsdb.db_list("Open_vSwitch").execute()[0]
+
+    @property
+    def capabilities(self):
+        _cfg = self.config
+        return {k: _cfg.get(k, OVS_DEFAULT_CAPS[k]) for k in OVS_DEFAULT_CAPS}
 
 
 class OVSBridge(BaseOVS):

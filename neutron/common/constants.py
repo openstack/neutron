@@ -155,6 +155,8 @@ LLA_TASK_TIMEOUT = 40
 # Linux interface max length
 DEVICE_NAME_MAX_LEN = 15
 
+# vhost-user device names start with "vhu"
+VHOST_USER_DEVICE_PREFIX = 'vhu'
 # Device names start with "tap"
 TAP_DEVICE_PREFIX = 'tap'
 # The vswitch side of a veth pair for a nova iptables filter setup
