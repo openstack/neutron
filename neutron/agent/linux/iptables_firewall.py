@@ -525,7 +525,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):
         ethertype = sg_rule.get('ethertype')
         ipset_name = self.ipset.get_name(remote_gid, ethertype)
-        if not self.ipset.set_exists(remote_gid, ethertype):
+        if not self.ipset.set_name_exists(ipset_name):
             #NOTE(mangelajo): ipsets for empty groups are not created
             #                 thus we can't reference them.
             return None
