@@ -191,7 +191,7 @@ def enable_tests_from_config():
         cfg.CONF.set_override('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
         cfg.CONF.set_override('arp_responder', True)
-    if config.AGENT.prevent_arp_spoofing:
+    if cfg.CONF.AGENT.prevent_arp_spoofing:
         cfg.CONF.set_override('arp_header_match', True)
     if cfg.CONF.ml2_sriov.agent_required:
         cfg.CONF.set_override('vf_management', True)
