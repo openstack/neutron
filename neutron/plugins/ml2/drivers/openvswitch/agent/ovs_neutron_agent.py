@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import hashlib
 import signal
 import sys
 import time
@@ -45,7 +46,6 @@ from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
@@ -1028,6 +1028,33 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.tun_br.setup_default_table(self.patch_int_ofport,
                                         self.arp_responder_enabled)
 
+    def get_peer_name(self, prefix, name):
+        """Construct a peer name based on the prefix and name.
+
+        The peer name can not exceed the maximum length allowed for a linux
+        device. Longer names are hashed to help ensure uniqueness.
+        """
+        if len(prefix + name) <= n_const.DEVICE_NAME_MAX_LEN:
+            return prefix + name
+        # We can't just truncate because bridges may be distinguished
+        # by an ident at the end. A hash over the name should be unique.
+        # Leave part of the bridge name on for easier identification
+        hashlen = 6
+        namelen = n_const.DEVICE_NAME_MAX_LEN - len(prefix) - hashlen
+        if isinstance(name, six.text_type):
+            hashed_name = hashlib.sha1(name.encode('utf-8'))
+        else:
+            hashed_name = hashlib.sha1(name)
+        new_name = ('%(prefix)s%(truncated)s%(hash)s' %
+                    {'prefix': prefix, 'truncated': name[0:namelen],
+                     'hash': hashed_name.hexdigest()[0:hashlen]})
+        LOG.warning(_LW("Creating an interface named %(name)s exceeds the "
+                        "%(limit)d character limitation. It was shortened to "
+                        "%(new_name)s to fit."),
+                    {'name': name, 'limit': n_const.DEVICE_NAME_MAX_LEN,
+                     'new_name': new_name})
+        return new_name
+
     def setup_physical_bridges(self, bridge_mappings):
         '''Setup the physical network bridges.
 
@@ -1061,10 +1088,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.phys_brs[physical_network] = br
 
             # interconnect physical and integration bridges using veth/patchs
-            int_if_name = p_utils.get_interface_name(bridge,
-                                     prefix=constants.PEER_INTEGRATION_PREFIX)
-            phys_if_name = p_utils.get_interface_name(bridge,
-                                      prefix=constants.PEER_PHYSICAL_PREFIX)
+            int_if_name = self.get_peer_name(constants.PEER_INTEGRATION_PREFIX,
+                                             bridge)
+            phys_if_name = self.get_peer_name(constants.PEER_PHYSICAL_PREFIX,
+                                              bridge)
             # Interface type of port for physical and integration bridges must
             # be same, so check only one of them.
             int_type = self.int_br.db_get_val("Interface", int_if_name, "type")

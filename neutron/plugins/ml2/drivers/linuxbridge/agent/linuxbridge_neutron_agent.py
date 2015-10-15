@@ -48,7 +48,6 @@ from neutron.common import utils as n_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
@@ -141,29 +140,12 @@ class LinuxBridgeManager(object):
         bridge_name = BRIDGE_NAME_PREFIX + network_id[0:11]
         return bridge_name
 
-    def get_vlan_device_name(self, physical_interface, vlan_id):
+    def get_subinterface_name(self, physical_interface, vlan_id):
         if not vlan_id:
-            raise ValueError("No VLAN ID specified!")
-
-        vlan_len = len(str(vlan_id))
-        if vlan_len > 4:
-            raise ValueError("Invalid VLAN ID! ID exceeds 4 digits!")
-
-        vlan_postfix = '.%s' % vlan_id
-
-        # Handling for too long physical_interface names:
-        # Ensure that vlan devices that belong to the same logical network
-        # use the same naming pattern despite the hashing algorithm that is
-        # used in such cases. E.g.
-        # Interface name: "very_long_name" should NOT result in
-        # "veryHASHED.1111" and "very_loHASHED.1" but rather in
-        # "veryHASHED.1111" and "veryHASHED.1". This can be accomplished with
-        # requesting a smaller device name length for small vlan ids.
-        max_len = constants.DEVICE_NAME_MAX_LEN - (4 - vlan_len)
-        vlan_name = p_utils.get_interface_name(physical_interface,
-                                               postfix=vlan_postfix,
-                                               max_len=max_len)
-        return vlan_name
+            LOG.warning(_LW("Invalid VLAN ID, will lead to incorrect "
+                            "subinterface name"))
+        subinterface_name = '%s.%s' % (physical_interface, vlan_id)
+        return subinterface_name
 
     def get_tap_device_name(self, interface_id):
         if not interface_id:
@@ -296,23 +278,23 @@ class LinuxBridgeManager(object):
 
     def ensure_vlan(self, physical_interface, vlan_id):
         """Create a vlan unless it already exists."""
-        vlan_device = self.get_vlan_device_name(physical_interface, vlan_id)
-        if not ip_lib.device_exists(vlan_device):
+        interface = self.get_subinterface_name(physical_interface, vlan_id)
+        if not ip_lib.device_exists(interface):
             LOG.debug("Creating subinterface %(interface)s for "
                       "VLAN %(vlan_id)s on interface "
                       "%(physical_interface)s",
-                      {'interface': vlan_device, 'vlan_id': vlan_id,
+                      {'interface': interface, 'vlan_id': vlan_id,
                        'physical_interface': physical_interface})
             if utils.execute(['ip', 'link', 'add', 'link',
                               physical_interface,
-                              'name', vlan_device, 'type', 'vlan', 'id',
+                              'name', interface, 'type', 'vlan', 'id',
                               vlan_id], run_as_root=True):
                 return
             if utils.execute(['ip', 'link', 'set',
-                              vlan_device, 'up'], run_as_root=True):
+                              interface, 'up'], run_as_root=True):
                 return
-            LOG.debug("Done creating subinterface %s", vlan_device)
-        return vlan_device
+            LOG.debug("Done creating subinterface %s", interface)
+        return interface
 
     def ensure_vxlan(self, segmentation_id):
         """Create a vxlan unless it already exists."""
