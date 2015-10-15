@@ -32,6 +32,7 @@ MAX_RETRIES = 10
 is_deadlock = lambda e: isinstance(e, db_exc.DBDeadlock)
 retry_db_errors = oslo_db_api.wrap_db_retry(
     max_retries=MAX_RETRIES,
+    retry_on_request=True,
     exception_checker=is_deadlock
 )
 
