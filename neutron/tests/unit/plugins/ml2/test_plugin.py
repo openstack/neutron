@@ -318,7 +318,9 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         ) as f:
             data = {'network': {'tenant_id': 'sometenant', 'name': 'dummy',
                                 'admin_state_up': True, 'shared': False}}
-            self.new_create_request('networks', data).get_response(self.api)
+            req = self.new_create_request('networks', data)
+            res = req.get_response(self.api)
+            self.assertEqual(500, res.status_int)
             self.assertEqual(db_api.MAX_RETRIES + 1, f.call_count)
 
 
