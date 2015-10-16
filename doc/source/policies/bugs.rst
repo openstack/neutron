@@ -79,8 +79,7 @@ is as follows:
 * Add Neutron to the list of affected projects.
 * Add 'release-subproject' tag to the list of tags for the bug report.
 * The Neutron release management team will watch these bugs, and work with
-  you to have the request fulfilled by following the instructions found `here
-<http://docs.openstack.org/developer/neutron/devref/sub_project_guidelines.html#sub-project-release-process>`_.
+  you to have the request fulfilled by following the instructions found `here <http://docs.openstack.org/developer/neutron/devref/sub_project_guidelines.html#sub-project-release-process>`_.
 
 
 .. _guidelines:
