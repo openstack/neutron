@@ -496,10 +496,13 @@ class TestAttributes(base.BaseTestCase):
         msg = validator(cidr, None)
         self.assertIsNone(msg)
 
-        # Valid - abbreviated ipv4 address
+        # Invalid - abbreviated ipv4 address
         cidr = "10/24"
         msg = validator(cidr, None)
-        self.assertIsNone(msg)
+        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                  " '%(cidr)s' is recommended") % {"data": cidr,
+                                                   "cidr": "10.0.0.0/24"}
+        self.assertEqual(error, msg)
 
         # Invalid - IPv4 missing mask
         cidr = "10.0.2.0"
