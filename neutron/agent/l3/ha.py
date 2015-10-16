@@ -117,7 +117,7 @@ class AgentMixin(object):
 
         try:
             ri = self.router_info[router_id]
-        except AttributeError:
+        except KeyError:
             LOG.info(_LI('Router %s is not managed by this agent. It was '
                          'possibly deleted concurrently.'), router_id)
             return
