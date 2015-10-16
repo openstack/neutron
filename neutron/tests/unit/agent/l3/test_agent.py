@@ -401,6 +401,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             l3_agent.L3NATAgent(HOSTNAME, self.conf)
             self.ensure_dir.assert_called_once_with('/etc/ha/')
 
+    def test_enqueue_state_change_router_not_found(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        non_existent_router = 42
+
+        # Make sure the exceptional code path has coverage
+        agent.enqueue_state_change(non_existent_router, 'master')
+
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = ValueError
