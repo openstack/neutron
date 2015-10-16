@@ -564,7 +564,8 @@ class IpNetnsCommand(IpCommandBase):
         self._as_root([], ('delete', name), use_root_namespace=True)
 
     def execute(self, cmds, addl_env=None, check_exit_code=True,
-                extra_ok_codes=None, run_as_root=False):
+                log_fail_as_error=True, extra_ok_codes=None,
+                run_as_root=False):
         ns_params = []
         kwargs = {'run_as_root': run_as_root}
         if self._parent.namespace:
@@ -577,7 +578,8 @@ class IpNetnsCommand(IpCommandBase):
                           ['%s=%s' % pair for pair in addl_env.items()])
         cmd = ns_params + env_params + list(cmds)
         return utils.execute(cmd, check_exit_code=check_exit_code,
-                             extra_ok_codes=extra_ok_codes, **kwargs)
+                             extra_ok_codes=extra_ok_codes,
+                             log_fail_as_error=log_fail_as_error, **kwargs)
 
     def exists(self, name):
         output = self._parent._execute(

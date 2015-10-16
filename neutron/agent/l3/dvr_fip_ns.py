@@ -122,12 +122,27 @@ class FipNamespace(namespaces.Namespace):
 
     def create(self):
         # TODO(Carl) Get this functionality from mlavelle's namespace baseclass
+        LOG.debug("DVR: add fip namespace: %s", self.name)
         ip_wrapper_root = ip_lib.IPWrapper()
-        ip_wrapper_root.netns.execute(['sysctl',
-                                       '-w',
-                                       'net.ipv4.ip_nonlocal_bind=1'],
-                                      run_as_root=True)
         ip_wrapper = ip_wrapper_root.ensure_namespace(self.get_name())
+        # Somewhere in the 3.19 kernel timeframe ip_nonlocal_bind was
+        # changed to be a per-namespace attribute.  To be backwards
+        # compatible we need to try both if at first we fail.
+        try:
+            ip_wrapper.netns.execute(['sysctl',
+                                      '-w',
+                                      'net.ipv4.ip_nonlocal_bind=1'],
+                                     log_fail_as_error=False,
+                                     run_as_root=True)
+        except RuntimeError:
+            LOG.debug('DVR: fip namespace (%s) does not support setting '
+                      'net.ipv4.ip_nonlocal_bind, trying in root namespace',
+                      self.name)
+            ip_wrapper_root.netns.execute(['sysctl',
+                                           '-w',
+                                           'net.ipv4.ip_nonlocal_bind=1'],
+                                          run_as_root=True)
+
         ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
         if self.use_ipv6:
             ip_wrapper.netns.execute(['sysctl', '-w',
@@ -157,7 +172,7 @@ class FipNamespace(namespaces.Namespace):
         self.agent_gateway_port = None
 
         # TODO(mrsmith): add LOG warn if fip count != 0
-        LOG.debug('DVR: destroy fip ns: %s', self.name)
+        LOG.debug('DVR: destroy fip namespace: %s', self.name)
         super(FipNamespace, self).delete()
 
     def create_gateway_port(self, agent_gateway_port):

@@ -14,9 +14,11 @@
 
 import mock
 
+from neutron.agent.common import utils
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import iptables_manager
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
@@ -91,6 +93,41 @@ class TestDvrFipNs(base.BaseTestCase):
                                                mock.sentinel.interface_name,
                                                '20.0.0.30',
                                                mock.ANY)
+
+    @mock.patch.object(iptables_manager, 'IptablesManager')
+    @mock.patch.object(utils, 'execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'exists')
+    def _test_create(self, old_kernel, exists, execute, IPTables):
+        exists.return_value = True
+        # There are up to four sysctl calls - two for ip_nonlocal_bind,
+        # and two to enable forwarding
+        execute.side_effect = [RuntimeError if old_kernel else None,
+                               None, None, None]
+
+        self.fip_ns._iptables_manager = IPTables()
+        self.fip_ns.create()
+
+        ns_name = self.fip_ns.get_name()
+
+        netns_cmd = ['ip', 'netns', 'exec', ns_name]
+        bind_cmd = ['sysctl', '-w', 'net.ipv4.ip_nonlocal_bind=1']
+        expected = [mock.call(netns_cmd + bind_cmd, check_exit_code=True,
+                              extra_ok_codes=None, log_fail_as_error=False,
+                              run_as_root=True)]
+
+        if old_kernel:
+            expected.append(mock.call(bind_cmd, check_exit_code=True,
+                                      extra_ok_codes=None,
+                                      log_fail_as_error=True,
+                                      run_as_root=True))
+
+        execute.assert_has_calls(expected)
+
+    def test_create_old_kernel(self):
+        self._test_create(True)
+
+    def test_create_new_kernel(self):
+        self._test_create(False)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     def test_destroy(self, IPWrapper):

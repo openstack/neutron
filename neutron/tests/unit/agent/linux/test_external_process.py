@@ -130,7 +130,8 @@ class TestProcessManager(base.BaseTestCase):
                 self.execute.assert_called_once_with(['the', 'cmd'],
                                                      check_exit_code=True,
                                                      extra_ok_codes=None,
-                                                     run_as_root=False)
+                                                     run_as_root=False,
+                                                     log_fail_as_error=True)
 
     def test_enable_with_namespace(self):
         callback = mock.Mock()
