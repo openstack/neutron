@@ -15,6 +15,7 @@
 
 import mock
 import netaddr
+from oslo_config import cfg
 import testtools
 
 from neutron.agent.common import utils  # noqa
@@ -276,23 +277,37 @@ class TestIpWrapper(base.BaseTestCase):
 
     def test_get_namespaces(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
+        cfg.CONF.AGENT.use_helper_for_ns_read = True
         retval = ip_lib.IPWrapper.get_namespaces()
         self.assertEqual(retval,
                          ['12345678-1234-5678-abcd-1234567890ab',
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
-        self.execute.assert_called_once_with([], 'netns', ('list',))
+        self.execute.assert_called_once_with([], 'netns', ['list'],
+                                             run_as_root=True)
 
     def test_get_namespaces_iproute2_4(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE_IPROUTE2_4)
+        cfg.CONF.AGENT.use_helper_for_ns_read = True
         retval = ip_lib.IPWrapper.get_namespaces()
         self.assertEqual(retval,
                          ['12345678-1234-5678-abcd-1234567890ab',
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
-        self.execute.assert_called_once_with([], 'netns', ('list',))
+        self.execute.assert_called_once_with([], 'netns', ['list'],
+                                             run_as_root=True)
+
+    @mock.patch('os.listdir', return_value=NETNS_SAMPLE)
+    def test_get_namespaces_listdir(self, mocked_listdir):
+        cfg.CONF.AGENT.use_helper_for_ns_read = False
+        retval = ip_lib.IPWrapper.get_namespaces()
+        self.assertEqual(retval,
+                         ['12345678-1234-5678-abcd-1234567890ab',
+                          'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+                          'cccccccc-cccc-cccc-cccc-cccccccccccc'])
+        mocked_listdir.assert_called_once_with(ip_lib.IP_NETNS_PATH)
 
     def test_add_tuntap(self):
         ip_lib.IPWrapper().add_tuntap('tap0')
@@ -1172,32 +1187,6 @@ class TestIpNetnsCommand(TestIPCmdBase):
         with mock.patch('neutron.agent.common.utils.execute'):
             self.netns_cmd.delete('ns')
             self._assert_sudo([], ('delete', 'ns'), use_root_namespace=True)
-
-    def test_namespace_exists_use_helper(self):
-        self.config(group='AGENT', use_helper_for_ns_read=True)
-        retval = '\n'.join(NETNS_SAMPLE)
-        # need another instance to avoid mocking
-        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.common.utils.execute') as execute:
-            execute.return_value = retval
-            self.assertTrue(
-                netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            run_as_root=True,
-                                            log_fail_as_error=True)
-
-    def test_namespace_doest_not_exist_no_helper(self):
-        self.config(group='AGENT', use_helper_for_ns_read=False)
-        retval = '\n'.join(NETNS_SAMPLE)
-        # need another instance to avoid mocking
-        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.common.utils.execute') as execute:
-            execute.return_value = retval
-            self.assertFalse(
-                netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            run_as_root=False,
-                                            log_fail_as_error=True)
 
     def test_execute(self):
         self.parent.namespace = 'ns'
