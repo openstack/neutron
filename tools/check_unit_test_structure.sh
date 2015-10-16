@@ -14,7 +14,6 @@ ignore_regexes=(
     # The following vendor plugins are not required to confrm to the
     # structural requirements.
     "^plugins/brocade.*$"
-    "^plugins/embrane.*$"
     "^plugins/ibm.*$"
     # The following open source plugin tests are not actually unit
     # tests and are ignored pending their relocation to the functional
