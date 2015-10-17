@@ -97,6 +97,10 @@ class CommonAgentLoop(service.Service):
             heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
             heartbeat.start(interval=report_interval)
+
+        # The initialization is complete; we can start receiving messages
+        self.connection.consume_in_threads()
+
         self.daemon_loop()
 
     def stop(self, graceful=True):
@@ -152,7 +156,8 @@ class CommonAgentLoop(service.Service):
         consumers = self.mgr.get_rpc_consumers()
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
-                                                     consumers)
+                                                     consumers,
+                                                     start_listening=False)
 
     def init_extension_manager(self, connection):
         ext_manager.register_opts(cfg.CONF)

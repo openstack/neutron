@@ -1,0 +1,13 @@
+---
+prelude: >
+    The LinuxBridge agent now supports QoS bandwidth limiting.
+features:
+  - The LinuxBridge agent can now configure basic bandwidth limiting
+    QoS rules set for ports and networks.
+    It introduces two new config options for LinuxBridge agent.
+    First is 'kernel_hz' option which is value of host kernel HZ
+    setting. It is necessary for proper calculation of minimum burst
+    value in tbf qdisc setting.
+    Second is 'tbf_latency' which is value of latency to be configured
+    in tc-tbf setting. Details about this option can be found in
+    `tc-tbf manual <http://linux.die.net/man/8/tc-tbf>`_.

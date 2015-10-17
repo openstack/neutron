@@ -114,10 +114,14 @@ class ML2ConfigFixture(ConfigFixture):
         super(ML2ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
+        mechanism_drivers = 'openvswitch,linuxbridge'
+        if self.env_desc.l2_pop:
+            mechanism_drivers += ',l2population'
+
         self.config.update({
             'ml2': {
                 'tenant_network_types': tenant_network_types,
-                'mechanism_drivers': self.mechanism_drivers,
+                'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
                 'network_vlan_ranges': 'physnet1:1000:2999',
@@ -133,16 +137,6 @@ class ML2ConfigFixture(ConfigFixture):
         if env_desc.qos:
             self.config['ml2']['extension_drivers'] =\
                     qos_ext.QOS_EXT_DRIVER_ALIAS
-
-    @property
-    def mechanism_drivers(self):
-        mechanism_drivers = set(['openvswitch'])
-        for host in self.host_desc:
-            if host.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
-                mechanism_drivers.add('linuxbridge')
-        if self.env_desc.l2_pop:
-            mechanism_drivers.add('l2population')
-        return ','.join(mechanism_drivers)
 
 
 class OVSConfigFixture(ConfigFixture):
@@ -226,6 +220,12 @@ class LinuxBridgeConfigFixture(ConfigFixture):
                 'l2_population': str(self.env_desc.l2_pop),
             }
         })
+        if env_desc.qos:
+            self.config.update({
+                'AGENT': {
+                    'extensions': 'qos'
+                }
+            })
         if self.env_desc.tunneling_enabled:
             self.config.update({
                 'LINUX_BRIDGE': {
