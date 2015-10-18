@@ -791,6 +791,15 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                         device_owner)
         port_other_config = self.int_br.db_get_val("Port", port.port_name,
                                                    "other_config")
+        if port_other_config is None:
+            if port.vif_id in self.deleted_ports:
+                LOG.debug("Port %s deleted concurrently", port.vif_id)
+            elif port.vif_id in self.updated_ports:
+                LOG.error(_LE("Expected port %s not found"), port.vif_id)
+            else:
+                LOG.debug("Unable to get config for port %s", port.vif_id)
+            return
+
         vlan_mapping = {'net_uuid': net_uuid,
                         'network_type': network_type,
                         'physical_network': physical_network,

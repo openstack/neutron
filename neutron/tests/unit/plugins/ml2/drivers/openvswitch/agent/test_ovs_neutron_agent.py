@@ -152,7 +152,7 @@ class TestOvsNeutronAgent(object):
         self.agent.sg_agent = mock.Mock()
 
     def _mock_port_bound(self, ofport=None, new_local_vlan=None,
-                         old_local_vlan=None):
+                         old_local_vlan=None, db_get_val=None):
         port = mock.Mock()
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
@@ -163,16 +163,19 @@ class TestOvsNeutronAgent(object):
                 self.mod_agent.LocalVLANMapping(
                     old_local_vlan, None, None, None))
         with mock.patch.object(self.agent, 'int_br', autospec=True) as int_br:
-            int_br.db_get_val.return_value = {}
+            int_br.db_get_val.return_value = db_get_val
             int_br.set_db_attribute.return_value = True
             self.agent.port_bound(port, net_uuid, 'local', None, None,
                                   fixed_ips, "compute:None", False)
-        vlan_mapping = {'net_uuid': net_uuid,
-                        'network_type': 'local',
-                        'physical_network': None,
-                        'segmentation_id': None}
-        int_br.set_db_attribute.assert_called_once_with(
-            "Port", mock.ANY, "other_config", vlan_mapping)
+        if db_get_val is None:
+            self.assertEqual(0, int_br.set_db_attribute.call_count)
+        else:
+            vlan_mapping = {'net_uuid': net_uuid,
+                            'network_type': 'local',
+                            'physical_network': None,
+                            'segmentation_id': None}
+            int_br.set_db_attribute.assert_called_once_with(
+                "Port", mock.ANY, "other_config", vlan_mapping)
 
     def _test_restore_local_vlan_maps(self, tag):
         port = mock.Mock()
@@ -284,13 +287,17 @@ class TestOvsNeutronAgent(object):
         self.assertIsNone(self.agent._check_agent_configurations())
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
-        self._mock_port_bound(ofport=1, new_local_vlan=1)
+        self._mock_port_bound(ofport=1, new_local_vlan=1, db_get_val={})
 
     def test_port_bound_ignores_flows_for_invalid_ofport(self):
-        self._mock_port_bound(ofport=-1, new_local_vlan=1)
+        self._mock_port_bound(ofport=-1, new_local_vlan=1, db_get_val={})
 
     def test_port_bound_does_not_rewire_if_already_bound(self):
-        self._mock_port_bound(ofport=-1, new_local_vlan=1, old_local_vlan=1)
+        self._mock_port_bound(
+            ofport=-1, new_local_vlan=1, old_local_vlan=1, db_get_val={})
+
+    def test_port_bound_not_found(self):
+        self._mock_port_bound(ofport=1, new_local_vlan=1, db_get_val=None)
 
     def _test_port_dead(self, cur_tag=None):
         port = mock.Mock()
