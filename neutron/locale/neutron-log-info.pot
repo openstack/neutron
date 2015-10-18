@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:21+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,22 +37,22 @@ msgstr ""
 msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/wsgi.py:693
+#: neutron/wsgi.py:597
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr ""
 
-#: neutron/wsgi.py:710
+#: neutron/wsgi.py:614
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: neutron/wsgi.py:726
+#: neutron/wsgi.py:630
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: neutron/wsgi.py:729
+#: neutron/wsgi.py:633
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
@@ -109,7 +109,7 @@ msgstr ""
 msgid "Port %(port_id)s not present in bridge %(br_name)s"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:96 neutron/agent/dhcp/agent.py:594
+#: neutron/agent/dhcp/agent.py:96 neutron/agent/dhcp/agent.py:587
 msgid "DHCP agent started"
 msgstr ""
 
@@ -121,7 +121,7 @@ msgstr ""
 msgid "Synchronizing state complete"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:591 neutron/agent/l3/agent.py:689
+#: neutron/agent/dhcp/agent.py:584 neutron/agent/l3/agent.py:684
 #: neutron/services/metering/agents/metering_agent.py:287
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -151,7 +151,7 @@ msgid ""
 "trying to reset"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:599 neutron/agent/l3/agent.py:677
+#: neutron/agent/l3/agent.py:599 neutron/agent/l3/agent.py:675
 msgid "L3 agent started"
 msgstr ""
 
@@ -179,26 +179,26 @@ msgid ""
 "not in port's address IP versions"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:254
+#: neutron/agent/linux/interface.py:242
 #, python-format
 msgid "Device %s already exists"
 msgstr ""
 
-#: neutron/agent/linux/iptables_firewall.py:169
+#: neutron/agent/linux/iptables_firewall.py:175
 #, python-format
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr ""
 
-#: neutron/agent/linux/iptables_firewall.py:180
+#: neutron/agent/linux/iptables_firewall.py:186
 #, python-format
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
 
-#: neutron/api/extensions.py:381
+#: neutron/api/extensions.py:382
 msgid "Initializing extension manager."
 msgstr ""
 
-#: neutron/api/extensions.py:535
+#: neutron/api/extensions.py:536
 #, python-format
 msgid "Loaded extension: %s"
 msgstr ""
@@ -265,9 +265,9 @@ msgid "OVS cleanup completed successfully"
 msgstr ""
 
 #: neutron/cmd/eventlet/plugins/hyperv_neutron_agent.py:43
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1175
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1164
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:411
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1759
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1786
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -284,7 +284,7 @@ msgstr ""
 msgid "IPv6 is not enabled on this system."
 msgstr ""
 
-#: neutron/db/agents_db.py:292
+#: neutron/db/agents_db.py:294
 #, python-format
 msgid ""
 "Heartbeat received from %(type)s agent on host %(host)s, uuid %(uuid)s "
@@ -314,7 +314,7 @@ msgstr ""
 msgid "Adding network %(net)s to agent %(agent)s on host %(host)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:846 neutron/plugins/ml2/plugin.py:927
+#: neutron/db/db_base_plugin_v2.py:846 neutron/plugins/ml2/plugin.py:917
 #, python-format
 msgid ""
 "Found port (%(port_id)s, %(ip)s) having IP allocation on subnet "
@@ -353,7 +353,7 @@ msgid ""
 "rescheduling is disabled."
 msgstr ""
 
-#: neutron/db/l3_db.py:1203
+#: neutron/db/l3_db.py:1204
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -415,17 +415,6 @@ msgstr ""
 #: neutron/plugins/brocade/NeutronPlugin.py:305
 #, python-format
 msgid "Allocated vlan (%d) from the pool"
-msgstr ""
-
-#: neutron/plugins/common/utils.py:180
-#, python-format
-msgid ""
-"The requested interface name %(requested_name)s exceeds the %(limit)d "
-"character limitation. It was shortened to %(new_name)s to fit."
-msgstr ""
-
-#: neutron/plugins/embrane/common/utils.py:44
-msgid "No ip allocation set"
 msgstr ""
 
 #: neutron/plugins/ml2/db.py:60
@@ -524,17 +513,17 @@ msgstr ""
 msgid "Attempt %(count)s to bind port %(port)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:727
+#: neutron/plugins/ml2/plugin.py:719
 #, python-format
 msgid "Port %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:738
+#: neutron/plugins/ml2/plugin.py:730
 #, python-format
 msgid "Subnet %s was deleted concurrently"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1443
+#: neutron/plugins/ml2/plugin.py:1431
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted "
@@ -596,61 +585,61 @@ msgstr ""
 msgid "Clearing orphaned ARP spoofing entries for devices %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:750
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:739
 #, python-format
 msgid "Physical network %s is defined in bridge_mappings and cannot be deleted."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:899
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:888
 msgid "Stopping linuxbridge agent."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:929
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:918
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:119
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:997
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:986
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:250
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1331
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1358
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1031
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1020
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1038
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1027
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1050
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1421
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1039
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1448
 #, python-format
 msgid "Port %s updated."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1108
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1097
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1118
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1107
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:317
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1637
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1664
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1158
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1147
 #: neutron/plugins/ml2/drivers/mlnx/agent/eswitch_neutron_agent.py:43
 #, python-format
 msgid "Interface mappings: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1167
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py:1156
 #, python-format
 msgid "Bridge mappings: %s"
 msgstr ""
@@ -661,7 +650,7 @@ msgid "Device %(device)s spoofcheck %(spoofcheck)s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:231
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/extension_drivers/qos_driver.py:61
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/extension_drivers/qos_driver.py:65
 #, python-format
 msgid "No device with MAC %s defined on agent."
 msgstr ""
@@ -714,11 +703,6 @@ msgstr ""
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:820
-#, python-format
-msgid "Port %s was deleted concurrently, skipping it"
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:856
 #, python-format
 msgid "Configuration for devices up %(up)s and devices down %(down)s completed."
@@ -734,52 +718,52 @@ msgstr ""
 msgid "Adding %s to list of bridges."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1046
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1073
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1215
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1242
 #, python-format
 msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1325
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1352
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be"
 " processed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1376
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1403
 #, python-format
 msgid "Ancillary Ports %s added"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1393
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1420
 #, python-format
 msgid "Ports %s removed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1409
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1436
 #, python-format
 msgid "Ancillary ports %s removed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1615
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1642
 #, python-format
 msgid "Cleaning stale %s flows"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1674
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1701
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1779
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1806
 msgid "Agent caught SIGTERM, quitting daemon loop."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1783
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1810
 msgid "Agent caught SIGHUP, resetting."
 msgstr ""
 

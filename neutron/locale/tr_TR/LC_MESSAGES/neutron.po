@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-09-16 08:28+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: tr_TR\n"
@@ -42,10 +42,6 @@ msgstr ""
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr "%(driver)s: Dahili sürücü hatası."
-
-#, python-format
-msgid "%(err_msg)s"
-msgstr "%(err_msg)s"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -277,15 +273,6 @@ msgstr "Ek ağ özniteliğini ağ kaynağına ekler."
 msgid "Adds test attributes to core resources."
 msgstr "Çekirdek kaynaklara test özniteliklerini ekler."
 
-msgid "Admin password"
-msgstr "Yönetici parolası"
-
-msgid "Admin tenant name"
-msgstr "Yönetici kiracı ismi"
-
-msgid "Admin user"
-msgstr "Yönetici kullanıcı"
-
 #, python-format
 msgid "Agent %(id)s could not be found"
 msgstr "Ajan %(id)s bulunamadı"
@@ -365,22 +352,11 @@ msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "%(opt_name)s: %(opt_value)s için geçersiz bir değer sağlanmış"
 
 msgid ""
-"An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
-msgstr ""
-"neutron.ml2.extension_drivers isim uzayından yüklenecek eklenti sürücü giriş "
-"noktalarının sıralı listesi."
-
-msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 "neutron.ml2.mechanism_drivers isim uzayından yüklenecek ağ mekanizması "
 "sürücü giriş noktalarının sıralı listesi."
-
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr "Beklenmeyen hata oluştu:%(err_msg)s"
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin."
@@ -395,12 +371,6 @@ msgstr "'%s' özniteliğine POST içinde izin verilmez"
 msgid "Auth strategy for connecting to neutron in admin context."
 msgstr ""
 "Neutron'a yönetici içeriğinde bağlanmak için kimlik doğrulama stratejisi."
-
-msgid "Authentication URL"
-msgstr "Kimlik Doğrulama URL'si"
-
-msgid "Authentication region"
-msgstr "Kimlik doğrulama bölgesi"
 
 msgid ""
 "Authorization URL for connecting to nova in admin context. Deprecated in "
@@ -539,10 +509,6 @@ msgstr "Akış silme veya değiştirmede öncelik eşleştirilemedi"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
 msgstr "IPv4 ve IPv6 önekleri alt ağ havuzunda karıştırılamaz"
-
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr "Şu sebepten utif bilgisi alınamıyor: %(err_msg)s"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "Hem subnet-id hem port-id belirtilemez"
@@ -722,9 +688,6 @@ msgstr "Varsayılan güvenlik grubu"
 msgid "Default security group already exists."
 msgstr "Varsayılan güvenlik grubu zaten mevcut."
 
-msgid "Define if the requests have run asynchronously or not"
-msgstr "İsteklerin eşzamansız olarak çalışıp çalışmadığını tanımla"
-
 msgid ""
 "Define the default value of enable_snat if not provided in "
 "external_gateway_info."
@@ -816,9 +779,6 @@ msgstr "Ağın DHCP ajanlarına zamanlanması için kullanılacak sürücü"
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr "Yönlendiriciyi bir L3 ajanına zamanlamak için gerekli sürücü"
 
-msgid "Dummy user traffic Security Zone id"
-msgstr "Sahte kullanıcı trafiği Güvenlik Bölgesi kimliği"
-
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr "Kopya IP adresi '%s'"
@@ -844,37 +804,6 @@ msgstr "Kopya isim sunucu '%s'"
 msgid "Duplicate segment entry in request."
 msgstr "İstekte kopya dilim girdisi."
 
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled through "
-"the heleos UI"
-msgstr ""
-"Dva işlemi çalıştırmak için bulunamıyor, muhtemelen heleos UI üzerinden "
-"iptal edildi"
-
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr "Dva yapılandırması %s sebebiyle başarısız"
-
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr "Dva oluşturma başarısız sebep %s"
-
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr "Dva oluşturma %s sebebiyle bekleme durumunda"
-
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr "Dva arayüzü şu sebepten bozuk görünüyor %s"
-
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr "Dva şu sebepten bekliyor: %s"
-
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr "Dva şu sebepten bozuk görünüyor %s"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "HATA: %s"
@@ -885,15 +814,6 @@ msgid ""
 msgstr ""
 "HATA: Varsayılan arama yollarıyla ve (~/.neutron/, ~/, /etc/neutron/, /etc/) "
 "ve '--config-file' seçeneğiyle yapılandırma dosyası bulunamadı!"
-
-msgid "ESM admin password."
-msgstr "ESM yönetici parolası."
-
-msgid "ESM admin username."
-msgstr "ESM yönetici kullanıcı adı."
-
-msgid "ESM management root address"
-msgstr "ESM yönetim kök adresi"
 
 msgid ""
 "Either one of parameter network_id or router_id must be passed to _get_ports "
@@ -1117,14 +1037,6 @@ msgid ""
 msgstr ""
 "%(network_id)s ağı üzerinde bağlantı noktası oluşturma başarısız, çünkü "
 "fixed_ips geçersiz %(subnet_id)s alt ağını içeriyor"
-
-#, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it manually "
-"through the heleos UI"
-msgstr ""
-"Arka uç yönlendirici %s sebebiyle silinemedi. Lütfen heleos UI ile elle "
-"kaldırın"
 
 #, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
@@ -1354,9 +1266,6 @@ msgstr ""
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s"
 msgstr "Öneklere geçersiz güncelleme: %(msg)s"
-
-msgid "In band Security Zone id"
-msgstr "Bant içi Güvenlik Bölgesi kimliği"
 
 #, python-format
 msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
@@ -1647,9 +1556,6 @@ msgstr "Kusurlu istek gövdesi"
 msgid "Malformed request body: %(reason)s"
 msgstr "Bozuk istek gövdesi: %(reason)s"
 
-msgid "Management Security Zone id"
-msgstr "Yönetim Güvenlik Bölgesi kimliği"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "Azami DNS isim sunucu sayısı"
 
@@ -1741,9 +1647,6 @@ msgstr "Akış ekleme ya da değiştirmede bir ya da fazla eylem belirtilmeli"
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Kullanılacak Open vSwitch köprüsünün ismi"
 
-msgid "Name of bridge used for external network traffic."
-msgstr "Harici ağ trafiği için kullanılan köprünün ismi."
-
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
@@ -1788,19 +1691,8 @@ msgstr ""
 "%(excluded_ranges)s IP aralıkları hariç %(parent_range)s IP aralığından "
 "%(size)s botyutunda ağ bulunamadı."
 
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr "Keystone kataloğundan çekmek için ağ servis uç noktası türü"
-
 msgid "Network that will have instance metadata proxied."
 msgstr "Sunucu metadata'sı vekillenecek ağ."
-
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is "
-"vlan"
-msgstr ""
-"Ağ türü %s desteklenmiyor. Lütfen tenant_network_type'in vlan olduğundan "
-"emin olun"
 
 #, python-format
 msgid "Network type value '%s' not supported"
@@ -2039,9 +1931,6 @@ msgstr ""
 
 msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "Kiracı ağlar olarak ayrılacak network_types'ın sıralı listesi."
-
-msgid "Out of band Security Zone id"
-msgstr "Bant dışı Güvenlik Bölgesi kimliği"
 
 msgid "Override the default dnsmasq settings with this file"
 msgstr "Bu dosyayla varsayılan dnsmasq ayarlarının üzerine yazın"
@@ -2300,9 +2189,6 @@ msgstr "Yönlendirici '%(router_id)s' bu ajanla uyumlu değil"
 msgid "Router already has a port on subnet %s"
 msgstr "Yönlendirici zaten %s alt ağında bir bağlantı noktasına sahip"
 
-msgid "Router image id (Embrane FW/VPN)"
-msgstr "Yönlendirici imaj kimliği (Embrane FW/VPN)"
-
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
@@ -2421,9 +2307,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "Paylaşılan adres kapsamının paylaştırılması durdurulamaz"
-
-msgid "Shared resource pool id"
-msgstr "Paylaşılan kaynak havuz kimliği"
 
 msgid "Shared secret to sign instance-id request"
 msgstr "instance-id isteklerini imzalamak için paylaşımlı giz"
@@ -2810,9 +2693,6 @@ msgstr "Kullanılacak tünel köprüsü."
 
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr "Tünelleme geçerli bir local_ip olmadan etkinleştirilemez."
-
-msgid "Turn off verification of the certificate for ssl"
-msgstr "Ssl için sertifika doğrulamayı kapat"
 
 msgid "URL for connecting to CRD service."
 msgstr "CRD servisine bağlantı için URL."

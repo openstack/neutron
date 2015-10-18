@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,28 +92,28 @@ msgstr ""
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:453
+#: neutron/wsgi.py:392
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:619
+#: neutron/wsgi.py:558
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:699
+#: neutron/wsgi.py:603
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:703
+#: neutron/wsgi.py:607
 msgid "Malformed request body"
 msgstr ""
 
-#: neutron/wsgi.py:840
+#: neutron/wsgi.py:744
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:893
+#: neutron/wsgi.py:797
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -208,7 +208,7 @@ msgstr ""
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:589
+#: neutron/agent/dhcp/agent.py:582
 #, python-format
 msgid "Agent updated: %(payload)s"
 msgstr ""
@@ -302,34 +302,36 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/l3/config.py:41 neutron/debug/debug_agent.py:42
-msgid "Name of bridge used for external network traffic."
+msgid ""
+"Name of bridge used for external network traffic. This option is "
+"deprecated and will be removed in the M release."
 msgstr ""
 
-#: neutron/agent/l3/config.py:45
+#: neutron/agent/l3/config.py:46
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3/config.py:49
+#: neutron/agent/l3/config.py:50
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
 "the feature is disabled"
 msgstr ""
 
-#: neutron/agent/l3/config.py:52
+#: neutron/agent/l3/config.py:53
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr ""
 
-#: neutron/agent/l3/config.py:57
+#: neutron/agent/l3/config.py:58
 msgid "Agent should implement routers with no gateway"
 msgstr ""
 
-#: neutron/agent/l3/config.py:59
+#: neutron/agent/l3/config.py:60
 msgid "UUID of external network for routers implemented by the agents."
 msgstr ""
 
-#: neutron/agent/l3/config.py:62
+#: neutron/agent/l3/config.py:63
 msgid ""
 "With IPv6, the network used for the external gateway does not need to "
 "have an associated subnet, since the automatically assigned link-local "
@@ -344,30 +346,30 @@ msgid ""
 " allocated to the network and not through this parameter. "
 msgstr ""
 
-#: neutron/agent/l3/config.py:80
+#: neutron/agent/l3/config.py:81
 msgid ""
 "Driver used for ipv6 prefix delegation. This needs to be an entry point "
 "defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg "
 "for entry points included with the neutron source."
 msgstr ""
 
-#: neutron/agent/l3/config.py:86
+#: neutron/agent/l3/config.py:87
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3/config.py:88
+#: neutron/agent/l3/config.py:89
 msgid ""
 "Delete namespace after removing a router.This option is deprecated and "
 "will be removed in a future release."
 msgstr ""
 
-#: neutron/agent/l3/config.py:94
+#: neutron/agent/l3/config.py:95
 msgid ""
 "Iptables mangle mark used to mark metadata valid requests. This mark will"
 " be masked with 0xffff so that only the lower 16 bits will be used."
 msgstr ""
 
-#: neutron/agent/l3/config.py:99
+#: neutron/agent/l3/config.py:100
 msgid ""
 "Iptables mangle mark used to mark ingress from external network. This "
 "mark will be masked with 0xffff so that only the lower 16 bits will be "
@@ -429,7 +431,7 @@ msgstr ""
 
 #: neutron/agent/l3/keepalived_state_change.py:122
 #: neutron/agent/metadata/namespace_proxy.py:158
-#: neutron/tests/functional/agent/l3/test_keepalived_state_change.py:31
+#: neutron/tests/functional/agent/l3/test_keepalived_state_change.py:33
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
 
@@ -498,7 +500,7 @@ msgstr ""
 msgid "Force ip_lib calls to use the root helper"
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:47
+#: neutron/agent/linux/ip_lib.py:48
 #, python-format
 msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
 msgstr ""
@@ -578,23 +580,23 @@ msgid ""
 "Stderr: %(stderr)s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:122
+#: neutron/agent/metadata/agent.py:98
 #: neutron/agent/metadata/namespace_proxy.py:60
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:200
+#: neutron/agent/metadata/agent.py:153
 msgid ""
 "Either one of parameter network_id or router_id must be passed to "
 "_get_ports method."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:262
+#: neutron/agent/metadata/agent.py:215
 #: neutron/agent/metadata/namespace_proxy.py:106
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:269
+#: neutron/agent/metadata/agent.py:222
 #: neutron/agent/metadata/namespace_proxy.py:113
 #, python-format
 msgid "Unexpected response code: %s"
@@ -627,76 +629,38 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/metadata/config.py:54
-msgid "Admin user"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:56
-msgid "Admin password"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:59
-msgid "Admin tenant name"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:61
-msgid "Authentication URL"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:63 neutron/common/config.py:48
-msgid "The type of authentication to use"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:65
-msgid "Authentication region"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:68
-msgid "Turn off verification of the certificate for ssl"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:71
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:75
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:79
-msgid ""
-"Neutron endpoint URL, if not set will use endpoint from the keystone "
-"catalog along with endpoint_type"
-msgstr ""
-
-#: neutron/agent/metadata/config.py:82
+#: neutron/agent/metadata/config.py:57
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:85
+#: neutron/agent/metadata/config.py:60
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:88
+#: neutron/agent/metadata/config.py:63
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:93
+#: neutron/agent/metadata/config.py:68
 msgid "Protocol to access nova metadata, http or https"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:95
+#: neutron/agent/metadata/config.py:70
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:99
+#: neutron/agent/metadata/config.py:74
 msgid "Client certificate for nova metadata api server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:102
+#: neutron/agent/metadata/config.py:77
 msgid "Private key of client certificate."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:116
+#: neutron/agent/metadata/config.py:91
 msgid ""
 "Metadata Proxy UNIX domain socket mode, 4 values allowed: 'deduce': "
 "deduce mode from metadata_proxy_user/group values, 'user': set metadata "
@@ -706,13 +670,13 @@ msgid ""
 "'all': set metadata proxy socket mode to 0o666, to use otherwise."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:130
+#: neutron/agent/metadata/config.py:105
 msgid ""
 "Number of separate worker processes for metadata server (defaults to half"
 " of the number of CPUs)"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:134
+#: neutron/agent/metadata/config.py:109
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr ""
 
@@ -820,12 +784,12 @@ msgstr ""
 msgid "Failed to parse request. Parameter '%s' not specified"
 msgstr ""
 
-#: neutron/api/extensions.py:231 neutron/pecan_wsgi/controllers/root.py:135
+#: neutron/api/extensions.py:232 neutron/pecan_wsgi/controllers/root.py:135
 #, python-format
 msgid "Extension with alias %s does not exist"
 msgstr ""
 
-#: neutron/api/extensions.py:235 neutron/api/extensions.py:239
+#: neutron/api/extensions.py:236 neutron/api/extensions.py:240
 msgid "Resource not found."
 msgstr ""
 
@@ -848,7 +812,7 @@ msgstr ""
 msgid "Cannot add multiple callbacks for %(resource_type)s"
 msgstr ""
 
-#: neutron/api/rpc/handlers/dhcp_rpc.py:86
+#: neutron/api/rpc/handlers/dhcp_rpc.py:89
 msgid "Unrecognized action"
 msgstr ""
 
@@ -972,9 +936,10 @@ msgid "Duplicate hostroute '%s'"
 msgstr ""
 
 #: neutron/api/v2/attributes.py:324
-#: neutron/tests/unit/api/v2/test_attributes.py:507
-#: neutron/tests/unit/api/v2/test_attributes.py:521
-#: neutron/tests/unit/api/v2/test_attributes.py:529
+#: neutron/tests/unit/api/v2/test_attributes.py:502
+#: neutron/tests/unit/api/v2/test_attributes.py:510
+#: neutron/tests/unit/api/v2/test_attributes.py:524
+#: neutron/tests/unit/api/v2/test_attributes.py:532
 #, python-format
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
 msgstr ""
@@ -1217,6 +1182,10 @@ msgstr ""
 
 #: neutron/common/config.py:46
 msgid "The path for API extensions"
+msgstr ""
+
+#: neutron/common/config.py:48
+msgid "The type of authentication to use"
 msgstr ""
 
 #: neutron/common/config.py:50
@@ -1949,13 +1918,13 @@ msgstr ""
 msgid "Shared address scope can't be unshared"
 msgstr ""
 
-#: neutron/db/agents_db.py:42
+#: neutron/db/agents_db.py:44
 msgid ""
 "Seconds to regard the agent is down; should be at least twice "
 "report_interval, to be sure the agent is down for good."
 msgstr ""
 
-#: neutron/db/agents_db.py:47
+#: neutron/db/agents_db.py:49
 msgid ""
 "Representing the resource type whose load is being reported by the agent."
 " This can be \"networks\", \"subnets\" or \"ports\". When specified "
@@ -1970,7 +1939,7 @@ msgid ""
 "Example: dhcp_load_type=networks"
 msgstr ""
 
-#: neutron/db/agents_db.py:63
+#: neutron/db/agents_db.py:65
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In "
 "the case, user's resources will not be scheduled automatically to the "
@@ -2356,7 +2325,7 @@ msgstr ""
 msgid "Network %s does not contain any IPv4 subnet"
 msgstr ""
 
-#: neutron/db/l3_db.py:1102
+#: neutron/db/l3_db.py:1106
 #, python-format
 msgid "has device owner %s"
 msgstr ""
@@ -3272,7 +3241,7 @@ msgid "An unexpected exception was caught: %s"
 msgstr ""
 
 #: neutron/pecan_wsgi/hooks/translation.py:38
-msgid "An unexpected internal error occured."
+msgid "An unexpected internal error occurred."
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:61
@@ -3308,127 +3277,22 @@ msgstr ""
 msgid "Brocade plugin raised exception, check logs"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:60
+#: neutron/plugins/common/utils.py:52
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:65
+#: neutron/plugins/common/utils.py:57
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:75
+#: neutron/plugins/common/utils.py:67
 #, python-format
 msgid "%s is not a valid VLAN tag"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:79
+#: neutron/plugins/common/utils.py:71
 msgid "End of VLAN range is less than start of VLAN range"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:21
-msgid "ESM management root address"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:23
-msgid "ESM admin username."
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:26
-msgid "ESM admin password."
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:28
-msgid "Router image id (Embrane FW/VPN)"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:30
-msgid "In band Security Zone id"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:32
-msgid "Out of band Security Zone id"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:34
-msgid "Management Security Zone id"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:36
-msgid "Dummy user traffic Security Zone id"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:38
-msgid "Shared resource pool id"
-msgstr ""
-
-#: neutron/plugins/embrane/common/config.py:40
-msgid "Define if the requests have run asynchronously or not"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:47
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:48
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled "
-"through the heleos UI"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:50
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:51
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:53
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:54
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:56
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/constants.py:57
-#, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it "
-"manually through the heleos UI"
-msgstr ""
-
-#: neutron/plugins/embrane/common/exceptions.py:20
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr ""
-
-#: neutron/plugins/embrane/common/exceptions.py:24
-#, python-format
-msgid "%(err_msg)s"
-msgstr ""
-
-#: neutron/plugins/embrane/l2base/support_exceptions.py:20
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr ""
-
-#: neutron/plugins/embrane/l2base/ml2/ml2_support.py:43
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is"
-" vlan"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/config.py:23
@@ -3485,30 +3349,31 @@ msgstr ""
 #: neutron/plugins/ml2/config.py:35
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
+"neutron.ml2.extension_drivers namespace. For example: extension_drivers ="
+" port_security,qos"
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:39
+#: neutron/plugins/ml2/config.py:40
 msgid ""
 "The maximum permissible size of an unfragmented packet travelling from "
 "and to addresses where encapsulated Neutron traffic is sent.  If <= 0, "
 "the path MTU is indeterminate."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:44
+#: neutron/plugins/ml2/config.py:45
 msgid ""
 "The maximum permissible size of an unfragmented packet travelling a L2 "
 "network segment.  If <= 0, the segment MTU is indeterminate."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:49
+#: neutron/plugins/ml2/config.py:50
 msgid ""
 "A list of mappings of physical networks to MTU values. The format of the "
 "mapping is <physnet>:<mtu val>. This mapping allows specifying a physical"
 " network MTU value that differs from the default segment_mtu value."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:55
+#: neutron/plugins/ml2/config.py:56
 msgid ""
 "Default network type for external networks when no provider attributes "
 "are specified. By default it is None, which means that if provider "
@@ -3900,23 +3765,23 @@ msgstr ""
 msgid "Unable to retrieve port details for devices: %(devices)s "
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1800
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1827
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1814
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1841
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1836
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1863
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1839
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1866
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -4351,9 +4216,9 @@ msgid ""
 "network %(network)s with segments to bind %(segments_to_bind)s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1206
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1225
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1244
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1217
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1236
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1255
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
