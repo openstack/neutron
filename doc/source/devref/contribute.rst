@@ -24,13 +24,6 @@
 Contributing new extensions to Neutron
 ======================================
 
-.. note:: **Third-party plugins/drivers which do not start decomposition in
-  Liberty will be marked as deprecated and removed before the Mitaka-3
-  milestone.**
-
-  Read on for details ...
-
-
 Introduction
 ------------
 
@@ -332,28 +325,6 @@ be the bare minimum you have to complete in order to get you off the ground.
 Integrating with the Neutron system
 -----------------------------------
 
-(This section currently describes the goals and progress of the completion of
-the decomposition work during the Liberty development cycle. The content here
-will be updated as the work progresses. In its final form this section will be
-merged with the previous section. When all existing plugins/drivers are fully
-decomposed, this document will be a recipe for how to add a new Neutron plugin
-or driver completely out-of-tree.)
-
-For the Liberty cycle we aim to move all the existing third-party code out of
-the Neutron tree. Each category of code and its removal plan is described
-below.
-
-
-Existing Shims
-~~~~~~~~~~~~~~
-
-Liberty Steps
-+++++++++++++
-
-The existing shims shall now be moved out of tree, together with any test
-code. The entry points shall be moved as described below in `Entry Points`_.
-
-
 Configuration Files
 ~~~~~~~~~~~~~~~~~~~
 
@@ -381,14 +352,6 @@ It is advised that subprojects do not keep their configuration files in their
 respective trees and instead generate them using a similar approach as Neutron
 does.
 
-
-Liberty Steps
-+++++++++++++
-
-Third-party configuration files still in the neutron tree have no dependencies
-and can simply be moved. The maintainers should add their configuration file(s)
-to their repo and then remove them from neutron.
-
 **ToDo: Inclusion in OpenStack documentation?**
     Is there a recommended way to have third-party config options listed in the
     configuration guide in docs.openstack.org?
@@ -402,11 +365,12 @@ these tables are in the Neutron database, they are independently managed
 entirely within the third-party code. Third-party code shall **never** modify
 neutron core tables in any way.
 
-Each repo has its own alembic migration branch that adds, removes and modifies
-its own tables in the neutron database schema.
+Each repo has its own *expand* and *contract* `alembic migration branches
+<alembic_migrations.html#migration-branches>`_. A third-party repo's alembic
+migration branches may operate only on tables that are owned by the repo.
 
 * Note: Care should be taken when adding new tables. To prevent collision of
-  table names it is recommended to prefix them with a vendor/plugin string.
+  table names it is **required** to prefix them with a vendor/plugin string.
 
 * Note: A third-party maintainer may opt to use a separate database for their
   tables. This may complicate cases where there are foreign key constraints
@@ -442,22 +406,6 @@ directory as an entrypoint in the ``neutron.db.alembic_migrations`` group::
     neutron.db.alembic_migrations =
         networking-foo = networking_foo.db.migration:alembic_migrations
 
-Liberty Steps
-+++++++++++++
-
-Each decomposed plugin/driver that has its own tables in the neutron database
-should take these steps to move the models for the tables out of tree.
-
-#. Add the models to the external repo.
-#. Create a start migration for the repo's alembic branch. Note: it is
-   recommended to keep the migration file(s) in the same location in the
-   third-party repo as is done in the neutron repo,
-   i.e. ``networking_foo/db/migration/alembic_migrations/versions/*.py``
-#. Remove the models from the neutron repo.
-#. Add the names of the removed tables to ``REPO_FOO_TABLES`` in
-   ``neutron/db/migration/alembic_migrations/external.py`` (this is used for
-   testing, see below).
-
 **ToDo: neutron-db-manage autogenerate**
     The alembic autogenerate command needs to support branches in external
     repos. Bug #1471333 has been filed for this.
@@ -471,14 +419,6 @@ Here is a `template functional test
 maintainers can use to develop tests for model-vs-migration sync in their
 repos. It is recommended that each third-party CI sets up such a test, and runs
 it regularly against Neutron master.
-
-Liberty Steps
-+++++++++++++
-
-The model_sync test will be updated to ignore the models that have been moved
-out of tree. ``REPO_FOO_TABLES`` lists will be maintained in
-``neutron/db/migration/alembic_migrations/external.py``.
-
 
 Entry Points
 ~~~~~~~~~~~~
@@ -605,9 +545,3 @@ Other repo-split items
   driver for Neutron. Possibly something for the networking guide, and/or a
   template that plugin/driver maintainers can modify and include with their
   package.
-
-
-Decomposition Phase II Progress Chart
--------------------------------------
-
-TBD.
