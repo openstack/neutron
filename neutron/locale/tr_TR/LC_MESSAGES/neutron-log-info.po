@@ -8,9 +8,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:21+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -370,9 +370,6 @@ msgstr "Neutron servisi başlatıldı, %(host)s:%(port)s üzerinde dinliyor"
 #, python-format
 msgid "No device with MAC %s defined on agent."
 msgstr "Ajanda %s MAC'ine sahip bir aygıt tanımlanmamış."
-
-msgid "No ip allocation set"
-msgstr "Ip ayırma ayarlanmamış"
 
 msgid "No ports here to refresh firewall"
 msgstr "Burda güvenlik duvarını tazelemek için bağlantı noktası yok"

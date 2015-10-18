@@ -14,9 +14,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: zh_Hans_CN\n"
@@ -47,10 +47,6 @@ msgstr ""
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr "%(driver)s: 内部驱动错误。"
-
-#, python-format
-msgid "%(err_msg)s"
-msgstr "%(err_msg)s"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -251,15 +247,6 @@ msgstr "请对网络资源添加外部网络属性。"
 msgid "Adds test attributes to core resources."
 msgstr "将测试属性添加至核心资源。"
 
-msgid "Admin password"
-msgstr "管理员密码"
-
-msgid "Admin tenant name"
-msgstr "管理员租户名称"
-
-msgid "Admin user"
-msgstr "管理员用户"
-
 #, python-format
 msgid "Agent %(id)s could not be found"
 msgstr "找不到代理 %(id)s"
@@ -337,22 +324,11 @@ msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "对于 %(opt_name)s，已提供的值无效：%(opt_value)s"
 
 msgid ""
-"An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
-msgstr ""
-"要从 neutron.ml2.extension_drivers 名称空间装入的扩展驱动程序入口点的已排序列"
-"表。"
-
-msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 "要从 neutron.ml2.mechanism_drivers 名称空间装入的联网机制驱动程序入口点的已排"
 "序列表。"
-
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr "发生意外错误：%(err_msg)s"
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "发生未知错误。请再次尝试您的请求。"
@@ -366,12 +342,6 @@ msgstr "在 POST 中，不允许属性“%s”"
 
 msgid "Auth strategy for connecting to neutron in admin context."
 msgstr "用于在管理员上下文中连接至 neutron 的认证策略。"
-
-msgid "Authentication URL"
-msgstr "认证 URL"
-
-msgid "Authentication region"
-msgstr "认证区域"
 
 msgid ""
 "Authorization URL for connecting to nova in admin context. Deprecated in "
@@ -488,10 +458,6 @@ msgstr "无法匹配删除或修改流时的优先级"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
 msgstr "无法在子网池中混合 IPv4 和 IPv6 前缀"
-
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr "由于以下原因，无法检索到 utif 信息：%(err_msg)s"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "无法同时指定 subnet-id 和 port-id"
@@ -638,9 +604,6 @@ msgstr "缺省安全组"
 msgid "Default security group already exists."
 msgstr "缺省安全组已存在。"
 
-msgid "Define if the requests have run asynchronously or not"
-msgstr "请定义请求是否已异步运行"
-
 msgid ""
 "Defines providers for advanced services using the format: <service_type>:"
 "<name>:<driver>[:default]"
@@ -698,9 +661,6 @@ msgstr "要用于对 DHCP 代理调度网络的驱动程序"
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr "要用于对缺省 L3 代理调度路由器的驱动程序"
 
-msgid "Dummy user traffic Security Zone id"
-msgstr "哑元用户流量安全区域标识"
-
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr "IP 地址“%s”重复"
@@ -726,35 +686,6 @@ msgstr "名称服务器“%s”重复"
 msgid "Duplicate segment entry in request."
 msgstr "请求中的段条目重复。"
 
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled through "
-"the heleos UI"
-msgstr "找不到 Dva，无法执行操作，可能已通过 heleos UI 将其取消"
-
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr "由于以下原因，Dva 配置失败：%s"
-
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr "由于以下原因，Dva 创建失败：%s"
-
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr "由于以下原因，Dva 创建处于暂挂状态：%s"
-
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr "Dva 接口似乎由于以下原因而中断：%s"
-
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr "由于以下原因，Dva 正处于暂挂状态：%s"
-
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr "Dva 似乎由于以下原因而中断：%s"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "错误：%s"
@@ -765,15 +696,6 @@ msgid ""
 msgstr ""
 "错误：无法通过缺省搜索路径（~/.neutron/、~/、/etc/neutron/ 和 /etc/）以及“--"
 "config-file”选项找到配置文件！"
-
-msgid "ESM admin password."
-msgstr "ESM 管理员密码。"
-
-msgid "ESM admin username."
-msgstr "ESM 管理员用户名。"
-
-msgid "ESM management root address"
-msgstr "ESM 管理根地址"
 
 msgid ""
 "Either one of parameter network_id or router_id must be passed to _get_ports "
@@ -958,12 +880,6 @@ msgid ""
 msgstr ""
 "未能在网络 %(network_id)s 上创建端口，因为 fixed_ips 包括了无效子网 "
 "%(subnet_id)s"
-
-#, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it manually "
-"through the heleos UI"
-msgstr "由于以下原因，未能删除后端路由器：%s。请通过 heleos UI 手动将它移除"
 
 #, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
@@ -1159,9 +1075,6 @@ msgstr ""
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s"
 msgstr "对前缀的更新非法：%(msg)s"
-
-msgid "In band Security Zone id"
-msgstr "带内安全区域标识"
 
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
@@ -1431,9 +1344,6 @@ msgstr "请求主体的格式不正确"
 msgid "Malformed request body: %(reason)s"
 msgstr "请求主体的格式不正确：%(reason)s"
 
-msgid "Management Security Zone id"
-msgstr "管理安全区域标识"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "最大 DNS 名称服务器数"
 
@@ -1531,9 +1441,6 @@ msgstr "名称“%s”不能以连字符开头或结尾。"
 msgid "Name of Open vSwitch bridge to use"
 msgstr "要使用的已打开 vSwitch 网桥的名称"
 
-msgid "Name of bridge used for external network traffic."
-msgstr "已将网桥的名称用于外部网络流量。"
-
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr "要使用的 nova 区域的名称。如果 keystone 管理多个区域，那么这很有用。"
@@ -1576,17 +1483,8 @@ msgstr ""
 "从 IP 范围 %(parent_range)s（排除 IP 范围%(excluded_ranges)s）中找不到大小为 "
 "%(size)s 的网络。"
 
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr "去身份认证服务目录拖取的网络服务端点类型"
-
 msgid "Network that will have instance metadata proxied."
 msgstr "将代理实例元数据的网络。"
-
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is "
-"vlan"
-msgstr "网络类型 %s 不受支持。请确保 tenant_network_type 为 vlan"
 
 #, python-format
 msgid "Network type value '%s' not supported"
@@ -1769,9 +1667,6 @@ msgstr ""
 
 msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "分配到项目的网络类型有序列表"
-
-msgid "Out of band Security Zone id"
-msgstr "带外安全区域标识"
 
 msgid "Override the default dnsmasq settings with this file"
 msgstr "请使用此文件来覆盖缺省 dnsmasq 设置"
@@ -2005,9 +1900,6 @@ msgstr "路由器“%(router_id)s”与此代理不兼容"
 msgid "Router already has a port on subnet %s"
 msgstr "路由器已在子网 %s 上具有端口"
 
-msgid "Router image id (Embrane FW/VPN)"
-msgstr "路由器映像标识 (Embrane FW/VPN)"
-
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
@@ -2098,9 +1990,6 @@ msgid ""
 "Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying GRE/"
 "VXLAN tunnel."
 msgstr "在承载 GRE/VXLAN 隧道的出局 IP 包上设置或取消设置不分段 (DF) 位。"
-
-msgid "Shared resource pool id"
-msgstr "共享资源池标识"
 
 msgid "Shared secret to sign instance-id request"
 msgstr "已共享用于对 instance-id 请求进行签名的密钥"
@@ -2425,9 +2314,6 @@ msgstr "要使用的隧道网桥。"
 
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr "在缺少有效 local_ip 的情况下，无法启用隧道传送。"
-
-msgid "Turn off verification of the certificate for ssl"
-msgstr "关闭用于 SSL 的证书的验证"
 
 msgid "URL for connecting to CRD service."
 msgstr "用于连接至 CRD 服务的 URL。"

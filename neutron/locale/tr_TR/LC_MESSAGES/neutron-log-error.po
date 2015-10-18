@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:21+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -752,10 +752,6 @@ msgid "The external network bridge '%s' does not exist"
 msgstr "%s harici ağ geçidi mevcut degil"
 
 #, python-format
-msgid "The following routers have not physical match: %s"
-msgstr "Şu yönlendiriciler fiziksel eşleşmeye sahip değil: %s"
-
-#, python-format
 msgid ""
 "The installed version of dnsmasq is too old. Please update to at least "
 "version %s."
@@ -852,9 +848,6 @@ msgstr ""
 msgid "Unexpected exception while checking supported ip link command"
 msgstr "Desteklenen ip bağlantısı komutu kontrol edilirken beklenmedik istisna"
 
-msgid "Unhandled exception occurred"
-msgstr "Ele alınmayan istisna oluştu"
-
 #, python-format
 msgid "Unknown network_type %(network_type)s for network %(network_id)s."
 msgstr "%(network_id)s ağı için bilinmeyen network_type %(network_type)s."
@@ -947,10 +940,6 @@ msgid ""
 msgstr ""
 "process_network_ports - yineleme:%d - sunucudan bağlantı noktası detaylarını "
 "alma başarısız"
-
-#, python-format
-msgid "respawning %(service)s for uuid %(uuid)s"
-msgstr "uuid %(uuid)s icin %(service)s yeniden başlatılıyor."
 
 #, python-format
 msgid "tunnel_type %s not supported by agent"

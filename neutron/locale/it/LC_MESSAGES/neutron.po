@@ -7,9 +7,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: it\n"
@@ -40,10 +40,6 @@ msgstr ""
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr "%(driver)s: errore di driver interno."
-
-#, python-format
-msgid "%(err_msg)s"
-msgstr "%(err_msg)s"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -252,15 +248,6 @@ msgstr "Aggiunge l'attributo della rete esterna alla risorsa di rete."
 msgid "Adds test attributes to core resources."
 msgstr "Aggiunge gli attributi di test alle risorse principali."
 
-msgid "Admin password"
-msgstr "Password Admin"
-
-msgid "Admin tenant name"
-msgstr "Nome tenant Admin"
-
-msgid "Admin user"
-msgstr "Utente Admin"
-
 #, python-format
 msgid "Agent %(id)s could not be found"
 msgstr "Impossibile trovare l'agent %(id)s"
@@ -343,22 +330,11 @@ msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "È stato fornito un valore non valido per %(opt_name)s: %(opt_value)s"
 
 msgid ""
-"An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
-msgstr ""
-"Un elenco ordinato di punti di ingresso del driver di estensione da caricare "
-"dallo spazio dei nomi neutron.ml2.extension_drivers."
-
-msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 "Un elenco ordinato dei punti di ingresso del driver del meccanismo di rete "
 "da caricare dallo spazio dei nomi neutron.ml2.mechanism_drivers."
-
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr "Si è verificato un errore non previsto: %(err_msg)s"
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "Si è verificato un errore sconosciuto. Ritentare la richiesta."
@@ -372,12 +348,6 @@ msgstr "Attributo '%s' non consentito in POST"
 
 msgid "Auth strategy for connecting to neutron in admin context."
 msgstr "Strategia Auth per la connessione a neutron in contesto admin."
-
-msgid "Authentication URL"
-msgstr "Autenticazione URL"
-
-msgid "Authentication region"
-msgstr "Autenticazione region"
 
 msgid ""
 "Authorization URL for connecting to nova in admin context. Deprecated in "
@@ -505,12 +475,6 @@ msgstr ""
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
 msgstr "Impossibile combinare i prefissi IPv4 e IPv6 in un pool di sottorete"
-
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr ""
-"Impossibile richiamare le informazioni su utif per il seguente motivo: "
-"%(err_msg)s"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "Impossibile specificare entrambi subnet_id e port_id"
@@ -676,9 +640,6 @@ msgstr "Gruppo di sicurezza predefinito"
 msgid "Default security group already exists."
 msgstr "Il gruppo di sicurezza predefinito già esiste."
 
-msgid "Define if the requests have run asynchronously or not"
-msgstr "Definire se le richieste sono state eseguite in modo asincrono"
-
 msgid ""
 "Defines providers for advanced services using the format: <service_type>:"
 "<name>:<driver>[:default]"
@@ -742,9 +703,6 @@ msgstr ""
 "Driver da utilizzare per la pianificazione del router nell'agent L3 "
 "predefinito"
 
-msgid "Dummy user traffic Security Zone id"
-msgstr "Id fittizio di zona di sicurezza traffico utente"
-
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr "Indirizzo IP duplicato '%s'"
@@ -770,37 +728,6 @@ msgstr "Nameserver duplicato '%s'"
 msgid "Duplicate segment entry in request."
 msgstr "Voce del segmento duplicata nella richiesta."
 
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled through "
-"the heleos UI"
-msgstr ""
-"Impossibile trovare Dva per eseguire l'operazione, probabilmente è stata "
-"annullata attraverso l'UI heleos"
-
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr "Configurazione Dva non riuscita per il motivo %s"
-
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr "Creazione Dva non riuscita per il motivo %s"
-
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr "La creazione di Dva è in stato in sospeso per il motivo %s"
-
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr "L'interfaccia Dva sembra essere interrotta per il motivo %s"
-
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr "Dva è in sospeso per il seguente motivo: %s"
-
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr "Dva sembra essere interrotto per il motivo %s"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "ERRORE: %s"
@@ -812,15 +739,6 @@ msgstr ""
 "ERRORE: Impossibile trovare il file di configurazione utilizzando i percorsi "
 "di ricerca predefiniti (~/.neutron/, ~/, /etc/neutron/, /etc/) e l'opzione "
 "'--config-file'!"
-
-msgid "ESM admin password."
-msgstr "Password admin ESM."
-
-msgid "ESM admin username."
-msgstr "Nome utente admin ESM."
-
-msgid "ESM management root address"
-msgstr "Indirizzo root di gestione ESM"
 
 msgid ""
 "Either one of parameter network_id or router_id must be passed to _get_ports "
@@ -1026,14 +944,6 @@ msgid ""
 msgstr ""
 "Impossibile creare la porta nella rete %(network_id)s perché fixed_ips ha "
 "incluso una sottorete %(subnet_id)s non valida"
-
-#, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it manually "
-"through the heleos UI"
-msgstr ""
-"Impossibile eliminare il router backend per il motivo %s. Rimuoverlo "
-"manualmente attraverso l'UI heleos"
 
 #, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
@@ -1253,9 +1163,6 @@ msgstr ""
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s"
 msgstr "Aggiornamento non valido dei prefissi: %(msg)s"
-
-msgid "In band Security Zone id"
-msgstr "ID di zona di sicurezza in banda"
 
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
@@ -1548,9 +1455,6 @@ msgstr "Corpo richiesta non corretto"
 msgid "Malformed request body: %(reason)s"
 msgstr "Corpo richiesta non corretto: %(reason)s"
 
-msgid "Management Security Zone id"
-msgstr "ID di zona di sicurezza di gestione"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "Numero massimo di nameserver DNS"
 
@@ -1657,9 +1561,6 @@ msgstr "Il nome '%s' non deve iniziare o terminare con un trattino."
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Nome del bridge Open vSwitch da utilizzare"
 
-msgid "Name of bridge used for external network traffic."
-msgstr "Nome del bridge utilizzato per il traffico di rete esterno."
-
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
@@ -1704,20 +1605,8 @@ msgstr ""
 "Rete di dimensione %(size)s, dall'intervallo IP %(parent_range)s esclusi gli "
 "intervalli IP %(excluded_ranges)s non trovata."
 
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr ""
-"Il tipo di endpoint del servizio di rete da richiamare dal catalogo keystone"
-
 msgid "Network that will have instance metadata proxied."
 msgstr "Rete che avrà i metadati dell'istanza con proxy."
-
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is "
-"vlan"
-msgstr ""
-"Il tipo di rete %s non è supportato. Accertarsi che tenant_network_type sia "
-"vlan"
 
 #, python-format
 msgid "Network type value '%s' not supported"
@@ -1918,9 +1807,6 @@ msgstr ""
 
 msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "Elenco ordinato di network_types da assegnare come reti tenant."
-
-msgid "Out of band Security Zone id"
-msgstr "ID di zona di sicurezza fuori banda"
 
 msgid "Override the default dnsmasq settings with this file"
 msgstr ""
@@ -2178,9 +2064,6 @@ msgstr "Il router '%(router_id)s' non è compatibile con questo agent"
 msgid "Router already has a port on subnet %s"
 msgstr "Il router dispone già di una porta sulla sottorete %s"
 
-msgid "Router image id (Embrane FW/VPN)"
-msgstr "ID immagine router (Embrane FW/VPN)"
-
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
@@ -2283,9 +2166,6 @@ msgid ""
 msgstr ""
 "Impostare o annullare l'impostazione del bit del frammento non DF sul "
 "pacchetto IP in uscita che trasporta il tunnel GRE/VXLAN."
-
-msgid "Shared resource pool id"
-msgstr "ID pool di risorse condivise"
 
 msgid "Shared secret to sign instance-id request"
 msgstr "Segreto condiviso per firmare la richiesta dell'id istanza"
@@ -2653,9 +2533,6 @@ msgstr "Bridge del tunnel da utilizzare."
 
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr "Tunneling non può essere abilitata senza un local_ip valido."
-
-msgid "Turn off verification of the certificate for ssl"
-msgstr "Disattiva verifica del certificato per ssl"
 
 msgid "URL for connecting to CRD service."
 msgstr "URL per la connessione al servizio CRD."

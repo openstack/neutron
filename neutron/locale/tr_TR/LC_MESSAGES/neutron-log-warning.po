@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:21+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -85,6 +85,14 @@ msgstr ""
 #, python-format
 msgid "Could not expand segment %s"
 msgstr "Dilim %s genişletilemedi"
+
+#, python-format
+msgid ""
+"Creating an interface named %(name)s exceeds the %(limit)d character "
+"limitation. It was shortened to %(new_name)s to fit."
+msgstr ""
+"%(name)s isimli bir arayüz oluşturmak %(limit)d karakter sınırını aşar. "
+"Sığması için %(new_name)s'e kısaltıldı."
 
 #, python-format
 msgid "DHCP agent %s is not active"
@@ -164,10 +172,6 @@ msgstr ""
 "%s yönlendiricisi için bilgi bulunamadı. Yönlendirici temizliği "
 "gerçekleştiriliyor"
 
-#, python-format
-msgid "Interface %s not found in the heleos back-end, likely already deleted"
-msgstr "Arayüz %s heleos arka-ucunda bulunamadı, muhtemelen zaten silinmiş"
-
 msgid "Invalid Interface ID, will lead to incorrect tap device name"
 msgstr "Geçersiz arayüz kimliği, geçersiz tap aygıt ismine yol açacak"
 
@@ -178,6 +182,9 @@ msgstr "Geçersiz Ağ ID'si, geçersiz köprü ismine yol açacak"
 msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
 msgstr ""
 "Geçersiz Dilimlendirme kimliği: %s, geçersiz vxlan aygıt ismine sebep olacak"
+
+msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
+msgstr "Geçersiz VLAN ID'si, geçersiz alt arayüz ismine yol açacak"
 
 #, python-format
 msgid "Invalid remote IP: %s"
@@ -344,9 +351,6 @@ msgstr ""
 "Güvenlik grubu ajan bağlama şu an ayarlanmış değil. Bu init sürecinin "
 "sonunda ayarlanmış olmalı."
 
-msgid "Server does not support metadata RPC, fallback to using neutron client"
-msgstr "Sunucu metadata RPC desteklemiyor, neutron istemcisine geri dönülüyor"
-
 #, python-format
 msgid ""
 "The configured driver %(driver)s has been moved, automatically using "
@@ -363,10 +367,6 @@ msgid ""
 msgstr ""
 "Uzak metadata sunucu Yasaklı yanıtı döndü. Bu yanıt genellikle paylaşılan "
 "gizler eşleşmediğinde oluşur."
-
-#, python-format
-msgid "The router %s had no physical representation, likely already deleted"
-msgstr "%s yönlendiricisinin fiziksel temsili yoktu, muhtemelen zaten silinmiş"
 
 msgid ""
 "The user that is executing neutron can read the namespaces without using the "
@@ -438,9 +438,6 @@ msgid ""
 msgstr ""
 "VIF bağlantı noktası: %s'in yapılandırılmış bir ofport'u yok, aktarım "
 "yapamayabilir"
-
-msgid "VXLAN is enabled, a valid local_ip must be provided"
-msgstr "VXLAN etkin, geçerli bir local_ip sağlanmalı"
 
 #, python-format
 msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"

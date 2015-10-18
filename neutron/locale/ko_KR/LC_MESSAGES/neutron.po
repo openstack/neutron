@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: ko_KR\n"
@@ -42,10 +42,6 @@ msgstr ""
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr "%(driver)s: 내부 드라이버 오류."
-
-#, python-format
-msgid "%(err_msg)s"
-msgstr "%(err_msg)s"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -254,15 +250,6 @@ msgstr "외부 네트워크 속성을 네트워크 자원에 추가합니다."
 msgid "Adds test attributes to core resources."
 msgstr "코어 자원에 테스트 속성을 추가합니다."
 
-msgid "Admin password"
-msgstr "관리자 비밀번호"
-
-msgid "Admin tenant name"
-msgstr "관리자 테넌트 이름"
-
-msgid "Admin user"
-msgstr "관리 사용자"
-
 #, python-format
 msgid "Agent %(id)s could not be found"
 msgstr "%(id)s 에이전트를 찾을 수 없음"
@@ -341,22 +328,11 @@ msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "%(opt_name)s에 대한 올바르지 않은 값이 제공됨: %(opt_value)s"
 
 msgid ""
-"An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
-msgstr ""
-"neutron.ml2.mechanism_drivers 네임스페이스로부터 로드할 확장 드라이버 엔드포"
-"인트의 정렬된 목록입니다."
-
-msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 "neutron.ml2.mechanism_drivers 네임스페이스로부터 로드할 네트워킹 메커니즘 드"
 "라이버 시작점의 정렬된 목록입니다."
-
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr "예상치 않은 오류 발생: %(err_msg)s"
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "알 수 없는 오류가 발생했습니다. 요청을 다시 시도하십시오. "
@@ -370,12 +346,6 @@ msgstr "'%s' 속성은 POST에서 허용되지 않음"
 
 msgid "Auth strategy for connecting to neutron in admin context."
 msgstr "관리 컨텍스트에서 neutron에 연결하기 위한 인증 전략입니다."
-
-msgid "Authentication URL"
-msgstr "인증 URL"
-
-msgid "Authentication region"
-msgstr "인증 리젼"
 
 msgid ""
 "Authorization URL for connecting to nova in admin context. Deprecated in "
@@ -497,10 +467,6 @@ msgstr "플로우 삭제 또는 수정 시 우선순위와 일치할 수 없음"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
 msgstr "서브넷 풀에서 IPv4 및 IPv6 접두부를 혼합하여 사용할 수 없음"
-
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr "다음과 같은 이유 때문에 utif 정보를 검색할 수 없음: %(err_msg)s"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id와 port-id를 둘 다 지정할 수 없음"
@@ -651,9 +617,6 @@ msgstr "기본 보안 그룹"
 msgid "Default security group already exists."
 msgstr "기본 보안 그룹이 이미 존재합니다. "
 
-msgid "Define if the requests have run asynchronously or not"
-msgstr "요청이 비동기로 실행되었는지 정의함"
-
 msgid ""
 "Defines providers for advanced services using the format: <service_type>:"
 "<name>:<driver>[:default]"
@@ -713,9 +676,6 @@ msgstr "DHCP 에이전트에 대한 네트워크 스케줄링에 사용할 드�
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr "기본 L3 에이전트에 대한 라우터 스케줄링에 사용할 드라이버"
 
-msgid "Dummy user traffic Security Zone id"
-msgstr "더미 사용자 트래픽 보안 구역 id"
-
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr "중복 IP 주소 '%s'"
@@ -741,36 +701,6 @@ msgstr "중복 이름 서버 '%s'"
 msgid "Duplicate segment entry in request."
 msgstr "요청에 중복되는 세그먼트 항목이 있음."
 
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled through "
-"the heleos UI"
-msgstr ""
-"조작을 실행하기 위한 Dva를 찾을 수 없음, heleos UI를 통해 취소되었을 수 있음"
-
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr "Dva 구성이 실패함. 이유: %s"
-
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr "Dva 작성이 실패함. 이유: %s"
-
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr "Dva 작성이 보류 상태임. 이유: %s"
-
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr "%s 이유 때문에 Dva 인터페이스가 중단된 것 같음"
-
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr "다음과 같은 이유로 Dva가 보류 중: %s"
-
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr "%s 이유 때문에 Dva가 중단된 것 같음"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "오류: %s"
@@ -781,15 +711,6 @@ msgid ""
 msgstr ""
 "오류: 기본 검색 경로(~/.quantum/, ~/, /etc/quantum/, /etc/) 및 '--config-"
 "file' (~/.neutron/, ~/, /etc/neutron/, /etc/) 및 '--config-file' 옵션!"
-
-msgid "ESM admin password."
-msgstr "ESM 관리 비밀번호."
-
-msgid "ESM admin username."
-msgstr "ESM 관리 사용자 이름."
-
-msgid "ESM management root address"
-msgstr "ESM 관리 루트 주소"
 
 msgid ""
 "Either one of parameter network_id or router_id must be passed to _get_ports "
@@ -991,14 +912,6 @@ msgstr ""
 "크 %(network_id)s에서 포트를 작성하지 못했습니다. "
 
 #, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it manually "
-"through the heleos UI"
-msgstr ""
-"%s 이유 때문에 백엔드 라우터를 삭제하지 못함. heleos UI를 통해 수동으로 제거"
-"하십시오."
-
-#, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
 msgstr "%(reason)s 때문에 정책 %(policy)s을(를) 초기화하지 못했습니다. "
 
@@ -1195,9 +1108,6 @@ msgstr ""
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s"
 msgstr "잘못된 접두부 업데이트: %(msg)s"
-
-msgid "In band Security Zone id"
-msgstr "대역내 보안 구역 id"
 
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
@@ -1483,9 +1393,6 @@ msgstr "형식이 틀린 요청 본문"
 msgid "Malformed request body: %(reason)s"
 msgstr "형식이 잘못된 요청 본문: %(reason)s"
 
-msgid "Management Security Zone id"
-msgstr "관리 보안 구역 id"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "DNS 이름 서버의 최대 수"
 
@@ -1583,9 +1490,6 @@ msgstr "이름 '%s'은(는) 하이픈으로 시작하거나 끝날 수 없습니
 msgid "Name of Open vSwitch bridge to use"
 msgstr "사용할 열린 vSwitch 브릿지의 이름"
 
-msgid "Name of bridge used for external network traffic."
-msgstr "외부 네트워크 트래픽에 사용되는 브릿지의 이름입니다. "
-
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
@@ -1630,20 +1534,8 @@ msgstr ""
 "IP 범위가 %(parent_range)s이고 크기가 %(size)s인(IP 범위 %(excluded_ranges)s "
 "제외) 네트워크를 발견하지 못했습니다."
 
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr ""
-"키스톤 카탈로그에서 가져오기 위한 네트워크 서비스 엔드포인트 유형입니다. "
-
 msgid "Network that will have instance metadata proxied."
 msgstr "인스턴스 메타데이터가 프록시되는 네트워크입니다."
-
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is "
-"vlan"
-msgstr ""
-"네트워크 유형 %s은(는) 지원되지 않습니다. tenant_network_type이 vlan인지 확인"
-"하십시오."
 
 #, python-format
 msgid "Network type value '%s' not supported"
@@ -1823,9 +1715,6 @@ msgstr ""
 
 msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "테넌트 네트워크로 할당할 네트워크 유형의 정렬된 목록입니다. "
-
-msgid "Out of band Security Zone id"
-msgstr "대역 외부 보안 구역 id"
 
 msgid "Override the default dnsmasq settings with this file"
 msgstr "기본 dnsmasq 설정을 이 파일로 대체합니다."
@@ -2068,9 +1957,6 @@ msgstr "라우터 '%(router_id)s'이(가) 이 에이전트와 호환되지 않�
 msgid "Router already has a port on subnet %s"
 msgstr "라우터가 이미 %s 서브넷에 포트를 갖고 있음"
 
-msgid "Router image id (Embrane FW/VPN)"
-msgstr "라우터 이미지 ID(Embrane FW/VPN)"
-
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
@@ -2167,9 +2053,6 @@ msgid ""
 msgstr ""
 "GRE/VXLAN 터널을 전송하는 발신 IP 패킷에 DF(Don't Fragment) 비트를 설정하거"
 "나 설정 해제하십시오."
-
-msgid "Shared resource pool id"
-msgstr "공유 자원 풀 id"
 
 msgid "Shared secret to sign instance-id request"
 msgstr "instance-id 요청을 서명하기 위한 공유 본인확인정보"
@@ -2527,9 +2410,6 @@ msgstr "사용할 터널 브릿지입니다."
 
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr "올바른 로컬 IP가 없으면 터널링을 사용할 수 없습니다. "
-
-msgid "Turn off verification of the certificate for ssl"
-msgstr "ssl용 인증서의 검증 끄기 "
 
 msgid "URL for connecting to CRD service."
 msgstr "CRD 서비스에 연결하기 위한 URL입니다."

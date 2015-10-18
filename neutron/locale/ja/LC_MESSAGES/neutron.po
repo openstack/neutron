@@ -12,9 +12,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev498\n"
+"Project-Id-Version: neutron 8.0.0.dev60\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-09 06:20+0000\n"
+"POT-Creation-Date: 2015-10-18 06:14+0000\n"
 "PO-Revision-Date: 2015-09-28 04:52+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
@@ -45,10 +45,6 @@ msgstr ""
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr "%(driver)s: 内部ドライバーエラー。"
-
-#, python-format
-msgid "%(err_msg)s"
-msgstr "デコードできませんでした: %(err_msg)s"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -258,15 +254,6 @@ msgstr "外部ネットワーク属性がネットワークリソースに追加
 msgid "Adds test attributes to core resources."
 msgstr "テスト属性をコアリソースに追加します。"
 
-msgid "Admin password"
-msgstr "管理パスワード"
-
-msgid "Admin tenant name"
-msgstr "管理テナント名"
-
-msgid "Admin user"
-msgstr "管理ユーザー"
-
 #, python-format
 msgid "Agent %(id)s could not be found"
 msgstr "エージェント %(id)s が見つかりませんでした"
@@ -354,22 +341,11 @@ msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "%(opt_name)s に無効値が指定されました: %(opt_value)s"
 
 msgid ""
-"An ordered list of extension driver entrypoints to be loaded from the "
-"neutron.ml2.extension_drivers namespace."
-msgstr ""
-"neutron.ml2.extension_drivers 名前空間からロードする拡張ドライバーエントリー"
-"ポイントの順序付きリスト。"
-
-msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 "neutron.ml2.mechanism_drivers 名前空間からロードするネットワーキングメカニズ"
 "ムドライバーのエンドポイントの順序付きリスト。"
-
-#, python-format
-msgid "An unexpected error occurred:%(err_msg)s"
-msgstr "予期しないエラーが発生しました:%(err_msg)s"
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "不明なエラーが発生しました。要求を再試行してください。"
@@ -383,12 +359,6 @@ msgstr "属性 '%s' は POST では許可されません"
 
 msgid "Auth strategy for connecting to neutron in admin context."
 msgstr "管理コンテキストでの Neutron への接続用認証ストラテジー。"
-
-msgid "Authentication URL"
-msgstr "認証 URL"
-
-msgid "Authentication region"
-msgstr "認証領域"
 
 msgid ""
 "Authorization URL for connecting to nova in admin context. Deprecated in "
@@ -516,10 +486,6 @@ msgstr "flowの削除か設定の優先度が一致できません"
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
 msgstr ""
 "IPv4 と IPv6 のプレフィックスをサブネットプールで混用することはできません"
-
-#, python-format
-msgid "Cannot retrieve utif info for the following reason: %(err_msg)s"
-msgstr "次の理由により utif 情報を取得できません: %(err_msg)s"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id と port-id の両方を指定することはできません"
@@ -677,9 +643,6 @@ msgstr "デフォルトセキュリティグループ"
 msgid "Default security group already exists."
 msgstr "デフォルトのセキュリティーグループが既に存在します。"
 
-msgid "Define if the requests have run asynchronously or not"
-msgstr "要求が非同期で実行されるかどうかを明示します"
-
 msgid ""
 "Defines providers for advanced services using the format: <service_type>:"
 "<name>:<driver>[:default]"
@@ -742,9 +705,6 @@ msgstr ""
 "デフォルトの L3 エージェントに対するルーターのスケジューリングに使用するドラ"
 "イバー"
 
-msgid "Dummy user traffic Security Zone id"
-msgstr "ダミーユーザートラフィックセキュリティーゾーン id"
-
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr "重複 IP アドレス '%s'"
@@ -770,37 +730,6 @@ msgstr "重複するネームサーバー '%s'"
 msgid "Duplicate segment entry in request."
 msgstr "重複するセグメントエントリーが要求に含まれています。"
 
-msgid ""
-"Dva can't be found to execute the operation, probably was cancelled through "
-"the heleos UI"
-msgstr ""
-"操作を実行するための DVA が見つかりません。heleos UI からキャンセルされた可能"
-"性があります"
-
-#, python-format
-msgid "Dva configuration failed for reason %s"
-msgstr "理由 %s により DVA を構成できませんでした"
-
-#, python-format
-msgid "Dva creation failed reason %s"
-msgstr "理由 %s により DVA を作成できませんでした"
-
-#, python-format
-msgid "Dva creation is in pending state for reason %s"
-msgstr "理由 %s により DVA の作成が保留状態にあります"
-
-#, python-format
-msgid "Dva interface seems to be broken for reason %s"
-msgstr "理由 %s により DVA インターフェースが壊れている可能性があります"
-
-#, python-format
-msgid "Dva is pending for the following reason: %s"
-msgstr "次の理由により DVA は保留中です: %s"
-
-#, python-format
-msgid "Dva seems to be broken for reason %s"
-msgstr "理由 %s により DVA が壊れている可能性があります"
-
 #, python-format
 msgid "ERROR: %s"
 msgstr "エラー: %s"
@@ -811,15 +740,6 @@ msgid ""
 msgstr ""
 "エラー: デフォルトの検索パス (~/.neutron/, ~/, /etc/neutron/, /etc/) および "
 "'--config-file' オプションを使用して、構成ファイルが見つかりません。"
-
-msgid "ESM admin password."
-msgstr "ESM 管理者パスワード。"
-
-msgid "ESM admin username."
-msgstr "ESM 管理者ユーザー名。"
-
-msgid "ESM management root address"
-msgstr "ESM 管理ルートアドレス"
 
 msgid ""
 "Either one of parameter network_id or router_id must be passed to _get_ports "
@@ -1027,14 +947,6 @@ msgid ""
 msgstr ""
 "fixed_ips が無効なサブネット %(subnet_id)s に含まれていたため、ネットワーク "
 "%(network_id)s でポートを作成できませんでした"
-
-#, python-format
-msgid ""
-"Failed to delete the backend router for reason %s. Please remove it manually "
-"through the heleos UI"
-msgstr ""
-"理由 %s によりバックエンドルーターを削除できませんでした。heleos UI から手動"
-"で削除してください"
 
 #, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
@@ -1246,9 +1158,6 @@ msgstr ""
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s"
 msgstr "プレフィックスに対する正しくない更新: %(msg)s"
-
-msgid "In band Security Zone id"
-msgstr "インバンドセキュリティーゾーン id"
 
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
@@ -1535,9 +1444,6 @@ msgstr "誤った形式の要求本体"
 msgid "Malformed request body: %(reason)s"
 msgstr "誤った形式の要求本体: %(reason)s"
 
-msgid "Management Security Zone id"
-msgstr "管理セキュリティーゾーン id"
-
 msgid "Maximum number of DNS nameservers"
 msgstr "DNS ネームサーバーの最大数"
 
@@ -1642,9 +1548,6 @@ msgstr "名前「%s」の先頭または末尾にハイフンを使用しては�
 msgid "Name of Open vSwitch bridge to use"
 msgstr "使用する Open vSwitch ブリッジの名前"
 
-msgid "Name of bridge used for external network traffic."
-msgstr "外部ネットワークトラフィックに使用されるブリッジの名前。"
-
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
@@ -1688,19 +1591,8 @@ msgstr ""
 "IP 範囲 %(parent_range)s (IP 範囲 %(excluded_ranges)s を除く) からのサイズ "
 "%(size)s のネットワークが見つかりませんでした。"
 
-msgid "Network service endpoint type to pull from the keystone catalog"
-msgstr "鍵ストアカタログからプルするネットワークサービスのエンドポイントタイプ"
-
 msgid "Network that will have instance metadata proxied."
 msgstr "インスタンスメタデータがプロキシー処理されるネットワーク。"
-
-#, python-format
-msgid ""
-"Network type %s not supported. Please be sure that tenant_network_type is "
-"vlan"
-msgstr ""
-"ネットワークタイプ %s はサポートされていません。tenant_network_type が vlan "
-"であることを確認してください"
 
 #, python-format
 msgid "Network type value '%s' not supported"
@@ -1888,9 +1780,6 @@ msgstr ""
 
 msgid "Ordered list of network_types to allocate as tenant networks."
 msgstr "テナントネットワークとして割り振る network_types の番号付きリスト。"
-
-msgid "Out of band Security Zone id"
-msgstr "アウトオブバンドセキュリティーゾーン id"
 
 msgid "Override the default dnsmasq settings with this file"
 msgstr "デフォルトの dnsmasq 設定をこのファイルで上書きします"
@@ -2144,9 +2033,6 @@ msgstr "ルーター「%(router_id)s」はこのエージェントと互換性�
 msgid "Router already has a port on subnet %s"
 msgstr "ルーターに、既にサブネット %s 上のポートがあります"
 
-msgid "Router image id (Embrane FW/VPN)"
-msgstr "ルーターイメージ id (Embrane FW/VPN)"
-
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
@@ -2247,9 +2133,6 @@ msgid ""
 msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
-
-msgid "Shared resource pool id"
-msgstr "共有リソースプール id"
 
 msgid "Shared secret to sign instance-id request"
 msgstr "インスタンス ID 要求に署名するための共有秘密鍵"
@@ -2613,9 +2496,6 @@ msgstr "使用するトンネルブリッジ。"
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 "有効な local_ip を指定せずに、トンネリングを有効にすることはできません。"
-
-msgid "Turn off verification of the certificate for ssl"
-msgstr "ssl の証明書の検査をオフにする"
 
 msgid "URL for connecting to CRD service."
 msgstr "CRD サービスに接続するための URL。"
