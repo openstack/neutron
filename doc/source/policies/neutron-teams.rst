@@ -1,9 +1,8 @@
 Neutron Core Reviewers
 ======================
 
-The `Neutron Core Reviewer Team
-<https://review.openstack.org/#/admin/groups/38,members>`_ is responsible
-for many things related to Neutron. A lot of these things include mundane
+The `Neutron Core Reviewer Team <https://review.openstack.org/#/admin/groups/38,members>`_
+is responsible for many things related to Neutron. A lot of these things include mundane
 tasks such as the following:
 
 * Ensuring the bug count is low
@@ -174,15 +173,16 @@ reviewers:
   queries, and closing gate bugs.
 * Triaging bugs for the specific areas.
 
-Neutron Core Reviewer Teams
-===========================
+Neutron Teams
+=============
 
 Given all of the above, Neutron has the following core reviewer teams with
 responsibility over the areas of code listed below:
 
 Neutron Core Reviewer Team
 --------------------------
-Neutron core reviewers have merge rights to the following git repositories:
+`Neutron core reviewers <https://review.openstack.org/#/admin/groups/38,members>`_ have
+merge rights to the following git repositories:
 
 * `openstack/neutron <https://git.openstack.org/cgit/openstack/neutron/>`_
 * `openstack/python-neutronclient <https://git.openstack.org/cgit/openstack/python-neutronclient/>`_
@@ -193,22 +193,22 @@ evolve into an area of specialization.
 
 Neutron FWaaS Core Reviewer Team
 --------------------------------
-Neutron FWaaS core reviewers have merge rights to the following git
-repositories:
+Neutron `FWaaS core reviewers <https://review.openstack.org/#/admin/groups/500,members>`_
+have merge rights to the following git repositories:
 
 * `openstack/neutron-fwaas <https://git.openstack.org/cgit/openstack/neutron-fwaas/>`_
 
 Neutron LBaaS Core Reviewer Team
 --------------------------------
-Neutron LBaaS core reviewers have merge rights to the following git
-repositories:
+Neutron `LBaaS core reviewers <https://review.openstack.org/#/admin/groups/501,members>`_
+have merge rights to the following git repositories:
 
 * `openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas/>`_
 
 Neutron VPNaaS Core Reviewer Team
 ---------------------------------
-Neutron VPNaaS core reviewers have merge rights to the following git
-repositories:
+Neutron `VPNaaS core reviewers <https://review.openstack.org/#/admin/groups/502,members>`_
+have merge rights to the following git repositories:
 
 * `openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas/>`_
 
@@ -228,22 +228,39 @@ arise.
 
 Neutron Specs Core Reviewer Team
 --------------------------------
-Neutron specs core reviewers have merge rights to the following git
-repositories:
+Neutron `specs core reviewers <https://review.openstack.org/#/admin/groups/314,members>`_
+have +2 rights to the following git repositories:
 
 * `openstack/neutron-specs <https://git.openstack.org/cgit/openstack/neutron-specs/>`_
 
-The Neutron specs core reviewer team is responsible for reviewing and merging
-specs into the neutron-specs repository. For the Liberty release, the Specs
-core reviewer team will review specs targeted to all neutron git repositories.
-
-It's worth noting specs reviewers have the following attributes which are
-potentially different than code reviewers:
+The Neutron specs core reviewer team is responsible for reviewing specs targeted to
+all Neutron git repositories (Neutron + Advanced Services). It is worth noting that
+specs reviewers have the following attributes which are potentially different than
+code reviewers:
 
 * Broad understanding of cloud and networking technologies
 * Broad understanding of core OpenStack projects and technologies
 * An understanding of the effect approved specs have on the teams development
   capacity for each cycle
+
+Specs core reviewers may match core members of the above mentioned groups, but
+the group can be extended to other individuals, if required.
+
+Drivers Team
+------------
+
+The `drivers team <https://review.openstack.org/#/admin/groups/464,members>`_ is
+the group of people who have full rights to the specs repo. This team, which matches
+`Launchpad Neutron Drivers team <https://launchpad.net/~neutron-drivers>`_, is
+instituted to ensure a consistent architectural vision for the Neutron project, and
+to continue to disaggregate and share the responsibilities of the Neutron PTL.
+The team is in charge of reviewing and commenting on
+`RFEs <http://docs.openstack.org/developer/neutron/policies/blueprints.html#neutron-request-for-feature-enhancements>`_,
+and working with specification contributors to provide guidance on the process
+that govern contributions to the Neutron project as a whole. The team
+`meets regularly <https://wiki.openstack.org/wiki/Meetings/NeutronDrivers>`_
+to go over RFE's and discuss the project roadmap. Anyone is welcome to join
+and/or read the meeting notes.
 
 Code Merge Responsibilities
 ===========================
