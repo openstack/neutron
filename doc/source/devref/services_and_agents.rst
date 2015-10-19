@@ -75,3 +75,11 @@ and the neutron-server.
 
 For more info on the rationale behind the code tree setup, see `the
 corresponding cross-project spec <https://review.openstack.org/154642>`_.
+
+
+Connecting to the Database
+--------------------------
+
+Only the neutron-server connects to the neutron database. Agents may never
+connect directly to the database, as this would break the ability to do rolling
+upgrades.
