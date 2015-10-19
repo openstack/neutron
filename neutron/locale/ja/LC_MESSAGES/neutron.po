@@ -12,10 +12,10 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev315\n"
+"Project-Id-Version: neutron 7.0.1.dev1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-02 06:33+0000\n"
-"PO-Revision-Date: 2015-09-23 08:01+0000\n"
+"POT-Creation-Date: 2015-10-19 06:10+0000\n"
+"PO-Revision-Date: 2015-10-08 03:43+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
 "Language-Team: Japanese (http://www.transifex.com/openstack/neutron/language/"
@@ -631,9 +631,9 @@ msgid ""
 "should be false when using no security groups or using the nova security "
 "group API."
 msgstr ""
-"Neutron セキュリティー・グループ API をサーバーで有効にするかどうかを制御しま"
-"す。セキュリティー・グループを使用しない場合、または Nova セキュリティー・グ"
-"ループ API を使用する場合には、False にする必要があります。"
+"Neutron セキュリティーグループ API をサーバーで有効にするかどうかを制御しま"
+"す。セキュリティーグループを使用しない場合、または Nova セキュリティーグルー"
+"プ API を使用する場合には、False にする必要があります。"
 
 #, fuzzy, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
@@ -699,7 +699,7 @@ msgid "Default security group"
 msgstr "デフォルトセキュリティグループ"
 
 msgid "Default security group already exists."
-msgstr "デフォルトのセキュリティー・グループが既に存在します。"
+msgstr "デフォルトのセキュリティーグループが既に存在します。"
 
 msgid "Define if the requests have run asynchronously or not"
 msgstr "要求が非同期で実行されるかどうかを明示します"
@@ -788,7 +788,7 @@ msgid "Duplicate Metering Rule in POST."
 msgstr "POST で計測規則が重複しています。"
 
 msgid "Duplicate Security Group Rule in POST."
-msgstr "POST に重複するセキュリティー・グループ・ルールがあります。"
+msgstr "POST に重複するセキュリティーグループルールがあります。"
 
 #, python-format
 msgid "Duplicate hostroute '%s'"
@@ -1304,7 +1304,7 @@ msgstr ""
 "サブネット・サイズ /%s を割り振るためのプレフィックス・スペースが不十分です"
 
 msgid "Insufficient rights for removing default security group."
-msgstr "デフォルトのセキュリティー・グループを削除するための権限が不十分です。"
+msgstr "デフォルトのセキュリティーグループを削除するための権限が不十分です。"
 
 msgid "Integration bridge to use."
 msgstr "使用する統合ブリッジ。"
@@ -1691,8 +1691,7 @@ msgstr "複数のプロバイダーがサービス %s に対して指定され�
 
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr ""
-"バルク・セキュリティー・グループ・ルールの作成で複数の tenant_id は許可されま"
-"せん"
+"バルク・セキュリティーグループルールの作成で複数の tenant_id は許可されません"
 
 msgid "Must also specifiy protocol if port range is given."
 msgstr "ポートの範囲を指定する場合は、プロトコルも指定する必要があります。"
@@ -1872,7 +1871,7 @@ msgid "Number of RPC worker processes for service"
 msgstr "サービスの RPC ワーカプロセスの数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
-msgstr "メタデータ・サーバー・ソケットの構成に使用されるバックログ要求の数"
+msgstr "メタデータ・サーバーソケットの構成に使用されるバックログ要求の数"
 
 #, fuzzy
 msgid "Number of backlog requests to configure the socket with"
@@ -1935,8 +1934,8 @@ msgid ""
 "Number of security groups allowed per tenant. A negative value means "
 "unlimited."
 msgstr ""
-"テナント当たりに許可されるセキュリティー・グループ数。負の値は無制限を意味し"
-"ます。 "
+"テナント当たりに許可されるセキュリティーグループ数。負の値は無制限を意味しま"
+"す。 "
 
 msgid ""
 "Number of security rules allowed per tenant. A negative value means "
@@ -2074,16 +2073,16 @@ msgid ""
 "Port has security group associated. Cannot disable port security or ip "
 "address until security group is removed"
 msgstr ""
-"ポートにセキュリティー・グループが関連付けられています。セキュリティー・グ"
-"ループを削除するまで、ポート・セキュリティーおよび IP アドレスを使用不可にす"
-"ることはできません"
+"ポートにセキュリティーグループが関連付けられています。セキュリティーグループ"
+"を削除するまで、ポート・セキュリティーおよび IP アドレスを使用不可にすること"
+"はできません"
 
 msgid ""
 "Port security must be enabled and port must have an IP address in order to "
 "use security groups."
 msgstr ""
-"セキュリティー・グループを使用するには、ポート・セキュリティーを使用可能にす"
-"る必要があり、ポートには IP アドレスが必要です。"
+"セキュリティーグループを使用するには、ポート・セキュリティーを使用可能にする"
+"必要があり、ポートには IP アドレスが必要です。"
 
 #, python-format
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
@@ -2288,16 +2287,16 @@ msgstr ""
 
 #, python-format
 msgid "Security group %(id)s does not exist"
-msgstr "セキュリティー・グループ %(id)s は存在しません"
+msgstr "セキュリティーグループ %(id)s は存在しません"
 
 #, python-format
 msgid "Security group rule %(id)s does not exist"
-msgstr "セキュリティー・グループ・ルール %(id)s は存在しません"
+msgstr "セキュリティーグループルール %(id)s は存在しません"
 
 #, python-format
 msgid "Security group rule already exists. Rule id is %(id)s."
 msgstr ""
-"セキュリティー・グループ・ルールが既に存在します。ルール ID は %(id)s です。"
+"セキュリティーグループルールが既に存在します。ルール ID は %(id)s です。"
 
 msgid "Segments and provider values cannot both be set."
 msgstr "セグメントとプロバイダーの両方を設定することはできません。"
@@ -2352,8 +2351,8 @@ msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
-"サーバー・ソケットごとに TCP_KEEPIDLE の値を秒単位で設定してください。OS X で"
-"はサポートされていません。"
+"サーバーソケットごとに TCP_KEEPIDLE の値を秒単位で設定してください。OS X では"
+"サポートされていません。"
 
 msgid "Shared resource pool id"
 msgstr "共有リソース・プール id"
@@ -2367,9 +2366,9 @@ msgid ""
 "%(duplicates)s. All duplicate 'default' security groups must be resolved "
 "before upgrading the database."
 msgstr ""
-"一部のテナントには、名前が「default」の複数のセキュリティー・グループがありま"
+"一部のテナントには、名前が「default」の複数のセキュリティーグループがありま"
 "す: %(duplicates)s。データベースをアップグレードする前に、重複する「default」"
-"セキュリティー・グループをすべて解決する必要があります。"
+"セキュリティーグループをすべて解決する必要があります。"
 
 msgid ""
 "Specifies the maximum number of retries to enable Hyper-V's port metrics "
@@ -3018,7 +3017,7 @@ msgid "Unsupported request type"
 msgstr "サポートされない要求タイプです"
 
 msgid "Updating default security group not allowed."
-msgstr "デフォルトのセキュリティー・グループの更新は許可されません。"
+msgstr "デフォルトのセキュリティーグループの更新は許可されません。"
 
 msgid ""
 "Use ML2 l2population mechanism driver to learn remote MAC and IPs and "

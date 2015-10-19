@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.0b4.dev276\n"
+"Project-Id-Version: neutron 7.0.1.dev1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-22 07:42+0000\n"
+"POT-Creation-Date: 2015-10-19 06:10+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
@@ -108,10 +108,6 @@ msgstr "Köprü %s mevcut değil"
 
 msgid "Brocade NOS driver error"
 msgstr "Brocade NOS sürücüsü hatası"
-
-#, python-format
-msgid "Cannot delete bridge %s, does not exist"
-msgstr "%s köprüsü silinemiyor, mevcut değil"
 
 msgid "Cannot have multiple IPv4 subnets on router port"
 msgstr "Yönlendirici bağlantı noktasında birden fazla IPv4 alt ağı olamaz"
@@ -309,14 +305,6 @@ msgstr "Ajan olay döngüsünde hata"
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr "Ajan döngüsünde hata. Aygıt bilgisi: %s"
-
-#, python-format
-msgid "Error loading plugin by class, %s"
-msgstr "Plugin yüklenirken %s sınıfı tarafından bir hata oluştu!"
-
-#, python-format
-msgid "Error loading plugin by name, %s"
-msgstr "%s isimli plugin yüklenirken bir hata oluştu!"
 
 #, python-format
 msgid "Error loading provider '%(provider)s' for service %(service_type)s"
