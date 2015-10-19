@@ -1190,7 +1190,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         return expected_calls
 
     def _process_router_ipv6_subnet_added(
-            self, router, ipv6_subnet_modes=None):
+            self, router, ipv6_subnet_modes=None, dns_nameservers=None):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
@@ -1201,7 +1201,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             router,
             count=len(ipv6_subnet_modes),
             ip_version=6,
-            ipv6_subnet_modes=ipv6_subnet_modes)
+            ipv6_subnet_modes=ipv6_subnet_modes,
+            dns_nameservers=dns_nameservers)
         # Reassign the router object to RouterInfo
         self._process_router_instance_for_agent(agent, ri, router)
         return ri
@@ -2168,6 +2169,21 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 self.utils_replace_file.call_args[0][1])
             assertFlag(managed_flag)('AdvManagedFlag on;',
                 self.utils_replace_file.call_args[0][1])
+
+    def test_generate_radvd_rdnss_conf(self):
+        router = l3_test_common.prepare_router_data()
+        ipv6_subnet_modes = [{'ra_mode': l3_constants.IPV6_SLAAC,
+                             'address_mode': l3_constants.IPV6_SLAAC}]
+        dns_list = ['fd01:1::100', 'fd01:1::200', 'fd01::300', 'fd01::400']
+        ri = self._process_router_ipv6_subnet_added(router,
+                                                    ipv6_subnet_modes,
+                                                    dns_nameservers=dns_list)
+        ri.radvd._generate_radvd_conf(router[l3_constants.INTERFACE_KEY])
+        # Verify that radvd configuration file includes RDNSS entries
+        expected = "RDNSS  "
+        for dns in dns_list[0:ra.MAX_RDNSS_ENTRIES]:
+            expected += "%s  " % dns
+        self.assertIn(expected, self.utils_replace_file.call_args[0][1])
 
     def _pd_expected_call_external_process(self, requestor, ri, enable=True):
         expected_calls = []

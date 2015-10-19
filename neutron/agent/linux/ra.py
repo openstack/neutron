@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from itertools import chain as iter_chain
 import jinja2
 import netaddr
 from oslo_config import cfg
@@ -26,6 +27,8 @@ from neutron.common import constants
 
 RADVD_SERVICE_NAME = 'radvd'
 RADVD_SERVICE_CMD = 'radvd'
+# We can configure max of 3 DNS servers in radvd RDNSS section.
+MAX_RDNSS_ENTRIES = 3
 
 LOG = logging.getLogger(__name__)
 
@@ -49,6 +52,10 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 
    {% if constants.DHCPV6_STATEFUL in ra_modes %}
    AdvManagedFlag on;
+   {% endif %}
+
+   {% if dns_servers %}
+   RDNSS {% for dns in dns_servers %} {{ dns }} {% endfor %} {};
    {% endif %}
 
    {% for prefix in prefixes %}
@@ -88,10 +95,15 @@ class DaemonMonitor(object):
                     subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
                     subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS]
             interface_name = self._dev_name_helper(p['id'])
+            slaac_subnets = [subnet for subnet in v6_subnets if
+                subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC]
+            dns_servers = list(iter_chain(*[subnet['dns_nameservers'] for
+                subnet in slaac_subnets if subnet.get('dns_nameservers')]))
             buf.write('%s' % CONFIG_TEMPLATE.render(
                 ra_modes=list(ra_modes),
                 interface_name=interface_name,
                 prefixes=auto_config_prefixes,
+                dns_servers=dns_servers[0:MAX_RDNSS_ENTRIES],
                 constants=constants))
 
         utils.replace_file(radvd_conf, buf.getvalue())
