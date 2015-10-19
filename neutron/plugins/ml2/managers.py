@@ -780,19 +780,19 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
         """Notify all extension drivers to extend network dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_network_dict(session, base_model, result)
-            LOG.info(_LI("Extended network dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended network dict for driver '%(drv)s'",
+                      {'drv': driver.name})
 
     def extend_subnet_dict(self, session, base_model, result):
         """Notify all extension drivers to extend subnet dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_subnet_dict(session, base_model, result)
-            LOG.info(_LI("Extended subnet dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended subnet dict for driver '%(drv)s'",
+                      {'drv': driver.name})
 
     def extend_port_dict(self, session, base_model, result):
         """Notify all extension drivers to extend port dictionary."""
         for driver in self.ordered_ext_drivers:
             driver.obj.extend_port_dict(session, base_model, result)
-            LOG.info(_LI("Extended port dict for driver '%(drv)s'"),
-                     {'drv': driver.name})
+            LOG.debug("Extended port dict for driver '%(drv)s'",
+                      {'drv': driver.name})
