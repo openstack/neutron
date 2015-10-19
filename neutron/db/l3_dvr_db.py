@@ -685,24 +685,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                           initial_status=l3_const.FLOATINGIP_STATUS_ACTIVE):
         floating_ip = self._create_floatingip(
             context, floatingip, initial_status)
-        self._notify_floating_ip_change(context, floating_ip)
-        return floating_ip
-
-    def _notify_floating_ip_change(self, context, floating_ip):
         router_id = floating_ip['router_id']
         if not router_id:
-            return
+            return floating_ip
 
-        try:
-            router = self._get_router(context, router_id)
-        except l3.RouterNotFound:
-            # TODO(changzhi): this is present to avoid grenade failing on a
-            # race condition(<bug:1486828>). Can be removed when underlying
-            # race condition is cleaned up.
-            LOG.debug("Router %(router_id)s not found. "
-                      "Just ingore this router. ",
-                      {"router_id": router_id})
-            return
+        router = self._get_router(context, router_id)
         # we need to notify agents only in case Floating IP is associated
         fixed_port_id = floating_ip['port_id']
         if fixed_port_id:
@@ -711,16 +698,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 self.l3_rpc_notifier.routers_updated_on_host(
                     context, [router_id], host)
             else:
-                self.notify_router_updated(context, router_id)
-
-    def update_floatingip(self, context, id, floatingip):
-        old_floatingip, floatingip = self._update_floatingip(
-            context, id, floatingip)
-        self._notify_floating_ip_change(context, old_floatingip)
-        if (floatingip['router_id'] != old_floatingip['router_id'] or
-                floatingip['port_id'] != old_floatingip['port_id']):
-            self._notify_floating_ip_change(context, floatingip)
-        return floatingip
+                self.notify_router_updated(context, router_id,
+                                           'create_floatingip')
+        return floating_ip
 
 
 def is_distributed_router(router):
