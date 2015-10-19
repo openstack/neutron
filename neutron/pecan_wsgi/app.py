@@ -15,6 +15,7 @@
 
 from keystonemiddleware import auth_token
 from oslo_config import cfg
+from oslo_middleware import cors
 from oslo_middleware import request_id
 import pecan
 
@@ -74,4 +75,17 @@ def _wrap_app(app):
     else:
         raise n_exc.InvalidConfigurationOption(
             opt_name='auth_strategy', opt_value=cfg.CONF.auth_strategy)
+
+    # This should be the last middleware in the list (which results in
+    # it being the first in the middleware chain). This is to ensure
+    # that any errors thrown by other middleware, such as an auth
+    # middleware - are annotated with CORS headers, and thus accessible
+    # by the browser.
+    app = cors.CORS(app, cfg.CONF)
+    app.set_latent(
+        allow_headers=['X-Auth-Token', 'X-Openstack-Request-Id'],
+        allow_methods=['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
+        expose_headers=['X-Auth-Token', 'X-Openstack-Request-Id']
+    )
+
     return app
