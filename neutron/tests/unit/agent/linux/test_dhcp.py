@@ -1262,6 +1262,15 @@ class TestDnsmasq(TestBase):
 
         self.safe.assert_called_once_with('/foo/opts', expected)
 
+    def test_output_opts_file_ipv6_address_mode_unset(self):
+        fake_v6 = '2001:0200:feed:7ac0::1'
+        expected = (
+            'tag:tag0,option6:dns-server,%s\n'
+            'tag:tag0,option6:domain-search,openstacklocal').lstrip() % (
+                '[' + fake_v6 + ']')
+
+        self._test_output_opts_file(expected, FakeV6Network())
+
     @property
     def _test_no_dhcp_domain_alloc_data(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
