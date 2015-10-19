@@ -146,7 +146,6 @@ class OVSConfigFixture(ConfigFixture):
         self.tunneling_enabled = self.env_desc.tunneling_enabled
         self.config.update({
             'ovs': {
-                'enable_tunneling': str(self.tunneling_enabled),
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
             },
