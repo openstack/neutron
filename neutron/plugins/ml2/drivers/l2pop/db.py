@@ -47,10 +47,14 @@ class L2populationDbMixin(base_db.CommonDbMixin):
         return configuration.get('l2pop_network_types')
 
     def get_agent_by_host(self, session, agent_host):
+        """Return a L2 agent on the host."""
+
         with session.begin(subtransactions=True):
             query = session.query(agents_db.Agent)
             query = query.filter(agents_db.Agent.host == agent_host)
-            return query.first()
+        for agent in query:
+            if self.get_agent_ip(agent):
+                return agent
 
     def _get_active_network_ports(self, session, network_id):
         with session.begin(subtransactions=True):
