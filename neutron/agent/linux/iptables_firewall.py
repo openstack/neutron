@@ -52,6 +52,11 @@ MAX_CONNTRACK_ZONES = 65535
 comment_rule = iptables_manager.comment_rule
 
 
+class mac_iptables(netaddr.mac_eui48):
+    """mac format class for netaddr to match iptables representation."""
+    word_sep = ':'
+
+
 class IptablesFirewallDriver(firewall.FirewallDriver):
     """Driver which enforces security groups through iptables rules."""
     IPTABLES_DIRECTION = {firewall.INGRESS_DIRECTION: 'physdev-out',
@@ -371,7 +376,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
                                   mac_ipv6_pairs):
-        mac = str(netaddr.EUI(mac, dialect=netaddr.mac_unix))
+        mac = str(netaddr.EUI(mac, dialect=mac_iptables))
         if netaddr.IPNetwork(ip_address).version == 4:
             mac_ipv4_pairs.append((mac, ip_address))
         else:

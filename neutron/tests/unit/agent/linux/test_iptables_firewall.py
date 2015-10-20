@@ -1806,8 +1806,8 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
                           for ip in other_ips])
 
     def test_build_ipv4v6_mac_ip_list(self):
-        mac_oth = 'ffff-ffff-ffff'
-        mac_unix = 'ff:ff:ff:ff:ff:ff'
+        mac_oth = 'ffff-ff0f-ffff'
+        mac_unix = 'FF:FF:FF:0F:FF:FF'
         ipv4 = FAKE_IP['IPv4']
         ipv6 = FAKE_IP['IPv6']
         fake_ipv4_pair = []
