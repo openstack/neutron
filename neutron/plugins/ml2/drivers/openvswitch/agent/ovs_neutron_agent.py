@@ -354,11 +354,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             net_uuid = local_vlan_map.get('net_uuid')
             if (net_uuid and net_uuid not in self.local_vlan_map
                 and local_vlan != DEAD_VLAN_TAG):
+                segmentation_id = local_vlan_map.get('segmentation_id')
+                if segmentation_id == 'None':
+                    # Backward compatible check when we used to store the
+                    # string 'None' in OVS
+                    segmentation_id = None
+                if segmentation_id is not None:
+                    segmentation_id = int(segmentation_id)
                 self.provision_local_vlan(local_vlan_map['net_uuid'],
                                           local_vlan_map['network_type'],
                                           local_vlan_map['physical_network'],
-                                          int(local_vlan_map[
-                                              'segmentation_id']),
+                                          segmentation_id,
                                           local_vlan)
 
     def setup_rpc(self):
@@ -803,8 +809,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         vlan_mapping = {'net_uuid': net_uuid,
                         'network_type': network_type,
-                        'physical_network': physical_network,
-                        'segmentation_id': segmentation_id}
+                        'physical_network': physical_network}
+        if segmentation_id is not None:
+            vlan_mapping['segmentation_id'] = segmentation_id
         port_other_config.update(vlan_mapping)
         self.int_br.set_db_attribute("Port", port.port_name, "other_config",
                                      port_other_config)
