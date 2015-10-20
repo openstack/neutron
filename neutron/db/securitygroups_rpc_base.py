@@ -153,7 +153,10 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                 security_groups_provider_updated = True
             # For IPv6, provider rule need to be updated in case router
             # interface is created or updated after VM port is created.
-            elif port['device_owner'] == q_const.DEVICE_OWNER_ROUTER_INTF:
+            # NOTE (Swami): ROUTER_INTERFACE_OWNERS check is required
+            # since it includes the legacy router interface device owners
+            # and DVR router interface device owners.
+            elif port['device_owner'] in q_const.ROUTER_INTERFACE_OWNERS:
                 if any(netaddr.IPAddress(fixed_ip['ip_address']).version == 6
                        for fixed_ip in port['fixed_ips']):
                     security_groups_provider_updated = True
