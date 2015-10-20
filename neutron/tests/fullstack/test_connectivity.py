@@ -36,7 +36,11 @@ class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
 
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription() for _ in range(2)]
+            # There's value in enabling L3 agents registration when l2pop
+            # is enabled, because l2pop code makes assumptions about the
+            # agent types present on machines.
+            environment.HostDescription(
+                l3_agent=self.l2_pop) for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type,
