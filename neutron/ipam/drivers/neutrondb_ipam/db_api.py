@@ -13,10 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
+from sqlalchemy.orm import exc as orm_exc
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
+from neutron.ipam import exceptions as ipam_exc
 
 LOG = log.getLogger(__name__)
 # Database operations for Neutron's DB-backed IPAM driver
@@ -103,45 +106,35 @@ class IpamSubnetManager(object):
             db_models.IpamAllocationPool).filter_by(
             ipam_subnet_id=self._ipam_subnet_id)
 
-    def _range_query(self, session, locking):
-        range_qry = session.query(
+    def _range_query(self, session):
+        return session.query(
             db_models.IpamAvailabilityRange).join(
             db_models.IpamAllocationPool).filter_by(
             ipam_subnet_id=self._ipam_subnet_id)
-        if locking:
-            range_qry = range_qry.with_lockmode('update')
-        return range_qry
 
-    def get_first_range(self, session, locking=False):
+    def get_first_range(self, session):
         """Return the first availability range for the subnet
 
         :param session: database session
-        :param locking: specifies whether a write-intent lock should be
-            performed on the database operation
         :return: first available range as instance of
             neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
         """
-        return self._range_query(session, locking).first()
+        return self._range_query(session).first()
 
-    def list_ranges_by_subnet_id(self, session, locking=False):
+    def list_ranges_by_subnet_id(self, session):
         """Return availability ranges for a given ipam subnet
 
         :param session: database session
-        :param locking: specifies whether a write-intent lock should be
-             acquired with this database operation.
         :return: list of availability ranges as instances of
             neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
         """
-        return self._range_query(session, locking)
+        return self._range_query(session)
 
-    def list_ranges_by_allocation_pool(self, session, allocation_pool_id,
-                                       locking=False):
+    def list_ranges_by_allocation_pool(self, session, allocation_pool_id):
         """Return availability ranges for a given pool.
 
         :param session: database session
         :param allocation_pool_id: allocation pool identifier
-        :param locking: specifies whether a write-intent lock should be
-             acquired with this database operation.
         :return: list of availability ranges as instances of
             neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
         """
@@ -149,6 +142,46 @@ class IpamSubnetManager(object):
             db_models.IpamAvailabilityRange).join(
             db_models.IpamAllocationPool).filter_by(
             id=allocation_pool_id)
+
+    def update_range(self, session, db_range, first_ip=None, last_ip=None):
+        """Updates db_range to have new first_ip and last_ip.
+
+        :param session: database session
+        :param db_range: IpamAvailabilityRange db object
+        :param first_ip: first ip address in range
+        :param last_ip: last ip address in range
+        :return: count of updated rows
+        """
+        opts = {}
+        if first_ip:
+            opts['first_ip'] = str(first_ip)
+        if last_ip:
+            opts['last_ip'] = str(last_ip)
+        if not opts:
+            raise ipam_exc.IpamAvailabilityRangeNoChanges()
+        try:
+            return session.query(
+                db_models.IpamAvailabilityRange).filter_by(
+                allocation_pool_id=db_range.allocation_pool_id).filter_by(
+                first_ip=db_range.first_ip).filter_by(
+                last_ip=db_range.last_ip).update(opts)
+        except orm_exc.ObjectDeletedError:
+            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed)
+
+    def delete_range(self, session, db_range):
+        """Return count of deleted ranges
+
+        :param session: database session
+        :param db_range: IpamAvailabilityRange db object
+        """
+        try:
+            return session.query(
+                db_models.IpamAvailabilityRange).filter_by(
+                allocation_pool_id=db_range.allocation_pool_id).filter_by(
+                first_ip=db_range.first_ip).filter_by(
+                last_ip=db_range.last_ip).delete()
+        except orm_exc.ObjectDeletedError:
+            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed)
 
     def create_range(self, session, allocation_pool_id,
                      range_start, range_end):
@@ -180,23 +213,18 @@ class IpamSubnetManager(object):
             return False
         return True
 
-    def list_allocations(self, session, status='ALLOCATED', locking=False):
+    def list_allocations(self, session, status='ALLOCATED'):
         """Return current allocations for the subnet.
 
         :param session: database session
         :param status: IP allocation status
-        :param locking: specifies whether a write-intent lock should be
-            performed on the database operation
         :returns: a list of IP allocation as instance of
             neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAllocation
         """
-        ip_qry = session.query(
+        return session.query(
             db_models.IpamAllocation).filter_by(
             ipam_subnet_id=self._ipam_subnet_id,
             status=status)
-        if locking:
-            ip_qry = ip_qry.with_lockmode('update')
-        return ip_qry
 
     def create_allocation(self, session, ip_address,
                           status='ALLOCATED'):

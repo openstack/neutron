@@ -60,3 +60,11 @@ class AllocationOnAutoAddressSubnet(exceptions.NeutronException):
 
 class IpAddressGenerationFailure(exceptions.Conflict):
     message = _("No more IP addresses available for subnet %(subnet_id)s.")
+
+
+class IPAllocationFailed(exceptions.NeutronException):
+    message = _("IP allocation failed. Try again later.")
+
+
+class IpamAvailabilityRangeNoChanges(exceptions.NeutronException):
+    message = _("New value for first_ip or last_ip has to be specified.")
