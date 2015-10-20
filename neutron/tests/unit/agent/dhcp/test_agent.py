@@ -619,11 +619,14 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             mock.call.get_network_info(network.id)])
         self.call_driver.assert_called_once_with('enable', network)
         self.cache.assert_has_calls([mock.call.put(network)])
-        if is_isolated_network:
+        if is_isolated_network and enable_isolated_metadata:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
-                mock.call().enable()
-            ])
+                mock.call().enable()])
+        elif not enable_isolated_metadata:
+            self.external_process.assert_has_calls([
+                self._process_manager_constructor_call(ns=None),
+                mock.call().disable()])
         else:
             self.assertFalse(self.external_process.call_count)
 
@@ -727,6 +730,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def test_enable_dhcp_helper_driver_failure(self):
         self.plugin.get_network_info.return_value = fake_network
         self.call_driver.return_value = False
+        cfg.CONF.set_override('enable_isolated_metadata', True)
         self.dhcp.enable_dhcp_helper(fake_network.id)
         self.plugin.assert_has_calls(
             [mock.call.get_network_info(fake_network.id)])
