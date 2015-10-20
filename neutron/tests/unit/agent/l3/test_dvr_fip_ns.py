@@ -103,9 +103,10 @@ class TestDvrFipNs(base.BaseTestCase):
         dev2.name = 'fg-aaaa'
         ip_wrapper.get_devices.return_value = [dev1, dev2]
 
-        self.conf.router_delete_namespaces = False
-
-        self.fip_ns.delete()
+        with mock.patch.object(self.fip_ns.ip_wrapper_root.netns,
+                               'delete') as delete:
+            self.fip_ns.delete()
+            delete.assert_called_once_with(mock.ANY)
 
         ext_net_bridge = self.conf.external_network_bridge
         ns_name = self.fip_ns.get_name()

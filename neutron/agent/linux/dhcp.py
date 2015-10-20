@@ -228,7 +228,7 @@ class DhcpLocalProcess(DhcpBase):
             LOG.warning(_LW('Failed trying to delete interface: %s'),
                         self.interface_name)
 
-        if self.conf.dhcp_delete_namespaces and self.network.namespace:
+        if self.network.namespace:
             ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
             try:
                 ns_ip.netns.delete(self.network.namespace)

@@ -85,11 +85,6 @@ OPTS = [
                       'source.')),
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
-    cfg.BoolOpt('router_delete_namespaces', default=True,
-                help=_("Delete namespace after removing a router."
-                       "This option is deprecated and "
-                       "will be removed in a future release."),
-                deprecated_for_removal=True),
     cfg.StrOpt('metadata_access_mark',
                default='0x1',
                help=_('Iptables mangle mark used to mark metadata valid '

@@ -76,12 +76,11 @@ class Namespace(object):
             ip_wrapper.netns.execute(cmd)
 
     def delete(self):
-        if self.agent_conf.router_delete_namespaces:
-            try:
-                self.ip_wrapper_root.netns.delete(self.name)
-            except RuntimeError:
-                msg = _LE('Failed trying to delete namespace: %s')
-                LOG.exception(msg, self.name)
+        try:
+            self.ip_wrapper_root.netns.delete(self.name)
+        except RuntimeError:
+            msg = _LE('Failed trying to delete namespace: %s')
+            LOG.exception(msg, self.name)
 
 
 class RouterNamespace(Namespace):

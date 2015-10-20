@@ -55,11 +55,6 @@ DNSMASQ_OPTS = [
                 help=_('Comma-separated list of the DNS servers which will be '
                        'used as forwarders.'),
                 deprecated_name='dnsmasq_dns_server'),
-    cfg.BoolOpt('dhcp_delete_namespaces', default=True,
-                help=_("Delete namespace after removing a dhcp server."
-                       "This option is deprecated and "
-                       "will be removed in a future release."),
-                deprecated_for_removal=True),
     cfg.StrOpt('dnsmasq_base_log_dir',
                help=_("Base log dir for dnsmasq logging. "
                       "The log contains DHCP and DNS log information and "
