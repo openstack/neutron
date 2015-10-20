@@ -130,7 +130,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                     self.fmt, net['network']['id'], **kwargs)
                 res = self.deserialize(self.fmt, res)
                 port_id = res['port']['id']
-                if device_owner == const.DEVICE_OWNER_ROUTER_INTF:
+                if device_owner in const.ROUTER_INTERFACE_OWNERS:
                     data = {'port': {'fixed_ips': []}}
                     req = self.new_update_request('ports', data, port_id)
                     res = self.deserialize(self.fmt,
@@ -144,6 +144,15 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             '2001:0db8::/64',
             6,
             '2001:0db8::1')
+        self.assertTrue(self.notifier.security_groups_provider_updated.called)
+
+    def test_notify_security_group_dvr_ipv6_gateway_port_added(self):
+        self._test_security_group_port(
+            const.DEVICE_OWNER_DVR_INTERFACE,
+            '2001:0db8::1',
+            '2001:0db8::/64',
+            6,
+            '2001:0db8::2')
         self.assertTrue(self.notifier.security_groups_provider_updated.called)
 
     def test_notify_security_group_ipv6_normal_port_added(self):
