@@ -85,7 +85,13 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         self.max_rate_mock.assert_called_once_with(
             self.ASSIGNED_MAC, self.PCI_SLOT, self.rule.max_kbps)
 
-    def test_delete_rules(self):
+    def test_delete_rules_on_assigned_vf(self):
+        self.qos_driver.delete(self.port, self.qos_policy)
+        self.max_rate_mock.assert_called_once_with(
+            self.ASSIGNED_MAC, self.PCI_SLOT, 0)
+
+    def test_delete_rules_on_released_vf(self):
+        del self.port['device_owner']
         self.qos_driver.delete(self.port, self.qos_policy)
         self.clear_max_rate_mock.assert_called_once_with(self.PCI_SLOT)
 
