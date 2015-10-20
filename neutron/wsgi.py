@@ -28,7 +28,6 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from oslo_service import _options
 from oslo_service import service as common_service
 from oslo_service import sslutils
 from oslo_service import systemd
@@ -60,9 +59,7 @@ socket_opts = [
 
 CONF = cfg.CONF
 CONF.register_opts(socket_opts)
-# TODO(eezhova): Replace it with wsgi.register_opts(CONF) when oslo.service
-# 0.10.0 releases.
-CONF.register_opts(_options.wsgi_opts)
+wsgi.register_opts(CONF)
 
 LOG = logging.getLogger(__name__)
 

@@ -25,7 +25,6 @@ from oslo_config import cfg
 from oslo_db import options as db_options
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_service import _options
 from oslo_service import wsgi
 
 from neutron.api.v2 import attributes
@@ -151,9 +150,7 @@ core_cli_opts = [
 # Register the configuration options
 cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_cli_opts(core_cli_opts)
-# TODO(eezhova): Replace it with wsgi.register_opts(CONF) when oslo.service
-# 0.10.0 releases.
-cfg.CONF.register_opts(_options.wsgi_opts)
+wsgi.register_opts(cfg.CONF)
 
 # Ensure that the control exchange is set correctly
 oslo_messaging.set_transport_defaults(control_exchange='neutron')
