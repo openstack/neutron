@@ -29,7 +29,7 @@ Policies
    blueprints
    bugs
    contributor-onboarding
-   core-reviewers
+   neutron-teams
    gate-failure-triage
    code-reviews
    thirdparty-ci
