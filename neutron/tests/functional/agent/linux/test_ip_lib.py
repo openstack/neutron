@@ -86,12 +86,6 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
 
 
 class IpLibTestCase(IpLibTestFramework):
-    def test_namespace_exists(self):
-        namespace = self.useFixture(net_helpers.NamespaceFixture())
-        self.assertTrue(namespace.ip_wrapper.netns.exists(namespace.name))
-        namespace.destroy()
-        self.assertFalse(namespace.ip_wrapper.netns.exists(namespace.name))
-
     def test_device_exists(self):
         attr = self.generate_device_details()
 
