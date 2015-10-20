@@ -151,8 +151,6 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-plumgrid_          |          core         |
 +-------------------------------+-----------------------+
-| networking-portforwarding_    |          l3           |
-+-------------------------------+-----------------------+
 | neutron-powervm_              |          ml2          |
 +-------------------------------+-----------------------+
 | networking-sfc_               |  service composition  |
@@ -407,14 +405,6 @@ PowerVM
 * Git: https://git.openstack.org/cgit/openstack/networking-powervm
 * Launchpad: https://launchpad.net/neutron-powervm
 * PyPI: https://pypi.python.org/pypi/neutron-powervm
-
-.. _networking-portforwarding:
-
-PortForwarding
-++++++++++++++
-
-* Git: https://git.openstack.org/cgit/stackforge/networking-portforwarding
-* Launchpad: https://launchpad.net/networking-portforwarding
 
 .. _networking-sfc:
 
