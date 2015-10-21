@@ -80,7 +80,6 @@ class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
         cfg.CONF.set_override('supported_pci_vendor_devs',
                               DEFAULT_PCI_INFO,
                               'ml2_sriov')
-        cfg.CONF.set_override('agent_required', True, 'ml2_sriov')
         super(SriovNicSwitchMechanismBaseTestCase, self).setUp()
         self.driver = mech_driver.SriovNicSwitchMechanismDriver()
         self.driver.initialize()
@@ -224,18 +223,6 @@ class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
         segment = {api.NETWORK_TYPE: 'foo'}
         with testtools.ExpectedException(exc.SriovUnsupportedNetworkType):
             self.driver._get_vif_details(segment)
-
-    def test_get_vif_details_without_agent(self):
-        cfg.CONF.set_override('agent_required', False, 'ml2_sriov')
-        self.driver = mech_driver.SriovNicSwitchMechanismDriver()
-        self.driver.initialize()
-        context = TestFakePortContext(self.AGENT_TYPE,
-                                      self.AGENTS,
-                                      self.VLAN_SEGMENTS,
-                                      portbindings.VNIC_DIRECT)
-
-        self.driver.bind_port(context)
-        self.assertEqual(constants.PORT_STATUS_ACTIVE, context._bound_state)
 
     def test_get_vif_details_with_agent(self):
         context = TestFakePortContext(self.AGENT_TYPE,

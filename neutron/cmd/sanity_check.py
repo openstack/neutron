@@ -241,6 +241,7 @@ def enable_tests_from_config():
     run all necessary tests, just by passing in the appropriate configs.
     """
 
+    cfg.CONF.set_override('vf_management', True)
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_vxlan', True)
     if 'geneve' in cfg.CONF.AGENT.tunnel_types:
@@ -260,8 +261,6 @@ def enable_tests_from_config():
     if cfg.CONF.AGENT.prevent_arp_spoofing:
         cfg.CONF.set_override('arp_header_match', True)
         cfg.CONF.set_override('icmpv6_header_match', True)
-    if cfg.CONF.ml2_sriov.agent_required:
-        cfg.CONF.set_override('vf_management', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
         cfg.CONF.set_override('read_netns', True)
     if cfg.CONF.dhcp_driver == 'neutron.agent.linux.dhcp.Dnsmasq':

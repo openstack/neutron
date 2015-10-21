@@ -38,13 +38,6 @@ sriov_opts = [
                       "vendor_id:product_id according to the PCI ID "
                       "Repository. Default enables support for Intel "
                       "and Mellanox SR-IOV capable NICs")),
-    cfg.BoolOpt('agent_required',
-                default=True,
-                help=_("SRIOV neutron agent is required for port binding. "
-                       'DEPRECATED: This option is deprecated in the Liberty '
-                       'release and will be removed in the Mitaka release. '
-                       'From Mitaka the agent will always be required.'),
-                deprecated_for_removal=True),
 ]
 
 cfg.CONF.register_opts(sriov_opts, "ml2_sriov")
@@ -61,9 +54,6 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
     L2 agent is not essential for port binding; port binding is handled by
     VIF Driver via libvirt domain XML.
     L2 Agent presents in  order to manage port update events.
-    If vendor NIC does not support updates, setting agent_required = False
-    will allow to use Mechanism Driver without L2 agent.
-
     """
 
     supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
@@ -93,7 +83,6 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
         try:
             self.pci_vendor_info = cfg.CONF.ml2_sriov.supported_pci_vendor_devs
             self._check_pci_vendor_config(self.pci_vendor_info)
-            self.agent_required = cfg.CONF.ml2_sriov.agent_required
         except ValueError:
             LOG.exception(_LE("Failed to parse supported PCI vendor devices"))
             raise cfg.Error(_("Parsing supported pci_vendor_devs failed"))
@@ -114,27 +103,22 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             LOG.debug("Refusing to bind due to unsupported pci_vendor device")
             return
 
-        if self.agent_required:
-            for agent in context.host_agents(self.agent_type):
-                LOG.debug("Checking agent: %s", agent)
-                if agent['alive']:
-                    if self.try_to_bind(context, agent):
-                        return
-                else:
-                    LOG.warning(_LW("Attempting to bind with dead agent: %s"),
-                                agent)
-        else:
-            self.try_to_bind(context)
+        for agent in context.host_agents(self.agent_type):
+            LOG.debug("Checking agent: %s", agent)
+            if agent['alive']:
+                if self.try_to_bind(context, agent):
+                    return
+            else:
+                LOG.warning(_LW("Attempting to bind with dead agent: %s"),
+                            agent)
 
-    def try_to_bind(self, context, agent=None):
+    def try_to_bind(self, context, agent):
         for segment in context.segments_to_bind:
             if self.check_segment(segment, agent):
-                port_status = (constants.PORT_STATUS_ACTIVE if agent is None
-                    else constants.PORT_STATUS_DOWN)
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
                                     self._get_vif_details(segment),
-                                    port_status)
+                                    constants.PORT_STATUS_DOWN)
                 LOG.debug("Bound using segment: %s", segment)
                 return True
         return False
