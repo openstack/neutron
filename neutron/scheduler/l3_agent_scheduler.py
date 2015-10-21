@@ -27,6 +27,7 @@ from sqlalchemy import sql
 from neutron._i18n import _LE, _LW
 from neutron.common import constants
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_hamode_db
@@ -292,10 +293,14 @@ class L3Scheduler(object):
                                 tenant_id, agent):
         """Creates and binds a new HA port for this agent."""
         ha_network = plugin.get_ha_network(context, tenant_id)
-        port_binding = plugin.add_ha_port(context.elevated(), router_id,
+        try:
+            port_binding = plugin.add_ha_port(context.elevated(), router_id,
                                           ha_network.network.id, tenant_id)
-        with context.session.begin(subtransactions=True):
-            port_binding.l3_agent_id = agent['id']
+            with db_api.autonested_transaction(context.session):
+                port_binding.l3_agent_id = agent['id']
+        except db_exc.DBDuplicateEntry:
+            LOG.debug("Router %(router)s already scheduled for agent "
+                      "%(agent)s", {'router': router_id, 'agent': agent['id']})
         self.bind_router(context, router_id, agent)
 
     def get_ha_routers_l3_agents_counts(self, context, plugin, filters=None):
@@ -333,13 +338,18 @@ class L3Scheduler(object):
         port_bindings = plugin.get_ha_router_port_bindings(context,
                                                            [router_id])
         for port_binding, agent in zip(port_bindings, chosen_agents):
-            with context.session.begin(subtransactions=True):
-                port_binding.l3_agent_id = agent.id
-                self.bind_router(context, router_id, agent)
-
-            LOG.debug('HA Router %(router_id)s is scheduled to L3 agent '
-                      '%(agent_id)s)',
-                      {'router_id': router_id, 'agent_id': agent.id})
+            try:
+                with db_api.autonested_transaction(context.session):
+                    port_binding.l3_agent_id = agent.id
+                    self.bind_router(context, router_id, agent)
+            except db_exc.DBDuplicateEntry:
+                LOG.debug("Router %(router)s already scheduled for agent "
+                          "%(agent)s", {'router': router_id,
+                                        'agent': agent.id})
+            else:
+                LOG.debug('HA Router %(router_id)s is scheduled to L3 agent '
+                          '%(agent_id)s)',
+                          {'router_id': router_id, 'agent_id': agent.id})
 
     def _bind_ha_router(self, plugin, context, router_id, candidates):
         """Bind a HA router to agents based on a specific policy."""

@@ -87,7 +87,12 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
     """
 
     __tablename__ = 'ha_router_agent_port_bindings'
-
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'router_id', 'l3_agent_id',
+            name='uniq_ha_router_agent_port_bindings0port_id0l3_agent_id'),
+        model_base.BASEV2.__table_args__
+    )
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
                                                      ondelete='CASCADE'),
                         nullable=False, primary_key=True)
