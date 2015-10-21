@@ -963,10 +963,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         try:
             devices_details_list = self.plugin_rpc.get_devices_details_list(
                 self.context, devices, self.agent_id)
-        except Exception as e:
-            LOG.debug("Unable to get port details for "
-                      "%(devices)s: %(e)s",
-                      {'devices': devices, 'e': e})
+        except Exception:
+            LOG.exception(_LE("Unable to get port details for %s"), devices)
             # resync is needed
             return True
 
@@ -1023,9 +1021,9 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                                                              device,
                                                              self.agent_id,
                                                              cfg.CONF.host)
-            except Exception as e:
-                LOG.debug("port_removed failed for %(device)s: %(e)s",
-                          {'device': device, 'e': e})
+            except Exception:
+                LOG.exception(_LE("Error occurred while removing port %s"),
+                              device)
                 resync = True
             if details and details['exists']:
                 LOG.info(_LI("Port %s updated."), device)
