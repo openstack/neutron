@@ -464,7 +464,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             self, context, router_id):
         """Return a list of [(agent, ha_state), ...]."""
         bindings = self.get_ha_router_port_bindings(context, [router_id])
-        return [(binding.agent, binding.state) for binding in bindings]
+        return [(binding.agent, binding.state) for binding in bindings
+                if binding.agent is not None]
 
     def get_active_host_for_ha_router(self, context, router_id):
         bindings = self.get_l3_bindings_hosting_router_with_ha_states(
