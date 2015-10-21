@@ -668,16 +668,10 @@ class LinuxBridgeManager(object):
         return (agent_ip in entries and mac in entries)
 
     def add_fdb_ip_entry(self, mac, ip, interface):
-        utils.execute(['ip', 'neigh', 'replace', ip, 'lladdr', mac,
-                       'dev', interface, 'nud', 'permanent'],
-                      run_as_root=True,
-                      check_exit_code=False)
+        ip_lib.IPDevice(interface).neigh.add(ip, mac)
 
     def remove_fdb_ip_entry(self, mac, ip, interface):
-        utils.execute(['ip', 'neigh', 'del', ip, 'lladdr', mac,
-                       'dev', interface],
-                      run_as_root=True,
-                      check_exit_code=False)
+        ip_lib.IPDevice(interface).neigh.delete(ip, mac)
 
     def add_fdb_bridge_entry(self, mac, agent_ip, interface, operation="add"):
         utils.execute(['bridge', 'fdb', operation, mac, 'dev', interface,

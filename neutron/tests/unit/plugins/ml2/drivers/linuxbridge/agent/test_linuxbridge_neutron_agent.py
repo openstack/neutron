@@ -1145,7 +1145,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'segment_id': 1}}
 
         with mock.patch.object(utils, 'execute',
-                               return_value='') as execute_fn:
+                               return_value='') as execute_fn, \
+                mock.patch.object(ip_lib.IpNeighCommand, 'add',
+                                  return_value='') as add_fn:
             self.lb_rpc.fdb_add(None, fdb_entries)
 
             expected = [
@@ -1156,16 +1158,13 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
-                mock.call(['ip', 'neigh', 'replace', 'port_ip', 'lladdr',
-                           'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
-                          run_as_root=True,
-                          check_exit_code=False),
                 mock.call(['bridge', 'fdb', 'replace', 'port_mac', 'dev',
                            'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
             ]
             execute_fn.assert_has_calls(expected)
+            add_fn.assert_called_with('port_ip', 'port_mac')
 
     def test_fdb_ignore(self):
         fdb_entries = {'net_id':
@@ -1205,7 +1204,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                         'segment_id': 1}}
 
         with mock.patch.object(utils, 'execute',
-                               return_value='') as execute_fn:
+                               return_value='') as execute_fn, \
+                mock.patch.object(ip_lib.IpNeighCommand, 'delete',
+                                  return_value='') as del_fn:
             self.lb_rpc.fdb_remove(None, fdb_entries)
 
             expected = [
@@ -1214,16 +1215,13 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
-                mock.call(['ip', 'neigh', 'del', 'port_ip', 'lladdr',
-                           'port_mac', 'dev', 'vxlan-1'],
-                          run_as_root=True,
-                          check_exit_code=False),
                 mock.call(['bridge', 'fdb', 'del', 'port_mac',
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
             ]
             execute_fn.assert_has_calls(expected)
+            del_fn.assert_called_with('port_ip', 'port_mac')
 
     def test_fdb_update_chg_ip(self):
         fdb_entries = {'chg_ip':
@@ -1232,21 +1230,14 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                          {'before': [['port_mac', 'port_ip_1']],
                           'after': [['port_mac', 'port_ip_2']]}}}}
 
-        with mock.patch.object(utils, 'execute',
-                               return_value='') as execute_fn:
+        with mock.patch.object(ip_lib.IpNeighCommand, 'add',
+                               return_value='') as add_fn, \
+                mock.patch.object(ip_lib.IpNeighCommand, 'delete',
+                                  return_value='') as del_fn:
             self.lb_rpc.fdb_update(None, fdb_entries)
 
-            expected = [
-                mock.call(['ip', 'neigh', 'replace', 'port_ip_2', 'lladdr',
-                           'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
-                          run_as_root=True,
-                          check_exit_code=False),
-                mock.call(['ip', 'neigh', 'del', 'port_ip_1', 'lladdr',
-                           'port_mac', 'dev', 'vxlan-1'],
-                          run_as_root=True,
-                          check_exit_code=False)
-            ]
-            execute_fn.assert_has_calls(expected)
+            del_fn.assert_called_with('port_ip_1', 'port_mac')
+            add_fn.assert_called_with('port_ip_2', 'port_mac')
 
     def test_fdb_update_chg_ip_empty_lists(self):
         fdb_entries = {'chg_ip': {'net_id': {'agent_ip': {}}}}
