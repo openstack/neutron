@@ -5,7 +5,7 @@ include LICENSE
 include neutron/db/migration/README
 include neutron/db/migration/alembic.ini
 include neutron/db/migration/alembic_migrations/script.py.mako
-include neutron/db/migration/alembic_migrations/versions/README
+recursive-include neutron/db/migration/alembic_migrations/versions *
 recursive-include neutron/locale *
 
 exclude .gitignore
