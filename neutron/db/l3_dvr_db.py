@@ -32,7 +32,7 @@ from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron.i18n import _LI
+from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
@@ -687,22 +687,43 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                           initial_status=l3_const.FLOATINGIP_STATUS_ACTIVE):
         floating_ip = self._create_floatingip(
             context, floatingip, initial_status)
-        router_id = floating_ip['router_id']
-        if not router_id:
-            return floating_ip
-
-        router = self._get_router(context, router_id)
-        # we need to notify agents only in case Floating IP is associated
-        fixed_port_id = floating_ip['port_id']
-        if fixed_port_id:
-            if is_distributed_router(router):
-                host = self._get_vm_port_hostid(context, fixed_port_id)
-                self.l3_rpc_notifier.routers_updated_on_host(
-                    context, [router_id], host)
-            else:
-                self.notify_router_updated(context, router_id,
-                                           'create_floatingip')
+        self._notify_floating_ip_change(context, floating_ip)
         return floating_ip
+
+    def _notify_floating_ip_change(self, context, floating_ip):
+        router_id = floating_ip['router_id']
+        fixed_port_id = floating_ip['port_id']
+        # we need to notify agents only in case Floating IP is associated
+        if not router_id or not fixed_port_id:
+            return
+
+        try:
+            router = self._get_router(context, router_id)
+        except l3.RouterNotFound:
+            # TODO(obondarev): bug 1507602 was filed to investigate race
+            # condition here. For now we preserve original behavior and do
+            # broad notification
+            LOG.warning(_LW("Router %s was not found. "
+                            "Doing broad notification."),
+                        router_id)
+            self.notify_router_updated(context, router_id)
+            return
+
+        if is_distributed_router(router):
+            host = self._get_vm_port_hostid(context, fixed_port_id)
+            self.l3_rpc_notifier.routers_updated_on_host(
+                context, [router_id], host)
+        else:
+            self.notify_router_updated(context, router_id)
+
+    def update_floatingip(self, context, id, floatingip):
+        old_floatingip, floatingip = self._update_floatingip(
+            context, id, floatingip)
+        self._notify_floating_ip_change(context, old_floatingip)
+        if (floatingip['router_id'] != old_floatingip['router_id'] or
+                floatingip['port_id'] != old_floatingip['port_id']):
+            self._notify_floating_ip_change(context, floatingip)
+        return floatingip
 
 
 def is_distributed_router(router):
