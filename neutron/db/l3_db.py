@@ -1190,27 +1190,22 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                       for rp in qry]
         return interfaces
 
-    def _populate_subnets_for_ports(self, context, ports):
-        """Populate ports with subnets.
+    @staticmethod
+    def _each_port_having_fixed_ips(ports):
+        for port in ports or []:
+            fixed_ips = port.get('fixed_ips', [])
+            if not fixed_ips:
+                # Skip ports without IPs, which can occur if a subnet
+                # attached to a router is deleted
+                LOG.info(_LI("Skipping port %s as no IP is configure on "
+                             "it"),
+                         port['id'])
+                continue
+            yield port
 
-        These ports already have fixed_ips populated.
-        """
-        def each_port_having_fixed_ips():
-            for port in ports or []:
-                fixed_ips = port.get('fixed_ips', [])
-                if not fixed_ips:
-                    # Skip ports without IPs, which can occur if a subnet
-                    # attached to a router is deleted
-                    LOG.info(_LI("Skipping port %s as no IP is configure on "
-                                 "it"),
-                             port['id'])
-                    continue
-                yield port
-
-        network_ids = set(p['network_id']
-                          for p in each_port_having_fixed_ips())
+    def _get_subnets_by_network_list(self, context, network_ids):
         if not network_ids:
-            return
+            return {}
 
         filters = {'network_id': [id for id in network_ids]}
         fields = ['id', 'cidr', 'gateway_ip',
@@ -1219,8 +1214,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         subnets_by_network = dict((id, []) for id in network_ids)
         for subnet in self._core_plugin.get_subnets(context, filters, fields):
             subnets_by_network[subnet['network_id']].append(subnet)
+        return subnets_by_network
 
-        for port in each_port_having_fixed_ips():
+    def _populate_subnets_for_ports(self, context, ports):
+        """Populate ports with subnets.
+
+        These ports already have fixed_ips populated.
+        """
+        network_ids = [p['network_id']
+                       for p in self._each_port_having_fixed_ips(ports)]
+
+        subnets_by_network = self._get_subnets_by_network_list(
+            context, network_ids)
+
+        for port in self._each_port_having_fixed_ips(ports):
 
             port['subnets'] = []
             port['extra_subnets'] = []
