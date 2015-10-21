@@ -242,16 +242,13 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_subnet = lla.LinkLocalAddressPair('15.1.2.3/32')
         _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
         fip_ns = ri.fip_ns
-        with mock.patch.object(self.plugin_api,
-                               'delete_agent_gateway_port') as del_fip_gw:
-            ri.floating_ip_removed_dist(fip_cidr)
-            self.assertTrue(del_fip_gw.called)
-            self.assertTrue(fip_ns.destroyed)
-            mIPWrapper().del_veth.assert_called_once_with(
-                fip_ns.get_int_device_name(router['id']))
-            mIPDevice().route.delete_gateway.assert_called_once_with(
-                str(fip_to_rtr.ip), table=16)
-            fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
+        ri.floating_ip_removed_dist(fip_cidr)
+        self.assertTrue(fip_ns.destroyed)
+        mIPWrapper().del_veth.assert_called_once_with(
+            fip_ns.get_int_device_name(router['id']))
+        mIPDevice().route.delete_gateway.assert_called_once_with(
+            str(fip_to_rtr.ip), table=16)
+        fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
 
     def _test_add_floating_ip(self, ri, fip, is_failure):
         ri._add_fip_addr_to_device = mock.Mock(return_value=is_failure)
