@@ -127,8 +127,6 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-hyperv_            |          ml2          |
 +-------------------------------+-----------------------+
-| networking-ibm_               |         ml2,l3        |
-+-------------------------------+-----------------------+
 | networking-l2gw_              |         l2            |
 +-------------------------------+-----------------------+
 | networking-midonet_           |        core,lb        |
@@ -286,14 +284,6 @@ Group Based Policy
 * Git: https://git.openstack.org/cgit/openstack/group-based-policy
 * Launchpad: https://launchpad.net/group-based-policy
 * PyPi: https://pypi.python.org/pypi/group-based-policy
-
-.. _networking-ibm:
-
-IBM SDNVE
-+++++++++
-
-* Git: https://git.openstack.org/cgit/stackforge/networking-ibm
-* Launchpad: https://launchpad.net/networking-ibm
 
 .. _kuryr:
 
