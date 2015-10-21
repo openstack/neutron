@@ -456,14 +456,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 continue
             agent_conf = self.get_configuration_dict(l3_agent)
             router_id = agent_conf.get('router_id', None)
-            use_namespaces = agent_conf.get('use_namespaces', True)
             handle_internal_only_routers = agent_conf.get(
                 'handle_internal_only_routers', True)
             gateway_external_network_id = agent_conf.get(
                 'gateway_external_network_id', None)
             agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
                                         constants.L3_AGENT_MODE_LEGACY)
-            if not use_namespaces and router_id != sync_router['id']:
+            if router_id and router_id != sync_router['id']:
                 continue
             ex_net_id = (sync_router['external_gateway_info'] or {}).get(
                 'network_id')

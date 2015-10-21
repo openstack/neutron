@@ -68,12 +68,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.register_opts(l3_config.OPTS)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
-        agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
         agent_config.register_availability_zone_opts_helper(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.register_opts(external_process.OPTS)
-        self.conf.set_override('router_id', 'fake_id')
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
@@ -1776,15 +1774,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._configure_metadata_proxy(enableflag=False)
 
     def test_router_id_specified_in_conf(self):
-        self.conf.set_override('use_namespaces', False)
-        self.conf.set_override('router_id', '')
-        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                          HOSTNAME, self.conf)
-
         self.conf.set_override('router_id', '1234')
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.assertEqual('1234', agent.conf.router_id)
-        self.assertFalse(agent.namespaces_manager._clean_stale)
+        self._configure_metadata_proxy()
 
     def test_process_routers_update_rpc_timeout_on_get_routers(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

@@ -51,7 +51,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.conf.register_opts(l3_config.OPTS)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
-        agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.register_opts(external_process.OPTS)

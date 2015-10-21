@@ -54,13 +54,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         return [i for i in floating_ips if i['host'] == self.host]
 
     def _handle_fip_nat_rules(self, interface_name):
-        """Configures NAT rules for Floating IPs for DVR.
-
-           Remove all the rules. This is safe because if
-           use_namespaces is set as False then the agent can
-           only configure one router, otherwise each router's
-           NAT rules will be in their own namespace.
-        """
+        """Configures NAT rules for Floating IPs for DVR."""
         self.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         self.iptables_manager.ipv4['nat'].empty_chain('snat')
 

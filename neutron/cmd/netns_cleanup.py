@@ -69,7 +69,6 @@ def setup_conf():
     conf = cfg.CONF
     conf.register_cli_opts(cli_opts)
     agent_config.register_interface_driver_opts_helper(conf)
-    agent_config.register_use_namespaces_opts_helper(conf)
     conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
     conf.register_opts(dhcp_config.DHCP_OPTS)
     conf.register_opts(dhcp_config.DNSMASQ_OPTS)
@@ -90,7 +89,7 @@ def kill_dhcp(conf, namespace):
         conf.dhcp_driver,
         conf=conf,
         process_monitor=_get_dhcp_process_monitor(conf),
-        network=dhcp.NetModel(conf.use_namespaces, {'id': network_id}),
+        network=dhcp.NetModel({'id': network_id}),
         plugin=FakeDhcpPlugin())
 
     if dhcp_driver.active:

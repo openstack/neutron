@@ -29,8 +29,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         if not router:
             router = mock.MagicMock()
         self.agent_conf = mock.Mock()
-        # NOTE The use_namespaces config will soon be deprecated
-        self.agent_conf.use_namespaces = True
         self.router_id = _uuid()
         return ha_router.HaRouter(mock.sentinel.enqueue_state,
                                   self.router_id,

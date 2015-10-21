@@ -29,7 +29,6 @@ class TestRouterInfo(base.BaseTestCase):
         super(TestRouterInfo, self).setUp()
 
         conf = agent_config.setup_conf()
-        conf.use_namespaces = True
 
         self.ip_cls_p = mock.patch('neutron.agent.linux.ip_lib.IPWrapper')
         ip_cls = self.ip_cls_p.start()
@@ -129,8 +128,6 @@ class BasicRouterTestCaseFramework(base.BaseTestCase):
         if not router:
             router = mock.MagicMock()
         self.agent_conf = mock.Mock()
-        # NOTE The use_namespaces config will soon be deprecated
-        self.agent_conf.use_namespaces = True
         self.router_id = _uuid()
         return router_info.RouterInfo(self.router_id,
                                       router,

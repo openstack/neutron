@@ -36,7 +36,6 @@ def register_opts(conf):
     conf.register_opts(metadata_config.SHARED_OPTS)
     conf.register_opts(ha.OPTS)
     config.register_interface_driver_opts_helper(conf)
-    config.register_use_namespaces_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)

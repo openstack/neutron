@@ -93,8 +93,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
             router['id']
             for router in routers
             if router['tenant_id'] == tenant_id]
-        local_ns_list = (root_ip.get_namespaces()
-                         if self.conf.use_namespaces else [])
+        local_ns_list = root_ip.get_namespaces()
 
         router_info_list = []
         # Pick up namespaces for Tenant Routers
@@ -103,11 +102,8 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
             # the router - but this is not yet populated in router_info
             if rid not in self.router_info:
                 continue
-            if self.conf.use_namespaces:
-                router_ns = self.router_info[rid].ns_name
-                if router_ns in local_ns_list:
-                    router_info_list.append(self.router_info[rid])
-            else:
+            router_ns = self.router_info[rid].ns_name
+            if router_ns in local_ns_list:
                 router_info_list.append(self.router_info[rid])
         return router_info_list
 

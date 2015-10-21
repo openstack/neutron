@@ -48,7 +48,6 @@ def setup_conf():
     conf.register_opts(l3_config.OPTS)
     conf.register_opts(interface.OPTS)
     agent_config.register_interface_driver_opts_helper(conf)
-    agent_config.register_use_namespaces_opts_helper(conf)
     return conf
 
 
