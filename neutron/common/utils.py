@@ -34,6 +34,7 @@ import sys
 import tempfile
 import uuid
 
+import debtcollector
 from eventlet.green import subprocess
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -111,6 +112,7 @@ class cache_method_results(object):
         return functools.partial(self.__call__, obj)
 
 
+@debtcollector.removals.remove(message="Unused in Liberty release.")
 def read_cached_file(filename, cache_info, reload_func=None):
     """Read from a file if it has been modified.
 
@@ -132,6 +134,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
     return cache_info['data']
 
 
+@debtcollector.removals.remove(message="Unused in Liberty release.")
 def find_config_file(options, config_file):
     """Return the first config file found.
 
@@ -379,6 +382,7 @@ def is_dvr_serviced(device_owner):
             device_owner in dvr_serviced_device_owners)
 
 
+@debtcollector.removals.remove(message="Unused in Liberty release.")
 def get_keystone_url(conf):
     if conf.auth_uri:
         auth_uri = conf.auth_uri.rstrip('/')
