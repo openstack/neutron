@@ -4,7 +4,7 @@ Blueprints and Specs
 The Neutron team uses the `neutron-specs
 <http://git.openstack.org/cgit/openstack/neutron-specs>`_ repository for its
 specification reviews. Detailed information can be found `here
-<https://wiki.openstack.org/wiki/Blueprints#Neutron>`_. Please also find
+<https://wiki.openstack.org/wiki/Blueprints>`_. Please also find
 additional information in the reviews.rst file.
 
 The Neutron team does not enforce deadlines for specs. These can be submitted
@@ -18,6 +18,17 @@ Please note that we use a `template
 for spec submissions. It is not required to fill out all sections in the
 template. Review of the spec may require filling in information left out by
 the submitter.
+
+Sub-Projects and Specs
+----------------------
+
+The `neutron-specs <http://git.openstack.org/cgit/openstack/neutron-specs>`_
+repository is only meant for specs from Neutron itself, and the advanced
+services repositories as well. This includes FWaaS, LBaaS, and VPNaaS. Other
+sub-projects are encouraged to fold their specs into their own devref code
+in their sub-project gerrit repositories. Please see additional commments
+`here <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#neutron-specs-core-reviewer-team>`_
+for reviewer requirements of the neutron-specs repository.
 
 Neutron Request for Feature Enhancements
 ----------------------------------------
