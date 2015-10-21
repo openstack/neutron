@@ -77,9 +77,9 @@ class TestParseTunnelRangesMixin(object):
     TUN_MIN = None
     TUN_MAX = None
     TYPE = None
-    _err_prefix = "Invalid network Tunnel range: '%d:%d' - "
-    _err_suffix = "%s is not a valid %s identifier"
-    _err_range = "End of tunnel range is less than start of tunnel range"
+    _err_prefix = "Invalid network tunnel range: '%d:%d' - "
+    _err_suffix = "%s is not a valid %s identifier."
+    _err_range = "End of tunnel range is less than start of tunnel range."
 
     def _build_invalid_tunnel_range_msg(self, t_range_tuple, n):
         bad_id = t_range_tuple[n - 1]
@@ -137,11 +137,11 @@ class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
 
 class UtilTestParseVlanRanges(base.BaseTestCase):
     _err_prefix = "Invalid network VLAN range: '"
-    _err_too_few = "' - 'need more than 2 values to unpack'"
+    _err_too_few = "' - 'need more than 2 values to unpack'."
     _err_too_many_prefix = "' - 'too many values to unpack"
-    _err_not_int = "' - 'invalid literal for int() with base 10: '%s''"
-    _err_bad_vlan = "' - '%s is not a valid VLAN tag'"
-    _err_range = "' - 'End of VLAN range is less than start of VLAN range'"
+    _err_not_int = "' - 'invalid literal for int() with base 10: '%s''."
+    _err_bad_vlan = "' - '%s is not a valid VLAN tag'."
+    _err_range = "' - 'End of VLAN range is less than start of VLAN range'."
 
     def _range_too_few_err(self, nv_range):
         return self._err_prefix + nv_range + self._err_too_few
