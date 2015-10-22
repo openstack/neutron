@@ -142,6 +142,12 @@ def add_alembic_subparser(sub, cmd):
     return sub.add_parser(cmd, help=getattr(alembic_command, cmd).__doc__)
 
 
+def add_branch_options(parser):
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--expand', action='store_true')
+    group.add_argument('--contract', action='store_true')
+
+
 def _find_milestone_revisions(config, milestone, branch=None):
     """Return the revision(s) for a given milestone."""
     script = alembic_script.ScriptDirectory.from_config(config)
@@ -230,10 +236,17 @@ def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
 
 def do_revision(config, cmd):
     '''Generate new revision files, one per branch.'''
-    do_alembic_command(config, cmd,
-                       message=CONF.command.message,
-                       autogenerate=CONF.command.autogenerate,
-                       sql=CONF.command.sql)
+    kwargs = {
+        'message': CONF.command.message,
+        'autogenerate': CONF.command.autogenerate,
+        'sql': CONF.command.sql,
+    }
+    if CONF.command.expand:
+        kwargs['head'] = 'expand@head'
+    elif CONF.command.contract:
+        kwargs['head'] = 'contract@head'
+
+    do_alembic_command(config, cmd, **kwargs)
     update_head_file(config)
 
 
@@ -392,10 +405,7 @@ def add_command_parsers(subparsers):
                         default='',
                         help='Change MySQL storage engine of current '
                              'existing tables')
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--expand', action='store_true')
-    group.add_argument('--contract', action='store_true')
+    add_branch_options(parser)
 
     parser.set_defaults(func=do_upgrade)
 
@@ -412,6 +422,7 @@ def add_command_parsers(subparsers):
     parser.add_argument('-m', '--message')
     parser.add_argument('--autogenerate', action='store_true')
     parser.add_argument('--sql', action='store_true')
+    add_branch_options(parser)
     parser.set_defaults(func=do_revision)
 
 
