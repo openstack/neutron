@@ -585,8 +585,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         elif action == 'remove':
             self.device_exists.return_value = False
             ri._map_internal_interfaces = mock.Mock(return_value=sn_port)
+            ri.get_snat_port_for_internal_port = mock.Mock(
+                return_value=sn_port)
+            ri._delete_arp_cache_for_internal_port = mock.Mock()
             ri._snat_redirect_modify = mock.Mock()
             ri.internal_network_removed(port)
+            self.assertEqual(
+                1, ri._delete_arp_cache_for_internal_port.call_count)
             ri._snat_redirect_modify.assert_called_with(
                 sn_port, port,
                 ri.get_internal_device_name(port['id']),
@@ -994,7 +999,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Test basic case
         ports[0]['subnets'] = [{'id': subnet_id,
                                 'cidr': '1.2.3.0/24'}]
-        ri._set_subnet_arp_info(subnet_id)
+        with mock.patch.object(ri,
+                               '_process_arp_cache_for_internal_port') as parp:
+            ri._set_subnet_arp_info(subnet_id)
+        self.assertEqual(1, parp.call_count)
         self.mock_ip_dev.neigh.add.assert_called_once_with(
             '1.2.3.4', '00:11:22:33:44:55')
 
@@ -1040,6 +1048,48 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as f:
             ri._update_arp_entry(mock.ANY, mock.ANY, 'foo_subnet_id', 'add')
         self.assertFalse(f.call_count)
+
+    def _setup_test_for_arp_entry_cache(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        ri = dvr_router.DvrRouter(
+            agent, HOSTNAME, router['id'], router, **self.ri_kwargs)
+        subnet_id = _get_subnet_id(ri.router[l3_constants.INTERFACE_KEY][0])
+        return ri, subnet_id
+
+    def test__update_arp_entry_calls_arp_cache_with_no_device(self):
+        ri, subnet_id = self._setup_test_for_arp_entry_cache()
+        state = True
+        with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as rtrdev,\
+                mock.patch.object(l3_agent.ip_lib, 'device_exists',
+                                  return_value=False),\
+                mock.patch.object(ri, '_cache_arp_entry') as arp_cache:
+                state = ri._update_arp_entry(
+                    mock.ANY, mock.ANY, subnet_id, 'add')
+        self.assertFalse(state)
+        self.assertTrue(arp_cache.called)
+        arp_cache.assert_called_once_with(mock.ANY, mock.ANY,
+                                          subnet_id, 'add')
+        self.assertFalse(rtrdev.neigh.add.called)
+
+    def test__process_arp_cache_for_internal_port(self):
+        ri, subnet_id = self._setup_test_for_arp_entry_cache()
+        ri._cache_arp_entry('1.7.23.11', '00:11:22:33:44:55',
+                            subnet_id, 'add')
+        self.assertEqual(1, len(ri._pending_arp_set))
+        with mock.patch.object(ri, '_update_arp_entry') as update_arp:
+            update_arp.return_value = True
+        ri._process_arp_cache_for_internal_port(subnet_id)
+        self.assertEqual(0, len(ri._pending_arp_set))
+
+    def test__delete_arp_cache_for_internal_port(self):
+        ri, subnet_id = self._setup_test_for_arp_entry_cache()
+        ri._cache_arp_entry('1.7.23.11', '00:11:22:33:44:55',
+                            subnet_id, 'add')
+        self.assertEqual(1, len(ri._pending_arp_set))
+        ri._delete_arp_cache_for_internal_port(subnet_id)
+        self.assertEqual(0, len(ri._pending_arp_set))
 
     def test_del_arp_entry(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
