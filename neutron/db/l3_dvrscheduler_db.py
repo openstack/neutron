@@ -491,8 +491,14 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
 
     if new_port and original_port:
         original_device_owner = original_port.get('device_owner', '')
-        if (original_device_owner.startswith('compute') and
-            not new_port.get('device_owner')):
+        new_device_owner = new_port.get('device_owner', '')
+        is_port_no_longer_serviced = (
+            n_utils.is_dvr_serviced(original_device_owner) and
+            not n_utils.is_dvr_serviced(new_device_owner))
+        is_port_moved = (
+            original_port['binding:host_id'] and
+            original_port['binding:host_id'] != new_port['binding:host_id'])
+        if is_port_no_longer_serviced or is_port_moved:
             l3plugin = manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT)
             context = kwargs['context']
@@ -508,7 +514,8 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                 }
                 _notify_port_delete(
                     event, resource, trigger, **removed_router_args)
-            return
+            if not n_utils.is_dvr_serviced(new_device_owner):
+                return
 
     _notify_l3_agent_new_port(resource, event, trigger, **kwargs)
 

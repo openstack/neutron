@@ -456,10 +456,13 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.assertEqual(1, len(fixed_ips))
 
     def test_update_vm_port_host_router_update(self):
-        # register l3 agent in dvr mode in addition to existing dvr_snat agent
-        HOST = 'host1'
-        dvr_agent = helpers.register_l3_agent(
-            host=HOST, agent_mode=constants.L3_AGENT_MODE_DVR)
+        # register l3 agents in dvr mode in addition to existing dvr_snat agent
+        HOST1 = 'host1'
+        dvr_agent1 = helpers.register_l3_agent(
+            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+        HOST2 = 'host2'
+        dvr_agent2 = helpers.register_l3_agent(
+            host=HOST2, agent_mode=constants.L3_AGENT_MODE_DVR)
         router = self._create_router()
         with self.subnet() as subnet:
             self.l3_plugin.add_router_interface(
@@ -469,24 +472,48 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             # since there are no vm ports on HOST, at this point the router
             # should be scheduled to only dvr_snat agent
             agents = self.l3_plugin.list_l3_agents_hosting_router(
-                self.context, router['id'])
-            self.assertEqual(1, len(agents['agents']))
-            self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
+                self.context, router['id'])['agents']
+            self.assertEqual(1, len(agents))
+            self.assertEqual(self.l3_agent['id'], agents[0]['id'])
             with mock.patch.object(self.l3_plugin,
                                    '_l3_rpc_notifier') as l3_notifier,\
                     self.port(subnet=subnet,
                               device_owner=DEVICE_OWNER_COMPUTE) as port:
+                self.l3_plugin.agent_notifiers[
+                    constants.AGENT_TYPE_L3] = l3_notifier
                 self.core_plugin.update_port(
                     self.context, port['port']['id'],
-                    {'port': {'binding:host_id': HOST}})
+                    {'port': {'binding:host_id': HOST1}})
 
-                # now router should be scheduled to both agents
+                # now router should be scheduled to dvr_snat agent and
+                # dvr agent on host1
                 agents = self.l3_plugin.list_l3_agents_hosting_router(
-                    self.context, router['id'])
-                self.assertEqual(2, len(agents['agents']))
-                self.assertIn(dvr_agent['id'],
-                              [agent['id'] for agent in agents['agents']])
-                # and notification should only be sent to the agent on HOST
+                    self.context, router['id'])['agents']
+                self.assertEqual(2, len(agents))
+                self.assertIn(dvr_agent1['id'],
+                              [agent['id'] for agent in agents])
+                self.assertNotIn(dvr_agent2['id'],
+                                 [agent['id'] for agent in agents])
+                # and notification should only be sent to the agent on host1
                 l3_notifier.routers_updated_on_host.assert_called_once_with(
-                    self.context, {router['id']}, HOST)
+                    self.context, {router['id']}, HOST1)
                 self.assertFalse(l3_notifier.routers_updated.called)
+
+                # updating port's host (instance migration)
+                l3_notifier.reset_mock()
+                self.core_plugin.update_port(
+                    self.context, port['port']['id'],
+                    {'port': {'binding:host_id': HOST2}})
+                # now router should be scheduled to dvr_snat agent and
+                # dvr agent on host2
+                agents = self.l3_plugin.list_l3_agents_hosting_router(
+                    self.context, router['id'])['agents']
+                self.assertEqual(2, len(agents))
+                self.assertIn(dvr_agent2['id'],
+                              [agent['id'] for agent in agents])
+                self.assertNotIn(dvr_agent1['id'],
+                                 [agent['id'] for agent in agents])
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST2)
+                l3_notifier.router_removed_from_agent.assert_called_once_with(
+                    self.context, router['id'], HOST1)
