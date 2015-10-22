@@ -100,8 +100,16 @@ REPO_NEC_TABLES = [
     'packetfilters',
 ]
 
+# BigSwitch models are in openstack/networking-bigswitch
+REPO_BIGSWITCH_TABLES = [
+    'consistencyhashes',
+    'routerrules',
+    'nexthops',
+]
+
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_CISCO_TABLES +
           REPO_VMWARE_TABLES +
-          REPO_NEC_TABLES)
+          REPO_NEC_TABLES +
+          REPO_BIGSWITCH_TABLES)
