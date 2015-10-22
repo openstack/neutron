@@ -3,7 +3,7 @@ Blueprints and Specs
 
 The Neutron team uses the `neutron-specs
 <http://git.openstack.org/cgit/openstack/neutron-specs>`_ repository for its
-specification reviews. Detailed information can be found `here
+specification reviews. Detailed information can be found on the `wiki
 <https://wiki.openstack.org/wiki/Blueprints>`_. Please also find
 additional information in the reviews.rst file.
 
@@ -27,7 +27,7 @@ repository is only meant for specs from Neutron itself, and the advanced
 services repositories as well. This includes FWaaS, LBaaS, and VPNaaS. Other
 sub-projects are encouraged to fold their specs into their own devref code
 in their sub-project gerrit repositories. Please see additional commments
-`here <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#neutron-specs-core-reviewer-team>`_
+in the Neutron teams `section <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#neutron-specs-core-reviewer-team>`_
 for reviewer requirements of the neutron-specs repository.
 
 Neutron Request for Feature Enhancements
