@@ -406,11 +406,17 @@ class L3AgentTestCase(L3AgentTestFramework):
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
 
-    def test_conntrack_disassociate_fip(self):
+    def test_conntrack_disassociate_fip_legacy_router(self):
+        self._test_conntrack_disassociate_fip(ha=False)
+
+    def test_conntrack_disassociate_fip_ha_router(self):
+        self._test_conntrack_disassociate_fip(ha=True)
+
+    def _test_conntrack_disassociate_fip(self, ha):
         '''Test that conntrack immediately drops stateful connection
            that uses floating IP once it's disassociated.
         '''
-        router_info = self.generate_router_info(enable_ha=False)
+        router_info = self.generate_router_info(enable_ha=ha)
         router = self.manage_router(self.agent, router_info)
 
         port = helpers.get_free_namespace_port(router.ns_name)
@@ -437,6 +443,9 @@ class L3AgentTestCase(L3AgentTestFramework):
                                            "--orig-src", client_address])
             self.assertEqual(
                 n, len([line for line in out.strip().split('\n') if line]))
+
+        if ha:
+            utils.wait_until_true(lambda: router.ha_state == 'master')
 
         with self.assert_max_execution_time(100):
             assert_num_of_conntrack_rules(0)
