@@ -62,10 +62,8 @@ BRIDGE_NAME_PREFIX = "brq"
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
 # devices are listed here (i.e. when using Xen)
 BRIDGE_FS = "/sys/class/net/"
-BRIDGE_NAME_PLACEHOLDER = "bridge_name"
-BRIDGE_INTERFACES_FS = BRIDGE_FS + BRIDGE_NAME_PLACEHOLDER + "/brif/"
-DEVICE_NAME_PLACEHOLDER = "device_name"
-BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
+BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
+BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
 VXLAN_INTERFACE_PREFIX = "vxlan-"
 
 
@@ -184,17 +182,13 @@ class LinuxBridgeManager(object):
 
     def get_interfaces_on_bridge(self, bridge_name):
         if ip_lib.device_exists(bridge_name):
-            bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
-                BRIDGE_NAME_PLACEHOLDER, bridge_name)
-            return os.listdir(bridge_interface_path)
+            return os.listdir(BRIDGE_INTERFACES_FS % bridge_name)
         else:
             return []
 
     def get_tap_devices_count(self, bridge_name):
-            bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
-                BRIDGE_NAME_PLACEHOLDER, bridge_name)
             try:
-                if_list = os.listdir(bridge_interface_path)
+                if_list = os.listdir(BRIDGE_INTERFACES_FS % bridge_name)
                 return len([interface for interface in if_list if
                             interface.startswith(constants.TAP_DEVICE_PREFIX)])
             except OSError:
@@ -213,9 +207,7 @@ class LinuxBridgeManager(object):
         if not device_name:
             return False
         else:
-            bridge_port_path = BRIDGE_PORT_FS_FOR_DEVICE.replace(
-                DEVICE_NAME_PLACEHOLDER, device_name)
-            return os.path.exists(bridge_port_path)
+            return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % device_name)
 
     def ensure_vlan_bridge(self, network_id, phy_bridge_name,
                            physical_interface, vlan_id):
