@@ -101,8 +101,6 @@ repo but are summarized here to describe the functionality they provide.
 +===============================+=======================+
 | dragonflow_                   |           l3          |
 +-------------------------------+-----------------------+
-| group-based-policy_           |         intent        |
-+-------------------------------+-----------------------+
 | kuryr_                        |         docker        |
 +-------------------------------+-----------------------+
 | networking-ale-omniswitch_    |          ml2          |
@@ -275,15 +273,6 @@ Hyper-V
 * Git: https://git.openstack.org/cgit/openstack/networking-hyperv
 * Launchpad: https://launchpad.net/networking-hyperv
 * PyPi: https://pypi.python.org/pypi/networking-hyperv
-
-.. _group-based-policy:
-
-Group Based Policy
-++++++++++++++++++
-
-* Git: https://git.openstack.org/cgit/openstack/group-based-policy
-* Launchpad: https://launchpad.net/group-based-policy
-* PyPi: https://pypi.python.org/pypi/group-based-policy
 
 .. _kuryr:
 
