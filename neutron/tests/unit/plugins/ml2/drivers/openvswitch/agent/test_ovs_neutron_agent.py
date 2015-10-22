@@ -165,16 +165,19 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent, 'int_br', autospec=True) as int_br:
             int_br.db_get_val.return_value = db_get_val
             int_br.set_db_attribute.return_value = True
-            self.agent.port_bound(port, net_uuid, 'local', None, None,
-                                  fixed_ips, "compute:None", False)
+            needs_binding = self.agent.port_bound(
+                port, net_uuid, 'local', None, None,
+                fixed_ips, "compute:None", False)
         if db_get_val is None:
             self.assertEqual(0, int_br.set_db_attribute.call_count)
+            self.assertFalse(needs_binding)
         else:
             vlan_mapping = {'net_uuid': net_uuid,
                             'network_type': 'local',
                             'physical_network': None}
             int_br.set_db_attribute.assert_called_once_with(
                 "Port", mock.ANY, "other_config", vlan_mapping)
+            self.assertTrue(needs_binding)
 
     def test_datapath_type_system(self):
         # verify kernel datapath is default
