@@ -56,8 +56,8 @@ ovs_opts = [
     cfg.IPOpt('of_listen_address', default='127.0.0.1',
               help=_("Address to listen on for OpenFlow connections. "
                      "Used only for 'native' driver.")),
-    cfg.IntOpt('of_listen_port', default=6633,
-               help=_("Port to listen on for OpenFlow connections. "
+    cfg.PortOpt('of_listen_port', default=6633,
+                help=_("Port to listen on for OpenFlow connections. "
                       "Used only for 'native' driver.")),
     cfg.IntOpt('of_connect_timeout', default=30,
                help=_("Timeout in seconds to wait for "
@@ -84,8 +84,8 @@ agent_opts = [
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
                        "(gre and/or vxlan).")),
-    cfg.IntOpt('vxlan_udp_port', default=p_const.VXLAN_UDP_PORT,
-               help=_("The UDP port to use for VXLAN tunnels.")),
+    cfg.PortOpt('vxlan_udp_port', default=p_const.VXLAN_UDP_PORT,
+                help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu',
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,

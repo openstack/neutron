@@ -41,10 +41,10 @@ OPTS = [
                help=_("Name of bridge used for external network "
                       "traffic. This option is deprecated and will be removed "
                       "in the M release.")),
-    cfg.IntOpt('metadata_port',
-               default=9697,
-               help=_("TCP Port used by Neutron metadata namespace "
-                      "proxy.")),
+    cfg.PortOpt('metadata_port',
+                default=9697,
+                help=_("TCP Port used by Neutron metadata namespace "
+                       "proxy.")),
     cfg.IntOpt('send_arp_for_ha',
                default=3,
                help=_("Send this many gratuitous ARPs for HA setup, if "
