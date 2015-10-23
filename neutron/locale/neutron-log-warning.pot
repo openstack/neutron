@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,6 +115,13 @@ msgstr ""
 #: neutron/agent/l3/agent.py:357
 #, python-format
 msgid "Info for router %s was not found. Performing router cleanup"
+msgstr ""
+
+#: neutron/agent/l3/dvr_local_router.py:219
+#, python-format
+msgid ""
+"Device %s does not exist so ARP entry cannot be updated, will cache "
+"information to be applied later when the device exists"
 msgstr ""
 
 #: neutron/agent/l3/router_info.py:191
@@ -272,6 +279,11 @@ msgid ""
 " not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
+#: neutron/db/l3_dvr_db.py:706
+#, python-format
+msgid "Router %s was not found. Doing broad notification."
+msgstr ""
+
 #: neutron/db/l3_dvrscheduler_db.py:367
 msgid "No active L3 agents found for SNAT"
 msgstr ""
@@ -330,18 +342,18 @@ msgstr ""
 msgid "%s does not support QoS; no rule types available"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:552
+#: neutron/plugins/ml2/plugin.py:560
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:806
+#: neutron/plugins/ml2/plugin.py:814
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:1491
+#: neutron/plugins/ml2/plugin.py:1499
 #, python-format
 msgid "Port %s not found during update"
 msgstr ""
@@ -359,7 +371,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_agent.py:76
-#: neutron/plugins/ml2/drivers/mech_sriov/mech_driver/mech_driver.py:124
+#: neutron/plugins/ml2/drivers/mech_sriov/mech_driver/mech_driver.py:112
 #, python-format
 msgid "Attempting to bind with dead agent: %s"
 msgstr ""
@@ -498,44 +510,44 @@ msgid ""
 "message: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:594
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:600
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1051
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1068
 #, python-format
 msgid ""
 "Creating an interface named %(name)s exceeds the %(limit)d character "
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1259
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1276
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1381
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1399
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1555
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1573
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1599
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1617
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1602
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1620
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1668
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1686
 #, python-format
 msgid "Clearing cache of registered ports, retrials to resync were > %s"
 msgstr ""

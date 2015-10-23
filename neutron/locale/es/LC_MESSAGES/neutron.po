@@ -8,14 +8,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: es\n"
-"Language-Team: Spanish (http://www.transifex.com/openstack/neutron/language/"
-"es/)\n"
+"Language-Team: Spanish\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -1650,9 +1649,6 @@ msgid "No eligible l3 agent associated with external network %s found"
 msgstr ""
 "No se ha encontrado ningún agente l3 elegible asociado con la red externa %s"
 
-msgid "No fixed IP"
-msgstr "No hay ninguna IP fija"
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "No hay más direcciones IP disponibles en la red %(net_id)s. "
@@ -1665,9 +1661,6 @@ msgstr ""
 "No hay ningún identificador de direccionador virtual (VRID) al crear el "
 "direccionador %(router_id)s. El límite del número de direccionadores HA por "
 "arrendatario es 254."
-
-msgid "No port ID"
-msgstr "No hay ningún ID de puerto"
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1878,9 +1871,6 @@ msgstr "Tiempo de espera de ping"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "El plug-in no soporta la actualización de atributos de proveedor"
-
-msgid "Plugin not found."
-msgstr "Complemento no encontrado."
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "No se ha podido encontrar el policy.json de configuración de política"
@@ -2973,9 +2963,6 @@ msgstr ""
 
 msgid "You must provide a revision or relative delta"
 msgstr "Debe proporcionar una revisión o delta relativa"
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "Los direccionadores admin_state_up=False no están soportados."
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""

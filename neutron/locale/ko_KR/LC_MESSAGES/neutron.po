@@ -9,14 +9,13 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: ko_KR\n"
-"Language-Team: Korean (Korea) (http://www.transifex.com/openstack/neutron/"
-"language/ko_KR/)\n"
+"Language-Team: Korean (South Korea)\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -1563,9 +1562,6 @@ msgstr "Neutron 할당량 드라이버 클래스"
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "외부 네트워크 %s과(와) 연관된 적합한 l3 에이전트를 찾을 수 없음"
 
-msgid "No fixed IP"
-msgstr "고정 IP 없음 "
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "%(net_id)s 네트워크에서 추가 IP 주소를 사용할 수 없습니다. "
@@ -1577,9 +1573,6 @@ msgid ""
 msgstr ""
 "%(router_id)s 라우터 작성 시 VRID(Virtual Router Identifier)를 더 이상 사용"
 "할 수 없습니다.테넌트당 HA 라우터 수의 한계는 254입니다."
-
-msgid "No port ID"
-msgstr "포트 ID 없음 "
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1759,9 +1752,6 @@ msgstr "Ping 제한시간 초과"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "플러그인이 제공자 속성 업데이트를 지원하지 않음"
-
-msgid "Plugin not found."
-msgstr "플러그인을 찾을 수 없습니다. "
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "정책 구성 policy.json을 찾을 수 없음"
@@ -2798,9 +2788,6 @@ msgstr ""
 
 msgid "You must provide a revision or relative delta"
 msgstr "개정판 또는 상대적 델타를 제공해야 함"
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "admin_state_up=False 라우터가 지원되지 않습니다. "
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr "allocation_pools는 특정 서브넷 요청에만 사용할 수 있습니다."

@@ -8,14 +8,13 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: pt_BR\n"
-"Language-Team: Portuguese (Brazil) (http://www.transifex.com/openstack/"
-"neutron/language/pt_BR/)\n"
+"Language-Team: Portuguese (Brazil)\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -1622,9 +1621,6 @@ msgstr "Classe do driver de cota Neutron"
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "Nenhum agente l3 elegível associado com a rede externa %s localizado"
 
-msgid "No fixed IP"
-msgstr "Nenhum IP fixo"
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "Nenhum outro endereço IP disponível na rede %(net_id)s."
@@ -1637,9 +1633,6 @@ msgstr ""
 "Nenhum outro Identificador de Roteador Virtual (VRID) disponível ao criar o "
 "roteador %(router_id)s. O limite do número de Roteadores de alta "
 "disponibilidade por locatário é de 254."
-
-msgid "No port ID"
-msgstr "Nenhum ID de porta"
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1842,9 +1835,6 @@ msgstr "Tempo Limite de Ping"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "O plug-in não suporta atualização de atributos do provedor"
-
-msgid "Plugin not found."
-msgstr "Plug-in não localizado."
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "A configuração de política policy.json não pôde ser localizada"
@@ -2912,9 +2902,6 @@ msgstr ""
 
 msgid "You must provide a revision or relative delta"
 msgstr "Você deve fornecer uma revisão ou um delta relativo"
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "Roteadores admin_state_up=Falso não são suportados."
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""

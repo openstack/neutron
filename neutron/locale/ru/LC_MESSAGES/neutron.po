@@ -7,14 +7,13 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: ru\n"
-"Language-Team: Russian (http://www.transifex.com/openstack/neutron/language/"
-"ru/)\n"
+"Language-Team: Russian\n"
 "Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
 "%100>=11 && n%100<=14)? 2 : 3)\n"
@@ -1622,9 +1621,6 @@ msgstr "Класс драйвера квоты Neutron"
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "Не найдены допустимые агенты l3, связанные с внешней сетью %s"
 
-msgid "No fixed IP"
-msgstr "Отсутствует фиксированный IP."
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "В сети %(net_id)s больше нет доступных IP-адресов."
@@ -1637,9 +1633,6 @@ msgstr ""
 "Не осталось доступных ИД виртуального маршрутизатора (VRID) при создании "
 "маршрутизатора %(router_id)s. Ограничение числа маршрутизаторов высокой "
 "готовности на арендатора составляет 254."
-
-msgid "No port ID"
-msgstr "Отсутствует ИД порта"
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1837,9 +1830,6 @@ msgstr "Тайм-аут проверки связи"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "Модуль не поддерживает обновление атрибутов поставщика"
-
-msgid "Plugin not found."
-msgstr "Модуль не найден."
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "Не найдена конфигурация стратегии policy.json"
@@ -2906,9 +2896,6 @@ msgstr ""
 
 msgid "You must provide a revision or relative delta"
 msgstr "Необходимо указать ревизию или относительную дельта"
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "Маршрутизаторы admin_state_up=False не поддерживаются."
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr "allocation_pools разрешено только для определенных запросов подсетей. "
