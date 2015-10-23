@@ -215,8 +215,9 @@ There are occasions when a spec will be approved and the code will not land in
 the cycle it was targeted at. For these cases, the work flow to get the spec
 into the next release is as follows:
 
-* The PTL will create a <release>-backlog directory during the RC window and
-  move all specs which didn't make the <release> there.
+* During the RC window, the PTL will create a directory named '<release>' under
+  the 'backlog' directory in the neutron specs repo, and he/she will move all
+  specs that did not make the release to this directory.
 * Anyone can propose a patch to neutron-specs which moves a spec from the
   previous release into the new release directory.
 
