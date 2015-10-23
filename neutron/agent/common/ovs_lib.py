@@ -435,7 +435,8 @@ class OVSBridge(BaseOVS):
 
     def get_vifs_by_ids(self, port_ids):
         interface_info = self.get_ports_attributes(
-            "Interface", columns=["name", "external_ids", "ofport"])
+            "Interface", columns=["name", "external_ids", "ofport"],
+            if_exists=True)
         by_id = {x['external_ids'].get('iface-id'): x for x in interface_info}
         result = {}
         for port_id in port_ids:
