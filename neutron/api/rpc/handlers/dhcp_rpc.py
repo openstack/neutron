@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import itertools
 import operator
 
@@ -195,7 +196,9 @@ class DhcpRpcCallback(object):
 
         """
         host = kwargs.get('host')
-        port = kwargs.get('port')
+        # Note(pbondar): Create deep copy of port to prevent operating
+        # on changed dict if RetryRequest is raised
+        port = copy.deepcopy(kwargs.get('port'))
         LOG.debug('Create dhcp port %(port)s '
                   'from %(host)s.',
                   {'port': port,
