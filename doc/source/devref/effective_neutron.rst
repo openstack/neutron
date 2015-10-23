@@ -230,7 +230,9 @@ Scoping your patch appropriately
 * Do not make multiple changes in one patch unless absolutely necessary.
   Cleaning up nearby functions or fixing a small bug you noticed while working
   on something else makes the patch very difficult to review. It also makes
-  cherry-picking and reverting very difficult.
+  cherry-picking and reverting very difficult.  Even apparently minor changes
+  such as reformatting whitespace around your change can burden reviewers and
+  cause merge conflicts.
 * If a fix or feature requires code refactoring, submit the refactoring as a
   separate patch than the one that changes the logic. Otherwise
   it's difficult for a reviewer to tell the difference between mistakes
