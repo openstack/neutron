@@ -9,19 +9,18 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Turkish (Turkey) (http://www.transifex.com/openstack/neutron/"
-"language/tr_TR/)\n"
+"Language-Team: Turkish (Turkey)\n"
 "Language: tr-TR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 3.7.1\n"
 
 #, python-format
@@ -53,14 +52,6 @@ msgid ""
 msgstr ""
 "henüz start_rpc_listeners implemente edilmediği için 'rpc_workers = %d' göz "
 "ardı edildi."
-
-#, python-format
-msgid ""
-"Add interface in the rollback of a remove_router_interface operation failed "
-"%s"
-msgstr ""
-"Bir remove_router_interface işleminin geri dönüşünde arayüz ekleme başarısız "
-"%s"
 
 msgid "Address not present on interface"
 msgstr "Adres arayüzde mevcut değil"
@@ -226,14 +217,6 @@ msgid "Could not retrieve gateway port for subnet %s"
 msgstr "Alt ağ %s için geçit bağlantı noktası alınamadı"
 
 #, python-format
-msgid "Create floating ip failed with error %s"
-msgstr "Değişken ip oluşturma %s hatasıyla başarısız"
-
-#, python-format
-msgid "Create router failed in SDN-VE with error %s"
-msgstr "SDN-VE'de yönlendirici oluşturma başarısız hata %s"
-
-#, python-format
 msgid "DVR: Duplicate DVR router interface detected for subnet %s"
 msgstr "DVR: %s alt ağı için çift DVR yönlendirici arayüzü algılandı"
 
@@ -253,17 +236,6 @@ msgstr "DVR: %s subnet_id için alt ağ bilgisi getirilemedi"
 
 msgid "DVR: error adding redirection logic"
 msgstr "DVR: yönlendirme mantığı ekleme hatası"
-
-#, python-format
-msgid "Delete floatingip failed in SDN-VE: %s"
-msgstr "Değişken ip silme SDN-VE'de başarısız oldu: %s"
-
-#, python-format
-msgid ""
-"Delete router operation failed in SDN-VE after deleting the router in DB: %s"
-msgstr ""
-"Yönlendirici silme işlemi SDN-VE'de yönlendirici DB'den silindikten sonra "
-"başarısız oldu: %s"
 
 #, python-format
 msgid "Driver %(driver)s does not implement %(func)s"
@@ -286,10 +258,6 @@ msgstr "Komut çalıştırırken hata"
 #, python-format
 msgid "Error fetching extended attributes for extension '%s'"
 msgstr " '%s' uzantısına dair özellikler getirilirken hata oluştu."
-
-#, python-format
-msgid "Error importing interface driver '%(driver)s': %(inner)s"
-msgstr " '%(driver)s': %(inner)s arayüz sürücüsü dahil edilirken hata oluştu"
 
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
@@ -325,9 +293,6 @@ msgstr "Tüneller eş zamanlanırken hata"
 #, python-format
 msgid "Error while writing HA state for %s"
 msgstr "%s için HA durumu yazılırken hata"
-
-msgid "Error, plugin is not set"
-msgstr "Hata, eklenti ayarlanmamış"
 
 #, python-format
 msgid "Error, unable to destroy IPset: %s"
@@ -854,22 +819,6 @@ msgstr "%(network_id)s ağı için bilinmeyen network_type %(network_type)s."
 
 msgid "Unrecoverable error: please check log for details."
 msgstr "Düzeltilemeyen hata: Lütfen detaylar için loglara bakınız."
-
-#, python-format
-msgid "Update floating ip failed with error %s"
-msgstr "Değişken ip güncelleme %s hatasıyla başarısız oldu"
-
-#, python-format
-msgid "Update router failed in SDN-VE with error %s"
-msgstr "Yönlendirici güncelleme SDN-VE'de %s hatasıyla başarısız oldu"
-
-#, python-format
-msgid "Update router-add-interface failed in SDN-VE with error %s"
-msgstr "router-add-interface güncelleme SDN-VE'de %s hatasıyla başarısız oldu"
-
-#, python-format
-msgid "Update router-remove-interface failed : %s"
-msgstr "router-remove-interface güncelleme başarısız: %s"
 
 #, python-format
 msgid ""

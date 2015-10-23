@@ -11,14 +11,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-25 12:37+0000\n"
 "Last-Translator: Cedric Savignan <liced@liced.fr>\n"
 "Language: fr\n"
-"Language-Team: French (http://www.transifex.com/openstack/neutron/language/"
-"fr/)\n"
+"Language-Team: French\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -1698,9 +1697,6 @@ msgstr "Classe de pilote du quota Neutron"
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "Aucun agent l3 admissible trouvé associé au réseau %s"
 
-msgid "No fixed IP"
-msgstr "Aucune adresse IP fixe"
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "Pas d'autres adresses IP disponibles sur le réseau %(net_id)s."
@@ -1713,9 +1709,6 @@ msgstr ""
 "Plus d'identificateur de routeur virtuel disponible lors de la création du "
 "routeur %(router_id)s. Le nombre maximum de routeurs haute disponibilité par "
 "locataire est 254."
-
-msgid "No port ID"
-msgstr "Aucun ID de port"
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1929,9 +1922,6 @@ msgstr "Délai d'expiration de la commande ping"
 msgid "Plugin does not support updating provider attributes"
 msgstr ""
 "Le plug-in ne prend pas en charge la mise à jour des attributs de fournisseur"
-
-msgid "Plugin not found."
-msgstr "Plug-in non trouvé"
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "La configuration de stratégie policy.json est introuvable"
@@ -3066,9 +3056,6 @@ msgstr ""
 
 msgid "You must provide a revision or relative delta"
 msgstr "Vous devez fournir une révision ou un delta relatif."
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "admin_state_up=Les routeurs False ne sont pas pris en charge."
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""

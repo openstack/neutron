@@ -7,14 +7,13 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev60\n"
+"Project-Id-Version: neutron 8.0.0.dev130\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-18 06:14+0000\n"
+"POT-Creation-Date: 2015-10-23 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: zh_Hant_TW\n"
-"Language-Team: Chinese (Taiwan) (http://www.transifex.com/openstack/neutron/"
-"language/zh_TW/)\n"
+"Language-Team: Chinese (Taiwan)\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -1510,9 +1509,6 @@ msgstr "Neutron 配額驅動程式類別"
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "找不到與外部網路 %s 相關聯的適用 L3 代理程式"
 
-msgid "No fixed IP"
-msgstr "不具有固定 IP"
-
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr "網路 %(net_id)s 上沒有更多的可用 IP 位址。"
@@ -1524,9 +1520,6 @@ msgid ""
 msgstr ""
 "建立路由器 %(router_id)s 時，沒有其他「虛擬路由器 ID (VRID)」可用。每個承租人"
 "的 HA 路由器數目限制為 254 個。"
-
-msgid "No port ID"
-msgstr "沒有埠 ID"
 
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
@@ -1694,9 +1687,6 @@ msgstr "連通測試逾時值"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "外掛程式不支援更新提供者屬性"
-
-msgid "Plugin not found."
-msgstr "找不到外掛程式。"
 
 msgid "Policy configuration policy.json could not be found"
 msgstr "找不到原則配置 policy.json 檔"
@@ -2662,9 +2652,6 @@ msgstr "必須為橋接器提供配置檔：--config-file，或env[NEUTRON_TEST_
 
 msgid "You must provide a revision or relative delta"
 msgstr "必須提供修訂或相對差異"
-
-msgid "admin_state_up=False routers are not supported."
-msgstr "不支援 admin_state_up = False 路由器。"
 
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr "僅容許用於特定子網路要求的 allocation_pools。"
