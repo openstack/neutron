@@ -1139,7 +1139,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns',
                  'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1'],
-                run_as_root=True, check_exit_code=True, extra_ok_codes=None)
+                run_as_root=True, check_exit_code=True, extra_ok_codes=None,
+                log_fail_as_error=True)
 
     def test_delete_namespace(self):
         with mock.patch('neutron.agent.common.utils.execute'):
@@ -1180,7 +1181,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
                                              'link', 'list'],
                                             run_as_root=True,
                                             check_exit_code=True,
-                                            extra_ok_codes=None)
+                                            extra_ok_codes=None,
+                                            log_fail_as_error=True)
 
     def test_execute_env_var_prepend(self):
         self.parent.namespace = 'ns'
@@ -1191,7 +1193,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 ['ip', 'netns', 'exec', 'ns', 'env'] +
                 ['%s=%s' % (k, v) for k, v in env.items()] +
                 ['ip', 'link', 'list'],
-                run_as_root=True, check_exit_code=True, extra_ok_codes=None)
+                run_as_root=True, check_exit_code=True, extra_ok_codes=None,
+                log_fail_as_error=True)
 
     def test_execute_nosudo_with_no_namespace(self):
         with mock.patch('neutron.agent.common.utils.execute') as execute:
@@ -1200,7 +1203,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(['test'],
                                             check_exit_code=True,
                                             extra_ok_codes=None,
-                                            run_as_root=False)
+                                            run_as_root=False,
+                                            log_fail_as_error=True)
 
 
 class TestDeviceExists(base.BaseTestCase):
