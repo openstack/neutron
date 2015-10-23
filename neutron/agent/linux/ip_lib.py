@@ -42,6 +42,7 @@ IP_NETNS_PATH = '/var/run/netns'
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
 METRIC_PATTERN = re.compile(r"metric (\S+)")
+DEVICE_NAME_PATTERN = re.compile(r"(\d+?): (\S+?):.*")
 
 
 class AddressNotReady(exceptions.NeutronException):
@@ -130,10 +131,19 @@ class IPWrapper(SubProcessBase):
         return retval
 
     def get_device_by_ip(self, ip):
-        """Get the IPDevice from system which has ip configured."""
-        for device in self.get_devices():
-            if device.addr.list(to=ip):
-                return device
+        """Get the IPDevice from system which has ip configured.
+
+        @param ip: look for the device holding this ip. If this is None,
+                   None is returned.
+        @type ip: str.
+        """
+        if not ip:
+            return None
+
+        addr = IpAddrCommand(self)
+        devices = addr.get_devices_with_ip(to=ip)
+        if devices:
+            return IPDevice(devices[0]['name'], namespace=self.namespace)
 
     def add_tuntap(self, name, mode='tap'):
         self._as_root([], 'tuntap', ('add', name, 'mode', mode))
@@ -517,24 +527,40 @@ class IpAddrCommand(IpDeviceCommandBase):
     def flush(self, ip_version):
         self._as_root([ip_version], ('flush', self.name))
 
-    def list(self, scope=None, to=None, filters=None, ip_version=None):
+    def get_devices_with_ip(self, name=None, scope=None, to=None,
+                            filters=None, ip_version=None):
+        """Get a list of all the devices with an IP attached in the namespace.
+
+        @param name: if it's not None, only a device with that matching name
+                     will be returned.
+        """
         options = [ip_version] if ip_version else []
-        args = ['show', self.name]
+
+        args = ['show']
+        if name:
+            args += [name]
         if filters:
             args += filters
-
-        retval = []
-
         if scope:
             args += ['scope', scope]
         if to:
             args += ['to', to]
 
+        retval = []
+
         for line in self._run(options, tuple(args)).split('\n'):
             line = line.strip()
-            if not line.startswith('inet'):
+
+            match = DEVICE_NAME_PATTERN.search(line)
+            if match:
+                # Found a match for a device name, but its' addresses will
+                # only appear in following lines, so we may as well continue.
+                device_name = match.group(2)
                 continue
-            parts = line.split()
+            elif not line.startswith('inet'):
+                continue
+
+            parts = line.split(" ")
             if parts[0] == 'inet6':
                 scope = parts[3]
             else:
@@ -543,12 +569,18 @@ class IpAddrCommand(IpDeviceCommandBase):
                 else:
                     scope = parts[3]
 
-            retval.append(dict(cidr=parts[1],
+            retval.append(dict(name=device_name,
+                               cidr=parts[1],
                                scope=scope,
                                dynamic=('dynamic' == parts[-1]),
                                tentative=('tentative' in line),
                                dadfailed=('dadfailed' == parts[-1])))
         return retval
+
+    def list(self, scope=None, to=None, filters=None, ip_version=None):
+        """Get device details of a device named <self.name>."""
+        return self.get_devices_with_ip(
+            self.name, scope, to, filters, ip_version)
 
     def wait_until_address_ready(self, address, wait_time=30):
         """Wait until an address is no longer marked 'tentative'

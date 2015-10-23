@@ -35,6 +35,7 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
                     prefix=lb_agent.BRIDGE_NAME_PREFIX))).fixture
 
         config = callback(br_fixture)
+        config.update({'VXLAN': {'enable_vxlan': 'False'}})
 
         temp_dir = self.useFixture(fixtures.TempDir()).path
         conf = self.useFixture(config_fixtures.ConfigFileFixture(
