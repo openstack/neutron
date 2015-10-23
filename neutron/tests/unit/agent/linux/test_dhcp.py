@@ -942,25 +942,6 @@ class TestDhcpLocalProcess(TestBase):
             self._assert_disabled(lp)
 
     def test_disable(self):
-        self.conf.set_override('dhcp_delete_namespaces', False)
-        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
-                              ['active', 'interface_name']])
-        network = FakeDualNetwork()
-        with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
-            mocks['active'].__get__ = mock.Mock(return_value=True)
-            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
-            lp = LocalChild(self.conf, network)
-            with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
-                lp.disable()
-
-            self._assert_disabled(lp)
-
-        self.mock_mgr.assert_has_calls([mock.call(self.conf, None),
-                                        mock.call().destroy(network, 'tap0')])
-
-        self.assertEqual(ip.return_value.netns.delete.call_count, 0)
-
-    def test_disable_delete_ns(self):
         attrs_to_mock = {'active': mock.DEFAULT}
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:

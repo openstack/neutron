@@ -1718,16 +1718,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                         '-bar')
         self.mock_ip.del_veth.assert_called_once_with('rfp-aaaa')
 
-    def test_destroy_router_namespace_skips_ns_removal(self):
-        self.conf.set_override('router_delete_namespaces', False)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ns = namespaces.Namespace(
-            'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
-        ns.create()
-        ns.delete()
-        self.assertEqual(0, self.mock_ip.netns.delete.call_count)
-
-    def test_destroy_router_namespace_removes_ns(self):
+    def test_destroy_router_namespace(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ns = namespaces.Namespace(
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
