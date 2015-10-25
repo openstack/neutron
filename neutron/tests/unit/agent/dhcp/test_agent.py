@@ -230,6 +230,10 @@ class TestDhcpAgent(base.BaseTestCase):
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
 
+        self.mock_ip_wrapper_p = mock.patch("neutron.agent.linux.ip_lib."
+                                            "IPWrapper")
+        self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
+
     def test_init_host(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         with mock.patch.object(dhcp, 'sync_state') as sync_state:
@@ -1221,6 +1225,10 @@ class TestDeviceManager(base.BaseTestCase):
         self.mangle_inst = mock.Mock()
         self.iptables_inst.ipv4 = {'mangle': self.mangle_inst}
 
+        self.mock_ip_wrapper_p = mock.patch("neutron.agent.linux.ip_lib."
+                                            "IPWrapper")
+        self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
+
     def _test_setup_helper(self, device_is_ready, net=None, port=None):
         net = net or fake_network
         port = port or fake_port1
@@ -1231,6 +1239,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         dh = dhcp.DeviceManager(cfg.CONF, plugin)
         dh._set_default_route = mock.Mock()
+        dh._cleanup_stale_devices = mock.Mock()
         interface_name = dh.setup(net)
 
         self.assertEqual(interface_name, 'tap12345678-12')
