@@ -1165,6 +1165,16 @@ class DeviceManager(object):
         else:
             network.ports.append(port)
 
+    def _cleanup_stale_devices(self, network, dhcp_port):
+        LOG.debug("Cleaning stale devices for network %s", network.id)
+        dev_name = self.driver.get_device_name(dhcp_port)
+        ns_ip = ip_lib.IPWrapper(namespace=network.namespace)
+        for d in ns_ip.get_devices(exclude_loopback=True):
+            # delete all devices except current active DHCP port device
+            if d.name != dev_name:
+                LOG.debug("Found stale device %s, deleting", d.name)
+                self.driver.unplug(d.name, namespace=network.namespace)
+
     def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
         port = self.setup_dhcp_port(network)
@@ -1215,6 +1225,12 @@ class DeviceManager(object):
 
         if self.conf.use_namespaces:
             self._set_default_route(network, interface_name)
+            try:
+                self._cleanup_stale_devices(network, port)
+            except Exception:
+                # catch everything as we don't want to fail because of
+                # cleanup step
+                LOG.error(_LE("Exception during stale dhcp device cleanup"))
 
         return interface_name
 
