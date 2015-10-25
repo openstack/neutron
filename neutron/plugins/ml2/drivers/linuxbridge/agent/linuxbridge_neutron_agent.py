@@ -194,12 +194,12 @@ class LinuxBridgeManager(object):
             return []
 
     def get_tap_devices_count(self, bridge_name):
-            try:
-                if_list = os.listdir(BRIDGE_INTERFACES_FS % bridge_name)
-                return len([interface for interface in if_list if
-                            interface.startswith(constants.TAP_DEVICE_PREFIX)])
-            except OSError:
-                return 0
+        try:
+            if_list = os.listdir(BRIDGE_INTERFACES_FS % bridge_name)
+            return len([interface for interface in if_list if
+                        interface.startswith(constants.TAP_DEVICE_PREFIX)])
+        except OSError:
+            return 0
 
     def get_bridge_for_tap_device(self, tap_device_name):
         bridges = self.get_all_neutron_bridges()
