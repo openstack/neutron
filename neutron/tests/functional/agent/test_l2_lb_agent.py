@@ -18,6 +18,7 @@ import testtools
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import test_ip_lib
 
 LOG = logging.getLogger(__name__)
@@ -31,6 +32,13 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
         agent_rpc = ('neutron.agent.rpc.PluginApi')
         mock.patch(agent_rpc).start()
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+
+    def create_bridge_port_fixture(self):
+        bridge = self.useFixture(
+            net_helpers.LinuxBridgeFixture(namespace=None)).bridge
+        port_fixture = self.useFixture(
+            net_helpers.LinuxBridgePortFixture(bridge))
+        return port_fixture
 
     def test_validate_interface_mappings(self):
         mappings = {'physnet1': 'int1', 'physnet2': 'int2'}
@@ -54,3 +62,15 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
             self.generate_device_details()._replace(namespace=None,
                                                     name='br-eth1'))
         lba.LinuxBridgeManager(mappings, {})
+
+    def test_get_bridge_for_tap_device(self):
+        port_fixture = self.create_bridge_port_fixture()
+        mappings = {'physnet1': port_fixture.bridge.name}
+        lbm = lba.LinuxBridgeManager(mappings, {})
+        self.assertEqual(
+            port_fixture.bridge.name,
+            lbm.get_bridge_for_tap_device(port_fixture.br_port.name))
+
+    def test_get_no_bridge_for_tap_device(self):
+        lbm = lba.LinuxBridgeManager({}, {})
+        self.assertIsNone(lbm.get_bridge_for_tap_device('fake'))

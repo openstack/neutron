@@ -64,6 +64,7 @@ BRIDGE_NAME_PREFIX = "brq"
 BRIDGE_FS = "/sys/class/net/"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
+BRIDGE_PATH_FOR_DEVICE = BRIDGE_PORT_FS_FOR_DEVICE + '/bridge'
 VXLAN_INTERFACE_PREFIX = "vxlan-"
 
 
@@ -195,12 +196,15 @@ class LinuxBridgeManager(object):
                 return 0
 
     def get_bridge_for_tap_device(self, tap_device_name):
-        bridges = self.get_all_neutron_bridges()
-        for bridge in bridges:
-            interfaces = self.get_interfaces_on_bridge(bridge)
-            if tap_device_name in interfaces:
+        try:
+            path = os.readlink(BRIDGE_PATH_FOR_DEVICE % tap_device_name)
+        except OSError:
+            pass
+        else:
+            bridge = path.rpartition('/')[-1]
+            if (bridge.startswith(BRIDGE_NAME_PREFIX)
+                    or bridge in self.bridge_mappings.values()):
                 return bridge
-
         return None
 
     def is_device_on_bridge(self, device_name):
