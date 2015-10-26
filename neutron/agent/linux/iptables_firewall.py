@@ -345,7 +345,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 ipv4_sg_rules.append(rule)
             elif rule.get('ethertype') == constants.IPv6:
                 if rule.get('protocol') == 'icmp':
-                    rule['protocol'] = 'icmpv6'
+                    rule['protocol'] = 'ipv6-icmp'
                 ipv6_sg_rules.append(rule)
         return ipv4_sg_rules, ipv6_sg_rules
 
@@ -384,15 +384,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
         # Allow dhcp client packets
-        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 '
+                                    '-m udp --dport 67 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
         # Drop Router Advts from the port.
-        ipv6_rules += [comment_rule('-p icmpv6 --icmpv6-type %s '
+        ipv6_rules += [comment_rule('-p ipv6-icmp -m icmp6 --icmpv6-type %s '
                                     '-j DROP' % constants.ICMPV6_TYPE_RA,
                                     comment=ic.IPV6_RA_DROP)]
-        ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
+        ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
                                     comment=ic.IPV6_ICMP_ALLOW)]
-        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 --dport 547 '
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
+                                    '-m udp --dport 547 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
         mac_ipv4_pairs = []
         mac_ipv6_pairs = []
@@ -418,9 +420,11 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
         #Note(nati) Drop dhcp packet from VM
-        ipv4_rules += [comment_rule('-p udp -m udp --sport 67 --dport 68 '
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 67 '
+                                    '-m udp --dport 68 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
-        ipv6_rules += [comment_rule('-p udp -m udp --sport 547 --dport 546 '
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 547 '
+                                    '-m udp --dport 546 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
 
     def _accept_inbound_icmpv6(self):
@@ -428,8 +432,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # neighbor advertisement into the instance
         icmpv6_rules = []
         for icmp6_type in constants.ICMPV6_ALLOWED_TYPES:
-            icmpv6_rules += ['-p icmpv6 --icmpv6-type %s -j RETURN' %
-                             icmp6_type]
+            icmpv6_rules += ['-p ipv6-icmp -m icmp6 --icmpv6-type %s '
+                             '-j RETURN' % icmp6_type]
         return icmpv6_rules
 
     def _select_sg_rules_for_port(self, port, direction):
@@ -594,32 +598,35 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _protocol_arg(self, protocol):
         if not protocol:
             return []
-
+        if protocol == 'icmpv6':
+            protocol = 'ipv6-icmp'
         iptables_rule = ['-p', protocol]
-        # iptables always adds '-m protocol' for udp and tcp
-        if protocol in ['udp', 'tcp']:
-            iptables_rule += ['-m', protocol]
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
-        if (protocol not in ['udp', 'tcp', 'icmp', 'icmpv6']
+        if (protocol not in ['udp', 'tcp', 'icmp', 'ipv6-icmp']
             or port_range_min is None):
             return []
 
-        if protocol in ['icmp', 'icmpv6']:
+        protocol_modules = {'udp': 'udp', 'tcp': 'tcp',
+                            'icmp': 'icmp', 'ipv6-icmp': 'icmp6'}
+        # iptables adds '-m protocol' when the port number is specified
+        args = ['-m', protocol_modules[protocol]]
+
+        if protocol in ['icmp', 'ipv6-icmp']:
+            protocol_type = 'icmpv6' if protocol == 'ipv6-icmp' else 'icmp'
             # Note(xuhanp): port_range_min/port_range_max represent
             # icmp type/code when protocol is icmp or icmpv6
+            args += ['--%s-type' % protocol_type, '%s' % port_range_min]
             # icmp code can be 0 so we cannot use "if port_range_max" here
             if port_range_max is not None:
-                return ['--%s-type' % protocol,
-                        '%s/%s' % (port_range_min, port_range_max)]
-            return ['--%s-type' % protocol, '%s' % port_range_min]
+                args[-1] += '/%s' % port_range_max
         elif port_range_min == port_range_max:
-            return ['--%s' % direction, '%s' % (port_range_min,)]
+            args += ['--%s' % direction, '%s' % (port_range_min,)]
         else:
-            return ['-m', 'multiport',
-                    '--%ss' % direction,
-                    '%s:%s' % (port_range_min, port_range_max)]
+            args += ['-m', 'multiport', '--%ss' % direction,
+                     '%s:%s' % (port_range_min, port_range_max)]
+        return args
 
     def _ip_prefix_arg(self, direction, ip_prefix):
         #NOTE (nati) : source_group_id is converted to list of source_
