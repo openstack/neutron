@@ -32,7 +32,8 @@ from neutron.tests import base
 
 LOCAL_IP = '192.168.0.33'
 DEVICE_1 = 'tapabcdef01-12'
-BRIDGE_MAPPINGS = {'physnet0': 'br-eth2'}
+BRIDGE_MAPPING_VALUE = 'br-eth2'
+BRIDGE_MAPPINGS = {'physnet0': BRIDGE_MAPPING_VALUE}
 INTERFACE_MAPPINGS = {'physnet1': 'eth1'}
 FAKE_DEFAULT_DEV = mock.Mock()
 FAKE_DEFAULT_DEV.name = 'eth1'
@@ -492,14 +493,21 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 0)
 
     def test_get_bridge_for_tap_device(self):
-        with mock.patch.object(self.lbm,
-                               "get_all_neutron_bridges") as get_all_qbr_fn,\
-                mock.patch.object(self.lbm,
-                                  "get_interfaces_on_bridge") as get_if_fn:
-            get_all_qbr_fn.return_value = ["br-int", "br-ex"]
-            get_if_fn.return_value = ["tap1", "tap2", "tap3"]
+
+        with mock.patch.object(os, 'readlink') as readlink:
+            readlink.return_value = (
+                'blah/%s-fake' % linuxbridge_neutron_agent.BRIDGE_NAME_PREFIX)
             self.assertEqual(self.lbm.get_bridge_for_tap_device("tap1"),
-                             "br-int")
+                             "brq-fake")
+
+            readlink.return_value = 'blah/%s' % BRIDGE_MAPPING_VALUE
+            self.assertEqual(self.lbm.get_bridge_for_tap_device("tap2"),
+                             BRIDGE_MAPPING_VALUE)
+
+            readlink.return_value = 'blah/notneutronbridge'
+            self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap3"))
+
+            readlink.side_effect = OSError()
             self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap4"))
 
     def test_is_device_on_bridge(self):
