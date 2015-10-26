@@ -68,6 +68,19 @@ def set_firewall_driver(firewall_driver):
                           group='SECURITYGROUP')
 
 
+class FakeFirewallDriver(firewall_base.FirewallDriver):
+    """Fake FirewallDriver
+
+    FirewallDriver is base class for other types of drivers. To be able to
+    use it in tests, it's needed to overwrite all abstract methods.
+    """
+    def prepare_port_filter(self, port):
+        raise NotImplementedError()
+
+    def update_port_filter(self, port):
+        raise NotImplementedError()
+
+
 class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
                                  sg_db_rpc.SecurityGroupServerRpcMixin):
     def __init__(self):
@@ -1117,7 +1130,7 @@ class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
         mock.patch('neutron.agent.linux.iptables_manager').start()
         self.default_firewall = self.agent.firewall
         self.firewall = mock.Mock()
-        firewall_object = firewall_base.FirewallDriver()
+        firewall_object = FakeFirewallDriver()
         self.firewall.defer_apply.side_effect = firewall_object.defer_apply
         self.agent.firewall = self.firewall
         self.fake_device = {'device': 'fake_device',
