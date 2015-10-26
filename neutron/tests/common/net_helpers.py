@@ -43,6 +43,8 @@ from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
 
+UNDEFINED = object()
+
 NS_PREFIX = 'test-'
 BR_PREFIX = 'test-br'
 PORT_PREFIX = 'test-port'
@@ -527,12 +529,14 @@ class LinuxBridgeFixture(fixtures.Fixture):
     :type namespace: str
     """
 
-    def __init__(self, prefix=BR_PREFIX):
+    def __init__(self, prefix=BR_PREFIX, namespace=UNDEFINED):
         super(LinuxBridgeFixture, self).__init__()
         self.prefix = prefix
+        self.namespace = namespace
 
     def _setUp(self):
-        self.namespace = self.useFixture(NamespaceFixture()).name
+        if self.namespace is UNDEFINED:
+            self.namespace = self.useFixture(NamespaceFixture()).name
         self.bridge = common_base.create_resource(
             self.prefix,
             bridge_lib.BridgeDevice.addbr,
