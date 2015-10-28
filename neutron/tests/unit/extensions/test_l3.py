@@ -1875,6 +1875,35 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertIsNotNone(body['floatingip']['fixed_ip_address'])
             self.assertIsNotNone(body['floatingip']['router_id'])
 
+    def test_create_floatingip_non_admin_context_agent_notification(self):
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not hasattr(plugin, 'l3_rpc_notifier'):
+            self.skipTest("Plugin does not support l3_rpc_notifier")
+
+        with self.subnet(cidr='11.0.0.0/24') as public_sub,\
+                self.port() as private_port,\
+                self.router() as r:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            subnet_id = private_port['port']['fixed_ips'][0]['subnet_id']
+            private_sub = {'subnet': {'id': subnet_id}}
+
+            self._add_external_gateway_to_router(
+                r['router']['id'],
+                public_sub['subnet']['network_id'])
+            self._router_interface_action(
+                'add', r['router']['id'],
+                private_sub['subnet']['id'], None)
+
+            with mock.patch.object(plugin.l3_rpc_notifier,
+                                   'routers_updated') as agent_notification:
+                self._make_floatingip(
+                    self.fmt,
+                    public_sub['subnet']['network_id'],
+                    port_id=private_port['port']['id'],
+                    set_context=True)
+                self.assertTrue(agent_notification.called)
+
     def test_floating_port_status_not_applicable(self):
         with self.floatingip_with_assoc():
             port_body = self._list('ports',
