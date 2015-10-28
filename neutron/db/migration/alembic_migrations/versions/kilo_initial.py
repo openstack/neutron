@@ -13,15 +13,15 @@
 #    under the License.
 #
 
-"""juno_initial
+"""kilo_initial
 
-Revision ID: juno
+Revision ID: kilo
 Revises: None
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'juno'
+revision = 'kilo'
 down_revision = None
 
 
@@ -36,14 +36,13 @@ from neutron.db.migration.alembic_migrations import lb_init_ops
 from neutron.db.migration.alembic_migrations import loadbalancer_init_ops
 from neutron.db.migration.alembic_migrations import metering_init_ops
 from neutron.db.migration.alembic_migrations import ml2_init_ops
-from neutron.db.migration.alembic_migrations import mlnx_init_ops
 from neutron.db.migration.alembic_migrations import nec_init_ops
+from neutron.db.migration.alembic_migrations import nsxv_initial_opts
 from neutron.db.migration.alembic_migrations import nuage_init_opts
 from neutron.db.migration.alembic_migrations import other_extensions_init_ops
 from neutron.db.migration.alembic_migrations import other_plugins_init_ops
 from neutron.db.migration.alembic_migrations import ovs_init_ops
 from neutron.db.migration.alembic_migrations import portsec_init_ops
-from neutron.db.migration.alembic_migrations import ryu_init_ops
 from neutron.db.migration.alembic_migrations import secgroup_init_ops
 from neutron.db.migration.alembic_migrations import vmware_init_ops
 from neutron.db.migration.alembic_migrations import vpn_init_ops
@@ -66,9 +65,8 @@ def upgrade():
     metering_init_ops.upgrade()
     brocade_init_ops.upgrade()
     cisco_init_ops.upgrade()
-    mlnx_init_ops.upgrade()
     nec_init_ops.upgrade()
     other_plugins_init_ops.upgrade()
-    ryu_init_ops.upgrade()
     vmware_init_ops.upgrade()
     nuage_init_opts.upgrade()
+    nsxv_initial_opts.upgrade()

@@ -44,7 +44,8 @@ def upgrade():
         sa.Column('vlan', sa.String(length=10), nullable=True),
         sa.Column('segment_id', sa.String(length=36), nullable=True),
         sa.Column('network_type', sa.String(length=10), nullable=True),
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.PrimaryKeyConstraint('id'))
 
     op.create_table(
@@ -54,6 +55,7 @@ def upgrade():
         sa.Column('admin_state_up', sa.Boolean(), nullable=False),
         sa.Column('physical_interface', sa.String(length=36), nullable=True),
         sa.Column('vlan_id', sa.String(length=36), nullable=True),
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['network_id'], ['ml2_brocadenetworks.id']))

@@ -56,41 +56,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('router_id'))
 
     op.create_table(
-        'vcns_edge_pool_bindings',
-        sa.Column('pool_id', sa.String(length=36), nullable=False),
-        sa.Column('edge_id', sa.String(length=36), nullable=False),
-        sa.Column('pool_vseid', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['pool_id'], ['pools.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('pool_id', 'edge_id'))
-
-    op.create_table(
-        'vcns_edge_monitor_bindings',
-        sa.Column('monitor_id', sa.String(length=36), nullable=False),
-        sa.Column('edge_id', sa.String(length=36), nullable=False),
-        sa.Column('monitor_vseid', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['monitor_id'], ['healthmonitors.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('monitor_id', 'edge_id'))
-
-    op.create_table(
-        'vcns_firewall_rule_bindings',
-        sa.Column('rule_id', sa.String(length=36), nullable=False),
-        sa.Column('edge_id', sa.String(length=36), nullable=False),
-        sa.Column('rule_vseid', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['rule_id'], ['firewall_rules.id'], ),
-        sa.PrimaryKeyConstraint('rule_id', 'edge_id'))
-
-    op.create_table(
-        'vcns_edge_vip_bindings',
-        sa.Column('vip_id', sa.String(length=36), nullable=False),
-        sa.Column('edge_id', sa.String(length=36), nullable=True),
-        sa.Column('vip_vseid', sa.String(length=36), nullable=True),
-        sa.Column('app_profileid', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['vip_id'], ['vips.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('vip_id'))
-
-    op.create_table(
         'networkgateways',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
@@ -100,7 +65,8 @@ def upgrade():
 
     op.create_table(
         'networkconnections',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('network_gateway_id', sa.String(length=36), nullable=True),
         sa.Column('network_id', sa.String(length=36), nullable=True),
         sa.Column('segmentation_type', l2gw_segmentation_type, nullable=True),
@@ -117,7 +83,8 @@ def upgrade():
 
     op.create_table(
         'qosqueues',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('default', sa.Boolean(), nullable=True,
@@ -206,10 +173,6 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('neutron_id'),
     )
-    # Execute statement to a record in nsx_router_mappings for
-    # each record in routers
-    op.execute("INSERT INTO neutron_nsx_router_mappings SELECT id,id "
-               "from routers")
 
     op.create_table(
         'neutron_nsx_security_group_mappings',
@@ -218,10 +181,7 @@ def upgrade():
         sa.ForeignKeyConstraint(['neutron_id'], ['securitygroups.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('neutron_id', 'nsx_id'))
-    # Execute statement to add a record in security group mappings for
-    # each record in securitygroups
-    op.execute("INSERT INTO neutron_nsx_security_group_mappings SELECT id,id "
-               "from securitygroups")
+
     op.create_table(
         'networkgatewaydevicereferences',
         sa.Column('id', sa.String(length=36), nullable=False),
@@ -233,7 +193,8 @@ def upgrade():
 
     op.create_table(
         'networkgatewaydevices',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('nsx_id', sa.String(length=36), nullable=True),
         sa.Column('name', sa.String(length=255), nullable=True),

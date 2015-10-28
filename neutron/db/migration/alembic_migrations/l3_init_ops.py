@@ -42,7 +42,8 @@ def upgrade():
 
     op.create_table(
         'routers',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('status', sa.String(length=16), nullable=True),
@@ -55,7 +56,8 @@ def upgrade():
 
     op.create_table(
         'floatingips',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('floating_ip_address', sa.String(length=64), nullable=False),
         sa.Column('floating_network_id', sa.String(length=36), nullable=False),
@@ -66,7 +68,8 @@ def upgrade():
         sa.Column('last_known_router_id', sa.String(length=36), nullable=True),
         sa.Column('status', sa.String(length=16), nullable=True),
         sa.ForeignKeyConstraint(['fixed_port_id'], ['ports.id'], ),
-        sa.ForeignKeyConstraint(['floating_port_id'], ['ports.id'], ),
+        sa.ForeignKeyConstraint(['floating_port_id'], ['ports.id'],
+                                ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
         sa.PrimaryKeyConstraint('id'))
 

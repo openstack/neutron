@@ -22,6 +22,8 @@ segment_type = sa.Enum('vlan', 'overlay', 'trunk', 'multi-segment',
                        name='segment_type')
 profile_type = sa.Enum('network', 'policy', name='profile_type')
 
+network_profile_type = sa.Enum('vlan', 'vxlan', name='network_profile_type')
+
 
 def upgrade():
     op.create_table(
@@ -189,13 +191,14 @@ def upgrade():
 
     op.create_table(
         'cisco_ml2_apic_contracts',
-        sa.Column('tenant_id', sa.String(length=255)),
+        sa.Column('tenant_id', sa.String(length=255), index=True),
         sa.Column('router_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['router_id'], ['routers.id']),
         sa.PrimaryKeyConstraint('router_id'))
 
     op.create_table('cisco_hosting_devices',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('complementary_id', sa.String(length=36), nullable=True),
         sa.Column('device_id', sa.String(length=255), nullable=True),
@@ -234,4 +237,86 @@ def upgrade():
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('router_id')
+    )
+    op.create_table(
+        'cisco_ml2_n1kv_policy_profiles',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('vsm_ip', sa.String(length=16), nullable=False),
+        sa.PrimaryKeyConstraint('id', 'vsm_ip'),
+    )
+
+    op.create_table(
+        'cisco_ml2_n1kv_network_profiles',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('segment_type', network_profile_type, nullable=False),
+        sa.Column('segment_range', sa.String(length=255), nullable=True),
+        sa.Column('multicast_ip_index', sa.Integer(), nullable=True),
+        sa.Column('multicast_ip_range', sa.String(length=255), nullable=True),
+        sa.Column('sub_type', sa.String(length=255), nullable=True),
+        sa.Column('physical_network', sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint('id'),
+    )
+
+    op.create_table(
+        'cisco_ml2_n1kv_port_bindings',
+        sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.Column('profile_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('port_id'),
+    )
+
+    op.create_table(
+        'cisco_ml2_n1kv_network_bindings',
+        sa.Column('network_id', sa.String(length=36), nullable=False),
+        sa.Column('network_type', sa.String(length=32), nullable=False),
+        sa.Column('segmentation_id', sa.Integer(), autoincrement=False),
+        sa.Column('profile_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['profile_id'],
+                                ['cisco_ml2_n1kv_network_profiles.id']),
+        sa.PrimaryKeyConstraint('network_id')
+    )
+
+    op.create_table(
+        'cisco_ml2_n1kv_vxlan_allocations',
+        sa.Column('vxlan_id', sa.Integer(), autoincrement=False,
+                  nullable=False),
+        sa.Column('allocated', sa.Boolean(), nullable=False),
+        sa.Column('network_profile_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['network_profile_id'],
+                                ['cisco_ml2_n1kv_network_profiles.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('vxlan_id')
+    )
+
+    op.create_table(
+        'cisco_ml2_n1kv_vlan_allocations',
+        sa.Column('physical_network', sa.String(length=64), nullable=False),
+        sa.Column('vlan_id', sa.Integer(), autoincrement=False,
+                  nullable=False),
+        sa.Column('allocated', sa.Boolean(), autoincrement=False,
+                  nullable=False),
+        sa.Column('network_profile_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['network_profile_id'],
+                                ['cisco_ml2_n1kv_network_profiles.id'],
+                                ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('physical_network', 'vlan_id')
+    )
+    op.create_table(
+        'cisco_ml2_n1kv_profile_bindings',
+        sa.Column('profile_type', profile_type, nullable=True),
+        sa.Column('tenant_id', sa.String(length=36), nullable=False,
+                  server_default='tenant_id_not_set'),
+        sa.Column('profile_id', sa.String(length=36), nullable=False),
+        sa.PrimaryKeyConstraint('tenant_id', 'profile_id')
+    )
+    op.create_table(
+        'ml2_ucsm_port_profiles',
+        sa.Column('vlan_id', sa.Integer(), nullable=False),
+        sa.Column('profile_id', sa.String(length=64), nullable=False),
+        sa.Column('created_on_ucs', sa.Boolean(), nullable=False),
+        sa.PrimaryKeyConstraint('vlan_id')
     )

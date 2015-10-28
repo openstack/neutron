@@ -21,17 +21,21 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table(
         'networks',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('status', sa.String(length=16), nullable=True),
         sa.Column('admin_state_up', sa.Boolean(), nullable=True),
         sa.Column('shared', sa.Boolean(), nullable=True),
+        sa.Column('mtu', sa.Integer(), nullable=True),
+        sa.Column('vlan_transparent', sa.Boolean(), nullable=True),
         sa.PrimaryKeyConstraint('id'))
 
     op.create_table(
         'ports',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('network_id', sa.String(length=36), nullable=False),
@@ -40,12 +44,19 @@ def upgrade():
         sa.Column('status', sa.String(length=16), nullable=False),
         sa.Column('device_id', sa.String(length=255), nullable=False),
         sa.Column('device_owner', sa.String(length=255), nullable=False),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id'], ),
-        sa.PrimaryKeyConstraint('id'))
+        sa.ForeignKeyConstraint(['network_id'], ['networks.id']),
+        sa.UniqueConstraint('network_id', 'mac_address',
+                            name='uniq_ports0network_id0mac_address'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.Index(op.f('ix_ports_network_id_device_owner'), 'network_id',
+                 'device_owner'),
+        sa.Index(op.f('ix_ports_network_id_mac_address'), 'network_id',
+                 'mac_address'))
 
     op.create_table(
         'subnets',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('network_id', sa.String(length=36), nullable=True),
@@ -62,6 +73,8 @@ def upgrade():
                   sa.Enum('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless',
                           name='ipv6_address_modes'),
                   nullable=True),
+        sa.Column('subnetpool_id', sa.String(length=36), nullable=True,
+                  index=True),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'], ),
         sa.PrimaryKeyConstraint('id'))
 
@@ -112,7 +125,13 @@ def upgrade():
         sa.Column('last_ip', sa.String(length=64), nullable=False),
         sa.ForeignKeyConstraint(['allocation_pool_id'],
                                 ['ipallocationpools.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('allocation_pool_id', 'first_ip', 'last_ip'))
+        sa.PrimaryKeyConstraint('allocation_pool_id', 'first_ip', 'last_ip'),
+        sa.UniqueConstraint(
+            'first_ip', 'allocation_pool_id',
+            name='uniq_ipavailabilityranges0first_ip0allocation_pool_id'),
+        sa.UniqueConstraint(
+            'last_ip', 'allocation_pool_id',
+            name='uniq_ipavailabilityranges0last_ip0allocation_pool_id'))
 
     op.create_table(
         'networkdhcpagentbindings',
