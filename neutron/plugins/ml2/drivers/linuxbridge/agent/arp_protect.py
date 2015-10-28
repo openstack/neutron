@@ -56,7 +56,7 @@ def setup_arp_spoofing_protection(vif, port_details):
 
 
 def chain_name(vif):
-    # start each chain with a common identifer for cleanup to find
+    # start each chain with a common identifier for cleanup to find
     return '%s%s' % (SPOOF_CHAIN_PREFIX, vif)
 
 

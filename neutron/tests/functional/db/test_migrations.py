@@ -256,7 +256,7 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
             migration.do_alembic_command(self.alembic_config, 'upgrade',
                                          'heads')
             insp = sqlalchemy.engine.reflection.Inspector.from_engine(engine)
-            # Test that table creation on mysql only builds InnoDB tables
+            # Test that table creation on MySQL only builds InnoDB tables
             tables = insp.get_table_names()
             self.assertTrue(len(tables) > 0,
                             "No tables found. Wrong schema?")

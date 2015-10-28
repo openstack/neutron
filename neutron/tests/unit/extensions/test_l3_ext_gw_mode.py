@@ -130,7 +130,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.net_ext = external_net_db.ExternalNetwork(
             network_id=self.ext_net_id)
         self.context.session.add(self.network)
-        # The following is to avoid complains from sqlite on
+        # The following is to avoid complaints from SQLite on
         # foreign key violations
         self.context.session.flush()
         self.context.session.add(self.net_ext)

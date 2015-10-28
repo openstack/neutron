@@ -227,7 +227,7 @@ def delete_dvr_port_binding_if_stale(session, binding):
 
 
 def get_port(session, port_id):
-    """Get port record for update within transcation."""
+    """Get port record for update within transaction."""
 
     with session.begin(subtransactions=True):
         try:

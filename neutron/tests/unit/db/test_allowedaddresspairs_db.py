@@ -80,7 +80,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
             ret_port.update(port['port'])
 
             if (delete_addr_pairs or has_addr_pairs):
-                # delete address pairds and readd them
+                # delete address pairs and readd them
                 self._delete_allowed_address_pairs(context, id)
                 self._process_create_allowed_address_pairs(
                     context, ret_port,

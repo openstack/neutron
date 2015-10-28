@@ -221,7 +221,7 @@ class VoidConnection(object):
 
 # functions
 def create_connection(new=True):
-    # NOTE(salv-orlando): This is a clever interpreation of the factory design
+    # NOTE(salv-orlando): This is a clever interpretation of the factory design
     # patter aimed at preventing plugins from initializing RPC servers upon
     # initialization when they are running in the REST over HTTP API server.
     # The educated reader will perfectly be able that this a fairly dirty hack

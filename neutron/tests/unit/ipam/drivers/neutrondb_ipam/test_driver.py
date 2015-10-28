@@ -201,7 +201,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
 
 class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                               TestNeutronDbIpamMixin):
-    """Test case for Subnet interface for Nuetron's DB IPAM driver.
+    """Test case for Subnet interface for Neutron's DB IPAM driver.
 
     This test case exercises the reference IPAM driver.
     Even if it loads a plugin, the unit tests in this class do not exercise

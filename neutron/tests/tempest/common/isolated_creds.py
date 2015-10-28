@@ -297,7 +297,7 @@ class IsolatedCreds(cred_provider.CredentialProvider):
             new_index = str(roles) + '-' + str(len(self.isolated_creds))
             self.isolated_creds[new_index] = exist_creds
             del self.isolated_creds[str(roles)]
-            # Handle isolated neutron resouces if they exist too
+            # Handle isolated neutron resources if they exist too
             if CONF.service_available.neutron:
                 exist_net = self.isolated_net_resources.get(str(roles))
                 if exist_net:

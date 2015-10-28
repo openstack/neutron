@@ -742,7 +742,7 @@ class Controller(object):
             raise webob.exc.HTTPNotAcceptable(msg)
 
     def _deserialize(self, data, content_type):
-        """Deserialize the request body to the specefied content type.
+        """Deserialize the request body to the specified content type.
 
         Uses self._serialization_metadata if it exists, which is a dict mapping
         MIME types to information needed to serialize to that type.

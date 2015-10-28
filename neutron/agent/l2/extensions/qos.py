@@ -41,7 +41,7 @@ class QosAgentDriver(object):
     """
 
     # Each QoS driver should define the set of rule types that it supports, and
-    # correspoding handlers that has the following names:
+    # corresponding handlers that has the following names:
     #
     # create_<type>
     # update_<type>

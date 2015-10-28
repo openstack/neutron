@@ -109,7 +109,7 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id'))
     # Additional attribute for keeping track of the router where the floating
     # ip was associated in order to be able to ensure consistency even if an
-    # aysnchronous backend is unavailable when the floating IP is disassociated
+    # asynchronous backend is unavailable when the floating IP is disassociated
     last_known_router_id = sa.Column(sa.String(36))
     status = sa.Column(sa.String(16))
     router = orm.relationship(Router, backref='floating_ips')

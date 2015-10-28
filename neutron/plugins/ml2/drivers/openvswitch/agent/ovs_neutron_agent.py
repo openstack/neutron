@@ -556,7 +556,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 br.install_flood_to_tun(lvm.vlan, lvm.segmentation_id,
                                         lvm.tun_ofports)
             else:
-                # This local vlan doesn't require any more tunnelling
+                # This local vlan doesn't require any more tunneling
                 br.delete_flood_to_tun(lvm.vlan)
         else:
             self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan,
@@ -1297,7 +1297,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         self.tun_br_ofports[tunnel_type][remote_ip] = ofport
         # Add flow in default table to resubmit to the right
-        # tunnelling table (lvid will be set in the latter)
+        # tunneling table (lvid will be set in the latter)
         br.setup_tunnel_port(tunnel_type, ofport)
 
         ofports = self.tun_br_ofports[tunnel_type].values()

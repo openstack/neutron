@@ -253,11 +253,11 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             action='access_as_shared', target_tenant='*')['rbac_policy']
         self.admin_client.delete_rbac_policy(res['policy']['id'])
 
-        # now that wilcard is the only remainin, it should be subjected to
+        # now that wildcard is the only remaining, it should be subjected to
         # to the same restriction
         with testtools.ExpectedException(lib_exc.Conflict):
             self.admin_client.delete_rbac_policy(wild['id'])
-        # similarily, we can't update the policy to a different tenant
+        # similarly, we can't update the policy to a different tenant
         with testtools.ExpectedException(lib_exc.Conflict):
             self.admin_client.update_rbac_policy(
                 wild['id'], target_tenant=self.client2.tenant_id)

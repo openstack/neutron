@@ -96,7 +96,7 @@ class VPNaaSTestJSON(base.BaseAdminNetworkTest):
         Returns the tenant_id of the client current user
         """
         # TODO(jroovers) This is a temporary workaround to get the tenant_id
-        # of the the current client. Replace this once tenant_isolation for
+        # of the current client. Replace this once tenant_isolation for
         # neutron is fixed.
         body = self.client.show_network(self.network['id'])
         return body['network']['tenant_id']

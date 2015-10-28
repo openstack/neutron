@@ -152,7 +152,7 @@ class IpamSubnetManager(object):
 
     def create_range(self, session, allocation_pool_id,
                      range_start, range_end):
-        """Create an availabilty range for a given pool.
+        """Create an availability range for a given pool.
 
         This method does not perform any validation on parameters; it simply
         persist data on the database.

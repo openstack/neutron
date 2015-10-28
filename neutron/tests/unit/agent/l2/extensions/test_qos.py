@@ -154,7 +154,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
         qos_policy_id = port['qos_policy_id']
         port_id = port['port_id']
         self.qos_ext.handle_port(self.context, port)
-        # we make sure the underlaying qos driver is called with the
+        # we make sure the underlying qos driver is called with the
         # right parameters
         self.qos_ext.qos_driver.create.assert_called_once_with(
             port, TEST_POLICY)

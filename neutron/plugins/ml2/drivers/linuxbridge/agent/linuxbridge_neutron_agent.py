@@ -1030,7 +1030,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
     def scan_devices(self, previous, sync):
         device_info = {}
 
-        # Save and reinitialise the set variable that the port_update RPC uses.
+        # Save and reinitialize the set variable that the port_update RPC uses.
         # This should be thread-safe as the greenthread should not yield
         # between these two statements.
         updated_devices = self.updated_devices

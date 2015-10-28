@@ -31,7 +31,7 @@ get_rand_name = tests_base.get_rand_name
 
 
 # Regarding MRO, it goes BaseOVSLinuxTestCase, WithScenarios,
-# BaseSudoTestCase, ..., UnitTest, object. setUp is not dfined in
+# BaseSudoTestCase, ..., UnitTest, object. setUp is not defined in
 # WithScenarios, so it will correctly be found in BaseSudoTestCase.
 class BaseOVSLinuxTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
     scenarios = [

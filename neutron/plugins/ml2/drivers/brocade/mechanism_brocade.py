@@ -14,7 +14,7 @@
 #    under the License.
 
 
-"""Implentation of Brocade ML2 Mechanism driver for ML2 Plugin."""
+"""Implementation of Brocade ML2 Mechanism driver for ML2 Plugin."""
 
 from oslo_config import cfg
 

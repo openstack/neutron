@@ -197,7 +197,7 @@ class PrefixDelegation(object):
                                            router['ns_name'],
                                            'link')
             # There is a delay before the LLA becomes active.
-            # This is because the kernal runs DAD to make sure LLA uniqueness
+            # This is because the kernel runs DAD to make sure LLA uniqueness
             # Spawn a thread to wait for the interface to be ready
             self._spawn_lla_thread(router['gw_interface'],
                                    router['ns_name'],
