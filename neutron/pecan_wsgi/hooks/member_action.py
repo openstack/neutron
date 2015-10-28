@@ -27,6 +27,7 @@ class MemberActionHook(hooks.PecanHook):
     def before(self, state):
         # TODO(salv-orlando): This hook must go. Handling actions like this is
         # shameful
+        state.request.member_action = None
         resource = state.request.context.get('resource')
         if not resource:
             return
