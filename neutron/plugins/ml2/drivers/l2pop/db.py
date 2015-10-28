@@ -71,8 +71,10 @@ class L2populationDbMixin(base_db.CommonDbMixin):
 
     def get_nondvr_active_network_ports(self, session, network_id):
         query = self._get_active_network_ports(session, network_id)
-        return query.filter(models_v2.Port.device_owner !=
-                            const.DEVICE_OWNER_DVR_INTERFACE)
+        query = query.filter(models_v2.Port.device_owner !=
+                             const.DEVICE_OWNER_DVR_INTERFACE)
+        return [(bind, agent) for bind, agent in query.all()
+                if self.get_agent_ip(agent)]
 
     def get_dvr_active_network_ports(self, session, network_id):
         with session.begin(subtransactions=True):
@@ -87,7 +89,8 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                  const.PORT_STATUS_ACTIVE,
                                  models_v2.Port.device_owner ==
                                  const.DEVICE_OWNER_DVR_INTERFACE)
-            return query
+        return [(bind, agent) for bind, agent in query.all()
+                if self.get_agent_ip(agent)]
 
     def get_agent_network_active_port_count(self, session, agent_host,
                                             network_id):
