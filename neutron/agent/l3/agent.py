@@ -461,6 +461,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     # processing queue (like events from fullsync) in order to
                     # prevent deleted router re-creation
                     rp.fetched_and_processed(update.timestamp)
+                LOG.debug("Finished a router update for %s", update.id)
                 continue
 
             try:
