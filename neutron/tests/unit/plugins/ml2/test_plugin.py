@@ -55,6 +55,7 @@ from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.db import test_allowedaddresspairs_db as test_pair
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.unit.db import test_ipam_pluggable_backend as test_ipam
 from neutron.tests.unit.extensions import test_extra_dhcp_opt as test_dhcpopts
 from neutron.tests.unit.plugins.ml2.drivers import mechanism_logger as \
      mech_logger
@@ -1617,6 +1618,29 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                         self.assertTrue(port_post.called)
                         port = self._show('ports', port_id)
                         self.assertEqual(new_name, port['port']['name'])
+
+
+class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
+    def test_create_subnet_delete_subnet_call_ipam_driver(self):
+        driver = 'neutron.ipam.drivers.neutrondb_ipam.driver.NeutronDbPool'
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        with mock.patch(driver) as driver_mock:
+            request = mock.Mock()
+            request.subnet_id = uuidutils.generate_uuid()
+            request.subnet_cidr = cidr
+            request.allocation_pools = []
+            request.gateway_ip = gateway_ip
+            request.tenant_id = uuidutils.generate_uuid()
+
+            ipam_subnet = mock.Mock()
+            ipam_subnet.get_details.return_value = request
+            driver_mock().allocate_subnet.return_value = ipam_subnet
+
+            self._test_create_subnet(gateway_ip=gateway_ip, cidr=cidr)
+
+            driver_mock().allocate_subnet.assert_called_with(mock.ANY)
+            driver_mock().remove_subnet.assert_called_with(request.subnet_id)
 
 
 class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):

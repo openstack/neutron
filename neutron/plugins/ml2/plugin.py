@@ -938,6 +938,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     LOG.debug("Deleting subnet record")
                     session.delete(record)
 
+                    # The super(Ml2Plugin, self).delete_subnet() is not called,
+                    # so need to manually call delete_subnet for pluggable ipam
+                    self.ipam.delete_subnet(context, id)
+
                     LOG.debug("Committing transaction")
                     break
 
