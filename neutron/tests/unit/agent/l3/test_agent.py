@@ -184,6 +184,16 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Make sure the exceptional code path has coverage
         agent.enqueue_state_change(non_existent_router, 'master')
 
+    def test_enqueue_state_change_metadata_disable(self):
+        self.conf.set_override('enable_metadata_proxy', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = mock.Mock()
+        router_info = mock.MagicMock()
+        agent.router_info[router.id] = router_info
+        agent._update_metadata_proxy = mock.Mock()
+        agent.enqueue_state_change(router.id, 'master')
+        self.assertFalse(agent._update_metadata_proxy.call_count)
+
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_routers.side_effect = ValueError
