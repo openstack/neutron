@@ -166,13 +166,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 mock.patch.object(agent.sg_agent,
                                   "remove_devices_filter") as fn_rdf:
             fn_udd.side_effect = Exception()
-            with mock.patch.object(linuxbridge_neutron_agent.LOG,
-                                   'debug') as log:
-                resync = agent.treat_devices_removed(devices)
-                self.assertEqual(2, log.call_count)
-                self.assertTrue(resync)
-                self.assertTrue(fn_udd.called)
-                self.assertTrue(fn_rdf.called)
+            resync = agent.treat_devices_removed(devices)
+            self.assertTrue(resync)
+            self.assertTrue(fn_udd.called)
+            self.assertTrue(fn_rdf.called)
 
     def _test_scan_devices(self, previous, updated,
                            fake_current, expected, sync):
