@@ -155,7 +155,8 @@ class SriovNicSwitchAgent(object):
         mgr.initialize(connection, 'sriov')
         return mgr
 
-    def setup_eswitch_mgr(self, device_mappings, exclude_devices={}):
+    def setup_eswitch_mgr(self, device_mappings, exclude_devices=None):
+        exclude_devices = exclude_devices or {}
         self.eswitch_mgr = esm.ESwitchManager()
         self.eswitch_mgr.discover_devices(device_mappings, exclude_devices)
 

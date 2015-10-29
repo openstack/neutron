@@ -353,7 +353,8 @@ class L3NatTestCaseMixin(object):
 
     def _add_external_gateway_to_router(self, router_id, network_id,
                                         expected_code=exc.HTTPOk.code,
-                                        neutron_context=None, ext_ips=[]):
+                                        neutron_context=None, ext_ips=None):
+        ext_ips = ext_ips or []
         body = {'router':
                 {'external_gateway_info': {'network_id': network_id}}}
         if ext_ips:

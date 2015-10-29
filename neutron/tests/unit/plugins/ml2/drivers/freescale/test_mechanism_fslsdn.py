@@ -221,7 +221,8 @@ class TestFslSdnMechanismDriver(base.BaseTestCase):
         return FakeContext(subnet)
 
     def _get_port_context(self, tenant_id, net_id, port_id,
-                          fixed_ips=[]):
+                          fixed_ips=None):
+        fixed_ips = fixed_ips or []
         # sample data for testing purpose only
         port = {'device_id': '1234',
                 'name': 'FakePort',

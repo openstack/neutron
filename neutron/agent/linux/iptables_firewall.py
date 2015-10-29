@@ -128,7 +128,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     self.devices_with_udpated_sg_members[sg_id].append(device)
 
     def security_group_updated(self, action_type, sec_group_ids,
-                               device_ids=[]):
+                               device_ids=None):
+        device_ids = device_ids or []
         if action_type == 'sg_rule':
             self.updated_rule_sg_ids.update(sec_group_ids)
         elif action_type == 'sg_member':

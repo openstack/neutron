@@ -213,8 +213,9 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                                    network)
 
     def get_ports(self, context, filters=None, fields=None,
-                  sorts=[], limit=None, marker=None,
+                  sorts=None, limit=None, marker=None,
                   page_reverse=False):
+        sorts = sorts or []
         neutron_lports = super(SecurityGroupTestPlugin, self).get_ports(
             context, filters, sorts=sorts, limit=limit, marker=marker,
             page_reverse=page_reverse)

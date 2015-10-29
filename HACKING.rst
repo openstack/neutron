@@ -18,6 +18,7 @@ Neutron Specific Commandments
 - [N326] Python 3: do not use basestring.
 - [N327] Python 3: do not use dict.iteritems.
 - [N328] Detect wrong usage with assertEqual
+- [N329] Method's default argument shouldn't be mutable
 
 Creating Unit Tests
 -------------------

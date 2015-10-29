@@ -39,7 +39,8 @@ class StubExtension(object):
 
 class StubPlugin(object):
 
-    def __init__(self, supported_extensions=[]):
+    def __init__(self, supported_extensions=None):
+        supported_extensions = supported_extensions or []
         self.supported_extension_aliases = supported_extensions
 
 
