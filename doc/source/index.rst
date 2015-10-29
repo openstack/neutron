@@ -47,6 +47,14 @@ Neutron Policies
 
    policies/index
 
+Neutron Stadium
+===============
+
+.. toctree::
+   :maxdepth: 1
+
+   stadium/index
+
 Developer Docs
 ==============
 
