@@ -148,8 +148,8 @@ To release a sub-project, follow the following steps:
   setup.cfg.
 * A member of neutron-release will then `tag the release
   <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_,
-  which will release the code to PyPi.
-* The releases will now be on PyPi. A sub-project owner should verify this by
+  which will release the code to PyPI.
+* The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
   `this <https://pypi.python.org/pypi/networking-odl>`_.
 * A sub-project owner should next go to Launchpad and release this version

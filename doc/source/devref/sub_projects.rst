@@ -246,7 +246,7 @@ DragonFlow
 
 * Git: https://git.openstack.org/cgit/openstack/dragonflow
 * Launchpad: https://launchpad.net/dragonflow
-* PyPi: https://pypi.python.org/pypi/DragonFlow
+* PyPI: https://pypi.python.org/pypi/DragonFlow
 
 .. _networking-edge-vpn:
 
@@ -272,7 +272,7 @@ Hyper-V
 
 * Git: https://git.openstack.org/cgit/openstack/networking-hyperv
 * Launchpad: https://launchpad.net/networking-hyperv
-* PyPi: https://pypi.python.org/pypi/networking-hyperv
+* PyPI: https://pypi.python.org/pypi/networking-hyperv
 
 .. _kuryr:
 
