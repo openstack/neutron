@@ -1,4 +1,0 @@
-The Neutron Mellanox plugin has been removed from the tree in Kilo.
-This directory includes Mellanox L2 agent for MLNX mechanism driver.
-For more details, please refer to the following link:
-https://wiki.openstack.org/wiki/Mellanox-Neutron-ML2
