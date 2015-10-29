@@ -62,6 +62,7 @@ BRIDGE_NAME_PREFIX = "brq"
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
 # devices are listed here (i.e. when using Xen)
 BRIDGE_FS = "/sys/class/net/"
+BRIDGE_INTERFACE_FS = BRIDGE_FS + "%(bridge)s/brif/%(interface)s"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
 VXLAN_INTERFACE_PREFIX = "vxlan-"
@@ -119,12 +120,10 @@ class LinuxBridgeManager(object):
             sys.exit(1)
         return device
 
-    def interface_exists_on_bridge(self, bridge, interface):
-        directory = '/sys/class/net/%s/brif' % bridge
-        for filename in os.listdir(directory):
-            if filename == interface:
-                return True
-        return False
+    @staticmethod
+    def interface_exists_on_bridge(bridge, interface):
+        return os.path.exists(
+            BRIDGE_INTERFACE_FS % {'bridge': bridge, 'interface': interface})
 
     def get_existing_bridge_name(self, physical_network):
         if not physical_network:

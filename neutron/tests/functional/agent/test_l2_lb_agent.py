@@ -19,6 +19,7 @@ import testtools
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent
+from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import test_ip_lib
 
 LOG = logging.getLogger(__name__)
@@ -33,6 +34,13 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
         mock.patch(agent_rpc).start()
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
         cfg.CONF.set_override('enable_vxlan', False, 'VXLAN')
+
+    def create_bridge_port_fixture(self):
+        bridge = self.useFixture(
+            net_helpers.LinuxBridgeFixture(namespace=None)).bridge
+        port_fixture = self.useFixture(
+            net_helpers.LinuxBridgePortFixture(bridge))
+        return port_fixture
 
     def test_validate_interface_mappings(self):
         mappings = {'physnet1': 'int1', 'physnet2': 'int2'}
@@ -56,3 +64,15 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
             self.generate_device_details()._replace(namespace=None,
                                                     name='br-eth1'))
         lba.LinuxBridgeManager(mappings, {})
+
+    def test_interface_exists_on_bridge(self):
+        port_fixture = self.create_bridge_port_fixture()
+        self.assertTrue(
+            lba.LinuxBridgeManager.interface_exists_on_bridge(
+                port_fixture.bridge.name, port_fixture.br_port.name))
+
+    def test_interface_exists_not_on_bridge(self):
+        port_fixture = self.create_bridge_port_fixture()
+        self.assertFalse(
+            lba.LinuxBridgeManager.interface_exists_on_bridge(
+                port_fixture.bridge.name, port_fixture.port.name))

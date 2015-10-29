@@ -399,8 +399,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             exit.assert_called_once_with(1)
 
     def test_interface_exists_on_bridge(self):
-        with mock.patch.object(os, 'listdir') as listdir_fn:
-            listdir_fn.return_value = ["abc"]
+        with mock.patch.object(os.path, 'exists') as exists_fn:
+            exists_fn.side_effect = (
+                lambda p: p == '/sys/class/net/br-int/brif/abc')
             self.assertTrue(
                 self.lbm.interface_exists_on_bridge("br-int", "abc")
             )
