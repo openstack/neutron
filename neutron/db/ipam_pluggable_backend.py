@@ -284,7 +284,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                 changes.remove)
         if to_add:
             added = self._ipam_allocate_ips(context, ipam_driver,
-                                            changes, to_add)
+                                            port, to_add)
         return self.Changes(add=added,
                             original=changes.original,
                             remove=removed)
