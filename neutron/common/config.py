@@ -69,7 +69,9 @@ core_opts = [
                help=_("Maximum number of host routes per subnet")),
     cfg.IntOpt('max_fixed_ips_per_port', default=5,
                deprecated_for_removal=True,
-               help=_("Maximum number of fixed ips per port")),
+               help=_("Maximum number of fixed ips per port. This option "
+                      "is deprecated and will be removed in the N "
+                      "release.")),
     cfg.StrOpt('default_ipv4_subnet_pool', default=None,
                help=_("Default IPv4 subnet-pool to be used for automatic "
                       "subnet CIDR allocation")),
