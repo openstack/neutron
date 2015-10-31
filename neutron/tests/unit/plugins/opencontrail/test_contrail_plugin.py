@@ -221,6 +221,12 @@ class TestContrailSubnetsV2(test_plugin.TestSubnetsV2,
     def test_delete_subnet_dhcp_port_associated_with_other_subnets(self):
         self.skipTest("There is no dhcp port in contrail")
 
+    def test_update_subnet_from_gw_to_no_gw(self):
+        self.skipTest("There is no empty gateway support in contrail")
+
+    def test_update_subnet_from_no_gw_to_no_gw(self):
+        self.skipTest("There is no empty gateway support in contrail")
+
     def _helper_test_validate_subnet(self, option, exception):
         cfg.CONF.set_override(option, 0)
         with self.network() as network:
