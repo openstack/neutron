@@ -577,7 +577,7 @@ class Dnsmasq(DhcpLocalProcess):
             # Even with an infinite lease, a client may choose to renew a
             # previous lease on reboot or interface bounce so we should have
             # an entry for it.
-            # Dnsmasq timestamp format for an infinite lease is  is 0.
+            # Dnsmasq timestamp format for an infinite lease is 0.
             timestamp = 0
         else:
             timestamp = int(time.time()) + self.conf.dhcp_lease_duration

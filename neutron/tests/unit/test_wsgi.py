@@ -38,7 +38,7 @@ TEST_VAR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 def open_no_proxy(*args, **kwargs):
     # NOTE(jamespage):
-    # Deal with more secure certification chain verficiation
+    # Deal with more secure certification chain verification
     # introduced in python 2.7.9 under PEP-0476
     # https://github.com/python/peps/blob/master/pep-0476.txt
     if hasattr(ssl, "_create_unverified_context"):

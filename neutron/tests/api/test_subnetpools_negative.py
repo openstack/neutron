@@ -251,7 +251,7 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
 
         self.addCleanup(self.client.delete_subnetpool, pool_id_2)
 
-        # now update the pool_id_1 with the prefix interesecting with
+        # now update the pool_id_1 with the prefix intersecting with
         # pool_id_2
         subnetpool_data = {'subnetpool': {'prefixes':
                                           pool_1_updated_prefixes}}

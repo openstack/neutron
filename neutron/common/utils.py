@@ -327,7 +327,7 @@ def get_random_string(length):
 
 def get_dhcp_agent_device_id(network_id, host):
     # Split host so as to always use only the hostname and
-    # not the domain name. This will guarantee consistentcy
+    # not the domain name. This will guarantee consistency
     # whether a local hostname or an fqdn is passed in.
     local_hostname = host.split('.')[0]
     host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))

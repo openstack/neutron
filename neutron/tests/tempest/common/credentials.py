@@ -45,7 +45,7 @@ def get_isolated_credentials(name, network_resources=None,
 
 # We want a helper function here to check and see if admin credentials
 # are available so we can do a single call from skip_checks if admin
-# creds area vailable.
+# creds are available.
 def is_admin_available():
     is_admin = True
     # If tenant isolation is enabled admin will be available

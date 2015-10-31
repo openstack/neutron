@@ -35,7 +35,7 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
     def test_list_agent(self):
         body = self.admin_client.list_agents()
         agents = body['agents']
-        # Hearthbeats must be excluded from comparison
+        # Heartbeats must be excluded from comparison
         self.agent.pop('heartbeat_timestamp', None)
         self.agent.pop('configurations', None)
         for agent in agents:

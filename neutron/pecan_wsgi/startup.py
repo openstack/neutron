@@ -104,7 +104,7 @@ def initialize_all():
     # NOTE(salv-orlando): If you are care about code quality, please read below
     # Hackiness is strong with the piece of code below. It is used for
     # populating resource plurals and registering resources with the quota
-    # engine, but the method it calls were not coinceived with this aim.
+    # engine, but the method it calls were not conceived with this aim.
     # Therefore it only leverages side-effects from those methods. Moreover,
     # as it is really not advisable to load an instance of
     # neutron.api.v2.router.APIRouter just to register resources with the

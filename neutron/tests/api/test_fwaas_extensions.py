@@ -331,7 +331,7 @@ class FWaaSExtensionTestJSON(base.BaseNetworkTest):
         self.client.insert_firewall_rule_in_policy(
             fw_policy_id, fw_rule_id2, fw_rule_id1, '')
 
-        # Verify the posiition of rule after insertion
+        # Verify the position of rule after insertion
         fw_rule = self.client.show_firewall_rule(
             fw_rule_id2)
 
@@ -342,7 +342,7 @@ class FWaaSExtensionTestJSON(base.BaseNetworkTest):
         # Insert rule to firewall policy before the first rule
         self.client.insert_firewall_rule_in_policy(
             fw_policy_id, fw_rule_id2, '', fw_rule_id1)
-        # Verify the posiition of rule after insertion
+        # Verify the position of rule after insertion
         fw_rule = self.client.show_firewall_rule(
             fw_rule_id2)
         self.assertEqual(int(fw_rule['firewall_rule']['position']), 1)
@@ -380,7 +380,7 @@ class FWaaSExtensionTestJSON(base.BaseNetworkTest):
         fw_policy_id = body['firewall_policy']['id']
         self.addCleanup(self._try_delete_policy, fw_policy_id)
         self.assertFalse(body['firewall_policy']['audited'])
-        # Update firewall policy audited attribute to ture
+        # Update firewall policy audited attribute to true
         self.client.update_firewall_policy(fw_policy_id,
                                            audited=True)
         # Insert Firewall rule to firewall policy

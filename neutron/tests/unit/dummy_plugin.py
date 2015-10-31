@@ -80,7 +80,7 @@ class Dummy(object):
 
 
 class DummyServicePlugin(service_base.ServicePluginBase):
-    """This is a simple plugin for managing instantes of a fictional 'dummy'
+    """This is a simple plugin for managing instances of a fictional 'dummy'
         service. This plugin is provided as a proof-of-concept of how
         advanced service might leverage the service type extension.
         Ideally, instances of real advanced services, such as load balancing

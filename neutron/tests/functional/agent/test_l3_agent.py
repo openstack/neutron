@@ -565,7 +565,7 @@ class L3AgentTestCase(L3AgentTestFramework):
         # clear agent router_info as it will be after restart
         self.agent.router_info = {}
 
-        # Synchonize the agent with the plug-in
+        # Synchronize the agent with the plug-in
         with mock.patch.object(namespace_manager.NamespaceManager, 'list_all',
                                return_value=ns_names_to_retrieve):
             self.agent.periodic_sync_routers_task(self.agent.context)
@@ -1402,7 +1402,7 @@ class TestDvrRouter(L3AgentTestFramework):
 
     def test_dvr_router_add_internal_network_set_arp_cache(self):
         # Check that, when the router is set up and there are
-        # existing ports on the the uplinked subnet, the ARP
+        # existing ports on the uplinked subnet, the ARP
         # cache is properly populated.
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = l3_test_common.prepare_router_data()

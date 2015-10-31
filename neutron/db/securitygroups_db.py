@@ -636,7 +636,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             **kwargs)
 
     def _extend_port_dict_security_group(self, port_res, port_db):
-        # Security group bindings will be retrieved from the sqlalchemy
+        # Security group bindings will be retrieved from the SQLAlchemy
         # model. As they're loaded eagerly with ports because of the
         # joined load they will not cause an extra query.
         security_group_ids = [sec_group_mapping['security_group_id'] for

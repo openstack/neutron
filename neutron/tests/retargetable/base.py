@@ -60,7 +60,7 @@ def get_plugin_scenarios():
 def get_scenarios():
     if rest_enabled():
         # FIXME(marun) Remove local import once tempest config is safe
-        # to import alonside neutron config
+        # to import alongside neutron config
         from neutron.tests.retargetable import rest_fixture
         return [('tempest', {'client': rest_fixture.RestClientFixture()})]
     else:

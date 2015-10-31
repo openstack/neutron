@@ -320,7 +320,7 @@ class IpRuleCommand(IpCommandBase):
 
     @staticmethod
     def _make_canonical(ip_version, settings):
-        """Converts settings to a canonical represention to compare easily"""
+        """Converts settings to a canonical representation to compare easily"""
         def canonicalize_fwmark_string(fwmark_mask):
             """Reformats fwmark/mask in to a canonical form
 

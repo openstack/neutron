@@ -29,7 +29,7 @@ class QuotaEnforcementHook(hooks.PecanHook):
     priority = 130
 
     def before(self, state):
-        # TODO(salv-orlando): This hook must go when adaptin the pecan code to
+        # TODO(salv-orlando): This hook must go when adapting the pecan code to
         # use reservations.
         if state.request.method != 'POST':
             return

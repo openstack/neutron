@@ -175,10 +175,10 @@ class ConfDriver(object):
         return quota_api.ReservationInfo('fake', None, None, None)
 
     def commit_reservation(self, context, reservation_id):
-        """Tnis is a noop as this driver does not support reservations."""
+        """This is a noop as this driver does not support reservations."""
 
     def cancel_reservation(self, context, reservation_id):
-        """Tnis is a noop as this driver does not support reservations."""
+        """This is a noop as this driver does not support reservations."""
 
 
 class QuotaEngine(object):

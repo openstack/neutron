@@ -15,7 +15,7 @@
 #
 
 
-"""Implentation of Brocade SVI service Plugin."""
+"""Implementation of Brocade SVI service Plugin."""
 
 from oslo_config import cfg
 

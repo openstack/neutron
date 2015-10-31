@@ -34,7 +34,7 @@ cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
 # that subnet
 class LocalDVRSubnetMapping(object):
     def __init__(self, subnet, csnat_ofport=constants.OFPORT_INVALID):
-        # set of commpute ports on on this dvr subnet
+        # set of compute ports on this dvr subnet
         self.compute_ports = {}
         self.subnet = subnet
         self.csnat_ofport = csnat_ofport

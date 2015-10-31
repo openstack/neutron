@@ -118,7 +118,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         self.api = router.APIRouter()
-        # Set the defualt status
+        # Set the default status
         self.net_create_status = 'ACTIVE'
         self.port_create_status = 'ACTIVE'
 

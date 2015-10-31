@@ -81,7 +81,7 @@ class ExtensionPathTest(base.BaseTestCase):
                          '%s:neutron/tests/unit/extensions' % self.base_path)
 
     def test_get_extensions_path_no_extensions(self):
-        # Reset to default value, as it's overriden by base class
+        # Reset to default value, as it's overridden by base class
         cfg.CONF.set_override('api_extensions_path', '')
         path = extensions.get_extensions_path()
         self.assertEqual(path, self.base_path)

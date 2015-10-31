@@ -327,7 +327,7 @@ class NetcatTester(object):
             address=self.address)
         if self.protocol == self.UDP:
             # Create an ASSURED entry in conntrack table for UDP packets,
-            # that requires 3-way communcation
+            # that requires 3-way communication
             # 1st transmission creates UNREPLIED
             # 2nd transmission removes UNREPLIED
             # 3rd transmission creates ASSURED

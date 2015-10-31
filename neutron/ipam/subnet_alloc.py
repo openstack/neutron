@@ -58,7 +58,7 @@ class SubnetAllocator(driver.Pool):
 
         # NOTE(cbrandily): the update disallows 2 concurrent subnet allocation
         # to succeed: at most 1 transaction will succeed, others will be
-        # rollbacked and be caught in neutron.db.v2.base
+        # rolled back and be caught in neutron.db.v2.base
         query = self._context.session.query(models_v2.SubnetPool).filter_by(
             id=self._subnetpool['id'], hash=current_hash)
         count = query.update({'hash': new_hash})

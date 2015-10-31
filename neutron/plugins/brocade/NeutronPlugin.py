@@ -17,7 +17,7 @@
 # TODO(shiv) need support for security groups
 
 
-"""Implentation of Brocade Neutron Plugin."""
+"""Implementation of Brocade Neutron Plugin."""
 
 from oslo_config import cfg
 from oslo_log import log as logging
