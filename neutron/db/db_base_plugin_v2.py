@@ -734,13 +734,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             s['allocation_pools'] = range_pools
 
         # If either gateway_ip or allocation_pools were specified
-        new_gateway_ip = s.get('gateway_ip')
-        gateway_ip_changed = (new_gateway_ip and
-                              new_gateway_ip != db_subnet.gateway_ip)
+        gateway_ip = s.get('gateway_ip', db_subnet.gateway_ip)
+        gateway_ip_changed = gateway_ip != db_subnet.gateway_ip
         if gateway_ip_changed or s.get('allocation_pools') is not None:
-            gateway_ip = new_gateway_ip or db_subnet.gateway_ip
             pools = range_pools if range_pools is not None else db_pools
-            self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
+            if gateway_ip:
+                self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
 
         if gateway_ip_changed:
             # Provide pre-update notification not to break plugins that don't

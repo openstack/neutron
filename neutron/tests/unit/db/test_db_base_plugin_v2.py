@@ -4754,6 +4754,37 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(data['subnet']['host_routes'],
                              res['subnet']['host_routes'])
 
+    def _test_update_subnet(self, old_gw=None, new_gw=None,
+                            check_gateway=False):
+        allocation_pools = [{'start': '192.168.0.16', 'end': '192.168.0.254'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip=old_gw,
+                             allocation_pools=allocation_pools,
+                             cidr='192.168.0.0/24') as subnet:
+                data = {
+                    'subnet': {
+                        'allocation_pools': [
+                            {'start': '192.168.0.10', 'end': '192.168.0.20'},
+                            {'start': '192.168.0.30', 'end': '192.168.0.40'}],
+                        'gateway_ip': new_gw}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(200, res.status_code)
+                self._verify_updated_subnet_allocation_pools(
+                    res, with_gateway_ip=check_gateway)
+
+    def test_update_subnet_from_no_gw_to_no_gw(self):
+        self._test_update_subnet()
+
+    def test_update_subnet_from_gw_to_no_gw(self):
+        self._test_update_subnet(old_gw='192.168.0.15')
+
+    def test_update_subnet_from_gw_to_new_gw(self):
+        self._test_update_subnet(old_gw='192.168.0.15',
+                                 new_gw='192.168.0.9', check_gateway=True)
+
     def test_update_subnet_route_with_too_many_entries(self):
         with self.subnet() as subnet:
             data = {'subnet': {'host_routes': [
