@@ -6,31 +6,31 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.0.dev347.g23e9734\n"
+"Project-Id-Version: neutron 7.0.1.dev41\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-09-24 20:52+0200\n"
+"POT-Creation-Date: 2015-11-01 06:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0\n"
+"Generated-By: Babel 2.1.1\n"
 
-#: neutron/manager.py:77
+#: neutron/manager.py:78
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
 msgstr ""
 
-#: neutron/manager.py:89
+#: neutron/manager.py:90
 msgid "Neutron core_plugin not configured!"
 msgstr ""
 
-#: neutron/manager.py:140 neutron/manager.py:152
+#: neutron/manager.py:141 neutron/manager.py:156
 msgid "Plugin not found."
 msgstr ""
 
-#: neutron/manager.py:200
+#: neutron/manager.py:204
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
@@ -246,16 +246,16 @@ msgstr ""
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:494
+#: neutron/agent/common/ovs_lib.py:496
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:632
+#: neutron/agent/common/ovs_lib.py:634
 msgid "Cannot match priority on flow deletion or modification"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:637
+#: neutron/agent/common/ovs_lib.py:639
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 
@@ -479,7 +479,7 @@ msgid "Group (gid or name) running this process after its initialization"
 msgstr ""
 
 #: neutron/agent/l3/keepalived_state_change.py:122
-#: neutron/agent/metadata/namespace_proxy.py:156
+#: neutron/agent/metadata/namespace_proxy.py:157
 #: neutron/tests/functional/agent/l3/test_keepalived_state_change.py:31
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
@@ -564,7 +564,7 @@ msgstr ""
 msgid "ip link capability %(capability)s is not supported"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:212
+#: neutron/agent/linux/iptables_manager.py:214
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
@@ -613,7 +613,7 @@ msgstr ""
 msgid "Location to store IPv6 RA config files"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:141
+#: neutron/agent/linux/utils.py:140
 #, python-format
 msgid ""
 "\n"
@@ -621,7 +621,7 @@ msgid ""
 "Exit code: %(code)d\n"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:152
+#: neutron/agent/linux/utils.py:151
 #, python-format
 msgid ""
 "Stdin: %(stdin)s\n"
@@ -630,7 +630,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/metadata/agent.py:122
-#: neutron/agent/metadata/namespace_proxy.py:58
+#: neutron/agent/metadata/namespace_proxy.py:59
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
@@ -641,12 +641,12 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/metadata/agent.py:262
-#: neutron/agent/metadata/namespace_proxy.py:104
+#: neutron/agent/metadata/namespace_proxy.py:105
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
 #: neutron/agent/metadata/agent.py:269
-#: neutron/agent/metadata/namespace_proxy.py:111
+#: neutron/agent/metadata/namespace_proxy.py:112
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
@@ -767,36 +767,36 @@ msgstr ""
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:140
+#: neutron/agent/metadata/namespace_proxy.py:141
 msgid "Network that will have instance metadata proxied."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:143
+#: neutron/agent/metadata/namespace_proxy.py:144
 msgid "Router that will have connected instances' metadata proxied."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:146
+#: neutron/agent/metadata/namespace_proxy.py:147
 #: neutron/tests/functional/agent/linux/simple_daemon.py:42
 msgid "Location of pid file of this process."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:149
+#: neutron/agent/metadata/namespace_proxy.py:150
 msgid "Run as daemon."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:152
+#: neutron/agent/metadata/namespace_proxy.py:153
 msgid "TCP Port to listen for metadata server requests."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:160
+#: neutron/agent/metadata/namespace_proxy.py:161
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:164
+#: neutron/agent/metadata/namespace_proxy.py:165
 msgid "Group (gid or name) running metadata proxy after its initialization"
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:168
+#: neutron/agent/metadata/namespace_proxy.py:169
 msgid ""
 "Watch file log. Log watch should be disabled when "
 "metadata_proxy_user/group has no read/write permissions on metadata proxy"
@@ -807,7 +807,7 @@ msgstr ""
 msgid "The interface for interacting with the OVSDB"
 msgstr ""
 
-#: neutron/agent/ovsdb/impl_idl.py:34
+#: neutron/agent/ovsdb/impl_idl.py:33
 msgid "The connection string for the native OVSDB backend"
 msgstr ""
 
@@ -1993,7 +1993,7 @@ msgstr ""
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/common/utils.py:433
+#: neutron/common/utils.py:434
 msgid "Illegal IP version number"
 msgstr ""
 
@@ -2477,7 +2477,7 @@ msgstr ""
 msgid "cannot be deleted due to %s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:673
+#: neutron/db/securitygroups_db.py:678
 msgid "Default security group"
 msgstr ""
 
@@ -2498,117 +2498,117 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
-#: neutron/db/migration/__init__.py:51
+#: neutron/db/migration/__init__.py:58
 #, python-format
 msgid "%s cannot be called while in offline mode"
 msgstr ""
 
-#: neutron/db/migration/cli.py:55
+#: neutron/db/migration/cli.py:56
 msgid "Neutron plugin provider module"
 msgstr ""
 
-#: neutron/db/migration/cli.py:58
+#: neutron/db/migration/cli.py:59
 msgid ""
 "(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
 "service to execute the command against."
 msgstr ""
 
-#: neutron/db/migration/cli.py:63
+#: neutron/db/migration/cli.py:64
 #, python-format
 msgid "The subproject to execute the command against. Can be one of: '%s'."
 msgstr ""
 
-#: neutron/db/migration/cli.py:68
+#: neutron/db/migration/cli.py:69
 msgid "Enforce using split branches file structure."
 msgstr ""
 
-#: neutron/db/migration/cli.py:74
+#: neutron/db/migration/cli.py:75
 msgid "Neutron quota driver class"
 msgstr ""
 
-#: neutron/db/migration/cli.py:82
+#: neutron/db/migration/cli.py:83
 msgid "URL to database"
 msgstr ""
 
-#: neutron/db/migration/cli.py:85
+#: neutron/db/migration/cli.py:86
 msgid "Database engine"
 msgstr ""
 
-#: neutron/db/migration/cli.py:101
+#: neutron/db/migration/cli.py:102
 #, python-format
 msgid "Running %(cmd)s (%(desc)s) for %(project)s ..."
 msgstr ""
 
-#: neutron/db/migration/cli.py:104
+#: neutron/db/migration/cli.py:105
 #, python-format
 msgid "Running %(cmd)s for %(project)s ..."
 msgstr ""
 
-#: neutron/db/migration/cli.py:110
+#: neutron/db/migration/cli.py:111
 msgid "OK"
 msgstr ""
 
-#: neutron/db/migration/cli.py:115
+#: neutron/db/migration/cli.py:116
 #, python-format
 msgid "Sub-project %s not installed."
 msgstr ""
 
-#: neutron/db/migration/cli.py:134
+#: neutron/db/migration/cli.py:147
 msgid "Phase upgrade options do not accept revision specification"
 msgstr ""
 
-#: neutron/db/migration/cli.py:146
+#: neutron/db/migration/cli.py:159
 msgid "You must provide a revision or relative delta"
 msgstr ""
 
-#: neutron/db/migration/cli.py:151
+#: neutron/db/migration/cli.py:164
 msgid "Negative relative revision (downgrade) not supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:157
+#: neutron/db/migration/cli.py:170
 msgid "Use either --delta or relative revision, not both"
 msgstr ""
 
-#: neutron/db/migration/cli.py:160
+#: neutron/db/migration/cli.py:173
 msgid "Negative delta (downgrade) not supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:175
+#: neutron/db/migration/cli.py:194
 msgid "Downgrade no longer supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:226
+#: neutron/db/migration/cli.py:245
 #, python-format
 msgid ""
 "Release aware branch labels (%s) are deprecated. Please switch to expand@"
 " and contract@ labels."
 msgstr ""
 
-#: neutron/db/migration/cli.py:233
+#: neutron/db/migration/cli.py:252
 #, python-format
 msgid "Unexpected label for script %(script_name)s: %(labels)s"
 msgstr ""
 
-#: neutron/db/migration/cli.py:290
+#: neutron/db/migration/cli.py:309
 #, python-format
 msgid "HEADS file does not match migration timeline heads, expected: %s"
 msgstr ""
 
-#: neutron/db/migration/cli.py:350
+#: neutron/db/migration/cli.py:369
 msgid "Available commands"
 msgstr ""
 
-#: neutron/db/migration/cli.py:366
+#: neutron/db/migration/cli.py:385
 #, python-format
 msgid "Failed to locate source for %s."
 msgstr ""
 
-#: neutron/db/migration/cli.py:438
+#: neutron/db/migration/cli.py:457
 #, python-format
 msgid "Package %s not installed"
 msgstr ""
 
-#: neutron/db/migration/cli.py:527
+#: neutron/db/migration/cli.py:546
 msgid "Cannot specify both --service and --subproject."
 msgstr ""
 
@@ -3308,7 +3308,7 @@ msgid "An unexpected exception was caught: %s"
 msgstr ""
 
 #: neutron/pecan_wsgi/hooks/translation.py:38
-msgid "An unexpected internal error occured."
+msgid "An unexpected internal error occurred."
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:61
@@ -3953,23 +3953,23 @@ msgstr ""
 msgid "Unable to retrieve port details for devices: %(devices)s "
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1825
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1842
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1839
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1856
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1861
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1878
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1864
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1881
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -4439,8 +4439,8 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr ""
 
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:846
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:880
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:860
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:894
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
@@ -4494,9 +4494,9 @@ msgid ""
 "network %(network)s with segments to bind %(segments_to_bind)s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1217
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1236
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1255
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1230
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1249
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1268
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""

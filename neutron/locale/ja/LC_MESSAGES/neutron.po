@@ -12,14 +12,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.1.dev1\n"
+"Project-Id-Version: neutron 7.0.1.dev41\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-19 06:10+0000\n"
-"PO-Revision-Date: 2015-10-08 03:43+0000\n"
+"POT-Creation-Date: 2015-11-01 06:12+0000\n"
+"PO-Revision-Date: 2015-10-24 12:14+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
-"Language-Team: Japanese (http://www.transifex.com/openstack/neutron/language/"
-"ja/)\n"
+"Language-Team: Japanese\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -149,11 +148,11 @@ msgstr ""
 
 #, python-format
 msgid "'%(host)s' is not a valid nameserver. %(msg)s"
-msgstr "'%(host)s' は有効なネーム・サーバーではありません。%(msg)s"
+msgstr "'%(host)s' は有効なネームサーバーではありません。%(msg)s"
 
 #, python-format
 msgid "'%s' Blank strings are not permitted"
-msgstr "'%s' ブランク・ストリングは許可されていません"
+msgstr "'%s' ブランクストリングは許可されていません"
 
 #, python-format
 msgid "'%s' cannot be converted to boolean"
@@ -554,8 +553,17 @@ msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s"
 msgstr "変更によって、次のリソースの使用量が 0 未満になります: %(unders)s"
 
+msgid "Check for ARP header match support"
+msgstr "ARP ヘッダーマッチのサポートを検査します"
+
 msgid "Check for ARP responder support"
 msgstr "ARP 応答側サポートを検査します"
+
+msgid "Check for ICMPv6 header match support"
+msgstr "ICMPv6 ヘッダーマッチのサポートを検査します"
+
+msgid "Check for OVS Geneve support"
+msgstr "OVS Geneve サポートを検査します"
 
 msgid "Check for OVS vxlan support"
 msgstr "OVS vxlan サポートを検査します"
@@ -570,7 +578,7 @@ msgid "Check for nova notification support"
 msgstr "Nova 通知サポートを検査します"
 
 msgid "Check for patch port support"
-msgstr "パッチ・ポート・サポートを検査します"
+msgstr "patch port の対応状況を検査します"
 
 msgid "Check minimal dnsmasq version"
 msgstr "最小 dnsmasq バージョンを検査します"
@@ -579,7 +587,7 @@ msgid "Check netns permission settings"
 msgstr "netns 許可設定を検査します"
 
 msgid "Check ovsdb native interface support"
-msgstr "ovsdb ネイティブ・インターフェース・サポートの検査"
+msgstr "ovsdb ネイティブインターフェースのサポートを検査します"
 
 #, python-format
 msgid ""
@@ -800,10 +808,10 @@ msgstr "リスト内で重複する項目: '%s'"
 
 #, python-format
 msgid "Duplicate nameserver '%s'"
-msgstr "重複するネーム・サーバー '%s'"
+msgstr "重複するネームサーバー '%s'"
 
 msgid "Duplicate segment entry in request."
-msgstr "重複するセグメント・エントリーが要求に含まれています。"
+msgstr "重複するセグメントエントリーが要求に含まれています。"
 
 msgid ""
 "Dva can't be found to execute the operation, probably was cancelled through "
@@ -922,11 +930,11 @@ msgid ""
 "metadata_proxy_user: watch log is enabled if metadata_proxy_user is agent "
 "effective user id/name."
 msgstr ""
-"メタデータ・プロキシーによるログ監視を有効/無効にします。metadata_proxy_user/"
-"group がログ・ファイルの読み取り/書き込みを許可されていない場合は無効にする必"
-"要があり、logrotate がメタデータ・プロキシー・ログ・ファイルで有効になってい"
-"る場合は copytruncate logrotate オプションを使用する必要があります。オプショ"
-"ンのデフォルト値は metadata_proxy_user から推測されます。監視ログは、"
+"メタデータプロキシーによるログ監視を有効/無効にします。metadata_proxy_user/"
+"group がログファイルの読み取り/書き込みを許可されていない場合は無効にする必要"
+"があり、logrotate がメタデータプロキシーのログファイルで有効になっている場合"
+"は copytruncate logrotate オプションを使用する必要があります。オプションのデ"
+"フォルト値は metadata_proxy_user から推測されます。監視ログは、"
 "metadata_proxy_user がエージェント有効ユーザーの ID または名前である場合に有"
 "効になります。"
 
@@ -1148,15 +1156,14 @@ msgid "Gateway is not valid on subnet"
 msgstr "ゲートウェイがサブネット上で無効です"
 
 msgid "Group (gid or name) running metadata proxy after its initialization"
-msgstr ""
-"メタデータ・プロキシーを初期化後に実行しているグループ (gid または名前)"
+msgstr "メタデータプロキシーを初期化後に実行しているグループ (gid または名前)"
 
 msgid ""
 "Group (gid or name) running metadata proxy after its initialization (if "
 "empty: agent effective group)."
 msgstr ""
-"初期化後にメタデータ・プロキシーを実行しているグループ (gid または名前) (空の"
-"場合: エージェント有効グループ)。"
+"初期化後にメタデータプロキシーを実行しているグループ (gid または名前) (空の場"
+"合: エージェント有効グループ)。"
 
 msgid "Group (gid or name) running this process after its initialization"
 msgstr "初期化後にこのプロセスを実行するグループ (gid または名前)"
@@ -1226,7 +1233,7 @@ msgstr ""
 "ません。"
 
 msgid "IP address used by Nova metadata server."
-msgstr "Nova メタデータ・サーバーによって使用される IP アドレス。"
+msgstr "Nova メタデータサーバーによって使用される IP アドレス。"
 
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 割り振りでは subnet_id または ip_address が必要です"
@@ -1381,7 +1388,7 @@ msgstr "ホスト経路に無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
-msgstr "ネーム・サーバーに無効なデータ形式: '%s'"
+msgstr "ネームサーバーに無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid extension environment: %(reason)s"
@@ -1555,7 +1562,7 @@ msgid "Local IP address of tunnel endpoint."
 msgstr "トンネル・エンドポイントのローカル IP アドレス。"
 
 msgid "Location for Metadata Proxy UNIX domain socket."
-msgstr "メタデータ・プロキシー UNIX ドメイン・ソケットのロケーション"
+msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション"
 
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr "メタデータプロキシー UNIX ドメインソケットの場所"
@@ -1777,10 +1784,10 @@ msgstr ""
 
 msgid "Network service endpoint type to pull from the keystone catalog"
 msgstr ""
-"鍵ストア・カタログからプルするネットワーク・サービス・エンドポイント・タイプ"
+"keystone カタログから取得するネットワークサービスのエンドポイントタイプ"
 
 msgid "Network that will have instance metadata proxied."
-msgstr "インスタンス・メタデータがプロキシー処理されるネットワーク。"
+msgstr "インスタンスメタデータがプロキシー処理されるネットワーク。"
 
 #, python-format
 msgid ""
@@ -1871,7 +1878,7 @@ msgid "Number of RPC worker processes for service"
 msgstr "サービスの RPC ワーカプロセスの数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
-msgstr "メタデータ・サーバーソケットの構成に使用されるバックログ要求の数"
+msgstr "メタデータサーバーソケットの構成に使用されるバックログ要求の数"
 
 #, fuzzy
 msgid "Number of backlog requests to configure the socket with"
@@ -2139,7 +2146,7 @@ msgid "Region name for connecting to CRD Service in admin context."
 msgstr "管理コンテキストでの CRD サービスへの接続用領域名。"
 
 msgid "Remote metadata server experienced an internal server error."
-msgstr "リモート・メタデータ・サーバーで内部サーバー・エラーが発生しました。"
+msgstr "リモートのメタデータサーバーで内部サーバーエラーが発生しました。"
 
 msgid ""
 "Representing the resource type whose load is being reported by the agent. "
@@ -2163,7 +2170,7 @@ msgstr ""
 "に構成することができます。例: dhcp_load_type=networks"
 
 msgid "Request Failed: internal server error while processing your request."
-msgstr "要求が失敗しました。要求の処理中に内部サーバー・エラーが発生しました。"
+msgstr "要求が失敗しました。要求の処理中に内部サーバーエラーが発生しました。"
 
 #, python-format
 msgid ""
@@ -2250,16 +2257,16 @@ msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
 "deleted, as it is required by one or more floating IPs."
 msgstr ""
-"ルーター %(router_id)s 上のサブネット %(subnet_id)s のルーター・インター"
-"フェースは、1 つ以上の浮動 IP で必要なため削除できません。"
+"ルーター %(router_id)s 上のサブネット %(subnet_id)s のルーターインターフェー"
+"スは、1 つ以上の浮動 IP で必要なため削除できません。"
 
 #, python-format
 msgid ""
 "Router interface for subnet %(subnet_id)s on router %(router_id)s cannot be "
 "deleted, as it is required by one or more routes."
 msgstr ""
-"ルーター %(router_id)s 上のサブネット %(subnet_id)s のルーター・インター"
-"フェースは、1 つ以上のルートで必要なため削除できません。"
+"ルーター %(router_id)s 上のサブネット %(subnet_id)s のルーターインターフェー"
+"スは、1 つ以上のルートで必要なため削除できません。"
 
 msgid "Router that will have connected instances' metadata proxied."
 msgstr "接続済みインスタンスのメタデータがプロキシー処理されるルーター。"
@@ -2431,13 +2438,13 @@ msgstr ""
 "理者のみがオーバーライドできます。"
 
 msgid "TCP Port to listen for metadata server requests."
-msgstr "メタデータ・サーバー要求を listen するための TCP ポート。"
+msgstr "メタデータサーバー要求を listen するための TCP ポート。"
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr "Neutron メタデータ名前空間プロキシーが使用する TCP Port"
 
 msgid "TCP Port used by Nova metadata server."
-msgstr "Nova メタデータ・サーバーによって使用される TCP ポート。"
+msgstr "Nova メタデータサーバーによって使用される TCP ポート。"
 
 #, python-format
 msgid "TLD '%s' must not be all numeric"
@@ -2691,12 +2698,12 @@ msgid ""
 "host deployments, e.g. devstack)"
 msgstr ""
 "エージェントの処理モード。許可されるモードは次のとおりです。「既存」 - この"
-"モードは、L3 エージェントを中央ネットワーキング・ノードにデプロイして L3 サー"
-"ビス (DNAT や SNAT など) を提供する、既存の動作を保持します。DVR を採用しない"
-"場合、このモードを使用します。「dvr」- このモードは、DVR 機能を有効にします。"
-"計算ホスト上で実行される L3 エージェントの場合、このモードを使用する必要があ"
-"ります。「dvr_snat」- このモードは、DVR とともに中央 SNAT サポートを有効にし"
-"ます。中央ノード (または devstack などの単一ホスト・デプロイメント) 上で実行"
+"モードは、L3 エージェントを中央ネットワーキングノードにデプロイして L3 サービ"
+"ス (DNAT や SNAT など) を提供する、既存の動作を保持します。DVR を採用しない場"
+"合、このモードを使用します。「dvr」- このモードは、DVR 機能を有効にします。計"
+"算ホスト上で実行される L3 エージェントの場合、このモードを使用する必要があり"
+"ます。「dvr_snat」- このモードは、DVR とともに中央 SNAT サポートを有効にしま"
+"す。中央ノード (または devstack などの単一ホストでのデプロイメント) 上で実行"
 "中の L3 の場合、このモードを使用する必要があります。"
 
 #, fuzzy
@@ -2726,7 +2733,7 @@ msgid ""
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
 "すべての OpenvSwitch ブリッジですべてのポートを削除する場合は True。統合およ"
-"び外部ネットワーク・ブリッジで Neutron によって作成されたポートを削除する場合"
+"び外部ネットワークブリッジで Neutron によって作成されたポートを削除する場合"
 "は False。"
 
 msgid "Tunnel IP value needed by the ML2 plugin"
@@ -3050,15 +3057,14 @@ msgstr ""
 "使用してください。"
 
 msgid "User (uid or name) running metadata proxy after its initialization"
-msgstr ""
-"メタデータ・プロキシーを初期化後に実行しているユーザー (uid または名前)"
+msgstr "メタデータプロキシーを初期化後に実行しているユーザー (uid または名前)"
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "
 "empty: agent effective user)."
 msgstr ""
-"初期化後にメタデータ・プロキシーを実行しているユーザー (uid または名前) (空の"
-"場合: エージェント有効ユーザー)。"
+"初期化後にメタデータプロキシーを実行しているユーザー (uid または名前) (空の場"
+"合: エージェント有効ユーザー)。"
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "初期化後にこのプロセスを実行するユーザー (uid または名前)"
@@ -3112,9 +3118,9 @@ msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
 "has no read/write permissions on metadata proxy log file."
 msgstr ""
-"ファイル・ログを監視します。metadata_proxy_user/group にメタデータ・プロキ"
-"シー・ログ・ファイルに対する読み取り/書き込み許可がない場合は、ログ監視を無効"
-"にする必要があります。"
+"ファイルログを監視します。metadata_proxy_user/group にメタデータプロキシーの"
+"ログファイルに対する読み取り/書き込み許可がない場合は、ログ監視を無効にする必"
+"要があります。"
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "
@@ -3208,7 +3214,7 @@ msgstr "ip リンク機能 %(capability)s はサポートされていません"
 
 #, python-format
 msgid "ip link command is not supported: %(reason)s"
-msgstr "ip リンク・コマンドはサポートされていません: %(reason)s"
+msgstr "ip link コマンドはサポートされていません: %(reason)s"
 
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr "cidr および subnetpool_id がない場合、ip_version の指定は必須です"
