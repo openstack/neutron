@@ -14,9 +14,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev130\n"
+"Project-Id-Version: neutron 8.0.0.dev185\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-23 06:11+0000\n"
+"POT-Creation-Date: 2015-11-01 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: zh_Hans_CN\n"
@@ -1351,9 +1351,6 @@ msgstr "将对其调度路由器的最大代理数。"
 
 msgid "Maximum number of allowed address pairs"
 msgstr "允许的最大地址对数"
-
-msgid "Maximum number of fixed ips per port"
-msgstr "每个端口的最大固定 IP 数"
 
 msgid "Maximum number of host routes per subnet"
 msgstr "每个子网的最大主机路由数"

@@ -8,9 +8,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev130\n"
+"Project-Id-Version: neutron 8.0.0.dev185\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-23 06:11+0000\n"
+"POT-Creation-Date: 2015-11-01 06:11+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: de\n"
@@ -1475,9 +1475,6 @@ msgstr "Maximale Anzahl an Agenten, für die ein Router geplant wird."
 
 msgid "Maximum number of allowed address pairs"
 msgstr "Maximale Anzahl an zulässigen Adresspaaren"
-
-msgid "Maximum number of fixed ips per port"
-msgstr "Maximale Anzahl an statischen IP-Adressen per Port"
 
 msgid "Maximum number of host routes per subnet"
 msgstr "Maximale Anzahl an Hostroutes pro Teilnetz"
