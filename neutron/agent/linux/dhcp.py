@@ -96,6 +96,9 @@ class DictModel(dict):
     def __delattr__(self, name):
         del self[name]
 
+    def __str__(self):
+        return ("id=" + self.id + ", network_id=" + self.network_id)
+
 
 class NetModel(DictModel):
 

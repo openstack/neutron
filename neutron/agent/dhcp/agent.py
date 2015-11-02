@@ -328,6 +328,8 @@ class DhcpAgent(manager.Manager):
         updated_port = dhcp.DictModel(payload['port'])
         network = self.cache.get_network_by_id(updated_port.network_id)
         if network:
+            LOG.info(_LI("Trigger reload_allocations for port %s"),
+                     updated_port)
             driver_action = 'reload_allocations'
             if self._is_port_on_this_agent(updated_port):
                 orig = self.cache.get_port_by_id(updated_port['id'])
