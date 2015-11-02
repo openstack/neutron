@@ -46,11 +46,11 @@ class IpsetManager(object):
         sanitized_addresses = []
         for ip in addresses:
             ip = netaddr.IPNetwork(ip)
-            if (ip.prefixlen == 0):
-                if(ip.version == 4):
+            if ip.prefixlen == 0:
+                if ip.version == 4:
                     sanitized_addresses.append('0.0.0.0/1')
                     sanitized_addresses.append('128.0.0.0/1')
-                elif (ip.version == 6):
+                elif ip.version == 6:
                     sanitized_addresses.append('::/1')
                     sanitized_addresses.append('8000::/1')
             else:
