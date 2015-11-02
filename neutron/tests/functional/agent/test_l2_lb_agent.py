@@ -76,3 +76,15 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
         self.assertFalse(
             lba.LinuxBridgeManager.interface_exists_on_bridge(
                 port_fixture.bridge.name, port_fixture.port.name))
+
+    def test_get_bridge_for_tap_device(self):
+        port_fixture = self.create_bridge_port_fixture()
+        mappings = {'physnet1': port_fixture.bridge.name}
+        lbm = lba.LinuxBridgeManager(mappings, {})
+        self.assertEqual(
+            port_fixture.bridge.name,
+            lbm.get_bridge_for_tap_device(port_fixture.br_port.name))
+
+    def test_get_no_bridge_for_tap_device(self):
+        lbm = lba.LinuxBridgeManager({}, {})
+        self.assertIsNone(lbm.get_bridge_for_tap_device('fake'))
