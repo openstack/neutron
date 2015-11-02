@@ -195,3 +195,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                 LOG.error(_LE("The SNAT namespace %s does not exist for "
                               "the router."), ns_name)
         super(DvrEdgeRouter, self).update_routing_table(operation, route)
+
+    def delete(self, agent):
+        super(DvrEdgeRouter, self).delete(agent)
+        if self.snat_namespace:
+            self.snat_namespace.delete()

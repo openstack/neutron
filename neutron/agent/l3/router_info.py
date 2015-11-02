@@ -265,7 +265,7 @@ class RouterInfo(object):
         self.router['gw_port'] = None
         self.router[l3_constants.INTERFACE_KEY] = []
         self.router[l3_constants.FLOATINGIP_KEY] = []
-        self.process(agent)
+        self.process_delete(agent)
         self.disable_radvd()
         if self.router_namespace:
             self.router_namespace.delete()
@@ -661,6 +661,27 @@ class RouterInfo(object):
                              self.iptables_manager,
                              interface_name)
 
+    def _process_external_on_delete(self, agent):
+        fip_statuses = {}
+        existing_floating_ips = self.floating_ips
+        try:
+            ex_gw_port = self.get_ex_gw_port()
+            self._process_external_gateway(ex_gw_port, agent.pd)
+            if not ex_gw_port:
+                return
+
+            interface_name = self.get_external_device_interface_name(
+                ex_gw_port)
+            fip_statuses = self.configure_fip_addresses(interface_name)
+
+        except (n_exc.FloatingIpSetupException) as e:
+                # All floating IPs must be put in error state
+                LOG.exception(e)
+                fip_statuses = self.put_fips_in_error_state()
+        finally:
+            agent.update_fip_statuses(
+                self, existing_floating_ips, fip_statuses)
+
     def process_external(self, agent):
         fip_statuses = {}
         existing_floating_ips = self.floating_ips
@@ -688,6 +709,22 @@ class RouterInfo(object):
         finally:
             agent.update_fip_statuses(
                 self, existing_floating_ips, fip_statuses)
+
+    @common_utils.exception_logger()
+    def process_delete(self, agent):
+        """Process the delete of this router
+
+        This method is the point where the agent requests that this router
+        be deleted. This is a separate code path from process in that it
+        avoids any changes to the qrouter namespace that will be removed
+        at the end of the operation.
+
+        :param agent: Passes the agent in order to send RPC messages.
+        """
+        LOG.debug("process router delete")
+        self._process_internal_ports(agent.pd)
+        agent.pd.sync_router(self.router['id'])
+        self._process_external_on_delete(agent)
 
     @common_utils.exception_logger()
     def process(self, agent):
