@@ -48,3 +48,15 @@ class OVSvAppAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return agent['configurations'].get('bridge_mappings', {})
+
+    def delete_network_postcommit(self, context):
+        self.ovsvapp_driver.delete_network_postcommit(context)
+
+    def create_port_postcommit(self, context):
+        self.ovsvapp_driver.create_port_postcommit(context)
+
+    def update_port_postcommit(self, context):
+        self.ovsvapp_driver.update_port_postcommit(context)
+
+    def delete_port_postcommit(self, context):
+        self.ovsvapp_driver.delete_port_postcommit(context)
