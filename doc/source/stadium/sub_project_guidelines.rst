@@ -148,13 +148,13 @@ Sub-Project Release Process
 
 Only members of the `neutron-release
 <https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can do
-releases. Make sure you talk to a member of neutron-release to perform your
-release.
+releases. The same group can create stable branches. Make sure you talk to
+a member of neutron-release to perform your release.
 
 To release a sub-project, follow the following steps:
 
 * First, follow the process found `here <http://docs.openstack.org/developer/neutron/policies/bugs.html#plugin-and-driver-repositories>`_
-  for creating a bug for your release.
+  for creating a bug for your release and/or stable branch creation.
 * For projects which have not moved to post-versioning, we need to push an
   alpha tag to avoid pbr complaining. A member of the neutron-release group
   will handle this.
