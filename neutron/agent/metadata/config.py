@@ -36,7 +36,6 @@ SHARED_OPTS = [
 
 DRIVER_OPTS = [
     cfg.BoolOpt('metadata_proxy_watch_log',
-                default=None,
                 help=_("Enable/Disable log watch by metadata proxy. It "
                        "should be disabled when metadata_proxy_user/group "
                        "is not allowed to read/write its log file and "

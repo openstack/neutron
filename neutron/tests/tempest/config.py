@@ -73,7 +73,6 @@ IdentityGroup = [
                 default=False,
                 help="Set to True if using self-signed SSL certificates."),
     cfg.StrOpt('ca_certificates_file',
-               default=None,
                help='Specify a CA bundle file to use in verifying a '
                     'TLS (https) server certificate.'),
     cfg.StrOpt('uri',
