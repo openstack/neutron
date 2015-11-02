@@ -19,3 +19,17 @@ ss_filter: CommandFilter, ss, root
 
 # enable neutron-linuxbridge-cleanup from namespace
 lb_cleanup_filter: RegExpFilter, neutron-linuxbridge-cleanup, root, neutron-linuxbridge-cleanup, --config-file, .*
+
+# enable dhclient from namespace
+dhclient_filter: CommandFilter, dhclient, root
+dhclient_kill: KillFilter, root, dhclient, -9
+
+# Actually, dhclient is used for test dhcp-agent and runs
+# in dhcp-agent namespace. If in that namespace resolv.conf file not exist
+# dhclient will override system /etc/resolv.conf
+# Filters below are limit functions mkdir, rm and touch
+# only to create and delete file resolv.conf in the that namespace
+mkdir_filter: RegExpFilter, /bin/mkdir, root, mkdir, -p, /etc/netns/qdhcp-[0-9a-z./-]+
+rm_filter: RegExpFilter, /bin/rm, root, rm, -r, /etc/netns/qdhcp-[0-9a-z./-]+
+touch_filter: RegExpFilter, /bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
+touch_filter: RegExpFilter, /usr/bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
