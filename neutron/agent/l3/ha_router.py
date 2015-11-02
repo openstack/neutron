@@ -385,8 +385,8 @@ class HaRouter(router.RouterInfo):
         self.ha_network_removed()
         self.disable_keepalived()
 
-    def process(self, agent):
-        super(HaRouter, self).process(agent)
+    def process(self, agent, delete=False):
+        super(HaRouter, self).process(agent, delete)
 
         if self.ha_port:
             self.enable_keepalived()
