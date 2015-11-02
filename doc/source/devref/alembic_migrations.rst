@@ -312,6 +312,19 @@ following directive should be added in the contraction script::
     depends_on = ('<expansion-revision>',)
 
 
+HEAD files for conflict management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In directory ``neutron/db/migration/alembic_migrations/versions`` there are two
+files, ``CONTRACT_HEAD`` and ``EXPAND_HEAD``. These files contain the ID of the
+head revision in each branch. The purpose of these files is to validate the
+revision timelines and prevent non-linear changes from entering the merge queue.
+
+When you create a new migration script by neutron-db-manage these files will be
+updated automatically. But if another migration script is merged while your
+change is under review, you will need to resolve the conflict manually by
+changing the ``down_revision`` in your migration script.
+
 Applying database migration rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
