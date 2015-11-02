@@ -121,9 +121,9 @@ class SubnetRequest(object):
 class AnySubnetRequest(SubnetRequest):
     """A template for allocating an unspecified subnet from IPAM
 
-    A driver may not implement this type of request.  For example, The initial
-    reference implementation will not support this.  The API has no way of
-    creating a subnet without a specific address until subnet-allocation is
+    Support for this type of request in a driver is optional. For example, the
+    initial reference implementation will not support this.  The API has no way
+    of creating a subnet without a specific address until subnet-allocation is
     implemented.
     """
     WILDCARDS = {constants.IPv4: '0.0.0.0',
