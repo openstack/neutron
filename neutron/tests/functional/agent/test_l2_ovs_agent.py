@@ -16,6 +16,7 @@
 
 import time
 
+from eventlet.timeout import Timeout
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
@@ -104,6 +105,20 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             while not done():
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
+
+    def test_noresync_after_port_gone(self):
+        '''This will test the scenario where a port is removed after listing
+        it but before getting vif info about it.
+        '''
+        self.ports = self.create_test_ports(amount=2)
+        self.agent = self.create_agent(create_tunnels=False)
+        self.network = self._create_test_network_dict()
+        self._plug_ports(self.network, self.ports, self.agent)
+        self.start_agent(self.agent, unplug_ports=[self.ports[1]])
+        self.wait_until_ports_state([self.ports[0]], up=True)
+        self.assertRaises(
+            Timeout, self.wait_until_ports_state, [self.ports[1]], up=True,
+            timeout=10)
 
 
 class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):
