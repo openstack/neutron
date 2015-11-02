@@ -242,24 +242,23 @@ class TestOvsNeutronAgent(object):
     def _test_restore_local_vlan_maps(self, tag, segmentation_id='1'):
         port = mock.Mock()
         port.port_name = 'fake_port'
-        local_vlan_map = {'net_uuid': 'fake_network_id',
+        net_uuid = 'fake_network_id'
+        local_vlan_map = {'net_uuid': net_uuid,
                           'network_type': 'vlan',
                           'physical_network': 'fake_network'}
         if segmentation_id is not None:
             local_vlan_map['segmentation_id'] = segmentation_id
-        with mock.patch.object(self.agent, 'int_br') as int_br, \
-            mock.patch.object(self.agent, 'provision_local_vlan') as \
-                provision_local_vlan:
+        with mock.patch.object(self.agent, 'int_br') as int_br:
             int_br.get_vif_ports.return_value = [port]
             int_br.get_ports_attributes.return_value = [{
                 'name': port.port_name, 'other_config': local_vlan_map,
                 'tag': tag
             }]
             self.agent._restore_local_vlan_map()
+            expected_hints = {}
             if tag:
-                self.assertTrue(provision_local_vlan.called)
-            else:
-                self.assertFalse(provision_local_vlan.called)
+                expected_hints[net_uuid] = tag
+            self.assertEqual(expected_hints, self.agent._local_vlan_hints)
 
     def test_restore_local_vlan_map_with_device_has_tag(self):
         self._test_restore_local_vlan_maps(2)
