@@ -1220,7 +1220,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self, expected_status=webob.exc.HTTPOk.code,
             expected_error='StateInvalid', subnet=None,
             device_owner=DEVICE_OWNER_COMPUTE, updated_fixed_ips=None,
-            host_arg={}, arg_list=[]):
+            host_arg=None, arg_list=None):
+        host_arg = host_arg or {}
+        arg_list = arg_list or []
         with self.port(device_owner=device_owner, subnet=subnet,
                        arg_list=arg_list, **host_arg) as port:
             self.assertIn('mac_address', port['port'])

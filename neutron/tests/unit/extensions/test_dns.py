@@ -151,9 +151,12 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             self._verify_dns_assigment(res['port'],
                                        ips_list=['10.0.0.2'])
 
-    def _verify_dns_assigment(self, port, ips_list=[], exp_ips_ipv4=0,
-                              exp_ips_ipv6=0, ipv4_cidrs=[], ipv6_cidrs=[],
+    def _verify_dns_assigment(self, port, ips_list=None, exp_ips_ipv4=0,
+                              exp_ips_ipv6=0, ipv4_cidrs=None, ipv6_cidrs=None,
                               dns_name=''):
+        ips_list = ips_list or []
+        ipv4_cidrs = ipv4_cidrs or []
+        ipv6_cidrs = ipv6_cidrs or []
         self.assertEqual(port['dns_name'], dns_name)
         dns_assignment = port['dns_assignment']
         if ips_list:

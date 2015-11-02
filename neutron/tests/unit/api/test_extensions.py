@@ -51,7 +51,8 @@ extensions_path = ':'.join(neutron.tests.unit.extensions.__path__)
 
 class ExtensionsTestApp(base_wsgi.Router):
 
-    def __init__(self, options={}):
+    def __init__(self, options=None):
+        options = options or {}
         mapper = routes.Mapper()
         controller = ext_stubs.StubBaseAppController()
         mapper.resource("dummy_resource", "/dummy_resources",

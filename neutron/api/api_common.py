@@ -29,7 +29,7 @@ from neutron.i18n import _LW
 LOG = logging.getLogger(__name__)
 
 
-def get_filters(request, attr_info, skips=[]):
+def get_filters(request, attr_info, skips=None):
     """Extracts the filters from the request string.
 
     Returns a dict of lists for the filters:
@@ -37,6 +37,7 @@ def get_filters(request, attr_info, skips=[]):
     becomes:
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
+    skips = skips or []
     res = {}
     for key, values in six.iteritems(request.GET.dict_of_lists()):
         if key in skips:

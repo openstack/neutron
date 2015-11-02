@@ -146,7 +146,8 @@ class APIv2TestCase(APIv2TestBase):
         fields.extend(policy_attrs)
         return fields
 
-    def _get_collection_kwargs(self, skipargs=[], **kwargs):
+    def _get_collection_kwargs(self, skipargs=None, **kwargs):
+        skipargs = skipargs or []
         args_list = ['filters', 'fields', 'sorts', 'limit', 'marker',
                      'page_reverse']
         args_dict = dict(

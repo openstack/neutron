@@ -361,9 +361,9 @@ class TestOVSInterfaceDriver(TestBase):
                                          'aa:bb:cc:dd:ee:ff',
                                          internal=True)
 
-    def _test_plug(self, additional_expectation=[], bridge=None,
+    def _test_plug(self, additional_expectation=None, bridge=None,
                    namespace=None):
-
+        additional_expectation = additional_expectation or []
         if not bridge:
             bridge = 'br-int'
 

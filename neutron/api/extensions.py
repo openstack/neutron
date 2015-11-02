@@ -641,7 +641,10 @@ class ResourceExtension(object):
     """Add top level resources to the OpenStack API in Neutron."""
 
     def __init__(self, collection, controller, parent=None, path_prefix="",
-                 collection_actions={}, member_actions={}, attr_map={}):
+                 collection_actions=None, member_actions=None, attr_map=None):
+        collection_actions = collection_actions or {}
+        member_actions = member_actions or {}
+        attr_map = attr_map or {}
         self.collection = collection
         self.controller = controller
         self.parent = parent
