@@ -425,6 +425,7 @@ class TestOvsNeutronAgent(object):
         devices_up = ['tap1']
         devices_down = ['tap2']
         self.agent.local_vlan_map["net1"] = mock.Mock()
+        self.agent.local_vlan_map["net1"].vlan = "1"
         ovs_db_list = [{'name': 'tap1', 'tag': []},
                        {'name': 'tap2', 'tag': []}]
         vif_port1 = mock.Mock()
@@ -451,6 +452,10 @@ class TestOvsNeutronAgent(object):
             update_devices.assert_called_once_with(mock.ANY, devices_up,
                                                    devices_down,
                                                    mock.ANY, mock.ANY)
+            set_db_attribute_calls = \
+                [mock.call.set_db_attribute("Port", "tap1", "tag", "1"),
+                 mock.call.set_db_attribute("Port", "tap2", "tag", "1")]
+            int_br.assert_has_calls(set_db_attribute_calls, any_order=True)
 
     def _test_arp_spoofing(self, enable_prevent_arp_spoofing):
         self.agent.prevent_arp_spoofing = enable_prevent_arp_spoofing
@@ -700,6 +705,32 @@ class TestOvsNeutronAgent(object):
                 set(['eth1', 'tap1']), False)
             setup_port_filters.assert_called_once_with(
                 set(), port_info.get('updated', set()))
+
+    def test_process_network_ports_call_order(self):
+        port_info = {'current': set(['tap0', 'tap1']),
+                     'updated': set(['tap1']),
+                     'removed': set([]),
+                     'added': set(['eth1'])}
+        with mock.patch.object(self.agent, "treat_devices_added_or_updated",
+                return_value=([], ['tap1'], ['eth1'])) \
+                as treat_devices_added_or_updated, \
+                mock.patch.object(self.agent, "_bind_devices") \
+                as _bind_devices, \
+                mock.patch.object(self.agent.sg_agent, "setup_port_filters") \
+                as setup_port_filters:
+            parent = mock.MagicMock()
+            parent.attach_mock(treat_devices_added_or_updated,
+                               'treat_devices_added_or_updated')
+            parent.attach_mock(_bind_devices, '_bind_devices')
+            parent.attach_mock(setup_port_filters, 'setup_port_filters')
+            self.assertFalse(self.agent.process_network_ports(port_info,
+                                                              False))
+            expected_calls = [
+                mock.call.treat_devices_added_or_updated(
+                    set(['tap1', 'eth1']), False),
+                mock.call._bind_devices(['tap1']),
+                mock.call.setup_port_filters(set([]), set(['tap1']))]
+            parent.assert_has_calls(expected_calls, any_order=False)
 
     def test_report_state(self):
         with mock.patch.object(self.agent.state_rpc,
