@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import mock
 from oslo_utils import uuidutils
 
@@ -69,65 +70,94 @@ class TestDvrFipNs(base.BaseTestCase):
         self.assertNotIn('20.0.0.30', self.fip_ns._rule_priorities.allocations)
         self.assertIn(pr, self.fip_ns._rule_priorities.pool)
 
-    @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_gateway_added(self, device_exists, send_adv_notif,
-                           IPDevice, IPWrapper):
-        subnet_id = _uuid()
+    def _get_agent_gw_port(self):
+        v4_subnet_id = _uuid()
+        v6_subnet_id = _uuid()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                         'prefixlen': 24,
-                                        'subnet_id': subnet_id}],
-                         'subnets': [{'id': subnet_id,
+                                        'subnet_id': v4_subnet_id},
+                                       {'ip_address': 'cafe:dead:beef::3',
+                                        'prefixlen': 64,
+                                        'subnet_id': v6_subnet_id}],
+                         'subnets': [{'id': v4_subnet_id,
                                       'cidr': '20.0.0.0/24',
-                                      'gateway_ip': '20.0.0.1'}],
+                                      'gateway_ip': '20.0.0.1'},
+                                     {'id': v6_subnet_id,
+                                      'cidr': 'cafe:dead:beef::/64',
+                                      'gateway_ip': 'cafe:dead:beef::1'}],
                          'id': _uuid(),
                          'network_id': self.net_id,
                          'mac_address': 'ca:fe:de:ad:be:ef'}
+        return agent_gw_port
+
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    @mock.patch.object(ip_lib, 'device_exists')
+    def test_gateway_added(self, device_exists, ip_wrapper):
+        agent_gw_port = self._get_agent_gw_port()
 
         device_exists.return_value = False
+        self.fip_ns.update_gateway_port = mock.Mock()
         self.fip_ns._gateway_added(agent_gw_port,
                                    mock.sentinel.interface_name)
         self.assertEqual(1, self.driver.plug.call_count)
         self.assertEqual(1, self.driver.init_l3.call_count)
-        send_adv_notif.assert_called_once_with(self.fip_ns.get_name(),
-                                               mock.sentinel.interface_name,
-                                               '20.0.0.30',
-                                               mock.ANY)
+        self.fip_ns.update_gateway_port.assert_called_once_with(agent_gw_port)
 
-    @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'IPDevice')
     @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_gateway_outside_subnet_added(self, device_exists, send_adv_notif,
-                                          IPDevice, IPWrapper):
-        device = mock.Mock()
-        IPDevice.return_value = device
+    def test_update_gateway_port(self, send_adv_notif, IPDevice):
+        self.fip_ns._check_for_gateway_ip_change = mock.Mock(return_value=True)
+        self.fip_ns.agent_gateway_port = None
+        agent_gw_port = self._get_agent_gw_port()
+        self.fip_ns.update_gateway_port(agent_gw_port)
+        expected = [
+            mock.call(self.fip_ns.get_name(),
+                      self.fip_ns.get_ext_device_name(agent_gw_port['id']),
+                      agent_gw_port['fixed_ips'][0]['ip_address'],
+                      mock.ANY),
+            mock.call(self.fip_ns.get_name(),
+                      self.fip_ns.get_ext_device_name(agent_gw_port['id']),
+                      agent_gw_port['fixed_ips'][1]['ip_address'],
+                      mock.ANY)]
+        send_adv_notif.assert_has_calls(expected)
+        gw_ipv4 = agent_gw_port['subnets'][0]['gateway_ip']
+        gw_ipv6 = agent_gw_port['subnets'][1]['gateway_ip']
+        expected = [mock.call(gw_ipv4), mock.call(gw_ipv6)]
+        IPDevice().route.add_gateway.assert_has_calls(expected)
 
-        subnet_id = _uuid()
-        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                        'prefixlen': 24,
-                                        'subnet_id': subnet_id}],
-                         'subnets': [{'id': subnet_id,
-                                      'cidr': '20.0.0.0/24',
-                                      'gateway_ip': '20.0.1.1'}],
-                         'id': _uuid(),
-                         'network_id': self.net_id,
-                         'mac_address': 'ca:fe:de:ad:be:ef'}
+    @mock.patch.object(ip_lib, 'IPDevice')
+    @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
+    def test_update_gateway_port_gateway_outside_subnet_added(
+            self, send_adv_notif, IPDevice):
+        self.fip_ns.agent_gateway_port = None
+        agent_gw_port = self._get_agent_gw_port()
+        agent_gw_port['subnets'][0]['gateway_ip'] = '20.0.1.1'
 
-        device_exists.return_value = False
-        self.fip_ns._gateway_added(agent_gw_port,
-                                   mock.sentinel.interface_name)
-        self.assertEqual(1, self.driver.plug.call_count)
-        self.assertEqual(1, self.driver.init_l3.call_count)
-        send_adv_notif.assert_called_once_with(self.fip_ns.get_name(),
-                                               mock.sentinel.interface_name,
-                                               '20.0.0.30',
-                                               mock.ANY)
-        device.route.add_route.assert_called_once_with('20.0.1.1',
-                                                       scope='link')
-        device.route.add_gateway.assert_called_once_with('20.0.1.1')
+        self.fip_ns.update_gateway_port(agent_gw_port)
+
+        IPDevice().route.add_route.assert_called_once_with('20.0.1.1',
+                                                           scope='link')
+
+    def test_check_gateway_ip_changed_no_change(self):
+        agent_gw_port = self._get_agent_gw_port()
+        self.fip_ns.agent_gateway_port = copy.deepcopy(agent_gw_port)
+        agent_gw_port['mac_address'] = 'aa:bb:cc:dd:ee:ff'
+        self.assertFalse(self.fip_ns._check_for_gateway_ip_change(
+            agent_gw_port))
+
+    def test_check_gateway_ip_changed_v4(self):
+        agent_gw_port = self._get_agent_gw_port()
+        self.fip_ns.agent_gateway_port = copy.deepcopy(agent_gw_port)
+        agent_gw_port['subnets'][0]['gateway_ip'] = '20.0.0.2'
+        self.assertTrue(self.fip_ns._check_for_gateway_ip_change(
+            agent_gw_port))
+
+    def test_check_gateway_ip_changed_v6(self):
+        agent_gw_port = self._get_agent_gw_port()
+        self.fip_ns.agent_gateway_port = copy.deepcopy(agent_gw_port)
+        agent_gw_port['subnets'][1]['gateway_ip'] = 'cafe:dead:beef::2'
+        self.assertTrue(self.fip_ns._check_for_gateway_ip_change(
+            agent_gw_port))
 
     @mock.patch.object(iptables_manager, 'IptablesManager')
     @mock.patch.object(utils, 'execute')

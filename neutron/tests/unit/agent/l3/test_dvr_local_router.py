@@ -158,6 +158,19 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                     mock.Mock(),
                                     **kwargs)
 
+    def test_create_dvr_fip_interfaces_update(self):
+        ri = self._create_router()
+        fip_agent_port = {'subnets': []}
+        ri.get_floating_agent_gw_interface = mock.Mock(
+            return_value=fip_agent_port)
+        ri.get_floating_ips = mock.Mock(return_value=True)
+        ri.fip_ns = mock.Mock()
+        ri.fip_ns.subscribe.return_value = False
+        ex_gw_port = {'network_id': 'fake_net_id'}
+        ri.create_dvr_fip_interfaces(ex_gw_port)
+        ri.fip_ns.update_gateway_port.assert_called_once_with(
+            fip_agent_port)
+
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
         router.get.return_value = [{'host': HOSTNAME},
