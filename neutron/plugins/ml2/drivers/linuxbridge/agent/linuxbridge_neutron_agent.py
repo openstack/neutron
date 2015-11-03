@@ -350,6 +350,8 @@ class LinuxBridgeManager(object):
                 return
             if bridge_device.disable_stp():
                 return
+            if bridge_device.disable_ipv6():
+                return
             if bridge_device.link.set_up():
                 return
             LOG.debug("Done starting bridge %(bridge_name)s for "

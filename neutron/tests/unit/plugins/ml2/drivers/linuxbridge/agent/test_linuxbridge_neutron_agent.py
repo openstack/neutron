@@ -651,6 +651,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             br_fn.addbr.return_value = bridge_device
             bridge_device.setfd.return_value = False
             bridge_device.disable_stp.return_value = False
+            bridge_device.disable_ipv6.return_value = False
             bridge_device.link.set_up.return_value = False
             self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
 
