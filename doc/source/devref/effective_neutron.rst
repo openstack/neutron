@@ -287,6 +287,11 @@ Reviewer comments
   mean they are trying to block it. It's very rare to get a patch merged on the
   first iteration that makes everyone happy.
 
+Code Review
+~~~~~~~~~~~
+
+* You should visit `OpenStack How To Review wiki <https://wiki.openstack.org/wiki/How_To_Contribute#Reviewing>`_
+
 Commit messages
 ~~~~~~~~~~~~~~~
 
