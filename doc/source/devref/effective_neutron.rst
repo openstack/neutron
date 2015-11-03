@@ -252,8 +252,6 @@ Document common nits and pedantic comments to watch out for.
 
 * Make sure you spell correctly, the best you can, no-one wants rebase generators at
   the end of the release cycle!
-* Being available on IRC is useful, since reviewers can contact directly to quickly
-  clarify a review issue. This speeds up the feeback loop.
 * The odd pep8 error may cause an entire CI run to be wasted. Consider running
   validation (pep8 and/or tests) before submitting your patch. If you keep forgetting
   consider installing a git `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_
@@ -291,6 +289,34 @@ Code Review
 ~~~~~~~~~~~
 
 * You should visit `OpenStack How To Review wiki <https://wiki.openstack.org/wiki/How_To_Contribute#Reviewing>`_
+
+IRC
+~~~~
+
+* IRC is a place where you can speak with many of the Neutron developers and core
+  reviewers. For more information you should visit
+  `OpenStack IRC wiki <http://wiki.openstack.org/wiki/IRC>`_
+  Neutron IRC channel is #openstack-neutron
+* There are weekly IRC meetings related to many different projects/teams
+  in Neutron.
+  A full list of these meetings and their date/time can be found in
+  `OpenStack IRC Meetings <http://eavesdrop.openstack.org>`_.
+  It is important to attend these meetings in the area of your contribution
+  and possibly mention your work and patches.
+* When you have questions regarding an idea or a specific patch of yours, it
+  can be helpful to find a relevant person in IRC and speak with them about
+  it.
+  You can find a user's IRC nickname in their launchpad account.
+* Being available on IRC is useful, since reviewers can contact
+  you directly to quickly clarify a review issue. This speeds
+  up the feedback loop.
+* Each area of Neutron or sub-project of Neutron has a specific lieutenant
+  in charge of it.
+  You can most likely find these lieutenants on IRC, it is advised however to try
+  and send public questions to the channel rather then to a specific person if possible.
+  (This increase the chances of getting faster answers to your questions).
+  A list of the areas and lieutenants nicknames can be found at
+  `Core Reviewers <http://docs.openstack.org/developer/neutron/policies/core-reviewers.html>`_.
 
 Commit messages
 ~~~~~~~~~~~~~~~
