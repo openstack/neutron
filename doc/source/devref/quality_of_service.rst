@@ -81,7 +81,7 @@ Supported QoS rule types
 Any plugin or Ml2 mechanism driver can claim support for some QoS rule types by
 providing a plugin/driver class property called 'supported_qos_rule_types' that
 should return a list of strings that correspond to QoS rule types (for the list
-of all rule types, see: neutron.extensions.qos.VALID_RULE_TYPES).
+of all rule types, see: neutron.services.qos.qos_consts.VALID_RULE_TYPES).
 
 In the most simple case, the property can be represented by a simple Python
 list defined on the class.
