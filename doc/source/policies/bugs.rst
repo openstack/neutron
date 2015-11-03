@@ -302,6 +302,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | needs-attention_              | A bug that needs further screening    | PTL/Bug Deputy       |
 +-------------------------------+---------------------------------------+----------------------+
+| ops_                          | Reported by or affecting operators    | Drivers Team         |
++-------------------------------+---------------------------------------+----------------------+
 | oslo_                         | An interop/cross-project issue        | Ihar Hrachyshka      |
 +-------------------------------+---------------------------------------+----------------------+
 | ovs_                          | A bug affecting ML2/OVS               | Kevin Benton         |
@@ -499,6 +501,13 @@ Needs Attention
 +++++++++++++++
 
 * `Needs Attention - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=needs-attention>`_
+
+.. _ops:
+
+Operators/Operations (ops)
+++++++++++++++++++++++++++
+
+* `Ops - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ops>`_
 
 .. _oslo:
 
