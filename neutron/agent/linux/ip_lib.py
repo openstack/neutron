@@ -593,14 +593,14 @@ class IpAddrCommand(IpDeviceCommandBase):
             except IndexError:
                 raise AddressNotReady(
                     address=address,
-                    reason=_LE('Address not present on interface'))
+                    reason=_('Address not present on interface'))
             if not addr_info['tentative']:
                 return True
             if addr_info['dadfailed']:
                 raise AddressNotReady(
-                    address=address, reason=_LE('Duplicate adddress detected'))
-        errmsg = _LE("Exceeded %s second limit waiting for "
-                     "address to leave the tentative state.") % wait_time
+                    address=address, reason=_('Duplicate adddress detected'))
+        errmsg = _("Exceeded %s second limit waiting for "
+                   "address to leave the tentative state.") % wait_time
         utils.utils.wait_until_true(
             is_address_ready, timeout=wait_time, sleep=0.20,
             exception=AddressNotReady(address=address, reason=errmsg))
