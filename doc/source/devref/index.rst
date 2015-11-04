@@ -68,6 +68,7 @@ Neutron Internals
    oslo-incubator
    callbacks
    dns_order
+   upgrade
 
 Testing
 -------

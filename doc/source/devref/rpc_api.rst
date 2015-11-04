@@ -95,6 +95,8 @@ This class implements the server side of the interface.  The
 oslo_messaging.Target() defined says that this class currently implements
 version 1.1 of the interface.
 
+.. _rpc_versioning:
+
 Versioning
 ==========
 

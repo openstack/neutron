@@ -182,10 +182,7 @@ Backward compatibility
 
 Document common pitfalls as well as good practices done when extending the RPC Interfaces.
 
-* The Neutron upgrade path requires the server to support the previous version of
-  the agent. Any changes to the existing RPC methods must be compatible with the
-  previous version of the agent. Otherwise a version bump is required and the old
-  method must be kept under the previous version RPC endpoint.
+* Make yourself familiar with :ref:`Upgrade review guidelines <upgrade_review_guidelines>`.
 
 
 Scalability issues
