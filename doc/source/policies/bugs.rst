@@ -8,6 +8,30 @@ Launchpad projects:
 * `Launchpad python-neutronclient <https://bugs.launchpad.net/python-neutronclient>`_
 
 
+Neutron Bugs Team In Launchpad
+------------------------------
+
+The `Neutron Bugs <https://launchpad.net/~neutron-bugs>`_ team in Launchpad
+is used to allow access to the projects above. Members of the above group
+have the ability to set bug priorities, target bugs to releases, and other
+administrative tasks around bugs. The administrators of this group are the
+members of the `neutron-drivers-core
+<https://review.openstack.org/#/admin/groups/464,members>`_ gerrit group.
+Non administrators of this group include anyone who is involved with the
+Neutron project and has a desire to assist with bug triage.
+
+If you would like to join this Launchpad group, it's best to reach out to a
+member of the above mentioned neutron-drivers-core team in #openstack-neutron
+on Freenode and let them know why you would like to be a member. The team is
+more than happy to add additional bug triage capability, but it helps to know
+who is requesting access, and IRC is a quick way to make the connection.
+
+As outlined below the bug deputy is a volunteer who wants to help with defect
+management. Permissions will have to be granted assuming that people sign up
+on the deputy role. The permission won't be given freely, a person must show
+some degree of prior involvement.
+
+
 Neutron Bug Deputy
 ------------------
 
