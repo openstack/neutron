@@ -13,12 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from distutils import version
-import re
-
 from oslo_config import cfg
 from oslo_log import log as logging
-import testtools
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
@@ -29,18 +25,6 @@ from neutron.tests.unit.agent.linux import test_keepalived
 
 
 LOG = logging.getLogger(__name__)
-
-
-def keepalived_version_not_supported():
-    try:
-        cmd = ['keepalived', '--version']
-        out = utils.execute(cmd, return_stderr=True)
-        ver = re.search(r"Keepalived v(\d+\.\d+\.\d+)", out[1]).group(1)
-        return version.LooseVersion(ver) >= version.LooseVersion("1.2.11")
-    except (OSError, RuntimeError, IndexError, ValueError) as e:
-        LOG.debug("Exception while checking keepalived version. "
-                  "Exception: %s", e)
-        return False
 
 
 class KeepalivedManagerTestCase(base.BaseTestCase,
@@ -70,8 +54,7 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
         self.assertEqual(self.expected_config.get_config_str(),
                          self.manager.get_conf_on_disk())
 
-    @testtools.skipIf(keepalived_version_not_supported(), 'bug/1511311')
-    def test_keepalived_respawns(self):
+    def _test_keepalived_respawns(self, normal_exit=True):
         self.manager.spawn()
         process = self.manager.get_process()
         pid = process.pid
@@ -81,11 +64,19 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
             sleep=0.01,
             exception=RuntimeError(_("Keepalived didn't spawn")))
 
-        # force process crash, and see that when it comes back
-        # it's indeed a different process
-        utils.execute(['kill', '-9', pid], run_as_root=True)
+        exit_code = '-15' if normal_exit else '-9'
+
+        # Exit the process, and see that when it comes back
+        # It's indeed a different process
+        utils.execute(['kill', exit_code, pid], run_as_root=True)
         utils.wait_until_true(
             lambda: process.active and pid != process.pid,
             timeout=5,
             sleep=0.01,
             exception=RuntimeError(_("Keepalived didn't respawn")))
+
+    def test_keepalived_respawns(self):
+        self._test_keepalived_respawns()
+
+    def test_keepalived_respawn_with_unexpected_exit(self):
+        self._test_keepalived_respawns(False)
