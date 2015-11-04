@@ -30,10 +30,11 @@ LOG = log.getLogger(__name__)
 
 flat_opts = [
     cfg.ListOpt('flat_networks',
-                default=[],
+                default='*',
                 help=_("List of physical_network names with which flat "
-                       "networks can be created. Use * to allow flat "
-                       "networks with arbitrary physical_network names."))
+                       "networks can be created. Use default '*' to allow "
+                       "flat networks with arbitrary physical_network names. "
+                       "Use an empty list to disable flat networks."))
 ]
 
 cfg.CONF.register_opts(flat_opts, "ml2_type_flat")
@@ -72,9 +73,8 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         if '*' in self.flat_networks:
             LOG.info(_LI("Arbitrary flat physical_network names allowed"))
             self.flat_networks = None
-        elif not all(self.flat_networks):
-            msg = _("physical network name is empty")
-            raise exc.InvalidInput(error_message=msg)
+        elif not self.flat_networks:
+            LOG.info(_LI("Flat networks are disabled"))
         else:
             LOG.info(_LI("Allowable flat physical_network names: %s"),
                      self.flat_networks)
@@ -92,6 +92,9 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         if not physical_network:
             msg = _("physical_network required for flat provider network")
+            raise exc.InvalidInput(error_message=msg)
+        if self.flat_networks is not None and not self.flat_networks:
+            msg = _("Flat provider networks are disabled")
             raise exc.InvalidInput(error_message=msg)
         if self.flat_networks and physical_network not in self.flat_networks:
             msg = (_("physical_network '%s' unknown for flat provider network")
