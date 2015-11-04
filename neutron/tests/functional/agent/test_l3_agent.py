@@ -1146,6 +1146,7 @@ class TestDvrRouter(L3AgentTestFramework):
                 router.ns_name)
             utils.wait_until_true(device_exists)
 
+        ext_gateway_port = router_info['gw_port']
         self.assertTrue(self._namespace_exists(router.ns_name))
         utils.wait_until_true(
             lambda: self._metadata_proxy_exists(self.agent.conf, router))
@@ -1166,6 +1167,7 @@ class TestDvrRouter(L3AgentTestFramework):
                 router, ip_versions, snat_ns_name)
 
         self._delete_router(self.agent, router.router_id)
+        self._assert_fip_namespace_deleted(ext_gateway_port)
         self._assert_router_does_not_exist(router)
         self._assert_snat_namespace_does_not_exist(router)
 
@@ -1632,3 +1634,9 @@ class TestDvrRouter(L3AgentTestFramework):
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router1)
+
+    def _assert_fip_namespace_deleted(self, ext_gateway_port):
+        ext_net_id = ext_gateway_port['network_id']
+        self.agent.fipnamespace_delete_on_ext_net(
+            self.agent.context, ext_net_id)
+        self._assert_interfaces_deleted_from_ovs()
