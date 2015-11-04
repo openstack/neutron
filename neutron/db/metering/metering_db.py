@@ -68,12 +68,11 @@ class MeteringDbMixin(metering.MeteringPluginBase,
 
     def create_metering_label(self, context, metering_label):
         m = metering_label['metering_label']
-        tenant_id = self._get_tenant_id_for_create(context, m)
 
         with context.session.begin(subtransactions=True):
             metering_db = MeteringLabel(id=uuidutils.generate_uuid(),
                                         description=m['description'],
-                                        tenant_id=tenant_id,
+                                        tenant_id=m['tenant_id'],
                                         name=m['name'],
                                         shared=m['shared'])
             context.session.add(metering_db)

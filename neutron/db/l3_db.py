@@ -178,8 +178,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def create_router(self, context, router):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, None)
-        tenant_id = self._get_tenant_id_for_create(context, r)
-        router_db = self._create_router_db(context, r, tenant_id)
+        router_db = self._create_router_db(context, r, r['tenant_id'])
         try:
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'],
@@ -956,7 +955,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _create_floatingip(self, context, floatingip,
             initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         fip = floatingip['floatingip']
-        tenant_id = self._get_tenant_id_for_create(context, fip)
         fip_id = uuidutils.generate_uuid()
 
         f_net_id = fip['floating_network_id']
@@ -1003,12 +1001,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             floating_ip_address = floating_fixed_ip['ip_address']
             floatingip_db = FloatingIP(
                 id=fip_id,
-                tenant_id=tenant_id,
+                tenant_id=fip['tenant_id'],
                 status=initial_status,
                 floating_network_id=fip['floating_network_id'],
                 floating_ip_address=floating_ip_address,
                 floating_port_id=external_port['id'])
-            fip['tenant_id'] = tenant_id
             # Update association with internal port
             # and define external IP address
             self._update_fip_assoc(context, fip,

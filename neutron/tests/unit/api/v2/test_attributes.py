@@ -18,11 +18,15 @@ import testtools
 
 import mock
 import netaddr
+import webob.exc
+
+from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron import context
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -1009,3 +1013,32 @@ class TestResDict(base.BaseTestCase):
                           attr_info, {'key': 1}, {'key': 1})
         self.assertRaises(self._EXC_CLS, attributes.convert_value,
                           attr_info, {'key': 1}, self._EXC_CLS)
+
+    def test_populate_tenant_id(self):
+        tenant_id_1 = uuidutils.generate_uuid()
+        tenant_id_2 = uuidutils.generate_uuid()
+        # apart from the admin, nobody can create a res on behalf of another
+        # tenant
+        ctx = context.Context(user_id=None, tenant_id=tenant_id_1)
+        res_dict = {'tenant_id': tenant_id_2}
+        self.assertRaises(webob.exc.HTTPBadRequest,
+                          attributes.populate_tenant_id,
+                          ctx, res_dict, None, None)
+        ctx.is_admin = True
+        self.assertIsNone(attributes.populate_tenant_id(ctx, res_dict,
+                                                        None, None))
+
+        # for each create request, the tenant_id should be added to the
+        # req body
+        res_dict2 = {}
+        attributes.populate_tenant_id(ctx, res_dict2, None, True)
+        self.assertEqual({'tenant_id': ctx.tenant_id}, res_dict2)
+
+        # if the tenant_id is mandatory for the resource and not specified
+        # in the request nor in the context, an exception should be raised
+        res_dict3 = {}
+        attr_info = {'tenant_id': {'allow_post': True}, }
+        ctx.tenant_id = None
+        self.assertRaises(webob.exc.HTTPBadRequest,
+                          attributes.populate_tenant_id,
+                          ctx, res_dict3, attr_info, True)

@@ -783,6 +783,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._set_net_external(net_id)
             router = {'name': 'router1',
                       'admin_state_up': True,
+                      'tenant_id': 'tenant_id',
                       'external_gateway_info': {'network_id': net_id},
                       'distributed': True}
             r = self.l3plugin.create_router(
@@ -1087,6 +1088,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
+                      'tenant_id': 'tenant_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1119,6 +1121,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._set_net_external(net_id)
 
             router = {'name': 'router1',
+                      'tenant_id': 'tenant_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1158,6 +1161,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
+                      'tenant_id': 'tenant_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1186,6 +1190,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
+                      'tenant_id': 'tenant_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,

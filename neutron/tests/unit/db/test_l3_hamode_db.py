@@ -68,7 +68,9 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         if ctx is None:
             ctx = self.admin_ctx
         ctx.tenant_id = tenant_id
-        router = {'name': 'router1', 'admin_state_up': True}
+        router = {'name': 'router1',
+                  'admin_state_up': True,
+                  'tenant_id': tenant_id}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:

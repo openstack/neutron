@@ -177,7 +177,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["security-group"]
 
     def create_port(self, context, port):
-        tenant_id = self._get_tenant_id_for_create(context, port['port'])
+        tenant_id = port['port']['tenant_id']
         default_sg = self._ensure_default_security_group(context, tenant_id)
         if not attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
@@ -207,8 +207,8 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return port
 
     def create_network(self, context, network):
-        tenant_id = self._get_tenant_id_for_create(context, network['network'])
-        self._ensure_default_security_group(context, tenant_id)
+        self._ensure_default_security_group(context,
+                                            network['network']['tenant_id'])
         return super(SecurityGroupTestPlugin, self).create_network(context,
                                                                    network)
 

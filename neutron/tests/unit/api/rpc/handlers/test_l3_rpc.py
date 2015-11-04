@@ -37,11 +37,13 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
     def _prepare_network(self):
         network = {'network': {'name': 'abc',
                                'shared': False,
+                               'tenant_id': 'tenant_id',
                                'admin_state_up': True}}
         return self.plugin.create_network(self.ctx, network)
 
     def _prepare_ipv6_pd_subnet(self):
         subnet = {'subnet': {'network_id': self.network['id'],
+                             'tenant_id': 'tenant_id',
                              'cidr': None,
                              'ip_version': 6,
                              'name': 'ipv6_pd',

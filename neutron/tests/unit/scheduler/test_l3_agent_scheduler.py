@@ -1797,7 +1797,8 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
     def _create_ha_router(self, ha=True, tenant_id='tenant1', az_hints=None):
         self.adminContext.tenant_id = tenant_id
-        router = {'name': 'router1', 'admin_state_up': True}
+        router = {'name': 'router1', 'admin_state_up': True,
+                  'tenant_id': tenant_id}
         if ha is not None:
             router['ha'] = ha
         if az_hints is None:
