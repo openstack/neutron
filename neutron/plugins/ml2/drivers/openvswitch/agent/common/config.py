@@ -58,7 +58,7 @@ ovs_opts = [
                      "Used only for 'native' driver.")),
     cfg.PortOpt('of_listen_port', default=6633,
                 help=_("Port to listen on for OpenFlow connections. "
-                      "Used only for 'native' driver.")),
+                       "Used only for 'native' driver.")),
     cfg.IntOpt('of_connect_timeout', default=30,
                help=_("Timeout in seconds to wait for "
                       "the local switch connecting the controller. "
