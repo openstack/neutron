@@ -63,7 +63,10 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
 
-    def _prepare_mocks(self):
+    def _prepare_mocks(self, address_factory=None):
+        if address_factory is None:
+            address_factory = ipam_req.AddressRequestFactory
+
         mocks = {
             'driver': mock.Mock(),
             'subnet': mock.Mock(),
@@ -76,10 +79,10 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         }
         mocks['driver'].get_subnet.return_value = mocks['subnet']
         mocks['driver'].allocate_subnet.return_value = mocks['subnet']
-        mocks['driver'].get_subnet_request_factory = (
+        mocks['driver'].get_subnet_request_factory.return_value = (
             ipam_req.SubnetRequestFactory)
-        mocks['driver'].get_address_request_factory = (
-            ipam_req.AddressRequestFactory)
+        mocks['driver'].get_address_request_factory.return_value = (
+            address_factory)
         mocks['subnet'].get_details.return_value = mocks['subnet_request']
         return mocks
 
@@ -88,8 +91,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
         return mocks
 
-    def _prepare_mocks_with_pool_mock(self, pool_mock):
-        mocks = self._prepare_mocks()
+    def _prepare_mocks_with_pool_mock(self, pool_mock, address_factory=None):
+        mocks = self._prepare_mocks(address_factory=address_factory)
         pool_mock.get_instance.return_value = mocks['driver']
         return mocks
 
@@ -509,3 +512,34 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                     ips = port['port']['fixed_ips']
                     self.assertEqual(1, len(ips))
                     self.assertEqual(ips[0]['ip_address'], ip)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_ips_for_port_passes_port_dict_to_factory(self, pool_mock):
+        address_factory = mock.Mock()
+        mocks = self._prepare_mocks_with_pool_mock(
+            pool_mock, address_factory=address_factory)
+        context = mock.Mock()
+        new_ips = mock.Mock()
+        original_ips = mock.Mock()
+        mac = mock.Mock()
+
+        ip_dict = {'ip_address': '192.1.1.10',
+                   'subnet_id': uuidutils.generate_uuid()}
+        changes = ipam_pluggable_backend.IpamPluggableBackend.Changes(
+            add=[ip_dict], original=[], remove=[])
+        changes_mock = mock.Mock(return_value=changes)
+        fixed_ips_mock = mock.Mock(return_value=changes.add)
+        mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+        mocks['ipam']._get_changed_ips_for_port = changes_mock
+        mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
+
+        port_dict = {'device_owner': uuidutils.generate_uuid(),
+                     'network_id': uuidutils.generate_uuid()}
+
+        mocks['ipam']._update_ips_for_port(context, port_dict,
+                                           original_ips, new_ips, mac)
+        mocks['driver'].get_address_request_factory.assert_called_once_with()
+        # Validate port_dict is passed into address_factory
+        address_factory.get_request.assert_called_once_with(context,
+                                                            port_dict,
+                                                            ip_dict)
