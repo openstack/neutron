@@ -1,0 +1,9 @@
+---
+prelude: >
+    In Liberty, some changes were made to agent scheduling.
+features:
+  - Neutron now provides a way for admins to manually schedule agents, allowing
+    host resources to be tested before they are enabled for tenant use.
+other:
+  - The specification for the agent scheduling change is located `here
+    <https://github.com/openstack/neutron-specs/blob/master/specs/liberty/enable-new-agents.rst>`_.

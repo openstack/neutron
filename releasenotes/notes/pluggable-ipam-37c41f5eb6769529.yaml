@@ -1,0 +1,6 @@
+---
+prelude: >
+    Neutron now has a pluggable IP address management framework.
+features:
+  - Pluggable IPAM enables the use of alternate or third-party IPAM.
+  - The original, non-pluggable version of IPAM is enabled by default.
