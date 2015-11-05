@@ -1370,6 +1370,26 @@ class TestDeviceManager(base.BaseTestCase):
             plugin.assert_has_calls(
                 [mock.call.release_dhcp_port(fake_net.id, mock.ANY)])
 
+    def test_destroy_with_none(self):
+        fake_net = dhcp.NetModel(
+            True, dict(id=FAKE_NETWORK_UUID,
+                       tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'))
+
+        with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
+            mock_driver = mock.MagicMock()
+            mock_driver.get_device_name.return_value = 'tap12345678-12'
+            dvr_cls.return_value = mock_driver
+
+            plugin = mock.Mock()
+
+            dh = dhcp.DeviceManager(cfg.CONF, plugin)
+            dh.destroy(fake_net, None)
+
+            dvr_cls.assert_called_once_with(cfg.CONF)
+            plugin.assert_has_calls(
+                [mock.call.release_dhcp_port(fake_net.id, mock.ANY)])
+            self.assertFalse(mock_driver.called)
+
     def test_get_interface_name(self):
         fake_net = dhcp.NetModel(
             True, dict(id='12345678-1234-5678-1234567890ab',
