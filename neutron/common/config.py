@@ -72,10 +72,10 @@ core_opts = [
                help=_("Maximum number of fixed ips per port. This option "
                       "is deprecated and will be removed in the N "
                       "release.")),
-    cfg.StrOpt('default_ipv4_subnet_pool', default=None,
+    cfg.StrOpt('default_ipv4_subnet_pool',
                help=_("Default IPv4 subnet-pool to be used for automatic "
                       "subnet CIDR allocation")),
-    cfg.StrOpt('default_ipv6_subnet_pool', default=None,
+    cfg.StrOpt('default_ipv6_subnet_pool',
                help=_("Default IPv6 subnet-pool to be used for automatic "
                       "subnet CIDR allocation")),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
@@ -113,7 +113,7 @@ core_opts = [
                 help=_('If True, effort is made to advertise MTU settings '
                        'to VMs via network methods (DHCP and RA MTU options) '
                        'when the network\'s preferred MTU is known.')),
-    cfg.StrOpt('ipam_driver', default=None,
+    cfg.StrOpt('ipam_driver',
                help=_('IPAM driver to use.')),
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '

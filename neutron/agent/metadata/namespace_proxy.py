@@ -158,11 +158,9 @@ def main():
                    help=_('Location of Metadata Proxy UNIX domain '
                           'socket')),
         cfg.StrOpt('metadata_proxy_user',
-                   default=None,
                    help=_("User (uid or name) running metadata proxy after "
                           "its initialization")),
         cfg.StrOpt('metadata_proxy_group',
-                   default=None,
                    help=_("Group (gid or name) running metadata proxy after "
                           "its initialization")),
         cfg.BoolOpt('metadata_proxy_watch_log',
