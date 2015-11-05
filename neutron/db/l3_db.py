@@ -71,7 +71,7 @@ class RouterPort(model_base.BASEV2):
     # queries on router ports, and also prevents potential error-prone
     # conditions which might originate from users altering the DEVICE_OWNER
     # property of router ports.
-    port_type = sa.Column(sa.String(255))
+    port_type = sa.Column(sa.String(attributes.DEVICE_OWNER_MAX_LEN))
     port = orm.relationship(
         models_v2.Port,
         backref=orm.backref('routerport', uselist=False, cascade="all,delete"),
@@ -82,7 +82,7 @@ class Router(model_base.HasStandardAttributes, model_base.BASEV2,
              models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron router."""
 
-    name = sa.Column(sa.String(255))
+    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))

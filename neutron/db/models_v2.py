@@ -234,7 +234,7 @@ class SubnetPool(model_base.HasStandardAttributes, model_base.BASEV2,
     """Represents a neutron subnet pool.
     """
 
-    name = sa.Column(sa.String(255))
+    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     ip_version = sa.Column(sa.Integer, nullable=False)
     default_prefixlen = sa.Column(sa.Integer, nullable=False)
     min_prefixlen = sa.Column(sa.Integer, nullable=False)

@@ -114,8 +114,8 @@ class L3HARouterNetwork(model_base.BASEV2):
 
     __tablename__ = 'ha_router_networks'
 
-    tenant_id = sa.Column(sa.String(255), primary_key=True,
-                          nullable=False)
+    tenant_id = sa.Column(sa.String(attributes.TENANT_ID_MAX_LEN),
+                          primary_key=True, nullable=False)
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            nullable=False, primary_key=True)

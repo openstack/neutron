@@ -18,6 +18,7 @@ from itertools import chain
 from oslo_log import log as logging
 import sqlalchemy as sa
 
+from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 from neutron.services import provider_configuration as pconf
 
@@ -25,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 class ProviderResourceAssociation(model_base.BASEV2):
-    provider_name = sa.Column(sa.String(255),
+    provider_name = sa.Column(sa.String(attr.NAME_MAX_LEN),
                               nullable=False, primary_key=True)
     # should be manually deleted on resource deletion
     resource_id = sa.Column(sa.String(36), nullable=False, primary_key=True,
