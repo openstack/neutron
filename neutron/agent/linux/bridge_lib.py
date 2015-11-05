@@ -16,7 +16,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 from neutron.agent.linux import ip_lib
+
+BRIDGE_FS = "/sys/class/net/"
+BRIDGE_INTERFACE_FS = BRIDGE_FS + "%(bridge)s/brif/%(interface)s"
+BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
+BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
+BRIDGE_PATH_FOR_DEVICE = BRIDGE_PORT_FS_FOR_DEVICE + '/bridge'
+
+
+def is_bridged_interface(interface):
+    if not interface:
+        return False
+    else:
+        return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % interface)
+
+
+def get_bridge_names():
+    return os.listdir(BRIDGE_FS)
 
 
 class BridgeDevice(ip_lib.IPDevice):
@@ -30,6 +49,16 @@ class BridgeDevice(ip_lib.IPDevice):
         bridge = cls(name, namespace)
         bridge._brctl(['addbr', bridge.name])
         return bridge
+
+    @classmethod
+    def get_interface_bridge(cls, interface):
+        try:
+            path = os.readlink(BRIDGE_PATH_FOR_DEVICE % interface)
+        except OSError:
+            return None
+        else:
+            name = path.rpartition('/')[-1]
+            return cls(name)
 
     def delbr(self):
         return self._brctl(['delbr', self.name])
@@ -45,3 +74,14 @@ class BridgeDevice(ip_lib.IPDevice):
 
     def disable_stp(self):
         return self._brctl(['stp', self.name, 'off'])
+
+    def owns_interface(self, interface):
+        return os.path.exists(
+            BRIDGE_INTERFACE_FS % {'bridge': self.name,
+                                   'interface': interface})
+
+    def get_interfaces(self):
+        try:
+            return os.listdir(BRIDGE_INTERFACES_FS % self.name)
+        except OSError:
+            return []

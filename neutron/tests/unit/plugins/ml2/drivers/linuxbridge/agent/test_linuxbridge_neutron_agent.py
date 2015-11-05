@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import sys
 
 import mock
@@ -399,17 +398,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(1, log.call_count)
             exit.assert_called_once_with(1)
 
-    def test_interface_exists_on_bridge(self):
-        with mock.patch.object(os.path, 'exists') as exists_fn:
-            exists_fn.side_effect = (
-                lambda p: p == '/sys/class/net/br-int/brif/abc')
-            self.assertTrue(
-                self.lbm.interface_exists_on_bridge("br-int", "abc")
-            )
-            self.assertFalse(
-                self.lbm.interface_exists_on_bridge("br-int", "abd")
-            )
-
     def test_get_existing_bridge_name(self):
         phy_net = 'physnet0'
         self.assertEqual('br-eth2',
@@ -464,57 +452,33 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         result = br_list[1:3]
         result.append('br-eth2')
 
-        with mock.patch.object(os, 'listdir') as listdir_fn:
-            listdir_fn.return_value = br_list
-            self.assertEqual(self.lbm.get_all_neutron_bridges(),
-                             result)
-            self.assertTrue(listdir_fn.called)
-
-    def test_get_interfaces_on_bridge(self):
-        with mock.patch.object(utils, 'execute'),\
-                mock.patch.object(os, 'listdir') as listdir_fn,\
-                mock.patch.object(ip_lib, 'device_exists', return_value=True):
-            listdir_fn.return_value = ["qbr1"]
-            self.assertEqual(self.lbm.get_interfaces_on_bridge("br0"),
-                             ["qbr1"])
-
-    def test_get_interfaces_on_bridge_not_existing(self):
-        with mock.patch.object(ip_lib, 'device_exists', return_value=False):
-            self.assertEqual([], self.lbm.get_interfaces_on_bridge("br0"))
+        with mock.patch.object(
+                bridge_lib, 'get_bridge_names', return_value=br_list):
+            self.assertEqual(result, self.lbm.get_all_neutron_bridges())
 
     def test_get_tap_devices_count(self):
-        with mock.patch.object(os, 'listdir') as listdir_fn:
-            listdir_fn.return_value = ['tap2101', 'eth0.100', 'vxlan-1000']
+        with mock.patch.object(
+                bridge_lib.BridgeDevice, 'get_interfaces') as get_ifs_fn:
+            get_ifs_fn.return_value = ['tap2101', 'eth0.100', 'vxlan-1000']
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 1)
-            listdir_fn.side_effect = OSError()
-            self.assertEqual(self.lbm.get_tap_devices_count('br0'), 0)
 
     def test_get_bridge_for_tap_device(self):
 
-        with mock.patch.object(os, 'readlink') as readlink:
-            readlink.return_value = (
-                'blah/%s-fake' % linuxbridge_neutron_agent.BRIDGE_NAME_PREFIX)
-            self.assertEqual(self.lbm.get_bridge_for_tap_device("tap1"),
-                             "brq-fake")
+        with mock.patch.object(
+                bridge_lib.BridgeDevice, 'get_interface_bridge') as get_br:
+            get_br.return_value = bridge_lib.BridgeDevice("brq-fake")
+            self.assertEqual(get_br.return_value,
+                             self.lbm.get_bridge_for_tap_device("tap1"))
 
-            readlink.return_value = 'blah/%s' % BRIDGE_MAPPING_VALUE
-            self.assertEqual(self.lbm.get_bridge_for_tap_device("tap2"),
-                             BRIDGE_MAPPING_VALUE)
+            get_br.return_value = bridge_lib.BridgeDevice(BRIDGE_MAPPING_VALUE)
+            self.assertEqual(get_br.return_value,
+                             self.lbm.get_bridge_for_tap_device("tap2"))
 
-            readlink.return_value = 'blah/notneutronbridge'
+            get_br.return_value = bridge_lib.BridgeDevice('notneutronbridge')
             self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap3"))
 
-            readlink.side_effect = OSError()
+            get_br.return_value = None
             self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap4"))
-
-    def test_is_device_on_bridge(self):
-        self.assertTrue(not self.lbm.is_device_on_bridge(""))
-        with mock.patch.object(os.path, 'exists') as exists_fn:
-            exists_fn.return_value = True
-            self.assertTrue(self.lbm.is_device_on_bridge("tap1"))
-            exists_fn.assert_called_with(
-                "/sys/class/net/tap1/brport"
-            )
 
     def test_get_interface_details(self):
         with mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn,\
@@ -688,12 +652,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         with mock.patch.object(self.lbm,
                                '_bridge_exists_and_ensure_up') as de_fn,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
-                                  return_value=bridge_device_old) as br_fn, \
+                                  return_value=bridge_device) as br_fn,\
                 mock.patch.object(self.lbm,
                                   'update_interface_ip_details') as upd_fn,\
-                mock.patch.object(self.lbm,
-                                  'interface_exists_on_bridge') as ie_fn,\
-                mock.patch.object(self.lbm, 'is_device_on_bridge'),\
+                mock.patch.object(bridge_lib, 'is_bridged_interface'),\
                 mock.patch.object(self.lbm,
                                   'get_bridge_for_tap_device') as get_if_br_fn:
             de_fn.return_value = False
@@ -702,26 +664,28 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             bridge_device.disable_stp.return_value = False
             bridge_device.link.set_up.return_value = False
             self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
-            ie_fn.return_Value = False
+
+            bridge_device.owns_interface.return_value = False
             self.lbm.ensure_bridge("br0", "eth0")
             upd_fn.assert_called_with("br0", "eth0", None, None)
-            ie_fn.assert_called_with("br0", "eth0")
+            bridge_device.owns_interface.assert_called_with("eth0")
 
             self.lbm.ensure_bridge("br0", "eth0", "ips", "gateway")
             upd_fn.assert_called_with("br0", "eth0", "ips", "gateway")
-            ie_fn.assert_called_with("br0", "eth0")
+            bridge_device.owns_interface.assert_called_with("eth0")
 
             de_fn.return_value = True
             bridge_device.delif.side_effect = Exception()
             self.lbm.ensure_bridge("br0", "eth0")
-            ie_fn.assert_called_with("br0", "eth0")
+            bridge_device.owns_interface.assert_called_with("eth0")
 
             de_fn.return_value = True
-            ie_fn.return_value = False
-            get_if_br_fn.return_value = "br1"
+            bridge_device.owns_interface.return_value = False
+            get_if_br_fn.return_value = bridge_device_old
+            bridge_device.addif.reset_mock()
             self.lbm.ensure_bridge("br0", "eth0")
             bridge_device_old.delif.assert_called_once_with('eth0')
-            br_fn.return_value.addif.assert_called_once_with('eth0')
+            bridge_device.addif.assert_called_once_with('eth0')
 
     def test_ensure_physical_in_bridge(self):
         self.assertFalse(
@@ -821,8 +785,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_delete_bridge(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(ip_lib, "IpLinkCommand") as link_cmd,\
-                mock.patch.object(self.lbm,
-                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  "get_interfaces") as getif_fn,\
                 mock.patch.object(self.lbm, "remove_interface"),\
                 mock.patch.object(self.lbm,
                                   "get_interface_details") as if_det_fn,\
@@ -844,8 +808,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_delete_bridge_with_ip(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
-                mock.patch.object(self.lbm,
-                                  "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(self.lbm, "remove_interface"),\
                 mock.patch.object(self.lbm,
                                   "get_interface_details") as if_det_fn,\
@@ -855,7 +817,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = True
-            getif_fn.return_value = ["eth0", "eth1.1"]
+            bridge_device.get_interfaces.return_value = ["eth0", "eth1.1"]
             if_det_fn.return_value = ("ips", "gateway")
             bridge_device.link.set_down.return_value = False
             self.lbm.delete_bridge("br0")
@@ -865,8 +827,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_delete_bridge_no_ip(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
-                mock.patch.object(self.lbm,
-                                  "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(self.lbm, "remove_interface"),\
                 mock.patch.object(self.lbm,
                                   "get_interface_details") as if_det_fn,\
@@ -876,7 +836,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = True
-            getif_fn.return_value = ["eth0", "eth1.1"]
+            bridge_device.get_interfaces.return_value = ["eth0", "eth1.1"]
             bridge_device.link.set_down.return_value = False
             if_det_fn.return_value = ([], None)
             self.lbm.delete_bridge("br0")
@@ -897,8 +857,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(ip_lib, "IpLinkCommand") as link_cmd,\
-                mock.patch.object(lbm,
-                                  "get_interfaces_on_bridge") as getif_fn,\
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  "get_interfaces") as getif_fn,\
                 mock.patch.object(lbm, "remove_interface"),\
                 mock.patch.object(lbm, "delete_interface") as del_interface:
             de_fn.return_value = False
@@ -915,14 +875,13 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.lbm.interface_mappings.update({"physnet2": "eth1.4000"})
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
-                mock.patch.object(self.lbm, "get_interfaces_on_bridge") as getif_fn,\
                 mock.patch.object(self.lbm, "remove_interface"),\
                 mock.patch.object(self.lbm, "get_interface_details") as if_det_fn,\
                 mock.patch.object(self.lbm, "delete_interface") as del_int,\
                 mock.patch.object(bridge_lib, "BridgeDevice",
                                   return_value=bridge_device):
             de_fn.return_value = True
-            getif_fn.return_value = ["eth1.1", "eth1.4000"]
+            bridge_device.get_interfaces.return_value = ["eth1.1", "eth1.4000"]
             if_det_fn.return_value = ([], None)
             bridge_device.link.set_down.return_value = False
             self.lbm.delete_bridge("br0")
@@ -960,8 +919,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_remove_interface(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
-                mock.patch.object(self.lbm,
-                                  "is_device_on_bridge") as isdev_fn,\
+                mock.patch.object(bridge_lib,
+                                  'is_bridged_interface') as isdev_fn,\
                 mock.patch.object(bridge_lib.BridgeDevice,
                                   "delif") as delif_fn:
             de_fn.return_value = False
