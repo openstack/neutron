@@ -462,24 +462,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             get_ifs_fn.return_value = ['tap2101', 'eth0.100', 'vxlan-1000']
             self.assertEqual(self.lbm.get_tap_devices_count('br0'), 1)
 
-    def test_get_bridge_for_tap_device(self):
-
-        with mock.patch.object(
-                bridge_lib.BridgeDevice, 'get_interface_bridge') as get_br:
-            get_br.return_value = bridge_lib.BridgeDevice("brq-fake")
-            self.assertEqual(get_br.return_value,
-                             self.lbm.get_bridge_for_tap_device("tap1"))
-
-            get_br.return_value = bridge_lib.BridgeDevice(BRIDGE_MAPPING_VALUE)
-            self.assertEqual(get_br.return_value,
-                             self.lbm.get_bridge_for_tap_device("tap2"))
-
-            get_br.return_value = bridge_lib.BridgeDevice('notneutronbridge')
-            self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap3"))
-
-            get_br.return_value = None
-            self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap4"))
-
     def test_get_interface_details(self):
         with mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn,\
                 mock.patch.object(ip_lib.IpRouteCommand,
@@ -656,8 +638,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(self.lbm,
                                   'update_interface_ip_details') as upd_fn,\
                 mock.patch.object(bridge_lib, 'is_bridged_interface'),\
-                mock.patch.object(self.lbm,
-                                  'get_bridge_for_tap_device') as get_if_br_fn:
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  'get_interface_bridge') as get_if_br_fn:
             de_fn.return_value = False
             br_fn.addbr.return_value = bridge_device
             bridge_device.setfd.return_value = False
@@ -732,8 +714,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             with mock.patch.object(self.lbm, "ensure_local_bridge") as en_fn,\
                     mock.patch.object(bridge_lib, "BridgeDevice",
                                       return_value=bridge_device), \
-                    mock.patch.object(self.lbm,
-                                      "get_bridge_for_tap_device") as get_br:
+                    mock.patch.object(bridge_lib.BridgeDevice,
+                                      "get_interface_bridge") as get_br:
                 bridge_device.addif.retun_value = False
                 get_br.return_value = True
                 self.assertTrue(self.lbm.add_tap_interface("123",
@@ -760,8 +742,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                    "ensure_physical_in_bridge") as ens_fn,\
                     mock.patch.object(self.lbm,
                                       "ensure_tap_mtu") as en_mtu_fn,\
-                    mock.patch.object(self.lbm,
-                                      "get_bridge_for_tap_device") as get_br:
+                    mock.patch.object(bridge_lib.BridgeDevice,
+                                      "get_interface_bridge") as get_br:
                 ens_fn.return_value = False
                 self.assertFalse(self.lbm.add_tap_interface("123",
                                                             p_const.TYPE_VLAN,
