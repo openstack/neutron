@@ -53,7 +53,7 @@ class NeutronException(Exception):
 
 
 class BadRequest(NeutronException):
-    message = _('Bad %(resource)s request: %(msg)s')
+    message = _('Bad %(resource)s request: %(msg)s.')
 
 
 class NotFound(NeutronException):
@@ -69,11 +69,11 @@ class NotAuthorized(NeutronException):
 
 
 class ServiceUnavailable(NeutronException):
-    message = _("The service is unavailable")
+    message = _("The service is unavailable.")
 
 
 class AdminRequired(NotAuthorized):
-    message = _("User does not have admin privileges: %(reason)s")
+    message = _("User does not have admin privileges: %(reason)s.")
 
 
 class ObjectNotFound(NotFound):
@@ -81,63 +81,63 @@ class ObjectNotFound(NotFound):
 
 
 class NetworkNotFound(NotFound):
-    message = _("Network %(net_id)s could not be found")
+    message = _("Network %(net_id)s could not be found.")
 
 
 class SubnetNotFound(NotFound):
-    message = _("Subnet %(subnet_id)s could not be found")
+    message = _("Subnet %(subnet_id)s could not be found.")
 
 
 class SubnetPoolNotFound(NotFound):
-    message = _("Subnet pool %(subnetpool_id)s could not be found")
+    message = _("Subnet pool %(subnetpool_id)s could not be found.")
 
 
 class PortNotFound(NotFound):
-    message = _("Port %(port_id)s could not be found")
+    message = _("Port %(port_id)s could not be found.")
 
 
 class QosPolicyNotFound(NotFound):
-    message = _("QoS policy %(policy_id)s could not be found")
+    message = _("QoS policy %(policy_id)s could not be found.")
 
 
 class QosRuleNotFound(NotFound):
     message = _("QoS rule %(rule_id)s for policy %(policy_id)s "
-                "could not be found")
+                "could not be found.")
 
 
 class PortNotFoundOnNetwork(NotFound):
     message = _("Port %(port_id)s could not be found "
-                "on network %(net_id)s")
+                "on network %(net_id)s.")
 
 
 class PortQosBindingNotFound(NotFound):
     message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
-                "could not be found")
+                "could not be found.")
 
 
 class NetworkQosBindingNotFound(NotFound):
     message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
-                "could not be found")
+                "could not be found.")
 
 
 class PolicyFileNotFound(NotFound):
-    message = _("Policy configuration policy.json could not be found")
+    message = _("Policy configuration policy.json could not be found.")
 
 
 class PolicyInitError(NeutronException):
-    message = _("Failed to init policy %(policy)s because %(reason)s")
+    message = _("Failed to init policy %(policy)s because %(reason)s.")
 
 
 class PolicyCheckError(NeutronException):
-    message = _("Failed to check policy %(policy)s because %(reason)s")
+    message = _("Failed to check policy %(policy)s because %(reason)s.")
 
 
 class StateInvalid(BadRequest):
-    message = _("Unsupported port state: %(port_state)s")
+    message = _("Unsupported port state: %(port_state)s.")
 
 
 class InUse(NeutronException):
-    message = _("The resource is inuse")
+    message = _("The resource is in use.")
 
 
 class QosPolicyInUse(InUse):
@@ -151,8 +151,8 @@ class NetworkInUse(InUse):
 
 
 class SubnetInUse(InUse):
-    message = _("Unable to complete operation on subnet %(subnet_id)s. "
-                "%(reason)s")
+    message = _("Unable to complete operation on subnet %(subnet_id)s "
+                "%(reason)s.")
 
     def __init__(self, **kwargs):
         if 'reason' not in kwargs:
@@ -169,13 +169,13 @@ class PortInUse(InUse):
 
 class ServicePortInUse(InUse):
     message = _("Port %(port_id)s cannot be deleted directly via the "
-                "port API: %(reason)s")
+                "port API: %(reason)s.")
 
 
 class PortBound(InUse):
     message = _("Unable to complete operation on port %(port_id)s, "
                 "port is already bound, port type: %(vif_type)s, "
-                "old_mac %(old_mac)s, new_mac %(new_mac)s")
+                "old_mac %(old_mac)s, new_mac %(new_mac)s.")
 
 
 class MacAddressInUse(InUse):
@@ -246,11 +246,11 @@ class NoNetworkFoundInMaximumAllowedAttempts(ServiceUnavailable):
 
 class SubnetMismatchForPort(BadRequest):
     message = _("Subnet on port %(port_id)s does not match "
-                "the requested subnet %(subnet_id)s")
+                "the requested subnet %(subnet_id)s.")
 
 
 class MalformedRequestBody(BadRequest):
-    message = _("Malformed request body: %(reason)s")
+    message = _("Malformed request body: %(reason)s.")
 
 
 class Invalid(NeutronException):
@@ -303,33 +303,33 @@ class QuotaResourceUnknown(NotFound):
 
 
 class OverQuota(Conflict):
-    message = _("Quota exceeded for resources: %(overs)s")
+    message = _("Quota exceeded for resources: %(overs)s.")
 
 
 class QuotaMissingTenant(BadRequest):
-    message = _("Tenant-id was missing from Quota request")
+    message = _("Tenant-id was missing from quota request.")
 
 
 class InvalidQuotaValue(Conflict):
     message = _("Change would make usage less than 0 for the following "
-                "resources: %(unders)s")
+                "resources: %(unders)s.")
 
 
 class InvalidSharedSetting(Conflict):
     message = _("Unable to reconfigure sharing settings for network "
-                "%(network)s. Multiple tenants are using it")
+                "%(network)s. Multiple tenants are using it.")
 
 
 class InvalidExtensionEnv(BadRequest):
-    message = _("Invalid extension environment: %(reason)s")
+    message = _("Invalid extension environment: %(reason)s.")
 
 
 class ExtensionsNotFound(NotFound):
-    message = _("Extensions not found: %(extensions)s")
+    message = _("Extensions not found: %(extensions)s.")
 
 
 class InvalidContentType(NeutronException):
-    message = _("Invalid content type %(content_type)s")
+    message = _("Invalid content type %(content_type)s.")
 
 
 class ExternalIpAddressExhausted(BadRequest):
@@ -338,17 +338,17 @@ class ExternalIpAddressExhausted(BadRequest):
 
 
 class TooManyExternalNetworks(NeutronException):
-    message = _("More than one external network exists")
+    message = _("More than one external network exists.")
 
 
 class InvalidConfigurationOption(NeutronException):
     message = _("An invalid value was provided for %(opt_name)s: "
-                "%(opt_value)s")
+                "%(opt_value)s.")
 
 
 class GatewayConflictWithAllocationPools(InUse):
     message = _("Gateway ip %(ip_address)s conflicts with "
-                "allocation pool %(pool)s")
+                "allocation pool %(pool)s.")
 
 
 class GatewayIpInUse(InUse):
@@ -357,7 +357,7 @@ class GatewayIpInUse(InUse):
 
 
 class NetworkVlanRangeError(NeutronException):
-    message = _("Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'")
+    message = _("Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'.")
 
     def __init__(self, **kwargs):
         # Convert vlan_range tuple to 'start:end' format for display
@@ -371,8 +371,8 @@ class PhysicalNetworkNameError(NeutronException):
 
 
 class NetworkTunnelRangeError(NeutronException):
-    message = _("Invalid network Tunnel range: "
-                "'%(tunnel_range)s' - %(error)s")
+    message = _("Invalid network tunnel range: "
+                "'%(tunnel_range)s' - %(error)s.")
 
     def __init__(self, **kwargs):
         # Convert tunnel_range tuple to 'start:end' format for display
@@ -382,15 +382,15 @@ class NetworkTunnelRangeError(NeutronException):
 
 
 class NetworkVxlanPortRangeError(NeutronException):
-    message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
+    message = _("Invalid network VXLAN port range: '%(vxlan_range)s'.")
 
 
 class VxlanNetworkUnsupported(NeutronException):
-    message = _("VXLAN Network unsupported.")
+    message = _("VXLAN network unsupported.")
 
 
 class DuplicatedExtension(NeutronException):
-    message = _("Found duplicate extension: %(alias)s")
+    message = _("Found duplicate extension: %(alias)s.")
 
 
 class DeviceIDNotOwnedByTenant(Conflict):
@@ -399,15 +399,15 @@ class DeviceIDNotOwnedByTenant(Conflict):
 
 
 class InvalidCIDR(BadRequest):
-    message = _("Invalid CIDR %(input)s given as IP prefix")
+    message = _("Invalid CIDR %(input)s given as IP prefix.")
 
 
 class RouterNotCompatibleWithAgent(NeutronException):
-    message = _("Router '%(router_id)s' is not compatible with this agent")
+    message = _("Router '%(router_id)s' is not compatible with this agent.")
 
 
 class DvrHaRouterNotSupported(NeutronException):
-    message = _("Router '%(router_id)s' cannot be both DVR and HA")
+    message = _("Router '%(router_id)s' cannot be both DVR and HA.")
 
 
 class FailToDropPrivilegesExit(SystemExit):
@@ -428,11 +428,12 @@ class IpTablesApplyException(NeutronException):
 
 
 class NetworkIdOrRouterIdRequiredError(NeutronException):
-    message = _('network_id and router_id are None. One must be provided.')
+    message = _('Both network_id and router_id are None. '
+                'One must be provided.')
 
 
 class AbortSyncRouters(NeutronException):
-    message = _("Aborting periodic_sync_routers_task due to an error")
+    message = _("Aborting periodic_sync_routers_task due to an error.")
 
 
 # Shared *aas exceptions, pending them being refactored out of Neutron
@@ -448,78 +449,78 @@ class FirewallInternalDriverError(NeutronException):
 
 
 class MissingMinSubnetPoolPrefix(BadRequest):
-    message = _("Unspecified minimum subnet pool prefix")
+    message = _("Unspecified minimum subnet pool prefix.")
 
 
 class EmptySubnetPoolPrefixList(BadRequest):
-    message = _("Empty subnet pool prefix list")
+    message = _("Empty subnet pool prefix list.")
 
 
 class PrefixVersionMismatch(BadRequest):
-    message = _("Cannot mix IPv4 and IPv6 prefixes in a subnet pool")
+    message = _("Cannot mix IPv4 and IPv6 prefixes in a subnet pool.")
 
 
 class UnsupportedMinSubnetPoolPrefix(BadRequest):
-    message = _("Prefix '%(prefix)s' not supported in IPv%(version)s pool")
+    message = _("Prefix '%(prefix)s' not supported in IPv%(version)s pool.")
 
 
 class IllegalSubnetPoolPrefixBounds(BadRequest):
     message = _("Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, "
-                "%(base_prefix_type)s=%(base_prefixlen)s")
+                "%(base_prefix_type)s=%(base_prefixlen)s.")
 
 
 class IllegalSubnetPoolPrefixUpdate(BadRequest):
-    message = _("Illegal update to prefixes: %(msg)s")
+    message = _("Illegal update to prefixes: %(msg)s.")
 
 
 class SubnetAllocationError(NeutronException):
-    message = _("Failed to allocate subnet: %(reason)s")
+    message = _("Failed to allocate subnet: %(reason)s.")
 
 
 class AddressScopePrefixConflict(Conflict):
     message = _("Failed to associate address scope: subnetpools "
-                "within an address scope must have unique prefixes")
+                "within an address scope must have unique prefixes.")
 
 
 class IllegalSubnetPoolAssociationToAddressScope(BadRequest):
     message = _("Illegal subnetpool association: subnetpool %(subnetpool_id)s "
-                " cannot be associated with address scope"
-                " %(address_scope_id)s")
+                "cannot be associated with address scope "
+                "%(address_scope_id)s.")
 
 
 class IllegalSubnetPoolUpdate(BadRequest):
-    message = _("Illegal subnetpool update : %(reason)s")
+    message = _("Illegal subnetpool update : %(reason)s.")
 
 
 class MinPrefixSubnetAllocationError(BadRequest):
     message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
-                "minimum allowed prefix is %(min_prefixlen)s")
+                "minimum allowed prefix is %(min_prefixlen)s.")
 
 
 class MaxPrefixSubnetAllocationError(BadRequest):
     message = _("Unable to allocate subnet with prefix length %(prefixlen)s, "
-                "maximum allowed prefix is %(max_prefixlen)s")
+                "maximum allowed prefix is %(max_prefixlen)s.")
 
 
 class SubnetPoolDeleteError(BadRequest):
-    message = _("Unable to delete subnet pool: %(reason)s")
+    message = _("Unable to delete subnet pool: %(reason)s.")
 
 
 class SubnetPoolQuotaExceeded(OverQuota):
-    message = _("Per-tenant subnet pool prefix quota exceeded")
+    message = _("Per-tenant subnet pool prefix quota exceeded.")
 
 
 class DeviceNotFoundError(NeutronException):
-    message = _("Device '%(device_name)s' does not exist")
+    message = _("Device '%(device_name)s' does not exist.")
 
 
 class NetworkSubnetPoolAffinityError(BadRequest):
     message = _("Subnets hosted on the same network must be allocated from "
-                "the same subnet pool")
+                "the same subnet pool.")
 
 
 class ObjectActionError(NeutronException):
-    message = _('Object action %(action)s failed because: %(reason)s')
+    message = _('Object action %(action)s failed because: %(reason)s.')
 
 
 class CTZoneExhaustedError(NeutronException):
