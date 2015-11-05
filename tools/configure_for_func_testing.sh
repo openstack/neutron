@@ -53,6 +53,7 @@ VENV=${VENV:-dsvm-functional}
 DEVSTACK_PATH=${DEVSTACK_PATH:-$1}
 PROJECT_NAME=${PROJECT_NAME:-neutron}
 REPO_BASE=${GATE_DEST:-$(cd $(dirname "$0")/../.. && pwd)}
+INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 
@@ -109,7 +110,10 @@ function _install_rpc_backend {
 }
 
 
+# _install_databases [install_pg]
 function _install_databases {
+    local install_pg=${1:-True}
+
     echo_summary "Installing databases"
 
     # Avoid attempting to configure the db if it appears to already
@@ -129,10 +133,12 @@ function _install_databases {
     install_database
     configure_database_mysql
 
-    enable_service postgresql
-    initialize_database_backends
-    install_database
-    configure_database_postgresql
+    if [[ "$install_pg" == "True" ]]; then
+        enable_service postgresql
+        initialize_database_backends
+        install_database
+        configure_database_postgresql
+    fi
 
     # Set up the 'openstack_citest' user and database in each backend
     tmp_dir=$(mktemp -d)
@@ -148,14 +154,16 @@ FLUSH PRIVILEGES;
 EOF
     /usr/bin/mysql -u root < $tmp_dir/mysql.sql
 
-    cat << EOF > $tmp_dir/postgresql.sql
+    if [[ "$install_pg" == "True" ]]; then
+        cat << EOF > $tmp_dir/postgresql.sql
 CREATE USER openstack_citest WITH CREATEDB LOGIN PASSWORD 'openstack_citest';
 CREATE DATABASE openstack_citest WITH OWNER openstack_citest;
 EOF
 
-    # User/group postgres needs to be given access to tmp_dir
-    setfacl -m g:postgres:rwx $tmp_dir
-    sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
+        # User/group postgres needs to be given access to tmp_dir
+        setfacl -m g:postgres:rwx $tmp_dir
+        sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
+    fi
 }
 
 
@@ -250,5 +258,9 @@ _init
 
 
 if [[ "$IS_GATE" != "True" ]]; then
-    configure_host_for_func_testing
+    if [[ "$INSTALL_MYSQL_ONLY" == "True" ]]; then
+        _install_databases nopg
+    else
+        configure_host_for_func_testing
+    fi
 fi
