@@ -758,13 +758,18 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         router = {'name': 'router1',
                   'admin_state_up': True,
                   'distributed': True}
+        subnet_ids = {'id': '1234'}
         r = self.l3plugin.create_router(
             self.adminContext, {'router': router})
         dvr_agent = self._register_dvr_agents()[1]
 
         with mock.patch.object(
                 self.l3plugin,
-                'check_ports_exist_on_l3agent') as port_exists:
+                'check_ports_exist_on_l3agent') as port_exists,\
+            mock.patch.object(
+                self.l3plugin,
+                'get_subnet_ids_on_router') as rtr_subnets:
+            rtr_subnets.return_value = [subnet_ids]
             port_exists.return_value = True
             self.l3plugin.schedule_router(
                 self.adminContext, r['id'])

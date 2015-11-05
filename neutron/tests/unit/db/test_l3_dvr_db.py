@@ -483,6 +483,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = mock.MagicMock()
         plugin.get_l3_agents_hosting_routers = mock.Mock(
             return_value=[mock.MagicMock()])
+        plugin.get_subnet_ids_on_router = mock.Mock(
+            return_value=interface_info)
         plugin.check_ports_exist_on_l3agent = mock.Mock(
             return_value=False)
         plugin.remove_router_from_l3_agent = mock.Mock(
@@ -519,6 +521,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
+        plugin = mock.MagicMock()
+        plugin.get_subnet_ids_on_router = mock.Mock()
         with self.network() as net_ext,\
                 self.subnet() as subnet1,\
                 self.subnet(cidr='20.0.0.0/24') as subnet2:
@@ -550,7 +554,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             with mock.patch.object(manager.NeutronManager,
                                   'get_service_plugins') as get_svc_plugin:
                 get_svc_plugin.return_value = {
-                    plugin_const.L3_ROUTER_NAT: self.mixin}
+                    plugin_const.L3_ROUTER_NAT: plugin}
+                self.mixin.manager = manager
                 self.mixin.remove_router_interface(
                     self.ctx, router['id'], {'port_id': dvr_ports[0]['id']})
 
@@ -563,6 +568,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             dvr_ports = self.core_plugin.get_ports(
                 self.ctx, filters=dvr_filters)
             self.assertEqual(1, len(dvr_ports))
+            self.assertEqual(1, plugin.get_subnet_ids_on_router.call_count)
 
     def test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': False}
