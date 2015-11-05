@@ -121,15 +121,9 @@ def execute(cmd, process_input=None, addl_env=None,
             obj.stdin.close()
         if six.PY3:
             if isinstance(_stdout, bytes):
-                try:
-                    _stdout = _stdout.decode(encoding='utf-8')
-                except UnicodeError:
-                    pass
+                _stdout = _stdout.decode('utf-8', 'surrogateescape')
             if isinstance(_stderr, bytes):
-                try:
-                    _stderr = _stderr.decode(encoding='utf-8')
-                except UnicodeError:
-                    pass
+                _stderr = _stderr.decode('utf-8', 'surrogateescape')
 
         command_str = {
             'cmd': cmd,
