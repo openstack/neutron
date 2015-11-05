@@ -163,18 +163,11 @@ class LinuxBridgeManager(object):
                             "range"),
                         cfg.CONF.VXLAN.vxlan_group)
 
-    def get_all_neutron_bridges(self):
-        neutron_bridge_list = []
+    def get_deletable_bridges(self):
         bridge_list = bridge_lib.get_bridge_names()
-        for bridge in bridge_list:
-            if bridge.startswith(BRIDGE_NAME_PREFIX):
-                neutron_bridge_list.append(bridge)
-
-        # NOTE(nick-ma-z): Add pre-existing user-defined bridges
-        for bridge_name in self.bridge_mappings.values():
-            if bridge_name not in neutron_bridge_list:
-                neutron_bridge_list.append(bridge_name)
-        return neutron_bridge_list
+        bridges = {b for b in bridge_list if b.startswith(BRIDGE_NAME_PREFIX)}
+        bridges.difference_update(self.bridge_mappings.values())
+        return bridges
 
     def get_tap_devices_count(self, bridge_name):
         if_list = bridge_lib.BridgeDevice(bridge_name).get_interfaces()

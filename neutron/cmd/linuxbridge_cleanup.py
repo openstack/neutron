@@ -45,10 +45,7 @@ def remove_empty_bridges():
     lb_manager = linuxbridge_neutron_agent.LinuxBridgeManager(
         bridge_mappings, interface_mappings)
 
-    # NOTE(mgagne) Don't remove pre-existing user-defined bridges
-    bridge_names = set(lb_manager.get_all_neutron_bridges())
-    bridge_names -= set(bridge_mappings.values())
-
+    bridge_names = lb_manager.get_deletable_bridges()
     for bridge_name in bridge_names:
         if lb_manager.get_tap_devices_count(bridge_name):
             continue
