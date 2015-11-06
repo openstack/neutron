@@ -95,8 +95,8 @@ check-requirements jobs in project-config. For example, see `this patch
 Stable branches
 ---------------
 
-Stable branches for libraries should be created at the same time when
-corresponding neutron stable branches are cut off. This is to avoid situations
+Stable branches for subprojects should be created at the same time when
+corresponding neutron stable branches are created. This is to avoid situations
 when a postponed cut-off results in a stable branch that contains some patches
 that belong to the next release. This would require reverting patches, and this
 is something you should avoid.
