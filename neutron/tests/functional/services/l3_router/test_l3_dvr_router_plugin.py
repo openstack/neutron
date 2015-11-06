@@ -391,3 +391,39 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
 
     def test_delete_floating_ip_agent_notification_non_dvr(self):
         self._test_delete_floating_ip_agent_notification(dvr=False)
+
+    def test_update_vm_port_host_router_update(self):
+        # register l3 agent in dvr mode in addition to existing dvr_snat agent
+        HOST = 'host1'
+        dvr_agent = helpers.register_l3_agent(
+            host=HOST, agent_mode=l3_const.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        with self.subnet() as subnet:
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            # since there are no vm ports on HOST, at this point the router
+            # should be scheduled to only dvr_snat agent
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])
+            self.assertEqual(1, len(agents['agents']))
+            self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier,\
+                    self.port(subnet=subnet,
+                              device_owner='compute:None') as port:
+                self.core_plugin.update_port(
+                    self.context, port['port']['id'],
+                    {'port': {'binding:host_id': HOST}})
+
+                # now router should be scheduled to both agents
+                agents = self.l3_plugin.list_l3_agents_hosting_router(
+                    self.context, router['id'])
+                self.assertEqual(2, len(agents['agents']))
+                self.assertIn(dvr_agent['id'],
+                              [agent['id'] for agent in agents['agents']])
+                # and notification should only be sent to the agent on HOST
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST)
+                self.assertFalse(l3_notifier.routers_updated.called)

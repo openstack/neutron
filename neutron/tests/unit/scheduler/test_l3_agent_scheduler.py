@@ -1026,8 +1026,10 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def test_dvr_update_router_addvm(self):
         port = {
+                'id': 'port1',
                 'device_id': 'abcd',
                 'device_owner': 'compute:nova',
+                'binding:host_id': 'host1',
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1059,39 +1061,27 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 ]
             }
         ]
-        r1 = {
-              'id': 'r1',
-              'distributed': True,
-        }
-        r2 = {
-              'id': 'r2',
-              'distributed': True,
-        }
+        agent_on_host = {'id': 'agent1'}
 
         with mock.patch(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
             return_value=dvr_ports),\
-                mock.patch(
-                    'neutron.manager.NeutronManager.get_service_plugins',
-                    return_value=mock.Mock()),\
-                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                           router_id='r1', return_value=r1),\
-                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                           router_id='r2', return_value=r2),\
                 mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
-                           '.L3AgentNotifyAPI'):
+                           '.L3AgentNotifyAPI'),\
+                mock.patch(
+                    'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port',
+                    return_value=port),\
+                mock.patch.object(
+                        self.dut, 'get_l3_agents',
+                        return_value=[agent_on_host]) as get_l3_agents:
             self.dut.dvr_update_router_addvm(self.adminContext, port)
-            self.assertEqual(
-                self.dut.l3_rpc_notifier.routers_updated.call_count, 2)
-            payload = {'subnet_id': port['fixed_ips'][0]['subnet_id']}
-            expected_calls = [
-                mock.call.routers_updated(
-                    self.adminContext, ['r1'], None, payload),
-                mock.call.routers_updated(
-                    self.adminContext, ['r2'], None, payload)
-            ]
-            self.dut.l3_rpc_notifier.routers_updated.assert_has_calls(
-                expected_calls, any_order=True)
+
+            get_l3_agents.assert_called_once_with(
+                self.adminContext, filters={'host': [port['binding:host_id']]})
+            (self.dut.l3_rpc_notifier.routers_updated_on_host.
+                assert_called_once_with(
+                    self.adminContext, {'r1', 'r2'}, 'host1'))
+            self.assertFalse(self.dut.l3_rpc_notifier.routers_updated.called)
 
     def test_get_dvr_routers_by_portid(self):
         dvr_port = {
