@@ -229,6 +229,7 @@ Calico
 
 * Git: https://git.openstack.org/cgit/openstack/networking-calico
 * Launchpad: https://launchpad.net/networking-calico
+* PyPI: https://pypi.python.org/pypi/networking-calico
 
 .. _networking-cisco:
 
