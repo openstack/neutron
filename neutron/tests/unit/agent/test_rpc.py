@@ -136,7 +136,7 @@ class AgentRPCMethods(base.BaseTestCase):
     def test_create_consumers_start_listening(self):
         endpoints = [mock.Mock()]
         expected = [
-            mock.call(new=True),
+            mock.call(),
             mock.call().create_consumer('foo-topic-op', endpoints,
                                         fanout=True),
             mock.call().consume_in_threads()
@@ -149,7 +149,7 @@ class AgentRPCMethods(base.BaseTestCase):
     def test_create_consumers_do_not_listen(self):
         endpoints = [mock.Mock()]
         expected = [
-            mock.call(new=True),
+            mock.call(),
             mock.call().create_consumer('foo-topic-op', endpoints,
                                         fanout=True),
         ]
@@ -161,7 +161,7 @@ class AgentRPCMethods(base.BaseTestCase):
     def test_create_consumers_with_node_name(self):
         endpoints = [mock.Mock()]
         expected = [
-            mock.call(new=True),
+            mock.call(),
             mock.call().create_consumer('foo-topic-op', endpoints,
                                         fanout=True),
             mock.call().create_consumer('foo-topic-op.node1', endpoints,

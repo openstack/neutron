@@ -254,7 +254,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.rpc_context = n_context.ContextBase('neutron', 'neutron',
                                                  is_admin=False)
-        self.conn = n_rpc.create_connection(new=True)
+        self.conn = n_rpc.create_connection()
         self.endpoints = [BridgeRpcCallbacks(),
                           securitygroups_rpc.SecurityGroupServerRpcCallback(),
                           dhcp_rpc.DhcpRpcCallback(),
