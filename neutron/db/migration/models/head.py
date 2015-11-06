@@ -48,6 +48,7 @@ from neutron.db.qos import models as qos_models  # noqa
 from neutron.db.quota import models  # noqa
 from neutron.db import rbac_db_models  # noqa
 from neutron.db import securitygroups_db  # noqa
+from neutron.db import segments_db  # noqa
 from neutron.db import servicetype_db  # noqa
 from neutron.db import tag_db  # noqa
 from neutron.ipam.drivers.neutrondb_ipam import db_models  # noqa
