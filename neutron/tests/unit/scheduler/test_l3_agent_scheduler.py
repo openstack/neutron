@@ -282,6 +282,33 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         router['distributed'] = True
         plugin.get_l3_agents.return_value = []
         iter(self.scheduler._get_candidates(plugin, mock.MagicMock(), router))
+        self.assertFalse(plugin.get_l3_agent_candidates.called)
+
+    def test__get_candidates_skips_get_l3_agent_candidates_if_dvr_scheduled(
+            self):
+        plugin = mock.MagicMock()
+        # distributed router already hosted
+        plugin.get_l3_agents_hosting_routers.return_value = ['a1']
+        router = {'distributed': True, 'id': str(uuid.uuid4())}
+        plugin.get_l3_agents.return_value = ['a1']
+        self.scheduler._get_candidates(plugin, mock.MagicMock(), router)
+        self.assertFalse(plugin.get_l3_agent_candidates.called)
+
+    def test__get_candidates_calls_get_l3_agent_candidates_if_agent_available(
+            self):
+        plugin = mock.MagicMock()
+        # distributed router already hosted in two agent 'a1' and 'a2'
+        plugin.get_l3_agents_hosting_routers.return_value = ['a1', 'a2']
+        router = {'distributed': True, 'id': str(uuid.uuid4())}
+        # Available distributed agents
+        plugin.get_l3_agents.return_value = ['a1', 'a2', 'a3', 'a4', 'a5']
+        unscheduled_agents = ['a3', 'a4', 'a5']
+        plugin.get_l3_agent_candidates.return_value = ['a3', 'a4']
+        agents_returned = self.scheduler._get_candidates(
+            plugin, mock.MagicMock(), router)
+        plugin.get_l3_agent_candidates.called_once_with(
+            mock.ANY, router, unscheduled_agents)
+        self.assertEqual(['a3', 'a4'], sorted(agents_returned))
 
 
 class L3SchedulerBaseMixin(object):
