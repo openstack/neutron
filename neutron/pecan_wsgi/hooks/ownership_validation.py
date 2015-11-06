@@ -27,8 +27,7 @@ class OwnershipValidationHook(hooks.PecanHook):
     def before(self, state):
         if state.request.method != 'POST':
             return
-        items = state.request.resources
-        for item in items:
+        for item in state.request.context.get('resources', []):
             self._validate_network_tenant_ownership(state, item)
 
     def _validate_network_tenant_ownership(self, state, resource_item):

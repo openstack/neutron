@@ -1042,3 +1042,35 @@ class TestResDict(base.BaseTestCase):
         self.assertRaises(webob.exc.HTTPBadRequest,
                           attributes.populate_tenant_id,
                           ctx, res_dict3, attr_info, True)
+
+
+class TestHelpers(base.DietTestCase):
+
+    def _verify_port_attributes(self, attrs):
+        for test_attribute in ('id', 'name', 'mac_address', 'network_id',
+                               'tenant_id', 'fixed_ips', 'status'):
+            self.assertIn(test_attribute, attrs)
+
+    def test_get_collection_info(self):
+        attrs = attributes.get_collection_info('ports')
+        self._verify_port_attributes(attrs)
+
+    def test_get_collection_info_missing(self):
+        self.assertFalse(attributes.get_collection_info('meh'))
+
+    def test_get_resource_info(self):
+        attributes.REVERSED_PLURALS.pop('port', None)
+        attrs = attributes.get_resource_info('port')
+        self._verify_port_attributes(attrs)
+        # verify side effect
+        self.assertIn('port', attributes.REVERSED_PLURALS)
+
+    def test_get_resource_info_missing(self):
+        self.assertFalse(attributes.get_resource_info('meh'))
+
+    def test_get_resource_info_cached(self):
+        with mock.patch('neutron.api.v2.attributes.PLURALS') as mock_plurals:
+            attributes.REVERSED_PLURALS['port'] = 'ports'
+            attrs = attributes.get_resource_info('port')
+            self._verify_port_attributes(attrs)
+        self.assertEqual(0, mock_plurals.items.call_count)

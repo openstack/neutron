@@ -46,7 +46,7 @@ def setup_app(*args, **kwargs):
         hooks.ExceptionTranslationHook(),  # priority 100
         hooks.ContextHook(),  # priority 95
         hooks.MemberActionHook(),  # piority 95
-        hooks.AttributePopulationHook(),  # priority 120
+        hooks.BodyValidationHook(),  # priority 120
         hooks.OwnershipValidationHook(),  # priority 125
         hooks.QuotaEnforcementHook(),  # priority 130
         hooks.PolicyHook(),  # priority 135
