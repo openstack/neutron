@@ -21,3 +21,4 @@ os-testr>=0.4.1
 tempest-lib>=0.10.0
 ddt>=0.7.0
 pylint==1.4.4 # GNU GPL v2
+reno>=0.1.1 # Apache2
