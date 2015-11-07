@@ -33,7 +33,6 @@ from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
-from neutron.agent.l3 import router_info as rinf
 from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -368,21 +367,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         del self.router_info[router_id]
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
-
-    def update_fip_statuses(self, ri, existing_floating_ips, fip_statuses):
-        # Identify floating IPs which were disabled
-        ri.floating_ips = set(fip_statuses.keys())
-        for fip_id in existing_floating_ips - ri.floating_ips:
-            fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
-        # filter out statuses that didn't change
-        fip_statuses = {f: stat for f, stat in fip_statuses.items()
-                        if stat != rinf.FLOATINGIP_STATUS_NOCHANGE}
-        if not fip_statuses:
-            return
-        LOG.debug('Sending floating ip statuses: %s', fip_statuses)
-        # Update floating IP status on the neutron server
-        self.plugin_rpc.update_floatingip_statuses(
-            self.context, ri.router_id, fip_statuses)
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
