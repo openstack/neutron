@@ -49,22 +49,22 @@ class FakeIpDevice(object):
         self.link = FakeIpLinkCommand()
 
 
+def get_linuxbridge_manager(bridge_mappings, interface_mappings):
+    with mock.patch.object(ip_lib.IPWrapper, 'get_device_by_ip',
+                           return_value=FAKE_DEFAULT_DEV),\
+            mock.patch.object(ip_lib, 'device_exists', return_value=True),\
+            mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                              'check_vxlan_support'):
+        return linuxbridge_neutron_agent.LinuxBridgeManager(
+            bridge_mappings, interface_mappings)
+
+
 class TestLinuxBridge(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridge, self).setUp()
-        interface_mappings = INTERFACE_MAPPINGS
-        bridge_mappings = BRIDGE_MAPPINGS
-
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip', return_value=FAKE_DEFAULT_DEV),\
-                mock.patch.object(ip_lib, 'device_exists',
-                                  return_value=True),\
-                mock.patch.object(
-                    linuxbridge_neutron_agent.LinuxBridgeManager,
-                    'check_vxlan_support'):
-            self.linux_bridge = linuxbridge_neutron_agent.LinuxBridgeManager(
-                bridge_mappings, interface_mappings)
+        self.linux_bridge = get_linuxbridge_manager(
+            BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
     def test_ensure_physical_in_bridge_invalid(self):
         result = self.linux_bridge.ensure_physical_in_bridge('network_id',
@@ -367,19 +367,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
 class TestLinuxBridgeManager(base.BaseTestCase):
     def setUp(self):
         super(TestLinuxBridgeManager, self).setUp()
-        self.interface_mappings = INTERFACE_MAPPINGS
-        self.bridge_mappings = BRIDGE_MAPPINGS
-
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip',
-                               return_value=FAKE_DEFAULT_DEV),\
-                mock.patch.object(ip_lib, 'device_exists',
-                                  return_value=True),\
-                mock.patch.object(
-                    linuxbridge_neutron_agent.LinuxBridgeManager,
-                    'check_vxlan_support'):
-            self.lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
-                self.bridge_mappings, self.interface_mappings)
+        self.lbm = get_linuxbridge_manager(
+            BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
     def test_local_ip_validation_with_valid_ip(self):
         with mock.patch.object(ip_lib.IPWrapper,
@@ -884,16 +873,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(updif_fn.called)
 
     def test_delete_bridge_no_int_mappings(self):
-        bridge_mappings = {}
-        interface_mappings = {}
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_device_by_ip',
-                               return_value=FAKE_DEFAULT_DEV),\
-                mock.patch.object(
-                    linuxbridge_neutron_agent.LinuxBridgeManager,
-                    'check_vxlan_support'):
-            lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
-                bridge_mappings, interface_mappings)
+        lbm = get_linuxbridge_manager(
+            bridge_mappings={}, interface_mappings={})
 
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(ip_lib, "IpLinkCommand") as link_cmd,\
@@ -1089,18 +1070,8 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         class FakeLBAgent(object):
             def __init__(self):
                 self.agent_id = 1
-                with mock.patch.object(
-                        ip_lib.IPWrapper,
-                        'get_device_by_ip', return_value=FAKE_DEFAULT_DEV),\
-                        mock.patch.object(ip_lib, 'device_exists',
-                                          return_value=True),\
-                        mock.patch.object(
-                            linuxbridge_neutron_agent.LinuxBridgeManager,
-                            'check_vxlan_support'):
-                    self.br_mgr = (
-                        linuxbridge_neutron_agent.LinuxBridgeManager(
-                                   BRIDGE_MAPPINGS,
-                                   INTERFACE_MAPPINGS))
+                self.br_mgr = get_linuxbridge_manager(
+                    BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
                 self.br_mgr.vxlan_mode = lconst.VXLAN_UCAST
                 segment = mock.Mock()
