@@ -149,9 +149,11 @@ def execute(cmd, process_input=None, addl_env=None,
             m += _("Stdin: %(stdin)s\n"
                   "Stdout: %(stdout)s\n"
                   "Stderr: %(stderr)s") % command_str
-            LOG.error(m)
+            log_msg = m.strip().replace('\n', '; ')
+            LOG.error(log_msg)
         else:
-            LOG.debug(m)
+            log_msg = m.strip().replace('\n', '; ')
+            LOG.debug(log_msg)
 
         if returncode and check_exit_code:
             raise RuntimeError(m)
