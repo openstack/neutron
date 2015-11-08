@@ -92,7 +92,7 @@ class DelBridgeCommand(BaseCommand):
             if self.if_exists:
                 return
             else:
-                msg = _LE("Bridge %s does not exist") % self.name
+                msg = _("Bridge %s does not exist") % self.name
                 LOG.error(msg)
                 raise RuntimeError(msg)
         self.api._ovs.verify('bridges')
@@ -320,7 +320,7 @@ class DelPortCommand(BaseCommand):
         except idlutils.RowNotFound:
             if self.if_exists:
                 return
-            msg = _LE("Port %s does not exist") % self.port
+            msg = _("Port %s does not exist") % self.port
             raise RuntimeError(msg)
         if self.bridge:
             br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name',
@@ -331,7 +331,7 @@ class DelPortCommand(BaseCommand):
 
         if port.uuid not in br.ports and not self.if_exists:
             # TODO(twilson) Make real errors across both implementations
-            msg = _LE("Port %(port)s does not exist on %(bridge)s!") % {
+            msg = _("Port %(port)s does not exist on %(bridge)s!") % {
                 'port': self.name, 'bridge': self.bridge
             }
             LOG.error(msg)
@@ -425,7 +425,7 @@ class DbListCommand(BaseCommand):
                     # NOTE(kevinbenton): this is converted to a RuntimeError
                     # for compat with the vsctl version. It might make more
                     # sense to change this to a RowNotFoundError in the future.
-                    raise RuntimeError(_LE(
+                    raise RuntimeError(_(
                           "Row doesn't exist in the DB. Request info: "
                           "Table=%(table)s. Columns=%(columns)s. "
                           "Records=%(records)s.") % {
