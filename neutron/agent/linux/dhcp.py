@@ -97,7 +97,8 @@ class DictModel(dict):
         del self[name]
 
     def __str__(self):
-        return "id=%s, network_id=%s" % (self.id, self.network_id)
+        pairs = ['%s=%s' % (k, v) for k, v in self.items()]
+        return ', '.join(sorted(pairs))
 
 
 class NetModel(DictModel):

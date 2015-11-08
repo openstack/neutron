@@ -2104,3 +2104,14 @@ class TestDeviceManager(TestConfBase):
         mgr.driver.init_l3.assert_called_with('ns-XXX',
                                               ['192.168.0.6/24'],
                                               namespace='qdhcp-ns')
+
+
+class TestDictModel(base.BaseTestCase):
+
+    def test_string_representation_port(self):
+        port = dhcp.DictModel({'id': 'id', 'network_id': 'net_id'})
+        self.assertEqual('id=id, network_id=net_id', str(port))
+
+    def test_string_representation_network(self):
+        net = dhcp.DictModel({'id': 'id', 'name': 'myname'})
+        self.assertEqual('id=id, name=myname', str(net))
