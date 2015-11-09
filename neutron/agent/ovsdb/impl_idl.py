@@ -24,7 +24,6 @@ from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import idlutils
-from neutron.i18n import _LE
 
 
 OPTS = [
@@ -98,7 +97,7 @@ class Transaction(api.Transaction):
                     seqno)
                 continue
             elif status == txn.ERROR:
-                msg = _LE("OVSDB Error: %s") % txn.get_error()
+                msg = _("OVSDB Error: %s") % txn.get_error()
                 if self.log_errors:
                     LOG.error(msg)
                 if self.check_error:

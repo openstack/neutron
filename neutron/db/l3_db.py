@@ -37,7 +37,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.i18n import _LI, _LE
+from neutron.i18n import _LI
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
@@ -524,7 +524,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                                       device_id=port['device_id'])
 
             if not port['fixed_ips']:
-                msg = _LE('Router port must have at least one fixed IP')
+                msg = _('Router port must have at least one fixed IP')
                 raise n_exc.BadRequest(resource='router', msg=msg)
 
             # Only allow one router port with IPv6 subnets per network id
@@ -553,8 +553,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
             # Keep the restriction against multiple IPv4 subnets
             if len([s for s in subnets if s['ip_version'] == 4]) > 1:
-                msg = _LE("Cannot have multiple "
-                          "IPv4 subnets on router port")
+                msg = _("Cannot have multiple "
+                        "IPv4 subnets on router port")
                 raise n_exc.BadRequest(resource='router', msg=msg)
 
             port.update({'device_id': router.id, 'device_owner': owner})
