@@ -75,10 +75,11 @@ def execute(cmd, process_input=None, addl_env=None,
         if obj.returncode and obj.returncode in extra_ok_codes:
             obj.returncode = None
 
+        log_msg = m.strip().replace('\n', '; ')
         if obj.returncode and log_fail_as_error:
-            LOG.error(m)
+            LOG.error(log_msg)
         else:
-            LOG.debug(m)
+            LOG.debug(log_msg)
 
         if obj.returncode and check_exit_code:
             raise RuntimeError(m)
