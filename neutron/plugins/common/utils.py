@@ -13,7 +13,7 @@
 #    under the License.
 
 """
-Common utilities and helper functions for Openstack Networking Plugins.
+Common utilities and helper functions for OpenStack Networking Plugins.
 """
 
 import webob.exc

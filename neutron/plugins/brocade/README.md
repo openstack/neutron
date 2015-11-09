@@ -1,4 +1,4 @@
-Brocade Openstack Neutron Plugin
+Brocade OpenStack Neutron Plugin
 ================================
 
 * up-to-date version of these instructions are located at:
@@ -9,7 +9,7 @@ Brocade Openstack Neutron Plugin
 * Supports VCS (Virtual Cluster of Switches)
 
 
-Openstack Brocade Neutron Plugin implements the Neutron v2.0 API.
+OpenStack Brocade Neutron Plugin implements the Neutron v2.0 API.
 
 This plugin is meant to orchestrate Brocade VCS switches running NOS, examples of these are:
 
@@ -22,7 +22,7 @@ to configure the Brocade switch.
              +------------+        +------------+          +-------------+
              |            |        |            |          |             |
              |            |        |            |          |   Brocade   |
-             | Openstack  |  v2.0  |  Brocade   |  NETCONF |  VCS Switch |
+             | OpenStack  |  v2.0  |  Brocade   |  NETCONF |  VCS Switch |
              | Neutron    +--------+  Neutron   +----------+             |
              |            |        |  Plugin    |          |  VDX 67xx   |
              |            |        |            |          |  VDX 87xx   |
@@ -34,7 +34,7 @@ to configure the Brocade switch.
 Directory Structure
 ===================
 
-Normally you will have your Openstack directory structure as follows:
+Normally you will have your OpenStack directory structure as follows:
 
          /opt/stack/nova/
          /opt/stack/horizon/
