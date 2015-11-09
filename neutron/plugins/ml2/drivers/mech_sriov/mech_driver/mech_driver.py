@@ -63,7 +63,8 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
                  vif_type=VIF_TYPE_HW_VEB,
                  vif_details={portbindings.CAP_PORT_FILTER: False},
                  supported_vnic_types=[portbindings.VNIC_DIRECT,
-                                       portbindings.VNIC_MACVTAP],
+                                       portbindings.VNIC_MACVTAP,
+                                       portbindings.VNIC_DIRECT_PHYSICAL],
                  supported_pci_vendor_info=None):
         """Initialize base class for SriovNicSwitch L2 agent type.
 
@@ -103,6 +104,17 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             LOG.debug("Refusing to bind due to unsupported pci_vendor device")
             return
 
+        if vnic_type == portbindings.VNIC_DIRECT_PHYSICAL:
+            # Physical functions don't support things like QoS properties,
+            # spoof checking, etc. so we might as well side-step the agent
+            # for now. The agent also doesn't currently recognize non-VF
+            # PCI devices so we won't get port status change updates
+            # either. This should be changed in the future so physical
+            # functions can use device mapping checks and the plugin can
+            # get port status updates.
+            self.try_to_bind(context, None)
+            return
+
         for agent in context.host_agents(self.agent_type):
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
@@ -115,10 +127,12 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
     def try_to_bind(self, context, agent):
         for segment in context.segments_to_bind:
             if self.check_segment(segment, agent):
+                port_status = (constants.PORT_STATUS_ACTIVE if agent is None
+                               else constants.PORT_STATUS_DOWN)
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
                                     self._get_vif_details(segment),
-                                    constants.PORT_STATUS_DOWN)
+                                    port_status)
                 LOG.debug("Bound using segment: %s", segment)
                 return True
         return False
