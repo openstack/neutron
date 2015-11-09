@@ -18,20 +18,43 @@ from oslo_config import cfg
 
 DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
-               help=_("Interval to resync.")),
+               help=_("The DHCP agent will resync its state with Neutron to "
+                      "recover from any transient notification or RPC errors. "
+                      "The interval is number of seconds between attempts.")),
     cfg.StrOpt('dhcp_driver',
                default='neutron.agent.linux.dhcp.Dnsmasq',
                help=_("The driver used to manage the DHCP server.")),
     cfg.BoolOpt('enable_isolated_metadata', default=False,
-                help=_("Support Metadata requests on isolated networks.")),
+                help=_("The DHCP server can assist with providing metadata "
+                       "support on isolated networks. Setting this value to "
+                       "True will cause the DHCP server to append specific "
+                       "host routes to the DHCP request. The metadata service "
+                       "will only be activated when the subnet does not "
+                       "contain any router port. The guest instance must be "
+                       "configured to request host routes via DHCP (Option "
+                       "121). This option doesn't have any effect when "
+                       "force_metadata is set to True.")),
     cfg.BoolOpt('force_metadata', default=False,
-                help=_("Force to use DHCP to get Metadata on all networks.")),
+                help=_("In some cases the Neutron router is not present to "
+                       "provide the metadata IP but the DHCP server can be "
+                       "used to provide this info. Setting this value will "
+                       "force the DHCP server to append specific host routes "
+                       "to the DHCP request. If this option is set, then the "
+                       "metadata service will be activated for all the "
+                       "networks.")),
     cfg.BoolOpt('enable_metadata_network', default=False,
-                help=_("Allows for serving metadata requests from a "
-                       "dedicated network. Requires "
-                       "enable_isolated_metadata = True")),
+                help=_("Allows for serving metadata requests coming from a "
+                       "dedicated metadata access network whose CIDR is "
+                       "169.254.169.254/16 (or larger prefix), and is "
+                       "connected to a Neutron router from which the VMs send "
+                       "metadata:1 request. In this case DHCP Option 121 will "
+                       "not be injected in VMs, as they will be able to reach "
+                       "169.254.169.254 through a router. This option "
+                       "requires enable_isolated_metadata = True.")),
     cfg.IntOpt('num_sync_threads', default=4,
-               help=_('Number of threads to use during sync process.'))
+               help=_('Number of threads to use during sync process. '
+                      'Should not exceed connection pool size configured on '
+                      'server.'))
 ]
 
 DHCP_OPTS = [

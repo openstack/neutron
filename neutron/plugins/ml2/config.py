@@ -24,7 +24,9 @@ ml2_opts = [
     cfg.ListOpt('tenant_network_types',
                 default=['local'],
                 help=_("Ordered list of network_types to allocate as tenant "
-                       "networks.")),
+                       "networks. The default value 'local' is useful for "
+                       "single-box testing but provides no connectivity "
+                       "between hosts.")),
     cfg.ListOpt('mechanism_drivers',
                 default=[],
                 help=_("An ordered list of networking mechanism driver "
@@ -39,12 +41,17 @@ ml2_opts = [
     cfg.IntOpt('path_mtu', default=0,
                help=_('The maximum permissible size of an unfragmented '
                       'packet travelling from and to addresses where '
-                      'encapsulated Neutron traffic is sent.  If <= 0, '
-                      'the path MTU is indeterminate.')),
+                      'encapsulated Neutron traffic is sent. '
+                      'Drivers calculate maximum viable MTU for validating '
+                      'tenant requests based on this value (typically, '
+                      'path_mtu - maxmum encapsulation header size). If <= 0, '
+                      'the path MTU is indeterminate and no calculation '
+                      'takes place.')),
     cfg.IntOpt('segment_mtu', default=0,
                help=_('The maximum permissible size of an unfragmented '
                       'packet travelling a L2 network segment.  If <= 0, the '
-                      'segment MTU is indeterminate.')),
+                      'segment MTU is indeterminate and no calculation takes '
+                      'place.')),
     cfg.ListOpt('physical_network_mtus',
                 default=[],
                 help=_("A list of mappings of physical networks to MTU "

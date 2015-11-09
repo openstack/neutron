@@ -42,7 +42,9 @@ security_group_opts = [
     cfg.BoolOpt(
         'enable_ipset',
         default=True,
-        help=_('Use ipset to speed-up the iptables based security groups.'))
+        help=_('Use ipset to speed-up the iptables based security groups. '
+               'Enabling ipset support requires that ipset is installed on L2 '
+               'agent node.'))
 ]
 cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 

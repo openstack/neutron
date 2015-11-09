@@ -367,6 +367,21 @@ section of the third-party repo's own ``setup.cfg`` file.
   config files, duplicate settings will collide. It is therefore recommended to
   prefix section names with a third-party string, e.g. [vendor_foo].
 
+Since Mitaka, configuration files are not maintained in the git repository but
+should be generated as follows::
+
+``tox -e genconfig``
+
+If a 'tox' environment is unavailable, then you can run the following script
+instead to generate the configuration files::
+
+./tools/generate_config_file_samples.sh
+
+It is advised that subprojects do not keep their configuration files in their
+respective trees and instead generate them using a similar approach as Neutron
+does.
+
+
 Liberty Steps
 +++++++++++++
 

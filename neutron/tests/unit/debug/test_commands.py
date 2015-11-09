@@ -35,7 +35,7 @@ class TestDebugCommands(base.BaseTestCase):
     def setUp(self):
         super(TestDebugCommands, self).setUp()
         cfg.CONF.register_opts(interface.OPTS)
-        cfg.CONF.register_opts(debug_agent.NeutronDebugAgent.OPTS)
+        cfg.CONF.register_opts(config.EXT_NET_BRIDGE_OPTS)
         common_config.init([])
         config.register_interface_driver_opts_helper(cfg.CONF)
 

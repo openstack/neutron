@@ -98,7 +98,8 @@ _db_opts = [
                help=_('URL to database')),
     cfg.StrOpt('engine',
                default='',
-               help=_('Database engine')),
+               help=_('Database engine for which script will be generated '
+                      'when using offline migration.')),
 ]
 
 CONF = cfg.ConfigOpts()
@@ -677,6 +678,10 @@ def run_sanity_checks(config, revision):
 def validate_cli_options():
     if CONF.subproject and CONF.service:
         alembic_util.err(_("Cannot specify both --service and --subproject."))
+
+
+def get_engine_config():
+    return [obj for obj in _db_opts if obj.name == 'engine']
 
 
 def main():
