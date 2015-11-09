@@ -262,6 +262,20 @@ that govern contributions to the Neutron project as a whole. The team
 to go over RFE's and discuss the project roadmap. Anyone is welcome to join
 and/or read the meeting notes.
 
+Release Team
+------------
+
+The `release team <https://review.openstack.org/#/admin/groups/150,members>`_ is
+a group of people with some additional gerrit permissions primarily aimed at
+allowing release management of Neutron sub-projects.  These permissions include:
+
+* Ability to push signed tags to sub-projects whose releases are managed by the
+  Neutron release team as opposed to the OpenStack release team.
+* Ability to push merge commits for Neutron or other sub-projects.
+* Ability to approve changes in all Neutron git repositories.  This is required
+  as the team needs to be able to quickly unblock things if needed, especially
+  at release time.
+
 Code Merge Responsibilities
 ===========================
 
