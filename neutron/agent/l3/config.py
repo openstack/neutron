@@ -43,16 +43,14 @@ OPTS = [
                       "in the M release.")),
     cfg.PortOpt('metadata_port',
                 default=9697,
-                help=_("TCP Port used by Neutron metadata namespace "
-                       "proxy.")),
+                help=_("TCP Port used by Neutron metadata namespace proxy.")),
     cfg.IntOpt('send_arp_for_ha',
                default=3,
                help=_("Send this many gratuitous ARPs for HA setup, if "
                       "less than or equal to 0, the feature is disabled")),
     cfg.StrOpt('router_id', default='',
-               help=_("If namespaces is disabled, the l3 agent can only"
-                      " configure a router that has the matching router "
-                      "ID.")),
+               help=_("If namespaces is disabled, the l3 agent can only "
+                      "configure a router that has the matching router ID.")),
     cfg.BoolOpt('handle_internal_only_routers',
                 default=True,
                 help=_("Agent should implement routers with no gateway")),
