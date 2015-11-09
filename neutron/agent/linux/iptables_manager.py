@@ -403,7 +403,7 @@ class IptablesManager(object):
             try:
                 self.defer_apply_off()
             except Exception:
-                msg = _LE('Failure applying iptables rules')
+                msg = _('Failure applying iptables rules')
                 LOG.exception(msg)
                 raise n_exc.IpTablesApplyException(msg)
 
