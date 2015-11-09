@@ -1,8 +1,8 @@
 Brocade ML2 Mechanism driver from ML2 plugin
 ============================================
 
-* The real code now resides in stackforge:
-  http://github.com/stackforge/networking-brocade
+* The real code now resides outside the Neutron Stadium in an OpenStack git repository:
+  http://github.com/openstack/networking-brocade
 
 * up-to-date version of these instructions are located at:
   http://50.56.236.34/docs/brocade-ml2-mechanism.txt
