@@ -117,7 +117,6 @@ class NamespaceManager(object):
         """Get a set of all namespaces on host managed by this manager."""
         try:
             root_ip = ip_lib.IPWrapper()
-
             namespaces = root_ip.get_namespaces()
             return set(ns for ns in namespaces if self.is_managed(ns))
         except RuntimeError:
