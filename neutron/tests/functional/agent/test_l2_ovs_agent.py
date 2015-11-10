@@ -73,6 +73,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             port_dicts=self.create_test_ports())
         self.wait_until_ports_state(self.ports, up=True)
         self.agent.check_ovs_status.return_value = constants.OVS_RESTARTED
+        # OVS restarted, the agent should reprocess all the ports
         self.agent.plugin_rpc.update_device_list.reset_mock()
         self.wait_until_ports_state(self.ports, up=True)
 
