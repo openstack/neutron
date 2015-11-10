@@ -36,6 +36,21 @@ class BridgeLibTest(base.BaseTestCase):
         self.execute.assert_called_once_with(cmd, run_as_root=True)
         self.execute.reset_mock()
 
+    def test_is_bridged_interface(self):
+        exists = lambda path: path == "/sys/class/net/tapOK/brport"
+        with mock.patch('os.path.exists', side_effect=exists):
+            self.assertTrue(bridge_lib.is_bridged_interface("tapOK"))
+            self.assertFalse(bridge_lib.is_bridged_interface("tapKO"))
+
+    def test_get_interface_bridge(self):
+        with mock.patch('os.readlink', side_effect=["prefix/br0", OSError()]):
+            br = bridge_lib.BridgeDevice.get_interface_bridge('tap0')
+            self.assertIsInstance(br, bridge_lib.BridgeDevice)
+            self.assertEqual("br0", br.name)
+
+            br = bridge_lib.BridgeDevice.get_interface_bridge('tap0')
+            self.assertIsNone(br)
+
     def _test_br(self, namespace=None):
         br = bridge_lib.BridgeDevice.addbr(self._BR_NAME, namespace)
         self.assertEqual(namespace, br.namespace)
@@ -63,3 +78,17 @@ class BridgeLibTest(base.BaseTestCase):
 
     def test_addbr_without_namespace(self):
         self._test_br()
+
+    def test_owns_interface(self):
+        br = bridge_lib.BridgeDevice('br-int')
+        exists = lambda path: path == "/sys/class/net/br-int/brif/abc"
+        with mock.patch('os.path.exists', side_effect=exists):
+            self.assertTrue(br.owns_interface("abc"))
+            self.assertFalse(br.owns_interface("def"))
+
+    def test_get_interfaces(self):
+        br = bridge_lib.BridgeDevice('br-int')
+        interfaces = ["tap1", "tap2"]
+        with mock.patch('os.listdir', side_effect=[interfaces, OSError()]):
+            self.assertEqual(interfaces, br.get_interfaces())
+            self.assertEqual([], br.get_interfaces())
