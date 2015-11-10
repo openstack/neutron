@@ -84,7 +84,7 @@ function _install_base_deps {
     echo_summary "Installing base dependencies"
 
     INSTALL_TESTONLY_PACKAGES=True
-    PACKAGES=$(get_packages general neutron,q-agt,q-l3)
+    PACKAGES=$(get_packages general,neutron,q-agt,q-l3)
     # Do not install 'python-' prefixed packages other than
     # python-dev*.  Neutron's functional testing relies on deployment
     # to a tox env so there is no point in installing python
