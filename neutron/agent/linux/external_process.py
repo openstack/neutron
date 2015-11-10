@@ -230,7 +230,7 @@ class ProcessMonitor(object):
                 LOG.error(_LE("%(service)s for %(resource_type)s "
                               "with uuid %(uuid)s not found. "
                               "The process should not have died"),
-                          {'service': pm.service,
+                          {'service': service_id.service,
                            'resource_type': self._resource_type,
                            'uuid': service_id.uuid})
                 self._execute_action(service_id)
