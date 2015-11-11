@@ -32,4 +32,4 @@ dhclient_kill: KillFilter, root, dhclient, -9
 mkdir_filter: RegExpFilter, /bin/mkdir, root, mkdir, -p, /etc/netns/qdhcp-[0-9a-z./-]+
 rm_filter: RegExpFilter, /bin/rm, root, rm, -r, /etc/netns/qdhcp-[0-9a-z./-]+
 touch_filter: RegExpFilter, /bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
-touch_filter: RegExpFilter, /usr/bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
+touch_filter2: RegExpFilter, /usr/bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
