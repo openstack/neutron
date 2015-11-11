@@ -1713,8 +1713,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if ipv6_pd:
             cidr = None
             gateway = None
-            cfg.CONF.set_override('default_ipv6_subnet_pool',
-                                  constants.IPV6_PD_POOL_ID)
+            cfg.CONF.set_override('ipv6_pd_enabled', True)
         return (self._make_subnet(self.fmt, network, gateway=gateway,
                                   cidr=cidr, ip_version=6,
                                   ipv6_ra_mode=ra_addr_mode,
@@ -2814,6 +2813,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_only_ip_version_v6_no_pool(self):
         with self.network() as network:
             tenant_id = network['network']['tenant_id']
+            cfg.CONF.set_override('ipv6_pd_enabled', False)
             cfg.CONF.set_override('default_ipv6_subnet_pool', None)
             data = {'subnet': {'network_id': network['network']['id'],
                     'ip_version': '6',
@@ -2856,6 +2856,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  tenant_id=tenant_id,
                                  min_prefixlen='64') as subnetpool:
                 subnetpool_id = subnetpool['subnetpool']['id']
+                cfg.CONF.set_override('ipv6_pd_enabled', False)
                 cfg.CONF.set_override('default_ipv6_subnet_pool',
                                       subnetpool_id)
                 data = {'subnet': {'network_id': network['network']['id'],

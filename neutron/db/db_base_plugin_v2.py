@@ -632,6 +632,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if ip_version == 4:
             return cfg.CONF.default_ipv4_subnet_pool
+        if cfg.CONF.ipv6_pd_enabled:
+            return constants.IPV6_PD_POOL_ID
         return cfg.CONF.default_ipv6_subnet_pool
 
     def create_subnet(self, context, subnet):

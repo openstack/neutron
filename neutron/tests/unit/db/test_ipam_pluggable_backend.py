@@ -290,8 +290,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     @mock.patch('neutron.ipam.driver.Pool')
     def test_create_ipv6_pd_subnet_over_ipam(self, pool_mock):
         mocks = self._prepare_mocks_with_pool_mock(pool_mock)
-        cfg.CONF.set_override('default_ipv6_subnet_pool',
-                              constants.IPV6_PD_POOL_ID)
+        cfg.CONF.set_override('ipv6_pd_enabled', True)
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
         with self.subnet(cidr=None, ip_version=6,

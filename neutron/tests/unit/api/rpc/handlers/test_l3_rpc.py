@@ -30,8 +30,7 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
         self.plugin = manager.NeutronManager.get_plugin()
         self.ctx = context.get_admin_context()
-        cfg.CONF.set_override('default_ipv6_subnet_pool',
-                              constants.IPV6_PD_POOL_ID)
+        cfg.CONF.set_override('ipv6_pd_enabled', True)
         self.callbacks = l3_rpc.L3RpcCallback()
         self.network = self._prepare_network()
 
