@@ -63,7 +63,8 @@ class SubnetAllocator(driver.Pool):
             id=self._subnetpool['id'], hash=current_hash)
         count = query.update({'hash': new_hash})
         if not count:
-            raise db_exc.RetryRequest()
+            raise db_exc.RetryRequest(n_exc.SubnetPoolInUse(
+                                      subnet_pool_id=self._subnetpool['id']))
 
     def _get_allocated_cidrs(self):
         query = self._context.session.query(models_v2.Subnet)
