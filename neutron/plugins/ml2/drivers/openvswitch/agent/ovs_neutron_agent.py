@@ -1648,13 +1648,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return port_stats
 
     def cleanup_stale_flows(self):
-        if self.iter_num == 0:
-            bridges = [self.int_br]
-            if self.enable_tunneling:
-                bridges.append(self.tun_br)
-            for bridge in bridges:
-                LOG.info(_LI("Cleaning stale %s flows"), bridge.br_name)
-                bridge.cleanup_flows()
+        bridges = [self.int_br]
+        if self.enable_tunneling:
+            bridges.append(self.tun_br)
+        for bridge in bridges:
+            LOG.info(_LI("Cleaning stale %s flows"), bridge.br_name)
+            bridge.cleanup_flows()
 
     def rpc_loop(self, polling_manager=None):
         if not polling_manager:
@@ -1668,6 +1667,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         tunnel_sync = True
         ovs_restarted = False
         consecutive_resyncs = 0
+        need_clean_stale_flow = True
         while self._check_and_handle_signal():
             port_info = {}
             ancillary_port_info = {}
@@ -1764,7 +1764,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         # If treat devices fails - must resync with plugin
                         sync = self.process_network_ports(port_info,
                                                           ovs_restarted)
-                        self.cleanup_stale_flows()
+                        if not sync and need_clean_stale_flow:
+                            self.cleanup_stale_flows()
+                            need_clean_stale_flow = False
                         LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
                                   "ports processed. Elapsed:%(elapsed).3f",
                                   {'iter_num': self.iter_num,
