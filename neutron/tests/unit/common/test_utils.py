@@ -18,6 +18,7 @@ import re
 import eventlet
 import mock
 import netaddr
+import six
 import testtools
 
 from neutron.common import constants
@@ -26,6 +27,7 @@ from neutron.common import utils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
+from neutron.tests.common import helpers
 
 from oslo_log import log as logging
 
@@ -716,3 +718,24 @@ class TestGetRandomString(base.BaseTestCase):
         self.assertEqual(length, len(random_string))
         regex = re.compile('^[0-9a-fA-F]+$')
         self.assertIsNotNone(regex.match(random_string))
+
+
+class TestSafeDecodeUtf8(base.BaseTestCase):
+
+    @helpers.requires_py2
+    def test_py2_does_nothing(self):
+        s = 'test-py2'
+        self.assertIs(s, utils.safe_decode_utf8(s))
+
+    @helpers.requires_py3
+    def test_py3_decoded_valid_bytes(self):
+        s = bytes('test-py2', 'utf-8')
+        decoded_str = utils.safe_decode_utf8(s)
+        self.assertIsInstance(decoded_str, six.text_type)
+        self.assertEqual(s, decoded_str.encode('utf-8'))
+
+    @helpers.requires_py3
+    def test_py3_decoded_invalid_bytes(self):
+        s = bytes('test-py2', 'utf_16')
+        decoded_str = utils.safe_decode_utf8(s)
+        self.assertIsInstance(decoded_str, six.text_type)

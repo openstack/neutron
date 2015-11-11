@@ -524,3 +524,9 @@ def load_class_by_alias_or_classname(namespace, name):
                       exc_info=True)
             raise ImportError(_("Class not found."))
     return class_to_load
+
+
+def safe_decode_utf8(s):
+    if six.PY3 and isinstance(s, bytes):
+        return s.decode('utf-8', 'surrogateescape')
+    return s

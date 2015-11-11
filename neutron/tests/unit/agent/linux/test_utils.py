@@ -22,6 +22,7 @@ import oslo_i18n
 
 from neutron.agent.linux import utils
 from neutron.tests import base
+from neutron.tests.common import helpers
 
 
 _marker = object()
@@ -147,7 +148,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         result = utils.execute(['ls', self.test_file], return_stderr=True)
         self.assertEqual((str_data, ''), result)
 
-    @testtools.skipUnless(six.PY3, 'This test makes sense only in Python 3')
+    @helpers.requires_py3
     def test_surrogateescape_in_decoding_out_data(self):
         bytes_err_data = b'\xed\xa0\xbd'
         err_data = bytes_err_data.decode('utf-8', 'surrogateescape')

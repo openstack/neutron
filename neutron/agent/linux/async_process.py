@@ -21,6 +21,7 @@ from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.i18n import _LE
 
 
@@ -226,7 +227,7 @@ class AsyncProcess(object):
     def _read(self, stream, queue):
         data = stream.readline()
         if data:
-            data = data.strip()
+            data = common_utils.safe_decode_utf8(data.strip())
             queue.put(data)
             return data
 
