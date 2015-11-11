@@ -161,6 +161,16 @@ class SubnetInUse(InUse):
         super(SubnetInUse, self).__init__(**kwargs)
 
 
+class SubnetPoolInUse(InUse):
+    message = _("Unable to complete operation on subnet pool "
+                "%(subnet_pool_id)s. %(reason)s.")
+
+    def __init__(self, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs['reason'] = _("Two or more concurrent subnets allocated.")
+        super(SubnetPoolInUse, self).__init__(**kwargs)
+
+
 class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
                 "for network %(net_id)s. Port already has an attached "
