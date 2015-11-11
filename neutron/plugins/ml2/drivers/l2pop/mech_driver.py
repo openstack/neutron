@@ -164,9 +164,8 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
         segment = context.bottom_bound_segment
         if not segment:
-            LOG.warning(_LW("Port %(port)s updated by agent %(agent)s "
-                            "isn't bound to any segment"),
-                        {'port': port['id'], 'agent': agent})
+            LOG.debug("Port %(port)s updated by agent %(agent)s isn't bound "
+                      "to any segment", {'port': port['id'], 'agent': agent})
             return
 
         network_types = self.get_agent_l2pop_network_types(agent)
