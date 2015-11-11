@@ -62,7 +62,7 @@ The workflow for the life an RFE in Launchpad is as follows:
 
 * The bug is submitted and will by default land in the "New" state.
 * As soon as a member of the neutron-drivers team acknowledges the bug, it will
-  be moved into the "Confirmed" state. No priority, assignee, or milestone is
+  be moved into the "Confirmed" state. No assignee, importance, or milestone is
   set at this time.
 * The bug goes into the "Triaged" state while the discussion is ongoing.
 * The neutron-drivers team will evaluate the RFE and may advise the submitter
@@ -152,6 +152,9 @@ In summary:
 
 Once the triaging (discussion is complete) and the RFE is approved, the tag goes from 'rfe'
 to 'rfe-approved', and at this point the bug report goes through the usual state transition.
+Note, that the importance will be set to 'wishlist', to reflect the fact that the bug report
+is indeed not a bug, but a new feature or enhancement. This will also help have RFEs that are
+not followed up by a blueprint standout in the Launchpad `milestone dashboards <https://launchpad.net/neutron/+milestones>`_.
 
 The drivers team will be discussing the following bug reports during their IRC meeting:
 
