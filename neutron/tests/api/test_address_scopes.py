@@ -29,6 +29,9 @@ class AddressScopeTestBase(base.BaseNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(AddressScopeTestBase, cls).resource_setup()
+        if not test.is_extension_enabled('address-scope', 'network'):
+            msg = "address-scope extension not enabled."
+            raise cls.skipException(msg)
         try:
             creds = cls.isolated_creds.get_admin_creds()
             cls.os_adm = clients.Manager(credentials=creds)
