@@ -89,6 +89,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                          priority=rule_pr)
         #Add routing rule in fip namespace
         fip_ns_name = self.fip_ns.get_name()
+        if self.rtr_fip_subnet is None:
+            self.rtr_fip_subnet = self.fip_ns.local_subnets.allocate(
+                self.router_id)
         rtr_2_fip, _ = self.rtr_fip_subnet.get_pair()
         device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
         device.route.add_route(fip_cidr, str(rtr_2_fip.ip))
