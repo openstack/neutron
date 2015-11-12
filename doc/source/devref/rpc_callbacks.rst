@@ -100,7 +100,7 @@ Serialized versioned objects look like::
     'versioned_object.namespace': 'versionedobjects'}
 
 Topic names for every resource type RPC endpoint
-================================================
+------------------------------------------------
 
 neutron-vo-<resource_class_name>-<version>
 
@@ -113,7 +113,7 @@ or something equivalent which would allow fine granularity for the receivers
 to only get interesting information to them.
 
 Subscribing to resources
-========================
+------------------------
 
 Imagine that you have agent A, which just got to handle a new port, which
 has an associated security group, and QoS policy.
@@ -165,7 +165,7 @@ We may want to look into that later, to avoid agents receiving resource updates
 which are uninteresting to them.
 
 Unsubscribing from resources
-============================
+----------------------------
 
 To unsubscribe registered callbacks:
 
@@ -174,7 +174,7 @@ To unsubscribe registered callbacks:
 
 
 Sending resource events
-=======================
+-----------------------
 
 On the server side, resource updates could come from anywhere, a service plugin,
 an extension, anything that updates, creates, or destroys the resource and that
@@ -202,7 +202,8 @@ The server/publisher side may look like::
 
 
 References
-==========
+----------
+
 .. [#ov_serdes] https://github.com/openstack/oslo.versionedobjects/blob/master/oslo_versionedobjects/tests/test_objects.py#L621
 .. [#vo_mkcompat] https://github.com/openstack/oslo.versionedobjects/blob/master/oslo_versionedobjects/base.py#L460
 .. [#vo_mkcptests] https://github.com/openstack/oslo.versionedobjects/blob/master/oslo_versionedobjects/tests/test_objects.py#L111

@@ -35,7 +35,8 @@ Details about the DB models, API extension, and use cases can be found here: `qo
 .
 
 Service side design
-===================
+-------------------
+
 * neutron.extensions.qos:
   base extension + API controller definition. Note that rules are subattributes
   of policies and hence embedded into their URIs.
@@ -76,7 +77,7 @@ Service side design
 
 
 Supported QoS rule types
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Any plugin or Ml2 mechanism driver can claim support for some QoS rule types by
 providing a plugin/driver class property called 'supported_qos_rule_types' that
@@ -96,7 +97,7 @@ for QoS (at the moment of writing, linuxbridge is such a driver).
 
 
 Database models
----------------
+~~~~~~~~~~~~~~~
 
 QoS design defines the following two conceptual resources to apply QoS rules
 for a port or a network:
@@ -129,7 +130,7 @@ All database models are defined under:
 
 
 QoS versioned objects
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 There is a long history of passing database dictionaries directly into business
 logic of Neutron. This path is not the one we wanted to take for QoS effort, so
@@ -207,7 +208,8 @@ QoS objects rely on some primitive database API functions that are added in:
 
 
 RPC communication
------------------
+~~~~~~~~~~~~~~~~~
+
 Details on RPC communication implemented in reference backend driver are
 discussed in `a separate page <rpc_callbacks.html>`_.
 
@@ -252,7 +254,7 @@ The flow of updates is as follows:
 
 
 Agent side design
-=================
+-----------------
 
 To ease code reusability between agents and to avoid the need to patch an agent
 for each new core resource extension, pluggable L2 agent extensions were
@@ -279,7 +281,7 @@ with them.
 
 
 Agent backends
---------------
+~~~~~~~~~~~~~~
 
 At the moment, QoS is supported by Open vSwitch and SR-IOV ml2 drivers.
 
@@ -291,7 +293,7 @@ interface:
 
 
 Open vSwitch
-~~~~~~~~~~~~
+++++++++++++
 
 Open vSwitch implementation relies on the new ovs_lib OVSBridge functions:
 
@@ -308,7 +310,7 @@ which we may explore in the future, but which will need to be used in
 combination with openflow rules.
 
 SR-IOV
-~~~~~~
+++++++
 
 SR-IOV bandwidth limit implementation relies on the new pci_lib function:
 
@@ -326,7 +328,7 @@ value.
 
 
 Configuration
-=============
+-------------
 
 To enable the service, the following steps should be followed:
 
@@ -342,14 +344,14 @@ On agent side (OVS):
 
 
 Testing strategy
-================
+----------------
 
 All the code added or extended as part of the effort got reasonable unit test
 coverage.
 
 
 Neutron objects
----------------
+~~~~~~~~~~~~~~~
 
 Base unit test classes to validate neutron objects were implemented in a way
 that allows code reuse when introducing a new object type.
@@ -370,7 +372,7 @@ object implementations on top of base semantics common to all neutron objects).
 
 
 Functional tests
-----------------
+~~~~~~~~~~~~~~~~
 
 Additions to ovs_lib to set bandwidth limits on ports are covered in:
 
@@ -378,7 +380,7 @@ Additions to ovs_lib to set bandwidth limits on ports are covered in:
 
 
 API tests
----------
+~~~~~~~~~
 
 API tests for basic CRUD operations for ports, networks, policies, and rules were added in:
 
