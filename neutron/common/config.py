@@ -157,9 +157,8 @@ core_opts = [
                       'there are any events to send.')),
     cfg.BoolOpt('advertise_mtu', default=True,
                 help=_('If True, advertise network MTU values if core plugin '
-                       'calculates them. Currently, the only way to advertise '
-                       'MTU to running instances is using corresponding DHCP '
-                       'option.')),
+                       'calculates them. MTU is advertised to running '
+                       'instances via DHCP and RA MTU options.')),
     cfg.StrOpt('ipam_driver',
                help=_("Neutron IPAM (IP address management) driver to use. "
                       "If ipam_driver is not set (default behavior), no IPAM "

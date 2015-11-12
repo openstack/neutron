@@ -1299,8 +1299,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             expected_calls.append(mock.call().disable())
         return expected_calls
 
-    def _process_router_ipv6_subnet_added(
-            self, router, ipv6_subnet_modes=None, dns_nameservers=None):
+    def _process_router_ipv6_subnet_added(self, router,
+            ipv6_subnet_modes=None, dns_nameservers=None, network_mtu=0):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
@@ -1312,7 +1312,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             count=len(ipv6_subnet_modes),
             ip_version=6,
             ipv6_subnet_modes=ipv6_subnet_modes,
-            dns_nameservers=dns_nameservers)
+            dns_nameservers=dns_nameservers,
+            network_mtu=network_mtu)
         # Reassign the router object to RouterInfo
         self._process_router_instance_for_agent(agent, ri, router)
         return ri
@@ -2291,6 +2292,25 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertIn(_join('-C', conffile), cmd)
         self.assertIn(_join('-p', pidfile), cmd)
         self.assertIn(_join('-m', 'syslog'), cmd)
+
+    def test_generate_radvd_mtu_conf(self):
+        router = l3_test_common.prepare_router_data()
+        ipv6_subnet_modes = [{'ra_mode': l3_constants.IPV6_SLAAC,
+                             'address_mode': l3_constants.IPV6_SLAAC}]
+        network_mtu = '1446'
+        ri = self._process_router_ipv6_subnet_added(router,
+                                                    ipv6_subnet_modes,
+                                                    None,
+                                                    network_mtu)
+        expected = "AdvLinkMTU 1446"
+        ri.agent_conf.set_override('advertise_mtu', False)
+        ri.radvd._generate_radvd_conf(router[l3_constants.INTERFACE_KEY])
+        self.assertNotIn(expected, self.utils_replace_file.call_args[0][1])
+
+        # Verify that MTU is advertised when advertise_mtu is True
+        ri.agent_conf.set_override('advertise_mtu', True)
+        ri.radvd._generate_radvd_conf(router[l3_constants.INTERFACE_KEY])
+        self.assertIn(expected, self.utils_replace_file.call_args[0][1])
 
     def test_generate_radvd_conf_other_and_managed_flag(self):
         # expected = {ra_mode: (AdvOtherConfigFlag, AdvManagedFlag), ...}

@@ -53,6 +53,10 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    MinRtrAdvInterval {{ min_rtr_adv_interval }};
    MaxRtrAdvInterval {{ max_rtr_adv_interval }};
 
+   {% if network_mtu >= constants.IPV6_MIN_MTU %}
+   AdvLinkMTU {{network_mtu}};
+   {% endif %}
+
    {% if constants.DHCPV6_STATELESS in ra_modes %}
    AdvOtherConfigFlag on;
    {% endif %}
@@ -101,6 +105,7 @@ class DaemonMonitor(object):
                                               'radvd.conf',
                                               True)
         buf = six.StringIO()
+        network_mtu = 0
         for p in router_ports:
             subnets = p.get('subnets', [])
             v6_subnets = [subnet for subnet in subnets if
@@ -118,6 +123,9 @@ class DaemonMonitor(object):
                 subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC]
             dns_servers = list(iter_chain(*[subnet['dns_nameservers'] for
                 subnet in slaac_subnets if subnet.get('dns_nameservers')]))
+            if self._agent_conf.advertise_mtu:
+                network_mtu = p.get('mtu', 0)
+
             buf.write('%s' % CONFIG_TEMPLATE.render(
                 ra_modes=list(ra_modes),
                 interface_name=interface_name,
@@ -126,7 +134,8 @@ class DaemonMonitor(object):
                 dns_servers=dns_servers[0:MAX_RDNSS_ENTRIES],
                 constants=constants,
                 min_rtr_adv_interval=self._agent_conf.min_rtr_adv_interval,
-                max_rtr_adv_interval=self._agent_conf.max_rtr_adv_interval))
+                max_rtr_adv_interval=self._agent_conf.max_rtr_adv_interval,
+                network_mtu=int(network_mtu)))
 
         common_utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf
