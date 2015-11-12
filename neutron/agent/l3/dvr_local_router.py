@@ -281,7 +281,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if is_add:
                 ns_ipwrapr = ip_lib.IPWrapper(namespace=self.ns_name)
             for port_fixed_ip in sn_port['fixed_ips']:
-                # Find the first gateway IP address matching this IP version
+                # Iterate and find the gateway IP address matching
+                # the IP version
                 port_ip_addr = port_fixed_ip['ip_address']
                 port_ip_vers = netaddr.IPAddress(port_ip_addr).version
                 for gw_fixed_ip in gateway['fixed_ips']:
@@ -306,7 +307,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                             ns_ipr.rule.delete(ip=sn_port_cidr,
                                                table=snat_idx,
                                                priority=snat_idx)
-                        break
         except Exception:
             if is_add:
                 exc = _LE('DVR: error adding redirection logic')

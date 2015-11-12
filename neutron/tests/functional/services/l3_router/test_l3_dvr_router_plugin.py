@@ -392,6 +392,66 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def test_delete_floating_ip_agent_notification_non_dvr(self):
         self._test_delete_floating_ip_agent_notification(dvr=False)
 
+    def test_router_with_ipv4_and_multiple_ipv6_on_same_network(self):
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, '', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        self._make_subnet(
+            self.fmt, ext_net, '2001:db8::1', '2001:db8::/64',
+            ip_version=6, enable_dhcp=True)
+        router1 = self._create_router()
+        self.l3_plugin._update_router_gw_info(
+            self.context, router1['id'],
+            {'network_id': ext_net['network']['id']})
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        self.assertEqual(0, len(snat_router_intfs[router1['id']]))
+        private_net1 = self._make_network(self.fmt, 'net1', True)
+        private_ipv6_subnet1 = self._make_subnet(self.fmt,
+            private_net1, 'fd00::1',
+            cidr='fd00::1/64', ip_version=6,
+            ipv6_ra_mode='slaac',
+            ipv6_address_mode='slaac')
+        private_ipv6_subnet2 = self._make_subnet(self.fmt,
+            private_net1, 'fd01::1',
+            cidr='fd01::1/64', ip_version=6,
+            ipv6_ra_mode='slaac',
+            ipv6_address_mode='slaac')
+        # Add the first IPv6 subnet to the router
+        self.l3_plugin.add_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': private_ipv6_subnet1['subnet']['id']})
+        # Check for the internal snat port interfaces
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        self.assertEqual(1, len(snat_router_intfs[router1['id']]))
+        # Add the second IPv6 subnet to the router
+        self.l3_plugin.add_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': private_ipv6_subnet2['subnet']['id']})
+        # Check for the internal snat port interfaces
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        snat_intf_list = snat_router_intfs[router1['id']]
+        fixed_ips = snat_intf_list[0]['fixed_ips']
+        self.assertEqual(1, len(snat_router_intfs[router1['id']]))
+        self.assertEqual(2, len(fixed_ips))
+        # Now delete the router interface and it should update the
+        # SNAT port with the right fixed_ips instead of deleting it.
+        self.l3_plugin.remove_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': private_ipv6_subnet2['subnet']['id']})
+        # Check for the internal snat port interfaces
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        snat_intf_list = snat_router_intfs[router1['id']]
+        fixed_ips = snat_intf_list[0]['fixed_ips']
+        self.assertEqual(1, len(snat_router_intfs[router1['id']]))
+        self.assertEqual(1, len(fixed_ips))
+
     def test_update_vm_port_host_router_update(self):
         # register l3 agent in dvr mode in addition to existing dvr_snat agent
         HOST = 'host1'
