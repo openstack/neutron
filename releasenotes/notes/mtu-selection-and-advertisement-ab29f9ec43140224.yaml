@@ -1,0 +1,9 @@
+---
+prelude: >
+    Support for MTU selection and advertisement.
+features:
+  - When advertise_mtu is set in the config, Neutron supports
+    advertising the LinkMTU using Router Advertisements.
+other:
+  - For details please read `Blueprint mtu-selection-and-advertisement
+    <https://specs.openstack.org/openstack/neutron-specs/specs/kilo/mtu-selection-and-advertisement.html>`_.
