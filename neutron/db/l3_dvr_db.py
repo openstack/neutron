@@ -342,7 +342,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         This function returns true if it is a multiprefix port.
         """
         subnet_id = subnet['id']
-        if router.gw_port and subnet_id:
+        if router.gw_port:
             # If router has a gateway port, check if it has IPV6 subnet
             cs_port = (
                 self._find_router_port_by_network_and_device_owner(
