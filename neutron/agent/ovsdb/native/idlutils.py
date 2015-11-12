@@ -143,8 +143,8 @@ def get_column_value(row, col):
 def condition_match(row, condition):
     """Return whether a condition matches a row
 
-    :param row       An OVSDB Row
-    :param condition A 3-tuple containing (column, operation, match)
+    :param row:       An OVSDB Row
+    :param condition: A 3-tuple containing (column, operation, match)
     """
 
     col, op, match = condition

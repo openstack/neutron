@@ -210,9 +210,10 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _expected_plugin_rpc_call(self, call, expected_devices, is_up=True):
         """Helper to check expected rpc call are received
+
         :param call: The call to check
-        :param expected_devices The device for which call is expected
-        :param is_up True if expected_devices are devices that are set up,
+        :param expected_devices: The device for which call is expected
+        :param is_up: True if expected_devices are devices that are set up,
                False if expected_devices are devices that are set down
         """
         if is_up:
