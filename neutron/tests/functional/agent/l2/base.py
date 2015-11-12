@@ -120,7 +120,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         agent.sg_agent = mock.Mock()
         return agent
 
-    def start_agent(self, agent, unplug_ports=[]):
+    def start_agent(self, agent, unplug_ports=None):
+        if unplug_ports is None:
+            unplug_ports = []
         self.setup_agent_rpc_mocks(agent, unplug_ports)
         polling_manager = polling.InterfacePollingMinimizer()
         self.addCleanup(polling_manager.stop)
