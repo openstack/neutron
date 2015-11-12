@@ -125,32 +125,24 @@ def execute(cmd, process_input=None, addl_env=None,
             if isinstance(_stderr, bytes):
                 _stderr = _stderr.decode('utf-8', 'surrogateescape')
 
-        command_str = {
-            'cmd': cmd,
-            'code': returncode
-        }
-        m = _("\nCommand: %(cmd)s"
-              "\nExit code: %(code)d\n") % command_str
-
         extra_ok_codes = extra_ok_codes or []
-        if returncode and returncode in extra_ok_codes:
-            returncode = None
+        if returncode and returncode not in extra_ok_codes:
+            msg = _("Exit code: %(returncode)d; "
+                    "Stdin: %(stdin)s; "
+                    "Stdout: %(stdout)s; "
+                    "Stderr: %(stderr)s") % {
+                        'returncode': returncode,
+                        'stdin': process_input or '',
+                        'stdout': _stdout,
+                        'stderr': _stderr}
 
-        if returncode and log_fail_as_error:
-            command_str['stdin'] = process_input or ''
-            command_str['stdout'] = _stdout
-            command_str['stderr'] = _stderr
-            m += _("Stdin: %(stdin)s\n"
-                  "Stdout: %(stdout)s\n"
-                  "Stderr: %(stderr)s") % command_str
-            log_msg = m.strip().replace('\n', '; ')
-            LOG.error(log_msg)
+            if log_fail_as_error:
+                LOG.error(msg)
+            if check_exit_code:
+                raise RuntimeError(msg)
         else:
-            log_msg = m.strip().replace('\n', '; ')
-            LOG.debug(log_msg)
+            LOG.debug("Exit code: %d", returncode)
 
-        if returncode and check_exit_code:
-            raise RuntimeError(m)
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess
         #               call clean something up in between calls, without
