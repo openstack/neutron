@@ -75,7 +75,7 @@ help understand better some of the principles behind the provided mechanism.
 
 
 Subscribing to events
-=====================
+---------------------
 
 Imagine that you have entity A, B, and C that have some common business over router creation.
 A wants to tell B and C that the router has been created and that they need to get on and
@@ -156,7 +156,7 @@ are flexible to evolve their internals, dynamics, and lifecycles.
 
 
 Subscribing and aborting events
-===============================
+-------------------------------
 
 Interestingly in Neutron, certain events may need to be forbidden from happening due to the
 nature of the resources involved. To this aim, the callback-based mechanism has been designed
@@ -232,7 +232,7 @@ fact, it is best to make use of different callbacks to keep the two logic separa
 
 
 Unsubscribing to events
-=======================
+-----------------------
 
 There are a few options to unsubscribe registered callbacks:
 
@@ -320,7 +320,7 @@ The output is:
 
 
 FAQ
-===
+---
 
 Can I use the callbacks registry to subscribe and notify non-core resources and events?
 
