@@ -28,7 +28,7 @@ Supported configuration options:
 # https://etherpad.openstack.org/p/kilo-neutron-library-proposals for
 # the discussion leading to this deprecation.
 #
-# We recommend helping with the new neutron.cache library being created
+# We recommend helping with the new oslo.cache library being created
 # as a wrapper for dogpile.
 #
 ########################################################################
