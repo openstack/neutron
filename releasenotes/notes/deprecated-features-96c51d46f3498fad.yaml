@@ -1,0 +1,13 @@
+---
+prelude: >
+    During Liberty, some Neutron APIs and options were deprecated.
+other:
+  - The FWaaS API is marked as experimental for Liberty. Further, the current
+    API will be removed in Mitaka and replaced with a new FWaaS API, which the
+    team is in the process of developing.
+  - The LBaaS V1 API is marked as deprecated and is planned to be removed in
+    a future release. Going forward, the LBaaS V2 API should be used.
+  - The 'external_network_bridge' option for the L3 agent has been deprecated
+    in favor of a bridge_mapping with a physnet. For more information, see the
+    `Network Node <http://docs.openstack.org/networking-guide/scenario_legacy_ovs.html>`_
+     section of this scenario in the networking guide.

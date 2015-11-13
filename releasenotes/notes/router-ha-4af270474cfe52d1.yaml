@@ -1,0 +1,15 @@
+---
+prelude: >
+    Neutron routers underwent some changes and enhancements during Liberty
+    around L2 population integration, VPNaaS, and segmentation types.
+features:
+  - Router high availability (L3 HA / VRRP) now works when layer 2 population
+    (l2pop) is enabled.
+  - VPNaaS reference drivers now work with HA routers.
+  - Networks used for VRRP traffic for HA routers may now be configured to use
+    a specific segmentation type or physical network tag.
+fixes:
+  - See `this <https://bugs.launchpad.net/neutron/+bug/1365476>`_ bug for
+    more details on the fix L3 HA and L2 population.
+  - See `this <https://bugs.launchpad.net/neutron/+bug/1481443>`_ bug for
+    more details on the config option changes for L3 HA networks.

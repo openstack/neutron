@@ -1,0 +1,21 @@
+---
+prelude: >
+    The following performance considerations are important when deploying
+    the Liberty version of Neutron.
+issues:
+  - The stock Ubuntu Trusty Tahr kernel (3.13) shows linear performance
+    degradation when running "ip netns exec" as the number of namespaces
+    increases. In cases where scale is important, a later version kernel
+    (e.g. 3.19) should be used. This regression should be fixed in Trusty
+    Tahr since 3.13.0-36.63 and later kernel versions. For more information,
+    please see `this <https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1328088>`_
+    bug.
+  - Creating Neutron-LBaaS load balancers in environments without hardware
+    virtualization may be slow when using the Octavia driver. This is due to
+    QEMU using the TCG accelerator instead of the KVM accelerator in
+    environments without hardware virtualization available. We recommend
+    enabling hardware virtualization on your compute nodes, or enabling nested
+    virtualization when using the Octavia driver inside a virtual environment.
+    See `this link <http://docs.openstack.org/developer/devstack/guides/devstack-with-nested-kvm.html>`_
+    for details on setting up nested virtualization for DevStack running inside
+    KVM.
