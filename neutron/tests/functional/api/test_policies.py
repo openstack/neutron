@@ -72,8 +72,7 @@ class APIPolicyTestCase(base.BaseTestCase):
         extension_manager.extend_resources(self.api_version,
                                            attributes.RESOURCE_ATTRIBUTE_MAP)
         self.assertTrue(self._check_external_router_policy(admin_context))
-        self.assertEqual(self._check_external_router_policy(tenant_context),
-                         False)
+        self.assertFalse(self._check_external_router_policy(tenant_context))
 
     def test_proper_load_order(self):
         """

@@ -1298,7 +1298,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         neutron_context = context.Context('', 'not_admin')
         port = self._update('ports', port['port']['id'], data,
                             neutron_context=neutron_context)
-        self.assertEqual(port['port']['admin_state_up'], False)
+        self.assertFalse(port['port']['admin_state_up'])
 
     def test_update_device_id_unchanged(self):
         with self.port() as port:

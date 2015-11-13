@@ -63,7 +63,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(self.context.roles, ['role1', 'role2', 'role3',
                                               'role4', 'role5'])
-        self.assertEqual(self.context.is_admin, False)
+        self.assertFalse(self.context.is_admin)
 
     def test_roles_with_admin(self):
         self.request.headers['X_PROJECT_ID'] = 'testtenantid'

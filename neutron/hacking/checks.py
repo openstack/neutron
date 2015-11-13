@@ -177,12 +177,12 @@ def check_python3_no_iteritems(logical_line):
 
 def check_asserttrue(logical_line, filename):
     if 'neutron/tests/' in filename:
-        if re.search(r"assertEqual\(True,.*\)", logical_line):
-            msg = ("N328: Use assertTrue(observed) instead of"
+        if re.search(r"assertEqual\(\s*True,[^,]*(,[^,]*)?\)", logical_line):
+            msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
-        if re.search(r"assertEqual\(.*, True\)", logical_line):
-            msg = ("N328: Use assertTrue(observed) instead of"
+        if re.search(r"assertEqual\([^,]*,\s*True(,[^,]*)?\)", logical_line):
+            msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
 
@@ -191,6 +191,18 @@ def no_mutable_default_args(logical_line):
     msg = "N329: Method's default argument shouldn't be mutable!"
     if mutable_default_args.match(logical_line):
         yield (0, msg)
+
+
+def check_assertfalse(logical_line, filename):
+    if 'neutron/tests/' in filename:
+        if re.search(r"assertEqual\(\s*False,[^,]*(,[^,]*)?\)", logical_line):
+            msg = ("N328: Use assertFalse(observed) instead of "
+                   "assertEqual(False, observed)")
+            yield (0, msg)
+        if re.search(r"assertEqual\([^,]*,\s*False(,[^,]*)?\)", logical_line):
+            msg = ("N328: Use assertFalse(observed) instead of "
+                   "assertEqual(False, observed)")
+            yield (0, msg)
 
 
 def factory(register):
@@ -205,3 +217,4 @@ def factory(register):
     register(check_python3_no_iteritems)
     register(check_asserttrue)
     register(no_mutable_default_args)
+    register(check_assertfalse)
