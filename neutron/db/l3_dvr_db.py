@@ -660,12 +660,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         # TODO(markmcclain): This is suboptimal but was left to reduce
         # changeset size since it is late in cycle
-        ports = (
+        ports = [
             rp.port.id for rp in
             router.attached_ports.filter_by(
                     port_type=l3_const.DEVICE_OWNER_ROUTER_SNAT)
             if rp.port
-        )
+        ]
 
         c_snat_ports = self._core_plugin.get_ports(
             context,
