@@ -357,8 +357,15 @@ class HaRouter(router.RouterInfo):
     def external_gateway_removed(self, ex_gw_port, interface_name):
         self._clear_vips(interface_name)
 
-        super(HaRouter, self).external_gateway_removed(ex_gw_port,
-                                                       interface_name)
+        if self.ha_state == 'master':
+            super(HaRouter, self).external_gateway_removed(ex_gw_port,
+                                                           interface_name)
+        else:
+            # We are not the master node, so no need to delete ip addresses.
+            self.driver.unplug(interface_name,
+                               bridge=self.agent_conf.external_network_bridge,
+                               namespace=self.ns_name,
+                               prefix=router.EXTERNAL_DEV_PREFIX)
 
     def delete(self, agent):
         super(HaRouter, self).delete(agent)

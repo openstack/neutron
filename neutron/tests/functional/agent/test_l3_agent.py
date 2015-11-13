@@ -777,6 +777,18 @@ class L3AgentTestCase(L3AgentTestFramework):
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
 
+    def test_delete_external_gateway_on_standby_router(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+
+        self.fail_ha_router(router)
+        utils.wait_until_true(lambda: router.ha_state == 'backup')
+
+        # The purpose of the test is to simply make sure no exception is raised
+        port = router.get_ex_gw_port()
+        interface_name = router.get_external_device_name(port['id'])
+        router.external_gateway_removed(port, interface_name)
+
 
 class L3HATestFramework(L3AgentTestFramework):
 
