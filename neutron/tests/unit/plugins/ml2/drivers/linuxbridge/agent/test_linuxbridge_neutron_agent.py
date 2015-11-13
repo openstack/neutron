@@ -436,14 +436,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         cfg.CONF.set_override('vxlan_group', '224.0.0.1/', 'VXLAN')
         self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
 
-    def test_get_all_neutron_bridges(self):
-        br_list = ["br-int", "brq1", "brq2", "br-ex"]
-        result = br_list[1:3]
-        result.append('br-eth2')
-
+    def test_get_deletable_bridges(self):
+        br_list = ["br-int", "brq1", "brq2", "brq-user"]
+        expected = set(br_list[1:3])
+        lbm = get_linuxbridge_manager(
+            bridge_mappings={"physnet0": "brq-user"}, interface_mappings={})
         with mock.patch.object(
                 bridge_lib, 'get_bridge_names', return_value=br_list):
-            self.assertEqual(result, self.lbm.get_all_neutron_bridges())
+            self.assertEqual(expected, lbm.get_deletable_bridges())
 
     def test_get_tap_devices_count(self):
         with mock.patch.object(
