@@ -16,7 +16,7 @@
 """
 Neutron REST Proxy Plug-in for Big Switch and FloodLight Controllers.
 
-See http://github.com/stackforge/networking-bigswitch for more information
+See http://github.com/openstack/networking-bigswitch for more information
 """
 from bsnstacklib.plugins.bigswitch import plugin
 

@@ -210,7 +210,7 @@ BGPVPN
 Big Switch Networks
 +++++++++++++++++++
 
-* Git: https://git.openstack.org/cgit/stackforge/networking-bigswitch
+* Git: https://git.openstack.org/cgit/openstack/networking-bigswitch
 * Pypi: https://pypi.python.org/pypi/bsnstacklib
 
 .. _networking-brocade:

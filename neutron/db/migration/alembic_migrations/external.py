@@ -88,7 +88,7 @@ REPO_VMWARE_TABLES = [
     'vcns_router_bindings',
 ]
 
-# NEC models moved to stackforge/networking-nec
+# NEC models are in openstack/networking-nec
 REPO_NEC_TABLES = [
     'ofcnetworkmappings',
     'ofcportmappings',
