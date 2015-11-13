@@ -72,12 +72,14 @@ core_opts = [
                help=_("Maximum number of fixed ips per port. This option "
                       "is deprecated and will be removed in the N "
                       "release.")),
-    cfg.StrOpt('default_ipv4_subnet_pool',
+    cfg.StrOpt('default_ipv4_subnet_pool', deprecated_for_removal=True,
                help=_("Default IPv4 subnet-pool to be used for automatic "
-                      "subnet CIDR allocation")),
-    cfg.StrOpt('default_ipv6_subnet_pool',
+                      "subnet CIDR allocation. This option is deprecated for "
+                      "removal in the N release.")),
+    cfg.StrOpt('default_ipv6_subnet_pool', deprecated_for_removal=True,
                help=_("Default IPv6 subnet-pool to be used for automatic "
-                      "subnet CIDR allocation")),
+                      "subnet CIDR allocation. This option is deprecated for "
+                      "removal in the N release.")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation")),

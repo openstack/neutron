@@ -22,8 +22,10 @@
 
     "create_subnetpool": "",
     "create_subnetpool:shared": "rule:admin_only",
+    "create_subnetpool:is_default": "rule:admin_only",
     "get_subnetpool": "rule:admin_or_owner or rule:shared_subnetpools",
     "update_subnetpool": "rule:admin_or_owner",
+    "update_subnetpool:is_default": "rule:admin_only",
     "delete_subnetpool": "rule:admin_or_owner",
 
     "create_address_scope": "",

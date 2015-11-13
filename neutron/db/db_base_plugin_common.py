@@ -146,6 +146,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'default_prefixlen': default_prefixlen,
                'min_prefixlen': min_prefixlen,
                'max_prefixlen': max_prefixlen,
+               'is_default': subnetpool['is_default'],
                'shared': subnetpool['shared'],
                'prefixes': [prefix['cidr']
                             for prefix in subnetpool['prefixes']],

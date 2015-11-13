@@ -226,7 +226,7 @@ class SubnetPoolReader(object):
         self._read_id(subnetpool)
         self._read_prefix_bounds(subnetpool)
         self._read_attrs(subnetpool,
-                         ['tenant_id', 'name', 'shared'])
+                         ['tenant_id', 'name', 'is_default', 'shared'])
         self._read_address_scope(subnetpool)
         self.subnetpool = {'id': self.id,
                            'name': self.name,
@@ -240,6 +240,7 @@ class SubnetPoolReader(object):
                            'default_prefixlen': self.default_prefixlen,
                            'default_quota': self.default_quota,
                            'address_scope_id': self.address_scope_id,
+                           'is_default': self.is_default,
                            'shared': self.shared}
 
     def _read_attrs(self, subnetpool, keys):
