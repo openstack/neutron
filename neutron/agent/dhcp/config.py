@@ -45,6 +45,10 @@ DHCP_OPTS = [
                       'neutron.conf as dns_domain. It will removed from here '
                       'in a future release'),
                deprecated_for_removal=True),
+    cfg.IntOpt('dhcp_lease_duration', default=86400,
+               deprecated_name='dhcp_lease_time',
+               help=_('DHCP lease duration (in seconds). Use -1 for infinite '
+                      'lease times.')),
 ]
 
 DNSMASQ_OPTS = [
