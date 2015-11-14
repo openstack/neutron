@@ -99,9 +99,7 @@ core_opts = [
     cfg.BoolOpt('force_gateway_on_subnet', default=True,
                 help=_("Ensure that configured gateway is on subnet. "
                        "For IPv6, validate only if gateway is not a link "
-                       "local address. Deprecated, to be removed during the "
-                       "K release, at which point the check will be "
-                       "mandatory.")),
+                       "local address.")),
     cfg.BoolOpt('notify_nova_on_port_status_changes', default=True,
                 help=_("Send notification to nova when port status changes")),
     cfg.BoolOpt('notify_nova_on_port_data_changes', default=True,
