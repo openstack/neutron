@@ -15,17 +15,20 @@
 import mock
 
 from neutron.api.v2 import attributes
-from neutron.common import constants as l3_const
+from neutron.common import constants
 from neutron.extensions import external_net
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
+
+
+DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def setUp(self):
         super(L3DvrTestCase, self).setUp()
         self.l3_agent = helpers.register_l3_agent(
-            agent_mode=l3_const.L3_AGENT_MODE_DVR_SNAT)
+            agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, distributed=True):
         return (super(L3DvrTestCase, self).
@@ -45,19 +48,19 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def test_get_device_owner_distributed_router_object(self):
         router = self._create_router()
         self.assertEqual(
-            l3_const.DEVICE_OWNER_DVR_INTERFACE,
+            constants.DEVICE_OWNER_DVR_INTERFACE,
             self.l3_plugin._get_device_owner(self.context, router))
 
     def test_get_device_owner_distributed_router_id(self):
         router = self._create_router()
         self.assertEqual(
-            l3_const.DEVICE_OWNER_DVR_INTERFACE,
+            constants.DEVICE_OWNER_DVR_INTERFACE,
             self.l3_plugin._get_device_owner(self.context, router['id']))
 
     def test_get_device_owner_centralized(self):
         router = self._create_router(distributed=False)
         self.assertEqual(
-            l3_const.DEVICE_OWNER_ROUTER_INTF,
+            constants.DEVICE_OWNER_ROUTER_INTF,
             self.l3_plugin._get_device_owner(self.context, router['id']))
 
     def test_get_agent_gw_ports_exist_for_network_no_port(self):
@@ -98,7 +101,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                         self.context, filters={
                             'network_id': [subnet1['subnet']['network_id']],
                             'device_owner':
-                                [l3_const.DEVICE_OWNER_DVR_INTERFACE]})[0]
+                                [constants.DEVICE_OWNER_DVR_INTERFACE]})[0]
                     self.l3_plugin.remove_router_interface(
                         self.context, router['id'],
                         {'port_id': port['id']})
@@ -125,7 +128,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                       'mac_address': attributes.ATTR_NOT_SPECIFIED,
                       'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                       'device_id': self.l3_agent['id'],
-                      'device_owner': l3_const.DEVICE_OWNER_AGENT_GW,
+                      'device_owner': constants.DEVICE_OWNER_AGENT_GW,
                       'binding:host_id': '',
                       'admin_state_up': True,
                       'name': ''}})
@@ -227,7 +230,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         with self.subnet() as ext_subnet,\
                 self.subnet(cidr='20.0.0.0/24') as int_subnet,\
                 self.port(subnet=int_subnet,
-                          device_owner='compute:None') as int_port:
+                          device_owner=DEVICE_OWNER_COMPUTE) as int_port:
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
@@ -272,9 +275,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 self.subnet(cidr='20.0.0.0/24') as int_subnet1,\
                 self.subnet(cidr='30.0.0.0/24') as int_subnet2,\
                 self.port(subnet=int_subnet1,
-                          device_owner='compute:None') as int_port1,\
+                          device_owner=DEVICE_OWNER_COMPUTE) as int_port1,\
                 self.port(subnet=int_subnet2,
-                          device_owner='compute:None') as int_port2:
+                          device_owner=DEVICE_OWNER_COMPUTE) as int_port2:
             # locate internal ports on different hosts
             self.core_plugin.update_port(
                 self.context, int_port1['port']['id'],
@@ -284,9 +287,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 {'port': {'binding:host_id': 'host2'}})
             # and create l3 agents on corresponding hosts
             helpers.register_l3_agent(host='host1',
-                agent_mode=l3_const.L3_AGENT_MODE_DVR)
+                agent_mode=constants.L3_AGENT_MODE_DVR)
             helpers.register_l3_agent(host='host2',
-                agent_mode=l3_const.L3_AGENT_MODE_DVR)
+                agent_mode=constants.L3_AGENT_MODE_DVR)
 
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
@@ -350,7 +353,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         with self.subnet() as ext_subnet,\
                 self.subnet(cidr='20.0.0.0/24') as int_subnet,\
                 self.port(subnet=int_subnet,
-                          device_owner='compute:None') as int_port:
+                          device_owner=DEVICE_OWNER_COMPUTE) as int_port:
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
@@ -456,7 +459,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         # register l3 agent in dvr mode in addition to existing dvr_snat agent
         HOST = 'host1'
         dvr_agent = helpers.register_l3_agent(
-            host=HOST, agent_mode=l3_const.L3_AGENT_MODE_DVR)
+            host=HOST, agent_mode=constants.L3_AGENT_MODE_DVR)
         router = self._create_router()
         with self.subnet() as subnet:
             self.l3_plugin.add_router_interface(
@@ -472,7 +475,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             with mock.patch.object(self.l3_plugin,
                                    '_l3_rpc_notifier') as l3_notifier,\
                     self.port(subnet=subnet,
-                              device_owner='compute:None') as port:
+                              device_owner=DEVICE_OWNER_COMPUTE) as port:
                 self.core_plugin.update_port(
                     self.context, port['port']['id'],
                     {'port': {'binding:host_id': HOST}})

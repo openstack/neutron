@@ -52,6 +52,10 @@ DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
 
+DEVICE_OWNER_COMPUTE = ''.join([constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                                'test:',
+                                DHCP_HOSTA])
+
 
 class AgentSchedulerTestMixIn(object):
 
@@ -402,7 +406,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             result0 = len(dhcp_agents['agents'])
             self._register_agent_states()
             with self.port(subnet=subnet,
-                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                           device_owner=DEVICE_OWNER_COMPUTE) as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
                 result1 = len(dhcp_agents['agents'])
@@ -417,7 +421,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             result0 = len(dhcp_agents['agents'])
             self._register_agent_states()
             with self.port(subnet=subnet,
-                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                           device_owner=DEVICE_OWNER_COMPUTE) as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
                 result1 = len(dhcp_agents['agents'])
@@ -432,13 +436,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             result0 = len(dhcp_agents['agents'])
             self._register_agent_states()
             with self.port(subnet=subnet,
-                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                           device_owner=DEVICE_OWNER_COMPUTE) as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
                 result1 = len(dhcp_agents['agents'])
             helpers.register_dhcp_agent('host1')
             with self.port(subnet=subnet,
-                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                           device_owner=DEVICE_OWNER_COMPUTE) as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
                 result2 = len(dhcp_agents['agents'])

@@ -23,6 +23,7 @@ from oslo_log import log as logging
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import constants
 from neutron.i18n import _LW
 
 
@@ -30,7 +31,7 @@ LOG = logging.getLogger(__name__)
 
 DEVICE_OWNER_NETWORK_PROBE = 'network:probe'
 
-DEVICE_OWNER_COMPUTE_PROBE = 'compute:probe'
+DEVICE_OWNER_COMPUTE_PROBE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'probe'
 
 
 class NeutronDebugAgent(object):

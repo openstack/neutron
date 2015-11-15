@@ -62,6 +62,9 @@ _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path
 
 
+DEVICE_OWNER_COMPUTE = l3_constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+
+
 class L3TestExtensionManager(object):
 
     def get_resources(self):
@@ -2831,7 +2834,7 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
         port_id = 'foo_port_id'
         port = {
             'id': port_id,
-            'device_owner': 'compute:None',
+            'device_owner': DEVICE_OWNER_COMPUTE,
             portbindings.HOST_ID: '',
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_BINDING_FAILED
         }

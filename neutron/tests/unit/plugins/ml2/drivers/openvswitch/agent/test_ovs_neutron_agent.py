@@ -50,6 +50,8 @@ TEST_PORT_ID3 = 'port-id-3'
 TEST_NETWORK_ID1 = 'net-id-1'
 TEST_NETWORK_ID2 = 'net-id-2'
 
+DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+
 
 class FakeVif(object):
     ofport = 99
@@ -167,7 +169,7 @@ class TestOvsNeutronAgent(object):
             int_br.set_db_attribute.return_value = True
             needs_binding = self.agent.port_bound(
                 port, net_uuid, 'local', None, None,
-                fixed_ips, "compute:None", False)
+                fixed_ips, DEVICE_OWNER_COMPUTE, False)
         if db_get_val is None:
             self.assertEqual(0, int_br.set_db_attribute.call_count)
             self.assertFalse(needs_binding)
@@ -602,7 +604,7 @@ class TestOvsNeutronAgent(object):
                              'network_type': 'baz',
                              'fixed_ips': [{'subnet_id': 'my-subnet-uuid',
                                             'ip_address': '1.1.1.1'}],
-                             'device_owner': 'compute:None',
+                             'device_owner': DEVICE_OWNER_COMPUTE,
                              'port_security_enabled': True
                              }
 
@@ -2054,13 +2056,13 @@ class TestOvsDvrNeutronAgent(object):
 
     def test_port_bound_for_dvr_with_compute_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner="compute:None")
+            device_owner=DEVICE_OWNER_COMPUTE)
         self._test_port_bound_for_dvr_on_vlan_network(
-            device_owner="compute:None", ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner="compute:None")
+            device_owner=DEVICE_OWNER_COMPUTE)
         self._test_port_bound_for_dvr_on_vxlan_network(
-            device_owner="compute:None", ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
 
     def test_port_bound_for_dvr_with_lbaas_vip_ports(self):
         self._test_port_bound_for_dvr_on_vlan_network(
@@ -2348,9 +2350,9 @@ class TestOvsDvrNeutronAgent(object):
 
     def test_treat_devices_removed_for_dvr_with_compute_ports(self):
         self._test_treat_devices_removed_for_dvr(
-            device_owner="compute:None")
+            device_owner=DEVICE_OWNER_COMPUTE)
         self._test_treat_devices_removed_for_dvr(
-            device_owner="compute:None", ip_version=6)
+            device_owner=DEVICE_OWNER_COMPUTE, ip_version=6)
 
     def test_treat_devices_removed_for_dvr_with_lbaas_vip_ports(self):
         self._test_treat_devices_removed_for_dvr(

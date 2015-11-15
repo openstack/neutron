@@ -23,6 +23,7 @@ import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
+from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
@@ -48,7 +49,7 @@ VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
 VIF_PORTS = {VIF_ID: VIF_PORT}
 FIXED_IPS = [{'subnet_id': 'my-subnet-uuid',
               'ip_address': '1.1.1.1'}]
-VM_DEVICE_OWNER = "compute:None"
+VM_DEVICE_OWNER = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 TUN_OFPORTS = {p_const.TYPE_GRE: {'ip1': '11', 'ip2': '12'}}
 

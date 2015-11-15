@@ -20,7 +20,7 @@ from neutron.tests.unit import testlib_api
 
 POLICY_ID_A = 'policy-id-a'
 POLICY_ID_B = 'policy-id-b'
-DEVICE_OWNER_COMPUTE = 'compute:None'
+DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class QosRuleObjectTestCase(neutron_test_base.BaseTestCase):

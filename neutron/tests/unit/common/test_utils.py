@@ -570,7 +570,7 @@ class TestDvrServices(base.BaseTestCase):
         self._test_is_dvr_serviced(constants.DEVICE_OWNER_DHCP, True)
 
     def test_is_dvr_serviced_with_vm_port(self):
-        self._test_is_dvr_serviced('compute:', True)
+        self._test_is_dvr_serviced(constants.DEVICE_OWNER_COMPUTE_PREFIX, True)
 
 
 class TestIpToCidr(base.BaseTestCase):
