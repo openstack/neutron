@@ -688,7 +688,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 self.fmt, n['network']['id'],
                 fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
                             'ip_address': fake_gateway}],
-                device_owner='network:router_interface')
+                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
@@ -756,7 +756,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 self.fmt, n['network']['id'],
                 fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
                             'ip_address': fake_gateway}],
-                device_owner='network:router_interface')
+                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
@@ -766,7 +766,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             interface_res = self._make_port(
                 self.fmt, n['network']['id'],
                 fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                device_owner='network:router_interface')
+                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
             interface_port_id = interface_res['port']['id']
 
             ports_rest1 = self._make_port(

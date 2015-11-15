@@ -448,7 +448,7 @@ def is_port_trusted(port):
     Trust is currently based on the device_owner field starting with 'network:'
     since we restrict who can use that in the default policy.json file.
     """
-    return port['device_owner'].startswith('network:')
+    return port['device_owner'].startswith(n_const.DEVICE_OWNER_NETWORK_PREFIX)
 
 
 class DelayedStringRenderer(object):

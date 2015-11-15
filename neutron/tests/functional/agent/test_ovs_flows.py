@@ -232,8 +232,9 @@ class _ARPSpoofTestCase(object):
         # block first and then disable port security to make sure old rules
         # are cleared
         self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'])
-        self._setup_arp_spoof_for_port(self.dst_p.name, ['192.168.0.3'],
-                                       device_owner='network:router_gateway')
+        self._setup_arp_spoof_for_port(
+            self.dst_p.name, ['192.168.0.3'],
+            device_owner=n_const.DEVICE_OWNER_ROUTER_GW)
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)

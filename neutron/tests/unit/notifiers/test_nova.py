@@ -75,7 +75,8 @@ class TestNovaNotify(base.BaseTestCase):
                                                 port)
 
     def test_port_without_device_id_no_notify(self):
-        port = models_v2.Port(id='port-uuid', device_owner="network:dhcp",
+        port = models_v2.Port(id='port-uuid',
+                              device_owner=n_const.DEVICE_OWNER_DHCP,
                               status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
@@ -93,7 +94,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_non_compute_instances_no_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port = models_v2.Port(id='port-uuid', device_id=device_id,
-                              device_owner="network:dhcp",
+                              device_owner=n_const.DEVICE_OWNER_DHCP,
                               status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,

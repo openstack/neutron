@@ -142,7 +142,8 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                          'gateway_ip': '152.2.0.1',
                                          'id': subnet_id_1}],
                            'network_id': _uuid(),
-                           'device_owner': 'network:router_centralized_snat',
+                           'device_owner':
+                           l3_constants.DEVICE_OWNER_ROUTER_SNAT,
                            'mac_address': 'fa:16:3e:80:8d:80',
                            'fixed_ips': [{'subnet_id': subnet_id_1,
                                           'ip_address': '152.2.0.13',
@@ -152,7 +153,8 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                         'gateway_ip': '152.10.0.1',
                                         'id': subnet_id_2}],
                            'network_id': _uuid(),
-                           'device_owner': 'network:router_centralized_snat',
+                           'device_owner':
+                           l3_constants.DEVICE_OWNER_ROUTER_SNAT,
                            'mac_address': 'fa:16:3e:80:8d:80',
                            'fixed_ips': [{'subnet_id': subnet_id_2,
                                          'ip_address': '152.10.0.13',

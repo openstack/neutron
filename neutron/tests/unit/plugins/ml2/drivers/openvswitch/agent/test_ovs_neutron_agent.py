@@ -1469,7 +1469,8 @@ class TestOvsNeutronAgent(object):
     def test_arp_spoofing_network_port(self):
         int_br = mock.create_autospec(self.agent.int_br)
         self.agent.setup_arp_spoofing_protection(
-            int_br, FakeVif(), {'device_owner': 'network:router_interface'})
+            int_br, FakeVif(),
+            {'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF})
         self.assertTrue(int_br.delete_arp_spoofing_protection.called)
         self.assertFalse(int_br.install_arp_spoofing_protection.called)
 

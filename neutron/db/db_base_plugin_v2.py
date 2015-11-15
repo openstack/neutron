@@ -1089,7 +1089,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             context.session.delete(subnetpool)
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
-        if (device_owner and device_owner.startswith('network:')):
+        if (device_owner and
+            device_owner.startswith(constants.DEVICE_OWNER_NETWORK_PREFIX)):
             raise n_exc.UnsupportedPortDeviceOwner(
                 op=_("mac address update"), port_id=id,
                 device_owner=device_owner)
