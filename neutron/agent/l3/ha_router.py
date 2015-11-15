@@ -192,13 +192,16 @@ class HaRouter(router.RouterInfo):
         self.routes = new_routes
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
-        default_gw_rts = []
         gateway_ips = self._get_external_gw_ips(ex_gw_port)
+        if not gateway_ips:
+            return
+
+        default_gw_rts = []
+        instance = self._get_keepalived_instance()
         for gw_ip in gateway_ips:
                 # TODO(Carl) This is repeated everywhere.  A method would
                 # be nice.
                 default_gw = n_consts.IP_ANY[netaddr.IPAddress(gw_ip).version]
-                instance = self._get_keepalived_instance()
                 default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
                     default_gw, gw_ip, interface_name))
         instance.virtual_routes.gateway_routes = default_gw_rts
