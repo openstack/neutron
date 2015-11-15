@@ -26,7 +26,6 @@ from neutron import context as neutron_context
 from neutron.db import api as db_api
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron.i18n import _LE
 from neutron import manager
 from neutron.plugins.common import constants as plugin_constants
 
@@ -73,12 +72,8 @@ class L3RpcCallback(object):
         router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
-        if not self.l3plugin:
-            routers = {}
-            LOG.error(_LE('No plugin for L3 routing registered! Will reply '
-                          'to l3 agent with empty router dictionary.'))
-        elif utils.is_extension_supported(
-                self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+        if utils.is_extension_supported(
+            self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
                 self.l3plugin.auto_schedule_routers(context, host, router_ids)
             routers = (
