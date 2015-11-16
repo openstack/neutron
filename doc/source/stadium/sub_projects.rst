@@ -147,7 +147,7 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-plumgrid_          |          core         |
 +-------------------------------+-----------------------+
-| neutron-powervm_              |          ml2          |
+| networking-powervm_           |          ml2          |
 +-------------------------------+-----------------------+
 | networking-sfc_               |  service composition  |
 +-------------------------------+-----------------------+
@@ -377,14 +377,14 @@ PLUMgrid
 * Launchpad: https://launchpad.net/networking-plumgrid
 * PyPI: https://pypi.python.org/pypi/networking-plumgrid
 
-.. _neutron-powervm:
+.. _networking-powervm:
 
 PowerVM
 +++++++
 
 * Git: https://git.openstack.org/cgit/openstack/networking-powervm
-* Launchpad: https://launchpad.net/neutron-powervm
-* PyPI: https://pypi.python.org/pypi/neutron-powervm
+* Launchpad: https://launchpad.net/networking-powervm
+* PyPI: https://pypi.python.org/pypi/networking-powervm
 
 .. _networking-sfc:
 
