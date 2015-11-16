@@ -479,7 +479,7 @@ def round_val(val):
                                              rounding=decimal.ROUND_HALF_UP))
 
 
-def replace_file(file_name, data):
+def replace_file(file_name, data, file_mode=0o644):
     """Replaces the contents of file_name with data in a safe manner.
 
     First write to a temp file and then rename. Since POSIX renames are
@@ -493,7 +493,7 @@ def replace_file(file_name, data):
                                      dir=base_dir,
                                      delete=False) as tmp_file:
         tmp_file.write(data)
-    os.chmod(tmp_file.name, 0o644)
+    os.chmod(tmp_file.name, file_mode)
     os.rename(tmp_file.name, file_name)
 
 
