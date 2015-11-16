@@ -154,13 +154,13 @@ class InvalidL3Agent(agent.AgentNotFound):
 
 
 class RouterHostedByL3Agent(exceptions.Conflict):
-    message = _("The router %(router_id)s has been already hosted"
-                " by the L3 Agent %(agent_id)s.")
+    message = _("The router %(router_id)s has been already hosted "
+                "by the L3 Agent %(agent_id)s.")
 
 
 class RouterSchedulingFailed(exceptions.Conflict):
-    message = _("Failed scheduling router %(router_id)s to"
-                " the L3 Agent %(agent_id)s.")
+    message = _("Failed scheduling router %(router_id)s to "
+                "the L3 Agent %(agent_id)s.")
 
 
 class RouterReschedulingFailed(exceptions.Conflict):
