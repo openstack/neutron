@@ -73,13 +73,6 @@ class DvrDbMixinTestCase(testlib_api.SqlTestCase):
                               self.ctx, "foo_host_2")
         self.assertEqual(new_retries, f.call_count)
 
-    def test_delete_dvr_mac_address(self):
-        self._create_dvr_mac_entry('foo_host', 'foo_mac_address')
-        self.mixin.delete_dvr_mac_address(self.ctx, 'foo_host')
-        count = self.ctx.session.query(
-            dvr_mac_db.DistributedVirtualRouterMacAddress).count()
-        self.assertFalse(count)
-
     def test_get_dvr_mac_address_list(self):
         self._create_dvr_mac_entry('host_1', 'mac_1')
         self._create_dvr_mac_entry('host_2', 'mac_2')
