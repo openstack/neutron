@@ -24,7 +24,7 @@
 Neutron Messaging Callback System
 =================================
 
-Neutron already has a callback system [link-to: callbacks.rst] for
+Neutron already has a :doc:`callback system <callbacks>` for
 in-process resource callbacks where publishers and subscribers are able
 to publish and subscribe for resource events.
 
@@ -55,12 +55,12 @@ agent.
 This publishing/subscription mechanism is highly dependent on the format
 of the resources passed around. This is why the library only allows
 versioned objects to be published and subscribed. Oslo versioned objects
-allow object version down/up conversion. #[vo_mkcompat]_ #[vo_mkcptests]_
+allow object version down/up conversion. [#vo_mkcompat]_ [#vo_mkcptests]_
 
-For the VO's versioning schema look here: #[vo_versioning]_
+For the VO's versioning schema look here: [#vo_versioning]_
 
 versioned_objects serialization/deserialization with the
-obj_to_primitive(target_version=..) and primitive_to_obj() #[ov_serdes]_
+obj_to_primitive(target_version=..) and primitive_to_obj() [#ov_serdes]_
 methods is used internally to convert/retrieve objects before/after messaging.
 
 Considering rolling upgrades, there are several scenarios to look at:

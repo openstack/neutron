@@ -9,25 +9,22 @@ but it is strongly encouraged, as internal neutron refactoring can break
 external plugins and drivers at any time.
 
 Neutron expects any Third Party CI system that interacts with gerrit to
-follow the requirements set by the Infrastructure team[1] as well as the
+follow the requirements set by the Infrastructure team [1]_ as well as the
 Neutron Third Party CI guidelines below. Please ping the PTL in
 #openstack-neutron or send an email to the openstack-dev ML (with subject
 [neutron]) with any questions. Be aware that the Infrastructure documentation
 as well as this document are living documents and undergo changes. Track
-changes to the infrastructure documentation using this url[2] (and please
+changes to the infrastructure documentation using this url [2]_ (and please
 review the patches) and check this doc on a regular basis for updates.
-
-[1] http://ci.openstack.org/third_party.html
-[2] https://review.openstack.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
 
 What Changes to Run Against
 ---------------------------
 
 If your code is a neutron plugin or driver, you should run against every
 neutron change submitted, except for docs, tests, tools, and top-level
-setup files. You can see a programmatic example of the exceptions here[3].
-
-[3] https://github.com/openstack-infra/project-config/blob/master/zuul/layout.yaml#L568
+setup files. You can skip your CI runs for such exceptions by using
+``skip-if`` and ``all-files-match-any`` directives in Zuul.
+You can see a programmatic example of the exceptions here [3]_.
 
 If your code is in a neutron-\*aas repo, you should run against the tests
 for that repo. You may also run against every neutron change, if your service
@@ -131,4 +128,6 @@ https://wiki.openstack.org/wiki/Neutron_Plugins_and_Drivers#Existing_Plugin_and_
 References
 ----------
 
-[1] https://review.openstack.org/#/c/187267
+.. [1] http://ci.openstack.org/third_party.html
+.. [2] https://review.openstack.org/#/q/status:open+project:openstack-infra/system-config+branch:master+topic:third-party,n,z
+.. [3] https://github.com/openstack-infra/project-config/blob/master/zuul/layout.yaml
