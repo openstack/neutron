@@ -81,6 +81,10 @@ core_opts = [
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation")),
+    cfg.IntOpt('dhcp_lease_duration', default=86400,
+               deprecated_name='dhcp_lease_time',
+               help=_("DHCP lease duration (in seconds). Use -1 to tell "
+                      "dnsmasq to use infinite lease times.")),
     cfg.StrOpt('dns_domain',
                default='openstacklocal',
                help=_('Domain to use for building the hostnames')),
