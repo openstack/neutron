@@ -127,7 +127,7 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-l2gw_              |         l2            |
 +-------------------------------+-----------------------+
-| networking-midonet_           |        core,lb        |
+| networking-midonet_           |  core,ml2,l3,lb,fw    |
 +-------------------------------+-----------------------+
 | networking-mlnx_              |          ml2          |
 +-------------------------------+-----------------------+
