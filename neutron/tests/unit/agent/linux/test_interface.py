@@ -14,7 +14,6 @@
 #    under the License.
 
 import mock
-from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.common import config
@@ -654,54 +653,3 @@ class TestIVSInterfaceDriver(TestBase):
             execute.assert_called_once_with(ivsctl_cmd, run_as_root=True)
             self.ip_dev.assert_has_calls([mock.call('ns-0', namespace=None),
                                           mock.call().link.delete()])
-
-
-class TestMidonetInterfaceDriver(TestBase):
-    def setUp(self):
-        self.conf = config.setup_conf()
-        self.conf.register_opts(interface.OPTS)
-        self.driver = interface.MidonetInterfaceDriver(self.conf)
-        self.network_id = uuidutils.generate_uuid()
-        self.port_id = uuidutils.generate_uuid()
-        self.device_name = "tap0"
-        self.mac_address = "aa:bb:cc:dd:ee:ff"
-        self.bridge = "br-test"
-        self.namespace = "ns-test"
-        super(TestMidonetInterfaceDriver, self).setUp()
-
-    def test_plug(self):
-        cmd = ['mm-ctl', '--bind-port', self.port_id, 'tap0']
-        self.device_exists.return_value = False
-
-        root_dev = mock.Mock()
-        ns_dev = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
-        with mock.patch.object(utils, 'execute') as execute:
-            self.driver.plug(
-                self.network_id, self.port_id,
-                self.device_name, self.mac_address,
-                self.bridge, self.namespace)
-            execute.assert_called_once_with(cmd, run_as_root=True)
-
-        expected = [mock.call(), mock.call(),
-                    mock.call().add_veth(self.device_name,
-                                         self.device_name,
-                                         namespace2=self.namespace),
-                    mock.call().ensure_namespace(self.namespace),
-                    mock.call().ensure_namespace().add_device_to_namespace(
-                        mock.ANY)]
-
-        ns_dev.assert_has_calls(
-            [mock.call.link.set_address(self.mac_address)])
-
-        root_dev.assert_has_calls([mock.call.link.set_up()])
-        ns_dev.assert_has_calls([mock.call.link.set_up()])
-        self.ip.assert_has_calls(expected, True)
-
-    def test_unplug(self):
-        self.driver.unplug(self.device_name, self.bridge, self.namespace)
-
-        self.ip_dev.assert_has_calls([
-            mock.call(self.device_name, namespace=self.namespace),
-            mock.call().link.delete()])
-        self.ip.assert_has_calls([mock.call().garbage_collect_namespace()])
