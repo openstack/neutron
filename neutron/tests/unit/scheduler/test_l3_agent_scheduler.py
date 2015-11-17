@@ -1071,7 +1071,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                     }
                 ]
         }
-        dvr_port = {
+        dvr_ports = [
+            {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
                 'device_owner': 'network:router_interface_distributed',
@@ -1081,22 +1082,52 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                         'ip_address': '10.10.10.1'
                     }
                 ]
-        }
+            },
+            {
+                'id': 'dvr_port2',
+                'device_id': 'r2',
+                'device_owner': 'network:router_interface_distributed',
+                'fixed_ips': [
+                    {
+                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'ip_address': '10.10.10.123'
+                    }
+                ]
+            }
+        ]
         r1 = {
               'id': 'r1',
               'distributed': True,
         }
+        r2 = {
+              'id': 'r2',
+              'distributed': True,
+        }
 
-        with contextlib.nested(
-            mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                       '.get_ports', return_value=[dvr_port]),
-            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
-                       return_value=mock.Mock()),
-            mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                       return_value=r1),
-            mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
-                       '.L3AgentNotifyAPI')):
+        with mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
+            return_value=dvr_ports),\
+                mock.patch(
+                    'neutron.manager.NeutronManager.get_service_plugins',
+                    return_value=mock.Mock()),\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           router_id='r1', return_value=r1),\
+                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
+                           router_id='r2', return_value=r2),\
+                mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
+                           '.L3AgentNotifyAPI'):
             self.dut.dvr_update_router_addvm(self.adminContext, port)
+            self.assertEqual(
+                self.dut.l3_rpc_notifier.routers_updated.call_count, 2)
+            payload = {'subnet_id': port['fixed_ips'][0]['subnet_id']}
+            expected_calls = [
+                mock.call.routers_updated(
+                    self.adminContext, ['r1'], None, payload),
+                mock.call.routers_updated(
+                    self.adminContext, ['r2'], None, payload)
+            ]
+            self.dut.l3_rpc_notifier.routers_updated.assert_has_calls(
+                expected_calls, any_order=True)
 
     def test_get_dvr_routers_by_portid(self):
         dvr_port = {
