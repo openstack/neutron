@@ -39,6 +39,7 @@ def setup_conf():
     cfg.CONF.import_group('ml2_sriov',
                           'neutron.plugins.ml2.drivers.mech_sriov.mech_driver.'
                           'mech_driver')
+    cfg.CONF.import_group('SECURITYGROUP', 'neutron.agent.securitygroups_rpc')
     dhcp_agent.register_options(cfg.CONF)
     cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
@@ -200,6 +201,14 @@ def check_ebtables():
     return result
 
 
+def check_ipset():
+    result = checks.ipset_supported()
+    if not result:
+        LOG.error(_LE('Cannot run ipset. Please ensure that it '
+                      'is installed.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -232,6 +241,8 @@ OPTS = [
                     help=_('Check keepalived IPv6 support')),
     BoolOptCallback('dibbler_version', check_dibbler_version,
                     help=_('Check minimal dibbler version')),
+    BoolOptCallback('ipset_installed', check_ipset,
+                    help=_('Check ipset installation')),
 ]
 
 
@@ -269,6 +280,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('ovsdb_native', True)
     if cfg.CONF.l3_ha:
         cfg.CONF.set_override('keepalived_ipv6_support', True)
+    if cfg.CONF.SECURITYGROUP.enable_ipset:
+        cfg.CONF.set_override('ipset_installed', True)
 
 
 def all_tests_passed():
