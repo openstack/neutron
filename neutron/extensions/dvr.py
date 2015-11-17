@@ -81,10 +81,6 @@ class Dvr(extensions.ExtensionDescriptor):
 class DVRMacAddressPluginBase(object):
 
     @abc.abstractmethod
-    def delete_dvr_mac_address(self, context, host):
-        pass
-
-    @abc.abstractmethod
     def get_dvr_mac_address_list(self, context):
         pass
 
