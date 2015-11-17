@@ -232,8 +232,16 @@ class L3Scheduler(object):
     def _schedule_router(self, plugin, context, router_id,
                          candidates=None):
         sync_router = plugin.get_router(context, router_id)
+        candidates = candidates or self.get_candidates(
+            plugin, context, sync_router)
+        if not candidates:
+            return
+
         router_distributed = sync_router.get('distributed', False)
         if router_distributed:
+            for chosen_agent in candidates:
+                self.bind_router(context, router_id, chosen_agent)
+
             # For Distributed routers check for SNAT Binding before
             # calling the schedule_snat_router
             snat_bindings = plugin.get_snat_bindings(context, [router_id])
@@ -241,21 +249,13 @@ class L3Scheduler(object):
             if not snat_bindings and router_gw_exists:
                 # If GW exists for DVR routers and no SNAT binding
                 # call the schedule_snat_router
-                return plugin.schedule_snat_router(
+                plugin.schedule_snat_router(
                     context, router_id, sync_router)
-            if not router_gw_exists and snat_bindings:
+            elif not router_gw_exists and snat_bindings:
                 # If DVR router and no Gateway but SNAT Binding exists then
                 # call the unbind_snat_servicenode to unbind the snat service
                 # from agent
                 plugin.unbind_snat_servicenode(context, router_id)
-                return
-        candidates = candidates or self.get_candidates(
-            plugin, context, sync_router)
-        if not candidates:
-            return
-        if router_distributed:
-            for chosen_agent in candidates:
-                self.bind_router(context, router_id, chosen_agent)
         elif sync_router.get('ha', False):
             chosen_agents = self.bind_ha_router(plugin, context,
                                                 router_id, candidates)
