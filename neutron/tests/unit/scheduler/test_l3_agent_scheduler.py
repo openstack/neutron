@@ -1043,7 +1043,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
-                'device_owner': 'network:router_interface_distributed',
+                'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1054,7 +1054,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             {
                 'id': 'dvr_port2',
                 'device_id': 'r2',
-                'device_owner': 'network:router_interface_distributed',
+                'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1089,7 +1089,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         dvr_port = {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
-                'device_owner': 'network:router_interface_distributed',
+                'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1115,7 +1115,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         dvr_port = {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
-                'device_owner': 'network:router_interface_distributed',
+                'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',

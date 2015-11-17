@@ -31,19 +31,24 @@ FLOATINGIP_STATUS_DOWN = 'DOWN'
 FLOATINGIP_STATUS_ERROR = 'ERROR'
 
 DEVICE_OWNER_COMPUTE_PREFIX = "compute:"
+DEVICE_OWNER_NETWORK_PREFIX = "network:"
 
-DEVICE_OWNER_ROUTER_HA_INTF = "network:router_ha_interface"
-DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
-DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
-DEVICE_OWNER_FLOATINGIP = "network:floatingip"
-DEVICE_OWNER_DHCP = "network:dhcp"
-DEVICE_OWNER_DVR_INTERFACE = "network:router_interface_distributed"
-DEVICE_OWNER_AGENT_GW = "network:floatingip_agent_gateway"
-DEVICE_OWNER_ROUTER_SNAT = "network:router_centralized_snat"
+DEVICE_OWNER_ROUTER_HA_INTF = (DEVICE_OWNER_NETWORK_PREFIX +
+                               "router_ha_interface")
+DEVICE_OWNER_ROUTER_INTF = DEVICE_OWNER_NETWORK_PREFIX + "router_interface"
+DEVICE_OWNER_ROUTER_GW = DEVICE_OWNER_NETWORK_PREFIX + "router_gateway"
+DEVICE_OWNER_FLOATINGIP = DEVICE_OWNER_NETWORK_PREFIX + "floatingip"
+DEVICE_OWNER_DHCP = DEVICE_OWNER_NETWORK_PREFIX + "dhcp"
+DEVICE_OWNER_DVR_INTERFACE = (DEVICE_OWNER_NETWORK_PREFIX +
+                              "router_interface_distributed")
+DEVICE_OWNER_AGENT_GW = (DEVICE_OWNER_NETWORK_PREFIX +
+                         "floatingip_agent_gateway")
+DEVICE_OWNER_ROUTER_SNAT = (DEVICE_OWNER_NETWORK_PREFIX +
+                            "router_centralized_snat")
 DEVICE_OWNER_LOADBALANCER = "neutron:LOADBALANCER"
 DEVICE_OWNER_LOADBALANCERV2 = "neutron:LOADBALANCERV2"
 
-DEVICE_OWNER_PREFIXES = ["network:", "neutron:"]
+DEVICE_OWNER_PREFIXES = [DEVICE_OWNER_NETWORK_PREFIX, "neutron:"]
 
 # Collection used to identify devices owned by router interfaces.
 # DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.

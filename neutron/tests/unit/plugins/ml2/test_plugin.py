@@ -1601,7 +1601,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                             network['network']['tenant_id'],
                             'name': 'port1',
                             'device_owner':
-                            'network:router_interface_distributed',
+                            constants.DEVICE_OWNER_DVR_INTERFACE,
                             'admin_state_up': 1,
                             'fixed_ips':
                             [{'subnet_id': subnet_id}]}}

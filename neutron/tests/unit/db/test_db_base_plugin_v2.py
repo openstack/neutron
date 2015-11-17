@@ -5652,7 +5652,8 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         with self.network() as net, self.network() as net1:
             with self.subnet(network=net, cidr='10.0.0.0/24') as subnet,\
                     self.subnet(network=net1, cidr='10.0.1.0/24') as subnet1:
-                with self.port(subnet=subnet, device_owner='network:dhcp'),\
+                with self.port(subnet=subnet,
+                               device_owner=constants.DEVICE_OWNER_DHCP),\
                         self.port(subnet=subnet1):
                     # check that user allocations on another network don't
                     # affect _subnet_get_user_allocation method

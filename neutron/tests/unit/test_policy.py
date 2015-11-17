@@ -327,8 +327,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                            oslo_policy.PolicyNotAuthorized)
 
     def test_create_port_device_owner_regex(self):
-        blocked_values = ('network:', 'network:abdef', 'network:dhcp',
-                          'network:router_interface')
+        blocked_values = (const.DEVICE_OWNER_NETWORK_PREFIX,
+                          'network:abdef',
+                          const.DEVICE_OWNER_DHCP,
+                          const.DEVICE_OWNER_ROUTER_INTF)
         for val in blocked_values:
             self._test_advsvc_action_on_attr(
                 'create', 'port', 'device_owner', val,

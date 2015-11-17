@@ -72,7 +72,7 @@ class Dictable(object):
 class FakeDhcpPort(object):
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
     admin_state_up = True
-    device_owner = 'network:dhcp'
+    device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.1',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:80:aa:bb:ee'
@@ -84,7 +84,7 @@ class FakeDhcpPort(object):
 
 class FakeReservedPort(object):
     admin_state_up = True
-    device_owner = 'network:dhcp'
+    device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.6',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:80:aa:bb:ee'

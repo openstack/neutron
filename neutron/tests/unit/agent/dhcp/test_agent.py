@@ -104,7 +104,7 @@ fake_port1 = dhcp.DictModel(dict(id='12345678-1234-aaaa-1234567890ab',
 
 fake_dhcp_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789022',
                             device_id='dhcp-12345678-1234-aaaa-123456789022',
-                            device_owner='network:dhcp',
+                            device_owner=const.DEVICE_OWNER_DHCP,
                             allocation_pools=fake_subnet1_allocation_pools,
                             mac_address='aa:bb:cc:dd:ee:22',
                             network_id='12345678-1234-5678-1234567890ab',

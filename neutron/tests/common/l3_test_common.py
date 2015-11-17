@@ -31,7 +31,7 @@ def get_ha_interface(ip='169.254.192.1', mac='12:34:56:78:2b:5d'):
     subnet_id = _uuid()
     return {'admin_state_up': True,
             'device_id': _uuid(),
-            'device_owner': 'network:router_ha_interface',
+            'device_owner': l3_constants.DEVICE_OWNER_ROUTER_HA_INTF,
             'fixed_ips': [{'ip_address': ip,
                            'prefixlen': 18,
                            'subnet_id': subnet_id}],

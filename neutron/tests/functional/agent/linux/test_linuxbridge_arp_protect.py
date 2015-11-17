@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants
 from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
-
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
@@ -93,7 +93,8 @@ class LinuxBridgeARPSpoofTestCase(functional_base.BaseSudoTestCase):
         self._add_arp_protection(self.source, ['1.1.1.1'])
         no_arping(self.observer.namespace, self.source.ip)
         self._add_arp_protection(self.source, ['1.1.1.1'],
-                                 {'device_owner': 'network:router_gateway'})
+                                 {'device_owner':
+                                  constants.DEVICE_OWNER_ROUTER_GW})
         arping(self.observer.namespace, self.source.ip)
 
     def test_arp_protection_dead_reference_removal(self):
