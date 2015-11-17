@@ -115,11 +115,20 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         super(DhcpFilter, self).bind(context, bound_agents, network_id)
 
     def filter_agents(self, plugin, context, network):
-        """Return the agents that can host the network."""
+        """Return the agents that can host the network.
+
+        This function returns a dictionary which has 3 keys.
+        n_agents: The number of agents should be scheduled. If n_agents=0,
+        all networks are already scheduled or no more agent can host the
+        network.
+        hostable_agents: A list of agents which can host the network.
+        hosted_agents: A list of agents which already hosts the network.
+        """
         agents_dict = self._get_network_hostable_dhcp_agents(
                                     plugin, context, network)
         if not agents_dict['hostable_agents'] or agents_dict['n_agents'] <= 0:
-            return {'n_agents': 0, 'hostable_agents': []}
+            return {'n_agents': 0, 'hostable_agents': [],
+                    'hosted_agents': agents_dict['hosted_agents']}
         return agents_dict
 
     def _get_dhcp_agents_hosting_network(self, plugin, context, network):
@@ -151,17 +160,21 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         return active_dhcp_agents
 
     def _get_network_hostable_dhcp_agents(self, plugin, context, network):
-        """Return number of agents which will actually host the given network
-           and a list of dhcp agents which can host the given network
+        """Provide information on hostable DHCP agents for network.
+
+        The returned value includes the number of agents that will actually
+        host the given network, a list of DHCP agents that can host the given
+        network, and a list of DHCP agents currently hosting the network.
         """
         hosted_agents = self._get_dhcp_agents_hosting_network(plugin,
                                                               context, network)
         if hosted_agents is None:
-            return {'n_agents': 0, 'hostable_agents': []}
+            return {'n_agents': 0, 'hostable_agents': [], 'hosted_agents': []}
         n_agents = cfg.CONF.dhcp_agents_per_network - len(hosted_agents)
         active_dhcp_agents = self._get_active_agents(plugin, context)
         if not active_dhcp_agents:
-            return {'n_agents': 0, 'hostable_agents': []}
+            return {'n_agents': 0, 'hostable_agents': [],
+                    'hosted_agents': hosted_agents}
         hostable_dhcp_agents = [
             agent for agent in set(active_dhcp_agents)
             if agent not in hosted_agents and plugin.is_eligible_agent(
@@ -169,7 +182,8 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         ]
 
         if not hostable_dhcp_agents:
-            return {'n_agents': 0, 'hostable_agents': []}
+            return {'n_agents': 0, 'hostable_agents': [],
+                    'hosted_agents': hosted_agents}
         n_agents = min(len(hostable_dhcp_agents), n_agents)
-        return {'n_agents': n_agents, 'hostable_agents':
-                hostable_dhcp_agents}
+        return {'n_agents': n_agents, 'hostable_agents': hostable_dhcp_agents,
+                'hosted_agents': hosted_agents}
