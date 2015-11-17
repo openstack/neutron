@@ -769,15 +769,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return
 
         try:
-            router = self._get_router(context, router_id)
+            # using admin context as router may belong to admin tenant
+            router = self._get_router(context.elevated(), router_id)
         except l3.RouterNotFound:
-            # TODO(obondarev): bug 1507602 was filed to investigate race
-            # condition here. For now we preserve original behavior and do
-            # broad notification
             LOG.warning(_LW("Router %s was not found. "
-                            "Doing broad notification."),
+                            "Skipping agent notification."),
                         router_id)
-            self.notify_router_updated(context, router_id)
             return
 
         if is_distributed_router(router):
