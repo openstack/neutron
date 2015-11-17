@@ -446,6 +446,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 raise ext_sg.SecurityGroupMissingIcmpType(
                     value=rule['port_range_max'])
 
+    def _validate_ethertype_and_protocol(self, rule):
+        """Check if given ethertype and  protocol are valid or not"""
+        if rule['protocol'] == constants.PROTO_NAME_ICMP_V6:
+            if rule['ethertype'] == constants.IPv4:
+                raise ext_sg.SecurityGroupEthertypeConflictWithProtocol(
+                        ethertype=rule['ethertype'], protocol=rule['protocol'])
+
     def _validate_single_tenant_and_group(self, security_group_rules):
         """Check that all rules belong to the same security group and tenant
         """
@@ -466,6 +473,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         rule = security_group_rule['security_group_rule']
         self._validate_port_range(rule)
         self._validate_ip_prefix(rule)
+        self._validate_ethertype_and_protocol(rule)
 
         if rule['remote_ip_prefix'] and rule['remote_group_id']:
             raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
