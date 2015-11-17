@@ -90,7 +90,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self._enabled_netfilter_for_bridges = False
         self.updated_rule_sg_ids = set()
         self.updated_sg_members = set()
-        self.devices_with_udpated_sg_members = collections.defaultdict(list)
+        self.devices_with_updated_sg_members = collections.defaultdict(list)
 
     def _enable_netfilter_for_bridges(self):
         # we only need to set these values once, but it has to be when
@@ -125,7 +125,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for sg_id in sec_group_ids:
             for device in self.filtered_ports.values():
                 if sg_id in device.get('security_group_source_groups', []):
-                    self.devices_with_udpated_sg_members[sg_id].append(device)
+                    self.devices_with_updated_sg_members[sg_id].append(device)
 
     def security_group_updated(self, action_type, sec_group_ids,
                                device_ids=None):
@@ -784,7 +784,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _clean_deleted_remote_sg_members_conntrack_entries(self):
         deleted_sg_ids = set()
-        for sg_id, devices in self.devices_with_udpated_sg_members.items():
+        for sg_id, devices in self.devices_with_updated_sg_members.items():
             for ethertype in [constants.IPv4, constants.IPv6]:
                 pre_ips = self._get_sg_members(
                     self.pre_sg_members, sg_id, ethertype)
@@ -796,7 +796,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                         devices, ethertype, ips)
             deleted_sg_ids.add(sg_id)
         for id in deleted_sg_ids:
-            self.devices_with_udpated_sg_members.pop(id, None)
+            self.devices_with_updated_sg_members.pop(id, None)
 
     def _remove_conntrack_entries_from_sg_updates(self):
         self._clean_deleted_sg_rule_conntrack_entries()
