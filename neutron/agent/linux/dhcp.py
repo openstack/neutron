@@ -23,6 +23,7 @@ import time
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging
 from oslo_utils import uuidutils
 import six
 
@@ -1096,9 +1097,16 @@ class DeviceManager(object):
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
             if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
-                port = self.plugin.update_dhcp_port(
-                    port.id, {'port': {'network_id': network.id,
-                                       'device_id': device_id}})
+                try:
+                    port = self.plugin.update_dhcp_port(
+                        port.id, {'port': {'network_id': network.id,
+                                           'device_id': device_id}})
+                except oslo_messaging.RemoteError as e:
+                    if e.exc_type == exceptions.DhcpPortInUse:
+                        LOG.info(_LI("Skipping DHCP port %s as it is "
+                                     "already in use"), port.id)
+                        continue
+                    raise
                 if port:
                     return port
 
