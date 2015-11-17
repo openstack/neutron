@@ -13,8 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import netaddr
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
@@ -184,3 +186,15 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         self.assertRaises(n_exc.SubnetPoolQuotaExceeded,
                           sa.allocate_subnet,
                           req)
+
+    def test_subnetpool_concurrent_allocation_exception(self):
+        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
+                                      ['fe80::/48'],
+                                      48, 6, default_quota=1)
+        sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
+        sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
+        req = ipam_req.SpecificSubnetRequest(self._tenant_id,
+                                         uuidutils.generate_uuid(),
+                                         'fe80::/63')
+        with mock.patch("sqlalchemy.orm.query.Query.update", return_value=0):
+            self.assertRaises(db_exc.RetryRequest, sa.allocate_subnet, req)
