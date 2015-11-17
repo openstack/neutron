@@ -118,6 +118,8 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-calico      | Neil Jerram               | neiljerram           |
 +------------------------+---------------------------+----------------------+
+| networking-infoblox    | John Belamaric            | johnbelamaric        |
++------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
