@@ -1109,6 +1109,34 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                          set([a['configurations']['agent_mode'] for a in
                               l3agents['agents']]))
 
+    def test_dvr_router_csnat_rescheduling(self):
+        self._register_one_l3_agent(
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        self._register_one_l3_agent(
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+        with self.subnet() as s:
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+
+            router = {'name': 'router1',
+                      'external_gateway_info': {'network_id': net_id},
+                      'admin_state_up': True,
+                      'distributed': True}
+            r = self.l3plugin.create_router(self.adminContext,
+                                            {'router': router})
+            self.l3plugin.schedule_router(
+                    self.adminContext, r['id'])
+            l3agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(l3agents['agents']))
+            csnat_agent_host = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])[0]['l3_agent']['host']
+            self._take_down_agent_and_run_reschedule(csnat_agent_host)
+            l3agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(1, len(l3agents['agents']))
+            new_csnat_agent_host = self.l3plugin.get_snat_bindings(
+                self.adminContext, [r['id']])[0]['l3_agent']['host']
+            self.assertNotEqual(csnat_agent_host, new_csnat_agent_host)
+
     def test_router_sync_data(self):
         with contextlib.nested(
             self.subnet(),
