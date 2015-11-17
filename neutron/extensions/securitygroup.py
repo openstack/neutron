@@ -45,8 +45,8 @@ class SecurityGroupInvalidIcmpValue(nexception.InvalidInput):
 
 
 class SecurityGroupEthertypeConflictWithProtocol(nexception.InvalidInput):
-    message = ("Invalid ethertype %(ethertype)s for protocol "
-               "%(protocol)s .")
+    message = _("Invalid ethertype %(ethertype)s for protocol "
+                "%(protocol)s.")
 
 
 class SecurityGroupMissingIcmpType(nexception.InvalidInput):
