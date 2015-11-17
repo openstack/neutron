@@ -76,9 +76,10 @@ def encode_body(body):
 
 class WorkerService(worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
-    def __init__(self, service, application):
+    def __init__(self, service, application, disable_ssl=False):
         self._service = service
         self._application = application
+        self._disable_ssl = disable_ssl
         self._server = None
 
     def start(self):
@@ -89,7 +90,7 @@ class WorkerService(worker.NeutronWorker):
         # errors on service restart.
         # Duplicate a socket object to keep a file descriptor usable.
         dup_sock = self._service._socket.dup()
-        if CONF.use_ssl:
+        if CONF.use_ssl and not self._disable_ssl:
             dup_sock = sslutils.wrap(CONF, dup_sock)
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
@@ -112,10 +113,11 @@ class WorkerService(worker.NeutronWorker):
 class Server(object):
     """Server class to manage multiple WSGI sockets and applications."""
 
-    def __init__(self, name, num_threads=1000):
+    def __init__(self, name, num_threads=1000, disable_ssl=False):
         # Raise the default from 8192 to accommodate large tokens
         eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
         self.num_threads = num_threads
+        self.disable_ssl = disable_ssl
         # Pool for a greenthread in which wsgi server will be running
         self.pool = eventlet.GreenPool(1)
         self.name = name
@@ -123,7 +125,7 @@ class Server(object):
         # A value of 0 is converted to None because None is what causes the
         # wsgi server to wait forever.
         self.client_socket_timeout = CONF.client_socket_timeout or None
-        if CONF.use_ssl:
+        if CONF.use_ssl and not self.disable_ssl:
             sslutils.is_enabled(CONF)
 
     def _get_socket(self, host, port, backlog):
@@ -186,7 +188,7 @@ class Server(object):
         self._launch(application, workers)
 
     def _launch(self, application, workers=0):
-        service = WorkerService(self, application)
+        service = WorkerService(self, application, self.disable_ssl)
         if workers < 1:
             # The API service should run in the current process.
             self._server = service
