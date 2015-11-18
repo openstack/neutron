@@ -62,6 +62,10 @@ class BridgeLibTest(base.BaseTestCase):
         br.disable_stp()
         self._verify_bridge_mock(['brctl', 'stp', self._BR_NAME, 'off'])
 
+        br.disable_ipv6()
+        cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self._BR_NAME
+        self._verify_bridge_mock(['sysctl', '-w', cmd])
+
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
             ['brctl', 'addif', self._BR_NAME, self._IF_NAME])

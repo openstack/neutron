@@ -44,6 +44,11 @@ class BridgeDevice(ip_lib.IPDevice):
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ip_wrapper.netns.execute(cmd, run_as_root=True)
 
+    def _sysctl(self, cmd):
+        cmd = ['sysctl', '-w'] + cmd
+        ip_wrapper = ip_lib.IPWrapper(self.namespace)
+        return ip_wrapper.netns.execute(cmd, run_as_root=True)
+
     @classmethod
     def addbr(cls, name, namespace=None):
         bridge = cls(name, namespace)
@@ -74,6 +79,10 @@ class BridgeDevice(ip_lib.IPDevice):
 
     def disable_stp(self):
         return self._brctl(['stp', self.name, 'off'])
+
+    def disable_ipv6(self):
+        cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self.name
+        return self._sysctl([cmd])
 
     def owns_interface(self, interface):
         return os.path.exists(
