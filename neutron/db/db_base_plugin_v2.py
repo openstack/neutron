@@ -451,16 +451,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if ((ip_ver == 4 and subnet_prefixlen > 30) or
                 (ip_ver == 6 and subnet_prefixlen > 126)):
                     raise n_exc.InvalidInput(error_message=error_message)
-            else:
-                # NOTE(watanabe.isao): The following restriction is necessary
-                # only when updating subnet.
-                if cur_subnet:
-                    range_qry = context.session.query(models_v2.
-                        IPAvailabilityRange).join(models_v2.IPAllocationPool)
-                    ip_range = range_qry.filter_by(subnet_id=s['id']).first()
-                    if not ip_range:
-                        raise n_exc.IpAddressGenerationFailure(
-                            net_id=cur_subnet.network_id)
+
             net = netaddr.IPNetwork(s['cidr'])
             if net.is_multicast():
                 error_message = _("Multicast IP subnet is not supported "
