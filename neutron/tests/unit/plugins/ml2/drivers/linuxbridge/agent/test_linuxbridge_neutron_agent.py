@@ -175,10 +175,29 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         nw_id = ""
         self.assertEqual("brq", self.lbm.get_bridge_name(nw_id))
 
-    def test_get_subinterface_name(self):
-        self.assertEqual("eth0.0",
-                         self.lbm.get_subinterface_name("eth0", "0"))
-        self.assertEqual("eth0.", self.lbm.get_subinterface_name("eth0", ""))
+    def test_get_subinterface_name_backwards_compatibility(self):
+        self.assertEqual("abcdefghijklm.1",
+                         self.lbm.get_subinterface_name("abcdefghijklm", "1"))
+        self.assertEqual("abcdefghijkl.11",
+                         self.lbm.get_subinterface_name("abcdefghijkl", "11"))
+        self.assertEqual("abcdefghij.1111",
+                         self.lbm.get_subinterface_name("abcdefghij",
+                                                        "1111"))
+
+    def test_get_subinterface_name_advanced(self):
+        """Ensure the same hash is used for long interface names.
+
+        If the generated vlan device name would be too long, make sure that
+        everything before the '.' is equal. This might be helpful when
+        debugging problems.
+        """
+
+        max_device_name = "abcdefghijklmno"
+        vlan_dev_name1 = self.lbm.get_subinterface_name(max_device_name, "1")
+        vlan_dev_name2 = self.lbm.get_subinterface_name(max_device_name,
+                                                        "1111")
+        self.assertEqual(vlan_dev_name1.partition(".")[0],
+                         vlan_dev_name2.partition(".")[0])
 
     def test_get_tap_device_name(self):
         if_id = "123456789101112"

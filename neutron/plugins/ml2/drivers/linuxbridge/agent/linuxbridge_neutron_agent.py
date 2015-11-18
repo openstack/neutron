@@ -40,6 +40,7 @@ from neutron.common import exceptions
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
@@ -55,6 +56,7 @@ LOG = logging.getLogger(__name__)
 
 LB_AGENT_BINARY = 'neutron-linuxbridge-agent'
 BRIDGE_NAME_PREFIX = "brq"
+MAX_VLAN_POSTFIX_LEN = 5
 VXLAN_INTERFACE_PREFIX = "vxlan-"
 
 
@@ -141,8 +143,32 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if not vlan_id:
             LOG.warning(_LW("Invalid VLAN ID, will lead to incorrect "
                             "subinterface name"))
-        subinterface_name = '%s.%s' % (physical_interface, vlan_id)
-        return subinterface_name
+        vlan_postfix = '.%s' % vlan_id
+
+        # For the vlan subinterface name prefix we use:
+        # * the physical_interface, if len(physical_interface) +
+        #   len(vlan_postifx) <= 15 for backward compatibility reasons
+        #   Example: physical_interface = eth0
+        #            prefix = eth0.1
+        #            prefix = eth0.1111
+        #
+        # * otherwise a unique hash per physical_interface to help debugging
+        #   Example: physical_interface = long_interface
+        #            prefix = longHASHED.1
+        #            prefix = longHASHED.1111
+        #
+        # Remark: For some physical_interface values, the used prefix can be
+        # both, the physical_interface itself or a hash, depending
+        # on the vlan_postfix length.
+        # Example: physical_interface = mix_interface
+        #          prefix = mix_interface.1 (backward compatible)
+        #          prefix = mix_iHASHED.1111
+        if (len(physical_interface) + len(vlan_postfix) >
+            constants.DEVICE_NAME_MAX_LEN):
+            physical_interface = p_utils.get_interface_name(
+                physical_interface, max_len=(constants.DEVICE_NAME_MAX_LEN -
+                                             MAX_VLAN_POSTFIX_LEN))
+        return "%s%s" % (physical_interface, vlan_postfix)
 
     @staticmethod
     def get_tap_device_name(interface_id):
