@@ -328,3 +328,19 @@ class TestNovaNotify(base.BaseTestCase):
                                         region_name=cfg.CONF.nova.region_name,
                                         endpoint_type='internal',
                                         extensions=mock.ANY)
+
+    def test_notify_port_active_direct(self):
+        device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
+        port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
+        port = models_v2.Port(id=port_id, device_id=device_id,
+                              device_owner=DEVICE_OWNER_COMPUTE)
+        expected_event = {'server_uuid': device_id,
+                          'name': nova.VIF_PLUGGED,
+                          'status': 'completed',
+                          'tag': port_id}
+        self.nova_notifier.notify_port_active_direct(port)
+
+        self.assertEqual(
+            1, len(self.nova_notifier.batch_notifier.pending_events))
+        self.assertEqual(expected_event,
+                         self.nova_notifier.batch_notifier.pending_events[0])
