@@ -1136,6 +1136,23 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertEqual(sub_ids.pop(),
                             dvr_port.get('fixed_ips').pop(0).get('subnet_id'))
 
+    def test_get_subnet_ids_on_router_no_subnet(self):
+        dvr_port = {
+                'id': 'dvr_port1',
+                'device_id': 'r1',
+                'device_owner': 'network:router_interface_distributed',
+                'fixed_ips': []
+        }
+        r1 = {
+              'id': 'r1',
+              'distributed': True,
+        }
+        with mock.patch.object(db_v2.NeutronDbPluginV2, 'get_ports',
+                               return_value=[dvr_port]):
+            sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
+                                                        r1['id'])
+            self.assertEqual(len(sub_ids), 0)
+
     def _test_check_ports_on_host_and_subnet_base(self, port_status):
         dvr_port = {
                 'id': 'fake_id',
