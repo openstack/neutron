@@ -1566,6 +1566,18 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.assertFalse(self.firewall.sg_members)
         self.assertFalse(self.firewall.sg_rules)
 
+    def test_single_fallback_accept_rule(self):
+        p1, p2 = self._fake_port(), self._fake_port()
+        self.firewall._setup_chains_apply(dict(p1=p1, p2=p2), {})
+        v4_adds = self.firewall.iptables.ipv4['filter'].add_rule.mock_calls
+        v6_adds = self.firewall.iptables.ipv6['filter'].add_rule.mock_calls
+        sg_chain_v4_accept = [call for call in v4_adds
+                              if call == mock.call('sg-chain', '-j ACCEPT')]
+        sg_chain_v6_accept = [call for call in v6_adds
+                              if call == mock.call('sg-chain', '-j ACCEPT')]
+        self.assertEqual(1, len(sg_chain_v4_accept))
+        self.assertEqual(1, len(sg_chain_v6_accept))
+
     def test_prepare_port_filter_with_deleted_member(self):
         self.firewall.sg_rules = self._fake_sg_rules()
         self.firewall.pre_sg_rules = self._fake_sg_rules()
