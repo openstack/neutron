@@ -62,22 +62,47 @@ The workflow for the life an RFE in Launchpad is as follows:
 
 * The bug is submitted and will by default land in the "New" state.
 * As soon as a member of the neutron-drivers team acknowledges the bug, it will
-  be moved into the "Confirmed" state. No assignee, importance, or milestone is
-  set at this time.
+  be moved into the "Confirmed" state. No assignee, or milestone is set at this
+  time. The importance will be set to 'Wishlist' to signal the fact that the
+  report is indeed a feature or enhancement and there is no severity associated
+  to it.
 * The bug goes into the "Triaged" state while the discussion is ongoing.
 * The neutron-drivers team will evaluate the RFE and may advise the submitter
-  to file a spec in neutron-specs to elaborate on the feature request.
+  to file a spec in neutron-specs to elaborate on the feature request, in case
+  the RFE requires extra scrutiny, more design discussion, etc.
 * The PTL will work with the Lieutenant for the area being identified by the
   RFE to evaluate resources against the current workload.
 * If a spec is necessary, a member of the Neutron release team will register
   a matching Launchpad blueprint to be used for milestone tracking purposes,
   and as a landing page for the spec document, as available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_.
   The blueprint will then be linked to the original RFE bug report. This
-  step will ensure higher visibility of the RFE over smaller RFEs (in scope)
+  step will ensure higher visibility of the RFE over the other RFEs
   and consistency across the various fields required during the blueprint
   registration process (Approver, Drafter, etc.). More precisely, the
   blueprint submitter will work with the RFE submitter to identify the
   following:
+
+  * Priority: there will be only two priorities to choose from, High and Low.
+    It is worth noting that priority is not to be confused with `importance <https://wiki.openstack.org/wiki/Bugs#Importance>`_,
+    which is a property of Launchpad Bugs. Priority gives an indication of
+    how promptly a work item should be tackled to allow it to complete. High
+    priority is to be chosen for work items that must make substantial
+    progress in the span of the targeted release, and deal with the
+    following aspects:
+
+    * OpenStack cross-project interaction and interoperability issues;
+    * Issues that affect the existing system's usability;
+    * Stability and testability of the platform;
+    * Risky implementations that may require complex and/or pervasive
+      changes to API and the logical model;
+
+    Low priority is to be chosen for everything else. RFEs without an associated
+    blueprint are effectively equivalent to low priority items. Bear in mind that,
+    even though staffing should take priorities into account (i.e. by giving more
+    resources to high priority items over low priority ones), the open source
+    reality is that they can both proceed at their own pace and low priority items
+    can indeed complete faster than high priority ones, even though they are
+    given fewer resources.
 
   * Drafter: who is going to submit and iterate on the spec proposal; he/she
     may be the RFE submitter.
