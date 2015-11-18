@@ -185,6 +185,21 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, router['id'])
         self.assertEqual([], bindings)
 
+    def test_get_l3_bindings_hosting_router_with_ha_states_active_and_dead(
+            self):
+        router = self._create_router()
+        self._bind_router(router['id'])
+        with mock.patch.object(agents_db.Agent, 'is_active',
+                               new_callable=mock.PropertyMock,
+                               return_value=False):
+            self.plugin.update_routers_states(
+                self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+            bindings = (
+                self.plugin.get_l3_bindings_hosting_router_with_ha_states(
+                    self.admin_ctx, router['id']))
+            agent_ids = [(agent[0]['id'], agent[1]) for agent in bindings]
+            self.assertIn((self.agent1['id'], 'standby'), agent_ids)
+
     def test_ha_router_create(self):
         router = self._create_router()
         self.assertTrue(router['ha'])

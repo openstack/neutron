@@ -490,10 +490,32 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
         return query.all()
 
+    def _get_bindings_and_update_router_state_for_dead_agents(self, context,
+                                                              router_id):
+        """Return bindings. In case if dead agents were detected update router
+           states on this agent.
+
+        """
+        with context.session.begin(subtransactions=True):
+            bindings = self.get_ha_router_port_bindings(context, [router_id])
+            dead_agents = [
+                binding.agent for binding in bindings
+                if binding.state == constants.HA_ROUTER_STATE_ACTIVE and
+                not binding.agent.is_active]
+            for dead_agent in dead_agents:
+                self.update_routers_states(
+                    context, {router_id: constants.HA_ROUTER_STATE_STANDBY},
+                    dead_agent.host)
+
+        if dead_agents:
+            return self.get_ha_router_port_bindings(context, [router_id])
+        return bindings
+
     def get_l3_bindings_hosting_router_with_ha_states(
             self, context, router_id):
         """Return a list of [(agent, ha_state), ...]."""
-        bindings = self.get_ha_router_port_bindings(context, [router_id])
+        bindings = self._get_bindings_and_update_router_state_for_dead_agents(
+            context, router_id)
         return [(binding.agent, binding.state) for binding in bindings
                 if binding.agent is not None]
 
