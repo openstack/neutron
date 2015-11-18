@@ -348,17 +348,20 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # they are already gone
         if 'removed' in port_info:
             self.deleted_ports -= port_info['removed']
+        deleted_ports = list(self.deleted_ports)
         while self.deleted_ports:
             port_id = self.deleted_ports.pop()
-            # Flush firewall rules and move to dead VLAN so deleted ports no
-            # longer have access to the network
-            self.sg_agent.remove_devices_filter([port_id])
             port = self.int_br.get_vif_port_by_id(port_id)
+            # move to dead VLAN so deleted ports no
+            # longer have access to the network
             if port:
                 # don't log errors since there is a chance someone will be
                 # removing the port from the bridge at the same time
                 self.port_dead(port, log_errors=False)
             self.port_unbound(port_id)
+        # Flush firewall rules after ports are put on dead VLAN to be
+        # more secure
+        self.sg_agent.remove_devices_filter(deleted_ports)
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
