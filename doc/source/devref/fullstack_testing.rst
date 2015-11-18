@@ -28,15 +28,13 @@ Why?
 ----
 
 The idea behind "fullstack" testing is to fill a gap between unit + functional
-tests and Tempest. Tempest tests are expensive to run, and operate only
-through the REST API. So they can only provide an explanation of what went wrong
-gets reported to an end user via the REST API, which is often too high level.
-Additionally, Tempest requires an OpenStack deployment to be run against, which
-can be difficult to configure and setup. The full stack testing addresses
+tests and Tempest. Tempest tests are expensive to run, and target black box API
+tests exclusively. Tempest requires an OpenStack deployment to be run against,
+which can be difficult to configure and setup. Full stack testing addresses
 these issues by taking care of the deployment itself, according to the topology
 that the test requires. Developers further benefit from full stack testing as
 it can sufficiently simulate a real environment and provide a rapidly
-reproducible way to verify code as you're still writing it.
+reproducible way to verify code while you're still writing it.
 
 How?
 ----
@@ -68,6 +66,13 @@ interconnected.
 
 .. image:: images/fullstack_multinode_simulation.png
 
+Segmentation at the database layer is guaranteed by creating a database
+per test. The messaging layer achieves segmentation by utilizing a RabbitMQ
+feature called 'vhosts'. In short, just like a MySQL server serve multiple
+databases, so can a RabbitMQ server serve multiple messaging domains.
+Exchanges and queues in one 'vhost' are segmented from those in another
+'vhost'.
+
 When?
 -----
 
@@ -83,6 +88,20 @@ When?
    stack testing can help here as the full stack infrastructure can restart an
    agent during the test.
 
+Example
+-------
+
+Neutron offers a Quality of Service API, initially offering bandwidth
+capping at the port level. In the reference implementation, it does this by
+utilizing an OVS feature.
+neutron.tests.fullstack.test_qos.TestQoSWithOvsAgent.test_qos_policy_rule_lifecycle
+is a positive example of how the fullstack testing infrastructure should be used.
+It creates a network, subnet, QoS policy & rule and a port utilizing that policy.
+It then asserts that the expected bandwidth limitation is present on the OVS
+bridge connected to that port. The test is a true integration test, in the
+sense that it invokes the API and then asserts that Neutron interacted with
+the hypervisor appropriately.
+
 Prerequisites
 -------------
 
@@ -97,14 +116,8 @@ Short Term Goals
     - Write a test for DHCP HA / Multiple DHCP agents per network
 * Write DVR tests
 * Write additional L3 HA tests
-* Write a test that validates L3 HA + l2pop integration after
-  https://bugs.launchpad.net/neutron/+bug/1365476 is fixed.
 * Write a test that validates DVR + L3 HA integration after
   https://bugs.launchpad.net/neutron/+bug/1365473 is fixed.
-
-After these tests are merged, it should be fair to start asking contributors to
-add full stack tests when appropriate in the patches themselves and not after
-the fact as there will probably be something to copy/paste from.
 
 Long Term Goals
 ---------------
