@@ -174,13 +174,6 @@ class LinuxBridgeManager(object):
         return len([interface for interface in if_list if
                     interface.startswith(constants.TAP_DEVICE_PREFIX)])
 
-    def get_bridge_for_tap_device(self, tap_device_name):
-        bridge = bridge_lib.BridgeDevice.get_interface_bridge(tap_device_name)
-        if (bridge and (bridge.name.startswith(BRIDGE_NAME_PREFIX)
-                        or bridge.name in self.bridge_mappings.values())):
-            return bridge
-        return None
-
     def ensure_vlan_bridge(self, network_id, phy_bridge_name,
                            physical_interface, vlan_id):
         """Create a vlan and bridge unless they already exist."""
@@ -361,8 +354,9 @@ class LinuxBridgeManager(object):
         if not bridge_device.owns_interface(interface):
             try:
                 # Check if the interface is not enslaved in another bridge
-                if bridge_lib.is_bridged_interface(interface):
-                    bridge = self.get_bridge_for_tap_device(interface)
+                bridge = bridge_lib.BridgeDevice.get_interface_bridge(
+                    interface)
+                if bridge:
                     bridge.delif(interface)
 
                 bridge_device.addif(interface)
@@ -433,7 +427,8 @@ class LinuxBridgeManager(object):
             self.ensure_tap_mtu(tap_device_name, phy_dev_name)
 
         # Check if device needs to be added to bridge
-        tap_device_in_bridge = self.get_bridge_for_tap_device(tap_device_name)
+        tap_device_in_bridge = bridge_lib.BridgeDevice.get_interface_bridge(
+            tap_device_name)
         if not tap_device_in_bridge:
             data = {'tap_device_name': tap_device_name,
                     'bridge_name': bridge_name}
