@@ -88,10 +88,11 @@ class ShellTest(base.BaseTestCase):
         shell = debug_shell.NeutronDebugShell(
                 openstack_shell.NEUTRON_API_VERSION)
         parser = shell.build_option_parser('descr', '2.0')
+        os_endpoints = ['public', 'publicURL']
 
         # Neither $OS_ENDPOINT_TYPE nor --os-endpoint-type
         namespace = parser.parse_args([])
-        self.assertEqual('publicURL', namespace.os_endpoint_type)
+        self.assertIn(namespace.os_endpoint_type, os_endpoints)
 
         # --endpoint-type but not $OS_ENDPOINT_TYPE
         namespace = parser.parse_args(['--os-endpoint-type=admin'])
