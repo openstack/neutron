@@ -51,9 +51,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         except RuntimeError:
             LOG.exception(_LE("Failed to communicate with the switch"))
             return constants.OVS_DEAD
-        if flows == []:
-            return constants.OVS_RESTARTED
-        return constants.OVS_NORMAL
+        return constants.OVS_NORMAL if flows else constants.OVS_RESTARTED
 
     @staticmethod
     def _local_vlan_match(_ofp, ofpp, port, vlan_vid):
