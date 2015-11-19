@@ -598,7 +598,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 class L3NATAgentWithStateReport(L3NATAgent):
 
     def __init__(self, host, conf=None):
-        self.use_call = True
         super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
@@ -645,10 +644,14 @@ class L3NATAgentWithStateReport(L3NATAgent):
         configurations['interfaces'] = num_interfaces
         configurations['floating_ips'] = num_floating_ips
         try:
-            self.state_rpc.report_state(self.context, self.agent_state,
-                                        self.use_call)
+            agent_status = self.state_rpc.report_state(self.context,
+                                                       self.agent_state,
+                                                       True)
+            if agent_status == l3_constants.AGENT_REVIVED:
+                LOG.info(_LI('Agent has just been revived. '
+                             'Doing a full sync.'))
+                self.fullsync = True
             self.agent_state.pop('start_flag', None)
-            self.use_call = False
         except AttributeError:
             # This means the server does not support report_state
             LOG.warn(_LW("Neutron server does not support state report."

@@ -362,6 +362,13 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
             self.agent.stop()
             self.assertFalse(mock_set_rpc.called)
 
+    def test_report_state_revived(self):
+        with mock.patch.object(self.agent.state_rpc,
+                               "report_state") as report_st:
+            report_st.return_value = constants.AGENT_REVIVED
+            self.agent._report_state()
+            self.assertTrue(self.agent.fullsync)
+
 
 class TestLinuxBridgeManager(base.BaseTestCase):
     def setUp(self):

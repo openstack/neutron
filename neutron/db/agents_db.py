@@ -299,6 +299,12 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                       'delta': delta})
 
     def _create_or_update_agent(self, context, agent_state):
+        """Registers new agent in the database or updates existing.
+
+        Returns agent status from server point of view: alive, new or revived.
+        It could be used by agent to do some sync with the server if needed.
+        """
+        status = constants.AGENT_ALIVE
         with context.session.begin(subtransactions=True):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
             res = dict((k, agent_state[k]) for k in res_keys)
@@ -311,6 +317,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             try:
                 agent_db = self._get_agent_by_type_and_host(
                     context, agent_state['agent_type'], agent_state['host'])
+                if not agent_db.is_active:
+                    status = constants.AGENT_REVIVED
                 res['heartbeat_timestamp'] = current_time
                 if agent_state.get('start_flag'):
                     res['started_at'] = current_time
@@ -327,7 +335,9 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 greenthread.sleep(0)
                 context.session.add(agent_db)
                 self._log_heartbeat(agent_state, agent_db, configurations_dict)
+                status = constants.AGENT_NEW
             greenthread.sleep(0)
+        return status
 
     def create_or_update_agent(self, context, agent):
         """Create or update agent according to report."""
@@ -367,7 +377,10 @@ class AgentExtRpcCallback(object):
         self.plugin = plugin
 
     def report_state(self, context, **kwargs):
-        """Report state from agent to server."""
+        """Report state from agent to server.
+
+        Returns - agent's status: AGENT_NEW, AGENT_REVIVED, AGENT_ALIVE
+        """
         time = kwargs['time']
         time = timeutils.parse_strtime(time)
         agent_state = kwargs['agent_state']['agent_state']
@@ -382,7 +395,7 @@ class AgentExtRpcCallback(object):
             return
         if not self.plugin:
             self.plugin = manager.NeutronManager.get_plugin()
-        self.plugin.create_or_update_agent(context, agent_state)
+        return self.plugin.create_or_update_agent(context, agent_state)
 
     def _check_clock_sync_on_agent_start(self, agent_state, agent_time):
         """Checks if the server and the agent times are in sync.

@@ -425,6 +425,20 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.periodic_resync()
             spawn.assert_called_once_with(dhcp._periodic_resync_helper)
 
+    def test_report_state_revival_logic(self):
+        dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
+        with mock.patch.object(dhcp.state_rpc,
+                               'report_state') as report_state,\
+            mock.patch.object(dhcp, "run"):
+            report_state.return_value = const.AGENT_ALIVE
+            dhcp._report_state()
+            self.assertEqual(dhcp.needs_resync_reasons, {})
+
+            report_state.return_value = const.AGENT_REVIVED
+            dhcp._report_state()
+            self.assertEqual(dhcp.needs_resync_reasons[None],
+                             ['Agent has just been revived'])
+
     def test_periodic_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)

@@ -824,6 +824,8 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
 
         # stores received port_updates for processing by the main loop
         self.updated_devices = set()
+        # flag to do a sync after revival
+        self.fullsync = False
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
@@ -845,8 +847,13 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         try:
             devices = len(self.br_mgr.get_tap_devices())
             self.agent_state.get('configurations')['devices'] = devices
-            self.state_rpc.report_state(self.context,
-                                        self.agent_state)
+            agent_status = self.state_rpc.report_state(self.context,
+                                                       self.agent_state,
+                                                       True)
+            if agent_status == constants.AGENT_REVIVED:
+                LOG.info(_LI('Agent has just been revived. '
+                             'Doing a full sync.'))
+                self.fullsync = True
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
@@ -1047,11 +1054,15 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
         while True:
             start = time.time()
 
-            device_info = self.scan_devices(previous=device_info, sync=sync)
+            if self.fullsync:
+                sync = True
+                self.fullsync = False
 
             if sync:
                 LOG.info(_LI("Agent out of sync with plugin!"))
-                sync = False
+
+            device_info = self.scan_devices(previous=device_info, sync=sync)
+            sync = False
 
             if (self._device_info_has_changes(device_info)
                 or self.sg_agent.firewall_refresh_needed()):

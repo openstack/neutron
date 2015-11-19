@@ -216,12 +216,25 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                        conf=self.conf)
 
             self.assertTrue(agent.agent_state['start_flag'])
-            use_call_arg = agent.use_call
             agent.after_start()
             report_state.assert_called_once_with(agent.context,
                                                  agent.agent_state,
-                                                 use_call_arg)
+                                                 True)
             self.assertIsNone(agent.agent_state.get('start_flag'))
+
+    def test_report_state_revival_logic(self):
+        with mock.patch.object(agent_rpc.PluginReportStateAPI,
+                               'report_state') as report_state:
+            agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
+                                                       conf=self.conf)
+            report_state.return_value = l3_constants.AGENT_REVIVED
+            agent._report_state()
+            self.assertTrue(agent.fullsync)
+
+            agent.fullsync = False
+            report_state.return_value = l3_constants.AGENT_ALIVE
+            agent._report_state()
+            self.assertFalse(agent.fullsync)
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

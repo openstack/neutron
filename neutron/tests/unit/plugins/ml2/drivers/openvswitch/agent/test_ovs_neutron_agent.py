@@ -147,9 +147,6 @@ class TestOvsNeutronAgent(object):
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         **kwargs)
-            # set back to true because initial report state will succeed due
-            # to mocked out RPC calls
-            self.agent.use_call = True
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
@@ -742,14 +739,13 @@ class TestOvsNeutronAgent(object):
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
             self.assertNotIn("start_flag", self.agent.agent_state)
-            self.assertFalse(self.agent.use_call)
             self.assertEqual(
                 self.agent.agent_state["configurations"]["devices"],
                 self.agent.int_br_device_count
             )
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
-                                         self.agent.agent_state, False)
+                                         self.agent.agent_state, True)
 
     def test_report_state_fail(self):
         with mock.patch.object(self.agent.state_rpc,
@@ -761,6 +757,13 @@ class TestOvsNeutronAgent(object):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+
+    def test_report_state_revived(self):
+        with mock.patch.object(self.agent.state_rpc,
+                               "report_state") as report_st:
+            report_st.return_value = n_const.AGENT_REVIVED
+            self.agent._report_state()
+            self.assertTrue(self.agent.fullsync)
 
     def test_port_update(self):
         port = {"id": TEST_PORT_ID1,
@@ -1809,9 +1812,6 @@ class TestOvsDvrNeutronAgent(object):
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                         **kwargs)
-            # set back to true because initial report state will succeed due
-            # to mocked out RPC calls
-            self.agent.use_call = True
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
