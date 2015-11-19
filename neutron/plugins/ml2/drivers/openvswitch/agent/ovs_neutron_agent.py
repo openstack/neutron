@@ -952,7 +952,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Don't kill a port if it's already dead
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag",
                                          log_errors=log_errors)
-        if cur_tag != DEAD_VLAN_TAG:
+        if cur_tag and cur_tag != DEAD_VLAN_TAG:
             self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                          DEAD_VLAN_TAG, log_errors=log_errors)
             self.int_br.drop_port(in_port=port.ofport)
