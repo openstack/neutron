@@ -120,6 +120,21 @@ def _validate_string(data, max_len=None):
         return msg
 
 
+def validate_list_of_unique_strings(data, max_string_len=None):
+    if not isinstance(data, list):
+        msg = _("'%s' is not a list") % data
+        return msg
+
+    if len(set(data)) != len(data):
+        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
+        return msg
+
+    for item in data:
+        msg = _validate_string(item, max_string_len)
+        if msg:
+            return msg
+
+
 def _validate_boolean(data, valid_values=None):
     try:
         convert_to_boolean(data)
@@ -635,7 +650,8 @@ validators = {'type:dict': _validate_dict,
               'type:uuid_or_none': _validate_uuid_or_none,
               'type:uuid_list': _validate_uuid_list,
               'type:values': _validate_values,
-              'type:boolean': _validate_boolean}
+              'type:boolean': _validate_boolean,
+              'type:list_of_unique_strings': validate_list_of_unique_strings}
 
 # Define constants for base resource name
 NETWORK = 'network'

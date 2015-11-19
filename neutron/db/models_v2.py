@@ -266,3 +266,4 @@ class Network(model_base.HasStandardAttributes, model_base.BASEV2,
     rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
                                     backref='network', lazy='joined',
                                     cascade='all, delete, delete-orphan')
+    availability_zone_hints = sa.Column(sa.String(255))

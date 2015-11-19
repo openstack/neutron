@@ -40,7 +40,6 @@ class AZExtensionManager(object):
         return []
 
 
-# This plugin class is just for testing
 class AZTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                    agents_db.AgentDbMixin):
     supported_extension_aliases = ["agent", "availability_zone"]
@@ -96,3 +95,41 @@ class TestAZAgentCase(AZTestCommon):
         self.assertRaises(az_ext.AvailabilityZoneNotFound,
                           self.plugin.validate_availability_zones,
                           ctx, 'router', ['nova1'])
+
+
+class TestAZNetworkCase(AZTestCommon):
+    def setUp(self):
+        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        ext_mgr = AZExtensionManager()
+        super(TestAZNetworkCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+
+    def test_create_network_with_az(self):
+        self._register_azs()
+        az_hints = ['nova1']
+        with self.network(availability_zone_hints=az_hints) as net:
+            res = self._show('networks', net['network']['id'])
+            self.assertItemsEqual(az_hints,
+                                  res['network']['availability_zone_hints'])
+
+    def test_create_network_with_azs(self):
+        self._register_azs()
+        az_hints = ['nova1', 'nova2']
+        with self.network(availability_zone_hints=az_hints) as net:
+            res = self._show('networks', net['network']['id'])
+            self.assertItemsEqual(az_hints,
+                                  res['network']['availability_zone_hints'])
+
+    def test_create_network_without_az(self):
+        with self.network() as net:
+            res = self._show('networks', net['network']['id'])
+            self.assertEqual([], res['network']['availability_zone_hints'])
+
+    def test_create_network_with_empty_az(self):
+        with self.network(availability_zone_hints=[]) as net:
+            res = self._show('networks', net['network']['id'])
+            self.assertEqual([], res['network']['availability_zone_hints'])
+
+    def test_create_network_with_not_exist_az(self):
+        res = self._create_network(self.fmt, 'net', True,
+                                   availability_zone_hints=['nova3'])
+        self.assertEqual(404, res.status_int)

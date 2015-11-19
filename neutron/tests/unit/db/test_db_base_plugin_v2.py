@@ -292,7 +292,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared',
-                     'vlan_transparent') + (arg_list or ())):
+                     'vlan_transparent',
+                     'availability_zone_hints') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
@@ -5610,7 +5611,9 @@ class DbModelTestCase(testlib_api.SqlTestCase):
         exp_end_with = (" {tenant_id=None, id=None, "
                         "name='net_net', status='OK', "
                         "admin_state_up=True, mtu=None, "
-                        "vlan_transparent=None, standard_attr_id=None}>")
+                        "vlan_transparent=None, "
+                        "availability_zone_hints=None, "
+                        "standard_attr_id=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(final_exp, actual_repr_output)
 

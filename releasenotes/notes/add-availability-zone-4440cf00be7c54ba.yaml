@@ -1,0 +1,4 @@
+---
+features:
+  - DHCP agent is assigned to a availability zone. Network can be host on the
+    DHCP agent with availability zone which users specify.

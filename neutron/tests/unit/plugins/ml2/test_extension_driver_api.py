@@ -80,7 +80,7 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_faulty_extend_dict(self):
         with mock.patch.object(ext_test.TestExtensionDriver,
                                'extend_network_dict',
-                               side_effect=TypeError):
+                               side_effect=[None, TypeError]):
             network, tid = self._verify_network_create(201, None)
             self._verify_network_update(network, 400, 'ExtensionDriverError')
 

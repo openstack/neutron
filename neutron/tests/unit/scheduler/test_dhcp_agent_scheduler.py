@@ -135,6 +135,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
         plugin = mock.Mock()
         plugin.get_subnets.return_value = [{"network_id": self.network_id,
                                             "enable_dhcp": True}]
+        plugin.get_network.return_value = self.network
         if active_hosts_only:
             plugin.get_dhcp_agents_hosting_networks.return_value = []
         else:
@@ -180,6 +181,10 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
     valid_host
         If true, then an valid host is passed to schedule the network,
         else an invalid host is passed.
+
+    az_hints
+        'availability_zone_hints' of the network.
+        note that default 'availability_zone' of an agent is 'nova'.
     """
     scenarios = [
         ('Network present',
@@ -187,42 +192,64 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
               enable_dhcp=True,
               scheduled_already=False,
               agent_down=False,
-              valid_host=True)),
+              valid_host=True,
+              az_hints=[])),
 
         ('No network',
          dict(network_present=False,
               enable_dhcp=False,
               scheduled_already=False,
               agent_down=False,
-              valid_host=True)),
+              valid_host=True,
+              az_hints=[])),
 
         ('Network already scheduled',
          dict(network_present=True,
               enable_dhcp=True,
               scheduled_already=True,
               agent_down=False,
-              valid_host=True)),
+              valid_host=True,
+              az_hints=[])),
 
         ('Agent down',
          dict(network_present=True,
               enable_dhcp=True,
               scheduled_already=False,
               agent_down=False,
-              valid_host=True)),
+              valid_host=True,
+              az_hints=[])),
 
         ('dhcp disabled',
          dict(network_present=True,
               enable_dhcp=False,
               scheduled_already=False,
               agent_down=False,
-              valid_host=False)),
+              valid_host=False,
+              az_hints=[])),
 
         ('Invalid host',
          dict(network_present=True,
               enable_dhcp=True,
               scheduled_already=False,
               agent_down=False,
-              valid_host=False)),
+              valid_host=False,
+              az_hints=[])),
+
+        ('Match AZ',
+         dict(network_present=True,
+              enable_dhcp=True,
+              scheduled_already=False,
+              agent_down=False,
+              valid_host=True,
+              az_hints=['nova'])),
+
+        ('Not match AZ',
+         dict(network_present=True,
+              enable_dhcp=True,
+              scheduled_already=False,
+              agent_down=False,
+              valid_host=True,
+              az_hints=['not-match'])),
     ]
 
     def test_auto_schedule_network(self):
@@ -230,6 +257,8 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
         plugin.get_subnets.return_value = (
             [{"network_id": self.network_id, "enable_dhcp": self.enable_dhcp}]
             if self.network_present else [])
+        plugin.get_network.return_value = {'availability_zone_hints':
+                                           self.az_hints}
         scheduler = dhcp_agent_scheduler.ChanceScheduler()
         if self.network_present:
             down_agent_count = 1 if self.agent_down else 0
@@ -241,6 +270,9 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
         expected_result = (self.network_present and self.enable_dhcp)
         expected_hosted_agents = (1 if expected_result and
                                   self.valid_host else 0)
+        if (self.az_hints and
+            agents[0]['availability_zone'] not in self.az_hints):
+            expected_hosted_agents = 0
         host = "host-a" if self.valid_host else "host-b"
         observed_ret_value = scheduler.auto_schedule_networks(
             plugin, self.ctx, host)
@@ -448,3 +480,96 @@ class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
         self._test_get_dhcp_agents_hosting_networks({'host-d'},
                                                     active=True,
                                                     admin_state_up=False)
+
+
+class DHCPAgentAZAwareWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
+
+    def setUp(self):
+        super(DHCPAgentAZAwareWeightSchedulerTestCase, self).setUp()
+        DB_PLUGIN_KLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
+        cfg.CONF.set_override("network_scheduler_driver",
+            'neutron.scheduler.dhcp_agent_scheduler.AZAwareWeightScheduler')
+        self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'
+                                                'Ml2Plugin')
+        cfg.CONF.set_override('dhcp_agents_per_network', 1)
+        cfg.CONF.set_override("dhcp_load_type", "networks")
+
+    def test_az_scheduler_one_az_hints(self):
+        self._save_networks(['1111'])
+        helpers.register_dhcp_agent('az1-host1', networks=1, az='az1')
+        helpers.register_dhcp_agent('az1-host2', networks=2, az='az1')
+        helpers.register_dhcp_agent('az2-host1', networks=3, az='az2')
+        helpers.register_dhcp_agent('az2-host2', networks=4, az='az2')
+        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
+            {'id': '1111', 'availability_zone_hints': ['az2']})
+        agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
+                                                              ['1111'])
+        self.assertEqual(1, len(agents))
+        self.assertEqual('az2-host1', agents[0]['host'])
+
+    def test_az_scheduler_default_az_hints(self):
+        cfg.CONF.set_override('default_availability_zones', ['az1'])
+        self._save_networks(['1111'])
+        helpers.register_dhcp_agent('az1-host1', networks=1, az='az1')
+        helpers.register_dhcp_agent('az1-host2', networks=2, az='az1')
+        helpers.register_dhcp_agent('az2-host1', networks=3, az='az2')
+        helpers.register_dhcp_agent('az2-host2', networks=4, az='az2')
+        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
+            {'id': '1111', 'availability_zone_hints': []})
+        agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
+                                                              ['1111'])
+        self.assertEqual(1, len(agents))
+        self.assertEqual('az1-host1', agents[0]['host'])
+
+    def test_az_scheduler_two_az_hints(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        self._save_networks(['1111'])
+        helpers.register_dhcp_agent('az1-host1', networks=1, az='az1')
+        helpers.register_dhcp_agent('az1-host2', networks=2, az='az1')
+        helpers.register_dhcp_agent('az2-host1', networks=3, az='az2')
+        helpers.register_dhcp_agent('az2-host2', networks=4, az='az2')
+        helpers.register_dhcp_agent('az3-host1', networks=5, az='az3')
+        helpers.register_dhcp_agent('az3-host2', networks=6, az='az3')
+        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
+            {'id': '1111', 'availability_zone_hints': ['az1', 'az3']})
+        agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
+                                                              ['1111'])
+        self.assertEqual(2, len(agents))
+        expected_hosts = set(['az1-host1', 'az3-host1'])
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(expected_hosts, hosts)
+
+    def test_az_scheduler_two_az_hints_one_available_az(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        self._save_networks(['1111'])
+        helpers.register_dhcp_agent('az1-host1', networks=1, az='az1')
+        helpers.register_dhcp_agent('az1-host2', networks=2, az='az1')
+        helpers.register_dhcp_agent('az2-host1', networks=3, alive=False,
+                                    az='az2')
+        helpers.register_dhcp_agent('az2-host2', networks=4,
+                                    admin_state_up=False, az='az2')
+        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
+            {'id': '1111', 'availability_zone_hints': ['az1', 'az2']})
+        agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
+                                                              ['1111'])
+        self.assertEqual(2, len(agents))
+        expected_hosts = set(['az1-host1', 'az1-host2'])
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(expected_hosts, hosts)
+
+    def test_az_scheduler_no_az_hints(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        self._save_networks(['1111'])
+        helpers.register_dhcp_agent('az1-host1', networks=2, az='az1')
+        helpers.register_dhcp_agent('az1-host2', networks=3, az='az1')
+        helpers.register_dhcp_agent('az2-host1', networks=2, az='az2')
+        helpers.register_dhcp_agent('az2-host2', networks=1, az='az2')
+        self.plugin.network_scheduler.schedule(self.plugin, self.ctx,
+            {'id': '1111', 'availability_zone_hints': []})
+        agents = self.plugin.get_dhcp_agents_hosting_networks(self.ctx,
+                                                              ['1111'])
+        self.assertEqual(2, len(agents))
+        expected_hosts = set(['az1-host1', 'az2-host2'])
+        hosts = {a['host'] for a in agents}
+        self.assertEqual(expected_hosts, hosts)
