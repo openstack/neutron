@@ -31,8 +31,7 @@ class NamespaceManagerTestCaseFramework(base.BaseTestCase):
     def _create_namespace_manager(self):
         self.agent_conf = mock.Mock()
         self.driver = mock.Mock()
-        return namespace_manager.NamespaceManager(self.agent_conf,
-                                                  self.driver, True)
+        return namespace_manager.NamespaceManager(self.agent_conf, self.driver)
 
 
 class TestNamespaceManager(NamespaceManagerTestCaseFramework):

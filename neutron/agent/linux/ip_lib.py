@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import debtcollector
 import eventlet
 import netaddr
 import os
@@ -722,6 +723,7 @@ class IpRouteCommand(IpDeviceCommandBase):
 
         return retval
 
+    @debtcollector.removals.remove(message="Will be removed in the N cycle.")
     def pullup_route(self, interface_name, ip_version):
         """Ensures that the route entry for the interface is before all
         others on the same subnet.

@@ -54,13 +54,6 @@ INTERFACE_DRIVER_OPTS = [
                help=_("The driver used to manage the virtual interface.")),
 ]
 
-USE_NAMESPACES_OPTS = [
-    cfg.BoolOpt('use_namespaces', default=True,
-                help=_("Allow overlapping IP. This option is deprecated and "
-                       "will be removed in a future release."),
-                deprecated_for_removal=True),
-]
-
 IPTABLES_OPTS = [
     cfg.BoolOpt('comment_iptables_rules', default=True,
                 help=_("Add comments to iptables rules.")),
@@ -146,10 +139,6 @@ def register_agent_state_opts_helper(conf):
 
 def register_interface_driver_opts_helper(conf):
     conf.register_opts(INTERFACE_DRIVER_OPTS)
-
-
-def register_use_namespaces_opts_helper(conf):
-    conf.register_opts(USE_NAMESPACES_OPTS)
 
 
 def register_iptables_opts(conf):

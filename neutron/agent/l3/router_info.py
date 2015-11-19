@@ -49,13 +49,10 @@ class RouterInfo(object):
         # Invoke the setter for establishing initial SNAT action
         self.router = router
         self.use_ipv6 = use_ipv6
-        self.ns_name = None
-        self.router_namespace = None
-        if agent_conf.use_namespaces:
-            ns = namespaces.RouterNamespace(
-                router_id, agent_conf, interface_driver, use_ipv6)
-            self.router_namespace = ns
-            self.ns_name = ns.name
+        ns = namespaces.RouterNamespace(
+            router_id, agent_conf, interface_driver, use_ipv6)
+        self.router_namespace = ns
+        self.ns_name = ns.name
         self.iptables_manager = iptables_manager.IptablesManager(
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
@@ -81,8 +78,7 @@ class RouterInfo(object):
                                       process_monitor,
                                       self.get_internal_device_name)
 
-        if self.router_namespace:
-            self.router_namespace.create()
+        self.router_namespace.create()
 
     @property
     def router(self):
@@ -267,8 +263,7 @@ class RouterInfo(object):
         self.router[l3_constants.FLOATINGIP_KEY] = []
         self.process(agent)
         self.disable_radvd()
-        if self.router_namespace:
-            self.router_namespace.delete()
+        self.router_namespace.delete()
 
     def _internal_network_updated(self, port, subnet_id, prefix, old_prefix,
                                   updated_cidrs):

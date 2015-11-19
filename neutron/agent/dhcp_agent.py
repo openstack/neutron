@@ -30,7 +30,6 @@ from neutron import service as neutron_service
 
 def register_options(conf):
     config.register_interface_driver_opts_helper(conf)
-    config.register_use_namespaces_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     config.register_availability_zone_opts_helper(conf)
     conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)

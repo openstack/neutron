@@ -226,7 +226,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         self.namespaces_manager = namespace_manager.NamespaceManager(
             self.conf,
             self.driver,
-            self.conf.use_namespaces,
             self.metadata_driver)
 
         self._queue = queue.RouterProcessingQueue()
@@ -249,11 +248,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         """
         if not self.conf.interface_driver:
             msg = _LE('An interface driver must be specified')
-            LOG.error(msg)
-            raise SystemExit(1)
-
-        if not self.conf.use_namespaces and not self.conf.router_id:
-            msg = _LE('Router id is required if not using namespaces.')
             LOG.error(msg)
             raise SystemExit(1)
 
@@ -406,10 +400,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                       self.conf.external_network_bridge)
             return
 
-        # If namespaces are disabled, only process the router associated
-        # with the configured agent id.
-        if (not self.conf.use_namespaces and
-            router['id'] != self.conf.router_id):
+        if self.conf.router_id and router['id'] != self.conf.router_id:
             raise n_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
 
         # Either ex_net_id or handle_internal_only_routers must be set
@@ -539,12 +530,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         timestamp = timeutils.utcnow()
 
         try:
-            if self.conf.use_namespaces:
-                routers = self.plugin_rpc.get_routers(context)
-            else:
+            if self.conf.router_id:
                 routers = self.plugin_rpc.get_routers(context,
                                                       [self.conf.router_id])
-
+            else:
+                routers = self.plugin_rpc.get_routers(context)
         except oslo_messaging.MessagingException:
             LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
             raise n_exc.AbortSyncRouters()
@@ -607,7 +597,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'topic': topics.L3_AGENT,
             'configurations': {
                 'agent_mode': self.conf.agent_mode,
-                'use_namespaces': self.conf.use_namespaces,
                 'router_id': self.conf.router_id,
                 'handle_internal_only_routers':
                 self.conf.handle_internal_only_routers,

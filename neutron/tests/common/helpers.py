@@ -60,8 +60,7 @@ def _get_l3_agent_dict(host, agent_mode, internal_only=True,
                            'handle_internal_only_routers': internal_only,
                            'external_network_bridge': ext_bridge,
                            'gateway_external_network_id': ext_net_id,
-                           'router_id': router_id,
-                           'use_namespaces': router_id is None}}
+                           'router_id': router_id}}
 
 
 def _register_agent(agent):
@@ -88,7 +87,6 @@ def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ):
         'agent_type': constants.AGENT_TYPE_DHCP,
         'availability_zone': az,
         'configurations': {'dhcp_driver': 'dhcp_driver',
-                           'use_namespaces': True,
                            'networks': networks}}
     return agent
 

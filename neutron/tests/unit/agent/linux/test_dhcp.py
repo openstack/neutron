@@ -798,7 +798,6 @@ class TestConfBase(base.BaseTestCase):
         self.conf.register_opts(dhcp_config.DNSMASQ_OPTS)
         self.conf.register_opts(external_process.OPTS)
         config.register_interface_driver_opts_helper(self.conf)
-        config.register_use_namespaces_opts_helper(self.conf)
 
 
 class TestBase(TestConfBase):
@@ -1888,11 +1887,6 @@ class TestDnsmasq(TestBase):
         dm._output_opts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
-
-    def test_should_enable_metadata_namespaces_disabled_returns_false(self):
-        self.conf.set_override('use_namespaces', False)
-        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(self.conf,
-                                                             mock.ANY))
 
     def test_should_enable_metadata_isolated_network_returns_true(self):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(

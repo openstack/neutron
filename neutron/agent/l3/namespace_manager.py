@@ -49,17 +49,16 @@ class NamespaceManager(object):
         dvr_fip_ns.FIP_NS_PREFIX: dvr_fip_ns.FipNamespace,
     }
 
-    def __init__(self, agent_conf, driver, clean_stale, metadata_driver=None):
+    def __init__(self, agent_conf, driver, metadata_driver=None):
         """Initialize the NamespaceManager.
 
         :param agent_conf: configuration from l3 agent
         :param driver: to perform operations on devices
-        :param clean_stale: Whether to try to clean stale namespaces
         :param metadata_driver: used to cleanup stale metadata proxy processes
         """
         self.agent_conf = agent_conf
         self.driver = driver
-        self._clean_stale = clean_stale
+        self._clean_stale = True
         self.metadata_driver = metadata_driver
         if metadata_driver:
             self.process_monitor = external_process.ProcessMonitor(

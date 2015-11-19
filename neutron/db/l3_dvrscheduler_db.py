@@ -346,8 +346,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 continue
 
             router_id = agent_conf.get('router_id', None)
-            use_namespaces = agent_conf.get('use_namespaces', True)
-            if not use_namespaces and router_id != sync_router['id']:
+            if router_id and router_id != sync_router['id']:
                 continue
 
             handle_internal_only_routers = agent_conf.get(

@@ -130,7 +130,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
     def create_network_dict(self, net_id, subnets=None, ports=None):
         subnets = [] if not subnets else subnets
         ports = [] if not ports else ports
-        net_dict = dhcp.NetModel(use_namespaces=True, d={
+        net_dict = dhcp.NetModel(d={
             "id": net_id,
             "subnets": subnets,
             "ports": ports,

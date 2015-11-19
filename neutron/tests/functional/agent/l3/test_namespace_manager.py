@@ -32,7 +32,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
         self.agent_conf = mock.MagicMock()
         self.metadata_driver_mock = mock.Mock()
         self.namespace_manager = namespace_manager.NamespaceManager(
-            self.agent_conf, driver=None, clean_stale=True,
+            self.agent_conf, driver=None,
             metadata_driver=self.metadata_driver_mock)
 
     def _create_namespace(self, router_id, ns_class):

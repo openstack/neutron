@@ -22,7 +22,6 @@ from oslo_log import log as logging
 
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.i18n import _LW
 
@@ -61,9 +60,7 @@ class NeutronDebugAgent(object):
 
         port = self._create_port(network, device_owner)
         interface_name = self.driver.get_device_name(port)
-        namespace = None
-        if self.conf.use_namespaces:
-            namespace = self._get_namespace(port)
+        namespace = self._get_namespace(port)
 
         if ip_lib.device_exists(interface_name, namespace=namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
@@ -114,7 +111,7 @@ class NeutronDebugAgent(object):
             bridge = self.conf.external_network_bridge
         ip = ip_lib.IPWrapper()
         namespace = self._get_namespace(port)
-        if self.conf.use_namespaces and ip.netns.exists(namespace):
+        if ip.netns.exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
                                bridge=bridge,
                                namespace=namespace)
@@ -141,13 +138,10 @@ class NeutronDebugAgent(object):
         port = dhcp.DictModel(self.client.show_port(port_id)['port'])
         ip = ip_lib.IPWrapper()
         namespace = self._get_namespace(port)
-        if self.conf.use_namespaces:
-            if not command:
-                return "sudo ip netns exec %s" % self._get_namespace(port)
-            namespace = ip.ensure_namespace(namespace)
-            return namespace.netns.execute(shlex.split(command))
-        else:
-            return utils.execute(shlex.split(command))
+        if not command:
+            return "sudo ip netns exec %s" % self._get_namespace(port)
+        namespace = ip.ensure_namespace(namespace)
+        return namespace.netns.execute(shlex.split(command))
 
     def ensure_probe(self, network_id):
         ports = self.client.list_ports(network_id=network_id,
