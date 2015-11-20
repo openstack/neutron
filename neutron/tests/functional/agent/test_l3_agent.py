@@ -45,12 +45,14 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
+from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
+from neutron.tests.functional import test_service
 
 
 LOG = logging.getLogger(__name__)
@@ -72,7 +74,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
-        self.agent = self._configure_agent('agent1')
+        self.conf = self._configure_agent('agent1')
+        self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
+                                                                self.conf)
 
     def _get_config_opts(self):
         config = cfg.ConfigOpts()
@@ -110,9 +114,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           get_temp_file_path('external/pids'))
         conf.set_override('host', host)
         conf.set_override('agent_mode', agent_mode)
-        agent = neutron_l3_agent.L3NATAgentWithStateReport(host, conf)
 
-        return agent
+        return conf
 
     def _get_agent_ovs_integration_bridge(self, agent):
         return get_ovs_bridge(agent.conf.ovs_integration_bridge)
@@ -811,7 +814,9 @@ class L3HATestFramework(L3AgentTestFramework):
 
     def setUp(self):
         super(L3HATestFramework, self).setUp()
-        self.failover_agent = self._configure_agent('agent2')
+        self.conf = self._configure_agent('agent2')
+        self.failover_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            'agent2', self.conf)
 
         br_int_1 = self._get_agent_ovs_integration_bridge(self.agent)
         br_int_2 = self._get_agent_ovs_integration_bridge(self.failover_agent)
@@ -919,6 +924,23 @@ class L3HATestFramework(L3AgentTestFramework):
 
         # Verify that keepalived config is properly updated.
         verify_ip_in_keepalived_config(router, internal_iface)
+
+
+class TestL3AgentRestart(test_service.TestServiceRestart,
+                         L3AgentTestFramework):
+
+    def _start_l3_agent(self, workers=1):
+        with mock.patch("neutron.service.Service.start") as start_method:
+            start_method.side_effect = self._fake_start
+            self._start_service(
+                host='agent1', binary='neutron-l3-agent',
+                topic=topics.L3_AGENT,
+                manager='neutron.agent.l3.agent.L3NATAgentWithStateReport',
+                workers=workers, conf=self.conf)
+
+    def test_restart_l3_agent_on_sighup(self):
+        self._test_restart_service_on_sighup(service=self._start_l3_agent,
+                                             workers=1)
 
 
 class MetadataFakeProxyHandler(object):
@@ -1555,7 +1577,9 @@ class TestDvrRouter(L3AgentTestFramework):
     def _setup_dvr_ha_agents(self):
         self.agent.conf.agent_mode = 'dvr_snat'
 
-        self.failover_agent = self._configure_agent('agent2')
+        self.conf = self._configure_agent('agent2')
+        self.failover_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            'agent2', self.conf)
         self.failover_agent.conf.agent_mode = 'dvr_snat'
 
     def _setup_dvr_ha_bridges(self):

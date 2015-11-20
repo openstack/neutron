@@ -279,12 +279,15 @@ class PrefixDelegation(object):
             self.notifier(self.context, prefix_update)
 
     def after_start(self):
-        LOG.debug('SIGHUP signal handler set')
-        signal.signal(signal.SIGHUP, self._handle_sighup)
+        LOG.debug('SIGUSR1 signal handler set')
+        signal.signal(signal.SIGUSR1, self._handle_sigusr1)
 
-    def _handle_sighup(self, signum, frame):
-        # The external DHCPv6 client uses SIGHUP to notify agent
-        # of prefix changes.
+    def _handle_sigusr1(self, signum, frame):
+        """Update PD on receiving SIGUSR1.
+
+        The external DHCPv6 client uses SIGUSR1 to notify agent
+        of prefix changes.
+        """
         self.pd_update_cb()
 
     def _get_sync_data(self):

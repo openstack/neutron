@@ -35,4 +35,4 @@ def main():
         utils.replace_file(prefix_fname, "%s/64" % prefix)
     elif operation == "delete":
         utils.replace_file(prefix_fname, "::/64")
-    os.kill(int(agent_pid), signal.SIGHUP)
+    os.kill(int(agent_pid), signal.SIGUSR1)
