@@ -1638,6 +1638,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         super(L3HATestCaseMixin, self).setUp()
 
         self.adminContext = n_context.get_admin_context()
+        mock.patch('neutron.common.rpc.get_client').start()
         self.plugin = L3HAPlugin()
 
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')

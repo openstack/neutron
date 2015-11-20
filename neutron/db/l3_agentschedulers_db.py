@@ -55,6 +55,10 @@ L3_AGENTS_SCHEDULER_OPTS = [
 
 cfg.CONF.register_opts(L3_AGENTS_SCHEDULER_OPTS)
 
+# default messaging timeout is 60 sec, so 2 here is chosen to not block API
+# call for more than 2 minutes
+AGENT_NOTIFY_MAX_ATTEMPTS = 2
+
 
 class RouterL3AgentBinding(model_base.BASEV2):
     """Represents binding between neutron routers and L3 agents."""
@@ -276,7 +280,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             query.delete()
 
     def reschedule_router(self, context, router_id, candidates=None):
-        """Reschedule router to a new l3 agent
+        """Reschedule router to (a) new l3 agent(s)
 
         Remove the router from the agent(s) currently hosting it and
         schedule it again
@@ -287,19 +291,45 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             for agent in cur_agents:
                 self._unbind_router(context, router_id, agent['id'])
 
-            new_agent = self.schedule_router(context, router_id,
-                                             candidates=candidates)
-            if not new_agent:
+            self.schedule_router(context, router_id, candidates=candidates)
+            new_agents = self.list_l3_agents_hosting_router(
+                context, router_id)['agents']
+            if not new_agents:
                 raise l3agentscheduler.RouterReschedulingFailed(
                     router_id=router_id)
 
+        self._notify_agents_router_rescheduled(context, router_id,
+                                               cur_agents, new_agents)
+
+    def _notify_agents_router_rescheduled(self, context, router_id,
+                                          old_agents, new_agents):
         l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
-        if l3_notifier:
-            for agent in cur_agents:
-                l3_notifier.router_removed_from_agent(
-                    context, router_id, agent['host'])
-            l3_notifier.router_added_to_agent(
-                context, [router_id], new_agent.host)
+        if not l3_notifier:
+            return
+
+        old_hosts = [agent['host'] for agent in old_agents]
+        new_hosts = [agent['host'] for agent in new_agents]
+        for host in set(old_hosts) - set(new_hosts):
+            l3_notifier.router_removed_from_agent(
+                context, router_id, host)
+
+        for agent in new_agents:
+            # Need to make sure agents are notified or unschedule otherwise
+            for attempt in range(AGENT_NOTIFY_MAX_ATTEMPTS):
+                try:
+                    l3_notifier.router_added_to_agent(
+                        context, [router_id], agent['host'])
+                    break
+                except oslo_messaging.MessagingException:
+                    LOG.warning(_LW('Failed to notify L3 agent on host '
+                                    '%(host)s about added router. Attempt '
+                                    '%(attempt)d out of %(max_attempts)d'),
+                                {'host': agent['host'], 'attempt': attempt + 1,
+                                 'max_attempts': AGENT_NOTIFY_MAX_ATTEMPTS})
+            else:
+                self._unbind_router(context, router_id, agent['id'])
+                raise l3agentscheduler.RouterReschedulingFailed(
+                    router_id=router_id)
 
     def list_routers_on_l3_agent(self, context, agent_id):
         query = context.session.query(RouterL3AgentBinding.router_id)
