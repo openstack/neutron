@@ -13,7 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import netaddr
+
+from oslo_db import exception as db_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -444,3 +447,16 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         subnet_req = ipam_req.SpecificSubnetRequest(
             'tenant_id', 'meh', '192.168.0.0/24')
         self.ipam_pool.allocate_subnet(subnet_req)
+
+    def test__allocate_specific_ip_raises_exception(self):
+        cidr = '10.0.0.0/24'
+        ip = '10.0.0.15'
+        ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
+        ipam_subnet.subnet_manager = mock.Mock()
+        ipam_subnet.subnet_manager.list_ranges_by_subnet_id.return_value = [{
+            'first_ip': '10.0.0.15', 'last_ip': '10.0.0.15'}]
+        ipam_subnet.subnet_manager.delete_range.return_value = 0
+
+        self.assertRaises(db_exc.RetryRequest,
+                          ipam_subnet._allocate_specific_ip,
+                          self.ctx.session, ip)

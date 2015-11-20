@@ -13,11 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
+from sqlalchemy.orm import exc as orm_exc
 
 from neutron import context
 from neutron.ipam.drivers.neutrondb_ipam import db_api
 from neutron.ipam.drivers.neutrondb_ipam import db_models
+from neutron.ipam import exceptions as ipam_exc
 from neutron.tests.unit import testlib_api
 
 
@@ -80,24 +85,16 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
             filter_by(allocation_pool_id=db_pools[0].id).first()
         self._validate_ips([self.single_pool], range)
 
-    def _test_get_first_range(self, locking):
-        self._create_pools(self.multi_pool)
-        range = self.subnet_manager.get_first_range(self.ctx.session,
-                                                    locking=locking)
-        self._validate_ips(self.multi_pool, range)
-
     def test_get_first_range(self):
-        self._test_get_first_range(False)
-
-    def test_get_first_range_locking(self):
-        self._test_get_first_range(True)
+        self._create_pools(self.multi_pool)
+        range = self.subnet_manager.get_first_range(self.ctx.session)
+        self._validate_ips(self.multi_pool, range)
 
     def test_list_ranges_by_subnet_id(self):
         self._create_pools(self.multi_pool)
 
         db_ranges = self.subnet_manager.list_ranges_by_subnet_id(
-            self.ctx.session,
-            self.ipam_subnet_id).all()
+            self.ctx.session).all()
         self.assertEqual(2, len(db_ranges))
         self.assertEqual(db_models.IpamAvailabilityRange, type(db_ranges[0]))
 
@@ -135,6 +132,46 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
                                                      range_end)
         self.assertEqual(range_start, new_range.first_ip)
         self.assertEqual(range_end, new_range.last_ip)
+
+    def test_update_range(self):
+        self._create_pools([self.single_pool])
+        db_range = self.subnet_manager.get_first_range(self.ctx.session)
+        updated_count = self.subnet_manager.update_range(self.ctx.session,
+                                                         db_range,
+                                                         first_ip='1.2.3.6',
+                                                         last_ip='1.2.3.8')
+        self.assertEqual(1, updated_count)
+
+    def test_update_range_no_new_values(self):
+        self._create_pools([self.single_pool])
+        db_range = self.subnet_manager.get_first_range(self.ctx.session)
+        self.assertRaises(ipam_exc.IpamAvailabilityRangeNoChanges,
+                          self.subnet_manager.update_range,
+                          self.ctx.session, db_range)
+
+    def test_update_range_reraise_error(self):
+        session = mock.Mock()
+        session.query.side_effect = orm_exc.ObjectDeletedError(None, None)
+        self.assertRaises(db_exc.RetryRequest,
+                          self.subnet_manager.update_range,
+                          session,
+                          mock.Mock(),
+                          first_ip='1.2.3.5')
+
+    def test_delete_range(self):
+        self._create_pools([self.single_pool])
+        db_range = self.subnet_manager.get_first_range(self.ctx.session)
+        deleted_count = self.subnet_manager.delete_range(self.ctx.session,
+                                                         db_range)
+        self.assertEqual(1, deleted_count)
+
+    def test_delete_range_reraise_error(self):
+        session = mock.Mock()
+        session.query.side_effect = orm_exc.ObjectDeletedError(None, None)
+        self.assertRaises(db_exc.RetryRequest,
+                          self.subnet_manager.delete_range,
+                          session,
+                          mock.Mock())
 
     def test_check_unique_allocation(self):
         self.assertTrue(self.subnet_manager.check_unique_allocation(
