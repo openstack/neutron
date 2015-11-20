@@ -431,7 +431,7 @@ def update_head_file(config):
 
 
 def add_command_parsers(subparsers):
-    for name in ['current', 'history', 'branches']:
+    for name in ['current', 'history', 'branches', 'heads']:
         parser = add_alembic_subparser(subparsers, name)
         parser.set_defaults(func=do_generic_show)
         parser.add_argument('--verbose',

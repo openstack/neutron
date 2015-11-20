@@ -173,38 +173,28 @@ class TestCli(base.BaseTestCase):
             [{'revision': 'foo', 'sql': True}]
         )
 
-    def test_branches(self):
+    def _validate_cmd(self, cmd):
         self._main_test_helper(
-            ['prog', 'branches'],
-            'branches',
+            ['prog', cmd],
+            cmd,
             [{'verbose': False}])
 
         self._main_test_helper(
-            ['prog', 'branches', '--verbose'],
-            'branches',
+            ['prog', cmd, '--verbose'],
+            cmd,
             [{'verbose': True}])
+
+    def test_branches(self):
+        self._validate_cmd('branches')
 
     def test_current(self):
-        self._main_test_helper(
-            ['prog', 'current'],
-            'current',
-            [{'verbose': False}])
-
-        self._main_test_helper(
-            ['prog', 'current', '--verbose'],
-            'current',
-            [{'verbose': True}])
+        self._validate_cmd('current')
 
     def test_history(self):
-        self._main_test_helper(
-            ['prog', 'history'],
-            'history',
-            [{'verbose': False}])
+        self._validate_cmd('history')
 
-        self._main_test_helper(
-            ['prog', 'history', '--verbose'],
-            'history',
-            [{'verbose': True}])
+    def test_heads(self):
+        self._validate_cmd('heads')
 
     def test_check_migration(self):
         with mock.patch.object(cli, 'validate_head_file') as validate:
