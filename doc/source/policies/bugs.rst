@@ -284,6 +284,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | Tag                           | Description                           | Contact              |
 +===============================+=======================================+======================+
+| access-control_               | A bug affecting RBAC and policy.json  | Kevin Benton         |
++-------------------------------+---------------------------------------+----------------------+
 | api_                          | A bug affecting the API layer         | Salvatore Orlando    |
 +-------------------------------+---------------------------------------+----------------------+
 | baremetal_                    | A bug affecting Ironic support        | Sukhdev Kapur        |
@@ -358,6 +360,14 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | xxx-backport-potential_       | Cherry-pick request for stable team   | Ihar Hrachyshka      |
 +-------------------------------+---------------------------------------+----------------------+
+
+.. _access-control:
+
+Access Control
+++++++++++++++
+
+* `Access Control - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=access-control>`_
+* `Access Control - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=access-control>`_
 
 .. _api:
 
