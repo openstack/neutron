@@ -1,0 +1,8 @@
+# Neutron flavors plugin
+# ----------------------
+
+FLAVORS_PLUGIN=neutron.services.flavors.flavors_plugin.FlavorsPlugin
+
+function configure_flavors {
+    _neutron_service_plugin_class_add $FLAVORS_PLUGIN
+}

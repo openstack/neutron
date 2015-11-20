@@ -19,13 +19,17 @@ import mock
 
 from oslo_config import cfg
 from oslo_utils import uuidutils
+from webob import exc
 
+from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import api as dbapi
 from neutron.db import flavors_db
+from neutron.db import servicetype_db
 from neutron.extensions import flavors
-from neutron import manager
 from neutron.plugins.common import constants
+from neutron.services.flavors import flavors_plugin
+from neutron.services import provider_configuration as provconf
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -34,20 +38,27 @@ from neutron.tests.unit.extensions import base as extension
 _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path
 
+_driver = ('neutron.tests.unit.extensions.test_flavors.'
+           'DummyServiceDriver')
+_provider = 'dummy'
+_long_name = 'x' * (attr.NAME_MAX_LEN + 1)
+_long_description = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN + 1)
+
 
 class FlavorExtensionTestCase(extension.ExtensionTestCase):
 
     def setUp(self):
         super(FlavorExtensionTestCase, self).setUp()
         self._setUpExtension(
-            'neutron.db.flavors_db.FlavorManager',
+            'neutron.services.flavors.flavors_plugin.FlavorsPlugin',
             constants.FLAVORS, flavors.RESOURCE_ATTRIBUTE_MAP,
             flavors.Flavors, '', supported_extension_aliases='flavors')
 
     def test_create_flavor(self):
         tenant_id = uuidutils.generate_uuid()
+        # Use service_type FLAVORS since plugin must be loaded to validate
         data = {'flavor': {'name': 'GOLD',
-                           'service_type': constants.LOADBALANCER,
+                           'service_type': constants.FLAVORS,
                            'description': 'the best flavor',
                            'tenant_id': tenant_id,
                            'enabled': True}}
@@ -66,6 +77,54 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         res = self.deserialize(res)
         self.assertIn('flavor', res)
         self.assertEqual(expected, res)
+
+    def test_create_flavor_invalid_service_type(self):
+        tenant_id = uuidutils.generate_uuid()
+        data = {'flavor': {'name': 'GOLD',
+                           'service_type': 'BROKEN',
+                           'description': 'the best flavor',
+                           'tenant_id': tenant_id,
+                           'enabled': True}}
+        self.api.post(_get_path('flavors', fmt=self.fmt),
+                      self.serialize(data),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
+    def test_create_flavor_too_long_name(self):
+        tenant_id = uuidutils.generate_uuid()
+        data = {'flavor': {'name': _long_name,
+                           'service_type': constants.FLAVORS,
+                           'description': 'the best flavor',
+                           'tenant_id': tenant_id,
+                           'enabled': True}}
+        self.api.post(_get_path('flavors', fmt=self.fmt),
+                      self.serialize(data),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
+    def test_create_flavor_too_long_description(self):
+        tenant_id = uuidutils.generate_uuid()
+        data = {'flavor': {'name': _long_name,
+                           'service_type': constants.FLAVORS,
+                           'description': _long_description,
+                           'tenant_id': tenant_id,
+                           'enabled': True}}
+        self.api.post(_get_path('flavors', fmt=self.fmt),
+                      self.serialize(data),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
+    def test_create_flavor_invalid_enabled(self):
+        tenant_id = uuidutils.generate_uuid()
+        data = {'flavor': {'name': _long_name,
+                           'service_type': constants.FLAVORS,
+                           'description': 'the best flavor',
+                           'tenant_id': tenant_id,
+                           'enabled': 'BROKEN'}}
+        self.api.post(_get_path('flavors', fmt=self.fmt),
+                      self.serialize(data),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
 
     def test_update_flavor(self):
         flavor_id = 'fake_id'
@@ -87,6 +146,36 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         res = self.deserialize(res)
         self.assertIn('flavor', res)
         self.assertEqual(expected, res)
+
+    def test_update_flavor_too_long_name(self):
+        flavor_id = 'fake_id'
+        data = {'flavor': {'name': _long_name,
+                           'description': 'the best flavor',
+                           'enabled': True}}
+        self.api.put(_get_path('flavors', id=flavor_id, fmt=self.fmt),
+                     self.serialize(data),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
+
+    def test_update_flavor_too_long_description(self):
+        flavor_id = 'fake_id'
+        data = {'flavor': {'name': 'GOLD',
+                           'description': _long_description,
+                           'enabled': True}}
+        self.api.put(_get_path('flavors', id=flavor_id, fmt=self.fmt),
+                     self.serialize(data),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
+
+    def test_update_flavor_invalid_enabled(self):
+        flavor_id = 'fake_id'
+        data = {'flavor': {'name': 'GOLD',
+                           'description': _long_description,
+                           'enabled': 'BROKEN'}}
+        self.api.put(_get_path('flavors', id=flavor_id, fmt=self.fmt),
+                     self.serialize(data),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
 
     def test_delete_flavor(self):
         flavor_id = 'fake_id'
@@ -154,6 +243,42 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertIn('service_profile', res)
         self.assertEqual(expected, res)
 
+    def test_create_service_profile_too_long_description(self):
+        tenant_id = uuidutils.generate_uuid()
+        expected = {'service_profile': {'description': _long_description,
+                                        'driver': '',
+                                        'tenant_id': tenant_id,
+                                        'enabled': True,
+                                        'metainfo': '{"data": "value"}'}}
+        self.api.post(_get_path('service_profiles', fmt=self.fmt),
+                      self.serialize(expected),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
+    def test_create_service_profile_too_long_driver(self):
+        tenant_id = uuidutils.generate_uuid()
+        expected = {'service_profile': {'description': 'the best sp',
+                                        'driver': _long_description,
+                                        'tenant_id': tenant_id,
+                                        'enabled': True,
+                                        'metainfo': '{"data": "value"}'}}
+        self.api.post(_get_path('service_profiles', fmt=self.fmt),
+                      self.serialize(expected),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
+    def test_create_service_profile_invalid_enabled(self):
+        tenant_id = uuidutils.generate_uuid()
+        expected = {'service_profile': {'description': 'the best sp',
+                                        'driver': '',
+                                        'tenant_id': tenant_id,
+                                        'enabled': 'BROKEN',
+                                        'metainfo': '{"data": "value"}'}}
+        self.api.post(_get_path('service_profiles', fmt=self.fmt),
+                      self.serialize(expected),
+                      content_type='application/%s' % self.fmt,
+                      status=exc.HTTPBadRequest.code)
+
     def test_update_service_profile(self):
         sp_id = "fake_id"
         expected = {'service_profile': {'description': 'the best sp',
@@ -176,6 +301,28 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertIn('service_profile', res)
         self.assertEqual(expected, res)
 
+    def test_update_service_profile_too_long_description(self):
+        sp_id = "fake_id"
+        expected = {'service_profile': {'description': 'the best sp',
+                                        'enabled': 'BROKEN',
+                                        'metainfo': '{"data1": "value3"}'}}
+        self.api.put(_get_path('service_profiles',
+                               id=sp_id, fmt=self.fmt),
+                     self.serialize(expected),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
+
+    def test_update_service_profile_invalid_enabled(self):
+        sp_id = "fake_id"
+        expected = {'service_profile': {'description': 'the best sp',
+                                        'enabled': 'BROKEN',
+                                        'metainfo': '{"data1": "value3"}'}}
+        self.api.put(_get_path('service_profiles',
+                               id=sp_id, fmt=self.fmt),
+                     self.serialize(expected),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
+
     def test_delete_service_profile(self):
         sp_id = 'fake_id'
         instance = self.plugin.return_value
@@ -187,7 +334,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
     def test_show_service_profile(self):
         sp_id = 'fake_id'
         expected = {'service_profile': {'id': 'id1',
-                                        'driver': 'entrypoint1',
+                                        'driver': _driver,
                                         'description': 'desc',
                                         'metainfo': '{}',
                                         'enabled': True}}
@@ -204,12 +351,12 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
 
     def test_get_service_profiles(self):
         expected = {'service_profiles': [{'id': 'id1',
-                                          'driver': 'entrypoint1',
+                                          'driver': _driver,
                                           'description': 'desc',
                                           'metainfo': '{}',
                                           'enabled': True},
                                          {'id': 'id2',
-                                          'driver': 'entrypoint2',
+                                          'driver': _driver,
                                           'description': 'desc',
                                           'metainfo': '{}',
                                           'enabled': True}]}
@@ -248,6 +395,15 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
             'fake_spid',
             flavor_id='fl_id')
 
+    def test_update_association_error(self):
+        """Confirm that update is not permitted with user error."""
+        new_id = uuidutils.generate_uuid()
+        data = {'service_profile': {'id': new_id}}
+        self.api.put('/flavors/fl_id/service_profiles/%s' % 'fake_spid',
+                     self.serialize(data),
+                     content_type='application/%s' % self.fmt,
+                     status=exc.HTTPBadRequest.code)
+
 
 class DummyCorePlugin(object):
     pass
@@ -275,10 +431,10 @@ class DummyServiceDriver(object):
         pass
 
 
-class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
-                            base.PluginFixture):
+class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+                           base.PluginFixture):
     def setUp(self):
-        super(FlavorManagerTestCase, self).setUp()
+        super(FlavorPluginTestCase, self).setUp()
 
         self.config_parse()
         cfg.CONF.set_override(
@@ -291,14 +447,24 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.useFixture(
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))
 
-        self.plugin = flavors_db.FlavorManager(
-            manager.NeutronManager().get_instance())
+        self.plugin = flavors_plugin.FlavorsPlugin()
         self.ctx = context.get_admin_context()
+
+        providers = [DummyServiceDriver.get_service_type() +
+                     ":" + _provider + ":" + _driver]
+        self.service_manager = servicetype_db.ServiceTypeManager.get_instance()
+        self.service_providers = mock.patch.object(
+            provconf.NeutronModule, 'service_providers').start()
+        self.service_providers.return_value = providers
+        for provider in providers:
+            self.service_manager.add_provider_configuration(
+                provider.split(':')[0], provconf.ProviderConfiguration())
+
         dbapi.get_engine()
 
     def _create_flavor(self, description=None):
         flavor = {'flavor': {'name': 'GOLD',
-                             'service_type': constants.LOADBALANCER,
+                             'service_type': constants.DUMMY,
                              'description': description or 'the best flavor',
                              'enabled': True}}
         return self.plugin.create_flavor(self.ctx, flavor), flavor
@@ -308,7 +474,7 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         res = self.ctx.session.query(flavors_db.Flavor).all()
         self.assertEqual(1, len(res))
         self.assertEqual('GOLD', res[0]['name'])
-        self.assertEqual(constants.LOADBALANCER, res[0]['service_type'])
+        self.assertEqual(constants.DUMMY, res[0]['service_type'])
 
     def test_update_flavor(self):
         fl, flavor = self._create_flavor()
@@ -341,13 +507,11 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _create_service_profile(self, description=None):
         data = {'service_profile':
                 {'description': description or 'the best sp',
-                 'driver':
-                     ('neutron.tests.unit.extensions.test_flavors.'
-                      'DummyServiceDriver'),
+                 'driver': _driver,
                  'enabled': True,
                  'metainfo': '{"data": "value"}'}}
-        sp = self.plugin.unit_create_service_profile(self.ctx,
-                                                     data)
+        sp = self.plugin.create_service_profile(self.ctx,
+                                                data)
         return sp, data
 
     def test_create_service_profile(self):
@@ -356,6 +520,41 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                filter_by(id=sp['id']).one())
         self.assertEqual(data['service_profile']['driver'], res['driver'])
         self.assertEqual(data['service_profile']['metainfo'], res['metainfo'])
+
+    def test_create_service_profile_empty_driver(self):
+        data = {'service_profile':
+                {'description': 'the best sp',
+                 'driver': '',
+                 'enabled': True,
+                 'metainfo': '{"data": "value"}'}}
+        sp = self.plugin.create_service_profile(self.ctx,
+                                                data)
+        res = (self.ctx.session.query(flavors_db.ServiceProfile).
+               filter_by(id=sp['id']).one())
+        self.assertEqual(data['service_profile']['driver'], res['driver'])
+        self.assertEqual(data['service_profile']['metainfo'], res['metainfo'])
+
+    def test_create_service_profile_invalid_driver(self):
+        data = {'service_profile':
+                {'description': 'the best sp',
+                 'driver': "Broken",
+                 'enabled': True,
+                 'metainfo': '{"data": "value"}'}}
+        self.assertRaises(flavors.ServiceProfileDriverNotFound,
+                          self.plugin.create_service_profile,
+                          self.ctx,
+                          data)
+
+    def test_create_service_profile_invalid_empty(self):
+        data = {'service_profile':
+                {'description': '',
+                 'driver': '',
+                 'enabled': True,
+                 'metainfo': ''}}
+        self.assertRaises(flavors.ServiceProfileEmpty,
+                          self.plugin.create_service_profile,
+                          self.ctx,
+                          data)
 
     def test_update_service_profile(self):
         sp, data = self._create_service_profile()
@@ -423,7 +622,7 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.ctx,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
-        self.assertRaises(flavors_db.FlavorServiceProfileBindingExists,
+        self.assertRaises(flavors.FlavorServiceProfileBindingExists,
                           self.plugin.create_flavor_service_profile,
                           self.ctx,
                           {'service_profile': {'id': sp['id']}},
@@ -444,7 +643,7 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.assertIsNone(binding)
 
         self.assertRaises(
-            flavors_db.FlavorServiceProfileBindingNotFound,
+            flavors.FlavorServiceProfileBindingNotFound,
             self.plugin.delete_flavor_service_profile,
             self.ctx, sp['id'], fl['id'])
 
@@ -456,7 +655,65 @@ class FlavorManagerTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
         self.assertRaises(
-            flavors_db.ServiceProfileInUse,
+            flavors.ServiceProfileInUse,
             self.plugin.delete_service_profile,
             self.ctx,
             sp['id'])
+
+    def test_get_flavor_next_provider_no_binding(self):
+        fl, data = self._create_flavor()
+        self.assertRaises(
+            flavors.FlavorServiceProfileBindingNotFound,
+            self.plugin.get_flavor_next_provider,
+            self.ctx,
+            fl['id'])
+
+    def test_get_flavor_next_provider_disabled(self):
+        data = {'service_profile':
+                {'description': 'the best sp',
+                 'driver': _driver,
+                 'enabled': False,
+                 'metainfo': '{"data": "value"}'}}
+        sp = self.plugin.create_service_profile(self.ctx,
+                                                data)
+        fl, data = self._create_flavor()
+        self.plugin.create_flavor_service_profile(
+            self.ctx,
+            {'service_profile': {'id': sp['id']}},
+            fl['id'])
+        self.assertRaises(
+            flavors.ServiceProfileDisabled,
+            self.plugin.get_flavor_next_provider,
+            self.ctx,
+            fl['id'])
+
+    def test_get_flavor_next_provider_no_driver(self):
+        data = {'service_profile':
+                {'description': 'the best sp',
+                 'driver': '',
+                 'enabled': True,
+                 'metainfo': '{"data": "value"}'}}
+        sp = self.plugin.create_service_profile(self.ctx,
+                                                data)
+        fl, data = self._create_flavor()
+        self.plugin.create_flavor_service_profile(
+            self.ctx,
+            {'service_profile': {'id': sp['id']}},
+            fl['id'])
+        self.assertRaises(
+            flavors.ServiceProfileDriverNotFound,
+            self.plugin.get_flavor_next_provider,
+            self.ctx,
+            fl['id'])
+
+    def test_get_flavor_next_provider(self):
+        sp, data = self._create_service_profile()
+        fl, data = self._create_flavor()
+        self.plugin.create_flavor_service_profile(
+            self.ctx,
+            {'service_profile': {'id': sp['id']}},
+            fl['id'])
+        providers = self.plugin.get_flavor_next_provider(
+            self.ctx,
+            fl['id'])
+        self.assertEqual(_provider, providers[0].get('provider', None))

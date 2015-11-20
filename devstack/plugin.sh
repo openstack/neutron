@@ -1,5 +1,6 @@
 LIBDIR=$DEST/neutron/devstack/lib
 
+source $LIBDIR/flavors
 source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/ml2
@@ -8,6 +9,9 @@ source $LIBDIR/qos
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
+            if is_service_enabled q-flavors; then
+                configure_flavors
+            fi
             if is_service_enabled q-qos; then
                 configure_qos
             fi

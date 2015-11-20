@@ -22,7 +22,6 @@ from oslo_service import periodic_task
 import six
 
 from neutron.common import utils
-from neutron.db import flavors_db
 from neutron.i18n import _LI
 from neutron.plugins.common import constants
 
@@ -162,11 +161,6 @@ class NeutronManager(object):
                 LOG.info(_LI("Service %s is supported by the core plugin"),
                          service_type)
 
-    def _load_flavors_manager(self):
-        # pass manager instance to resolve cyclical import dependency
-        self.service_plugins[constants.FLAVORS] = (
-            flavors_db.FlavorManager(self))
-
     def _load_service_plugins(self):
         """Loads service plugins.
 
@@ -206,9 +200,6 @@ class NeutronManager(object):
                       "Description: %(desc)s",
                       {"type": plugin_inst.get_plugin_type(),
                        "desc": plugin_inst.get_plugin_description()})
-        # do it after the loading from conf to avoid conflict with
-        # configuration provided by unit tests.
-        self._load_flavors_manager()
 
     @classmethod
     @utils.synchronized("manager")
