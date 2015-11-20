@@ -284,6 +284,20 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                    and table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
+    def _test_has_offline_migrations(self, revision, expected):
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        migration.do_alembic_command(self.alembic_config, 'upgrade', revision)
+        self.assertEqual(expected,
+                         migration.has_offline_migrations(self.alembic_config,
+                                                          'unused'))
+
+    def test_has_offline_migrations_pending_contract_scripts(self):
+        self._test_has_offline_migrations('kilo', True)
+
+    def test_has_offline_migrations_all_heads_upgraded(self):
+        self._test_has_offline_migrations('heads', False)
+
 
 class TestModelsMigrationsPsql(_TestModelsMigrations,
                                base.PostgreSQLTestCase):

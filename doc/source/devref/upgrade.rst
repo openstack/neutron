@@ -90,11 +90,18 @@ Database upgrade is split into two parts:
 
 Each part represents a separate alembic branch.
 
-:ref:`More info on alembic scripts <alembic_migrations>`.
-
 The former step can be executed while old neutron-server code is running. The
 latter step requires *all* neutron-server instances to be shut down. Once it's
 complete, neutron-servers can be started again.
+
+.. note::
+    Full shutdown of neutron-server instances can be skipped depending on
+    whether there are pending contract scripts not applied to the database::
+
+     $ neutron-db-manage has_offline_migrations
+     Command will return a message if there are pending contract scripts.
+
+:ref:`More info on alembic scripts <alembic_migrations>`.
 
 Agents upgrade
 ~~~~~~~~~~~~~~
