@@ -98,6 +98,10 @@ class TunnelTest(object):
         self.inta = mock.Mock()
         self.intb = mock.Mock()
 
+        mock.patch.object(ovs_lib.BaseOVS, 'config',
+                          new_callable=mock.PropertyMock,
+                          return_value={}).start()
+
         self.ovs_bridges = {
             self.INT_BRIDGE: mock.create_autospec(
                 self.br_int_cls('br-int')),

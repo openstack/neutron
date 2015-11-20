@@ -181,6 +181,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''
         super(OVSNeutronAgent, self).__init__()
         self.conf = conf or cfg.CONF
+        self.ovs = ovs_lib.BaseOVS()
 
         self.fullsync = True
         # init bridge classes with configured datapath type.
@@ -282,7 +283,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                self.enable_distributed_routing,
                                'log_agent_heartbeats':
                                self.conf.AGENT.log_agent_heartbeats,
-                               'extensions': self.ext_manager.names()},
+                               'extensions': self.ext_manager.names(),
+                               'datapath_type': self.conf.OVS.datapath_type,
+                               'ovs_capabilities': self.ovs.capabilities,
+                               'vhostuser_socket_dir':
+                               self.conf.OVS.vhostuser_socket_dir},
             'agent_type': self.conf.AGENT.agent_type,
             'start_flag': True}
 

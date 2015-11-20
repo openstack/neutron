@@ -131,6 +131,9 @@ class TestOvsNeutronAgent(object):
             'neutron.agent.common.ovs_lib.OVSBridge.get_ports_attributes',
             return_value=[]).start()
 
+        mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
+                   new_callable=mock.PropertyMock,
+                   return_value={}).start()
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
@@ -198,7 +201,10 @@ class TestOvsNeutronAgent(object):
                        new=MockFixedIntervalLoopingCall), \
             mock.patch(
                 'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
-                return_value=[]):
+                return_value=[]), \
+            mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
+                       new_callable=mock.PropertyMock,
+                       return_value={'datapath_types': ['netdev']}):
             # validate setting non default datapath
             expected = constants.OVS_DATAPATH_NETDEV
             cfg.CONF.set_override('datapath_type',
@@ -1674,6 +1680,9 @@ class AncillaryBridgesTest(object):
                              group='SECURITYGROUP')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         self.kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
+        mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
+                   new_callable=mock.PropertyMock,
+                   return_value={}).start()
 
     def _test_ancillary_bridges(self, bridges, ancillary):
         device_ids = ancillary[:]
@@ -1791,6 +1800,9 @@ class TestOvsDvrNeutronAgent(object):
                              group='SECURITYGROUP')
         kwargs = self.mod_agent.create_agent_config_map(cfg.CONF)
 
+        mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
+                   new_callable=mock.PropertyMock,
+                   return_value={}).start()
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
