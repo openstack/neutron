@@ -9,7 +9,7 @@ Routes!=2.0,>=1.12.3
 eventlet!=0.17.0,>=0.16.1
 greenlet>=0.3.2
 httplib2>=0.7.5
-requests!=2.4.0,>=2.2.0
+requests!=2.4.0,<2.8.0,>=2.2.0
 jsonrpclib
 Jinja2>=2.6 # BSD License (3 clause)
 keystonemiddleware<1.6.0,>=1.5.0
