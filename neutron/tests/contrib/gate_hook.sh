@@ -35,6 +35,7 @@ EOF
     export DEVSTACK_LOCAL_CONFIG+="
 enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas
 enable_plugin neutron git://git.openstack.org/openstack/neutron
+enable_service q-qos
 "
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
