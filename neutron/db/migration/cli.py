@@ -65,12 +65,14 @@ INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints]
 _core_opts = [
     cfg.StrOpt('core_plugin',
                default='',
-               help=_('Neutron plugin provider module')),
+               help=_('Neutron plugin provider module'),
+               deprecated_for_removal=True),
     cfg.StrOpt('service',
                choices=INSTALLED_SERVICES,
                help=(_("(Deprecated. Use '--subproject neutron-SERVICE' "
                        "instead.) The advanced service to execute the "
-                       "command against."))),
+                       "command against.")),
+               deprecated_for_removal=True),
     cfg.StrOpt('subproject',
                choices=INSTALLED_SUBPROJECTS,
                help=(_("The subproject to execute the command against. "
@@ -84,7 +86,8 @@ _core_opts = [
 _quota_opts = [
     cfg.StrOpt('quota_driver',
                default='',
-               help=_('Neutron quota driver class')),
+               help=_('Neutron quota driver class'),
+               deprecated_for_removal=True),
 ]
 
 _db_opts = [
