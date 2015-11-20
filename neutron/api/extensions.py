@@ -1,5 +1,4 @@
 # Copyright 2011 OpenStack Foundation.
-# Copyright 2011 Justin Santa Barbara
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
