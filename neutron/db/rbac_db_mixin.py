@@ -105,7 +105,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
             models.get_type_model_map(), 'object_type')
         return self._get_collection(
             context, model, self._make_rbac_policy_dict, filters=filters,
-            sorts=sorts, limit=limit, page_reverse=page_reverse)
+            fields=fields, sorts=sorts, limit=limit, page_reverse=page_reverse)
 
     def _get_object_type(self, context, entry_id):
         """Scans all RBAC tables for an ID to figure out the type.

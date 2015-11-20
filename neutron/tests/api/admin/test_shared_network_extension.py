@@ -301,6 +301,19 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
              for p in self.client2.list_rbac_policies()['rbac_policies']])
 
     @test.attr(type='smoke')
+    @test.idempotent_id('bf5052b8-b11e-407c-8e43-113447404d3e')
+    def test_filter_fields(self):
+        net = self.create_network()
+        self.client.create_rbac_policy(
+            object_type='network', object_id=net['id'],
+            action='access_as_shared', target_tenant=self.client2.tenant_id)
+        field_args = (('id',), ('id', 'action'), ('object_type', 'object_id'),
+                      ('tenant_id', 'target_tenant'))
+        for fields in field_args:
+            res = self.client.list_rbac_policies(fields=fields)
+            self.assertEqual(set(fields), set(res['rbac_policies'][0].keys()))
+
+    @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff5fff')
     def test_policy_show(self):
         res = self._make_admin_net_and_subnet_shared_to_tenant_id(
