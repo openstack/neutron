@@ -16,7 +16,6 @@
 import os
 
 from oslo_config import cfg
-from oslo_config import types
 from oslo_log import log as logging
 
 from neutron.common import config
@@ -68,35 +67,11 @@ PROCESS_MONITOR_OPTS = [
                       '(seconds), use 0 to disable')),
 ]
 
-
-# TODO(hichihara): Remove these two classes, once oslo fixes types.string
-# and cfg.StrOpt.
-class LengthString(types.String):
-    def __init__(self, maxlen=None):
-        super(LengthString, self).__init__()
-        self.maxlen = maxlen
-
-    def __call__(self, value):
-        value = super(LengthString, self).__call__(value)
-        if self.maxlen and len(value) > self.maxlen:
-            raise ValueError(_("String value '%(value)s' exceeds max length "
-                               "%(len)d") % {'value': value,
-                                             'len': self.maxlen})
-        return value
-
-
-class LengthStrOpt(cfg.Opt):
-    def __init__(self, name, maxlen=None, **kwargs):
-        super(LengthStrOpt, self).__init__(name,
-                                           type=LengthString(maxlen=maxlen),
-                                           **kwargs)
-
-
 AVAILABILITY_ZONE_OPTS = [
     # The default AZ name "nova" is selected to match the default
     # AZ name in Nova and Cinder.
-    LengthStrOpt('availability_zone', maxlen=255, default='nova',
-                 help=_("Availability zone of this node")),
+    cfg.StrOpt('availability_zone', max_length=255, default='nova',
+               help=_("Availability zone of this node")),
 ]
 
 
