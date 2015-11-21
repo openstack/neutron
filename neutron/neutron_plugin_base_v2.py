@@ -83,7 +83,7 @@ class NeutronPluginBaseV2(object):
         :param filters: a dictionary with keys that are valid keys for
                         a subnet as listed in the :obj:`RESOURCE_ATTRIBUTE_MAP`
                         object in :file:`neutron/api/v2/attributes.py`.
-                        Values in this dictiontary are an iterable containing
+                        Values in this dictionary are an iterable containing
                         values that will be used for an exact match comparison
                         for that value.  Each result returned by this
                         function will have matched one of the values for each
@@ -108,7 +108,7 @@ class NeutronPluginBaseV2(object):
                         a network as listed in the
                         :obj:`RESOURCE_ATTRIBUTE_MAP` object in
                         :file:`neutron/api/v2/attributes.py`.  Values in this
-                        dictiontary are an iterable containing values that
+                        dictionary are an iterable containing values that
                         will be used for an exact match comparison for that
                         value.  Each result returned by this function will
                         have matched one of the values for each key in filters.
@@ -224,7 +224,7 @@ class NeutronPluginBaseV2(object):
                         a network as listed in the
                         :obj:`RESOURCE_ATTRIBUTE_MAP` object in
                         :file:`neutron/api/v2/attributes.py`.  Values in this
-                        dictiontary are an iterable containing values that will
+                        dictionary are an iterable containing values that will
                         be used for an exact match comparison for that value.
                         Each result returned by this function will have matched
                         one of the values for each key in filters.
@@ -248,7 +248,7 @@ class NeutronPluginBaseV2(object):
                         a network as listed in the
                         :obj:`RESOURCE_ATTRIBUTE_MAP` object
                         in :file:`neutron/api/v2/attributes.py`. Values in
-                        this dictiontary are an iterable containing values that
+                        this dictionary are an iterable containing values that
                         will be used for an exact match comparison for that
                         value.  Each result returned by this function will have
                         matched one of the values for each key in filters.
@@ -321,7 +321,7 @@ class NeutronPluginBaseV2(object):
         :param filters: a dictionary with keys that are valid keys for
                         a port as listed in the  :obj:`RESOURCE_ATTRIBUTE_MAP`
                         object in :file:`neutron/api/v2/attributes.py`. Values
-                        in this dictiontary are an iterable containing values
+                        in this dictionary are an iterable containing values
                         that will be used for an exact match comparison for
                         that value.  Each result returned by this function will
                         have matched one of the values for each key in filters.
@@ -344,7 +344,7 @@ class NeutronPluginBaseV2(object):
                         a network as listed in the
                         :obj:`RESOURCE_ATTRIBUTE_MAP` object in
                         :file:`neutron/api/v2/attributes.py`.  Values in this
-                        dictiontary are an iterable containing values that will
+                        dictionary are an iterable containing values that will
                         be used for an exact match comparison for that value.
                         Each result returned by this function will have matched
                         one of the values for each key in filters.
