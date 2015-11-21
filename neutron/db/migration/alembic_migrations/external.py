@@ -100,6 +100,14 @@ REPO_NEC_TABLES = [
     'packetfilters',
 ]
 
+# Brocade models are in openstack/networking-brocade
+REPO_BROCADE_TABLES = [
+    'brocadenetworks',
+    'brocadeports',
+    'ml2_brocadenetworks',
+    'ml2_brocadeports',
+]
+
 # BigSwitch models are in openstack/networking-bigswitch
 REPO_BIGSWITCH_TABLES = [
     'consistencyhashes',
@@ -112,4 +120,5 @@ TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_CISCO_TABLES +
           REPO_VMWARE_TABLES +
           REPO_NEC_TABLES +
+          REPO_BROCADE_TABLES +
           REPO_BIGSWITCH_TABLES)
