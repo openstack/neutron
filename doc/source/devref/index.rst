@@ -63,6 +63,7 @@ Neutron Internals
    rpc_callbacks
    layer3
    l2_agents
+   ovs_vhostuser
    quality_of_service
    advanced_services
    oslo-incubator
