@@ -49,6 +49,7 @@ OPTS = [
                help=_("Send this many gratuitous ARPs for HA setup, if "
                       "less than or equal to 0, the feature is disabled")),
     cfg.StrOpt('router_id', default='',
+               deprecated_for_removal=True,
                help=_("If non-empty, the l3 agent can only configure a router "
                       "that has the matching router ID.")),
     cfg.BoolOpt('handle_internal_only_routers',
