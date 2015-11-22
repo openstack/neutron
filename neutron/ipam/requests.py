@@ -66,9 +66,9 @@ class SubnetRequest(object):
             previous = None
             for pool in allocation_pools:
                 if not isinstance(pool, netaddr.ip.IPRange):
-                    raise TypeError("Ranges must be netaddr.IPRange")
+                    raise TypeError(_("Ranges must be netaddr.IPRange"))
                 if previous and pool.first <= previous.last:
-                    raise ValueError("Ranges must not overlap")
+                    raise ValueError(_("Ranges must not overlap"))
                 previous = pool
             if 1 < len(allocation_pools):
                 # Checks that all the ranges are in the same IP version.
@@ -78,13 +78,14 @@ class SubnetRequest(object):
                 first_version = allocation_pools[0].version
                 last_version = allocation_pools[-1].version
                 if first_version != last_version:
-                    raise ValueError("Ranges must be in the same IP version")
+                    raise ValueError(_("Ranges must be in the same IP "
+                                       "version"))
             self._allocation_pools = allocation_pools
 
         if self.gateway_ip and self.allocation_pools:
             if self.gateway_ip.version != self.allocation_pools[0].version:
-                raise ValueError("Gateway IP version inconsistent with "
-                                 "allocation pool version")
+                raise ValueError(_("Gateway IP version inconsistent with "
+                                   "allocation pool version"))
 
     @property
     def tenant_id(self):
@@ -108,14 +109,16 @@ class SubnetRequest(object):
             if (gw_ip.version == 4 or (gw_ip.version == 6
                                        and not gw_ip.is_link_local())):
                 if self.gateway_ip not in subnet_cidr:
-                    raise ValueError("gateway_ip is not in the subnet")
+                    raise ValueError(_("gateway_ip is not in the subnet"))
 
         if self.allocation_pools:
             if subnet_cidr.version != self.allocation_pools[0].version:
-                raise ValueError("allocation_pools use the wrong ip version")
+                raise ValueError(_("allocation_pools use the wrong ip "
+                                   "version"))
             for pool in self.allocation_pools:
                 if pool not in subnet_cidr:
-                    raise ValueError("allocation_pools are not in the subnet")
+                    raise ValueError(_("allocation_pools are not in the "
+                                       "subnet"))
 
 
 class AnySubnetRequest(SubnetRequest):
@@ -218,7 +221,7 @@ class AutomaticAddressRequest(SpecificAddressRequest):
         if set(kwargs) != set(['prefix', 'mac']):
             raise ipam_exc.AddressCalculationFailure(
                 address_type='eui-64',
-                reason='must provide exactly 2 arguments - cidr and MAC')
+                reason=_('must provide exactly 2 arguments - cidr and MAC'))
         prefix = kwargs['prefix']
         mac_address = kwargs['mac']
         return ipv6_utils.get_ipv6_addr_by_EUI64(prefix, mac_address)
