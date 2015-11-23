@@ -67,4 +67,4 @@ class TestConnectivitySameNetwork(base.BaseFullStackTestCase):
         for vm in vms:
             vm.block_until_boot()
 
-        vms[0].assert_ping(vms[1].ip)
+        vms[0].block_until_ping(vms[1].ip)
