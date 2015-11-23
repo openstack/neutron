@@ -225,9 +225,12 @@ neutron/tests/fullstack/test_connectivity.py.
 
 Full stack testing can simulate multi node testing by starting an agent
 multiple times. Specifically, each node would have its own copy of the
-OVS/DHCP/L3 agents, all configured with the same "host" value. Each OVS agent
-is connected to its own pair of br-int/br-ex, and those bridges are then
-interconnected.
+OVS/LinuxBridge/DHCP/L3 agents, all configured with the same "host" value.
+Each OVS agent is connected to its own pair of br-int/br-ex, and those bridges
+are then interconnected.
+For LinuxBridge agent each agent is started in its own namespace, called
+"host-<some_random_value>". Such namespaces are connected with OVS "central"
+bridge to eachother.
 
 .. image:: images/fullstack_multinode_simulation.png
 

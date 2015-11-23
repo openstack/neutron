@@ -21,3 +21,5 @@ VXLAN_MCAST = 'multicast_flooding'
 VXLAN_UCAST = 'unicast_flooding'
 
 EXTENSION_DRIVER_TYPE = 'linuxbridge'
+
+RESOURCE_ID_LENGTH = 11

@@ -20,11 +20,11 @@ from neutron.tests.common import net_helpers
 
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
+
     def __init__(self, host, network_id, tenant_id, safe_client,
                  neutron_port=None):
         super(FakeFullstackMachine, self).__init__()
-        self.bridge = host.ovs_agent.br_int
-        self.host_binding = host.hostname
+        self.host = host
         self.tenant_id = tenant_id
         self.network_id = network_id
         self.safe_client = safe_client
@@ -33,18 +33,19 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def _setUp(self):
         super(FakeFullstackMachine, self)._setUp()
 
+        self.bridge = self.host.get_bridge(self.network_id)
+
         if not self.neutron_port:
             self.neutron_port = self.safe_client.create_port(
                 network_id=self.network_id,
                 tenant_id=self.tenant_id,
-                hostname=self.host_binding)
-        self.neutron_port_id = self.neutron_port['id']
+                hostname=self.host.hostname)
         mac_address = self.neutron_port['mac_address']
 
         self.port = self.useFixture(
             net_helpers.PortFixture.get(
                 self.bridge, self.namespace, mac_address,
-                self.neutron_port_id)).port
+                self.neutron_port['id'])).port
 
         self._ip = self.neutron_port['fixed_ips'][0]['ip_address']
         subnet_id = self.neutron_port['fixed_ips'][0]['subnet_id']
@@ -69,6 +70,6 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
 
     def block_until_boot(self):
         utils.wait_until_true(
-            lambda: (self.safe_client.client.show_port(self.neutron_port_id)
+            lambda: (self.safe_client.client.show_port(self.neutron_port['id'])
                      ['port']['status'] == 'ACTIVE'),
             sleep=3)
