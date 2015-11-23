@@ -426,16 +426,20 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                   context, agent, router)
 
     def remove_router_from_l3_agent(self, context, agent_id, router_id):
+        binding = None
         router = self.get_router(context, router_id)
         if router['external_gateway_info'] and router.get('distributed'):
             binding = self.unbind_snat(context, router_id, agent_id=agent_id)
+            # binding only exists when agent mode is dvr_snat
             if binding:
                 notification_not_sent = self.unbind_router_servicenode(context,
                                              router_id, binding)
                 if notification_not_sent:
                     self.l3_rpc_notifier.routers_updated(
                         context, [router_id], schedule_routers=False)
-        else:
+
+        # Below Needs to be done when agent mode is legacy or dvr.
+        if not binding:
             super(L3_DVRsch_db_mixin,
                   self).remove_router_from_l3_agent(
                     context, agent_id, router_id)
