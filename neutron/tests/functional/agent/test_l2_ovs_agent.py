@@ -17,7 +17,7 @@
 import time
 
 from eventlet.timeout import Timeout
-
+from neutron.agent.linux import utils as agent_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
@@ -34,6 +34,53 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             self.agent.int_br.delete_port(port['vif_name'])
 
         self.wait_until_ports_state(self.ports, up=False)
+
+    def test_no_stale_flows_after_port_delete(self):
+        def find_drop_flow(ofport, flows):
+            for flow in flows.split("\n"):
+                if "in_port=%d" % ofport in flow and "actions=drop" in flow:
+                    return True
+            return False
+
+        def num_ports_with_drop_flows(ofports, flows):
+            count = 0
+            for ofport in ofports:
+                if find_drop_flow(ofport, flows):
+                    count = count + 1
+            return count
+        # setup
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports())
+        self.wait_until_ports_state(self.ports, up=True)
+
+        # call port_delete first
+        for port in self.ports:
+            self.agent.port_delete([], port_id=port['id'])
+        portnames = [port["vif_name"] for port in self.ports]
+        ofports = [port.ofport for port in self.agent.int_br.get_vif_ports()
+                   if port.port_name in portnames]
+
+        #wait until ports are marked dead, with drop flow
+        agent_utils.wait_until_true(
+            lambda: num_ports_with_drop_flows(
+                ofports,
+                self.agent.int_br.dump_flows(
+                    constants.LOCAL_SWITCHING
+                )) == len(ofports))
+
+        #delete the ports on bridge
+        for port in self.ports:
+            self.agent.int_br.delete_port(port['vif_name'])
+        self.wait_until_ports_state(self.ports, up=False)
+
+        #verify no stale drop flows
+        self.assertEqual(0,
+            num_ports_with_drop_flows(
+                ofports,
+                self.agent.int_br.dump_flows(
+                    constants.LOCAL_SWITCHING
+                )
+            ))
 
     def _check_datapath_type_netdev(self, expected, default=False):
         if not default:

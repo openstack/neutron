@@ -1762,6 +1762,25 @@ class TestOvsNeutronAgent(object):
         ofport_changed_ports = self.agent.update_stale_ofport_rules()
         self.assertEqual(['port1'], ofport_changed_ports)
 
+    def test_update_stale_ofport_rules_removes_drop_flow(self):
+        self.agent.prevent_arp_spoofing = False
+        self.agent.vifname_to_ofport_map = {'port1': 1, 'port2': 2}
+        self.agent.int_br = mock.Mock()
+        # simulate port1 was removed
+        newmap = {'port2': 2}
+        self.agent.int_br.get_vif_port_to_ofport_map.return_value = newmap
+        self.agent.update_stale_ofport_rules()
+        # drop flow rule matching port 1 should have been deleted
+        ofport_changed_ports = self.agent.update_stale_ofport_rules()
+        expected = [
+            mock.call(in_port=1)
+        ]
+        self.assertEqual(expected, self.agent.int_br.delete_flows.mock_calls)
+        self.assertEqual(newmap, self.agent.vifname_to_ofport_map)
+        self.assertFalse(
+            self.agent.int_br.delete_arp_spoofing_protection.called)
+        self.assertEqual([], ofport_changed_ports)
+
     def test__setup_tunnel_port_while_new_mapping_is_added(self):
         """
         Test that _setup_tunnel_port doesn't fail if new vlan mapping is
