@@ -21,6 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
+.. _rpc_callbacks:
+
 Neutron Messaging Callback System
 =================================
 
