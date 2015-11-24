@@ -168,6 +168,8 @@ In summary:
 +============+=============================================================================+
 |New         | This is where all RFE's start, as filed by the community.                   |
 +------------+-----------------------------------------------------------------------------+
+|Incomplete  | Drivers/LTs - Move to this state to mean, "more needed before proceeding"   |
++------------+-----------------------------------------------------------------------------+
 |Confirmed   | Drivers/LTs - Move to this state to mean, "yeah, I see that you filed it"   |
 +------------+-----------------------------------------------------------------------------+
 |Triaged     | Drivers/LTs - Move to this state to mean, "discussion is ongoing"           |
@@ -184,6 +186,7 @@ not followed up by a blueprint standout in the Launchpad `milestone dashboards <
 The drivers team will be discussing the following bug reports during their IRC meeting:
 
 * `New RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=NEW&field.tag=rfe>`_
+* `Incomplete RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INCOMPLETE&field.tag=rfe>`_
 * `Confirmed RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=CONFIRMED&field.tag=rfe>`_
 * `Triaged RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=TRIAGED&field.tag=rfe>`_
 
