@@ -77,3 +77,61 @@ class NeutronBaseV2(NeutronBase):
 
 
 BASEV2 = declarative.declarative_base(cls=NeutronBaseV2)
+
+
+class StandardAttribute(BASEV2):
+    """Common table to associate all Neutron API resources.
+
+    By having Neutron objects related to this table, we can associate new
+    tables that apply to many Neutron objects (e.g. timestamps, rbac entries)
+    to this table to avoid schema duplication while maintaining referential
+    integrity.
+
+    NOTE(kevinbenton): This table should not have more columns added to it
+    unless we are absolutely certain the new column will have a value for
+    every single type of Neutron resource. Otherwise this table will be filled
+    with NULL entries for combinations that don't make sense. Additionally,
+    by keeping this table small we can ensure that performance isn't adversely
+    impacted for queries on objects.
+    """
+
+    # sqlite doesn't support auto increment on big integers so we use big int
+    # for everything but sqlite
+    id = sa.Column(sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
+                   primary_key=True, autoincrement=True)
+
+    # NOTE(kevinbenton): this column is redundant information, but it allows
+    # operators/devs to look at the contents of this table and know which table
+    # the corresponding object is in.
+    # 255 was selected as a max just because it's the varchar ceiling in mysql
+    # before a 2-byte prefix is required. We shouldn't get anywhere near this
+    # limit with our table names...
+    resource_type = sa.Column(sa.String(255), nullable=False)
+
+
+class HasStandardAttributes(object):
+    @declarative.declared_attr
+    def standard_attr_id(cls):
+        return sa.Column(
+            sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
+            sa.ForeignKey(StandardAttribute.id, ondelete="CASCADE"),
+            unique=True,
+            nullable=False
+        )
+
+    # NOTE(kevinbenton): we have to disable the following pylint check because
+    # it thinks we are overriding this method in the __init__ method.
+    #pylint: disable=method-hidden
+    @declarative.declared_attr
+    def standard_attr(cls):
+        return orm.relationship(StandardAttribute,
+                                lazy='joined',
+                                cascade='all, delete-orphan',
+                                single_parent=True,
+                                uselist=False)
+
+    def __init__(self, *args, **kwargs):
+        super(HasStandardAttributes, self).__init__(*args, **kwargs)
+        # here we automatically create the related standard attribute object
+        self.standard_attr = StandardAttribute(
+            resource_type=self.__tablename__)

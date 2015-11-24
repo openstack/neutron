@@ -78,7 +78,8 @@ class RouterPort(model_base.BASEV2):
         lazy='joined')
 
 
-class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class Router(model_base.HasStandardAttributes, model_base.BASEV2,
+             models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron router."""
 
     name = sa.Column(sa.String(255))
@@ -92,7 +93,8 @@ class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         lazy='dynamic')
 
 
-class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class FloatingIP(model_base.HasStandardAttributes, model_base.BASEV2,
+                 models_v2.HasId, models_v2.HasTenant):
     """Represents a floating IP address.
 
     This IP address may or may not be allocated to a tenant, and may or
