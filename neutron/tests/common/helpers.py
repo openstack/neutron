@@ -16,6 +16,8 @@ import datetime
 import os
 
 from oslo_utils import timeutils
+import six
+import testtools
 
 import neutron
 from neutron.common import constants
@@ -151,3 +153,11 @@ def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
                                 tunneling_ip, interface_mappings,
                                 l2pop_network_types)
     return _register_agent(agent)
+
+
+def requires_py2(testcase):
+    return testtools.skipUnless(six.PY2, "requires python 2.x")(testcase)
+
+
+def requires_py3(testcase):
+    return testtools.skipUnless(six.PY3, "requires python 3.x")(testcase)

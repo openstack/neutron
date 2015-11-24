@@ -120,11 +120,8 @@ def execute(cmd, process_input=None, addl_env=None,
             _stdout, _stderr = obj.communicate(_process_input)
             returncode = obj.returncode
             obj.stdin.close()
-        if six.PY3:
-            if isinstance(_stdout, bytes):
-                _stdout = _stdout.decode('utf-8', 'surrogateescape')
-            if isinstance(_stderr, bytes):
-                _stderr = _stderr.decode('utf-8', 'surrogateescape')
+        _stdout = utils.safe_decode_utf8(_stdout)
+        _stderr = utils.safe_decode_utf8(_stderr)
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode not in extra_ok_codes:

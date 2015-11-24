@@ -19,7 +19,6 @@ import ssl
 
 import mock
 from oslo_config import cfg
-import six
 import six.moves.urllib.request as urlrequest
 import testtools
 import webob
@@ -28,6 +27,7 @@ import webob.exc
 from neutron.common import exceptions as exception
 from neutron.db import api
 from neutron.tests import base
+from neutron.tests.common import helpers
 from neutron import wsgi
 
 CONF = cfg.CONF
@@ -496,7 +496,7 @@ class JSONDictSerializerTest(base.BaseTestCase):
 
     # The tested behaviour is only meant to be witnessed in Python 2, so it is
     # OK to skip this test with Python 3.
-    @testtools.skipIf(six.PY3, "This test does not make sense in Python 3")
+    @helpers.requires_py2
     def test_json_with_utf8(self):
         input_dict = dict(servers=dict(a=(2, '\xe7\xbd\x91\xe7\xbb\x9c')))
         expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'

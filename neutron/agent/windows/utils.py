@@ -57,11 +57,8 @@ def execute(cmd, process_input=None, addl_env=None,
         obj, cmd = create_process(cmd, addl_env=addl_env)
         _stdout, _stderr = obj.communicate(_process_input)
         obj.stdin.close()
-        if six.PY3:
-            if isinstance(_stdout, bytes):
-                _stdout = _stdout.decode('utf-8', 'surrogateescape')
-            if isinstance(_stderr, bytes):
-                _stderr = _stderr.decode('utf-8', 'surrogateescape')
+        _stdout = utils.safe_decode_utf8(_stdout)
+        _stderr = utils.safe_decode_utf8(_stderr)
 
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
               "Stdout: %(stdout)s\nStderr: %(stderr)s") % \
