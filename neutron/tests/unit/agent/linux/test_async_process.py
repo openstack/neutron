@@ -291,4 +291,7 @@ class TestFailingAsyncProcess(base.BaseTestCase):
                 as handle_error_mock:
             self.process.start()
             self.process._process.wait()
+            # Wait for the monitor process to complete
+            for thread in self.process._watchers:
+                thread.wait()
             self.assertEqual(1, handle_error_mock.call_count)
