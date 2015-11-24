@@ -20,13 +20,13 @@ from neutron.callbacks import resources
 class NeutronWorker(service.ServiceBase):
     """Partial implementation of the ServiceBase ABC
 
-    Subclasses will still need to add the other abstractmethods defined in
+    Subclasses will still need to add the other abstract methods defined in
     service.ServiceBase. See oslo_service for more details.
 
-    If a plugin needs to handle synchornization with the Neutron database and
+    If a plugin needs to handle synchronization with the Neutron database and
     do this only once instead of in every API worker, for instance, it would
     define a NeutronWorker class and the plugin would have get_workers return
-    an array of NeutronWorker instnaces. For example:
+    an array of NeutronWorker instances. For example:
         class MyPlugin(...):
             def get_workers(self):
                 return [MyPluginWorker()]
