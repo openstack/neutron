@@ -218,7 +218,7 @@ You will often need to clear it to re-run operations from a blank database::
 To work on the test database instead of the neutron database, point to it with
 the ``--database-connection`` option::
 
- neutron-db-manage --database-connection mysql+pymysql://root:secretmysql@127.0.0.1/testdb?charset=utf8
+ neutron-db-manage --database-connection mysql+pymysql://root:secretmysql@127.0.0.1/testdb?charset=utf8 <commands>
 
 You may find it convenient to set up an alias (in your .bashrc) for this::
 
