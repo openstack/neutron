@@ -29,6 +29,7 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron import context as ncontext
 from neutron.db import agents_db
+from neutron.db.availability_zone import network as network_az
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
@@ -457,6 +458,21 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     def auto_schedule_networks(self, context, host):
         if self.network_scheduler:
             self.network_scheduler.auto_schedule_networks(self, context, host)
+
+
+class AZDhcpAgentSchedulerDbMixin(DhcpAgentSchedulerDbMixin,
+                                  network_az.NetworkAvailabilityZoneMixin):
+    """Mixin class to add availability_zone supported DHCP agent scheduler."""
+
+    def get_network_availability_zones(self, network_id):
+        context = ncontext.get_admin_context()
+        with context.session.begin():
+            query = context.session.query(agents_db.Agent.availability_zone)
+            query = query.join(NetworkDhcpAgentBinding)
+            query = query.filter(
+                NetworkDhcpAgentBinding.network_id == network_id)
+            query = query.group_by(agents_db.Agent.availability_zone)
+            return [item[0] for item in query]
 
 
 # helper functions for readability.

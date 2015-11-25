@@ -1667,6 +1667,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         plugin._get_host_port_if_changed = mock.Mock(
             return_value=new_host_port)
         plugin._check_mac_update_allowed = mock.Mock(return_value=True)
+        plugin._extend_availability_zone = mock.Mock()
 
         self.notify.side_effect = (
             lambda r, e, t, **kwargs: self._ensure_transaction_is_closed())

@@ -14,6 +14,8 @@
 
 import abc
 
+from oslo_serialization import jsonutils
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
@@ -21,9 +23,36 @@ from neutron.common import exceptions
 from neutron import manager
 
 
+AZ_HINTS_DB_LEN = 255
+
+
+# resource independent common methods
+def convert_az_list_to_string(az_list):
+    return jsonutils.dumps(az_list)
+
+
+def convert_az_string_to_list(az_string):
+    return jsonutils.loads(az_string) if az_string else []
+
+
+def _validate_availability_zone_hints(data, valid_value=None):
+    # syntax check only here. existence of az will be checked later.
+    msg = attr.validate_list_of_unique_strings(data)
+    if msg:
+        return msg
+    az_string = convert_az_list_to_string(data)
+    if len(az_string) > AZ_HINTS_DB_LEN:
+        msg = _("Too many availability_zone_hints specified")
+        raise exceptions.InvalidInput(error_message=msg)
+
+
+attr.validators['type:availability_zone_hints'] = (
+    _validate_availability_zone_hints)
+
 # Attribute Map
 RESOURCE_NAME = 'availability_zone'
 AVAILABILITY_ZONES = 'availability_zones'
+AZ_HINTS = 'availability_zone_hints'
 # name: name of availability zone (string)
 # resource: type of resource: 'network' or 'router'
 # state: state of availability zone: 'available' or 'unavailable'
@@ -99,9 +128,9 @@ class AvailabilityZonePluginBase(object):
     def get_availability_zones(self, context, filters=None, fields=None,
                                sorts=None, limit=None, marker=None,
                                page_reverse=False):
-        pass
+        """Return availability zones which a resource belongs to"""
 
     @abc.abstractmethod
     def validate_availability_zones(self, context, resource_type,
                                     availability_zones):
-        pass
+        """Verify that the availability zones exist."""

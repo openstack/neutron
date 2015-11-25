@@ -63,6 +63,16 @@ core_opts = [
                help=_("The maximum number of items returned in a single "
                       "response, value was 'infinite' or negative integer "
                       "means no limit")),
+    cfg.ListOpt('default_availability_zones', default=[],
+                help=_("Default value of availability zone hints. The "
+                       "availability zone aware schedulers use this when "
+                       "the resources availability_zone_hints is empty. "
+                       "Multiple availability zones can be specified by a "
+                       "comma separated string. This value can be empty. "
+                       "In this case, even if availability_zone_hints for "
+                       "a resource is empty, availability zone is "
+                       "considered for high availability while scheduling "
+                       "the resource.")),
     cfg.IntOpt('max_dns_nameservers', default=5,
                help=_("Maximum number of DNS nameservers")),
     cfg.IntOpt('max_subnet_host_routes', default=20,

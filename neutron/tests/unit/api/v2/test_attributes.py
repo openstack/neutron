@@ -113,6 +113,24 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_string("123456789", None)
         self.assertIsNone(msg)
 
+    def test_validate_list_of_unique_strings(self):
+        data = "TEST"
+        msg = attributes.validate_list_of_unique_strings(data, None)
+        self.assertEqual("'TEST' is not a list", msg)
+
+        data = ["TEST01", "TEST02", "TEST01"]
+        msg = attributes.validate_list_of_unique_strings(data, None)
+        self.assertEqual(
+            "Duplicate items in the list: 'TEST01, TEST02, TEST01'", msg)
+
+        data = ["12345678", "123456789"]
+        msg = attributes.validate_list_of_unique_strings(data, 8)
+        self.assertEqual("'123456789' exceeds maximum length of 8", msg)
+
+        data = ["TEST01", "TEST02", "TEST03"]
+        msg = attributes.validate_list_of_unique_strings(data, None)
+        self.assertIsNone(msg)
+
     def test_validate_no_whitespace(self):
         data = 'no_white_space'
         result = attributes._validate_no_whitespace(data)

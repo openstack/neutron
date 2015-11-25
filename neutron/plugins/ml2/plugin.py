@@ -60,6 +60,7 @@ from neutron.db import securitygroups_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
+from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
@@ -88,7 +89,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
                 external_net_db.External_net_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
-                agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                agentschedulers_db.AZDhcpAgentSchedulerDbMixin,
                 addr_pair_db.AllowedAddressPairsMixin,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
@@ -119,7 +120,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "extra_dhcp_opt", "subnet_allocation",
                                     "net-mtu", "vlan-transparent",
                                     "address-scope", "dns-integration",
-                                    "availability_zone"]
+                                    "availability_zone",
+                                    "network_availability_zone"]
 
     @property
     def supported_extension_aliases(self):
@@ -640,6 +642,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 res = super(Ml2Plugin, self).update_network(context,
                     result['id'], {'network': {api.MTU: net_data[api.MTU]}})
                 result[api.MTU] = res.get(api.MTU, 0)
+
+            if az_ext.AZ_HINTS in net_data:
+                self.validate_availability_zones(context, 'network',
+                                                 net_data[az_ext.AZ_HINTS])
+                az_hints = az_ext.convert_az_list_to_string(
+                                                net_data[az_ext.AZ_HINTS])
+                super(Ml2Plugin, self).update_network(context,
+                    result['id'], {'network': {az_ext.AZ_HINTS: az_hints}})
+                result[az_ext.AZ_HINTS] = az_hints
 
         return result, mech_context
 

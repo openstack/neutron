@@ -345,6 +345,10 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                             'enable_dhcp': enable_dhcp})
         return subnets
 
+    def get_network(self, context, net_id):
+        # TODO(hichihara): add test cases of AZ scheduler
+        return {'availability_zone_hints': []}
+
     def _get_hosted_networks_on_dhcp_agent(self, agent_id):
         query = self.ctx.session.query(
             agentschedulers_db.NetworkDhcpAgentBinding.network_id)

@@ -14,6 +14,9 @@
 #    under the License.
 
 
+import collections
+import heapq
+
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -22,6 +25,7 @@ from sqlalchemy import sql
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.extensions import availability_zone as az_ext
 from neutron.i18n import _LI, _LW
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
@@ -64,6 +68,12 @@ class AutoScheduler(object):
                         continue
                     if any(dhcp_agent.id == agent.id for agent in agents):
                         continue
+                    net = plugin.get_network(context, net_id)
+                    az_hints = (net.get(az_ext.AZ_HINTS) or
+                                cfg.CONF.default_availability_zones)
+                    if (az_hints and
+                        dhcp_agent['availability_zone'] not in az_hints):
+                        continue
                     bindings_to_add.append((dhcp_agent, net_id))
         # do it outside transaction so particular scheduling results don't
         # make other to fail
@@ -82,6 +92,46 @@ class WeightScheduler(base_scheduler.BaseWeightScheduler, AutoScheduler):
 
     def __init__(self):
         super(WeightScheduler, self).__init__(DhcpFilter())
+
+
+class AZAwareWeightScheduler(WeightScheduler):
+
+    def select(self, plugin, context, resource_hostable_agents,
+               resource_hosted_agents, num_agents_needed):
+        """AZ aware scheduling
+           If the network has multiple AZs, agents are scheduled as
+           follows:
+           - select AZ with least agents scheduled for the network
+             (nondeterministic for AZs with same amount of agents scheduled)
+           - choose agent in the AZ with WeightScheduler
+        """
+        hostable_az_agents = collections.defaultdict(list)
+        num_az_agents = {}
+        for agent in resource_hostable_agents:
+            az_agent = agent['availability_zone']
+            hostable_az_agents[az_agent].append(agent)
+            if az_agent not in num_az_agents:
+                num_az_agents[az_agent] = 0
+        if num_agents_needed <= 0:
+            return []
+        for agent in resource_hosted_agents:
+            az_agent = agent['availability_zone']
+            if az_agent in num_az_agents:
+                num_az_agents[az_agent] += 1
+
+        num_az_q = [(value, key) for key, value in num_az_agents.items()]
+        heapq.heapify(num_az_q)
+        chosen_agents = []
+        while num_agents_needed > 0:
+            num, select_az = heapq.heappop(num_az_q)
+            select_agent = super(AZAwareWeightScheduler, self).select(
+                plugin, context, hostable_az_agents[select_az], [], 1)
+            chosen_agents.append(select_agent[0])
+            hostable_az_agents[select_az].remove(select_agent[0])
+            if hostable_az_agents[select_az]:
+                heapq.heappush(num_az_q, (num + 1, select_az))
+            num_agents_needed -= 1
+        return chosen_agents
 
 
 class DhcpFilter(base_resource_filter.BaseResourceFilter):
@@ -147,13 +197,15 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                 return
         return network_hosted_agents
 
-    def _get_active_agents(self, plugin, context):
+    def _get_active_agents(self, plugin, context, az_hints):
         """Return a list of active dhcp agents."""
         with context.session.begin(subtransactions=True):
+            filters = {'agent_type': [constants.AGENT_TYPE_DHCP],
+                       'admin_state_up': [True]}
+            if az_hints:
+                filters['availability_zone'] = az_hints
             active_dhcp_agents = plugin.get_agents_db(
-                context, filters={
-                    'agent_type': [constants.AGENT_TYPE_DHCP],
-                    'admin_state_up': [True]})
+                context, filters=filters)
             if not active_dhcp_agents:
                 LOG.warn(_LW('No more DHCP agents'))
                 return []
@@ -171,7 +223,9 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         if hosted_agents is None:
             return {'n_agents': 0, 'hostable_agents': [], 'hosted_agents': []}
         n_agents = cfg.CONF.dhcp_agents_per_network - len(hosted_agents)
-        active_dhcp_agents = self._get_active_agents(plugin, context)
+        az_hints = (network.get(az_ext.AZ_HINTS) or
+                    cfg.CONF.default_availability_zones)
+        active_dhcp_agents = self._get_active_agents(plugin, context, az_hints)
         if not active_dhcp_agents:
             return {'n_agents': 0, 'hostable_agents': [],
                     'hosted_agents': hosted_agents}
