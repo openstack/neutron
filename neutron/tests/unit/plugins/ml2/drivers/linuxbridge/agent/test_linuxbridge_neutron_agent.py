@@ -858,36 +858,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.lbm.delete_bridge("br0")
             del_int.assert_called_once_with("eth1.1")
 
-    def test_remove_empty_bridges(self):
-        self.lbm.network_map = {'net1': mock.Mock(), 'net2': mock.Mock()}
-
-        def tap_count_side_effect(*args):
-            return 0 if args[0] == 'brqnet1' else 1
-
-        with mock.patch.object(self.lbm, "delete_bridge") as del_br_fn,\
-                mock.patch.object(self.lbm,
-                                  "get_tap_devices_count",
-                                  side_effect=tap_count_side_effect):
-            self.lbm.remove_empty_bridges()
-            del_br_fn.assert_called_once_with('brqnet1')
-
-    def test_remove_empty_bridges_with_existed_brq(self):
-        phy_net = mock.Mock()
-        phy_net.physical_network = 'physnet0'
-        self.lbm.network_map = {'net1': mock.Mock(),
-                                'net2': mock.Mock(),
-                                'net3': phy_net}
-
-        def tap_count_side_effect(*args):
-            return 0
-
-        with mock.patch.object(self.lbm, "delete_bridge") as del_br_fn,\
-                mock.patch.object(self.lbm,
-                                  "get_tap_devices_count",
-                                  side_effect=tap_count_side_effect):
-            self.lbm.remove_empty_bridges()
-            self.assertEqual(2, del_br_fn.call_count)
-
     def test_remove_interface(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
                 mock.patch.object(bridge_lib,
