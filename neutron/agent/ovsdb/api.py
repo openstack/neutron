@@ -36,7 +36,7 @@ cfg.CONF.register_opts(OPTS, 'OVS')
 
 @six.add_metaclass(abc.ABCMeta)
 class Command(object):
-    """An OSVDB command that can be executed in a transaction
+    """An OVSDB command that can be executed in a transaction
 
     :attr result: The result of executing the command in a transaction
     """
