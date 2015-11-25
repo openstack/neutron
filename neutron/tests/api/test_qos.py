@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions
 from tempest import test
+
 import testtools
 
 from neutron.services.qos import qos_consts
@@ -448,3 +450,257 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         rules_ids = [r['id'] for r in rules]
         self.assertIn(rule1['id'], rules_ids)
         self.assertNotIn(rule2['id'], rules_ids)
+
+
+class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
+
+    force_tenant_isolation = True
+    credentials = ['primary', 'alt', 'admin']
+
+    @classmethod
+    def resource_setup(cls):
+        super(RbacSharedQosPoliciesTest, cls).resource_setup()
+        if not test.is_extension_enabled('qos', 'network'):
+            msg = "qos extension not enabled."
+            raise cls.skipException(msg)
+        cls.client2 = cls.alt_manager.network_client
+
+    def _create_qos_policy(self, tenant_id=None):
+        args = {'name': data_utils.rand_name('test-policy'),
+                'description': 'test policy',
+                'shared': False,
+                'tenant_id': tenant_id}
+        qos_policy = self.admin_client.create_qos_policy(**args)['policy']
+        self.addCleanup(self.admin_client.delete_qos_policy, qos_policy['id'])
+
+        return qos_policy
+
+    def _make_admin_policy_shared_to_tenant_id(self, tenant_id):
+        policy = self._create_qos_policy()
+        rbac_policy = self.admin_client.create_rbac_policy(
+            object_type='qos_policy',
+            object_id=policy['id'],
+            action='access_as_shared',
+            target_tenant=tenant_id,
+        )['rbac_policy']
+
+        return {'policy': policy, 'rbac_policy': rbac_policy}
+
+    def _create_network(self, qos_policy_id, client, should_cleanup=True):
+        net = client.create_network(
+            name=data_utils.rand_name('test-network'),
+            qos_policy_id=qos_policy_id)['network']
+        if should_cleanup:
+            self.addCleanup(client.delete_network, net['id'])
+
+        return net
+
+    @test.idempotent_id('b9dcf582-d3b3-11e5-950a-54ee756c66df')
+    def test_policy_sharing_with_wildcard(self):
+        qos_pol = self.create_qos_policy(
+            name=data_utils.rand_name('test-policy'),
+            description='test-shared-policy', shared=False)
+        self.assertNotIn(qos_pol, self.client2.list_qos_policies()['policies'])
+
+        # test update shared False -> True
+        self.admin_client.update_qos_policy(qos_pol['id'], shared=True)
+        qos_pol['shared'] = True
+        self.client2.show_qos_policy(qos_pol['id'])
+        rbac_pol = {'target_tenant': '*',
+                    'tenant_id': self.admin_client.tenant_id,
+                    'object_type': 'qos_policy',
+                    'object_id': qos_pol['id'],
+                    'action': 'access_as_shared'}
+
+        rbac_policies = self.admin_client.list_rbac_policies()['rbac_policies']
+        rbac_policies = [r for r in rbac_policies if r.pop('id')]
+        self.assertIn(rbac_pol, rbac_policies)
+
+        # update shared True -> False should fail because the policy is bound
+        # to a network
+        net = self._create_network(qos_pol['id'], self.admin_client, False)
+        with testtools.ExpectedException(exceptions.Conflict):
+            self.admin_client.update_qos_policy(qos_pol['id'], shared=False)
+
+        # delete the network, and update shared True -> False should pass now
+        self.admin_client.delete_network(net['id'])
+        self.admin_client.update_qos_policy(qos_pol['id'], shared=False)
+        qos_pol['shared'] = False
+        self.assertNotIn(qos_pol, self.client2.list_qos_policies()['policies'])
+
+    def _create_net_bound_qos_rbacs(self):
+        res = self._make_admin_policy_shared_to_tenant_id(
+            self.client.tenant_id)
+        qos_policy, rbac_for_client_tenant = res['policy'], res['rbac_policy']
+
+        # add a wildcard rbac rule - now the policy globally shared
+        rbac_wildcard = self.admin_client.create_rbac_policy(
+            object_type='qos_policy',
+            object_id=qos_policy['id'],
+            action='access_as_shared',
+            target_tenant='*',
+        )['rbac_policy']
+
+        # tenant1 now uses qos policy for net
+        self._create_network(qos_policy['id'], self.client)
+
+        return rbac_for_client_tenant, rbac_wildcard
+
+    @test.idempotent_id('328b1f70-d424-11e5-a57f-54ee756c66df')
+    def test_net_bound_shared_policy_wildcard_and_tenant_id_wild_remove(self):
+        client_rbac, wildcard_rbac = self._create_net_bound_qos_rbacs()
+        # globally unshare the qos-policy, the specific share should remain
+        self.admin_client.delete_rbac_policy(wildcard_rbac['id'])
+        self.client.list_rbac_policies(id=client_rbac['id'])
+
+    @test.idempotent_id('328b1f70-d424-11e5-a57f-54ee756c66df')
+    def test_net_bound_shared_policy_wildcard_and_tenant_id_wild_remains(self):
+        client_rbac, wildcard_rbac = self._create_net_bound_qos_rbacs()
+        # remove client_rbac policy the wildcard share should remain
+        self.admin_client.delete_rbac_policy(client_rbac['id'])
+        self.client.list_rbac_policies(id=wildcard_rbac['id'])
+
+    @test.idempotent_id('2ace9adc-da6e-11e5-aafe-54ee756c66df')
+    def test_policy_sharing_with_wildcard_and_tenant_id(self):
+        res = self._make_admin_policy_shared_to_tenant_id(
+            self.client.tenant_id)
+        qos_policy, rbac = res['policy'], res['rbac_policy']
+        qos_pol = self.client.show_qos_policy(qos_policy['id'])['policy']
+        self.assertTrue(qos_pol['shared'])
+        with testtools.ExpectedException(exceptions.NotFound):
+            self.client2.show_qos_policy(qos_policy['id'])
+
+        # make the qos-policy globally shared
+        self.admin_client.update_qos_policy(qos_policy['id'], shared=True)
+        qos_pol = self.client2.show_qos_policy(qos_policy['id'])['policy']
+        self.assertTrue(qos_pol['shared'])
+
+        # globally unshare the qos-policy, the specific share should remain
+        self.admin_client.update_qos_policy(qos_policy['id'], shared=False)
+        self.client.show_qos_policy(qos_policy['id'])
+        with testtools.ExpectedException(exceptions.NotFound):
+            self.client2.show_qos_policy(qos_policy['id'])
+        self.assertIn(rbac,
+                      self.admin_client.list_rbac_policies()['rbac_policies'])
+
+    @test.idempotent_id('9f85c76a-a350-11e5-8ae5-54ee756c66df')
+    def test_policy_target_update(self):
+        res = self._make_admin_policy_shared_to_tenant_id(
+            self.client.tenant_id)
+        # change to client2
+        update_res = self.admin_client.update_rbac_policy(
+                res['rbac_policy']['id'], target_tenant=self.client2.tenant_id)
+        self.assertEqual(self.client2.tenant_id,
+                         update_res['rbac_policy']['target_tenant'])
+        # make sure everything else stayed the same
+        res['rbac_policy'].pop('target_tenant')
+        update_res['rbac_policy'].pop('target_tenant')
+        self.assertEqual(res['rbac_policy'], update_res['rbac_policy'])
+
+    @test.idempotent_id('a9b39f46-a350-11e5-97c7-54ee756c66df')
+    def test_network_presence_prevents_policy_rbac_policy_deletion(self):
+        res = self._make_admin_policy_shared_to_tenant_id(
+            self.client2.tenant_id)
+        qos_policy_id = res['policy']['id']
+        self._create_network(qos_policy_id, self.client2)
+        # a network with shared qos-policy should prevent the deletion of an
+        # rbac-policy required for it to be shared
+        with testtools.ExpectedException(exceptions.Conflict):
+            self.admin_client.delete_rbac_policy(res['rbac_policy']['id'])
+
+        # a wildcard policy should allow the specific policy to be deleted
+        # since it allows the remaining port
+        wild = self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=res['policy']['id'],
+            action='access_as_shared', target_tenant='*')['rbac_policy']
+        self.admin_client.delete_rbac_policy(res['rbac_policy']['id'])
+
+        # now that wildcard is the only remaining, it should be subjected to
+        # the same restriction
+        with testtools.ExpectedException(exceptions.Conflict):
+            self.admin_client.delete_rbac_policy(wild['id'])
+
+        # we can't update the policy to a different tenant
+        with testtools.ExpectedException(exceptions.Conflict):
+            self.admin_client.update_rbac_policy(
+                wild['id'], target_tenant=self.client2.tenant_id)
+
+    @test.idempotent_id('b0fe87e8-a350-11e5-9f08-54ee756c66df')
+    def test_regular_client_shares_to_another_regular_client(self):
+        # owned by self.admin_client
+        policy = self._create_qos_policy()
+        with testtools.ExpectedException(exceptions.NotFound):
+            self.client.show_qos_policy(policy['id'])
+        rbac_policy = self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=policy['id'],
+            action='access_as_shared',
+            target_tenant=self.client.tenant_id)['rbac_policy']
+        self.client.show_qos_policy(policy['id'])
+
+        self.assertIn(rbac_policy,
+                      self.admin_client.list_rbac_policies()['rbac_policies'])
+        # ensure that 'client2' can't see the rbac-policy sharing the
+        # qos-policy to it because the rbac-policy belongs to 'client'
+        self.assertNotIn(rbac_policy['id'], [p['id'] for p in
+                          self.client2.list_rbac_policies()['rbac_policies']])
+
+    @test.idempotent_id('ba88d0ca-a350-11e5-a06f-54ee756c66df')
+    def test_filter_fields(self):
+        policy = self._create_qos_policy()
+        self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=policy['id'],
+            action='access_as_shared', target_tenant=self.client2.tenant_id)
+        field_args = (('id',), ('id', 'action'), ('object_type', 'object_id'),
+                      ('tenant_id', 'target_tenant'))
+        for fields in field_args:
+            res = self.admin_client.list_rbac_policies(fields=fields)
+            self.assertEqual(set(fields), set(res['rbac_policies'][0].keys()))
+
+    @test.idempotent_id('c10d993a-a350-11e5-9c7a-54ee756c66df')
+    def test_rbac_policy_show(self):
+        res = self._make_admin_policy_shared_to_tenant_id(
+            self.client.tenant_id)
+        p1 = res['rbac_policy']
+        p2 = self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=res['policy']['id'],
+            action='access_as_shared',
+            target_tenant='*')['rbac_policy']
+
+        self.assertEqual(
+            p1, self.admin_client.show_rbac_policy(p1['id'])['rbac_policy'])
+        self.assertEqual(
+            p2, self.admin_client.show_rbac_policy(p2['id'])['rbac_policy'])
+
+    @test.idempotent_id('c7496f86-a350-11e5-b380-54ee756c66df')
+    def test_filter_rbac_policies(self):
+        policy = self._create_qos_policy()
+        rbac_pol1 = self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=policy['id'],
+            action='access_as_shared',
+            target_tenant=self.client2.tenant_id)['rbac_policy']
+        rbac_pol2 = self.admin_client.create_rbac_policy(
+            object_type='qos_policy', object_id=policy['id'],
+            action='access_as_shared',
+            target_tenant=self.admin_client.tenant_id)['rbac_policy']
+        res1 = self.admin_client.list_rbac_policies(id=rbac_pol1['id'])[
+            'rbac_policies']
+        res2 = self.admin_client.list_rbac_policies(id=rbac_pol2['id'])[
+            'rbac_policies']
+        self.assertEqual(1, len(res1))
+        self.assertEqual(1, len(res2))
+        self.assertEqual(rbac_pol1['id'], res1[0]['id'])
+        self.assertEqual(rbac_pol2['id'], res2[0]['id'])
+
+    @test.idempotent_id('cd7d755a-a350-11e5-a344-54ee756c66df')
+    def test_regular_client_blocked_from_sharing_anothers_policy(self):
+        qos_policy = self._make_admin_policy_shared_to_tenant_id(
+            self.client.tenant_id)['policy']
+        with testtools.ExpectedException(exceptions.BadRequest):
+            self.client.create_rbac_policy(
+                object_type='qos_policy', object_id=qos_policy['id'],
+                action='access_as_shared',
+                target_tenant=self.client2.tenant_id)
+
+        # make sure the rbac-policy is invisible to the tenant for which it's
+        # being shared
+        self.assertFalse(self.client.list_rbac_policies()['rbac_policies'])

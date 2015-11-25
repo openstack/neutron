@@ -246,7 +246,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertEqual(rule_dict, obj_dict['rules'][0])
 
     def test_shared_default(self):
-        self.db_obj.pop('shared')
         obj = self._test_class(self.context, **self.db_obj)
         self.assertFalse(obj.shared)
 
@@ -274,3 +273,13 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         policy_obj.reload_rules()
         self.assertEqual([rule_obj], policy_obj.rules)
+
+    def test_get_bound_tenant_ids_returns_set_of_tenant_ids(self):
+        obj = self._create_test_policy()
+        obj.attach_port(self._port['id'])
+        ids = self._test_class.get_bound_tenant_ids(self.context, obj['id'])
+        self.assertEqual(ids.pop(), self._port['tenant_id'])
+        self.assertEqual(len(ids), 0)
+
+        obj.detach_port(self._port['id'])
+        obj.delete()

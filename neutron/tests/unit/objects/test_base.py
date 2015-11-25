@@ -234,7 +234,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(base.NeutronDbObject,
                                '_get_changed_persistent_fields',
                                return_value={}):
-            obj = self._test_class(self.context)
+            obj = self._test_class(self.context, id=7777)
             obj.update()
             self.assertFalse(update_mock.called)
 
@@ -311,7 +311,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         # TODO(ihrachys): replace with port.create() once we get an object
         # implementation for ports
         self._port = db_api.create_object(self.context, models_v2.Port,
-                                          {'name': 'test-port1',
+                                          {'tenant_id': 'fake_tenant_id',
+                                           'name': 'test-port1',
                                            'network_id': network['id'],
                                            'mac_address': 'fake_mac',
                                            'admin_state_up': True,

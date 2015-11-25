@@ -1,0 +1,5 @@
+---
+prelude: >
+   RBAC support for QoS policies
+features:
+  - Neutron now supports sharing of QoS policies between a subset of tenants.

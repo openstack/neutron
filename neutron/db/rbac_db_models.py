@@ -24,6 +24,9 @@ from neutron.common import exceptions as n_exc
 from neutron.db import model_base
 
 
+ACCESS_SHARED = 'access_as_shared'
+
+
 class InvalidActionForType(n_exc.InvalidInput):
     message = _("Invalid action '%(action)s' for object type "
                 "'%(object_type)s'. Valid actions: %(valid_actions)s")
@@ -75,13 +78,27 @@ def get_type_model_map():
     return {table.object_type: table for table in RBACColumns.__subclasses__()}
 
 
+def _object_id_column(foreign_key):
+    return sa.Column(sa.String(36),
+                     sa.ForeignKey(foreign_key, ondelete="CASCADE"),
+                     nullable=False)
+
+
 class NetworkRBAC(RBACColumns, model_base.BASEV2):
     """RBAC table for networks."""
 
-    object_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                          nullable=False)
+    object_id = _object_id_column('networks.id')
     object_type = 'network'
 
     def get_valid_actions(self):
-        return ('access_as_shared',)
+        return (ACCESS_SHARED,)
+
+
+class QosPolicyRBAC(RBACColumns, model_base.BASEV2):
+    """RBAC table for qos policies."""
+
+    object_id = _object_id_column('qos_policies.id')
+    object_type = 'qos_policy'
+
+    def get_valid_actions(self):
+        return (ACCESS_SHARED,)

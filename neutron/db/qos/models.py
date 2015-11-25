@@ -18,13 +18,16 @@ import sqlalchemy as sa
 from neutron.api.v2 import attributes as attrs
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 
 
 class QosPolicy(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
     description = sa.Column(sa.String(attrs.DESCRIPTION_MAX_LEN))
-    shared = sa.Column(sa.Boolean, nullable=False)
+    rbac_entries = sa.orm.relationship(rbac_db_models.QosPolicyRBAC,
+                                       backref='qos_policy', lazy='joined',
+                                       cascade='all, delete, delete-orphan')
 
 
 class QosNetworkPolicyBinding(model_base.BASEV2):
