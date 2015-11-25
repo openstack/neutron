@@ -149,5 +149,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         self.delete_flows(table_id=constants.LOCAL_SWITCHING,
                           in_port=port, nw_proto=const.PROTO_NUM_ICMP_V6,
                           icmp_type=const.ICMPV6_TYPE_NA)
+        self.delete_arp_spoofing_allow_rules(port)
+
+    def delete_arp_spoofing_allow_rules(self, port):
         self.delete_flows(table_id=constants.ARP_SPOOF_TABLE,
                           in_port=port)
