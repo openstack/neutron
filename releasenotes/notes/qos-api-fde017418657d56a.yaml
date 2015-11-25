@@ -1,7 +1,6 @@
 ---
 prelude: >
     Neutron now exposes a QoS API, initially offering bandwidth limitation on
-    the port level.
-features:
-  - The API, CLI, configuration and additional information may be found
-    `here <http://docs.openstack.org/developer/neutron/devref/quality_of_service.html>`.
+    the port level. See the
+    `QoS devref <http://docs.openstack.org/developer/neutron/devref/quality_of_service.html>`_
+    for additional information.

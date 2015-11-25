@@ -2,9 +2,10 @@
 prelude: >
     Neutron now offers role base access control (RBAC) for networks.
 issues:
-  - An issue exists when trying to delete another tenant's port on your own
-    network if you are not an admin. This is being tracked with `this bug
-    <https://bugs.launchpad.net/neutron/+bug/1498790>`_.
+  - With regards to Neutron RBAC, an issue exists when trying to delete another
+    tenant's port on your own network if you are not an admin. This is being
+    tracked with `this bug <https://bugs.launchpad.net/neutron/+bug/1498790>`_.
 other:
-  - The spec for the Neutron RBAC work is located `here
+  - Please read the `Neutron RBAC spec
     <http://specs.openstack.org/openstack/neutron-specs/specs/liberty/rbac-networks.html>`_.
+    for more information on how Neutron RBAC works and can be configured.

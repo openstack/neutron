@@ -1,10 +1,8 @@
 ---
 prelude: >
-    IPv6 Prefix Delegation
+    IPv6 prefix delegation support was added to Neutron.
 features:
   - Neutron now supports IPv6 Prefix Delegation for the automatic assignment of
-    CIDRs to IPv6 subnets.
-other:
-  - For more information on the usage and configuration of this feature, see
-    the `OpenStack Networking Guide
+    CIDRs to IPv6 subnets. For more information on the usage and configuration
+    of this feature, see the `OpenStack Networking Guide
     <http://docs.openstack.org/networking-guide/adv_config_ipv6.html#prefix-delegation>`_.

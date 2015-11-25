@@ -9,7 +9,6 @@ features:
   - Networks used for VRRP traffic for HA routers may now be configured to use
     a specific segmentation type or physical network tag.
 fixes:
-  - See `this <https://bugs.launchpad.net/neutron/+bug/1365476>`_ bug for
+  - See `bug 1365476 <https://bugs.launchpad.net/neutron/+bug/1365476>`_ and
+    `bug 1481443 <https://bugs.launchpad.net/neutron/+bug/1481443>`_ for
     more details on the fix L3 HA and L2 population.
-  - See `this <https://bugs.launchpad.net/neutron/+bug/1481443>`_ bug for
-    more details on the config option changes for L3 HA networks.

@@ -1,6 +1,6 @@
 ---
 prelude: >
-    LBaaS V2 API is no longer experimental. It is now stable.
+    The LBaaS V2 API is no longer experimental. It is now stable.
 features:
   - LBaaS V2 reference driver is now based on Octavia, an operator grade
     scalable, reliable Load Balancer platform.

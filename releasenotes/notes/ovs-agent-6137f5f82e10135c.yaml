@@ -4,5 +4,6 @@ prelude: >
 features:
   - The OVS agent may now be restarted without affecting data plane connectivity.
 fixes:
-  - This `bug <https://bugs.launchpad.net/neutron/+bug/1383674>`_ has details
-     on the agent restart fix which went into Liberty.
+  - Launchpad `Bug 1383674 <https://bugs.launchpad.net/neutron/+bug/1383674>`_
+    has details on the agent restart fix which went into Liberty to address OVS
+    agent restartability.

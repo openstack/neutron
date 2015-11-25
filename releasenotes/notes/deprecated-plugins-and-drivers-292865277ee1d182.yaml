@@ -1,6 +1,8 @@
 ---
 prelude: >
-    During Liberty, some plugins and drivers have been deprecated.
+    During Liberty, some plugins and drivers have been deprecated, including the
+    metaplugin, the IBM SDN-VE plugin, the Cisco N1KV monolithic plugin, and the
+    Embrane plugin.
 other:
   - The metaplugin is removed in the Liberty release.
   - The IBM SDN-VE monolithic plugin is removed in the Liberty release.
