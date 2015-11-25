@@ -22,12 +22,12 @@ from oslo_log import log as logging
 import six
 from sqlalchemy import sql
 
+from neutron._i18n import _LE, _LW
 from neutron.common import constants
 from neutron.common import utils
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_hamode_db
-from neutron.i18n import _LE, _LW
 
 
 LOG = logging.getLogger(__name__)

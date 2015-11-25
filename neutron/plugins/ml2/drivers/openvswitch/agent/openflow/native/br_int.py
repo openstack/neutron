@@ -24,7 +24,7 @@ from ryu.lib.packet import ether_types
 from ryu.lib.packet import icmpv6
 from ryu.lib.packet import in_proto
 
-from neutron.i18n import _LE
+from neutron._i18n import _LE
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \

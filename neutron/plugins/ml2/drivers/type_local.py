@@ -16,8 +16,8 @@
 from oslo_log import log
 import six
 
+from neutron._i18n import _LI
 from neutron.common import exceptions as exc
-from neutron.i18n import _LI
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 

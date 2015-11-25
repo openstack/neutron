@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 from sqlalchemy import and_
 from sqlalchemy import event
 
+from neutron._i18n import _LE, _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -44,7 +45,6 @@ from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import sqlalchemyutils
 from neutron.extensions import l3
-from neutron.i18n import _LE, _LI
 from neutron import ipam
 from neutron.ipam import subnet_alloc
 from neutron import manager

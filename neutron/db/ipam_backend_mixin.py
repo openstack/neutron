@@ -22,13 +22,13 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
+from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
-from neutron.i18n import _LI
 from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)

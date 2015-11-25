@@ -21,9 +21,9 @@ import six
 from six.moves.urllib import parse
 from webob import exc
 
+from neutron._i18n import _LW
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.i18n import _LW
 
 
 LOG = logging.getLogger(__name__)

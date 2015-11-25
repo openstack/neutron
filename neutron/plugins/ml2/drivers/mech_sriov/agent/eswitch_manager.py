@@ -20,8 +20,8 @@ import re
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _LE, _LW
 from neutron.common import utils
-from neutron.i18n import _LE, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib

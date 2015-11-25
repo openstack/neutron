@@ -17,11 +17,11 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron._i18n import _LE, _LW
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron.i18n import _LE, _LW
 from neutron import manager
 
 

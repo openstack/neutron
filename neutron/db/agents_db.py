@@ -27,6 +27,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
@@ -34,7 +35,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
-from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 
 LOG = logging.getLogger(__name__)

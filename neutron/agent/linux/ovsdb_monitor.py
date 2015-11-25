@@ -16,9 +16,9 @@ import eventlet
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
+from neutron._i18n import _LE
 from neutron.agent.linux import async_process
 from neutron.agent.ovsdb import api as ovsdb
-from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)

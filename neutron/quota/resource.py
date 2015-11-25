@@ -19,9 +19,9 @@ from oslo_log import log
 from oslo_utils import excutils
 from sqlalchemy import event
 
+from neutron._i18n import _LE
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
-from neutron.i18n import _LE
 
 LOG = log.getLogger(__name__)
 

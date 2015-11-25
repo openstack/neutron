@@ -24,6 +24,7 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import importutils
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.metadata import driver as metadata_driver
@@ -34,7 +35,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
-from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 
 LOG = logging.getLogger(__name__)

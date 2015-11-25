@@ -20,9 +20,9 @@ from oslo_serialization import jsonutils
 from oslo_utils import excutils
 import six
 
+from neutron._i18n import _LE
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

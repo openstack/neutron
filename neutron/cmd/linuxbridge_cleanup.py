@@ -15,9 +15,9 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LE, _LI
 from neutron.common import config
 from neutron.common import utils as n_utils
-from neutron.i18n import _LE, _LI
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
     import linuxbridge_neutron_agent
 

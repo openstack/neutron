@@ -23,6 +23,7 @@ from oslo_service import periodic_task
 from oslo_service import service
 from oslo_utils import importutils
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
@@ -31,7 +32,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
-from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron import service as neutron_service
 

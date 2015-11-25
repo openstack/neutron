@@ -15,8 +15,8 @@
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.agent.linux import ip_lib
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

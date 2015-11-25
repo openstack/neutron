@@ -17,6 +17,7 @@ from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _LE, _LW
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events
@@ -28,7 +29,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
-from neutron.i18n import _LE, _LW
 from neutron import manager
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel

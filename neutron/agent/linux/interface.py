@@ -20,13 +20,13 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _LE, _LI
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import ipv6_utils
-from neutron.i18n import _LE, _LI
 
 
 LOG = logging.getLogger(__name__)

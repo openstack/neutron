@@ -20,13 +20,13 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
+from neutron._i18n import _LE, _LW
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
-from neutron.i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
 # xor-folding mask used for IPv6 rule index

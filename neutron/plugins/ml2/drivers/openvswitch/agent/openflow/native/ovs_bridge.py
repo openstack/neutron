@@ -17,8 +17,8 @@
 from oslo_log import log as logging
 from oslo_utils import excutils
 
+from neutron._i18n import _LI
 from neutron.agent.common import ovs_lib
-from neutron.i18n import _LI
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ofswitch
 

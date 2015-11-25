@@ -22,11 +22,11 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import sql
 
+from neutron._i18n import _LI, _LW
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.extensions import availability_zone as az_ext
-from neutron.i18n import _LI, _LW
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
 

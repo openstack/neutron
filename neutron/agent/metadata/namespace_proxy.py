@@ -21,12 +21,12 @@ import six
 import six.moves.urllib.parse as urlparse
 import webob
 
+from neutron._i18n import _LE
 from neutron.agent.linux import daemon
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
 from neutron.common import exceptions
 from neutron.common import utils
-from neutron.i18n import _LE
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)

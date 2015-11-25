@@ -18,8 +18,8 @@ from oslo_config import cfg
 from oslo_log import log
 from six.moves import socketserver
 
+from neutron._i18n import _LI, _LW
 from neutron.common import rpc as n_rpc
-from neutron.i18n import _LI, _LW
 from neutron.pecan_wsgi import app as pecan_app
 from neutron import server
 

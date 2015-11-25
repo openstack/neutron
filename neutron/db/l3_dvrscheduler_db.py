@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import joinedload
 
+from neutron._i18n import _LI, _LW
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -31,7 +32,6 @@ from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
-from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import db as ml2_db

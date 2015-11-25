@@ -14,7 +14,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from neutron.i18n import _LI, _LW
+from neutron._i18n import _LI, _LW
 from neutron.quota import resource
 
 LOG = log.getLogger(__name__)

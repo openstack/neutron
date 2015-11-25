@@ -12,12 +12,12 @@
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

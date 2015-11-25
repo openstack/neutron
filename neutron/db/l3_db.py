@@ -22,6 +22,7 @@ from sqlalchemy.orm import exc
 from oslo_utils import excutils
 import six
 
+from neutron._i18n import _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -37,7 +38,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.i18n import _LI
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils

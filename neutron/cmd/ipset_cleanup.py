@@ -16,10 +16,10 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LE, _LI
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import utils
 from neutron.common import config
-from neutron.i18n import _LE, _LI
 
 
 LOG = logging.getLogger(__name__)

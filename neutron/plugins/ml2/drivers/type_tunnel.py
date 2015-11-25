@@ -23,10 +23,10 @@ from oslo_log import log
 from six import moves
 from sqlalchemy import or_
 
+from neutron._i18n import _LI, _LW
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.db import api as db_api
-from neutron.i18n import _LI, _LW
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers

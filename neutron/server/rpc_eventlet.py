@@ -21,7 +21,7 @@
 import eventlet
 from oslo_log import log
 
-from neutron.i18n import _LI
+from neutron._i18n import _LI
 from neutron import server
 from neutron import service
 

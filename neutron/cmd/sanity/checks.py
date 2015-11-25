@@ -22,6 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
+from neutron._i18n import _LE
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
@@ -32,7 +33,6 @@ from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import constants as n_consts
 from neutron.common import utils
-from neutron.i18n import _LE
 from neutron.plugins.common import constants as const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const

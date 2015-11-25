@@ -15,10 +15,10 @@
 
 from oslo_log import log
 
+from neutron._i18n import _LI, _LW
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
-from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root
 from neutron import policy

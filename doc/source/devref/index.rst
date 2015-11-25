@@ -70,6 +70,7 @@ Neutron Internals
    callbacks
    dns_order
    upgrade
+   i18n
 
 Testing
 -------

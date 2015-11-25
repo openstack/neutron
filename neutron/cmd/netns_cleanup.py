@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron._i18n import _LE
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.dhcp import config as dhcp_config
@@ -32,7 +33,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.api.v2 import attributes
 from neutron.common import config
-from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)

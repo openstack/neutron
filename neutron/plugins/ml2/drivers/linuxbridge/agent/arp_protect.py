@@ -17,9 +17,9 @@ import netaddr
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
+from neutron._i18n import _LI
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
-from neutron.i18n import _LI
 
 LOG = logging.getLogger(__name__)
 SPOOF_CHAIN_PREFIX = 'neutronARP-'
