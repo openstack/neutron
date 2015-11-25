@@ -149,7 +149,7 @@ To provide better compatibility guarantees for rolling upgrades, RPC interfaces
 could also define specific format for arguments they accept. In OpenStack
 world, it's usually implemented using oslo.versionedobjects library, and
 relying on the library to define serialized form for arguments that are passed
-thru AMQP wire.
+through AMQP wire.
 
 Note that Neutron has *not* adopted oslo.versionedobjects library for its RPC
 interfaces yet (except for QoS feature).
