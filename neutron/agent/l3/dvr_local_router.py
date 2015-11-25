@@ -414,11 +414,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
         pass
 
-    def process_external(self, agent):
+    def process_external(self, agent, delete=False):
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:
             self.create_dvr_fip_interfaces(ex_gw_port)
-        super(DvrLocalRouter, self).process_external(agent)
+        super(DvrLocalRouter, self).process_external(agent, delete)
 
     def create_dvr_fip_interfaces(self, ex_gw_port):
         floating_ips = self.get_floating_ips()
@@ -455,10 +455,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 # configured
                 self.agent.process_router_add(self)
 
-    def process(self, agent):
+    def process(self, agent, delete=False):
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:
             self.fip_ns = agent.get_fip_ns(ex_gw_port['network_id'])
             self.fip_ns.scan_fip_ports(self)
 
-        super(DvrLocalRouter, self).process(agent)
+        super(DvrLocalRouter, self).process(agent, delete)

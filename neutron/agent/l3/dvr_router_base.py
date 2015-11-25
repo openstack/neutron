@@ -26,8 +26,8 @@ class DvrRouterBase(router.RouterInfo):
         self.agent = agent
         self.host = host
 
-    def process(self, agent):
-        super(DvrRouterBase, self).process(agent)
+    def process(self, agent, delete=False):
+        super(DvrRouterBase, self).process(agent, delete)
         # NOTE:  Keep a copy of the interfaces around for when they are removed
         self.snat_ports = self.get_snat_interfaces()
 

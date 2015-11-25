@@ -186,3 +186,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
         super(DvrEdgeRouter, self).update_routing_table(operation, route,
                                                         namespace=ns_name)
+
+    def delete(self, agent):
+        super(DvrEdgeRouter, self).delete(agent)
+        if self.snat_namespace:
+            self.snat_namespace.delete()
