@@ -134,7 +134,7 @@ The workflow for the life an RFE in Launchpad is as follows:
   * Escalate issues, and raise warnings to the release team/PTL if the
     effort shows slow progress. Approver and assignee are key parts to land
     a blueprint: should the approver and/or assignee be unable to continue
-    the committment during the release cycle, it is the Approver's
+    the commitment during the release cycle, it is the Approver's
     responsibility to reach out the release team/PTL so that replacements
     can be identified.
   * Provide a status update during the Neutron IRC meeting, if required.
