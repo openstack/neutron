@@ -206,5 +206,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         match = self._icmpv6_reply_match(ofp, ofpp, port=port)
         self.delete_flows(table_id=constants.LOCAL_SWITCHING,
                           match=match)
+        self.delete_arp_spoofing_allow_rules(port)
+
+    def delete_arp_spoofing_allow_rules(self, port):
         self.delete_flows(table_id=constants.ARP_SPOOF_TABLE,
                           in_port=port)
