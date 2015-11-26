@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 import contextlib
+import logging
+from logging import handlers
 import os
 import sys
 
@@ -31,6 +32,23 @@ FAKE_FD = 8
 class FakeEntry(object):
     def __init__(self, name, value):
         setattr(self, name, value)
+
+
+class TestUnwatchLog(base.BaseTestCase):
+
+    def test_unwatch_log(self):
+        stream_handler = logging.StreamHandler()
+        logger = logging.Logger('fake')
+        logger.addHandler(stream_handler)
+        logger.addHandler(handlers.WatchedFileHandler('/tmp/filename1'))
+
+        with mock.patch('logging.getLogger', return_value=logger):
+            daemon.unwatch_log()
+            self.assertEqual(2, len(logger.handlers))
+            logger.handlers.remove(stream_handler)
+            observed = logger.handlers[0]
+            self.assertEqual(logging.FileHandler, type(observed))
+            self.assertEqual('/tmp/filename1', observed.baseFilename)
 
 
 class TestPrivileges(base.BaseTestCase):
