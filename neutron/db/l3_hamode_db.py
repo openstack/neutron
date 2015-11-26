@@ -26,6 +26,8 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
+from neutron.db import l3_attrs_db
+from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -460,6 +462,21 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
         return router_db
 
+    def _delete_ha_network(self, context, net):
+        admin_ctx = context.elevated()
+        self._core_plugin.delete_network(admin_ctx, net.network_id)
+
+    def _ha_routers_present(self, context, tenant_id):
+        ha = True
+        routers = context.session.query(l3_db.Router).filter(
+            l3_db.Router.tenant_id == tenant_id).subquery()
+        ha_routers = context.session.query(
+            l3_attrs_db.RouterExtraAttributes).join(
+            routers,
+            l3_attrs_db.RouterExtraAttributes.router_id == routers.c.id
+        ).filter(l3_attrs_db.RouterExtraAttributes.ha == ha).first()
+        return ha_routers is not None
+
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
         super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
@@ -471,6 +488,21 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
                 self._delete_ha_interfaces(context, router_db.id)
+            try:
+                if not self._ha_routers_present(context,
+                                                router_db.tenant_id):
+                    self._delete_ha_network(context, ha_network)
+                    LOG.info(_LI("HA network %(network)s was deleted as "
+                                 "no HA routers are present in tenant "
+                                 "%(tenant)s."),
+                             {'network': ha_network.network_id,
+                              'tenant': router_db.tenant_id})
+            except n_exc.NetworkNotFound:
+                LOG.debug("HA network %s was already deleted.",
+                          ha_network.network_id)
+            except sa.exc.InvalidRequestError:
+                LOG.info(_LI("HA network %s can not be deleted."),
+                         ha_network.network_id)
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
