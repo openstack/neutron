@@ -81,10 +81,11 @@ def unwatch_log():
     to_replace = [h for h in log_root.handlers
                   if isinstance(h, handlers.WatchedFileHandler)]
     for handler in to_replace:
+        # NOTE(cbrandily): we use default delay(=False) to ensure the log file
+        # is opened before privileges drop.
         new_handler = std_logging.FileHandler(handler.baseFilename,
                                               mode=handler.mode,
-                                              encoding=handler.encoding,
-                                              delay=handler.delay)
+                                              encoding=handler.encoding)
         log_root.removeHandler(handler)
         log_root.addHandler(new_handler)
 
