@@ -34,7 +34,7 @@ Mac OS X. These instructions assume you're already familiar with
 Git and Gerrit, which is a code repository mirror and code review toolset
 , however if you aren't please see `this Git tutorial`_ for an introduction
 to using Git and `this guide`_ for a tutorial on using Gerrit and Git for
-code contribution to Openstack projects.
+code contribution to OpenStack projects.
 
 .. _this Git tutorial: http://git-scm.com/book/en/Getting-Started
 .. _this guide: http://docs.openstack.org/infra/manual/developers.html#development-workflow
