@@ -13,27 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
-
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
-import sqlalchemy as sa
 from sqlalchemy import or_
-from sqlalchemy import orm
-from sqlalchemy.orm import joinedload
 
-from neutron._i18n import _LI, _LW
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
-from neutron.db import agents_db
+
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
-from neutron.db import model_base
 from neutron.db import models_v2
-from neutron.extensions import l3agentscheduler
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -41,24 +32,6 @@ from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
 
 LOG = logging.getLogger(__name__)
-
-
-class CentralizedSnatL3AgentBinding(model_base.BASEV2):
-    """Represents binding between Neutron Centralized SNAT and L3 agents."""
-
-    __tablename__ = "csnat_l3_agent_bindings"
-
-    router_id = sa.Column(sa.String(36),
-                          sa.ForeignKey("routers.id", ondelete='CASCADE'),
-                          primary_key=True)
-    l3_agent_id = sa.Column(sa.String(36),
-                            sa.ForeignKey("agents.id", ondelete='CASCADE'),
-                            primary_key=True)
-    host_id = sa.Column(sa.String(255))
-    csnat_gw_port_id = sa.Column(sa.String(36),
-                                 sa.ForeignKey('ports.id', ondelete='CASCADE'))
-    l3_agent = orm.relationship(agents_db.Agent)
-    csnat_gw_port = orm.relationship(models_v2.Port)
 
 
 class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
@@ -117,18 +90,12 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
         ips = port['fixed_ips']
         router_ids = self.get_dvr_routers_by_portid(context, port['id'], ips)
-        if not router_ids:
-            return
-
-        for router_id in router_ids:
-            if not self.check_l3_agent_router_binding(
-                    context, router_id, l3_agent_on_host['id']):
-                self.schedule_router(
-                    context, router_id, candidates=[l3_agent_on_host])
-            LOG.debug('DVR: Handle new service_port on router: %s', router_id)
-
-        self.l3_rpc_notifier.routers_updated_on_host(
-            context, router_ids, port_host)
+        if router_ids:
+            LOG.debug('DVR: Handle new service port, host %(host)s, '
+                      'router ids %(router_ids)s',
+                {'host': port_host, 'router_ids': router_ids})
+            self.l3_rpc_notifier.routers_updated_on_host(
+                context, router_ids, port_host)
 
     def get_dvr_routers_by_portid(self, context, port_id, fixed_ips=None):
         """Gets the dvr routers on vmport subnets."""
@@ -187,7 +154,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         removed_router_info = []
         for router_id in router_ids:
             snat_binding = context.session.query(
-                CentralizedSnatL3AgentBinding).filter_by(
+                l3agent_sch_db.RouterL3AgentBinding).filter_by(
                     router_id=router_id).filter_by(
                         l3_agent_id=agent.id).first()
             if snat_binding:
@@ -220,183 +187,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                       info)
         return removed_router_info
 
-    def bind_snat_router(self, context, router_id, chosen_agent):
-        """Bind the router to the chosen l3 agent."""
-        with context.session.begin(subtransactions=True):
-            binding = CentralizedSnatL3AgentBinding()
-            binding.l3_agent = chosen_agent
-            binding.router_id = router_id
-            context.session.add(binding)
-            LOG.debug('SNAT Router %(router_id)s is scheduled to L3 agent '
-                      '%(agent_id)s', {'router_id': router_id,
-                                       'agent_id': chosen_agent.id})
-
-    def bind_dvr_router_servicenode(self, context, router_id,
-                                    chosen_snat_agent):
-        """Bind the IR router to service node if not already hosted."""
-        query = (context.session.query(l3agent_sch_db.RouterL3AgentBinding).
-                 filter_by(router_id=router_id))
-        for bind in query:
-            if bind.l3_agent_id == chosen_snat_agent.id:
-                LOG.debug('Distributed Router %(router_id)s already hosted '
-                          'on snat l3_agent %(snat_id)s',
-                          {'router_id': router_id,
-                           'snat_id': chosen_snat_agent.id})
-                return
-        with context.session.begin(subtransactions=True):
-            binding = l3agent_sch_db.RouterL3AgentBinding()
-            binding.l3_agent = chosen_snat_agent
-            binding.router_id = router_id
-            context.session.add(binding)
-            LOG.debug('Binding the distributed router %(router_id)s to '
-                      'the snat agent %(snat_id)s',
-                      {'router_id': router_id,
-                       'snat_id': chosen_snat_agent.id})
-
-    def bind_snat_servicenode(self, context, router_id, snat_candidates):
-        """Bind the snat router to the chosen l3 service agent."""
-        chosen_snat_agent = random.choice(snat_candidates)
-        self.bind_snat_router(context, router_id, chosen_snat_agent)
-        return chosen_snat_agent
-
-    def unbind_snat(self, context, router_id, agent_id=None):
-        """Unbind snat from the chosen l3 service agent.
-
-        Unbinds from all L3 agents hosting SNAT if passed agent_id is None
-        """
-        with context.session.begin(subtransactions=True):
-            query = (context.session.
-                     query(CentralizedSnatL3AgentBinding).
-                     filter_by(router_id=router_id))
-            if agent_id:
-                query = query.filter_by(l3_agent_id=agent_id)
-            binding = query.first()
-            if not binding:
-                LOG.debug('no SNAT router binding found for router: '
-                          '%(router)s, agent: %(agent)s',
-                          {'router': router_id, 'agent': agent_id or 'any'})
-                return
-
-            query.delete()
-        LOG.debug('Deleted binding of the SNAT router %s', router_id)
-
-        return binding
-
-    def unbind_router_servicenode(self, context, router_id, binding):
-        """Unbind the router from the chosen l3 service agent."""
-        port_found = False
-        with context.session.begin(subtransactions=True):
-            host = binding.l3_agent.host
-            subnet_ids = self.get_subnet_ids_on_router(context, router_id)
-            for subnet in subnet_ids:
-                ports = (
-                    self._core_plugin.get_ports_on_host_by_subnet(
-                        context, host, subnet))
-                for port in ports:
-                    if (n_utils.is_dvr_serviced(port['device_owner'])):
-                        port_found = True
-                        LOG.debug('One or more ports exist on the snat '
-                                  'enabled l3_agent host %(host)s and '
-                                  'router_id %(id)s',
-                                  {'host': host, 'id': router_id})
-                        break
-            agent_id = binding.l3_agent_id
-
-            if not port_found:
-                context.session.query(
-                    l3agent_sch_db.RouterL3AgentBinding).filter_by(
-                        router_id=router_id, l3_agent_id=agent_id).delete(
-                            synchronize_session=False)
-
-        if not port_found:
-            self.l3_rpc_notifier.router_removed_from_agent(
-                context, router_id, host)
-            LOG.debug('Removed binding for router %(router_id)s and '
-                      'agent %(agent_id)s',
-                      {'router_id': router_id, 'agent_id': agent_id})
-        return port_found
-
-    def unbind_snat_servicenode(self, context, router_id):
-        """Unbind snat AND the router from the current agent."""
-        with context.session.begin(subtransactions=True):
-            binding = self.unbind_snat(context, router_id)
-            if binding:
-                self.unbind_router_servicenode(context, router_id, binding)
-
-    def get_snat_bindings(self, context, router_ids):
-        """Retrieves the dvr snat bindings for a router."""
-        if not router_ids:
-            return []
-        query = context.session.query(CentralizedSnatL3AgentBinding)
-        query = query.options(joinedload('l3_agent')).filter(
-            CentralizedSnatL3AgentBinding.router_id.in_(router_ids))
-        return query.all()
-
-    def get_snat_candidates(self, sync_router, l3_agents):
-        """Get the valid snat enabled l3 agents for the distributed router."""
-        candidates = []
-        is_router_distributed = sync_router.get('distributed', False)
-        if not is_router_distributed:
-            return candidates
-        for l3_agent in l3_agents:
-            if not l3_agent.admin_state_up:
-                continue
-
-            agent_conf = self.get_configuration_dict(l3_agent)
-            agent_mode = agent_conf.get(n_const.L3_AGENT_MODE,
-                                        n_const.L3_AGENT_MODE_LEGACY)
-            if agent_mode != n_const.L3_AGENT_MODE_DVR_SNAT:
-                continue
-
-            router_id = agent_conf.get('router_id', None)
-            if router_id and router_id != sync_router['id']:
-                continue
-
-            handle_internal_only_routers = agent_conf.get(
-                'handle_internal_only_routers', True)
-            gateway_external_network_id = agent_conf.get(
-                'gateway_external_network_id', None)
-            ex_net_id = (sync_router['external_gateway_info'] or {}).get(
-                'network_id')
-            if ((not ex_net_id and not handle_internal_only_routers) or
-                (ex_net_id and gateway_external_network_id and
-                 ex_net_id != gateway_external_network_id)):
-                continue
-
-            candidates.append(l3_agent)
-        return candidates
-
-    def schedule_snat_router(self, context, router_id, sync_router):
-        """Schedule the snat router on l3 service agent."""
-        active_l3_agents = self.get_l3_agents(context, active=True)
-        if not active_l3_agents:
-            LOG.warn(_LW('No active L3 agents found for SNAT'))
-            return
-        snat_candidates = self.get_snat_candidates(sync_router,
-                                                   active_l3_agents)
-        if not snat_candidates:
-            LOG.warn(_LW('No candidates found for SNAT'))
-            return
-        else:
-            try:
-                chosen_agent = self.bind_snat_servicenode(
-                    context, router_id, snat_candidates)
-            except db_exc.DBDuplicateEntry:
-                LOG.info(_LI("SNAT already bound to a service node."))
-                return
-            self.bind_dvr_router_servicenode(
-                context, router_id, chosen_agent)
-            return chosen_agent
-
-    def _unschedule_router(self, context, router_id, agents_ids):
-        router = self.get_router(context, router_id)
-        if router.get('distributed', False):
-            # for DVR router unscheduling means just unscheduling SNAT portion
-            self.unbind_snat_servicenode(context, router_id)
-        else:
-            super(L3_DVRsch_db_mixin, self)._unschedule_router(
-                context, router_id, agents_ids)
-
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):
         if n_utils.is_extension_supported(self, n_const.L3_HA_MODE_EXT_ALIAS):
@@ -405,52 +195,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                                                   active=True)
         return self._get_dvr_sync_data(context, host, agent,
                                        router_ids=router_ids, active=True)
-
-    def check_agent_router_scheduling_needed(self, context, agent, router):
-        if router.get('distributed'):
-            if router['external_gateway_info']:
-                return not self.get_snat_bindings(context, [router['id']])
-            return False
-        return super(L3_DVRsch_db_mixin,
-                     self).check_agent_router_scheduling_needed(
-                     context, agent, router)
-
-    def create_router_to_agent_binding(self, context, agent, router):
-        """Create router to agent binding."""
-        router_id = router['id']
-        agent_id = agent['id']
-        if router['external_gateway_info'] and self.router_scheduler and (
-                router.get('distributed')):
-            try:
-                self.bind_snat_router(context, router_id, agent)
-                self.bind_dvr_router_servicenode(context,
-                                                 router_id, agent)
-            except db_exc.DBError:
-                raise l3agentscheduler.RouterSchedulingFailed(
-                    router_id=router_id,
-                    agent_id=agent_id)
-        else:
-            super(L3_DVRsch_db_mixin, self).create_router_to_agent_binding(
-                  context, agent, router)
-
-    def remove_router_from_l3_agent(self, context, agent_id, router_id):
-        binding = None
-        router = self.get_router(context, router_id)
-        if router['external_gateway_info'] and router.get('distributed'):
-            binding = self.unbind_snat(context, router_id, agent_id=agent_id)
-            # binding only exists when agent mode is dvr_snat
-            if binding:
-                notification_not_sent = self.unbind_router_servicenode(context,
-                                             router_id, binding)
-                if notification_not_sent:
-                    self.l3_rpc_notifier.routers_updated(
-                        context, [router_id], schedule_routers=False)
-
-        # Below Needs to be done when agent mode is legacy or dvr.
-        if not binding:
-            super(L3_DVRsch_db_mixin,
-                  self).remove_router_from_l3_agent(
-                    context, agent_id, router_id)
 
     def get_hosts_to_notify(self, context, router_id):
         """Returns all hosts to send notification about router update"""
@@ -570,12 +314,9 @@ def _notify_port_delete(event, resource, trigger, **kwargs):
     l3plugin = manager.NeutronManager.get_service_plugins().get(
         service_constants.L3_ROUTER_NAT)
     l3plugin.delete_arp_entry_for_dvr_service_port(context, port)
-    for router in removed_routers:
-        # we need admin context in case a tenant removes the last dvr
-        # serviceable port on a shared network owned by admin, where router
-        # is also owned by admin
-        l3plugin.remove_router_from_l3_agent(
-            context.elevated(), router['agent_id'], router['router_id'])
+    for info in removed_routers:
+        l3plugin.l3_rpc_notifier.router_removed_from_agent(
+            context, info['router_id'], info['host'])
 
 
 def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
