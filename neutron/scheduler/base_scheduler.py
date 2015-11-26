@@ -17,10 +17,6 @@ import abc
 from operator import attrgetter
 import random
 
-from oslo_log import log as logging
-
-LOG = logging.getLogger(__name__)
-
 
 class BaseScheduler(object):
     """The base scheduler (agnostic to resource type).

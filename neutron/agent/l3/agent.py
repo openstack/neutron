@@ -643,8 +643,8 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.agent_state.pop('start_flag', None)
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_LW("Neutron server does not support state report."
-                         " State report for this agent will be disabled."))
+            LOG.warn(_LW("Neutron server does not support state report. "
+                         "State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:
