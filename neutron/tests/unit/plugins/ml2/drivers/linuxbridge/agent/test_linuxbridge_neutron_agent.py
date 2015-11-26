@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import sys
 
 import mock
@@ -30,12 +31,18 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent \
 from neutron.tests import base
 
 LOCAL_IP = '192.168.0.33'
+PORT_1 = 'abcdef01-12ddssdfds-fdsfsd'
 DEVICE_1 = 'tapabcdef01-12'
+NETWORK_ID = '57653b20-ed5b-4ed0-a31d-06f84e3fd909'
 BRIDGE_MAPPING_VALUE = 'br-eth2'
 BRIDGE_MAPPINGS = {'physnet0': BRIDGE_MAPPING_VALUE}
 INTERFACE_MAPPINGS = {'physnet1': 'eth1'}
 FAKE_DEFAULT_DEV = mock.Mock()
 FAKE_DEFAULT_DEV.name = 'eth1'
+PORT_DATA = {
+    "port_id": PORT_1,
+    "device": DEVICE_1
+}
 
 
 class FakeIpLinkCommand(object):
@@ -128,10 +135,13 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         agent = self.agent
         agent._ensure_port_admin_state = mock.Mock()
         devices = [DEVICE_1]
+        agent.network_ports[NETWORK_ID].append(PORT_DATA)
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd,\
                 mock.patch.object(agent.sg_agent,
-                                  "remove_devices_filter") as fn_rdf:
+                                  "remove_devices_filter") as fn_rdf,\
+                mock.patch.object(agent.ext_manager,
+                                  "delete_port") as ext_mgr_delete_port:
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': True}
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
@@ -141,14 +151,21 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertFalse(resync)
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
+                self.assertTrue(ext_mgr_delete_port.called)
+                self.assertTrue(
+                    PORT_DATA not in agent.network_ports[NETWORK_ID]
+                )
 
     def test_treat_devices_removed_with_not_existed_device(self):
         agent = self.agent
         devices = [DEVICE_1]
+        agent.network_ports[NETWORK_ID].append(PORT_DATA)
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd,\
                 mock.patch.object(agent.sg_agent,
-                                  "remove_devices_filter") as fn_rdf:
+                                  "remove_devices_filter") as fn_rdf,\
+                mock.patch.object(agent.ext_manager,
+                                  "delete_port") as ext_mgr_delete_port:
             fn_udd.return_value = {'device': DEVICE_1,
                                    'exists': False}
             with mock.patch.object(linuxbridge_neutron_agent.LOG,
@@ -158,19 +175,30 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertFalse(resync)
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
+                self.assertTrue(ext_mgr_delete_port.called)
+                self.assertTrue(
+                    PORT_DATA not in agent.network_ports[NETWORK_ID]
+                )
 
     def test_treat_devices_removed_failed(self):
         agent = self.agent
         devices = [DEVICE_1]
+        agent.network_ports[NETWORK_ID].append(PORT_DATA)
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd,\
                 mock.patch.object(agent.sg_agent,
-                                  "remove_devices_filter") as fn_rdf:
+                                  "remove_devices_filter") as fn_rdf,\
+                mock.patch.object(agent.ext_manager,
+                                  "delete_port") as ext_mgr_delete_port:
             fn_udd.side_effect = Exception()
             resync = agent.treat_devices_removed(devices)
             self.assertTrue(resync)
             self.assertTrue(fn_udd.called)
             self.assertTrue(fn_rdf.called)
+            self.assertTrue(ext_mgr_delete_port.called)
+            self.assertTrue(
+                PORT_DATA not in agent.network_ports[NETWORK_ID]
+            )
 
     def _test_scan_devices(self, previous, updated,
                            fake_current, expected, sync):
@@ -273,6 +301,27 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
 
+    def test_scan_devices_updated_deleted_concurrently(self):
+        previous = {
+            'current': set([1, 2]),
+            'updated': set(),
+            'added': set(),
+            'removed': set()
+        }
+        # Device 2 disappeared.
+        fake_current = set([1])
+        # Device 2 got an concurrent update via network_update
+        updated = set([2])
+        expected = {
+            'current': set([1]),
+            'updated': set(),
+            'added': set(),
+            'removed': set([2])
+        }
+        self._test_scan_devices(
+            previous, updated, fake_current, expected, sync=False
+        )
+
     def test_scan_devices_updated_on_sync(self):
         previous = {'current': set([1, 2]),
                     'updated': set([1]),
@@ -318,6 +367,11 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                         'segmentation_id': 100,
                         'physical_network': 'physnet1',
                         'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX}
+        mock_port_data = {
+            'port_id': mock_details['port_id'],
+            'device': mock_details['device']
+        }
+        agent.ext_manager = mock.Mock()
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
         agent.br_mgr = mock.Mock()
@@ -331,6 +385,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                       100, 'port123',
                                       constants.DEVICE_OWNER_NETWORK_PREFIX)
         self.assertTrue(agent.plugin_rpc.update_device_up.called)
+        self.assertTrue(agent.ext_manager.handle_port.called)
+        self.assertTrue(
+            mock_port_data in agent.network_ports[mock_details['network_id']]
+        )
 
     def test_set_rpc_timeout(self):
         self.agent.stop()
@@ -369,6 +427,63 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
 
     def test_ensure_port_admin_state_down(self):
         self._test_ensure_port_admin_state(False)
+
+    def test_update_network_ports(self):
+        port_1_data = PORT_DATA
+        NETWORK_2_ID = 'fake_second_network'
+        port_2_data = {
+            'port_id': 'fake_port_2',
+            'device': 'fake_port_2_device_name'
+        }
+        self.agent.network_ports[NETWORK_ID].append(
+            port_1_data
+        )
+        self.agent.network_ports[NETWORK_ID].append(
+            port_2_data
+        )
+        #check update port:
+        self.agent._update_network_ports(
+            NETWORK_2_ID, port_2_data['port_id'], port_2_data['device']
+        )
+        self.assertTrue(
+            port_2_data not in self.agent.network_ports[NETWORK_ID]
+        )
+        self.assertTrue(
+            port_2_data in self.agent.network_ports[NETWORK_2_ID]
+        )
+
+    def test_clean_network_ports(self):
+        port_1_data = PORT_DATA
+        port_2_data = {
+            'port_id': 'fake_port_2',
+            'device': 'fake_port_2_device_name'
+        }
+        self.agent.network_ports[NETWORK_ID].append(
+            port_1_data
+        )
+        self.agent.network_ports[NETWORK_ID].append(
+            port_2_data
+        )
+        #check removing port from network when other ports are still there:
+        cleaned_port_id = self.agent._clean_network_ports(DEVICE_1)
+        self.assertTrue(
+            NETWORK_ID in self.agent.network_ports.keys()
+        )
+        self.assertTrue(
+            port_1_data not in self.agent.network_ports[NETWORK_ID]
+        )
+        self.assertTrue(
+            port_2_data in self.agent.network_ports[NETWORK_ID]
+        )
+        self.assertEqual(cleaned_port_id, PORT_1)
+        #and now remove last port from network:
+        cleaned_port_id = self.agent._clean_network_ports(
+            port_2_data['device']
+        )
+        self.assertTrue(
+            NETWORK_ID not in self.agent.network_ports.keys()
+        )
+        self.assertEqual(cleaned_port_id, port_2_data['port_id'])
 
 
 class TestLinuxBridgeManager(base.BaseTestCase):
@@ -1048,6 +1163,8 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 segment.network_type = 'vxlan'
                 segment.segmentation_id = 1
                 self.br_mgr.network_map['net_id'] = segment
+                self.updated_devices = set()
+                self.network_ports = collections.defaultdict(list)
 
         self.lb_rpc = linuxbridge_neutron_agent.LinuxBridgeRpcCallbacks(
             object(),
@@ -1059,16 +1176,29 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         mock_net = mock.Mock()
         mock_net.physical_network = None
 
-        self.lb_rpc.agent.br_mgr.network_map = {'123': mock_net}
+        self.lb_rpc.agent.br_mgr.network_map = {NETWORK_ID: mock_net}
 
         with mock.patch.object(self.lb_rpc.agent.br_mgr,
                                "get_bridge_name") as get_br_fn,\
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
                                   "delete_bridge") as del_fn:
             get_br_fn.return_value = "br0"
-            self.lb_rpc.network_delete("anycontext", network_id="123")
-            get_br_fn.assert_called_with("123")
+            self.lb_rpc.network_delete("anycontext", network_id=NETWORK_ID)
+            get_br_fn.assert_called_with(NETWORK_ID)
             del_fn.assert_called_with("br0")
+
+    def test_port_update(self):
+        port = {'id': PORT_1}
+        self.lb_rpc.port_update(context=None, port=port)
+        self.assertEqual(set([DEVICE_1]), self.lb_rpc.agent.updated_devices)
+
+    def test_network_update(self):
+        updated_network = {'id': NETWORK_ID}
+        self.lb_rpc.agent.network_ports = {
+            NETWORK_ID: [PORT_DATA]
+        }
+        self.lb_rpc.network_update(context=None, network=updated_network)
+        self.assertEqual(set([DEVICE_1]), self.lb_rpc.agent.updated_devices)
 
     def test_network_delete_with_existed_brq(self):
         mock_net = mock.Mock()
