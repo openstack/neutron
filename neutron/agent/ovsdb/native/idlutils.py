@@ -22,6 +22,7 @@ from ovs import jsonrpc
 from ovs import poller
 from ovs import stream
 
+from neutron._i18n import _
 from neutron.common import exceptions
 
 

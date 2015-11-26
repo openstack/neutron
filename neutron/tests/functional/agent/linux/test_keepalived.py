@@ -16,6 +16,7 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils

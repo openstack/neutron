@@ -18,6 +18,7 @@ import os
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.common import config
 
 

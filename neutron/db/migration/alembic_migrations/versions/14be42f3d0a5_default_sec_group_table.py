@@ -29,6 +29,7 @@ from alembic import op
 import six
 import sqlalchemy as sa
 
+from neutron._i18n import _
 from neutron.common import exceptions
 
 # Models can change in time, but migration should rely only on exact

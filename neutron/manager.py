@@ -21,7 +21,7 @@ import oslo_messaging
 from oslo_service import periodic_task
 import six
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.common import utils
 from neutron.plugins.common import constants
 

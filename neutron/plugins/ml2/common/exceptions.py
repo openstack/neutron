@@ -15,6 +15,7 @@
 
 """Exceptions used by ML2."""
 
+from neutron._i18n import _
 from neutron.common import exceptions
 
 

@@ -19,7 +19,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy import and_
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

@@ -23,6 +23,7 @@ import pecan
 from pecan import hooks
 import webob
 
+from neutron._i18n import _
 from neutron.common import constants as const
 from neutron import manager
 from neutron.pecan_wsgi.hooks import attribute_population

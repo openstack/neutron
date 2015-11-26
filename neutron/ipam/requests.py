@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import ipv6_utils

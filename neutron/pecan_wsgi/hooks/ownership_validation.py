@@ -16,6 +16,7 @@
 from pecan import hooks
 import webob
 
+from neutron._i18n import _
 from neutron import manager
 
 

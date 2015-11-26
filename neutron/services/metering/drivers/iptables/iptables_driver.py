@@ -18,7 +18,7 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
-from neutron._i18n import _LE, _LI
+from neutron._i18n import _, _LE, _LI
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager

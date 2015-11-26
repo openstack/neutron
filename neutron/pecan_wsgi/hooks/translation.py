@@ -17,6 +17,7 @@ from oslo_log import log as logging
 from pecan import hooks
 import webob.exc
 
+from neutron._i18n import _
 from neutron.api.v2 import base as v2base
 
 

@@ -19,6 +19,7 @@ from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db

@@ -17,7 +17,7 @@ from oslo_config import cfg
 from oslo_log import log
 import stevedore
 
-from neutron._i18n import _LE, _LI
+from neutron._i18n import _, _LE, _LI
 
 LOG = log.getLogger(__name__)
 

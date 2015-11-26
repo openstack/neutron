@@ -20,7 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import webob
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils as common_utils

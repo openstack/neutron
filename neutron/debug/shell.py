@@ -18,6 +18,7 @@ import sys
 from oslo_config import cfg
 from oslo_utils import importutils
 
+from neutron._i18n import _
 from neutron.agent.common import config
 from neutron.agent.common import utils
 from neutron.agent.linux import interface

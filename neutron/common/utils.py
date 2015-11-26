@@ -44,7 +44,7 @@ from oslo_utils import importutils
 import six
 from stevedore import driver
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.common import constants as n_const
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

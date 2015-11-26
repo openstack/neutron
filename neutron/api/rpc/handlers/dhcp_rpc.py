@@ -23,7 +23,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
-from neutron._i18n import _LW
+from neutron._i18n import _, _LW
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

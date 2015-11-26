@@ -27,7 +27,7 @@ import oslo_messaging
 from oslo_utils import uuidutils
 import six
 
-from neutron._i18n import _LI, _LW, _LE
+from neutron._i18n import _, _LI, _LW, _LE
 from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib

@@ -18,6 +18,7 @@ import testtools
 
 import mock
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

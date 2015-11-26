@@ -19,7 +19,7 @@ from oslo_log import log
 import six
 import sqlalchemy as sa
 
-from neutron._i18n import _LI, _LW
+from neutron._i18n import _, _LI, _LW
 from neutron.common import exceptions as exc
 from neutron.db import model_base
 from neutron.plugins.common import constants as p_const

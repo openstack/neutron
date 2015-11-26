@@ -17,6 +17,7 @@ import sys
 
 from oslo_config import cfg
 
+from neutron._i18n import _
 from neutron.agent.l3 import agent
 from neutron.agent.l3 import namespaces
 from neutron.agent import l3_agent

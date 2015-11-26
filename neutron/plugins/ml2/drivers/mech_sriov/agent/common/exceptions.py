@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 
 

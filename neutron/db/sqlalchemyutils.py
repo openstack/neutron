@@ -18,6 +18,7 @@ from six import moves
 import sqlalchemy
 from sqlalchemy.orm import properties
 
+from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 
 

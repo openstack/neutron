@@ -20,7 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import requests
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.agent.l3 import ha
 from neutron.agent.linux import daemon
 from neutron.agent.linux import ip_monitor

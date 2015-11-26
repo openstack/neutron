@@ -28,7 +28,7 @@ from oslo_service import loopingcall
 import six
 from six import moves
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils

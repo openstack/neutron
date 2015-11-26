@@ -26,7 +26,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc

@@ -17,7 +17,7 @@ import netaddr
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LW
+from neutron._i18n import _, _LW
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils

@@ -16,7 +16,7 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import config as l3_config

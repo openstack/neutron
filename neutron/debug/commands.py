@@ -19,7 +19,7 @@ from neutronclient.neutron import v2_0 as client
 from neutronclient.neutron.v2_0 import port
 from oslo_log import log as logging
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 
 
 class ProbeCommand(client.NeutronCommand):

@@ -34,6 +34,7 @@ from oslo_utils import strutils
 import six
 import testtools
 
+from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.callbacks import manager as registry_manager

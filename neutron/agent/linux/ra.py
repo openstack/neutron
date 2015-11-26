@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants

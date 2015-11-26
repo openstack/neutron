@@ -26,6 +26,7 @@ from oslo_utils import importutils
 import pkg_resources
 import six
 
+from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import migration
 

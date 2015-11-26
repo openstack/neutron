@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource

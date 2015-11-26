@@ -20,6 +20,7 @@ from eventlet import greenthread
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)

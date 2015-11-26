@@ -20,6 +20,8 @@ from oslo_config import cfg
 from oslo_utils import importutils
 import six
 
+from neutron._i18n import _
+
 interface_map = {
     'vsctl': 'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl',
     'native': 'neutron.agent.ovsdb.impl_idl.OvsdbIdl',

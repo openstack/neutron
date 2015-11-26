@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from ovs.db import idl
 
+from neutron._i18n import _
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection

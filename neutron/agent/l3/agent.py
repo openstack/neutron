@@ -23,7 +23,7 @@ from oslo_service import periodic_task
 from oslo_utils import excutils
 from oslo_utils import timeutils
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_edge_ha_router

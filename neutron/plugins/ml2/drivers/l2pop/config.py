@@ -15,6 +15,8 @@
 
 from oslo_config import cfg
 
+from neutron._i18n import _
+
 
 l2_population_options = [
     cfg.IntOpt('agent_boot_time', default=180,

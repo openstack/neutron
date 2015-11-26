@@ -15,6 +15,7 @@
 
 from oslo_config import cfg
 
+from neutron._i18n import _
 
 ml2_opts = [
     cfg.ListOpt('type_drivers',

@@ -21,6 +21,7 @@ from oslo_utils import uuidutils
 import six
 import webob.exc
 
+from neutron._i18n import _
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 

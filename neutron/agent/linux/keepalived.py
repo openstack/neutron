@@ -20,6 +20,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
