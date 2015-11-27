@@ -142,7 +142,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         # detected, sleep for a while to let the agents check in.
         tdelta = timeutils.utcnow() - getattr(self, '_clock_jump_canary',
                                               timeutils.utcnow())
-        if timeutils.total_seconds(tdelta) > cfg.CONF.agent_down_time:
+        if tdelta.total_seconds() > cfg.CONF.agent_down_time:
             LOG.warn(_LW("Time since last %s agent reschedule check has "
                          "exceeded the interval between checks. Waiting "
                          "before check to allow agents to send a heartbeat "
