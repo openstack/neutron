@@ -34,7 +34,10 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertEqual('user_id', ctx.user_id)
         self.assertEqual('tenant_id', ctx.project_id)
         self.assertEqual('tenant_id', ctx.tenant_id)
-        self.assertThat(ctx.request_id, matchers.StartsWith(b'req-'))
+        request_id = ctx.request_id
+        if isinstance(request_id, bytes):
+            request_id = request_id.decode('utf-8')
+        self.assertThat(request_id, matchers.StartsWith('req-'))
         self.assertEqual('user_id', ctx.user)
         self.assertEqual('tenant_id', ctx.tenant)
         self.assertIsNone(ctx.user_name)
