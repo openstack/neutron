@@ -16,6 +16,7 @@
 
 from oslo_config import cfg
 
+from neutron.agent.common import config
 from neutron.common import constants
 
 
@@ -36,11 +37,6 @@ OPTS = [
                       "with DVR.  This mode must be used for an L3 agent "
                       "running on a centralized node (or in single-host "
                       "deployments, e.g. devstack)")),
-    cfg.StrOpt('external_network_bridge', default='br-ex',
-               deprecated_for_removal=True,
-               help=_("Name of bridge used for external network "
-                      "traffic. This option is deprecated and will be removed "
-                      "in the M release.")),
     cfg.PortOpt('metadata_port',
                 default=9697,
                 help=_("TCP Port used by Neutron metadata namespace proxy.")),
@@ -54,10 +50,19 @@ OPTS = [
                       "that has the matching router ID.")),
     cfg.BoolOpt('handle_internal_only_routers',
                 default=True,
-                help=_("Agent should implement routers with no gateway")),
+                help=_("Indicates that this L3 agent should also handle "
+                       "routers that do not have an external network gateway "
+                       "configured. This option should be True only for a "
+                       "single agent in a Neutron deployment, and may be "
+                       "False for all agents if all routers must have an "
+                       "external network gateway.")),
     cfg.StrOpt('gateway_external_network_id', default='',
-               help=_("UUID of external network for routers implemented "
-                      "by the agents.")),
+               help=_("When external_network_bridge is set, each L3 agent can "
+                      "be associated with no more than one external network. "
+                      "This value should be set to the UUID of that external "
+                      "network. To allow L3 agent support multiple external "
+                      "networks, both the external_network_bridge and "
+                      "gateway_external_network_id must be left empty.")),
     cfg.StrOpt('ipv6_gateway', default='',
                help=_("With IPv6, the network used for the external gateway "
                       "does not need to have an associated subnet, since the "
@@ -95,3 +100,5 @@ OPTS = [
                       'external network. This mark will be masked with '
                       '0xffff so that only the lower 16 bits will be used.')),
 ]
+
+OPTS += config.EXT_NET_BRIDGE_OPTS

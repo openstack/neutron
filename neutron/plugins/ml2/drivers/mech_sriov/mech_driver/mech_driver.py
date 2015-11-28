@@ -34,10 +34,10 @@ FLAT_VLAN = 0
 sriov_opts = [
     cfg.ListOpt('supported_pci_vendor_devs',
                default=['15b3:1004', '8086:10ca'],
-               help=_("Supported PCI vendor devices, defined by "
-                      "vendor_id:product_id according to the PCI ID "
-                      "Repository. Default enables support for Intel "
-                      "and Mellanox SR-IOV capable NICs")),
+               help=_("Comma-separated list of supported PCI vendor devices, "
+                      "as defined by vendor_id:product_id according to the "
+                      "PCI ID Repository. Default enables support for Intel "
+                      "and Mellanox SR-IOV capable NICs.")),
 ]
 
 cfg.CONF.register_opts(sriov_opts, "ml2_sriov")

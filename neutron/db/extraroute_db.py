@@ -33,7 +33,7 @@ LOG = logging.getLogger(__name__)
 extra_route_opts = [
     #TODO(nati): use quota framework when it support quota for attributes
     cfg.IntOpt('max_routes', default=30,
-               help=_("Maximum number of routes")),
+               help=_("Maximum number of routes per router")),
 ]
 
 cfg.CONF.register_opts(extra_route_opts)

@@ -47,7 +47,9 @@ FAILMODE_STANDALONE = 'standalone'
 OPTS = [
     cfg.IntOpt('ovs_vsctl_timeout',
                default=DEFAULT_OVS_VSCTL_TIMEOUT,
-               help=_('Timeout in seconds for ovs-vsctl commands')),
+               help=_('Timeout in seconds for ovs-vsctl commands. '
+                      'If the timeout expires, ovs commands will fail with '
+                      'ALARMCLOCK error.')),
 ]
 cfg.CONF.register_opts(OPTS)
 

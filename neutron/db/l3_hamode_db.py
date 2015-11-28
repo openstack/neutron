@@ -50,12 +50,14 @@ L3_HA_OPTS = [
                 help=_('Enable HA mode for virtual routers.')),
     cfg.IntOpt('max_l3_agents_per_router',
                default=3,
-               help=_('Maximum number of agents on which a router will be '
-                      'scheduled.')),
+               help=_("Maximum number of L3 agents which a HA router will be "
+                      "scheduled on. If it is set to 0 then the router will "
+                      "be scheduled on every agent.")),
     cfg.IntOpt('min_l3_agents_per_router',
                default=constants.MINIMUM_AGENTS_FOR_HA,
-               help=_('Minimum number of agents on which a router will be '
-                      'scheduled.')),
+               help=_("Minimum number of L3 agents which a HA router will be "
+                      "scheduled on. If it is set to 0 then the router will "
+                      "be scheduled on every agent.")),
     cfg.StrOpt('l3_ha_net_cidr',
                default='169.254.192.0/18',
                help=_('Subnet used for the l3 HA admin network.')),

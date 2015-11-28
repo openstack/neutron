@@ -62,23 +62,25 @@ agent_opts = [
 sriov_nic_opts = [
     cfg.ListOpt('physical_device_mappings',
                 default=DEFAULT_DEVICE_MAPPINGS,
-                help=_("List of <physical_network>:<network_device> mapping "
+                help=_("Comma-separated list of "
+                       "<physical_network>:<network_device> tuples mapping "
                        "physical network names to the agent's node-specific "
-                       "physical network device of SR-IOV physical "
-                       "function to be used for VLAN networks. "
-                       "All physical networks listed in network_vlan_ranges "
-                       "on the server should have mappings to appropriate "
-                       "interfaces on each agent")),
+                       "physical network device interfaces of SR-IOV physical "
+                       "function to be used for VLAN networks. All physical "
+                       "networks listed in network_vlan_ranges on the server "
+                       "should have mappings to appropriate interfaces on "
+                       "each agent.")),
     cfg.ListOpt('exclude_devices',
                 default=DEFAULT_EXCLUDE_DEVICES,
-                help=_("List of <network_device>:<excluded_devices> "
-                       "mapping network_device to the agent's node-specific "
-                       "list of virtual functions that should not be used "
-                       "for virtual networking. excluded_devices is a "
-                       "semicolon separated list of virtual functions "
-                       "(BDF format).to exclude from network_device. "
-                       "The network_device in the mapping should appear in "
-                       "the physical_device_mappings list.")),
+                help=_("Comma-separated list of "
+                       "<network_device>:<vfs_to_exclude> tuples, mapping "
+                       "network_device to the agent's node-specific list of "
+                       "virtual functions that should not be used for virtual "
+                       "networking. vfs_to_exclude is a semicolon-separated "
+                       "list of virtual functions to exclude from "
+                       "network_device. The network_device in the mapping "
+                       "should appear in the physical_device_mappings "
+                       "list.")),
 ]
 
 

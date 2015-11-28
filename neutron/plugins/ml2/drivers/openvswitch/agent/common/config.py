@@ -28,7 +28,13 @@ DEFAULT_TUNNEL_TYPES = []
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
-               help=_("Integration bridge to use.")),
+               help=_("Integration bridge to use. "
+                      "Do not change this parameter unless you have a good "
+                      "reason to. This is the name of the OVS integration "
+                      "bridge. There is one per hypervisor. The integration "
+                      "bridge acts as a virtual 'patch bay'. All VM VIFs are "
+                      "attached to this bridge and then 'patched' according "
+                      "to their network connectivity.")),
     cfg.StrOpt('tunnel_bridge', default='br-tun',
                help=_("Tunnel bridge to use.")),
     cfg.StrOpt('int_peer_patch_port', default='patch-tun',
@@ -41,18 +47,33 @@ ovs_opts = [
               help=_("Local IP address of tunnel endpoint.")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
-                help=_("List of <physical_network>:<bridge>. "
-                       "Deprecated for ofagent.")),
+                help=_("Comma-separated list of <physical_network>:<bridge> "
+                       "tuples mapping physical network names to the agent's "
+                       "node-specific Open vSwitch bridge names to be used "
+                       "for flat and VLAN networks. The length of bridge "
+                       "names should be no more than 11. Each bridge must "
+                       "exist, and should have a physical network interface "
+                       "configured as a port. All physical networks "
+                       "configured on the server should have mappings to "
+                       "appropriate bridges on each agent. "
+                       "Note: If you remove a bridge from this "
+                       "mapping, make sure to disconnect it from the "
+                       "integration bridge as it won't be managed by the "
+                       "agent anymore. Deprecated for ofagent.")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 help=_("Use veths instead of patch ports to interconnect the "
-                       "integration bridge to physical bridges.")),
+                       "integration bridge to physical networks. "
+                       "Support kernel without Open vSwitch patch port "
+                       "support so long as it is set to True.")),
     cfg.StrOpt('of_interface', default='ovs-ofctl',
                choices=['ovs-ofctl', 'native'],
                help=_("OpenFlow interface to use.")),
     cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
                choices=[constants.OVS_DATAPATH_SYSTEM,
                         constants.OVS_DATAPATH_NETDEV],
-               help=_("OVS datapath to use.")),
+               help=_("OVS datapath to use. 'system' is the default value and "
+                      "corresponds to the kernel datapath. To enable the "
+                      "userspace datapath set this value to 'netdev'.")),
     cfg.StrOpt('vhostuser_socket_dir', default=constants.VHOST_USER_SOCKET_DIR,
                help=_("OVS vhost-user socket directory.")),
     cfg.IPOpt('of_listen_address', default='127.0.0.1',

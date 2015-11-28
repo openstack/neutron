@@ -17,7 +17,6 @@ import shlex
 import socket
 
 import netaddr
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.linux import dhcp
@@ -34,15 +33,6 @@ DEVICE_OWNER_COMPUTE_PROBE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'probe'
 
 
 class NeutronDebugAgent(object):
-
-    OPTS = [
-        # Needed for drivers
-        cfg.StrOpt('external_network_bridge', default='br-ex',
-                   deprecated_for_removal=True,
-                   help=_("Name of bridge used for external network "
-                          "traffic. This option is deprecated and will be "
-                          "removed in the M release.")),
-    ]
 
     def __init__(self, conf, client, driver):
         self.conf = conf

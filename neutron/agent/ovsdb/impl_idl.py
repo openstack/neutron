@@ -26,13 +26,6 @@ from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import idlutils
 
 
-OPTS = [
-    cfg.StrOpt('ovsdb_connection',
-               default='tcp:127.0.0.1:6640',
-               help=_('The connection string for the native OVSDB backend')),
-]
-cfg.CONF.register_opts(OPTS, 'OVS')
-# TODO(twilson) DEFAULT.ovs_vsctl_timeout should be OVS.vsctl_timeout
 cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 
 LOG = logging.getLogger(__name__)

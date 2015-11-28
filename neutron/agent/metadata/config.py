@@ -59,7 +59,12 @@ METADATA_PROXY_HANDLER_OPTS = [
                  help=_("TCP Port used by Nova metadata server.")),
      cfg.StrOpt('metadata_proxy_shared_secret',
                 default='',
-                help=_('Shared secret to sign instance-id request'),
+                help=_('When proxying metadata requests, Neutron signs the '
+                       'Instance-ID header with a shared secret to prevent '
+                       'spoofing. You may select any string for a secret, '
+                       'but it must match here and in the configuration used '
+                       'by the Nova Metadata Server. NOTE: Nova uses the same '
+                       'config key, but in [neutron] section.'),
                 secret=True),
      cfg.StrOpt('nova_metadata_protocol',
                 default='http',

@@ -33,8 +33,10 @@ vxlan_opts = [
                        "enumerating ranges of VXLAN VNI IDs that are "
                        "available for tenant network allocation")),
     cfg.StrOpt('vxlan_group',
-               help=_("Multicast group for VXLAN. If unset, disables VXLAN "
-                      "multicast mode.")),
+               help=_("Multicast group for VXLAN. When configured, will "
+                      "enable sending all broadcast traffic to this multicast "
+                      "group. When left unconfigured, will disable multicast "
+                      "VXLAN mode.")),
 ]
 
 cfg.CONF.register_opts(vxlan_opts, "ml2_type_vxlan")

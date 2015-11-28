@@ -42,7 +42,13 @@ core_opts = [
     cfg.PortOpt('bind_port', default=9696,
                 help=_("The port to bind to")),
     cfg.StrOpt('api_extensions_path', default="",
-               help=_("The path for API extensions")),
+               help=_("The path for API extensions. "
+                      "Note that this can be a colon-separated list of paths. "
+                      "For example: api_extensions_path = "
+                      "extensions:/path/to/more/exts:/even/more/exts. "
+                      "The __path__ of neutron.extensions is appended to "
+                      "this, so if your extensions are in there you don't "
+                      "need to specify them here.")),
     cfg.StrOpt('auth_strategy', default='keystone',
                help=_("The type of authentication to use")),
     cfg.StrOpt('core_plugin',
@@ -50,7 +56,10 @@ core_opts = [
     cfg.ListOpt('service_plugins', default=[],
                 help=_("The service plugins Neutron will use")),
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00",
-               help=_("The base MAC address Neutron will use for VIFs")),
+               help=_("The base MAC address Neutron will use for VIFs. "
+                      "The first 3 octets will remain unchanged. If the 4th "
+                      "octet is not 00, it will also be used. The others "
+                      "will be randomly generated.")),
     cfg.IntOpt('mac_generation_retries', default=16,
                help=_("How many times Neutron will retry MAC generation")),
     cfg.BoolOpt('allow_bulk', default=True,
@@ -74,7 +83,7 @@ core_opts = [
                        "considered for high availability while scheduling "
                        "the resource.")),
     cfg.IntOpt('max_dns_nameservers', default=5,
-               help=_("Maximum number of DNS nameservers")),
+               help=_("Maximum number of DNS nameservers per subnet")),
     cfg.IntOpt('max_subnet_host_routes', default=20,
                help=_("Maximum number of host routes per subnet")),
     cfg.IntOpt('max_fixed_ips_per_port', default=5,
@@ -83,16 +92,35 @@ core_opts = [
                       "is deprecated and will be removed in the N "
                       "release.")),
     cfg.StrOpt('default_ipv4_subnet_pool', deprecated_for_removal=True,
-               help=_("Default IPv4 subnet-pool to be used for automatic "
-                      "subnet CIDR allocation. This option is deprecated for "
-                      "removal in the N release.")),
+               help=_("Default IPv4 subnet pool to be used for automatic "
+                      "subnet CIDR allocation. "
+                      "Specifies by UUID the pool to be used in case where "
+                      "creation of a subnet is being called without a "
+                      "subnet pool ID. If not set then no pool "
+                      "will be used unless passed explicitly to the subnet "
+                      "create. If no pool is used, then a CIDR must be passed "
+                      "to create a subnet and that subnet will not be "
+                      "allocated from any pool; it will be considered part of "
+                      "the tenant's private address space. This option is "
+                      "deprecated for removal in the N release.")),
     cfg.StrOpt('default_ipv6_subnet_pool', deprecated_for_removal=True,
-               help=_("Default IPv6 subnet-pool to be used for automatic "
-                      "subnet CIDR allocation. This option is deprecated for "
-                      "removal in the N release.")),
+               help=_("Default IPv6 subnet pool to be used for automatic "
+                      "subnet CIDR allocation. "
+                      "Specifies by UUID the pool to be used in case where "
+                      "creation of a subnet is being called without a "
+                      "subnet pool ID. See the description for "
+                      "default_ipv4_subnet_pool for more information. This "
+                      "option is deprecated for removal in the N release.")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
-                       "CIDR allocation")),
+                       "CIDR allocation. "
+                       "Set to True to enable IPv6 Prefix Delegation for "
+                       "subnet allocation in a PD-capable environment. Users "
+                       "making subnet creation requests for IPv6 subnets "
+                       "without providing a CIDR or subnetpool ID will be "
+                       "given a CIDR via the Prefix Delegation mechanism. "
+                       "Note that enabling PD will override the behavior of "
+                       "the default IPv6 subnetpool.")),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
                deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
@@ -104,9 +132,13 @@ core_opts = [
                 help=_("Allow sending resource operation"
                        " notification to DHCP agent")),
     cfg.BoolOpt('allow_overlapping_ips', default=False,
-                help=_("Allow overlapping IP support in Neutron")),
+                help=_("Allow overlapping IP support in Neutron. "
+                       "Attention: the following parameter MUST be set to "
+                       "False if Neutron is being used in conjunction with "
+                       "Nova security groups.")),
     cfg.StrOpt('host', default=utils.get_hostname(),
-               help=_("Hostname to be used by the neutron server, agents and "
+               sample_default='example.domain',
+               help=_("Hostname to be used by the Neutron server, agents and "
                       "services running on this machine. All the agents and "
                       "services running on this machine must use the same "
                       "host value.")),
@@ -127,7 +159,11 @@ core_opts = [
                        'to VMs via network methods (DHCP and RA MTU options) '
                        'when the network\'s preferred MTU is known.')),
     cfg.StrOpt('ipam_driver',
-               help=_('IPAM driver to use.')),
+               help=_("Neutron IPAM (IP address management) driver to use. "
+                      "If ipam_driver is not set (default behavior), no IPAM "
+                      "driver is used. In order to use the reference "
+                      "implementation of Neutron IPAM driver, "
+                      "use 'internal'.")),
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
