@@ -21,8 +21,6 @@ Neutron. This includes the processes we use for blueprints and specs, bugs,
 contributor onboarding, core reviewer memberships, and other procedural
 items.
 
-Policies
---------
 .. toctree::
    :maxdepth: 3
 
@@ -34,10 +32,3 @@ Policies
    code-reviews
    thirdparty-ci
    office-hours
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

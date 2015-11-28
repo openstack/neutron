@@ -19,17 +19,8 @@ Neutron Stadium
 The Stadium Guide contains information on policies and procedures for the
 Neutron Stadium.
 
-Stadium
--------
 .. toctree::
    :maxdepth: 3
 
    sub_projects
    sub_project_guidelines
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
