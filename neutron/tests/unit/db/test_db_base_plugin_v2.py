@@ -4310,36 +4310,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPConflict.code)
 
-    def _test_subnet_update_enable_dhcp_no_ip_available_returns_409(
-            self, allocation_pools, cidr):
-        ip_version = netaddr.IPNetwork(cidr).version
-        with self.network() as network:
-            with self.subnet(network=network,
-                             allocation_pools=allocation_pools,
-                             enable_dhcp=False,
-                             cidr=cidr,
-                             ip_version=ip_version) as subnet:
-                id = subnet['subnet']['network_id']
-                self._create_port(self.fmt, id)
-                data = {'subnet': {'enable_dhcp': True}}
-                req = self.new_update_request('subnets', data,
-                                              subnet['subnet']['id'])
-                res = req.get_response(self.api)
-                self.assertEqual(res.status_int,
-                                 webob.exc.HTTPConflict.code)
-
-    def test_subnet_update_enable_dhcp_no_ip_available_returns_409_ipv4(self):
-        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.2'}]
-        cidr = '10.0.0.0/30'
-        self._test_subnet_update_enable_dhcp_no_ip_available_returns_409(
-                allocation_pools, cidr)
-
-    def test_subnet_update_enable_dhcp_no_ip_available_returns_409_ipv6(self):
-        allocation_pools = [{'start': '2001:db8::2', 'end': '2001:db8::2'}]
-        cidr = '2001:db8::/126'
-        self._test_subnet_update_enable_dhcp_no_ip_available_returns_409(
-                allocation_pools, cidr)
-
     def test_show_subnet(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:
