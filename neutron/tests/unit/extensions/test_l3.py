@@ -2683,6 +2683,37 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         chk_method.assert_called_with(mock.ANY,
                                                       ['fake_device'], None)
 
+    def test__notify_subnetpool_address_scope_update(self):
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+
+        tenant_id = _uuid()
+        with mock.patch.object(
+            plugin, 'notify_routers_updated') as chk_method, \
+                self.subnetpool(prefixes=['10.0.0.0/24'],
+                                admin=True, name='sp',
+                                tenant_id=tenant_id) as subnetpool, \
+                self.router(tenant_id=tenant_id) as router, \
+                self.network(tenant_id=tenant_id) as network:
+            subnetpool_id = subnetpool['subnetpool']['id']
+            data = {'subnet': {
+                    'network_id': network['network']['id'],
+                    'subnetpool_id': subnetpool_id,
+                    'prefixlen': 24,
+                    'ip_version': 4,
+                    'tenant_id': tenant_id}}
+            req = self.new_create_request('subnets', data)
+            subnet = self.deserialize(self.fmt, req.get_response(self.api))
+
+            admin_ctx = context.get_admin_context()
+            plugin.add_router_interface(
+                admin_ctx,
+                router['router']['id'], {'subnet_id': subnet['subnet']['id']})
+            l3_db._notify_subnetpool_address_scope_update(
+                mock.ANY, mock.ANY, mock.ANY,
+                context=admin_ctx, subnetpool_id=subnetpool_id)
+            chk_method.assert_called_with(admin_ctx, [router['router']['id']])
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 

@@ -14,10 +14,14 @@
 
 import contextlib
 
+import mock
 import netaddr
 import webob.exc
 
 from neutron.api.v2 import attributes as attr
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron import context
 from neutron.db import address_scope_db
@@ -369,6 +373,62 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                 res = self.deserialize(self.fmt, req.get_response(api))
                 self._compare_resource(res, update_data['subnetpool'],
                                        'subnetpool')
+
+    def _test_update_subnetpool_address_scope_notify(self, as_change=True):
+        with self.address_scope(name='foo-address-scope') as addr_scope:
+            foo_as_id = addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            initial_subnetpool = self._test_create_subnetpool(
+                [subnet.cidr], name='foo-sp',
+                min_prefixlen='21', address_scope_id=foo_as_id)
+            subnetpool_id = initial_subnetpool['subnetpool']['id']
+            with self.address_scope(name='bar-address-scope') as other_as, \
+                    self.network() as network:
+                data = {'subnet': {
+                        'network_id': network['network']['id'],
+                        'subnetpool_id': subnetpool_id,
+                        'prefixlen': 24,
+                        'ip_version': 4,
+                        'tenant_id': network['network']['tenant_id']}}
+                req = self.new_create_request('subnets', data)
+                subnet = self.deserialize(self.fmt,
+                                          req.get_response(self.api))
+
+                with mock.patch.object(registry, 'notify') as notify:
+                    plugin = db_base_plugin_v2.NeutronDbPluginV2()
+                    plugin.is_address_scope_owned_by_tenant = mock.Mock(
+                        return_value=True)
+                    plugin._validate_address_scope_id = mock.Mock()
+                    ctx = context.get_admin_context()
+
+                    bar_as_id = other_as['address_scope']['id']
+                    data = {'subnetpool': {
+                            'name': 'bar-sp'}}
+                    if as_change:
+                        data['subnetpool']['address_scope_id'] = bar_as_id
+
+                    updated_sp = plugin.update_subnetpool(
+                        ctx, subnetpool_id, data)
+
+                    self.assertEqual('bar-sp', updated_sp['name'])
+                    if as_change:
+                        self.assertEqual(bar_as_id,
+                                         updated_sp['address_scope_id'])
+                        notify.assert_called_once_with(
+                            resources.SUBNETPOOL_ADDRESS_SCOPE,
+                            events.AFTER_UPDATE,
+                            plugin.update_subnetpool, context=ctx,
+                            subnetpool_id=subnetpool_id)
+                    else:
+                        self.assertEqual(foo_as_id,
+                                         updated_sp['address_scope_id'])
+                        self.assertFalse(notify.called)
+
+    def test_update_subnetpool_address_scope_notify(self):
+        self._test_update_subnetpool_address_scope_notify()
+
+    def test_not_update_subnetpool_address_scope_not_notify(self):
+        self._test_update_subnetpool_address_scope_notify(False)
 
     def test_delete_address_scope_in_use(self):
         with self.address_scope(name='foo-address-scope') as addr_scope:
