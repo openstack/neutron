@@ -8,9 +8,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev130\n"
+"Project-Id-Version: neutron 8.0.0.dev524\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-23 06:11+0000\n"
+"POT-Creation-Date: 2015-11-29 06:23+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.1\n"
+"X-Generator: Zanata 3.7.3\n"
 
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
@@ -76,9 +76,6 @@ msgstr "Ajan SIGHUP yakaladı, sıfırlanıyor."
 
 msgid "Agent caught SIGTERM, quitting daemon loop."
 msgstr "Ajan SIGTERM yakaladı, artalan işlemi döngüsünden çıkılıyor."
-
-msgid "Agent initialised successfully, now running... "
-msgstr "Ajan başarıyla ilklendirildi, şimdi çalıştırılıyor... "
 
 msgid "Agent initialized successfully, now running... "
 msgstr "Ajan başarıyla ilklendirildi, şimdi çalıştırılıyor... "
@@ -273,9 +270,6 @@ msgstr "IPset temizliği başarıyla tamamlandı"
 
 msgid "IPv6 is not enabled on this system."
 msgstr "IPv6 bu sistemde etkin değil."
-
-msgid "Initializing CRD client... "
-msgstr "CRD istemcisi ilklendiriliyor... "
 
 #, python-format
 msgid "Initializing driver for type '%s'"

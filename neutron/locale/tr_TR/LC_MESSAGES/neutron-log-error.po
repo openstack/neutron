@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev130\n"
+"Project-Id-Version: neutron 8.0.0.dev524\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-23 06:11+0000\n"
+"POT-Creation-Date: 2015-11-29 06:23+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.1\n"
+"X-Generator: Zanata 3.7.3\n"
 
 #, python-format
 msgid ""
@@ -52,9 +52,6 @@ msgid ""
 msgstr ""
 "henüz start_rpc_listeners implemente edilmediği için 'rpc_workers = %d' göz "
 "ardı edildi."
-
-msgid "Address not present on interface"
-msgstr "Adres arayüzde mevcut değil"
 
 msgid "Agent Initialization Failed"
 msgstr "Ajan İlklendirme Başarısız"
@@ -89,15 +86,8 @@ msgstr ""
 "%(physical_network)s fiziksel ağı için %(bridge)s köprüsü mevcut değil. Ajan "
 "sonlandırıldı!"
 
-#, python-format
-msgid "Bridge %s does not exist"
-msgstr "Köprü %s mevcut değil"
-
 msgid "Brocade NOS driver error"
 msgstr "Brocade NOS sürücüsü hatası"
-
-msgid "Cannot have multiple IPv4 subnets on router port"
-msgstr "Yönlendirici bağlantı noktasında birden fazla IPv4 alt ağı olamaz"
 
 #, python-format
 msgid ""
@@ -209,10 +199,6 @@ msgid "Could not find %s to delete."
 msgstr "%s silmek için bulunamadı."
 
 #, python-format
-msgid "Could not parse: %s"
-msgstr "%s çözümlenemiyor."
-
-#, python-format
 msgid "Could not retrieve gateway port for subnet %s"
 msgstr "Alt ağ %s için geçit bağlantı noktası alınamadı"
 
@@ -244,9 +230,6 @@ msgstr "Sürücü %(driver)s %(func)s yi uygulamıyor"
 #, python-format
 msgid "Driver %(driver)s:%(func)s runtime error"
 msgstr "Sürücü %(driver)s:%(func)s çalışma zamanı hatası"
-
-msgid "Duplicate adddress detected"
-msgstr "Çift adres algılandı"
 
 #, python-format
 msgid "Error during notification for %(callback)s %(resource)s, %(event)s"
@@ -301,12 +284,6 @@ msgstr "Hata, IPset: %s silinemedi"
 #, python-format
 msgid "Error, unable to remove iptables rule for IPset: %s"
 msgstr "Hata, IPset: %s için iptables kuralı kaldırılamıyor"
-
-#, python-format
-msgid ""
-"Exceeded %s second limit waiting for address to leave the tentative state."
-msgstr ""
-"Adresin belirsiz durumdan çıkması için %s saniye bekleme sınırı aşıldı."
 
 #, python-format
 msgid ""
@@ -392,10 +369,6 @@ msgstr "fwaas süreç servisleri eş zamanlama başarısız"
 
 msgid "Failed on Agent configuration parse. Agent terminated!"
 msgstr "Ajan yapılandırma aşamasında başarısız olundu. Ajan sonlandırıldı!"
-
-#, python-format
-msgid "Failed on Agent initialisation : %s. Agent terminated!"
-msgstr "Ajan ilklendirme başarısız: %s. Ajan sonlandırıldı!"
 
 msgid "Failed reporting state!"
 msgstr "Raporlama durumu sağlanamıyor."
@@ -505,9 +478,6 @@ msgstr "Bilinirlik alanı silme hatası: %s"
 msgid "Failed unplugging interface '%s'"
 msgstr "%s arayuzu devre dışı bırakılamadı."
 
-msgid "Failure applying iptables rules"
-msgstr "Iptables kuralları uygulanırken başarısız olundu"
-
 #, python-format
 msgid "Firewall Driver Error for %(func_name)s for fw: %(fwid)s"
 msgstr "fw: %(fwid)s için %(func_name)s için Güvenlik Duvarı Hatası"
@@ -612,13 +582,6 @@ msgstr ""
 "Yönlendirici zamanlamayı işlemesi için L3 yönlendirme için kaydedilmiş "
 "eklenti yok"
 
-msgid ""
-"No plugin for L3 routing registered! Will reply to l3 agent with empty "
-"router dictionary."
-msgstr ""
-"L3 yönlendirme için kaydedilmiş eklenti yok. l3 ajanına boş yönlendirici "
-"sözlüğüyle yanıt verilecek."
-
 #, python-format
 msgid ""
 "No plugin for L3 routing registered. Cannot notify agents with the message %s"
@@ -662,10 +625,6 @@ msgid "OVS flows could not be applied on bridge %s"
 msgstr "OVS akışları  %s köprüsüne uygulanamıyor."
 
 #, python-format
-msgid "OVSDB Error: %s"
-msgstr "OVSDB Hatası: %s"
-
-#, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 "physical_interface_mappings ayrıştırma başarısız: %s. Ajan sonlandırıldı!"
@@ -679,21 +638,8 @@ msgid "Policy check error while calling %s!"
 msgstr "%s cağrılırken politika doğrulama hatası oluştu!"
 
 #, python-format
-msgid "Port %(port)s does not exist on %(bridge)s!"
-msgstr "Bağlantı noktası %(port)s %(bridge)s köprüsü üzerinde mevcut değil!"
-
-#, python-format
-msgid "Port %s does not exist"
-msgstr "Bağlantı noktası %s mevcut değil"
-
-#, python-format
 msgid "Removing incompatible router '%s'"
 msgstr "Uygunsuz '%s' yönlendirici bilgisi kaldırılıyor"
-
-msgid "Router id is required if not using namespaces."
-msgstr ""
-"Eğer tanım alanı kullanmıyorsanız bir yönlendirici bilgisi belirtmeniz "
-"gerekmektedir, "
 
 msgid "RuntimeError in obtaining namespace list for namespace cleanup."
 msgstr ""
@@ -752,10 +698,6 @@ msgstr "%s ağı için vxlan arayüzü eklenemedi"
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s degeri dönüştürülemiyor"
-
-#, python-format
-msgid "Unable to execute %(cmd)s."
-msgstr " %(cmd)s çalıştırılamıyor."
 
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"

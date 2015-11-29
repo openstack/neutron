@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev130\n"
+"Project-Id-Version: neutron 8.0.0.dev524\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-10-23 06:11+0000\n"
+"POT-Creation-Date: 2015-11-29 06:23+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.1\n"
+"X-Generator: Zanata 3.7.3\n"
 
 #, python-format
 msgid "%(agent_type)s agent %(agent_id)s is not active"
@@ -60,14 +60,6 @@ msgstr "%s zincirinin mevcut olmayan trafik sayaçları alınmaya çalışıldı
 msgid "Attempting to bind with dead agent: %s"
 msgstr "Ölü ajanla bağlama deneniyor: %s"
 
-msgid ""
-"Authenticating to nova using nova_admin_* options is deprecated. This should "
-"be done using an auth plugin, like password"
-msgstr ""
-"Nova'ya nova_admin_* seçeneklerini kullanarak kimlik doğrulama artık "
-"kullanılmıyor. Bu parola gibi bir yetkilendirme eklentisi kullanılarak "
-"yapılmalı"
-
 #, python-format
 msgid "Cannot find vf index for pci slot %s"
 msgstr "%s pci yuvası için vf indisi bulunamıyor"
@@ -84,14 +76,6 @@ msgstr ""
 #, python-format
 msgid "Could not expand segment %s"
 msgstr "Dilim %s genişletilemedi"
-
-#, python-format
-msgid ""
-"Creating an interface named %(name)s exceeds the %(limit)d character "
-"limitation. It was shortened to %(new_name)s to fit."
-msgstr ""
-"%(name)s isimli bir arayüz oluşturmak %(limit)d karakter sınırını aşar. "
-"Sığması için %(new_name)s'e kısaltıldı."
 
 #, python-format
 msgid "DHCP agent %s is not active"
@@ -304,12 +288,6 @@ msgstr ""
 "komutuyla desteklenmeli"
 
 #, python-format
-msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
-msgstr ""
-"%(agent)s ajanı tarafından güncellenen %(port)s bağlantı noktası herhangi "
-"bir dilime bağlı değil"
-
-#, python-format
 msgid "Port %s not found during update"
 msgstr "%s bağlantı noktası güncelleme sırasında bulunamadı"
 
@@ -317,15 +295,6 @@ msgid "Port ID not set! Nova will not be notified of port status change."
 msgstr ""
 "Bağlantı noktası kimliği ayarlanmamış! Nova bağlantı noktası durumu "
 "değişikliğinde bilgilendirilmeyecek."
-
-msgid ""
-"Registering resources to apply quota limits to using the quota_items option "
-"is deprecated as of Liberty.Resource REST controllers should take care of "
-"registering resources with the quota engine."
-msgstr ""
-"quota_items seçeneğini kullanarak kota sınırlarını uygulamak için kaynak "
-"kaydetme Liberty itibariyle kullanılmıyor. Kaynakların kota motoruyla "
-"kaydında kaynak REST kontrolcüleri kullanılmalı."
 
 #, python-format
 msgid ""
@@ -413,9 +382,6 @@ msgstr "Değişken IP için IP adresi yapılandırılamıyor: %s"
 #, python-format
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr "%s özniteliği için veri türü tanımlayıcısı bulunamadı"
-
-msgid "Unable to retrieve the agent ip, check the agent configuration."
-msgstr "Ajan ip'si alınamıyor, ajan yapılandırmasını kontrol edin."
 
 #, python-format
 msgid ""

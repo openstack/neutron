@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev185\n"
+"Project-Id-Version: neutron 8.0.0.dev524\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-01 06:11+0000\n"
+"POT-Creation-Date: 2015-11-29 06:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,21 +17,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.1.1\n"
 
-#: neutron/manager.py:74
+#: neutron/manager.py:73
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
 msgstr ""
 
-#: neutron/manager.py:86
+#: neutron/manager.py:85
 msgid "Neutron core_plugin not configured!"
 msgstr ""
 
-#: neutron/manager.py:146
+#: neutron/manager.py:145
 #, python-format
 msgid "Plugin '%s' not found."
 msgstr ""
 
-#: neutron/manager.py:193
+#: neutron/manager.py:187
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
@@ -134,147 +134,179 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/securitygroups_rpc.py:45
-msgid "Use ipset to speed-up the iptables based security groups."
+msgid ""
+"Use ipset to speed-up the iptables based security groups. Enabling ipset "
+"support requires that ipset is installed on L2 agent node."
 msgstr ""
 
-#: neutron/agent/common/config.py:30
-msgid "Root helper application."
+#: neutron/agent/common/config.py:29
+msgid ""
+"Root helper application. Use 'sudo neutron-rootwrap "
+"/etc/neutron/rootwrap.conf' to use the real root filter facility. Change "
+"to 'sudo' to skip the filtering and just run the command directly."
 msgstr ""
 
-#: neutron/agent/common/config.py:33
-msgid "Use the root helper to read the namespaces from the operating system."
+#: neutron/agent/common/config.py:36
+msgid ""
+"Use the root helper when listing the namespaces on a system. This may not"
+" be required depending on the security configuration. If the root helper "
+"is not required, set this to False for a performance improvement."
 msgstr ""
 
-#: neutron/agent/common/config.py:40
+#: neutron/agent/common/config.py:46
 msgid "Root helper daemon application to use when possible."
 msgstr ""
 
-#: neutron/agent/common/config.py:45
+#: neutron/agent/common/config.py:51
 msgid ""
 "Seconds between nodes reporting state to server; should be less than "
 "agent_down_time, best if it is half or less than agent_down_time."
 msgstr ""
 
-#: neutron/agent/common/config.py:49
+#: neutron/agent/common/config.py:55
 msgid "Log agent heartbeats"
 msgstr ""
 
-#: neutron/agent/common/config.py:54
+#: neutron/agent/common/config.py:60
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: neutron/agent/common/config.py:59
+#: neutron/agent/common/config.py:65
 msgid ""
-"Allow overlapping IP. This option is deprecated and will be removed in a "
-"future release."
+"Add comments to iptables rules. Set to false to disallow the addition of "
+"comments to generated iptables rules that describe each rule's purpose. "
+"System must support the iptables comments module for addition of "
+"comments."
 msgstr ""
 
-#: neutron/agent/common/config.py:66
-msgid "Add comments to iptables rules."
-msgstr ""
-
-#: neutron/agent/common/config.py:72
+#: neutron/agent/common/config.py:75
 msgid "Action to be executed when a child process dies"
 msgstr ""
 
-#: neutron/agent/common/config.py:74
+#: neutron/agent/common/config.py:77
 msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to "
 "disable"
 msgstr ""
 
-#: neutron/agent/common/config.py:89
-#, python-format
-msgid "String value '%(value)s' exceeds max length %(len)d"
-msgstr ""
-
-#: neutron/agent/common/config.py:106
+#: neutron/agent/common/config.py:85
 msgid "Availability zone of this node"
 msgstr ""
 
-#: neutron/agent/common/config.py:175
+#: neutron/agent/common/config.py:91
+msgid ""
+"Name of bridge used for external network traffic. This should be set to "
+"an empty value for the Linux Bridge. When this parameter is set, each L3 "
+"agent can be associated with no more than one external network. This "
+"option is deprecated and will be removed in the M release."
+msgstr ""
+
+#: neutron/agent/common/config.py:161
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
 #: neutron/agent/common/ovs_lib.py:50
-msgid "Timeout in seconds for ovs-vsctl commands"
+msgid ""
+"Timeout in seconds for ovs-vsctl commands. If the timeout expires, ovs "
+"commands will fail with ALARMCLOCK error."
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:496
+#: neutron/agent/common/ovs_lib.py:520
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:634
+#: neutron/agent/common/ovs_lib.py:658
 msgid "Cannot match priority on flow deletion or modification"
 msgstr ""
 
-#: neutron/agent/common/ovs_lib.py:639
+#: neutron/agent/common/ovs_lib.py:663
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 
-#: neutron/agent/dhcp/agent.py:582
+#: neutron/agent/dhcp/agent.py:579
 #, python-format
 msgid "Agent updated: %(payload)s"
 msgstr ""
 
 #: neutron/agent/dhcp/config.py:21
-msgid "Interval to resync."
-msgstr ""
-
-#: neutron/agent/dhcp/config.py:24
-msgid "The driver used to manage the DHCP server."
+msgid ""
+"The DHCP agent will resync its state with Neutron to recover from any "
+"transient notification or RPC errors. The interval is number of seconds "
+"between attempts."
 msgstr ""
 
 #: neutron/agent/dhcp/config.py:26
-msgid "Support Metadata requests on isolated networks."
+msgid "The driver used to manage the DHCP server."
 msgstr ""
 
 #: neutron/agent/dhcp/config.py:28
-msgid "Force to use DHCP to get Metadata on all networks."
-msgstr ""
-
-#: neutron/agent/dhcp/config.py:30
 msgid ""
-"Allows for serving metadata requests from a dedicated network. Requires "
-"enable_isolated_metadata = True"
+"The DHCP server can assist with providing metadata support on isolated "
+"networks. Setting this value to True will cause the DHCP server to append"
+" specific host routes to the DHCP request. The metadata service will only"
+" be activated when the subnet does not contain any router port. The guest"
+" instance must be configured to request host routes via DHCP (Option "
+"121). This option doesn't have any effect when force_metadata is set to "
+"True."
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:34
-msgid "Number of threads to use during sync process."
+#: neutron/agent/dhcp/config.py:38
+msgid ""
+"In some cases the Neutron router is not present to provide the metadata "
+"IP but the DHCP server can be used to provide this info. Setting this "
+"value will force the DHCP server to append specific host routes to the "
+"DHCP request. If this option is set, then the metadata service will be "
+"activated for all the networks."
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:40
+#: neutron/agent/dhcp/config.py:46
+msgid ""
+"Allows for serving metadata requests coming from a dedicated metadata "
+"access network whose CIDR is 169.254.169.254/16 (or larger prefix), and "
+"is connected to a Neutron router from which the VMs send metadata:1 "
+"request. In this case DHCP Option 121 will not be injected in VMs, as "
+"they will be able to reach 169.254.169.254 through a router. This option "
+"requires enable_isolated_metadata = True."
+msgstr ""
+
+#: neutron/agent/dhcp/config.py:55
+msgid ""
+"Number of threads to use during sync process. Should not exceed "
+"connection pool size configured on server."
+msgstr ""
+
+#: neutron/agent/dhcp/config.py:63
 msgid "Location to store DHCP server config files"
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:43
+#: neutron/agent/dhcp/config.py:66
 msgid ""
 "Domain to use for building the hostnames.This option is deprecated. It "
 "has been moved to neutron.conf as dns_domain. It will removed from here "
 "in a future release"
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:53
+#: neutron/agent/dhcp/config.py:76
 msgid "Override the default dnsmasq settings with this file"
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:55
+#: neutron/agent/dhcp/config.py:78
 msgid "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:59
+#: neutron/agent/dhcp/config.py:82
 msgid ""
 "Base log dir for dnsmasq logging. The log contains DHCP and DNS log "
 "information and is useful for debugging issues with either DHCP or DNS. "
 "If this section is null, disable dnsmasq log."
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:66
+#: neutron/agent/dhcp/config.py:89
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr ""
 
-#: neutron/agent/dhcp/config.py:68
+#: neutron/agent/dhcp/config.py:91
 msgid "Use broadcast in DHCP replies"
 msgstr ""
 
@@ -282,13 +314,13 @@ msgstr ""
 msgid "Extensions list to use"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:294
+#: neutron/agent/l3/agent.py:289
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3/config.py:27
+#: neutron/agent/l3/config.py:28
 msgid ""
 "The working mode for the agent. Allowed modes are: 'legacy' - this "
 "preserves the existing behavior where the L3 agent is deployed on a "
@@ -300,37 +332,40 @@ msgid ""
 "centralized node (or in single-host deployments, e.g. devstack)"
 msgstr ""
 
-#: neutron/agent/l3/config.py:41 neutron/debug/debug_agent.py:42
-msgid ""
-"Name of bridge used for external network traffic. This option is "
-"deprecated and will be removed in the M release."
-msgstr ""
-
-#: neutron/agent/l3/config.py:46
+#: neutron/agent/l3/config.py:42
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3/config.py:50
+#: neutron/agent/l3/config.py:45
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
 "the feature is disabled"
 msgstr ""
 
-#: neutron/agent/l3/config.py:53
+#: neutron/agent/l3/config.py:49
 msgid ""
-"If namespaces is disabled, the l3 agent can only configure a router that "
-"has the matching router ID."
+"If non-empty, the l3 agent can only configure a router that has the "
+"matching router ID."
 msgstr ""
 
-#: neutron/agent/l3/config.py:58
-msgid "Agent should implement routers with no gateway"
+#: neutron/agent/l3/config.py:53
+msgid ""
+"Indicates that this L3 agent should also handle routers that do not have "
+"an external network gateway configured. This option should be True only "
+"for a single agent in a Neutron deployment, and may be False for all "
+"agents if all routers must have an external network gateway."
 msgstr ""
 
 #: neutron/agent/l3/config.py:60
-msgid "UUID of external network for routers implemented by the agents."
+msgid ""
+"When external_network_bridge is set, each L3 agent can be associated with"
+" no more than one external network. This value should be set to the UUID "
+"of that external network. To allow L3 agent support multiple external "
+"networks, both the external_network_bridge and "
+"gateway_external_network_id must be left empty."
 msgstr ""
 
-#: neutron/agent/l3/config.py:63
+#: neutron/agent/l3/config.py:67
 msgid ""
 "With IPv6, the network used for the external gateway does not need to "
 "have an associated subnet, since the automatically assigned link-local "
@@ -345,24 +380,24 @@ msgid ""
 " allocated to the network and not through this parameter. "
 msgstr ""
 
-#: neutron/agent/l3/config.py:81
+#: neutron/agent/l3/config.py:85
 msgid ""
 "Driver used for ipv6 prefix delegation. This needs to be an entry point "
 "defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg "
 "for entry points included with the neutron source."
 msgstr ""
 
-#: neutron/agent/l3/config.py:87
+#: neutron/agent/l3/config.py:91
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3/config.py:90
+#: neutron/agent/l3/config.py:94
 msgid ""
 "Iptables mangle mark used to mark metadata valid requests. This mark will"
 " be masked with 0xffff so that only the lower 16 bits will be used."
 msgstr ""
 
-#: neutron/agent/l3/config.py:95
+#: neutron/agent/l3/config.py:99
 msgid ""
 "Iptables mangle mark used to mark ingress from external network. This "
 "mark will be masked with 0xffff so that only the lower 16 bits will be "
@@ -428,15 +463,15 @@ msgstr ""
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:76
+#: neutron/agent/linux/async_process.py:77
 msgid "respawn_interval must be >= 0 if provided."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:108
+#: neutron/agent/linux/async_process.py:111
 msgid "Process is already started"
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:129
+#: neutron/agent/linux/async_process.py:131
 msgid "Process is not running."
 msgstr ""
 
@@ -458,17 +493,17 @@ msgstr ""
 msgid "Failed to remove supplemental groups"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:242
+#: neutron/agent/linux/dhcp.py:244
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:249
+#: neutron/agent/linux/dhcp.py:251
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:251
+#: neutron/agent/linux/dhcp.py:253
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
@@ -482,20 +517,35 @@ msgid "Name of Open vSwitch bridge to use"
 msgstr ""
 
 #: neutron/agent/linux/interface.py:40
-msgid "Uses veth for an interface or not"
+msgid ""
+"Uses veth for an OVS interface or not. Support kernels with limited "
+"namespace support (e.g. RHEL 6.5) so long as ovs_use_veth is set to True."
 msgstr ""
 
-#: neutron/agent/linux/interface.py:42
+#: neutron/agent/linux/interface.py:45
 msgid "MTU setting for device."
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:35
+#: neutron/agent/linux/ip_lib.py:36
 msgid "Force ip_lib calls to use the root helper"
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:49
+#: neutron/agent/linux/ip_lib.py:50
 #, python-format
 msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
+msgstr ""
+
+#: neutron/agent/linux/ip_lib.py:597
+msgid "Address not present on interface"
+msgstr ""
+
+#: neutron/agent/linux/ip_lib.py:602
+msgid "Duplicate adddress detected"
+msgstr ""
+
+#: neutron/agent/linux/ip_lib.py:603
+#, python-format
+msgid "Exceeded %s second limit waiting for address to leave the tentative state."
 msgstr ""
 
 #: neutron/agent/linux/ip_link_support.py:33
@@ -508,31 +558,35 @@ msgstr ""
 msgid "ip link capability %(capability)s is not supported"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:214
+#: neutron/agent/linux/iptables_manager.py:216
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:54
+#: neutron/agent/linux/iptables_manager.py:408
+msgid "Failure applying iptables rules"
+msgstr ""
+
+#: neutron/agent/linux/keepalived.py:53
 #, python-format
 msgid ""
 "Network of size %(size)s, from IP range %(parent_range)s excluding IP "
 "ranges %(excluded_ranges)s was not found."
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:63
+#: neutron/agent/linux/keepalived.py:62
 #, python-format
 msgid "Invalid instance state: %(state)s, valid states are: %(valid_states)s"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:73
+#: neutron/agent/linux/keepalived.py:72
 #, python-format
 msgid ""
 "Invalid authentication type: %(auth_type)s, valid types are: "
 "%(valid_auth_types)s"
 msgstr ""
 
-#: neutron/agent/linux/keepalived.py:83
+#: neutron/agent/linux/keepalived.py:82
 #, python-format
 msgid ""
 "Attempted to add duplicate VIP address, existing vips are: "
@@ -553,24 +607,15 @@ msgid ""
 "required by RFC3315 DUID-EN."
 msgstr ""
 
-#: neutron/agent/linux/ra.py:35
+#: neutron/agent/linux/ra.py:36
 msgid "Location to store IPv6 RA config files"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:138
+#: neutron/agent/linux/utils.py:128
 #, python-format
 msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)d\n"
-msgstr ""
-
-#: neutron/agent/linux/utils.py:149
-#, python-format
-msgid ""
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
+"Exit code: %(returncode)d; Stdin: %(stdin)s; Stdout: %(stdout)s; Stderr: "
+"%(stderr)s"
 msgstr ""
 
 #: neutron/agent/metadata/agent.py:98
@@ -611,7 +656,7 @@ msgid ""
 "empty: agent effective group)."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:40
+#: neutron/agent/metadata/config.py:39
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
 "metadata_proxy_user/group is not allowed to read/write its log file and "
@@ -621,39 +666,44 @@ msgid ""
 " effective user id/name."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:54
+#: neutron/agent/metadata/config.py:53
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:57
+#: neutron/agent/metadata/config.py:56
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:60
+#: neutron/agent/metadata/config.py:59
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:63
-msgid "Shared secret to sign instance-id request"
+#: neutron/agent/metadata/config.py:62
+msgid ""
+"When proxying metadata requests, Neutron signs the Instance-ID header "
+"with a shared secret to prevent spoofing. You may select any string for a"
+" secret, but it must match here and in the configuration used by the Nova"
+" Metadata Server. NOTE: Nova uses the same config key, but in [neutron] "
+"section."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:68
+#: neutron/agent/metadata/config.py:72
 msgid "Protocol to access nova metadata, http or https"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:70
+#: neutron/agent/metadata/config.py:74
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:74
+#: neutron/agent/metadata/config.py:78
 msgid "Client certificate for nova metadata api server."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:77
+#: neutron/agent/metadata/config.py:81
 msgid "Private key of client certificate."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:91
+#: neutron/agent/metadata/config.py:95
 msgid ""
 "Metadata Proxy UNIX domain socket mode, 4 values allowed: 'deduce': "
 "deduce mode from metadata_proxy_user/group values, 'user': set metadata "
@@ -663,13 +713,13 @@ msgid ""
 "'all': set metadata proxy socket mode to 0o666, to use otherwise."
 msgstr ""
 
-#: neutron/agent/metadata/config.py:105
+#: neutron/agent/metadata/config.py:109
 msgid ""
 "Number of separate worker processes for metadata server (defaults to half"
 " of the number of CPUs)"
 msgstr ""
 
-#: neutron/agent/metadata/config.py:109
+#: neutron/agent/metadata/config.py:113
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr ""
 
@@ -694,15 +744,15 @@ msgstr ""
 msgid "TCP Port to listen for metadata server requests."
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:162
+#: neutron/agent/metadata/namespace_proxy.py:161
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:166
+#: neutron/agent/metadata/namespace_proxy.py:164
 msgid "Group (gid or name) running metadata proxy after its initialization"
 msgstr ""
 
-#: neutron/agent/metadata/namespace_proxy.py:170
+#: neutron/agent/metadata/namespace_proxy.py:168
 msgid ""
 "Watch file log. Log watch should be disabled when "
 "metadata_proxy_user/group has no read/write permissions on metadata proxy"
@@ -713,8 +763,37 @@ msgstr ""
 msgid "The interface for interacting with the OVSDB"
 msgstr ""
 
-#: neutron/agent/ovsdb/impl_idl.py:33
-msgid "The connection string for the native OVSDB backend"
+#: neutron/agent/ovsdb/api.py:35
+msgid ""
+"The connection string for the native OVSDB backend. Requires the native "
+"ovsdb_interface to be enabled."
+msgstr ""
+
+#: neutron/agent/ovsdb/impl_idl.py:93
+#, python-format
+msgid "OVSDB Error: %s"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/commands.py:95
+#, python-format
+msgid "Bridge %s does not exist"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/commands.py:323
+#, python-format
+msgid "Port %s does not exist"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/commands.py:334
+#, python-format
+msgid "Port %(port)s does not exist on %(bridge)s!"
+msgstr ""
+
+#: neutron/agent/ovsdb/native/commands.py:428
+#, python-format
+msgid ""
+"Row doesn't exist in the DB. Request info: Table=%(table)s. "
+"Columns=%(columns)s. Records=%(records)s."
 msgstr ""
 
 #: neutron/agent/ovsdb/native/idlutils.py:48
@@ -735,7 +814,7 @@ msgstr ""
 msgid "record"
 msgstr ""
 
-#: neutron/agent/windows/utils.py:72
+#: neutron/agent/windows/utils.py:63
 #, python-format
 msgid ""
 "\n"
@@ -746,43 +825,43 @@ msgid ""
 "Stderr: %(stderr)s"
 msgstr ""
 
-#: neutron/api/api_common.py:118
+#: neutron/api/api_common.py:119
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
 msgstr ""
 
-#: neutron/api/api_common.py:135
+#: neutron/api/api_common.py:136
 msgid "The number of sort_keys and sort_dirs must be same"
 msgstr ""
 
-#: neutron/api/api_common.py:140
+#: neutron/api/api_common.py:141
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr ""
 
-#: neutron/api/api_common.py:144
+#: neutron/api/api_common.py:145
 #, python-format
 msgid ""
 "%(invalid_dirs)s is invalid value for sort_dirs, valid value is '%(asc)s'"
 " and '%(desc)s'"
 msgstr ""
 
-#: neutron/api/api_common.py:328 neutron/api/v2/base.py:665
+#: neutron/api/api_common.py:329 neutron/api/v2/base.py:665
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr ""
 
-#: neutron/api/api_common.py:335
+#: neutron/api/api_common.py:336
 #, python-format
 msgid "Failed to parse request. Parameter '%s' not specified"
 msgstr ""
 
-#: neutron/api/extensions.py:232 neutron/pecan_wsgi/controllers/root.py:135
+#: neutron/api/extensions.py:231 neutron/pecan_wsgi/controllers/root.py:135
 #, python-format
 msgid "Extension with alias %s does not exist"
 msgstr ""
 
-#: neutron/api/extensions.py:236 neutron/api/extensions.py:240
+#: neutron/api/extensions.py:235 neutron/api/extensions.py:239
 msgid "Resource not found."
 msgstr ""
 
@@ -819,210 +898,212 @@ msgstr ""
 msgid "Resource %(resource_id)s of type %(resource_type)s not found"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:56
+#: neutron/api/v2/attributes.py:57
 #, python-format
 msgid ""
 "Invalid input. '%(target_dict)s' must be a dictionary with keys: "
 "%(expected_keys)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:68
+#: neutron/api/v2/attributes.py:69
 #, python-format
 msgid ""
 "Validation of dictionary's keys failed. Expected keys: %(expected_keys)s "
 "Provided keys: %(provided_keys)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:83
+#: neutron/api/v2/attributes.py:84
 #, python-format
 msgid "'%(data)s' is not in %(valid_values)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:99
+#: neutron/api/v2/attributes.py:100
 #, python-format
 msgid "'%s' Blank strings are not permitted"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:111
+#: neutron/api/v2/attributes.py:112
 #, python-format
 msgid "'%s' is not a valid string"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:116
+#: neutron/api/v2/attributes.py:117
 #, python-format
 msgid "'%(data)s' exceeds maximum length of %(max_len)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:126
-#, python-format
-msgid "'%s' is not a valid boolean value"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:145 neutron/api/v2/attributes.py:485
-#, python-format
-msgid "'%s' is not an integer"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:149
-#, python-format
-msgid "'%(data)s' is too small - must be at least '%(limit)d'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:154
-#, python-format
-msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:163
-#, python-format
-msgid "'%s' contains whitespace"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:182
-#, python-format
-msgid "'%s' is not a valid MAC address"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:211
-#, python-format
-msgid "'%s' is not a valid IP address"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:222
-#, python-format
-msgid "Invalid data format for IP pool: '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:239 neutron/api/v2/attributes.py:246
-#, python-format
-msgid "Invalid data format for fixed IP: '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:254
-#, python-format
-msgid "Duplicate IP address '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:269
-#, python-format
-msgid "Invalid data format for nameserver: '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:278
-#, python-format
-msgid "'%(host)s' is not a valid nameserver. %(msg)s"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:283
-#, python-format
-msgid "Duplicate nameserver '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:291
-#, python-format
-msgid "Invalid data format for hostroute: '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:308
-#, python-format
-msgid "Duplicate hostroute '%s'"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:324
-#: neutron/tests/unit/api/v2/test_attributes.py:502
-#: neutron/tests/unit/api/v2/test_attributes.py:510
-#: neutron/tests/unit/api/v2/test_attributes.py:524
-#: neutron/tests/unit/api/v2/test_attributes.py:532
-#, python-format
-msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:330
-#, python-format
-msgid "'%s' is not a valid IP subnet"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:338 neutron/api/v2/attributes.py:399
+#: neutron/api/v2/attributes.py:125 neutron/api/v2/attributes.py:354
+#: neutron/api/v2/attributes.py:415
 #, python-format
 msgid "'%s' is not a list"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:343 neutron/api/v2/attributes.py:409
+#: neutron/api/v2/attributes.py:129 neutron/api/v2/attributes.py:359
+#: neutron/api/v2/attributes.py:425
 #, python-format
 msgid "Duplicate items in the list: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:365
+#: neutron/api/v2/attributes.py:142
+#, python-format
+msgid "'%s' is not a valid boolean value"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:161 neutron/api/v2/attributes.py:501
+#, python-format
+msgid "'%s' is not an integer"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:165
+#, python-format
+msgid "'%(data)s' is too small - must be at least '%(limit)d'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:170
+#, python-format
+msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:179
+#, python-format
+msgid "'%s' contains whitespace"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:198
+#, python-format
+msgid "'%s' is not a valid MAC address"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:227
+#, python-format
+msgid "'%s' is not a valid IP address"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:238
+#, python-format
+msgid "Invalid data format for IP pool: '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:255 neutron/api/v2/attributes.py:262
+#, python-format
+msgid "Invalid data format for fixed IP: '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:270
+#, python-format
+msgid "Duplicate IP address '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:285
+#, python-format
+msgid "Invalid data format for nameserver: '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:294
+#, python-format
+msgid "'%(host)s' is not a valid nameserver. %(msg)s"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:299
+#, python-format
+msgid "Duplicate nameserver '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:307
+#, python-format
+msgid "Invalid data format for hostroute: '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:324
+#, python-format
+msgid "Duplicate hostroute '%s'"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:340
+#: neutron/tests/unit/api/v2/test_attributes.py:520
+#: neutron/tests/unit/api/v2/test_attributes.py:528
+#: neutron/tests/unit/api/v2/test_attributes.py:542
+#: neutron/tests/unit/api/v2/test_attributes.py:550
+#, python-format
+msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:346
+#, python-format
+msgid "'%s' is not a valid IP subnet"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:381
 #, python-format
 msgid "'%s' is not a valid input"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:387
+#: neutron/api/v2/attributes.py:403
 #, python-format
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:429
+#: neutron/api/v2/attributes.py:445
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:441
+#: neutron/api/v2/attributes.py:457
 #, python-format
 msgid "'%s' is not a dictionary"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:490
+#: neutron/api/v2/attributes.py:506
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:509
+#: neutron/api/v2/attributes.py:525
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:522
+#: neutron/api/v2/attributes.py:538
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:545
+#: neutron/api/v2/attributes.py:561
 #, python-format
 msgid "'%s' must be a non negative decimal."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:559
+#: neutron/api/v2/attributes.py:575
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:901
+#: neutron/api/v2/attributes.py:925
 #, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:908
+#: neutron/api/v2/attributes.py:932
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:927
+#: neutron/api/v2/attributes.py:951
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:936
+#: neutron/api/v2/attributes.py:960
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request "
 "requires admin privileges"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:944
+#: neutron/api/v2/attributes.py:968
 msgid "Running without keystone AuthN requires that tenant_id is specified"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:952
+#: neutron/api/v2/attributes.py:976
 #: neutron/extensions/allowedaddresspairs.py:80
 #: neutron/extensions/multiprovidernet.py:45
 #, python-format
@@ -1105,64 +1186,68 @@ msgid ""
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:206
+#: neutron/cmd/sanity_check.py:215
 msgid "Check for OVS vxlan support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:208
+#: neutron/cmd/sanity_check.py:217
 msgid "Check for OVS Geneve support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:210
+#: neutron/cmd/sanity_check.py:219
 msgid "Check for iproute2 vxlan support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:212
+#: neutron/cmd/sanity_check.py:221
 msgid "Check for patch port support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:214
+#: neutron/cmd/sanity_check.py:223
 msgid "Check for nova notification support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:216
+#: neutron/cmd/sanity_check.py:225
 msgid "Check for ARP responder support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:218
+#: neutron/cmd/sanity_check.py:227
 msgid "Check for ARP header match support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:220
+#: neutron/cmd/sanity_check.py:229
 msgid "Check for ICMPv6 header match support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:222
+#: neutron/cmd/sanity_check.py:231
 msgid "Check for VF management support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:224
+#: neutron/cmd/sanity_check.py:233
 msgid "Check netns permission settings"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:226
+#: neutron/cmd/sanity_check.py:235
 msgid "Check minimal dnsmasq version"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:228
+#: neutron/cmd/sanity_check.py:237
 msgid "Check ovsdb native interface support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:230
+#: neutron/cmd/sanity_check.py:239
 msgid "Check ebtables installation"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:232
+#: neutron/cmd/sanity_check.py:241
 msgid "Check keepalived IPv6 support"
 msgstr ""
 
-#: neutron/cmd/sanity_check.py:234
+#: neutron/cmd/sanity_check.py:243
 msgid "Check minimal dibbler version"
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:245
+msgid "Check ipset installation"
 msgstr ""
 
 #: neutron/common/config.py:41
@@ -1174,183 +1259,193 @@ msgid "The port to bind to"
 msgstr ""
 
 #: neutron/common/config.py:45
-msgid "The path for API extensions"
-msgstr ""
-
-#: neutron/common/config.py:47
-msgid "The type of authentication to use"
-msgstr ""
-
-#: neutron/common/config.py:49
-msgid "The core plugin Neutron will use"
-msgstr ""
-
-#: neutron/common/config.py:51
-msgid "The service plugins Neutron will use"
+msgid ""
+"The path for API extensions. Note that this can be a colon-separated list"
+" of paths. For example: api_extensions_path = "
+"extensions:/path/to/more/exts:/even/more/exts. The __path__ of "
+"neutron.extensions is appended to this, so if your extensions are in "
+"there you don't need to specify them here."
 msgstr ""
 
 #: neutron/common/config.py:53
-msgid "The base MAC address Neutron will use for VIFs"
+msgid "The type of authentication to use"
 msgstr ""
 
 #: neutron/common/config.py:55
-msgid "How many times Neutron will retry MAC generation"
+msgid "The core plugin Neutron will use"
 msgstr ""
 
 #: neutron/common/config.py:57
-msgid "Allow the usage of the bulk API"
+msgid "The service plugins Neutron will use"
 msgstr ""
 
 #: neutron/common/config.py:59
+msgid ""
+"The base MAC address Neutron will use for VIFs. The first 3 octets will "
+"remain unchanged. If the 4th octet is not 00, it will also be used. The "
+"others will be randomly generated."
+msgstr ""
+
+#: neutron/common/config.py:64
+msgid "How many times Neutron will retry MAC generation"
+msgstr ""
+
+#: neutron/common/config.py:66
+msgid "Allow the usage of the bulk API"
+msgstr ""
+
+#: neutron/common/config.py:68
 msgid "Allow the usage of the pagination"
 msgstr ""
 
-#: neutron/common/config.py:61
+#: neutron/common/config.py:70
 msgid "Allow the usage of the sorting"
 msgstr ""
 
-#: neutron/common/config.py:63
+#: neutron/common/config.py:72
 msgid ""
 "The maximum number of items returned in a single response, value was "
 "'infinite' or negative integer means no limit"
 msgstr ""
 
-#: neutron/common/config.py:67
-msgid "Maximum number of DNS nameservers"
+#: neutron/common/config.py:76
+msgid ""
+"Default value of availability zone hints. The availability zone aware "
+"schedulers use this when the resources availability_zone_hints is empty. "
+"Multiple availability zones can be specified by a comma separated string."
+" This value can be empty. In this case, even if availability_zone_hints "
+"for a resource is empty, availability zone is considered for high "
+"availability while scheduling the resource."
 msgstr ""
 
-#: neutron/common/config.py:69
+#: neutron/common/config.py:86
+msgid "Maximum number of DNS nameservers per subnet"
+msgstr ""
+
+#: neutron/common/config.py:88
 msgid "Maximum number of host routes per subnet"
 msgstr ""
 
-#: neutron/common/config.py:72
+#: neutron/common/config.py:91
 msgid ""
 "Maximum number of fixed ips per port. This option is deprecated and will "
 "be removed in the N release."
 msgstr ""
 
-#: neutron/common/config.py:76
-msgid "Default IPv4 subnet-pool to be used for automatic subnet CIDR allocation"
+#: neutron/common/config.py:95
+msgid ""
+"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation."
+" Specifies by UUID the pool to be used in case where creation of a subnet"
+" is being called without a subnet pool ID. If not set then no pool will "
+"be used unless passed explicitly to the subnet create. If no pool is "
+"used, then a CIDR must be passed to create a subnet and that subnet will "
+"not be allocated from any pool; it will be considered part of the "
+"tenant's private address space. This option is deprecated for removal in "
+"the N release."
 msgstr ""
 
-#: neutron/common/config.py:79
-msgid "Default IPv6 subnet-pool to be used for automatic subnet CIDR allocation"
+#: neutron/common/config.py:107
+msgid ""
+"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation."
+" Specifies by UUID the pool to be used in case where creation of a subnet"
+" is being called without a subnet pool ID. See the description for "
+"default_ipv4_subnet_pool for more information. This option is deprecated "
+"for removal in the N release."
 msgstr ""
 
-#: neutron/common/config.py:83
+#: neutron/common/config.py:115
+msgid ""
+"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set "
+"to True to enable IPv6 Prefix Delegation for subnet allocation in a PD-"
+"capable environment. Users making subnet creation requests for IPv6 "
+"subnets without providing a CIDR or subnetpool ID will be given a CIDR "
+"via the Prefix Delegation mechanism. Note that enabling PD will override "
+"the behavior of the default IPv6 subnetpool."
+msgstr ""
+
+#: neutron/common/config.py:126
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
 msgstr ""
 
-#: neutron/common/config.py:87
+#: neutron/common/config.py:130
 msgid "Domain to use for building the hostnames"
 msgstr ""
 
-#: neutron/common/config.py:89
+#: neutron/common/config.py:132
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr ""
 
-#: neutron/common/config.py:92
-msgid "Allow overlapping IP support in Neutron"
+#: neutron/common/config.py:135
+msgid ""
+"Allow overlapping IP support in Neutron. Attention: the following "
+"parameter MUST be set to False if Neutron is being used in conjunction "
+"with Nova security groups."
 msgstr ""
 
-#: neutron/common/config.py:94
+#: neutron/common/config.py:141
 msgid ""
-"Hostname to be used by the neutron server, agents and services running on"
+"Hostname to be used by the Neutron server, agents and services running on"
 " this machine. All the agents and services running on this machine must "
 "use the same host value."
 msgstr ""
 
-#: neutron/common/config.py:99
+#: neutron/common/config.py:146
 msgid ""
 "Ensure that configured gateway is on subnet. For IPv6, validate only if "
-"gateway is not a link local address. Deprecated, to be removed during the"
-" K release, at which point the check will be mandatory."
+"gateway is not a link local address."
 msgstr ""
 
-#: neutron/common/config.py:105
+#: neutron/common/config.py:150
 msgid "Send notification to nova when port status changes"
 msgstr ""
 
-#: neutron/common/config.py:107
+#: neutron/common/config.py:152
 msgid ""
 "Send notification to nova when port data (fixed_ips/floatingip) changes "
 "so nova can update its cache."
 msgstr ""
 
-#: neutron/common/config.py:111
-msgid ""
-"URL for connection to nova. Deprecated in favour of an auth plugin in "
-"[nova]."
-msgstr ""
-
-#: neutron/common/config.py:114
-msgid ""
-"Username for connecting to nova in admin context. Deprecated in favour of"
-" an auth plugin in [nova]."
-msgstr ""
-
-#: neutron/common/config.py:117
-msgid ""
-"Password for connection to nova in admin context. Deprecated in favour of"
-" an auth plugin in [nova]."
-msgstr ""
-
-#: neutron/common/config.py:121
-msgid ""
-"The uuid of the admin nova tenant. Deprecated in favour of an auth plugin"
-" in [nova]."
-msgstr ""
-
-#: neutron/common/config.py:124
-msgid ""
-"The name of the admin nova tenant. Deprecated in favour of an auth plugin"
-" in [nova]."
-msgstr ""
-
-#: neutron/common/config.py:128
-msgid ""
-"Authorization URL for connecting to nova in admin context. Deprecated in "
-"favour of an auth plugin in [nova]."
-msgstr ""
-
-#: neutron/common/config.py:132
+#: neutron/common/config.py:155
 msgid ""
 "Number of seconds between sending events to nova if there are any events "
 "to send."
 msgstr ""
 
-#: neutron/common/config.py:135
+#: neutron/common/config.py:158
 msgid ""
 "If True, effort is made to advertise MTU settings to VMs via network "
 "methods (DHCP and RA MTU options) when the network's preferred MTU is "
 "known."
 msgstr ""
 
-#: neutron/common/config.py:139
-msgid "IPAM driver to use."
+#: neutron/common/config.py:162
+msgid ""
+"Neutron IPAM (IP address management) driver to use. If ipam_driver is not"
+" set (default behavior), no IPAM driver is used. In order to use the "
+"reference implementation of Neutron IPAM driver, use 'internal'."
 msgstr ""
 
-#: neutron/common/config.py:141
+#: neutron/common/config.py:168
 msgid ""
 "If True, then allow plugins that support it to create VLAN transparent "
 "networks."
 msgstr ""
 
-#: neutron/common/config.py:148
+#: neutron/common/config.py:175
 msgid ""
 "Where to store Neutron state files. This directory must be writable by "
 "the agent."
 msgstr ""
 
-#: neutron/common/config.py:186
+#: neutron/common/config.py:206
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one "
 "region."
 msgstr ""
 
-#: neutron/common/config.py:208
+#: neutron/common/config.py:228
 #, python-format
 msgid "Base MAC: %s"
 msgstr ""
@@ -1361,7 +1456,7 @@ msgstr ""
 
 #: neutron/common/exceptions.py:56
 #, python-format
-msgid "Bad %(resource)s request: %(msg)s"
+msgid "Bad %(resource)s request: %(msg)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:68
@@ -1369,12 +1464,12 @@ msgid "Not authorized."
 msgstr ""
 
 #: neutron/common/exceptions.py:72
-msgid "The service is unavailable"
+msgid "The service is unavailable."
 msgstr ""
 
 #: neutron/common/exceptions.py:76
 #, python-format
-msgid "User does not have admin privileges: %(reason)s"
+msgid "User does not have admin privileges: %(reason)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:80
@@ -1384,74 +1479,74 @@ msgstr ""
 
 #: neutron/common/exceptions.py:84
 #, python-format
-msgid "Network %(net_id)s could not be found"
+msgid "Network %(net_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:88
 #, python-format
-msgid "Subnet %(subnet_id)s could not be found"
+msgid "Subnet %(subnet_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:92
 #, python-format
-msgid "Subnet pool %(subnetpool_id)s could not be found"
+msgid "Subnet pool %(subnetpool_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:96
 #, python-format
-msgid "Port %(port_id)s could not be found"
+msgid "Port %(port_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:100
 #, python-format
-msgid "QoS policy %(policy_id)s could not be found"
+msgid "QoS policy %(policy_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:104
 #, python-format
-msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found"
+msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:109
 #, python-format
-msgid "Port %(port_id)s could not be found on network %(net_id)s"
+msgid "Port %(port_id)s could not be found on network %(net_id)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:114
 #, python-format
 msgid ""
 "QoS binding for port %(port_id)s and policy %(policy_id)s could not be "
-"found"
+"found."
 msgstr ""
 
 #: neutron/common/exceptions.py:119
 #, python-format
 msgid ""
 "QoS binding for network %(net_id)s and policy %(policy_id)s could not be "
-"found"
+"found."
 msgstr ""
 
 #: neutron/common/exceptions.py:124
-msgid "Policy configuration policy.json could not be found"
+msgid "Policy configuration policy.json could not be found."
 msgstr ""
 
 #: neutron/common/exceptions.py:128
 #, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s"
+msgid "Failed to init policy %(policy)s because %(reason)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:132
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s"
+msgid "Failed to check policy %(policy)s because %(reason)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:136
 #, python-format
-msgid "Unsupported port state: %(port_state)s"
+msgid "Unsupported port state: %(port_state)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:140
-msgid "The resource is inuse"
+msgid "The resource is in use."
 msgstr ""
 
 #: neutron/common/exceptions.py:144
@@ -1468,7 +1563,7 @@ msgstr ""
 
 #: neutron/common/exceptions.py:154
 #, python-format
-msgid "Unable to complete operation on subnet %(subnet_id)s. %(reason)s"
+msgid "Unable to complete operation on subnet %(subnet_id)s %(reason)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:159
@@ -1478,382 +1573,398 @@ msgstr ""
 #: neutron/common/exceptions.py:165
 #, python-format
 msgid ""
+"Unable to complete operation on subnet pool %(subnet_pool_id)s. "
+"%(reason)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:170
+msgid "Two or more concurrent subnets allocated."
+msgstr ""
+
+#: neutron/common/exceptions.py:175
+#, python-format
+msgid ""
 "Unable to complete operation on port %(port_id)s for network %(net_id)s. "
 "Port already has an attached device %(device_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:171
+#: neutron/common/exceptions.py:181
 #, python-format
-msgid "Port %(port_id)s cannot be deleted directly via the port API: %(reason)s"
+msgid "Port %(port_id)s cannot be deleted directly via the port API: %(reason)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:176
+#: neutron/common/exceptions.py:186
+#, python-format
+msgid "Port %(port_id)s is already acquired by another DHCP agent"
+msgstr ""
+
+#: neutron/common/exceptions.py:190
 #, python-format
 msgid ""
 "Unable to complete operation on port %(port_id)s, port is already bound, "
-"port type: %(vif_type)s, old_mac %(old_mac)s, new_mac %(new_mac)s"
+"port type: %(vif_type)s, old_mac %(old_mac)s, new_mac %(new_mac)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:182
+#: neutron/common/exceptions.py:196
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The mac address "
 "%(mac)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:188
+#: neutron/common/exceptions.py:202
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of host routes"
 " exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:194
+#: neutron/common/exceptions.py:208
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of DNS "
 "nameservers exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:199
+#: neutron/common/exceptions.py:213
 #, python-format
 msgid ""
 "IP address %(ip_address)s is not a valid IP for any of the subnets on the"
 " specified network."
 msgstr ""
 
-#: neutron/common/exceptions.py:204
+#: neutron/common/exceptions.py:218
 #, python-format
 msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
 msgstr ""
 
-#: neutron/common/exceptions.py:209
+#: neutron/common/exceptions.py:223
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The IP address "
 "%(ip_address)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:214
+#: neutron/common/exceptions.py:228
 #, python-format
 msgid ""
 "Unable to create the network. The VLAN %(vlan_id)s on physical network "
 "%(physical_network)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:220
+#: neutron/common/exceptions.py:234
 #, python-format
 msgid ""
 "Unable to create the flat network. Physical network %(physical_network)s "
 "is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:225
+#: neutron/common/exceptions.py:239
 #, python-format
 msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:230
+#: neutron/common/exceptions.py:244
 msgid "Tenant network creation is not enabled."
 msgstr ""
 
-#: neutron/common/exceptions.py:238
+#: neutron/common/exceptions.py:252
 msgid ""
 "Unable to create the network. No tenant network is available for "
 "allocation."
 msgstr ""
 
-#: neutron/common/exceptions.py:243
+#: neutron/common/exceptions.py:257
 msgid ""
 "Unable to create the network. No available network found in maximum "
 "allowed attempts."
 msgstr ""
 
-#: neutron/common/exceptions.py:248
+#: neutron/common/exceptions.py:262
 #, python-format
 msgid ""
 "Subnet on port %(port_id)s does not match the requested subnet "
-"%(subnet_id)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:253
-#, python-format
-msgid "Malformed request body: %(reason)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:263
-#, python-format
-msgid "Invalid input for operation: %(error_message)s."
+"%(subnet_id)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:267
 #, python-format
+msgid "Malformed request body: %(reason)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:277
+#, python-format
+msgid "Invalid input for operation: %(error_message)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:281
+#, python-format
 msgid "The allocation pool %(pool)s is not valid."
 msgstr ""
 
-#: neutron/common/exceptions.py:271
+#: neutron/common/exceptions.py:285
 #, python-format
 msgid ""
 "Operation %(op)s is not supported for device_owner %(device_owner)s on "
 "port %(port_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:276
+#: neutron/common/exceptions.py:290
 #, python-format
 msgid ""
 "Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
 "%(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:281
+#: neutron/common/exceptions.py:295
 #, python-format
 msgid "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:286
+#: neutron/common/exceptions.py:300
 #, python-format
 msgid "Unable to generate unique mac on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:290
+#: neutron/common/exceptions.py:304
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:294
+#: neutron/common/exceptions.py:308
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr ""
 
-#: neutron/common/exceptions.py:298
+#: neutron/common/exceptions.py:312
 #, python-format
 msgid "Creation failed. %(dev_name)s already exists."
 msgstr ""
 
-#: neutron/common/exceptions.py:302
+#: neutron/common/exceptions.py:316
 #, python-format
 msgid "Unknown quota resources %(unknown)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:306
+#: neutron/common/exceptions.py:320
 #, python-format
-msgid "Quota exceeded for resources: %(overs)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:310
-msgid "Tenant-id was missing from Quota request"
-msgstr ""
-
-#: neutron/common/exceptions.py:314
-#, python-format
-msgid ""
-"Change would make usage less than 0 for the following resources: "
-"%(unders)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:319
-#, python-format
-msgid ""
-"Unable to reconfigure sharing settings for network %(network)s. Multiple "
-"tenants are using it"
+msgid "Quota exceeded for resources: %(overs)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:324
-#, python-format
-msgid "Invalid extension environment: %(reason)s"
+msgid "Tenant-id was missing from quota request."
 msgstr ""
 
 #: neutron/common/exceptions.py:328
 #, python-format
-msgid "Extensions not found: %(extensions)s"
+msgid ""
+"Change would make usage less than 0 for the following resources: "
+"%(unders)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:332
+#: neutron/common/exceptions.py:333
 #, python-format
-msgid "Invalid content type %(content_type)s"
+msgid ""
+"Unable to reconfigure sharing settings for network %(network)s. Multiple "
+"tenants are using it."
 msgstr ""
 
-#: neutron/common/exceptions.py:336
+#: neutron/common/exceptions.py:338
 #, python-format
-msgid "Unable to find any IP address on external network %(net_id)s."
+msgid "Invalid extension environment: %(reason)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:341
-msgid "More than one external network exists"
-msgstr ""
-
-#: neutron/common/exceptions.py:345
+#: neutron/common/exceptions.py:342
 #, python-format
-msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
+msgid "Extensions not found: %(extensions)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:346
+#, python-format
+msgid "Invalid content type %(content_type)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:350
 #, python-format
-msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
+msgid "Unable to find any IP address on external network %(net_id)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:355
+msgid "More than one external network exists."
+msgstr ""
+
+#: neutron/common/exceptions.py:359
+#, python-format
+msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:364
+#, python-format
+msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:369
 #, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. "
 "Unable to update."
 msgstr ""
 
-#: neutron/common/exceptions.py:360
+#: neutron/common/exceptions.py:374
 #, python-format
-msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
+msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
 msgstr ""
 
-#: neutron/common/exceptions.py:370
+#: neutron/common/exceptions.py:384
 msgid "Empty physical network name."
 msgstr ""
 
-#: neutron/common/exceptions.py:374
+#: neutron/common/exceptions.py:388
 #, python-format
-msgid "Invalid network Tunnel range: '%(tunnel_range)s' - %(error)s"
+msgid "Invalid network tunnel range: '%(tunnel_range)s' - %(error)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:385
+#: neutron/common/exceptions.py:399
 #, python-format
-msgid "Invalid network VXLAN port range: '%(vxlan_range)s'"
+msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr ""
 
-#: neutron/common/exceptions.py:389
-msgid "VXLAN Network unsupported."
+#: neutron/common/exceptions.py:403
+msgid "VXLAN network unsupported."
 msgstr ""
 
-#: neutron/common/exceptions.py:393
+#: neutron/common/exceptions.py:407
 #, python-format
-msgid "Found duplicate extension: %(alias)s"
+msgid "Found duplicate extension: %(alias)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:397
+#: neutron/common/exceptions.py:411
 #, python-format
 msgid ""
 "The following device_id %(device_id)s is not owned by your tenant or "
 "matches another tenants router."
 msgstr ""
 
-#: neutron/common/exceptions.py:402
+#: neutron/common/exceptions.py:416
 #, python-format
-msgid "Invalid CIDR %(input)s given as IP prefix"
+msgid "Invalid CIDR %(input)s given as IP prefix."
 msgstr ""
 
-#: neutron/common/exceptions.py:406
+#: neutron/common/exceptions.py:420
 #, python-format
-msgid "Router '%(router_id)s' is not compatible with this agent"
+msgid "Router '%(router_id)s' is not compatible with this agent."
 msgstr ""
 
-#: neutron/common/exceptions.py:410
+#: neutron/common/exceptions.py:424
 #, python-format
-msgid "Router '%(router_id)s' cannot be both DVR and HA"
+msgid "Router '%(router_id)s' cannot be both DVR and HA."
 msgstr ""
 
-#: neutron/common/exceptions.py:431
-msgid "network_id and router_id are None. One must be provided."
+#: neutron/common/exceptions.py:445
+msgid "Both network_id and router_id are None. One must be provided."
 msgstr ""
 
-#: neutron/common/exceptions.py:435
-msgid "Aborting periodic_sync_routers_task due to an error"
+#: neutron/common/exceptions.py:450
+msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr ""
 
-#: neutron/common/exceptions.py:447
+#: neutron/common/exceptions.py:462
 #, python-format
 msgid "%(driver)s: Internal driver error."
 msgstr ""
 
-#: neutron/common/exceptions.py:451
-msgid "Unspecified minimum subnet pool prefix"
+#: neutron/common/exceptions.py:466
+msgid "Unspecified minimum subnet pool prefix."
 msgstr ""
 
-#: neutron/common/exceptions.py:455
-msgid "Empty subnet pool prefix list"
+#: neutron/common/exceptions.py:470
+msgid "Empty subnet pool prefix list."
 msgstr ""
 
-#: neutron/common/exceptions.py:459
-msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool"
+#: neutron/common/exceptions.py:474
+msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr ""
 
-#: neutron/common/exceptions.py:463
+#: neutron/common/exceptions.py:478
 #, python-format
-msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool"
+msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
 msgstr ""
 
-#: neutron/common/exceptions.py:467
+#: neutron/common/exceptions.py:482
 #, python-format
 msgid ""
 "Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, "
-"%(base_prefix_type)s=%(base_prefixlen)s"
+"%(base_prefix_type)s=%(base_prefixlen)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:472
+#: neutron/common/exceptions.py:487
 #, python-format
-msgid "Illegal update to prefixes: %(msg)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:476
-#, python-format
-msgid "Failed to allocate subnet: %(reason)s"
-msgstr ""
-
-#: neutron/common/exceptions.py:480
-msgid ""
-"Failed to associate address scope: subnetpools within an address scope "
-"must have unique prefixes"
-msgstr ""
-
-#: neutron/common/exceptions.py:485
-#, python-format
-msgid ""
-"Illegal subnetpool association: subnetpool %(subnetpool_id)s  cannot be "
-"associated with address scope %(address_scope_id)s"
+msgid "Illegal update to prefixes: %(msg)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:491
 #, python-format
-msgid "Illegal subnetpool update : %(reason)s"
+msgid "Failed to allocate subnet: %(reason)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:495
-#, python-format
 msgid ""
-"Unable to allocate subnet with prefix length %(prefixlen)s, minimum "
-"allowed prefix is %(min_prefixlen)s"
+"Failed to associate address scope: subnetpools within an address scope "
+"must have unique prefixes."
 msgstr ""
 
 #: neutron/common/exceptions.py:500
 #, python-format
 msgid ""
+"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot be "
+"associated with address scope %(address_scope_id)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:506
+#, python-format
+msgid "Illegal subnetpool update : %(reason)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:510
+#, python-format
+msgid ""
+"Unable to allocate subnet with prefix length %(prefixlen)s, minimum "
+"allowed prefix is %(min_prefixlen)s."
+msgstr ""
+
+#: neutron/common/exceptions.py:515
+#, python-format
+msgid ""
 "Unable to allocate subnet with prefix length %(prefixlen)s, maximum "
-"allowed prefix is %(max_prefixlen)s"
+"allowed prefix is %(max_prefixlen)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:505
+#: neutron/common/exceptions.py:520
 #, python-format
-msgid "Unable to delete subnet pool: %(reason)s"
+msgid "Unable to delete subnet pool: %(reason)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:509
-msgid "Per-tenant subnet pool prefix quota exceeded"
+#: neutron/common/exceptions.py:524
+msgid "Per-tenant subnet pool prefix quota exceeded."
 msgstr ""
 
-#: neutron/common/exceptions.py:513
+#: neutron/common/exceptions.py:528
 #, python-format
-msgid "Device '%(device_name)s' does not exist"
+msgid "Device '%(device_name)s' does not exist."
 msgstr ""
 
-#: neutron/common/exceptions.py:517
+#: neutron/common/exceptions.py:532
 msgid ""
 "Subnets hosted on the same network must be allocated from the same subnet"
-" pool"
+" pool."
 msgstr ""
 
-#: neutron/common/exceptions.py:522
+#: neutron/common/exceptions.py:537
 #, python-format
-msgid "Object action %(action)s failed because: %(reason)s"
+msgid "Object action %(action)s failed because: %(reason)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:526
+#: neutron/common/exceptions.py:541
 msgid "IPtables conntrack zones exhausted, iptables rules cannot be applied."
 msgstr ""
 
@@ -1940,19 +2051,19 @@ msgid ""
 "agent until admin changes admin_state_up to True."
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:44
+#: neutron/db/agentschedulers_db.py:45
 msgid "Driver to use for scheduling network to DHCP agent"
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:46
+#: neutron/db/agentschedulers_db.py:47
 msgid "Allow auto scheduling networks to DHCP agent."
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:48
+#: neutron/db/agentschedulers_db.py:49
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:51
+#: neutron/db/agentschedulers_db.py:52
 msgid ""
 "Number of DHCP agents scheduled to host a tenant network. If this number "
 "is greater than 1, the scheduler automatically assigns multiple DHCP "
@@ -1960,7 +2071,7 @@ msgid ""
 "service."
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:58
+#: neutron/db/agentschedulers_db.py:59
 msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it "
@@ -2016,56 +2127,56 @@ msgstr ""
 msgid "Subnet has a prefix length that is incompatible with DHCP service enabled."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:466
+#: neutron/db/db_base_plugin_v2.py:457
 msgid "Multicast IP subnet is not supported if enable_dhcp is True."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:470
+#: neutron/db/db_base_plugin_v2.py:461
 msgid "Loopback IP subnet is not supported if enable_dhcp is True."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:479
+#: neutron/db/db_base_plugin_v2.py:470
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:499 neutron/db/db_base_plugin_v2.py:513
+#: neutron/db/db_base_plugin_v2.py:490 neutron/db/db_base_plugin_v2.py:504
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:506
+#: neutron/db/db_base_plugin_v2.py:497
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:522
+#: neutron/db/db_base_plugin_v2.py:513
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:526
+#: neutron/db/db_base_plugin_v2.py:517
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:534
+#: neutron/db/db_base_plugin_v2.py:525
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:544
+#: neutron/db/db_base_plugin_v2.py:535
 msgid "IPv6 RA Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:550
+#: neutron/db/db_base_plugin_v2.py:541
 msgid "IPv6 Address Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:629
+#: neutron/db/db_base_plugin_v2.py:620
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:646
+#: neutron/db/db_base_plugin_v2.py:647
 msgid "cidr and prefixlen must not be supplied together"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:671
+#: neutron/db/db_base_plugin_v2.py:672
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr ""
 
@@ -2076,15 +2187,21 @@ msgid ""
 "shared address scope %(address_scope_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:978
+#: neutron/db/db_base_plugin_v2.py:937
+msgid ""
+"A default subnetpool for this IP family has already been set. Only one "
+"default may exist per IP family"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:993
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1051
+#: neutron/db/db_base_plugin_v2.py:1077
 msgid "Subnet pool has existing allocations"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1058
+#: neutron/db/db_base_plugin_v2.py:1085
 msgid "mac address update"
 msgstr ""
 
@@ -2099,7 +2216,7 @@ msgid ""
 msgstr ""
 
 #: neutron/db/extraroute_db.py:36
-msgid "Maximum number of routes"
+msgid "Maximum number of routes per router"
 msgstr ""
 
 #: neutron/db/extraroute_db.py:91
@@ -2108,36 +2225,6 @@ msgstr ""
 
 #: neutron/db/extraroute_db.py:96
 msgid "the nexthop is used by router"
-msgstr ""
-
-#: neutron/db/flavors_db.py:35
-#, python-format
-msgid "Flavor %(flavor_id)s could not be found"
-msgstr ""
-
-#: neutron/db/flavors_db.py:39
-#, python-format
-msgid "Flavor %(flavor_id)s is used by some service instance"
-msgstr ""
-
-#: neutron/db/flavors_db.py:43
-#, python-format
-msgid "Service Profile %(sp_id)s could not be found"
-msgstr ""
-
-#: neutron/db/flavors_db.py:47
-#, python-format
-msgid "Service Profile %(sp_id)s is used by some service instance"
-msgstr ""
-
-#: neutron/db/flavors_db.py:51
-#, python-format
-msgid "Service Profile %(sp_id)s is already associated with flavor %(fl_id)s"
-msgstr ""
-
-#: neutron/db/flavors_db.py:56
-#, python-format
-msgid "Service Profile %(sp_id)s is not associated with flavor %(fl_id)s"
 msgstr ""
 
 #: neutron/db/ipam_backend_mixin.py:82
@@ -2161,7 +2248,7 @@ msgid ""
 msgstr ""
 
 #: neutron/db/ipam_backend_mixin.py:302
-msgid "Exceeded maximim amount of fixed ips per port"
+msgid "Exceeded maximum amount of fixed ips per port"
 msgstr ""
 
 #: neutron/db/ipam_backend_mixin.py:309
@@ -2173,10 +2260,6 @@ msgstr ""
 
 #: neutron/db/ipam_backend_mixin.py:323
 msgid "IP allocation requires subnet_id or ip_address"
-msgstr ""
-
-#: neutron/db/ipam_backend_mixin.py:371
-msgid "Exceeded maximum amount of fixed ips per port"
 msgstr ""
 
 #: neutron/db/ipam_non_pluggable_backend.py:259
@@ -2201,42 +2284,46 @@ msgid ""
 "agents."
 msgstr ""
 
-#: neutron/db/l3_db.py:279
+#: neutron/db/l3_db.py:281
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr ""
 
-#: neutron/db/l3_db.py:317
+#: neutron/db/l3_db.py:319
 #, python-format
 msgid "Network %s is not an external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:327
+#: neutron/db/l3_db.py:329
 #, python-format
 msgid "External IP %s is the same as the gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:477
+#: neutron/db/l3_db.py:479
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:494
+#: neutron/db/l3_db.py:496
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:510
+#: neutron/db/l3_db.py:512
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: neutron/db/l3_db.py:514
+#: neutron/db/l3_db.py:516
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: neutron/db/l3_db.py:535
+#: neutron/db/l3_db.py:529
+msgid "Router port must have at least one fixed IP"
+msgstr ""
+
+#: neutron/db/l3_db.py:537
 #, python-format
 msgid ""
 "Cannot have multiple router ports with the same network id if both "
@@ -2244,82 +2331,86 @@ msgid ""
 "id %(nid)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:577
+#: neutron/db/l3_db.py:558
+msgid "Cannot have multiple IPv4 subnets on router port"
+msgstr ""
+
+#: neutron/db/l3_db.py:579
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:581
+#: neutron/db/l3_db.py:583
 #, python-format
 msgid ""
 "IPv6 subnet %s configured to receive RAs from an external router cannot "
 "be added to Neutron Router."
 msgstr ""
 
-#: neutron/db/l3_db.py:792
+#: neutron/db/l3_db.py:794
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: neutron/db/l3_db.py:837
+#: neutron/db/l3_db.py:839
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:841
+#: neutron/db/l3_db.py:843
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:853
+#: neutron/db/l3_db.py:855
 #, python-format
 msgid ""
 "Floating IP %(floatingip_id)s is associated with non-IPv4 address "
 "%s(internal_ip)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:857
+#: neutron/db/l3_db.py:859
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to %s, since that is not an IPv4 "
 "address."
 msgstr ""
 
-#: neutron/db/l3_db.py:865
+#: neutron/db/l3_db.py:867
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:872
+#: neutron/db/l3_db.py:874
 #, python-format
 msgid "Cannot add floating IP to port %s that has no fixed IPv4 addresses"
 msgstr ""
 
-#: neutron/db/l3_db.py:876
+#: neutron/db/l3_db.py:878
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPv4 addresses.  Must provide a specific IPv4 "
 "address when assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:905
+#: neutron/db/l3_db.py:907
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: neutron/db/l3_db.py:949
+#: neutron/db/l3_db.py:951
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:953
+#: neutron/db/l3_db.py:955
 #, python-format
 msgid "Network %s does not contain any IPv4 subnet"
 msgstr ""
 
-#: neutron/db/l3_db.py:1105
+#: neutron/db/l3_db.py:1107
 #, python-format
 msgid "has device owner %s"
 msgstr ""
@@ -2340,11 +2431,11 @@ msgid ""
 "admin_state_up to False prior to upgrade."
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:543
+#: neutron/db/l3_dvr_db.py:614
 msgid "Unable to create the Agent Gateway Port"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:574
+#: neutron/db/l3_dvr_db.py:645
 msgid "Unable to create the SNAT Interface Port"
 msgstr ""
 
@@ -2354,23 +2445,27 @@ msgid ""
 "external_gateway_info."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:48
+#: neutron/db/l3_hamode_db.py:50
 msgid "Enable HA mode for virtual routers."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:51
-msgid "Maximum number of agents on which a router will be scheduled."
+#: neutron/db/l3_hamode_db.py:53
+msgid ""
+"Maximum number of L3 agents which a HA router will be scheduled on. If it"
+" is set to 0 then the router will be scheduled on every agent."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:55
-msgid "Minimum number of agents on which a router will be scheduled."
+#: neutron/db/l3_hamode_db.py:58
+msgid ""
+"Minimum number of L3 agents which a HA router will be scheduled on. If it"
+" is set to 0 then the router will be scheduled on every agent."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:59
+#: neutron/db/l3_hamode_db.py:63
 msgid "Subnet used for the l3 HA admin network."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:61
+#: neutron/db/l3_hamode_db.py:65
 msgid ""
 "The network type to use when creating the HA network for an HA router. By"
 " default or if empty, the first 'tenant_network_types' is used. This is "
@@ -2378,11 +2473,11 @@ msgid ""
 "the default one."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:67
+#: neutron/db/l3_hamode_db.py:71
 msgid "The physical network name with which the HA network can be created."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:431
+#: neutron/db/l3_hamode_db.py:435
 msgid ""
 "Cannot change HA attribute of active routers. Please set router "
 "admin_state_up to False prior to upgrade."
@@ -2395,12 +2490,12 @@ msgid ""
 "actions: %(valid_actions)s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:271 neutron/db/securitygroups_db.py:621
+#: neutron/db/securitygroups_db.py:272 neutron/db/securitygroups_db.py:622
 #, python-format
 msgid "cannot be deleted due to %s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:686
+#: neutron/db/securitygroups_db.py:687
 msgid "Default security group"
 msgstr ""
 
@@ -2426,117 +2521,130 @@ msgstr ""
 msgid "%s cannot be called while in offline mode"
 msgstr ""
 
-#: neutron/db/migration/cli.py:66
+#: neutron/db/migration/cli.py:68
 msgid "Neutron plugin provider module"
 msgstr ""
 
-#: neutron/db/migration/cli.py:69
+#: neutron/db/migration/cli.py:72
 msgid ""
 "(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
 "service to execute the command against."
 msgstr ""
 
-#: neutron/db/migration/cli.py:74
+#: neutron/db/migration/cli.py:78
 #, python-format
 msgid "The subproject to execute the command against. Can be one of: '%s'."
 msgstr ""
 
-#: neutron/db/migration/cli.py:79
+#: neutron/db/migration/cli.py:83
 msgid "Enforce using split branches file structure."
 msgstr ""
 
-#: neutron/db/migration/cli.py:85
+#: neutron/db/migration/cli.py:89
 msgid "Neutron quota driver class"
 msgstr ""
 
-#: neutron/db/migration/cli.py:93
+#: neutron/db/migration/cli.py:98
 msgid "URL to database"
 msgstr ""
 
-#: neutron/db/migration/cli.py:96
-msgid "Database engine"
+#: neutron/db/migration/cli.py:101
+msgid ""
+"Database engine for which script will be generated when using offline "
+"migration."
 msgstr ""
 
-#: neutron/db/migration/cli.py:112
+#: neutron/db/migration/cli.py:118
 #, python-format
 msgid "Running %(cmd)s (%(desc)s) for %(project)s ..."
 msgstr ""
 
-#: neutron/db/migration/cli.py:115
+#: neutron/db/migration/cli.py:121
 #, python-format
 msgid "Running %(cmd)s for %(project)s ..."
 msgstr ""
 
-#: neutron/db/migration/cli.py:121
+#: neutron/db/migration/cli.py:127
 msgid "OK"
 msgstr ""
 
-#: neutron/db/migration/cli.py:126
+#: neutron/db/migration/cli.py:132
 #, python-format
 msgid "Sub-project %s not installed."
 msgstr ""
 
-#: neutron/db/migration/cli.py:168
+#: neutron/db/migration/cli.py:174
 msgid "Phase upgrade options do not accept revision specification"
 msgstr ""
 
-#: neutron/db/migration/cli.py:180
+#: neutron/db/migration/cli.py:186
 msgid "You must provide a revision or relative delta"
 msgstr ""
 
-#: neutron/db/migration/cli.py:185
+#: neutron/db/migration/cli.py:191
 msgid "Negative relative revision (downgrade) not supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:191
+#: neutron/db/migration/cli.py:197
 msgid "Use either --delta or relative revision, not both"
 msgstr ""
 
-#: neutron/db/migration/cli.py:194
+#: neutron/db/migration/cli.py:200
 msgid "Negative delta (downgrade) not supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:215
+#: neutron/db/migration/cli.py:221
 msgid "Downgrade no longer supported"
 msgstr ""
 
-#: neutron/db/migration/cli.py:274
+#: neutron/db/migration/cli.py:282
 #, python-format
 msgid ""
 "Release aware branch labels (%s) are deprecated. Please switch to expand@"
 " and contract@ labels."
 msgstr ""
 
-#: neutron/db/migration/cli.py:281
+#: neutron/db/migration/cli.py:289
 #, python-format
 msgid "Unexpected label for script %(script_name)s: %(labels)s"
 msgstr ""
 
-#: neutron/db/migration/cli.py:323
+#: neutron/db/migration/cli.py:331
 #, python-format
 msgid "Unexpected number of alembic branch points: %(branchpoints)s"
 msgstr ""
 
-#: neutron/db/migration/cli.py:360
+#: neutron/db/migration/cli.py:370
 #, python-format
 msgid "HEAD file does not match migration timeline head, expected: %s"
 msgstr ""
 
-#: neutron/db/migration/cli.py:431
+#: neutron/db/migration/cli.py:395
+#, python-format
+msgid ""
+"%(branch)s HEAD file does not match migration timeline head, expected: "
+"%(head)s"
+msgstr ""
+
+#: neutron/db/migration/cli.py:405
+msgid "Repository does not contain HEAD files for contract and expand branches."
+msgstr ""
+
+#: neutron/db/migration/cli.py:482
 msgid "Available commands"
 msgstr ""
 
-#: neutron/db/migration/cli.py:447
+#: neutron/db/migration/cli.py:498
 #, python-format
 msgid "Failed to locate source for %s."
 msgstr ""
 
-#: neutron/db/migration/cli.py:522
+#: neutron/db/migration/cli.py:591
 #, python-format
 msgid "Package %s not installed"
 msgstr ""
 
-#: neutron/db/migration/cli.py:611
+#: neutron/db/migration/cli.py:680
 msgid "Cannot specify both --service and --subproject."
 msgstr ""
 
@@ -2590,11 +2698,11 @@ msgstr ""
 msgid "ID of network"
 msgstr ""
 
-#: neutron/debug/shell.py:61
+#: neutron/debug/shell.py:62
 msgid "Config file for interface driver (You may also use l3_agent.ini)"
 msgstr ""
 
-#: neutron/debug/shell.py:69
+#: neutron/debug/shell.py:70
 msgid ""
 "You must provide a config file for bridge - either --config-file or "
 "env[NEUTRON_TEST_CONFIG_FILE]"
@@ -2662,7 +2770,11 @@ msgstr ""
 msgid "Allowed address pairs must be a list."
 msgstr ""
 
-#: neutron/extensions/availability_zone.py:48
+#: neutron/extensions/availability_zone.py:45
+msgid "Too many availability_zone_hints specified"
+msgstr ""
+
+#: neutron/extensions/availability_zone.py:77
 #, python-format
 msgid "AvailabilityZone %(availability_zone)s could not be found."
 msgstr ""
@@ -2787,6 +2899,58 @@ msgstr ""
 msgid ""
 "Unable to complete operation for %(router_id)s. The number of routes "
 "exceeds the maximum %(quota)s."
+msgstr ""
+
+#: neutron/extensions/flavors.py:26
+#, python-format
+msgid "Flavor %(flavor_id)s could not be found."
+msgstr ""
+
+#: neutron/extensions/flavors.py:30
+#, python-format
+msgid "Flavor %(flavor_id)s is used by some service instance."
+msgstr ""
+
+#: neutron/extensions/flavors.py:34
+#, python-format
+msgid "Service Profile %(sp_id)s could not be found."
+msgstr ""
+
+#: neutron/extensions/flavors.py:38
+#, python-format
+msgid "Service Profile %(sp_id)s is used by some service instance."
+msgstr ""
+
+#: neutron/extensions/flavors.py:42
+#, python-format
+msgid "Service Profile %(sp_id)s is already associated with flavor %(fl_id)s."
+msgstr ""
+
+#: neutron/extensions/flavors.py:47
+#, python-format
+msgid "Service Profile %(sp_id)s is not associated with flavor %(fl_id)s."
+msgstr ""
+
+#: neutron/extensions/flavors.py:52
+#, python-format
+msgid "Service Profile driver %(driver)s could not be found."
+msgstr ""
+
+#: neutron/extensions/flavors.py:56
+msgid "Service Profile needs either a driver or metainfo."
+msgstr ""
+
+#: neutron/extensions/flavors.py:60
+msgid "Flavor is not enabled."
+msgstr ""
+
+#: neutron/extensions/flavors.py:64
+msgid "Service Profile is not enabled."
+msgstr ""
+
+#: neutron/extensions/flavors.py:68
+#, python-format
+msgid "Invalid service type %(service_type)s."
 msgstr ""
 
 #: neutron/extensions/l3.py:29
@@ -3038,6 +3202,11 @@ msgid ""
 "255."
 msgstr ""
 
+#: neutron/extensions/securitygroup.py:48
+#, python-format
+msgid "Invalid ethertype %(ethertype)s for protocol %(protocol)s."
+msgstr ""
+
 #: neutron/extensions/securitygroup.py:53
 #, python-format
 msgid ""
@@ -3205,16 +3374,56 @@ msgstr ""
 msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr ""
 
-#: neutron/ipam/subnet_alloc.py:134
+#: neutron/ipam/exceptions.py:66
+msgid "IP allocation failed. Try again later."
+msgstr ""
+
+#: neutron/ipam/exceptions.py:70
+msgid "New value for first_ip or last_ip has to be specified."
+msgstr ""
+
+#: neutron/ipam/requests.py:69
+msgid "Ranges must be netaddr.IPRange"
+msgstr ""
+
+#: neutron/ipam/requests.py:71
+msgid "Ranges must not overlap"
+msgstr ""
+
+#: neutron/ipam/requests.py:81
+msgid "Ranges must be in the same IP version"
+msgstr ""
+
+#: neutron/ipam/requests.py:87
+msgid "Gateway IP version inconsistent with allocation pool version"
+msgstr ""
+
+#: neutron/ipam/requests.py:112
+msgid "gateway_ip is not in the subnet"
+msgstr ""
+
+#: neutron/ipam/requests.py:116
+msgid "allocation_pools use the wrong ip version"
+msgstr ""
+
+#: neutron/ipam/requests.py:120
+msgid "allocation_pools are not in the subnet"
+msgstr ""
+
+#: neutron/ipam/requests.py:224
+msgid "must provide exactly 2 arguments - cidr and MAC"
+msgstr ""
+
+#: neutron/ipam/subnet_alloc.py:135
 #, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
 msgstr ""
 
-#: neutron/ipam/subnet_alloc.py:152
+#: neutron/ipam/subnet_alloc.py:153
 msgid "Cannot allocate requested subnet from the available set of prefixes"
 msgstr ""
 
-#: neutron/ipam/subnet_alloc.py:173
+#: neutron/ipam/subnet_alloc.py:174
 msgid "Unsupported request type"
 msgstr ""
 
@@ -3277,22 +3486,28 @@ msgstr ""
 msgid "Brocade plugin raised exception, check logs"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:52
+#: neutron/plugins/common/utils.py:61
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:57
+#: neutron/plugins/common/utils.py:66
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:67
+#: neutron/plugins/common/utils.py:76
 #, python-format
 msgid "%s is not a valid VLAN tag"
 msgstr ""
 
-#: neutron/plugins/common/utils.py:71
+#: neutron/plugins/common/utils.py:80
 msgid "End of VLAN range is less than start of VLAN range"
+msgstr ""
+
+#: neutron/plugins/common/utils.py:167
+msgid ""
+"Too long prefix provided. New name would exceed given length for an "
+"interface name."
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/config.py:23
@@ -3306,10 +3521,9 @@ msgid "Private vswitch name used for local networks"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/config.py:31
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:58
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:68
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:58
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:43
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:74
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:97
 msgid ""
 "The number of seconds the agent will wait between polling for local "
 "device changes."
@@ -3337,43 +3551,49 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ml2/config.py:26
-msgid "Ordered list of network_types to allocate as tenant networks."
+msgid ""
+"Ordered list of network_types to allocate as tenant networks. The default"
+" value 'local' is useful for single-box testing but provides no "
+"connectivity between hosts."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:30
+#: neutron/plugins/ml2/config.py:32
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded "
 "from the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:35
+#: neutron/plugins/ml2/config.py:37
 msgid ""
 "An ordered list of extension driver entrypoints to be loaded from the "
 "neutron.ml2.extension_drivers namespace. For example: extension_drivers ="
 " port_security,qos"
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:40
+#: neutron/plugins/ml2/config.py:42
 msgid ""
 "The maximum permissible size of an unfragmented packet travelling from "
-"and to addresses where encapsulated Neutron traffic is sent.  If <= 0, "
-"the path MTU is indeterminate."
+"and to addresses where encapsulated Neutron traffic is sent. Drivers "
+"calculate maximum viable MTU for validating tenant requests based on this"
+" value (typically, path_mtu - maxmum encapsulation header size). If <= 0,"
+" the path MTU is indeterminate and no calculation takes place."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:45
+#: neutron/plugins/ml2/config.py:51
 msgid ""
 "The maximum permissible size of an unfragmented packet travelling a L2 "
-"network segment.  If <= 0, the segment MTU is indeterminate."
+"network segment.  If <= 0, the segment MTU is indeterminate and no "
+"calculation takes place."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:50
+#: neutron/plugins/ml2/config.py:57
 msgid ""
 "A list of mappings of physical networks to MTU values. The format of the "
 "mapping is <physnet>:<mtu val>. This mapping allows specifying a physical"
 " network MTU value that differs from the default segment_mtu value."
 msgstr ""
 
-#: neutron/plugins/ml2/config.py:56
+#: neutron/plugins/ml2/config.py:63
 msgid ""
 "Default network type for external networks when no provider attributes "
 "are specified. By default it is None, which means that if provider "
@@ -3392,7 +3612,7 @@ msgstr ""
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:263
+#: neutron/plugins/ml2/plugin.py:265
 msgid "binding:profile value too large"
 msgstr ""
 
@@ -3409,11 +3629,8 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/type_flat.py:34
 msgid ""
 "List of physical_network names with which flat networks can be created. "
-"Use * to allow flat networks with arbitrary physical_network names."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/type_flat.py:76
-msgid "physical network name is empty"
+"Use default '*' to allow flat networks with arbitrary physical_network "
+"names. Use an empty list to disable flat networks."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_flat.py:94
@@ -3421,11 +3638,15 @@ msgid "physical_network required for flat provider network"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_flat.py:97
+msgid "Flat provider networks are disabled"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_flat.py:100
 #, python-format
 msgid "physical_network '%s' unknown for flat provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:104
+#: neutron/plugins/ml2/drivers/type_flat.py:107
 #, python-format
 msgid "%s prohibited for flat provider network"
 msgstr ""
@@ -3439,8 +3660,10 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/type_geneve.py:37
 msgid ""
 "Geneve encapsulation header size is dynamic, this value is used to "
-"calculate the maximum MTU for the driver.this is the sum of the sizes of "
-"the outer ETH + IP + UDP + GENEVE header sizes"
+"calculate the maximum MTU for the driver. This is the sum of the sizes of"
+" the outer ETH + IP + UDP + GENEVE header sizes. The default size for "
+"this field is 50, which is the size of the Geneve header without any "
+"additional option headers."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_gre.py:32
@@ -3511,7 +3734,10 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_vxlan.py:36
-msgid "Multicast group for VXLAN. If unset, disables VXLAN multicast mode."
+msgid ""
+"Multicast group for VXLAN. When configured, will enable sending all "
+"broadcast traffic to this multicast group. When left unconfigured, will "
+"disable multicast VXLAN mode."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:28
@@ -3524,46 +3750,6 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/brocade/mechanism_brocade.py:32
 msgid "OS Version number"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:28
-msgid "CRD service Username."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:31
-msgid "CRD Service Password."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:33
-msgid "CRD Tenant Name."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:36
-msgid "CRD Auth URL."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:39
-msgid "URL for connecting to CRD service."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:42
-msgid "Timeout value for connecting to CRD service in seconds."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:46
-msgid "Region name for connecting to CRD Service in admin context."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:50
-msgid "If set, ignore any SSL validation issues."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:53
-msgid "Auth strategy for connecting to neutron in admin context."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/freescale/config.py:56
-msgid "Location of ca certificates file to use for CRD client requests."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/l2pop/config.py:21
@@ -3589,39 +3775,45 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:34
 msgid ""
 "Multicast group(s) for vxlan interface. A range of group addresses may be"
-" specified by using CIDR notation. To reserve a unique group for each "
-"possible (24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be"
-" the same on all the agents."
+" specified by using CIDR notation. Specifying a range allows different "
+"VNIs to use different group addresses, reducing or eliminating spurious "
+"broadcast traffic to the tunnel endpoints. To reserve a unique group for "
+"each possible (24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting "
+"must be the same on all the agents."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:40
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:43
 msgid "Local IP address of the VXLAN endpoints."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:42
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:45
 msgid ""
 "Extension to use alongside ml2 plugin's l2population mechanism driver. It"
 " enables the plugin to populate VXLAN forwarding table."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:50
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:25
-msgid "List of <physical_network>:<physical_interface>"
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:53
+msgid ""
+"Comma-separated list of <physical_network>:<physical_interface> tuples "
+"mapping physical network names to the agent's node-specific physical "
+"network interfaces to be used for flat and VLAN networks. All physical "
+"networks listed in network_vlan_ranges on the server should have mappings"
+" to appropriate interfaces on each agent."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:53
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:63
 msgid "List of <physical_network>:<physical_bridge>"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:61
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:118
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:71
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:141
 msgid ""
 "Set new timeout in seconds for new rpc calls after agent receives "
 "SIGTERM. If value is set to 0, rpc timeout won't be changed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:69
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:101
+#: neutron/plugins/ml2/drivers/linuxbridge/agent/common/config.py:79
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:124
 msgid ""
 "Enable suppression of ARP responses that don't match an IP address that "
 "belongs to the port from which they originate. Note: This prevents the "
@@ -3641,7 +3833,7 @@ msgstr ""
 msgid "Device has no virtual functions"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:380
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:381
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr ""
@@ -3653,20 +3845,20 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:65
 msgid ""
-"List of <physical_network>:<network_device> mapping physical network "
-"names to the agent's node-specific physical network device of SR-IOV "
-"physical function to be used for VLAN networks. All physical networks "
-"listed in network_vlan_ranges on the server should have mappings to "
-"appropriate interfaces on each agent"
+"Comma-separated list of <physical_network>:<network_device> tuples "
+"mapping physical network names to the agent's node-specific physical "
+"network device interfaces of SR-IOV physical function to be used for VLAN"
+" networks. All physical networks listed in network_vlan_ranges on the "
+"server should have mappings to appropriate interfaces on each agent."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:74
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:75
 msgid ""
-"List of <network_device>:<excluded_devices> mapping network_device to the"
-" agent's node-specific list of virtual functions that should not be used "
-"for virtual networking. excluded_devices is a semicolon separated list of"
-" virtual functions (BDF format).to exclude from network_device. The "
-"network_device in the mapping should appear in the "
+"Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping"
+" network_device to the agent's node-specific list of virtual functions "
+"that should not be used for virtual networking. vfs_to_exclude is a "
+"semicolon-separated list of virtual functions to exclude from "
+"network_device. The network_device in the mapping should appear in the "
 "physical_device_mappings list."
 msgstr ""
 
@@ -3697,9 +3889,9 @@ msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_sriov/mech_driver/mech_driver.py:37
 msgid ""
-"Supported PCI vendor devices, defined by vendor_id:product_id according "
-"to the PCI ID Repository. Default enables support for Intel and Mellanox "
-"SR-IOV capable NICs"
+"Comma-separated list of supported PCI vendor devices, as defined by "
+"vendor_id:product_id according to the PCI ID Repository. Default enables "
+"support for Intel and Mellanox SR-IOV capable NICs."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mech_sriov/mech_driver/mech_driver.py:88
@@ -3711,162 +3903,142 @@ msgstr ""
 msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:28
-msgid "eswitch daemon end point"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:30
-msgid ""
-"The number of milliseconds the agent will wait for response on request to"
-" daemon."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:33
-msgid ""
-"The number of retries the agent will send request to daemon before giving"
-" up"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/mlnx/agent/config.py:36
-msgid ""
-"backoff rate multiplier for waiting period between retries for request to"
-" daemon, i.e. value of 2 will  double the request timeout each retry"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/opendaylight/driver.py:27
-msgid "HTTP URL of OpenDaylight REST interface."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/opendaylight/driver.py:29
-msgid "HTTP username for authentication"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/opendaylight/driver.py:31
-msgid "HTTP password for authentication"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/opendaylight/driver.py:33
-msgid "HTTP timeout in seconds."
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/opendaylight/driver.py:35
-msgid "Tomcat session timeout in minutes."
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:72
 #, python-format
 msgid "Unable to retrieve port details for devices: %(devices)s "
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1840
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1834
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1854
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1848
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1876
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1870
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1879
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1873
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:31
-msgid "Integration bridge to use."
+msgid ""
+"Integration bridge to use. Do not change this parameter unless you have a"
+" good reason to. This is the name of the OVS integration bridge. There is"
+" one per hypervisor. The integration bridge acts as a virtual 'patch "
+"bay'. All VM VIFs are attached to this bridge and then 'patched' "
+"according to their network connectivity."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:33
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:39
 msgid "Tunnel bridge to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:35
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:41
 msgid "Peer patch port in integration bridge for tunnel bridge."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:38
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:44
 msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:41
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:47
 msgid "Local IP address of tunnel endpoint."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:44
-msgid "List of <physical_network>:<bridge>. Deprecated for ofagent."
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:50
+msgid ""
+"Comma-separated list of <physical_network>:<bridge> tuples mapping "
+"physical network names to the agent's node-specific Open vSwitch bridge "
+"names to be used for flat and VLAN networks. The length of bridge names "
+"should be no more than 11. Each bridge must exist, and should have a "
+"physical network interface configured as a port. All physical networks "
+"configured on the server should have mappings to appropriate bridges on "
+"each agent. Note: If you remove a bridge from this mapping, make sure to "
+"disconnect it from the integration bridge as it won't be managed by the "
+"agent anymore. Deprecated for ofagent."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:47
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:64
 msgid ""
 "Use veths instead of patch ports to interconnect the integration bridge "
-"to physical bridges."
+"to physical networks. Support kernel without Open vSwitch patch port "
+"support so long as it is set to True."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:51
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:70
 msgid "OpenFlow interface to use."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:55
-msgid "OVS datapath to use."
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:74
+msgid ""
+"OVS datapath to use. 'system' is the default value and corresponds to the"
+" kernel datapath. To enable the userspace datapath set this value to "
+"'netdev'."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:57
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:78
+msgid "OVS vhost-user socket directory."
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:80
 msgid ""
 "Address to listen on for OpenFlow connections. Used only for 'native' "
 "driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:60
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:83
 msgid "Port to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:63
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:86
 msgid ""
 "Timeout in seconds to wait for the local switch connecting the "
 "controller. Used only for 'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:67
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:90
 msgid ""
 "Timeout in seconds to wait for a single OpenFlow request. Used only for "
 "'native' driver."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:78
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:101
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:82
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:105
 msgid ""
 "The number of seconds to wait before respawning the ovsdb monitor after "
 "losing communication with it."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:85
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:108
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:88
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:111
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:90
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:113
 msgid "MTU size of veth interfaces"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:92
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:115
 msgid ""
 "Use ML2 l2population mechanism driver to learn remote MAC and IPs and "
 "improve tunnel scalability."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:95
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:118
 msgid ""
 "Enable local ARP responder if it is supported. Requires OVS 2.1 and ML2 "
 "l2population driver. Allows the switch (when supporting an overlay) to "
@@ -3874,29 +4046,29 @@ msgid ""
 "broadcast into the overlay."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:113
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:136
 msgid ""
 "Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying "
 "GRE/VXLAN tunnel."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:116
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:139
 msgid "Make the l2 agent run in DVR mode."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:122
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:145
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
 "interruption."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:125
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:148
 msgid ""
 "Set or un-set the tunnel header checksum  on outgoing IP packet carrying "
 "GRE/VXLAN tunnel."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:129
+#: neutron/plugins/ml2/drivers/openvswitch/agent/common/config.py:152
 msgid "Selects the Agent Type reported"
 msgstr ""
 
@@ -4130,7 +4302,7 @@ msgid ""
 "/proc/cmdline interface."
 msgstr ""
 
-#: neutron/tests/functional/agent/linux/test_async_process.py:77
+#: neutron/tests/functional/agent/linux/test_async_process.py:78
 msgid "Async process didn't respawn"
 msgstr ""
 
@@ -4142,8 +4314,8 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr ""
 
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:860
-#: neutron/tests/unit/agent/linux/test_iptables_manager.py:894
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:892
+#: neutron/tests/unit/agent/linux/test_iptables_manager.py:926
 #, python-format
 msgid ""
 "IPTablesManager.apply failed to apply the following set of iptables "
@@ -4162,12 +4334,12 @@ msgid ""
 "operation."
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:493
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:494
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/test_plugin.py:494
+#: neutron/tests/unit/plugins/ml2/test_plugin.py:495
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -4197,9 +4369,9 @@ msgid ""
 "network %(network)s with segments to bind %(segments_to_bind)s"
 msgstr ""
 
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1232
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1251
-#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1270
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1263
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1282
+#: neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_neutron_agent.py:1301
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
