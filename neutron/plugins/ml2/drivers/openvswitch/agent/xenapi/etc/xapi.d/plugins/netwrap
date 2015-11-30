@@ -34,6 +34,12 @@ import XenAPIPlugin
 
 ALLOWED_CMDS = [
     'ip',
+    'ipset',
+    'iptables-save',
+    'iptables-restore',
+    'ip6tables-save',
+    'ip6tables-restore',
+    'sysctl',
     # NOTE(yamamoto): of_interface=native doesn't use ovs-ofctl
     'ovs-ofctl',
     'ovs-vsctl',
@@ -56,7 +62,7 @@ def _run_command(cmd, cmd_input):
                             stderr=pipe, close_fds=True)
     (out, err) = proc.communicate(cmd_input)
 
-    if err:
+    if proc.returncode != 0:
         raise PluginError(err)
     return out
 
