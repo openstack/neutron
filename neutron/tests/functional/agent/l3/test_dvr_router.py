@@ -172,6 +172,13 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self._assert_onlink_subnet_routes(
                 router, ip_versions, snat_ns_name)
             self._assert_extra_routes(router, namespace=snat_ns_name)
+
+        # During normal operation, a router-gateway-clear followed by
+        # a router delete results in two notifications to the agent.  This
+        # code flow simulates the exceptional case where the notification of
+        # the clearing of the gateway hast been missed, so we are checking
+        # that the L3 agent is robust enough to handle that case and delete
+        # the router correctly.
         self._delete_router(self.agent, router.router_id)
         self._assert_fip_namespace_deleted(ext_gateway_port)
         self._assert_router_does_not_exist(router)

@@ -88,8 +88,8 @@ class DvrEdgeHaRouter(DvrEdgeRouter, HaRouter):
         self._create_snat_namespace()
         super(DvrEdgeHaRouter, self).initialize(process_monitor)
 
-    def process(self, agent, delete=False):
-        super(DvrEdgeHaRouter, self).process(agent, delete)
+    def process(self, agent):
+        super(DvrEdgeHaRouter, self).process(agent)
         if self.ha_port:
             self.enable_keepalived()
 
