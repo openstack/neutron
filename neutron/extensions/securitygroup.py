@@ -236,7 +236,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                               'is_visible': True, 'required_by_policy': True},
         'remote_group_id': {'allow_post': True, 'allow_put': False,
                             'default': None, 'is_visible': True},
-        'direction': {'allow_post': True, 'allow_put': True,
+        'direction': {'allow_post': True, 'allow_put': False,
                       'is_visible': True,
                       'validate': {'type:values': ['ingress', 'egress']}},
         'protocol': {'allow_post': True, 'allow_put': False,
