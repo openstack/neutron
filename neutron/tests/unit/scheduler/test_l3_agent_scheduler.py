@@ -616,6 +616,7 @@ class L3SchedulerTestBaseMixin(object):
         agent_list = [self.agent1, self.l3_dvr_agent]
         # test dvr agent_mode case only dvr agent should be candidate
         router['distributed'] = True
+        self.get_subnet_ids_on_router = mock.Mock()
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR)
 
@@ -629,6 +630,7 @@ class L3SchedulerTestBaseMixin(object):
         agent_list = [self.agent1, self.l3_dvr_agent]
         router['distributed'] = True
         # Test no VMs present case
+        self.get_subnet_ids_on_router = mock.Mock()
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR, count=0)
@@ -643,6 +645,7 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
 
         agent_list = [self.l3_dvr_snat_agent]
+        self.get_subnet_ids_on_router = mock.Mock()
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR_SNAT)
 
@@ -658,6 +661,7 @@ class L3SchedulerTestBaseMixin(object):
         agent_list = [self.l3_dvr_snat_agent]
         self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
         # Test no VMs present case
+        self.get_subnet_ids_on_router = mock.Mock()
         self.check_ports_exist_on_l3agent.return_value = False
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR_SNAT, count=0)
@@ -684,14 +688,13 @@ class L3SchedulerTestBaseMixin(object):
         router['external_gateway_info'] = None
         router['id'] = str(uuid.uuid4())
         self.plugin.get_ports = mock.Mock(return_value=[])
-        self.get_subnet_ids_on_router = mock.Mock(return_value=[])
-        return l3_agent, router
+        return l3_agent
 
     def test_check_ports_exist_on_l3agent_no_subnets(self):
-        l3_agent, router = self._prepare_check_ports_exist_tests()
+        l3_agent = self._prepare_check_ports_exist_tests()
         # no subnets
-        val = self.check_ports_exist_on_l3agent(self.adminContext,
-                                                l3_agent, router['id'])
+        val = self.check_ports_exist_on_l3agent(
+            self.adminContext, l3_agent, [])
         self.assertFalse(val)
 
     def test_check_ports_exist_on_l3agent_with_dhcp_enabled_subnets(self):
@@ -707,38 +710,24 @@ class L3SchedulerTestBaseMixin(object):
         subnet = {'id': str(uuid.uuid4()),
                   'enable_dhcp': True}
 
-        self.get_subnet_ids_on_router = mock.Mock(
-            return_value=[subnet['id']])
-
         self.plugin.get_subnet = mock.Mock(return_value=subnet)
         self.plugin.get_ports = mock.Mock()
         val = self.check_ports_exist_on_l3agent(
-            self.adminContext, agent_list[0], router['id'])
+            self.adminContext, agent_list[0], [subnet['id']])
         self.assertTrue(val)
         self.assertFalse(self.plugin.get_ports.called)
 
-    def test_check_ports_exist_on_l3agent_if_no_subnets_then_return(self):
-        l3_agent, router = self._prepare_check_ports_exist_tests()
-        with mock.patch.object(manager.NeutronManager,
-                               'get_plugin') as getp:
-            getp.return_value = self.plugin
-            # no subnets and operation is remove_router_interface,
-            # so return immediately without calling get_ports
-            self.check_ports_exist_on_l3agent(self.adminContext,
-                                          l3_agent, router['id'])
-        self.assertFalse(self.plugin.get_ports.called)
-
     def test_check_ports_exist_on_l3agent_no_subnet_match(self):
-        l3_agent, router = self._prepare_check_ports_exist_tests()
+        l3_agent = self._prepare_check_ports_exist_tests()
         # no matching subnet
         self.plugin.get_subnet_ids_on_router = mock.Mock(
             return_value=[str(uuid.uuid4())])
         val = self.check_ports_exist_on_l3agent(self.adminContext,
-                                                l3_agent, router['id'])
+                                                l3_agent, [])
         self.assertFalse(val)
 
     def test_check_ports_exist_on_l3agent_subnet_match(self):
-        l3_agent, router = self._prepare_check_ports_exist_tests()
+        l3_agent = self._prepare_check_ports_exist_tests()
         # matching subnet
         port = {'subnet_id': str(uuid.uuid4()),
                 'binding:host_id': 'host_1',
@@ -747,11 +736,9 @@ class L3SchedulerTestBaseMixin(object):
         subnet = {'id': str(uuid.uuid4()),
                   'enable_dhcp': False}
         self.plugin.get_ports.return_value = [port]
-        self.get_subnet_ids_on_router = mock.Mock(
-            return_value=[port['subnet_id']])
         self.plugin.get_subnet = mock.Mock(return_value=subnet)
         val = self.check_ports_exist_on_l3agent(self.adminContext,
-                                                l3_agent, router['id'])
+                                                l3_agent, [port['subnet_id']])
         self.assertTrue(val)
 
     def test_get_l3_agents_hosting_routers(self):

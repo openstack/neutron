@@ -439,15 +439,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_ports_exist_on_l3agent(self, context, l3_agent, router_id):
+    def check_ports_exist_on_l3agent(
+            self, context, l3_agent, subnet_ids):
         """
         This function checks for existence of dvr serviceable
         ports on the host, running the input l3agent.
         """
-        subnet_ids = self.get_subnet_ids_on_router(context, router_id)
-        if not subnet_ids:
-            return False
-
         core_plugin = manager.NeutronManager.get_plugin()
         # NOTE(swami):Before checking for existence of dvr
         # serviceable ports on the host managed by the l3
@@ -479,6 +476,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                                 ignore_admin_state=False):
         """Get the valid l3 agents for the router from a list of l3_agents."""
         candidates = []
+        is_router_distributed = sync_router.get('distributed', False)
+        if is_router_distributed:
+            subnet_ids = self.get_subnet_ids_on_router(
+                context, sync_router['id'])
         for l3_agent in l3_agents:
             if not ignore_admin_state and not l3_agent.admin_state_up:
                 # ignore_admin_state True comes from manual scheduling
@@ -500,16 +501,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 (ex_net_id and gateway_external_network_id and
                  ex_net_id != gateway_external_network_id)):
                 continue
-            is_router_distributed = sync_router.get('distributed', False)
             if agent_mode in (
                 constants.L3_AGENT_MODE_LEGACY,
                 constants.L3_AGENT_MODE_DVR_SNAT) and (
                 not is_router_distributed):
                 candidates.append(l3_agent)
-            elif is_router_distributed and agent_mode.startswith(
-                constants.L3_AGENT_MODE_DVR) and (
-                self.check_ports_exist_on_l3agent(
-                    context, l3_agent, sync_router['id'])):
+            elif (is_router_distributed and subnet_ids and
+                    agent_mode.startswith(constants.L3_AGENT_MODE_DVR) and (
+                        self.check_ports_exist_on_l3agent(
+                            context, l3_agent, subnet_ids))):
                 candidates.append(l3_agent)
         return candidates
 

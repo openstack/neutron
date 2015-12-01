@@ -375,11 +375,14 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         constants.L3_ROUTER_NAT)
             l3_agents = plugin.get_l3_agents_hosting_routers(context,
                                                              [router['id']])
-            for l3_agent in l3_agents:
-                if not plugin.check_ports_exist_on_l3agent(context, l3_agent,
-                                                           router['id']):
-                    plugin.remove_router_from_l3_agent(
-                        context, l3_agent['id'], router['id'])
+            subnet_ids = plugin.get_subnet_ids_on_router(
+                context, router['id'])
+            if subnet_ids:
+                for l3_agent in l3_agents:
+                    if not plugin.check_ports_exist_on_l3agent(
+                        context, l3_agent, subnet_ids):
+                        plugin.remove_router_from_l3_agent(
+                            context, l3_agent['id'], router['id'])
         router_interface_info = self._make_router_interface_info(
             router['id'], port['tenant_id'], port['id'], subnet['id'],
             [subnet['id']])
