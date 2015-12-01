@@ -46,6 +46,13 @@ def disable_extension_by_config(aliases):
         LOG.info(_LI('Disabled vlantransparent extension.'))
 
 
+def get_vlan_transparent(network):
+    return (network['vlan_transparent']
+            if ('vlan_transparent' in network and
+                attributes.is_attr_set(network['vlan_transparent']))
+            else False)
+
+
 class Vlantransparent(extensions.ExtensionDescriptor):
     """Extension class supporting vlan transparent networks."""
 

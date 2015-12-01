@@ -280,12 +280,6 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 shared = True
                 break
         res['shared'] = shared
-        # TODO(pritesh): Move vlan_transparent to the extension module.
-        # vlan_transparent here is only added if the vlantransparent
-        # extension is enabled.
-        if ('vlan_transparent' in network and network['vlan_transparent'] !=
-            attributes.ATTR_NOT_SPECIFIED):
-            res['vlan_transparent'] = network['vlan_transparent']
         # Call auxiliary extend functions, if any
         if process_extensions:
             self._apply_dict_extend_functions(

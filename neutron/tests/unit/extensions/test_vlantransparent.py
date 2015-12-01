@@ -46,6 +46,18 @@ class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     supported_extension_aliases = ["vlan-transparent"]
 
+    def create_network(self, context, network):
+        with context.session.begin(subtransactions=True):
+            new_net = super(VlanTransparentExtensionTestPlugin,
+                            self).create_network(context, network)
+            # Update the vlan_transparent in the database
+            n = network['network']
+            vlan_transparent = vlt.get_vlan_transparent(n)
+            network = self._get_network(context, new_net['id'])
+            n['vlan_transparent'] = vlan_transparent
+            network.update(n)
+        return new_net
+
 
 class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
     fmt = 'json'
@@ -102,4 +114,4 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(net['network']['name'],
                              res['network']['name'])
-            self.assertIsNone(res['network'][vlt.VLANTRANSPARENT])
+            self.assertFalse(res['network'][vlt.VLANTRANSPARENT])

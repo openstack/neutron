@@ -652,6 +652,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     result['id'], {'network': {az_ext.AZ_HINTS: az_hints}})
                 result[az_ext.AZ_HINTS] = az_hints
 
+            # Update the transparent vlan if configured
+            if utils.is_extension_supported(self, 'vlan-transparent'):
+                vlt = vlantransparent.get_vlan_transparent(net_data)
+                super(Ml2Plugin, self).update_network(context,
+                    result['id'], {'network': {'vlan_transparent': vlt}})
+                result['vlan_transparent'] = vlt
+
         return result, mech_context
 
     def create_network(self, context, network):
