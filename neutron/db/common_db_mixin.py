@@ -184,6 +184,13 @@ class CommonDbMixin(object):
         return query.filter(model.id == id).one()
 
     def _apply_filters_to_query(self, query, model, filters, context=None):
+        if isinstance(model, UnionModel):
+            # NOTE(kevinbenton): a unionmodel is made up of multiple tables so
+            # we apply the filter to each table
+            for component_model in model.model_map.values():
+                query = self._apply_filters_to_query(query, component_model,
+                                                     filters, context)
+            return query
         if filters:
             for key, value in six.iteritems(filters):
                 column = getattr(model, key, None)
