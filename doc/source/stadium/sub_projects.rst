@@ -141,7 +141,7 @@ repo but are summarized here to describe the functionality they provide.
 +-------------------------------+-----------------------+
 | networking-ofagent_           |          ml2          |
 +-------------------------------+-----------------------+
-| networking-onos_              |          ml2          |
+| networking-onos_              |        ml2,l3         |
 +-------------------------------+-----------------------+
 | networking-ovn_               |          ml2          |
 +-------------------------------+-----------------------+
