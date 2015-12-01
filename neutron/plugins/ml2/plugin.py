@@ -196,12 +196,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if self.type_manager.network_matches_filters(network, filters)
                 ]
 
-    def _get_host_port_if_changed(self, mech_context, attrs):
-        binding = mech_context._binding
-        if attrs and portbindings.HOST_ID in attrs:
-            if binding.host != attrs.get(portbindings.HOST_ID):
-                return mech_context.current
-
     def _check_mac_update_allowed(self, orig_port, port, binding):
         unplugged_types = (portbindings.VIF_TYPE_BINDING_FAILED,
                            portbindings.VIF_TYPE_UNBOUND)
@@ -1023,11 +1017,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     def create_port(self, context, port):
-        attrs = port[attributes.PORT]
         result, mech_context = self._create_port_db(context, port)
-        new_host_port = self._get_host_port_if_changed(mech_context, attrs)
         # notify any plugin that is interested in port create events
-        kwargs = {'context': context, 'port': new_host_port}
+        kwargs = {'context': context, 'port': result}
         registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
 
         try:
@@ -1063,9 +1055,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for obj in objects:
             attrs = obj['attributes']
             if attrs and attrs.get(portbindings.HOST_ID):
-                new_host_port = self._get_host_port_if_changed(
-                    obj['mech_context'], attrs)
-                kwargs = {'context': context, 'port': new_host_port}
+                kwargs = {'context': context, 'port': obj['result']}
                 registry.notify(
                     resources.PORT, events.AFTER_CREATE, self, **kwargs)
 
@@ -1169,8 +1159,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding, levels,
                 original_port=original_port)
-            new_host_port = self._get_host_port_if_changed(
-                mech_context, attrs)
             need_port_update_notify |= self._process_port_binding(
                 mech_context, attrs)
             # For DVR router interface ports we need to retrieve the
@@ -1202,7 +1190,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # Notifications must be sent after the above transaction is complete
         kwargs = {
             'context': context,
-            'port': new_host_port,
+            'port': updated_port,
             'mac_address_updated': mac_address_updated,
             'original_port': original_port,
         }
