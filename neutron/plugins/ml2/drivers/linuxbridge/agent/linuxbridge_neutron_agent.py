@@ -58,8 +58,6 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
 LOG = logging.getLogger(__name__)
 
 BRIDGE_NAME_PREFIX = "brq"
-# NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
-# devices are listed here (i.e. when using Xen)
 VXLAN_INTERFACE_PREFIX = "vxlan-"
 
 

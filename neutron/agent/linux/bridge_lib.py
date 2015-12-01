@@ -20,6 +20,8 @@ import os
 
 from neutron.agent.linux import ip_lib
 
+# NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
+# devices are listed here (i.e. when using Xen)
 BRIDGE_FS = "/sys/class/net/"
 BRIDGE_INTERFACE_FS = BRIDGE_FS + "%(bridge)s/brif/%(interface)s"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + "%s/brif/"
