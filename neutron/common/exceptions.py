@@ -172,6 +172,10 @@ class ServicePortInUse(InUse):
                 "port API: %(reason)s")
 
 
+class DhcpPortInUse(InUse):
+    message = _("Port %(port_id)s is already acquired by another DHCP agent")
+
+
 class PortBound(InUse):
     message = _("Unable to complete operation on port %(port_id)s, "
                 "port is already bound, port type: %(vif_type)s, "
