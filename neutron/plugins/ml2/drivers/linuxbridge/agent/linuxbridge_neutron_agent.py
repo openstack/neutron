@@ -400,7 +400,7 @@ class LinuxBridgeManager(object):
                                              network_id: network_id})
 
     def add_tap_interface(self, network_id, network_type, physical_network,
-                          segmentation_id, tap_device_name):
+                          segmentation_id, tap_device_name, device_owner):
         """Add tap interface.
 
         If a VIF has been plugged into a network, this function will
@@ -425,22 +425,26 @@ class LinuxBridgeManager(object):
             if not phy_dev_name:
                 return False
             self.ensure_tap_mtu(tap_device_name, phy_dev_name)
-
-        # Check if device needs to be added to bridge
-        tap_device_in_bridge = bridge_lib.BridgeDevice.get_interface_bridge(
-            tap_device_name)
-        if not tap_device_in_bridge:
-            data = {'tap_device_name': tap_device_name,
-                    'bridge_name': bridge_name}
-            LOG.debug("Adding device %(tap_device_name)s to bridge "
-                      "%(bridge_name)s", data)
-            if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
-                return False
+        # Avoid messing with plugging devices into a bridge that the agent
+        # does not own
+        if device_owner.startswith(constants.DEVICE_OWNER_PREFIXES):
+            # Check if device needs to be added to bridge
+            if not bridge_lib.BridgeDevice.get_interface_bridge(
+                tap_device_name):
+                data = {'tap_device_name': tap_device_name,
+                        'bridge_name': bridge_name}
+                LOG.debug("Adding device %(tap_device_name)s to bridge "
+                          "%(bridge_name)s", data)
+                if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
+                    return False
         else:
             data = {'tap_device_name': tap_device_name,
+                    'device_owner': device_owner,
                     'bridge_name': bridge_name}
-            LOG.debug("%(tap_device_name)s already exists on bridge "
-                      "%(bridge_name)s", data)
+            LOG.debug("Skip adding device %(tap_device_name)s to "
+                      "%(bridge_name)s. It is owned by %(device_owner) and "
+                      "thus added elsewhere."
+                      "elsewhere", data)
         return True
 
     def ensure_tap_mtu(self, tap_dev_name, phy_dev_name):
@@ -449,14 +453,14 @@ class LinuxBridgeManager(object):
         ip_lib.IPDevice(tap_dev_name).link.set_mtu(phy_dev_mtu)
 
     def add_interface(self, network_id, network_type, physical_network,
-                      segmentation_id, port_id):
+                      segmentation_id, port_id, device_owner):
         self.network_map[network_id] = NetworkSegment(network_type,
                                                       physical_network,
                                                       segmentation_id)
         tap_device_name = self.get_tap_device_name(port_id)
         return self.add_tap_interface(network_id, network_type,
                                       physical_network, segmentation_id,
-                                      tap_device_name)
+                                      tap_device_name, device_owner)
 
     def delete_bridge(self, bridge_name):
         bridge_device = bridge_lib.BridgeDevice(bridge_name)
@@ -894,12 +898,14 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
     def setup_linux_bridge(self, bridge_mappings, interface_mappings):
         self.br_mgr = LinuxBridgeManager(bridge_mappings, interface_mappings)
 
-    def remove_port_binding(self, network_id, physical_network, interface_id):
-        bridge_name = self.br_mgr.get_existing_bridge_name(physical_network)
-        if not bridge_name:
-            bridge_name = self.br_mgr.get_bridge_name(network_id)
-        tap_device_name = self.br_mgr.get_tap_device_name(interface_id)
-        return self.br_mgr.remove_interface(bridge_name, tap_device_name)
+    def _ensure_port_admin_state(self, port_id, admin_state_up):
+        LOG.debug("Setting admin_state_up to %s for port %s",
+                  admin_state_up, port_id)
+        tap_name = self.br_mgr.get_tap_device_name(port_id)
+        if admin_state_up:
+            ip_lib.IPDevice(tap_name).link.set_up()
+        else:
+            ip_lib.IPDevice(tap_name).link.set_down()
 
     def process_network_devices(self, device_info):
         resync_a = False
@@ -941,18 +947,56 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                         device_details['port_id'])
                     arp_protect.setup_arp_spoofing_protection(port,
                                                               device_details)
+                # create the networking for the port
+                network_type = device_details.get('network_type')
+                segmentation_id = device_details.get('segmentation_id')
+                tap_in_bridge = self.br_mgr.add_interface(
+                    device_details['network_id'], network_type,
+                    device_details['physical_network'], segmentation_id,
+                    device_details['port_id'], device_details['device_owner'])
+                # REVISIT(scheuran): Changed the way how ports admin_state_up
+                # is implemented.
+                #
+                # Old lb implementation:
+                # - admin_state_up: ensure that tap is plugged into bridge
+                # - admin_state_down: remove tap from bridge
+                # New lb implementation:
+                # - admin_state_up: set tap device state to up
+                # - admin_state_down: set tap device stae to down
+                #
+                # However both approaches could result in races with
+                # nova/libvirt and therefore to an invalid system state in the
+                # scenario, where an instance is booted with a port configured
+                # with admin_state_up = False:
+                #
+                # Libvirt does the following actions in exactly
+                # this order (see libvirt virnetdevtap.c)
+                #     1) Create the tap device, set its MAC and MTU
+                #     2) Plug the tap into the bridge
+                #     3) Set the tap online
+                #
+                # Old lb implementation:
+                #   A race could occur, if the lb agent removes the tap device
+                #   right after step 1). Then libvirt will add it to the bridge
+                #   again in step 2).
+                # New lb implementation:
+                #   The race could occur if the lb-agent sets the taps device
+                #   state to down right after step 2). In step 3) libvirt
+                #   might set it to up again.
+                #
+                # This is not an issue if an instance is booted with a port
+                # configured with admin_state_up = True. Libvirt would just
+                # set the tap device up again.
+                #
+                # This refactoring is recommended for the following reasons:
+                # 1) An existing race with libvirt caused by the behavior of
+                #    the old implementation. See Bug #1312016
+                # 2) The new code is much more readable
+                self._ensure_port_admin_state(device_details['port_id'],
+                                              device_details['admin_state_up'])
+                # update plugin about port status if admin_state is up
                 if device_details['admin_state_up']:
-                    # create the networking for the port
-                    network_type = device_details.get('network_type')
-                    segmentation_id = device_details.get('segmentation_id')
-                    if self.br_mgr.add_interface(
-                        device_details['network_id'],
-                        network_type,
-                        device_details['physical_network'],
-                        segmentation_id,
-                        device_details['port_id']):
-
-                        # update plugin about port status
+                    if tap_in_bridge:
                         self.plugin_rpc.update_device_up(self.context,
                                                          device,
                                                          self.agent_id,
@@ -962,11 +1006,6 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
                                                            device,
                                                            self.agent_id,
                                                            cfg.CONF.host)
-                else:
-                    physical_network = device_details['physical_network']
-                    self.remove_port_binding(device_details['network_id'],
-                                             physical_network,
-                                             device_details['port_id'])
             else:
                 LOG.info(_LI("Device %s not defined on plugin"), device)
         return False
