@@ -138,8 +138,12 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         int_ports = self._core_plugin.get_ports(context, filters=filter_rtr)
         for int_port in int_ports:
             int_ips = int_port['fixed_ips']
-            int_subnet = int_ips[0]['subnet_id']
-            subnet_ids.add(int_subnet)
+            if int_ips:
+                int_subnet = int_ips[0]['subnet_id']
+                subnet_ids.add(int_subnet)
+            else:
+                LOG.debug('DVR: Could not find a subnet id'
+                          'for router %s', router_id)
         return subnet_ids
 
     def check_ports_on_host_and_subnet(self, context, host,
