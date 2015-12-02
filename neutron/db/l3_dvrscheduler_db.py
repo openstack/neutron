@@ -146,7 +146,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 int_subnet = int_ips[0]['subnet_id']
                 subnet_ids.add(int_subnet)
             else:
-                LOG.debug('DVR: Could not find a subnet id'
+                LOG.debug('DVR: Could not find a subnet id '
                           'for router %s', router_id)
         return subnet_ids
 
