@@ -32,7 +32,9 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import l3_attrs_db
 from neutron.db import model_base
+from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
+from neutron.extensions import portbindings
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -453,21 +455,27 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_ports_exist_on_l3agent(
-            self, context, l3_agent, subnet_ids):
+    def check_ports_exist_on_l3agent(self, context, l3_agent, subnet_ids):
         """
         This function checks for existence of dvr serviceable
         ports on the host, running the input l3agent.
         """
-        core_plugin = manager.NeutronManager.get_plugin()
-        filter = {'fixed_ips': {'subnet_id': subnet_ids}}
-        ports = core_plugin.get_ports(context, filters=filter)
-        for port in ports:
-            if (n_utils.is_dvr_serviced(port['device_owner']) and
-                l3_agent['host'] == port['binding:host_id']):
-                    return True
+        # db query will return ports for all subnets if subnet_ids is empty,
+        # so need to check first
+        if not subnet_ids:
+            return False
 
-        return False
+        core_plugin = manager.NeutronManager.get_plugin()
+        filters = {'fixed_ips': {'subnet_id': subnet_ids},
+                   portbindings.HOST_ID: [l3_agent['host']]}
+        ports_query = core_plugin._get_ports_query(context, filters=filters)
+        owner_filter = or_(
+            models_v2.Port.device_owner.startswith(
+                constants.DEVICE_OWNER_COMPUTE_PREFIX),
+            models_v2.Port.device_owner.in_(
+                n_utils.get_other_dvr_serviced_device_owners()))
+        ports_query = ports_query.filter(owner_filter)
+        return ports_query.first() is not None
 
     def get_l3_agent_candidates(self, context, sync_router, l3_agents,
                                 ignore_admin_state=False):

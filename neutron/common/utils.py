@@ -360,6 +360,18 @@ class exception_logger(object):
         return call
 
 
+def get_other_dvr_serviced_device_owners():
+    """Return device_owner names for ports that should be serviced by DVR
+
+    This doesn't return DEVICE_OWNER_COMPUTE_PREFIX since it is a
+    prefix, not a complete device_owner name, so should be handled
+    separately (see is_dvr_serviced() below)
+    """
+    return [n_const.DEVICE_OWNER_LOADBALANCER,
+            n_const.DEVICE_OWNER_LOADBALANCERV2,
+            n_const.DEVICE_OWNER_DHCP]
+
+
 def is_dvr_serviced(device_owner):
     """Check if the port need to be serviced by DVR
 
@@ -368,11 +380,8 @@ def is_dvr_serviced(device_owner):
     if they are required for DVR or any service directly or
     indirectly associated with DVR.
     """
-    dvr_serviced_device_owners = (n_const.DEVICE_OWNER_LOADBALANCER,
-                                  n_const.DEVICE_OWNER_LOADBALANCERV2,
-                                  n_const.DEVICE_OWNER_DHCP)
     return (device_owner.startswith('compute:') or
-            device_owner in dvr_serviced_device_owners)
+            device_owner in get_other_dvr_serviced_device_owners())
 
 
 def get_keystone_url(conf):
