@@ -755,21 +755,20 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertFalse(ret_b)
 
     def test_router_is_not_rescheduled_from_dvr_agent(self):
-        router = {'name': 'router1',
-                  'admin_state_up': True,
-                  'distributed': True}
-        subnet_ids = {'id': '1234'}
-        r = self.l3plugin.create_router(
-            self.adminContext, {'router': router})
-        dvr_agent = self._register_dvr_agents()[1]
+        with self.subnet() as s, \
+                mock.patch.object(
+                        self.l3plugin,
+                        'check_ports_exist_on_l3agent') as port_exists:
+            net_id = s['subnet']['network_id']
+            self._set_net_external(net_id)
+            router = {'name': 'router1',
+                      'admin_state_up': True,
+                      'external_gateway_info': {'network_id': net_id},
+                      'distributed': True}
+            r = self.l3plugin.create_router(
+                self.adminContext, {'router': router})
+            dvr_snat_agent, dvr_agent = self._register_dvr_agents()
 
-        with mock.patch.object(
-                self.l3plugin,
-                'check_ports_exist_on_l3agent') as port_exists,\
-            mock.patch.object(
-                self.l3plugin,
-                'get_subnet_ids_on_router') as rtr_subnets:
-            rtr_subnets.return_value = [subnet_ids]
             port_exists.return_value = True
             self.l3plugin.schedule_router(
                 self.adminContext, r['id'])
@@ -777,7 +776,19 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertEqual(2, len(agents['agents']))
             self.assertIn(dvr_agent['host'],
                           [a['host'] for a in agents['agents']])
+            # router should not be unscheduled from dvr agent
             self._take_down_agent_and_run_reschedule(dvr_agent['host'])
+            agents = self._list_l3_agents_hosting_router(r['id'])
+            self.assertEqual(2, len(agents['agents']))
+            self.assertIn(dvr_agent['host'],
+                          [a['host'] for a in agents['agents']])
+
+            # another dvr_snat agent is needed to test that router is not
+            # unscheduled from dead dvr agent in case rescheduling between
+            # dvr_snat agents happens
+            helpers.register_l3_agent(
+                host='hostC', agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            self._take_down_agent_and_run_reschedule(dvr_snat_agent['host'])
             agents = self._list_l3_agents_hosting_router(r['id'])
             self.assertEqual(2, len(agents['agents']))
             self.assertIn(dvr_agent['host'],
