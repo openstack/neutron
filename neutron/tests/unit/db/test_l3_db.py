@@ -68,6 +68,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         subnet = {'id': mock.sentinel.subnet_id,
                   'cidr': cidr,
                   'gateway_ip': mock.sentinel.gateway_ip,
+                  'dns_nameservers': mock.sentinel.dns_nameservers,
                   'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode,
                   'subnetpool_id': mock.sentinel.subnetpool_id}
         get_subnets_by_network.return_value = {'net_id': [subnet]}

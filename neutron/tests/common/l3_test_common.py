@@ -175,7 +175,8 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
 
 
 def router_append_subnet(router, count=1, ip_version=4,
-                         ipv6_subnet_modes=None, interface_id=None):
+                         ipv6_subnet_modes=None, interface_id=None,
+                         dns_nameservers=None):
     if ip_version == 6:
         subnet_mode_none = {'ra_mode': None, 'address_mode': None}
         if not ipv6_subnet_modes:
@@ -222,6 +223,7 @@ def router_append_subnet(router, count=1, ip_version=4,
                 {'id': subnet_id,
                  'cidr': cidr_pool % (i + num_existing_subnets),
                  'gateway_ip': gw_pool % (i + num_existing_subnets),
+                 'dns_nameservers': dns_nameservers,
                  'ipv6_ra_mode': ipv6_subnet_modes[i]['ra_mode'],
                  'ipv6_address_mode': ipv6_subnet_modes[i]['address_mode']})
 
