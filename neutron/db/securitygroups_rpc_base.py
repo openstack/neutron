@@ -432,7 +432,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         for ra_ip in ra_ips:
             ra_rule = {'direction': 'ingress',
                        'ethertype': n_const.IPv6,
-                       'protocol': n_const.PROTO_NAME_ICMP_V6,
+                       'protocol': n_const.PROTO_NAME_IPV6_ICMP,
                        'source_ip_prefix': ra_ip,
                        'source_port_range_min': n_const.ICMPV6_TYPE_RA}
             port['security_group_rules'].append(ra_rule)

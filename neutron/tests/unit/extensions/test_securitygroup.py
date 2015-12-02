@@ -427,7 +427,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             rule = self._build_security_group_rule(
-                security_group_id, 'ingress', const.PROTO_NAME_ICMP_V6)
+                security_group_id, 'ingress', const.PROTO_NAME_IPV6_ICMP)
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
@@ -813,7 +813,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             direction = "ingress"
             ethertype = const.IPv6
             remote_ip_prefix = "2001::f401:56ff:fefe:d3dc/128"
-            protocol = const.PROTO_NAME_ICMP_V6
+            protocol = const.PROTO_NAME_IPV6_ICMP
             # ICMPV6 type
             port_range_min = const.ICMPV6_TYPE_RA
             # ICMPV6 code
@@ -1348,7 +1348,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group() as sg:
             rule = {'security_group_id': sg['security_group']['id'],
                     'direction': 'ingress',
-                    'ethertype': 'IPv4',
+                    'ethertype': const.IPv4,
                     'tenant_id': 'test-tenant'}
 
             res = self._create_security_group_rule(
@@ -1363,11 +1363,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group() as sg:
             rule_v4 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
-                       'ethertype': 'IPv4',
+                       'ethertype': const.IPv4,
                        'tenant_id': 'test-tenant'}
             rule_v6 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
-                       'ethertype': 'IPv6',
+                       'ethertype': const.IPv6,
                        'tenant_id': 'test-tenant'}
 
             rules = {'security_group_rules': [rule_v4, rule_v6]}

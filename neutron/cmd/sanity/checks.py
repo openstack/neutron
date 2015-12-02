@@ -138,7 +138,7 @@ def icmpv6_header_match_supported():
                                table=ovs_const.ARP_SPOOF_TABLE,
                                priority=1,
                                dl_type=n_consts.ETHERTYPE_IPV6,
-                               nw_proto=n_consts.PROTO_NUM_ICMP_V6,
+                               nw_proto=n_consts.PROTO_NUM_IPV6_ICMP,
                                icmp_type=n_consts.ICMPV6_TYPE_NA,
                                nd_target='fdf8:f53b:82e4::10',
                                actions="NORMAL")

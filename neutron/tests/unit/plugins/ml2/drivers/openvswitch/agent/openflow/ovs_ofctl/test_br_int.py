@@ -194,17 +194,17 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         expected = [
             call.add_flow(dl_type=const.ETHERTYPE_IPV6, actions='normal',
                           icmp_type=const.ICMPV6_TYPE_NA,
-                          nw_proto=const.PROTO_NUM_ICMP_V6,
+                          nw_proto=const.PROTO_NUM_IPV6_ICMP,
                           nd_target='2001:db8::1',
                           priority=2, table=24, in_port=8888),
             call.add_flow(dl_type=const.ETHERTYPE_IPV6, actions='normal',
                           icmp_type=const.ICMPV6_TYPE_NA,
-                          nw_proto=const.PROTO_NUM_ICMP_V6,
+                          nw_proto=const.PROTO_NUM_IPV6_ICMP,
                           nd_target='fdf8:f53b:82e4::1/128',
                           priority=2, table=24, in_port=8888),
             call.add_flow(dl_type=const.ETHERTYPE_IPV6,
                           icmp_type=const.ICMPV6_TYPE_NA,
-                          nw_proto=const.PROTO_NUM_ICMP_V6,
+                          nw_proto=const.PROTO_NUM_IPV6_ICMP,
                           priority=10, table=0, in_port=8888,
                           actions='resubmit(,24)')
         ]

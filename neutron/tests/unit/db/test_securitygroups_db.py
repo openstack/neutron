@@ -16,6 +16,7 @@ import testtools
 
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
+from neutron.common import constants
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
@@ -83,3 +84,22 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         with testtools.ExpectedException(
             securitygroup.SecurityGroupRuleNotFound):
             self.mixin.delete_security_group_rule(self.ctx, 'foo_rule')
+
+    def test_validate_ethertype_and_protocol(self):
+        fake_ipv4_rules = [{'protocol': constants.PROTO_NAME_IPV6_ICMP,
+                            'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_ENCAP,
+                            'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_ROUTE,
+                            'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_FRAG,
+                            'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_NONXT,
+                            'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_OPTS,
+                            'ethertype': constants.IPv4}]
+        # test wrong protocols
+        for rule in fake_ipv4_rules:
+            with testtools.ExpectedException(
+                securitygroup.SecurityGroupEthertypeConflictWithProtocol):
+                self.mixin._validate_ethertype_and_protocol(rule)

@@ -38,11 +38,6 @@ from neutron.extensions import securitygroup as ext_sg
 
 LOG = logging.getLogger(__name__)
 
-IP_PROTOCOL_MAP = {constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
-                   constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
-                   constants.PROTO_NAME_ICMP: constants.PROTO_NUM_ICMP,
-                   constants.PROTO_NAME_ICMP_V6: constants.PROTO_NUM_ICMP_V6}
-
 
 class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
                     model_base.HasId, model_base.HasTenant):
@@ -420,7 +415,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # problems with comparing int and string in PostgreSQL. Here this
         # string is converted to int to give an opportunity to use it as
         # before.
-        return int(IP_PROTOCOL_MAP.get(protocol, protocol))
+        return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
     def _validate_port_range(self, rule):
         """Check that port_range is valid."""
@@ -452,7 +447,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _validate_ethertype_and_protocol(self, rule):
         """Check if given ethertype and  protocol are valid or not"""
-        if rule['protocol'] == constants.PROTO_NAME_ICMP_V6:
+        if rule['protocol'] in [constants.PROTO_NAME_IPV6_ENCAP,
+                                constants.PROTO_NAME_IPV6_FRAG,
+                                constants.PROTO_NAME_IPV6_ICMP,
+                                constants.PROTO_NAME_IPV6_NONXT,
+                                constants.PROTO_NAME_IPV6_OPTS,
+                                constants.PROTO_NAME_IPV6_ROUTE]:
             if rule['ethertype'] == constants.IPv4:
                 raise ext_sg.SecurityGroupEthertypeConflictWithProtocol(
                         ethertype=rule['ethertype'], protocol=rule['protocol'])

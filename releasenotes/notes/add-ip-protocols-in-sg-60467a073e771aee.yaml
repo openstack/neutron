@@ -1,0 +1,7 @@
+---
+prelude: >
+    Add popular IP protocols to the security group code. End-users can
+    specify protocol names instead of protocol numbers in both RESTful
+    API and python-neutronclient CLI.
+upgrade:
+  - Add popular IP protocols to security group code.
