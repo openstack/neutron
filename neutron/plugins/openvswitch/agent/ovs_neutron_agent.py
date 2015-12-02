@@ -732,11 +732,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     @staticmethod
     def setup_arp_spoofing_protection(bridge, vif, port_details):
         # clear any previous flows related to this port in our ARP table
-        bridge.delete_flows(table=constants.LOCAL_SWITCHING,
-                            in_port=vif.ofport, proto='arp')
         bridge.delete_flows(table=constants.ARP_SPOOF_TABLE,
                             in_port=vif.ofport)
         if not port_details.get('port_security_enabled', True):
+            bridge.delete_flows(table=constants.LOCAL_SWITCHING,
+                                in_port=vif.ofport, proto='arp')
             LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                          "it has port security disabled"), vif.port_name)
             return
@@ -751,6 +751,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in addresses):
             # don't try to install protection because a /0 prefix allows any
             # address anyway and the ARP_SPA can only match on /1 or more.
+            bridge.delete_flows(table=constants.LOCAL_SWITCHING,
+                                in_port=vif.ofport, proto='arp')
             return
 
         # allow ARPs as long as they match addresses that actually
