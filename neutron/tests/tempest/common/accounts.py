@@ -28,8 +28,8 @@ LOG = logging.getLogger(__name__)
 
 
 def read_accounts_yaml(path):
-    yaml_file = open(path, 'r')
-    accounts = yaml.load(yaml_file)
+    with open(path, 'r') as yaml_file:
+        accounts = yaml.load(yaml_file)
     return accounts
 
 
