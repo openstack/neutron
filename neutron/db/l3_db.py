@@ -517,17 +517,29 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 raise n_exc.BadRequest(resource='router', msg=msg)
         return port_id_specified, subnet_id_specified
 
-    def _add_interface_by_port(self, context, router, port_id, owner):
-        with context.session.begin(subtransactions=True):
-            port = self._core_plugin._get_port(context, port_id)
-            if port['device_id']:
-                raise n_exc.PortInUse(net_id=port['network_id'],
-                                      port_id=port['id'],
-                                      device_id=port['device_id'])
+    def _check_router_port(self, context, port_id, device_id):
+        port = self._core_plugin.get_port(context, port_id)
+        if port['device_id'] != device_id:
+            raise n_exc.PortInUse(net_id=port['network_id'],
+                                  port_id=port['id'],
+                                  device_id=port['device_id'])
+        if not port['fixed_ips']:
+            msg = _('Router port must have at least one fixed IP')
+            raise n_exc.BadRequest(resource='router', msg=msg)
+        return port
 
-            if not port['fixed_ips']:
-                msg = _('Router port must have at least one fixed IP')
-                raise n_exc.BadRequest(resource='router', msg=msg)
+    def _add_interface_by_port(self, context, router, port_id, owner):
+        # Update owner before actual process in order to avoid the
+        # case where a port might get attached to a router without the
+        # owner successfully updating due to an unavailable backend.
+        self._check_router_port(context, port_id, '')
+        self._core_plugin.update_port(
+            context, port_id, {'port': {'device_id': router.id,
+                                        'device_owner': owner}})
+
+        with context.session.begin(subtransactions=True):
+            # check again within transaction to mitigate race
+            port = self._check_router_port(context, port_id, router.id)
 
             # Only allow one router port with IPv6 subnets per network id
             if self._port_has_ipv6_address(port):
@@ -558,8 +570,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 msg = _("Cannot have multiple "
                         "IPv4 subnets on router port")
                 raise n_exc.BadRequest(resource='router', msg=msg)
-
-            port.update({'device_id': router.id, 'device_owner': owner})
             return port, subnets
 
     def _port_has_ipv6_address(self, port):
