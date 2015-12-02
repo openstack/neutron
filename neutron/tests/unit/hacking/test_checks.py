@@ -39,6 +39,9 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             0, len(list(checks.validate_log_translations(debug, debug, 'f'))))
         for log in logs:
+            bad = 'LOG.%s(_("Bad"))' % log
+            self.assertEqual(
+                1, len(list(checks.validate_log_translations(bad, bad, 'f'))))
             bad = 'LOG.%s("Bad")' % log
             self.assertEqual(
                 1, len(list(checks.validate_log_translations(bad, bad, 'f'))))
