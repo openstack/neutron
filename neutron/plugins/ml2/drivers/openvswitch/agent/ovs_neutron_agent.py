@@ -870,16 +870,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     @staticmethod
     def setup_arp_spoofing_protection(bridge, vif, port_details):
-        # clear any previous flows related to this port in our ARP table
-        bridge.delete_arp_spoofing_protection(port=vif.ofport)
         if not port_details.get('port_security_enabled', True):
             LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                          "it has port security disabled"), vif.port_name)
+            bridge.delete_arp_spoofing_protection(port=vif.ofport)
             return
         if port_details['device_owner'].startswith('network:'):
             LOG.debug("Skipping ARP spoofing rules for network owned port "
                       "'%s'.", vif.port_name)
+            bridge.delete_arp_spoofing_protection(port=vif.ofport)
             return
+        # clear any previous flows related to this port in our ARP table
+        bridge.delete_arp_spoofing_allow_rules(port=vif.ofport)
         # collect all of the addresses and cidrs that belong to the port
         addresses = {f['ip_address'] for f in port_details['fixed_ips']}
         mac_addresses = {vif.vif_mac}
@@ -911,6 +913,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # match on /1 or more.
             bridge.install_arp_spoofing_protection(port=vif.ofport,
                                                    ip_addresses=ipv4_addresses)
+        else:
+            bridge.delete_arp_spoofing_protection(port=vif.ofport)
 
     def port_unbound(self, vif_id, net_uuid=None):
         '''Unbind port.
