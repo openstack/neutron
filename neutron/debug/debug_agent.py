@@ -19,10 +19,10 @@ import socket
 import netaddr
 from oslo_log import log as logging
 
+from neutron._i18n import _LW
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.common import constants
-from neutron.i18n import _LW
 
 
 LOG = logging.getLogger(__name__)

@@ -20,12 +20,12 @@ from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _LE
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import model_base
 from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings
-from neutron.i18n import _LE
 from neutron import manager
 
 

@@ -24,8 +24,8 @@ import sys
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE, _LI
 from neutron.common import exceptions
-from neutron.i18n import _LE, _LI
 
 LOG = logging.getLogger(__name__)
 

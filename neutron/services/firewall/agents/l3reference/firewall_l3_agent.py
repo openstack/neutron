@@ -17,11 +17,11 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron._i18n import _LE
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as nexception
 from neutron.common import topics
 from neutron import context
-from neutron.i18n import _LE
 from neutron.plugins.common import constants
 from neutron.services.firewall.agents import firewall_agent_api as api
 from neutron.services import provider_configuration as provconf

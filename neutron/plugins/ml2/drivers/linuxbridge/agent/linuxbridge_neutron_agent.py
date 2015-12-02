@@ -34,6 +34,7 @@ from oslo_service import service
 from oslo_utils import excutils
 from six import moves
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -45,7 +46,6 @@ from neutron.common import exceptions
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
-from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc

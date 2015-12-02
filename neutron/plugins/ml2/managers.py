@@ -19,6 +19,7 @@ from oslo_utils import excutils
 import six
 import stevedore
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as exc
 from neutron.extensions import external_net
@@ -26,7 +27,6 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
-from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api

@@ -16,13 +16,13 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LI
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import config as l3_config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config
-from neutron.i18n import _LI
 
 
 LOG = logging.getLogger(__name__)

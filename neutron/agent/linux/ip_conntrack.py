@@ -14,8 +14,8 @@
 import netaddr
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.agent.linux import utils as linux_utils
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

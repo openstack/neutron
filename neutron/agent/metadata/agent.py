@@ -24,6 +24,7 @@ import six
 import six.moves.urllib.parse as urlparse
 import webob
 
+from neutron._i18n import _LE, _LW
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import config
 from neutron.agent import rpc as agent_rpc
@@ -32,7 +33,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
-from neutron.i18n import _LE, _LW
 from neutron.openstack.common.cache import cache
 
 LOG = logging.getLogger(__name__)

@@ -12,7 +12,7 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.i18n import _LI
+from neutron._i18n import _LI
 from neutron import manager
 
 QOS_DRIVER_NAMESPACE = 'neutron.qos.notification_drivers'

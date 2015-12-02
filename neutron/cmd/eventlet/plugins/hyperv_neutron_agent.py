@@ -18,9 +18,9 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LI
 from neutron.agent.common import config
 from neutron.common import config as common_config
-from neutron.i18n import _LI
 from neutron.plugins.hyperv.agent import config as hyperv_config
 from neutron.plugins.hyperv.agent import l2_agent
 

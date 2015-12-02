@@ -27,8 +27,8 @@ import six
 import webob.dec
 import webob.exc
 
+from neutron._i18n import _LE, _LI
 from neutron.common import exceptions
-from neutron.i18n import _LE, _LI
 from neutron import wsgi
 
 

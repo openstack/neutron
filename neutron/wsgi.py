@@ -37,11 +37,11 @@ import six
 import webob.dec
 import webob.exc
 
+from neutron._i18n import _LE, _LI
 from neutron.common import config
 from neutron.common import exceptions as exception
 from neutron import context
 from neutron.db import api
-from neutron.i18n import _LE, _LI
 from neutron import worker
 
 socket_opts = [

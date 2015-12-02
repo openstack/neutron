@@ -27,9 +27,9 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import wsgi
 
+from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.common import utils
-from neutron.i18n import _LI
 from neutron import policy
 from neutron import version
 

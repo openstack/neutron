@@ -26,6 +26,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -34,7 +35,6 @@ from neutron.common import constants as n_constants
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
-from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc

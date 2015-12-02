@@ -23,10 +23,10 @@ from oslo_utils import excutils
 import re
 import six
 
+from neutron._i18n import _LE
 from neutron.agent.common import utils
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

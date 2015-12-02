@@ -22,7 +22,7 @@ from ncclient import manager
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from neutron.i18n import _LE
+from neutron._i18n import _LE
 from neutron.plugins.brocade.nos import nctemplates as template
 
 

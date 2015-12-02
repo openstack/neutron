@@ -18,9 +18,9 @@ import os
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.agent.common import config
 from neutron.common import utils as neutron_utils
-from neutron.i18n import _LE
 
 
 if os.name == 'nt':

@@ -23,11 +23,11 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import fileutils
 
+from neutron._i18n import _LE
 from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

@@ -12,19 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import oslo_i18n
+# TODO(dougwig) - remove this file at the beginning of N.
 
-_translators = oslo_i18n.TranslatorFactory(domain='neutron')
+from debtcollector import moves
 
-# The primary translation function using the well-known name "_"
-_ = _translators.primary
+import neutron._i18n
 
-# Translators for log levels.
-#
-# The abbreviated names are meant to reflect the usual use of a short
-# name like '_'. The "L" is for "log" and the other letter comes from
-# the level.
-_LI = _translators.log_info
-_LW = _translators.log_warning
-_LE = _translators.log_error
-_LC = _translators.log_critical
+message = "moved to neutron._i18n; please migrate to local oslo_i18n " \
+    "usage, as defined in the devref and at " \
+    "http://docs.openstack.org/developer/oslo.i18n/usage.html"
+
+_ = moves.moved_function(neutron._i18n._, '_', __name__, message=message)
+_LI = moves.moved_function(neutron._i18n._LI, '_LI', __name__, message=message)
+_LW = moves.moved_function(neutron._i18n._LW, '_LW', __name__, message=message)
+_LE = moves.moved_function(neutron._i18n._LE, '_LE', __name__, message=message)
+_LC = moves.moved_function(neutron._i18n._LC, '_LC', __name__, message=message)

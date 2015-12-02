@@ -18,11 +18,11 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LE, _LW
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
 from neutron.db import l3_hamode_db
-from neutron.i18n import _LE, _LW
 
 
 LOG = logging.getLogger(__name__)

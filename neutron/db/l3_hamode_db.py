@@ -21,6 +21,7 @@ from oslo_utils import excutils
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -34,7 +35,6 @@ from neutron.db import models_v2
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
-from neutron.i18n import _LI
 from neutron.plugins.common import utils as p_utils
 
 

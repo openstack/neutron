@@ -44,8 +44,8 @@ from oslo_utils import importutils
 import six
 from stevedore import driver
 
+from neutron._i18n import _LE
 from neutron.common import constants as n_const
-from neutron.i18n import _LE
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)

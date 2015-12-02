@@ -22,10 +22,10 @@ from oslo_log import log as logging
 import six
 import webob.exc
 
+from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
-from neutron.i18n import _LI
 from neutron.plugins.common import constants as p_const
 
 INTERFACE_HASH_LEN = 6

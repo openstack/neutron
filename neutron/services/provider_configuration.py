@@ -20,8 +20,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import stevedore
 
+from neutron._i18n import _LW
 from neutron.common import exceptions as n_exc
-from neutron.i18n import _LW
 
 LOG = logging.getLogger(__name__)
 

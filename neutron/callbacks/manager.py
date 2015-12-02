@@ -15,9 +15,9 @@ import collections
 from oslo_log import log as logging
 from oslo_utils import reflection
 
+from neutron._i18n import _LE
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

@@ -18,12 +18,12 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 
+from neutron._i18n import _LE, _LI
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants as constants
 from neutron.common import ipv6_utils
-from neutron.i18n import _LE, _LI
 from neutron.services.metering.drivers import abstract_driver
 
 

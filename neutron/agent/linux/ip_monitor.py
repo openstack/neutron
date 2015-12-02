@@ -16,8 +16,8 @@
 from oslo_log import log as logging
 from oslo_utils import excutils
 
+from neutron._i18n import _LE
 from neutron.agent.linux import async_process
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 

@@ -17,8 +17,8 @@ import re
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE, _LW
 from neutron.agent.linux import ip_lib
-from neutron.i18n import _LE, _LW
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 

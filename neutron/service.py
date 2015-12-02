@@ -26,11 +26,11 @@ from oslo_service import service as common_service
 from oslo_utils import excutils
 from oslo_utils import importutils
 
+from neutron._i18n import _LE, _LI
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.db import api as session
-from neutron.i18n import _LE, _LI
 from neutron import manager
 from neutron import worker
 from neutron import wsgi

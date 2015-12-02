@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _LI
 from neutron.agent import firewall
 from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
@@ -32,7 +33,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
 from neutron.extensions import portsecurity as psec
-from neutron.i18n import _LI
 
 
 LOG = logging.getLogger(__name__)

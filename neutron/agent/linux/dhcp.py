@@ -27,6 +27,7 @@ import oslo_messaging
 from oslo_utils import uuidutils
 import six
 
+from neutron._i18n import _LI, _LW, _LE
 from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -36,7 +37,6 @@ from neutron.common import exceptions
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
-from neutron.i18n import _LI, _LW, _LE
 
 LOG = logging.getLogger(__name__)
 

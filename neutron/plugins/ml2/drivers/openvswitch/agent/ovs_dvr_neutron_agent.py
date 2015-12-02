@@ -18,9 +18,9 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
-from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 

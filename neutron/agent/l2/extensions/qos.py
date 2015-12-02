@@ -20,13 +20,13 @@ from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import six
 
+from neutron._i18n import _LW, _LI
 from neutron.agent.l2 import agent_extension
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import exceptions
-from neutron.i18n import _LW, _LI
 from neutron import manager
 
 LOG = logging.getLogger(__name__)

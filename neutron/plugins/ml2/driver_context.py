@@ -16,9 +16,9 @@
 from oslo_log import log
 from oslo_serialization import jsonutils
 
+from neutron._i18n import _LW
 from neutron.common import constants
 from neutron.extensions import portbindings
-from neutron.i18n import _LW
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 

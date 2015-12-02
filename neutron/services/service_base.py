@@ -20,9 +20,9 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 import six
 
+from neutron._i18n import _LE, _LI
 from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
-from neutron.i18n import _LE, _LI
 from neutron.services import provider_configuration as pconf
 
 LOG = logging.getLogger(__name__)

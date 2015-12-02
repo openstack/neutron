@@ -17,9 +17,9 @@ import re
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.agent.linux import utils
 from neutron.common import exceptions as n_exc
-from neutron.i18n import _LE
 
 
 LOG = logging.getLogger(__name__)

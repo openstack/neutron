@@ -25,6 +25,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.common import constants
 from neutron.common import utils
 from neutron import context as ncontext
@@ -33,7 +34,6 @@ from neutron.db.availability_zone import network as network_az
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
-from neutron.i18n import _LE, _LI, _LW
 
 
 LOG = logging.getLogger(__name__)

@@ -22,13 +22,13 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 
+from neutron._i18n import _LE
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
-from neutron.i18n import _LE
 from neutron.plugins.ml2.drivers.hyperv import constants as h_const
 
 LOG = logging.getLogger(__name__)

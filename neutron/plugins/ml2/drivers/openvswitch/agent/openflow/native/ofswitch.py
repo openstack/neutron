@@ -23,7 +23,7 @@ from oslo_utils import timeutils
 import ryu.app.ofctl.api as ofctl_api
 import ryu.exception as ryu_exc
 
-from neutron.i18n import _LE, _LW
+from neutron._i18n import _LE, _LW
 
 LOG = logging.getLogger(__name__)
 

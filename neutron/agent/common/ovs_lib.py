@@ -24,11 +24,11 @@ import retrying
 import six
 import uuid
 
+from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.common import exceptions
-from neutron.i18n import _LE, _LI, _LW
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants

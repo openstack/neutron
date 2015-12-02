@@ -18,10 +18,10 @@ from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 
+from neutron._i18n import _LE
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import api as db_api
-from neutron.i18n import _LE
 from neutron.ipam import driver as ipam_base
 from neutron.ipam.drivers.neutrondb_ipam import db_api as ipam_db_api
 from neutron.ipam import exceptions as ipam_exc

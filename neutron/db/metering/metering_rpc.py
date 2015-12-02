@@ -15,9 +15,9 @@
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron._i18n import _LE
 from neutron.common import constants as consts
 from neutron.common import utils
-from neutron.i18n import _LE
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 

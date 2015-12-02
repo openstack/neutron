@@ -18,6 +18,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
+from neutron._i18n import _LI, _LW
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
@@ -32,7 +33,6 @@ from neutron.db import l3_dvrscheduler_db as l3_dvrsched_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
