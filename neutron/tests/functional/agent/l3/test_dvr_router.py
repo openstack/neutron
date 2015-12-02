@@ -19,6 +19,7 @@ import mock
 import netaddr
 
 from neutron.agent.l3 import agent as neutron_l3_agent
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -33,6 +34,18 @@ DEVICE_OWNER_COMPUTE = l3_constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class TestDvrRouter(framework.L3AgentTestFramework):
+    def manage_router(self, agent, router):
+        def _safe_fipnamespace_delete_on_ext_net(ext_net_id):
+            try:
+                agent.fipnamespace_delete_on_ext_net(None, ext_net_id)
+            except RuntimeError:
+                pass
+        self.addCleanup(
+            _safe_fipnamespace_delete_on_ext_net,
+            router['gw_port']['network_id'])
+
+        return super(TestDvrRouter, self).manage_router(agent, router)
+
     def test_dvr_router_lifecycle_without_ha_without_snat_with_fips(self):
         self._dvr_router_lifecycle(enable_ha=False, enable_snat=False)
 
@@ -635,3 +648,5 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.agent.fipnamespace_delete_on_ext_net(
             self.agent.context, ext_net_id)
         self._assert_interfaces_deleted_from_ovs()
+        fip_ns_name = dvr_fip_ns.FipNamespace._get_ns_name(ext_net_id)
+        self.assertFalse(self._namespace_exists(fip_ns_name))
