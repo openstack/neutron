@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 import testtools
 from webob import exc
 
+from neutron.common import constants
 from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
@@ -111,6 +112,23 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             req.environ['neutron.context'] = context.Context('', 'noadmin')
             res = req.get_response(self.api)
             self.assertEqual(exc.HTTPForbidden.code, res.status_int)
+
+    def test_update_network_external_net_with_ports_set_not_shared(self):
+        with self.network(router__external=True, shared=True) as ext_net,\
+                self.subnet(network=ext_net) as ext_subnet, \
+                self.port(subnet=ext_subnet,
+                          tenant_id='',
+                          device_owner=constants.DEVICE_OWNER_ROUTER_SNAT):
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          ext_net['network']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(exc.HTTPOk.code, res.status_int)
+            ctx = context.Context(None, None, is_admin=True)
+            plugin = manager.NeutronManager.get_plugin()
+            result = plugin.get_networks(ctx)
+            self.assertFalse(result[0]['shared'])
 
     def test_network_filter_hook_admin_context(self):
         plugin = manager.NeutronManager.get_plugin()
