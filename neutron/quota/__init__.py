@@ -110,7 +110,7 @@ class ConfDriver(object):
         nothing.
 
         :param context: The request context, for access checks.
-        :param tennant_id: The tenant_id to check quota.
+        :param tenant_id: The tenant_id to check quota.
         :param resources: A dictionary of the registered resources.
         :param values: A dictionary of the values to check against the
                        quota.
