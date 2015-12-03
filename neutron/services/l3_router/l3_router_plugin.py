@@ -53,7 +53,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     """
     supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
                                    "extraroute", "l3_agent_scheduler",
-                                   "l3-ha"]
+                                   "l3-ha", "router_availability_zone"]
 
     @resource_registry.tracked_resources(router=l3_db.Router,
                                          floatingip=l3_db.FloatingIP)

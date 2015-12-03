@@ -44,6 +44,8 @@ class RouterExtraAttributes(model_base.BASEV2):
                    server_default=sa.sql.false(),
                    nullable=False)
     ha_vr_id = sa.Column(sa.Integer())
+    # Availability Zone support
+    availability_zone_hints = sa.Column(sa.String(255))
 
     router = orm.relationship(
         l3_db.Router,
