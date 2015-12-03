@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 from tempest_lib import exceptions as lib_exc
 import testtools
 
@@ -357,6 +359,25 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             self.client.create_rbac_policy(
                 object_type='network', object_id=net['id'],
                 action='access_as_shared', target_tenant=self.client.tenant_id)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
+    def test_rbac_policy_quota(self):
+        if not test.is_extension_enabled('quotas', 'network'):
+            msg = "quotas extension not enabled."
+            raise self.skipException(msg)
+        quota = self.client.show_quotas(self.client.tenant_id)['quota']
+        max_policies = quota['rbac_policy']
+        self.assertGreater(max_policies, 0)
+        net = self.client.create_network(
+            name=data_utils.rand_name('test-network-'))['network']
+        self.addCleanup(self.client.delete_network, net['id'])
+        with testtools.ExpectedException(lib_exc.Conflict):
+            for i in range(0, max_policies + 1):
+                self.admin_client.create_rbac_policy(
+                    object_type='network', object_id=net['id'],
+                    action='access_as_shared',
+                    target_tenant=str(uuid.uuid4()).replace('-', ''))
 
     @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff7fff')
