@@ -36,6 +36,11 @@ class BridgeLibTest(base.BaseTestCase):
         self.execute.assert_called_once_with(cmd, run_as_root=True)
         self.execute.reset_mock()
 
+    def _verify_bridge_mock_check_exit_code(self, cmd):
+        self.execute.assert_called_once_with(cmd, run_as_root=True,
+                                             check_exit_code=True)
+        self.execute.reset_mock()
+
     def test_is_bridged_interface(self):
         exists = lambda path: path == "/sys/class/net/tapOK/brport"
         with mock.patch('os.path.exists', side_effect=exists):
@@ -64,7 +69,7 @@ class BridgeLibTest(base.BaseTestCase):
 
         br.disable_ipv6()
         cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self._BR_NAME
-        self._verify_bridge_mock(['sysctl', '-w', cmd])
+        self._verify_bridge_mock_check_exit_code(['sysctl', '-w', cmd])
 
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
