@@ -526,6 +526,9 @@ class Controller(object):
 
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
+        if request.body:
+            msg = _('Request body is not supported in DELETE.')
+            raise webob.exc.HTTPBadRequest(msg)
         self._notifier.info(request.context,
                             self._resource + '.delete.start',
                             {self._resource + '_id': id})
