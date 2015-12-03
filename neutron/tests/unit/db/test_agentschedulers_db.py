@@ -720,6 +720,26 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 self._take_down_agent_and_run_reschedule(DHCP_HOSTC)
                 self.assertFalse(rr.called)
 
+    def test_router_is_not_rescheduled_if_agent_is_back_online(self):
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
+        agent = helpers.register_l3_agent(host=L3_HOSTA)
+        with self.router(),\
+                self.router(),\
+                mock.patch.object(plugin, 'reschedule_router') as rs_mock,\
+                mock.patch.object(plugin, '_get_agent') as get_agent_mock:
+
+            # schedule the routers to the agent
+            l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)
+            # since _get_agent is mocked it will return Mock object and
+            # agent.is_active will return true, so no rescheduling will be done
+            self.assertFalse(rs_mock.called)
+            # should be called only once as for second router alive agent id
+            # will be in cache
+            get_agent_mock.assert_called_once_with(mock.ANY, agent['id'])
+
     def test_router_reschedule_from_dead_agent(self):
         with self.router():
             l3_rpc_cb = l3_rpc.L3RpcCallback()
