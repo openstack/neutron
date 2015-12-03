@@ -73,8 +73,9 @@ class AgentMechanismDriverBase(api.MechanismDriver):
                         LOG.debug("Bound using segment: %s", segment)
                         return
             else:
-                LOG.warning(_LW("Attempting to bind with dead agent: %s"),
-                            agent)
+                LOG.warning(_LW("Refusing to bind port %(pid)s to dead agent: "
+                                "%(agent)s"),
+                            {'pid': context.current['id'], 'agent': agent})
 
     @abc.abstractmethod
     def try_to_bind_segment_for_agent(self, context, segment, agent):
