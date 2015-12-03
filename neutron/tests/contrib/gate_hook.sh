@@ -25,11 +25,6 @@ then
 elif [ "$VENV" == "api" ]
 then
     cat > $DEVSTACK_PATH/local.conf <<EOF
-[[post-config|/etc/neutron/neutron_lbaas.conf]]
-
-[service_providers]
-service_provider=LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-
 [[post-config|/etc/neutron/neutron_vpnaas.conf]]
 
 [service_providers]
