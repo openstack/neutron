@@ -23,6 +23,7 @@ from oslo_utils import excutils
 from oslo_utils import uuidutils
 from sqlalchemy import and_
 from sqlalchemy import event
+from sqlalchemy import not_
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
@@ -208,13 +209,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if updated['shared'] == original.shared or updated['shared']:
             return
         ports = self._model_query(
-            context, models_v2.Port).filter(
-                and_(
-                    models_v2.Port.network_id == id,
-                    models_v2.Port.device_owner !=
-                    constants.DEVICE_OWNER_ROUTER_GW,
-                    models_v2.Port.device_owner !=
-                    constants.DEVICE_OWNER_FLOATINGIP))
+            context, models_v2.Port).filter(models_v2.Port.network_id == id)
+        ports = ports.filter(not_(models_v2.Port.device_owner.startswith(
+            constants.DEVICE_OWNER_NETWORK_PREFIX)))
         subnets = self._model_query(
             context, models_v2.Subnet).filter(
                 models_v2.Subnet.network_id == id)
