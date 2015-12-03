@@ -230,6 +230,13 @@ actions during the ABORT_CREATE event. It is worth noting that it is not mandato
 the same callback register to both BEFORE_* and the respective ABORT_* event; as a matter of
 fact, it is best to make use of different callbacks to keep the two logic separate.
 
+As we can see from the last example, exception which is triggered in some callback will be
+recorded, and it will not prevent the other remaining callbacks execution. Exception triggered in
+callback of BEFORE_XXX will make notify process generate an ABORT_XXX event and call the related
+callback, while exception from PRECOMMIT_XXX will not generate ABORT_XXX event. But both of them
+will finally raise a unified CallbackFailure exception to the outside. For the exception triggered
+from other events, like AFTER_XXX and ABORT_XXX there will no exception raised to the outside.
+
 
 Unsubscribing to events
 -----------------------
@@ -365,6 +372,13 @@ Is the registry thread-safe?
   of the life of the process and that the unsubscriptions (if any) take place at the very end.
   In this case, chances that things do go badly may be pretty slim. Making the registry
   thread-safe will be considered as a future improvement.
+
+What kind of operation I can add into callback?
+
+  For callback function of PRECOMMIT_XXX events, we can't use blocking functions or a function
+  that would take a long time, like communicating to SDN controller over network.
+  Callbacks for PRECOMMIT events are meant to execute DB operations in a transaction context, the
+  errors occured will be taken care by the context manager.
 
 What kind of function can be a callback?
 
