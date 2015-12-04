@@ -1131,9 +1131,6 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             return_value=dvr_ports),\
                 mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
                            '.L3AgentNotifyAPI'),\
-                mock.patch(
-                    'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port',
-                    return_value=port),\
                 mock.patch.object(
                         self.dut, 'get_l3_agents',
                         return_value=[agent_on_host]) as get_l3_agents:
