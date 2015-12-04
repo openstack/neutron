@@ -27,6 +27,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
+from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
@@ -136,11 +137,13 @@ class L3HARouterVRIdAllocation(model_base.BASEV2):
     vr_id = sa.Column(sa.Integer(), nullable=False, primary_key=True)
 
 
-class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
+class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
+                         router_az_db.RouterAvailabilityZoneMixin):
     """Mixin class to add high availability capability to routers."""
 
     extra_attributes = (
-        l3_dvr_db.L3_NAT_with_dvr_db_mixin.extra_attributes + [
+        l3_dvr_db.L3_NAT_with_dvr_db_mixin.extra_attributes +
+        router_az_db.RouterAvailabilityZoneMixin.extra_attributes + [
             {'name': 'ha', 'default': cfg.CONF.l3_ha},
             {'name': 'ha_vr_id', 'default': 0}])
 

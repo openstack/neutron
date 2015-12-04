@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import contextlib
 import datetime
 import uuid
@@ -1632,7 +1633,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 class L3HAPlugin(db_v2.NeutronDbPluginV2,
                  l3_hamode_db.L3_HA_NAT_db_mixin,
                  l3_hascheduler_db.L3_HA_scheduler_db_mixin):
-    supported_extension_aliases = ["l3-ha"]
+    supported_extension_aliases = ["l3-ha", "router_availability_zone"]
 
 
 class L3HATestCaseMixin(testlib_api.SqlTestCase,
@@ -1657,11 +1658,14 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
         self._register_l3_agents()
 
-    def _create_ha_router(self, ha=True, tenant_id='tenant1'):
+    def _create_ha_router(self, ha=True, tenant_id='tenant1', az_hints=None):
         self.adminContext.tenant_id = tenant_id
         router = {'name': 'router1', 'admin_state_up': True}
         if ha is not None:
             router['ha'] = ha
+        if az_hints is None:
+            az_hints = []
+        router['availability_zone_hints'] = az_hints
         return self.plugin.create_router(self.adminContext,
                                          {'router': router})
 
@@ -1682,14 +1686,13 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
         router1 = self._create_ha_router()
         router2 = self._create_ha_router()
         router3 = self._create_ha_router(ha=False)
-        result = self.plugin.get_ha_routers_l3_agents_count(
-            self.adminContext).all()
+        result = self.plugin.get_ha_routers_l3_agents_count(self.adminContext)
 
         self.assertEqual(2, len(result))
-        self.assertIn((router1['id'], router1['tenant_id'], 4), result)
-        self.assertIn((router2['id'], router2['tenant_id'], 4), result)
-        self.assertNotIn((router3['id'], router3['tenant_id'], mock.ANY),
-                         result)
+        check_result = [(router['id'], agents) for router, agents in result]
+        self.assertIn((router1['id'], 4), check_result)
+        self.assertIn((router2['id'], 4), check_result)
+        self.assertNotIn((router3['id'], mock.ANY), check_result)
 
     def test_get_ordered_l3_agents_by_num_routers(self):
         # Mock scheduling so that the test can control it explicitly
@@ -2027,3 +2030,120 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         returned_agent_modes = [self._get_agent_mode(agent)
                                 for agent in l3_agents]
         self.assertEqual(self.expected_agent_modes, returned_agent_modes)
+
+
+class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
+
+    def setUp(self):
+        super(L3AgentAZLeastRoutersSchedulerTestCase, self).setUp()
+        self.plugin.router_scheduler = importutils.import_object(
+            'neutron.scheduler.l3_agent_scheduler.AZLeastRoutersScheduler')
+        # Mock scheduling so that the test can control it explicitly
+        mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
+                          '_notify_ha_interfaces_updated').start()
+
+    def _register_l3_agents(self):
+        self.agent1 = helpers.register_l3_agent(host='az1-host1', az='az1')
+        self.agent2 = helpers.register_l3_agent(host='az1-host2', az='az1')
+        self.agent3 = helpers.register_l3_agent(host='az2-host1', az='az2')
+        self.agent4 = helpers.register_l3_agent(host='az2-host2', az='az2')
+        self.agent5 = helpers.register_l3_agent(host='az3-host1', az='az3')
+        self.agent6 = helpers.register_l3_agent(host='az3-host2', az='az3')
+
+    def test_az_scheduler_auto_schedule(self):
+        r1 = self._create_ha_router(ha=False, az_hints=['az1'])
+        self.plugin.auto_schedule_routers(self.adminContext,
+                                          'az1-host2', None)
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id']])
+        self.assertEqual(1, len(agents))
+        self.assertEqual('az1-host2', agents[0]['host'])
+
+    def test_az_scheduler_auto_schedule_no_match(self):
+        r1 = self._create_ha_router(ha=False, az_hints=['az1'])
+        self.plugin.auto_schedule_routers(self.adminContext,
+                                          'az2-host1', None)
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id']])
+        self.assertEqual(0, len(agents))
+
+    def test_az_scheduler_default_az(self):
+        cfg.CONF.set_override('default_availability_zones', ['az2'])
+        r1 = self._create_ha_router(ha=False)
+        r2 = self._create_ha_router(ha=False)
+        r3 = self._create_ha_router(ha=False)
+        self.plugin.schedule_router(self.adminContext, r1['id'])
+        self.plugin.schedule_router(self.adminContext, r2['id'])
+        self.plugin.schedule_router(self.adminContext, r3['id'])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id'], r2['id'], r3['id']])
+        self.assertEqual(3, len(agents))
+        expected_hosts = set(['az2-host1', 'az2-host2'])
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(expected_hosts, hosts)
+
+    def test_az_scheduler_az_hints(self):
+        r1 = self._create_ha_router(ha=False, az_hints=['az3'])
+        r2 = self._create_ha_router(ha=False, az_hints=['az3'])
+        r3 = self._create_ha_router(ha=False, az_hints=['az3'])
+        self.plugin.schedule_router(self.adminContext, r1['id'])
+        self.plugin.schedule_router(self.adminContext, r2['id'])
+        self.plugin.schedule_router(self.adminContext, r3['id'])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id'], r2['id'], r3['id']])
+        self.assertEqual(3, len(agents))
+        expected_hosts = set(['az3-host1', 'az3-host2'])
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(expected_hosts, hosts)
+
+    def test_az_scheduler_least_routers(self):
+        r1 = self._create_ha_router(ha=False, az_hints=['az1'])
+        r2 = self._create_ha_router(ha=False, az_hints=['az1'])
+        r3 = self._create_ha_router(ha=False, az_hints=['az1'])
+        r4 = self._create_ha_router(ha=False, az_hints=['az1'])
+        self.plugin.schedule_router(self.adminContext, r1['id'])
+        self.plugin.schedule_router(self.adminContext, r2['id'])
+        self.plugin.schedule_router(self.adminContext, r3['id'])
+        self.plugin.schedule_router(self.adminContext, r4['id'])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id'], r2['id'], r3['id'], r4['id']])
+        host_num = collections.defaultdict(int)
+        for agent in agents:
+            host_num[agent['host']] += 1
+        self.assertEqual(2, host_num['az1-host1'])
+        self.assertEqual(2, host_num['az1-host2'])
+
+    def test_az_scheduler_ha_az_hints(self):
+        cfg.CONF.set_override('max_l3_agents_per_router', 2)
+        r1 = self._create_ha_router(az_hints=['az1', 'az3'])
+        self.plugin.schedule_router(self.adminContext, r1['id'])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id']])
+        self.assertEqual(2, len(agents))
+        expected_azs = set(['az1', 'az3'])
+        azs = set([a['availability_zone'] for a in agents])
+        self.assertEqual(expected_azs, azs)
+
+    def test_az_scheduler_ha_auto_schedule(self):
+        cfg.CONF.set_override('max_l3_agents_per_router', 3)
+        r1 = self._create_ha_router(az_hints=['az1', 'az3'])
+        self._set_l3_agent_admin_state(self.adminContext, self.agent2['id'],
+                                       state=False)
+        self._set_l3_agent_admin_state(self.adminContext, self.agent6['id'],
+                                       state=False)
+        self.plugin.schedule_router(self.adminContext, r1['id'])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id']])
+        self.assertEqual(2, len(agents))
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(set(['az1-host1', 'az3-host1']), hosts)
+        self._set_l3_agent_admin_state(self.adminContext, self.agent6['id'],
+                                       state=True)
+        self.plugin.auto_schedule_routers(self.adminContext,
+                                          'az3-host2', None)
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [r1['id']])
+        self.assertEqual(3, len(agents))
+        expected_hosts = set(['az1-host1', 'az3-host1', 'az3-host2'])
+        hosts = set([a['host'] for a in agents])
+        self.assertEqual(expected_hosts, hosts)
