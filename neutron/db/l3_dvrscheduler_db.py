@@ -99,7 +99,13 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     the state of the router and the Compute Nodes.
     """
 
-    def dvr_update_router_addvm(self, context, port):
+    def dvr_handle_new_service_port(self, context, port):
+        """Handle new dvr service port creation.
+
+        When a new dvr service port is created, this function will
+        schedule a dvr router to new compute node if needed and notify
+        l3 agent on that node.
+        """
         port_host = port[portbindings.HOST_ID]
         l3_agent_on_host = (self.get_l3_agents(
             context, filters={'host': [port_host]}) or [None])[0]
@@ -113,7 +119,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     context, router_id, l3_agent_on_host['id']):
                 self.schedule_router(
                     context, router_id, candidates=[l3_agent_on_host])
-            LOG.debug('DVR: dvr_update_router_addvm %s ', router_id)
+            LOG.debug('DVR: Handle new service_port on router: %s', router_id)
 
         self.l3_rpc_notifier.routers_updated_on_host(
             context, router_ids, port_host)
@@ -152,7 +158,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def check_ports_on_host_and_subnet(self, context, host,
                                        port_id, subnet_id):
-        """Check if there is any dvr serviceable port on the subnet_id."""
+        """Check if there are any dvr service ports on the subnet_id."""
         filter_sub = {'fixed_ips': {'subnet_id': [subnet_id]}}
         ports = self._core_plugin.get_ports(context, filters=filter_sub)
         for port in ports:
@@ -474,7 +480,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         context = kwargs['context']
-        l3plugin.dvr_update_router_addvm(context, port)
+        l3plugin.dvr_handle_new_service_port(context, port)
         l3plugin.dvr_vmarp_table_update(context, port, "add")
 
 
@@ -534,7 +540,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                 new_port[portbindings.HOST_ID]))
         if (is_new_port_binding_changed and
             n_utils.is_dvr_serviced(new_device_owner)):
-            l3plugin.dvr_update_router_addvm(context, new_port)
+            l3plugin.dvr_handle_new_service_port(context, new_port)
             l3plugin.dvr_vmarp_table_update(context, new_port, "add")
         elif kwargs.get('mac_address_updated') or is_fixed_ips_changed:
             l3plugin.dvr_vmarp_table_update(context, new_port, "add")
