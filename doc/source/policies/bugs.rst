@@ -44,12 +44,13 @@ various Neutron teams when a bug has been triaged. In addition, the bug
 deputy should be reporting "High" and "Critical" priority bugs.
 
 To avoid burnout, and to give a chance to everyone to gain experience in
-defect management, the Neutron bug deputy is a rotating role: every member
-of the Neutron core team is invited to fill in the role, and the rotation
+defect management, the Neutron bug deputy is a rotating role. The rotation
 will be set on a period (typically one or two weeks) determined by the team
 during the weekly Neutron IRC meeting and/or according to holidays. During
 the Neutron IRC meeting we will expect a volunteer to step up for the period.
-Non-core volunteers are encouraged in taking up the role.
+Members of the Neutron core team are invited to fill in the role,
+however non-core Neutron contributors who are interested are also
+encouraged to take up the role.
 
 This contributor is going to be the bug deputy for the period, and he/she
 will be asked to report to the team during the subsequent IRC meeting. The
