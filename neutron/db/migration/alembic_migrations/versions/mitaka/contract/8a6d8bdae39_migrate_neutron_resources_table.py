@@ -49,15 +49,18 @@ standardattrs = sa.Table(
 def upgrade():
     generate_records_for_existing()
     for table, model in TABLE_MODELS:
-        # add the constraint now that everything is populated on that table
+        # add constraint(s) now that everything is populated on that table.
+        # note that some MariaDB versions will *not* allow the ALTER to
+        # NOT NULL on a column that has an FK constraint, so we set NOT NULL
+        # first, then the FK constraint.
+        op.alter_column(table, 'standard_attr_id', nullable=False,
+                        existing_type=sa.BigInteger(), existing_nullable=True,
+                        existing_server_default=False)
         op.create_foreign_key(
             constraint_name=None, source_table=table,
             referent_table='standardattributes',
             local_cols=['standard_attr_id'], remote_cols=['id'],
             ondelete='CASCADE')
-        op.alter_column(table, 'standard_attr_id', nullable=False,
-                        existing_type=sa.BigInteger(), existing_nullable=True,
-                        existing_server_default=False)
         op.create_unique_constraint(
             constraint_name='uniq_%s0standard_attr_id' % table,
             table_name=table, columns=['standard_attr_id'])
