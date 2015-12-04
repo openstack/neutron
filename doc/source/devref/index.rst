@@ -71,6 +71,7 @@ Neutron Internals
    dns_order
    upgrade
    i18n
+   instrumentation
 
 Testing
 -------
