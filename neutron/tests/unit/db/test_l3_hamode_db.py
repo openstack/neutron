@@ -161,8 +161,27 @@ class L3HATestCase(L3HATestFramework):
         self.assertIn((self.agent1['id'], 'active'), agent_ids)
         self.assertIn((self.agent2['id'], 'standby'), agent_ids)
 
+    def test_get_l3_bindings_hosting_router_with_ha_states_agent_none(self):
+        router = self._create_router()
+        # Do not bind router to leave agents as None
+        res = self.admin_ctx.session.query(
+            l3_hamode_db.L3HARouterAgentPortBinding).filter(
+            l3_hamode_db.L3HARouterAgentPortBinding.router_id == router['id']
+        ).all()
+        # Check that agents are None
+        self.assertEqual([None, None], [r.agent for r in res])
+        bindings = self.plugin.get_l3_bindings_hosting_router_with_ha_states(
+            self.admin_ctx, router['id'])
+        self.assertEqual([], bindings)
+
     def test_get_l3_bindings_hosting_router_with_ha_states_not_scheduled(self):
         router = self._create_router(ha=False)
+        # Check that there no L3 agents scheduled for this router
+        res = self.admin_ctx.session.query(
+            l3_hamode_db.L3HARouterAgentPortBinding).filter(
+            l3_hamode_db.L3HARouterAgentPortBinding.router_id == router['id']
+        ).all()
+        self.assertEqual([], [r.agent for r in res])
         bindings = self.plugin.get_l3_bindings_hosting_router_with_ha_states(
             self.admin_ctx, router['id'])
         self.assertEqual([], bindings)
