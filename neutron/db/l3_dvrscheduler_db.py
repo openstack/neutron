@@ -32,6 +32,7 @@ from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
+from neutron.extensions import portbindings
 from neutron.i18n import _LI, _LW
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -453,15 +454,12 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
     if not port:
         return
 
-    l3plugin = manager.NeutronManager.get_service_plugins().get(
-        service_constants.L3_ROUTER_NAT)
-    mac_address_updated = kwargs.get('mac_address_updated')
-    update_device_up = kwargs.get('update_device_up')
-    context = kwargs['context']
-    if mac_address_updated or update_device_up:
-        l3plugin.dvr_vmarp_table_update(context, port, "add")
     if n_utils.is_dvr_serviced(port['device_owner']):
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        context = kwargs['context']
         l3plugin.dvr_update_router_addvm(context, port)
+        l3plugin.dvr_vmarp_table_update(context, port, "add")
 
 
 def _notify_port_delete(event, resource, trigger, **kwargs):
@@ -481,12 +479,13 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
     original_port = kwargs.get('original_port')
 
     if new_port and original_port:
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        context = kwargs['context']
         original_device_owner = original_port.get('device_owner', '')
+        new_device_owner = new_port.get('device_owner', '')
         if (original_device_owner.startswith('compute') and
             not new_port.get('device_owner')):
-            l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
-            context = kwargs['context']
             removed_routers = l3plugin.dvr_deletens_if_no_port(
                 context,
                 original_port['id'],
@@ -501,7 +500,16 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                     event, resource, trigger, **removed_router_args)
             return
 
-    _notify_l3_agent_new_port(resource, event, trigger, **kwargs)
+        is_new_port_binding_changed = (
+            new_port[portbindings.HOST_ID] and
+            (original_port[portbindings.HOST_ID] !=
+                new_port[portbindings.HOST_ID]))
+        if (is_new_port_binding_changed and
+            n_utils.is_dvr_serviced(new_device_owner)):
+            l3plugin.dvr_update_router_addvm(context, new_port)
+            l3plugin.dvr_vmarp_table_update(context, new_port, "add")
+        elif kwargs.get('mac_address_updated'):
+            l3plugin.dvr_vmarp_table_update(context, new_port, "add")
 
 
 def subscribe():

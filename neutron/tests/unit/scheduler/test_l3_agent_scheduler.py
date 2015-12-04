@@ -38,6 +38,7 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.extensions import l3agentscheduler as l3agent
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
@@ -72,6 +73,7 @@ DVR_SNAT_L3_AGENT = {
     'agent_type': constants.AGENT_TYPE_L3,
     'start_flag': True
 }
+DEVICE_OWNER_COMPUTE = 'compute:fake'
 
 
 class FakeL3Scheduler(l3_agent_scheduler.L3Scheduler):
@@ -988,11 +990,94 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                return_value={'L3_ROUTER_NAT': l3plugin}):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', plugin, **kwargs)
+            self.assertFalse(l3plugin.dvr_vmarp_table_update.called)
+            self.assertFalse(l3plugin.dvr_update_router_addvm.called)
+            self.assertFalse(l3plugin.remove_router_from_l3_agent.called)
+            self.assertFalse(l3plugin.dvr_deletens_if_no_port.called)
+
+    def test__notify_l3_agent_new_port_action(self):
+        kwargs = {
+            'context': self.adminContext,
+            'original_port': None,
+            'port': {
+                'device_owner': DEVICE_OWNER_COMPUTE,
+            },
+        }
+        l3plugin = mock.Mock()
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value={'L3_ROUTER_NAT': l3plugin}):
+            l3_dvrscheduler_db._notify_l3_agent_new_port(
+                'port', 'after_create', mock.ANY, **kwargs)
+            l3plugin.dvr_vmarp_table_update.assert_called_once_with(
+                self.adminContext, kwargs.get('port'), 'add')
+            l3plugin.dvr_update_router_addvm.assert_called_once_with(
+                self.adminContext, kwargs.get('port'))
+
+    def test__notify_l3_agent_new_port_no_action(self):
+        kwargs = {
+            'context': self.adminContext,
+            'original_port': None,
+            'port': {
+                'device_owner': 'network:None',
+            }
+        }
+        l3plugin = mock.Mock()
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value={'L3_ROUTER_NAT': l3plugin}):
+            l3_dvrscheduler_db._notify_l3_agent_new_port(
+                'port', 'after_create', mock.ANY, **kwargs)
+            self.assertFalse(l3plugin.dvr_vmarp_table_update.called)
+            self.assertFalse(l3plugin.dvr_update_router_addvm.called)
+
+    def test__notify_l3_agent_update_port_no_action(self):
+        kwargs = {
+            'context': self.adminContext,
+            'original_port': {
+                portbindings.HOST_ID: 'vm-host',
+                'device_owner': DEVICE_OWNER_COMPUTE,
+            },
+            'port': {
+                portbindings.HOST_ID: 'vm-host',
+                'device_owner': DEVICE_OWNER_COMPUTE,
+            },
+        }
+        l3plugin = mock.Mock()
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value={'L3_ROUTER_NAT': l3plugin}):
+            l3_dvrscheduler_db._notify_l3_agent_port_update(
+                'port', 'after_update', mock.ANY, **kwargs)
 
             self.assertFalse(l3plugin.dvr_vmarp_table_update.called)
             self.assertFalse(l3plugin.dvr_update_router_addvm.called)
             self.assertFalse(l3plugin.remove_router_from_l3_agent.called)
             self.assertFalse(l3plugin.dvr_deletens_if_no_port.called)
+
+    def test__notify_l3_agent_update_port_with_mac_address_update(self):
+        kwargs = {
+            'context': self.adminContext,
+            'original_port': {
+                portbindings.HOST_ID: 'vm-host',
+                'mac_address': '02:04:05:17:18:19'
+            },
+            'port': {
+                portbindings.HOST_ID: 'vm-host',
+                'mac_address': '02:04:05:17:18:29'
+            },
+            'mac_address_updated': True
+        }
+        l3plugin = mock.Mock()
+        with mock.patch.object(manager.NeutronManager,
+                               'get_service_plugins',
+                               return_value={'L3_ROUTER_NAT': l3plugin}):
+            l3_dvrscheduler_db._notify_l3_agent_port_update(
+                'port', 'after_update', mock.ANY, **kwargs)
+
+            l3plugin.dvr_vmarp_table_update.assert_called_once_with(
+                self.adminContext, kwargs.get('port'), 'add')
+            self.assertFalse(l3plugin.dvr_update_router_addvm.called)
 
     def test__notify_l3_agent_update_port_removing_routers(self):
         port_id = 'fake-port'
