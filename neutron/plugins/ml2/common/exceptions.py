@@ -27,3 +27,9 @@ class MechanismDriverError(exceptions.NeutronException):
 class ExtensionDriverError(exceptions.InvalidInput):
     """Extension driver call failed."""
     message = _("Extension %(driver)s failed.")
+
+
+class ExtensionDriverNotFound(exceptions.InvalidConfigurationOption):
+    """Required extension driver not found in ML2 config."""
+    message = _("Extension driver %(driver)s required for "
+                "service plugin %(service_plugin)s not found.")

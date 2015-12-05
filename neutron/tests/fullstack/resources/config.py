@@ -17,6 +17,7 @@ import tempfile
 import fixtures
 
 from neutron.common import constants
+from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.tests import base
 from neutron.tests.common import config_fixtures
 from neutron.tests.common import helpers as c_helpers
@@ -134,7 +135,8 @@ class ML2ConfigFixture(ConfigFixture):
         })
 
         if env_desc.qos:
-            self.config['ml2']['extension_drivers'] = 'qos'
+            self.config['ml2']['extension_drivers'] =\
+                    qos_ext.QOS_EXT_DRIVER_ALIAS
 
 
 class OVSConfigFixture(ConfigFixture):

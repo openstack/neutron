@@ -21,6 +21,8 @@ from neutron.plugins.ml2 import driver_api as api
 
 LOG = logging.getLogger(__name__)
 
+QOS_EXT_DRIVER_ALIAS = 'qos'
+
 
 class QosExtensionDriver(api.ExtensionDriver):
 
