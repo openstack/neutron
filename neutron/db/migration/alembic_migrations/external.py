@@ -115,10 +115,19 @@ REPO_BIGSWITCH_TABLES = [
     'nexthops',
 ]
 
+# Nuage models are in github.com/nuagenetworks/nuage-openstack-neutron
+REPO_NUAGE_TABLES = [
+    'nuage_net_partitions',
+    'nuage_net_partition_router_mapping',
+    'nuage_provider_net_bindings',
+    'nuage_subnet_l2dom_mapping',
+]
+
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_CISCO_TABLES +
           REPO_VMWARE_TABLES +
           REPO_NEC_TABLES +
           REPO_BROCADE_TABLES +
-          REPO_BIGSWITCH_TABLES)
+          REPO_BIGSWITCH_TABLES +
+          REPO_NUAGE_TABLES)
