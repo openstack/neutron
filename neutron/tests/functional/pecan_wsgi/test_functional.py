@@ -79,18 +79,18 @@ class TestV2Controller(PecanFunctionalTest):
             params={'port': {'network_id': self.port['network_id'],
                              'admin_state_up': True,
                              'tenant_id': 'tenid'}},
-            headers={'X-Tenant-Id': 'tenid'})
+            headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 201)
 
     def test_put(self):
         response = self.app.put_json('/v2.0/ports/%s.json' % self.port['id'],
                                      params={'port': {'name': 'test'}},
-                                     headers={'X-Tenant-Id': 'tenid'})
+                                     headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
 
     def test_delete(self):
         response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
-                                   headers={'X-Tenant-Id': 'tenid'})
+                                   headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 204)
 
     def test_plugin_initialized(self):
@@ -195,7 +195,7 @@ class TestRequestPopulatingHooks(PecanFunctionalTest):
 
     def test_context_set_in_request(self):
         self.app.get('/v2.0/ports.json',
-                     headers={'X-Tenant-Id': 'tenant_id'})
+                     headers={'X-Project-Id': 'tenant_id'})
         self.assertEqual('tenant_id', self.req_stash['context'].tenant_id)
 
     def test_core_resource_identified(self):
@@ -222,7 +222,7 @@ class TestEnforcementHooks(PecanFunctionalTest):
             params={'port': {'network_id': self.port['network_id'],
                              'admin_state_up': True,
                              'tenant_id': 'tenid2'}},
-            headers={'X-Tenant-Id': 'tenid'})
+            headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
 
     def test_quota_enforcement(self):
