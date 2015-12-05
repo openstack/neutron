@@ -453,6 +453,144 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.assertEqual(1, len(snat_router_intfs[router1['id']]))
         self.assertEqual(1, len(fixed_ips))
 
+    def test_update_service_port_with_allowed_address_pairs(self):
+        HOST1 = 'host1'
+        helpers.register_l3_agent(
+            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        private_net1 = self._make_network(self.fmt, 'net1', True)
+        test_allocation_pools = [{'start': '10.1.0.2',
+                                  'end': '10.1.0.20'}]
+        fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, '', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        # Set gateway to router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'],
+            {'network_id': ext_net['network']['id']})
+        private_subnet1 = self._make_subnet(
+            self.fmt,
+            private_net1,
+            '10.1.0.1',
+            cidr='10.1.0.0/24',
+            ip_version=4,
+            allocation_pools=test_allocation_pools,
+            enable_dhcp=True)
+        vrrp_port = self._make_port(
+            self.fmt,
+            private_net1['network']['id'],
+            device_owner=constants.DEVICE_OWNER_LOADBALANCER,
+            fixed_ips=fixed_vrrp_ip)
+        allowed_address_pairs = [
+            {'ip_address': '10.1.0.201',
+             'mac_address': vrrp_port['port']['mac_address']}]
+        with self.port(
+                subnet=private_subnet1,
+                device_owner=DEVICE_OWNER_COMPUTE) as int_port:
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': private_subnet1['subnet']['id']})
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier:
+                self.core_plugin.update_port(
+                    self.context, int_port['port']['id'],
+                    {'port': {portbindings.HOST_ID: HOST1}})
+
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST1)
+
+                floating_ip = {'floating_network_id': ext_net['network']['id'],
+                               'router_id': router['id'],
+                               'port_id': vrrp_port['port']['id'],
+                               'tenant_id': vrrp_port['port']['tenant_id']}
+                floating_ip = self.l3_plugin.create_floatingip(
+                    self.context, {'floatingip': floating_ip})
+
+                vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                self.assertNotEqual(vrrp_port_db[portbindings.HOST_ID], HOST1)
+                # Now update the VM port with the allowed_address_pair
+                cur_int_port = self.core_plugin.update_port(
+                     self.context, int_port['port']['id'],
+                     {'port': {
+                         'allowed_address_pairs': allowed_address_pairs}})
+                cur_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                # Check to make sure that we are not chaning the existing
+                # device_owner for the allowed_address_pair port.
+                self.assertEqual(
+                    cur_vrrp_port_db['device_owner'],
+                    constants.DEVICE_OWNER_LOADBALANCER)
+                self.assertEqual(cur_vrrp_port_db[portbindings.HOST_ID], HOST1)
+                self.assertTrue(cur_vrrp_port_db.get(portbindings.PROFILE))
+                port_profile = cur_vrrp_port_db.get(portbindings.PROFILE)
+                self.assertTrue(port_profile)
+                self.assertEqual(port_profile['original_owner'],
+                                 constants.DEVICE_OWNER_LOADBALANCER)
+                # Now change the compute port admin_state_up from True to
+                # False, and see if the vrrp ports device_owner and binding
+                # inheritence reverts back to normal
+                mod_int_port = self.core_plugin.update_port(
+                    self.context, cur_int_port['id'],
+                    {'port': {
+                        'admin_state_up': False}})
+                self.assertFalse(mod_int_port['admin_state_up'])
+                new_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, cur_vrrp_port_db['id'])
+                new_port_profile = new_vrrp_port_db.get(portbindings.PROFILE)
+                self.assertEqual({}, new_port_profile)
+                self.assertNotEqual(
+                    new_vrrp_port_db[portbindings.HOST_ID], HOST1)
+                # Now change the compute port admin_state_up from False to
+                # True, and see if the vrrp ports device_owner and binding
+                # inherits from the associated parent compute port.
+                new_mod_int_port = self.core_plugin.update_port(
+                    self.context, mod_int_port['id'],
+                    {'port': {
+                        'admin_state_up': True}})
+                self.assertTrue(new_mod_int_port['admin_state_up'])
+                cur_new_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, new_vrrp_port_db['id'])
+                self.assertNotEqual(
+                    cur_new_vrrp_port_db['device_owner'], DEVICE_OWNER_COMPUTE)
+                self.assertEqual(
+                    cur_new_vrrp_port_db[portbindings.HOST_ID], HOST1)
+                # Now let us try to remove vrrp_port device_owner and see
+                # how it inherits from the compute port.
+                updated_vrrp_port = self.core_plugin.update_port(
+                    self.context, cur_new_vrrp_port_db['id'],
+                    {'port': {'device_owner': "",
+                              portbindings.PROFILE: {'original_owner': ""}}})
+                updated_vm_port = self.core_plugin.update_port(
+                    self.context, new_mod_int_port['id'],
+                    {'port': {
+                        'admin_state_up': False}})
+                self.assertFalse(updated_vm_port['admin_state_up'])
+                # This port admin_state down should not cause any issue
+                # with the existing vrrp port device_owner, but should
+                # only change the port_binding HOST_ID.
+                cur_new_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, updated_vrrp_port['id'])
+                self.assertEqual(
+                    "", cur_new_vrrp_port_db['device_owner'])
+                self.assertEqual(
+                    "", cur_new_vrrp_port_db[portbindings.HOST_ID])
+                updated_vm_port = self.core_plugin.update_port(
+                    self.context, new_mod_int_port['id'],
+                    {'port': {
+                        'admin_state_up': True}})
+                self.assertTrue(updated_vm_port['admin_state_up'])
+                updated_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, new_vrrp_port_db['id'])
+                self.assertEqual(
+                    updated_vrrp_port_db['device_owner'], DEVICE_OWNER_COMPUTE)
+                self.assertEqual(
+                    updated_vrrp_port_db[portbindings.HOST_ID], HOST1)
+
     def test_update_vm_port_host_router_update(self):
         # register l3 agents in dvr mode in addition to existing dvr_snat agent
         HOST1 = 'host1'
