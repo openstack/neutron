@@ -473,7 +473,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
             service_constants.L3_ROUTER_NAT)
         context = kwargs['context']
         l3plugin.dvr_handle_new_service_port(context, port)
-        l3plugin.dvr_vmarp_table_update(context, port, "add")
+        l3plugin.update_arp_entry_for_dvr_service_port(context, port, "add")
 
 
 def _notify_port_delete(event, resource, trigger, **kwargs):
@@ -482,7 +482,7 @@ def _notify_port_delete(event, resource, trigger, **kwargs):
     removed_routers = kwargs['removed_routers']
     l3plugin = manager.NeutronManager.get_service_plugins().get(
         service_constants.L3_ROUTER_NAT)
-    l3plugin.dvr_vmarp_table_update(context, port, "del")
+    l3plugin.update_arp_entry_for_dvr_service_port(context, port, "del")
     for router in removed_routers:
         l3plugin.remove_router_from_l3_agent(
             context, router['agent_id'], router['router_id'])
@@ -527,9 +527,11 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         if (is_new_port_binding_changed and
             n_utils.is_dvr_serviced(new_device_owner)):
             l3plugin.dvr_handle_new_service_port(context, new_port)
-            l3plugin.dvr_vmarp_table_update(context, new_port, "add")
+            l3plugin.update_arp_entry_for_dvr_service_port(
+                context, new_port, "add")
         elif kwargs.get('mac_address_updated'):
-            l3plugin.dvr_vmarp_table_update(context, new_port, "add")
+            l3plugin.update_arp_entry_for_dvr_service_port(
+                context, new_port, "add")
 
 
 def subscribe():
