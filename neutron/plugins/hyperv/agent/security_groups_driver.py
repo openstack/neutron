@@ -13,15 +13,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from debtcollector import moves
 from hyperv.neutron import security_groups_driver as sg_driver
+from oslo_log import log as logging
 
-from neutron.agent import firewall
+from neutron.i18n import _LW
 
+LOG = logging.getLogger(__name__)
 
-class HyperVSecurityGroupsDriver(sg_driver.HyperVSecurityGroupsDriverMixin,
-                                 firewall.FirewallDriver):
-    """Security Groups Driver.
+# TODO(claudiub): Remove this module at the beginning of the O cycle.
 
-    Security Groups implementation for Hyper-V VMs.
-    """
-    pass
+new_driver = 'hyperv.neutron.security_groups_driver.HyperVSecurityGroupsDriver'
+LOG.warn(_LW("You are using the deprecated firewall driver: %(deprecated)s. "
+             "Use the recommended driver %(new)s instead."),
+         {'deprecated': '%s.HyperVSecurityGroupsDriver' % __name__,
+          'new': new_driver})
+
+HyperVSecurityGroupsDriver = moves.moved_class(
+    sg_driver.HyperVSecurityGroupsDriver,
+    'HyperVSecurityGroupsDriver', __name__)
