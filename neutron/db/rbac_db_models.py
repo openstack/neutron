@@ -18,6 +18,7 @@ import abc
 import sqlalchemy as sa
 from sqlalchemy.orm import validates
 
+from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 from neutron.db import model_base
 
@@ -38,7 +39,8 @@ class RBACColumns(model_base.HasId, model_base.HasTenant):
     # the target_tenant is the subject that the policy will affect. this may
     # also be a wildcard '*' to indicate all tenants or it may be a role if
     # neutron gets better integration with keystone
-    target_tenant = sa.Column(sa.String(255), nullable=False)
+    target_tenant = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN),
+                              nullable=False)
 
     action = sa.Column(sa.String(255), nullable=False)
 

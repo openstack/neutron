@@ -16,6 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
+from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 from neutron.db import models_v2
 
@@ -32,7 +33,7 @@ class ResourceDelta(model_base.BASEV2):
 
 
 class Reservation(model_base.BASEV2, models_v2.HasId):
-    tenant_id = sa.Column(sa.String(255))
+    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN))
     expiration = sa.Column(sa.DateTime())
     resource_deltas = orm.relationship(ResourceDelta,
                                        backref='reservation',
@@ -55,7 +56,7 @@ class QuotaUsage(model_base.BASEV2):
 
     resource = sa.Column(sa.String(255), nullable=False,
                          primary_key=True, index=True)
-    tenant_id = sa.Column(sa.String(255), nullable=False,
+    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), nullable=False,
                           primary_key=True, index=True)
     dirty = sa.Column(sa.Boolean, nullable=False, server_default=sql.false())
 

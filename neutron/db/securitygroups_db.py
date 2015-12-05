@@ -47,14 +47,15 @@ class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
                     models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron security group."""
 
-    name = sa.Column(sa.String(255))
-    description = sa.Column(sa.String(255))
+    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    description = sa.Column(sa.String(attributes.DESCRIPTION_MAX_LEN))
 
 
 class DefaultSecurityGroup(model_base.BASEV2):
     __tablename__ = 'default_security_group'
 
-    tenant_id = sa.Column(sa.String(255), primary_key=True, nullable=False)
+    tenant_id = sa.Column(sa.String(attributes.TENANT_ID_MAX_LEN),
+                          primary_key=True, nullable=False)
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id",
                                                 ondelete="CASCADE"),

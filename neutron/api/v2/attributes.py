@@ -34,9 +34,6 @@ SHARED = 'shared'
 # Used by range check to indicate no limit for a bound.
 UNLIMITED = None
 
-# TODO(watanabe.isao): A fix like in neutron/db/models_v2.py needs to be
-# done in other db modules, to reuse the following constants.
-# Common definitions for maximum string field length
 NAME_MAX_LEN = 255
 TENANT_ID_MAX_LEN = 255
 DESCRIPTION_MAX_LEN = 255

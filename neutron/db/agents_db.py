@@ -96,7 +96,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     # updated when agents report
     heartbeat_timestamp = sa.Column(sa.DateTime, nullable=False)
     # description is note for admin user
-    description = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(attributes.DESCRIPTION_MAX_LEN))
     # configurations: a json dict string, I think 4095 is enough
     configurations = sa.Column(sa.String(4095), nullable=False)
     # load - number of resources hosted by the agent

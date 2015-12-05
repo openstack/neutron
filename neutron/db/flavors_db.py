@@ -18,6 +18,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
 
+from neutron.api.v2 import attributes as attr
 from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -28,8 +29,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Flavor(model_base.BASEV2, models_v2.HasId):
-    name = sa.Column(sa.String(255))
-    description = sa.Column(sa.String(1024))
+    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
     enabled = sa.Column(sa.Boolean, nullable=False, default=True,
                         server_default=sa.sql.true())
     # Make it True for multi-type flavors
@@ -39,7 +40,7 @@ class Flavor(model_base.BASEV2, models_v2.HasId):
 
 
 class ServiceProfile(model_base.BASEV2, models_v2.HasId):
-    description = sa.Column(sa.String(1024))
+    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
     driver = sa.Column(sa.String(1024), nullable=False)
     enabled = sa.Column(sa.Boolean, nullable=False, default=True,
                         server_default=sa.sql.true())

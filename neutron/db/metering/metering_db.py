@@ -20,6 +20,7 @@ from sqlalchemy import orm
 from sqlalchemy import sql
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
+from neutron.api.v2 import attributes as attr
 from neutron.common import constants
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_db
@@ -43,8 +44,8 @@ class MeteringLabelRule(model_base.BASEV2, models_v2.HasId):
 
 
 class MeteringLabel(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    name = sa.Column(sa.String(255))
-    description = sa.Column(sa.String(1024))
+    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
     rules = orm.relationship(MeteringLabelRule, backref="label",
                              cascade="delete", lazy="joined")
     routers = orm.relationship(

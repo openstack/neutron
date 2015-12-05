@@ -17,6 +17,7 @@ from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import address_scope as ext_address_scope
@@ -29,7 +30,7 @@ class AddressScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
     __tablename__ = "address_scopes"
 
-    name = sa.Column(sa.String(255), nullable=False)
+    name = sa.Column(sa.String(attr.NAME_MAX_LEN), nullable=False)
     shared = sa.Column(sa.Boolean, nullable=False)
 
 

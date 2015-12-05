@@ -21,6 +21,7 @@ from oslo_log import log as logging
 import stevedore
 
 from neutron._i18n import _LW
+from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 
 LOG = logging.getLogger(__name__)
@@ -133,9 +134,10 @@ def parse_service_provider_opt(service_module='neutron'):
 
     """Parse service definition opts and returns result."""
     def validate_name(name):
-        if len(name) > 255:
+        if len(name) > attr.NAME_MAX_LEN:
             raise n_exc.Invalid(
-                _("Provider name is limited by 255 characters: %s") % name)
+                _("Provider name %(name)s is limited by %(len)s characters")
+                % {'name': name, 'len': attr.NAME_MAX_LEN})
 
     neutron_mod = NeutronModule(service_module)
     svc_providers_opt = neutron_mod.service_providers()
