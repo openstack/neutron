@@ -413,7 +413,7 @@ class ExtensionManager(object):
     def extend_resources(self, version, attr_map):
         """Extend resources with additional resources or attributes.
 
-        :param: attr_map, the existing mapping from resource name to
+        :param attr_map: the existing mapping from resource name to
         attrs definition.
 
         After this function, we will extend the attr_map if an extension
