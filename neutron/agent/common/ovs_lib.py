@@ -99,10 +99,11 @@ class VifPort(object):
         self.switch = switch
 
     def __str__(self):
-        return ("iface-id=" + self.vif_id + ", vif_mac=" +
-                self.vif_mac + ", port_name=" + self.port_name +
-                ", ofport=" + str(self.ofport) + ", bridge_name=" +
-                self.switch.br_name)
+        return ("iface-id=%s, vif_mac=%s, port_name=%s, ofport=%s, "
+                "bridge_name=%s") % (
+                    self.vif_id, self.vif_mac,
+                    self.port_name, self.ofport,
+                    self.switch.br_name)
 
 
 class BaseOVS(object):
