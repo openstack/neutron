@@ -321,6 +321,91 @@ be the bare minimum you have to complete in order to get you off the ground.
   <http://docs.openstack.org/infra/system-config/third_party.html>`_ to get
   one.
 
+Internationalization support
+----------------------------
+
+OpenStack is committed to broad international support.
+Internationalization (I18n) is one of important areas to make OpenStack ubiquitous.
+Each project is recommended to support i18n.
+
+This section describes how to set up translation support.
+The description in this section uses the following variables.
+
+* repository : ``openstack/${REPOSITORY}`` (e.g., ``openstack/networking-foo``)
+* top level python path : ``${MODULE_NAME}`` (e.g., ``networking_foo``)
+
+oslo.i18n
+~~~~~~~~~
+
+* Each subproject repository should have its own oslo.i18n integration
+  wrapper module ``${MODULE_NAME}/_i18n.py``. The detail is found at
+  http://docs.openstack.org/developer/oslo.i18n/usage.html.
+
+  .. note::
+
+     **DOMAIN** name should match your **repository** name ``${REPOSITORY}``.
+     (Note that it is not a top level python path name ``${MODULE_NAME}``.)
+
+* Import ``_()`` from your ``${MODULE_NAME}/_i18n.py``.
+
+  .. warning::
+
+     Do not use ``_()`` in the builtins namespace which is
+     registered by **gettext.install()** in ``neutron/__init__.py``.
+     It is now deprecated as described in oslo.18n documentation.
+
+Setting up translation support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need to create or edit the following files to start translation support:
+
+* setup.cfg
+* babel.cfg
+* skeleton POT file
+
+We have a good example for an oslo project at
+https://review.openstack.org/#/c/98248/.
+
+Add the following to ``setup.cfg``::
+
+    [extract_messages]
+    keywords = _ gettext ngettext l_ lazy_gettext
+    mapping_file = babel.cfg
+    output_file = ${REPOSITORY}/locale/${REPOSITORY}.pot
+
+    [compile_catalog]
+    directory = ${REPOSITORY}/locale
+    domain = ${REPOSITORY}
+
+    [update_catalog]
+    domain = ${REPOSITORY}
+    output_dir = ${REPOSITORY}/locale
+    input_file = ${REPOSITORY}/locale/${REPOSITORY}.pot
+
+Note that ``${REPOSITORY}`` is used in all names. Both come from the
+implementation of the current infra scripts. Changing it affects many
+projects, so it is not a good idea.
+
+Create ``babel.cfg`` with the following contents::
+
+    [python: **.py]
+
+Finally, create a skeleton POT file.
+To import translation, we need to place it at the proper place.
+Run the following commands in the top directory of your repository::
+
+  $ mkdir -p ${REPOSITORY}/locale
+  $ tox -e venv -- python setup.py extract_messages
+
+Now you see ``${REPOSITORY}/locale/${REPOSITORY}.pot``.
+
+Enable Translation
+~~~~~~~~~~~~~~~~~~
+
+To update and import translations, you need to make a change in project-config.
+A good example is found at https://review.openstack.org/#/c/224222/.
+After doing this, the necessary jobs will be run and push/pull a
+message catalog to/from the translation infrastructure.
 
 Integrating with the Neutron system
 -----------------------------------
