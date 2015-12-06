@@ -109,7 +109,16 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             filter(sa.or_(l3_attrs_db.RouterExtraAttributes.ha == sql.false(),
                           l3_attrs_db.RouterExtraAttributes.ha == sql.null())))
         try:
+            agents_back_online = set()
             for binding in down_bindings:
+                if binding.l3_agent_id in agents_back_online:
+                    continue
+                else:
+                    agent = self._get_agent(context, binding.l3_agent_id)
+                    if agent.is_active:
+                        agents_back_online.add(binding.l3_agent_id)
+                        continue
+
                 agent_mode = self._get_agent_mode(binding.l3_agent)
                 if agent_mode == constants.L3_AGENT_MODE_DVR:
                     # rescheduling from l3 dvr agent on compute node doesn't
