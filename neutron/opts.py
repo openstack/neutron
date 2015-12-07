@@ -14,8 +14,7 @@ import copy
 import itertools
 import operator
 
-from keystoneclient import auth
-from keystoneclient import session
+from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 
 import neutron.agent.common.config
@@ -69,7 +68,7 @@ deprecations = {'nova.cafile': [cfg.DeprecatedOpt('ca_certificates_file',
                 'nova.timeout': [cfg.DeprecatedOpt('url_timeout',
                                                    group=NOVA_GROUP)]}
 
-_nova_options = session.Session.register_conf_options(
+_nova_options = ks_loading.register_session_conf_options(
             CONF, NOVA_GROUP, deprecated_opts=deprecations)
 
 
@@ -275,12 +274,12 @@ def list_sriov_agent_opts():
 
 def list_auth_opts():
     opt_list = copy.deepcopy(_nova_options)
-    opt_list.insert(0, auth.get_common_conf_options()[0])
+    opt_list.insert(0, ks_loading.get_auth_common_conf_options()[0])
     # NOTE(mhickey): There are a lot of auth plugins, we just generate
     # the config options for a few common ones
     plugins = ['password', 'v2password', 'v3password']
     for name in plugins:
-        for plugin_option in auth.get_plugin_class(name).get_options():
+        for plugin_option in ks_loading.get_plugin_loader(name).get_options():
             if all(option.name != plugin_option.name for option in opt_list):
                 opt_list.append(plugin_option)
     opt_list.sort(key=operator.attrgetter('name'))
