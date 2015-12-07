@@ -30,6 +30,9 @@ import six
 #    neutron/tests/unit/hacking/test_checks.py
 
 _all_log_levels = {
+    'reserved': '_',  # this should never be used with a log unless
+                      # it is a variable used for a log message and
+                      # a exception
     'error': '_LE',
     'info': '_LI',
     'warn': '_LW',
