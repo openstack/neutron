@@ -17,6 +17,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron._i18n import _
 from neutron.api.rpc.callbacks.consumer import registry as cons_registry
 from neutron.api.rpc.callbacks.producer import registry as prod_registry
 from neutron.api.rpc.callbacks import resources

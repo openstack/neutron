@@ -17,6 +17,7 @@ import abc
 
 from oslo_config import cfg
 
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper

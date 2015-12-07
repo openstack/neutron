@@ -24,7 +24,7 @@ import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import importutils
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.metadata import driver as metadata_driver

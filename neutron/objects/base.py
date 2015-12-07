@@ -17,6 +17,7 @@ from oslo_utils import reflection
 from oslo_versionedobjects import base as obj_base
 import six
 
+from neutron._i18n import _
 from neutron.common import exceptions
 from neutron.db import api as db_api
 

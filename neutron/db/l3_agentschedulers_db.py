@@ -25,7 +25,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import joinedload
 from sqlalchemy import sql
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import constants
 from neutron.common import utils as n_utils
 from neutron import context as n_ctx

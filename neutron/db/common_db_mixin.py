@@ -20,6 +20,7 @@ from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import sql
 
+from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.db import sqlalchemyutils
 

@@ -21,7 +21,7 @@ import os
 import netaddr
 from oslo_log import log
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.common import constants
 
 

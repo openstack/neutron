@@ -22,7 +22,7 @@ from sqlalchemy.orm import exc
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.callbacks import events

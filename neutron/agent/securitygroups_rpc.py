@@ -21,7 +21,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import importutils
 
-from neutron._i18n import _LI, _LW
+from neutron._i18n import _, _LI, _LW
 from neutron.agent import firewall
 from neutron.api.rpc.handlers import securitygroups_rpc
 

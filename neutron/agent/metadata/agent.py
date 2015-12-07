@@ -24,7 +24,7 @@ import six
 import six.moves.urllib.parse as urlparse
 import webob
 
-from neutron._i18n import _LE, _LW
+from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import config
 from neutron.agent import rpc as agent_rpc

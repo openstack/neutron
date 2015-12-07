@@ -21,7 +21,7 @@ import six
 import six.moves.urllib.parse as urlparse
 import webob
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.agent.linux import daemon
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config

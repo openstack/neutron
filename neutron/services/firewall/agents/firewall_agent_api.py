@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron._i18n import _
 from neutron.common import rpc as n_rpc
 
 LOG = logging.getLogger(__name__)

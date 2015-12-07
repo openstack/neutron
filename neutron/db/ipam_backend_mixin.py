@@ -22,7 +22,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

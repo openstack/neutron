@@ -20,7 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import stevedore
 
-from neutron._i18n import _LW
+from neutron._i18n import _, _LW
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 

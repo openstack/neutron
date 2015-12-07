@@ -18,7 +18,7 @@ from oslo_log import log
 import pecan
 from pecan import request
 
-from neutron._i18n import _LW
+from neutron._i18n import _, _LW
 from neutron.api import extensions
 from neutron.api.views import versions as versions_view
 from neutron import manager

@@ -16,6 +16,8 @@
 
 from oslo_config import cfg
 
+from neutron._i18n import _
+
 DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
                help=_("The DHCP agent will resync its state with Neutron to "

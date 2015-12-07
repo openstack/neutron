@@ -17,6 +17,7 @@ from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 from neutron.db import models_v2

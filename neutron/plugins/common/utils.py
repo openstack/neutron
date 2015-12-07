@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import six
 import webob.exc
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc

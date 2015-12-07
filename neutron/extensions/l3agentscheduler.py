@@ -18,7 +18,7 @@ import abc
 from oslo_log import log as logging
 import webob.exc
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource

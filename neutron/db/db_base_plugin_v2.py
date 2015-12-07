@@ -24,7 +24,7 @@ from oslo_utils import uuidutils
 from sqlalchemy import and_
 from sqlalchemy import event
 
-from neutron._i18n import _LE, _LI
+from neutron._i18n import _, _LE, _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.callbacks import events

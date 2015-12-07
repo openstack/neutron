@@ -16,6 +16,7 @@ import abc
 
 from oslo_serialization import jsonutils
 
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base

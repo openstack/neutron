@@ -19,7 +19,7 @@ from oslo_utils import excutils
 import six
 import stevedore
 
-from neutron._i18n import _LE, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as exc
 from neutron.extensions import external_net

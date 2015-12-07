@@ -26,6 +26,7 @@ from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as sqla_exc
 
+from neutron._i18n import _
 from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import exceptions as exc

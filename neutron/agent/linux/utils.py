@@ -35,7 +35,7 @@ from oslo_utils import excutils
 import six
 from six.moves import http_client as httplib
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.agent.common import config
 from neutron.common import constants
 from neutron.common import utils

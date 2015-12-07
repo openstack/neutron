@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
 
+from neutron._i18n import _
 from neutron.agent.l3 import keepalived_state_change
 from neutron.tests.functional import base
 

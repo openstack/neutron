@@ -20,6 +20,7 @@ from sqlalchemy import and_
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

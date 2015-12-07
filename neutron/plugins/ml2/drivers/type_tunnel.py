@@ -23,7 +23,7 @@ from oslo_log import log
 from six import moves
 from sqlalchemy import or_
 
-from neutron._i18n import _LI, _LW
+from neutron._i18n import _, _LI, _LW
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.db import api as db_api

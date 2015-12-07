@@ -17,7 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as nexception
 from neutron.common import topics

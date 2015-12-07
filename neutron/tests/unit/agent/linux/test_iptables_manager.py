@@ -20,6 +20,7 @@ import mock
 from oslo_config import cfg
 import testtools
 
+from neutron._i18n import _
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants

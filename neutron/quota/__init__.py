@@ -23,7 +23,7 @@ from oslo_utils import importutils
 import six
 import webob
 
-from neutron._i18n import _LI, _LW
+from neutron._i18n import _, _LI, _LW
 from neutron.common import exceptions
 from neutron.db.quota import api as quota_api
 from neutron.quota import resource_registry

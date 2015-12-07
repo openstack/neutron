@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_utils import importutils
 import webob
 
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base

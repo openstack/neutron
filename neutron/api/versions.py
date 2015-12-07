@@ -17,6 +17,7 @@ import oslo_i18n
 from oslo_log import log as logging
 import webob.dec
 
+from neutron._i18n import _
 from neutron.api.views import versions as versions_view
 from neutron import wsgi
 

@@ -17,7 +17,7 @@
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _LE, _LW
+from neutron._i18n import _, _LE, _LW
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const

@@ -24,7 +24,7 @@ from oslo_utils import excutils
 import six
 import webob.exc
 
-from neutron._i18n import _LE, _LI
+from neutron._i18n import _, _LE, _LI
 from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes

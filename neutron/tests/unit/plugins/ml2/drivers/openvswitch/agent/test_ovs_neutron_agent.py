@@ -21,6 +21,7 @@ from oslo_log import log
 import oslo_messaging
 import testtools
 
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.agent.linux import async_process
