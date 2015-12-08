@@ -18,6 +18,7 @@ from oslo_utils import excutils
 
 from neutron._i18n import _LE
 from neutron.agent.linux import async_process
+from neutron.agent.linux import ip_lib
 
 LOG = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class IPMonitorEvent(object):
             route = route[1:]
 
         try:
-            interface = route[1]
+            interface = ip_lib.remove_interface_suffix(route[1])
             cidr = route[3]
         except IndexError:
             with excutils.save_and_reraise_exception():
