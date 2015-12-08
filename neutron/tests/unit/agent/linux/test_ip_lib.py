@@ -119,6 +119,13 @@ ADDR_SAMPLE2 = ("""
        valid_lft forever preferred_lft forever
 """)
 
+
+ADDR_SAMPLE3 = ("""
+2: eth0@NONE: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP
+    link/ether dd:cc:aa:b9:76:ce brd ff:ff:ff:ff:ff:ff
+    inet 172.16.77.240/24 brd 172.16.77.255 scope global eth0
+""")
+
 GATEWAY_SAMPLE1 = ("""
 default via 10.35.19.254  metric 100
 10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
@@ -821,6 +828,12 @@ class TestIpAddrCommand(TestIPCmdBase):
                              filters=['permanent']), expected)
             self._assert_call([], ('show', 'tap0', 'permanent', 'scope',
                               'global'))
+
+    def test_get_devices_with_ip(self):
+        self.parent._run.return_value = ADDR_SAMPLE3
+        devices = self.addr_cmd.get_devices_with_ip('172.16.77.240/24')
+        self.assertEqual(1, len(devices))
+        self.assertEqual('eth0', devices[0]['name'])
 
 
 class TestIpRouteCommand(TestIPCmdBase):
