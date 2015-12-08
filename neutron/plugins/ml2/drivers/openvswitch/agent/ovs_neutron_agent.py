@@ -26,6 +26,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
+from oslo_service import systemd
 import six
 from six import moves
 
@@ -334,7 +335,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                              'Doing a full sync.'))
                 self.fullsync = True
             self.use_call = False
-            self.agent_state.pop('start_flag', None)
+
+            if self.agent_state.pop('start_flag', None):
+                # On initial start, we notify systemd after initialization
+                # is complete.
+                systemd.notify_once()
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
