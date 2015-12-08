@@ -480,7 +480,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             self.ensure_tap_mtu(tap_device_name, phy_dev_name)
         # Avoid messing with plugging devices into a bridge that the agent
         # does not own
-        if device_owner.startswith(constants.DEVICE_OWNER_PREFIXES):
+        if not device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX):
             # Check if device needs to be added to bridge
             if not bridge_lib.BridgeDevice.get_interface_bridge(
                 tap_device_name):
