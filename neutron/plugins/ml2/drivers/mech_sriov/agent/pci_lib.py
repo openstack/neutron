@@ -34,9 +34,11 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     MAC_PATTERN = r"MAC\s+(?P<mac>[a-fA-F0-9:]+),"
     STATE_PATTERN = r"\s+link-state\s+(?P<state>\w+)"
     ANY_PATTERN = ".*,"
+    MACVTAP_PATTERN = r".*macvtap[0-9]+@(?P<vf_interface>[a-zA-Z0-9]+):"
 
     VF_LINE_FORMAT = VF_PATTERN + MAC_PATTERN + ANY_PATTERN + STATE_PATTERN
     VF_DETAILS_REG_EX = re.compile(VF_LINE_FORMAT)
+    MACVTAP_REG_EX = re.compile(MACVTAP_PATTERN)
 
     IP_LINK_OP_NOT_SUPPORTED = 'RTNETLINK answers: Operation not supported'
 
@@ -68,8 +70,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                 raise exc.IpCommandOperationNotSupportedError(
                     dev_name=self.dev_name)
             else:
-                raise exc.IpCommandError(dev_name=self.dev_name,
-                                         reason=str(e))
+                raise exc.IpCommandDeviceError(dev_name=self.dev_name,
+                                               reason=str(e))
 
     def get_assigned_macs(self, vf_list):
         """Get assigned mac addresses for vf list.
@@ -81,8 +83,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             out = self._as_root([], "link", ("show", self.dev_name))
         except Exception as e:
             LOG.exception(_LE("Failed executing ip command"))
-            raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=e)
+            raise exc.IpCommandDeviceError(dev_name=self.dev_name,
+                                           reason=e)
         vf_to_mac_mapping = {}
         vf_lines = self._get_vf_link_show(vf_list, out)
         if vf_lines:
@@ -104,8 +106,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             out = self._as_root([], "link", ("show", self.dev_name))
         except Exception as e:
             LOG.exception(_LE("Failed executing ip command"))
-            raise exc.IpCommandError(dev_name=self.dev_name,
-                                     reason=e)
+            raise exc.IpCommandDeviceError(dev_name=self.dev_name,
+                                           reason=e)
         vf_lines = self._get_vf_link_show([vf_index], out)
         if vf_lines:
             vf_details = self._parse_vf_link_show(vf_lines[0])
@@ -181,3 +183,26 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                             "for %(device)s"),
                         {'line': vf_line, 'device': self.dev_name})
         return vf_details
+
+    @classmethod
+    def is_macvtap_assigned(cls, ifname):
+        """Check if vf has macvtap interface assigned
+
+        Parses the output of ip link show command and checks
+        if macvtap[0-9]+@<vf interface> regex matches the
+        output.
+        @param ifname: vf interface name
+        @return: True on match otherwise False
+        """
+        try:
+            out = cls._execute([], "link", ("show", ), run_as_root=True)
+        except Exception as e:
+            LOG.error(_LE("Failed executing ip command: %s"), e)
+            raise exc.IpCommandError(reason=e)
+
+        for line in out.splitlines():
+            pattern_match = cls.MACVTAP_REG_EX.match(line)
+            if pattern_match:
+                if ifname == pattern_match.group('vf_interface'):
+                    return True
+        return False
