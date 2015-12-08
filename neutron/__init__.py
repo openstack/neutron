@@ -14,6 +14,8 @@
 #    under the License.
 
 import gettext
+
+from debtcollector import removals
 import six
 
 
@@ -21,3 +23,8 @@ if six.PY2:
     gettext.install('neutron', unicode=1)
 else:
     gettext.install('neutron')
+
+
+six.moves.builtins.__dict__['_'] = removals.remove(
+    message='Builtin _ translation function is deprecated in OpenStack; '
+            'use the function from _i18n module for your project.')(_)
