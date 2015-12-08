@@ -56,11 +56,82 @@ properly cleaned up both on test success and failure.
 Fullstack Tests
 ~~~~~~~~~~~~~~~
 
-Fullstack tests (neutron/tests/fullstack/) target Neutron as a whole.
-The test infrastructure itself manages the Neutron server and its agents.
-Fullstack tests are a form of integration testing and fill a void between
-unit/functional tests and Tempest. More information may be found
-`here. <fullstack_testing.html>`_
+Why?
+++++
+
+The idea behind "fullstack" testing is to fill a gap between unit + functional
+tests and Tempest. Tempest tests are expensive to run, and target black box API
+tests exclusively. Tempest requires an OpenStack deployment to be run against,
+which can be difficult to configure and setup. Full stack testing addresses
+these issues by taking care of the deployment itself, according to the topology
+that the test requires. Developers further benefit from full stack testing as
+it can sufficiently simulate a real environment and provide a rapidly
+reproducible way to verify code while you're still writing it.
+
+How?
+++++
+
+Full stack tests set up their own Neutron processes (Server & agents). They
+assume a working Rabbit and MySQL server before the run starts. Instructions
+on how to run fullstack tests on a VM are available below.
+
+Each test defines its own topology (What and how many servers and agents should
+be running).
+
+Since the test runs on the machine itself, full stack testing enables
+"white box" testing. This means that you can, for example, create a router
+through the API and then assert that a namespace was created for it.
+
+Full stack tests run in the Neutron tree with Neutron resources alone. You
+may use the Neutron API (The Neutron server is set to NOAUTH so that Keystone
+is out of the picture). VMs may be simulated with a container-like class:
+neutron.tests.fullstack.resources.machine.FakeFullstackMachine.
+An example of its usage may be found at:
+neutron/tests/fullstack/test_connectivity.py.
+
+Full stack testing can simulate multi node testing by starting an agent
+multiple times. Specifically, each node would have its own copy of the
+OVS/DHCP/L3 agents, all configured with the same "host" value. Each OVS agent
+is connected to its own pair of br-int/br-ex, and those bridges are then
+interconnected.
+
+.. image:: images/fullstack_multinode_simulation.png
+
+Segmentation at the database layer is guaranteed by creating a database
+per test. The messaging layer achieves segmentation by utilizing a RabbitMQ
+feature called 'vhosts'. In short, just like a MySQL server serve multiple
+databases, so can a RabbitMQ server serve multiple messaging domains.
+Exchanges and queues in one 'vhost' are segmented from those in another
+'vhost'.
+
+When?
++++++
+
+1) You'd like to test the interaction between Neutron components (Server
+   and agents) and have already tested each component in isolation via unit or
+   functional tests. You should have many unit tests, fewer tests to test
+   a component and even fewer to test their interaction. Edge cases should
+   not be tested with full stack testing.
+2) You'd like to increase coverage by testing features that require multi node
+   testing such as l2pop, L3 HA and DVR.
+3) You'd like to test agent restarts. We've found bugs in the OVS, DHCP and
+   L3 agents and haven't found an effective way to test these scenarios. Full
+   stack testing can help here as the full stack infrastructure can restart an
+   agent during the test.
+
+Example
++++++++
+
+Neutron offers a Quality of Service API, initially offering bandwidth
+capping at the port level. In the reference implementation, it does this by
+utilizing an OVS feature.
+neutron.tests.fullstack.test_qos.TestQoSWithOvsAgent.test_qos_policy_rule_lifecycle
+is a positive example of how the fullstack testing infrastructure should be used.
+It creates a network, subnet, QoS policy & rule and a port utilizing that policy.
+It then asserts that the expected bandwidth limitation is present on the OVS
+bridge connected to that port. The test is a true integration test, in the
+sense that it invokes the API and then asserts that Neutron interacted with
+the hypervisor appropriately.
 
 API Tests
 ~~~~~~~~~
@@ -260,9 +331,11 @@ tools/configure_for_func_testing.sh is advised (As described above).
 When running full-stack tests on a clean VM for the first time, we
 advise to run ./stack.sh successfully to make sure all Neutron's
 dependencies are met. Full-stack based Neutron daemons produce logs to a
-sub-folder in /tmp/fullstack-logs (for example, a test named
-"test_example" will produce logs to /tmp/fullstack-logs/test_example/),
+sub-folder in /tmp/dsvm-fullstack-logs (for example, a test named
+"test_example" will produce logs to /tmp/dsvm-fullstack-logs/test_example/),
 so that will be a good place to look if your test is failing.
+Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
+the test machine is available for its usage.
 
 API Tests
 +++++++++
