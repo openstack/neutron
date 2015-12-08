@@ -230,8 +230,12 @@ class OVSBridge(BaseOVS):
 
     def replace_port(self, port_name, *interface_attr_tuples):
         """Replace existing port or create it, and configure port interface."""
+
+        # NOTE(xiaohhui): If del_port is inside the transaction, there will
+        # only be one command for replace_port. This will cause the new port
+        # not be found by system, which will lead to Bug #1519926.
+        self.ovsdb.del_port(port_name).execute()
         with self.ovsdb.transaction() as txn:
-            txn.add(self.ovsdb.del_port(port_name))
             txn.add(self.ovsdb.add_port(self.br_name, port_name,
                                         may_exist=False))
             if interface_attr_tuples:
