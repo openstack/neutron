@@ -13,9 +13,12 @@
 #    under the License.
 #
 
+import functools
+
 import fixtures
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils
 from neutron.tests.common import net_helpers
 
 
@@ -47,6 +50,17 @@ class FakeMachineBase(fixtures.Fixture):
     def execute(self, *args, **kwargs):
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ns_ip_wrapper.netns.execute(*args, **kwargs)
+
+    def ping_predicate(self, dst_ip):
+        try:
+            self.assert_ping(dst_ip)
+        except RuntimeError:
+            return False
+        return True
+
+    def block_until_ping(self, dst_ip):
+        predicate = functools.partial(self.ping_predicate, dst_ip)
+        utils.wait_until_true(predicate)
 
     def assert_ping(self, dst_ip):
         net_helpers.assert_ping(self.namespace, dst_ip)
