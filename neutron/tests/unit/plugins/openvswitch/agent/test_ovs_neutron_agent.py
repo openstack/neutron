@@ -102,6 +102,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier
+        systemd_patch = mock.patch(
+            'neutron.openstack.common.systemd.notify_once')
+        self.systemd_notify = systemd_patch.start()
+
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
@@ -475,9 +479,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
             self.agent.int_br_device_count = 5
+            self.systemd_notify.assert_not_called()
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+            self.systemd_notify.assert_called_once_with()
+            self.systemd_notify.reset_mock()
             self.assertNotIn("start_flag", self.agent.agent_state)
             self.assertFalse(self.agent.use_call)
             self.assertEqual(
@@ -487,6 +494,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, False)
+            self.systemd_notify.assert_not_called()
 
     def test_report_state_fail(self):
         with mock.patch.object(self.agent.state_rpc,
@@ -498,6 +506,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+            self.systemd_notify.assert_not_called()
 
     def test_network_delete(self):
         with contextlib.nested(

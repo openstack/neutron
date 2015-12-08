@@ -42,6 +42,7 @@ from neutron.common import utils as q_utils
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron.openstack.common import loopingcall
+from neutron.openstack.common import systemd
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_dvr_neutron_agent
 from neutron.plugins.openvswitch.common import constants
@@ -281,7 +282,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                         self.agent_state,
                                         self.use_call)
             self.use_call = False
-            self.agent_state.pop('start_flag', None)
+
+            if self.agent_state.pop('start_flag', None):
+                # On initial start, we notify systemd after initialization
+                # is complete.
+                systemd.notify_once()
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
 
