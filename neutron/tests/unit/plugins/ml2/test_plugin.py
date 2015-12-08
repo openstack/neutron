@@ -1659,14 +1659,12 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         exit = transaction.__exit__.call_count
         self.assertEqual(enter, exit)
 
-    def _create_plugin_for_create_update_port(self, new_host_port):
+    def _create_plugin_for_create_update_port(self):
         plugin = ml2_plugin.Ml2Plugin()
         plugin.extension_manager = mock.Mock()
         plugin.type_manager = mock.Mock()
         plugin.mechanism_manager = mock.Mock()
         plugin.notifier = mock.Mock()
-        plugin._get_host_port_if_changed = mock.Mock(
-            return_value=new_host_port)
         plugin._check_mac_update_allowed = mock.Mock(return_value=True)
         plugin._extend_availability_zone = mock.Mock()
 
@@ -1675,76 +1673,19 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
 
         return plugin
 
-    def _test__get_host_port_if_changed(
-        self, mech_context, attrs=None, expected_retval=None):
-        with mock.patch.object(ml2_plugin.Ml2Plugin,
-                               '__init__',
-                               return_value=None):
-            plugin = ml2_plugin.Ml2Plugin()
-            test_return = plugin._get_host_port_if_changed(mech_context, attrs)
-            self.assertEqual(expected_retval, test_return)
-
-    def test__get_host_port_if_changed_no_attrs(self):
-        mech_context = mock.Mock()
-        mech_context._binding.host = 'Host-1'
-        self._test__get_host_port_if_changed(
-            mech_context, attrs=None, expected_retval=None)
-
-    def test__get_host_port_if_changed_no_binding_change(self):
-        mech_context = mock.Mock()
-        mech_context._binding.host = 'Host-1'
-        mech_context.current = {
-            'id': 'fake-id',
-            'mac_address': '2a:2b:2c:2d:2e:2f'
-        }
-        attrs = {'mac_address': '0a:0b:0c:0d:0e:0f'}
-        self._test__get_host_port_if_changed(
-            mech_context, attrs=attrs, expected_retval=None)
-
-        attrs = {
-            portbindings.HOST_ID: 'Host-1',
-            'mac_address': '0a:0b:0c:0d:0e:0f',
-        }
-        self._test__get_host_port_if_changed(
-            mech_context, attrs=attrs, expected_retval=None)
-
-    def test__get_host_port_if_changed_with_binding_removed(self):
-        expected_return = {
-            'id': 'fake-id',
-            portbindings.HOST_ID: None,
-            'mac_address': '2a:2b:2c:2d:2e:2f'
-        }
-        mech_context = mock.Mock()
-        mech_context._binding.host = 'Host-1'
-        mech_context.current = expected_return
-        attrs = {portbindings.HOST_ID: None}
-        self._test__get_host_port_if_changed(
-            mech_context, attrs=attrs, expected_retval=expected_return)
-
-    def test__get_host_port_if_changed_with_binding_added(self):
-        expected_return = {
-            'id': 'fake-id',
-            portbindings.HOST_ID: 'host-1',
-            'mac_address': '2a:2b:2c:2d:2e:2f'
-        }
-        mech_context = mock.Mock()
-        mech_context.current = expected_return
-        attrs = {portbindings.HOST_ID: 'host-1'}
-        self._test__get_host_port_if_changed(
-            mech_context, attrs=attrs, expected_retval=expected_return)
-
     def test_create_port_rpc_outside_transaction(self):
         with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
-                                  'create_port'):
+                                  'create_port') as db_create_port:
             init.return_value = None
 
-            new_host_port = mock.Mock()
-            plugin = self._create_plugin_for_create_update_port(new_host_port)
+            new_port = mock.MagicMock()
+            db_create_port.return_value = new_port
+            plugin = self._create_plugin_for_create_update_port()
 
             plugin.create_port(self.context, mock.MagicMock())
 
-            kwargs = {'context': self.context, 'port': new_host_port}
+            kwargs = {'context': self.context, 'port': new_port}
             self.notify.assert_called_once_with('port', 'after_create',
                 plugin, **kwargs)
 
@@ -1773,17 +1714,18 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 mock.patch.object(ml2_db, 'get_locked_port_and_binding',
                                   return_value=(original_port_db, binding)),\
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
-                                  'update_port'):
+                                  'update_port') as db_update_port:
             init.return_value = None
-            new_host_port = mock.Mock()
-            plugin = self._create_plugin_for_create_update_port(new_host_port)
+            updated_port = mock.MagicMock()
+            db_update_port.return_value = updated_port
+            plugin = self._create_plugin_for_create_update_port()
             original_port = plugin._make_port_dict(original_port_db)
 
             plugin.update_port(self.context, port_id, mock.MagicMock())
 
             kwargs = {
                 'context': self.context,
-                'port': new_host_port,
+                'port': updated_port,
                 'mac_address_updated': True,
                 'original_port': original_port,
             }
@@ -1804,7 +1746,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 mock.patch.object(manager.NeutronManager,
                                   'get_service_plugins',
                                   return_value={'L3_ROUTER_NAT': l3plugin}):
-            plugin = self._create_plugin_for_create_update_port(mock.Mock())
+            plugin = self._create_plugin_for_create_update_port()
             # Set backend manually here since __init__ was mocked
             plugin.set_ipam_backend()
             # deleting the port will call registry.notify, which will
