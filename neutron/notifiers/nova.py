@@ -60,6 +60,7 @@ class Notifier(object):
             NOVA_API_VERSION,
             session=session,
             region_name=cfg.CONF.nova.region_name,
+            endpoint_type=cfg.CONF.nova.endpoint_type,
             extensions=extensions)
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)

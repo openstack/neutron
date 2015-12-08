@@ -309,3 +309,23 @@ class TestNovaNotify(base.BaseTestCase):
         event = self.nova_notifier.create_port_changed_event('delete_port',
                                                              {}, returned_obj)
         self.assertEqual(expected_event, event)
+
+    @mock.patch('novaclient.client.Client')
+    def test_endpoint_types(self, mock_client):
+        nova.Notifier()
+        mock_client.assert_called_once_with(
+                                        nova.NOVA_API_VERSION,
+                                        session=mock.ANY,
+                                        region_name=cfg.CONF.nova.region_name,
+                                        endpoint_type='public',
+                                        extensions=mock.ANY)
+
+        mock_client.reset_mock()
+        cfg.CONF.set_override('endpoint_type', 'internal', 'nova')
+        nova.Notifier()
+        mock_client.assert_called_once_with(
+                                        nova.NOVA_API_VERSION,
+                                        session=mock.ANY,
+                                        region_name=cfg.CONF.nova.region_name,
+                                        endpoint_type='internal',
+                                        extensions=mock.ANY)
