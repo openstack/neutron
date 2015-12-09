@@ -417,8 +417,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def delete_port(self, context, port_id):
         query = (context.session.query(models_v2.Port).
                  enable_eagerloads(False).filter_by(id=port_id))
-        if not context.is_admin:
-            query = query.filter_by(tenant_id=context.tenant_id)
         # Use of the ORM mapper is needed for ensuring appropriate resource
         # tracking; otherwise SQL Alchemy events won't be triggered.
         # For more info check 'caveats' in doc/source/devref/quota.rst

@@ -276,11 +276,6 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-beefbeefbeef')
     def test_tenant_can_delete_port_on_own_network(self):
-        # TODO(kevinbenton): make adjustments to the db lookup to
-        # make this work.
-        msg = "Non-admin cannot currently delete other's ports."
-        raise self.skipException(msg)
-        # pylint: disable=unreachable
         net = self.create_network()  # owned by self.client
         self.client.create_rbac_policy(
             object_type='network', object_id=net['id'],
