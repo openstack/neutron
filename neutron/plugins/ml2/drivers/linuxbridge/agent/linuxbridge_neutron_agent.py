@@ -442,9 +442,8 @@ class LinuxBridgeManager(object):
                     'device_owner': device_owner,
                     'bridge_name': bridge_name}
             LOG.debug("Skip adding device %(tap_device_name)s to "
-                      "%(bridge_name)s. It is owned by %(device_owner) and "
-                      "thus added elsewhere."
-                      "elsewhere", data)
+                      "%(bridge_name)s. It is owned by %(device_owner)s and "
+                      "thus added elsewhere.", data)
         return True
 
     def ensure_tap_mtu(self, tap_dev_name, phy_dev_name):
