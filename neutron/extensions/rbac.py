@@ -97,7 +97,7 @@ class Rbac(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_updated(cls):
-        return "2015-06-17T12:15:12-30:00"
+        return "2015-06-17T12:15:12-00:00"
 
     @classmethod
     def get_resources(cls):
