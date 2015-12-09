@@ -19,8 +19,8 @@ WebTest>=2.0
 oslotest>=1.10.0 # Apache-2.0
 os-testr>=0.4.1
 tempest-lib>=0.11.0
-ddt>=0.7.0
-pylint==1.4.4 # GNU GPL v2
+ddt>=1.0.1
+pylint==1.4.5 # GNU GPL v2
 reno>=0.1.1 # Apache2
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.6.2 # MIT License
