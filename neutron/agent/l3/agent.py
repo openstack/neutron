@@ -437,6 +437,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         ri.process(self)
         registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
 
+    def _resync_router(self, router_update,
+                       priority=queue.PRIORITY_SYNC_ROUTERS_TASK):
+        router_update.timestamp = timeutils.utcnow()
+        router_update.priority = priority
+        self._queue.add(router_update)
+
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
             LOG.debug("Starting router update for %s, action %s, priority %s",
@@ -454,7 +460,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 except Exception:
                     msg = _LE("Failed to fetch router information for '%s'")
                     LOG.exception(msg, update.id)
-                    self.fullsync = True
+                    self._resync_router(update)
                     continue
 
                 if routers:
@@ -463,10 +469,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             if not router:
                 removed = self._safe_router_removed(update.id)
                 if not removed:
-                    # TODO(Carl) Stop this fullsync non-sense.  Just retry this
-                    # one router by sticking the update at the end of the queue
-                    # at a lower priority.
-                    self.fullsync = True
+                    self._resync_router(update)
                 else:
                     # need to update timestamp of removed router in case
                     # there are older events for the same router in the
@@ -488,7 +491,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             except Exception:
                 msg = _LE("Failed to process compatible router '%s'")
                 LOG.exception(msg, update.id)
-                self.fullsync = True
+                self._resync_router(update)
                 continue
 
             LOG.debug("Finished a router update for %s", update.id)
