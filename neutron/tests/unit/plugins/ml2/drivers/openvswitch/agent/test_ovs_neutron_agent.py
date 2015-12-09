@@ -70,35 +70,25 @@ class MockFixedIntervalLoopingCall(object):
 
 class ValidateTunnelTypes(ovs_test_base.OVSAgentConfigTestBase):
 
+    def setUp(self):
+        super(ValidateTunnelTypes, self).setUp()
+        self.mock_validate_local_ip = mock.patch.object(
+            self.mod_agent, 'validate_local_ip').start()
+
     def test_validate_tunnel_types_succeeds(self):
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
                               group='AGENT')
-        # ValueError will not raise
-        self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
-                                             cfg.CONF.OVS.local_ip)
-
-    def test_validate_tunnel_types_fails_for_invalid_tunnel_config(self):
-        # An ip address is required for tunneling but there is no default,
-        # verify this for both gre and vxlan tunnels.
-        cfg.CONF.set_override('local_ip', None, group='OVS')
-        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
-                              group='AGENT')
-        with testtools.ExpectedException(ValueError):
-            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
-                                                 cfg.CONF.OVS.local_ip)
-        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_VXLAN],
-                              group='AGENT')
-        with testtools.ExpectedException(ValueError):
-            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
-                                                 cfg.CONF.OVS.local_ip)
+        self.mod_agent.validate_tunnel_config(cfg.CONF.AGENT.tunnel_types,
+                                              cfg.CONF.OVS.local_ip)
+        self.mock_validate_local_ip.assert_called_once_with('10.10.10.10')
 
     def test_validate_tunnel_types_fails_for_invalid_tunnel_type(self):
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfg.CONF.set_override('tunnel_types', ['foobar'], group='AGENT')
-        with testtools.ExpectedException(ValueError):
-            self.mod_agent.validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
-                                                 cfg.CONF.OVS.local_ip)
+        with testtools.ExpectedException(SystemExit):
+            self.mod_agent.validate_tunnel_config(cfg.CONF.AGENT.tunnel_types,
+                                                  cfg.CONF.OVS.local_ip)
 
 
 class TestOvsNeutronAgent(object):
@@ -2667,20 +2657,17 @@ class TestOvsDvrNeutronAgentRyu(TestOvsDvrNeutronAgent,
 
 
 class TestValidateTunnelLocalIP(base.BaseTestCase):
-    def test_validate_local_ip_no_tunneling(self):
-        cfg.CONF.set_override('tunnel_types', [], group='AGENT')
-        # The test will pass simply if no exception is raised by the next call:
-        ovs_agent.validate_local_ip(FAKE_IP1)
-
     def test_validate_local_ip_with_valid_ip(self):
-        cfg.CONF.set_override('tunnel_types', ['vxlan'], group='AGENT')
         mock_get_device_by_ip = mock.patch.object(
             ip_lib.IPWrapper, 'get_device_by_ip').start()
         ovs_agent.validate_local_ip(FAKE_IP1)
         mock_get_device_by_ip.assert_called_once_with(FAKE_IP1)
 
+    def test_validate_local_ip_with_none_ip(self):
+        with testtools.ExpectedException(SystemExit):
+            ovs_agent.validate_local_ip(None)
+
     def test_validate_local_ip_with_invalid_ip(self):
-        cfg.CONF.set_override('tunnel_types', ['vxlan'], group='AGENT')
         mock_get_device_by_ip = mock.patch.object(
             ip_lib.IPWrapper, 'get_device_by_ip').start()
         mock_get_device_by_ip.return_value = None

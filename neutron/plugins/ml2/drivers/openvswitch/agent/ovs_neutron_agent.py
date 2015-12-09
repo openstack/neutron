@@ -1813,10 +1813,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
 
 def validate_local_ip(local_ip):
-    """If tunneling is enabled, verify if the ip exists on the agent's host."""
-    if not cfg.CONF.AGENT.tunnel_types:
-        return
-
+    """Verify if the ip exists on the agent's host."""
     if not ip_lib.IPWrapper().get_device_by_ip(local_ip):
         LOG.error(_LE("Tunneling can't be enabled with invalid local_ip '%s'."
                       " IP couldn't be found on this host's interfaces."),
@@ -1824,15 +1821,16 @@ def validate_local_ip(local_ip):
         raise SystemExit(1)
 
 
-def validate_tunnel_types(tunnel_types, local_ip):
-    if tunnel_types and not local_ip:
-        msg = _('Tunneling cannot be enabled without a valid local_ip.')
-        raise ValueError(msg)
+def validate_tunnel_config(tunnel_types, local_ip):
+    """Verify local ip and tunnel config if tunneling is enabled."""
+    if not tunnel_types:
+        return
 
+    validate_local_ip(local_ip)
     for tun in tunnel_types:
         if tun not in constants.TUNNEL_NETWORK_TYPES:
-            msg = _('Invalid tunnel type specified: %s') % tun
-            raise ValueError(msg)
+            LOG.error(_LE('Invalid tunnel type specified: %s'), tun)
+            raise SystemExit(1)
 
 
 def prepare_xen_compute():
@@ -1846,13 +1844,7 @@ def prepare_xen_compute():
 
 def main(bridge_classes):
     prepare_xen_compute()
-    validate_local_ip(cfg.CONF.OVS.local_ip)
-    try:
-        validate_tunnel_types(cfg.CONF.AGENT.tunnel_types,
-                              cfg.CONF.OVS.local_ip)
-    except ValueError as e:
-        LOG.error(_LE("Validation of tunnel types failed. %s"), e)
-        raise SystemExit(1)
+    validate_tunnel_config(cfg.CONF.AGENT.tunnel_types, cfg.CONF.OVS.local_ip)
 
     try:
         agent = OVSNeutronAgent(bridge_classes, cfg.CONF)
