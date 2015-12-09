@@ -258,3 +258,41 @@ into the next release is as follows:
 The specs which are moved in this way can be fast-tracked into the next
 release. Please note that it is required to re-propose the spec for the new
 release.
+
+
+Documentation
+-------------
+
+The above process involves two places where any given feature can start to be
+documented - namely in the RFE bug, and in the spec - and in addition to those
+Neutron has a substantial `developer reference guide
+<http://docs.openstack.org/developer/neutron/devref/index.html>`_ (aka
+'devref'), and user-facing docs such as the `networking guide
+<http://docs.openstack.org/networking-guide/>`_.  So it might be asked:
+
+* What is the relationship between all of those?
+
+* What is the point of devref documentation, if everything has already been
+  described in the spec?
+
+The answers have been beautifully expressed in an `openstack-dev post
+<http://lists.openstack.org/pipermail/openstack-dev/2015-December/081458.html>`_:
+
+1. RFE: "I want X"
+2. Spec: "I plan to implement X like this"
+3. devref: "How X is implemented and how to extend it"
+4. OS docs: "API and guide for using X"
+
+Once a feature X has been implemented, we shouldn't have to go to back to its
+RFE bug or spec to find information on it.  The devref may reuse a lot of
+content from the spec, but the spec is not maintained and the implementation
+may differ in some ways from what was intended when the spec was agreed.  The
+devref should be kept current with refactorings, etc., of the implementation.
+
+Devref content should be added as part of the implementation of a new feature.
+Since the spec is not maintained after the feature is implemented, the devref
+should include a maintained version of the information from the spec.
+
+If a feature requires OS docs (4), the commit message for the feature patch
+shall include 'DocImpact'.  If the feature is purely a developer facing thing,
+(4) is not needed.
