@@ -646,7 +646,7 @@ class L3SchedulerTestBaseMixin(object):
         # test dvr agent_mode case only dvr agent should be candidate
         router['distributed'] = True
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
+        self.check_dvr_serviceable_ports_on_host = mock.Mock(return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR)
 
     def test_get_l3_agent_candidates_dvr_no_vms(self):
@@ -660,7 +660,8 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
         # Test no VMs present case
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
+        self.check_dvr_serviceable_ports_on_host = mock.Mock(
+            return_value=False)
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR, count=0)
 
@@ -675,7 +676,7 @@ class L3SchedulerTestBaseMixin(object):
 
         agent_list = [self.l3_dvr_snat_agent]
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_ports_exist_on_l3agent = mock.Mock(return_value=True)
+        self.check_dvr_serviceable_ports_on_host = mock.Mock(return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR_SNAT)
 
     def test_get_l3_agent_candidates_dvr_snat_no_vms(self):
@@ -688,10 +689,11 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
 
         agent_list = [self.l3_dvr_snat_agent]
-        self.check_ports_exist_on_l3agent = mock.Mock(return_value=False)
+        self.check_dvr_serviceable_ports_on_host = mock.Mock(
+            return_value=False)
         # Test no VMs present case
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_ports_exist_on_l3agent.return_value = False
+        self.check_dvr_serviceable_ports_on_host.return_value = False
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR_SNAT, count=0)
 
@@ -1229,85 +1231,6 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                                         r1['id'])
             self.assertEqual(len(sub_ids), 0)
 
-    def _test_check_ports_on_host_and_subnet_base(self, port_status):
-        dvr_port = {
-                'id': 'fake_id',
-                'device_id': 'r1',
-                'status': port_status,
-                portbindings.HOST_ID: 'thisHost',
-                'device_owner': DEVICE_OWNER_COMPUTE_NOVA,
-                'fixed_ips': [
-                    {
-                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
-                        'ip_address': '10.10.10.1'
-                    }
-                ]
-        }
-        r1 = {
-              'id': 'r1',
-              'distributed': True,
-        }
-        with mock.patch(
-            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
-            return_value=[dvr_port]),\
-                mock.patch(
-                    'neutron.manager.NeutronManager.get_service_plugins',
-                    return_value=mock.Mock()),\
-                mock.patch('neutron.db.l3_db.L3_NAT_db_mixin.get_router',
-                           return_value=r1),\
-                mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
-                           '.L3AgentNotifyAPI'):
-            sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
-                                                        r1['id'])
-            result = self.dut.check_ports_on_host_and_subnet(
-                                                    self.adminContext,
-                                                    'thisHost', 'dvr_port1',
-                                                    sub_ids)
-            self.assertTrue(result)
-
-    def test_check_ports_on_host_and_subnet_with_active_port(self):
-        self._test_check_ports_on_host_and_subnet_base('ACTIVE')
-
-    def test_check_ports_on_host_and_subnet_with_build_port(self):
-        self._test_check_ports_on_host_and_subnet_base('BUILD')
-
-    def test_check_ports_on_host_and_subnet_with_down_port(self):
-        self._test_check_ports_on_host_and_subnet_base('DOWN')
-
-    def _test_dvr_serviced_port_exists_on_subnet(self, port):
-        with mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                        'get_ports', return_value=[port]):
-            result = self.dut.check_ports_on_host_and_subnet(
-                                                    self.adminContext,
-                                                    'thisHost',
-                                                    'dvr1-intf-id',
-                                                    'my-subnet-id')
-            self.assertTrue(result)
-
-    def _test_dvr_serviced_vip_port_exists_on_subnet(self, device_owner):
-        vip_port = {
-                'id': 'lbaas-vip-port1',
-                'device_id': 'vip-pool-id',
-                'status': 'ACTIVE',
-                portbindings.HOST_ID: 'thisHost',
-                'device_owner': device_owner,
-                'fixed_ips': [
-                    {
-                        'subnet_id': 'my-subnet-id',
-                        'ip_address': '10.10.10.1'
-                    }
-                ]
-        }
-        self._test_dvr_serviced_port_exists_on_subnet(port=vip_port)
-
-    def test_dvr_serviced_lbaas_vip_port_exists_on_subnet(self):
-        self._test_dvr_serviced_vip_port_exists_on_subnet(
-                        device_owner=constants.DEVICE_OWNER_LOADBALANCER)
-
-    def test_dvr_serviced_lbaasv2_vip_port_exists_on_subnet(self):
-        self._test_dvr_serviced_vip_port_exists_on_subnet(
-                        device_owner=constants.DEVICE_OWNER_LOADBALANCERV2)
-
     def _create_port(self, port_name, tenant_id, host, subnet_id, ip_address,
                      status='ACTIVE',
                      device_owner=DEVICE_OWNER_COMPUTE_NOVA):
@@ -1375,11 +1298,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             status='INACTIVE')
         deleted_vm_port_id = deleted_vm_port['id']
 
-        running_vm_port = self._create_port(
-            'running-vn', 'tenant-2', vm_port_host,
-            shared_subnet_id, '10.10.10.33')
-
-        fakePortDB = FakePortDB([running_vm_port, deleted_vm_port, dvr_port])
+        fakePortDB = FakePortDB([deleted_vm_port, dvr_port])
 
         vm_port_binding = {
             'port_id': deleted_vm_port_id,
@@ -1397,10 +1316,15 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
                            'get_ports', side_effect=fakePortDB.get_ports) as\
                 mock_get_ports,\
+                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+                           '_get_ports_query'),\
                 mock.patch('neutron.plugins.ml2.db.'
                            'get_dvr_port_binding_by_host',
                            return_value=vm_port_binding) as\
-                mock_get_dvr_port_binding_by_host:
+                mock_get_dvr_port_binding_by_host,\
+                mock.patch.object(self.dut,
+                                  'check_dvr_serviceable_ports_on_host',
+                                  return_value=True):
 
             routers = self.dut.dvr_deletens_if_no_port(
                 my_context, deleted_vm_port_id)
@@ -1437,11 +1361,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             status='INACTIVE')
         deleted_vm_port_id = deleted_vm_port['id']
 
-        running_vm_port = self._create_port(
-             'running-vn', vm_tenant, 'compute-node-2',
-             shared_subnet_id, '10.10.10.33')
-
-        fakePortDB = FakePortDB([running_vm_port, dvr_port, deleted_vm_port])
+        fakePortDB = FakePortDB([dvr_port, deleted_vm_port])
 
         dvr_port_binding = {
             'port_id': dvr_port_id, 'host': vm_port_host
@@ -1469,7 +1389,10 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 mock_get_dvr_port_binding_by_host,\
                 mock.patch('neutron.db.agents_db.AgentDbMixin.'
                            '_get_agent_by_type_and_host',
-                           return_value=l3_agent_on_vm_host):
+                           return_value=l3_agent_on_vm_host),\
+                mock.patch.object(self.dut,
+                                  'check_dvr_serviceable_ports_on_host',
+                                  return_value=False):
 
             routers = self.dut.dvr_deletens_if_no_port(
                 my_context, deleted_vm_port_id)
@@ -1498,22 +1421,6 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         # router will be unscheduled on the compute node
         self._test_dvr_deletens_if_no_ports_delete_routers(
             'tenant-1', 'tenant-1')
-
-    def test_dvr_serviced_dhcp_port_exists_on_subnet(self):
-        dhcp_port = {
-                'id': 'dhcp-port1',
-                'device_id': 'dhcp-net-id',
-                'status': 'ACTIVE',
-                portbindings.HOST_ID: 'thisHost',
-                'device_owner': constants.DEVICE_OWNER_DHCP,
-                'fixed_ips': [
-                    {
-                        'subnet_id': 'my-subnet-id',
-                        'ip_address': '10.10.10.2'
-                    }
-                ]
-        }
-        self._test_dvr_serviced_port_exists_on_subnet(port=dhcp_port)
 
     def _prepare_schedule_snat_tests(self):
         agent = agents_db.Agent()
