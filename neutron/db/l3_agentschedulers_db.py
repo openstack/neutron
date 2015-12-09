@@ -273,6 +273,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 RouterL3AgentBinding.l3_agent_id == agent_id)
             query.delete()
 
+    def _unschedule_router(self, context, router_id, agents_ids):
+        with context.session.begin(subtransactions=True):
+            for agent_id in agents_ids:
+                self._unbind_router(context, router_id, agent_id)
+
     def reschedule_router(self, context, router_id, candidates=None):
         """Reschedule router to (a) new l3 agent(s)
 
@@ -282,8 +287,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         cur_agents = self.list_l3_agents_hosting_router(
             context, router_id)['agents']
         with context.session.begin(subtransactions=True):
-            for agent in cur_agents:
-                self._unbind_router(context, router_id, agent['id'])
+            cur_agents_ids = [agent['id'] for agent in cur_agents]
+            self._unschedule_router(context, router_id, cur_agents_ids)
 
             self.schedule_router(context, router_id, candidates=candidates)
             new_agents = self.list_l3_agents_hosting_router(
