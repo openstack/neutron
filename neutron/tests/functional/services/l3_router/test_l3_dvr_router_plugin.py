@@ -654,3 +654,82 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                                       topic=topics.L3_AGENT,
                                       version='1.1')]
                 mock_prepare.assert_has_calls(expected, any_order=True)
+
+    def test_router_is_not_removed_from_snat_agent_on_interface_removal(self):
+        """Check that dvr router is not removed from l3 agent hosting
+        SNAT for it on router interface removal
+        """
+        router = self._create_router()
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        host = self.l3_agent['host']
+        with self.subnet() as subnet,\
+                self.network(**kwargs) as ext_net,\
+                self.subnet(network=ext_net, cidr='20.0.0.0/24'):
+            self.l3_plugin._update_router_gw_info(
+                self.context, router['id'],
+                {'network_id': ext_net['network']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])
+            self.assertEqual(1, len(agents['agents']))
+            csnat_agent_host = self.l3_plugin.get_snat_bindings(
+                self.context, [router['id']])[0]['l3_agent']['host']
+            self.assertEqual(host, csnat_agent_host)
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier:
+                self.l3_plugin.remove_router_interface(
+                        self.context, router['id'],
+                        {'subnet_id': subnet['subnet']['id']})
+                agents = self.l3_plugin.list_l3_agents_hosting_router(
+                    self.context, router['id'])
+                self.assertEqual(1, len(agents['agents']))
+                self.assertFalse(l3_notifier.router_removed_from_agent.called)
+
+    def test_router_is_not_removed_from_snat_agent_on_dhcp_port_deletion(self):
+        """Check that dvr router is not removed from l3 agent hosting
+        SNAT for it on DHCP port removal
+        """
+        router = self._create_router()
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        with self.network(**kwargs) as ext_net,\
+                self.subnet(network=ext_net),\
+                self.subnet(cidr='20.0.0.0/24') as subnet,\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_DHCP) as port:
+            self.core_plugin.update_port(
+                    self.context, port['port']['id'],
+                    {'port': {'binding:host_id': self.l3_agent['host']}})
+            self.l3_plugin._update_router_gw_info(
+                self.context, router['id'],
+                {'network_id': ext_net['network']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            # router should be scheduled to the dvr_snat l3 agent
+            csnat_agent_host = self.l3_plugin.get_snat_bindings(
+                self.context, [router['id']])[0]['l3_agent']['host']
+            self.assertEqual(self.l3_agent['host'], csnat_agent_host)
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])
+            self.assertEqual(1, len(agents['agents']))
+            self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
+
+            notifier = self.l3_plugin.agent_notifiers[
+                constants.AGENT_TYPE_L3]
+            with mock.patch.object(
+                    notifier, 'router_removed_from_agent') as remove_mock:
+                self._delete('ports', port['port']['id'])
+                # now when port is deleted the router still has external
+                # gateway and should still be scheduled to the snat agent
+                agents = self.l3_plugin.list_l3_agents_hosting_router(
+                    self.context, router['id'])
+                self.assertEqual(1, len(agents['agents']))
+                self.assertEqual(self.l3_agent['id'],
+                                 agents['agents'][0]['id'])
+                self.assertFalse(remove_mock.called)

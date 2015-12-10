@@ -368,11 +368,19 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             subnet_ids = plugin.get_subnet_ids_on_router(
                 context, router['id'])
             if subnet_ids:
+                binding_table = l3_dvrsched_db.CentralizedSnatL3AgentBinding
+                snat_binding = context.session.query(binding_table).filter_by(
+                    router_id=router['id']).first()
                 for l3_agent in l3_agents:
-                    if not plugin.check_dvr_serviceable_ports_on_host(
-                        context, l3_agent['host'], subnet_ids):
-                        plugin.remove_router_from_l3_agent(
-                            context, l3_agent['id'], router['id'])
+                    is_this_snat_agent = (
+                        snat_binding and
+                        snat_binding.l3_agent_id == l3_agent['id'])
+                    if (is_this_snat_agent or
+                        plugin.check_dvr_serviceable_ports_on_host(
+                            context, l3_agent['host'], subnet_ids)):
+                        continue
+                    plugin.remove_router_from_l3_agent(
+                        context, l3_agent['id'], router['id'])
         router_interface_info = self._make_router_interface_info(
             router['id'], port['tenant_id'], port['id'], subnet['id'],
             [subnet['id']])
