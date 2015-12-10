@@ -157,10 +157,7 @@ class HaRouter(router.RouterInfo):
 
     def _add_vips(self, port, interface_name):
         for ip_cidr in common_utils.fixed_ip_cidrs(port['fixed_ips']):
-            try:
-                self._add_vip(ip_cidr, interface_name)
-            except keepalived.VIPDuplicateAddressException:
-                LOG.debug("%s has already been added to keepalive", ip_cidr)
+            self._add_vip(ip_cidr, interface_name)
 
     def _add_vip(self, ip_cidr, interface, scope=None):
         instance = self._get_keepalived_instance()
