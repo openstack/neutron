@@ -204,6 +204,7 @@ def _validate_mac_address_or_none(data, valid_values=None):
 
 
 def _validate_ip_address(data, valid_values=None):
+    msg = None
     try:
         netaddr.IPAddress(_validate_no_whitespace(data))
         # The followings are quick checks for IPv6 (has ':') and
@@ -220,11 +221,12 @@ def _validate_ip_address(data, valid_values=None):
         #   IPAddress('199.28.113.199')
         #   >>>
         if ':' not in data and data.count('.') != 3:
-            raise ValueError()
+            msg = _("'%s' is not a valid IP address") % data
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
+    if msg:
         LOG.debug(msg)
-        return msg
+    return msg
 
 
 def _validate_ip_pools(data, valid_values=None):
