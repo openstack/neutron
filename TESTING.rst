@@ -24,16 +24,56 @@
 Testing Neutron
 ===============
 
-Overview
---------
+Why Should You Care
+-------------------
+There's two ways to approach testing:
 
-Neutron relies on unit, functional, fullstack and API tests to ensure its
-quality, as described below. In addition to in-tree testing, `Tempest`_ is
-responsible for validating Neutron's integration with other OpenStack
-components via scenario tests, and `Rally`_ is responsible for benchmarking.
+1) Write unit tests because they're required to get your patch merged.
+   This typically involves mock heavy tests that assert that your code is as
+   written.
+2) Putting as much thought in to your testing strategy as you do to the rest
+   of your code. Use different layers of testing as appropriate to provide
+   high *quality* coverage. Are you touching an agent? Test it against an
+   actual system! Are you adding a new API? Test it for race conditions
+   against a real database! Are you adding a new cross-cutting feature?
+   Test that it does what it's supposed to do when run on a real cloud!
 
-.. _Tempest: http://docs.openstack.org/developer/tempest/
-.. _Rally: http://rally.readthedocs.org/en/latest/
+Do you feel the need to verify your change manually? If so, the next few
+sections attempt to guide you through Neutron's different test infrastructures
+to help you make intelligent decisions and best exploit Neutron's test
+offerings.
+
+Definitions
+-----------
+We will talk about three classes of tests: unit, functional and integration.
+Each respective category typically targets a larger scope of code. Other than
+that broad categorization, here are a few more characteristic:
+
+  * Unit tests - Should be able to run on your laptop, directly following a
+    'git clone' of the project. The underlying system must not be mutated,
+    mocks can be used to achieve this. A unit test typically targets a function
+    or class.
+  * Functional tests - Run against a pre-configured environment
+    (tools/configure_for_func_testing.sh). Typically test a component
+    such as an agent using no mocks.
+  * Integration tests - Run against a running cloud, often target the API level,
+    but also 'scenarios' or 'user stories'. You may find such tests under
+    tests/api, tests/fullstack and in the Tempest and Rally projects.
+
+Tests in the Neutron tree are typically organized by the testing infrastructure
+used, and not by the scope of the test. For example, many tests under the
+'unit' directory invoke an API call and assert that the expected output was
+received. The scope of such a test is the entire Neutron server stack,
+and clearly not a specific function such as in a typical unit test.
+
+Testing Frameworks
+------------------
+
+The different frameworks are listed below. The intent is to list the
+capabilities of each testing framework as to help the reader understand when
+should each tool be used. Remember that when adding code that touches many
+areas of Neutron, each area should be tested with the appropriate framework.
+Overlap between different test layers is often desirable and encouraged.
 
 Unit Tests
 ~~~~~~~~~~
@@ -44,6 +84,42 @@ make sure any new changes don't break existing functionality. Unit tests have
 no requirements nor make changes to the system they are running on. They use
 an in-memory sqlite database to test DB interaction.
 
+At the start of each test run:
+
+* RPC listeners are mocked away.
+* The fake Oslo messaging driver is used.
+
+At the end of each test run:
+
+* Mocks are automatically reverted.
+* The in-memory database is cleared of content, but its schema is maintained.
+* The global Oslo configuration object is reset.
+
+The unit testing framework can be used to effectively test database interaction,
+for example, distributed routers allocate a MAC address for every host running
+an OVS agent. One of DVR's DB mixins implements a method that lists all host
+MAC addresses. Its test looks like this:
+
+.. code-block:: python
+
+    def test_get_dvr_mac_address_list(self):
+        self._create_dvr_mac_entry('host_1', 'mac_1')
+        self._create_dvr_mac_entry('host_2', 'mac_2')
+        mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+        self.assertEqual(2, len(mac_list))
+
+It inserts two new host MAC address, invokes the method under test and asserts
+its output. The test has many things going for it:
+
+* It targets the method under test correctly, not taking on a larger scope
+  than is necessary.
+* It does not use mocks to assert that methods were called, it simply
+  invokes the method and asserts its output (In this case, that the list
+  method returns two records).
+
+This is allowed by the fact that the method was built to be testable -
+The method has clear input and output with no side effects.
+
 Functional Tests
 ~~~~~~~~~~~~~~~~
 
@@ -52,6 +128,61 @@ validate actual system interaction. Mocks should be used sparingly,
 if at all. Care should be taken to ensure that existing system
 resources are not modified and that resources created in tests are
 properly cleaned up both on test success and failure.
+
+Let's examine the benefits of the functional testing framework.
+Neutron offers a library called 'ip_lib' that wraps around the 'ip' binary.
+One of its methods is called 'device_exists' which accepts a device name
+and a namespace and returns True if the device exists in the given namespace.
+It's easy building a test that targets the method directly, and such a test
+would be considered a 'unit' test. However, what framework should such a test
+use? A test using the unit tests framework could not mutate state on the system,
+and so could not actually create a device and assert that it now exists. Such
+a test would look roughly like this:
+
+* It would mock 'execute', a method that executes shell commands against the
+  system to return an IP device named 'foo'.
+* It would then assert that when 'device_exists' is called with 'foo', it
+  returns True, but when called with a different device name it returns False.
+* It would most likely assert that 'execute' was called using something like:
+  'ip link show foo'.
+
+The value of such a test is arguable. Remember that new tests are not free,
+they need to be maintained. Code is often refactored, reimplemented and
+optimized.
+
+* There are other ways to find out if a device exists (Such as
+  by looking at '/sys/class/net'), and in such a case the test would have
+  to be updated.
+* Methods are mocked using their name. When methods are renamed, moved or
+  removed, their mocks must be updated. This slows down development for
+  avoidable reasons.
+* Most importantly, the test does not assert the behavior of the method. It
+  merely asserts that the code is as written.
+
+When adding a functional test for 'device_exists', several framework level
+methods were added. These methods may now be used by other tests as well.
+One such method creates a virtual device in a namespace,
+and ensures that both the namespace and the device are cleaned up at the
+end of the test run regardless of success or failure using the 'addCleanup'
+method. The test generates details for a temporary device, asserts that
+a device by that name does not exist, create that device, asserts that
+it now exists, deletes it, and asserts that it no longer exists.
+Such a test avoids all three issues mentioned above if it were written
+using the unit testing framework.
+
+Functional tests are also used to target larger scope, such as agents.
+Many good examples exist: See the OVS, L3 and DHCP agents functional tests.
+Such tests target a top level agent method and assert that the system
+interaction that was supposed to be perform was indeed performed.
+For example, to test the DHCP agent's top level method that accepts network
+attributes and configures dnsmasq for that network, the test:
+
+* Instantiates an instance of the DHCP agent class (But does not start its
+  process).
+* Calls its top level function with prepared data.
+* Creates a temporary namespace and device, and calls 'dhclient' from that
+  namespace.
+* Assert that the device successfully obtained the expected IP address.
 
 Fullstack Tests
 ~~~~~~~~~~~~~~~
@@ -157,8 +288,8 @@ Development Process
 -------------------
 
 It is expected that any new changes that are proposed for merge
-come with tests for that feature or code area. Ideally any bugs
-fixes that are submitted also have tests to prove that they stay
+come with tests for that feature or code area. Any bugs
+fixes that are submitted must also have tests to prove that they stay
 fixed! In addition, before proposing for merge, all of the
 current tests should be passing.
 
