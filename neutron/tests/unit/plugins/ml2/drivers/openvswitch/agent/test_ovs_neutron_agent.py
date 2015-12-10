@@ -384,6 +384,133 @@ class TestOvsNeutronAgent(object):
                                       updated_ports)
         self.assertEqual(expected, actual)
 
+    def _test_process_ports_events(self, events, registered_ports,
+                                   ancillary_ports, expected_ports,
+                                   expected_ancillary, updated_ports=None):
+        with mock.patch.object(self.agent, 'check_changed_vlans',
+                               return_value=set()):
+            devices_not_ready_yet = set()
+            actual = self.agent.process_ports_events(
+                events, registered_ports, ancillary_ports,
+                devices_not_ready_yet, updated_ports)
+            self.assertEqual(
+                (expected_ports, expected_ancillary, devices_not_ready_yet),
+                actual)
+
+    def test_process_ports_events_returns_current_for_unchanged_ports(self):
+        events = {'added': [], 'removed': []}
+        registered_ports = {1, 3}
+        ancillary_ports = {2, 5}
+        expected_ports = {'current': registered_ports, 'added': set(),
+                          'removed': set()}
+        expected_ancillary = {'current': ancillary_ports, 'added': set(),
+                              'removed': set()}
+        self._test_process_ports_events(events, registered_ports,
+                                        ancillary_ports, expected_ports,
+                                        expected_ancillary)
+
+    def test_process_port_events_no_vif_changes_return_updated_port_only(self):
+        events = {'added': [], 'removed': []}
+        registered_ports = {1, 2, 3}
+        updated_ports = {2}
+        expected_ports = dict(current=registered_ports, updated={2},
+                              added=set(), removed=set())
+        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        self._test_process_ports_events(events, registered_ports,
+                                        set(), expected_ports,
+                                        expected_ancillary, updated_ports)
+
+    def test_process_port_events_ignores_removed_port_if_never_added(self):
+        events = {'added': [],
+                  'removed': [{'name': 'port2', 'ofport': 2,
+                               'external_ids': {'attached-mac': 'test-mac'}}]}
+        registered_ports = {1}
+        expected_ports = dict(current=registered_ports, added=set(),
+                              removed=set())
+        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        devices_not_ready_yet = set()
+        with mock.patch.object(self.agent.int_br, 'portid_from_external_ids',
+                               side_effect=[2]), \
+            mock.patch.object(self.agent, 'check_changed_vlans',
+                              return_value=set()):
+            actual = self.agent.process_ports_events(
+                events, registered_ports, set(), devices_not_ready_yet)
+            self.assertEqual(
+                (expected_ports, expected_ancillary, devices_not_ready_yet),
+                actual)
+
+    def test_process_port_events_port_not_ready_yet(self):
+        events = {'added': [{'name': 'port5', 'ofport': [],
+                  'external_ids': {'attached-mac': 'test-mac'}}],
+                  'removed': []}
+        old_devices_not_ready = {'port4'}
+        registered_ports = set([1, 2, 3])
+        expected_ports = dict(current=set([1, 2, 3, 4]),
+                              added=set([4]), removed=set())
+        self.agent.ancillary_brs = []
+        expected_ancillary = dict(current=set(), added=set(), removed=set())
+        with mock.patch.object(self.agent.int_br, 'portid_from_external_ids',
+                               side_effect=[5, 4]), \
+            mock.patch.object(self.agent, 'check_changed_vlans',
+                              return_value=set()), \
+            mock.patch.object(self.agent.int_br, 'get_ports_attributes',
+                              return_value=[{'name': 'port4', 'ofport': 4,
+                                             'external_ids': {
+                                                 'attached-mac': 'mac4'}}]):
+            expected_devices_not_ready = {'port5'}
+            actual = self.agent.process_ports_events(
+                events, registered_ports, set(), old_devices_not_ready)
+            self.assertEqual(
+                (expected_ports, expected_ancillary,
+                 expected_devices_not_ready),
+                actual)
+
+    def _test_process_port_events_with_updated_ports(self, updated_ports):
+        events = {'added': [{'name': 'port3', 'ofport': 3,
+                            'external_ids': {'attached-mac': 'test-mac'}},
+                            {'name': 'qg-port2', 'ofport': 6,
+                             'external_ids': {'attached-mac': 'test-mac'}}],
+                  'removed': [{'name': 'port2', 'ofport': 2,
+                               'external_ids': {'attached-mac': 'test-mac'}},
+                              {'name': 'qg-port1', 'ofport': 5,
+                               'external_ids': {'attached-mac': 'test-mac'}}]}
+        registered_ports = {1, 2, 4}
+        ancillary_ports = {5, 8}
+        expected_ports = dict(current={1, 3, 4}, added={3}, removed={2})
+        if updated_ports:
+            expected_ports['updated'] = updated_ports
+        expected_ancillary = dict(current={6, 8}, added={6},
+                                  removed={5})
+        ancillary_bridge = mock.Mock()
+        ancillary_bridge.get_vif_port_set.return_value = {5, 6, 8}
+        self.agent.ancillary_brs = [ancillary_bridge]
+        with mock.patch.object(self.agent.int_br, 'portid_from_external_ids',
+                              side_effect=[3, 6, 2, 5]), \
+            mock.patch.object(self.agent, 'check_changed_vlans',
+                              return_value=set()):
+
+            devices_not_ready_yet = set()
+            actual = self.agent.process_ports_events(
+                events, registered_ports, ancillary_ports,
+                devices_not_ready_yet, updated_ports)
+            self.assertEqual(
+                (expected_ports, expected_ancillary, devices_not_ready_yet),
+                actual)
+
+    def test_process_port_events_returns_port_changes(self):
+        self._test_process_port_events_with_updated_ports(set())
+
+    def test_process_port_events_finds_known_updated_ports(self):
+        self._test_process_port_events_with_updated_ports({4})
+
+    def test_process_port_events_ignores_unknown_updated_ports(self):
+        # the port '10' was not seen on current ports. Hence it has either
+        # never been wired or already removed and should be ignored
+        self._test_process_port_events_with_updated_ports({4, 10})
+
+    def test_process_port_events_ignores_updated_port_if_removed(self):
+        self._test_process_port_events_with_updated_ports({4, 5})
+
     def test_update_ports_returns_changed_vlan(self):
         br = self.br_int_cls('br-int')
         mac = "ca:fe:de:ad:be:ef"
@@ -1349,11 +1476,17 @@ class TestOvsNeutronAgent(object):
                   'added': set([]),
                   'removed': set(['tap0'])}
 
+        reply_ancillary = {'current': set([]),
+                           'added': set([]),
+                           'removed': set([])}
+
         with mock.patch.object(async_process.AsyncProcess, "_spawn"),\
+                mock.patch.object(async_process.AsyncProcess, "start"),\
+                mock.patch.object(async_process.AsyncProcess, "stop"),\
                 mock.patch.object(log.KeywordArgumentAdapter,
                                   'exception') as log_exception,\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                                  'scan_ports') as scan_ports,\
+                                  'process_ports_events') as process_p_events,\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
                     'process_network_ports') as process_network_ports,\
@@ -1371,7 +1504,11 @@ class TestOvsNeutronAgent(object):
                                   'cleanup_stale_flows') as cleanup:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
-            scan_ports.side_effect = [reply2, reply3]
+            devices_not_ready = set()
+            process_p_events.side_effect = [(reply2, reply_ancillary,
+                                             devices_not_ready),
+                                            (reply3, reply_ancillary,
+                                             devices_not_ready)]
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
             check_ovs_status.side_effect = args
@@ -1380,10 +1517,13 @@ class TestOvsNeutronAgent(object):
             except Exception:
                 pass
 
-            scan_ports.assert_has_calls([
-                mock.call(set(), True, set()),
-                mock.call(set(), False, set())
+            process_p_events.assert_has_calls([
+                mock.call({'removed': [], 'added': []}, set(), set(), set(),
+                          set()),
+                mock.call({'removed': [], 'added': []}, set(['tap0']), set(),
+                          set(), set())
             ])
+
             process_network_ports.assert_has_calls([
                 mock.call(reply2, False),
                 mock.call(reply3, True)

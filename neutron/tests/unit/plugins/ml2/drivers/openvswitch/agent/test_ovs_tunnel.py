@@ -509,13 +509,23 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_daemon_loop(self):
-        reply2 = {'current': set(['tap0']),
-                  'added': set(['tap2']),
-                  'removed': set([])}
+        reply_ge_1 = {'added': set(['tap0']),
+                      'removed': set([])}
 
-        reply3 = {'current': set(['tap2']),
-                  'added': set([]),
+        reply_ge_2 = {'added': set([]),
                   'removed': set(['tap0'])}
+
+        reply_pe_1 = {'current': set(['tap0']),
+                      'added': set(['tap0']),
+                      'removed': set([])}
+
+        reply_pe_2 = {'current': set([]),
+                      'added': set([]),
+                      'removed': set(['tap0'])}
+
+        reply_ancillary = {'current': set([]),
+                           'added': set([]),
+                           'removed': set([])}
 
         self.mock_int_bridge_expected += [
             mock.call.check_canary_table(),
@@ -527,7 +537,7 @@ class TunnelTest(object):
         with mock.patch.object(log.KeywordArgumentAdapter,
                                'exception') as log_exception,\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                                  'scan_ports') as scan_ports,\
+                                  'process_ports_events') as process_p_events,\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
                     'process_network_ports') as process_network_ports,\
@@ -542,8 +552,13 @@ class TunnelTest(object):
                     'cleanup_stale_flows') as cleanup:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
-            scan_ports.side_effect = [reply2, reply3]
             update_stale.return_value = []
+            devices_not_ready = set()
+            process_p_events.side_effect = [
+                (reply_pe_1, reply_ancillary, devices_not_ready),
+                (reply_pe_2, reply_ancillary, devices_not_ready)]
+            interface_polling = mock.Mock()
+            interface_polling.get_events.side_effect = [reply_ge_1, reply_ge_2]
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
 
@@ -553,7 +568,7 @@ class TunnelTest(object):
             # We start method and expect it will raise after 2nd loop
             # If something goes wrong, assert_has_calls below will catch it
             try:
-                n_agent.daemon_loop()
+                n_agent.rpc_loop(interface_polling)
             except Exception:
                 pass
 
@@ -561,17 +576,15 @@ class TunnelTest(object):
             # messages
             log_exception.assert_called_once_with(
                 "Error while processing VIF ports")
-            scan_ports.assert_has_calls([
-                mock.call(set(), True, set()),
-                mock.call(set(['tap0']), False, set())
+            process_p_events.assert_has_calls([
+                mock.call(reply_ge_1, set(), set(), devices_not_ready, set()),
+                mock.call(reply_ge_2, set(['tap0']), set(), devices_not_ready,
+                          set())
             ])
             process_network_ports.assert_has_calls([
                 mock.call({'current': set(['tap0']),
                            'removed': set([]),
-                           'added': set(['tap2'])}, False),
-                mock.call({'current': set(['tap2']),
-                           'removed': set(['tap0']),
-                           'added': set([])}, False)
+                           'added': set(['tap0'])}, False),
             ])
 
             cleanup.assert_called_once_with()

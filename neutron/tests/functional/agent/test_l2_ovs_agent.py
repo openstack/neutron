@@ -114,7 +114,8 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.agent = self.create_agent(create_tunnels=False)
         self.network = self._create_test_network_dict()
         self._plug_ports(self.network, self.ports, self.agent)
-        self.start_agent(self.agent, unplug_ports=[self.ports[1]])
+        self.start_agent(self.agent, ports=self.ports,
+                         unplug_ports=[self.ports[1]])
         self.wait_until_ports_state([self.ports[0]], up=True)
         self.assertRaises(
             Timeout, self.wait_until_ports_state, [self.ports[1]], up=True,
