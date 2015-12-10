@@ -206,7 +206,10 @@ def _validate_mac_address_or_none(data, valid_values=None):
 def _validate_ip_address(data, valid_values=None):
     msg = None
     try:
-        netaddr.IPAddress(_validate_no_whitespace(data))
+        # netaddr.core.ZEROFILL is only applicable to IPv4.
+        # it will remove leading zeros from IPv4 address octets.
+        ip = netaddr.IPAddress(_validate_no_whitespace(data),
+                               flags=netaddr.core.ZEROFILL)
         # The followings are quick checks for IPv6 (has ':') and
         # IPv4.  (has 3 periods like 'xx.xx.xx.xx')
         # NOTE(yamamoto): netaddr uses libraries provided by the underlying
@@ -222,6 +225,13 @@ def _validate_ip_address(data, valid_values=None):
         #   >>>
         if ':' not in data and data.count('.') != 3:
             msg = _("'%s' is not a valid IP address") % data
+        # A leading '0' in IPv4 address may be interpreted as an octal number,
+        # e.g. 011 octal is 9 decimal. Since there is no standard saying
+        # whether IP address with leading '0's should be interpreted as octal
+        # or decimal, hence we reject leading '0's to avoid ambiguity.
+        if ip.version == 4 and str(ip) != data:
+            msg = _("'%(data)s' is not an accepted IP address, "
+                    "'%(ip)s' is recommended") % {"data": data, "ip": ip}
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
     if msg:

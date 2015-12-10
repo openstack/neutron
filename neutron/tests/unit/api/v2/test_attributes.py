@@ -17,6 +17,7 @@ import string
 import testtools
 
 import mock
+import netaddr
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
@@ -270,6 +271,28 @@ class TestAttributes(base.BaseTestCase):
             msg = attributes._validate_ip_address(ip_addr)
             self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
+    def test_validate_ip_address_with_leading_zero(self):
+        ip_addr = '1.1.1.01'
+        expected_msg = ("'%(data)s' is not an accepted IP address, "
+                        "'%(ip)s' is recommended")
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(expected_msg % {"data": ip_addr, "ip": '1.1.1.1'},
+                         msg)
+
+        ip_addr = '1.1.1.011'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(expected_msg % {"data": ip_addr, "ip": '1.1.1.11'},
+                         msg)
+
+        ip_addr = '1.1.1.09'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(expected_msg % {"data": ip_addr, "ip": '1.1.1.9'},
+                         msg)
+
+        ip_addr = "fe80:0:0:0:0:0:0:0001"
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertIsNone(msg)
+
     def test_validate_ip_address_bsd(self):
         # NOTE(yamamoto):  On NetBSD and OS X, netaddr.IPAddress() accepts
         # '1' * 59 as a valid address.  The behaviour is inherited from
@@ -279,7 +302,8 @@ class TestAttributes(base.BaseTestCase):
         ip_addr = '1' * 59
         with mock.patch('netaddr.IPAddress') as ip_address_cls:
             msg = attributes._validate_ip_address(ip_addr)
-        ip_address_cls.assert_called_once_with(ip_addr)
+        ip_address_cls.assert_called_once_with(ip_addr,
+                                               flags=netaddr.core.ZEROFILL)
         self.assertEqual("'%s' is not a valid IP address" % ip_addr, msg)
 
     def test_validate_ip_pools(self):
