@@ -130,8 +130,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                                for route in subnet['routes']],
                }
         # The shared attribute for a subnet is the same as its parent network
-        res['shared'] = self._make_network_dict(subnet.networks,
-                                                context=context)['shared']
+        res['shared'] = self._is_network_shared(context, subnet.networks)
         # Call auxiliary extend functions, if any
         self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
         return self._fields(res, fields)
@@ -270,21 +269,22 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'status': network['status'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}
-        # The shared attribute for a network now reflects if the network
-        # is shared to the calling tenant via an RBAC entry.
-        shared = False
-        matches = ('*',) + ((context.tenant_id,) if context else ())
-        for entry in network.rbac_entries:
-            if (entry.action == 'access_as_shared' and
-                    entry.target_tenant in matches):
-                shared = True
-                break
-        res['shared'] = shared
+        res['shared'] = self._is_network_shared(context, network)
         # Call auxiliary extend functions, if any
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.NETWORKS, res, network)
         return self._fields(res, fields)
+
+    def _is_network_shared(self, context, network):
+        # The shared attribute for a network now reflects if the network
+        # is shared to the calling tenant via an RBAC entry.
+        matches = ('*',) + ((context.tenant_id,) if context else ())
+        for entry in network.rbac_entries:
+            if (entry.action == 'access_as_shared' and
+                    entry.target_tenant in matches):
+                return True
+        return False
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
         gateway_ip = str(detail.gateway_ip) if detail.gateway_ip else None
