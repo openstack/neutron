@@ -148,10 +148,20 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         return value
 
     def extend_network_dict_provider(self, context, network):
-        id = network['id']
-        segments = db.get_network_segments(context.session, id)
+        # this method is left for backward compat even though it would be
+        # easy to change the callers in tree to use the bulk function
+        return self.extend_networks_dict_provider(context, [network])
+
+    def extend_networks_dict_provider(self, context, networks):
+        ids = [network['id'] for network in networks]
+        net_segments = db.get_networks_segments(context.session, ids)
+        for network in networks:
+            segments = net_segments[network['id']]
+            self._extend_network_dict_provider(network, segments)
+
+    def _extend_network_dict_provider(self, network, segments):
         if not segments:
-            LOG.error(_LE("Network %s has no segments"), id)
+            LOG.error(_LE("Network %s has no segments"), network['id'])
             for attr in provider.ATTRIBUTES:
                 network[attr] = None
         elif len(segments) > 1:

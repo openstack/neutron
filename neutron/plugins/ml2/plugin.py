@@ -691,8 +691,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             nets = super(Ml2Plugin,
                          self).get_networks(context, filters, None, sorts,
                                             limit, marker, page_reverse)
-            for net in nets:
-                self.type_manager.extend_network_dict_provider(context, net)
+            self.type_manager.extend_networks_dict_provider(context, nets)
 
             nets = self._filter_nets_provider(context, nets, filters)
 

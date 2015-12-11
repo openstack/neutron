@@ -65,15 +65,22 @@ def add_network_segment(session, network_id, segment, segment_index=0,
 
 
 def get_network_segments(session, network_id, filter_dynamic=False):
+    return get_networks_segments(
+        session, [network_id], filter_dynamic)[network_id]
+
+
+def get_networks_segments(session, network_ids, filter_dynamic=False):
     with session.begin(subtransactions=True):
         query = (session.query(models.NetworkSegment).
-                 filter_by(network_id=network_id).
+                 filter(models.NetworkSegment.network_id.in_(network_ids)).
                  order_by(models.NetworkSegment.segment_index))
         if filter_dynamic is not None:
             query = query.filter_by(is_dynamic=filter_dynamic)
         records = query.all()
-
-        return [_make_segment_dict(record) for record in records]
+        result = {net_id: [] for net_id in network_ids}
+        for record in records:
+            result[record.network_id].append(_make_segment_dict(record))
+        return result
 
 
 def get_segment_by_id(session, segment_id):
