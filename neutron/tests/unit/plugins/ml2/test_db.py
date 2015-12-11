@@ -57,8 +57,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                                                     vif_type=vif_type,
                                                     host=host))
 
-    def _create_segments(self, segments, is_seg_dynamic=False):
-        network_id = 'foo-network-id'
+    def _create_segments(self, segments, is_seg_dynamic=False,
+                         network_id='foo-network-id'):
         self._setup_neutron_network(network_id)
         for segment in segments:
             ml2_db.add_network_segment(
@@ -94,6 +94,32 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                      api.PHYSICAL_NETWORK: 'physnet1',
                      api.SEGMENTATION_ID: 2}]
         self._create_segments(segments)
+
+    def test_get_networks_segments(self):
+        segments1 = [{api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.SEGMENTATION_ID: 1},
+                     {api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.SEGMENTATION_ID: 2}]
+        segments2 = [{api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.SEGMENTATION_ID: 3},
+                     {api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.SEGMENTATION_ID: 4}]
+        net1segs = self._create_segments(segments1, network_id='net1')
+        net2segs = self._create_segments(segments2, network_id='net2')
+        segs = ml2_db.get_networks_segments(self.ctx.session, ['net1', 'net2'])
+        self.assertEqual(net1segs, segs['net1'])
+        self.assertEqual(net2segs, segs['net2'])
+
+    def test_get_networks_segments_no_segments(self):
+        self._create_segments([], network_id='net1')
+        self._create_segments([], network_id='net2')
+        segs = ml2_db.get_networks_segments(self.ctx.session, ['net1', 'net2'])
+        self.assertEqual([], segs['net1'])
+        self.assertEqual([], segs['net2'])
 
     def test_get_segment_by_id(self):
         segment = {api.NETWORK_TYPE: 'vlan',

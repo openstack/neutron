@@ -676,10 +676,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         with self.network() as net:
             with self.subnet(network=net) as subnet:
-                segments = ml2_db.get_network_segments(ctx.session,
-                                                       net['network']['id'])
+                segments = ml2_db.get_networks_segments(ctx.session,
+                                                        [net['network']['id']])
                 with mock.patch('neutron.plugins.ml2.plugin.'
-                                'db.get_network_segments') as get_seg_mock:
+                                'db.get_networks_segments') as get_seg_mock:
                     get_seg_mock.side_effect = [db_exc.DBDeadlock, segments,
                                                 segments, segments]
                     with self.port(subnet=subnet) as port:
