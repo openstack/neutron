@@ -642,9 +642,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                  net_data[az_ext.AZ_HINTS])
                 az_hints = az_ext.convert_az_list_to_string(
                                                 net_data[az_ext.AZ_HINTS])
-                super(Ml2Plugin, self).update_network(context,
+                res = super(Ml2Plugin, self).update_network(context,
                     result['id'], {'network': {az_ext.AZ_HINTS: az_hints}})
-                result[az_ext.AZ_HINTS] = az_hints
+                result[az_ext.AZ_HINTS] = res[az_ext.AZ_HINTS]
 
             # Update the transparent vlan if configured
             if utils.is_extension_supported(self, 'vlan-transparent'):
