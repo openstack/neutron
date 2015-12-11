@@ -23,6 +23,7 @@ ignore_regexes=(
     "^plugins/ml2/test_extension_driver_api.py$"
     "^plugins/ml2/test_ext_portsecurity.py$"
     "^plugins/ml2/test_agent_scheduler.py$"
+    "^plugins/ml2/test_tracked_resources.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_agent_scheduler.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_ovs_tunnel.py$"
     "^plugins/openvswitch/test_agent_scheduler.py$"
