@@ -15,10 +15,51 @@
 
 import weakref
 
+from oslo_log import log as logging
+from oslo_utils import excutils
 from sqlalchemy import sql
 
+from neutron.i18n import _, _LE
 from neutron.common import exceptions as n_exc
 from neutron.db import sqlalchemyutils
+
+LOG = logging.getLogger(__name__)
+
+
+def safe_creation(context, create_fn, delete_fn, create_bindings):
+    '''This function wraps logic of object creation in safe atomic way.
+
+    In case of exception, object is deleted.
+
+    More information when this method could be used can be found in
+    developer guide - Effective Neutron: Database interaction section.
+    http://docs.openstack.org/developer/neutron/devref/effective_neutron.html
+
+    :param context: context
+
+    :param create_fn: function without arguments that is called to create
+        object and returns this object.
+
+    :param delete_fn: function that is called to delete an object. It is
+        called with object's id field as an argument.
+
+    :param create_bindings: function that is called to create bindings for
+        an object. It is called with object's id field as an argument.
+    '''
+
+    with context.session.begin(subtransactions=True):
+        obj = create_fn()
+        try:
+            value = create_bindings(obj['id'])
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                try:
+                    delete_fn(obj['id'])
+                except Exception as e:
+                    LOG.error(_LE("Cannot clean up created object %(obj)s. "
+                                  "Exception: %(exc)s"), {'obj': obj['id'],
+                                                          'exc': e})
+        return obj, value
 
 
 class CommonDbMixin(object):
