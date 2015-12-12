@@ -105,6 +105,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
 
 
 class L3HATestCase(L3HATestFramework):
+
     def test_verify_configuration_succeed(self):
         # Default configuration should pass
         self.plugin._verify_configuration()
@@ -469,7 +470,7 @@ class L3HATestCase(L3HATestFramework):
         network = self.plugin.get_ha_network(self.admin_ctx,
                                              router['tenant_id'])
 
-        with mock.patch.object(self.plugin, '_create_ha_port_binding',
+        with mock.patch.object(l3_hamode_db, 'L3HARouterAgentPortBinding',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin.add_ha_port,
                               self.admin_ctx, router['id'], network.network_id,
@@ -483,8 +484,8 @@ class L3HATestCase(L3HATestFramework):
     def test_create_ha_network_binding_failure_rolls_back_network(self):
         networks_before = self.core_plugin.get_networks(self.admin_ctx)
 
-        with mock.patch.object(self.plugin,
-                               '_create_ha_network_tenant_binding',
+        with mock.patch.object(l3_hamode_db,
+                               'L3HARouterNetwork',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin._create_ha_network,
                               self.admin_ctx, _uuid())
@@ -496,9 +497,10 @@ class L3HATestCase(L3HATestFramework):
         networks_before = self.core_plugin.get_networks(self.admin_ctx)
 
         with mock.patch.object(self.plugin, '_create_ha_subnet',
-                               side_effect=ValueError):
-            self.assertRaises(ValueError, self.plugin._create_ha_network,
-                              self.admin_ctx, _uuid())
+                               side_effect=ValueError),\
+            self.admin_ctx._session.begin():
+                self.assertRaises(ValueError, self.plugin._create_ha_network,
+                                  self.admin_ctx, _uuid())
 
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
         self.assertEqual(networks_before, networks_after)
@@ -512,7 +514,7 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, filters=device_filter)
 
         router_db = self.plugin._get_router(self.admin_ctx, router['id'])
-        with mock.patch.object(self.plugin, '_create_ha_port_binding',
+        with mock.patch.object(l3_hamode_db, 'L3HARouterAgentPortBinding',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin._create_ha_interfaces,
                               self.admin_ctx, router_db, network)
