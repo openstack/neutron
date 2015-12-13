@@ -32,6 +32,7 @@ from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import db as ml2_db
@@ -100,7 +101,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def dvr_update_router_addvm(self, context, port):
         port_dict = self._core_plugin.get_port(context, port['id'])
-        port_host = port_dict['binding:host_id']
+        port_host = port_dict[portbindings.HOST_ID]
         l3_agent_on_host = (self.get_l3_agents(
             context, filters={'host': [port_host]}) or [None])[0]
         if not l3_agent_on_host:
@@ -157,7 +158,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         ports = self._core_plugin.get_ports(context, filters=filter_sub)
         for port in ports:
             if (n_utils.is_dvr_serviced(port['device_owner'])
-                and port['binding:host_id'] == host
+                and port[portbindings.HOST_ID] == host
                 and port['id'] != port_id):
                 LOG.debug('DVR: %(port_status)s port exists for subnet '
                           '%(subnet_id)s on host %(host)s',
@@ -496,8 +497,9 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             n_utils.is_dvr_serviced(original_device_owner) and
             not n_utils.is_dvr_serviced(new_device_owner))
         is_port_moved = (
-            original_port['binding:host_id'] and
-            original_port['binding:host_id'] != new_port['binding:host_id'])
+            original_port[portbindings.HOST_ID] and
+            original_port[portbindings.HOST_ID] !=
+            new_port[portbindings.HOST_ID])
         if is_port_no_longer_serviced or is_port_moved:
             l3plugin = manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT)
@@ -505,7 +507,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             removed_routers = l3plugin.dvr_deletens_if_no_port(
                 context,
                 original_port['id'],
-                port_host=original_port['binding:host_id'])
+                port_host=original_port[portbindings.HOST_ID])
             if removed_routers:
                 removed_router_args = {
                     'context': context,

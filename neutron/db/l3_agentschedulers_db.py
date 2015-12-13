@@ -34,6 +34,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import l3_attrs_db
 from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
+from neutron.extensions import portbindings
 from neutron.extensions import router_availability_zone as router_az
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -482,7 +483,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         ports = core_plugin.get_ports(context, filters=filter)
         for port in ports:
             if (n_utils.is_dvr_serviced(port['device_owner']) and
-                l3_agent['host'] == port['binding:host_id']):
+                l3_agent['host'] == port[portbindings.HOST_ID]):
                     return True
 
         return False

@@ -25,6 +25,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
+from neutron.extensions import portbindings
 
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
@@ -345,7 +346,7 @@ class HaRouter(router.RouterInfo):
         def _get_filtered_dict(d, ignore):
             return {k: v for k, v in d.items() if k not in ignore}
 
-        keys_to_ignore = set(['binding:host_id'])
+        keys_to_ignore = set([portbindings.HOST_ID])
         port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
         port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
         return port1_filtered == port2_filtered

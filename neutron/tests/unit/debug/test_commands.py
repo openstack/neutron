@@ -23,6 +23,7 @@ from neutron.agent.linux import interface
 from neutron.common import config as common_config
 from neutron.debug import commands
 from neutron.debug import debug_agent
+from neutron.extensions import portbindings
 from neutron.tests import base
 
 
@@ -114,7 +115,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
-                     'binding:host_id': cfg.CONF.host,
+                     portbindings.HOST_ID: cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         namespace = 'qprobe-fake_port'
@@ -159,7 +160,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
-                     'binding:host_id': cfg.CONF.host,
+                     portbindings.HOST_ID: cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         namespace = 'qprobe-fake_port'
@@ -288,7 +289,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
-                     'binding:host_id': cfg.CONF.host,
+                     portbindings.HOST_ID: cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         expected = [mock.call.show_network('fake_net'),

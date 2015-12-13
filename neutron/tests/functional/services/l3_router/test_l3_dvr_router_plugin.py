@@ -17,6 +17,7 @@ import mock
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.extensions import external_net
+from neutron.extensions import portbindings
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
@@ -129,7 +130,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                       'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                       'device_id': self.l3_agent['id'],
                       'device_owner': constants.DEVICE_OWNER_AGENT_GW,
-                      'binding:host_id': '',
+                      portbindings.HOST_ID: '',
                       'admin_state_up': True,
                       'name': ''}})
         return network_id, port
@@ -256,7 +257,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 if dvr:
                     l3_notif.routers_updated_on_host.assert_called_once_with(
                         self.context, [router['id']],
-                        int_port['port']['binding:host_id'])
+                        int_port['port'][portbindings.HOST_ID])
                     self.assertFalse(l3_notif.routers_updated.called)
                 else:
                     l3_notif.routers_updated.assert_called_once_with(
@@ -281,10 +282,10 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             # locate internal ports on different hosts
             self.core_plugin.update_port(
                 self.context, int_port1['port']['id'],
-                {'port': {'binding:host_id': 'host1'}})
+                {'port': {portbindings.HOST_ID: 'host1'}})
             self.core_plugin.update_port(
                 self.context, int_port2['port']['id'],
-                {'port': {'binding:host_id': 'host2'}})
+                {'port': {portbindings.HOST_ID: 'host2'}})
             # and create l3 agents on corresponding hosts
             helpers.register_l3_agent(host='host1',
                 agent_mode=constants.L3_AGENT_MODE_DVR)
@@ -381,7 +382,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 if dvr:
                     l3_notif.routers_updated_on_host.assert_called_once_with(
                         self.context, [router['id']],
-                        int_port['port']['binding:host_id'])
+                        int_port['port'][portbindings.HOST_ID])
                     self.assertFalse(l3_notif.routers_updated.called)
                 else:
                     l3_notif.routers_updated.assert_called_once_with(
@@ -483,7 +484,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                     constants.AGENT_TYPE_L3] = l3_notifier
                 self.core_plugin.update_port(
                     self.context, port['port']['id'],
-                    {'port': {'binding:host_id': HOST1}})
+                    {'port': {portbindings.HOST_ID: HOST1}})
 
                 # now router should be scheduled to dvr_snat agent and
                 # dvr agent on host1
@@ -503,7 +504,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 l3_notifier.reset_mock()
                 self.core_plugin.update_port(
                     self.context, port['port']['id'],
-                    {'port': {'binding:host_id': HOST2}})
+                    {'port': {portbindings.HOST_ID: HOST2}})
                 # now router should be scheduled to dvr_snat agent and
                 # dvr agent on host2
                 agents = self.l3_plugin.list_l3_agents_hosting_router(

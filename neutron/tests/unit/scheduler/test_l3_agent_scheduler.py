@@ -39,6 +39,7 @@ from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
@@ -758,7 +759,7 @@ class L3SchedulerTestBaseMixin(object):
         l3_agent = self._prepare_check_ports_exist_tests()
         # matching subnet
         port = {'subnet_id': str(uuid.uuid4()),
-                'binding:host_id': 'host_1',
+                portbindings.HOST_ID: 'host_1',
                 'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX,
                 'id': 1234}
         subnet = {'id': str(uuid.uuid4()),
@@ -949,7 +950,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'port': None,
             'original_port': {
                 'id': port_id,
-                'binding:host_id': 'vm-host',
+                portbindings.HOST_ID: 'vm-host',
                 'device_id': 'vm-id',
                 'device_owner': DEVICE_OWNER_COMPUTE,
                 'mac_address': '02:04:05:17:18:19'
@@ -981,14 +982,14 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'context': self.adminContext,
             'port': {
                 'id': port_id,
-                'binding:host_id': None,
+                portbindings.HOST_ID: None,
                 'device_id': '',
                 'device_owner': ''
             },
             'mac_address_updated': False,
             'original_port': {
                 'id': port_id,
-                'binding:host_id': 'vm-host',
+                portbindings.HOST_ID: 'vm-host',
                 'device_id': 'vm-id',
                 'device_owner': DEVICE_OWNER_COMPUTE
             }
@@ -1046,7 +1047,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': 'port1',
                 'device_id': 'abcd',
                 'device_owner': DEVICE_OWNER_COMPUTE_NOVA,
-                'binding:host_id': 'host1',
+                portbindings.HOST_ID: 'host1',
                 'fixed_ips': [
                     {
                         'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
@@ -1094,7 +1095,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.dut.dvr_update_router_addvm(self.adminContext, port)
 
             get_l3_agents.assert_called_once_with(
-                self.adminContext, filters={'host': [port['binding:host_id']]})
+                self.adminContext,
+                filters={'host': [port[portbindings.HOST_ID]]})
             (self.dut.l3_rpc_notifier.routers_updated_on_host.
                 assert_called_once_with(
                     self.adminContext, {'r1', 'r2'}, 'host1'))
@@ -1173,7 +1175,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': 'fake_id',
                 'device_id': 'r1',
                 'status': port_status,
-                'binding:host_id': 'thisHost',
+                portbindings.HOST_ID: 'thisHost',
                 'device_owner': DEVICE_OWNER_COMPUTE_NOVA,
                 'fixed_ips': [
                     {
@@ -1228,7 +1230,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': 'lbaas-vip-port1',
                 'device_id': 'vip-pool-id',
                 'status': 'ACTIVE',
-                'binding:host_id': 'thisHost',
+                portbindings.HOST_ID: 'thisHost',
                 'device_owner': device_owner,
                 'fixed_ips': [
                     {
@@ -1256,7 +1258,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'device_id': port_name,
             'device_owner': device_owner,
             'status': status,
-            'binding:host_id': host,
+            portbindings.HOST_ID: host,
             'fixed_ips': [
                 {
                     'subnet_id': subnet_id,
@@ -1443,7 +1445,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'id': 'dhcp-port1',
                 'device_id': 'dhcp-net-id',
                 'status': 'ACTIVE',
-                'binding:host_id': 'thisHost',
+                portbindings.HOST_ID: 'thisHost',
                 'device_owner': constants.DEVICE_OWNER_DHCP,
                 'fixed_ips': [
                     {
