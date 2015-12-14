@@ -436,6 +436,41 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     self.assertEqual(204, res.status_int)
 
 
+class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
+                               Ml2PluginV2TestCase):
+    """Test cases to assert constant query count for list operations.
+
+    These test cases assert that an increase in the number of objects
+    does not result in an increase of the number of db operations. All
+    database lookups during a list operation should be performed in bulk
+    so the number of queries required for 2 objects instead of 1 should
+    stay the same.
+    """
+
+    def make_network(self):
+        return self._make_network(self.fmt, 'name', True)
+
+    def make_subnet(self):
+        net = self.make_network()
+        setattr(self, '_subnet_count', getattr(self, '_subnet_count', 0) + 1)
+        cidr = '1.%s.0.0/24' % self._subnet_count
+        return self._make_subnet(self.fmt, net, None, cidr)
+
+    def make_port(self):
+        net = self.make_network()
+        return self._make_port(self.fmt, net['network']['id'])
+
+    def test_network_list_queries_constant(self):
+        self._assert_object_list_queries_constant(self.make_network,
+                                                  'networks')
+
+    def test_subnet_list_queries_constant(self):
+        self._assert_object_list_queries_constant(self.make_subnet, 'subnets')
+
+    def test_port_list_queries_constant(self):
+        self._assert_object_list_queries_constant(self.make_port, 'ports')
+
+
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_update_port_status_build(self):
