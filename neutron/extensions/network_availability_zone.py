@@ -64,5 +64,5 @@ class Network_availability_zone(extensions.ExtensionDescriptor):
 class NetworkAvailabilityZonePluginBase(object):
 
     @abc.abstractmethod
-    def get_network_availability_zones(self, network_id):
+    def get_network_availability_zones(self, network):
         """Return availability zones which a network belongs to"""

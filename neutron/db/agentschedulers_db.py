@@ -464,15 +464,9 @@ class AZDhcpAgentSchedulerDbMixin(DhcpAgentSchedulerDbMixin,
                                   network_az.NetworkAvailabilityZoneMixin):
     """Mixin class to add availability_zone supported DHCP agent scheduler."""
 
-    def get_network_availability_zones(self, network_id):
-        context = ncontext.get_admin_context()
-        with context.session.begin():
-            query = context.session.query(agents_db.Agent.availability_zone)
-            query = query.join(NetworkDhcpAgentBinding)
-            query = query.filter(
-                NetworkDhcpAgentBinding.network_id == network_id)
-            query = query.group_by(agents_db.Agent.availability_zone)
-            return [item[0] for item in query]
+    def get_network_availability_zones(self, network):
+        zones = {agent.availability_zone for agent in network.dhcp_agents}
+        return list(zones)
 
 
 # helper functions for readability.

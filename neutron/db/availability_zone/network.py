@@ -29,7 +29,7 @@ class NetworkAvailabilityZoneMixin(net_az.NetworkAvailabilityZonePluginBase):
         net_res[az_ext.AZ_HINTS] = az_ext.convert_az_string_to_list(
             net_db[az_ext.AZ_HINTS])
         net_res[az_ext.AVAILABILITY_ZONES] = (
-            self.get_network_availability_zones(net_db['id']))
+            self.get_network_availability_zones(net_db))
 
     common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
         attributes.NETWORKS, ['_extend_availability_zone'])
