@@ -48,6 +48,7 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
         self.br_int = None
         self.init_done = False
         self.init_done_ev = eventlet.event.Event()
+        self.main_ev = eventlet.event.Event()
         self.addCleanup(self._kill_main)
         retry_count = 3
         while True:
@@ -82,7 +83,7 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
             self.of_interface_mod.main()
 
     def _kill_main(self):
-        self._main_thread.kill()
+        self.main_ev.send()
         self._main_thread.wait()
 
     def _agent_main(self, bridge_classes):
@@ -97,6 +98,8 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
         # signal to setUp()
         self.init_done = True
         self.init_done_ev.send()
+
+        self.main_ev.wait()
 
 
 class _OVSAgentOFCtlTestBase(_OVSAgentTestBase):
