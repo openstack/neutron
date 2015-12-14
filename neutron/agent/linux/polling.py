@@ -15,10 +15,14 @@
 import contextlib
 
 import eventlet
+from oslo_log import log as logging
 
 from neutron.agent.common import base_polling
+from neutron.agent.linux import async_process
 from neutron.agent.linux import ovsdb_monitor
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+
+LOG = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
@@ -53,7 +57,10 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
         self._monitor.start()
 
     def stop(self):
-        self._monitor.stop()
+        try:
+            self._monitor.stop()
+        except async_process.AsyncProcessException:
+            LOG.debug("InterfacePollingMinimizer was not running when stopped")
 
     def _is_polling_required(self):
         # Maximize the chances of update detection having a chance to
