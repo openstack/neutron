@@ -147,19 +147,29 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                                  self.br.br_name, 'datapath_id', dpid)
         self.assertIn(dpid, self.br.get_datapath_id())
 
-    def test_add_tunnel_port(self):
+    def _test_add_tunnel_port(self, attrs):
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        self.br.add_tunnel_port(port_name, attrs['remote_ip'],
+                                attrs['local_ip'])
+        self.assertEqual('gre',
+                         self.ovs.db_get_val('Interface', port_name, 'type'))
+        options = self.ovs.db_get_val('Interface', port_name, 'options')
+        for attr, val in attrs.items():
+            self.assertEqual(val, options[attr])
+
+    def test_add_tunnel_port_ipv4(self):
         attrs = {
             'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
             'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
         }
-        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
-        self.br.add_tunnel_port(port_name, attrs['remote_ip'],
-                                attrs['local_ip'])
-        self.assertEqual(self.ovs.db_get_val('Interface', port_name, 'type'),
-                         'gre')
-        options = self.ovs.db_get_val('Interface', port_name, 'options')
-        for attr, val in attrs.items():
-            self.assertEqual(val, options[attr])
+        self._test_add_tunnel_port(attrs)
+
+    def test_add_tunnel_port_ipv6(self):
+        attrs = {
+            'remote_ip': '2001:db8:200::1',
+            'local_ip': '2001:db8:100::1',
+        }
+        self._test_add_tunnel_port(attrs)
 
     def test_add_patch_port(self):
         local = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)

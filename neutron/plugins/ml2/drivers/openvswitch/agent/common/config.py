@@ -44,8 +44,9 @@ ovs_opts = [
     cfg.StrOpt('tun_peer_patch_port', default='patch-int',
                help=_("Peer patch port in tunnel bridge for integration "
                       "bridge.")),
-    cfg.IPOpt('local_ip', version=4,
-              help=_("Local IP address of tunnel endpoint.")),
+    cfg.IPOpt('local_ip',
+              help=_("Local IP address of tunnel endpoint. Can be either "
+                     "an IPv4 or IPv6 address.")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help=_("Comma-separated list of <physical_network>:<bridge> "
