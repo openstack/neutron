@@ -1,10 +1,10 @@
 ---
 prelude: >
-    Agent scheduling aware of availability zones is now supported.
+    DHCP and L3 Agent scheduling is availability zone aware.
 features:
-  - DHCP agent is assigned to an availability zone; network will be hosted by
-    the DHCP agent with availability zone which user specifies.
-  - L3 agent is assigned to an availability zone; router will be hosted by the
-    L3 agent with availability zone which user specifies. This supports the use
-    of availability zones with HA routers. DVR isn't supported now because L3HA
-    and DVR integration isn't finished.
+  - A DHCP agent is assigned to an availability zone; the network will be
+    hosted by the DHCP agent with availability zone specified by the user.
+  - An L3 agent is assigned to an availability zone; the router will be hosted
+    by the L3 agent with availability zone specified by the user. This supports
+    the use of availability zones with HA routers. DVR isn't supported now
+    because L3HA and DVR integration isn't finished.

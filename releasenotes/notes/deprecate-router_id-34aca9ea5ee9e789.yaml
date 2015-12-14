@@ -1,5 +1,3 @@
 ---
-prelude: >
-    Deprecate router_id option in order to prepare its removal in N cycle.
 upgrade:
-  - router_id option deprecation
+  - The router_id option is deprecated and will be removed in the 'N' cycle.
