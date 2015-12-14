@@ -22,6 +22,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_utils import importutils
 import six
+from sqlalchemy import event
 from sqlalchemy import orm
 import testtools
 from testtools import matchers
@@ -40,6 +41,7 @@ from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import models_v2
@@ -5593,3 +5595,34 @@ class TestNetworks(testlib_api.SqlTestCase):
     def test_update_shared_net_used_by_floating_ip(self):
         self._test_update_shared_net_used(
             constants.DEVICE_OWNER_FLOATINGIP)
+
+
+class DbOperationBoundMixin(object):
+    """Mixin to support tests that assert constraints on DB operations."""
+
+    def setUp(self, *args, **kwargs):
+        super(DbOperationBoundMixin, self).setUp(*args, **kwargs)
+        self._db_execute_count = 0
+
+        def _event_incrementer(*args, **kwargs):
+            self._db_execute_count += 1
+
+        engine = db_api.get_engine()
+        event.listen(engine, 'after_execute', _event_incrementer)
+        self.addCleanup(event.remove, engine, 'after_execute',
+                        _event_incrementer)
+
+    def _list_and_count_queries(self, resource):
+        self._db_execute_count = 0
+        self.assertNotEqual([], self._list(resource))
+        query_count = self._db_execute_count
+        # sanity check to make sure queries are being observed
+        self.assertNotEqual(0, query_count)
+        return query_count
+
+    def _assert_object_list_queries_constant(self, obj_creator, plural):
+        obj_creator()
+        before_count = self._list_and_count_queries(plural)
+        # one more thing shouldn't change the db query count
+        obj_creator()
+        self.assertEqual(before_count, self._list_and_count_queries(plural))
