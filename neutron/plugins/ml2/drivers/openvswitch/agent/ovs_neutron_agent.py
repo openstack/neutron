@@ -13,8 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import collections
 import functools
+import hashlib
 import signal
 import sys
 import time
@@ -1403,6 +1405,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return port_needs_binding
 
     def _setup_tunnel_port(self, br, port_name, remote_ip, tunnel_type):
+        try:
+            if (netaddr.IPAddress(self.local_ip).version !=
+                netaddr.IPAddress(remote_ip).version):
+                LOG.error(_LE("IP version mismatch, cannot create tunnel: "
+                              "local_ip=%(lip)s remote_ip=%(rip)s"),
+                          {'lip': self.local_ip, 'rip': remote_ip})
+                return 0
+        except Exception:
+            LOG.error(_LE("Invalid local or remote IP, cannot create tunnel: "
+                          "local_ip=%(lip)s remote_ip=%(rip)s"),
+                      {'lip': self.local_ip, 'rip': remote_ip})
+            return 0
         ofport = br.add_tunnel_port(port_name,
                                     remote_ip,
                                     self.local_ip,
@@ -1660,9 +1674,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return failed_devices
 
     @classmethod
-    def get_ip_in_hex(cls, ip_address):
+    def get_tunnel_hash(cls, ip_address, hashlen):
         try:
-            return '%08x' % netaddr.IPAddress(ip_address, version=4)
+            addr = netaddr.IPAddress(ip_address)
+            if addr.version == n_const.IP_VERSION_4:
+                # We cannot change this from 8, since it could break
+                # backwards-compatibility
+                return '%08x' % addr
+            else:
+                # Create 32-bit Base32 encoded hash
+                sha1 = hashlib.sha1(ip_address.encode())
+                iphash = base64.b32encode(sha1.digest())
+                return iphash[:hashlen].decode().lower()
         except Exception:
             LOG.warning(_LW("Invalid remote IP: %s"), ip_address)
             return
@@ -1697,10 +1720,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     @classmethod
     def get_tunnel_name(cls, network_type, local_ip, remote_ip):
-        remote_ip_hex = cls.get_ip_in_hex(remote_ip)
-        if not remote_ip_hex:
+        # This string is used to build port and interface names in OVS.
+        # Port and interface names can be max 16 characters long,
+        # including NULL, and must be unique per table per host.
+        # We make the name as long as possible given the network_type,
+        # for example, 'vxlan-012345678' or 'geneve-01234567'.
+
+        # Remove length of network type and dash
+        hashlen = n_const.DEVICE_NAME_MAX_LEN - len(network_type) - 1
+        remote_tunnel_hash = cls.get_tunnel_hash(remote_ip, hashlen)
+        if not remote_tunnel_hash:
             return None
-        return '%s-%s' % (network_type, remote_ip_hex)
+        return '%s-%s' % (network_type, remote_tunnel_hash)
 
     def _agent_has_updates(self, polling_manager):
         return (polling_manager.is_polling_required or

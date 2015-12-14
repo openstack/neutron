@@ -99,7 +99,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             'br_tun': br_tun.OVSTunnelBridge
         }
 
-    def create_agent(self, create_tunnels=True, ancillary_bridge=None):
+    def create_agent(self, create_tunnels=True, ancillary_bridge=None,
+                     local_ip='192.168.10.1'):
         if create_tunnels:
             tunnel_types = [p_const.TYPE_VXLAN]
         else:
@@ -108,7 +109,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.config.set_override('tunnel_types', tunnel_types, "AGENT")
         self.config.set_override('polling_interval', 1, "AGENT")
         self.config.set_override('prevent_arp_spoofing', False, "AGENT")
-        self.config.set_override('local_ip', '192.168.10.1', "OVS")
+        self.config.set_override('local_ip', local_ip, "OVS")
         self.config.set_override('bridge_mappings', bridge_mappings, "OVS")
         # Physical bridges should be created prior to running
         self._bridge_classes()['br_phys'](self.br_phys).create()

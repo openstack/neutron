@@ -1,0 +1,10 @@
+---
+prelude: >
+    Support for IPv6 addresses as tunnel endpoints in OVS.
+features:
+  - The local_ip value in ml2_conf.ini can now be set to
+    an IPv6 address configured on the system.
+other:
+  - Requires OVS 2.5+ version or higher with linux kernel
+    4.3 or higher. More info at
+    `OVS github page <https://github.com/openvswitch/ovs/blob/master/FAQ.md>`_.
