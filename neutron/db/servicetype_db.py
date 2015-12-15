@@ -93,6 +93,14 @@ class ServiceTypeManager(object):
             assoc = ProviderResourceAssociation(provider_name=provider_name,
                                                 resource_id=resource_id)
             context.session.add(assoc)
+        # NOTE(blogan): the ProviderResourceAssociation relationship will not
+        # be populated if a resource was created before this.  The expire_all
+        # will force the session to go retrieve the new data when that
+        # resource will be read again.  It has been suggested that we can
+        # crawl through everything in the mapper to find the resource with
+        # the ID that matches resource_id and expire that one, but we can
+        # just start with this.
+        context.session.expire_all()
 
     def del_resource_associations(self, context, resource_ids):
         if not resource_ids:
