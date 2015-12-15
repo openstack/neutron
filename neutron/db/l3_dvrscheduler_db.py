@@ -487,8 +487,11 @@ def _notify_port_delete(event, resource, trigger, **kwargs):
         service_constants.L3_ROUTER_NAT)
     l3plugin.dvr_vmarp_table_update(context, port, "del")
     for router in removed_routers:
+        # we need admin context in case a tenant removes the last dvr
+        # serviceable port on a shared network owned by admin, where router
+        # is also owned by admin
         l3plugin.remove_router_from_l3_agent(
-            context, router['agent_id'], router['router_id'])
+            context.elevated(), router['agent_id'], router['router_id'])
 
 
 def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
