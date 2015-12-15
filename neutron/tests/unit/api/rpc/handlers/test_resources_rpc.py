@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+
 import mock
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
@@ -38,8 +40,9 @@ def _create_test_resource(context=None):
     return resource
 
 
-@obj_base.VersionedObjectRegistry.register
 class FakeResource(objects_base.NeutronObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
 
     fields = {
         'id': obj_fields.UUIDField(),
@@ -55,7 +58,21 @@ class ResourcesRpcBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(ResourcesRpcBaseTestCase, self).setUp()
+
+        # TODO(mhickey) This is using temp registry pattern. The
+        # pattern solution is to backup the object registry, register
+        # a class locally, and then restore the original registry.
+        # Refer to https://review.openstack.org/#/c/263800/ for more
+        # details. This code should be updated when the patch is merged.
+        self._base_test_backup = copy.copy(
+            obj_base.VersionedObjectRegistry._registry._obj_classes)
+        self.addCleanup(self._restore_obj_registry)
+
         self.context = context.get_admin_context()
+
+    def _restore_obj_registry(self):
+        obj_base.VersionedObjectRegistry._registry._obj_classes = (
+            self._base_test_backup)
 
 
 class _ValidateResourceTypeTestCase(base.BaseTestCase):
@@ -103,6 +120,7 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
         self.assertIs(self.rpc, resources_rpc.ResourcesPullRpcApi())
 
     def test_pull(self):
+        obj_base.VersionedObjectRegistry.register(FakeResource)
         expected_obj = _create_test_resource(self.context)
         resource_id = expected_obj.id
         self.cctxt_mock.call.return_value = expected_obj.obj_to_primitive()
@@ -128,6 +146,7 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
         super(ResourcesPullRpcCallbackTestCase, self).setUp()
+        obj_base.VersionedObjectRegistry.register(FakeResource)
         self.callbacks = resources_rpc.ResourcesPullRpcCallback()
         self.resource_obj = _create_test_resource(self.context)
 
@@ -207,6 +226,7 @@ class ResourcesPushRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 
     @mock.patch.object(resources_rpc.cons_registry, 'push')
     def test_push(self, reg_push_mock):
+        obj_base.VersionedObjectRegistry.register(FakeResource)
         self.callbacks.push(self.context, self.resource_prim, 'TYPE')
         reg_push_mock.assert_called_once_with(self.resource_obj.obj_name(),
                                               self.resource_obj, 'TYPE')
