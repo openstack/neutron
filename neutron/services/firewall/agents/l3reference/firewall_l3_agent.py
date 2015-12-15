@@ -20,12 +20,12 @@ from oslo_utils import importutils
 from neutron._i18n import _, _LE
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as nexception
-from neutron.common import topics
 from neutron import context
 from neutron.plugins.common import constants
 from neutron.services.firewall.agents import firewall_agent_api as api
 from neutron.services import provider_configuration as provconf
 
+FIREWALL_PLUGIN = 'q-firewall-plugin'
 LOG = logging.getLogger(__name__)
 
 
@@ -81,8 +81,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 raise ImportError(msg % fwaas_driver_class_path)
         self.services_sync = False
         # setup RPC to msg fwaas plugin
-        self.fwplugin_rpc = FWaaSL3PluginApi(topics.FIREWALL_PLUGIN,
-                                             conf.host)
+        self.fwplugin_rpc = FWaaSL3PluginApi(FIREWALL_PLUGIN, conf.host)
         super(FWaaSL3AgentRpcCallback, self).__init__(host=conf.host)
 
     def _get_router_info_list_for_tenant(self, routers, tenant_id):
