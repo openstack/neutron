@@ -170,33 +170,30 @@ class L3Scheduler(object):
             # one enabled l3 agent hosting since active is just a
             # timing problem. Non-active l3 agent can return to
             # active any time
-            l3_agents = plugin.get_l3_agents_hosting_routers(
+            current_l3_agents = plugin.get_l3_agents_hosting_routers(
                 context, [sync_router['id']], admin_state_up=True)
-            if l3_agents and not sync_router.get('distributed', False):
+            is_router_distributed = sync_router.get('distributed', False)
+            if current_l3_agents and not is_router_distributed:
                 LOG.debug('Router %(router_id)s has already been hosted '
                           'by L3 agent %(agent_id)s',
                           {'router_id': sync_router['id'],
-                           'agent_id': l3_agents[0]['id']})
+                           'agent_id': current_l3_agents[0]['id']})
                 return []
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
                 LOG.warn(_LW('No active L3 agents'))
                 return []
-            new_l3agents = plugin.get_l3_agent_candidates(context,
-                                                          sync_router,
-                                                          active_l3_agents)
-            old_l3agentset = set(l3_agents)
-            if sync_router.get('distributed', False):
-                new_l3agentset = set(new_l3agents)
-                candidates = list(new_l3agentset - old_l3agentset)
-            else:
-                candidates = new_l3agents
-                if not candidates:
+            potential_candidates = list(
+                set(active_l3_agents) - set(current_l3_agents))
+            new_l3agents = []
+            if potential_candidates:
+                new_l3agents = plugin.get_l3_agent_candidates(
+                    context, sync_router, potential_candidates)
+                if not new_l3agents:
                     LOG.warn(_LW('No L3 agents can host the router %s'),
                              sync_router['id'])
-
-            return candidates
+            return new_l3agents
 
     def _bind_routers(self, context, plugin, routers, l3_agent):
         for router in routers:
