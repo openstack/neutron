@@ -31,7 +31,6 @@ from neutron.common import utils as n_utils
 from neutron import context as n_ctx
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import api as db_api
 from neutron.db import l3_attrs_db
 from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
@@ -563,12 +562,5 @@ class AZL3AgentSchedulerDbMixin(L3AgentSchedulerDbMixin,
                                 router_az.RouterAvailabilityZonePluginBase):
     """Mixin class to add availability_zone supported l3 agent scheduler."""
 
-    def get_router_availability_zones(self, router_id):
-        session = db_api.get_session()
-        with session.begin():
-            query = session.query(agents_db.Agent.availability_zone)
-            query = query.join(RouterL3AgentBinding)
-            query = query.filter(
-                RouterL3AgentBinding.router_id == router_id)
-            query = query.group_by(agents_db.Agent.availability_zone)
-            return [item[0] for item in query]
+    def get_router_availability_zones(self, router):
+        return list({agent.availability_zone for agent in router.l3_agents})

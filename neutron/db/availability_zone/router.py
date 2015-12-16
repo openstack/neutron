@@ -29,7 +29,7 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
         router_res[az_ext.AZ_HINTS] = az_ext.convert_az_string_to_list(
             router_res[az_ext.AZ_HINTS])
         router_res['availability_zones'] = (
-            self.get_router_availability_zones(router_db['id']))
+            self.get_router_availability_zones(router_db))
 
     def _process_extra_attr_router_create(
         self, context, router_db, router_req):

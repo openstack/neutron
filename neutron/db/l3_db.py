@@ -91,6 +91,8 @@ class Router(model_base.HasStandardAttributes, model_base.BASEV2,
         RouterPort,
         backref='router',
         lazy='dynamic')
+    l3_agents = orm.relationship('Agent', lazy='joined', viewonly=True,
+                                 secondary='routerl3agentbindings')
 
 
 class FloatingIP(model_base.HasStandardAttributes, model_base.BASEV2,
