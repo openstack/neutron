@@ -15,6 +15,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import copy
 
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
@@ -82,3 +83,112 @@ class IptablesFirewallTestCase(base.BaseSudoTestCase):
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
         self.client.assert_ping(self.server.ip)
+
+    def test_rule_application_converges(self):
+        sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress'},
+                    {'ethertype': 'IPv6', 'direction': 'egress'},
+                    {'ethertype': 'IPv4', 'direction': 'ingress',
+                     'source_ip_prefix': '0.0.0.0/0', 'protocol': 'icmp'},
+                    {'ethertype': 'IPv6', 'direction': 'ingress',
+                     'source_ip_prefix': '0::0/0', 'protocol': 'ipv6-icmp'}]
+        # make sure port ranges converge on all protocols with and without
+        # port ranges (prevents regression of bug 1502924)
+        for proto in ('tcp', 'udp', 'icmp'):
+            for version in ('IPv4', 'IPv6'):
+                if proto == 'icmp' and version == 'IPv6':
+                    proto = 'ipv6-icmp'
+                base = {'ethertype': version, 'direction': 'ingress',
+                        'protocol': proto}
+                sg_rules.append(copy.copy(base))
+                base['port_range_min'] = 50
+                base['port_range_max'] = 50
+                sg_rules.append(copy.copy(base))
+                base['port_range_max'] = 55
+                sg_rules.append(copy.copy(base))
+                base['source_port_range_min'] = 60
+                base['source_port_range_max'] = 60
+                sg_rules.append(copy.copy(base))
+                base['source_port_range_max'] = 65
+                sg_rules.append(copy.copy(base))
+
+        # add some single-host rules to prevent regression of bug 1502917
+        sg_rules.append({'ethertype': 'IPv4', 'direction': 'ingress',
+                         'source_ip_prefix': '77.77.77.77/32'})
+        sg_rules.append({'ethertype': 'IPv6', 'direction': 'ingress',
+                         'source_ip_prefix': 'fe80::1/128'})
+        self.firewall.update_security_group_rules(
+            self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.firewall.prepare_port_filter(self.src_port_desc)
+        # after one prepare call, another apply should be a NOOP
+        self.assertEqual([], self.firewall.iptables._apply())
+
+        orig_sg_rules = copy.copy(sg_rules)
+        for proto in ('tcp', 'udp', 'icmp'):
+            for version in ('IPv4', 'IPv6'):
+                if proto == 'icmp' and version == 'IPv6':
+                    proto = 'ipv6-icmp'
+                # make sure firewall is in converged state
+                self.firewall.update_security_group_rules(
+                    self.FAKE_SECURITY_GROUP_ID, orig_sg_rules)
+                self.firewall.update_port_filter(self.src_port_desc)
+                sg_rules = copy.copy(orig_sg_rules)
+
+                # remove one rule and add another to make sure it results in
+                # exactly one delete and insert
+                sg_rules.pop(0 if version == 'IPv4' else 1)
+                sg_rules.append({'ethertype': version, 'direction': 'egress',
+                                 'protocol': proto})
+                self.firewall.update_security_group_rules(
+                    self.FAKE_SECURITY_GROUP_ID, sg_rules)
+                result = self.firewall.update_port_filter(self.src_port_desc)
+                deletes = [r for r in result if r.startswith('-D ')]
+                creates = [r for r in result if r.startswith('-I ')]
+                self.assertEqual(1, len(deletes))
+                self.assertEqual(1, len(creates))
+                # quick sanity check to make sure the insert was for the
+                # correct proto
+                self.assertIn('-p %s' % proto, creates[0])
+                # another apply should be a NOOP if the right rule was removed
+                # and the new one was inserted in the correct position
+                self.assertEqual([], self.firewall.iptables._apply())
+
+    def test_rule_ordering_correct(self):
+        sg_rules = [
+            {'ethertype': 'IPv4', 'direction': 'egress', 'protocol': 'tcp',
+             'port_range_min': i, 'port_range_max': i}
+            for i in range(50, 61)
+        ]
+        self.firewall.update_security_group_rules(
+            self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.firewall.prepare_port_filter(self.src_port_desc)
+        self._assert_sg_out_tcp_rules_appear_in_order(sg_rules)
+        # remove a rule and add a new one
+        sg_rules.pop(5)
+        sg_rules.insert(8, {'ethertype': 'IPv4', 'direction': 'egress',
+                            'protocol': 'tcp', 'port_range_min': 400,
+                            'port_range_max': 400})
+        self.firewall.update_security_group_rules(
+            self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.firewall.prepare_port_filter(self.src_port_desc)
+        self._assert_sg_out_tcp_rules_appear_in_order(sg_rules)
+
+        # reverse all of the rules (requires lots of deletes and inserts)
+        sg_rules = list(reversed(sg_rules))
+        self.firewall.update_security_group_rules(
+            self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.firewall.prepare_port_filter(self.src_port_desc)
+        self._assert_sg_out_tcp_rules_appear_in_order(sg_rules)
+
+    def _assert_sg_out_tcp_rules_appear_in_order(self, sg_rules):
+        outgoing_rule_pref = '-A %s-o%s' % (self.firewall.iptables.wrap_name,
+                                            self.src_port_desc['device'][3:13])
+        rules = [
+            r for r in self.firewall.iptables.get_rules_for_table('filter')
+            if r.startswith(outgoing_rule_pref)
+        ]
+        # we want to ensure the rules went in in the same order we sent
+        indexes = [rules.index('%s -p tcp -m tcp --dport %s -j RETURN' %
+                               (outgoing_rule_pref, i['port_range_min']))
+                   for i in sg_rules]
+        # all indexes should be in order with no unexpected rules in between
+        self.assertEqual(range(indexes[0], indexes[-1] + 1), indexes)
