@@ -114,6 +114,10 @@ class IpLibTestCase(IpLibTestFramework):
         device.link.delete()
         self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
 
+    def test_ipwrapper_get_device_by_ip_None(self):
+        ip_wrapper = ip_lib.IPWrapper(namespace=None)
+        self.assertIsNone(ip_wrapper.get_device_by_ip(ip=None))
+
     def test_ipwrapper_get_device_by_ip(self):
         attr = self.generate_device_details()
         self.manage_device(attr)

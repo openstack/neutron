@@ -763,21 +763,21 @@ class TestIpAddrCommand(TestIPCmdBase):
 
     def test_list(self):
         expected = [
-            dict(scope='global', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
                  dynamic=False, cidr='172.16.77.240/24'),
-            dict(scope='global', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64'),
-            dict(scope='link', dadfailed=False, tentative=True,
+            dict(name='eth0', scope='link', dadfailed=False, tentative=True,
                  dynamic=False, cidr='fe80::3023:39ff:febc:22ae/64'),
-            dict(scope='link', dadfailed=True, tentative=True,
+            dict(name='eth0', scope='link', dadfailed=True, tentative=True,
                  dynamic=False, cidr='fe80::3023:39ff:febc:22af/64'),
-            dict(scope='global', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64'),
-            dict(scope='global', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64'),
-            dict(scope='global', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
                  dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64'),
-            dict(scope='link', dadfailed=False, tentative=False,
+            dict(name='eth0', scope='link', dadfailed=False, tentative=False,
                  dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64')]
 
         test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
@@ -809,7 +809,7 @@ class TestIpAddrCommand(TestIPCmdBase):
 
     def test_list_filtered(self):
         expected = [
-            dict(scope='global', tentative=False, dadfailed=False,
+            dict(name='eth0', scope='global', tentative=False, dadfailed=False,
                  dynamic=False, cidr='172.16.77.240/24')]
 
         test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
