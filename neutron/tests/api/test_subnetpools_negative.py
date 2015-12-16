@@ -166,7 +166,8 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope_prefix_intersect(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=4)
         addr_scope_id = address_scope['id']
         pool_id = self._create_subnetpool(
             self.client, pool_values={'address_scope_id': addr_scope_id})
@@ -183,7 +184,8 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_sp_associate_address_scope_multiple_prefix_intersect(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=4)
         addr_scope_id = address_scope['id']
         pool_values = {'address_scope_id': addr_scope_id,
                        'prefixes': [u'20.0.0.0/18', u'30.0.0.0/18']}
@@ -204,7 +206,8 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope_of_other_owner(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'), is_admin=True)
+            name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
+            ip_version=4)
         address_scope_id = address_scope['id']
         subnetpool_data = copy.deepcopy(self._subnetpool_data)
         subnetpool_data['subnetpool']['address_scope_id'] = address_scope_id
@@ -217,7 +220,7 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     def test_tenant_create_subnetpool_associate_shared_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
-            shared=True)
+            shared=True, ip_version=4)
         subnetpool_data = copy.deepcopy(self._subnetpool_data)
         subnetpool_data['subnetpool']['address_scope_id'] = (
             address_scope['id'])
@@ -229,7 +232,8 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope_of_other_owner(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'), is_admin=True)
+            name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
+            ip_version=4)
         address_scope_id = address_scope['id']
         pool_id = self._create_subnetpool(self.client)
         self.addCleanup(self.client.delete_subnetpool, pool_id)
@@ -244,7 +248,7 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
         # Updating the first subnet pool with the prefix intersecting
         # with the second one should be a failure
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'), ip_version=4)
         addr_scope_id = address_scope['id']
         pool_values = {'address_scope_id': addr_scope_id,
                        'prefixes': pool_1_prefixes}
@@ -292,7 +296,7 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
     def test_tenant_update_sp_prefix_associated_with_shared_addr_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
-            shared=True)
+            shared=True, ip_version=4)
         addr_scope_id = address_scope['id']
         pool_values = {'prefixes': [u'20.0.0.0/18', u'30.0.0.0/18']}
 
@@ -320,3 +324,16 @@ class SubnetPoolsNegativeTestJSON(base.BaseNetworkTest):
         body = self.admin_client.get_subnetpool(pool_id)
         self.assertEqual(update_prefixes,
                          body['subnetpool']['prefixes'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('648fee7d-a909-4ced-bad3-3a169444c0a8')
+    def test_update_subnetpool_associate_address_scope_wrong_ip_version(self):
+        address_scope = self.create_address_scope(
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=6)
+        pool_id = self._create_subnetpool(self.client)
+        self.addCleanup(self.client.delete_subnetpool, pool_id)
+        subnetpool_data = {'subnetpool': {'address_scope_id':
+                                          address_scope['id']}}
+        self.assertRaises(lib_exc.BadRequest, self.client.update_subnetpool,
+                          pool_id, subnetpool_data)

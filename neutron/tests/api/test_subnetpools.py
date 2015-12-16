@@ -244,7 +244,8 @@ class SubnetPoolsTest(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=self._ip_version)
         name, pool_id = self._create_subnetpool(
             self.client, pool_values={'address_scope_id': address_scope['id']})
         self.addCleanup(self.client.delete_subnetpool, pool_id)
@@ -257,7 +258,8 @@ class SubnetPoolsTest(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=self._ip_version)
         name, pool_id = self._create_subnetpool(self.client)
         self.addCleanup(self.client.delete_subnetpool, pool_id)
         body = self.client.get_subnetpool(pool_id)
@@ -274,9 +276,11 @@ class SubnetPoolsTest(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_another_address_scope(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=self._ip_version)
         another_address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=self._ip_version)
         name, pool_id = self._create_subnetpool(
             self.client, pool_values={'address_scope_id':
                                       address_scope['id']})
@@ -297,7 +301,8 @@ class SubnetPoolsTest(base.BaseNetworkTest):
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_disassociate_address_scope(self):
         address_scope = self.create_address_scope(
-            name=data_utils.rand_name('smoke-address-scope'))
+            name=data_utils.rand_name('smoke-address-scope'),
+            ip_version=self._ip_version)
         name, pool_id = self._create_subnetpool(
             self.client, pool_values={'address_scope_id': address_scope['id']})
         self.addCleanup(self.client.delete_subnetpool, pool_id)

@@ -504,6 +504,12 @@ class IllegalSubnetPoolAssociationToAddressScope(BadRequest):
                 "%(address_scope_id)s.")
 
 
+class IllegalSubnetPoolIpVersionAssociationToAddressScope(BadRequest):
+    message = _("Illegal subnetpool association: subnetpool %(subnetpool_id)s "
+                "cannot associate with address scope %(address_scope_id)s "
+                "because subnetpool ip_version is not %(ip_version)s.")
+
+
 class IllegalSubnetPoolUpdate(BadRequest):
     message = _("Illegal subnetpool update : %(reason)s.")
 

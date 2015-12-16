@@ -874,7 +874,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         context.session.add(subnetpool_prefix)
 
     def _validate_address_scope_id(self, context, address_scope_id,
-                                   subnetpool_id, sp_prefixes):
+                                   subnetpool_id, sp_prefixes, ip_version):
         """Validate the address scope before associating.
 
         Subnetpool can associate with an address scope if
@@ -884,6 +884,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             address scope
           - there is no prefix conflict with the existing subnetpools
             associated with the address scope.
+          - the address family of the subnetpool and address scope
+            are the same
         """
         if not attributes.is_attr_set(address_scope_id):
             return
@@ -892,6 +894,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                      address_scope_id):
             raise n_exc.IllegalSubnetPoolAssociationToAddressScope(
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id)
+
+        as_ip_version = self.get_ip_version_for_address_scope(context,
+                                                              address_scope_id)
+
+        if ip_version != as_ip_version:
+            raise n_exc.IllegalSubnetPoolIpVersionAssociationToAddressScope(
+                subnetpool_id=subnetpool_id, address_scope_id=address_scope_id,
+                ip_version=as_ip_version)
 
         subnetpools = self._get_subnetpools_by_address_scope_id(
             context, address_scope_id)
@@ -943,7 +953,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_default_subnetpool_exists(context,
                                                   sp_reader.ip_version)
         self._validate_address_scope_id(context, sp_reader.address_scope_id,
-                                        id, sp_reader.prefixes)
+                                        id, sp_reader.prefixes,
+                                        sp_reader.ip_version)
         tenant_id = self._get_tenant_id_for_create(context, sp)
         with context.session.begin(subtransactions=True):
             pool_args = {'tenant_id': tenant_id,
@@ -1023,7 +1034,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                       orig_sp.address_scope_id)
 
             self._validate_address_scope_id(context, reader.address_scope_id,
-                                            id, reader.prefixes)
+                                            id, reader.prefixes,
+                                            reader.ip_version)
             orig_sp.update(self._filter_non_model_columns(
                                                       reader.subnetpool,
                                                       models_v2.SubnetPool))

@@ -47,7 +47,8 @@ class AddressScopeTestBase(base.BaseNetworkTest):
                                          **kwargs)
 
     def _test_update_address_scope_helper(self, is_admin=False, shared=None):
-        address_scope = self._create_address_scope(is_admin=is_admin)
+        address_scope = self._create_address_scope(is_admin=is_admin,
+                                                   ip_version=4)
 
         if is_admin:
             client = self.admin_client
@@ -70,7 +71,7 @@ class AddressScopeTest(AddressScopeTestBase):
     @test.attr(type='smoke')
     @test.idempotent_id('045f9294-8b1a-4848-b6a8-edf1b41e9d06')
     def test_tenant_create_list_address_scope(self):
-        address_scope = self._create_address_scope()
+        address_scope = self._create_address_scope(ip_version=4)
         body = self.client.list_address_scopes()
         returned_address_scopes = body['address_scopes']
         self.assertIn(address_scope['id'],
@@ -83,7 +84,7 @@ class AddressScopeTest(AddressScopeTestBase):
     @test.attr(type='smoke')
     @test.idempotent_id('85e0326b-4c75-4b92-bd6e-7c7de6aaf05c')
     def test_show_address_scope(self):
-        address_scope = self._create_address_scope()
+        address_scope = self._create_address_scope(ip_version=4)
         body = self.client.show_address_scope(
             address_scope['id'])
         returned_address_scope = body['address_scope']
@@ -100,7 +101,7 @@ class AddressScopeTest(AddressScopeTestBase):
     @test.attr(type='smoke')
     @test.idempotent_id('22b3b600-72a8-4b60-bc94-0f29dd6271df')
     def test_delete_address_scope(self):
-        address_scope = self._create_address_scope()
+        address_scope = self._create_address_scope(ip_version=4)
         self.client.delete_address_scope(address_scope['id'])
         self.assertRaises(lib_exc.NotFound, self.client.show_address_scope,
                           address_scope['id'])
@@ -108,7 +109,8 @@ class AddressScopeTest(AddressScopeTestBase):
     @test.attr(type='smoke')
     @test.idempotent_id('5a06c287-8036-4d04-9d78-def8e06d43df')
     def test_admin_create_shared_address_scope(self):
-        address_scope = self._create_address_scope(is_admin=True, shared=True)
+        address_scope = self._create_address_scope(is_admin=True, shared=True,
+                                                   ip_version=4)
         body = self.admin_client.show_address_scope(
             address_scope['id'])
         returned_address_scope = body['address_scope']
