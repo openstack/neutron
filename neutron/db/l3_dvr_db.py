@@ -107,7 +107,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                          reason=e)
 
     def _update_distributed_attr(
-        self, context, router_id, router_db, data, gw_info):
+        self, context, router_id, router_db, data):
         """Update the model to support the dvr case of a router."""
         if data.get('distributed'):
             old_owner = l3_const.DEVICE_OWNER_ROUTER_INTF
@@ -116,18 +116,18 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 rp.port_type = new_owner
                 rp.port.device_owner = new_owner
 
-    def _update_router_db(self, context, router_id, data, gw_info):
+    def _update_router_db(self, context, router_id, data):
         with context.session.begin(subtransactions=True):
             router_db = super(
                 L3_NAT_with_dvr_db_mixin, self)._update_router_db(
-                    context, router_id, data, gw_info)
+                    context, router_id, data)
             migrating_to_distributed = (
                 not router_db.extra_attributes.distributed and
                 data.get('distributed') is True)
             self._validate_router_migration(context, router_db, data)
             router_db.extra_attributes.update(data)
             self._update_distributed_attr(
-                context, router_id, router_db, data, gw_info)
+                context, router_id, router_db, data)
             if migrating_to_distributed:
                 if router_db['gw_port_id']:
                     # If the Legacy router is getting migrated to a DVR

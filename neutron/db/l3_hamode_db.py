@@ -411,7 +411,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             router_dict['ha_vr_id'] = router_db.extra_attributes.ha_vr_id
         return router_dict
 
-    def _update_router_db(self, context, router_id, data, gw_info):
+    def _update_router_db(self, context, router_id, data):
         router_db = self._get_router(context, router_id)
 
         original_distributed_state = router_db.extra_attributes.distributed
@@ -427,7 +427,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
-                context, router_id, data, gw_info)
+                context, router_id, data)
 
             ha_not_changed = (requested_ha_state is None or
                               requested_ha_state == original_ha_state)
