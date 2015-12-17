@@ -555,6 +555,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         res = query.filter(agents_db.Agent.id.in_(agent_ids)).first()
         return res[0]
 
+    def get_hosts_to_notify(self, context, router_id):
+        """Returns all hosts to send notification about router update"""
+        state = agentschedulers_db.get_admin_state_up_filter()
+        agents = self.get_l3_agents_hosting_routers(
+            context, [router_id], admin_state_up=state, active=True)
+        return [a.host for a in agents]
+
 
 class AZL3AgentSchedulerDbMixin(L3AgentSchedulerDbMixin,
                                 router_az.RouterAvailabilityZonePluginBase):
