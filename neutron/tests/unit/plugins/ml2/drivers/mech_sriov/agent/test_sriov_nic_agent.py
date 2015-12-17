@@ -18,6 +18,8 @@ import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.agent.l2.extensions import manager as l2_ext_manager
+from neutron.agent import rpc as agent_rpc
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
@@ -307,3 +309,24 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         kwargs = {'context': self.context, 'port': port}
         self.sriov_rpc_callback.port_update(**kwargs)
         self.assertEqual(set(), self.agent.updated_devices)
+
+
+class TestSRIOVAgentExtensionConfig(base.BaseTestCase):
+    def setUp(self):
+        super(TestSRIOVAgentExtensionConfig, self).setUp()
+        l2_ext_manager.register_opts(cfg.CONF)
+        # disable setting up periodic state reporting
+        cfg.CONF.set_override('report_interval', 0, group='AGENT')
+        cfg.CONF.set_override('extensions', ['qos'], group='agent')
+
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.eswitch_manager"
+               ".ESwitchManager.get_assigned_devices_info", return_value=[])
+    def test_report_loaded_extension(self, *args):
+        with mock.patch.object(agent_rpc.PluginReportStateAPI,
+                               'report_state') as mock_report_state:
+            agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
+            agent._report_state()
+            mock_report_state.assert_called_with(
+                agent.context, agent.agent_state)
+            self.assertEqual(
+                ['qos'], agent.agent_state['configurations']['extensions'])
