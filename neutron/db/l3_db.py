@@ -188,7 +188,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
         return self._make_router_dict(router_db)
 
-    def _update_router_db(self, context, router_id, data, gw_info):
+    def _update_router_db(self, context, router_id, data):
         """Update the DB object."""
         with context.session.begin(subtransactions=True):
             router_db = self._get_router(context, router_id)
@@ -212,7 +212,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             self._update_router_gw_info(context, id, gw_info)
         else:
             candidates = None
-        router_db = self._update_router_db(context, id, r, gw_info)
+        router_db = self._update_router_db(context, id, r)
         if candidates:
             l3_plugin = manager.NeutronManager.get_service_plugins().get(
                 constants.L3_ROUTER_NAT)

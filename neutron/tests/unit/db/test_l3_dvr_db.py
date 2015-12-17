@@ -122,7 +122,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return_value={'agents': [agent]})
         self.mixin._unbind_router = mock.Mock()
         router_db = self.mixin._update_router_db(
-            self.ctx, router_id, distributed, mock.ANY)
+            self.ctx, router_id, distributed)
         # Assert that the DB value has changed
         self.assertTrue(router_db.extra_attributes.distributed)
         self.assertEqual(1,

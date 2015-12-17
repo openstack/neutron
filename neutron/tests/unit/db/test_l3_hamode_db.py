@@ -88,8 +88,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
             data['distributed'] = distributed
         if admin_state is not None:
             data['admin_state_up'] = admin_state
-        return self.plugin._update_router_db(ctx, router_id,
-                                             data, None)
+        return self.plugin._update_router_db(ctx, router_id, data)
 
     def _bind_router(self, router_id):
         with self.admin_ctx.session.begin(subtransactions=True):
