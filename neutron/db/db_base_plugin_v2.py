@@ -521,8 +521,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise n_exc.BadRequest(resource='subnets', msg=reason)
 
         mode_list = [constants.IPV6_SLAAC,
-                     constants.DHCPV6_STATELESS,
-                     attributes.ATTR_NOT_SPECIFIED]
+                     constants.DHCPV6_STATELESS]
 
         ra_mode = subnet.get('ipv6_ra_mode')
         if ra_mode not in mode_list:
