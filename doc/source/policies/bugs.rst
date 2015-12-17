@@ -353,6 +353,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough | Moshe Levi           |
 +-------------------------------+---------------------------------------+----------------------+
+| troubleshooting_              | An issue affecting ease of debugging  | Assaf Muller         |
++-------------------------------+---------------------------------------+----------------------+
 | unittest_                     | A bug affecting the unit test subtree | Cedric Brandily      |
 +-------------------------------+---------------------------------------+----------------------+
 | usability_                    | UX, interoperability, feature parity  | PTL/Drivers Team     |
@@ -631,6 +633,14 @@ SG-FW
 
 * `Security groups - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=sg-fw>`_
 * `Security groups - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=sg-fw>`_
+
+.. _troubleshooting:
+
+Troubleshooting
++++++++++++++++
+
+* `Troubleshooting - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=Troubleshooting>`_
+* `Troubleshooting - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=Troubleshooting>`_
 
 .. _unittest:
 
