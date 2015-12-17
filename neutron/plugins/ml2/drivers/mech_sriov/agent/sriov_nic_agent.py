@@ -18,9 +18,6 @@ import socket
 import sys
 import time
 
-import eventlet
-eventlet.monkey_patch()
-
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -411,7 +408,3 @@ def main():
     # Start everything.
     LOG.info(_LI("Agent initialized successfully, now running... "))
     agent.daemon_loop()
-
-
-if __name__ == '__main__':
-    main()
