@@ -344,6 +344,17 @@ def ebtables_supported():
         return False
 
 
+def ipset_supported():
+    try:
+        cmd = ['ipset', '--version']
+        agent_utils.execute(cmd)
+        return True
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking for installed ipset. "
+                  "Exception: %s", e)
+        return False
+
+
 def get_minimal_dibbler_version_supported():
     return MINIMUM_DIBBLER_VERSION
 
