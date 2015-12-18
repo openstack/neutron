@@ -383,19 +383,18 @@ class KeepalivedManager(object):
     def spawn(self):
         config_path = self._output_config_file()
 
-        def callback(pid_file):
-            cmd = ['keepalived', '-P',
-                   '-f', config_path,
-                   '-p', pid_file,
-                   '-r', '%s-vrrp' % pid_file]
-            return cmd
+        keepalived_pm = self.get_process()
+        vrrp_pm = self._get_vrrp_process(
+            '%s-vrrp' % keepalived_pm.get_pid_file_name())
 
-        pm = self.get_process(callback=callback)
-        pm.enable(reload_cfg=True)
+        keepalived_pm.default_cmd_callback = (
+            self._get_keepalived_process_callback(vrrp_pm, config_path))
+
+        keepalived_pm.enable(reload_cfg=True)
 
         self.process_monitor.register(uuid=self.resource_id,
                                       service_name=KEEPALIVED_SERVICE_NAME,
-                                      monitored_process=pm)
+                                      monitored_process=keepalived_pm)
 
         LOG.debug('Keepalived spawned with config %s', config_path)
 
@@ -413,3 +412,27 @@ class KeepalivedManager(object):
             self.namespace,
             pids_path=self.conf_path,
             default_cmd_callback=callback)
+
+    def _get_vrrp_process(self, pid_file):
+        return external_process.ProcessManager(
+            cfg.CONF,
+            self.resource_id,
+            self.namespace,
+            pid_file=pid_file)
+
+    def _get_keepalived_process_callback(self, vrrp_pm, config_path):
+
+        def callback(pid_file):
+            # If keepalived process crashed unexpectedly, the vrrp process
+            # will be orphan and prevent keepalived process to be spawned.
+            # A check here will let the l3-agent to kill the orphan process
+            # and spawn keepalived successfully.
+            if vrrp_pm.active:
+                vrrp_pm.disable()
+            cmd = ['keepalived', '-P',
+                   '-f', config_path,
+                   '-p', pid_file,
+                   '-r', '%s-vrrp' % pid_file]
+            return cmd
+
+        return callback
