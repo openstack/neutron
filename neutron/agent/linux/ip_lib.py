@@ -610,7 +610,7 @@ class IpAddrCommand(IpDeviceCommandBase):
                 return True
             if addr_info['dadfailed']:
                 raise AddressNotReady(
-                    address=address, reason=_('Duplicate adddress detected'))
+                    address=address, reason=_('Duplicate address detected'))
         errmsg = _("Exceeded %s second limit waiting for "
                    "address to leave the tentative state.") % wait_time
         utils.utils.wait_until_true(
