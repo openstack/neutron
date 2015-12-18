@@ -893,7 +893,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             internal_subnet_id = ipv4_fixed_ips[0]['subnet_id']
         return internal_port, internal_subnet_id, internal_ip_address
 
-    def get_assoc_data(self, context, fip, floating_network_id):
+    def _get_assoc_data(self, context, fip, floating_network_id):
         """Determine/extract data associated with the internal port.
 
         When a floating IP is associated with an internal port,
@@ -917,7 +917,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             msg = _("fixed_ip_address cannot be specified without a port_id")
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
         if fip.get('port_id'):
-            port_id, internal_ip_address, router_id = self.get_assoc_data(
+            port_id, internal_ip_address, router_id = self._get_assoc_data(
                 context,
                 fip,
                 floatingip_db['floating_network_id'])
