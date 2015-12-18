@@ -405,13 +405,12 @@ class KeepalivedManager(object):
         pm = self.get_process()
         pm.disable(sig='15')
 
-    def get_process(self, callback=None):
+    def get_process(self):
         return external_process.ProcessManager(
             cfg.CONF,
             self.resource_id,
             self.namespace,
-            pids_path=self.conf_path,
-            default_cmd_callback=callback)
+            pids_path=self.conf_path)
 
     def _get_vrrp_process(self, pid_file):
         return external_process.ProcessManager(
