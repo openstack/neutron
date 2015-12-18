@@ -1359,6 +1359,12 @@ class TestOvsNeutronAgent(object):
             self.agent.tunnel_delete(context=None, **kwargs)
             self.assertTrue(clean_tun_fn.called)
 
+    def test_reset_tunnel_ofports(self):
+        tunnel_handles = self.agent.tun_br_ofports
+        self.agent.tun_br_ofports = {'gre': {'10.10.10.10': '1'}}
+        self.agent._reset_tunnel_ofports()
+        self.assertEqual(self.agent.tun_br_ofports, tunnel_handles)
+
     def _test_ovs_status(self, *args):
         reply2 = {'current': set(['tap0']),
                   'added': set(['tap2']),
@@ -1367,6 +1373,8 @@ class TestOvsNeutronAgent(object):
         reply3 = {'current': set(['tap2']),
                   'added': set([]),
                   'removed': set(['tap0'])}
+
+        self.agent.enable_tunneling = True
 
         with mock.patch.object(async_process.AsyncProcess, "_spawn"),\
                 mock.patch.object(log.KeywordArgumentAdapter,
@@ -1387,7 +1395,15 @@ class TestOvsNeutronAgent(object):
                     self.mod_agent.OVSNeutronAgent,
                     'update_stale_ofport_rules') as update_stale, \
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
-                                  'cleanup_stale_flows') as cleanup:
+                                  'cleanup_stale_flows') as cleanup, \
+                mock.patch.object(self.mod_agent.OVSNeutronAgent,
+                                  'setup_tunnel_br') as setup_tunnel_br,\
+                mock.patch.object(
+                    self.mod_agent.OVSNeutronAgent,
+                    'setup_tunnel_br_flows') as setup_tunnel_br_flows,\
+                mock.patch.object(
+                    self.mod_agent.OVSNeutronAgent,
+                    '_reset_tunnel_ofports') as reset_tunnel_ofports:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
@@ -1413,6 +1429,11 @@ class TestOvsNeutronAgent(object):
             # re-setup the bridges
             setup_int_br.assert_has_calls([mock.call()])
             setup_phys_br.assert_has_calls([mock.call({})])
+            # Ensure that tunnel handles are reset and bridge
+            # and flows reconfigured.
+            self.assertTrue(reset_tunnel_ofports.called)
+            self.assertTrue(setup_tunnel_br_flows.called)
+            self.assertTrue(setup_tunnel_br.called)
 
     def test_ovs_status(self):
         self._test_ovs_status(constants.OVS_NORMAL,
