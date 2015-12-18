@@ -1045,6 +1045,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.tunnel_delete(context=None, **kwargs)
             self.assertTrue(clean_tun_fn.called)
 
+    def test_reset_tunnel_ofports(self):
+        tunnel_handles = self.agent.tun_br_ofports
+        self.agent.tun_br_ofports = {'gre': {'10.10.10.10': '1'}}
+        self.agent._reset_tunnel_ofports()
+        self.assertEqual(self.agent.tun_br_ofports, tunnel_handles)
+
     def _test_ovs_status(self, *args):
         reply2 = {'current': set(['tap0']),
                   'added': set(['tap2']),
@@ -1053,6 +1059,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         reply3 = {'current': set(['tap2']),
                   'added': set([]),
                   'removed': set(['tap0'])}
+
+        self.agent.enable_tunneling = True
 
         with contextlib.nested(
             mock.patch.object(async_process.AsyncProcess, "_spawn"),
@@ -1069,10 +1077,17 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                               'setup_physical_bridges'),
             mock.patch.object(time, 'sleep'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
-                              'update_stale_ofport_rules')
+                              'update_stale_ofport_rules'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'reset_tunnel_br'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'setup_tunnel_br'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              '_reset_tunnel_ofports')
         ) as (spawn_fn, log_exception, scan_ports, process_network_ports,
               check_ovs_status, setup_int_br, setup_phys_br, time_sleep,
-              update_stale):
+              update_stale, reset_tunnel_br, setup_tunnel_br,
+              reset_tunnel_ofports):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             scan_ports.side_effect = [reply2, reply3]
@@ -1097,6 +1112,11 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         # re-setup the bridges
         setup_int_br.assert_has_calls([mock.call()])
         setup_phys_br.assert_has_calls([mock.call({})])
+        # Ensure that tunnel handles are reset and bridge
+        # and flows reconfigured.
+        self.assertTrue(reset_tunnel_br.called)
+        self.assertTrue(reset_tunnel_ofports.called)
+        self.assertTrue(setup_tunnel_br.called)
 
     def test_ovs_status(self):
         self._test_ovs_status(constants.OVS_NORMAL,

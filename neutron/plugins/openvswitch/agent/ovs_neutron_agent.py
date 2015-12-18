@@ -209,8 +209,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
-        self.tun_br_ofports = {p_const.TYPE_GRE: {},
-                               p_const.TYPE_VXLAN: {}}
+
+        self._reset_tunnel_ofports()
 
         self.polling_interval = polling_interval
         self.minimize_polling = minimize_polling
@@ -284,6 +284,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
+
+    def _reset_tunnel_ofports(self):
+        self.tun_br_ofports = {p_const.TYPE_GRE: {},
+                               p_const.TYPE_VXLAN: {}}
 
     def setup_rpc(self):
         self.agent_id = 'ovs-agent-%s' % cfg.CONF.host
@@ -1561,6 +1565,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.setup_physical_bridges(self.bridge_mappings)
                 if self.enable_tunneling:
                     self.reset_tunnel_br()
+                    self._reset_tunnel_ofports()
                     self.setup_tunnel_br()
                     tunnel_sync = True
                 if self.enable_distributed_routing:
