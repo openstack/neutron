@@ -493,21 +493,31 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
                 self._delete_ha_interfaces(context, router_db.id)
-            try:
+
+                # In case that create HA router failed because of the failure
+                # in HA network creation. So here put this deleting HA network
+                # procedure under 'if ha_network' block.
                 if not self._ha_routers_present(context,
                                                 router_db.tenant_id):
-                    self._delete_ha_network(context, ha_network)
-                    LOG.info(_LI("HA network %(network)s was deleted as "
-                                 "no HA routers are present in tenant "
-                                 "%(tenant)s."),
-                             {'network': ha_network.network_id,
-                              'tenant': router_db.tenant_id})
-            except n_exc.NetworkNotFound:
-                LOG.debug("HA network %s was already deleted.",
-                          ha_network.network_id)
-            except sa.exc.InvalidRequestError:
-                LOG.info(_LI("HA network %s can not be deleted."),
-                         ha_network.network_id)
+                    try:
+                        self._delete_ha_network(context, ha_network)
+                    except (n_exc.NetworkNotFound,
+                            orm.exc.ObjectDeletedError):
+                        LOG.debug(
+                            "HA network for tenant %s was already deleted.",
+                            router_db.tenant_id)
+                    except sa.exc.InvalidRequestError:
+                        LOG.info(_LI("HA network %s can not be deleted."),
+                                 ha_network.network_id)
+                    except n_exc.NetworkInUse:
+                        LOG.debug("HA network %s is still in use.",
+                                  ha_network.network_id)
+                    else:
+                        LOG.info(_LI("HA network %(network)s was deleted as "
+                                     "no HA routers are present in tenant "
+                                     "%(tenant)s."),
+                                 {'network': ha_network.network_id,
+                                  'tenant': router_db.tenant_id})
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):

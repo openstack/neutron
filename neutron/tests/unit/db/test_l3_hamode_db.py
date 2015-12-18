@@ -16,6 +16,7 @@ import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import sqlalchemy as sa
+from sqlalchemy import orm
 
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
@@ -617,22 +618,52 @@ class L3HATestCase(L3HATestFramework):
         self.assertNotIn('HA network tenant %s' % router1['tenant_id'],
                          nets_after)
 
-    def test_ha_network_is_not_deleted_if_another_ha_router_is_created(self):
-        # If another router was created during deletion of current router,
-        # _delete_ha_network will fail with InvalidRequestError. Check that HA
-        # network won't be deleted.
+    def _test_ha_network_is_not_deleted_raise_exception(self, exception):
         router1 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
         self.assertIn('HA network tenant %s' % router1['tenant_id'],
                       nets_before)
         with mock.patch.object(self.plugin, '_delete_ha_network',
-                               side_effect=sa.exc.InvalidRequestError):
+                               side_effect=exception):
             self.plugin.delete_router(self.admin_ctx, router1['id'])
             nets_after = [net['name'] for net in
                           self.core_plugin.get_networks(self.admin_ctx)]
             self.assertIn('HA network tenant %s' % router1['tenant_id'],
                           nets_after)
+
+    def test_ha_network_is_not_deleted_if_another_ha_router_is_created(self):
+        # If another router was created during deletion of current router,
+        # _delete_ha_network will fail with InvalidRequestError. Check that HA
+        # network won't be deleted.
+        self._test_ha_network_is_not_deleted_raise_exception(
+            sa.exc.InvalidRequestError)
+
+    def test_ha_network_is_not_deleted_if_network_in_use(self):
+        self._test_ha_network_is_not_deleted_raise_exception(
+            n_exc.NetworkInUse(net_id="foo_net_id"))
+
+    def test_ha_network_is_not_deleted_if_db_deleted_error(self):
+        self._test_ha_network_is_not_deleted_raise_exception(
+            orm.exc.ObjectDeletedError(None))
+
+    def test_ha_router_create_failed_no_ha_network_delete(self):
+        tenant_id = "foo_tenant_id"
+        nets_before = self.core_plugin.get_networks(self.admin_ctx)
+        self.assertNotIn('HA network tenant %s' % tenant_id,
+                         nets_before)
+
+        # Unable to create HA network
+        with mock.patch.object(self.core_plugin, 'create_network',
+                               side_effect=n_exc.NoNetworkAvailable):
+            self.assertRaises(n_exc.NoNetworkAvailable,
+                              self._create_router,
+                              True,
+                              tenant_id)
+            nets_after = self.core_plugin.get_networks(self.admin_ctx)
+            self.assertEqual(nets_before, nets_after)
+            self.assertNotIn('HA network tenant %s' % tenant_id,
+                             nets_after)
 
 
 class L3HAModeDbTestCase(L3HATestFramework):
