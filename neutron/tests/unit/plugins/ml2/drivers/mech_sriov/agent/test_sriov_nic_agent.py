@@ -18,6 +18,7 @@ import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent import sriov_nic_agent
@@ -292,6 +293,13 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         self.sriov_rpc_callback.port_update(**kwargs)
         self.assertEqual(set([(DEVICE_MAC, PCI_SLOT)]),
                          self.agent.updated_devices)
+
+    def test_port_update_with_vnic_physical_direct(self):
+        port = self._create_fake_port()
+        port[portbindings.VNIC_TYPE] = portbindings.VNIC_DIRECT_PHYSICAL
+        kwargs = {'context': self.context, 'port': port}
+        self.sriov_rpc_callback.port_update(**kwargs)
+        self.assertEqual(set(), self.agent.updated_devices)
 
     def test_port_update_without_pci_slot(self):
         port = self._create_fake_port()

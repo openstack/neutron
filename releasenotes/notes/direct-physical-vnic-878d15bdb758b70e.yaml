@@ -1,0 +1,6 @@
+---
+prelude: >
+    Add new VNIC type for SR-IOV physical functions.
+features:
+  - Neutron now supports creation of ports for exposing physical functions
+    as network devices to guests.

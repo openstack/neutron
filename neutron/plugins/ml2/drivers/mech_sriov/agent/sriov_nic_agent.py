@@ -35,6 +35,7 @@ from neutron.common import constants as n_constants
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
+from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -60,6 +61,13 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")
         port = kwargs.get('port')
+
+        vnic_type = port.get(portbindings.VNIC_TYPE)
+        if vnic_type and vnic_type == portbindings.VNIC_DIRECT_PHYSICAL:
+            LOG.debug("The SR-IOV agent doesn't handle %s ports.",
+                      portbindings.VNIC_DIRECT_PHYSICAL)
+            return
+
         # Put the port mac address in the updated_devices set.
         # Do not store port details, as if they're used for processing
         # notifications there is no guarantee the notifications are
