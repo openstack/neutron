@@ -64,5 +64,5 @@ class Router_availability_zone(extensions.ExtensionDescriptor):
 class RouterAvailabilityZonePluginBase(object):
 
     @abc.abstractmethod
-    def get_router_availability_zones(self, router_id):
+    def get_router_availability_zones(self, router):
         """Return availability zones which a router belongs to."""
