@@ -63,6 +63,8 @@ Document common pitfalls as well as good practices done during plugin developmen
   but their strength is also a weakness, as they can introduce `unpredictable <https://review.openstack.org/#/c/121290/>`_
   behavior to the `MRO <https://www.python.org/download/releases/2.3/mro/>`_,
   amongst other issues.
+* In lieu of mixins, if you need to add behavior that is relevant for ML2,
+  consider using the `extension manager <http://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_.
 * If you make changes to the DB class methods, like calling methods that can
   be inherited, think about what effect that may have to plugins that have
   controller `backends <https://review.openstack.org/#/c/116924/>`_.
