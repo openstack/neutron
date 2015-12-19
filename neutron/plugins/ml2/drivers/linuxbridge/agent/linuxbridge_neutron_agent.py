@@ -22,9 +22,6 @@
 import sys
 import time
 
-import eventlet
-eventlet.monkey_patch()
-
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -1145,7 +1142,3 @@ def main():
     LOG.info(_LI("Agent initialized successfully, now running... "))
     launcher = service.launch(cfg.CONF, agent)
     launcher.wait()
-
-
-if __name__ == "__main__":
-    main()
