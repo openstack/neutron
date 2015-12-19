@@ -104,6 +104,10 @@ Document common pitfalls as well as good practices done during database developm
   transaction blocks, and the innermost block raises an error without proper
   rollback. Consider if `savepoints <http://docs.sqlalchemy.org/en/rel_1_0/orm/session_transaction.html#using-savepoint>`_
   can fit your use case.
+* When designing data models that are related to each other, be careful to how
+  you model the relationships' loading `strategy <http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html#using-loader-strategies-lazy-loading-eager-loading>`_. For instance a joined relationship can
+  be very efficient over others (some examples include `router gateways <https://review.openstack.org/#/c/88665/>`_
+  or `network availability zones <https://review.openstack.org/#/c/257086/>`_).
 
 System development
 ~~~~~~~~~~~~~~~~~~
