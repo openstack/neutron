@@ -542,3 +542,43 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         address_factory.get_request.assert_called_once_with(context,
                                                             port_dict,
                                                             ip_dict)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_ips_for_port_passes_port_id_to_factory(self, pool_mock):
+        port_id = mock.Mock()
+        network_id = uuidutils.generate_uuid()
+        address_factory = mock.Mock()
+        mocks = self._prepare_mocks_with_pool_mock(
+            pool_mock, address_factory=address_factory)
+        context = mock.Mock()
+
+        ip_dict = {'ip_address': '192.1.1.10',
+                   'subnet_id': uuidutils.generate_uuid()}
+        port_dict = {'port': {'device_owner': uuidutils.generate_uuid(),
+                              'network_id': network_id,
+                              'fixed_ips': [ip_dict]}}
+        subnets = [{'id': ip_dict['subnet_id'],
+                    'network_id': network_id,
+                    'cidr': '192.1.1.0/24',
+                    'ipv6_address_mode': None,
+                    'ipv6_ra_mode': None}]
+        get_subnets_mock = mock.Mock(return_value=subnets)
+        get_subnet_mock = mock.Mock(return_value=subnets[0])
+        mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+        mocks['ipam']._get_subnets = get_subnets_mock
+        mocks['ipam']._get_subnet = get_subnet_mock
+
+        mocks['ipam'].allocate_ips_for_port_and_store(context,
+                                                      port_dict,
+                                                      port_id)
+
+        mocks['driver'].get_address_request_factory.assert_called_once_with()
+
+        port_dict_with_id = port_dict['port'].copy()
+        port_dict_with_id['id'] = port_id
+        # Validate port id is added to port dict before address_factory call
+        address_factory.get_request.assert_called_once_with(context,
+                                                            port_dict_with_id,
+                                                            ip_dict)
+        # Verify incoming port dict is not changed ('id' is not added to it)
+        self.assertIsNone(port_dict['port'].get('id'))
