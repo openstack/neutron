@@ -441,6 +441,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                        priority=queue.PRIORITY_SYNC_ROUTERS_TASK):
         router_update.timestamp = timeutils.utcnow()
         router_update.priority = priority
+        router_update.router = None  # Force the agent to resync the router
         self._queue.add(router_update)
 
     def _process_router_update(self):
