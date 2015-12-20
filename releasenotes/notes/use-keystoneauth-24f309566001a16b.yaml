@@ -1,6 +1,5 @@
 ---
 upgrade:
-  - neutron now depends on keystoneauth instead of
-    keystoneclient.
+  - Neutron depends on keystoneauth instead of keystoneclient.
 features:
-  - neutron can now interact with keystone v3.
+  - Neutron can interact with keystone v3.

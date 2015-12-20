@@ -1,9 +1,8 @@
 ---
-prelude: |
-  oslo.messaging.notify.drivers entry points are deprecated
+prelude: >
+    oslo.messaging.notify.drivers entry points are deprecated
 other:
-  - |
-    The oslo.messaging.notify.drivers entry points that were left in tree for
+  - The oslo.messaging.notify.drivers entry points that were left in tree for
     backward compatibility with Icehouse are deprecated and will be removed
     after liberty-eol. Configure notifications using the oslo_messaging
     configuration options in neutron.conf.
