@@ -83,6 +83,8 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.notifier.plugin.get_ports_count.return_value = port_count
         enabled_agents = self.notifier._get_enabled_agents(
             mock.ANY, network, agents, mock.ANY, mock.ANY)
+        if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
+            agents = [x for x in agents if x.admin_state_up]
         self.assertEqual(agents, enabled_agents)
         self.assertEqual(expected_warnings, self.mock_log.warn.call_count)
         self.assertEqual(expected_errors, self.mock_log.error.call_count)
@@ -112,7 +114,10 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def test__get_enabled_agents_with_notification_required(self):
         network = {'id': 'foo_network_id', 'subnets': ['foo_subnet_id']}
-        self._test__get_enabled_agents(network, [], port_count=20,
+        agent = agents_db.Agent()
+        agent.admin_state_up = False
+        agent.heartbeat_timestamp = timeutils.utcnow()
+        self._test__get_enabled_agents(network, [agent], port_count=20,
                                        expected_warnings=0, expected_errors=1)
 
     def test__get_enabled_agents_with_admin_state_down(self):
