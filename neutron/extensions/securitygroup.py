@@ -134,6 +134,11 @@ class SecurityGroupConflict(nexception.Conflict):
     message = _("Error %(reason)s while attempting the operation.")
 
 
+class SecurityGroupRuleInvalidEtherType(nexception.InvalidInput):
+    message = _("Security group rule for ethertype '%(ethertype)s' not "
+                "supported. Allowed values are %(values)s.")
+
+
 def convert_protocol(value):
     if value is None:
         return
@@ -161,6 +166,8 @@ def convert_ethertype_to_case_insensitive(value):
         for ethertype in sg_supported_ethertypes:
             if ethertype.lower() == value.lower():
                 return ethertype
+    raise SecurityGroupRuleInvalidEtherType(
+        ethertype=value, values=sg_supported_ethertypes)
 
 
 def convert_validate_port_value(port):
