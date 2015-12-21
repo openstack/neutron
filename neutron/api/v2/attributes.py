@@ -15,6 +15,7 @@
 
 import re
 
+import functools
 import netaddr
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -77,6 +78,21 @@ def is_attr_set(attribute):
     return not (attribute is None or attribute is ATTR_NOT_SPECIFIED)
 
 
+def _validate_list_of_items(item_validator, data, *args, **kwargs):
+    if not isinstance(data, list):
+        msg = _("'%s' is not a list") % data
+        return msg
+
+    if len(set(data)) != len(data):
+        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
+        return msg
+
+    for item in data:
+        msg = item_validator(item, *args, **kwargs)
+        if msg:
+            return msg
+
+
 def _validate_values(data, valid_values=None):
     if data not in valid_values:
         msg = (_("'%(data)s' is not in %(valid_values)s") %
@@ -118,19 +134,8 @@ def _validate_string(data, max_len=None):
         return msg
 
 
-def validate_list_of_unique_strings(data, max_string_len=None):
-    if not isinstance(data, list):
-        msg = _("'%s' is not a list") % data
-        return msg
-
-    if len(set(data)) != len(data):
-        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
-        return msg
-
-    for item in data:
-        msg = _validate_string(item, max_string_len)
-        if msg:
-            return msg
+validate_list_of_unique_strings = functools.partial(_validate_list_of_items,
+                                                    _validate_string)
 
 
 def _validate_boolean(data, valid_values=None):
@@ -347,23 +352,6 @@ def _validate_subnet(data, valid_values=None):
     return msg
 
 
-def _validate_subnet_list(data, valid_values=None):
-    if not isinstance(data, list):
-        msg = _("'%s' is not a list") % data
-        LOG.debug(msg)
-        return msg
-
-    if len(set(data)) != len(data):
-        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
-        LOG.debug(msg)
-        return msg
-
-    for item in data:
-        msg = _validate_subnet(item)
-        if msg:
-            return msg
-
-
 def _validate_subnet_or_none(data, valid_values=None):
     if data is not None:
         return _validate_subnet(data, valid_values)
@@ -406,23 +394,6 @@ def _validate_uuid(data, valid_values=None):
 def _validate_uuid_or_none(data, valid_values=None):
     if data is not None:
         return _validate_uuid(data)
-
-
-def _validate_uuid_list(data, valid_values=None):
-    if not isinstance(data, list):
-        msg = _("'%s' is not a list") % data
-        LOG.debug(msg)
-        return msg
-
-    for item in data:
-        msg = _validate_uuid(item)
-        if msg:
-            return msg
-
-    if len(set(data)) != len(data):
-        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
-        LOG.debug(msg)
-        return msg
 
 
 def _validate_dict_item(key, key_validator, data):
@@ -640,13 +611,15 @@ validators = {'type:dict': _validate_dict,
               'type:not_empty_string_or_none':
               _validate_not_empty_string_or_none,
               'type:subnet': _validate_subnet,
-              'type:subnet_list': _validate_subnet_list,
+              'type:subnet_list': functools.partial(_validate_list_of_items,
+                                                    _validate_subnet),
               'type:subnet_or_none': _validate_subnet_or_none,
               'type:subnetpool_id': _validate_subnetpool_id,
               'type:subnetpool_id_or_none': _validate_subnetpool_id_or_none,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
-              'type:uuid_list': _validate_uuid_list,
+              'type:uuid_list': functools.partial(_validate_list_of_items,
+                                                  _validate_uuid),
               'type:values': _validate_values,
               'type:boolean': _validate_boolean,
               'type:list_of_unique_strings': validate_list_of_unique_strings}

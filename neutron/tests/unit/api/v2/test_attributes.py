@@ -610,54 +610,47 @@ class TestAttributes(base.BaseTestCase):
                                   allow_none=True)
 
     def test_validate_uuid(self):
-        msg = attributes._validate_uuid('garbage')
-        self.assertEqual("'garbage' is not a valid UUID", msg)
+        invalid_uuids = [None,
+                         123,
+                         '123',
+                         't5069610-744b-42a7-8bd8-ceac1a229cd4',
+                         'e5069610-744bb-42a7-8bd8-ceac1a229cd4']
+        for uuid in invalid_uuids:
+            msg = attributes._validate_uuid(uuid)
+            error = "'%s' is not a valid UUID" % uuid
+            self.assertEqual(error, msg)
 
         msg = attributes._validate_uuid('00000000-ffff-ffff-ffff-000000000000')
         self.assertIsNone(msg)
 
-    def test_validate_uuid_list(self):
+    def test__validate_list_of_items(self):
         # check not a list
-        uuids = [None,
+        items = [None,
                  123,
                  'e5069610-744b-42a7-8bd8-ceac1a229cd4',
                  '12345678123456781234567812345678',
                  {'uuid': 'e5069610-744b-42a7-8bd8-ceac1a229cd4'}]
-        for uuid in uuids:
-            msg = attributes._validate_uuid_list(uuid)
-            error = "'%s' is not a list" % uuid
-            self.assertEqual(error, msg)
-
-        # check invalid uuid in a list
-        invalid_uuid_lists = [[None],
-                              [123],
-                              [123, 'e5069610-744b-42a7-8bd8-ceac1a229cd4'],
-                              ['123', '12345678123456781234567812345678'],
-                              ['t5069610-744b-42a7-8bd8-ceac1a229cd4'],
-                              ['e5069610-744b-42a7-8bd8-ceac1a229cd44'],
-                              ['e50696100-744b-42a7-8bd8-ceac1a229cd4'],
-                              ['e5069610-744bb-42a7-8bd8-ceac1a229cd4']]
-        for uuid_list in invalid_uuid_lists:
-            msg = attributes._validate_uuid_list(uuid_list)
-            error = "'%s' is not a valid UUID" % uuid_list[0]
+        for item in items:
+            msg = attributes._validate_list_of_items(mock.Mock(), item)
+            error = "'%s' is not a list" % item
             self.assertEqual(error, msg)
 
         # check duplicate items in a list
-        duplicate_uuids = ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
+        duplicate_items = ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
                            'f3eeab00-8367-4524-b662-55e64d4cacb5',
                            'e5069610-744b-42a7-8bd8-ceac1a229cd4']
-        msg = attributes._validate_uuid_list(duplicate_uuids)
+        msg = attributes._validate_list_of_items(mock.Mock(), duplicate_items)
         error = ("Duplicate items in the list: "
-                 "'%s'" % ', '.join(duplicate_uuids))
+                 "'%s'" % ', '.join(duplicate_items))
         self.assertEqual(error, msg)
 
-        # check valid uuid lists
-        valid_uuid_lists = [['e5069610-744b-42a7-8bd8-ceac1a229cd4'],
-                            ['f3eeab00-8367-4524-b662-55e64d4cacb5'],
-                            ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
-                             'f3eeab00-8367-4524-b662-55e64d4cacb5']]
-        for uuid_list in valid_uuid_lists:
-            msg = attributes._validate_uuid_list(uuid_list)
+        # check valid lists
+        valid_lists = [[],
+                       [1, 2, 3],
+                       ['a', 'b', 'c']]
+        for list_obj in valid_lists:
+            msg = attributes._validate_list_of_items(
+                mock.Mock(return_value=None), list_obj)
             self.assertIsNone(msg)
 
     def test_validate_dict_type(self):
