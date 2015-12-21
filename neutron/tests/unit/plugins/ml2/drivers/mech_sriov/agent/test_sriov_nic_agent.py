@@ -286,7 +286,7 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
 
     def _create_fake_port(self):
         return {'id': uuidutils.generate_uuid(),
-                'binding:profile': {'pci_slot': PCI_SLOT},
+                portbindings.PROFILE: {'pci_slot': PCI_SLOT},
                 'mac_address': DEVICE_MAC}
 
     def test_port_update_with_pci_slot(self):
@@ -305,7 +305,7 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
 
     def test_port_update_without_pci_slot(self):
         port = self._create_fake_port()
-        port['binding:profile'] = None
+        port[portbindings.PROFILE] = None
         kwargs = {'context': self.context, 'port': port}
         self.sriov_rpc_callback.port_update(**kwargs)
         self.assertEqual(set(), self.agent.updated_devices)
