@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import six
 import testscenarios
 
@@ -212,6 +213,11 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             This stores the expected networks that should have been scheduled
             (or that could have already been scheduled) for each agent
             after the 'auto_schedule_networks' function is called.
+
+        no_network_with_az_match
+            If this parameter is True, there is no unscheduled network with
+            availability_zone_hints matches to an availability_zone of agents
+            to be scheduled. The default is False.
     """
 
     scenarios = [
@@ -320,6 +326,16 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
               expected_auto_schedule_return_value=False,
               expected_hosted_networks={'agent-0': [],
                                         'agent-1': []})),
+
+        ('No agents scheduled if unscheduled network does not match AZ',
+         dict(agent_count=1,
+              max_agents_per_network=1,
+              network_count=1,
+              networks_with_dhcp_disabled=[],
+              hosted_networks={},
+              expected_auto_schedule_return_value=True,
+              expected_hosted_networks={'agent-0': []},
+              no_network_with_az_match=True)),
     ]
 
     def _strip_host_index(self, name):
@@ -346,8 +362,10 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         return subnets
 
     def get_network(self, context, net_id):
-        # TODO(hichihara): add test cases of AZ scheduler
-        return {'availability_zone_hints': []}
+        az_hints = []
+        if getattr(self, 'no_network_with_az_match', False):
+            az_hints = ['not-match']
+        return {'availability_zone_hints': az_hints}
 
     def _get_hosted_networks_on_dhcp_agent(self, agent_id):
         query = self.ctx.session.query(
@@ -400,3 +418,144 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
     def test_auto_schedule(self):
         for i in range(self.agent_count):
             self._test_auto_schedule(i)
+
+
+class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
+                                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                                 agents_db.AgentDbMixin,
+                                 common_db_mixin.CommonDbMixin):
+    """Test various scenarios for AZAwareWeightScheduler.schedule.
+
+        az_count
+            Number of AZs.
+
+        network_az_hints
+            Number of AZs in availability_zone_hints of the network.
+
+        agent_count[each az]
+            Number of dhcp agents (also number of hosts).
+
+        max_agents_per_network
+            Maximum  DHCP Agents that can be scheduled for a network.
+
+        scheduled_agent_count[each az]
+            Number of agents the network has previously scheduled
+
+        down_agent_count[each az]
+            Number of dhcp agents which are down
+
+        expected_scheduled_agent_count[each az]
+            Number of scheduled agents the schedule() should return
+            or 'None' if the schedule() cannot schedule the network.
+    """
+
+    scenarios = [
+        ('Single hint, Single agent, Scheduled an agent of the specified AZ',
+         dict(az_count=2,
+              network_az_hints=1,
+              agent_count=[1, 1],
+              max_agents_per_network=1,
+              scheduled_agent_count=[0, 0],
+              down_agent_count=[0, 0],
+              expected_scheduled_agent_count=[1, 0])),
+
+        ('Multi hints, Multi agents Scheduled agents of the specified AZs',
+         dict(az_count=3,
+              network_az_hints=2,
+              agent_count=[1, 1, 1],
+              max_agents_per_network=2,
+              scheduled_agent_count=[0, 0, 0],
+              down_agent_count=[0, 0, 0],
+              expected_scheduled_agent_count=[1, 1, 0])),
+
+        ('Single hint, Multi agents, Scheduled agents of the specified AZ',
+         dict(az_count=2,
+              network_az_hints=1,
+              agent_count=[2, 1],
+              max_agents_per_network=2,
+              scheduled_agent_count=[0, 0],
+              down_agent_count=[0, 0],
+              expected_scheduled_agent_count=[2, 0])),
+
+        ('Multi hints, Multi agents, Only single AZ available',
+         dict(az_count=2,
+              network_az_hints=2,
+              agent_count=[2, 1],
+              max_agents_per_network=2,
+              scheduled_agent_count=[0, 0],
+              down_agent_count=[0, 1],
+              expected_scheduled_agent_count=[2, 0])),
+
+        ('Multi hints, Multi agents, Not enough agents',
+         dict(az_count=3,
+              network_az_hints=3,
+              agent_count=[1, 1, 1],
+              max_agents_per_network=3,
+              scheduled_agent_count=[0, 0, 0],
+              down_agent_count=[0, 1, 0],
+              expected_scheduled_agent_count=[1, 0, 1])),
+
+        ('Multi hints, Multi agents, Partially scheduled, Another AZ selected',
+         dict(az_count=3,
+              network_az_hints=2,
+              agent_count=[1, 1, 1],
+              max_agents_per_network=2,
+              scheduled_agent_count=[1, 0, 0],
+              down_agent_count=[0, 0, 0],
+              expected_scheduled_agent_count=[0, 1, 0])),
+
+        ('No hint, Scheduled independent to AZ',
+         dict(az_count=3,
+              network_az_hints=0,
+              agent_count=[1, 1, 1],
+              max_agents_per_network=3,
+              scheduled_agent_count=[0, 0, 0],
+              down_agent_count=[0, 0, 0],
+              expected_scheduled_agent_count=[1, 1, 1])),
+    ]
+
+    def _set_network_az_hints(self):
+        self.network['availability_zone_hints'] = []
+        for i in range(self.network_az_hints):
+            self.network['availability_zone_hints'].append('az%s' % i)
+
+    def test_schedule_network(self):
+        self.config(dhcp_agents_per_network=self.max_agents_per_network)
+        scheduler = dhcp_agent_scheduler.AZAwareWeightScheduler()
+        self._set_network_az_hints()
+
+        # create dhcp agents
+        for i in range(self.az_count):
+            az = 'az%s' % i
+            hosts = ['%s-host-%s' % (az, j)
+                     for j in range(self.agent_count[i])]
+            dhcp_agents = self._create_and_set_agents_down(
+                hosts, down_agent_count=self.down_agent_count[i], az=az)
+
+            active_agents = dhcp_agents[self.down_agent_count[i]:]
+
+            # schedule some agents before calling schedule
+            if self.scheduled_agent_count[i]:
+                # schedule the network
+                schedule_agents = active_agents[:self.scheduled_agent_count[i]]
+                scheduler.resource_filter.bind(
+                    self.ctx, schedule_agents, self.network_id)
+
+        actual_scheduled_agents = scheduler.schedule(self, self.ctx,
+                                                     self.network)
+        scheduled_azs = collections.defaultdict(int)
+        for agent in actual_scheduled_agents:
+            scheduled_azs[agent['availability_zone']] += 1
+
+        hosted_agents = self.list_dhcp_agents_hosting_network(
+                            self.ctx, self.network_id)
+        hosted_azs = collections.defaultdict(int)
+        for agent in hosted_agents['agents']:
+            hosted_azs[agent['availability_zone']] += 1
+
+        for i in range(self.az_count):
+            self.assertEqual(self.expected_scheduled_agent_count[i],
+                             scheduled_azs.get('az%s' % i, 0))
+            self.assertEqual(self.scheduled_agent_count[i] +
+                             scheduled_azs.get('az%s' % i, 0),
+                             hosted_azs.get('az%s' % i, 0))

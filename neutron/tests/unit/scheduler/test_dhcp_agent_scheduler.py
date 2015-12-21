@@ -45,14 +45,16 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
         self._save_networks([self.network_id])
 
     def _create_and_set_agents_down(self, hosts, down_agent_count=0,
-                                    admin_state_up=True):
+                                    admin_state_up=True,
+                                    az=helpers.DEFAULT_AZ):
         agents = []
         for i, host in enumerate(hosts):
             is_alive = i >= down_agent_count
             agents.append(helpers.register_dhcp_agent(
                 host,
                 admin_state_up=admin_state_up,
-                alive=is_alive))
+                alive=is_alive,
+                az=az))
         return agents
 
     def _save_networks(self, networks):
