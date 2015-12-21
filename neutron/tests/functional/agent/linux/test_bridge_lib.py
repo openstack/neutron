@@ -59,3 +59,17 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
     def test_get_interfaces_no_bridge(self):
         bridge = bridge_lib.BridgeDevice('--fake--')
         self.assertEqual([], bridge.get_interfaces())
+
+    def test_disable_ipv6(self):
+        sysfs_path = ("/proc/sys/net/ipv6/conf/%s/disable_ipv6" %
+                      self.bridge.name)
+
+        # first, make sure it's enabled
+        with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
+            sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
+            self.assertEqual("0\n", sysfs_disable_ipv6)
+
+        self.assertEqual(0, self.bridge.disable_ipv6())
+        with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
+            sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
+            self.assertEqual("1\n", sysfs_disable_ipv6)
