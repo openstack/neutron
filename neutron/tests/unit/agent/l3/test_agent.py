@@ -46,6 +46,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
@@ -352,7 +353,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                       'subnets': [{'gateway_ip': '20.0.0.1'}],
                       'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                       'id': _uuid(),
-                      'binding:host_id': HOSTNAME,
+                      portbindings.HOST_ID: HOSTNAME,
                       'network_id': _uuid(),
                       'mac_address': 'ca:fe:de:ad:be:ef'}
         ri.snat_ports = sn_port

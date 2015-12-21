@@ -23,7 +23,7 @@ from neutron._i18n import _LW
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.common import constants
-
+from neutron.extensions import portbindings
 
 LOG = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class NeutronDebugAgent(object):
                          'device_id': '%s' % socket.gethostname(),
                          'device_owner': '%s:probe' % device_owner,
                          'tenant_id': network.tenant_id,
-                         'binding:host_id': host,
+                         portbindings.HOST_ID: host,
                          'fixed_ips': [dict(subnet_id=s.id)
                                        for s in network.subnets]}}
         port_dict = self.client.create_port(body)['port']

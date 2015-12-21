@@ -731,11 +731,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.assertEqual(port_id, details['port_id'])
 
     def _update_and_check_portbinding(self, port_id, host_id):
-        data = {'port': {'binding:host_id': host_id}}
+        data = {'port': {portbindings.HOST_ID: host_id}}
         req = self.new_update_request('ports', data, port_id)
         res = self.deserialize(self.fmt,
                                req.get_response(self.api))
-        self.assertEqual(host_id, res['port']['binding:host_id'])
+        self.assertEqual(host_id, res['port'][portbindings.HOST_ID])
 
     def _test_host_changed(self, twice):
         self._register_ml2_agents()

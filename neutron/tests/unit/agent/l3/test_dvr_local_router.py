@@ -31,6 +31,7 @@ from neutron.agent.linux import ip_lib
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import utils as common_utils
+from neutron.extensions import portbindings
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 
@@ -487,7 +488,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
                            'cidr': '20.0.0.0/24',
                            'gateway_ip': '20.0.0.1'}],
               'id': _uuid(),
-              'binding:host_id': 'myhost',
+              portbindings.HOST_ID: 'myhost',
               'device_owner': l3_constants.DEVICE_OWNER_AGENT_GW,
               'network_id': fake_network_id,
               'mac_address': 'ca:fe:de:ad:be:ef'}]

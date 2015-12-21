@@ -25,6 +25,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as l3_constants
+from neutron.extensions import portbindings
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
@@ -192,7 +193,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         internal_ports = router.get(l3_constants.INTERFACE_KEY, [])
         router['distributed'] = True
         router['gw_port_host'] = agent.conf.host
-        router['gw_port']['binding:host_id'] = agent.conf.host
+        router['gw_port'][portbindings.HOST_ID] = agent.conf.host
         floating_ip = router['_floatingips'][0]
         floating_ip['floating_network_id'] = router['gw_port']['network_id']
         floating_ip['host'] = agent.conf.host
@@ -229,7 +230,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                  'network_id': external_gw_port['network_id'],
                  'device_owner': l3_constants.DEVICE_OWNER_AGENT_GW,
                  'mac_address': 'fa:16:3e:80:8d:89',
-                 'binding:host_id': self.agent.conf.host,
+                 portbindings.HOST_ID: self.agent.conf.host,
                  'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
                                 'ip_address': fip_gw_port_ip,
                                 'prefixlen': prefixlen}],

@@ -20,6 +20,7 @@ from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron.extensions import portbindings
 from neutron.tests import base
 
 
@@ -169,7 +170,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 }
         expected_port = {'port': {'network_id': 'foo_network_id',
                                   'device_owner': constants.DEVICE_OWNER_DHCP,
-                                  'binding:host_id': 'foo_host',
+                                  portbindings.HOST_ID: 'foo_host',
                                   'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
                                   },
                          'id': 'foo_port_id'
@@ -193,7 +194,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 }
         expected_port = {'port': {'network_id': 'foo_network_id',
                                   'device_owner': constants.DEVICE_OWNER_DHCP,
-                                  'binding:host_id': 'foo_host',
+                                  portbindings.HOST_ID: 'foo_host',
                                   'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
                                   },
                          'id': 'foo_port_id'
@@ -225,7 +226,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 }
         expected_port = {'port': {'network_id': 'foo_network_id',
                                   'device_owner': constants.DEVICE_OWNER_DHCP,
-                                  'binding:host_id': 'foo_host',
+                                  portbindings.HOST_ID: 'foo_host',
                                   'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
                                   },
                          'id': 'foo_port_id'

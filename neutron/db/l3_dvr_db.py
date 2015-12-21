@@ -606,7 +606,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                              'network_id': network_id,
                              'device_id': l3_agent_db['id'],
                              'device_owner': l3_const.DEVICE_OWNER_AGENT_GW,
-                             'binding:host_id': host,
+                             portbindings.HOST_ID: host,
                              'admin_state_up': True,
                              'name': ''}
                 agent_port = p_utils.create_port(self._core_plugin, context,

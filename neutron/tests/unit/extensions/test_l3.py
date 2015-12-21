@@ -2882,7 +2882,7 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
             self.l3_rpc_cb._ensure_host_set_on_port(
                 mock.ANY, mock.ANY, port, router_id)
         self.l3_rpc_cb.plugin.update_port.assert_called_once_with(
-            mock.ANY, port_id, {'port': {'binding:host_id': mock.ANY}})
+            mock.ANY, port_id, {'port': {portbindings.HOST_ID: mock.ANY}})
         self.assertTrue(mock_log.call_count)
         expected_message = ('Port foo_port_id not found while updating '
                             'agent binding for router foo_router_id.')

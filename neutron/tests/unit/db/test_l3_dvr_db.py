@@ -23,6 +23,7 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as plugin_const
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -267,13 +268,13 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _helper_delete_floatingip_agent_gateway_port(self, port_host):
         ports = [{
             'id': 'my_port_id',
-            'binding:host_id': 'foo_host',
+            portbindings.HOST_ID: 'foo_host',
             'network_id': 'ext_network_id',
             'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
         },
                 {
             'id': 'my_new_port_id',
-            'binding:host_id': 'my_foo_host',
+            portbindings.HOST_ID: 'my_foo_host',
             'network_id': 'ext_network_id',
             'device_owner': l3_const.DEVICE_OWNER_ROUTER_GW
         }]
@@ -429,7 +430,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self, fip, floatingip_db, router_db):
         port = {
             'id': '1234',
-            'binding:host_id': 'myhost',
+            portbindings.HOST_ID: 'myhost',
             'network_id': 'external_net'
         }
 

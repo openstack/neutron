@@ -995,7 +995,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         plugin = manager.NeutronManager.get_plugin()
         port = {
             'id': 'foo_port_id',
-            'binding:host_id': 'foo_host',
+            portbindings.HOST_ID: 'foo_host',
         }
         with mock.patch.object(ml2_db, 'ensure_dvr_port_binding') as mock_dvr:
             plugin.update_dvr_port_binding(
