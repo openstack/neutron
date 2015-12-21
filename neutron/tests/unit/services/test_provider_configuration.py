@@ -35,7 +35,7 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
 
     def test_default_service_provider_configuration(self):
         providers = cfg.CONF.service_providers.service_provider
-        self.assertEqual(providers, [])
+        self.assertEqual([], providers)
 
     def test_parse_single_service_provider_opt(self):
         self._set_override([constants.LOADBALANCER +

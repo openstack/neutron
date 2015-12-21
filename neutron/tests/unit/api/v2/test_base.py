@@ -665,7 +665,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         res = self.api.get(_get_path('networks'),
                            params=params).json
 
-        self.assertEqual(res['networks'], [])
+        self.assertEqual([], res['networks'])
 
         previous_links = []
         if 'networks_links' in res:
@@ -728,7 +728,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                   'page_reverse': ['True']}
         res = self.api.get(_get_path('networks'),
                            params=params).json
-        self.assertEqual(res['networks'], [])
+        self.assertEqual([], res['networks'])
 
         next_links = []
         if 'networks_links' in res:

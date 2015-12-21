@@ -410,7 +410,7 @@ class TestIpWrapper(base.BaseTestCase):
                 ip_ns_cmd_cls.assert_has_calls([mock.call().exists('ns')])
                 self.assertNotIn(mock.call().delete('ns'),
                                  ip_ns_cmd_cls.return_value.mock_calls)
-                self.assertEqual(mock_is_empty.mock_calls, [])
+                self.assertEqual([], mock_is_empty.mock_calls)
 
     def test_garbage_collect_namespace_existing_empty_ns(self):
         with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
@@ -485,7 +485,7 @@ class TestIpWrapper(base.BaseTestCase):
     def test_add_device_to_namespace_is_none(self):
         dev = mock.Mock()
         ip_lib.IPWrapper().add_device_to_namespace(dev)
-        self.assertEqual(dev.mock_calls, [])
+        self.assertEqual([], dev.mock_calls)
 
 
 class TestIPDevice(base.BaseTestCase):

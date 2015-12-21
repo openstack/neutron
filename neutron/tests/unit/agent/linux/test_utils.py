@@ -61,7 +61,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.mock_popen.return_value = ["", ""]
         stdout = utils.execute(["ls", self.test_file[:-1]],
                                check_exit_code=False)
-        self.assertEqual(stdout, "")
+        self.assertEqual("", stdout)
 
     def test_execute_raises(self):
         self.mock_popen.side_effect = RuntimeError
@@ -216,11 +216,11 @@ class TestFindChildPids(base.BaseTestCase):
     def test_returns_empty_list_for_exit_code_1(self):
         with mock.patch.object(utils, 'execute',
                                side_effect=RuntimeError('Exit code: 1')):
-            self.assertEqual(utils.find_child_pids(-1), [])
+            self.assertEqual([], utils.find_child_pids(-1))
 
     def test_returns_empty_list_for_no_output(self):
         with mock.patch.object(utils, 'execute', return_value=''):
-            self.assertEqual(utils.find_child_pids(-1), [])
+            self.assertEqual([], utils.find_child_pids(-1))
 
     def test_returns_list_of_child_process_ids_for_good_ouput(self):
         with mock.patch.object(utils, 'execute', return_value=' 123 \n 185\n'):

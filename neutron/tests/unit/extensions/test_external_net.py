@@ -98,7 +98,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = manager.NeutronManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)
         result = plugin.get_networks(ctx, filters=None)
-        self.assertEqual(result, [])
+        self.assertEqual([], result)
 
     def test_update_network_set_external_non_admin_fails(self):
         # Assert that a non-admin user cannot update the
@@ -117,7 +117,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         ctx = context.Context(None, None, is_admin=True)
         model = models_v2.Network
         conditions = plugin._network_filter_hook(ctx, model, [])
-        self.assertEqual(conditions, [])
+        self.assertEqual([], conditions)
 
     def test_network_filter_hook_nonadmin_context(self):
         plugin = manager.NeutronManager.get_plugin()

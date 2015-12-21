@@ -432,7 +432,7 @@ class TestDhcpAgent(base.BaseTestCase):
             mock.patch.object(dhcp, "run"):
             report_state.return_value = const.AGENT_ALIVE
             dhcp._report_state()
-            self.assertEqual(dhcp.needs_resync_reasons, {})
+            self.assertEqual({}, dhcp.needs_resync_reasons)
 
             report_state.return_value = const.AGENT_REVIVED
             dhcp._report_state()

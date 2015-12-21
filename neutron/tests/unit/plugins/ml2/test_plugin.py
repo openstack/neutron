@@ -1303,8 +1303,8 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
             req = self.new_delete_request('networks', network_id)
             res = req.get_response(self.api)
             self.assertEqual(2, rs.call_count)
-        self.assertEqual(ml2_db.get_network_segments(
-            self.context.session, network_id), [])
+        self.assertEqual([], ml2_db.get_network_segments(
+            self.context.session, network_id))
         self.assertIsNone(ml2_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet2'))
 
