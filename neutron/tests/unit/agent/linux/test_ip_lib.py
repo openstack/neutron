@@ -26,6 +26,11 @@ NETNS_SAMPLE = [
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'cccccccc-cccc-cccc-cccc-cccccccccccc']
 
+NETNS_SAMPLE_IPROUTE2_4 = [
+    '12345678-1234-5678-abcd-1234567890ab (id: 1)',
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb (id: 0)',
+    'cccccccc-cccc-cccc-cccc-cccccccccccc (id: 2)']
+
 LINK_SAMPLE = [
     '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN \\'
     'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0',
@@ -258,6 +263,16 @@ class TestIpWrapper(base.BaseTestCase):
 
     def test_get_namespaces(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
+        retval = ip_lib.IPWrapper.get_namespaces()
+        self.assertEqual(retval,
+                         ['12345678-1234-5678-abcd-1234567890ab',
+                          'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+                          'cccccccc-cccc-cccc-cccc-cccccccccccc'])
+
+        self.execute.assert_called_once_with([], 'netns', ('list',))
+
+    def test_get_namespaces_iproute2_4(self):
+        self.execute.return_value = '\n'.join(NETNS_SAMPLE_IPROUTE2_4)
         retval = ip_lib.IPWrapper.get_namespaces()
         self.assertEqual(retval,
                          ['12345678-1234-5678-abcd-1234567890ab',

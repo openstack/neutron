@@ -186,7 +186,7 @@ class IPWrapper(SubProcessBase):
     @classmethod
     def get_namespaces(cls):
         output = cls._execute([], 'netns', ('list',))
-        return [l.strip() for l in output.split('\n')]
+        return [l.split()[0] for l in output.splitlines()]
 
 
 class IPDevice(SubProcessBase):
@@ -585,8 +585,8 @@ class IpNetnsCommand(IpCommandBase):
         output = self._parent._execute(
             ['o'], 'netns', ['list'],
             run_as_root=cfg.CONF.AGENT.use_helper_for_ns_read)
-        for line in output.split('\n'):
-            if name == line.strip():
+        for line in [l.split()[0] for l in output.splitlines()]:
+            if name == line:
                 return True
         return False
 
