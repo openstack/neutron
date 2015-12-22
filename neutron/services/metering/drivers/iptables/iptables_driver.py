@@ -176,9 +176,9 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _prepare_rule(self, ext_dev, rule, label_chain):
         remote_ip = rule['remote_ip_prefix']
         if rule['direction'] == 'egress':
-            dir_opt = '-o %s -s %s' % (ext_dev, remote_ip)
+            dir_opt = '-o %s -d %s' % (ext_dev, remote_ip)
         else:
-            dir_opt = '-i %s -d %s' % (ext_dev, remote_ip)
+            dir_opt = '-i %s -s %s' % (ext_dev, remote_ip)
 
         if rule['excluded']:
             ipt_rule = '%s -j RETURN' % dir_opt
