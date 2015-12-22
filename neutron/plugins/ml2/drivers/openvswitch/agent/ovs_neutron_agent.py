@@ -33,7 +33,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2.extensions import manager as ext_manager
-from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import polling as linux_polling
 from neutron.agent import rpc as agent_rpc
@@ -1812,12 +1811,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # no action and by InterfacePollingMinimizer as start/stop
                 if isinstance(
                     polling_manager, linux_polling.InterfacePollingMinimizer):
-                    # There's a possible race here, when ovsdb-server is
-                    # restarted ovsdb monitor will also be restarted
-                    try:
-                        polling_manager.stop()
-                    except async_process.AsyncProcessException:
-                        LOG.debug("OVSDB monitor was not running")
+                    polling_manager.stop()
                     polling_manager.start()
             elif ovs_status == constants.OVS_DEAD:
                 # Agent doesn't apply any operations when ovs is dead, to
