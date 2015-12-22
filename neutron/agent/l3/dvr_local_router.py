@@ -410,6 +410,14 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
         pass
 
+    def _get_address_scope_mark(self):
+        # Prepare address scope iptables rule for internal ports
+        internal_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
+        ports_scopemark = self._get_port_devicename_scopemark(
+            internal_ports, self.get_internal_device_name)
+        # DVR local router don't need to consider external port
+        return ports_scopemark
+
     def process_external(self, agent):
         ex_gw_port = self.get_ex_gw_port()
         if ex_gw_port:

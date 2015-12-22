@@ -336,6 +336,11 @@ class IptablesManager(object):
             builtin_chains[4].update(
                 {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
                             'POSTROUTING']})
+            self.ipv6.update(
+                {'mangle': IptablesTable(binary_name=self.wrap_name)})
+            builtin_chains[6].update(
+                {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
+                            'POSTROUTING']})
             self.ipv4.update(
                 {'nat': IptablesTable(binary_name=self.wrap_name)})
             builtin_chains[4].update({'nat': ['PREROUTING',
@@ -385,9 +390,55 @@ class IptablesManager(object):
             self.ipv4['mangle'].add_chain('mark')
             self.ipv4['mangle'].add_rule('PREROUTING', '-j $mark')
 
+            # Add address scope related chains
+            self.ipv4['mangle'].add_chain('scope')
+            self.ipv6['mangle'].add_chain('scope')
+
+            self.ipv4['mangle'].add_chain('floatingip')
+            self.ipv4['mangle'].add_chain('float-snat')
+
+            self.ipv4['filter'].add_chain('scope')
+            self.ipv6['filter'].add_chain('scope')
+            self.ipv4['filter'].add_rule('FORWARD', '-j $scope')
+            self.ipv6['filter'].add_rule('FORWARD', '-j $scope')
+
+            # Add rules for marking traffic for address scopes
+            mark_new_ingress_address_scope_by_interface = (
+                '-j $scope')
+            copy_address_scope_for_existing = (
+                '-m connmark ! --mark 0x0/0xffff0000 '
+                '-j CONNMARK --restore-mark '
+                '--nfmask 0xffff0000 --ctmask 0xffff0000')
+            mark_new_ingress_address_scope_by_floatingip = (
+                '-j $floatingip')
+            save_mark_to_connmark = (
+                '-m connmark --mark 0x0/0xffff0000 '
+                '-j CONNMARK --save-mark '
+                '--nfmask 0xffff0000 --ctmask 0xffff0000')
+
+            self.ipv4['mangle'].add_rule(
+                'PREROUTING', mark_new_ingress_address_scope_by_interface)
+            self.ipv4['mangle'].add_rule(
+                'PREROUTING', copy_address_scope_for_existing)
+            # The floating ip scope rules must come after the CONNTRACK rules
+            # because the (CONN)MARK targets are non-terminating (this is true
+            # despite them not being documented as such) and the floating ip
+            # rules need to override the mark from CONNMARK to cross scopes.
+            self.ipv4['mangle'].add_rule(
+                'PREROUTING', mark_new_ingress_address_scope_by_floatingip)
+            self.ipv4['mangle'].add_rule(
+                'float-snat', save_mark_to_connmark)
+            self.ipv6['mangle'].add_rule(
+                'PREROUTING', mark_new_ingress_address_scope_by_interface)
+            self.ipv6['mangle'].add_rule(
+                'PREROUTING', copy_address_scope_for_existing)
+
+    def get_tables(self, ip_version):
+        return {4: self.ipv4, 6: self.ipv6}[ip_version]
+
     def get_chain(self, table, chain, ip_version=4, wrap=True):
         try:
-            requested_table = {4: self.ipv4, 6: self.ipv6}[ip_version][table]
+            requested_table = self.get_tables(ip_version)[table]
         except KeyError:
             return []
         return requested_table._get_chain_rules(chain, wrap)
