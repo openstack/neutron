@@ -74,15 +74,16 @@ class NotifierHook(hooks.PecanHook):
             except ValueError:
                 if not state.response.body:
                     data = {}
-
-        if cfg.CONF.dhcp_agent_notification:
-            if data:
-                if resource_name in data:
-                    resources = [data[resource_name]]
-                elif collection_name in data:
-                    # This was a bulk request
-                    resources = data[collection_name]
-            else:
-                resources = []
-            self._notify_dhcp_agent(neutron_context, resource_name,
-                                    action, resources)
+        # Send a notification only if a resource can be identified in the
+        # response. This means that for operations such as add_router_interface
+        # no notification will be sent
+        if cfg.CONF.dhcp_agent_notification and data:
+            resources = []
+            if resource_name in data:
+                resources = [data[resource_name]]
+            elif collection_name in data:
+                # This was a bulk request
+                resources = data[collection_name]
+            self._notify_dhcp_agent(
+                neutron_context, resource_name,
+                action, resources)
