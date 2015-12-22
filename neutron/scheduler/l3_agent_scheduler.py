@@ -32,6 +32,7 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_hamode_db
 from neutron.extensions import availability_zone as az_ext
+from neutron.extensions import l3
 
 
 LOG = logging.getLogger(__name__)
@@ -266,6 +267,11 @@ class L3Scheduler(object):
         except db_exc.DBDuplicateEntry:
             LOG.debug("Router %(router)s already scheduled for agent "
                       "%(agent)s", {'router': router_id, 'agent': agent['id']})
+        except l3.RouterNotFound:
+            LOG.debug('Router %s has already been removed '
+                      'by concurrent operation', router_id)
+            return
+
         self.bind_router(context, router_id, agent)
 
     def get_ha_routers_l3_agents_counts(self, context, plugin, filters=None):
