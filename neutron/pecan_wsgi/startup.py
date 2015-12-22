@@ -19,6 +19,7 @@ from neutron._i18n import _LI, _LW
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
+from neutron.extensions import quotasv2
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron import policy
@@ -38,9 +39,15 @@ def _plugin_for_resource(collection):
     # the same resource to be handled by more than one plugin. Therefore
     # all the extensions mapped to a given resource will necessarily be
     # implemented by the same plugin.
+    # Also, quotas are peculiar, as they are not handled by any plugin.
+    # However, since plugins list quotas among the extensions they support
+    # this implies that the Pecan server at startup might believe the core
+    # plugin handles quotas too. The following also ensures no plugin is
+    # ever associate wiht the 'quotas' extension.
     ext_res_mappings = dict((ext.get_alias(), collection) for
                             ext in ext_mgr.extensions.values() if
-                            collection in ext.get_extended_resources('2.0'))
+                            collection in ext.get_extended_resources('2.0') and
+                            collection != quotasv2.RESOURCE_COLLECTION)
     LOG.debug("Extension mappings for: %(collection)s: %(aliases)s",
               {'collection': collection, 'aliases': ext_res_mappings.keys()})
     # find the plugin that supports this extension
@@ -84,16 +91,18 @@ def initialize_all():
 
     for collection in attributes.RESOURCE_ATTRIBUTE_MAP:
         resource = _handle_plurals(collection)
+
+        plugin = _plugin_for_resource(collection)
+        if plugin:
+            manager.NeutronManager.set_plugin_for_resource(
+                resource, plugin)
+        else:
+            LOG.warn(_LW("No plugin found for resource:%s. API calls "
+                         "may not be correctly dispatched"), resource)
+
         controller = pecan_controllers.get(collection)
         if not controller:
             LOG.debug("Building controller for resource:%s", resource)
-            plugin = _plugin_for_resource(collection)
-            if plugin:
-                manager.NeutronManager.set_plugin_for_resource(
-                    resource, plugin)
-            else:
-                LOG.warn(_LW("No plugin found for resource:%s. API calls "
-                             "may not be correctly dispatched"), resource)
             controller = res_ctrl.CollectionsController(collection, resource)
         else:
             LOG.debug("There are already controllers for resource:%s",
@@ -105,6 +114,7 @@ def initialize_all():
                      "via URI path segment:%(collection)s"),
                  {'resource': resource,
                   'collection': collection})
+
     # NOTE(salv-orlando): If you are care about code quality, please read below
     # Hackiness is strong with the piece of code below. It is used for
     # populating resource plurals and registering resources with the quota
