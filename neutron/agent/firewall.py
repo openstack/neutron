@@ -57,12 +57,12 @@ class FirewallDriver(object):
       remote_group_id will also remaining membership update management
     """
 
+    @abc.abstractmethod
     def prepare_port_filter(self, port):
         """Prepare filters for the port.
 
         This method should be called before the port is created.
         """
-        raise NotImplementedError()
 
     def apply_port_filter(self, port):
         """Apply port filter.
@@ -74,6 +74,7 @@ class FirewallDriver(object):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def update_port_filter(self, port):
         """Refresh security group rules from data store
 
@@ -81,7 +82,6 @@ class FirewallDriver(object):
         the security group the port is a member of or if the
         group gains or looses a rule.
         """
-        raise NotImplementedError()
 
     def remove_port_filter(self, port):
         """Stop filtering port."""
