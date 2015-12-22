@@ -51,7 +51,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
         floating_ips = super(DvrLocalRouter, self).get_floating_ips()
-        return [i for i in floating_ips if i['host'] == self.host]
+        return [i for i in floating_ips if (
+                   (i['host'] == self.host) or
+                   (i.get('dest_host') == self.host))]
 
     def _handle_fip_nat_rules(self, interface_name):
         """Configures NAT rules for Floating IPs for DVR."""
