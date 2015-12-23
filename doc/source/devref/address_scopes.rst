@@ -100,8 +100,9 @@ Routing
 
 The reference implementation honors address scopes.  Within an address scope,
 addresses route freely (barring any FW rules or other external restrictions).
-Between scopes, routed is prevented unless address translation is used.  Future
-patches will expand on this.
+Between scopes, routed is prevented unless address translation is used.  For
+now, floating IPs are the only place where traffic crosses scope boundaries.
+The 1-1 NAT allows this to happen.
 
 .. TODO (Carl) Implement NAT for floating ips crossing scopes
 .. TODO (Carl) Implement SNAT for crossing scopes
@@ -134,6 +135,23 @@ Here is an example of how the json will look in the context of a router port::
         "4": "d010a0ea-660e-4df4-86ca-ae2ed96da5c1",
         "6": null
     },
+
+To implement floating IPs crossing scope boundaries, the L3 agent needs to know
+the target scope of the floating ip.  The fixed address is not enough to
+disambiguate because, theoritically, there could be overlapping addresses from
+different scopes.  The scope is computed [#]_ from the floating ip fixed port
+and attached to the floating ip dict under the 'fixed_ip_address_scope'
+attribute.  Here's what the json looks like (trimmed)::
+
+    {
+         ...
+         "floating_ip_address": "172.24.4.4",
+         "fixed_ip_address": "172.16.0.3",
+         "fixed_ip_address_scope": "d010a0ea-660e-4df4-86ca-ae2ed96da5c1",
+         ...
+    }
+
+.. [#] neutron/db/l3_db.py (_get_sync_floating_ips)
 
 Model
 ~~~~~

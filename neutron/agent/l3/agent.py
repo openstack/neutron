@@ -82,6 +82,7 @@ class L3PluginApi(object):
         1.6 - Added process_prefix_update
         1.7 - DVR support: new L3 plugin methods added.
               - delete_agent_gateway_port
+        1.8 - Added address scope information
     """
 
     def __init__(self, topic, host):

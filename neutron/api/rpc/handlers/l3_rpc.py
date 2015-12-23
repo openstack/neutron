@@ -45,7 +45,8 @@ class L3RpcCallback(object):
     # 1.5 Added update_ha_routers_states
     # 1.6 Added process_prefix_update to support IPv6 Prefix Delegation
     # 1.7 Added method delete_agent_gateway_port for DVR Routers
-    target = oslo_messaging.Target(version='1.7')
+    # 1.8 Added address scope information
+    target = oslo_messaging.Target(version='1.8')
 
     @property
     def plugin(self):

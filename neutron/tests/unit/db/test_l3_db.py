@@ -96,3 +96,37 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                            'network_id': 'net_id',
                            'subnets': [{k: subnet[k] for k in keys}],
                            'address_scopes': address_scopes}], ports)
+
+    def test__get_sync_floating_ips_no_query(self):
+        """Basic test that no query is performed if no router ids are passed"""
+        db = l3_db.L3_NAT_dbonly_mixin()
+        context = mock.Mock()
+        db._get_sync_floating_ips(context, [])
+        self.assertFalse(context.session.query.called)
+
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_floatingip_dict')
+    def test__make_floatingip_dict_with_scope(self, make_fip_dict):
+        db = l3_db.L3_NAT_dbonly_mixin()
+        make_fip_dict.return_value = {'id': mock.sentinel.fip_ip}
+        result = db._make_floatingip_dict_with_scope(
+            mock.sentinel.floating_ip_db, mock.sentinel.address_scope_id)
+        self.assertEqual({
+            'fixed_ip_address_scope': mock.sentinel.address_scope_id,
+            'id': mock.sentinel.fip_ip}, result)
+
+    def test__unique_floatingip_iterator(self):
+        query = mock.MagicMock()
+        query.order_by().__iter__.return_value = [
+            ({'id': 'id1'}, 'scope1'),
+            ({'id': 'id1'}, 'scope1'),
+            ({'id': 'id2'}, 'scope2'),
+            ({'id': 'id2'}, 'scope2'),
+            ({'id': 'id2'}, 'scope2'),
+            ({'id': 'id3'}, 'scope3')]
+        query.reset_mock()
+        result = list(
+            l3_db.L3_NAT_dbonly_mixin._unique_floatingip_iterator(query))
+        query.order_by.assert_called_once_with(l3_db.FloatingIP.id)
+        self.assertEqual([({'id': 'id1'}, 'scope1'),
+                          ({'id': 'id2'}, 'scope2'),
+                          ({'id': 'id3'}, 'scope3')], result)
