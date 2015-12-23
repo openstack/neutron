@@ -79,6 +79,7 @@ class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
 
 ROUTERS = 'routers'
 EXTERNAL_GW_INFO = 'external_gateway_info'
+FLOATINGIPS = 'floatingips'
 
 RESOURCE_ATTRIBUTE_MAP = {
     ROUTERS: {
@@ -116,7 +117,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                                }
                            }}
     },
-    'floatingips': {
+    FLOATINGIPS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
