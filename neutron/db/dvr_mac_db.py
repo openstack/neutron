@@ -126,7 +126,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
 
     @log_helpers.log_method_call
     def get_ports_on_host_by_subnet(self, context, host, subnet):
-        """Returns ports of interest, on a given subnet in the input host
+        """Returns DVR serviced ports on a given subnet in the input host
 
         This method returns ports that need to be serviced by DVR.
         :param context: rpc request context

@@ -53,6 +53,8 @@ class DVRServerRpcApi(object):
 
     @log_helpers.log_method_call
     def get_ports_on_host_by_subnet(self, context, host, subnet):
+        """Get DVR serviced ports on given host and subnet."""
+
         cctxt = self.client.prepare()
         return cctxt.call(context, 'get_ports_on_host_by_subnet',
                           host=host, subnet=subnet)
@@ -95,6 +97,8 @@ class DVRServerRpcCallback(object):
         return self.plugin.get_dvr_mac_address_by_host(context, host)
 
     def get_ports_on_host_by_subnet(self, context, **kwargs):
+        """Get DVR serviced ports for given host and subnet."""
+
         host = kwargs.get('host')
         subnet = kwargs.get('subnet')
         LOG.debug("DVR Agent requests list of VM ports on host %s", host)
