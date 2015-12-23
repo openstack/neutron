@@ -228,9 +228,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             # Check if distributed router and then create the
             # FloatingIP agent gateway port
             if router_dict.get('distributed'):
-                vm_hostid = self._get_vm_port_hostid(
+                hostid = self._get_dvr_service_port_hostid(
                     context, fip_port)
-                if vm_hostid:
+                if hostid:
                     # FIXME (Swami): This FIP Agent Gateway port should be
                     # created only once and there should not be a duplicate
                     # for the same host. Until we find a good solution for
@@ -239,7 +239,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     fip_agent_port = (
                         self.create_fip_agent_gw_port_if_not_exists(
                             admin_ctx, external_port['network_id'],
-                            vm_hostid))
+                            hostid))
                     LOG.debug("FIP Agent gateway port: %s", fip_agent_port)
 
     def _get_floatingip_on_port(self, context, port_id=None):
@@ -463,9 +463,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             for fip in floating_ips:
                 vm_port = port_dict.get(fip['port_id'], None)
                 if vm_port:
-                    fip['host'] = self._get_vm_port_hostid(context,
-                                                           fip['port_id'],
-                                                           port=vm_port)
+                    fip['host'] = self._get_dvr_service_port_hostid(
+                        context, fip['port_id'], port=vm_port)
         routers_dict = self._process_routers(context, routers)
         self._process_floating_ips_dvr(context, routers_dict,
                                        floating_ips, host, agent)
@@ -482,13 +481,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         self._process_interfaces(routers_dict, interfaces)
         return list(routers_dict.values())
 
-    def _get_vm_port_hostid(self, context, port_id, port=None):
-        """Return the portbinding host_id."""
-        vm_port_db = port or self._core_plugin.get_port(context, port_id)
-        device_owner = vm_port_db['device_owner'] if vm_port_db else ""
+    def _get_dvr_service_port_hostid(self, context, port_id, port=None):
+        """Returns the portbinding host_id for dvr service port."""
+        port_db = port or self._core_plugin.get_port(context, port_id)
+        device_owner = port_db['device_owner'] if port_db else ""
         if (n_utils.is_dvr_serviced(device_owner) or
             device_owner == l3_const.DEVICE_OWNER_AGENT_GW):
-            return vm_port_db[portbindings.HOST_ID]
+            return port_db[portbindings.HOST_ID]
 
     def _get_agent_gw_ports_exist_for_network(
             self, context, network_id, host, agent_id):
@@ -744,7 +743,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return
 
         if is_distributed_router(router):
-            host = self._get_vm_port_hostid(context, fixed_port_id)
+            host = self._get_dvr_service_port_hostid(context, fixed_port_id)
             self.l3_rpc_notifier.routers_updated_on_host(
                 context, [router_id], host)
         else:
