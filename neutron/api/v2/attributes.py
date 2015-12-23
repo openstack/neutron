@@ -357,6 +357,10 @@ def _validate_subnet_or_none(data, valid_values=None):
         return _validate_subnet(data, valid_values)
 
 
+_validate_subnet_list = functools.partial(_validate_list_of_items,
+                                          _validate_subnet)
+
+
 def _validate_regex(data, valid_values=None):
     try:
         if re.match(valid_values, data):
@@ -394,6 +398,10 @@ def _validate_uuid(data, valid_values=None):
 def _validate_uuid_or_none(data, valid_values=None):
     if data is not None:
         return _validate_uuid(data)
+
+
+_validate_uuid_list = functools.partial(_validate_list_of_items,
+                                        _validate_uuid)
 
 
 def _validate_dict_item(key, key_validator, data):
@@ -611,15 +619,13 @@ validators = {'type:dict': _validate_dict,
               'type:not_empty_string_or_none':
               _validate_not_empty_string_or_none,
               'type:subnet': _validate_subnet,
-              'type:subnet_list': functools.partial(_validate_list_of_items,
-                                                    _validate_subnet),
+              'type:subnet_list': _validate_subnet_list,
               'type:subnet_or_none': _validate_subnet_or_none,
               'type:subnetpool_id': _validate_subnetpool_id,
               'type:subnetpool_id_or_none': _validate_subnetpool_id_or_none,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
-              'type:uuid_list': functools.partial(_validate_list_of_items,
-                                                  _validate_uuid),
+              'type:uuid_list': _validate_uuid_list,
               'type:values': _validate_values,
               'type:boolean': _validate_boolean,
               'type:list_of_unique_strings': validate_list_of_unique_strings}
