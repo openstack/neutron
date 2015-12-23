@@ -35,7 +35,7 @@ function generate_testr_results {
 
     if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
     then
-        generate_test_logs "/tmp/${venv}-logs"
+        generate_test_logs $log_dir
     fi
 }
 
@@ -43,6 +43,7 @@ if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
 then
     owner=stack
     sudo_env=
+    log_dir="/tmp/${venv}-logs"
 elif [ "$venv" == "api" ]
 then
     owner=tempest
@@ -53,6 +54,10 @@ fi
 # Set owner permissions according to job's requirements.
 cd $NEUTRON_DIR
 sudo chown -R $owner:stack $NEUTRON_DIR
+
+# NOTE(armax): this is a gate hook and we should run in a constrained env
+# to avoid breakage from uncontrolled upper constraints
+venv=$venv-constraints
 
 # Run tests
 echo "Running neutron $venv test suite"
