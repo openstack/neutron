@@ -247,9 +247,10 @@ class ProcessMonitor(object):
         action_function(service_id)
 
     def _respawn_action(self, service_id):
-        LOG.error(_LE("respawning %(service)s for uuid %(uuid)s"),
-                  {'service': service_id.service,
-                   'uuid': service_id.uuid})
+        # _LE used to avoid dropping translation for the message
+        LOG.warning(_LE("respawning %(service)s for uuid %(uuid)s"),
+                    {'service': service_id.service,
+                     'uuid': service_id.uuid})  # noqa
         self._monitored_processes[service_id].enable()
 
     def _exit_action(self, service_id):
