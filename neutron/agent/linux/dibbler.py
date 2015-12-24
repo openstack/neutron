@@ -13,10 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import jinja2
 import os
-from oslo_config import cfg
 import shutil
+
+import jinja2
+from oslo_config import cfg
+from oslo_log import log as logging
 import six
 
 from neutron.agent.linux import external_process
@@ -25,8 +27,6 @@ from neutron.agent.linux import pd_driver
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import utils as common_utils
-from oslo_log import log as logging
-
 
 LOG = logging.getLogger(__name__)
 
