@@ -314,6 +314,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         return portbinding
 
     def add_ha_port(self, context, router_id, network_id, tenant_id):
+        # NOTE(kevinbenton): we have to block any ongoing transactions because
+        # our exception handling will try to delete the port using the normal
+        # core plugin API. If this function is called inside of a transaction
+        # the exception will mangle the state, cause the delete call to fail,
+        # and end up relying on the DB rollback to remove the port instead of
+        # proper delete_port call.
+        if context.session.is_active:
+            raise RuntimeError(_('add_ha_port cannot be called inside of a '
+                                 'transaction.'))
         args = {'tenant_id': '',
                 'network_id': network_id,
                 'admin_state_up': True,
