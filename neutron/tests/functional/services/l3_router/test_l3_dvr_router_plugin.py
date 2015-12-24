@@ -725,6 +725,186 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                                  agents['agents'][0]['id'])
                 self.assertFalse(remove_mock.called)
 
+    def test__get_dvr_subnet_ids_on_host_query(self):
+        with self.subnet(cidr='20.0.0.0/24') as subnet1,\
+                self.subnet(cidr='30.0.0.0/24') as subnet2,\
+                self.subnet(cidr='40.0.0.0/24') as subnet3,\
+                self.port(subnet=subnet1,
+                          device_owner=DEVICE_OWNER_COMPUTE) as p1,\
+                self.port(subnet=subnet2,
+                          device_owner=constants.DEVICE_OWNER_DHCP) as p2,\
+                self.port(subnet=subnet3,
+                          device_owner=constants.DEVICE_OWNER_NEUTRON_PREFIX)\
+                as p3,\
+                self.port(subnet=subnet3,
+                          device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX)\
+                as p4:
+            host = 'host1'
+
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual([], subnet_ids)
+
+            self.core_plugin.update_port(
+                self.context, p1['port']['id'],
+                {'port': {portbindings.HOST_ID: host}})
+            expected = {subnet1['subnet']['id']}
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual(expected, set(subnet_ids))
+
+            self.core_plugin.update_port(
+                self.context, p2['port']['id'],
+                {'port': {portbindings.HOST_ID: host}})
+            expected.add(subnet2['subnet']['id'])
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual(expected, set(subnet_ids))
+
+            self.core_plugin.update_port(
+                self.context, p3['port']['id'],
+                {'port': {portbindings.HOST_ID: host}})
+            # p3 is non dvr serviceable so no subnet3 expected
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual(expected, set(subnet_ids))
+
+            other_host = 'other' + host
+            self.core_plugin.update_port(
+                self.context, p4['port']['id'],
+                {'port': {portbindings.HOST_ID: other_host}})
+            # p4 is on other host so no subnet3 expected
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual(expected, set(subnet_ids))
+
+            self.core_plugin.update_port(
+                self.context, p4['port']['id'],
+                {'port': {portbindings.HOST_ID: host}})
+            # finally p4 is on the right host so subnet3 is expected
+            expected.add(subnet3['subnet']['id'])
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+            self.assertEqual(expected, set(subnet_ids))
+
+    def test__get_dvr_router_ids_for_host(self):
+        router1 = self._create_router()
+        router2 = self._create_router()
+        host = 'host1'
+        arg_list = (portbindings.HOST_ID,)
+        with self.subnet(cidr='20.0.0.0/24') as subnet1,\
+                self.subnet(cidr='30.0.0.0/24') as subnet2,\
+                self.port(subnet=subnet1,
+                          device_owner=DEVICE_OWNER_COMPUTE,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: host}),\
+                self.port(subnet=subnet2,
+                          device_owner=constants.DEVICE_OWNER_DHCP,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: host}):
+
+            router_ids = self.l3_plugin._get_dvr_router_ids_for_host(
+                self.context, host)
+            self.assertEqual([], router_ids)
+
+            self.l3_plugin.add_router_interface(
+                self.context, router1['id'],
+                {'subnet_id': subnet1['subnet']['id']})
+            router_ids = self.l3_plugin._get_dvr_router_ids_for_host(
+                self.context, host)
+            expected = {router1['id']}
+            self.assertEqual(expected, set(router_ids))
+
+            self.l3_plugin.add_router_interface(
+                self.context, router2['id'],
+                {'subnet_id': subnet2['subnet']['id']})
+            router_ids = self.l3_plugin._get_dvr_router_ids_for_host(
+                self.context, host)
+            expected.add(router2['id'])
+            self.assertEqual(expected, set(router_ids))
+
+    def test__get_router_ids_for_agent(self):
+        router1 = self._create_router()
+        router2 = self._create_router()
+        router3 = self._create_router()
+        arg_list = (portbindings.HOST_ID,)
+        host = self.l3_agent['host']
+        with self.subnet() as ext_subnet,\
+                self.subnet(cidr='20.0.0.0/24') as subnet1,\
+                self.subnet(cidr='30.0.0.0/24') as subnet2,\
+                self.port(subnet=subnet1,
+                          device_owner=DEVICE_OWNER_COMPUTE,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: host}),\
+                self.port(subnet=subnet2,
+                          device_owner=constants.DEVICE_OWNER_DHCP,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: host}):
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [])
+            self.assertEqual([], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id'], router2['id']])
+            self.assertEqual([], ids)
+
+            self.l3_plugin.add_router_interface(
+                self.context, router1['id'],
+                {'subnet_id': subnet1['subnet']['id']})
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [])
+            self.assertEqual([router1['id']], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id']])
+            self.assertEqual([router1['id']], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id'], router2['id']])
+            self.assertEqual([router1['id']], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router2['id']])
+            self.assertEqual([], ids)
+
+            self.l3_plugin.add_router_interface(
+                self.context, router2['id'],
+                {'subnet_id': subnet2['subnet']['id']})
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [])
+            self.assertEqual({router1['id'], router2['id']}, set(ids))
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id']])
+            self.assertEqual([router1['id']], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id'], router2['id']])
+            self.assertEqual({router1['id'], router2['id']}, set(ids))
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router2['id']])
+            self.assertEqual([router2['id']], ids)
+
+            # make net external
+            ext_net_id = ext_subnet['subnet']['network_id']
+            self._update('networks', ext_net_id,
+                     {'network': {external_net.EXTERNAL: True}})
+            # add external gateway to router
+            self.l3_plugin.update_router(
+                self.context, router3['id'],
+                {'router': {
+                    'external_gateway_info': {'network_id': ext_net_id}}})
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [])
+            self.assertEqual({router1['id'], router2['id'], router3['id']},
+                             set(ids))
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router3['id']])
+            self.assertEqual([router3['id']], ids)
+            ids = self.l3_plugin._get_router_ids_for_agent(
+                self.context, self.l3_agent, [router1['id'], router3['id']])
+            self.assertEqual({router1['id'], router3['id']}, set(ids))
+
     def test_remove_router_interface(self):
         HOST1 = 'host1'
         dvr_agent = helpers.register_l3_agent(
