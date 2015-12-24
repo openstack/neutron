@@ -422,6 +422,11 @@ class L3HATestCase(L3HATestFramework):
 
         self.assertNotEqual(ha0, ha1)
 
+    def test_add_ha_port_subtransactions_blocked(self):
+        with self.admin_ctx.session.begin():
+            self.assertRaises(RuntimeError, self.plugin.add_ha_port,
+                              self.admin_ctx, 'id', 'id', 'id')
+
     def test_add_ha_port_binding_failure_rolls_back_port(self):
         router = self._create_router()
         device_filter = {'device_id': [router['id']]}
