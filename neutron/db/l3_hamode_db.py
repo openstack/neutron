@@ -186,7 +186,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
     def _allocate_vr_id(self, context, network_id, router_id):
         for count in range(MAX_ALLOCATION_TRIES):
             try:
-                with context.session.begin(subtransactions=True):
+                # NOTE(kevinbenton): we disallow subtransactions because the
+                # retry logic will bust any parent transactions
+                with context.session.begin():
                     allocated_vr_ids = self._get_allocated_vr_id(context,
                                                                  network_id)
                     available_vr_ids = VR_ID_RANGE - allocated_vr_ids
@@ -219,9 +221,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                 vr_id=vr_id).delete()
 
     def _set_vr_id(self, context, router, ha_network):
-        with context.session.begin(subtransactions=True):
-            router.extra_attributes.ha_vr_id = self._allocate_vr_id(
-                context, ha_network.network_id, router.id)
+        router.extra_attributes.ha_vr_id = self._allocate_vr_id(
+            context, ha_network.network_id, router.id)
 
     def _create_ha_subnet(self, context, network_id, tenant_id):
         args = {'network_id': network_id,
