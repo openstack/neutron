@@ -11,11 +11,9 @@
 #    under the License.
 
 import time
-import urllib
-
 
 from oslo_serialization import jsonutils as json
-from six.moves.urllib import parse
+from six.moves.urllib import parse as urlparse
 from tempest_lib.common.utils import misc
 from tempest_lib import exceptions as lib_exc
 
@@ -106,7 +104,7 @@ class NetworkClientJSON(service_client.ServiceClient):
         def _list(**filters):
             uri = self.get_uri(plural_name)
             if filters:
-                uri += '?' + parse.urlencode(filters, doseq=1)
+                uri += '?' + urlparse.urlencode(filters, doseq=1)
             resp, body = self.get(uri)
             result = {plural_name: self.deserialize_list(body)}
             self.expected_success(200, resp.status)
@@ -132,7 +130,7 @@ class NetworkClientJSON(service_client.ServiceClient):
             plural = self.pluralize(resource_name)
             uri = '%s/%s' % (self.get_uri(plural), resource_id)
             if fields:
-                uri += '?' + parse.urlencode(fields, doseq=1)
+                uri += '?' + urlparse.urlencode(fields, doseq=1)
             resp, body = self.get(uri)
             body = self.deserialize_single(body)
             self.expected_success(200, resp.status)
@@ -632,7 +630,7 @@ class NetworkClientJSON(service_client.ServiceClient):
     def list_qos_policies(self, **filters):
         if filters:
             uri = '%s/qos/policies?%s' % (self.uri_prefix,
-                                          urllib.urlencode(filters))
+                                          urlparse.urlencode(filters))
         else:
             uri = '%s/qos/policies' % self.uri_prefix
         resp, body = self.get(uri)
