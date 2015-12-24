@@ -32,10 +32,12 @@ from neutron.common import constants
 from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron import context
+from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
@@ -391,6 +393,21 @@ class TestMl2NetworksWithVlanTransparencyAndMTU(TestMl2NetworksV2):
         network = self.deserialize(self.fmt, res)['network']
         self.assertEqual(network['mtu'], 1000)
         self.assertIn('vlan_transparent', network)
+
+
+class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
+    def test_create_network_availability_zone(self):
+        az_hints = ['az1', 'az2']
+        data = {'network': {'name': 'net1',
+                            az_ext.AZ_HINTS: az_hints,
+                            'tenant_id': 'tenant_one'}}
+        with mock.patch.object(agents_db.AgentAvailabilityZoneMixin,
+                               'validate_availability_zones'):
+            network_req = self.new_create_request('networks', data)
+            res = network_req.get_response(self.api)
+            self.assertEqual(201, res.status_int)
+            network = self.deserialize(self.fmt, res)['network']
+            self.assertEqual(az_hints, network[az_ext.AZ_HINTS])
 
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
