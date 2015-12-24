@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
 import netaddr
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -1182,11 +1183,52 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                         if r.get('gw_port'))
         return self._build_routers_list(context, router_dicts, gw_ports)
 
+    @staticmethod
+    def _unique_floatingip_iterator(query):
+        """Iterates over only one row per floating ip.  Ignores others."""
+        # Group rows by fip id.  They must be sorted by same.
+        q = query.order_by(FloatingIP.id)
+        keyfunc = lambda row: row[0]['id']
+        group_iterator = itertools.groupby(q, keyfunc)
+
+        # Just hit the first row of each group
+        for key, value in group_iterator:
+            yield six.next(value)
+
+    def _make_floatingip_dict_with_scope(self, floatingip_db, scope_id):
+        d = self._make_floatingip_dict(floatingip_db)
+        d['fixed_ip_address_scope'] = scope_id
+        return d
+
     def _get_sync_floating_ips(self, context, router_ids):
-        """Query floating_ips that relate to list of router_ids."""
+        """Query floating_ips that relate to list of router_ids with scope.
+
+        This is different than the regular get_floatingips in that it finds the
+        address scope of the fixed IP.  The router needs to know this to
+        distinguish it from other scopes.
+
+        There are a few redirections to go through to discover the address
+        scope from the floating ip.
+        """
         if not router_ids:
             return []
-        return self.get_floatingips(context, {'router_id': router_ids})
+
+        query = context.session.query(FloatingIP,
+                                      models_v2.SubnetPool.address_scope_id)
+        query = query.join(models_v2.Port,
+            FloatingIP.fixed_port_id == models_v2.Port.id)
+        # Outer join of Subnet can cause each ip to have more than one row.
+        query = query.outerjoin(models_v2.Subnet,
+            models_v2.Subnet.network_id == models_v2.Port.network_id)
+        query = query.filter(models_v2.Subnet.ip_version == 4)
+        query = query.outerjoin(models_v2.SubnetPool,
+            models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id)
+
+        # Filter out on router_ids
+        query = query.filter(FloatingIP.router_id.in_(router_ids))
+
+        return [self._make_floatingip_dict_with_scope(*row)
+                for row in self._unique_floatingip_iterator(query)]
 
     def _get_sync_interfaces(self, context, router_ids, device_owners=None):
         """Query router interfaces that relate to list of router_ids."""
