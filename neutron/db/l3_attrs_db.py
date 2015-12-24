@@ -16,7 +16,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.extensions import l3
 
@@ -48,7 +47,7 @@ class RouterExtraAttributes(model_base.BASEV2):
     availability_zone_hints = sa.Column(sa.String(255))
 
     router = orm.relationship(
-        l3_db.Router,
+        'Router',
         backref=orm.backref("extra_attributes", lazy='joined',
                             uselist=False, cascade='delete'))
 
