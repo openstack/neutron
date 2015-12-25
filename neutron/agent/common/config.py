@@ -159,7 +159,8 @@ def setup_conf():
     bind_opts = [
         cfg.StrOpt('state_path',
                    default='/var/lib/neutron',
-                   help=_('Top-level directory for maintaining dhcp state')),
+                   help=_("Where to store Neutron state files. "
+                          "This directory must be writable by the agent.")),
     ]
 
     conf = cfg.ConfigOpts()
