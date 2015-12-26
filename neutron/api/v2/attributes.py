@@ -533,7 +533,7 @@ def convert_to_int(data):
     try:
         return int(data)
     except (ValueError, TypeError):
-        msg = _("'%s' is not a integer") % data
+        msg = _("'%s' is not an integer") % data
         raise n_exc.InvalidInput(error_message=msg)
 
 

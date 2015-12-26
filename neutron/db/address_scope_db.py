@@ -75,7 +75,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         return address_scope.ip_version
 
     def create_address_scope(self, context, address_scope):
-        """Create a address scope."""
+        """Create an address scope."""
         a_s = address_scope['address_scope']
         tenant_id = self._get_tenant_id_for_create(context, a_s)
         address_scope_id = a_s.get('id') or uuidutils.generate_uuid()
