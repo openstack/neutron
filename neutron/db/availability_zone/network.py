@@ -11,15 +11,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import network_availability_zone as net_az
-
-
-LOG = logging.getLogger(__name__)
 
 
 class NetworkAvailabilityZoneMixin(net_az.NetworkAvailabilityZonePluginBase):

@@ -14,7 +14,6 @@
 #    under the License.
 
 import mock
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 import testtools
 from webob import exc
@@ -26,8 +25,6 @@ from neutron import manager
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
-
-LOG = logging.getLogger(__name__)
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path

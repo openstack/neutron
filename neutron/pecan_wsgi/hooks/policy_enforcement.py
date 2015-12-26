@@ -16,7 +16,6 @@
 import copy
 import simplejson
 
-from oslo_log import log
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
 import pecan
@@ -28,8 +27,6 @@ from neutron.common import constants as const
 from neutron import manager
 from neutron.pecan_wsgi.hooks import attribute_population
 from neutron import policy
-
-LOG = log.getLogger(__name__)
 
 
 class PolicyHook(hooks.PecanHook):

@@ -11,8 +11,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -20,9 +18,6 @@ from neutron.extensions import agent
 from neutron.extensions import availability_zone as az_ext
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
-
-
-LOG = logging.getLogger(__name__)
 
 
 class AZExtensionManager(object):

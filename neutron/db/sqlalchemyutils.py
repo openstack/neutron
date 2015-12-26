@@ -13,16 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
 from six import moves
 import sqlalchemy
 from sqlalchemy.orm import properties
 
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
-
-
-LOG = logging.getLogger(__name__)
 
 
 def paginate_query(query, model, limit, sorts, marker_obj=None):

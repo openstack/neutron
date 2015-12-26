@@ -15,8 +15,6 @@
 
 import os
 
-from oslo_log import log
-
 from neutron.agent import securitygroups_rpc
 from neutron.common import constants
 from neutron.extensions import portbindings
@@ -26,8 +24,6 @@ from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
 from neutron.services.qos import qos_consts
-
-LOG = log.getLogger(__name__)
 
 
 class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):

@@ -19,7 +19,6 @@ import random
 import eventlet
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
@@ -45,8 +44,6 @@ from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
-
-LOG = logging.getLogger(__name__)
 
 
 class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):

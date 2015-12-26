@@ -15,7 +15,6 @@
 
 import fixtures
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from neutron import manager
 from neutron.plugins.common import constants
@@ -24,7 +23,6 @@ from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api
 
 
-LOG = logging.getLogger(__name__)
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 

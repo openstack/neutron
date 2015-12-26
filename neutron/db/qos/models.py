@@ -13,15 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
 import sqlalchemy as sa
 
 from neutron.api.v2 import attributes as attrs
 from neutron.db import model_base
 from neutron.db import models_v2
-
-
-LOG = logging.getLogger(__name__)
 
 
 class QosPolicy(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):

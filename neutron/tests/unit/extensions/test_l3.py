@@ -20,7 +20,6 @@ import copy
 import mock
 import netaddr
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_utils import importutils
 from oslo_utils import uuidutils
 from webob import exc
@@ -58,7 +57,6 @@ from neutron.tests.unit.extensions import base as test_extensions_base
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.plugins.ml2 import base as ml2_base
 
-LOG = logging.getLogger(__name__)
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path

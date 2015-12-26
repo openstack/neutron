@@ -20,13 +20,10 @@ import exceptions
 import re
 import urlparse
 
-from oslo_log import log as logging
 import six
 
 from tempest_lib.services.identity.v2 import token_client as json_v2id
 from tempest_lib.services.identity.v3 import token_client as json_v3id
-
-LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)

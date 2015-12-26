@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_service import wsgi as base_wsgi
 import routes as routes_mapper
 import six
@@ -31,8 +30,6 @@ from neutron import policy
 from neutron.quota import resource_registry
 from neutron import wsgi
 
-
-LOG = logging.getLogger(__name__)
 
 RESOURCES = {'network': 'networks',
              'subnet': 'subnets',

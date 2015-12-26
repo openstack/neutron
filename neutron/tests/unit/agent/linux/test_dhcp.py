@@ -18,7 +18,6 @@ import os
 import mock
 import netaddr
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import config as dhcp_config
@@ -30,8 +29,6 @@ from neutron.common import utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests import base
 from neutron.tests import tools
-
-LOG = logging.getLogger(__name__)
 
 
 class FakeIPAllocation(object):

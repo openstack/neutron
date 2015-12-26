@@ -15,7 +15,6 @@
 
 import copy
 
-from oslo_log import log as logging
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
@@ -23,7 +22,6 @@ from neutron.db import extradhcpopt_db as edo_db
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
-LOG = logging.getLogger(__name__)
 
 DB_PLUGIN_KLASS = (
     'neutron.tests.unit.extensions.test_extra_dhcp_opt.ExtraDhcpOptTestPlugin')

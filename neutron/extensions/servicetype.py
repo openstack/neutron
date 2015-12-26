@@ -13,15 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
 
-LOG = logging.getLogger(__name__)
 
 RESOURCE_NAME = "service_provider"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME

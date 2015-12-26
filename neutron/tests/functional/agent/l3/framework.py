@@ -38,7 +38,6 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
-LOG = logging.getLogger(__name__)
 _uuid = uuidutils.generate_uuid
 
 

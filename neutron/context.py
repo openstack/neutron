@@ -19,13 +19,9 @@ import copy
 import datetime
 
 from oslo_context import context as oslo_context
-from oslo_log import log as logging
 
 from neutron.db import api as db_api
 from neutron import policy
-
-
-LOG = logging.getLogger(__name__)
 
 
 class ContextBase(oslo_context.RequestContext):

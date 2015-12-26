@@ -14,14 +14,12 @@
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 import testtools
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent
 from neutron.tests.functional.agent.linux import test_ip_lib
 
-LOG = logging.getLogger(__name__)
 lba = linuxbridge_neutron_agent
 
 

@@ -20,15 +20,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron.agent import securitygroups_rpc
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
-
-LOG = logging.getLogger(__name__)
 
 
 class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):

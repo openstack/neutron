@@ -17,13 +17,10 @@ import abc
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
-from oslo_log import log as logging
 import six
 
 from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
-
-LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)

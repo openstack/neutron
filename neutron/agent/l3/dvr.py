@@ -14,12 +14,9 @@
 
 import weakref
 
-from oslo_log import log as logging
-
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 
-LOG = logging.getLogger(__name__)
 
 # TODO(Carl) Following constants retained to increase SNR during refactoring
 SNAT_INT_DEV_PREFIX = dvr_snat_ns.SNAT_INT_DEV_PREFIX

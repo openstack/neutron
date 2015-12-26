@@ -13,15 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron.agent.l3.dvr_edge_router import DvrEdgeRouter
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3.ha_router import HaRouter
 from neutron.agent.l3.router_info import RouterInfo
 from neutron.common import constants as l3_constants
-
-LOG = logging.getLogger(__name__)
 
 
 class DvrEdgeHaRouter(DvrEdgeRouter, HaRouter):

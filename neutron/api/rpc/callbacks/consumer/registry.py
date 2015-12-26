@@ -10,12 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron.api.rpc.callbacks import resource_manager
-
-
-LOG = logging.getLogger(__name__)
 
 
 #TODO(ajo): consider adding locking to _get_manager, it's

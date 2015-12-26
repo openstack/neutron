@@ -13,7 +13,6 @@
 # under the License.
 
 import netaddr
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -27,9 +26,6 @@ from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import metering
-
-
-LOG = logging.getLogger(__name__)
 
 
 class MeteringLabelRule(model_base.BASEV2, models_v2.HasId):

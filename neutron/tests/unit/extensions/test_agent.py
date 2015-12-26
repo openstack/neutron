@@ -18,7 +18,6 @@ from datetime import datetime
 import time
 
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 from webob import exc
 
@@ -33,8 +32,6 @@ from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
-
-LOG = logging.getLogger(__name__)
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path

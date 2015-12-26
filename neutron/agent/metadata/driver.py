@@ -15,8 +15,6 @@
 
 import os
 
-from oslo_log import log as logging
-
 from neutron.agent.common import config
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
@@ -28,7 +26,6 @@ from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions
 
-LOG = logging.getLogger(__name__)
 
 # Access with redirection to metadata proxy iptables mark mask
 METADATA_SERVICE_NAME = 'metadata-proxy'

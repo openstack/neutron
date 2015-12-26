@@ -14,14 +14,12 @@
 #    under the License.
 
 from oslo_db import exception as db_exc
-from oslo_log import log
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam import exceptions as ipam_exc
 
-LOG = log.getLogger(__name__)
 # Database operations for Neutron's DB-backed IPAM driver
 
 

@@ -14,7 +14,6 @@
 #
 
 from oslo_config import cfg
-from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import sql
 
@@ -24,7 +23,6 @@ from neutron.db import l3_db
 from neutron.extensions import l3
 
 
-LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.BoolOpt('enable_snat_by_default', default=True,
                 help=_('Define the default value of enable_snat if not '

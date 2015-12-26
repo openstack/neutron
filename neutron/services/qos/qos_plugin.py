@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from oslo_log import log as logging
-
 
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
@@ -24,9 +22,6 @@ from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.notification_drivers import manager as driver_mgr
 from neutron.services.qos import qos_consts
-
-
-LOG = logging.getLogger(__name__)
 
 
 class QoSPlugin(qos.QoSPluginBase):

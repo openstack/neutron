@@ -14,7 +14,6 @@
 #    under the License.
 
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 from webob import exc
 
@@ -26,8 +25,6 @@ from neutron.extensions import l3
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.extensions import test_l3 as test_l3
 
-
-LOG = logging.getLogger(__name__)
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path
