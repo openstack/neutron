@@ -169,14 +169,13 @@ class RouterReschedulingFailed(exceptions.Conflict):
 
 
 class RouterL3AgentMismatch(exceptions.Conflict):
-    message = _("Cannot host %(router_type)s router %(router_id)s "
-                "on %(agent_mode)s L3 agent %(agent_id)s.")
+    message = _("Cannot host distributed router %(router_id)s "
+                "on legacy L3 agent %(agent_id)s.")
 
 
 class DVRL3CannotAssignToDvrAgent(exceptions.Conflict):
-    message = _("Not allowed to manually assign a %(router_type)s "
-                "router %(router_id)s from an existing DVR node "
-                "to another L3 agent %(agent_id)s.")
+    message = _("Not allowed to manually assign a router to an "
+                "agent in 'dvr' mode.")
 
 
 class L3AgentSchedulerPluginBase(object):
