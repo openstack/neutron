@@ -131,7 +131,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
             object_, name, type_, reflected, compare_to)
 
     def filter_metadata_diff(self, diff):
-        return filter(self.remove_unrelated_errors, diff)
+        return list(filter(self.remove_unrelated_errors, diff))
 
     # Remove some difference that are not mistakes just specific of
     # dialects, etc
