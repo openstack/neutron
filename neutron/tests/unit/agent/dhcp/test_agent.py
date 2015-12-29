@@ -707,7 +707,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_dhcp_helper_network_none(self):
         self.plugin.get_network_info.return_value = None
-        with mock.patch.object(dhcp_agent.LOG, 'warn') as log:
+        with mock.patch.object(dhcp_agent.LOG, 'warning') as log:
             self.dhcp.enable_dhcp_helper('fake_id')
             self.plugin.assert_has_calls(
                 [mock.call.get_network_info('fake_id')])

@@ -209,10 +209,11 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 return True
             else:
                 if operation == 'add':
-                    LOG.warn(_LW("Device %s does not exist so ARP entry "
-                                 "cannot be updated, will cache information "
-                                 "to be applied later when the device exists"),
-                             device)
+                    LOG.warning(_LW("Device %s does not exist so ARP entry "
+                                    "cannot be updated, will cache "
+                                    "information to be applied later "
+                                    "when the device exists"),
+                                device)
                     self._cache_arp_entry(ip, mac, subnet_id, operation)
                 return False
         except Exception:

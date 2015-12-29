@@ -203,7 +203,7 @@ class DhcpAgent(manager.Manager):
         try:
             network = self.plugin_rpc.get_network_info(network_id)
             if not network:
-                LOG.warn(_LW('Network %s has been deleted.'), network_id)
+                LOG.warning(_LW('Network %s has been deleted.'), network_id)
             return network
         except Exception as e:
             self.schedule_resync(e, network_id)
@@ -223,8 +223,9 @@ class DhcpAgent(manager.Manager):
             self.configure_dhcp_for_network(network)
             LOG.info(_LI('Finished network %s dhcp configuration'), network_id)
         except (exceptions.NetworkNotFound, RuntimeError):
-            LOG.warn(_LW('Network %s may have been deleted and its resources '
-                         'may have already been disposed.'), network.id)
+            LOG.warning(_LW('Network %s may have been deleted and '
+                            'its resources may have already been disposed.'),
+                        network.id)
 
     def configure_dhcp_for_network(self, network):
         if not network.admin_state_up:
@@ -585,8 +586,8 @@ class DhcpAgentWithStateReport(DhcpAgent):
                 self.schedule_resync("Agent has just been revived")
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_LW("Neutron server does not support state report."
-                         " State report for this agent will be disabled."))
+            LOG.warning(_LW("Neutron server does not support state report. "
+                            "State report for this agent will be disabled."))
             self.heartbeat.stop()
             self.run()
             return

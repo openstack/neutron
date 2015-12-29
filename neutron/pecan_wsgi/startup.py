@@ -52,7 +52,7 @@ def _plugin_for_resource(collection):
                     hasattr(plugin, 'get_%s' % collection)):
                 # This plugin implements this resource
                 return plugin
-    LOG.warn(_LW("No plugin found for:%s"), collection)
+    LOG.warning(_LW("No plugin found for: %s"), collection)
 
 
 def _handle_plurals(collection):
@@ -127,15 +127,15 @@ def initialize_all():
             manager.NeutronManager.set_plugin_for_resource(
                 resource, plugin)
         else:
-            LOG.warn(_LW("No plugin found for resource:%s. API calls "
-                         "may not be correctly dispatched"), resource)
+            LOG.warning(_LW("No plugin found for resource:%s. API calls "
+                            "may not be correctly dispatched"), resource)
 
         controller = pecan_controllers.get(collection)
         if not controller:
             LOG.debug("Building controller for resource:%s", resource)
             controller = res_ctrl.CollectionsController(collection, resource)
         else:
-            LOG.debug("There are already controllers for resource:%s",
+            LOG.debug("There are already controllers for resource: %s",
                       resource)
 
         manager.NeutronManager.set_controller_for_resource(

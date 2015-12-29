@@ -352,7 +352,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 else:
                     # at least one of drivers does not support QoS, meaning
                     # there are no rule types supported by all of them
-                    LOG.warn(
+                    LOG.warning(
                         _LW("%s does not support QoS; "
                             "no rule types available"),
                         driver.name)

@@ -145,8 +145,8 @@ class L3Scheduler(object):
         target_routers = self._get_routers_can_schedule(
             context, plugin, unscheduled_routers, l3_agent)
         if not target_routers:
-            LOG.warn(_LW('No routers compatible with L3 agent configuration '
-                         'on host %s'), host)
+            LOG.warning(_LW('No routers compatible with L3 agent '
+                            'configuration on host %s'), host)
             return False
 
         self._bind_routers(context, plugin, target_routers, l3_agent)
@@ -170,14 +170,14 @@ class L3Scheduler(object):
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
-                LOG.warn(_LW('No active L3 agents'))
+                LOG.warning(_LW('No active L3 agents'))
                 return []
             candidates = plugin.get_l3_agent_candidates(context,
                                                         sync_router,
                                                         active_l3_agents)
             if not candidates:
-                LOG.warn(_LW('No L3 agents can host the router %s'),
-                         sync_router['id'])
+                LOG.warning(_LW('No L3 agents can host the router %s'),
+                            sync_router['id'])
 
             return candidates
 

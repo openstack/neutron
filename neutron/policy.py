@@ -109,8 +109,9 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
     validate = attr['validate']
     key = list(filter(lambda k: k.startswith('type:dict'), validate.keys()))
     if not key:
-        LOG.warn(_LW("Unable to find data type descriptor for attribute %s"),
-                 attr_name)
+        LOG.warning(_LW("Unable to find data type descriptor "
+                        "for attribute %s"),
+                    attr_name)
         return
     data = validate[key[0]]
     if not isinstance(data, dict):

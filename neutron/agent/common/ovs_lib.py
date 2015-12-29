@@ -449,11 +449,11 @@ class OVSBridge(BaseOVS):
             if_exists=True)
         for result in results:
             if result['ofport'] == UNASSIGNED_OFPORT:
-                LOG.warn(_LW("Found not yet ready openvswitch port: %s"),
-                         result['name'])
+                LOG.warning(_LW("Found not yet ready openvswitch port: %s"),
+                            result['name'])
             elif result['ofport'] == INVALID_OFPORT:
-                LOG.warn(_LW("Found failed openvswitch port: %s"),
-                         result['name'])
+                LOG.warning(_LW("Found failed openvswitch port: %s"),
+                            result['name'])
             elif 'attached-mac' in result['external_ids']:
                 port_id = self.portid_from_external_ids(result['external_ids'])
                 if port_id:
@@ -511,9 +511,9 @@ class OVSBridge(BaseOVS):
     @staticmethod
     def _check_ofport(port_id, port_info):
         if port_info['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
-            LOG.warn(_LW("ofport: %(ofport)s for VIF: %(vif)s is not a"
-                         " positive integer"),
-                     {'ofport': port_info['ofport'], 'vif': port_id})
+            LOG.warning(_LW("ofport: %(ofport)s for VIF: %(vif)s "
+                            "is not a positive integer"),
+                        {'ofport': port_info['ofport'], 'vif': port_id})
             return False
         return True
 

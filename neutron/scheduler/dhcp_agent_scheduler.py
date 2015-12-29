@@ -59,7 +59,8 @@ class AutoScheduler(object):
             for dhcp_agent in dhcp_agents:
                 if agents_db.AgentDbMixin.is_agent_down(
                     dhcp_agent.heartbeat_timestamp):
-                    LOG.warn(_LW('DHCP agent %s is not active'), dhcp_agent.id)
+                    LOG.warning(_LW('DHCP agent %s is not active'),
+                                dhcp_agent.id)
                     continue
                 for net_id in net_ids:
                     agents = plugin.get_dhcp_agents_hosting_networks(
@@ -207,7 +208,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             active_dhcp_agents = plugin.get_agents_db(
                 context, filters=filters)
             if not active_dhcp_agents:
-                LOG.warn(_LW('No more DHCP agents'))
+                LOG.warning(_LW('No more DHCP agents'))
                 return []
         return active_dhcp_agents
 

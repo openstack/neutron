@@ -118,7 +118,7 @@ class PluginApi(object):
             # may not work correctly, however it can function in 'degraded'
             # mode, in that DVR routers may not be in the system yet, and
             # it might be not necessary to retrieve info about the host.
-            LOG.warn(_LW('DVR functionality requires a server upgrade.'))
+            LOG.warning(_LW('DVR functionality requires a server upgrade.'))
             res = [
                 self.get_device_details(context, device, agent_id, host)
                 for device in devices
@@ -196,7 +196,8 @@ class PluginApi(object):
             res = cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
                              tunnel_type=tunnel_type, host=host)
         except oslo_messaging.UnsupportedVersion:
-            LOG.warn(_LW('Tunnel synchronization requires a server upgrade.'))
+            LOG.warning(_LW('Tunnel synchronization requires a '
+                            'server upgrade.'))
             cctxt = self.client.prepare()
             res = cctxt.call(context, 'tunnel_sync', tunnel_ip=tunnel_ip,
                              tunnel_type=tunnel_type)

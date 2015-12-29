@@ -250,10 +250,10 @@ class IptablesTable(object):
                                                           top, self.wrap_name,
                                                           comment=comment)))
         except ValueError:
-            LOG.warn(_LW('Tried to remove rule that was not there:'
-                         ' %(chain)r %(rule)r %(wrap)r %(top)r'),
-                     {'chain': chain, 'rule': rule,
-                      'top': top, 'wrap': wrap})
+            LOG.warning(_LW('Tried to remove rule that was not there:'
+                            ' %(chain)r %(rule)r %(wrap)r %(top)r'),
+                        {'chain': chain, 'rule': rule,
+                         'top': top, 'wrap': wrap})
 
     def _get_chain_rules(self, chain, wrap):
         chain = get_chain_name(chain, wrap)
@@ -696,8 +696,8 @@ class IptablesManager(object):
         """Return the sum of the traffic counters of all rules of a chain."""
         cmd_tables = self._get_traffic_counters_cmd_tables(chain, wrap)
         if not cmd_tables:
-            LOG.warn(_LW('Attempted to get traffic counters of chain %s which '
-                         'does not exist'), chain)
+            LOG.warning(_LW('Attempted to get traffic counters of chain %s '
+                            'which does not exist'), chain)
             return
 
         name = get_chain_name(chain, wrap)

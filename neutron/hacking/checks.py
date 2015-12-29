@@ -35,7 +35,6 @@ _all_log_levels = {
                       # a exception
     'error': '_LE',
     'info': '_LI',
-    'warn': '_LW',
     'warning': '_LW',
     'critical': '_LC',
     'exception': '_LE',
@@ -55,6 +54,8 @@ log_translation_hint = re.compile(
     '|'.join('(?:%s)' % _regex_for_level(level, hint)
              for level, hint in six.iteritems(_all_log_levels)))
 
+log_warn = re.compile(
+    r"(.)*LOG\.(warn)\(\s*('|\"|_)")
 contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
 
 
@@ -218,6 +219,12 @@ def check_assertequal_for_httpcode(logical_line, filename):
             yield (0, msg)
 
 
+def check_log_warn_deprecated(logical_line, filename):
+    msg = "N333: Use LOG.warning due to compatibility with py3"
+    if log_warn.match(logical_line):
+        yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -233,3 +240,4 @@ def factory(register):
     register(check_assertempty)
     register(check_assertisinstance)
     register(check_assertequal_for_httpcode)
+    register(check_log_warn_deprecated)

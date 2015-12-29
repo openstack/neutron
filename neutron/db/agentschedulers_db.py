@@ -143,10 +143,11 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         tdelta = timeutils.utcnow() - getattr(self, '_clock_jump_canary',
                                               timeutils.utcnow())
         if tdelta.total_seconds() > cfg.CONF.agent_down_time:
-            LOG.warn(_LW("Time since last %s agent reschedule check has "
-                         "exceeded the interval between checks. Waiting "
-                         "before check to allow agents to send a heartbeat "
-                         "in case there was a clock adjustment."), agent_type)
+            LOG.warning(_LW("Time since last %s agent reschedule check has "
+                            "exceeded the interval between checks. Waiting "
+                            "before check to allow agents to send a heartbeat "
+                            "in case there was a clock adjustment."),
+                        agent_type)
             time.sleep(agent_dead_limit)
         self._clock_jump_canary = timeutils.utcnow()
 
@@ -282,17 +283,17 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             active_agents = [agent for agent in agents if
                              self.is_eligible_agent(context, True, agent)]
             if not active_agents:
-                LOG.warn(_LW("No DHCP agents available, "
-                             "skipping rescheduling"))
+                LOG.warning(_LW("No DHCP agents available, "
+                                "skipping rescheduling"))
                 return
             for binding in dead_bindings:
-                LOG.warn(_LW("Removing network %(network)s from agent "
-                             "%(agent)s because the agent did not report "
-                             "to the server in the last %(dead_time)s "
-                             "seconds."),
-                         {'network': binding.network_id,
-                          'agent': binding.dhcp_agent_id,
-                          'dead_time': agent_dead_limit})
+                LOG.warning(_LW("Removing network %(network)s from agent "
+                                "%(agent)s because the agent did not report "
+                                "to the server in the last %(dead_time)s "
+                                "seconds."),
+                            {'network': binding.network_id,
+                             'agent': binding.dhcp_agent_id,
+                             'dead_time': agent_dead_limit})
                 # save binding object to avoid ObjectDeletedError
                 # in case binding is concurrently deleted from the DB
                 saved_binding = {'net': binding.network_id,

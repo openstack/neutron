@@ -200,7 +200,7 @@ class MetadataProxyHandler(object):
             req.response.body = content
             return req.response
         elif resp.status == 403:
-            LOG.warn(_LW(
+            LOG.warning(_LW(
                 'The remote metadata server responded with Forbidden. This '
                 'response usually occurs when shared secrets do not match.'
             ))
@@ -215,7 +215,7 @@ class MetadataProxyHandler(object):
             msg = _(
                 'Remote metadata server experienced an internal server error.'
             )
-            LOG.warn(msg)
+            LOG.warning(msg)
             explanation = six.text_type(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
         else:
@@ -267,8 +267,8 @@ class UnixDomainMetadataProxy(object):
                 use_call=self.agent_state.get('start_flag'))
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_LW('Neutron server does not support state report.'
-                         ' State report for this agent will be disabled.'))
+            LOG.warning(_LW('Neutron server does not support state report.'
+                            ' State report for this agent will be disabled.'))
             self.heartbeat.stop()
             return
         except Exception:

@@ -118,7 +118,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                         agents_back_online.add(binding.l3_agent_id)
                         continue
 
-                LOG.warn(_LW(
+                LOG.warning(_LW(
                     "Rescheduling router %(router)s from agent %(agent)s "
                     "because the agent did not report to the server in "
                     "the last %(dead_time)s seconds."),

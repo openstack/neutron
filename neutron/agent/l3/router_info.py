@@ -265,8 +265,8 @@ class RouterInfo(object):
         except RuntimeError:
             # any exception occurred here should cause the floating IP
             # to be set in error state
-            LOG.warn(_LW("Unable to configure IP address for "
-                         "floating IP: %s"), fip['id'])
+            LOG.warning(_LW("Unable to configure IP address for "
+                            "floating IP: %s"), fip['id'])
 
     def add_floating_ip(self, fip, interface_name, device):
         raise NotImplementedError()

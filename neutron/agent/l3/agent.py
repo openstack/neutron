@@ -362,8 +362,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
         if ri is None:
-            LOG.warn(_LW("Info for router %s was not found. "
-                         "Performing router cleanup"), router_id)
+            LOG.warning(_LW("Info for router %s was not found. "
+                            "Performing router cleanup"), router_id)
             self.namespaces_manager.ensure_router_cleanup(router_id)
             return
 
@@ -683,8 +683,8 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.agent_state.pop('start_flag', None)
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_LW("Neutron server does not support state report. "
-                         "State report for this agent will be disabled."))
+            LOG.warning(_LW("Neutron server does not support state report. "
+                            "State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:

@@ -71,7 +71,7 @@ class ItemController(utils.NeutronPecanController):
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
         if not controller:
-            LOG.warn(_LW("No controller found for: %s - returning response "
+            LOG.warning(_LW("No controller found for: %s - returning response "
                          "code 404"), collection)
             pecan.abort(404)
         return controller, remainder

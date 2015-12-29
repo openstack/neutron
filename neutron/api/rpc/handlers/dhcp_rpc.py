@@ -104,9 +104,9 @@ class DhcpRpcCallback(object):
                     else:
                         ctxt.reraise = True
                 net_id = port['port']['network_id']
-                LOG.warn(_LW("Action %(action)s for network %(net_id)s "
-                             "could not complete successfully: %(reason)s"),
-                         {"action": action, "net_id": net_id, 'reason': e})
+                LOG.warning(_LW("Action %(action)s for network %(net_id)s "
+                                "could not complete successfully: %(reason)s"),
+                            {"action": action, "net_id": net_id, 'reason': e})
 
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""
