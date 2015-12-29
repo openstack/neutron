@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import weakref
+
 import fixtures
 from oslo_config import cfg
 
@@ -147,3 +149,20 @@ class NeutronManagerTestCase(base.BaseTestCase):
         with testlib_api.ExpectedException(ImportError):
             manager.NeutronManager.load_class_for_provider(
                     'neutron.core_plugins', 'ml2XXXXXX')
+
+    def test_get_service_plugin_by_path_prefix_3(self):
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        nm = manager.NeutronManager.get_instance()
+
+        class pclass(object):
+            def __init__(self, path_prefix):
+                self.path_prefix = path_prefix
+
+        x_plugin, y_plugin = pclass('xpa'), pclass('ypa')
+        nm.service_plugins['x'], nm.service_plugins['y'] = x_plugin, y_plugin
+
+        self.assertEqual(weakref.proxy(x_plugin),
+                         nm.get_service_plugin_by_path_prefix('xpa'))
+        self.assertEqual(weakref.proxy(y_plugin),
+                         nm.get_service_plugin_by_path_prefix('ypa'))
+        self.assertIsNone(nm.get_service_plugin_by_path_prefix('abc'))
