@@ -209,6 +209,13 @@ def check_ipset():
     return result
 
 
+def check_ip6tables():
+    result = checks.ip6tables_supported()
+    if not result:
+        LOG.error(_LE('Cannot run ip6tables. Please ensure that it '
+                      'is installed.'))
+    return result
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -243,6 +250,8 @@ OPTS = [
                     help=_('Check minimal dibbler version')),
     BoolOptCallback('ipset_installed', check_ipset,
                     help=_('Check ipset installation')),
+    BoolOptCallback('ip6tables_installed', check_ip6tables,
+                    help=_('Check ip6tables installation')),
 ]
 
 
@@ -283,6 +292,8 @@ def enable_tests_from_config():
         cfg.CONF.set_override('keepalived_ipv6_support', True)
     if cfg.CONF.SECURITYGROUP.enable_ipset:
         cfg.CONF.set_override('ipset_installed', True)
+    if cfg.CONF.SECURITYGROUP.enable_security_group:
+        cfg.CONF.set_override('ip6tables_installed', True)
 
 
 def all_tests_passed():
