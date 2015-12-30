@@ -632,11 +632,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     @staticmethod
     def _make_router_interface_info(
-            router_id, tenant_id, port_id, subnet_id, subnet_ids):
+            router_id, tenant_id, port_id, network_id, subnet_id, subnet_ids):
         return {
             'id': router_id,
             'tenant_id': tenant_id,
             'port_id': port_id,
+            'network_id': network_id,
             'subnet_id': subnet_id,  # deprecated by IPv6 multi-prefix
             'subnet_ids': subnet_ids
         }
@@ -668,8 +669,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 context.session.add(router_port)
 
         return self._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], subnets[-1]['id'],
-            [subnet['id'] for subnet in subnets])
+            router.id, port['tenant_id'], port['id'], port['network_id'],
+            subnets[-1]['id'], [subnet['id'] for subnet in subnets])
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -772,7 +773,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                     context, router_id, subnet_id, device_owner)
 
         return self._make_router_interface_info(router_id, port['tenant_id'],
-                                                port['id'], subnets[0]['id'],
+                                                port['id'], port['network_id'],
+                                                subnets[0]['id'],
                                                 [subnet['id'] for subnet in
                                                     subnets])
 

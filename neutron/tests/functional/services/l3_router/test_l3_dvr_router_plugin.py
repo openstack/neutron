@@ -724,3 +724,40 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 self.assertEqual(self.l3_agent['id'],
                                  agents['agents'][0]['id'])
                 self.assertFalse(remove_mock.called)
+
+    def test_remove_router_interface(self):
+        HOST1 = 'host1'
+        dvr_agent = helpers.register_l3_agent(
+            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        arg_list = (portbindings.HOST_ID,)
+        with self.subnet() as subnet,\
+                self.port(subnet=subnet,
+                          device_owner=DEVICE_OWNER_COMPUTE,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: HOST1}):
+            l3_notifier = mock.Mock()
+            self.l3_plugin.l3_rpc_notifier = l3_notifier
+            self.l3_plugin.agent_notifiers[
+                    constants.AGENT_TYPE_L3] = l3_notifier
+
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+            self.l3_plugin.schedule_router(self.context, router['id'])
+
+            # router should be scheduled to the agent on HOST1
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])['agents']
+            self.assertEqual(1, len(agents))
+            self.assertEqual(dvr_agent['id'], agents[0]['id'])
+
+            self.l3_plugin.remove_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])['agents']
+            self.assertEqual(0, len(agents))
+            l3_notifier.router_removed_from_agent.assert_called_once_with(
+                self.context, router['id'], HOST1)

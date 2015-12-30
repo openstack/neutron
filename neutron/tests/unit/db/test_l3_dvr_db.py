@@ -471,7 +471,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                        'distributed': True}
         router = self._create_router(router_dict)
         plugin = mock.MagicMock()
-        plugin.get_subnet_ids_on_router = mock.Mock()
         with self.network() as net_ext,\
                 self.subnet() as subnet1,\
                 self.subnet(cidr='20.0.0.0/24') as subnet2:
@@ -517,7 +516,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             dvr_ports = self.core_plugin.get_ports(
                 self.ctx, filters=dvr_filters)
             self.assertEqual(1, len(dvr_ports))
-            self.assertEqual(1, plugin.get_subnet_ids_on_router.call_count)
 
     def test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': False}
