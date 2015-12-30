@@ -64,6 +64,9 @@ class DhcpAgent(manager.Manager):
         utils.ensure_dir(dhcp_dir)
         self.dhcp_version = self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
+        # keep track of mappings between networks and routers for
+        # metadata processing
+        self._metadata_routers = {}  # {network_id: router_id}
         self._process_monitor = external_process.ProcessMonitor(
             config=self.conf,
             resource_type='dhcp')
@@ -375,14 +378,24 @@ class DhcpAgent(manager.Manager):
                                  'port_id': router_ports[0].id,
                                  'router_id': router_ports[0].device_id})
                 kwargs = {'router_id': router_ports[0].device_id}
+                self._metadata_routers[network.id] = router_ports[0].device_id
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, dhcp.METADATA_PORT,
             self.conf, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
+        if (self.conf.enable_metadata_network and
+            network.id in self._metadata_routers):
+            uuid = self._metadata_routers[network.id]
+            is_router_id = True
+        else:
+            uuid = network.id
+            is_router_id = False
         metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
-            self._process_monitor, network.id, self.conf)
+            self._process_monitor, uuid, self.conf)
+        if is_router_id:
+            del self._metadata_routers[network.id]
 
 
 class DhcpPluginApi(object):
