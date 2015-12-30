@@ -110,7 +110,7 @@ class AllowedAddressPairsMixin(object):
     def _check_update_deletes_allowed_address_pairs(self, port):
         """Determine if request deletes address pair.
 
-        Return True if port has as a allowed address pair and its value
+        Return True if port has an allowed address pair and its value
         is either [] or not is_attr_set, otherwise return False
         """
         return (addr_pair.ADDRESS_PAIRS in port['port'] and

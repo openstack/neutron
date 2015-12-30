@@ -139,8 +139,8 @@ class AgentPluginBase(object):
         """Delete agent.
 
         Agents register themselves on reporting state.
-        But if a agent does not report its status
-        for a long time (for example, it is dead for ever. ),
+        But if an agent does not report its status
+        for a long time (for example, it is dead forever. ),
         admin can remove it. Agents must be disabled before
         being removed.
         """

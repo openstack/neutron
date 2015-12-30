@@ -146,7 +146,7 @@ class DhcpRpcCallback(object):
         return networks
 
     def get_network_info(self, context, **kwargs):
-        """Retrieve and return a extended information about a network."""
+        """Retrieve and return extended information about a network."""
         network_id = kwargs.get('network_id')
         host = kwargs.get('host')
         LOG.debug('Network %(network_id)s requested from '
