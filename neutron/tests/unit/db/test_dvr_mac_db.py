@@ -19,7 +19,7 @@ from oslo_config import cfg
 from neutron import context
 from neutron.db import dvr_mac_db
 from neutron.extensions import dvr
-from neutron.tests.unit import testlib_api
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 class DVRDbMixinImpl(dvr_mac_db.DVRDbMixin):
@@ -28,7 +28,7 @@ class DVRDbMixinImpl(dvr_mac_db.DVRDbMixin):
         self.notifier = notifier
 
 
-class DvrDbMixinTestCase(testlib_api.SqlTestCase):
+class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
         super(DvrDbMixinTestCase, self).setUp()
@@ -90,3 +90,40 @@ class DvrDbMixinTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(self.mixin, '_create_dvr_mac_address') as f:
             self.mixin.get_dvr_mac_address_by_host(self.ctx, 'foo_host')
             self.assertEqual(1, f.call_count)
+
+    def test_get_subnet_for_dvr_returns_correct_mac(self):
+        with self.subnet() as subnet,\
+                self.port(subnet=subnet),\
+                self.port(subnet=subnet):
+            dvr_subnet = self.mixin.get_subnet_for_dvr(self.ctx,
+                                                       subnet['subnet']['id'])
+            # no gateway port should be found so no info should be returned
+            self.assertEqual({}, dvr_subnet)
+            with self.port(
+                    subnet=subnet,
+                    fixed_ips=[{'ip_address': subnet['subnet'][
+                        'gateway_ip']}]) as gw_port:
+                dvr_subnet = self.mixin.get_subnet_for_dvr(
+                    self.ctx, subnet['subnet']['id'])
+                self.assertEqual(gw_port['port']['mac_address'],
+                                 dvr_subnet['gateway_mac'])
+
+    def test_get_subnet_for_dvr_returns_correct_mac_fixed_ips_passed(self):
+        with self.subnet() as subnet,\
+                self.port(subnet=subnet,
+                          fixed_ips=[{'ip_address': '10.0.0.2'}]),\
+                self.port(subnet=subnet,
+                          fixed_ips=[{'ip_address': '10.0.0.3'}]):
+            fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                          'ip_address': '10.0.0.4'}]
+            dvr_subnet = self.mixin.get_subnet_for_dvr(
+                self.ctx, subnet['subnet']['id'], fixed_ips)
+            # no gateway port should be found so no info should be returned
+            self.assertEqual({}, dvr_subnet)
+            with self.port(
+                    subnet=subnet,
+                    fixed_ips=[{'ip_address': '10.0.0.4'}]) as gw_port:
+                dvr_subnet = self.mixin.get_subnet_for_dvr(
+                    self.ctx, subnet['subnet']['id'], fixed_ips)
+                self.assertEqual(gw_port['port']['mac_address'],
+                                 dvr_subnet['gateway_mac'])
