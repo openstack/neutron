@@ -78,7 +78,7 @@ class FirewallDriver(object):
     def update_port_filter(self, port):
         """Refresh security group rules from data store
 
-        Gets called when an port gets added to or removed from
+        Gets called when a port gets added to or removed from
         the security group the port is a member of or if the
         group gains or looses a rule.
         """

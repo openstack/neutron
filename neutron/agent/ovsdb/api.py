@@ -102,7 +102,7 @@ class API(object):
 
     @abc.abstractmethod
     def add_br(self, name, may_exist=True, datapath_type=None):
-        """Create an command to add an OVS bridge
+        """Create a command to add an OVS bridge
 
         :param name:            The name of the bridge
         :type name:             string
