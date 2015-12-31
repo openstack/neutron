@@ -1061,7 +1061,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             br.setup_default_table()
             self.phys_brs[physical_network] = br
 
-            # interconnect physical and integration bridges using veth/patchs
+            # interconnect physical and integration bridges using veth/patches
             int_if_name = p_utils.get_interface_name(
                 bridge, prefix=constants.PEER_INTEGRATION_PREFIX)
             phys_if_name = p_utils.get_interface_name(
