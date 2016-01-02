@@ -51,11 +51,19 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    AdvManagedFlag on;
    {% endif %}
 
-   {% for prefix in prefixes %}
+   {% for prefix in auto_config_prefixes %}
    prefix {{ prefix }}
    {
         AdvOnLink on;
         AdvAutonomous on;
+   };
+   {% endfor %}
+
+   {% for prefix in stateful_config_prefixes %}
+   prefix {{ prefix }}
+   {
+        AdvOnLink on;
+        AdvAutonomous off;
    };
    {% endfor %}
 };
@@ -87,11 +95,14 @@ class DaemonMonitor(object):
             auto_config_prefixes = [subnet['cidr'] for subnet in v6_subnets if
                     subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
                     subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS]
+            stateful_config_prefixes = [subnet['cidr'] for subnet in v6_subnets
+                    if subnet['ipv6_ra_mode'] == constants.DHCPV6_STATEFUL]
             interface_name = self._dev_name_helper(p['id'])
             buf.write('%s' % CONFIG_TEMPLATE.render(
                 ra_modes=list(ra_modes),
                 interface_name=interface_name,
-                prefixes=auto_config_prefixes,
+                auto_config_prefixes=auto_config_prefixes,
+                stateful_config_prefixes=stateful_config_prefixes,
                 constants=constants))
 
         utils.replace_file(radvd_conf, buf.getvalue())
