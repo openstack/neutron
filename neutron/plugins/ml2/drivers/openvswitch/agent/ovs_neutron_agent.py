@@ -234,7 +234,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if self.enable_tunneling:
             self.setup_tunnel_br_flows()
 
-        self.dvr_agent.setup_dvr_flows()
+        if self.enable_distributed_routing:
+            self.dvr_agent.setup_dvr_flows()
 
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(

@@ -204,8 +204,6 @@ class OVSDVRNeutronAgent(object):
 
     def setup_dvr_flows_on_integ_br(self):
         '''Setup up initial dvr flows into br-int'''
-        if not self.in_distributed_mode():
-            return
 
         LOG.info(_LI("L2 Agent operating in DVR Mode with MAC %s"),
                  self.dvr_mac_address)
@@ -234,7 +232,7 @@ class OVSDVRNeutronAgent(object):
 
     def setup_dvr_flows_on_tun_br(self):
         '''Setup up initial dvr flows into br-tun'''
-        if not self.enable_tunneling or not self.in_distributed_mode():
+        if not self.enable_tunneling:
             return
 
         self.tun_br.install_goto(dest_table_id=constants.DVR_PROCESS,
@@ -250,8 +248,6 @@ class OVSDVRNeutronAgent(object):
 
     def setup_dvr_flows_on_phys_br(self):
         '''Setup up initial dvr flows into br-phys'''
-        if not self.in_distributed_mode():
-            return
 
         for physical_network in self.bridge_mappings:
             self.phys_brs[physical_network].install_goto(
@@ -313,10 +309,6 @@ class OVSDVRNeutronAgent(object):
         self.registered_dvr_macs.remove(mac)
 
     def setup_dvr_mac_flows_on_all_brs(self):
-        if not self.in_distributed_mode():
-            LOG.debug("Not in distributed mode, ignoring invocation "
-                      "of get_dvr_mac_address_list() ")
-            return
         dvr_macs = self.plugin_rpc.get_dvr_mac_address_list(self.context)
         LOG.debug("L2 Agent DVR: Received these MACs: %r", dvr_macs)
         for mac in dvr_macs:
