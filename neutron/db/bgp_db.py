@@ -12,22 +12,33 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import itertools
+
 from oslo_db import exception as oslo_db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
+from sqlalchemy import and_
 from sqlalchemy import orm
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import exc as sa_exc
+
+from neutron_lib import constants as lib_consts
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
+from neutron.db import address_scope_db
 from neutron.db import common_db_mixin as common_db
+from neutron.db import l3_attrs_db
+from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import bgp as bgp_ext
 
 
 LOG = logging.getLogger(__name__)
+DEVICE_OWNER_ROUTER_GW = lib_consts.DEVICE_OWNER_ROUTER_GW
+DEVICE_OWNER_ROUTER_INTF = lib_consts.DEVICE_OWNER_ROUTER_INTF
 
 
 class BgpSpeakerPeerBinding(model_base.BASEV2):
@@ -140,7 +151,9 @@ class BgpDbMixin(common_db.CommonDbMixin):
             res['peers'] = self.get_bgp_peers_by_bgp_speaker(context,
                                                          bgp_speaker['id'],
                                                          fields=bgp_peer_attrs)
-            res['advertised_routes'] = []
+            res['advertised_routes'] = self.get_routes_by_bgp_speaker_id(
+                                                               context,
+                                                               bgp_speaker_id)
             return res
 
     def update_bgp_speaker(self, context, bgp_speaker_id, bgp_speaker):
@@ -267,8 +280,30 @@ class BgpDbMixin(common_db.CommonDbMixin):
         except sa_exc.NoResultFound:
             raise bgp_ext.BgpSpeakerNotFound(id=bgp_speaker_id)
 
+    def _get_bgp_speaker_ids_by_router(self, context, router_id):
+        with context.session.begin(subtransactions=True):
+            network_binding = aliased(BgpSpeakerNetworkBinding)
+            r_port = aliased(l3_db.RouterPort)
+            query = context.session.query(network_binding.bgp_speaker_id)
+            query = query.filter(
+                      r_port.router_id == router_id,
+                      r_port.port_type == lib_consts.DEVICE_OWNER_ROUTER_GW,
+                      r_port.port_id == models_v2.Port.id,
+                      models_v2.Port.network_id == network_binding.network_id)
+
+            return [binding.bgp_speaker_id for binding in query.all()]
+
+    def _get_bgp_speaker_ids_by_binding_network(self, context, network_id):
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(
+                                      BgpSpeakerNetworkBinding.bgp_speaker_id)
+            query = query.filter(
+                            BgpSpeakerNetworkBinding.network_id == network_id)
+            return query.all()
+
     def get_advertised_routes(self, context, bgp_speaker_id):
-        return self._make_advertised_routes_dict([])
+        routes = self.get_routes_by_bgp_speaker_id(context, bgp_speaker_id)
+        return self._make_advertised_routes_dict(routes)
 
     def _get_id_for(self, resource, id_name):
         try:
@@ -406,3 +441,473 @@ class BgpDbMixin(common_db.CommonDbMixin):
                  'auth_type', 'password']
         res = dict((k, bgp_peer[k]) for k in attrs)
         return self._fields(res, fields)
+
+    def _get_address_scope_ids_for_bgp_speaker(self, context, bgp_speaker_id):
+        with context.session.begin(subtransactions=True):
+            binding = aliased(BgpSpeakerNetworkBinding)
+            address_scope = aliased(address_scope_db.AddressScope)
+            query = context.session.query(address_scope)
+            query = query.filter(
+                binding.bgp_speaker_id == bgp_speaker_id,
+                models_v2.Subnet.ip_version == binding.ip_version,
+                models_v2.Subnet.network_id == binding.network_id,
+                models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+                models_v2.SubnetPool.address_scope_id == address_scope.id)
+            return [scope.id for scope in query.all()]
+
+    def get_routes_by_bgp_speaker_id(self, context, bgp_speaker_id):
+        """Get all routes that should be advertised by a BgpSpeaker."""
+        with context.session.begin(subtransactions=True):
+            net_routes = self._get_tenant_network_routes_by_bgp_speaker(
+                                                               context,
+                                                               bgp_speaker_id)
+            fip_routes = self._get_central_fip_host_routes_by_bgp_speaker(
+                                                               context,
+                                                               bgp_speaker_id)
+            return itertools.chain(fip_routes, net_routes)
+
+    def get_routes_by_bgp_speaker_binding(self, context,
+                                          bgp_speaker_id, network_id):
+        """Get all routes for the given bgp_speaker binding."""
+        with context.session.begin(subtransactions=True):
+            fip_routes = self._get_central_fip_host_routes_by_binding(
+                                                               context,
+                                                               network_id,
+                                                               bgp_speaker_id)
+            net_routes = self._get_tenant_network_routes_by_binding(
+                                                           context,
+                                                           network_id,
+                                                           bgp_speaker_id)
+        return itertools.chain(fip_routes, net_routes)
+
+    def _get_routes_by_router(self, context, router_id):
+        bgp_speaker_ids = self._get_bgp_speaker_ids_by_router(context,
+                                                              router_id)
+        route_dict = {}
+        for bgp_speaker_id in bgp_speaker_ids:
+            fip_routes = self._get_central_fip_host_routes_by_router(
+                                                               context,
+                                                               router_id,
+                                                               bgp_speaker_id)
+            net_routes = self._get_tenant_network_routes_by_router(
+                                                               context,
+                                                               router_id,
+                                                               bgp_speaker_id)
+            routes = list(itertools.chain(fip_routes, net_routes))
+            route_dict[bgp_speaker_id] = routes
+        return route_dict
+
+    def _get_central_fip_host_routes_by_router(self, context, router_id,
+                                               bgp_speaker_id):
+        """Get floating IP host routes with the given router as nexthop."""
+        with context.session.begin(subtransactions=True):
+            dest_alias = aliased(l3_db.FloatingIP,
+                                 name='destination')
+            next_hop_alias = aliased(models_v2.IPAllocation,
+                                     name='next_hop')
+            binding_alias = aliased(BgpSpeakerNetworkBinding,
+                                    name='binding')
+            router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                                   name='router_attrs')
+            query = context.session.query(dest_alias.floating_ip_address,
+                                          next_hop_alias.ip_address)
+            query = query.join(
+                  next_hop_alias,
+                  next_hop_alias.network_id == dest_alias.floating_network_id)
+            query = query.join(l3_db.Router,
+                               dest_alias.router_id == l3_db.Router.id)
+            query = query.filter(
+                l3_db.Router.id == router_id,
+                dest_alias.router_id == l3_db.Router.id,
+                l3_db.Router.id == router_attrs.router_id,
+                router_attrs.distributed == sa.sql.false(),
+                l3_db.Router.gw_port_id == next_hop_alias.port_id,
+                next_hop_alias.subnet_id == models_v2.Subnet.id,
+                models_v2.Subnet.ip_version == 4,
+                binding_alias.network_id == models_v2.Subnet.network_id,
+                binding_alias.bgp_speaker_id == bgp_speaker_id,
+                binding_alias.ip_version == 4,
+                BgpSpeaker.advertise_floating_ip_host_routes == sa.sql.true())
+            query = query.outerjoin(router_attrs,
+                                    l3_db.Router.id == router_attrs.router_id)
+            query = query.filter(router_attrs.distributed != sa.sql.true())
+            return self._host_route_list_from_tuples(query.all())
+
+    def _get_central_fip_host_routes_by_binding(self, context,
+                                                network_id, bgp_speaker_id):
+        """Get all floating IP host routes for the given network binding."""
+        with context.session.begin(subtransactions=True):
+            # Query the DB for floating IP's and the IP address of the
+            # gateway port
+            dest_alias = aliased(l3_db.FloatingIP,
+                                 name='destination')
+            next_hop_alias = aliased(models_v2.IPAllocation,
+                                     name='next_hop')
+            binding_alias = aliased(BgpSpeakerNetworkBinding,
+                                    name='binding')
+            router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                                   name='router_attrs')
+            query = context.session.query(dest_alias.floating_ip_address,
+                                          next_hop_alias.ip_address)
+            query = query.join(
+                  next_hop_alias,
+                  next_hop_alias.network_id == dest_alias.floating_network_id)
+            query = query.join(
+                   binding_alias,
+                   binding_alias.network_id == dest_alias.floating_network_id)
+            query = query.join(l3_db.Router,
+                               dest_alias.router_id == l3_db.Router.id)
+            query = query.filter(
+                dest_alias.floating_network_id == network_id,
+                dest_alias.router_id == l3_db.Router.id,
+                l3_db.Router.gw_port_id == next_hop_alias.port_id,
+                next_hop_alias.subnet_id == models_v2.Subnet.id,
+                models_v2.Subnet.ip_version == 4,
+                binding_alias.network_id == models_v2.Subnet.network_id,
+                binding_alias.bgp_speaker_id == BgpSpeaker.id,
+                BgpSpeaker.id == bgp_speaker_id,
+                BgpSpeaker.advertise_floating_ip_host_routes == sa.sql.true())
+            query = query.outerjoin(router_attrs,
+                                    l3_db.Router.id == router_attrs.router_id)
+            query = query.filter(router_attrs.distributed != sa.sql.true())
+            return self._host_route_list_from_tuples(query.all())
+
+    def _get_central_fip_host_routes_by_bgp_speaker(self, context,
+                                                    bgp_speaker_id):
+        """Get all the floating IP host routes advertised by a BgpSpeaker."""
+        with context.session.begin(subtransactions=True):
+            dest_alias = aliased(l3_db.FloatingIP,
+                                 name='destination')
+            next_hop_alias = aliased(models_v2.IPAllocation,
+                                     name='next_hop')
+            speaker_binding = aliased(BgpSpeakerNetworkBinding,
+                                      name="speaker_network_mapping")
+            router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                                   name='router_attrs')
+            query = context.session.query(dest_alias.floating_ip_address,
+                                          next_hop_alias.ip_address)
+            query = query.select_from(dest_alias,
+                                      BgpSpeaker,
+                                      l3_db.Router,
+                                      models_v2.Subnet)
+            query = query.join(
+                  next_hop_alias,
+                  next_hop_alias.network_id == dest_alias.floating_network_id)
+            query = query.join(
+                 speaker_binding,
+                 speaker_binding.network_id == dest_alias.floating_network_id)
+            query = query.join(l3_db.Router,
+                               dest_alias.router_id == l3_db.Router.id)
+            query = query.filter(
+                 BgpSpeaker.id == bgp_speaker_id,
+                 BgpSpeaker.advertise_floating_ip_host_routes,
+                 speaker_binding.bgp_speaker_id == BgpSpeaker.id,
+                 dest_alias.floating_network_id == speaker_binding.network_id,
+                 next_hop_alias.network_id == speaker_binding.network_id,
+                 dest_alias.router_id == l3_db.Router.id,
+                 l3_db.Router.gw_port_id == next_hop_alias.port_id,
+                 next_hop_alias.subnet_id == models_v2.Subnet.id,
+                 models_v2.Subnet.ip_version == 4)
+            query = query.outerjoin(router_attrs,
+                                    l3_db.Router.id == router_attrs.router_id)
+            query = query.filter(router_attrs.distributed != sa.sql.true())
+            return self._host_route_list_from_tuples(query.all())
+
+    def _get_tenant_network_routes_by_binding(self, context,
+                                              network_id, bgp_speaker_id):
+        """Get all tenant network routes for the given network."""
+
+        with context.session.begin(subtransactions=True):
+            tenant_networks_query = self._tenant_networks_by_network_query(
+                                                               context,
+                                                               network_id,
+                                                               bgp_speaker_id)
+            nexthops_query = self._nexthop_ip_addresses_by_binding_query(
+                                                               context,
+                                                               network_id,
+                                                               bgp_speaker_id)
+            join_q = self._join_tenant_networks_to_next_hops(
+                                             context,
+                                             tenant_networks_query.subquery(),
+                                             nexthops_query.subquery())
+            return self._make_advertised_routes_list(join_q.all())
+
+    def _get_tenant_network_routes_by_router(self, context, router_id,
+                                             bgp_speaker_id):
+        """Get all tenant network routes with the given router as nexthop."""
+
+        with context.session.begin(subtransactions=True):
+            scopes = self._get_address_scope_ids_for_bgp_speaker(
+                                                               context,
+                                                               bgp_speaker_id)
+            address_scope = aliased(address_scope_db.AddressScope)
+            inside_query = context.session.query(
+                                            models_v2.Subnet.cidr,
+                                            models_v2.IPAllocation.ip_address,
+                                            address_scope.id)
+            outside_query = context.session.query(
+                                            address_scope.id,
+                                            models_v2.IPAllocation.ip_address)
+            speaker_binding = aliased(BgpSpeakerNetworkBinding,
+                                      name="speaker_network_mapping")
+            port_alias = aliased(l3_db.RouterPort, name='routerport')
+            inside_query = inside_query.filter(
+                    port_alias.router_id == router_id,
+                    models_v2.IPAllocation.port_id == port_alias.port_id,
+                    models_v2.IPAllocation.subnet_id == models_v2.Subnet.id,
+                    models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+                    models_v2.SubnetPool.address_scope_id == address_scope.id,
+                    address_scope.id.in_(scopes),
+                    port_alias.port_type != lib_consts.DEVICE_OWNER_ROUTER_GW,
+                    speaker_binding.bgp_speaker_id == bgp_speaker_id)
+            outside_query = outside_query.filter(
+                    port_alias.router_id == router_id,
+                    port_alias.port_type == lib_consts.DEVICE_OWNER_ROUTER_GW,
+                    models_v2.IPAllocation.port_id == port_alias.port_id,
+                    models_v2.IPAllocation.subnet_id == models_v2.Subnet.id,
+                    models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+                    models_v2.SubnetPool.address_scope_id == address_scope.id,
+                    address_scope.id.in_(scopes),
+                    speaker_binding.bgp_speaker_id == bgp_speaker_id,
+                    speaker_binding.network_id == models_v2.Port.network_id,
+                    port_alias.port_id == models_v2.Port.id)
+            inside_query = inside_query.subquery()
+            outside_query = outside_query.subquery()
+            join_query = context.session.query(inside_query.c.cidr,
+                                               outside_query.c.ip_address)
+            and_cond = and_(inside_query.c.id == outside_query.c.id)
+            join_query = join_query.join(outside_query, and_cond)
+            return self._make_advertised_routes_list(join_query.all())
+
+    def _get_tenant_network_routes_by_bgp_speaker(self, context,
+                                                  bgp_speaker_id):
+        """Get all tenant network routes to be advertised by a BgpSpeaker."""
+
+        with context.session.begin(subtransactions=True):
+            tenant_nets_q = self._tenant_networks_by_bgp_speaker_query(
+                                                               context,
+                                                               bgp_speaker_id)
+            nexthops_q = self._nexthop_ip_addresses_by_bgp_speaker_query(
+                                                               context,
+                                                               bgp_speaker_id)
+            join_q = self._join_tenant_networks_to_next_hops(
+                                                     context,
+                                                     tenant_nets_q.subquery(),
+                                                     nexthops_q.subquery())
+
+            return self._make_advertised_routes_list(join_q.all())
+
+    def _join_tenant_networks_to_next_hops(self, context,
+                                           tenant_networks_subquery,
+                                           nexthops_subquery):
+        """Join subquery for tenant networks to subquery for nexthop IP's"""
+        left_subq = tenant_networks_subquery
+        right_subq = nexthops_subquery
+        join_query = context.session.query(left_subq.c.cidr,
+                                           right_subq.c.ip_address)
+        and_cond = and_(left_subq.c.router_id == right_subq.c.router_id,
+                      left_subq.c.ip_version == right_subq.c.ip_version)
+        join_query = join_query.join(right_subq, and_cond)
+        return join_query
+
+    def _tenant_networks_by_network_query(self, context,
+                                          network_id, bgp_speaker_id):
+        """Return subquery for tenant networks by binding network ID"""
+        address_scope = aliased(address_scope_db.AddressScope,
+                                name='address_scope')
+        router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                               name='router_attrs')
+        tenant_networks_query = context.session.query(
+                                              l3_db.RouterPort.router_id,
+                                              models_v2.Subnet.cidr,
+                                              models_v2.Subnet.ip_version,
+                                              address_scope.id)
+        tenant_networks_query = tenant_networks_query.filter(
+             l3_db.RouterPort.port_type != lib_consts.DEVICE_OWNER_ROUTER_GW,
+             l3_db.RouterPort.port_type != lib_consts.DEVICE_OWNER_ROUTER_SNAT,
+             l3_db.RouterPort.router_id == router_attrs.router_id,
+             models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id,
+             models_v2.IPAllocation.subnet_id == models_v2.Subnet.id,
+             models_v2.Subnet.network_id != network_id,
+             models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+             models_v2.SubnetPool.address_scope_id == address_scope.id,
+             BgpSpeaker.id == bgp_speaker_id,
+             BgpSpeaker.ip_version == address_scope.ip_version,
+             models_v2.Subnet.ip_version == address_scope.ip_version)
+        return tenant_networks_query
+
+    def _tenant_networks_by_bgp_speaker_query(self, context, bgp_speaker_id):
+        """Return subquery for tenant networks by binding bgp_speaker_id"""
+        router_id = l3_db.RouterPort.router_id.distinct().label('router_id')
+        tenant_nets_subq = context.session.query(router_id,
+                                                 models_v2.Subnet.cidr,
+                                                 models_v2.Subnet.ip_version)
+        scopes = self._get_address_scope_ids_for_bgp_speaker(context,
+                                                             bgp_speaker_id)
+        filters = self._tenant_networks_by_bgp_speaker_filters(scopes)
+        tenant_nets_subq = tenant_nets_subq.filter(*filters)
+        return tenant_nets_subq
+
+    def _tenant_networks_by_bgp_speaker_filters(self, address_scope_ids):
+        """Return the filters for querying tenant networks by BGP speaker"""
+        router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                               name='router_attrs')
+        return [models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id,
+          l3_db.RouterPort.router_id == router_attrs.router_id,
+          l3_db.RouterPort.port_type != lib_consts.DEVICE_OWNER_ROUTER_GW,
+          l3_db.RouterPort.port_type != lib_consts.DEVICE_OWNER_ROUTER_SNAT,
+          models_v2.IPAllocation.subnet_id == models_v2.Subnet.id,
+          models_v2.Subnet.network_id != BgpSpeakerNetworkBinding.network_id,
+          models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+          models_v2.SubnetPool.address_scope_id.in_(address_scope_ids),
+          models_v2.Subnet.ip_version == BgpSpeakerNetworkBinding.ip_version,
+          BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id,
+          BgpSpeaker.advertise_tenant_networks == sa.sql.true()]
+
+    def _nexthop_ip_addresses_by_binding_query(self, context,
+                                               network_id, bgp_speaker_id):
+        """Return the subquery for locating nexthops by binding network"""
+        nexthops_query = context.session.query(
+                                            l3_db.RouterPort.router_id,
+                                            models_v2.IPAllocation.ip_address,
+                                            models_v2.Subnet.ip_version)
+        filters = self._next_hop_ip_addresses_by_binding_filters(
+                                                               network_id,
+                                                               bgp_speaker_id)
+        nexthops_query = nexthops_query.filter(*filters)
+        return nexthops_query
+
+    def _next_hop_ip_addresses_by_binding_filters(self,
+                                                  network_id,
+                                                  bgp_speaker_id):
+        """Return the filters for querying nexthops by binding network"""
+        address_scope = aliased(address_scope_db.AddressScope,
+                                name='address_scope')
+        return [models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id,
+            models_v2.IPAllocation.subnet_id == models_v2.Subnet.id,
+            BgpSpeaker.id == bgp_speaker_id,
+            BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id,
+            BgpSpeakerNetworkBinding.network_id == network_id,
+            models_v2.Subnet.network_id == BgpSpeakerNetworkBinding.network_id,
+            models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id,
+            models_v2.SubnetPool.address_scope_id == address_scope.id,
+            models_v2.Subnet.ip_version == address_scope.ip_version,
+            l3_db.RouterPort.port_type == DEVICE_OWNER_ROUTER_GW]
+
+    def _nexthop_ip_addresses_by_bgp_speaker_query(self, context,
+                                                   bgp_speaker_id):
+        """Return the subquery for locating nexthops by BGP speaker"""
+        nexthops_query = context.session.query(
+                                            l3_db.RouterPort.router_id,
+                                            models_v2.IPAllocation.ip_address,
+                                            models_v2.Subnet.ip_version)
+        filters = self._next_hop_ip_addresses_by_bgp_speaker_filters(
+                                                               bgp_speaker_id)
+        nexthops_query = nexthops_query.filter(*filters)
+        return nexthops_query
+
+    def _next_hop_ip_addresses_by_bgp_speaker_filters(self, bgp_speaker_id):
+        """Return the filters for querying nexthops by BGP speaker"""
+        router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                               name='router_attrs')
+
+        return [l3_db.RouterPort.port_type == DEVICE_OWNER_ROUTER_GW,
+           l3_db.RouterPort.router_id == router_attrs.router_id,
+           BgpSpeakerNetworkBinding.network_id == models_v2.Subnet.network_id,
+           BgpSpeakerNetworkBinding.ip_version == models_v2.Subnet.ip_version,
+           BgpSpeakerNetworkBinding.bgp_speaker_id == bgp_speaker_id,
+           models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id,
+           models_v2.IPAllocation.subnet_id == models_v2.Subnet.id]
+
+    def _tenant_prefixes_by_router(self, context, router_id, bgp_speaker_id):
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(models_v2.Subnet.cidr.distinct())
+            filters = self._tenant_prefixes_by_router_filters(router_id,
+                                                              bgp_speaker_id)
+            query = query.filter(*filters)
+            return [x[0] for x in query.all()]
+
+    def _tenant_prefixes_by_router_filters(self, router_id, bgp_speaker_id):
+        binding = aliased(BgpSpeakerNetworkBinding, name='network_binding')
+        subnetpool = aliased(models_v2.SubnetPool,
+                             name='subnetpool')
+        router_attrs = aliased(l3_attrs_db.RouterExtraAttributes,
+                               name='router_attrs')
+        return [models_v2.Subnet.id == models_v2.IPAllocation.subnet_id,
+                models_v2.Subnet.subnetpool_id == subnetpool.id,
+                l3_db.RouterPort.router_id == router_id,
+                l3_db.Router.id == l3_db.RouterPort.router_id,
+                l3_db.Router.id == router_attrs.router_id,
+                l3_db.Router.gw_port_id == models_v2.Port.id,
+                models_v2.Port.network_id == binding.network_id,
+                binding.bgp_speaker_id == BgpSpeaker.id,
+                l3_db.RouterPort.port_type == DEVICE_OWNER_ROUTER_INTF,
+                models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id]
+
+    def _tenant_prefixes_by_router_interface(self,
+                                             context,
+                                             router_port_id,
+                                             bgp_speaker_id):
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(models_v2.Subnet.cidr.distinct())
+            filters = self._tenant_prefixes_by_router_filters(router_port_id,
+                                                              bgp_speaker_id)
+            query = query.filter(*filters)
+            return [x[0] for x in query.all()]
+
+    def _tenant_prefixes_by_router_port_filters(self,
+                                                router_port_id,
+                                                bgp_speaker_id):
+        binding = aliased(BgpSpeakerNetworkBinding, name='network_binding')
+        return [models_v2.Subnet.id == models_v2.IPAllocation.subnet_id,
+                l3_db.RouterPort.port_id == router_port_id,
+                l3_db.Router.id == l3_db.RouterPort.router_id,
+                l3_db.Router.gw_port_id == models_v2.Port.id,
+                models_v2.Port.network_id == binding.network_id,
+                binding.bgp_speaker_id == BgpSpeaker.id,
+                models_v2.Subnet.ip_version == binding.ip_version,
+                l3_db.RouterPort.port_type == DEVICE_OWNER_ROUTER_INTF,
+                models_v2.IPAllocation.port_id == l3_db.RouterPort.port_id]
+
+    def _bgp_speakers_for_gateway_network(self, context, network_id):
+        """Return all BgpSpeakers for the given gateway network"""
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(BgpSpeaker)
+            query = query.filter(
+                  BgpSpeakerNetworkBinding.network_id == network_id,
+                  BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id)
+            try:
+                return query.all()
+            except sa_exc.NoResultFound:
+                raise bgp_ext.NetworkNotBound(network_id=network_id)
+
+    def _bgp_speaker_for_gateway_network(self, context,
+                                         network_id, ip_version):
+        """Return the BgpSpeaker by given gateway network and ip_version"""
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(BgpSpeaker)
+            query = query.filter(
+                  BgpSpeakerNetworkBinding.network_id == network_id,
+                  BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id,
+                  BgpSpeakerNetworkBinding.ip_version == ip_version)
+            try:
+                return query.one()
+            except sa_exc.NoResultFound:
+                raise bgp_ext.NetworkNotBoundForIpVersion(
+                                                        network_id=network_id,
+                                                        ip_version=ip_version)
+
+    def _make_advertised_routes_list(self, routes):
+        route_list = ({'destination': x,
+                       'next_hop': y} for x, y in routes)
+        return route_list
+
+    def _route_list_from_prefixes_and_next_hop(self, routes, next_hop):
+        route_list = [{'destination': x,
+                       'next_hop': next_hop} for x in routes]
+        return route_list
+
+    def _host_route_list_from_tuples(self, ip_next_hop_tuples):
+        """Return the list of host routes given a list of (IP, nexthop)"""
+        return ({'destination': x + '/32',
+                 'next_hop': y} for x, y in ip_next_hop_tuples)

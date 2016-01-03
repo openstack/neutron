@@ -320,6 +320,22 @@ class NetworkClientJSON(service_client.ServiceClient):
         body = json.loads(body)
         return service_client.ResponseBody(resp, body)
 
+    def get_bgp_advertised_routes(self, bgp_speaker_id):
+        base_uri = '%s/bgp-speakers/%s/get_advertised_routes'
+        uri = base_uri % (self.uri_prefix, bgp_speaker_id)
+        resp, body = self.get(uri)
+        body = {'advertised_routes': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def get_bgp_router_routes(self, router_id):
+        base_uri = '%s/router-routes/%s'
+        uri = base_uri % (self.uri_prefix, router_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_list(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     # Common methods that are hard to automate
     def create_bulk_network(self, names, shared=False):
         network_list = [{'name': name, 'shared': shared} for name in names]

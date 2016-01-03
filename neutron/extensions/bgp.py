@@ -154,6 +154,11 @@ class InvalidBgpPeerMd5Authentication(exceptions.BadRequest):
     message = _("A password must be supplied when using auth_type md5.")
 
 
+class NetworkNotBoundForIpVersion(NetworkNotBound):
+    message = _("Network %(network_id)s is not bound to a IPv%(ip_version)s "
+                "BgpSpeaker.")
+
+
 class Bgp(extensions.ExtensionDescriptor):
 
     @classmethod
