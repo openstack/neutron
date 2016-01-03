@@ -1000,7 +1000,6 @@ class TestDnsmasq(TestBase):
         expected = [
             'dnsmasq',
             '--no-hosts',
-            '--no-resolv',
             '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % expected_pid_file,
@@ -1128,6 +1127,12 @@ class TestDnsmasq(TestBase):
                           '--log-dhcp',
                           ('--log-facility=%s' % dhcp_dns_log)],
                          network)
+
+    def test_spawn_cfg_no_local_resolv(self):
+        self.conf.set_override('dnsmasq_local_resolv', False)
+
+        self._test_spawn(['--conf-file=', '--no-resolv',
+                          '--domain=openstacklocal'])
 
     def test_spawn_max_leases_is_smaller_than_cap(self):
         self._test_spawn(

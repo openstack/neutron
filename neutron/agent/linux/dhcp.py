@@ -307,7 +307,6 @@ class Dnsmasq(DhcpLocalProcess):
         cmd = [
             'dnsmasq',
             '--no-hosts',
-            '--no-resolv',
             '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % pid_file,
@@ -384,6 +383,11 @@ class Dnsmasq(DhcpLocalProcess):
             cmd.extend(
                 '--server=%s' % server
                 for server in self.conf.dnsmasq_dns_servers)
+        else:
+            # We only look at 'dnsmasq_local_resolv' if 'dnsmasq_dns_servers'
+            # is not set, which explicitly overrides 'dnsmasq_local_resolv'.
+            if not self.conf.dnsmasq_local_resolv:
+                cmd.append('--no-resolv')
 
         if self.conf.dhcp_domain:
             cmd.append('--domain=%s' % self.conf.dhcp_domain)
