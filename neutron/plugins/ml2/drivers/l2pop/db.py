@@ -18,12 +18,11 @@ from oslo_utils import timeutils
 
 from neutron.common import constants as const
 from neutron.db import agents_db
-from neutron.db import common_db_mixin as base_db
 from neutron.db import models_v2
 from neutron.plugins.ml2 import models as ml2_models
 
 
-class L2populationDbMixin(base_db.CommonDbMixin):
+class L2populationDbMixin(object):
 
     def get_agent_ip_by_host(self, session, agent_host):
         agent = self.get_agent_by_host(session, agent_host)
