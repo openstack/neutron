@@ -16,7 +16,6 @@ import six
 
 from alembic import script as alembic_script
 from contextlib import contextmanager
-import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_base
@@ -102,11 +101,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     '''
 
     def setUp(self):
-        patch = mock.patch.dict('sys.modules', {
-            'heleosapi': mock.MagicMock(),
-        })
-        patch.start()
-        self.addCleanup(patch.stop)
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin=CORE_PLUGIN)

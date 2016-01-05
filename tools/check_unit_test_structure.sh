@@ -11,9 +11,6 @@ test_path=$neutron_path/$base_test_path
 test_files=$(find ${test_path} -iname 'test_*.py')
 
 ignore_regexes=(
-    # The following vendor plugins are not required to confrm to the
-    # structural requirements.
-    "^plugins/ibm.*$"
     # The following test is required for oslo.versionedobjects
     "^objects/test_objects.py$"
     # The following open source plugin tests are not actually unit
@@ -28,7 +25,6 @@ ignore_regexes=(
     "^plugins/ml2/test_tracked_resources.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_agent_scheduler.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_ovs_tunnel.py$"
-    "^plugins/openvswitch/test_agent_scheduler.py$"
 )
 
 error_count=0
