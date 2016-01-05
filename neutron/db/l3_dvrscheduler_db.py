@@ -500,6 +500,10 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                     event, resource, trigger, **removed_router_args)
             return
 
+        is_fixed_ips_changed = (
+            'fixed_ips' in new_port and
+            'fixed_ips' in original_port and
+            new_port['fixed_ips'] != original_port['fixed_ips'])
         is_new_port_binding_changed = (
             new_port[portbindings.HOST_ID] and
             (original_port[portbindings.HOST_ID] !=
@@ -508,7 +512,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             n_utils.is_dvr_serviced(new_device_owner)):
             l3plugin.dvr_update_router_addvm(context, new_port)
             l3plugin.dvr_vmarp_table_update(context, new_port, "add")
-        elif kwargs.get('mac_address_updated'):
+        elif kwargs.get('mac_address_updated') or is_fixed_ips_changed:
             l3plugin.dvr_vmarp_table_update(context, new_port, "add")
 
 
