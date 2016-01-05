@@ -59,7 +59,19 @@ AuthGroup = [
                      "number of concurrent test processes."),
     cfg.ListOpt('tempest_roles',
                 help="Roles to assign to all users created by tempest",
-                default=[])
+                default=[]),
+    cfg.StrOpt('admin_username',
+               help="Administrative Username to use for "
+                    "Keystone API requests."),
+    cfg.StrOpt('admin_tenant_name',
+               help="Administrative Tenant name to use for Keystone API "
+                    "requests."),
+    cfg.StrOpt('admin_password',
+               help="API key to use when authenticating as admin.",
+               secret=True),
+    cfg.StrOpt('admin_domain_name',
+               help="Admin domain name for authentication (Keystone V3)."
+                    "The same domain applies to user and project"),
 ]
 
 identity_group = cfg.OptGroup(name='identity',
@@ -118,18 +130,6 @@ IdentityGroup = [
                secret=True),
     cfg.StrOpt('alt_domain_name',
                help="Alternate domain name for authentication (Keystone V3)."
-                    "The same domain applies to user and project"),
-    cfg.StrOpt('admin_username',
-               help="Administrative Username to use for "
-                    "Keystone API requests."),
-    cfg.StrOpt('admin_tenant_name',
-               help="Administrative Tenant name to use for Keystone API "
-                    "requests."),
-    cfg.StrOpt('admin_password',
-               help="API key to use when authenticating as admin.",
-               secret=True),
-    cfg.StrOpt('admin_domain_name',
-               help="Admin domain name for authentication (Keystone V3)."
                     "The same domain applies to user and project"),
 ]
 
@@ -1148,6 +1148,18 @@ class TempestConfigPrivate(object):
         self.input_scenario = cfg.CONF['input-scenario']
         self.cli = cfg.CONF.cli
         self.negative = cfg.CONF.negative
+
+        self.identity.admin_username = self.auth.admin_username
+        self.identity.admin_password = self.auth.admin_password
+        self.identity.admin_tenant_name = self.auth.admin_tenant_name
+        self.identity.admin_domain_name = self.auth.admin_domain_name
+        self.identity.password = self.auth.admin_password
+        self.identity.tenant_name = 'demo'
+        self.identity.username = 'demo'
+        self.identity.alt_username = 'alt_demo'
+        self.identity.alt_tenant_name = 'alt_demo'
+        self.identity.alt_password = self.auth.admin_password
+
         cfg.CONF.set_default('domain_name', self.identity.admin_domain_name,
                              group='identity')
         cfg.CONF.set_default('alt_domain_name',
