@@ -684,6 +684,24 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._populate_subnets_for_ports(context, port_list)
         return port_list
 
+    def _generate_arp_table_and_notify_agent(
+        self, context, fixed_ip, mac_address, notifier):
+        """Generates the arp table entry and notifies the l3 agent."""
+        ip_address = fixed_ip['ip_address']
+        subnet = fixed_ip['subnet_id']
+        filters = {'fixed_ips': {'subnet_id': [subnet]}}
+        ports = self._core_plugin.get_ports(context, filters=filters)
+        for port in ports:
+            if port['device_owner'] == l3_const.DEVICE_OWNER_DVR_INTERFACE:
+                router_id = port['device_id']
+                router_dict = self._get_router(context, router_id)
+                if router_dict.extra_attributes.distributed:
+                    arp_table = {'ip_address': ip_address,
+                                 'mac_address': mac_address,
+                                 'subnet_id': subnet}
+                    notifier(context, router_id, arp_table)
+                    return
+
     def update_arp_entry_for_dvr_service_port(
             self, context, port_dict, action):
         """Notify L3 agents of ARP table entry for dvr service port.
@@ -697,24 +715,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if not (n_utils.is_dvr_serviced(port_dict['device_owner']) and
                 port_dict['fixed_ips']):
             return
-        ip_address = port_dict['fixed_ips'][0]['ip_address']
-        subnet = port_dict['fixed_ips'][0]['subnet_id']
-        filters = {'fixed_ips': {'subnet_id': [subnet]}}
-        ports = self._core_plugin.get_ports(context, filters=filters)
-        for port in ports:
-            if port['device_owner'] == l3_const.DEVICE_OWNER_DVR_INTERFACE:
-                router_id = port['device_id']
-                router_dict = self._get_router(context, router_id)
-                if router_dict.extra_attributes.distributed:
-                    arp_table = {'ip_address': ip_address,
-                                 'mac_address': port_dict['mac_address'],
-                                 'subnet_id': subnet}
-                    if action == "add":
-                        notify_action = self.l3_rpc_notifier.add_arp_entry
-                    elif action == "del":
-                        notify_action = self.l3_rpc_notifier.del_arp_entry
-                    notify_action(context, router_id, arp_table)
-                    return
+        changed_fixed_ips = port_dict['fixed_ips']
+        for fixed_ip in changed_fixed_ips:
+            if action == "add":
+                notifier = self.l3_rpc_notifier.add_arp_entry
+            elif action == "del":
+                notifier = self.l3_rpc_notifier.del_arp_entry
+            else:
+                return
+
+            self._generate_arp_table_and_notify_agent(
+                context, fixed_ip, port_dict['mac_address'], notifier)
 
     def delete_csnat_router_interface_ports(self, context,
                                             router, subnet_id=None):
