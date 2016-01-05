@@ -1,0 +1,16 @@
+---
+features:
+  - By default, the DHCP agent provides a network MTU value to instances using
+    the corresponding DHCP option if core plugin calculates the value. For ML2
+    plugin, calculation mechanism is enabled by setting [ml2] path_mtu option
+    to a value greater than zero.
+upgrade:
+  - To disable, use [DEFAULT] advertise_mtu = False.
+other:
+  - For overlay networks managed by ML2 core plugin, the calculation algorithm
+    subtracts the overlay protocol overhead from the value of [ml2] path_mtu.
+    The DHCP agent provides the resulting (smaller) MTU to instances using
+    overlay networks.
+  - The [DEFAULT] advertise_mtu option must contain a consistent value on all
+    hosts running the DHCP agent.
+  - Typical networks can use [ml2] path_mtu = 1500.
