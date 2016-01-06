@@ -27,6 +27,8 @@ from neutron.objects.qos import rule as rule_obj_impl
 
 @obj_base.VersionedObjectRegistry.register
 class QosPolicy(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
 
     db_model = qos_db_model.QosPolicy
 

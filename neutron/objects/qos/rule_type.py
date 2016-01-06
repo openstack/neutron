@@ -28,6 +28,8 @@ class RuleTypeField(obj_fields.BaseEnumField):
 
 @obj_base.VersionedObjectRegistry.register
 class QosRuleType(base.NeutronObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
 
     fields = {
         'type': RuleTypeField(),

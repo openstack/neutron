@@ -36,8 +36,10 @@ class FakeModel(object):
         pass
 
 
-@obj_base.VersionedObjectRegistry.register
+@obj_base.VersionedObjectRegistry.register_if(False)
 class FakeNeutronObject(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
 
     db_model = FakeModel
 
