@@ -24,11 +24,10 @@ from neutron.common import constants
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_db
 from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.extensions import metering
 
 
-class MeteringLabelRule(model_base.BASEV2, models_v2.HasId):
+class MeteringLabelRule(model_base.BASEV2, model_base.HasId):
     direction = sa.Column(sa.Enum('ingress', 'egress',
                                   name='meteringlabels_direction'))
     remote_ip_prefix = sa.Column(sa.String(64))
@@ -39,7 +38,7 @@ class MeteringLabelRule(model_base.BASEV2, models_v2.HasId):
     excluded = sa.Column(sa.Boolean, default=False, server_default=sql.false())
 
 
-class MeteringLabel(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class MeteringLabel(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
     rules = orm.relationship(MeteringLabelRule, backref="label",

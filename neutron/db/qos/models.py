@@ -20,7 +20,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 
 
-class QosPolicy(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class QosPolicy(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
     description = sa.Column(sa.String(attrs.DESCRIPTION_MAX_LEN))
@@ -65,7 +65,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
                                cascade='delete', lazy='joined'))
 
 
-class QosBandwidthLimitRule(models_v2.HasId, model_base.BASEV2):
+class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
     __tablename__ = 'qos_bandwidth_limit_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',

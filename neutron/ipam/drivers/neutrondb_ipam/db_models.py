@@ -18,7 +18,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm as sa_orm
 
 from neutron.db import model_base
-from neutron.db import models_v2
 
 # Database models used by the neutron DB IPAM driver
 
@@ -65,7 +64,7 @@ class IpamAvailabilityRange(model_base.BASEV2):
 # models_v2.IPAllocationPool is the representation of IP allocation pools in
 # the management layer and therefore its evolution is subject to APIs backward
 # compatibility policies
-class IpamAllocationPool(model_base.BASEV2, models_v2.HasId):
+class IpamAllocationPool(model_base.BASEV2, model_base.HasId):
     """Representation of an allocation pool in a Neutron subnet."""
 
     ipam_subnet_id = sa.Column(sa.String(36),
@@ -83,7 +82,7 @@ class IpamAllocationPool(model_base.BASEV2, models_v2.HasId):
         return "%s - %s" % (self.first_ip, self.last_ip)
 
 
-class IpamSubnet(model_base.BASEV2, models_v2.HasId):
+class IpamSubnet(model_base.BASEV2, model_base.HasId):
     """Association between IPAM entities and neutron subnets.
 
     For subnet data persistency - such as cidr and gateway IP, the IPAM
