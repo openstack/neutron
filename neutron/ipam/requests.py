@@ -110,16 +110,18 @@ class SubnetRequest(object):
             if (gw_ip.version == 4 or (gw_ip.version == 6
                                        and not gw_ip.is_link_local())):
                 if self.gateway_ip not in subnet_cidr:
-                    raise ValueError(_("gateway_ip is not in the subnet"))
+                    raise ipam_exc.IpamValueInvalid(_(
+                                        "gateway_ip %s is not in the subnet") %
+                                        self.gateway_ip)
 
         if self.allocation_pools:
             if subnet_cidr.version != self.allocation_pools[0].version:
-                raise ValueError(_("allocation_pools use the wrong ip "
-                                   "version"))
+                raise ipam_exc.IpamValueInvalid(_(
+                                "allocation_pools use the wrong ip version"))
             for pool in self.allocation_pools:
                 if pool not in subnet_cidr:
-                    raise ValueError(_("allocation_pools are not in the "
-                                       "subnet"))
+                    raise ipam_exc.IpamValueInvalid(_(
+                                "allocation_pools are not in the subnet"))
 
 
 class AnySubnetRequest(SubnetRequest):
