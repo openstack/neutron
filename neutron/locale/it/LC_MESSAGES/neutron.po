@@ -1,15 +1,13 @@
 # Italian translations for neutron.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
-# Translators:
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: it\n"
@@ -18,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -155,10 +153,6 @@ msgid "'%s' is not a dictionary"
 msgstr "'%s' non è un dizionario"
 
 #, python-format
-msgid "'%s' is not a integer"
-msgstr "'%s' non è un numero intero"
-
-#, python-format
 msgid "'%s' is not a list"
 msgstr "'%s' non è un elenco"
 
@@ -289,9 +283,6 @@ msgstr ""
 "Consentire l'esecuzione di richieste SSL (https) non protette sui metadati "
 "nova"
 
-msgid "Allowed physical networks"
-msgstr "Reti fisiche consentite"
-
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair deve contenere ip_address"
 
@@ -350,9 +341,6 @@ msgstr "MAC base: %s"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "Il bridge %(bridge)s non esiste."
-
-msgid "Brocade plugin raised exception, check logs"
-msgstr "Brocade plugin ha rilevato un'eccezione; controllare i log"
 
 msgid "Bulk operation not supported"
 msgstr "Operazione massiccia non supportata"
@@ -531,9 +519,6 @@ msgstr ""
 
 msgid "Currently distributed HA routers are not supported."
 msgstr "I router HA attualmente distribuiti non sono supportati."
-
-msgid "Currently unused"
-msgstr "Attualmente non utilizzato"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -727,16 +712,6 @@ msgstr ""
 "metadati. Il valore predefinito dell'opzione viene dedotto da "
 "metadata_proxy_user: il logwatch è abilitato se metadata_proxy_user è l'ID/"
 "nomedell'utente operativo dell'agent."
-
-msgid ""
-"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
-"Collected data can by retrieved by other apps and services, e.g.: "
-"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
-msgstr ""
-"Abilita le raccolte di metrica per le porte switch utilizzando la metrica "
-"delle API Hyper-V. I dati raccolti possono essere richiamati da altre "
-"applicazioni e servizi, ad esempio: Ceilometer. Richiede Hyper-V / Windows "
-"Server 2012 e successive"
 
 msgid "Encountered an empty component."
 msgstr "È stato rilevato un componente vuoto."
@@ -1112,10 +1087,6 @@ msgid "Invalid service provider format"
 msgstr "Formato del provider del servizio non valido"
 
 #, python-format
-msgid "Invalid tunnel type specified: %s"
-msgstr "Specificato un tipo tunnel non valido: %s"
-
-#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr ""
@@ -1132,9 +1103,6 @@ msgstr "Keepalived non ha eseguito la nuova generazione"
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "Chiave %(key)s nell'associazione: '%(mapping)s' non univoca"
-
-msgid "Keystone URL."
-msgstr "URL del keystone."
 
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
@@ -1153,13 +1121,6 @@ msgstr ""
 "specificano nomi physical_network utilizzabili per le reti tenant e provider "
 "VLAN, come anche gli intervalli di tag VLAN su ciascuno disponibile per "
 "l'assegnazione alle reti tenant."
-
-msgid ""
-"List of <physical_network>:<vswitch> where the physical networks can be "
-"expressed with wildcards, e.g.: .\"*:external\""
-msgstr ""
-"Elenco di <physical_network>:<vswitch> dove le reti fisiche possono essere "
-"espresse con i caratteri jolly, ad esempio: .\"*:external\""
 
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
@@ -1297,9 +1258,6 @@ msgstr ""
 "Nome della regione nova da utilizzare. Utile nel caso in cui keystone "
 "gestisce più di una regione."
 
-msgid "Name of tenant admin user."
-msgstr "Nome dell'utente admin tenant."
-
 msgid "Name of the FWaaS Driver"
 msgstr "Nome del driver FWaaS"
 
@@ -1397,12 +1355,6 @@ msgstr ""
 "Non sono presenti agent L3 sufficienti per garantire HA. Sono richiesti "
 "minimo %(min_agents)s, disponibili %(num_agents)s."
 
-msgid "Nova VM flavor for instances of Vyatta vRouter."
-msgstr "Flavor VM Nova per le istanze di Vyatta vRouter."
-
-msgid "Nova image id for instances of Vyatta vRouter."
-msgstr "ID immagine Nova per le istanze di Vyatta vRouter."
-
 msgid "Number of RPC worker processes for service"
 msgstr "Numero di processi RPC worker per servizio"
 
@@ -1437,20 +1389,6 @@ msgstr ""
 "illimitato."
 
 msgid ""
-"Number of seconds between consecutive Nova queries when waiting for router "
-"instance status change."
-msgstr ""
-"Numero di secondi di intervallo tra query Nova consecutive in attesa della "
-"modifica di stato dell'istanza del router."
-
-msgid ""
-"Number of seconds between consecutive Vyatta vRouter queries when waiting "
-"for router instance boot."
-msgstr ""
-"Numero di secondi di intervallo tra query Vyatta vRouter consecutive in "
-"attesa dell'avvio dell'istanza del router."
-
-msgid ""
 "Number of seconds between sending events to nova if there are any events to "
 "send."
 msgstr ""
@@ -1459,20 +1397,6 @@ msgstr ""
 
 msgid "Number of seconds to keep retrying to listen"
 msgstr "Numero di secondi per trattenere i nuovi tentativi di ascolto"
-
-msgid ""
-"Number of seconds to wait for Nova to activate instance before setting "
-"resource to error state."
-msgstr ""
-"Numero di secondi di attesa per Nova affinché attivi l'istanza prima di "
-"impostare la risorsa sullo stato di errore."
-
-msgid ""
-"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
-"to error state."
-msgstr ""
-"Numero di secondi di attesa per Vyatta vRouter per l'avvio prima di "
-"impostare la risorsa sullo stato di errore."
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -1492,12 +1416,6 @@ msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr ""
 "Numero di sottoreti consentite per tenant. Un valore negativo indica un "
 "numero illimitato."
-
-msgid "OS Type of the switch"
-msgstr "Tipo Sistema operativo dello switch"
-
-msgid "OS Version number"
-msgstr "Numero versione Sistema operativo"
 
 msgid "Only admin can view or configure quota"
 msgstr "Solo admin può visualizzare o configurare una quota"
@@ -1596,9 +1514,6 @@ msgstr ""
 msgid "Private key of client certificate."
 msgstr "Chiave privata del certificato client."
 
-msgid "Private vswitch name used for local networks"
-msgstr "Nome privato vswitch utilizzato per le reti locali"
-
 #, python-format
 msgid "Probe %s deleted"
 msgstr "Probe %s eliminato"
@@ -1616,10 +1531,6 @@ msgstr "Il processo non è in esecuzione."
 msgid "Protocol to access nova metadata, http or https"
 msgstr "Protocollo per accedere ai metadati nova, http o https"
 
-#, python-format
-msgid "Provider name is limited by 255 characters: %s"
-msgstr "Il nome del provider è limitato a 255 caratteri: %s"
-
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
@@ -1627,9 +1538,6 @@ msgstr ""
 "Intervallo di secondi per ritardare casualmente l'avvio di attività "
 "periodiche programma di pianificazione per ridurre la modifica data/ora. "
 "(Disabilitare impostando questa opzione a 0)"
-
-msgid "Rbridge id of provider edge router(s)"
-msgstr "ID Rbridge del router PE (Provider Edge)"
 
 msgid "Remote metadata server experienced an internal server error."
 msgstr "Il server di metadati remoto ha rilevato un errore di server interno."
@@ -1838,17 +1746,6 @@ msgstr ""
 "devono essere risolti prima dell'aggiornamento del database."
 
 msgid ""
-"Specifies the maximum number of retries to enable Hyper-V's port metrics "
-"collection. The agent will try to enable the feature once every "
-"polling_interval period for at most metrics_max_retries or until it "
-"succeedes."
-msgstr ""
-"Specifica il numero massimo di tentativi per abilitare la collezione di "
-"metriche porta Hyper-V's L'agent tenterà di abilitare la funzione una volta "
-"ogni periodo di polling_interval per un massimo di metrics_max_retries o "
-"fino a quando non ha esito positivo."
-
-msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
 msgstr ""
@@ -1895,9 +1792,6 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Tenant %(tenant_id)s non consentito per creare %(resource)s su questa rete"
 
-msgid "Tenant admin password."
-msgstr "Password admin tenant."
-
 msgid "Tenant network creation is not enabled."
 msgstr "La creazione della rete tenant non è consentita."
 
@@ -1916,17 +1810,8 @@ msgstr ""
 "Il CIDR della rete HA specificato nel file di configurazione non è valido; "
 "%(cidr)s."
 
-msgid "The SSH password to use"
-msgstr "La password SSH da utilizzare"
-
-msgid "The SSH username to use"
-msgstr "Il nome utente SSH da utilizzare"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "La porta UDP da utilizzare per i tunnel VXLAN."
-
-msgid "The address of the host to SSH to"
-msgstr "L'indirizzo dell'host per SSH su"
 
 msgid "The advertisement interval in seconds"
 msgstr "L'intervallo di annuncio in secondi"
@@ -1992,9 +1877,6 @@ msgid ""
 "The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
 msgstr ""
 "La rete %(network_id)s non è stata ospitata dall'agent DHCP %(agent_id)s."
-
-msgid "The network interface to use when creating a port"
-msgstr "L'interfaccia di rete da utilizzare durante la creazione di una porta"
 
 #, python-format
 msgid "The number of allowed address pair exceeds the maximum %(quota)s."
@@ -2075,9 +1957,6 @@ msgstr ""
 "Questa modalità deve essere utilizzata per un agent L3 in esecuzione su un "
 "nodo centralizzato (o in distribuzioni a singolo host, ad esempio devstack)"
 
-msgid "Top-level directory for maintaining dhcp state"
-msgstr "Directory di livello superiore per conservare lo stato dhcp"
-
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
@@ -2092,14 +1971,8 @@ msgstr "Valore IP tunnel IP richiesto dal plugin ML2"
 msgid "Tunnel bridge to use."
 msgstr "Bridge del tunnel da utilizzare."
 
-msgid "Tunneling cannot be enabled without a valid local_ip."
-msgstr "Tunneling non può essere abilitata senza un local_ip valido."
-
 msgid "URL to database"
 msgstr "URL per il database"
-
-msgid "UUID of tenant that holds Vyatta vRouter instances."
-msgstr "L'UUID del tenant che contiene le istanze Vyatta vRouter."
 
 #, python-format
 msgid "Unable to access %s"
@@ -2347,12 +2220,6 @@ msgstr "Il programma di convalida '%s' non eiste."
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "Valore %(value)s nell'associazione: '%(mapping)s' non univoco"
-
-msgid "Vyatta vRouter login credentials"
-msgstr "Credenziali di accesso Vyatta vRouter"
-
-msgid "Vyatta vRouter management network id."
-msgstr "ID di rete di gestione Vyatta vRouter."
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "

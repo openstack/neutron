@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-08-20 03:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -56,9 +56,6 @@ msgstr ""
 msgid "Agent Initialization Failed"
 msgstr "Ajan İlklendirme Başarısız"
 
-msgid "Agent failed to create agent config map"
-msgstr "Ajan ajan yapılandırma haritasını oluşturmada başarısız"
-
 #, python-format
 msgid "An error occurred while communicating with async process [%s]."
 msgstr "[%s] asenkron işlem ile haberleşirken bir hata oluştu."
@@ -85,9 +82,6 @@ msgid ""
 msgstr ""
 "%(physical_network)s fiziksel ağı için %(bridge)s köprüsü mevcut değil. Ajan "
 "sonlandırıldı!"
-
-msgid "Brocade NOS driver error"
-msgstr "Brocade NOS sürücüsü hatası"
 
 #, python-format
 msgid ""
@@ -185,10 +179,6 @@ msgstr ""
 
 msgid "Check for native OVSDB support failed."
 msgstr "Doğal OVSDB desteği kontrolü başarısız."
-
-#, python-format
-msgid "Connect failed to switch: %s"
-msgstr "Anahtara bağlantı başarısız: %s"
 
 #, python-format
 msgid "Could not delete %(res)s %(id)s."

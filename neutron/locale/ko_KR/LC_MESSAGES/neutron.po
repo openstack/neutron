@@ -1,18 +1,13 @@
 # Korean (South Korea) translations for neutron.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
-# Translators:
-# Seong-ho Cho <darkcircle.0426@gmail.com>, 2013
-# Sungjin Kang <potopro@gmail.com>, 2013
-# ChungYoung Cho <openstack.cho@gmail.com>, 2015. #zanata
-# Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-10-31 07:48+0000\n"
 "Last-Translator: ChungYoung Cho <openstack.cho@gmail.com>\n"
 "Language: ko_KR\n"
@@ -21,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -160,10 +155,6 @@ msgid "'%s' is not a dictionary"
 msgstr "'%s'이(가) 사전이 아님"
 
 #, python-format
-msgid "'%s' is not a integer"
-msgstr "'%s'이(가) 정수가 아님"
-
-#, python-format
 msgid "'%s' is not a list"
 msgstr "'%s'이(가) 목록이 아님"
 
@@ -289,9 +280,6 @@ msgstr "정렬 사용 허용"
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "nova 메타데이터에 대한 비보안 SSL(https) 요청 수행 허용"
 
-msgid "Allowed physical networks"
-msgstr "실제 네트워크가 허용됨"
-
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair에 ip_address가 포함되어야 함"
 
@@ -349,9 +337,6 @@ msgstr "기본 MAC: %s"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "%(bridge)s 브릿지가 존재하지 않습니다. "
-
-msgid "Brocade plugin raised exception, check logs"
-msgstr "Brocade 플러그인에서 예외 발생, 로그를 확인하십시오."
 
 msgid "Bulk operation not supported"
 msgstr "벌크 오퍼레이션은 지원되지 않음"
@@ -518,9 +503,6 @@ msgstr ""
 
 msgid "Currently distributed HA routers are not supported."
 msgstr "현재 분배된 HA 라우터는 지원되지 않습니다. "
-
-msgid "Currently unused"
-msgstr "현재 사용하지 않음"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -705,15 +687,6 @@ msgstr ""
 "션을 사용해야 합니다. 옵션 기본값은 metadata_proxy_user에서 도출된 값입니다. "
 "감시 로그는 metadata_proxy_user가 에이전트 유효 사용자 ID/이름인 경우 사용 설"
 "정됩니다."
-
-msgid ""
-"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
-"Collected data can by retrieved by other apps and services, e.g.: "
-"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
-msgstr ""
-"Hyper-V의 메트릭 API를 사용하여 스위치 포트에 대한 메트릭 콜렉션을 사용 가능"
-"하게 합니다. 수집된 데이터는 다른 애플리케이션 및 서비스(예: Ceilometer)를 사"
-"용하여 검색할 수 있습니다. Hyper-V / Windows Server 2012 이상이 필요합니다."
 
 msgid "Encountered an empty component."
 msgstr "비어 있는 컴포넌트가 발생했습니다."
@@ -1064,10 +1037,6 @@ msgid "Invalid service provider format"
 msgstr "올바르지 않은 서비스 제공자 형식"
 
 #, python-format
-msgid "Invalid tunnel type specified: %s"
-msgstr "지정된 터널 유형이 올바르지 않음: %s"
-
-#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr ""
@@ -1084,9 +1053,6 @@ msgstr "유휴되면 다시 파생되지 않음"
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "'%(mapping)s' 맵핑의 %(key)s 키가 고유하지 않음"
-
-msgid "Keystone URL."
-msgstr "키스톤 URL."
 
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
@@ -1105,13 +1071,6 @@ msgstr ""
 "자와 테넌트 네트워크에 사용할 수 있는 실제 네트워크 이름을 지정하는  "
 "<physical_network>:<vlan_min>:<vlan_max> 또는 <physical_network>의 목록입니"
 "다."
-
-msgid ""
-"List of <physical_network>:<vswitch> where the physical networks can be "
-"expressed with wildcards, e.g.: .\"*:external\""
-msgstr ""
-"실제 네트워크가 와일드카드(예: .\"*:external\")로 표현될 수 있는 "
-"<physical_network>:<vswitch> 목록"
 
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
@@ -1239,9 +1198,6 @@ msgstr ""
 "사용할 nova 리젼의 이름입니다. 키스톤이 둘 이상의 리젼을 관리할 경우 유용합니"
 "다."
 
-msgid "Name of tenant admin user."
-msgstr "테넌트 관리자의 이름입니다."
-
 msgid "Name of the FWaaS Driver"
 msgstr "FWaaS 드라이버 이름"
 
@@ -1337,12 +1293,6 @@ msgstr ""
 "HA를 확인하기 위해 사용 가능한 13개의 에이전트가 충분하지 않습니다. 최소 "
 "%(min_agents)s, 사용 가능한 %(num_agents)s이(가) 필요합니다."
 
-msgid "Nova VM flavor for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter의 인스턴스에 대한 Nova VM 플레이버입니다. "
-
-msgid "Nova image id for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter의 인스턴스에 대한 Nova 이미지 ID입니다. "
-
 msgid "Number of RPC worker processes for service"
 msgstr "서비스에 대한 RPC 작업자 프로세스 수"
 
@@ -1367,39 +1317,12 @@ msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr "테넌트당 허용된 라우터 수입니다. 음수 값은 무제한을 의미합니다."
 
 msgid ""
-"Number of seconds between consecutive Nova queries when waiting for router "
-"instance status change."
-msgstr ""
-"라우터 인스턴스 상태가 변경되기를 기다릴 때 연속 Nova 조회 간의 시간(초)입니"
-"다."
-
-msgid ""
-"Number of seconds between consecutive Vyatta vRouter queries when waiting "
-"for router instance boot."
-msgstr ""
-"라우터 인스턴스가 부팅될 때 연속 Vyatta vRouter 조회 간의시간(초)입니다."
-
-msgid ""
 "Number of seconds between sending events to nova if there are any events to "
 "send."
 msgstr "보낼 이벤트가 있는 경우 nova에 전송하는 이벤트 간의 시간(초)입니다."
 
 msgid "Number of seconds to keep retrying to listen"
 msgstr "감청 재시도 계속할 시간"
-
-msgid ""
-"Number of seconds to wait for Nova to activate instance before setting "
-"resource to error state."
-msgstr ""
-"자원을 오류 상태로 설정하기 전에 Nova에서 인스턴스를 활성화할 때까지 기다리"
-"는 시간(초)입니다."
-
-msgid ""
-"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
-"to error state."
-msgstr ""
-"자원을 오류 상태로 설정하기 전에 Vyatta vRouter에 대해기다리는 시간(초)입니"
-"다."
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -1416,12 +1339,6 @@ msgstr "테넌트당 허용되는 서브넷 수입니다. 음수 값은 무제�
 
 msgid "OK"
 msgstr "OK"
-
-msgid "OS Type of the switch"
-msgstr "스위치의 OS 유형"
-
-msgid "OS Version number"
-msgstr "OS 버전 번호"
 
 msgid "Only admin can view or configure quota"
 msgstr "관리자만이 할당량을 보거나 구성할 수 있습니다. "
@@ -1518,9 +1435,6 @@ msgstr ""
 msgid "Private key of client certificate."
 msgstr "클라이언트 인증서의 개인 키입니다."
 
-msgid "Private vswitch name used for local networks"
-msgstr "로컬 네트워크에 사용된 개인용 vswitch 이름"
-
 #, python-format
 msgid "Probe %s deleted"
 msgstr "%s 프로브가 삭제되었음"
@@ -1538,19 +1452,12 @@ msgstr "프로세스가 실행 중이지 않습니다."
 msgid "Protocol to access nova metadata, http or https"
 msgstr "nova 메타데이터에 액세스하기 위한 프로토콜, http 또는 https"
 
-#, python-format
-msgid "Provider name is limited by 255 characters: %s"
-msgstr "제공자 이름은 255자로 제한됨: %s"
-
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 "몰리지 않도록 주기적 태스크 스케줄러를 시작할 때 무작위로 지연할 시간의 범위"
 "(초)입니다. (0으로 설정하여 사용 안함) "
-
-msgid "Rbridge id of provider edge router(s)"
-msgstr "제공자 에지 라우터의 Rbridge ID"
 
 msgid "Remote metadata server experienced an internal server error."
 msgstr "원격 메타데이터 서버에서 내부 서버 오류가 발생했습니다. "
@@ -1744,17 +1651,6 @@ msgstr ""
 "안 그룹을 해결해야 합니다."
 
 msgid ""
-"Specifies the maximum number of retries to enable Hyper-V's port metrics "
-"collection. The agent will try to enable the feature once every "
-"polling_interval period for at most metrics_max_retries or until it "
-"succeedes."
-msgstr ""
-"Hyper-V의 포트 메트릭 콜렉션을 사용으로 설정하기 위한 재시도 최대 수를 지정합"
-"니다. 에이전트는 최대 metrics_max_retries번 재시도하는 동안 또는 재시도가 성"
-"공할 때까지 polling_interval 기간마다 한 번씩 해당 기능을 사용으로 설정하려"
-"고 시도합니다."
-
-msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
 msgstr ""
@@ -1801,9 +1697,6 @@ msgstr ""
 "%(tenant_id)s 테넌트는 이 네트워크에 %(resource)s을(를) 작성하도록 허용되지 "
 "않음"
 
-msgid "Tenant admin password."
-msgstr "테넌트 관리자의 비밀번호입니다."
-
 msgid "Tenant network creation is not enabled."
 msgstr "테넌트 네트워크 작성은 사용되지 않습니다. "
 
@@ -1822,17 +1715,8 @@ msgstr ""
 "구성 파일에 지정된 HA 네트워크 CIDR이 올바르지 않습니다.%(cidr)s과(와) 연관되"
 "어 있습니다."
 
-msgid "The SSH password to use"
-msgstr "사용할 SSH 비밀번호"
-
-msgid "The SSH username to use"
-msgstr "사용할 SSH 사용자 이름"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN 터널에 사용하는 UDP 포트"
-
-msgid "The address of the host to SSH to"
-msgstr "SSH에 대한 호스트의 주소"
 
 msgid "The advertisement interval in seconds"
 msgstr "광고 간격(초)"
@@ -1899,9 +1783,6 @@ msgid ""
 msgstr ""
 "DHCP 에이전트 %(agent_id)s에서 %(network_id)s 네트워크를 호스트하지 않습니"
 "다. "
-
-msgid "The network interface to use when creating a port"
-msgstr "포트 작성 시 사용할 네트워크 인터페이스"
 
 #, python-format
 msgid "The number of allowed address pair exceeds the maximum %(quota)s."
@@ -1976,9 +1857,6 @@ msgstr ""
 "원을 사용합니다. 중앙 노드에서(또는 devstack과 같은 단일 호스트 배치에서) 실"
 "행 중인 L3 에이전트에는 이 모드를 사용해야 합니다."
 
-msgid "Top-level directory for maintaining dhcp state"
-msgstr "dhcp 상태 유지보수를 위한 최상위 레벨 디렉토리"
-
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
@@ -1992,14 +1870,8 @@ msgstr "ML2 플러그인에 터널 IP 값이 필요함"
 msgid "Tunnel bridge to use."
 msgstr "사용할 터널 브릿지입니다."
 
-msgid "Tunneling cannot be enabled without a valid local_ip."
-msgstr "올바른 로컬 IP가 없으면 터널링을 사용할 수 없습니다. "
-
 msgid "URL to database"
 msgstr "데이터베이스에 대한 URL"
-
-msgid "UUID of tenant that holds Vyatta vRouter instances."
-msgstr "Vyatta vRouter 인스턴스를 보유한 테넌트의 UUID입니다."
 
 #, python-format
 msgid "Unable to access %s"
@@ -2242,12 +2114,6 @@ msgstr "유효성 검증기 '%s'이(가) 없습니다. "
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "'%(mapping)s' 맵핑의 %(value)s 값이 고유하지 않음"
-
-msgid "Vyatta vRouter login credentials"
-msgstr "Vyatta vRouter 로그인 신임 정보"
-
-msgid "Vyatta vRouter management network id."
-msgstr "Vyatta vRouter 관리 네트워크 ID입니다."
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
