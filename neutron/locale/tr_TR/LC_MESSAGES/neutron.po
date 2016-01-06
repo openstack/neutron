@@ -1,17 +1,13 @@
 # Turkish (Turkey) translations for neutron.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
-# Translators:
-# ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
-# Alper Çiftçi <alprciftci@gmail.com>, 2015
-# Andreas Jaeger <jaegerandi@gmail.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-09-16 08:28+0000\n"
 "Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
 "Language: tr_TR\n"
@@ -20,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -171,10 +167,6 @@ msgid "'%s' is not a dictionary"
 msgstr "'%s' bir dizin değil"
 
 #, python-format
-msgid "'%s' is not a integer"
-msgstr "'%s' tam sayı değil"
-
-#, python-format
 msgid "'%s' is not a list"
 msgstr "'%s' liste değil"
 
@@ -311,9 +303,6 @@ msgstr "Sıralama kullanımına izin ver"
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
 
-msgid "Allowed physical networks"
-msgstr "İzin verilen fiziksel ağlar"
-
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair ip_address içermeli"
 
@@ -374,9 +363,6 @@ msgstr "Gövde geçersiz veri içeriyor"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "Köprü %(bridge)s mevcut değil."
-
-msgid "Brocade plugin raised exception, check logs"
-msgstr "Brocade eklentisi istisna yükseltti, kayıtları kontrol edin"
 
 msgid "Bulk operation not supported"
 msgstr "Toplu işlem desteklenmiyor"
@@ -566,9 +552,6 @@ msgstr ""
 
 msgid "Currently distributed HA routers are not supported."
 msgstr "Şu anda dağıtık HA yönlendiriciler desteklenmiyor."
-
-msgid "Currently unused"
-msgstr "Şu an kullanılmıyor"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -803,16 +786,6 @@ msgstr ""
 "metadata_proxy_user'den anlaşılır: metadata_proxy_user ajan etkin kullanıcı "
 "id/ismi ise izleme kaydı etkinleştirilir."
 
-msgid ""
-"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
-"Collected data can by retrieved by other apps and services, e.g.: "
-"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
-msgstr ""
-"Hyper-V'nin ölçüm API'sini kullanarak anahtar bağlantı noktaları için ölçüm "
-"toplamayı etkinleştirir. Toplanan veri diğer uygulama ve servislerce "
-"alınabilir, örn.:Silometre. Hyper-V / Windows Sunucu 2012 ve yukarısına "
-"ihtiyaç duyar"
-
 msgid "End of VLAN range is less than start of VLAN range"
 msgstr "VLAN aralığı sonu VLAN aralığı başından daha küçük"
 
@@ -834,9 +807,6 @@ msgstr "%s dns adresinin ayrıştırılmasında hata"
 #, python-format
 msgid "Error while reading %s"
 msgstr "%s okunurken hata"
-
-msgid "Exceeded maximum amount of fixed ips per port"
-msgstr "Azami bağlantı noktası başına sabit ip miktarı aşıldı"
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Mevcut önekler yeni öneklerin alt kümesi olmalıdır"
@@ -1197,10 +1167,6 @@ msgid "Invalid service provider format"
 msgstr "Geçersiz servis sağlayıcı biçimi"
 
 #, python-format
-msgid "Invalid tunnel type specified: %s"
-msgstr "Geçersiz tünel türü belirtildi: %s"
-
-#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr ""
@@ -1217,9 +1183,6 @@ msgstr "Keepalived yeniden başlamadı"
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "'%(mapping)s' eşleştirmesindeki %(key)s anahtarı benzersiz değil"
-
-msgid "Keystone URL."
-msgstr "Keystone URL."
 
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
@@ -1238,13 +1201,6 @@ msgstr ""
 "isimlerini belirten <physical_network>:<vlan_min>:<vlan_max> veya "
 "<physical_network> listesi, aynı zamanda her birinde kiracı ağlara ayırma "
 "için VLAN etiketleri aralıkları."
-
-msgid ""
-"List of <physical_network>:<vswitch> where the physical networks can be "
-"expressed with wildcards, e.g.: .\"*:external\""
-msgstr ""
-"Fiziksel ağların joker karakterlerle ifade edilebildiği <physical_network>:"
-"<vswitch> listesi, örn.: .\"*:external\""
 
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
@@ -1370,9 +1326,6 @@ msgstr ""
 "Kullanılacak nova gölgesinin ismi. Keystone birden fazla bölgeyi yönetiyorsa "
 "kullanışlıdır."
 
-msgid "Name of tenant admin user."
-msgstr "Kiracı yönetici kullanıcısı ismi."
-
 msgid "Name of the FWaaS Driver"
 msgstr "FWaaS Sürücüsü ismi"
 
@@ -1473,12 +1426,6 @@ msgstr ""
 "HA'dan emin olmak için yeterli l3 ajanı yok. Asgari %(min_agents)s gerekli, "
 "kullanılabilir %(num_agents)s var."
 
-msgid "Nova VM flavor for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter sunucuları için Nova VM niteliği."
-
-msgid "Nova image id for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter sunucuları için Nova imaj kimliği."
-
 msgid ""
 "Number of DHCP agents scheduled to host a tenant network. If this number is "
 "greater than 1, the scheduler automatically assigns multiple DHCP agents for "
@@ -1519,20 +1466,6 @@ msgstr ""
 "anlamına gelir."
 
 msgid ""
-"Number of seconds between consecutive Nova queries when waiting for router "
-"instance status change."
-msgstr ""
-"Yönlendirici sunucu durum değişikliği için beklerken takip eden Nova "
-"sorguları arasındaki saniye sayısı."
-
-msgid ""
-"Number of seconds between consecutive Vyatta vRouter queries when waiting "
-"for router instance boot."
-msgstr ""
-"Yönlendirici sunucusunun önyüklemesini beklerken art arda gelen Vyatta "
-"vRouter sorguları arasındaki saniye sayısı."
-
-msgid ""
 "Number of seconds between sending events to nova if there are any events to "
 "send."
 msgstr ""
@@ -1541,20 +1474,6 @@ msgstr ""
 
 msgid "Number of seconds to keep retrying to listen"
 msgstr "Dinlemeye devam etmek için saniye sayısı"
-
-msgid ""
-"Number of seconds to wait for Nova to activate instance before setting "
-"resource to error state."
-msgstr ""
-"Kaynağı hata durumuna ayarlamadan önce Nova'nın sunucuyu etkinleştirmek için "
-"bekleyeceği saniye sayısı."
-
-msgid ""
-"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
-"to error state."
-msgstr ""
-"Kaynağı hata durumuna sokmadan öcne Vyatta vRouter önyüklemesi için kaç "
-"saniye bekleneceği."
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -1591,12 +1510,6 @@ msgstr ""
 
 msgid "OK"
 msgstr "Tamam"
-
-msgid "OS Type of the switch"
-msgstr "Anahtarın OS türü"
-
-msgid "OS Version number"
-msgstr "OS Sürüm numarası"
 
 msgid "One or more ports have an IP allocation from this subnet."
 msgstr "Bir ya da fazla bağlantı noktasının bu alt ağdan ayrılmış IP'si var."
@@ -1698,9 +1611,6 @@ msgstr ""
 msgid "Private key of client certificate."
 msgstr "İstemci sertifikasının özel anahtarı."
 
-msgid "Private vswitch name used for local networks"
-msgstr "Yerel ağlar için kullanılan özel vswitch ismi"
-
 #, python-format
 msgid "Probe %s deleted"
 msgstr "Deneme %s silindi"
@@ -1718,19 +1628,12 @@ msgstr "Süreç çalışmıyor."
 msgid "Protocol to access nova metadata, http or https"
 msgstr "Nova metadata'ya erişmek için iletişim kuralı, http veya https"
 
-#, python-format
-msgid "Provider name is limited by 255 characters: %s"
-msgstr "Sağlayıcı ismi 255 karakterle sınırlıdır: %s"
-
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 "Devresel görev zamanlayıcıyı başlatırken izdiham yaratmayı engellemek için "
 "beklenecek rastgele saniye aralığı. (0 olarak ayarlayıp kapatabilirsiniz)"
-
-msgid "Rbridge id of provider edge router(s)"
-msgstr "Sağlayıcı uç yönlendirici(ler)inin Rbridge kimliği"
 
 msgid "Remote metadata server experienced an internal server error."
 msgstr "Uzak metadata sunucu dahil sunucu hatası yaşadı."
@@ -1959,17 +1862,6 @@ msgstr ""
 "grupları çözülmeli."
 
 msgid ""
-"Specifies the maximum number of retries to enable Hyper-V's port metrics "
-"collection. The agent will try to enable the feature once every "
-"polling_interval period for at most metrics_max_retries or until it "
-"succeedes."
-msgstr ""
-"Hyper-V'nin bağlantı noktası ölçüm toplamasını etkinleştirmek için azami "
-"deneme sayısını belirtir. Ajan özelliği her polling_interval devresi boyunca "
-"bir kere en fazla metrics_max_retries kere veya başarana kadar "
-"etkinleştirmeye çalışacaktır."
-
-msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
 msgstr ""
@@ -2028,9 +1920,6 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Kiracı %(tenant_id)s'in bu ağda %(resource)s oluşturmasına izin verilmiyor"
 
-msgid "Tenant admin password."
-msgstr "Kiracı yönetici parolası."
-
 msgid "Tenant network creation is not enabled."
 msgstr "Kiracı ağ oluşturma etkin değil."
 
@@ -2048,12 +1937,6 @@ msgid ""
 msgstr ""
 "Yapılandırma dosyasında belirtilen HA Ağ CIDR'i geçerli değil; %(cidr)s."
 
-msgid "The SSH password to use"
-msgstr "Kullanılacak SSH parolası"
-
-msgid "The SSH username to use"
-msgstr "Kullanılacak SSH kullanıcı adı"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN tünelleri için kullanılacak UDP bağlantı noktası."
 
@@ -2061,9 +1944,6 @@ msgstr "VXLAN tünelleri için kullanılacak UDP bağlantı noktası."
 msgid ""
 "The address allocation request could not be satisfied because: %(reason)s"
 msgstr "Adres ayırma isteği sağlanamadı çünkü: %(reason)s"
-
-msgid "The address of the host to SSH to"
-msgstr "SSH yapılacak istemci adresi"
 
 msgid "The advertisement interval in seconds"
 msgstr "Saniye cinsinden duyuru aralığı"
@@ -2126,9 +2006,6 @@ msgstr "Ağ %(network_id)s zaten %(agent_id)s DHCP Ajanı tarafından sunuluyor.
 msgid ""
 "The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
 msgstr "Ağ %(network_id)s %(agent_id)s DHCP ajanı tarafından sunulmuyor."
-
-msgid "The network interface to use when creating a port"
-msgstr "Bağlantı noktası oluştururken kullanılacak ağ arayüzü"
 
 #, python-format
 msgid "The number of allowed address pair exceeds the maximum %(quota)s."
@@ -2211,9 +2088,6 @@ msgstr ""
 "desteğini etkinleştirir.  Bu kip merkezi bir düğümde çalışan L3 ajanı için "
 "kullanılmalıdır (veya tek-istemcili kurulumlarda, örn. devstack)"
 
-msgid "Top-level directory for maintaining dhcp state"
-msgstr "Dhcp durumunu yönetmek için üst düzey dizin"
-
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
@@ -2228,14 +2102,8 @@ msgstr "Tünel IP değerine ML2 eklentisi tarafından ihtiyaç duyuluyor"
 msgid "Tunnel bridge to use."
 msgstr "Kullanılacak tünel köprüsü."
 
-msgid "Tunneling cannot be enabled without a valid local_ip."
-msgstr "Tünelleme geçerli bir local_ip olmadan etkinleştirilemez."
-
 msgid "URL to database"
 msgstr "Veri tabanı URL'si"
-
-msgid "UUID of tenant that holds Vyatta vRouter instances."
-msgstr "Vyatta vRouter arayüzlerini tutan kiracının UUID'si."
 
 #, python-format
 msgid "Unable to access %s"
@@ -2490,12 +2358,6 @@ msgstr "Onaylayan '%s' mevcut değil."
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "'%(mapping)s' eşleştirmesindeki %(value)s değeri benzersiz değil"
-
-msgid "Vyatta vRouter login credentials"
-msgstr "Vyatta vRouter giriş kimlik bilgileri"
-
-msgid "Vyatta vRouter management network id."
-msgstr "Vyatta vRouter yönetim ağ kimliği."
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "

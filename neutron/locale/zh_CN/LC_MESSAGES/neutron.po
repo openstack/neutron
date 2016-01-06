@@ -1,22 +1,13 @@
 # Chinese (Simplified, China) translations for neutron.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
-# Translators:
-# Allerson Yao, 2015
-# Zhong Chaoliang <charliezon@gmail.com>, 2013
-# lyndon zhang <Dandanmylady@gmail.com>, 2014
-# MA QIANG <qiama@cisco.com>, 2014
-# 汪军 <wwyyzz08@sina.com>, 2015
-# 陈展奇 <chenzq1604@163.com>, 2013-2014
-# 颜海峰 <yanheven@gmail.com>, 2014
-# Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: zh_Hans_CN\n"
@@ -25,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -157,10 +148,6 @@ msgid "'%s' is not a dictionary"
 msgstr "“%s”不是字典"
 
 #, python-format
-msgid "'%s' is not a integer"
-msgstr "“%s”不是整数"
-
-#, python-format
 msgid "'%s' is not a list"
 msgstr "“%s”不是列表"
 
@@ -285,9 +272,6 @@ msgstr "允许使用排序"
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "允许对 nova 元数据执行非安全 SSL (HTTPS) 请求"
 
-msgid "Allowed physical networks"
-msgstr "允许物理网络"
-
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair 必须包含 ip_address"
 
@@ -343,9 +327,6 @@ msgstr "基本 MAC：%s"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "网桥 %(bridge)s 不存在。"
-
-msgid "Brocade plugin raised exception, check logs"
-msgstr "Brocade 插件发生异常，请查看日志"
 
 msgid "Bulk operation not supported"
 msgstr "成批操作不受支持"
@@ -507,9 +488,6 @@ msgstr "当前网关 IP %(ip_address)s 已由端口 %(port_id)s 使用。无法�
 
 msgid "Currently distributed HA routers are not supported."
 msgstr "当前，分布式 HA 路由器不受支持。"
-
-msgid "Currently unused"
-msgstr "当前未使用"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -684,15 +662,6 @@ msgstr ""
 "文件时，应当禁用日志监控，如果对元数据代理日志文件启用了 logrotate，那么必须"
 "使用 copytruncate logrotate 选项。从 metadata_proxy_user 推论出选项缺省值：如"
 "果 metadata_proxy_user 是代理有效用户标识/名称，那么启用了监控日志。"
-
-msgid ""
-"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
-"Collected data can by retrieved by other apps and services, e.g.: "
-"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
-msgstr ""
-"通过使用 Hyper-V 的度量值 API，会为交换机端口启用度量值收集。收集的数据可通过"
-"其他应用程序和服务（例如 Ceilometer）检索到。需要 Hyper-V / Windows Server "
-"2012 和更高版本"
 
 msgid "Encountered an empty component."
 msgstr "遇到空的组件。"
@@ -1028,10 +997,6 @@ msgid "Invalid service provider format"
 msgstr "服务提供程序格式无效"
 
 #, python-format
-msgid "Invalid tunnel type specified: %s"
-msgstr "指定的隧道类型无效：%s"
-
-#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr "ICMP %(field)s (%(attr)s) 的值 %(value)s 无效。它必须为 0 到 255。"
@@ -1046,9 +1011,6 @@ msgstr "保持活动的未重新衍生"
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "映射“%(mapping)s”中的键 %(key)s 不唯一"
-
-msgid "Keystone URL."
-msgstr "Keystone URL。"
 
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
@@ -1066,13 +1028,6 @@ msgstr ""
 "为VLAN提供商和租户网络提供<physical_network>:<vlan_min>:<vlan_max> 或 "
 "<physical_network>专属物理网络名称，从事实现每个租户网络可以分配到相应的VLAN"
 "标识。"
-
-msgid ""
-"List of <physical_network>:<vswitch> where the physical networks can be "
-"expressed with wildcards, e.g.: .\"*:external\""
-msgstr ""
-"<physical_network>:<vswitch> 的列表，其中物理网络可使用通配符来表示，例"
-"如：“*:external”"
 
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
@@ -1198,9 +1153,6 @@ msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr "要使用的 nova 区域的名称。如果 keystone 管理多个区域，那么这很有用。"
 
-msgid "Name of tenant admin user."
-msgstr "租户管理员用户的名称。"
-
 msgid "Name of the FWaaS Driver"
 msgstr "FWaaS 驱动程序的名称"
 
@@ -1296,12 +1248,6 @@ msgstr ""
 "l3 个代理并非足够可用于确保 HA。需要的最小数目为 %(min_agents)s，可用的数目"
 "为 %(num_agents)s。"
 
-msgid "Nova VM flavor for instances of Vyatta vRouter."
-msgstr "用于 Vyatta vRouter 的实例的 Nova VM 实例类型。"
-
-msgid "Nova image id for instances of Vyatta vRouter."
-msgstr "用于 Vyatta vRouter 的实例的 Nova 映像标识。"
-
 msgid "Number of RPC worker processes for service"
 msgstr "针对服务的RPC执行程序编号。"
 
@@ -1326,32 +1272,12 @@ msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr "每个租户允许的路由器数。负值表示无限。"
 
 msgid ""
-"Number of seconds between consecutive Nova queries when waiting for router "
-"instance status change."
-msgstr "当等待路由器实例状态更改时，在连续 Nova 查询之间的秒数。"
-
-msgid ""
-"Number of seconds between consecutive Vyatta vRouter queries when waiting "
-"for router instance boot."
-msgstr "当等待路由器实例引导时，在连续 Vyatta vRouter 查询之间的秒数。"
-
-msgid ""
 "Number of seconds between sending events to nova if there are any events to "
 "send."
 msgstr "前后两次将事件发送至 nova 的间隔秒数（如果有事件要发送）。"
 
 msgid "Number of seconds to keep retrying to listen"
 msgstr "若干秒保持重试监听"
-
-msgid ""
-"Number of seconds to wait for Nova to activate instance before setting "
-"resource to error state."
-msgstr "在将资源设置为错误状态之前，用于等待 Nova 激活实例的秒数。"
-
-msgid ""
-"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
-"to error state."
-msgstr "在将资源设置为错误状态之前，用于等待 Vyatta vRouter 进行引导的秒数。"
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -1375,12 +1301,6 @@ msgstr "每个租户允许的子网数。负值表示无限。"
 
 msgid "OK"
 msgstr "确定"
-
-msgid "OS Type of the switch"
-msgstr "交换机的操作系统类型"
-
-msgid "OS Version number"
-msgstr "操作系统版本号"
 
 msgid "Only admin can view or configure quota"
 msgstr "只有管理员才能查看或配置配额"
@@ -1468,9 +1388,6 @@ msgstr "必须启用端口安全性，并且端口必须具有 IP 地址，以�
 msgid "Private key of client certificate."
 msgstr "客户机证书的专用密钥。"
 
-msgid "Private vswitch name used for local networks"
-msgstr "用于本地网络的私有 vswitch 名称"
-
 #, python-format
 msgid "Probe %s deleted"
 msgstr "已删除探测器 %s"
@@ -1488,18 +1405,11 @@ msgstr "进程未运行"
 msgid "Protocol to access nova metadata, http or https"
 msgstr "用于访问 nova 元数据的协议（HTTP 或 HTTPS）"
 
-#, python-format
-msgid "Provider name is limited by 255 characters: %s"
-msgstr "提供程序名称的限制长度为 255 个字符：%s"
-
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 "当启动定期任务调度程序以减少拥堵时要随机延迟的秒数范围.(通过设置为 0 来禁用)"
-
-msgid "Rbridge id of provider edge router(s)"
-msgstr "提供程序 Edge 路由器的 rbridge 标识"
 
 msgid "Remote metadata server experienced an internal server error."
 msgstr "远程元数据服务器遇到内部服务器错误。"
@@ -1684,16 +1594,6 @@ msgstr ""
 "解析所有重复“default”安全组。"
 
 msgid ""
-"Specifies the maximum number of retries to enable Hyper-V's port metrics "
-"collection. The agent will try to enable the feature once every "
-"polling_interval period for at most metrics_max_retries or until it "
-"succeedes."
-msgstr ""
-"指定为启用 Hyper-V 的端口指标集合而进行重试的最大次数。代理将尝试对每个 "
-"polling_interval 时间段启用一次该功能，最多进行 metrics_max_retries 次或直到"
-"成功。"
-
-msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
 msgstr "在请求中指定除了已认证租户之外的“tenant_id”需要管理特权"
@@ -1735,9 +1635,6 @@ msgstr "用于 vxlan 接口协议包的 TTL。"
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "不允许租户 %(tenant_id)s 在此网络上创建 %(resource)s"
 
-msgid "Tenant admin password."
-msgstr "租户管理员密码。"
-
 msgid "Tenant network creation is not enabled."
 msgstr "未启用租户网络创建。"
 
@@ -1754,17 +1651,8 @@ msgid ""
 "%(cidr)s."
 msgstr "配置文件中指定的 HA 网络 CIDR 无效；%(cidr)s。"
 
-msgid "The SSH password to use"
-msgstr "使用的SSH密码"
-
-msgid "The SSH username to use"
-msgstr "使用的SSH用户名"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "UDP端口用于VXLAN隧道"
-
-msgid "The address of the host to SSH to"
-msgstr "要 SSH 至的主机的地址"
 
 msgid "The advertisement interval in seconds"
 msgstr "通告间隔（秒）"
@@ -1820,9 +1708,6 @@ msgstr "网络 %(network_id)s 已由 DHCP 代理 %(agent_id)s 主管。"
 msgid ""
 "The network %(network_id)s is not hosted by the DHCP agent %(agent_id)s."
 msgstr "网络 %(network_id)s 未由 DHCP 代理 %(agent_id)s 主管。"
-
-msgid "The network interface to use when creating a port"
-msgstr "创建端口时要使用的网络接口"
 
 #, python-format
 msgid "The number of allowed address pair exceeds the maximum %(quota)s."
@@ -1892,9 +1777,6 @@ msgstr ""
 "理。“dvr_snat”- 它允许中央 SNAT 支持与 DVR 配合使用。此方法必须用于中央节点或"
 "单主机部署（例如，devstack）上运行的 L3代理程序"
 
-msgid "Top-level directory for maintaining dhcp state"
-msgstr "存在用于维持 dhcp 状态的顶级目录"
-
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
@@ -1908,14 +1790,8 @@ msgstr "ML2 插件需要隧道 IP 值"
 msgid "Tunnel bridge to use."
 msgstr "要使用的隧道网桥。"
 
-msgid "Tunneling cannot be enabled without a valid local_ip."
-msgstr "在缺少有效 local_ip 的情况下，无法启用隧道传送。"
-
 msgid "URL to database"
 msgstr "指向数据库的 URL"
-
-msgid "UUID of tenant that holds Vyatta vRouter instances."
-msgstr "拥有 Vyatta vRouter 实例的租户的 UUID。"
 
 #, python-format
 msgid "Unable to access %s"
@@ -2137,12 +2013,6 @@ msgstr "验证器“%s”不存在。"
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "映射“%(mapping)s”中的值 %(value)s 不唯一"
-
-msgid "Vyatta vRouter login credentials"
-msgstr "Vyatta vRouter 登录凭证"
-
-msgid "Vyatta vRouter management network id."
-msgstr "Vyatta vRouter 管理网络标识。"
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "

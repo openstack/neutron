@@ -8,9 +8,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -85,10 +85,6 @@ msgstr "Ajan ve eklenti uyumsuz!"
 
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "Ajan tüneli eklentiyle uyumsuz!"
-
-#, python-format
-msgid "Allocated vlan (%d) from the pool"
-msgstr "Havuzdan vlan (%d) ayrıldı"
 
 msgid ""
 "Allow sorting is enabled because native pagination requires native sorting"

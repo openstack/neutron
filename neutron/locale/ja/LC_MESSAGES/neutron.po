@@ -1,20 +1,13 @@
 # Japanese translations for neutron.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2016 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
-# Translators:
-# Akihiro Motoki <amotoki@gmail.com>, 2013
-# Sasuke(Kyohei MORIYAMA) <>, 2015
-# NachiUeno <nati.ueno@gmail.com>, 2013
-# Tomoyuki KATO <tomo@dream.daynight.jp>, 2013
-# Akihiro Motoki <amotoki@gmail.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.dev524\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-29 06:23+0000\n"
+"POT-Creation-Date: 2016-01-06 06:29+0000\n"
 "PO-Revision-Date: 2015-09-28 04:52+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
@@ -23,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -163,10 +156,6 @@ msgid "'%s' is not a dictionary"
 msgstr "'%s' はディクショナリーではありません"
 
 #, python-format
-msgid "'%s' is not a integer"
-msgstr "'%s' は整数ではありません"
-
-#, python-format
 msgid "'%s' is not a list"
 msgstr "'%s' はリストではありません"
 
@@ -300,9 +289,6 @@ msgstr ""
 "Nova メタデータに対する非セキュアな SSL (https) 要求を実行することを許可しま"
 "す"
 
-msgid "Allowed physical networks"
-msgstr "許可された物理ネットワーク"
-
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair には ip_address が含まれていなければなりません"
 
@@ -361,9 +347,6 @@ msgstr "ベース MAC: %s"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "ブリッジ %(bridge)s は存在しません。"
-
-msgid "Brocade plugin raised exception, check logs"
-msgstr "Brocade プラグインで例外が発生しました。ログを確認してください"
 
 msgid "Bulk operation not supported"
 msgstr "バルク操作はサポートされていません"
@@ -539,9 +522,6 @@ msgstr ""
 
 msgid "Currently distributed HA routers are not supported."
 msgstr "現在、分散 HA ルーターはサポートされていません。"
-
-msgid "Currently unused"
-msgstr "現在未使用"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -734,16 +714,6 @@ msgstr ""
 "フォルト値は metadata_proxy_user から推測されます。監視ログは、"
 "metadata_proxy_user がエージェント有効ユーザーの ID または名前である場合に有"
 "効になります。"
-
-msgid ""
-"Enables metrics collections for switch ports by using Hyper-V's metric APIs. "
-"Collected data can by retrieved by other apps and services, e.g.: "
-"Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
-msgstr ""
-"このオプションにより、Hyper-V のメトリック API を使用することでスイッチポート"
-"のメトリックを収集できるようになります。収集されたデータは、他のアプリケー"
-"ションやサービス (例: 雲高計) が取得できるデータです。Hyper-V / Windows "
-"Server 2012 以上が必要となります。"
 
 msgid "Encountered an empty component."
 msgstr "空のコンポーネントが検出されました。"
@@ -1108,10 +1078,6 @@ msgid "Invalid service provider format"
 msgstr "サービスプロバイダーの指定形式が無効です"
 
 #, python-format
-msgid "Invalid tunnel type specified: %s"
-msgstr "無効なトンネルタイプが指定されました: %s"
-
-#, python-format
 msgid ""
 "Invalid value for ICMP %(field)s (%(attr)s) %(value)s. It must be 0 to 255."
 msgstr ""
@@ -1128,9 +1094,6 @@ msgstr "keepalived が再作成されませんでした"
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "マッピング '%(mapping)s' 内のキー %(key)s が固有ではありません"
-
-msgid "Keystone URL."
-msgstr "Keystone URL。"
 
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
@@ -1149,13 +1112,6 @@ msgstr ""
 "このリストには、VLAN プロバイダー/テナントネットワークに使用できる "
 "physical_network 名が指定されるだけでなく、テナントネットワークに割り振ること"
 "ができる各物理ネットワークの VLAN タグの範囲も指定されます。"
-
-msgid ""
-"List of <physical_network>:<vswitch> where the physical networks can be "
-"expressed with wildcards, e.g.: .\"*:external\""
-msgstr ""
-"<physical_network>:<vswitch> のリスト。物理ネットワークはワイルドカードを使用"
-"して表すことができます (例: .\"*:external\")"
 
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
@@ -1290,9 +1246,6 @@ msgid ""
 msgstr ""
 "使用する nova 領域の名前。keystone で複数の領域を管理する場合に役立ちます。"
 
-msgid "Name of tenant admin user."
-msgstr "テナント管理ユーザーの名前。"
-
 msgid "Name of the FWaaS Driver"
 msgstr "FWaaS ドライバーの名前"
 
@@ -1391,12 +1344,6 @@ msgstr ""
 "HA を確実にするためには、l3 エージェントが十分ではありません。必要な最小数 "
 "%(min_agents)s、使用可能 %(num_agents)s。"
 
-msgid "Nova VM flavor for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter のインスタンスの Nova VM フレーバー。"
-
-msgid "Nova image id for instances of Vyatta vRouter."
-msgstr "Vyatta vRouter のインスタンスの Nova イメージ ID。"
-
 #, fuzzy
 msgid "Number of RPC worker processes for service"
 msgstr "サービスの RPC ワーカプロセスの数"
@@ -1424,40 +1371,12 @@ msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr "テナント当たりに許可されるルーター数。負の値は無制限を意味します。"
 
 msgid ""
-"Number of seconds between consecutive Nova queries when waiting for router "
-"instance status change."
-msgstr ""
-"ルーターインスタンス状況の変化を待機している場合の連続する Nova 照会間の秒"
-"数。"
-
-msgid ""
-"Number of seconds between consecutive Vyatta vRouter queries when waiting "
-"for router instance boot."
-msgstr ""
-"ルーターインスタンスブートを待機している場合の連続する Vyatta vRouter照会間の"
-"秒数。"
-
-msgid ""
 "Number of seconds between sending events to nova if there are any events to "
 "send."
 msgstr "送信するイベントがある場合の nova へのイベント送信間の秒数。"
 
 msgid "Number of seconds to keep retrying to listen"
 msgstr "listen を試行し続ける秒数"
-
-msgid ""
-"Number of seconds to wait for Nova to activate instance before setting "
-"resource to error state."
-msgstr ""
-"Nova によるインスタンスのアクティブ化を待機する秒数。これを超えるとリソースが"
-"エラー状態に設定されます。"
-
-msgid ""
-"Number of seconds to wait for Vyatta vRouter to boot before setting resource "
-"to error state."
-msgstr ""
-"Vyatta vRouter のブートを待機する秒数。これを超えるとリソースがエラー状態に設"
-"定されます。"
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -1475,12 +1394,6 @@ msgstr ""
 
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "テナント当たりに許可されるサブネット数。負の値は無制限を意味します。"
-
-msgid "OS Type of the switch"
-msgstr "スイッチの OS タイプ"
-
-msgid "OS Version number"
-msgstr "OS バージョン番号"
 
 msgid "Only admin can view or configure quota"
 msgstr "admin のみが割り当て量を表示または構成できます"
@@ -1576,9 +1489,6 @@ msgstr ""
 msgid "Private key of client certificate."
 msgstr "クライアント証明書の秘密鍵。"
 
-msgid "Private vswitch name used for local networks"
-msgstr "ローカルネットワークに使用されるプライベート VSWITCH 名"
-
 #, python-format
 msgid "Probe %s deleted"
 msgstr "プローブ %s が削除されました"
@@ -1596,19 +1506,12 @@ msgstr "プロセスが実行されていません"
 msgid "Protocol to access nova metadata, http or https"
 msgstr "Nova メタデータ、http、または https にアクセスするためのプロトコル"
 
-#, python-format
-msgid "Provider name is limited by 255 characters: %s"
-msgstr "プロバイダー名は 255 文字までで制限されています: %s"
-
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task scheduler "
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 "集中状態を緩和するため、定期タスクスケジューラーの開始時に挿入するランダムな"
 "遅延時間 (秒) の範囲。(無効にするには 0 に設定)"
-
-msgid "Rbridge id of provider edge router(s)"
-msgstr "プロバイダーエッジルーターのブリッジ ID。"
 
 msgid "Remote metadata server experienced an internal server error."
 msgstr "リモートメタデータサーバーで内部サーバーエラーが発生しました。"
@@ -1811,16 +1714,6 @@ msgstr ""
 "セキュリティーグループをすべて解決する必要があります。"
 
 msgid ""
-"Specifies the maximum number of retries to enable Hyper-V's port metrics "
-"collection. The agent will try to enable the feature once every "
-"polling_interval period for at most metrics_max_retries or until it "
-"succeedes."
-msgstr ""
-"Hyper-V のポートメトリックの収集を有効にするための最大再試行回数を指定しま"
-"す。エージェントでは、polling_interval 期間ごとに 1 回、最大で "
-"metrics_max_retries 回または成功するまで、機能の有効化が試行されます。"
-
-msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
 msgstr ""
@@ -1868,9 +1761,6 @@ msgstr ""
 "テナント %(tenant_id)s は、このネットワークでの %(resource)s の作成を許可され"
 "ていません"
 
-msgid "Tenant admin password."
-msgstr "テナント管理パスワード。"
-
 msgid "Tenant network creation is not enabled."
 msgstr "テナントネットワークの作成は使用できません。"
 
@@ -1887,17 +1777,8 @@ msgid ""
 "%(cidr)s."
 msgstr "構成ファイルに指定されている HA ネットワーク CIDR が無効です: %(cidr)s"
 
-msgid "The SSH password to use"
-msgstr "使用する SSH パスワード"
-
-msgid "The SSH username to use"
-msgstr "使用する SSH ユーザー名"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN トンネルで使用する UDP ポート。"
-
-msgid "The address of the host to SSH to"
-msgstr "SSH の実行先となるホストのアドレス"
 
 msgid "The advertisement interval in seconds"
 msgstr "通知間隔 (秒)"
@@ -1964,9 +1845,6 @@ msgid ""
 msgstr ""
 "ネットワーク %(network_id)s は DHCP エージェント %(agent_id)s によってホスト"
 "されていません。"
-
-msgid "The network interface to use when creating a port"
-msgstr "ポート作成時に使用するネットワークインターフェース"
 
 #, python-format
 msgid "The number of allowed address pair exceeds the maximum %(quota)s."
@@ -2045,10 +1923,6 @@ msgstr ""
 "す。中央ノード (または devstack などの単一ホストでのデプロイメント) 上で実行"
 "中の L3 の場合、このモードを使用する必要があります。"
 
-#, fuzzy
-msgid "Top-level directory for maintaining dhcp state"
-msgstr "DHCP の状態を維持するための最上位ディレクトリー"
-
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
@@ -2063,15 +1937,8 @@ msgstr "トンネル IP 値が ML2 プラグインに必要です"
 msgid "Tunnel bridge to use."
 msgstr "使用するトンネルブリッジ。"
 
-msgid "Tunneling cannot be enabled without a valid local_ip."
-msgstr ""
-"有効な local_ip を指定せずに、トンネリングを有効にすることはできません。"
-
 msgid "URL to database"
 msgstr "データベースへの URL"
-
-msgid "UUID of tenant that holds Vyatta vRouter instances."
-msgstr "Vyatta vRouter インスタンスを保持するテナントの UUID。"
 
 #, python-format
 msgid "Unable to access %s"
@@ -2315,12 +2182,6 @@ msgstr "バリデーター '%s' は存在しません。"
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "マッピング '%(mapping)s' 内の値 %(value)s が固有ではありません"
-
-msgid "Vyatta vRouter login credentials"
-msgstr "Vyatta vRouter ログイン資格情報"
-
-msgid "Vyatta vRouter management network id."
-msgstr "Vyatta vRouter 管理ネットワーク ID。"
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
