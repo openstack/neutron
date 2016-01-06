@@ -1,0 +1,8 @@
+---
+prelude: >
+    The Linuxbridge agent now supports l2 agent extensions.
+features:
+  - The Linuxbridge agent can now be extended by 3rd parties using a pluggable
+    mechanism.
+fixes:
+  - partially closes bug 1468803
