@@ -188,6 +188,7 @@ class TunnelTest(object):
         ]
 
         self.mock_map_tun_bridge_expected = [
+            mock.call.create(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
             mock.call.add_patch_port('phy-%s' % self.MAP_TUN_BRIDGE,
@@ -214,8 +215,7 @@ class TunnelTest(object):
 
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
-            mock.call.bridge_exists(mock.ANY),
-            nonzero(mock.call.bridge_exists()),
+            mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
             nonzero(mock.call.port_exists()),
@@ -627,6 +627,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.mock_map_tun_bridge_expected = [
+            mock.call.create(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
             mock.call.add_port(self.intb),
@@ -646,8 +647,7 @@ class TunnelTestUseVethInterco(TunnelTest):
 
         self.mock_tun_bridge_expected = [
             mock.call.set_agent_uuid_stamp(mock.ANY),
-            mock.call.bridge_exists(mock.ANY),
-            nonzero(mock.call.bridge_exists()),
+            mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
             nonzero(mock.call.port_exists()),

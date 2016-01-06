@@ -61,6 +61,8 @@ class AddBridgeCommand(BaseCommand):
             br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name',
                                        self.name, None)
             if br:
+                if self.datapath_type:
+                    br.datapath_type = self.datapath_type
                 return
         row = txn.insert(self.api._tables['Bridge'])
         row.name = self.name
