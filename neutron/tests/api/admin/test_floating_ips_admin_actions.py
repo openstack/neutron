@@ -140,7 +140,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
     @test.attr(type='smoke')
     @test.idempotent_id('332a8ae4-402e-4b98-bb6f-532e5a87b8e0')
     def test_create_floatingip_with_specified_ip_address(self):
-        fip = self.get_unused_ip(self.ext_net_id)
+        fip = self.get_unused_ip(self.ext_net_id, ip_version=4)
         body = self.admin_client.create_floatingip(
             floating_network_id=self.ext_net_id,
             floating_ip_address=fip)

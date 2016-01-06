@@ -544,7 +544,7 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         return service_profile
 
     @classmethod
-    def get_unused_ip(cls, net_id):
+    def get_unused_ip(cls, net_id, ip_version=None):
         """Get an unused ip address in a allocaion pool of net"""
         body = cls.admin_client.list_ports(network_id=net_id)
         ports = body['ports']
@@ -556,6 +556,8 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         subnets = body['subnets']
 
         for subnet in subnets:
+            if ip_version and subnet['ip_version'] != ip_version:
+                continue
             cidr = subnet['cidr']
             allocation_pools = subnet['allocation_pools']
             iterators = []
@@ -570,7 +572,7 @@ class BaseAdminNetworkTest(BaseNetworkTest):
                     for ip in net:
                         if ip not in (net.network, net.broadcast):
                             yield ip
-                iterators.append(_iterip)
+                iterators.append(iter(_iterip()))
 
             for iterator in iterators:
                 for ip in iterator:
