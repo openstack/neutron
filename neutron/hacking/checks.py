@@ -219,6 +219,15 @@ def check_assertempty(logical_line, filename):
             yield (0, msg)
 
 
+def check_assertisinstance(logical_line, filename):
+    if 'neutron/tests/' in filename:
+        if re.search(r"assertTrue\(\s*isinstance\(\s*[^,]*,\s*[^,]*\)\)",
+                     logical_line):
+            msg = ("N331: Use assertIsInstance(observed, type) instead "
+                   "of assertTrue(isinstance(observed, type))")
+            yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -233,3 +242,4 @@ def factory(register):
     register(no_mutable_default_args)
     register(check_assertfalse)
     register(check_assertempty)
+    register(check_assertisinstance)
