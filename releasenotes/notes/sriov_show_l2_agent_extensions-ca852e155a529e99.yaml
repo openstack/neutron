@@ -1,0 +1,3 @@
+---
+fixes:
+  - Loaded agent extensions of SR-IOV agent are now shown in agent state API.

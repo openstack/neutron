@@ -93,14 +93,6 @@ class SriovNicSwitchAgent(object):
         self.conf = cfg.CONF
         self.setup_eswitch_mgr(physical_devices_mappings,
                                exclude_devices)
-        configurations = {'device_mappings': physical_devices_mappings}
-        self.agent_state = {
-            'binary': 'neutron-sriov-nic-agent',
-            'host': self.conf.host,
-            'topic': n_constants.L2_AGENT_TOPIC,
-            'configurations': configurations,
-            'agent_type': n_constants.AGENT_TYPE_NIC_SWITCH,
-            'start_flag': True}
 
         # Stores port update notifications for processing in the main loop
         self.updated_devices = set()
@@ -114,6 +106,17 @@ class SriovNicSwitchAgent(object):
         self._setup_rpc()
         self.ext_manager = self._create_agent_extension_manager(
             self.connection)
+
+        configurations = {'device_mappings': physical_devices_mappings,
+                          'extensions': self.ext_manager.names()}
+        self.agent_state = {
+            'binary': 'neutron-sriov-nic-agent',
+            'host': self.conf.host,
+            'topic': n_constants.L2_AGENT_TOPIC,
+            'configurations': configurations,
+            'agent_type': n_constants.AGENT_TYPE_NIC_SWITCH,
+            'start_flag': True}
+
         # The initialization is complete; we can start receiving messages
         self.connection.consume_in_threads()
         # Initialize iteration counter
