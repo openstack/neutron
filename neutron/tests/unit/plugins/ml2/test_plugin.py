@@ -503,6 +503,43 @@ class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
+    def test_create_router_port_and_fail_create_postcommit(self):
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'create_port_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError(
+                                   method='create_port_postcommit')):
+            l3_plugin = manager.NeutronManager.get_service_plugins().get(
+                            p_const.L3_ROUTER_NAT)
+            data = {'router': {'name': 'router', 'admin_state_up': True,
+                               'tenant_id': self.context.tenant_id}}
+            r = l3_plugin.create_router(self.context, data)
+            with self.subnet() as s:
+                data = {'subnet_id': s['subnet']['id']}
+                self.assertRaises(ml2_exc.MechanismDriverError,
+                                  l3_plugin.add_router_interface,
+                                  self.context, r['id'], data)
+                res_ports = self._list('ports')['ports']
+                self.assertEqual([], res_ports)
+
+    def test_create_router_port_and_fail_bind_port_if_needed(self):
+
+        with mock.patch.object(ml2_plugin.Ml2Plugin, '_bind_port_if_needed',
+                               side_effect=ml2_exc.MechanismDriverError(
+                                   method='_bind_port_if_needed')):
+            l3_plugin = manager.NeutronManager.get_service_plugins().get(
+                            p_const.L3_ROUTER_NAT)
+            data = {'router': {'name': 'router', 'admin_state_up': True,
+                               'tenant_id': self.context.tenant_id}}
+            r = l3_plugin.create_router(self.context, data)
+            with self.subnet() as s:
+                data = {'subnet_id': s['subnet']['id']}
+                self.assertRaises(ml2_exc.MechanismDriverError,
+                                  l3_plugin.add_router_interface,
+                                  self.context, r['id'], data)
+                res_ports = self._list('ports')['ports']
+                self.assertEqual([], res_ports)
+
     def test_update_port_status_build(self):
         with self.port() as port:
             self.assertEqual('DOWN', port['port']['status'])

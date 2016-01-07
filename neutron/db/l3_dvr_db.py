@@ -269,7 +269,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         # the request by rolling back the port creation
                         # that led to new_port=True
                         self._core_plugin.delete_port(
-                            admin_context, port['id'])
+                            admin_context, port['id'], l3_port_check=False)
 
             with context.session.begin(subtransactions=True):
                 router_port = l3_db.RouterPort(

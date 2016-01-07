@@ -1099,7 +1099,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("mechanism_manager.create_port_postcommit "
                               "failed, deleting port '%s'"), result['id'])
-                self.delete_port(context, result['id'])
+                self.delete_port(context, result['id'], l3_port_check=False)
 
         # REVISIT(rkukura): Is there any point in calling this before
         # a binding has been successfully established?
@@ -1118,7 +1118,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("_bind_port_if_needed "
                               "failed, deleting port '%s'"), result['id'])
-                self.delete_port(context, result['id'])
+                self.delete_port(context, result['id'], l3_port_check=False)
 
         return bound_context.current
 
