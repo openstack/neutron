@@ -41,6 +41,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
+from oslo_utils import reflection
 import six
 from stevedore import driver
 
@@ -64,9 +65,11 @@ class cache_method_results(object):
         self._not_cached = object()
 
     def _get_from_cache(self, target_self, *args, **kwargs):
+        target_self_cls_name = reflection.get_class_name(target_self,
+                                                         fully_qualified=False)
         func_name = "%(module)s.%(class)s.%(func_name)s" % {
             'module': target_self.__module__,
-            'class': target_self.__class__.__name__,
+            'class': target_self_cls_name,
             'func_name': self.func.__name__,
         }
         key = (func_name,) + args
@@ -90,19 +93,21 @@ class cache_method_results(object):
         return item
 
     def __call__(self, target_self, *args, **kwargs):
+        target_self_cls_name = reflection.get_class_name(target_self,
+                                                         fully_qualified=False)
         if not hasattr(target_self, '_cache'):
             raise NotImplementedError(
                 "Instance of class %(module)s.%(class)s must contain _cache "
                 "attribute" % {
                     'module': target_self.__module__,
-                    'class': target_self.__class__.__name__})
+                    'class': target_self_cls_name})
         if not target_self._cache:
             if self._first_call:
                 LOG.debug("Instance of class %(module)s.%(class)s doesn't "
                           "contain attribute _cache therefore results "
                           "cannot be cached for %(func_name)s.",
                           {'module': target_self.__module__,
-                           'class': target_self.__class__.__name__,
+                           'class': target_self_cls_name,
                            'func_name': self.func.__name__})
                 self._first_call = False
             return self.func(target_self, *args, **kwargs)
