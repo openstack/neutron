@@ -49,7 +49,7 @@ vhostuser_socket_dir=/var/run/openvswitch
 When OVS is running with DPDK support enabled, and the datapath_type is set to
 "netdev", then the OVS ML2 driver will use the vhost-user VIF type and pass
 the necessary binding details to use OVS+DPDK and vhost-user sockets. This
-includes the vhoustuser_socket_dir setting, which must match the directory
+includes the vhostuser_socket_dir setting, which must match the directory
 passed to ovs-vswitchd on startup.
 
 What about the networking-ovs-dpdk repo?
