@@ -18,6 +18,7 @@ import mock
 
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
+from neutron.agent.linux import ip_lib
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -72,6 +73,27 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
                                      'fe80::f816:3eff:fe2e:1')
         self._router_lifecycle(enable_ha=False, dual_stack=True,
                                v6_ext_gw_with_sub=False)
+
+    def test_legacy_router_ns_rebuild(self):
+        router_info = self.generate_router_info(False)
+        router = self.manage_router(self.agent, router_info)
+        gw_port = router.router['gw_port']
+        gw_inf_name = router.get_external_device_name(gw_port['id'])
+        gw_device = ip_lib.IPDevice(gw_inf_name, namespace=router.ns_name)
+        router_ports = [gw_device]
+        for i_port in router_info.get(l3_constants.INTERFACE_KEY, []):
+            interface_name = router.get_internal_device_name(i_port['id'])
+            router_ports.append(
+                ip_lib.IPDevice(interface_name, namespace=router.ns_name))
+
+        namespaces.Namespace.delete(router.router_namespace)
+
+        # l3 agent should be able to rebuild the ns when it is deleted
+        self.manage_router(self.agent, router_info)
+        # Assert the router ports are there in namespace
+        self.assertTrue(all([port.exists() for port in router_ports]))
+
+        self._delete_router(self.agent, router.router_id)
 
     def test_conntrack_disassociate_fip_legacy_router(self):
         self._test_conntrack_disassociate_fip(ha=False)
