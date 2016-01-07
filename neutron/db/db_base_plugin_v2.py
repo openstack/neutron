@@ -466,10 +466,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # a subnet-update and a router-interface-add operation are
             # executed concurrently
             if cur_subnet and not ipv6_utils.is_ipv6_pd_enabled(s):
-                alloc_qry = context.session.query(models_v2.IPAllocation)
-                allocated = alloc_qry.filter_by(
-                    ip_address=cur_subnet['gateway_ip'],
-                    subnet_id=cur_subnet['id']).first()
+                ipal = models_v2.IPAllocation
+                alloc_qry = context.session.query(ipal)
+                alloc_qry = alloc_qry.join("port", "routerport")
+                allocated = alloc_qry.filter(
+                    ipal.ip_address == cur_subnet['gateway_ip'],
+                    ipal.subnet_id == cur_subnet['id']).first()
                 if allocated and allocated['port_id']:
                     raise n_exc.GatewayIpInUse(
                         ip_address=cur_subnet['gateway_ip'],
