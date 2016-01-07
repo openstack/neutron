@@ -198,7 +198,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         super(BaseNetworkTest, cls).resource_cleanup()
 
     @classmethod
-    def _try_delete_resource(self, delete_callable, *args, **kwargs):
+    def _try_delete_resource(cls, delete_callable, *args, **kwargs):
         """Cleanup resources in case of test-failure
 
         Some resources are explicitly deleted by the test.
