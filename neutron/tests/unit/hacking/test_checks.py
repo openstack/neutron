@@ -216,3 +216,27 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             0, len(list(checks.check_assertfalse(pass_code,
                                             "neutron/tests/test_assert.py"))))
+
+    def test_assertempty(self):
+        fail_code = """
+                test_empty = %s
+                self.assertEqual(test_empty, %s)
+                """
+        pass_code1 = """
+                test_empty = %s
+                self.assertEqual(%s, test_empty)
+                """
+        pass_code2 = """
+                self.assertEqual(123, foo(abc, %s))
+                """
+        empty_cases = ['{}', '[]', '""', "''", '()', 'set()']
+        for ec in empty_cases:
+            self.assertEqual(
+                1, len(list(checks.check_assertempty(fail_code % (ec, ec),
+                                            "neutron/tests/test_assert.py"))))
+            self.assertEqual(
+                0, len(list(checks.check_assertfalse(pass_code1 % (ec, ec),
+                                            "neutron/tests/test_assert.py"))))
+            self.assertEqual(
+                0, len(list(checks.check_assertfalse(pass_code2 % ec,
+                                            "neutron/tests/test_assert.py"))))

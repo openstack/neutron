@@ -1248,8 +1248,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                   port['port']['id'])
                     res = self.deserialize(self.fmt,
                                            req.get_response(self.api))
-                    self.assertEqual(res['port'].get(ext_sg.SECURITYGROUPS),
-                                     [])
+                    self.assertEqual([],
+                                     res['port'].get(ext_sg.SECURITYGROUPS))
                     self._delete('ports', port['port']['id'])
 
     def test_update_port_remove_security_group_none(self):
@@ -1269,8 +1269,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                   port['port']['id'])
                     res = self.deserialize(self.fmt,
                                            req.get_response(self.api))
-                    self.assertEqual(res['port'].get(ext_sg.SECURITYGROUPS),
-                                     [])
+                    self.assertEqual([],
+                                     res['port'].get(ext_sg.SECURITYGROUPS))
                     self._delete('ports', port['port']['id'])
 
     def test_create_port_with_bad_security_group(self):

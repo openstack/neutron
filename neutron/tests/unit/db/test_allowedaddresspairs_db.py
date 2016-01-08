@@ -317,5 +317,5 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             req = self.new_update_request('ports', update_port,
                                           port['port']['id'])
             port = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS], [])
+            self.assertEqual([], port['port'][addr_pair.ADDRESS_PAIRS])
             self._delete('ports', port['port']['id'])

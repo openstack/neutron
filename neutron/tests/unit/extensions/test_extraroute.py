@@ -95,7 +95,7 @@ class ExtraRouteDBTestCaseBase(object):
                                                 None, p['port']['id'], routes)
                     body = self._update('routers', r['router']['id'],
                                         {'router': {'routes': None}})
-                    self.assertEqual(body['router']['routes'], [])
+                    self.assertEqual([], body['router']['routes'])
                     self._routes_update_cleanup(p['port']['id'],
                                                 None, r['router']['id'], [])
 

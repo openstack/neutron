@@ -208,6 +208,17 @@ def check_assertfalse(logical_line, filename):
             yield (0, msg)
 
 
+def check_assertempty(logical_line, filename):
+    if 'neutron/tests/' in filename:
+        msg = ("N330: Use assertEqual(*empty*, observed) instead of "
+               "assertEqual(observed, *empty*). *empty* contains "
+               "{}, [], (), set(), '', \"\"")
+        empties = r"(\[\s*\]|\{\s*\}|\(\s*\)|set\(\s*\)|'\s*'|\"\s*\")"
+        reg = r"assertEqual\(([^,]*,\s*)+?%s\)\s*$" % empties
+        if re.search(reg, logical_line):
+            yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -221,3 +232,4 @@ def factory(register):
     register(check_asserttrue)
     register(no_mutable_default_args)
     register(check_assertfalse)
+    register(check_assertempty)

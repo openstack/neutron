@@ -72,7 +72,7 @@ class TestParseMappings(base.BaseTestCase):
                          {'key1': 'val', 'key2': 'val'})
 
     def test_parse_mappings_succeeds_for_no_mappings(self):
-        self.assertEqual(self.parse(['']), {})
+        self.assertEqual({}, self.parse(['']))
 
 
 class TestParseTunnelRangesMixin(object):
