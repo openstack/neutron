@@ -71,10 +71,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         cls.subnets = []
         cls.ports = []
         cls.routers = []
-        cls.pools = []
-        cls.vips = []
-        cls.members = []
-        cls.health_monitors = []
         cls.vpnservices = []
         cls.ikepolicies = []
         cls.floating_ips = []
@@ -130,23 +126,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
             for router in cls.routers:
                 cls._try_delete_resource(cls.delete_router,
                                          router)
-
-            # Clean up health monitors
-            for health_monitor in cls.health_monitors:
-                cls._try_delete_resource(cls.client.delete_health_monitor,
-                                         health_monitor['id'])
-            # Clean up members
-            for member in cls.members:
-                cls._try_delete_resource(cls.client.delete_member,
-                                         member['id'])
-            # Clean up vips
-            for vip in cls.vips:
-                cls._try_delete_resource(cls.client.delete_vip,
-                                         vip['id'])
-            # Clean up pools
-            for pool in cls.pools:
-                cls._try_delete_resource(cls.client.delete_pool,
-                                         pool['id'])
             # Clean up metering label rules
             for metering_label_rule in cls.metering_label_rules:
                 cls._try_delete_resource(
@@ -320,78 +299,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
         fip = body['floatingip']
         cls.floating_ips.append(fip)
         return fip
-
-    @classmethod
-    def create_pool(cls, name, lb_method, protocol, subnet):
-        """Wrapper utility that returns a test pool."""
-        body = cls.client.create_pool(
-            name=name,
-            lb_method=lb_method,
-            protocol=protocol,
-            subnet_id=subnet['id'])
-        pool = body['pool']
-        cls.pools.append(pool)
-        return pool
-
-    @classmethod
-    def update_pool(cls, name):
-        """Wrapper utility that returns a test pool."""
-        body = cls.client.update_pool(name=name)
-        pool = body['pool']
-        return pool
-
-    @classmethod
-    def create_vip(cls, name, protocol, protocol_port, subnet, pool):
-        """Wrapper utility that returns a test vip."""
-        body = cls.client.create_vip(name=name,
-                                     protocol=protocol,
-                                     protocol_port=protocol_port,
-                                     subnet_id=subnet['id'],
-                                     pool_id=pool['id'])
-        vip = body['vip']
-        cls.vips.append(vip)
-        return vip
-
-    @classmethod
-    def update_vip(cls, name):
-        body = cls.client.update_vip(name=name)
-        vip = body['vip']
-        return vip
-
-    @classmethod
-    def create_member(cls, protocol_port, pool, ip_version=None):
-        """Wrapper utility that returns a test member."""
-        ip_version = ip_version if ip_version is not None else cls._ip_version
-        member_address = "fd00::abcd" if ip_version == 6 else "10.0.9.46"
-        body = cls.client.create_member(address=member_address,
-                                        protocol_port=protocol_port,
-                                        pool_id=pool['id'])
-        member = body['member']
-        cls.members.append(member)
-        return member
-
-    @classmethod
-    def update_member(cls, admin_state_up):
-        body = cls.client.update_member(admin_state_up=admin_state_up)
-        member = body['member']
-        return member
-
-    @classmethod
-    def create_health_monitor(cls, delay, max_retries, Type, timeout):
-        """Wrapper utility that returns a test health monitor."""
-        body = cls.client.create_health_monitor(delay=delay,
-                                                max_retries=max_retries,
-                                                type=Type,
-                                                timeout=timeout)
-        health_monitor = body['health_monitor']
-        cls.health_monitors.append(health_monitor)
-        return health_monitor
-
-    @classmethod
-    def update_health_monitor(cls, admin_state_up):
-        body = cls.client.update_vip(admin_state_up=admin_state_up)
-        health_monitor = body['health_monitor']
-        return health_monitor
 
     @classmethod
     def create_router_interface(cls, router_id, subnet_id):
