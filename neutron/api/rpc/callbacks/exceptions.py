@@ -24,3 +24,7 @@ class CallbackNotFound(exceptions.NeutronException):
 
 class CallbacksMaxLimitReached(exceptions.NeutronException):
     message = _("Cannot add multiple callbacks for %(resource_type)s")
+
+
+class VersionsCallbackNotFound(exceptions.NeutronException):
+    message = _("No versions callback provided in ResourceVersionsManager")

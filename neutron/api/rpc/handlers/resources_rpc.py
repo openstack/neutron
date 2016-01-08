@@ -21,6 +21,7 @@ from neutron._i18n import _
 from neutron.api.rpc.callbacks.consumer import registry as cons_registry
 from neutron.api.rpc.callbacks.producer import registry as prod_registry
 from neutron.api.rpc.callbacks import resources
+from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
@@ -49,11 +50,16 @@ def _validate_resource_type(resource_type):
         raise InvalidResourceTypeClass(resource_type=resource_type)
 
 
-def resource_type_versioned_topic(resource_type):
+def resource_type_versioned_topic(resource_type, version=None):
+    """Return the topic for a resource type.
+
+    If no version is provided, the latest version of the object will
+    be used.
+    """
     _validate_resource_type(resource_type)
     cls = resources.get_resource_cls(resource_type)
     return topics.RESOURCE_TOPIC_PATTERN % {'resource_type': resource_type,
-                                            'version': cls.VERSION}
+                                            'version': version or cls.VERSION}
 
 
 class ResourcesPullRpcApi(object):
@@ -130,22 +136,23 @@ class ResourcesPushRpcApi(object):
             namespace=constants.RPC_NAMESPACE_RESOURCES)
         self.client = n_rpc.get_client(target)
 
-    def _prepare_object_fanout_context(self, obj):
+    def _prepare_object_fanout_context(self, obj, version):
         """Prepare fanout context, one topic per object type."""
-        obj_topic = resource_type_versioned_topic(obj.obj_name())
+        obj_topic = resource_type_versioned_topic(obj.obj_name(), version)
         return self.client.prepare(fanout=True, topic=obj_topic)
 
     @log_helpers.log_method_call
     def push(self, context, resource, event_type):
         resource_type = resources.get_resource_type(resource)
         _validate_resource_type(resource_type)
-        cctxt = self._prepare_object_fanout_context(resource)
-        #TODO(QoS): Push notifications for every known version once we have
-        #           multiple of those
-        dehydrated_resource = resource.obj_to_primitive()
-        cctxt.cast(context, 'push',
-                   resource=dehydrated_resource,
-                   event_type=event_type)
+        versions = version_manager.get_resource_versions(resource_type)
+        for version in versions:
+            cctxt = self._prepare_object_fanout_context(resource, version)
+            dehydrated_resource = resource.obj_to_primitive(
+                target_version=version)
+            cctxt.cast(context, 'push',
+                       resource=dehydrated_resource,
+                       event_type=event_type)
 
 
 class ResourcesPushRpcCallback(object):
