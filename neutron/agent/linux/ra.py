@@ -40,10 +40,10 @@ OPTS = [
                default='$state_path/ra',
                help=_('Location to store IPv6 RA config files')),
     cfg.IntOpt('min_rtr_adv_interval',
-               default=3,
+               default=30,
                help=_('MinRtrAdvInterval setting for radvd.conf')),
     cfg.IntOpt('max_rtr_adv_interval',
-               default=10,
+               default=100,
                help=_('MaxRtrAdvInterval setting for radvd.conf')),
 ]
 
