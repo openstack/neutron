@@ -1,0 +1,3 @@
+---
+fixes:
+  - Fix SR-IOV agent macvtap assigned VF check when linux kernel < 3.13

@@ -26,7 +26,7 @@ class InvalidDeviceError(SriovNicError):
 
 
 class IpCommandError(SriovNicError):
-    message = _("ip command failed on device %(dev_name)s: %(reason)s")
+    message = _("ip command failed: %(reason)s")
 
 
 class IpCommandOperationNotSupportedError(SriovNicError):
@@ -35,3 +35,7 @@ class IpCommandOperationNotSupportedError(SriovNicError):
 
 class InvalidPciSlotError(SriovNicError):
     message = _("Invalid pci slot %(pci_slot)s")
+
+
+class IpCommandDeviceError(SriovNicError):
+    message = _("ip command failed on device %(dev_name)s: %(reason)s")
