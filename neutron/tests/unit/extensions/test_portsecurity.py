@@ -60,7 +60,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["security-group", "port-security"]
 
     def create_network(self, context, network):
-        tenant_id = self._get_tenant_id_for_create(context, network['network'])
+        tenant_id = network['network'].get('tenant_id')
         self._ensure_default_security_group(context, tenant_id)
         with context.session.begin(subtransactions=True):
             neutron_db = super(PortSecurityTestPlugin, self).create_network(

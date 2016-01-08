@@ -96,6 +96,7 @@ class PluginClientFixture(AbstractClientFixture):
         # framework
         kwargs.setdefault('admin_state_up', True)
         kwargs.setdefault('shared', False)
+        kwargs.setdefault('tenant_id', self.ctx.tenant_id)
         data = dict(network=kwargs)
         result = self.plugin.create_network(self.ctx, data)
         return base.AttributeDict(result)

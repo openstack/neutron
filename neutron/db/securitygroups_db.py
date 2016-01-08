@@ -149,7 +149,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         except exceptions.CallbackFailure as e:
             raise ext_sg.SecurityGroupConflict(reason=e)
 
-        tenant_id = self._get_tenant_id_for_create(context, s)
+        tenant_id = s['tenant_id']
 
         if not default_sg:
             self._ensure_default_security_group(context, tenant_id)
@@ -393,11 +393,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         except exceptions.CallbackFailure as e:
             raise ext_sg.SecurityGroupConflict(reason=e)
 
-        tenant_id = self._get_tenant_id_for_create(context, rule_dict)
         with context.session.begin(subtransactions=True):
             db = SecurityGroupRule(
                 id=(rule_dict.get('id') or uuidutils.generate_uuid()),
-                tenant_id=tenant_id,
+                tenant_id=rule_dict['tenant_id'],
                 security_group_id=rule_dict['security_group_id'],
                 direction=rule_dict['direction'],
                 remote_group_id=rule_dict.get('remote_group_id'),
@@ -729,8 +728,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         port = port['port']
         if port.get('device_owner') and utils.is_port_trusted(port):
             return
-        tenant_id = self._get_tenant_id_for_create(context, port)
-        default_sg = self._ensure_default_security_group(context, tenant_id)
+        default_sg = self._ensure_default_security_group(context,
+                                                         port['tenant_id'])
         if not attributes.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             port[ext_sg.SECURITYGROUPS] = [default_sg]
 

@@ -867,7 +867,8 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             p_const.L3_ROUTER_NAT]
         r = plugin.create_router(
             self.context,
-            {'router': {'name': 'router', 'admin_state_up': True}})
+            {'router': {'name': 'router', 'admin_state_up': True,
+             'tenant_id': self.context.tenant_id}})
         with self.subnet() as s:
             p = plugin.add_router_interface(self.context, r['id'],
                                             {'subnet_id': s['subnet']['id']})

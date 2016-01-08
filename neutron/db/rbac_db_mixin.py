@@ -42,12 +42,11 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         except c_exc.CallbackFailure as e:
             raise n_exc.InvalidInput(error_message=e)
         dbmodel = models.get_type_model_map()[e['object_type']]
-        tenant_id = self._get_tenant_id_for_create(context, e)
         with context.session.begin(subtransactions=True):
             db_entry = dbmodel(object_id=e['object_id'],
                                target_tenant=e['target_tenant'],
                                action=e['action'],
-                               tenant_id=tenant_id)
+                               tenant_id=e['tenant_id'])
             context.session.add(db_entry)
         return self._make_rbac_policy_dict(db_entry)
 

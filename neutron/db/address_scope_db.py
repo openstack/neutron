@@ -74,10 +74,9 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
     def create_address_scope(self, context, address_scope):
         """Create an address scope."""
         a_s = address_scope['address_scope']
-        tenant_id = self._get_tenant_id_for_create(context, a_s)
         address_scope_id = a_s.get('id') or uuidutils.generate_uuid()
         with context.session.begin(subtransactions=True):
-            pool_args = {'tenant_id': tenant_id,
+            pool_args = {'tenant_id': a_s['tenant_id'],
                          'id': address_scope_id,
                          'name': a_s['name'],
                          'shared': a_s['shared'],

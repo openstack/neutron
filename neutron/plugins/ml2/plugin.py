@@ -616,7 +616,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _create_network_db(self, context, network):
         net_data = network[attributes.NETWORK]
-        tenant_id = self._get_tenant_id_for_create(context, net_data)
+        tenant_id = net_data['tenant_id']
         session = context.session
         with session.begin(subtransactions=True):
             self._ensure_default_security_group(context, tenant_id)

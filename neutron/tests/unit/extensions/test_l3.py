@@ -2471,6 +2471,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         plugin = manager.NeutronManager.get_service_plugins()[
                     service_constants.L3_ROUTER_NAT]
         router_req = {'router': {'id': _uuid(), 'name': 'router',
+                                 'tenant_id': 'foo',
                                  'admin_state_up': True}}
         result = plugin.create_router(context.Context('', 'foo'), router_req)
         self.assertEqual(result['id'], router_req['router']['id'])
@@ -2976,6 +2977,7 @@ class L3NatDBTestCaseMixin(object):
         with self.network() as n:
             data = {'router': {
                 'name': 'router1', 'admin_state_up': True,
+                'tenant_id': ctx.tenant_id,
                 'external_gateway_info': {'network_id': n['network']['id']}}}
 
             self.assertRaises(MyException, plugin.create_router, ctx, data)
