@@ -119,7 +119,11 @@ class FirewallDriver(object):
 
     def security_group_updated(self, action_type, sec_group_ids,
                                device_id=None):
-        """Called when a security group is updated."""
+        """Called when a security group is updated.
+
+        Note: This method needs to be implemented by the firewall drivers
+        which use enhanced RPC for security_groups.
+        """
         raise NotImplementedError()
 
 
