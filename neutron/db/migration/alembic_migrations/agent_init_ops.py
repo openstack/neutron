@@ -37,6 +37,7 @@ def upgrade():
         sa.Column('heartbeat_timestamp', sa.DateTime(), nullable=False),
         sa.Column('description', sa.String(length=255), nullable=True),
         sa.Column('configurations', sa.String(length=4095), nullable=False),
+        sa.Column('load', sa.Integer(), server_default='0', nullable=False),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('agent_type', 'host',
                             name='uniq_agents0agent_type0host'))

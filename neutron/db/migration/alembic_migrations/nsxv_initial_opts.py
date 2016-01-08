@@ -13,17 +13,6 @@
 #    under the License.
 #
 
-"""nsxv
-
-Revision ID: 4dbe243cd84d
-Revises: 38495dc99731
-Create Date: 2015-01-05 23:22:04.501609
-
-"""
-
-# revision identifiers, used by Alembic.
-revision = '4dbe243cd84d'
-down_revision = '38495dc99731'
 from alembic import op
 import sqlalchemy as sa
 

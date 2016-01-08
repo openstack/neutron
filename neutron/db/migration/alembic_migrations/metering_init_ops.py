@@ -27,7 +27,8 @@ direction = sa.Enum('ingress', 'egress',
 def create_meteringlabels():
     op.create_table(
         'meteringlabels',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True,
+                  index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=1024), nullable=True),

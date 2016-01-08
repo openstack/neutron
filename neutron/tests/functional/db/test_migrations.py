@@ -25,7 +25,6 @@ import sqlalchemy
 from sqlalchemy import event
 import sqlalchemy.types as types
 
-from neutron.api.v2 import attributes as attr
 import neutron.db.migration as migration_help
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
@@ -289,35 +288,6 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
 class TestModelsMigrationsPsql(_TestModelsMigrations,
                                base.PostgreSQLTestCase):
     pass
-
-
-class TestSanityCheck(test_base.DbTestCase):
-
-    def setUp(self):
-        super(TestSanityCheck, self).setUp()
-        self.alembic_config = migration.get_neutron_config()
-        self.alembic_config.neutron_config = cfg.CONF
-
-    def test_check_sanity_14be42f3d0a5(self):
-        SecurityGroup = sqlalchemy.Table(
-            'securitygroups', sqlalchemy.MetaData(),
-            sqlalchemy.Column('id', sqlalchemy.String(length=36),
-                              nullable=False),
-            sqlalchemy.Column('name', sqlalchemy.String(attr.NAME_MAX_LEN)),
-            sqlalchemy.Column('tenant_id',
-                              sqlalchemy.String(attr.TENANT_ID_MAX_LEN)))
-
-        with self.engine.connect() as conn:
-            SecurityGroup.create(conn)
-            conn.execute(SecurityGroup.insert(), [
-                {'id': '123d4s', 'tenant_id': 'sssda1', 'name': 'default'},
-                {'id': '123d4', 'tenant_id': 'sssda1', 'name': 'default'}
-            ])
-            script_dir = alembic_script.ScriptDirectory.from_config(
-                self.alembic_config)
-            script = script_dir.get_revision("14be42f3d0a5").module
-            self.assertRaises(script.DuplicateSecurityGroupsNamedDefault,
-                              script.check_sanity, conn)
 
 
 class TestWalkMigrations(test_base.DbTestCase):

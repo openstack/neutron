@@ -64,22 +64,36 @@ def upgrade():
         sa.Column('port_id', sa.String(length=36), nullable=False),
         sa.Column('opt_name', sa.String(length=64), nullable=False),
         sa.Column('opt_value', sa.String(length=255), nullable=False),
+        sa.Column('ip_version', sa.Integer(), server_default='4',
+                  nullable=False),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('port_id', 'opt_name', name='uidx_portid_optname'))
+        sa.UniqueConstraint(
+            'port_id', 'opt_name', 'ip_version',
+            name='uniq_extradhcpopts0portid0optname0ipversion'))
 
-    op.create_table(
-        'routerservicetypebindings',
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.Column('service_type_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('router_id'))
-
-    op.create_table(
-        'servicerouterbindings',
-        sa.Column('resource_id', sa.String(length=36), nullable=False),
-        sa.Column('resource_type', sa.String(length=36), nullable=False),
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
-        sa.PrimaryKeyConstraint('resource_id', 'resource_type'))
+    op.create_table('subnetpools',
+                    sa.Column('tenant_id',
+                              sa.String(length=255),
+                              nullable=True,
+                              index=True),
+                    sa.Column('id', sa.String(length=36), nullable=False),
+                    sa.Column('name', sa.String(length=255), nullable=True),
+                    sa.Column('ip_version', sa.Integer(), nullable=False),
+                    sa.Column('default_prefixlen',
+                              sa.Integer(),
+                              nullable=False),
+                    sa.Column('min_prefixlen', sa.Integer(), nullable=False),
+                    sa.Column('max_prefixlen', sa.Integer(), nullable=False),
+                    sa.Column('shared', sa.Boolean(), nullable=False),
+                    sa.Column('default_quota', sa.Integer(), nullable=True),
+                    sa.PrimaryKeyConstraint('id'))
+    op.create_table('subnetpoolprefixes',
+                    sa.Column('cidr', sa.String(length=64), nullable=False),
+                    sa.Column('subnetpool_id',
+                              sa.String(length=36),
+                              nullable=False),
+                    sa.ForeignKeyConstraint(['subnetpool_id'],
+                                            ['subnetpools.id'],
+                                            ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('cidr', 'subnetpool_id'))
