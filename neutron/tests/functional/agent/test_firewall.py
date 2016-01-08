@@ -422,3 +422,47 @@ class FirewallTestCase(base.BaseSudoTestCase):
 
         self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, list())
         self.tester.assert_established_connection(**connection)
+
+    def test_preventing_firewall_blink(self):
+        direction = self.tester.INGRESS
+        sg_rules = [{'ethertype': 'IPv4', 'direction': 'ingress',
+                     'protocol': 'tcp'}]
+        self.tester.start_sending_icmp(direction)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, {})
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.stop_sending_icmp(direction)
+        packets_sent = self.tester.get_sent_icmp_packets(direction)
+        packets_received = self.tester.get_received_icmp_packets(direction)
+        self.assertGreater(packets_sent, 0)
+        self.assertEqual(0, packets_received)
+
+    def test_remote_security_groups(self):
+        remote_sg_id = 'remote_sg_id'
+        peer_port_desc = self._create_port_description(
+            self.tester.peer_port_id,
+            [self.tester.peer_ip_address],
+            self.tester.peer_mac_address,
+            [remote_sg_id])
+        self.firewall.prepare_port_filter(peer_port_desc)
+
+        peer_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',
+                          'protocol': 'icmp'}]
+        self._apply_security_group_rules(remote_sg_id, peer_sg_rules)
+
+        vm_sg_rules = [{'ethertype': 'IPv4', 'direction': 'ingress',
+                        'protocol': 'icmp', 'remote_group_id': remote_sg_id}]
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID,
+                                         vm_sg_rules)
+
+        vm_sg_members = {'IPv4': [self.tester.peer_ip_address]}
+        with self.firewall.defer_apply():
+            self.firewall.update_security_group_members(
+                remote_sg_id, vm_sg_members)
+
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)

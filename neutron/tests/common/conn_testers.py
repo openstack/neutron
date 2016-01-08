@@ -59,11 +59,14 @@ class ConnectionTester(fixtures.Fixture):
             self.ICMP: self._test_icmp_connectivity,
             self.ARP: self._test_arp_connectivity}
         self._nc_testers = dict()
+        self._pingers = dict()
         self.addCleanup(self.cleanup)
 
     def cleanup(self):
         for nc in self._nc_testers.values():
             nc.stop_processes()
+        for pinger in self._pingers.values():
+            pinger.stop()
 
     @property
     def vm_namespace(self):
@@ -88,6 +91,14 @@ class ConnectionTester(fixtures.Fixture):
     @vm_mac_address.setter
     def vm_mac_address(self, mac_address):
         self._vm.mac_address = mac_address
+
+    @property
+    def peer_mac_address(self):
+        return self._peer.port.link.address
+
+    @peer_mac_address.setter
+    def peer_mac_address(self, mac_address):
+        self._peer.mac_address = mac_address
 
     @property
     def peer_namespace(self):
@@ -238,6 +249,32 @@ class ConnectionTester(fixtures.Fixture):
         self._nc_testers[nc_key] = nc_tester
         return nc_tester
 
+    def _get_pinger(self, direction):
+        try:
+            pinger = self._pingers[direction]
+        except KeyError:
+            src_namespace, dst_address = self._get_namespace_and_address(
+                direction)
+            pinger = net_helpers.Pinger(src_namespace, dst_address)
+            self._pingers[direction] = pinger
+        return pinger
+
+    def start_sending_icmp(self, direction):
+        pinger = self._get_pinger(direction)
+        pinger.start()
+
+    def stop_sending_icmp(self, direction):
+        pinger = self._get_pinger(direction)
+        pinger.stop()
+
+    def get_sent_icmp_packets(self, direction):
+        pinger = self._get_pinger(direction)
+        return pinger.sent
+
+    def get_received_icmp_packets(self, direction):
+        pinger = self._get_pinger(direction)
+        return pinger.received
+
 
 class LinuxBridgeConnectionTester(ConnectionTester):
     """Tester with linux bridge in the middle
@@ -260,6 +297,10 @@ class LinuxBridgeConnectionTester(ConnectionTester):
     @property
     def vm_port_id(self):
         return net_helpers.VethFixture.get_peer_name(self._vm.port.name)
+
+    @property
+    def peer_port_id(self):
+        return net_helpers.VethFixture.get_peer_name(self._peer.port.name)
 
     def flush_arp_tables(self):
         self._bridge.neigh.flush(4, 'all')
