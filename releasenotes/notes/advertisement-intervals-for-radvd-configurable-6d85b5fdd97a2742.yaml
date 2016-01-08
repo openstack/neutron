@@ -1,0 +1,9 @@
+---
+fixes:
+  - Prior to Mitaka, the settings that control the frequency of
+    router advertisements transmitted by the radvd daemon were
+    not able to be adjusted. Larger deployments may wish to decrease
+    the frequency in which radvd sends multicast traffic. The 'min_rtr_adv_interval'
+    and 'max_rtr_adv_interval' settings in the L3 agent configuration file
+    map directly to the 'MinRtrAdvInterval' and 'MaxRtrAdvInterval' in the generated
+    radvd.conf file. Consult the manpage for radvd.conf for more detailed information.

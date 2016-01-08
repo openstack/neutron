@@ -38,13 +38,19 @@ OPTS = [
     cfg.StrOpt('ra_confs',
                default='$state_path/ra',
                help=_('Location to store IPv6 RA config files')),
+    cfg.IntOpt('min_rtr_adv_interval',
+               default=3,
+               help=_('MinRtrAdvInterval setting for radvd.conf')),
+    cfg.IntOpt('max_rtr_adv_interval',
+               default=10,
+               help=_('MaxRtrAdvInterval setting for radvd.conf')),
 ]
 
 CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 {
    AdvSendAdvert on;
-   MinRtrAdvInterval 3;
-   MaxRtrAdvInterval 10;
+   MinRtrAdvInterval {{ min_rtr_adv_interval }};
+   MaxRtrAdvInterval {{ max_rtr_adv_interval }};
 
    {% if constants.DHCPV6_STATELESS in ra_modes %}
    AdvOtherConfigFlag on;
@@ -106,7 +112,9 @@ class DaemonMonitor(object):
                 interface_name=interface_name,
                 prefixes=auto_config_prefixes,
                 dns_servers=dns_servers[0:MAX_RDNSS_ENTRIES],
-                constants=constants))
+                constants=constants,
+                min_rtr_adv_interval=self._agent_conf.min_rtr_adv_interval,
+                max_rtr_adv_interval=self._agent_conf.max_rtr_adv_interval))
 
         common_utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf
