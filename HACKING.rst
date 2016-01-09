@@ -1,12 +1,12 @@
 Neutron Style Commandments
-=======================
+==========================
 
 - Step 1: Read the OpenStack Style Commandments
   http://docs.openstack.org/developer/hacking/
 - Step 2: Read on
 
 Neutron Specific Commandments
---------------------------
+-----------------------------
 
 - [N319] Validate that debug level logs are not translated
 - [N320] Validate that LOG messages, except debug ones, have translations
