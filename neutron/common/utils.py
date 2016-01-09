@@ -92,8 +92,8 @@ class cache_method_results(object):
     def __call__(self, target_self, *args, **kwargs):
         if not hasattr(target_self, '_cache'):
             raise NotImplementedError(
-                "Instance of class %(module)s.%(class)s must contain _cache "
-                "attribute" % {
+                _("Instance of class %(module)s.%(class)s must contain _cache "
+                  "attribute") % {
                     'module': target_self.__module__,
                     'class': target_self.__class__.__name__})
         if not target_self._cache:
