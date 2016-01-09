@@ -83,12 +83,10 @@ class AddressScopeTestNegative(test_address_scopes.AddressScopeTestBase):
     def test_delete_address_scope_associated_with_subnetpool(self):
         address_scope = self._create_address_scope(ip_version=4)
         prefixes = [u'10.11.12.0/24']
-        subnetpool_data = {'subnetpool': {
+        subnetpool_data = {
             'name': 'foo-subnetpool',
             'min_prefixlen': '29', 'prefixes': prefixes,
-            'address_scope_id': address_scope['id']}}
-        body = self.client.create_subnetpool(subnetpool_data)
-        subnetpool = body['subnetpool']
-        self.addCleanup(self.client.delete_subnetpool, subnetpool['id'])
+            'address_scope_id': address_scope['id']}
+        self.create_subnetpool(**subnetpool_data)
         self.assertRaises(lib_exc.Conflict, self.client.delete_address_scope,
                           address_scope['id'])
