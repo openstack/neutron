@@ -805,7 +805,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                             fake_network.id,
                                             cfg.CONF)
 
-    def _test_metadata_network(self, network):
+    def _test_enable_isolated_metadata_proxy(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
         cfg.CONF.set_override('debug', True)
         cfg.CONF.set_override('verbose', False)
@@ -821,13 +821,33 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                           router_id='forzanapoli')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
-        self._test_metadata_network(fake_meta_network)
+        self._test_enable_isolated_metadata_proxy(fake_meta_network)
 
     def test_enable_isolated_metadata_proxy_with_metadata_network_dvr(self):
-        self._test_metadata_network(fake_meta_dvr_network)
+        self._test_enable_isolated_metadata_proxy(fake_meta_dvr_network)
 
     def test_enable_isolated_metadata_proxy_with_dist_network(self):
-        self._test_metadata_network(fake_dist_network)
+        self._test_enable_isolated_metadata_proxy(fake_dist_network)
+
+    def _test_disable_isolated_metadata_proxy(self, network):
+        cfg.CONF.set_override('enable_metadata_network', True)
+        method_path = ('neutron.agent.metadata.driver.MetadataDriver'
+                       '.destroy_monitored_metadata_proxy')
+        with mock.patch(method_path) as destroy:
+            self.dhcp.enable_isolated_metadata_proxy(network)
+            self.dhcp.disable_isolated_metadata_proxy(network)
+            destroy.assert_called_once_with(self.dhcp._process_monitor,
+                                            'forzanapoli',
+                                            cfg.CONF)
+
+    def test_disable_isolated_metadata_proxy_with_metadata_network(self):
+        self._test_disable_isolated_metadata_proxy(fake_meta_network)
+
+    def test_disable_isolated_metadata_proxy_with_metadata_network_dvr(self):
+        self._test_disable_isolated_metadata_proxy(fake_meta_dvr_network)
+
+    def test_disable_isolated_metadata_proxy_with_dist_network(self):
+        self._test_disable_isolated_metadata_proxy(fake_dist_network)
 
     def test_network_create_end(self):
         payload = dict(network=dict(id=fake_network.id))
