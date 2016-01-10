@@ -32,7 +32,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
 from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron import manager
@@ -70,7 +69,7 @@ AGENT_OPTS = [
 cfg.CONF.register_opts(AGENT_OPTS)
 
 
-class Agent(model_base.BASEV2, models_v2.HasId):
+class Agent(model_base.BASEV2, model_base.HasId):
     """Represents agents running in neutron deployments."""
 
     __table_args__ = (

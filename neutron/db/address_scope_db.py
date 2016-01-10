@@ -19,11 +19,10 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.extensions import address_scope as ext_address_scope
 
 
-class AddressScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
     """Represents a neutron address scope."""
 
     __tablename__ = "address_scopes"
