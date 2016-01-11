@@ -23,6 +23,7 @@ from sqlalchemy import orm
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db import l3_dvr_db
@@ -571,6 +572,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             try:
                 self._core_plugin.update_port(admin_ctx, port['id'],
                                               {attributes.PORT: port})
-            except (orm.exc.StaleDataError, orm.exc.ObjectDeletedError):
+            except (orm.exc.StaleDataError, orm.exc.ObjectDeletedError,
+                    n_exc.PortNotFound):
                 # Take concurrently deleted interfaces in to account
                 pass
