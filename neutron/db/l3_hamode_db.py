@@ -683,7 +683,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                                     routers_dict.keys(),
                                                     host)
         for binding in bindings:
-            port_dict = self._core_plugin._make_port_dict(binding.port)
+            port = binding.port
+            if not port:
+                # Filter the HA router has no ha port here
+                LOG.info(_LI("HA router %s is missing HA router port "
+                             "bindings. Skipping it."),
+                         binding.router_id)
+                routers_dict.pop(binding.router_id)
+                continue
+            port_dict = self._core_plugin._make_port_dict(port)
 
             router = routers_dict.get(binding.router_id)
             router[constants.HA_INTERFACE_KEY] = port_dict
@@ -694,6 +702,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             if interface:
                 self._populate_mtu_and_subnets_for_ports(context, [interface])
 
+        # Could not filter the HA_INTERFACE_KEY here, because a DVR router
+        # with SNAT HA in DVR compute host also does not have that attribute.
         return list(routers_dict.values())
 
     @log_helpers.log_method_call
