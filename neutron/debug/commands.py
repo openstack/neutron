@@ -17,26 +17,18 @@ from cliff import lister
 from neutronclient.common import utils
 from neutronclient.neutron import v2_0 as client
 from neutronclient.neutron.v2_0 import port
-from oslo_log import log as logging
 
 from neutron._i18n import _, _LI
 
 
 class ProbeCommand(client.NeutronCommand):
-    log = logging.getLogger(__name__ + '.ProbeCommand')
 
     def get_debug_agent(self):
         return self.app.debug_agent
 
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
-        self.log.info(_('Unimplemented commands'))
-
 
 class CreateProbe(ProbeCommand):
     """Create probe port and interface, then plug it in."""
-
-    log = logging.getLogger(__name__ + '.CreateProbe')
 
     def get_parser(self, prog_name):
         parser = super(CreateProbe, self).get_parser(prog_name)
@@ -49,8 +41,7 @@ class CreateProbe(ProbeCommand):
             help=_('Owner type of the device: network/compute'))
         return parser
 
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         probe_port = debug_agent.create_probe(parsed_args.id,
                                               parsed_args.device_owner)
@@ -60,8 +51,6 @@ class CreateProbe(ProbeCommand):
 class DeleteProbe(ProbeCommand):
     """Delete probe - delete port then uplug."""
 
-    log = logging.getLogger(__name__ + '.DeleteProbe')
-
     def get_parser(self, prog_name):
         parser = super(DeleteProbe, self).get_parser(prog_name)
         parser.add_argument(
@@ -69,24 +58,18 @@ class DeleteProbe(ProbeCommand):
             help=_('ID of probe port to delete'))
         return parser
 
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         debug_agent.delete_probe(parsed_args.id)
         self.log.info(_('Probe %s deleted'), parsed_args.id)
 
 
-class ListProbe(client.NeutronCommand, lister.Lister):
+class ListProbe(ProbeCommand, lister.Lister):
     """List probes."""
 
-    log = logging.getLogger(__name__ + '.ListProbe')
     _formatters = {'fixed_ips': port._format_fixed_ips, }
 
-    def get_debug_agent(self):
-        return self.app.debug_agent
-
-    def get_data(self, parsed_args):
-
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         info = debug_agent.list_probes()
         columns = sorted(info[0].keys()) if info else []
@@ -98,10 +81,7 @@ class ListProbe(client.NeutronCommand, lister.Lister):
 class ClearProbe(ProbeCommand):
     """Clear All probes."""
 
-    log = logging.getLogger(__name__ + '.ClearProbe')
-
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         cleared_probes_count = debug_agent.clear_probes()
         self.log.info(_LI('%d probe(s) deleted'), cleared_probes_count)
@@ -109,8 +89,6 @@ class ClearProbe(ProbeCommand):
 
 class ExecProbe(ProbeCommand):
     """Exec commands on the namespace of the probe."""
-
-    log = logging.getLogger(__name__ + '.ExecProbe')
 
     def get_parser(self, prog_name):
         parser = super(ExecProbe, self).get_parser(prog_name)
@@ -124,8 +102,7 @@ class ExecProbe(ProbeCommand):
             help=_('Command to execute'))
         return parser
 
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         result = debug_agent.exec_command(parsed_args.id, parsed_args.command)
         self.app.stdout.write(result + '\n')
@@ -133,8 +110,6 @@ class ExecProbe(ProbeCommand):
 
 class PingAll(ProbeCommand):
     """Ping all fixed_ip."""
-
-    log = logging.getLogger(__name__ + '.ExecProbe')
 
     def get_parser(self, prog_name):
         parser = super(PingAll, self).get_parser(prog_name)
@@ -148,8 +123,7 @@ class PingAll(ProbeCommand):
             help=_('ID of network'))
         return parser
 
-    def run(self, parsed_args):
-        self.log.debug('run(%s)', parsed_args)
+    def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         result = debug_agent.ping_all(parsed_args.id,
                                       timeout=parsed_args.timeout)
