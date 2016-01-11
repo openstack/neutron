@@ -258,9 +258,6 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                              expected)
             self._delete('ports', port_id1)
 
-    def test_sg_rules_for_devices_ipv4_ingress_port_range_min_port_0(self):
-        self._test_sg_rules_for_devices_ipv4_ingress_port_range(0, 10)
-
     def test_sg_rules_for_devices_ipv4_ingress_port_range_min_port_1(self):
         self._test_sg_rules_for_devices_ipv4_ingress_port_range(1, 10)
 

@@ -1503,6 +1503,23 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
 
+    def test_create_security_group_rule_with_invalid_tcp_or_udp_protocol(self):
+        security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
+        direction = "ingress"
+        remote_ip_prefix = "10.0.0.0/24"
+        protocol = 'tcp'
+        port_range_min = 0
+        port_range_max = 80
+        remote_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        rule = self._build_security_group_rule(security_group_id, direction,
+                                               protocol, port_range_min,
+                                               port_range_max,
+                                               remote_ip_prefix,
+                                               remote_group_id)
+        res = self._create_security_group_rule(self.fmt, rule)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
     def test_create_port_with_non_uuid(self):
         with self.network() as n:
             with self.subnet(n):
