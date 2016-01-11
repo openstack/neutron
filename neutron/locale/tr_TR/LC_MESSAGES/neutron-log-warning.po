@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.1.dev41\n"
+"Project-Id-Version: neutron 7.0.2.dev63\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-01 06:13+0000\n"
+"POT-Creation-Date: 2016-01-11 06:54+0000\n"
 "PO-Revision-Date: 2015-08-21 01:06+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Turkish (Turkey)\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.1\n"
+"X-Generator: Zanata 3.7.3\n"
 
 #, python-format
 msgid "%(agent_type)s agent %(agent_id)s is not active"
@@ -311,12 +311,6 @@ msgstr ""
 "komutuyla desteklenmeli"
 
 #, python-format
-msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
-msgstr ""
-"%(agent)s ajanı tarafından güncellenen %(port)s bağlantı noktası herhangi "
-"bir dilime bağlı değil"
-
-#, python-format
 msgid "Port %s not found during update"
 msgstr "%s bağlantı noktası güncelleme sırasında bulunamadı"
 
@@ -324,15 +318,6 @@ msgid "Port ID not set! Nova will not be notified of port status change."
 msgstr ""
 "Bağlantı noktası kimliği ayarlanmamış! Nova bağlantı noktası durumu "
 "değişikliğinde bilgilendirilmeyecek."
-
-msgid ""
-"Registering resources to apply quota limits to using the quota_items option "
-"is deprecated as of Liberty.Resource REST controllers should take care of "
-"registering resources with the quota engine."
-msgstr ""
-"quota_items seçeneğini kullanarak kota sınırlarını uygulamak için kaynak "
-"kaydetme Liberty itibariyle kullanılmıyor. Kaynakların kota motoruyla "
-"kaydında kaynak REST kontrolcüleri kullanılmalı."
 
 #, python-format
 msgid ""
@@ -428,9 +413,6 @@ msgstr "Değişken IP için IP adresi yapılandırılamıyor: %s"
 msgid "Unable to find data type descriptor for attribute %s"
 msgstr "%s özniteliği için veri türü tanımlayıcısı bulunamadı"
 
-msgid "Unable to retrieve the agent ip, check the agent configuration."
-msgstr "Ajan ip'si alınamıyor, ajan yapılandırmasını kontrol edin."
-
 #, python-format
 msgid ""
 "Unable to schedule network %s: no agents available; will retry on subsequent "
@@ -451,9 +433,6 @@ msgid ""
 msgstr ""
 "VIF bağlantı noktası: %s'in yapılandırılmış bir ofport'u yok, aktarım "
 "yapamayabilir"
-
-msgid "VXLAN is enabled, a valid local_ip must be provided"
-msgstr "VXLAN etkin, geçerli bir local_ip sağlanmalı"
 
 #, python-format
 msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"
