@@ -8,3 +8,6 @@ features:
     by the L3 agent with availability zone specified by the user. This supports
     the use of availability zones with HA routers. DVR isn't supported now
     because L3HA and DVR integration isn't finished.
+other:
+  - Please read the `OpenStack Networking Guide
+    <http://docs.openstack.org/networking-guide/adv_config_availability_zone.html>`_.
