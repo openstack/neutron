@@ -1129,9 +1129,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             # add router interface first
             self.l3plugin.add_router_interface(self.adminContext, r['id'],
                 {'subnet_id': s_int['subnet']['id']})
-            # check that router is scheduled to both dvr_snat agents
+            # Check if the router is not scheduled to any of the agents
             l3agents = self._list_l3_agents_hosting_router(r['id'])
-            self.assertEqual(2, len(l3agents['agents']))
+            self.assertEqual(0, len(l3agents['agents']))
             # check that snat is not scheduled as router is not connected to
             # external network
             snat_agents = self.l3plugin.get_snat_bindings(
@@ -1141,9 +1141,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             # connect router to external network
             self.l3plugin.update_router(self.adminContext, r['id'],
                 {'router': {'external_gateway_info': {'network_id': net_id}}})
-            # router should still be scheduled to both dvr_snat agents
+            # router should still be scheduled to one of the dvr_snat agents
             l3agents = self._list_l3_agents_hosting_router(r['id'])
-            self.assertEqual(2, len(l3agents['agents']))
+            self.assertEqual(1, len(l3agents['agents']))
             # now snat portion should be scheduled as router is connected
             # to external network
             snat_agents = self.l3plugin.get_snat_bindings(
@@ -1169,7 +1169,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.l3plugin.schedule_router(
                     self.adminContext, r['id'])
             l3agents = self._list_l3_agents_hosting_router(r['id'])
-            self.assertEqual(2, len(l3agents['agents']))
+            self.assertEqual(1, len(l3agents['agents']))
             csnat_agent_host = self.l3plugin.get_snat_bindings(
                 self.adminContext, [r['id']])[0]['l3_agent']['host']
             self._take_down_agent_and_run_reschedule(csnat_agent_host)
@@ -1199,24 +1199,27 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     self.adminContext, r['id'])
             l3agents = self.l3plugin.list_l3_agents_hosting_router(
                 self.adminContext, r['id'])
-            self.assertEqual(2, len(l3agents['agents']))
+            self.assertEqual(1, len(l3agents['agents']))
             csnat_agent = self.l3plugin.get_snat_bindings(
                 self.adminContext, [r['id']])[0]['l3_agent']
-
+            # NOTE: Removing the router from the l3_agent will
+            # remove all the namespace since there is no other
+            # serviceable ports in the node that requires it.
             self.l3plugin.remove_router_from_l3_agent(
                 self.adminContext, csnat_agent['id'], r['id'])
 
             l3agents = self.l3plugin.list_l3_agents_hosting_router(
                 self.adminContext, r['id'])
-            self.assertEqual(1, len(l3agents['agents']))
+            self.assertEqual(0, len(l3agents['agents']))
             self.assertFalse(self.l3plugin.get_snat_bindings(
                 self.adminContext, [r['id']]))
 
             self.l3plugin.add_router_to_l3_agent(
                 self.adminContext, csnat_agent['id'], r['id'])
 
-            l3agents = self._list_l3_agents_hosting_router(r['id'])
-            self.assertEqual(2, len(l3agents['agents']))
+            l3agents = self.l3plugin.list_l3_agents_hosting_router(
+                self.adminContext, r['id'])
+            self.assertEqual(1, len(l3agents['agents']))
             new_csnat_agent = self.l3plugin.get_snat_bindings(
                 self.adminContext, [r['id']])[0]['l3_agent']
             self.assertEqual(csnat_agent['id'], new_csnat_agent['id'])
