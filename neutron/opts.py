@@ -24,6 +24,8 @@ import neutron.agent.l2.extensions.manager
 import neutron.agent.l3.config
 import neutron.agent.l3.ha
 import neutron.agent.linux.interface
+import neutron.agent.linux.pd
+import neutron.agent.linux.ra
 import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
@@ -190,7 +192,9 @@ def list_l3_agent_opts():
          itertools.chain(
              neutron.agent.l3.config.OPTS,
              neutron.service.service_opts,
-             neutron.agent.l3.ha.OPTS)
+             neutron.agent.l3.ha.OPTS,
+             neutron.agent.linux.pd.OPTS,
+             neutron.agent.linux.ra.OPTS)
          )
     ]
 

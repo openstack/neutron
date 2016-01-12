@@ -40,8 +40,6 @@ OPTS = [
                help=_('Service to handle DHCPv6 Prefix delegation.')),
 ]
 
-cfg.CONF.register_opts(OPTS)
-
 
 class PrefixDelegation(object):
     def __init__(self, context, pmon, intf_driver, notifier, pd_update_cb,
