@@ -62,6 +62,23 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertNotIn(test_object, a.pool)
         self.assertTrue(write.called)
 
+    def test_allocate_repeated_call_with_same_key(self):
+        test_pool = set([TestObject(33000), TestObject(33001),
+                         TestObject(33002), TestObject(33003),
+                         TestObject(33004), TestObject(33005)])
+        a = ia.ItemAllocator('/file', TestObject, test_pool)
+        with mock.patch.object(ia.ItemAllocator, '_write'):
+            test_object = a.allocate('test')
+            test_object1 = a.allocate('test')
+            test_object2 = a.allocate('test')
+            test_object3 = a.allocate('test1')
+
+        # same value for same key on repeated calls
+        self.assertEqual(test_object, test_object1)
+        self.assertEqual(test_object1, test_object2)
+        # values for different keys should be diffent
+        self.assertNotEqual(test_object, test_object3)
+
     def test_allocate_from_file(self):
         test_pool = set([TestObject(33000), TestObject(33001)])
         with mock.patch.object(ia.ItemAllocator, '_read') as read:
