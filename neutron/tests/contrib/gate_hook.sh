@@ -16,12 +16,28 @@ then
     PROJECT_NAME=neutron
     IS_GATE=True
 
+    source $DEVSTACK_PATH/functions
+    source $NEUTRON_PATH/devstack/lib/ovs
+
     source $NEUTRON_PATH/tools/configure_for_func_testing.sh
+
+    configure_host_for_func_testing
+
+    if [[ "$VENV" =~ "dsvm-functional" ]]; then
+        # Build from current branch-2.5 commit (2016-01-15)
+        OVS_BRANCH=eedd0ef239301f68964313e93dfd7ec41fc7814c
+        for package in openvswitch openvswitch-switch openvswitch-common; do
+            if is_package_installed $package; then
+                uninstall_package $package
+            fi
+        done
+        compile_ovs True /usr
+        start_new_ovs
+    fi
 
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
 
-    configure_host_for_func_testing
 elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
 then
     cat > $DEVSTACK_PATH/local.conf <<EOF

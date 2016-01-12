@@ -1,0 +1,93 @@
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
+OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
+OVS_BRANCH=${OVS_BRANCH:-origin/master}
+
+# Functions
+
+# load_module() - Load module using modprobe module given by argument and dies
+#                 on failure
+#               - fatal argument is optional and says whether function should
+#                 exit if module can't be loaded
+function load_module {
+    local module=$1
+    local fatal=$2
+
+    if [ "$(trueorfalse True fatal)" == "True" ]; then
+        sudo modprobe $module || (dmesg && die $LINENO "FAILED TO LOAD $module")
+    else
+        sudo modprobe $module || (echo "FAILED TO LOAD vport_geneve" && dmesg)
+    fi
+}
+
+# compile_ovs() - Compile OVS from source and load needed modules.
+#                 Accepts two parameters:
+#                   - first one is True, modules are built and installed.
+#                   - second optional parameter defines prefix for ovs compilation
+#                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
+function compile_ovs {
+    local _pwd=$PWD
+    local build_modules=${1:-True}
+    local prefix=$2
+
+    if [ -n $prefix ]; then
+        prefix="--prefix=$prefix"
+    fi
+
+    cd $DEST
+    if [ ! -d $OVS_REPO_NAME ] ; then
+        git clone $OVS_REPO
+        cd $OVS_REPO_NAME
+        git checkout $OVS_BRANCH
+    else
+        cd $OVS_REPO_NAME
+    fi
+
+    # TODO: Can you create package list files like you can inside devstack?
+    install_package autoconf automake libtool gcc patch make
+
+    if is_fedora ; then
+        # is_fedora covers Fedora, RHEL, CentOS, etc...
+        install_package kernel-devel
+    fi
+
+    if [ ! -f configure ] ; then
+        ./boot.sh
+    fi
+    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
+        if [[ "$build_modules" == "True" ]]; then
+            ./configure $prefix --with-linux=/lib/modules/$(uname -r)/build
+        else
+            ./configure $prefix
+        fi
+    fi
+    make -j$[$(nproc) + 1]
+    sudo make install
+    if [[ "$build_modules" == "True" ]]; then
+        sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
+        sudo modprobe -r vport_geneve
+        sudo modprobe -r openvswitch
+    fi
+    load_module openvswitch
+    load_module vport-geneve False
+    dmesg | tail
+
+    cd $_pwd
+}
+
+# start_new_ovs() - removes old ovs database, creates a new one and starts ovs
+function start_new_ovs () {
+    rm -f /etc/openvswitch/conf.db /etc/openvswitch/.conf.db~lock~
+    sudo /usr/share/openvswitch/scripts/ovs-ctl start
+}

@@ -127,7 +127,10 @@ Functional tests (neutron/tests/functional/) are intended to
 validate actual system interaction. Mocks should be used sparingly,
 if at all. Care should be taken to ensure that existing system
 resources are not modified and that resources created in tests are
-properly cleaned up both on test success and failure.
+properly cleaned up both on test success and failure. Note that when run
+at the gate, the functional tests compile OVS from source. Check out
+neutron/tests/contrib/gate_hook.sh. Other jobs presently use OVS from
+packages.
 
 Let's examine the benefits of the functional testing framework.
 Neutron offers a library called 'ip_lib' that wraps around the 'ip' binary.
