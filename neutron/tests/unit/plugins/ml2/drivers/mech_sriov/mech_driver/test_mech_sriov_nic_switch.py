@@ -45,8 +45,8 @@ class TestFakePortContext(base.FakePortContext):
         @property
         def current(self):
             return {'id': base.PORT_ID,
-                    'binding:vnic_type': self._bound_vnic_type,
-                    'binding:profile': self._bound_profile}
+                    portbindings.VNIC_TYPE: self._bound_vnic_type,
+                    portbindings.PROFILE: self._bound_profile}
 
         def set_binding(self, segment_id, vif_type, vif_details, state):
             self._bound_segment_id = segment_id

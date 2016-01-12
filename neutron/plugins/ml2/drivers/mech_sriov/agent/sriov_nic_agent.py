@@ -71,8 +71,8 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         # processed in the same order as the relevant API requests.
         mac = port['mac_address']
         pci_slot = None
-        if port.get('binding:profile'):
-            pci_slot = port['binding:profile'].get('pci_slot')
+        if port.get(portbindings.PROFILE):
+            pci_slot = port[portbindings.PROFILE].get('pci_slot')
 
         if pci_slot:
             self.agent.updated_devices.add((mac, pci_slot))

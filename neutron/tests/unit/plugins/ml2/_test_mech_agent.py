@@ -53,7 +53,7 @@ class FakePortContext(api.PortContext):
     @property
     def current(self):
         return {'id': PORT_ID,
-                'binding:vnic_type': self._bound_vnic_type}
+                portbindings.VNIC_TYPE: self._bound_vnic_type}
 
     @property
     def original(self):
