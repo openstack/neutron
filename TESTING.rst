@@ -502,6 +502,10 @@ or::
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
+If you want to pass other arguments to ostestr, you can do the following::
+      $ tox -e -epy27 -- --regex neutron.tests.unit.test_manager --serial
+
+
 Coverage
 --------
 
