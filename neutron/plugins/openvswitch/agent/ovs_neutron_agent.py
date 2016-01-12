@@ -1193,6 +1193,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                 physical_network, segmentation_id,
                                 fixed_ips, device_owner, ovs_restarted)
             else:
+                LOG.info(_LI("VIF port: %s admin state up disabled, "
+                             "putting on the dead VLAN"), vif_port.vif_id)
+
                 self.port_dead(vif_port)
         else:
             LOG.debug("No VIF port for port %s defined on agent.", port_id)
