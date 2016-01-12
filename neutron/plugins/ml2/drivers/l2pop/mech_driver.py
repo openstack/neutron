@@ -73,6 +73,9 @@ class L2populationMechanismDriver(api.MechanismDriver,
         else:
             agent_host = context.original_host
 
+        if not agent_host:
+            return
+
         agent_ip = self.get_agent_ip_by_host(db_api.get_session(), agent_host)
 
         orig_mac_ip = [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
@@ -248,6 +251,9 @@ class L2populationMechanismDriver(api.MechanismDriver,
                                                      other_fdb_entries)
 
     def _get_agent_fdb(self, context, port, agent_host):
+        if not agent_host:
+            return
+
         network_id = port['network_id']
 
         session = db_api.get_session()
@@ -256,6 +262,9 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
         agent = self.get_agent_by_host(db_api.get_session(), agent_host)
         segment = self._get_and_validate_segment(context, port['id'], agent)
+        if not segment:
+            return
+
         agent_ip = self.get_agent_ip(agent)
         other_fdb_entries = self._get_fdb_entries_template(
             segment, agent_ip, port['network_id'])
