@@ -252,11 +252,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             router = self.get_router(context, router_id)
             agent = self._get_agent(context, agent_id)
             self.validate_agent_router_combination(context, agent, router)
-            if self.check_agent_router_scheduling_needed(
-                context, agent, router):
-                self.create_router_to_agent_binding(context, agent, router)
-            else:
+            if not self.check_agent_router_scheduling_needed(
+                    context, agent, router):
                 return
+        self.create_router_to_agent_binding(context, agent, router)
 
         l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
         if l3_notifier:
