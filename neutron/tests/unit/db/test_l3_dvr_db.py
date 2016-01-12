@@ -397,7 +397,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         # NOTE: mock.patch is not needed here since self.mixin is created fresh
         # for each test.  It doesn't work with some methods since the mixin is
         # tested in isolation (e.g. _get_agent_by_type_and_host).
-        self.mixin._get_vm_port_hostid = mock.Mock(return_value=hostid)
+        self.mixin._get_dvr_service_port_hostid = mock.Mock(
+            return_value=hostid)
         self.mixin._get_agent_by_type_and_host = mock.Mock(
             return_value=fipagent)
         self.mixin._get_fip_sync_interfaces = mock.Mock(
@@ -435,7 +436,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         }
 
         with mock.patch.object(self.mixin, 'get_router') as grtr,\
-                mock.patch.object(self.mixin, '_get_vm_port_hostid') as vmp,\
+                mock.patch.object(self.mixin,
+                                  '_get_dvr_service_port_hostid') as vmp,\
                 mock.patch.object(
                     self.mixin,
                     'create_fip_agent_gw_port_if_not_exists') as c_fip,\
