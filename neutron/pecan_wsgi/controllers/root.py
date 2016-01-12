@@ -58,7 +58,9 @@ class RootController(object):
         versions = [builder.build(version) for version in _get_version_info()]
         return dict(versions=versions)
 
+    @when(index, method='HEAD')
     @when(index, method='POST')
+    @when(index, method='PATCH')
     @when(index, method='PUT')
     @when(index, method='DELETE')
     def not_supported(self):
@@ -96,7 +98,9 @@ class V2Controller(object):
         builder = versions_view.get_view_builder(pecan.request)
         return dict(version=builder.build(self.version_info))
 
+    @when(index, method='HEAD')
     @when(index, method='POST')
+    @when(index, method='PATCH')
     @when(index, method='PUT')
     @when(index, method='DELETE')
     def not_supported(self):
@@ -110,9 +114,10 @@ class V2Controller(object):
             LOG.warn(_LW("No controller found for: %s - returning response "
                          "code 404"), collection)
             pecan.abort(404)
-        # Store resource name in pecan request context so that hooks can
-        # leverage it if necessary
+        # Store resource and collection names in pecan request context so that
+        # hooks can leverage them if necessary
         request.context['resource'] = controller.resource
+        request.context['collection'] = collection
         return controller, remainder
 
 
@@ -150,6 +155,8 @@ class CollectionsController(NeutronPecanController):
 
     @expose()
     def _lookup(self, item, *remainder):
+        # Store resource identifier in request context
+        request.context['resource_id'] = item
         return ItemController(self.resource, item), remainder
 
     @expose(generic=True)
@@ -165,21 +172,36 @@ class CollectionsController(NeutronPecanController):
         filters = {k: _listify(v) for k, v in kwargs.items()}
         # TODO(kevinbenton): convert these using api_common.get_filters
         lister = getattr(self.plugin, 'get_%s' % self.collection)
-        neutron_context = request.context.get('neutron_context')
+        neutron_context = request.context['neutron_context']
         return {self.collection: lister(neutron_context, filters=filters)}
+
+    @when(index, method='HEAD')
+    @when(index, method='PATCH')
+    @when(index, method='PUT')
+    @when(index, method='DELETE')
+    def not_supported(self):
+        pecan.abort(405)
 
     @when(index, method='POST')
     def post(self, *args, **kwargs):
         # TODO(kevinbenton): emulated bulk!
+        resources = request.context['resources']
         pecan.response.status = 201
-        if request.bulk:
+        return self.create(resources)
+
+    def create(self, resources):
+        if len(resources) > 1:
+            # Bulk!
             method = 'create_%s_bulk' % self.resource
+            key = self.collection
+            data = {key: [{self.resource: res} for res in resources]}
         else:
             method = 'create_%s' % self.resource
+            key = self.resource
+            data = {key: resources[0]}
         creator = getattr(self.plugin, method)
-        key = self.collection if request.bulk else self.resource
-        neutron_context = request.context.get('neutron_context')
-        return {key: creator(neutron_context, request.prepared_data)}
+        neutron_context = request.context['neutron_context']
+        return {key: creator(neutron_context, data)}
 
 
 class ItemController(NeutronPecanController):
@@ -194,25 +216,35 @@ class ItemController(NeutronPecanController):
 
     def get(self, *args, **kwargs):
         getter = getattr(self.plugin, 'get_%s' % self.resource)
-        neutron_context = request.context.get('neutron_context')
+        neutron_context = request.context['neutron_context']
         return {self.resource: getter(neutron_context, self.item)}
+
+    @when(index, method='HEAD')
+    @when(index, method='POST')
+    @when(index, method='PATCH')
+    def not_supported(self):
+        pecan.abort(405)
 
     @when(index, method='PUT')
     def put(self, *args, **kwargs):
-        neutron_context = request.context.get('neutron_context')
+        neutron_context = request.context['neutron_context']
+        resources = request.context['resources']
         if request.member_action:
             member_action_method = getattr(self.plugin,
                                            request.member_action)
             return member_action_method(neutron_context, self.item,
-                                        request.prepared_data)
+                                        resources[0])
         # TODO(kevinbenton): bulk?
         updater = getattr(self.plugin, 'update_%s' % self.resource)
-        return updater(neutron_context, self.item, request.prepared_data)
+        # Bulk update is not supported, 'resources' always contains a single
+        # elemenet
+        data = {self.resource: resources[0]}
+        return updater(neutron_context, self.item, data)
 
     @when(index, method='DELETE')
     def delete(self):
         # TODO(kevinbenton): setting code could be in a decorator
         pecan.response.status = 204
-        neutron_context = request.context.get('neutron_context')
+        neutron_context = request.context['neutron_context']
         deleter = getattr(self.plugin, 'delete_%s' % self.resource)
         return deleter(neutron_context, self.item)
