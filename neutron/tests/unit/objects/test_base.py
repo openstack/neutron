@@ -240,6 +240,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
     common_types.IPVersionEnumField: tools.get_random_ip_version,
     obj_fields.DateTimeField: timeutils.utcnow,
+    obj_fields.IPAddressField: tools.get_random_ip_address,
+    common_types.MACAddressField: tools.get_random_EUI,
 }
 
 
