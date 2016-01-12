@@ -778,7 +778,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         with self.subnet() as s, \
                 mock.patch.object(
                         self.l3plugin,
-                        'check_ports_exist_on_l3agent') as port_exists:
+                        'check_dvr_serviceable_ports_on_host') as port_exists:
             net_id = s['subnet']['network_id']
             self._set_net_external(net_id)
             router = {'name': 'router1',
@@ -1095,7 +1095,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                             {'router': router})
             with mock.patch.object(
                     self.l3plugin,
-                    'check_ports_exist_on_l3agent') as ports_exist:
+                    'check_dvr_serviceable_ports_on_host') as ports_exist:
                 # emulating dvr serviceable ports exist on compute node
                 ports_exist.return_value = True
                 self.l3plugin.schedule_router(

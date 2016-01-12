@@ -488,7 +488,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return_value=[mock.MagicMock()])
         plugin.get_subnet_ids_on_router = mock.Mock(
             return_value=interface_info)
-        plugin.check_ports_exist_on_l3agent = mock.Mock(
+        plugin.check_dvr_serviceable_ports_on_host = mock.Mock(
             return_value=False)
         plugin.remove_router_from_l3_agent = mock.Mock(
             return_value=None)
@@ -517,7 +517,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.mixin.remove_router_interface(
                 self.ctx, mock.Mock(), interface_info)
             self.assertTrue(plugin.get_l3_agents_hosting_routers.called)
-            self.assertTrue(plugin.check_ports_exist_on_l3agent.called)
+            self.assertTrue(plugin.check_dvr_serviceable_ports_on_host.called)
             self.assertTrue(plugin.remove_router_from_l3_agent.called)
 
     def test_remove_router_interface_csnat_ports_removal(self):

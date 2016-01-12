@@ -455,10 +455,16 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_ports_exist_on_l3agent(self, context, l3_agent, subnet_ids):
-        """
-        This function checks for existence of dvr serviceable
-        ports on the host, running the input l3agent.
+    def check_dvr_serviceable_ports_on_host(
+            self, context, host, subnet_ids, except_port=None):
+        """Check for existence of dvr serviceable ports on host
+
+        :param context: request context
+        :param host: host to look ports on
+        :param subnet_ids: IDs of subnets to look ports on
+        :param except_port: ID of the port to ignore (used when checking if
+        DVR router should be removed from host before actual port remove)
+        :return:
         """
         # db query will return ports for all subnets if subnet_ids is empty,
         # so need to check first
@@ -467,13 +473,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         core_plugin = manager.NeutronManager.get_plugin()
         filters = {'fixed_ips': {'subnet_id': subnet_ids},
-                   portbindings.HOST_ID: [l3_agent['host']]}
+                   portbindings.HOST_ID: [host]}
         ports_query = core_plugin._get_ports_query(context, filters=filters)
         owner_filter = or_(
             models_v2.Port.device_owner.startswith(
                 constants.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
                 n_utils.get_other_dvr_serviced_device_owners()))
+        if except_port:
+            ports_query = ports_query.filter(models_v2.Port.id != except_port)
         ports_query = ports_query.filter(owner_filter)
         return ports_query.first() is not None
 
@@ -513,8 +521,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 candidates.append(l3_agent)
             elif (is_router_distributed and subnet_ids and
                     agent_mode.startswith(constants.L3_AGENT_MODE_DVR) and (
-                        self.check_ports_exist_on_l3agent(
-                            context, l3_agent, subnet_ids))):
+                        self.check_dvr_serviceable_ports_on_host(
+                            context, l3_agent['host'], subnet_ids))):
                 candidates.append(l3_agent)
         return candidates
 
