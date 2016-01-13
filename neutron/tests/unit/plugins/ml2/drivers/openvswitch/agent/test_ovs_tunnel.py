@@ -179,7 +179,6 @@ class TunnelTest(object):
 
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
         self.mock_int_bridge_expected = [
-            mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
@@ -214,7 +213,6 @@ class TunnelTest(object):
         ]
 
         self.mock_tun_bridge_expected = [
-            mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),
@@ -627,7 +625,6 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.mock_int_bridge_expected = [
-            mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
@@ -655,7 +652,6 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.mock_tun_bridge_expected = [
-            mock.call.set_agent_uuid_stamp(mock.ANY),
             mock.call.create(secure_mode=True),
             mock.call.setup_controllers(mock.ANY),
             mock.call.port_exists('patch-int'),

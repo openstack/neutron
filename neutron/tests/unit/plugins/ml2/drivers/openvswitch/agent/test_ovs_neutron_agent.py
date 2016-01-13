@@ -1850,12 +1850,11 @@ class TestOvsNeutronAgent(object):
 class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
                                ovs_test_base.OVSOFCtlTestBase):
     def test_cleanup_stale_flows(self):
-        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
-                               new=1234),\
-            mock.patch.object(self.agent.int_br,
+        with mock.patch.object(self.agent.int_br,
                               'dump_flows_all_tables') as dump_flows,\
                 mock.patch.object(self.agent.int_br,
                                   'delete_flows') as del_flow:
+            self.agent.int_br.set_agent_uuid_stamp(1234)
             dump_flows.return_value = [
                 'cookie=0x4d2, duration=50.156s, table=0,actions=drop',
                 'cookie=0x4321, duration=54.143s, table=2, priority=0',
@@ -1875,12 +1874,11 @@ class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
                              ovs_test_base.OVSRyuTestBase):
     def test_cleanup_stale_flows(self):
         uint64_max = (1 << 64) - 1
-        with mock.patch.object(self.agent.int_br, 'agent_uuid_stamp',
-                               new=1234),\
-            mock.patch.object(self.agent.int_br,
+        with mock.patch.object(self.agent.int_br,
                               'dump_flows') as dump_flows,\
                 mock.patch.object(self.agent.int_br,
                                   'delete_flows') as del_flow:
+            self.agent.int_br.set_agent_uuid_stamp(1234)
             dump_flows.return_value = [
                 # mock ryu.ofproto.ofproto_v1_3_parser.OFPFlowStats
                 mock.Mock(cookie=1234, table_id=0),

@@ -85,8 +85,9 @@ class OpenFlowSwitchMixin(object):
             super(OpenFlowSwitchMixin, self).remove_all_flows()
 
     def _filter_flows(self, flows):
-        LOG.debug("Agent uuid stamp used to filter flows: %s",
-                  self.agent_uuid_stamp)
+        cookie_list = self.reserved_cookies
+        LOG.debug("Bridge cookies used to filter flows: %s",
+                  cookie_list)
         cookie_re = re.compile('cookie=(0x[A-Fa-f0-9]*)')
         table_re = re.compile('table=([0-9]*)')
         for flow in flows:
@@ -94,7 +95,7 @@ class OpenFlowSwitchMixin(object):
             if not fl_cookie:
                 continue
             fl_cookie = fl_cookie.group(1)
-            if int(fl_cookie, 16) != self.agent_uuid_stamp:
+            if int(fl_cookie, 16) not in cookie_list:
                 fl_table = table_re.search(flow)
                 if not fl_table:
                     continue
