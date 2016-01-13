@@ -401,13 +401,16 @@ class Controller(object):
                 # We need a way for ensuring that if it has been created,
                 # it is then deleted
 
-    @db_api.retry_db_errors
     def create(self, request, body=None, **kwargs):
-        """Creates a new instance of the requested entity."""
-        parent_id = kwargs.get(self._parent_id_name)
         self._notifier.info(request.context,
                             self._resource + '.create.start',
                             body)
+        return self._create(request, body, **kwargs)
+
+    @db_api.retry_db_errors
+    def _create(self, request, body, **kwargs):
+        """Creates a new instance of the requested entity."""
+        parent_id = kwargs.get(self._parent_id_name)
         body = Controller.prepare_request_body(request.context,
                                                copy.deepcopy(body), True,
                                                self._resource, self._attr_info,
@@ -519,12 +522,15 @@ class Controller(object):
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
-    @db_api.retry_db_errors
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
         self._notifier.info(request.context,
                             self._resource + '.delete.start',
                             {self._resource + '_id': id})
+        return self._delete(request, id, **kwargs)
+
+    @db_api.retry_db_errors
+    def _delete(self, request, id, **kwargs):
         action = self._plugin_handlers[self.DELETE]
 
         # Check authz
@@ -557,10 +563,8 @@ class Controller(object):
                                      result,
                                      notifier_method)
 
-    @db_api.retry_db_errors
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes."""
-        parent_id = kwargs.get(self._parent_id_name)
         try:
             payload = body.copy()
         except AttributeError:
@@ -570,6 +574,10 @@ class Controller(object):
         self._notifier.info(request.context,
                             self._resource + '.update.start',
                             payload)
+        return self._update(request, id, body, **kwargs)
+
+    @db_api.retry_db_errors
+    def _update(self, request, id, body, **kwargs):
         body = Controller.prepare_request_body(request.context, body, False,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
@@ -583,6 +591,7 @@ class Controller(object):
                           'default' not in value)]
         # Ensure policy engine is initialized
         policy.init()
+        parent_id = kwargs.get(self._parent_id_name)
         orig_obj = self._item(request, id, field_list=field_list,
                               parent_id=parent_id)
         orig_object_copy = copy.copy(orig_obj)
