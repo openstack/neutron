@@ -78,7 +78,7 @@ Overlap between different test layers is often desirable and encouraged.
 Unit Tests
 ~~~~~~~~~~
 
-Unit tests (neutron/test/unit/) are meant to cover as much code as
+Unit tests (neutron/tests/unit/) are meant to cover as much code as
 possible. They are designed to test the various pieces of the Neutron tree to
 make sure any new changes don't break existing functionality. Unit tests have
 no requirements nor make changes to the system they are running on. They use
