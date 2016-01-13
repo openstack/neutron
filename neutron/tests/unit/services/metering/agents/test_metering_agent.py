@@ -75,31 +75,31 @@ class TestMeteringOperations(base.BaseTestCase):
 
     def test_add_metering_label(self):
         self.agent.add_metering_label(None, ROUTERS)
-        self.assertEqual(self.driver.add_metering_label.call_count, 1)
+        self.assertEqual(1, self.driver.add_metering_label.call_count)
 
     def test_remove_metering_label(self):
         self.agent.remove_metering_label(None, ROUTERS)
-        self.assertEqual(self.driver.remove_metering_label.call_count, 1)
+        self.assertEqual(1, self.driver.remove_metering_label.call_count)
 
     def test_update_metering_label_rule(self):
         self.agent.update_metering_label_rules(None, ROUTERS)
-        self.assertEqual(self.driver.update_metering_label_rules.call_count, 1)
+        self.assertEqual(1, self.driver.update_metering_label_rules.call_count)
 
     def test_add_metering_label_rule(self):
         self.agent.add_metering_label_rule(None, ROUTERS_WITH_RULE)
-        self.assertEqual(self.driver.add_metering_label_rule.call_count, 1)
+        self.assertEqual(1, self.driver.add_metering_label_rule.call_count)
 
     def test_remove_metering_label_rule(self):
         self.agent.remove_metering_label_rule(None, ROUTERS_WITH_RULE)
-        self.assertEqual(self.driver.remove_metering_label_rule.call_count, 1)
+        self.assertEqual(1, self.driver.remove_metering_label_rule.call_count)
 
     def test_routers_updated(self):
         self.agent.routers_updated(None, ROUTERS)
-        self.assertEqual(self.driver.update_routers.call_count, 1)
+        self.assertEqual(1, self.driver.update_routers.call_count)
 
     def test_get_traffic_counters(self):
         self.agent._get_traffic_counters(None, ROUTERS)
-        self.assertEqual(self.driver.get_traffic_counters.call_count, 1)
+        self.assertEqual(1, self.driver.get_traffic_counters.call_count)
 
     def test_notification_report(self):
         self.agent.routers_updated(None, ROUTERS)
@@ -114,13 +114,13 @@ class TestMeteringOperations(base.BaseTestCase):
             if n['event_type'] == 'l3.meter':
                 break
 
-        self.assertEqual(n['event_type'], 'l3.meter')
+        self.assertEqual('l3.meter', n['event_type'])
 
         payload = n['payload']
-        self.assertEqual(payload['tenant_id'], TENANT_ID)
-        self.assertEqual(payload['label_id'], LABEL_ID)
-        self.assertEqual(payload['pkts'], 88)
-        self.assertEqual(payload['bytes'], 444)
+        self.assertEqual(TENANT_ID, payload['tenant_id'])
+        self.assertEqual(LABEL_ID, payload['label_id'])
+        self.assertEqual(88, payload['pkts'])
+        self.assertEqual(444, payload['bytes'])
 
     def test_router_deleted(self):
         label_id = _uuid()
@@ -133,8 +133,8 @@ class TestMeteringOperations(base.BaseTestCase):
         self.agent.routers_updated(None, ROUTERS)
         self.agent.router_deleted(None, ROUTERS[0]['id'])
 
-        self.assertEqual(self.agent._add_metering_info.call_count, 1)
-        self.assertEqual(self.driver.remove_router.call_count, 1)
+        self.assertEqual(1, self.agent._add_metering_info.call_count)
+        self.assertEqual(1, self.driver.remove_router.call_count)
 
         self.agent._add_metering_info.assert_called_with(label_id, 44, 222)
 

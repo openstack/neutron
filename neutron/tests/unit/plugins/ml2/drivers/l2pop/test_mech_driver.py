@@ -643,7 +643,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 req = self.new_update_request('ports', data, p1['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
-                self.assertEqual(len(ips), 2)
+                self.assertEqual(2, len(ips))
 
                 add_expected = {'chg_ip':
                                 {p1['network_id']:
@@ -661,7 +661,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 req = self.new_update_request('ports', data, p1['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
-                self.assertEqual(len(ips), 2)
+                self.assertEqual(2, len(ips))
 
                 upd_expected = {'chg_ip':
                                 {p1['network_id']:
@@ -680,7 +680,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 req = self.new_update_request('ports', data, p1['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
-                self.assertEqual(len(ips), 1)
+                self.assertEqual(1, len(ips))
 
                 del_expected = {'chg_ip':
                                 {p1['network_id']:

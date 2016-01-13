@@ -63,7 +63,7 @@ class TestSriovAgentConfig(base.BaseTestCase):
                               'SRIOV_NIC')
         device_mappings = n_utils.parse_mappings(
             cfg.CONF.SRIOV_NIC.physical_device_mappings)
-        self.assertEqual(device_mappings, self.DEVICE_MAPPING)
+        self.assertEqual(self.DEVICE_MAPPING, device_mappings)
 
     def test_device_mappings_with_error(self):
         cfg.CONF.set_override('physical_device_mappings',
@@ -78,7 +78,7 @@ class TestSriovAgentConfig(base.BaseTestCase):
                               'SRIOV_NIC')
         device_mappings = n_utils.parse_mappings(
             cfg.CONF.SRIOV_NIC.physical_device_mappings)
-        self.assertEqual(device_mappings, self.DEVICE_MAPPING)
+        self.assertEqual(self.DEVICE_MAPPING, device_mappings)
 
     def test_exclude_devices(self):
         cfg.CONF.set_override('exclude_devices',
@@ -86,7 +86,7 @@ class TestSriovAgentConfig(base.BaseTestCase):
                               'SRIOV_NIC')
         exclude_devices = config.parse_exclude_devices(
             cfg.CONF.SRIOV_NIC.exclude_devices)
-        self.assertEqual(exclude_devices, self.EXCLUDE_DEVICES)
+        self.assertEqual(self.EXCLUDE_DEVICES, exclude_devices)
 
     def test_exclude_devices_with_spaces(self):
         cfg.CONF.set_override('exclude_devices',
@@ -94,7 +94,7 @@ class TestSriovAgentConfig(base.BaseTestCase):
                               'SRIOV_NIC')
         exclude_devices = config.parse_exclude_devices(
             cfg.CONF.SRIOV_NIC.exclude_devices)
-        self.assertEqual(exclude_devices, self.EXCLUDE_DEVICES)
+        self.assertEqual(self.EXCLUDE_DEVICES, exclude_devices)
 
     def test_exclude_devices_with_error(self):
         cfg.CONF.set_override('exclude_devices',
@@ -114,8 +114,8 @@ class TestSriovAgentConfig(base.BaseTestCase):
         config_parser.parse()
         device_mappings = config_parser.device_mappings
         exclude_devices = config_parser.exclude_devices
-        self.assertEqual(exclude_devices, self.EXCLUDE_DEVICES)
-        self.assertEqual(device_mappings, self.DEVICE_MAPPING)
+        self.assertEqual(self.EXCLUDE_DEVICES, exclude_devices)
+        self.assertEqual(self.DEVICE_MAPPING, device_mappings)
 
     def test_validate_config_fail(self):
         cfg.CONF.set_override('physical_device_mappings',

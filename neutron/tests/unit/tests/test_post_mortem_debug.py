@@ -95,7 +95,7 @@ class TestGetIgnoredTraceback(base.BaseTestCase):
         actual = post_mortem_debug.get_ignored_traceback(root_tb)
         if expected is not None:
             expected = tracebacks[expected]
-        self.assertEqual(actual, expected)
+        self.assertEqual(expected, actual)
 
     def test_no_ignored_tracebacks(self):
         self._test_get_ignored_traceback([0, 0, 0], None)

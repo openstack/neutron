@@ -73,13 +73,13 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
             ctx,
             filters=dict(service_type=[constants.LOADBALANCER])
         )
-        self.assertEqual(len(res), 1)
+        self.assertEqual(1, len(res))
 
         res = self.manager.get_service_providers(
             ctx,
             filters=dict(service_type=[constants.FIREWALL])
         )
-        self.assertEqual(len(res), 1)
+        self.assertEqual(1, len(res))
 
     def test_multiple_default_providers_specified_for_service(self):
         self.assertRaises(
@@ -98,10 +98,10 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         # can pass None as a context
         p = self.manager.get_default_service_provider(None,
                                                       constants.LOADBALANCER)
-        self.assertEqual(p, {'service_type': constants.LOADBALANCER,
-                             'name': 'lbaas1',
-                             'driver': 'driver_path',
-                             'default': True})
+        self.assertEqual({'service_type': constants.LOADBALANCER,
+                          'name': 'lbaas1',
+                          'driver': 'driver_path',
+                          'default': True}, p)
 
         self.assertRaises(
             provconf.DefaultServiceProviderNotFound,
@@ -186,7 +186,7 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
         instance.get_service_providers.assert_called_with(mock.ANY,
                                                           filters={},
                                                           fields=[])
-        self.assertEqual(res.status_int, webexc.HTTPOk.code)
+        self.assertEqual(webexc.HTTPOk.code, res.status_int)
 
 
 class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
@@ -212,7 +212,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
 
     def test_list_service_providers(self):
         res = self._list_service_providers()
-        self.assertEqual(res.status_int, webexc.HTTPOk.code)
+        self.assertEqual(webexc.HTTPOk.code, res.status_int)
         data = self.deserialize(res)
         self.assertIn('service_providers', data)
         self.assertGreaterEqual(len(data['service_providers']), 2)
