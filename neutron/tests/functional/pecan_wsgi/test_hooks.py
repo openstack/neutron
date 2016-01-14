@@ -19,13 +19,15 @@ from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 
 from neutron.api.v2 import attributes
+from neutron import context
+from neutron.db.quota import driver as quota_driver
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource
 from neutron import policy
 from neutron.tests.functional.pecan_wsgi import test_functional
 
 
-class TestEnforcementHooks(test_functional.PecanFunctionalTest):
+class TestOwnershipHook(test_functional.PecanFunctionalTest):
 
     def test_network_ownership_check(self):
         net_response = self.app.post_json(
@@ -40,9 +42,48 @@ class TestEnforcementHooks(test_functional.PecanFunctionalTest):
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(201, port_response.status_int)
 
-    def test_quota_enforcement(self):
-        # TODO(kevinbenton): this test should do something
-        pass
+
+class TestQuotaEnforcementHook(test_functional.PecanFunctionalTest):
+
+    def test_quota_enforcement_single(self):
+        ctx = context.get_admin_context()
+        quota_driver.DbQuotaDriver.update_quota_limit(
+            ctx, 'tenid', 'network', 1)
+        # There is enough headroom for creating a network
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh'}},
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(response.status_int, 201)
+        # But a second request will fail
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh-2'}},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(response.status_int, 409)
+
+    def test_quota_enforcement_bulk_request(self):
+        ctx = context.get_admin_context()
+        quota_driver.DbQuotaDriver.update_quota_limit(
+            ctx, 'tenid', 'network', 3)
+        # There is enough headroom for a bulk request creating 2 networks
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'networks': [
+                {'name': 'meh1'},
+                {'name': 'meh2'}]},
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(response.status_int, 201)
+        # But it won't be possible to create 2 more networks...
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'networks': [
+                {'name': 'meh3'},
+                {'name': 'meh4'}]},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(response.status_int, 409)
 
 
 class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):

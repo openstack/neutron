@@ -13,13 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from oslo_log import log as logging
 from pecan import hooks
 
 from neutron.common import exceptions
 from neutron import manager
 from neutron import quota
-
+from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -29,27 +31,43 @@ class QuotaEnforcementHook(hooks.PecanHook):
     priority = 130
 
     def before(self, state):
-        # TODO(salv-orlando): This hook must go when adapting the pecan code to
-        # use reservations.
         resource = state.request.context.get('resource')
         if state.request.method != 'POST' or not resource:
             return
         plugin = manager.NeutronManager.get_plugin_for_resource(resource)
         items = state.request.context.get('resources')
-        deltas = {}
-        for item in items:
-            tenant_id = item['tenant_id']
+        # Store requested resource amounts grouping them by tenant
+        deltas = collections.Counter(map(lambda x: x['tenant_id'], items))
+        # Perform quota enforcement
+        reservations = []
+        neutron_context = state.request.context.get('neutron_context')
+        for (tenant_id, delta) in deltas.items():
             try:
-                neutron_context = state.request.context.get('neutron_context')
-                count = quota.QUOTAS.count(neutron_context,
-                                           resource,
-                                           plugin,
-                                           tenant_id)
-                delta = deltas.get(tenant_id, 0) + 1
-                kwargs = {resource: count + delta}
+                reservation = quota.QUOTAS.make_reservation(
+                    neutron_context,
+                    tenant_id,
+                    {resource: delta},
+                    plugin)
+                LOG.debug("Made reservation on behalf of %(tenant_id)s "
+                          "for: %(delta)s",
+                          {'tenant_id': tenant_id, 'delta': {resource: delta}})
+                reservations.append(reservation)
             except exceptions.QuotaResourceUnknown as e:
-                # We don't want to quota this resource
+                # Quotas cannot be enforced on this resource
                 LOG.debug(e)
-            else:
-                quota.QUOTAS.limit_check(neutron_context, tenant_id,
-                                         **kwargs)
+        # Save the reservations in the request context so that they can be
+        # retrieved in the 'after' hook
+        state.request.context['reservations'] = reservations
+
+    def after(self, state):
+        # Commit reservation(s)
+        reservations = state.request.context.get('reservations')
+        if not reservations:
+            return
+        neutron_context = state.request.context.get('neutron_context')
+        with neutron_context.session.begin():
+            # Commit the reservation(s)
+            for reservation in reservations:
+                quota.QUOTAS.commit_reservation(
+                    neutron_context, reservation.reservation_id)
+            resource_registry.set_resources_dirty(neutron_context)
