@@ -164,10 +164,9 @@ Cached subset will be re-evaluated (to cut down the version sets as agents
 upgrade) after configured TTL.
 
 As a fast path to update this cache on all neutron-servers when upgraded agents
-come up (or old agents revive after a long timeout or even a downgrade), we could
-introduce a fanout queue consumed by servers, to additionally notify from one
-agent to all neutron-servers about the "versions of interest" in the agent just
-comming up.
+come up (or old agents revive after a long timeout or even a downgrade) the
+server registering the new status update will notify the other servers about
+the new consumer resource versions via cast.
 
 All notifications for all calculated version sets must be sent, as non-upgraded
 agents would otherwise not receive them.

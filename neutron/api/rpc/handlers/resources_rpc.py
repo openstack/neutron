@@ -120,6 +120,53 @@ class ResourcesPullRpcCallback(object):
             return obj.obj_to_primitive(target_version=version)
 
 
+class ResourcesPushToServersRpcApi(object):
+    """Publisher-side RPC (stub) for plugin-to-plugin fanout interaction.
+
+    This class implements the client side of an rpc interface.  The receiver
+    side can be found below: ResourcesPushToServerRpcCallback.  For more
+    information on this RPC interface, see doc/source/devref/rpc_callbacks.rst.
+    """
+
+    def __init__(self):
+        target = oslo_messaging.Target(
+            topic=topics.SERVER_RESOURCE_VERSIONS, version='1.0',
+            namespace=constants.RPC_NAMESPACE_RESOURCES)
+        self.client = n_rpc.get_client(target)
+
+    @log_helpers.log_method_call
+    def report_agent_resource_versions(self, context, agent_type, agent_host,
+                                       version_map):
+        """Fan out all the agent resource versions to other servers."""
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'report_agent_resource_versions',
+                   agent_type=agent_type,
+                   agent_host=agent_host,
+                   version_map=version_map)
+
+
+class ResourcesPushToServerRpcCallback(object):
+    """Receiver-side RPC (implementation) for plugin-to-plugin interaction.
+
+    This class implements the receiver side of an rpc interface.
+    The client side can be found above: ResourcePushToServerRpcApi.  For more
+    information on this RPC interface, see doc/source/devref/rpc_callbacks.rst.
+    """
+
+    # History
+    #   1.0 Initial version
+
+    target = oslo_messaging.Target(
+        version='1.0', namespace=constants.RPC_NAMESPACE_RESOURCES)
+
+    @log_helpers.log_method_call
+    def report_agent_resource_versions(self, context, agent_type, agent_host,
+                                       version_map):
+        consumer_id = version_manager.AgentConsumer(agent_type=agent_type,
+                                                    host=agent_host)
+        version_manager.update_versions(consumer_id, version_map)
+
+
 class ResourcesPushRpcApi(object):
     """Plugin-side RPC for plugin-to-agents interaction.
 

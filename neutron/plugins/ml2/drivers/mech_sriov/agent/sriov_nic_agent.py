@@ -29,6 +29,7 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.callbacks import resources
 from neutron.common import config as common_config
 from neutron.common import constants as n_constants
 from neutron.common import topics
@@ -125,12 +126,15 @@ class SriovNicSwitchAgent(object):
 
         configurations = {'device_mappings': physical_devices_mappings,
                           'extensions': self.ext_manager.names()}
+
+        #TODO(mangelajo): optimize resource_versions (see ovs agent)
         self.agent_state = {
             'binary': 'neutron-sriov-nic-agent',
             'host': self.conf.host,
             'topic': n_constants.L2_AGENT_TOPIC,
             'configurations': configurations,
             'agent_type': n_constants.AGENT_TYPE_NIC_SWITCH,
+            'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
             'start_flag': True}
 
         # The initialization is complete; we can start receiving messages

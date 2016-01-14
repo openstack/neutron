@@ -211,6 +211,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = n_rpc.create_connection()
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
+        self.conn.create_consumer(
+            topics.SERVER_RESOURCE_VERSIONS,
+            [resources_rpc.ResourcesPushToServerRpcCallback()],
+            fanout=True)
         # process state reports despite dedicated rpc workers
         self.conn.create_consumer(topics.REPORTS,
                                   [agents_db.AgentExtRpcCallback()],

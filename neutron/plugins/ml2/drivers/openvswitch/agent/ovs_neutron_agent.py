@@ -37,6 +37,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import polling as linux_polling
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import config
 from neutron.common import constants as n_const
@@ -231,6 +232,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.enable_tunneling,
             self.enable_distributed_routing)
 
+        #TODO(mangelajo): optimize resource_versions to only report
+        #                 versions about resources which are common,
+        #                 or which are used by specific extensions.
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
             'host': host,
@@ -250,6 +254,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                'ovs_capabilities': self.ovs.capabilities,
                                'vhostuser_socket_dir':
                                ovs_conf.vhostuser_socket_dir},
+            'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
             'agent_type': agent_conf.agent_type,
             'start_flag': True}
 
