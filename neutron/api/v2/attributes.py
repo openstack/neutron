@@ -234,7 +234,7 @@ def _validate_ip_address(data, valid_values=None):
         # e.g. 011 octal is 9 decimal. Since there is no standard saying
         # whether IP address with leading '0's should be interpreted as octal
         # or decimal, hence we reject leading '0's to avoid ambiguity.
-        if ip.version == 4 and str(ip) != data:
+        elif ip.version == 4 and str(ip) != data:
             msg = _("'%(data)s' is not an accepted IP address, "
                     "'%(ip)s' is recommended") % {"data": data, "ip": ip}
     except Exception:
