@@ -13,16 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fixtures
 import mock
 from oslo_db import exception as exc
-from oslo_log import log as logging
 from sqlalchemy.orm import query
 
 import neutron.db.api as db
-from neutron.plugins.ml2.drivers import helpers
 from neutron.plugins.ml2.drivers import type_vlan
-from neutron.tests import base
 from neutron.tests.unit import testlib_api
 
 
@@ -43,12 +39,6 @@ class HelpersTest(testlib_api.SqlTestCase):
         self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         self.session = db.get_session()
-        self.useFixture(
-            fixtures.FakeLogger(
-                name=helpers.__name__,
-                format=base.LOG_FORMAT,
-                level=logging.DEBUG
-            ))
 
     def check_raw_segment(self, expected, observed):
         for key, value in expected.items():

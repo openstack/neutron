@@ -18,7 +18,6 @@
 
 import contextlib
 import gc
-import logging as std_logging
 import os
 import os.path
 import random
@@ -31,8 +30,8 @@ from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 from oslo_utils import strutils
+from oslotest import base
 import six
-import testtools
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
@@ -52,7 +51,6 @@ from neutron.tests import tools
 
 CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
-LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
 ROOTDIR = os.path.dirname(__file__)
 ETCDIR = os.path.join(ROOTDIR, 'etc')
@@ -100,10 +98,6 @@ def bool_from_env(key, strict=False, default=False):
     return strutils.bool_from_string(value, strict=strict, default=default)
 
 
-def get_test_timeout(default=0):
-    return int(os.environ.get('OS_TEST_TIMEOUT', 0))
-
-
 def sanitize_log_path(path):
     # Sanitize the string so that its log path is shell friendly
     return path.replace(' ', '-').replace('(', '_').replace(')', '_')
@@ -122,7 +116,7 @@ class AttributeDict(dict):
         raise AttributeError(_("Unknown attribute '%s'.") % name)
 
 
-class DietTestCase(testtools.TestCase):
+class DietTestCase(base.BaseTestCase):
     """Same great taste, less filling.
 
     BaseTestCase is responsible for doing lots of plugin-centric setup
@@ -147,38 +141,13 @@ class DietTestCase(testtools.TestCase):
         # Make sure we see all relevant deprecation warnings when running tests
         self.useFixture(tools.WarningsFixture())
 
-        if bool_from_env('OS_DEBUG'):
-            _level = std_logging.DEBUG
-        else:
-            _level = std_logging.INFO
-        capture_logs = bool_from_env('OS_LOG_CAPTURE')
-        if not capture_logs:
-            std_logging.basicConfig(format=LOG_FORMAT, level=_level)
-        self.log_fixture = self.useFixture(
-            fixtures.FakeLogger(
-                format=LOG_FORMAT,
-                level=_level,
-                nuke_handlers=capture_logs,
-            ))
-
-        test_timeout = get_test_timeout()
-        if test_timeout == -1:
-            test_timeout = 0
-        if test_timeout > 0:
-            self.useFixture(fixtures.Timeout(test_timeout, gentle=True))
-
-        # If someone does use tempfile directly, ensure that it's cleaned up
-        self.useFixture(fixtures.NestedTempfile())
-        self.useFixture(fixtures.TempHomeDir())
-
+        # NOTE(ihrachys): oslotest already sets stopall for cleanup, but it
+        # does it using six.moves.mock (the library was moved into
+        # unittest.mock in Python 3.4). So until we switch to six.moves.mock
+        # everywhere in unit tests, we can't remove this setup. The base class
+        # is used in 3party projects, so we would need to switch all of them to
+        # six before removing the cleanup callback from here.
         self.addCleanup(mock.patch.stopall)
-
-        if bool_from_env('OS_STDOUT_CAPTURE'):
-            stdout = self.useFixture(fixtures.StringStream('stdout')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
-        if bool_from_env('OS_STDERR_CAPTURE'):
-            stderr = self.useFixture(fixtures.StringStream('stderr')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
@@ -270,16 +239,6 @@ class BaseTestCase(DietTestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-
-        # suppress all but errors here
-        capture_logs = bool_from_env('OS_LOG_CAPTURE')
-        self.useFixture(
-            fixtures.FakeLogger(
-                name='neutron.api.extensions',
-                format=LOG_FORMAT,
-                level=std_logging.ERROR,
-                nuke_handlers=capture_logs,
-            ))
 
         self.useFixture(lockutils.ExternalLockFixture())
 

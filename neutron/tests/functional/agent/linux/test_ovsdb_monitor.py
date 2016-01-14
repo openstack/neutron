@@ -26,7 +26,6 @@ from oslo_config import cfg
 
 from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import utils
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base as functional_base
@@ -85,10 +84,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
 
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
         self.addCleanup(self.monitor.stop)
-        # In case a global test timeout isn't set or disabled, use a
-        # value that will ensure the monitor has time to start.
-        timeout = max(tests_base.get_test_timeout(), 60)
-        self.monitor.start(block=True, timeout=timeout)
+        self.monitor.start(block=True, timeout=60)
 
     def test_has_updates(self):
         utils.wait_until_true(lambda: self.monitor.has_updates)
