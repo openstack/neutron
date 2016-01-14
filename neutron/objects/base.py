@@ -99,6 +99,8 @@ class NeutronDbObject(NeutronObject):
     # should be overridden for all persistent objects
     db_model = None
 
+    primary_key = 'id'
+
     fields_no_update = []
 
     def from_db_object(self, *objs):
@@ -111,7 +113,8 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def get_by_id(cls, context, id):
-        db_obj = db_api.get_object(context, cls.db_model, id=id)
+        db_obj = db_api.get_object(context, cls.db_model,
+                                   **{cls.primary_key: id})
         if db_obj:
             obj = cls(context, **db_obj)
             obj.obj_reset_changes()
@@ -161,8 +164,11 @@ class NeutronDbObject(NeutronObject):
 
         if updates:
             db_obj = db_api.update_object(self._context, self.db_model,
-                                          self.id, updates)
+                                          getattr(self, self.primary_key),
+                                          updates, key=self.primary_key)
             self.from_db_object(self, db_obj)
 
     def delete(self):
-        db_api.delete_object(self._context, self.db_model, self.id)
+        db_api.delete_object(self._context, self.db_model,
+                             getattr(self, self.primary_key),
+                             key=self.primary_key)

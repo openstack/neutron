@@ -114,22 +114,30 @@ def create_object(context, model, values):
     return db_obj.__dict__
 
 
-def _safe_get_object(context, model, id):
-    db_obj = get_object(context, model, id=id)
+def _safe_get_object(context, model, id, key='id'):
+    db_obj = get_object(context, model, **{key: id})
     if db_obj is None:
         raise n_exc.ObjectNotFound(id=id)
     return db_obj
 
 
-def update_object(context, model, id, values):
+def update_object(context, model, id, values, key=None):
     with context.session.begin(subtransactions=True):
-        db_obj = _safe_get_object(context, model, id)
+        kwargs = {}
+        if key:
+            kwargs['key'] = key
+        db_obj = _safe_get_object(context, model, id,
+                                  **kwargs)
         db_obj.update(values)
         db_obj.save(session=context.session)
     return db_obj.__dict__
 
 
-def delete_object(context, model, id):
+def delete_object(context, model, id, key=None):
     with context.session.begin(subtransactions=True):
-        db_obj = _safe_get_object(context, model, id)
+        kwargs = {}
+        if key:
+            kwargs['key'] = key
+        db_obj = _safe_get_object(context, model, id,
+                                  **kwargs)
         context.session.delete(db_obj)
