@@ -1037,7 +1037,9 @@ class TestDnsmasq(TestBase):
                 possible_leases += netaddr.IPNetwork(s.cidr).size
 
         if cfg.CONF.advertise_mtu:
-            expected.append('--dhcp-option-force=option:mtu,%s' % network.mtu)
+            if hasattr(network, 'mtu'):
+                expected.append(
+                    '--dhcp-option-force=option:mtu,%s' % network.mtu)
 
         expected.append('--dhcp-lease-max=%d' % min(
             possible_leases, max_leases))
@@ -1149,6 +1151,12 @@ class TestDnsmasq(TestBase):
         cfg.CONF.set_override('advertise_mtu', True)
         network = FakeV4Network()
         network.mtu = 1500
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         network)
+
+    def test_spawn_cfg_advertise_mtu_plugin_doesnt_pass_mtu_value(self):
+        cfg.CONF.set_override('advertise_mtu', True)
+        network = FakeV4Network()
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
                          network)
 
