@@ -121,6 +121,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                     'get_interface_mac')
         self.get_mac = self.get_mac_p.start()
         self.get_mac.return_value = '00:00:00:00:00:01'
+        self.get_bridge_names_p = mock.patch.object(bridge_lib,
+                                                    'get_bridge_names')
+        self.get_bridge_names = self.get_bridge_names_p.start()
+        self.get_bridge_names.return_value = ["br-int", "brq1"]
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_device_by_ip',
                                return_value=FAKE_DEFAULT_DEV):
