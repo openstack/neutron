@@ -122,7 +122,7 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
-| networking-midonet     | Ryu Ishimoto              | ryu_ishimoto         |
+| networking-midonet     | Ryu Ishimoto              | ryu25                |
 |                        +---------------------------+----------------------+
 |                        | Jaume Devesa              | devvesa              |
 |                        +---------------------------+----------------------+
