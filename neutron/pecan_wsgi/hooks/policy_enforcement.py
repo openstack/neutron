@@ -24,8 +24,16 @@ import webob
 from neutron._i18n import _
 from neutron.api.v2 import attributes as v2_attributes
 from neutron.common import constants as const
+from neutron.extensions import quotasv2
 from neutron import manager
+from neutron.pecan_wsgi.controllers import quota
 from neutron import policy
+
+
+def _custom_getter(resource, resource_id):
+    """Helper function to retrieve resources not served by any plugin."""
+    if resource == quotasv2.RESOURCE_NAME:
+        return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
 class PolicyHook(hooks.PecanHook):
@@ -39,9 +47,15 @@ class PolicyHook(hooks.PecanHook):
                       if (value.get('required_by_policy') or
                           value.get('primary_key') or 'default' not in value)]
         plugin = manager.NeutronManager.get_plugin_for_resource(resource)
-        getter = getattr(plugin, 'get_%s' % resource)
-        # TODO(kevinbenton): the parent_id logic currently in base.py
-        return getter(neutron_context, resource_id, fields=field_list)
+        if plugin:
+            getter = getattr(plugin, 'get_%s' % resource)
+            # TODO(kevinbenton): the parent_id logic currently in base.py
+            return getter(neutron_context, resource_id, fields=field_list)
+        else:
+            # Some legit resources, like quota, do not have a plugin yet.
+            # Retrieving the original object is nevertheless important
+            # for policy checks.
+            return _custom_getter(resource, resource_id)
 
     def before(self, state):
         # This hook should be run only for PUT,POST and DELETE methods and for

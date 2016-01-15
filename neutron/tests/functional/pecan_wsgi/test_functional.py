@@ -462,3 +462,89 @@ class TestRootController(PecanFunctionalTest):
 
     def test_head(self):
         self._test_method_returns_405('head')
+
+
+class TestQuotasController(TestRootController):
+    """Test quota management API controller."""
+
+    base_url = '/v2.0/quotas'
+    default_expected_limits = {
+        'network': 10,
+        'port': 50,
+        'subnet': 10}
+
+    def _verify_limits(self, response, limits):
+        for resource, limit in limits.items():
+            self.assertEqual(limit, response['quota'][resource])
+
+    def _verify_default_limits(self, response):
+        self._verify_limits(response, self.default_expected_limits)
+
+    def _verify_after_update(self, response, updated_limits):
+        expected_limits = self.default_expected_limits.copy()
+        expected_limits.update(updated_limits)
+        self._verify_limits(response, expected_limits)
+
+    def test_index_admin(self):
+        # NOTE(salv-orlando): The quota controller has an hardcoded check for
+        # admin-ness for this operation, which is supposed to return quotas for
+        # all tenants. Such check is "vestigial" from the home-grown WSGI and
+        # shall be removed
+        response = self.app.get('%s.json' % self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+
+    def test_index(self):
+        response = self.app.get('%s.json' % self.base_url, expect_errors=True)
+        self.assertEqual(403, response.status_int)
+
+    def test_get_admin(self):
+        response = self.app.get('%s/foo.json' % self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        # As quota limits have not been updated, expect default values
+        json_body = jsonutils.loads(response.body)
+        self._verify_default_limits(json_body)
+
+    def test_get(self):
+        # It is not ok to access another tenant's limits
+        url = '%s/foo.json' % self.base_url
+        response = self.app.get(url, expect_errors=True)
+        self.assertEqual(403, response.status_int)
+        # It is however ok to retrieve your own limits
+        response = self.app.get(url, headers={'X-Project-Id': 'foo'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self._verify_default_limits(json_body)
+
+    def test_put_get_delete(self):
+        # PUT and DELETE actions are in the same test as a meaningful DELETE
+        # test would require a put anyway
+        url = '%s/foo.json' % self.base_url
+        response = self.app.put_json(url,
+                                     params={'quota': {'network': 99}},
+                                     headers={'X-Project-Id': 'admin',
+                                              'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self._verify_after_update(json_body, {'network': 99})
+
+        response = self.app.get(url, headers={'X-Project-Id': 'foo'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self._verify_after_update(json_body, {'network': 99})
+
+        response = self.app.delete(url, headers={'X-Project-Id': 'admin',
+                                                 'X-Roles': 'admin'})
+        self.assertEqual(204, response.status_int)
+        # As DELETE does not return a body we need another GET
+        response = self.app.get(url, headers={'X-Project-Id': 'foo'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self._verify_default_limits(json_body)
+
+    def test_delete(self):
+        # TODO(salv-orlando)
+        pass

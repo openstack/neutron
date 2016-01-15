@@ -74,8 +74,8 @@ def initialize_all():
                       hasattr(ext, 'get_pecan_controllers')]
     pecan_controllers = {}
     for ext in pecanized_exts:
-        LOG.debug("Extension %s is pecan-enabled. Fetching resources "
-                  "and controllers", ext.get_name())
+        LOG.info(_LI("Extension %s is pecan-aware. Fetching resources "
+                     "and controllers"), ext.get_name())
         controllers = ext.get_pecan_controllers()
         # controllers is actually a list of pairs where the first element is
         # the collection name and the second the actual controller
@@ -83,24 +83,28 @@ def initialize_all():
             pecan_controllers[collection] = coll_controller
 
     for collection in attributes.RESOURCE_ATTRIBUTE_MAP:
-        if collection not in pecan_controllers:
-            resource = _handle_plurals(collection)
+        resource = _handle_plurals(collection)
+        controller = pecan_controllers.get(collection)
+        if not controller:
             LOG.debug("Building controller for resource:%s", resource)
             plugin = _plugin_for_resource(collection)
             if plugin:
                 manager.NeutronManager.set_plugin_for_resource(
                     resource, plugin)
+            else:
+                LOG.warn(_LW("No plugin found for resource:%s. API calls "
+                             "may not be correctly dispatched"), resource)
             controller = root.CollectionsController(collection, resource)
-            manager.NeutronManager.set_controller_for_resource(
-                collection, controller)
-            LOG.info(_LI("Added controller for resource %(resource)s "
-                         "via URI path segment:%(collection)s"),
-                     {'resource': resource,
-                      'collection': collection})
         else:
             LOG.debug("There are already controllers for resource:%s",
                       resource)
 
+        manager.NeutronManager.set_controller_for_resource(
+            collection, controller)
+        LOG.info(_LI("Added controller for resource %(resource)s "
+                     "via URI path segment:%(collection)s"),
+                 {'resource': resource,
+                  'collection': collection})
     # NOTE(salv-orlando): If you are care about code quality, please read below
     # Hackiness is strong with the piece of code below. It is used for
     # populating resource plurals and registering resources with the quota
