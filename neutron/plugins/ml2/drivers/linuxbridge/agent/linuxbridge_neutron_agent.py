@@ -79,6 +79,7 @@ class LinuxBridgeManager(object):
         self.vxlan_mode = lconst.VXLAN_NONE
         if cfg.CONF.VXLAN.enable_vxlan:
             device = self.get_local_ip_device(self.local_ip)
+            self.validate_vxlan_group_with_local_ip()
             self.local_int = device.name
             self.check_vxlan_support()
         # Store network mapping to segments
@@ -99,6 +100,26 @@ class LinuxBridgeManager(object):
                               " does not exist. Agent terminated!"),
                           {'brq': bridge, 'net': physnet})
                 sys.exit(1)
+
+    def validate_vxlan_group_with_local_ip(self):
+        if not cfg.CONF.VXLAN.vxlan_group:
+            return
+        try:
+            ip_addr = netaddr.IPAddress(self.local_ip)
+            # Ensure the configured group address/range is valid and multicast
+            group_net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
+            if not group_net.is_multicast():
+                raise ValueError()
+            if not ip_addr.version == group_net.version:
+                raise ValueError()
+        except (netaddr.core.AddrFormatError, ValueError):
+            LOG.error(_LE("Invalid VXLAN Group: %(group)s, must be an address "
+                          "or network (in CIDR notation) in a multicast "
+                          "range of the same address family as local_ip: "
+                          "%(ip)s"),
+                      {'group': cfg.CONF.VXLAN.vxlan_group,
+                       'ip': self.local_ip})
+            sys.exit(1)
 
     def get_local_ip_device(self, local_ip):
         """Return the device with local_ip on the host."""
@@ -146,19 +167,10 @@ class LinuxBridgeManager(object):
                             "incorrect vxlan device name"), segmentation_id)
 
     def get_vxlan_group(self, segmentation_id):
-        try:
-            # Ensure the configured group address/range is valid and multicast
-            net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
-            if not net.is_multicast():
-                raise ValueError()
-            # Map the segmentation ID to (one of) the group address(es)
-            return str(net.network +
-                       (int(segmentation_id) & int(net.hostmask)))
-        except (netaddr.core.AddrFormatError, ValueError):
-            LOG.warning(_LW("Invalid VXLAN Group: %s, must be an address "
-                            "or network (in CIDR notation) in a multicast "
-                            "range"),
-                        cfg.CONF.VXLAN.vxlan_group)
+        net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
+        # Map the segmentation ID to (one of) the group address(es)
+        return str(net.network +
+                   (int(segmentation_id) & int(net.hostmask)))
 
     def get_deletable_bridges(self):
         bridge_list = bridge_lib.get_bridge_names()
