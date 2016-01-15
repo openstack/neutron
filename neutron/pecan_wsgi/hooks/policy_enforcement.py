@@ -46,30 +46,44 @@ class PolicyHook(hooks.PecanHook):
     def before(self, state):
         # This hook should be run only for PUT,POST and DELETE methods and for
         # requests targeting a neutron resource
-        # FIXME(salv-orlando): DELETE support. It does not work with the
-        # current logic. See LP Bug #1520180
-        items = state.request.context.get('resources')
-        if state.request.method not in ('POST', 'PUT') or not items:
+        resources = state.request.context.get('resources', [])
+        if state.request.method not in ('POST', 'PUT', 'DELETE'):
             return
+        # As this routine will likely alter the resources, do a shallow copy
+        resources_copy = resources[:]
         neutron_context = state.request.context.get('neutron_context')
         resource = state.request.context.get('resource')
+        # If there is no resource for this request, don't bother running authZ
+        # policies
+        if not resource:
+            return
         collection = state.request.context.get('collection')
-        is_update = (state.request.method == 'PUT')
+        needs_prefetch = (state.request.method == 'PUT' or
+                          state.request.method == 'DELETE')
         policy.init()
         action = '%s_%s' % (self.ACTION_MAP[state.request.method], resource)
 
         # NOTE(salv-orlando): As bulk updates are not supported, in case of PUT
         # requests there will be only a single item to process, and its
-        # identifier would have been already retrieved by the lookup process
-        for item in items:
-            if is_update:
-                resource_id = state.request.context.get('resource_id')
-                obj = copy.copy(self._fetch_resource(neutron_context,
-                                                     resource,
-                                                     resource_id))
-                obj.update(item)
-                obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
-                item = obj
+        # identifier would have been already retrieved by the lookup process;
+        # in the case of DELETE requests there won't be any item to process in
+        # the request body
+        if needs_prefetch:
+            try:
+                item = resources_copy.pop()
+            except IndexError:
+                # Ops... this was a delete after all!
+                item = {}
+            resource_id = state.request.context.get('resource_id')
+            obj = copy.copy(self._fetch_resource(neutron_context,
+                                                 resource,
+                                                 resource_id))
+            obj.update(item)
+            obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
+            # Put back the item in the list so that policies could be enforced
+            resources_copy.append(obj)
+
+        for item in resources_copy:
             try:
                 policy.enforce(
                     neutron_context, action, item,
@@ -79,8 +93,8 @@ class PolicyHook(hooks.PecanHook):
                     # If a tenant is modifying it's own object, it's safe to
                     # return a 403. Otherwise, pretend that it doesn't exist
                     # to avoid giving away information.
-                    if (is_update and
-                            neutron_context.tenant_id != obj['tenant_id']):
+                    if (needs_prefetch and
+                        neutron_context.tenant_id != item['tenant_id']):
                         ctxt.reraise = False
                 msg = _('The resource could not be found.')
                 raise webob.exc.HTTPNotFound(msg)
@@ -110,13 +124,20 @@ class PolicyHook(hooks.PecanHook):
         # in the plural case, we just check so violating items are hidden
         policy_method = policy.enforce if is_single else policy.check
         plugin = manager.NeutronManager.get_plugin_for_resource(resource)
-        resp = [self._get_filtered_item(state.request, resource,
-                                        collection, item)
-                for item in to_process
-                if (state.request.method != 'GET' or
-                    policy_method(neutron_context, action, item,
-                                  plugin=plugin,
-                                  pluralized=collection))]
+        try:
+            resp = [self._get_filtered_item(state.request, resource,
+                                            collection, item)
+                    for item in to_process
+                    if (state.request.method != 'GET' or
+                        policy_method(neutron_context, action, item,
+                                      plugin=plugin,
+                                      pluralized=collection))]
+        except oslo_policy.PolicyNotAuthorized as e:
+            # This exception must be explicitly caught as the exception
+            # translation hook won't be called if an error occurs in the
+            # 'after' handler.
+            raise webob.exc.HTTPForbidden(e.message)
+
         if is_single:
             resp = resp[0]
         data[key] = resp
