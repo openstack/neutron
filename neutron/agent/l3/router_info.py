@@ -107,15 +107,10 @@ class RouterInfo(object):
         ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
-    def update_routing_table(self, operation, route, namespace=None):
-        if namespace is None:
-            namespace = self.ns_name
-        self._update_routing_table(operation, route, namespace)
+    def update_routing_table(self, operation, route):
+        self._update_routing_table(operation, route, self.ns_name)
 
-    def routes_updated(self):
-        new_routes = self.router['routes']
-
-        old_routes = self.routes
+    def routes_updated(self, old_routes, new_routes):
         adds, removes = common_utils.diff_list_of_dict(old_routes,
                                                        new_routes)
         for route in adds:
@@ -129,7 +124,6 @@ class RouterInfo(object):
         for route in removes:
             LOG.debug("Removed route entry is '%s'", route)
             self.update_routing_table('delete', route)
-        self.routes = new_routes
 
     def get_ex_gw_port(self):
         return self.router.get('gw_port')
@@ -713,7 +707,8 @@ class RouterInfo(object):
         agent.pd.sync_router(self.router['id'])
         self.process_external(agent, delete)
         # Process static routes for router
-        self.routes_updated()
+        self.routes_updated(self.routes, self.router['routes'])
+        self.routes = self.router['routes']
 
         # Update ex_gw_port and enable_snat on the router info cache
         self.ex_gw_port = self.get_ex_gw_port()

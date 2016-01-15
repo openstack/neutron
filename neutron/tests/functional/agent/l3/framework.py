@@ -422,8 +422,10 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             self.assertTrue(self.device_exists_with_ips_and_mac(
                 device, router.get_internal_device_name, router.ns_name))
 
-    def _assert_extra_routes(self, router):
-        routes = ip_lib.get_routing_table(4, namespace=router.ns_name)
+    def _assert_extra_routes(self, router, namespace=None):
+        if namespace is None:
+            namespace = router.ns_name
+        routes = ip_lib.get_routing_table(4, namespace=namespace)
         routes = [{'nexthop': route['nexthop'],
                    'destination': route['destination']} for route in routes]
 

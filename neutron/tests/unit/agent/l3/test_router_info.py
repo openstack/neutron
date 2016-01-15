@@ -97,7 +97,7 @@ class TestRouterInfo(base.BaseTestCase):
                             'nexthop': "10.100.10.30"}]
         ri.routes = fake_old_routes
         ri.router['routes'] = fake_new_routes
-        ri.routes_updated()
+        ri.routes_updated(fake_old_routes, fake_new_routes)
 
         expected = [['ip', 'route', 'replace', 'to', '110.100.30.0/24',
                     'via', '10.100.10.30'],
@@ -105,18 +105,18 @@ class TestRouterInfo(base.BaseTestCase):
                      'via', '10.100.10.30']]
 
         self._check_agent_method_called(expected)
-
+        ri.routes = fake_new_routes
         fake_new_routes = [{'destination': "110.100.30.0/24",
                             'nexthop': "10.100.10.30"}]
         ri.router['routes'] = fake_new_routes
-        ri.routes_updated()
+        ri.routes_updated(ri.routes, fake_new_routes)
         expected = [['ip', 'route', 'delete', 'to', '110.100.31.0/24',
                     'via', '10.100.10.30']]
 
         self._check_agent_method_called(expected)
         fake_new_routes = []
         ri.router['routes'] = fake_new_routes
-        ri.routes_updated()
+        ri.routes_updated(ri.routes, fake_new_routes)
 
         expected = [['ip', 'route', 'delete', 'to', '110.100.30.0/24',
                     'via', '10.100.10.30']]
