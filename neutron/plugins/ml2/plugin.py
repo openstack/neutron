@@ -1000,7 +1000,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             attrs['status'] = const.PORT_STATUS_DOWN
 
         session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.exc_to_retry(os_db_exception.DBDuplicateEntry),\
+                session.begin(subtransactions=True):
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
             result = super(Ml2Plugin, self).create_port(context, port)
             self.extension_manager.process_create_port(context, attrs, result)
@@ -1135,7 +1136,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         bound_mech_contexts = []
 
-        with session.begin(subtransactions=True):
+        with db_api.exc_to_retry(os_db_exception.DBDuplicateEntry),\
+                session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)

@@ -749,6 +749,54 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 self.assertRaises(
                     exc.PortNotFound, plugin.get_port, ctx, port['port']['id'])
 
+    def test_port_create_resillient_to_duplicate_records(self):
+
+        def make_port():
+            with self.port():
+                pass
+
+        self._test_operation_resillient_to_ipallocation_failure(make_port)
+
+    def test_port_update_resillient_to_duplicate_records(self):
+        with self.port() as p:
+            data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.9'}]}}
+            req = self.new_update_request('ports', data, p['port']['id'])
+
+            def do_request():
+                self.assertEqual(200, req.get_response(self.api).status_int)
+
+            self._test_operation_resillient_to_ipallocation_failure(do_request)
+
+    def _test_operation_resillient_to_ipallocation_failure(self, func):
+        from sqlalchemy import event
+
+        class IPAllocationsGrenade(object):
+            insert_ip_called = False
+            except_raised = False
+
+            def execute(self, con, curs, stmt, *args, **kwargs):
+                if 'INSERT INTO ipallocations' in stmt:
+                    self.insert_ip_called = True
+
+            def commit(self, con):
+                # we blow up on commit to simulate another thread/server
+                # stealing our IP before our transaction was done
+                if self.insert_ip_called and not self.except_raised:
+                    self.except_raised = True
+                    raise db_exc.DBDuplicateEntry()
+
+        listener = IPAllocationsGrenade()
+        engine = db_api.get_engine()
+        event.listen(engine, 'before_cursor_execute', listener.execute)
+        event.listen(engine, 'commit', listener.commit)
+        self.addCleanup(event.remove, engine, 'before_cursor_execute',
+                        listener.execute)
+        self.addCleanup(event.remove, engine, 'commit',
+                        listener.commit)
+        func()
+        # make sure that the grenade went off during the commit
+        self.assertTrue(listener.except_raised)
+
 
 class TestMl2PluginOnly(Ml2PluginV2TestCase):
     """For testing methods that don't call drivers"""

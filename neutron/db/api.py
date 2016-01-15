@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import session
+from oslo_utils import excutils
 from oslo_utils import uuidutils
 from sqlalchemy import exc
 
@@ -35,6 +36,17 @@ retry_db_errors = oslo_db_api.wrap_db_retry(
     retry_on_request=True,
     exception_checker=is_deadlock
 )
+
+
+@contextlib.contextmanager
+def exc_to_retry(exceptions):
+    try:
+        yield
+    except Exception as e:
+        with excutils.save_and_reraise_exception() as ctx:
+            if isinstance(e, exceptions):
+                ctx.reraise = False
+                raise db_exc.RetryRequest(e)
 
 
 def _create_facade_lazily():
