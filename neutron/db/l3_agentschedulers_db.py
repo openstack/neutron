@@ -159,33 +159,24 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """Validate if the router can be correctly assigned to the agent.
 
         :raises: RouterL3AgentMismatch if attempting to assign DVR router
-          to legacy agent, or centralized router to compute's L3 agents.
+          to legacy agent.
         :raises: InvalidL3Agent if attempting to assign router to an
           unsuitable agent (disabled, type != L3, incompatible configuration)
-        :raises: DVRL3CannotAssignToDvrAgent if attempting to assign DVR
-          router from one DVR Agent to another.
+        :raises: DVRL3CannotAssignToDvrAgent if attempting to assign a
+          router to an agent in 'dvr' mode.
         """
         if agent['agent_type'] != constants.AGENT_TYPE_L3:
             raise l3agentscheduler.InvalidL3Agent(id=agent['id'])
 
-        is_distributed = router.get('distributed')
         agent_mode = self._get_agent_mode(agent)
-        router_type = (
-            'distributed' if is_distributed else
-            'centralized')
 
-        is_agent_router_types_incompatible = (
-            agent_mode == constants.L3_AGENT_MODE_DVR and not is_distributed
-            or agent_mode == constants.L3_AGENT_MODE_LEGACY and is_distributed
-        )
-        if is_agent_router_types_incompatible:
+        if agent_mode == constants.L3_AGENT_MODE_DVR:
+            raise l3agentscheduler.DVRL3CannotAssignToDvrAgent()
+
+        if (agent_mode == constants.L3_AGENT_MODE_LEGACY and
+            router.get('distributed')):
             raise l3agentscheduler.RouterL3AgentMismatch(
-                router_type=router_type, router_id=router['id'],
-                agent_mode=agent_mode, agent_id=agent['id'])
-        if agent_mode == constants.L3_AGENT_MODE_DVR and is_distributed:
-            raise l3agentscheduler.DVRL3CannotAssignToDvrAgent(
-                router_type=router_type, router_id=router['id'],
-                agent_id=agent['id'])
+                router_id=router['id'], agent_id=agent['id'])
 
         is_suitable_agent = (
             agentschedulers_db.services_available(agent['admin_state_up']) and

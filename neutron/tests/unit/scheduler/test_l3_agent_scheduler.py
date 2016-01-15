@@ -439,7 +439,7 @@ class L3SchedulerTestBaseMixin(object):
         self._register_l3_dvr_agents()
         self._prepare_l3_agent_dvr_move_exceptions(
             agent_id=self.l3_dvr_agent_id,
-            expected_exception=l3agent.RouterL3AgentMismatch)
+            expected_exception=l3agent.DVRL3CannotAssignToDvrAgent)
 
     def test_add_router_to_l3_agent_mismatch_error_dvr_to_dvr(self):
         self._register_l3_dvr_agents()
