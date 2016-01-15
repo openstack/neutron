@@ -99,6 +99,9 @@ class TestOvsNeutronAgent(object):
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier
+        systemd_patch = mock.patch('oslo_service.systemd.notify_once')
+        self.systemd_notify = systemd_patch.start()
+
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
@@ -846,9 +849,12 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
             self.agent.int_br_device_count = 5
+            self.systemd_notify.assert_not_called()
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+            self.systemd_notify.assert_called_once_with()
+            self.systemd_notify.reset_mock()
             self.assertNotIn("start_flag", self.agent.agent_state)
             self.assertEqual(
                 self.agent.agent_state["configurations"]["devices"],
@@ -857,6 +863,7 @@ class TestOvsNeutronAgent(object):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+            self.systemd_notify.assert_not_called()
 
     def test_report_state_fail(self):
         with mock.patch.object(self.agent.state_rpc,
@@ -868,6 +875,7 @@ class TestOvsNeutronAgent(object):
             self.agent._report_state()
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state, True)
+            self.systemd_notify.assert_not_called()
 
     def test_report_state_revived(self):
         with mock.patch.object(self.agent.state_rpc,
