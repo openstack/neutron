@@ -21,7 +21,6 @@ import os
 from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
-from neutron.i18n import _LE
 
 LOG = logging.getLogger(__name__)
 
@@ -50,32 +49,6 @@ class BridgeDevice(ip_lib.IPDevice):
         cmd = ['brctl'] + cmd
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ip_wrapper.netns.execute(cmd, run_as_root=True)
-
-    def _sysctl(self, cmd):
-        """execute() doesn't return the exit status of the command it runs,
-        it returns stdout and stderr. Setting check_exit_code=True will cause
-        it to raise a RuntimeError if the exit status of the command is
-        non-zero, which in sysctl's case is an error. So we're normalizing
-        that into zero (success) and one (failure) here to mimic what
-        "echo $?" in a shell would be.
-
-        This is all because sysctl is too verbose and prints the value you
-        just set on success, unlike most other utilities that print nothing.
-
-        execute() will have dumped a message to the logs with the actual
-        output on failure, so it's not lost, and we don't need to print it
-        here.
-        """
-        cmd = ['sysctl', '-w'] + cmd
-        ip_wrapper = ip_lib.IPWrapper(self.namespace)
-        try:
-            ip_wrapper.netns.execute(cmd, run_as_root=True,
-                                     check_exit_code=True)
-        except RuntimeError:
-            LOG.exception(_LE("Failed running %s"), cmd)
-            return 1
-
-        return 0
 
     @classmethod
     def addbr(cls, name, namespace=None):
@@ -107,10 +80,6 @@ class BridgeDevice(ip_lib.IPDevice):
 
     def disable_stp(self):
         return self._brctl(['stp', self.name, 'off'])
-
-    def disable_ipv6(self):
-        cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self.name
-        return self._sysctl([cmd])
 
     def owns_interface(self, interface):
         return os.path.exists(
