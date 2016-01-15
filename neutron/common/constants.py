@@ -13,53 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(salv-orlando): Verify if a single set of operational
-# status constants is achievable
-NET_STATUS_ACTIVE = 'ACTIVE'
-NET_STATUS_BUILD = 'BUILD'
-NET_STATUS_DOWN = 'DOWN'
-NET_STATUS_ERROR = 'ERROR'
+import sys
 
-PORT_STATUS_ACTIVE = 'ACTIVE'
-PORT_STATUS_BUILD = 'BUILD'
-PORT_STATUS_DOWN = 'DOWN'
-PORT_STATUS_ERROR = 'ERROR'
-PORT_STATUS_NOTAPPLICABLE = 'N/A'
+from neutron_lib import constants as lib_constants
 
-FLOATINGIP_STATUS_ACTIVE = 'ACTIVE'
-FLOATINGIP_STATUS_DOWN = 'DOWN'
-FLOATINGIP_STATUS_ERROR = 'ERROR'
+from neutron.common import _deprecate
 
-DEVICE_OWNER_COMPUTE_PREFIX = "compute:"
-DEVICE_OWNER_NETWORK_PREFIX = "network:"
-DEVICE_OWNER_NEUTRON_PREFIX = "neutron:"
 
-DEVICE_OWNER_ROUTER_HA_INTF = (DEVICE_OWNER_NETWORK_PREFIX +
-                               "router_ha_interface")
-DEVICE_OWNER_ROUTER_INTF = DEVICE_OWNER_NETWORK_PREFIX + "router_interface"
-DEVICE_OWNER_ROUTER_GW = DEVICE_OWNER_NETWORK_PREFIX + "router_gateway"
-DEVICE_OWNER_FLOATINGIP = DEVICE_OWNER_NETWORK_PREFIX + "floatingip"
-DEVICE_OWNER_DHCP = DEVICE_OWNER_NETWORK_PREFIX + "dhcp"
-DEVICE_OWNER_DVR_INTERFACE = (DEVICE_OWNER_NETWORK_PREFIX +
-                              "router_interface_distributed")
-DEVICE_OWNER_AGENT_GW = (DEVICE_OWNER_NETWORK_PREFIX +
-                         "floatingip_agent_gateway")
-DEVICE_OWNER_ROUTER_SNAT = (DEVICE_OWNER_NETWORK_PREFIX +
-                            "router_centralized_snat")
-DEVICE_OWNER_LOADBALANCER = DEVICE_OWNER_NEUTRON_PREFIX + "LOADBALANCER"
-DEVICE_OWNER_LOADBALANCERV2 = DEVICE_OWNER_NEUTRON_PREFIX + "LOADBALANCERV2"
-
-DEVICE_OWNER_PREFIXES = (DEVICE_OWNER_NETWORK_PREFIX,
-                         DEVICE_OWNER_NEUTRON_PREFIX)
-
-# Collection used to identify devices owned by router interfaces.
-# DEVICE_OWNER_ROUTER_HA_INTF is a special case and so is not included.
-ROUTER_INTERFACE_OWNERS = (DEVICE_OWNER_ROUTER_INTF,
-                           DEVICE_OWNER_DVR_INTERFACE)
-ROUTER_INTERFACE_OWNERS_SNAT = (DEVICE_OWNER_ROUTER_INTF,
-                                DEVICE_OWNER_DVR_INTERFACE,
-                                DEVICE_OWNER_ROUTER_SNAT)
-ROUTER_PORT_OWNERS = ROUTER_INTERFACE_OWNERS_SNAT + (DEVICE_OWNER_ROUTER_GW,)
+ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
+    (lib_constants.DEVICE_OWNER_ROUTER_GW,)
 
 L3_AGENT_MODE_DVR = 'dvr'
 L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
@@ -68,9 +30,6 @@ L3_AGENT_MODE = 'agent_mode'
 
 DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
 
-FLOATINGIP_KEY = '_floatingips'
-INTERFACE_KEY = '_interfaces'
-HA_INTERFACE_KEY = '_ha_interface'
 HA_ROUTER_STATE_KEY = '_ha_state'
 METERING_LABEL_KEY = '_metering_labels'
 FLOATINGIP_AGENT_INTF_KEY = '_floatingip_agent_interfaces'
@@ -83,46 +42,10 @@ MINIMUM_AGENTS_FOR_HA = 2
 HA_ROUTER_STATE_ACTIVE = 'active'
 HA_ROUTER_STATE_STANDBY = 'standby'
 
-IPv4 = 'IPv4'
-IPv6 = 'IPv6'
-IP_VERSION_4 = 4
-IP_VERSION_6 = 6
-IPv4_BITS = 32
-IPv6_BITS = 128
-
-INVALID_MAC_ADDRESSES = ['00:00:00:00:00:00', 'FF:FF:FF:FF:FF:FF']
-
-IPv4_ANY = '0.0.0.0/0'
-IPv6_ANY = '::/0'
-IP_ANY = {IP_VERSION_4: IPv4_ANY, IP_VERSION_6: IPv6_ANY}
-
-DHCP_RESPONSE_PORT = 68
-
-FLOODING_ENTRY = ('00:00:00:00:00:00', '0.0.0.0')
-
-AGENT_TYPE_DHCP = 'DHCP agent'
-AGENT_TYPE_OVS = 'Open vSwitch agent'
-AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
-AGENT_TYPE_OFA = 'OFA driver agent'
-AGENT_TYPE_L3 = 'L3 agent'
-AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
-AGENT_TYPE_METERING = 'Metering agent'
-AGENT_TYPE_METADATA = 'Metadata agent'
-AGENT_TYPE_NIC_SWITCH = 'NIC Switch agent'
-L2_AGENT_TOPIC = 'N/A'
-
 PAGINATION_INFINITE = 'infinite'
 
 SORT_DIRECTION_ASC = 'asc'
 SORT_DIRECTION_DESC = 'desc'
-
-PORT_BINDING_EXT_ALIAS = 'binding'
-L3_AGENT_SCHEDULER_EXT_ALIAS = 'l3_agent_scheduler'
-DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'
-LBAAS_AGENT_SCHEDULER_EXT_ALIAS = 'lbaas_agent_scheduler'
-L3_DISTRIBUTED_EXT_ALIAS = 'dvr'
-L3_HA_MODE_EXT_ALIAS = 'l3-ha'
-SUBNET_ALLOCATION_EXT_ALIAS = 'subnet_allocation'
 
 ETHERTYPE_IPV6 = 0x86DD
 
@@ -225,8 +148,6 @@ DEVICE_NAME_MAX_LEN = 15
 
 # vhost-user device names start with "vhu"
 VHOST_USER_DEVICE_PREFIX = 'vhu'
-# Device names start with "tap"
-TAP_DEVICE_PREFIX = 'tap'
 # The vswitch side of a veth pair for a nova iptables filter setup
 VETH_DEVICE_PREFIX = 'qvo'
 # prefix for SNAT interface in DVR
@@ -235,7 +156,7 @@ SNAT_INT_DEV_PREFIX = 'sg-'
 # Possible prefixes to partial port IDs in interface names used by the OVS,
 # Linux Bridge, and IVS VIF drivers in Nova and the neutron agents. See the
 # 'get_ovs_interfaceid' method in Nova (nova/virt/libvirt/vif.py) for details.
-INTERFACE_PREFIXES = (TAP_DEVICE_PREFIX, VETH_DEVICE_PREFIX,
+INTERFACE_PREFIXES = (lib_constants.TAP_DEVICE_PREFIX, VETH_DEVICE_PREFIX,
                       SNAT_INT_DEV_PREFIX)
 
 ATTRIBUTES_TO_UPDATE = 'attributes_to_update'
@@ -268,9 +189,6 @@ IPV6_MIN_MTU = 1280
 
 ROUTER_MARK_MASK = "0xffff"
 
-# Time format
-ISO8601_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
-
 # Agent states as detected by server, used to reply on agent's state report
 # agent has just been registered
 AGENT_NEW = 'new'
@@ -278,3 +196,17 @@ AGENT_NEW = 'new'
 AGENT_ALIVE = 'alive'
 # agent has just returned to alive after being dead
 AGENT_REVIVED = 'revived'
+
+
+# Neutron-lib migration shim. This will wrap any constants that are moved
+# to that library in a deprecation warning, until they can be updated to
+# import directly from their new location.
+# If you're wondering why we bother saving _OLD_REF, it is because if we
+# do not, then the original module we are overwriting gets garbage collected,
+# and then you will find some super strange behavior with inherited classes
+# and the like. Saving a ref keeps it around.
+
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_OLD_REF = sys.modules[__name__]
+sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), lib_constants)
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE

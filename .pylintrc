@@ -48,6 +48,8 @@ disable=
  unused-argument,
  unused-import,
  unused-variable,
+# TODO(dougwig) - disable nonstandard-exception while we have neutron_lib shims
+ nonstandard-exception,
 # "C" Coding convention violations
  bad-continuation,
  invalid-name,
