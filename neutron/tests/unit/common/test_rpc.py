@@ -33,6 +33,7 @@ CONF.import_opt('state_path', 'neutron.common.config')
 class RPCFixture(fixtures.Fixture):
     def _setUp(self):
         self.trans = copy.copy(rpc.TRANSPORT)
+        self.noti_trans = copy.copy(rpc.NOTIFICATION_TRANSPORT)
         self.noti = copy.copy(rpc.NOTIFIER)
         self.all_mods = copy.copy(rpc.ALLOWED_EXMODS)
         self.ext_mods = copy.copy(rpc.EXTRA_EXMODS)
@@ -40,6 +41,7 @@ class RPCFixture(fixtures.Fixture):
 
     def _reset_everything(self):
         rpc.TRANSPORT = self.trans
+        rpc.NOTIFICATION_TRANSPORT = self.noti_trans
         rpc.NOTIFIER = self.noti
         rpc.ALLOWED_EXMODS = self.all_mods
         rpc.EXTRA_EXMODS = self.ext_mods
@@ -53,15 +55,19 @@ class TestRPC(base.DietTestCase):
     @mock.patch.object(rpc, 'get_allowed_exmods')
     @mock.patch.object(rpc, 'RequestContextSerializer')
     @mock.patch.object(messaging, 'get_transport')
+    @mock.patch.object(messaging, 'get_notification_transport')
     @mock.patch.object(messaging, 'Notifier')
-    def test_init(self, mock_not, mock_trans, mock_ser, mock_exmods):
+    def test_init(self, mock_not, mock_noti_trans, mock_trans, mock_ser,
+                  mock_exmods):
         notifier = mock.Mock()
         transport = mock.Mock()
+        noti_transport = mock.Mock()
         serializer = mock.Mock()
         conf = mock.Mock()
 
         mock_exmods.return_value = ['foo']
         mock_trans.return_value = transport
+        mock_noti_trans.return_value = noti_transport
         mock_ser.return_value = serializer
         mock_not.return_value = notifier
 
@@ -70,28 +76,45 @@ class TestRPC(base.DietTestCase):
         mock_exmods.assert_called_once_with()
         mock_trans.assert_called_once_with(conf, allowed_remote_exmods=['foo'],
                                            aliases=rpc.TRANSPORT_ALIASES)
-        mock_not.assert_called_once_with(transport, serializer=serializer)
+        mock_noti_trans.assert_called_once_with(conf,
+                                                allowed_remote_exmods=['foo'],
+                                                aliases=rpc.TRANSPORT_ALIASES)
+        mock_not.assert_called_once_with(noti_transport,
+                                         serializer=serializer)
         self.assertIsNotNone(rpc.TRANSPORT)
+        self.assertIsNotNone(rpc.NOTIFICATION_TRANSPORT)
         self.assertIsNotNone(rpc.NOTIFIER)
 
     def test_cleanup_transport_null(self):
+        rpc.NOTIFIER = mock.Mock()
+        rpc.NOTIFICATION_TRANSPORT = mock.Mock()
+        self.assertRaises(AssertionError, rpc.cleanup)
+
+    def test_cleanup_notification_transport_null(self):
+        rpc.TRANSPORT = mock.Mock()
         rpc.NOTIFIER = mock.Mock()
         self.assertRaises(AssertionError, rpc.cleanup)
 
     def test_cleanup_notifier_null(self):
         rpc.TRANSPORT = mock.Mock()
+        rpc.NOTIFICATION_TRANSPORT = mock.Mock()
         self.assertRaises(AssertionError, rpc.cleanup)
 
     def test_cleanup(self):
         rpc.NOTIFIER = mock.Mock()
+        rpc.NOTIFICATION_TRANSPORT = mock.Mock()
         rpc.TRANSPORT = mock.Mock()
         trans_cleanup = mock.Mock()
+        not_trans_cleanup = mock.Mock()
         rpc.TRANSPORT.cleanup = trans_cleanup
+        rpc.NOTIFICATION_TRANSPORT.cleanup = not_trans_cleanup
 
         rpc.cleanup()
 
         trans_cleanup.assert_called_once_with()
+        not_trans_cleanup.assert_called_once_with()
         self.assertIsNone(rpc.TRANSPORT)
+        self.assertIsNone(rpc.NOTIFICATION_TRANSPORT)
         self.assertIsNone(rpc.NOTIFIER)
 
     def test_add_extra_exmods(self):

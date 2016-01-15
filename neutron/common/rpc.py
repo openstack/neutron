@@ -29,6 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 TRANSPORT = None
+NOTIFICATION_TRANSPORT = None
 NOTIFIER = None
 
 ALLOWED_EXMODS = [
@@ -56,21 +57,26 @@ RPC_DISABLED = False
 
 
 def init(conf):
-    global TRANSPORT, NOTIFIER
+    global TRANSPORT, NOTIFICATION_TRANSPORT, NOTIFIER
     exmods = get_allowed_exmods()
     TRANSPORT = oslo_messaging.get_transport(conf,
                                              allowed_remote_exmods=exmods,
                                              aliases=TRANSPORT_ALIASES)
+    NOTIFICATION_TRANSPORT = oslo_messaging.get_notification_transport(
+        conf, allowed_remote_exmods=exmods, aliases=TRANSPORT_ALIASES)
     serializer = RequestContextSerializer()
-    NOTIFIER = oslo_messaging.Notifier(TRANSPORT, serializer=serializer)
+    NOTIFIER = oslo_messaging.Notifier(NOTIFICATION_TRANSPORT,
+                                       serializer=serializer)
 
 
 def cleanup():
-    global TRANSPORT, NOTIFIER
+    global TRANSPORT, NOTIFICATION_TRANSPORT, NOTIFIER
     assert TRANSPORT is not None
+    assert NOTIFICATION_TRANSPORT is not None
     assert NOTIFIER is not None
     TRANSPORT.cleanup()
-    TRANSPORT = NOTIFIER = None
+    NOTIFICATION_TRANSPORT.cleanup()
+    TRANSPORT = NOTIFICATION_TRANSPORT = NOTIFIER = None
 
 
 def add_extra_exmods(*args):
