@@ -149,10 +149,13 @@ class CallBacksManagerTestCase(base.BaseTestCase):
             n.return_value = ['error']
             self.assertRaises(exceptions.CallbackFailure,
                               self.manager.notify,
-                              mock.ANY, events.BEFORE_CREATE, mock.ANY)
+                              mock.ANY, events.BEFORE_CREATE,
+                              'trigger', params={'a': 1})
             expected_calls = [
-                mock.call(mock.ANY, 'before_create', mock.ANY),
-                mock.call(mock.ANY, 'abort_create', mock.ANY)
+                mock.call(mock.ANY, 'before_create',
+                          'trigger', params={'a': 1}),
+                mock.call(mock.ANY, 'abort_create',
+                          'trigger', params={'a': 1})
             ]
             n.assert_has_calls(expected_calls)
 
