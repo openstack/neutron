@@ -74,6 +74,7 @@ from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import driver_context
+from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
@@ -83,6 +84,11 @@ from neutron.services.qos import qos_consts
 LOG = log.getLogger(__name__)
 
 MAX_BIND_TRIES = 10
+
+
+SERVICE_PLUGINS_REQUIRED_DRIVERS = {
+    'qos': [qos_ext.QOS_EXT_DRIVER_ALIAS]
+}
 
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -152,6 +158,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._setup_dhcp()
         self._start_rpc_notifiers()
         self.add_agent_status_check(self.agent_health_check)
+        self._verify_service_plugins_requirements()
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
     def _setup_rpc(self):
@@ -172,6 +179,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.network_scheduler_driver
         )
         self.start_periodic_dhcp_agent_status_check()
+
+    def _verify_service_plugins_requirements(self):
+        for service_plugin in cfg.CONF.service_plugins:
+            extension_drivers = SERVICE_PLUGINS_REQUIRED_DRIVERS.get(
+                service_plugin, []
+            )
+            for extension_driver in extension_drivers:
+                if extension_driver not in self.extension_manager.names():
+                    raise ml2_exc.ExtensionDriverNotFound(
+                        driver=extension_driver, service_plugin=service_plugin
+                    )
 
     @property
     def supported_qos_rule_types(self):

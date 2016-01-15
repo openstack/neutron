@@ -759,6 +759,29 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 class TestMl2PluginOnly(Ml2PluginV2TestCase):
     """For testing methods that don't call drivers"""
 
+    def test__verify_service_plugins_requirements(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.dict(ml2_plugin.SERVICE_PLUGINS_REQUIRED_DRIVERS,
+                             {self.l3_plugin: self._mechanism_drivers}),\
+                mock.patch.object(plugin.extension_manager,
+                                  'names',
+                                  return_value=self._mechanism_drivers):
+
+            plugin._verify_service_plugins_requirements()
+
+    def test__verify_service_plugins_requirements_missing_driver(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.dict(ml2_plugin.SERVICE_PLUGINS_REQUIRED_DRIVERS,
+                             {self.l3_plugin: ['test_required_driver']}),\
+                mock.patch.object(plugin.extension_manager,
+                                  'names',
+                                  return_value=self._mechanism_drivers):
+
+            self.assertRaises(
+                ml2_exc.ExtensionDriverNotFound,
+                plugin._verify_service_plugins_requirements
+            )
+
     def _test_check_mac_update_allowed(self, vif_type, expect_change=True):
         plugin = manager.NeutronManager.get_plugin()
         port = {'mac_address': "fake_mac", 'id': "fake_id"}
