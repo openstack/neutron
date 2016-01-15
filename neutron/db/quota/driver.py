@@ -18,6 +18,7 @@ from oslo_log import log
 
 from neutron.common import exceptions
 from neutron.db import api as db_api
+from neutron.db import common_db_mixin as common_db
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import models as quota_models
 
@@ -34,7 +35,8 @@ class DbQuotaDriver(object):
     @staticmethod
     def get_tenant_quotas(context, resources, tenant_id):
         """Given a list of resources, retrieve the quotas for the given
-        tenant.
+        tenant. If no limits are found for the specified tenant, the operation
+        returns the default limits.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
@@ -47,7 +49,7 @@ class DbQuotaDriver(object):
                             for key, resource in resources.items())
 
         # update with tenant specific limits
-        q_qry = context.session.query(quota_models.Quota).filter_by(
+        q_qry = common_db.model_query(context, quota_models.Quota).filter_by(
             tenant_id=tenant_id)
         for item in q_qry:
             tenant_quota[item['resource']] = item['limit']
