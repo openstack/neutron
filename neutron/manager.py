@@ -254,3 +254,11 @@ class NeutronManager(object):
     @classmethod
     def get_controller_for_resource(cls, resource):
         return cls.get_instance().resource_controller_mappings.get(resource)
+
+    @classmethod
+    def get_service_plugin_by_path_prefix(cls, path_prefix):
+        service_plugins = cls.get_unique_service_plugins()
+        for service_plugin in service_plugins:
+            plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
+            if plugin_path_prefix and plugin_path_prefix == path_prefix:
+                return service_plugin

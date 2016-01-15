@@ -95,6 +95,15 @@ class V2Controller(object):
 
     @utils.expose()
     def _lookup(self, collection, *remainder):
+        # if collection exists in the extension to service plugins map then
+        # we are assuming that collection is the service plugin and
+        # needs to be remapped.
+        # Example: https://neutron.endpoint/v2.0/lbaas/loadbalancers
+        if (remainder and
+                manager.NeutronManager.get_service_plugin_by_path_prefix(
+                    collection)):
+            collection = remainder[0]
+            remainder = remainder[1:]
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
         if not controller:

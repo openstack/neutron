@@ -15,11 +15,13 @@
 
 import os
 
+from collections import namedtuple
 import mock
 from oslo_config import cfg
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+import pecan
 from pecan import request
 from pecan import set_config
 from pecan.testing import load_test_app
@@ -34,6 +36,20 @@ from neutron.pecan_wsgi.controllers import root as controllers
 from neutron import policy
 from neutron.tests.unit import testlib_api
 
+_SERVICE_PLUGIN_RESOURCE = 'serviceplugin'
+_SERVICE_PLUGIN_COLLECTION = _SERVICE_PLUGIN_RESOURCE + 's'
+_SERVICE_PLUGIN_INDEX_BODY = {_SERVICE_PLUGIN_COLLECTION: []}
+
+
+class FakeServicePluginController(object):
+    resource = _SERVICE_PLUGIN_RESOURCE
+
+    @pecan.expose(generic=True,
+                  content_type='application/json',
+                  template='json')
+    def index(self):
+        return _SERVICE_PLUGIN_INDEX_BODY
+
 
 class PecanFunctionalTest(testlib_api.SqlTestCase):
 
@@ -44,6 +60,7 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
         self.addCleanup(set_config, {}, overwrite=True)
         self.set_config_overrides()
         self.setup_app()
+        self.setup_service_plugin()
 
     def setup_app(self):
         self.app = load_test_app(os.path.join(
@@ -68,6 +85,10 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
 
     def set_config_overrides(self):
         cfg.CONF.set_override('auth_strategy', 'noauth')
+
+    def setup_service_plugin(self):
+        manager.NeutronManager.set_controller_for_resource(
+            _SERVICE_PLUGIN_COLLECTION, FakeServicePluginController())
 
 
 class TestV2Controller(PecanFunctionalTest):
@@ -105,6 +126,15 @@ class TestV2Controller(PecanFunctionalTest):
     def test_get_specific_extension(self):
         response = self.app.get('/v2.0/extensions/allowed-address-pairs.json')
         self.assertEqual(response.status_int, 200)
+
+    def test_service_plugin_uri(self):
+        service_plugin = namedtuple('DummyServicePlugin', 'path_prefix')
+        service_plugin.path_prefix = 'dummy'
+        nm = manager.NeutronManager.get_instance()
+        nm.service_plugins['dummy_sp'] = service_plugin
+        response = self.app.get('/v2.0/dummy/serviceplugins.json')
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(_SERVICE_PLUGIN_INDEX_BODY, response.json_body)
 
 
 class TestErrors(PecanFunctionalTest):
