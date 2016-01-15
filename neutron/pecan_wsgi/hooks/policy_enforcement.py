@@ -41,6 +41,12 @@ class PolicyHook(hooks.PecanHook):
 
     def _fetch_resource(self, neutron_context, resource, resource_id):
         attrs = v2_attributes.get_resource_info(resource)
+        if not attrs:
+            # this isn't a request for a normal resource. it could be
+            # an action like removing a network from a dhcp agent.
+            # return None and assume the custom controller for this will
+            # handle the necessary logic.
+            return
         field_list = [name for (name, value) in attrs.items()
                       if (value.get('required_by_policy') or
                           value.get('primary_key') or 'default' not in value)]
@@ -89,14 +95,16 @@ class PolicyHook(hooks.PecanHook):
                 # Ops... this was a delete after all!
                 item = {}
             resource_id = state.request.context.get('resource_id')
-            obj = copy.copy(self._fetch_resource(neutron_context,
-                                                 resource,
-                                                 resource_id))
-            obj.update(item)
-            merged_resources.append(obj.copy())
-            obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
-            # Put back the item in the list so that policies could be enforced
-            resources_copy.append(obj)
+            resource_obj = self._fetch_resource(neutron_context,
+                                                resource, resource_id)
+            if resource_obj:
+                obj = copy.copy(resource_obj)
+                obj.update(item)
+                merged_resources.append(obj.copy())
+                obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
+                # Put back the item in the list so that policies could be
+                # enforced
+                resources_copy.append(obj)
         # TODO(salv-orlando): as other hooks might need to prefetch resources,
         # store them in the request context. However, this should be done in a
         # separate hook which is conventietly called before all other hooks

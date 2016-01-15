@@ -21,6 +21,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource as res_ctrl
+from neutron.pecan_wsgi.controllers import utils
 from neutron import policy
 from neutron.quota import resource_registry
 
@@ -65,6 +66,40 @@ def _handle_plurals(collection):
     return resource
 
 
+def initialize_legacy_extensions(legacy_extensions):
+    leftovers = []
+    for ext in legacy_extensions:
+        ext_resources = ext.get_resources()
+        for ext_resource in ext_resources:
+            controller = ext_resource.controller.controller
+            collection = ext_resource.collection
+            resource = _handle_plurals(collection)
+            if manager.NeutronManager.get_plugin_for_resource(resource):
+                continue
+            # NOTE(blogan): It is possible that a plugin is tied to the
+            # collection rather than the resource.  An example of this is
+            # the auto_allocated_topology extension.  All other extensions
+            # created their legacy resources with the collection/plural form
+            # except auto_allocated_topology.  Making that extension
+            # conform with the rest of extensions could invalidate this, but
+            # it's possible out of tree extensions did the same thing.  Since
+            # the auto_allocated_topology resources have already been loaded
+            # we definitely don't want to load them up with shim controllers,
+            # so this will prevent that.
+            if manager.NeutronManager.get_plugin_for_resource(collection):
+                continue
+            # NOTE(blogan): Since this does not have a plugin, we know this
+            # extension has not been loaded and controllers for its resources
+            # have not been created nor set.
+            leftovers.append((collection, resource, controller))
+    # NOTE(blogan): at this point we have leftover extensions that never
+    # had a controller set which will force us to use shim controllers.
+    for leftover in leftovers:
+        shim_controller = utils.ShimCollectionsController(*leftover)
+        manager.NeutronManager.set_controller_for_resource(
+            shim_controller.collection, shim_controller)
+
+
 def initialize_all():
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
     ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
@@ -73,6 +108,7 @@ def initialize_all():
     # and extensions)
     pecanized_exts = [ext for ext in ext_mgr.extensions.values() if
                       hasattr(ext, 'get_pecan_controllers')]
+    non_pecanized_exts = set(ext_mgr.extensions.values()) - set(pecanized_exts)
     pecan_controllers = {}
     for ext in pecanized_exts:
         LOG.info(_LI("Extension %s is pecan-aware. Fetching resources "
@@ -108,6 +144,8 @@ def initialize_all():
                      "via URI path segment:%(collection)s"),
                  {'resource': resource,
                   'collection': collection})
+
+    initialize_legacy_extensions(non_pecanized_exts)
 
     # NOTE(salv-orlando): If you are care about code quality, please read below
     # Hackiness is strong with the piece of code below. It is used for

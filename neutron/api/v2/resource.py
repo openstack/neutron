@@ -148,6 +148,11 @@ def Resource(controller, faults=None, deserializers=None, serializers=None,
         return webob.Response(request=request, status=status,
                               content_type=content_type,
                               body=body)
+    # NOTE(blogan): this is something that is needed for the transition to
+    # pecan.  This will allow the pecan code to have a handle on the controller
+    # for an extension so it can reuse the code instead of forcing every
+    # extension to rewrite the code for use with pecan.
+    setattr(resource, 'controller', controller)
     return resource
 
 

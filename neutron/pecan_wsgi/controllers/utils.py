@@ -14,6 +14,7 @@
 #    under the License.
 
 import pecan
+from pecan import request
 
 from neutron.api.v2 import attributes as api_attributes
 from neutron import manager
@@ -50,3 +51,63 @@ class NeutronPecanController(object):
             self._plugin = manager.NeutronManager.get_plugin_for_resource(
                 self.resource)
         return self._plugin
+
+
+class ShimRequest(object):
+
+    def __init__(self, context):
+        self.context = context
+
+
+class ShimItemController(NeutronPecanController):
+
+    def __init__(self, collection, resource, item, controller):
+        super(ShimItemController, self).__init__(collection, resource)
+        self.item = item
+        self.controller_delete = getattr(controller, 'delete', None)
+
+    @expose(generic=True)
+    def index(self):
+        pecan.abort(405)
+
+    @when(index, method='DELETE')
+    def delete(self):
+        if not self.controller_delete:
+            pecan.abort(405)
+        shim_request = ShimRequest(request.context['neutron_context'])
+        uri_identifiers = request.context['uri_identifiers']
+        return self.controller_delete(shim_request, self.item,
+                                      **uri_identifiers)
+
+
+class ShimCollectionsController(NeutronPecanController):
+
+    def __init__(self, collection, resource, controller):
+        super(ShimCollectionsController, self).__init__(collection, resource)
+        self.controller = controller
+        self.controller_index = getattr(controller, 'index', None)
+        self.controller_create = getattr(controller, 'create', None)
+
+    @expose(generic=True)
+    def index(self):
+        if not self.controller_index:
+            pecan.abort(405)
+        shim_request = ShimRequest(request.context['neutron_context'])
+        uri_identifiers = request.context['uri_identifiers']
+        return self.controller_index(shim_request, **uri_identifiers)
+
+    @when(index, method='POST')
+    def create(self):
+        if not self.controller_create:
+            pecan.abort(405)
+        shim_request = ShimRequest(request.context['neutron_context'])
+        uri_identifiers = request.context['uri_identifiers']
+        return self.controller_create(shim_request, request.json,
+                                      **uri_identifiers)
+
+    @expose()
+    def _lookup(self, item, *remainder):
+        request.context['resource'] = self.resource
+        request.context['resource_id'] = item
+        return ShimItemController(self.collection, self.resource, item,
+                                  self.controller), remainder

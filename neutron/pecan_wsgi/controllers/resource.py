@@ -12,11 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 import pecan
 from pecan import request
 
 from neutron.api import api_common
+from neutron.i18n import _LW
+from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 class ItemController(utils.NeutronPecanController):
@@ -59,6 +65,17 @@ class ItemController(utils.NeutronPecanController):
         deleter = getattr(self.plugin, 'delete_%s' % self.resource)
         return deleter(neutron_context, self.item)
 
+    @utils.expose()
+    def _lookup(self, collection, *remainder):
+        request.context['collection'] = collection
+        controller = manager.NeutronManager.get_controller_for_resource(
+            collection)
+        if not controller:
+            LOG.warn(_LW("No controller found for: %s - returning response "
+                         "code 404"), collection)
+            pecan.abort(404)
+        return controller, remainder
+
 
 class CollectionsController(utils.NeutronPecanController):
 
@@ -68,6 +85,8 @@ class CollectionsController(utils.NeutronPecanController):
     def _lookup(self, item, *remainder):
         # Store resource identifier in request context
         request.context['resource_id'] = item
+        uri_identifier = '%s_id' % self.resource
+        request.context['uri_identifiers'][uri_identifier] = item
         return self.item_controller_class(self.resource, item), remainder
 
     @utils.expose(generic=True)

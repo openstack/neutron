@@ -48,7 +48,7 @@ class BodyValidationHook(hooks.PecanHook):
         state.request.context['request_data'] = json_data
         if not (resource in json_data or collection in json_data):
             # there is no resource in the request. This can happen when a
-            # member action is being processed.
+            # member action is being processed or on agent scheduler operations
             return
         # Prepare data to be passed to the plugin from request body
         data = v2_base.Controller.prepare_request_body(

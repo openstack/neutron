@@ -18,6 +18,7 @@ from oslo_log import log
 import pecan
 from pecan import request
 
+from neutron import manager
 from neutron.pecan_wsgi.controllers import resource
 from neutron.pecan_wsgi.controllers import utils
 
@@ -41,37 +42,22 @@ class RouterController(resource.ItemController):
 
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
-        neutron_context = request.context['neutron_context']
-        if args:
-            # There is a member action to process
-            member_action = args[0]
-            LOG.debug("Processing member action %(action)s for resource "
-                      "%(resource)s identified by %(item)s",
-                      {'action': member_action,
-                       'resource': self.resource,
-                       'item': self.item})
-            # NOTE(salv-orlando): The following simply verify that the plugin
-            # has a method for a given action. It therefore enables plugins to
-            # implement actions which are not part of the API specification.
-            # Unfortunately the API extension descriptor does not do a good job
-            # of sanctioning which actions are available on a given resource.
-            # TODO(salv-orlando): prevent plugins from implementing actions
-            # which are not part of the Neutron API spec
-            try:
-                member_action_method = getattr(self.plugin, member_action)
-                return member_action_method(neutron_context, self.item,
-                                            request.context['request_data'])
-            except AttributeError:
-                LOG.error(_LE("Action %(action)s is not defined on resource "
-                              "%(resource)s"),
-                          {'action': member_action, 'resource': self.resource})
-                pecan.abort(404)
-        # Do standard PUT processing
         return super(RouterController, self).put(*args, **kwargs)
 
     @utils.when(index, method='DELETE')
     def delete(self):
         return super(RouterController, self).delete()
+
+    @utils.expose()
+    def _lookup(self, member_action, *remainder):
+        # This check is mainly for the l3-agents resource.  If there isn't
+        # a controller for it then we'll just assume its a member action.
+        controller = manager.NeutronManager.get_controller_for_resource(
+            member_action)
+        if not controller:
+            controller = RouterMemberActionController(
+                self.resource, self.item, member_action)
+        return controller, remainder
 
 
 class RoutersController(resource.CollectionsController):
@@ -80,3 +66,46 @@ class RoutersController(resource.CollectionsController):
 
     def __init__(self):
         super(RoutersController, self).__init__('routers', 'router')
+
+
+class RouterMemberActionController(resource.ItemController):
+
+    def __init__(self, resource, item, member_action):
+        super(RouterMemberActionController, self).__init__(resource, item)
+        self.member_action = member_action
+
+    @utils.expose(generic=True)
+    def index(self, *args, **kwargs):
+        pecan.abort(405)
+
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PATCH')
+    def not_supported(self):
+        return super(RouterMemberActionController, self).not_supported()
+
+    @utils.when(index, method='PUT')
+    def put(self, *args, **kwargs):
+        neutron_context = request.context['neutron_context']
+        LOG.debug("Processing member action %(action)s for resource "
+                  "%(resource)s identified by %(item)s",
+                  {'action': self.member_action,
+                   'resource': self.resource,
+                   'item': self.item})
+        # NOTE(salv-orlando): The following simply verify that the plugin
+        # has a method for a given action. It therefore enables plugins to
+        # implement actions which are not part of the API specification.
+        # Unfortunately the API extension descriptor does not do a good job
+        # of sanctioning which actions are available on a given resource.
+        # TODO(salv-orlando): prevent plugins from implementing actions
+        # which are not part of the Neutron API spec
+        try:
+            member_action_method = getattr(self.plugin, self.member_action)
+            return member_action_method(neutron_context, self.item,
+                                        request.context['request_data'])
+        except AttributeError:
+            LOG.error(_LE("Action %(action)s is not defined on resource "
+                          "%(resource)s"),
+                      {'action': self.member_action,
+                       'resource': self.resource})
+            pecan.abort(404)

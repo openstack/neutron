@@ -102,6 +102,13 @@ class V2Controller(object):
         # properly sanitized (eg: replacing dashes with underscores)
         request.context['resource'] = controller.resource
         request.context['collection'] = controller.collection
+        # NOTE(blogan): initialize a dict to store the ids of the items walked
+        # in the path for example: /networks/1234 would cause uri_identifiers
+        # to contain: {'network_id': '1234'}
+        # This is for backwards compatibility with legacy extensions that
+        # defined their own controllers and expected kwargs to be passed in
+        # with the uri_identifiers
+        request.context['uri_identifiers'] = {}
         return controller, remainder
 
 

@@ -14,17 +14,22 @@ from collections import namedtuple
 
 import mock
 from oslo_config import cfg
+from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 import pecan
 from pecan import request
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
+from neutron.common import constants as n_const
 from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
 from neutron.plugins.common import constants
+from neutron import policy
+from neutron.tests.common import helpers
 from neutron.tests.functional.pecan_wsgi import test_functional
+from neutron.tests.functional.pecan_wsgi import utils as pecan_utils
 
 _SERVICE_PLUGIN_RESOURCE = 'serviceplugin'
 _SERVICE_PLUGIN_COLLECTION = _SERVICE_PLUGIN_RESOURCE + 's'
@@ -50,6 +55,8 @@ class TestRootController(test_functional.PecanFunctionalTest):
     def setUp(self):
         super(TestRootController, self).setUp()
         self.setup_service_plugin()
+        self.plugin = manager.NeutronManager.get_plugin()
+        self.ctx = context.get_admin_context()
 
     def setup_service_plugin(self):
         manager.NeutronManager.set_controller_for_resource(
@@ -228,12 +235,11 @@ class TestResourceController(TestRootController):
         self._gen_port()
 
     def _gen_port(self):
-        pl = manager.NeutronManager.get_plugin()
-        network_id = pl.create_network(context.get_admin_context(), {
+        network_id = self.plugin.create_network(context.get_admin_context(), {
             'network':
             {'name': 'pecannet', 'tenant_id': 'tenid', 'shared': False,
              'admin_state_up': True, 'status': 'ACTIVE'}})['id']
-        self.port = pl.create_port(context.get_admin_context(), {
+        self.port = self.plugin.create_port(context.get_admin_context(), {
             'port':
             {'tenant_id': 'tenid', 'network_id': network_id,
              'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
@@ -403,43 +409,14 @@ class TestRouterController(TestResourceController):
         cfg.CONF.set_override(
             'service_plugins',
             ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'])
-
         super(TestRouterController, self).setUp()
-
-        # Create a network, a subnet, and a router
-        pl = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
+        ctx = context.get_admin_context()
         service_plugins = manager.NeutronManager.get_service_plugins()
         l3_plugin = service_plugins[constants.L3_ROUTER_NAT]
-        ctx = context.get_admin_context()
-        network_id = pl.create_network(
-            ctx,
-            {'network':
-             {'name': 'pecannet',
-              'tenant_id': 'tenid',
-              'shared': False,
-              'admin_state_up': True,
-              'status': 'ACTIVE'}})['id']
-        self.subnet = pl.create_subnet(
-            ctx,
-            {'subnet':
-             {'tenant_id': 'tenid',
-              'network_id': network_id,
-              'name': 'pecansub',
-              'ip_version': 4,
-              'cidr': '10.20.30.0/24',
-              'gateway_ip': '10.20.30.1',
-              'enable_dhcp': True,
-              'allocation_pools': [
-                  {'start': '10.20.30.2',
-                   'end': '10.20.30.254'}],
-              'dns_nameservers': [],
-              'host_routes': []}})
-        self.router = l3_plugin.create_router(
-            ctx,
-            {'router':
-             {'name': 'pecanrtr',
-              'tenant_id': 'tenid',
-              'admin_state_up': True}})
+        network_id = pecan_utils.create_network(ctx, plugin)['id']
+        self.subnet = pecan_utils.create_subnet(ctx, plugin, network_id)
+        self.router = pecan_utils.create_router(ctx, l3_plugin)
 
     def test_member_actions_processing(self):
         response = self.app.put_json(
@@ -455,3 +432,121 @@ class TestRouterController(TestResourceController):
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
         self.assertEqual(404, response.status_int)
+
+    def test_unsupported_method_member_action(self):
+        response = self.app.post_json(
+            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            params={'subnet_id': self.subnet['id']},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(405, response.status_int)
+
+        response = self.app.get(
+            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(405, response.status_int)
+
+
+class TestDHCPAgentShimControllers(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        super(TestDHCPAgentShimControllers, self).setUp()
+        policy.init()
+        policy._ENFORCER.set_rules(
+            oslo_policy.Rules.from_dict(
+                {'get_dhcp-agents': 'role:admin',
+                 'get_dhcp-networks': 'role:admin',
+                 'create_dhcp-networks': 'role:admin',
+                 'delete_dhcp-networks': 'role:admin'}),
+            overwrite=False)
+        plugin = manager.NeutronManager.get_plugin()
+        ctx = context.get_admin_context()
+        self.network = pecan_utils.create_network(ctx, plugin)
+        self.agent = helpers.register_dhcp_agent()
+        # NOTE(blogan): Not sending notifications because this test is for
+        # testing the shim controllers
+        plugin.agent_notifiers[n_const.AGENT_TYPE_DHCP] = None
+
+    def test_list_dhcp_agents_hosting_network(self):
+        response = self.app.get(
+            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            headers={'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+
+    def test_list_networks_on_dhcp_agent(self):
+        response = self.app.get(
+            '/v2.0/agents/%s/dhcp-networks.json' % self.agent.id,
+            headers={'X-Project-Id': 'tenid', 'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+
+    def test_add_remove_dhcp_agent(self):
+        headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        self.app.post_json(
+            '/v2.0/agents/%s/dhcp-networks.json' % self.agent.id,
+            headers=headers, params={'network_id': self.network['id']})
+        response = self.app.get(
+            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            headers=headers)
+        self.assertIn(self.agent.id,
+                      [a['id'] for a in response.json['agents']])
+        self.app.delete('/v2.0/agents/%(a)s/dhcp-networks/%(n)s.json' % {
+            'a': self.agent.id, 'n': self.network['id']}, headers=headers)
+        response = self.app.get(
+            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            headers=headers)
+        self.assertNotIn(self.agent.id,
+                         [a['id'] for a in response.json['agents']])
+
+
+class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        cfg.CONF.set_override(
+            'service_plugins',
+            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'])
+        super(TestL3AgentShimControllers, self).setUp()
+        policy.init()
+        policy._ENFORCER.set_rules(
+            oslo_policy.Rules.from_dict(
+                {'get_l3-agents': 'role:admin',
+                 'get_l3-routers': 'role:admin'}),
+            overwrite=False)
+        ctx = context.get_admin_context()
+        service_plugins = manager.NeutronManager.get_service_plugins()
+        l3_plugin = service_plugins[constants.L3_ROUTER_NAT]
+        self.router = pecan_utils.create_router(ctx, l3_plugin)
+        self.agent = helpers.register_l3_agent()
+        # NOTE(blogan): Not sending notifications because this test is for
+        # testing the shim controllers
+        l3_plugin.agent_notifiers[n_const.AGENT_TYPE_L3] = None
+
+    def test_list_l3_agents_hosting_router(self):
+        response = self.app.get(
+            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            headers={'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+
+    def test_list_routers_on_l3_agent(self):
+        response = self.app.get(
+            '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
+            headers={'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+
+    def test_add_remove_l3_agent(self):
+        headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        self.app.post_json(
+            '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
+            headers=headers, params={'router_id': self.router['id']})
+        response = self.app.get(
+            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            headers=headers)
+        self.assertIn(self.agent.id,
+                      [a['id'] for a in response.json['agents']])
+        self.app.delete('/v2.0/agents/%(a)s/l3-routers/%(n)s.json' % {
+            'a': self.agent.id, 'n': self.router['id']}, headers=headers)
+        response = self.app.get(
+            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            headers=headers)
+        self.assertNotIn(self.agent.id,
+                         [a['id'] for a in response.json['agents']])
