@@ -203,6 +203,12 @@ class IPWrapper(SubProcessBase):
         if self.namespace:
             device.link.set_netns(self.namespace)
 
+    def add_vlan(self, name, physical_interface, vlan_id):
+        cmd = ['add', 'link', physical_interface, 'name', name,
+               'type', 'vlan', 'id', vlan_id]
+        self._as_root([], 'link', cmd)
+        return IPDevice(name, namespace=self.namespace)
+
     def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
                   local=None, port=None, proxy=False):
         cmd = ['add', name, 'type', 'vxlan', 'id', vni]
@@ -283,6 +289,37 @@ class IPDevice(SubProcessBase):
         except RuntimeError:
             LOG.exception(_LE("Failed deleting egress connection state of"
                               " floatingip %s"), ip_str)
+
+    def _sysctl(self, cmd):
+        """execute() doesn't return the exit status of the command it runs,
+        it returns stdout and stderr. Setting check_exit_code=True will cause
+        it to raise a RuntimeError if the exit status of the command is
+        non-zero, which in sysctl's case is an error. So we're normalizing
+        that into zero (success) and one (failure) here to mimic what
+        "echo $?" in a shell would be.
+
+        This is all because sysctl is too verbose and prints the value you
+        just set on success, unlike most other utilities that print nothing.
+
+        execute() will have dumped a message to the logs with the actual
+        output on failure, so it's not lost, and we don't need to print it
+        here.
+        """
+        cmd = ['sysctl', '-w'] + cmd
+        ip_wrapper = IPWrapper(self.namespace)
+        try:
+            ip_wrapper.netns.execute(cmd, run_as_root=True,
+                                     check_exit_code=True)
+        except RuntimeError:
+            LOG.exception(_LE("Failed running %s"), cmd)
+            return 1
+
+        return 0
+
+    def disable_ipv6(self):
+        sysctl_name = re.sub(r'\.', '/', self.name)
+        cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name
+        return self._sysctl([cmd])
 
 
 class IpCommandBase(object):
@@ -868,6 +905,14 @@ class IpNetnsCommand(IpCommandBase):
             if name == line:
                 return True
         return False
+
+
+def vlan_in_use(segmentation_id, namespace=None):
+    """Return True if VLAN ID is in use by an interface, else False."""
+    ip_wrapper = IPWrapper(namespace=namespace)
+    interfaces = ip_wrapper.netns.execute(["ip", "-d", "link", "list"],
+                                          check_exit_code=True)
+    return '802.1Q id %s ' % segmentation_id in interfaces
 
 
 def vxlan_in_use(segmentation_id, namespace=None):
