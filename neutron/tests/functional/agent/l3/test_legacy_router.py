@@ -112,6 +112,10 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             deleted_routers_info.append(ri)
             ns_names_to_retrieve.add(ri.ns_name)
 
+        mocked_get_router_ids = self.mock_plugin_api.get_router_ids
+        mocked_get_router_ids.return_value = [r['id'] for r in
+                                              routers_to_keep +
+                                              routers_deleted_during_resync]
         mocked_get_routers = self.mock_plugin_api.get_routers
         mocked_get_routers.return_value = (routers_to_keep +
                                            routers_deleted_during_resync)

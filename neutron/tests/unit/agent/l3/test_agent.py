@@ -200,6 +200,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_router_ids.return_value = ['fake_id']
         self.plugin_api.get_routers.side_effect = ValueError
         self.assertRaises(ValueError,
                           agent.periodic_sync_routers_task,
@@ -247,6 +248,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         stale_router_ids = [_uuid(), _uuid()]
         active_routers = [{'id': _uuid()}, {'id': _uuid()}]
+        self.plugin_api.get_router_ids.return_value = [r['id'] for r
+                                                       in active_routers]
         self.plugin_api.get_routers.return_value = active_routers
         namespace_list = [namespaces.NS_PREFIX + r_id
                           for r_id in stale_router_ids]

@@ -361,8 +361,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         return self.get_sync_data(context, router_ids=router_ids, active=True)
 
-    def list_active_sync_routers_on_active_l3_agent(
-            self, context, host, router_ids):
+    def list_router_ids_on_host(self, context, host, router_ids=None):
         agent = self._get_agent_by_type_and_host(
             context, constants.AGENT_TYPE_L3, host)
         if not agentschedulers_db.services_available(agent.admin_state_up):
@@ -374,8 +373,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if router_ids:
             query = query.filter(
                 RouterL3AgentBinding.router_id.in_(router_ids))
-        router_ids = [item[0] for item in query]
+
+        return [item[0] for item in query]
+
+    def list_active_sync_routers_on_active_l3_agent(
+            self, context, host, router_ids):
+        router_ids = self.list_router_ids_on_host(context, host, router_ids)
         if router_ids:
+            agent = self._get_agent_by_type_and_host(
+                context, constants.AGENT_TYPE_L3, host)
             return self._get_active_l3_agent_routers_sync_data(context, host,
                                                                agent,
                                                                router_ids)
