@@ -588,14 +588,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         return list(routers_dict.values())
 
-    def get_ha_sync_data_for_host(self, context, host=None, router_ids=None,
-                                  active=None):
-        if n_utils.is_extension_supported(self,
-                                          constants.L3_DISTRIBUTED_EXT_ALIAS):
+    def get_ha_sync_data_for_host(self, context, host, agent,
+                                  router_ids=None, active=None):
+        agent_mode = self._get_agent_mode(agent)
+        dvr_agent_mode = (agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
+                                         constants.L3_AGENT_MODE_DVR])
+        if (dvr_agent_mode and n_utils.is_extension_supported(
+                self, constants.L3_DISTRIBUTED_EXT_ALIAS)):
             # DVR has to be handled differently
-            agent = self._get_agent_by_type_and_host(context,
-                                                     constants.AGENT_TYPE_L3,
-                                                     host)
             sync_data = self._get_dvr_sync_data(context, host, agent,
                                                 router_ids, active)
         else:

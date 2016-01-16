@@ -355,7 +355,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                                                router_ids):
         if n_utils.is_extension_supported(self,
                                           constants.L3_HA_MODE_EXT_ALIAS):
-            return self.get_ha_sync_data_for_host(context, host,
+            return self.get_ha_sync_data_for_host(context, host, agent,
                                                   router_ids=router_ids,
                                                   active=True)
 

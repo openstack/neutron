@@ -1646,7 +1646,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
         for agent in agents:
             sync_data = self.plugin.get_ha_sync_data_for_host(
                 self.adminContext, router_ids=[router['id']],
-                host=agent.host)
+                host=agent.host, agent=agent)
             self.assertEqual(1, len(sync_data))
             interface = sync_data[0][constants.HA_INTERFACE_KEY]
             self.assertIsNotNone(interface)
