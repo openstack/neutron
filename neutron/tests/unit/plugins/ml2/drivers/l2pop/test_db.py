@@ -25,7 +25,6 @@ from neutron.tests.unit import testlib_api
 class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestL2PopulationDBTestCase, self).setUp()
-        self.db_mixin = l2pop_db.L2populationDbMixin()
         self.ctx = context.get_admin_context()
 
     def test_get_agent_by_host(self):
@@ -33,7 +32,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
-        agent = self.db_mixin.get_agent_by_host(
+        agent = l2pop_db.get_agent_by_host(
             self.ctx.session, helpers.HOST)
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
 
@@ -41,7 +40,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         # Register a bunch of non-L2 agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
-        agent = self.db_mixin.get_agent_by_host(
+        agent = l2pop_db.get_agent_by_host(
             self.ctx.session, helpers.HOST)
         self.assertIsNone(agent)
 
@@ -77,7 +76,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
-        tunnel_network_ports = self.db_mixin.get_dvr_active_network_ports(
+        tunnel_network_ports = l2pop_db.get_dvr_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(1, len(tunnel_network_ports))
         _, agent = tunnel_network_ports[0]
@@ -88,7 +87,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         # Register a bunch of non-L2 agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
-        tunnel_network_ports = self.db_mixin.get_dvr_active_network_ports(
+        tunnel_network_ports = l2pop_db.get_dvr_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(0, len(tunnel_network_ports))
 
@@ -98,7 +97,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
-        fdb_network_ports = self.db_mixin.get_nondvr_active_network_ports(
+        fdb_network_ports = l2pop_db.get_nondvr_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(1, len(fdb_network_ports))
         _, agent = fdb_network_ports[0]
@@ -109,6 +108,6 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         # Register a bunch of non-L2 agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
-        fdb_network_ports = self.db_mixin.get_nondvr_active_network_ports(
+        fdb_network_ports = l2pop_db.get_nondvr_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(0, len(fdb_network_ports))
