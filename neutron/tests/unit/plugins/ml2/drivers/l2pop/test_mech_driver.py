@@ -792,6 +792,39 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             l2pop_mech.delete_port_postcommit(mock.Mock())
             self.assertTrue(upd_port_down.called)
 
+    def test_delete_unbound_port(self):
+        l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
+        l2pop_mech.initialize()
+
+        with self.port() as port:
+            port_context = driver_context.PortContext(
+                self.driver, self.context, port['port'],
+                self.driver.get_network(
+                    self.context, port['port']['network_id']),
+                None, None)
+            # The point is to provide coverage and to assert that no exceptions
+            # are raised.
+            l2pop_mech.delete_port_postcommit(port_context)
+
+    def test_fixed_ips_change_unbound_port_no_rpc(self):
+        l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
+        l2pop_mech.initialize()
+        l2pop_mech.L2populationAgentNotify = mock.Mock()
+
+        with self.port() as port:
+            port_context = driver_context.PortContext(
+                self.driver, self.context, port['port'],
+                self.driver.get_network(
+                    self.context, port['port']['network_id']),
+                None, None)
+            l2pop_mech._fixed_ips_changed(
+                port_context, None, port['port'], (set(['10.0.0.1']), set()))
+
+        # There's no need to send an RPC update if the IP address for an
+        # unbound port changed.
+        self.assertFalse(
+            l2pop_mech.L2populationAgentNotify.update_fdb_entries.called)
+
 
 class TestL2PopulationMechDriver(base.BaseTestCase):
 
