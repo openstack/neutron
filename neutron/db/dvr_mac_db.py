@@ -169,11 +169,12 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         else:
             # retrieve the gateway port on this subnet
             if fixed_ips:
-                filter = fixed_ips[0]
+                ip_address = fixed_ips[0]['ip_address']
             else:
-                filter = {'fixed_ips': {'subnet_id': [subnet],
-                                        'ip_address':
-                                        [subnet_info['gateway_ip']]}}
+                ip_address = subnet_info['gateway_ip']
+
+            filter = {'fixed_ips': {'subnet_id': [subnet],
+                                    'ip_address': [ip_address]}}
 
             internal_gateway_ports = self.plugin.get_ports(
                 context, filters=filter)
