@@ -538,7 +538,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.assertTrue(
             port_2_data in self.agent.network_ports[NETWORK_ID]
         )
-        self.assertEqual(cleaned_port_id, PORT_1)
+        self.assertEqual(PORT_1, cleaned_port_id)
         #and now remove last port from network:
         cleaned_port_id = self.agent._clean_network_ports(
             port_2_data['device']
@@ -546,7 +546,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.assertTrue(
             NETWORK_ID not in self.agent.network_ports.keys()
         )
-        self.assertEqual(cleaned_port_id, port_2_data['port_id'])
+        self.assertEqual(port_2_data['port_id'], cleaned_port_id)
 
 
 class TestLinuxBridgeManager(base.BaseTestCase):
@@ -608,30 +608,28 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_get_bridge_name(self):
         nw_id = "123456789101112"
-        self.assertEqual(self.lbm.get_bridge_name(nw_id),
-                         "brq" + nw_id[0:11])
+        self.assertEqual("brq" + nw_id[0:11],
+                         self.lbm.get_bridge_name(nw_id))
         nw_id = ""
-        self.assertEqual(self.lbm.get_bridge_name(nw_id),
-                         "brq")
+        self.assertEqual("brq", self.lbm.get_bridge_name(nw_id))
 
     def test_get_subinterface_name(self):
-        self.assertEqual(self.lbm.get_subinterface_name("eth0", "0"),
-                         "eth0.0")
-        self.assertEqual(self.lbm.get_subinterface_name("eth0", ""),
-                         "eth0.")
+        self.assertEqual("eth0.0",
+                         self.lbm.get_subinterface_name("eth0", "0"))
+        self.assertEqual("eth0.", self.lbm.get_subinterface_name("eth0", ""))
 
     def test_get_tap_device_name(self):
         if_id = "123456789101112"
-        self.assertEqual(self.lbm.get_tap_device_name(if_id),
-                         constants.TAP_DEVICE_PREFIX + if_id[0:11])
+        self.assertEqual(constants.TAP_DEVICE_PREFIX + if_id[0:11],
+                         self.lbm.get_tap_device_name(if_id))
         if_id = ""
-        self.assertEqual(self.lbm.get_tap_device_name(if_id),
-                         constants.TAP_DEVICE_PREFIX)
+        self.assertEqual(constants.TAP_DEVICE_PREFIX,
+                         self.lbm.get_tap_device_name(if_id))
 
     def test_get_vxlan_device_name(self):
         vn_id = p_const.MAX_VXLAN_VNI
-        self.assertEqual(self.lbm.get_vxlan_device_name(vn_id),
-                         "vxlan-" + str(vn_id))
+        self.assertEqual("vxlan-" + str(vn_id),
+                         self.lbm.get_vxlan_device_name(vn_id))
         self.assertIsNone(self.lbm.get_vxlan_device_name(vn_id + 1))
 
     def test_get_vxlan_group(self):
