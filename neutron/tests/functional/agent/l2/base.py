@@ -58,6 +58,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                                          prefix='br-int')
         self.br_tun = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
                                          prefix='br-tun')
+        self.br_phys = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
+                                          prefix='br-phys')
         patch_name_len = n_const.DEVICE_NAME_MAX_LEN - len("-patch-tun")
         self.patch_tun = "%s-patch-tun" % self.br_int[patch_name_len:]
         self.patch_int = "%s-patch-int" % self.br_tun[patch_name_len:]
@@ -102,17 +104,20 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             tunnel_types = [p_const.TYPE_VXLAN]
         else:
             tunnel_types = None
-        bridge_mappings = ['physnet:%s' % self.br_int]
+        bridge_mappings = ['physnet:%s' % self.br_phys]
         self.config.set_override('tunnel_types', tunnel_types, "AGENT")
         self.config.set_override('polling_interval', 1, "AGENT")
         self.config.set_override('prevent_arp_spoofing', False, "AGENT")
         self.config.set_override('local_ip', '192.168.10.1', "OVS")
         self.config.set_override('bridge_mappings', bridge_mappings, "OVS")
+        # Physical bridges should be created prior to running
+        self._bridge_classes()['br_phys'](self.br_phys).create()
         agent = ovs_agent.OVSNeutronAgent(self._bridge_classes(),
                                           self.config)
         self.addCleanup(self.ovs.delete_bridge, self.br_int)
         if tunnel_types:
             self.addCleanup(self.ovs.delete_bridge, self.br_tun)
+        self.addCleanup(self.ovs.delete_bridge, self.br_phys)
         agent.sg_agent = mock.Mock()
         agent.ancillary_brs = []
         return agent

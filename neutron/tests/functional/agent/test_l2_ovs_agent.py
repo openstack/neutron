@@ -41,14 +41,14 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                                      "OVS")
         agent = self.create_agent()
         self.start_agent(agent)
-        actual = self.ovs.db_get_val('Bridge',
-                                     agent.int_br.br_name,
-                                     'datapath_type')
-        self.assertEqual(expected, actual)
-        actual = self.ovs.db_get_val('Bridge',
-                                     agent.tun_br.br_name,
-                                     'datapath_type')
-        self.assertEqual(expected, actual)
+        for br_name in (getattr(self, br) for br in
+                        ('br_int', 'br_tun', 'br_phys')):
+            actual = self.ovs.db_get_val('Bridge', br_name, 'datapath_type')
+            self.assertEqual(expected, actual)
+
+    def test_datapath_type_change(self):
+        self._check_datapath_type_netdev('system')
+        self._check_datapath_type_netdev('netdev')
 
     def test_datapath_type_netdev(self):
         self._check_datapath_type_netdev(
