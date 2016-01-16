@@ -23,7 +23,6 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 
@@ -54,22 +53,18 @@ class L3AgentNotifyAPI(object):
         adminContext = context if context.is_admin else context.elevated()
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
-        state = agentschedulers_db.get_admin_state_up_filter()
         for router_id in router_ids:
-            l3_agents = plugin.get_l3_agents_hosting_routers(
-                adminContext, [router_id],
-                admin_state_up=state,
-                active=True)
+            hosts = plugin.get_hosts_to_notify(adminContext, router_id)
             if shuffle_agents:
-                random.shuffle(l3_agents)
-            for l3_agent in l3_agents:
+                random.shuffle(hosts)
+            for host in hosts:
                 LOG.debug('Notify agent at %(topic)s.%(host)s the message '
                           '%(method)s',
-                          {'topic': l3_agent.topic,
-                           'host': l3_agent.host,
+                          {'topic': topics.L3_AGENT,
+                           'host': host,
                            'method': method})
-                cctxt = self.client.prepare(topic=l3_agent.topic,
-                                            server=l3_agent.host,
+                cctxt = self.client.prepare(topic=topics.L3_AGENT,
+                                            server=host,
                                             version='1.1')
                 cctxt.cast(context, method, routers=[router_id])
 
@@ -82,22 +77,17 @@ class L3AgentNotifyAPI(object):
                         context or context.elevated())
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
-        state = agentschedulers_db.get_admin_state_up_filter()
-        l3_agents = (plugin.
-                     get_l3_agents_hosting_routers(adminContext,
-                                                   [router_id],
-                                                   admin_state_up=state,
-                                                   active=True))
+        hosts = plugin.get_hosts_to_notify(adminContext, router_id)
         # TODO(murali): replace cast with fanout to avoid performance
         # issues at greater scale.
-        for l3_agent in l3_agents:
-            log_topic = '%s.%s' % (l3_agent.topic, l3_agent.host)
+        for host in hosts:
+            log_topic = '%s.%s' % (topics.L3_AGENT, host)
             LOG.debug('Casting message %(method)s with topic %(topic)s',
                       {'topic': log_topic, 'method': method})
             dvr_arptable = {'router_id': router_id,
                             'arp_table': data}
-            cctxt = self.client.prepare(topic=l3_agent.topic,
-                                        server=l3_agent.host,
+            cctxt = self.client.prepare(topic=topics.L3_AGENT,
+                                        server=host,
                                         version='1.2')
             cctxt.cast(context, method, payload=dvr_arptable)
 

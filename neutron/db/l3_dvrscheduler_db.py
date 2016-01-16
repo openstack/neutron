@@ -18,6 +18,7 @@ import random
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import sqlalchemy as sa
+from sqlalchemy import or_
 from sqlalchemy import orm
 from sqlalchemy.orm import joinedload
 
@@ -28,6 +29,7 @@ from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
+from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -36,6 +38,7 @@ from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import db as ml2_db
+from neutron.plugins.ml2 import models as ml2_models
 
 LOG = logging.getLogger(__name__)
 
@@ -114,6 +117,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
         ips = port['fixed_ips']
         router_ids = self.get_dvr_routers_by_portid(context, port['id'], ips)
+        if not router_ids:
+            return
+
         for router_id in router_ids:
             if not self.check_l3_agent_router_binding(
                     context, router_id, l3_agent_on_host['id']):
@@ -434,6 +440,46 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             super(L3_DVRsch_db_mixin,
                   self).remove_router_from_l3_agent(
                     context, agent_id, router_id)
+
+    def get_hosts_to_notify(self, context, router_id):
+        """Returns all hosts to send notification about router update"""
+        hosts = super(L3_DVRsch_db_mixin, self).get_hosts_to_notify(
+            context, router_id)
+        router = self.get_router(context, router_id)
+        if router.get('distributed', False):
+            dvr_hosts = self._get_dvr_hosts_for_router(context, router_id)
+            dvr_hosts = set(dvr_hosts) - set(hosts)
+            state = agentschedulers_db.get_admin_state_up_filter()
+            agents = self.get_l3_agents(context, active=state,
+                                        filters={'host': dvr_hosts})
+            hosts += [a.host for a in agents]
+
+        return hosts
+
+    def _get_dvr_hosts_for_router(self, context, router_id):
+        """Get a list of hosts where specified DVR router should be hosted
+
+        It will first get IDs of all subnets connected to the router and then
+        get a set of hosts where all dvr serviceable ports on those subnets
+        are bound
+        """
+        subnet_ids = self.get_subnet_ids_on_router(context, router_id)
+        Binding = ml2_models.PortBinding
+        Port = models_v2.Port
+        IPAllocation = models_v2.IPAllocation
+
+        query = context.session.query(Binding.host).distinct()
+        query = query.join(Binding.port)
+        query = query.join(Port.fixed_ips)
+        query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
+        owner_filter = or_(
+            Port.device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX),
+            Port.device_owner.in_(
+                n_utils.get_other_dvr_serviced_device_owners()))
+        query = query.filter(owner_filter)
+        hosts = [item[0] for item in query]
+        LOG.debug('Hosts for router %s: %s', router_id, hosts)
+        return hosts
 
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
