@@ -24,6 +24,8 @@ from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import ha
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
+from neutron.agent.linux import pd
+from neutron.agent.linux import ra
 from neutron.agent.metadata import config as metadata_config
 from neutron.common import config as common_config
 from neutron.common import topics
@@ -39,6 +41,8 @@ def register_opts(conf):
     config.register_agent_state_opts_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
+    conf.register_opts(pd.OPTS)
+    conf.register_opts(ra.OPTS)
     config.register_availability_zone_opts_helper(conf)
 
 

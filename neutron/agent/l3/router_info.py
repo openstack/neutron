@@ -76,7 +76,8 @@ class RouterInfo(object):
         self.radvd = ra.DaemonMonitor(self.router_id,
                                       self.ns_name,
                                       process_monitor,
-                                      self.get_internal_device_name)
+                                      self.get_internal_device_name,
+                                      self.agent_conf)
 
         self.router_namespace.create()
 
