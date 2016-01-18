@@ -104,6 +104,15 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     floating_port_id = sa.Column(sa.String(36),
                                  sa.ForeignKey('ports.id', ondelete="CASCADE"),
                                  nullable=False)
+
+    # The ORM-level "delete" cascade relationship between port and floating_ip
+    # is required for causing the in-Python event "after_delete" that needs for
+    # proper quota management in case when cascade removal of the floating_ip
+    # happens after removal of the floating_port
+    port = orm.relationship(models_v2.Port,
+                            backref=orm.backref('floating_ips',
+                                                cascade='all,delete-orphan'),
+                            foreign_keys='FloatingIP.floating_port_id')
     fixed_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     fixed_ip_address = sa.Column(sa.String(64))
     router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id'))
