@@ -169,15 +169,6 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.assertEqual(
             router['id'], result[router['id']]['id'])
 
-    def test_get_router_ids(self):
-        router = self._create_router()
-        self.assertEqual(
-            router['id'],
-            self.l3_plugin._get_router_ids(self.context)[0])
-        self._create_router()
-        self.assertEqual(
-            2, len(self.l3_plugin._get_router_ids(self.context)))
-
     def test_agent_gw_port_delete_when_last_gateway_for_ext_net_removed(self):
         kwargs = {'arg_list': (external_net.EXTERNAL,),
                   external_net.EXTERNAL: True}

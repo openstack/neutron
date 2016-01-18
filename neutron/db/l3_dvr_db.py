@@ -554,11 +554,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if ports:
             return ports[0]
 
-    def _get_router_ids(self, context):
-        """Function to retrieve router IDs for a context without joins"""
-        query = self._model_query(context, l3_db.Router.id)
-        return [row[0] for row in query]
-
     def delete_floatingip_agent_gateway_port(
         self, context, host_id, ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
