@@ -153,6 +153,7 @@ class DhcpAgent(manager.Manager):
 
         try:
             active_networks = self.plugin_rpc.get_active_networks_info()
+            LOG.info(_LI('All active networks have been fetched through RPC.'))
             active_network_ids = set(network.id for network in active_networks)
             for deleted_id in known_network_ids - active_network_ids:
                 try:
@@ -218,7 +219,10 @@ class DhcpAgent(manager.Manager):
     @utils.exception_logger()
     def safe_configure_dhcp_for_network(self, network):
         try:
+            network_id = network.get('id')
+            LOG.info(_LI('Starting network %s dhcp configuration'), network_id)
             self.configure_dhcp_for_network(network)
+            LOG.info(_LI('Finished network %s dhcp configuration'), network_id)
         except (exceptions.NetworkNotFound, RuntimeError):
             LOG.warn(_LW('Network %s may have been deleted and its resources '
                          'may have already been disposed.'), network.id)
