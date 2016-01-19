@@ -49,8 +49,7 @@ class AgentMixin(object):
     def get_ports_by_subnet(self, subnet_id):
         return self.plugin_rpc.get_ports_by_subnet(self.context, subnet_id)
 
-    def add_arp_entry(self, context, payload):
-        """Add arp entry into router namespace.  Called from RPC."""
+    def _update_arp_entry(self, context, payload, action):
         router_id = payload['router_id']
         ri = self.router_info.get(router_id)
         if not ri:
@@ -60,20 +59,16 @@ class AgentMixin(object):
         ip = arp_table['ip_address']
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
-        ri._update_arp_entry(ip, mac, subnet_id, 'add')
+
+        ri._update_arp_entry(ip, mac, subnet_id, action)
+
+    def add_arp_entry(self, context, payload):
+        """Add arp entry into router namespace.  Called from RPC."""
+        self._update_arp_entry(context, payload, 'add')
 
     def del_arp_entry(self, context, payload):
         """Delete arp entry from router namespace.  Called from RPC."""
-        router_id = payload['router_id']
-        ri = self.router_info.get(router_id)
-        if not ri:
-            return
-
-        arp_table = payload['arp_table']
-        ip = arp_table['ip_address']
-        mac = arp_table['mac_address']
-        subnet_id = arp_table['subnet_id']
-        ri._update_arp_entry(ip, mac, subnet_id, 'delete')
+        self._update_arp_entry(context, payload, 'delete')
 
     def fipnamespace_delete_on_ext_net(self, context, ext_net_id):
         """Delete fip namespace after external network removed."""
