@@ -335,10 +335,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                             raise n_exc.BadRequest(resource='router', msg=msg)
         return network_id
 
-    def _delete_current_gw_port(self, context, router_id, router, new_network):
+    def _delete_current_gw_port(self, context, router_id, router,
+                                new_network_id):
         """Delete gw port if attached to an old network."""
         port_requires_deletion = (
-            router.gw_port and router.gw_port['network_id'] != new_network)
+            router.gw_port and router.gw_port['network_id'] != new_network_id)
         if not port_requires_deletion:
             return
         admin_ctx = context.elevated()
@@ -368,19 +369,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                     raise e.errors[0].error
                 raise l3.RouterInUse(router_id=router_id, reason=e)
 
-    def _create_gw_port(self, context, router_id, router, new_network,
+    def _create_gw_port(self, context, router_id, router, new_network_id,
                         ext_ips):
         new_valid_gw_port_attachment = (
-            new_network and (not router.gw_port or
-                             router.gw_port['network_id'] != new_network))
+            new_network_id and (not router.gw_port or
+                              router.gw_port['network_id'] != new_network_id))
         if new_valid_gw_port_attachment:
             subnets = self._core_plugin.get_subnets_by_network(context,
-                                                               new_network)
+                                                               new_network_id)
             for subnet in subnets:
                 self._check_for_dup_router_subnet(context, router,
-                                                  new_network, subnet['id'],
+                                                  new_network_id, subnet['id'],
                                                   subnet['cidr'])
-            self._create_router_gw_port(context, router, new_network, ext_ips)
+            self._create_router_gw_port(context, router,
+                                        new_network_id, ext_ips)
 
     def _update_current_gw_port(self, context, router_id, router, ext_ips):
         self._core_plugin.update_port(context, router.gw_port['id'], {'port':
