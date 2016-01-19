@@ -39,4 +39,13 @@ enable_service q-qos
 "
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
+elif [ "$VENV" == "dsvm-plus" ]
+then
+    # We need the qos service enabled to add corresponding scenario tests to tempest
+    export DEVSTACK_LOCAL_CONFIG+="
+enable_plugin neutron git://git.openstack.org/openstack/neutron
+enable_service qos
+"
+
+    $BASE/new/devstack-gate/devstack-vm-gate.sh
 fi
