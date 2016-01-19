@@ -22,7 +22,7 @@ then
     sudo chown -R $STACK_USER:$STACK_USER $BASE
 
     configure_host_for_func_testing
-elif [ "$VENV" == "api" ]
+elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
 then
     cat > $DEVSTACK_PATH/local.conf <<EOF
 [[post-config|/etc/neutron/neutron_vpnaas.conf]]
@@ -31,6 +31,17 @@ then
 service_provider=VPN:openswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 
 EOF
+
+    if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
+    then
+        cat >> $DEVSTACK_PATH/local.conf <<EOF
+[[post-config|/etc/neutron/neutron.conf]]
+
+[default]
+web_framework=pecan
+
+EOF
+    fi
 
     export DEVSTACK_LOCAL_CONFIG+="
 enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas
