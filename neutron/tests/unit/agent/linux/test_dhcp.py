@@ -988,7 +988,7 @@ class TestDnsmasq(TestBase):
 
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
                     max_leases=16777216, lease_duration=86400,
-                    has_static=True):
+                    has_static=True, no_resolv='--no-resolv'):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -1000,6 +1000,7 @@ class TestDnsmasq(TestBase):
         expected = [
             'dnsmasq',
             '--no-hosts',
+            no_resolv,
             '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % expected_pid_file,
@@ -1130,10 +1131,18 @@ class TestDnsmasq(TestBase):
                           ('--log-facility=%s' % dhcp_dns_log)],
                          network)
 
-    def test_spawn_cfg_no_local_resolv(self):
-        self.conf.set_override('dnsmasq_local_resolv', False)
+    def test_spawn_cfg_with_local_resolv(self):
+        self.conf.set_override('dnsmasq_local_resolv', True)
 
-        self._test_spawn(['--conf-file=', '--no-resolv',
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         no_resolv='')
+
+    def test_spawn_cfg_with_local_resolv_overriden(self):
+        self.conf.set_override('dnsmasq_local_resolv', True)
+        self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8'])
+
+        self._test_spawn(['--conf-file=',
+                          '--server=8.8.8.8',
                           '--domain=openstacklocal'])
 
     def test_spawn_max_leases_is_smaller_than_cap(self):

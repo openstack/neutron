@@ -85,7 +85,7 @@ DNSMASQ_OPTS = [
                       "The log contains DHCP and DNS log information and "
                       "is useful for debugging issues with either DHCP or "
                       "DNS. If this section is null, disable dnsmasq log.")),
-    cfg.BoolOpt('dnsmasq_local_resolv', default=True,
+    cfg.BoolOpt('dnsmasq_local_resolv', default=False,
                 help=_("Enables the dnsmasq service to provide name "
                        "resolution for instances via DNS resolvers on the "
                        "host running the DHCP agent. Effectively removes the "

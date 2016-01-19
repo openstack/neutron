@@ -304,9 +304,15 @@ class Dnsmasq(DhcpLocalProcess):
             return []
 
     def _build_cmdline_callback(self, pid_file):
+        # We ignore local resolv.conf if dns servers are specified
+        # or if local resolution is explicitly disabled.
+        _no_resolv = (
+            '--no-resolv' if self.conf.dnsmasq_dns_servers or
+            not self.conf.dnsmasq_local_resolv else '')
         cmd = [
             'dnsmasq',
             '--no-hosts',
+            _no_resolv,
             '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % pid_file,
@@ -383,11 +389,6 @@ class Dnsmasq(DhcpLocalProcess):
             cmd.extend(
                 '--server=%s' % server
                 for server in self.conf.dnsmasq_dns_servers)
-        else:
-            # We only look at 'dnsmasq_local_resolv' if 'dnsmasq_dns_servers'
-            # is not set, which explicitly overrides 'dnsmasq_local_resolv'.
-            if not self.conf.dnsmasq_local_resolv:
-                cmd.append('--no-resolv')
 
         if self.conf.dhcp_domain:
             cmd.append('--domain=%s' % self.conf.dhcp_domain)
