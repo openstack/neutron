@@ -1,22 +1,33 @@
-# Japanese translations for neutron.
-# Copyright (C) 2016 ORGANIZATION
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
+# Translators:
+# Akihiro Motoki <amotoki@gmail.com>, 2013
+# Akihiro Motoki <amotoki@gmail.com>, 2013
+# Sasuke(Kyohei MORIYAMA) <>, 2015
+# NachiUeno <nati.ueno@gmail.com>, 2013
+# NachiUeno <nati.ueno@gmail.com>, 2013
+# Sasuke(Kyohei MORIYAMA) <>, 2015
+# Tomoyuki KATO <tomo@dream.daynight.jp>, 2013
+# Akihiro Motoki <amotoki@gmail.com>, 2015. #zanata
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-06 06:29+0000\n"
+"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2015-09-28 04:52+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
 "Language-Team: Japanese\n"
-"Plural-Forms: nplurals=1; plural=0\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -396,14 +407,6 @@ msgstr ""
 "同じネットワーク ID を持つ複数のルーターポートのいずれにも IPv6 サブネットが"
 "含まれる場合、これらのポートは使用できません。既存のポート %(p)s には IPv6 サ"
 "ブネットがあり、ネットワーク ID は %(nid)s です"
-
-#, python-format
-msgid ""
-"Cannot host %(router_type)s router %(router_id)s on %(agent_mode)s L3 agent "
-"%(agent_id)s."
-msgstr ""
-"%(router_type)s ルーター %(router_id)s を %(agent_mode)s L3 エージェント "
-"%(agent_id)s でホストできません。"
 
 #, fuzzy
 msgid "Cannot match priority on flow deletion or modification"
@@ -1325,14 +1328,6 @@ msgstr ""
 msgid "No providers specified for '%s' service, exiting"
 msgstr "'%s' サービスに対して指定されたプロバイダーはありません。終了します"
 
-#, python-format
-msgid ""
-"Not allowed to manually assign a %(router_type)s router %(router_id)s from "
-"an existing DVR node to another L3 agent %(agent_id)s."
-msgstr ""
-"%(router_type)s ルーター %(router_id)s を既存の DVR ノードから別のL3 エージェ"
-"ント %(agent_id)s に手動で割り当てることは許可されていません。"
-
 msgid "Not authorized."
 msgstr "許可されていません。"
 
@@ -1702,16 +1697,6 @@ msgid ""
 msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
-
-#, python-format
-msgid ""
-"Some tenants have more than one security group named 'default': "
-"%(duplicates)s. All duplicate 'default' security groups must be resolved "
-"before upgrading the database."
-msgstr ""
-"一部のテナントには、名前が「default」の複数のセキュリティーグループがありま"
-"す: %(duplicates)s。データベースをアップグレードする前に、重複する「default」"
-"セキュリティーグループをすべて解決する必要があります。"
 
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
@@ -2093,9 +2078,6 @@ msgstr "予期しない応答コード: %s"
 #, python-format
 msgid "Unexpected response: %s"
 msgstr "予期しない応答: %s"
-
-msgid "Unimplemented commands"
-msgstr "実装されていないコマンド"
 
 msgid "Unknown API version specified"
 msgstr "不明な API バージョンが指定されました"
