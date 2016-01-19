@@ -466,18 +466,22 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
     stay the same.
     """
 
+    def setUp(self):
+        super(TestMl2DbOperationBounds, self).setUp()
+        self.kwargs = self.get_api_kwargs()
+
     def make_network(self):
-        return self._make_network(self.fmt, 'name', True)
+        return self._make_network(self.fmt, 'name', True, **self.kwargs)
 
     def make_subnet(self):
         net = self.make_network()
         setattr(self, '_subnet_count', getattr(self, '_subnet_count', 0) + 1)
         cidr = '1.%s.0.0/24' % self._subnet_count
-        return self._make_subnet(self.fmt, net, None, cidr)
+        return self._make_subnet(self.fmt, net, None, cidr, **self.kwargs)
 
     def make_port(self):
         net = self.make_network()
-        return self._make_port(self.fmt, net['network']['id'])
+        return self._make_port(self.fmt, net['network']['id'], **self.kwargs)
 
     def test_network_list_queries_constant(self):
         self._assert_object_list_queries_constant(self.make_network,
@@ -488,6 +492,10 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
 
     def test_port_list_queries_constant(self):
         self._assert_object_list_queries_constant(self.make_port, 'ports')
+
+
+class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
+    admin = False
 
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):

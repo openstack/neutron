@@ -59,9 +59,9 @@ DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 DEVICE_OWNER_NOT_COMPUTE = constants.DEVICE_OWNER_DHCP
 
 
-def optional_ctx(obj, fallback):
+def optional_ctx(obj, fallback, **kwargs):
     if not obj:
-        return fallback()
+        return fallback(**kwargs)
 
     @contextlib.contextmanager
     def context_wrapper():
@@ -289,10 +289,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return req.get_response(self.api)
 
     def _create_network(self, fmt, name, admin_state_up,
-                        arg_list=None, **kwargs):
+                        arg_list=None, set_context=False, tenant_id=None,
+                        **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
-                            'tenant_id': self._tenant_id}}
+                            'tenant_id': tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared',
                      'vlan_transparent',
                      'availability_zone_hints') + (arg_list or ())):
@@ -300,10 +302,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
         network_req = self.new_create_request('networks', data, fmt)
-        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+        if set_context and tenant_id:
             # create a specific auth context for this request
             network_req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
+                '', tenant_id)
 
         return network_req.get_response(self.api)
 
@@ -373,9 +375,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return subnetpool_res
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, **kwargs):
+                     arg_list=None, set_context=False, tenant_id=None,
+                     **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         data = {'port': {'network_id': net_id,
-                         'tenant_id': self._tenant_id}}
+                         'tenant_id': tenant_id}}
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
@@ -392,10 +396,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt)
-        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+        if set_context and tenant_id:
             # create a specific auth context for this request
             port_req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
+                '', tenant_id)
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:
@@ -595,7 +599,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                ipv6_address_mode=None,
                tenant_id=None,
                set_context=False):
-        with optional_ctx(network, self.network) as network_to_use:
+        with optional_ctx(network, self.network,
+                          set_context=set_context,
+                          tenant_id=tenant_id) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
                                        gateway_ip,
@@ -621,10 +627,16 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         yield subnetpool
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt=None, **kwargs):
-        with optional_ctx(subnet, self.subnet) as subnet_to_use:
+    def port(self, subnet=None, fmt=None, set_context=False, tenant_id=None,
+             **kwargs):
+        with optional_ctx(
+                subnet, self.subnet,
+                set_context=set_context, tenant_id=tenant_id) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
-            port = self._make_port(fmt or self.fmt, net_id, **kwargs)
+            port = self._make_port(
+                fmt or self.fmt, net_id,
+                set_context=set_context, tenant_id=tenant_id,
+                **kwargs)
             yield port
 
     def _test_list_with_sort(self, resource,
@@ -5946,6 +5958,8 @@ class TestNetworks(testlib_api.SqlTestCase):
 class DbOperationBoundMixin(object):
     """Mixin to support tests that assert constraints on DB operations."""
 
+    admin = True
+
     def setUp(self, *args, **kwargs):
         super(DbOperationBoundMixin, self).setUp(*args, **kwargs)
         self._db_execute_count = 0
@@ -5958,9 +5972,20 @@ class DbOperationBoundMixin(object):
         self.addCleanup(event.remove, engine, 'after_execute',
                         _event_incrementer)
 
+    def _get_context(self):
+        if self.admin:
+            return context.get_admin_context()
+        return context.Context('', 'fake')
+
+    def get_api_kwargs(self):
+        context_ = self._get_context()
+        return {'set_context': True, 'tenant_id': context_.tenant}
+
     def _list_and_count_queries(self, resource):
         self._db_execute_count = 0
-        self.assertNotEqual([], self._list(resource))
+        self.assertNotEqual([],
+                            self._list(resource,
+                                       neutron_context=self._get_context()))
         query_count = self._db_execute_count
         # sanity check to make sure queries are being observed
         self.assertNotEqual(0, query_count)
