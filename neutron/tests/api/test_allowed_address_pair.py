@@ -14,10 +14,10 @@
 #    under the License.
 
 import netaddr
+from tempest import test
 
 from neutron.tests.api import base
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 

@@ -12,10 +12,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from tempest import test
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
-from neutron.tests.tempest import test
 
 
 class TestFlavorsJson(base.BaseAdminNetworkTest):

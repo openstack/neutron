@@ -14,11 +14,11 @@
 #    under the License.
 
 import six
+from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base_security_groups as base
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 

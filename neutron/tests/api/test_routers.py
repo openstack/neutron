@@ -15,12 +15,11 @@
 
 import netaddr
 import six
+from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base_routers as base
-from neutron.tests.api import clients
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 
@@ -28,13 +27,15 @@ CONF = config.CONF
 class RoutersTest(base.BaseRouterTest):
 
     @classmethod
-    def resource_setup(cls):
-        super(RoutersTest, cls).resource_setup()
+    def skip_checks(cls):
+        super(RoutersTest, cls).skip_checks()
         if not test.is_extension_enabled('router', 'network'):
             msg = "router extension not enabled."
             raise cls.skipException(msg)
-        admin_manager = clients.AdminManager()
-        cls.identity_admin_client = admin_manager.identity_client
+
+    @classmethod
+    def resource_setup(cls):
+        super(RoutersTest, cls).resource_setup()
         cls.tenant_cidr = (CONF.network.tenant_network_cidr
                            if cls._ip_version == 4 else
                            CONF.network.tenant_network_v6_cidr)
@@ -85,7 +86,7 @@ class RoutersTest(base.BaseRouterTest):
         test_tenant = data_utils.rand_name('test_tenant_')
         test_description = data_utils.rand_name('desc_')
         tenant = self.identity_admin_client.create_tenant(
-            name=test_tenant, description=test_description)
+            name=test_tenant, description=test_description)['tenant']
         tenant_id = tenant['id']
         self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
 

@@ -16,14 +16,14 @@
 
 import uuid
 
+from tempest import test
+from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 import testtools
 
 from neutron.tests.api import base
-from neutron.tests.api import clients
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
-from tempest_lib.common.utils import data_utils
+
 
 CONF = config.CONF
 
@@ -180,6 +180,7 @@ class AllowedAddressPairSharedNetworkTest(base.BaseAdminNetworkTest):
 class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
 
     force_tenant_isolation = True
+    credentials = ['primary', 'alt', 'admin']
 
     @classmethod
     def resource_setup(cls):
@@ -187,8 +188,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         if not test.is_extension_enabled('rbac_policies', 'network'):
             msg = "rbac extension not enabled."
             raise cls.skipException(msg)
-        creds = cls.isolated_creds.get_alt_creds()
-        cls.client2 = clients.Manager(credentials=creds).network_client
+        cls.client2 = cls.alt_manager.network_client
 
     def _make_admin_net_and_subnet_shared_to_tenant_id(self, tenant_id):
         net = self.admin_client.create_network(

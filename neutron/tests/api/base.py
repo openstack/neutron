@@ -14,18 +14,18 @@
 #    under the License.
 
 import netaddr
+from tempest import test
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import clients
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
-import neutron.tests.tempest.test
 
 CONF = config.CONF
 
 
-class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
+class BaseNetworkTest(test.BaseTestCase):
 
     """
     Base class for the Neutron tests that use the Tempest Neutron REST client
@@ -48,24 +48,44 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
     """
 
     force_tenant_isolation = False
+    credentials = ['primary']
 
     # Default to ipv4.
     _ip_version = 4
 
     @classmethod
-    def resource_setup(cls):
-        # Create no network resources for these test.
-        cls.set_network_resources()
-        super(BaseNetworkTest, cls).resource_setup()
+    def get_client_manager(cls, credential_type=None, roles=None,
+                           force_new=None):
+        manager = test.BaseTestCase.get_client_manager(
+                credential_type=credential_type,
+                roles=roles,
+                force_new=force_new)
+        # Neutron uses a different clients manager than the one in the Tempest
+        return clients.Manager(manager.credentials)
+
+    @classmethod
+    def skip_checks(cls):
+        super(BaseNetworkTest, cls).skip_checks()
         if not CONF.service_available.neutron:
             raise cls.skipException("Neutron support is required")
         if cls._ip_version == 6 and not CONF.network_feature_enabled.ipv6:
             raise cls.skipException("IPv6 Tests are disabled.")
 
-        os = cls.get_client_manager()
+    @classmethod
+    def setup_credentials(cls):
+        # Create no network resources for these test.
+        cls.set_network_resources()
+        super(BaseNetworkTest, cls).setup_credentials()
 
-        cls.network_cfg = CONF.network
-        cls.client = os.network_client
+    @classmethod
+    def setup_clients(cls):
+        super(BaseNetworkTest, cls).setup_clients()
+        cls.client = cls.os.network_client
+
+    @classmethod
+    def resource_setup(cls):
+        super(BaseNetworkTest, cls).resource_setup()
+
         cls.networks = []
         cls.shared_networks = []
         cls.subnets = []
@@ -183,7 +203,6 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
                     cls.admin_client.delete_address_scope,
                     address_scope['id'])
 
-            cls.clear_isolated_creds()
         super(BaseNetworkTest, cls).resource_cleanup()
 
     @classmethod
@@ -264,7 +283,7 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
                     raise
         else:
             message = 'Available CIDR for subnet creation could not be found'
-            raise exceptions.BuildErrorException(message)
+            raise ValueError(message)
         subnet = body['subnet']
         cls.subnets.append(subnet)
         return subnet
@@ -417,18 +436,13 @@ class BaseNetworkTest(neutron.tests.tempest.test.BaseTestCase):
 
 class BaseAdminNetworkTest(BaseNetworkTest):
 
-    @classmethod
-    def resource_setup(cls):
-        super(BaseAdminNetworkTest, cls).resource_setup()
+    credentials = ['primary', 'admin']
 
-        try:
-            creds = cls.isolated_creds.get_admin_creds()
-            cls.os_adm = clients.Manager(credentials=creds)
-        except NotImplementedError:
-            msg = ("Missing Administrative Network API credentials "
-                   "in configuration.")
-            raise cls.skipException(msg)
+    @classmethod
+    def setup_clients(cls):
+        super(BaseAdminNetworkTest, cls).setup_clients()
         cls.admin_client = cls.os_adm.network_client
+        cls.identity_admin_client = cls.os_adm.tenants_client
 
     @classmethod
     def create_metering_label(cls, name, description):

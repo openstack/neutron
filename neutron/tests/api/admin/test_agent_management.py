@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import tempest_fixtures
+from tempest import test
+
 from neutron.tests.api import base
-from neutron.tests.tempest.common import tempest_fixtures as fixtures
-from neutron.tests.tempest import test
 
 
 class AgentManagementTestJSON(base.BaseAdminNetworkTest):
@@ -71,7 +72,7 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
     @test.attr(type='smoke')
     @test.idempotent_id('68a94a14-1243-46e6-83bf-157627e31556')
     def test_update_agent_description(self):
-        self.useFixture(fixtures.LockFixture('agent_description'))
+        self.useFixture(tempest_fixtures.LockFixture('agent_description'))
         description = 'description for update agent.'
         agent_description = {'description': description}
         body = self.admin_client.update_agent(agent_id=self.dyn_agent['id'],

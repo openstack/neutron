@@ -13,19 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
-from neutron.tests.api import clients
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 SUBNETPOOL_NAME = 'smoke-subnetpool'
 SUBNET_NAME = 'smoke-subnet'
 
 
-class SubnetPoolsTestBase(base.BaseNetworkTest):
+class SubnetPoolsTestBase(base.BaseAdminNetworkTest):
 
     @classmethod
     def resource_setup(cls):
@@ -34,14 +33,6 @@ class SubnetPoolsTestBase(base.BaseNetworkTest):
         prefixes = [u'10.11.12.0/24']
         cls._subnetpool_data = {'prefixes': prefixes,
                                 'min_prefixlen': min_prefixlen}
-        try:
-            creds = cls.isolated_creds.get_admin_creds()
-            cls.os_adm = clients.Manager(credentials=creds)
-        except NotImplementedError:
-            msg = ("Missing Administrative Network API credentials "
-                   "in configuration.")
-            raise cls.skipException(msg)
-        cls.admin_client = cls.os_adm.network_client
 
     def _create_subnetpool(self, is_admin=False, **kwargs):
         if 'name' not in kwargs:

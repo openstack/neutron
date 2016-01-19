@@ -14,10 +14,10 @@
 #    under the License.
 
 import six
+from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
-from neutron.tests.tempest import test
 
 
 class QuotasTest(base.BaseAdminNetworkTest):
@@ -44,7 +44,6 @@ class QuotasTest(base.BaseAdminNetworkTest):
         if not test.is_extension_enabled('quotas', 'network'):
             msg = "quotas extension not enabled."
             raise cls.skipException(msg)
-        cls.identity_admin_client = cls.os_adm.identity_client
 
     @test.attr(type='gate')
     @test.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')
@@ -54,7 +53,7 @@ class QuotasTest(base.BaseAdminNetworkTest):
         test_description = data_utils.rand_name('desc_')
         tenant = self.identity_admin_client.create_tenant(
             name=test_tenant,
-            description=test_description)
+            description=test_description)['tenant']
         tenant_id = tenant['id']
         self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
 

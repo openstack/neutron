@@ -21,10 +21,6 @@ class BaseRouterTest(base.BaseAdminNetworkTest):
     # as some router operations, such as enabling or disabling SNAT
     # require admin credentials by default
 
-    @classmethod
-    def resource_setup(cls):
-        super(BaseRouterTest, cls).resource_setup()
-
     def _cleanup_router(self, router):
         self.delete_router(router)
         self.routers.remove(router)
