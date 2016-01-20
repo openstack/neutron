@@ -596,7 +596,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 'device_owner': l3_const.DEVICE_OWNER_DVR_INTERFACE,
                 'device_id': 'dvr_router_id'
             }
-            plugin.get_ports.return_value = [port, dvr_port]
+            plugin.get_ports.return_value = [dvr_port]
             grtr.return_value = dvr_router
             dvr_router.extra_attributes.distributed = True
             self.mixin.update_arp_entry_for_dvr_service_port(
