@@ -255,7 +255,9 @@ class HaRouter(router.RouterInfo):
 
     def remove_floating_ip(self, device, ip_cidr):
         self._remove_vip(ip_cidr)
-        if self.ha_state == 'master' and device.addr.list():
+        if self.ha_state == 'master' and device.addr.list(to=ip_cidr):
+            # Delete the floatingip address from external port only after
+            # the ip address has been configured to the device
             super(HaRouter, self).remove_floating_ip(device, ip_cidr)
 
     def internal_network_updated(self, interface_name, ip_cidrs):
