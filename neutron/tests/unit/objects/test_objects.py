@@ -18,7 +18,9 @@ import pprint
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fixture
 
+from neutron import objects
 from neutron.tests import base as test_base
+from neutron.tests import tools
 
 
 # NOTE: The hashes in this list should only be changed if they come with a
@@ -31,6 +33,12 @@ object_data = {
 
 
 class TestObjectVersions(test_base.BaseTestCase):
+
+    def setUp(self):
+        super(TestObjectVersions, self).setUp()
+        # NOTE(ihrachys): seed registry with all objects under neutron.objects
+        # before validating the hashes
+        tools.import_modules_recursively(os.path.dirname(objects.__file__))
 
     def test_versions(self):
         checker = fixture.ObjectVersionChecker(
