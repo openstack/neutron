@@ -21,6 +21,7 @@ methods that needs to be implemented by a v2 Neutron Plug-in.
 """
 
 import abc
+
 import six
 
 

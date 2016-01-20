@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from six.moves import queue as Queue
 import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from ovs.db import idl
+from six.moves import queue as Queue
 
 from neutron._i18n import _
 from neutron.agent.ovsdb import api

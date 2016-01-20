@@ -13,6 +13,7 @@
 #    under the License.
 
 import copy
+
 import netaddr
 from oslo_utils import uuidutils
 from six import moves

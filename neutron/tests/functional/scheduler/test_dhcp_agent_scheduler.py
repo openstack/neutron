@@ -14,6 +14,8 @@
 #    under the License.
 
 import collections
+from operator import attrgetter
+
 import six
 import testscenarios
 
@@ -24,7 +26,6 @@ from neutron.db import common_db_mixin
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.unit.scheduler import (test_dhcp_agent_scheduler as
                                           test_dhcp_sch)
-from operator import attrgetter
 
 # Required to generate tests from scenarios. Not compatible with nose.
 load_tests = testscenarios.load_tests_apply_scenarios

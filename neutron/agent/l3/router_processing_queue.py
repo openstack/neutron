@@ -14,9 +14,9 @@
 #
 
 import datetime
-from six.moves import queue as Queue
 
 from oslo_utils import timeutils
+from six.moves import queue as Queue
 
 # Lower value is higher priority
 PRIORITY_RPC = 0

@@ -16,10 +16,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import oslo_db.sqlalchemy.session
 import sqlalchemy as sa
 from sqlalchemy import orm
-
-import oslo_db.sqlalchemy.session
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes

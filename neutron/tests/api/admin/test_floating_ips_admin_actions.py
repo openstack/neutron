@@ -12,10 +12,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import testtools
 
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
+import testtools
 
 from neutron.tests.api import base
 from neutron.tests.api import clients

@@ -16,13 +16,13 @@
 import collections
 import itertools
 import operator
+import uuid
 
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 import retrying
 import six
-import uuid
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import utils

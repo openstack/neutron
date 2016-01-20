@@ -14,12 +14,12 @@
 #    under the License.
 
 import collections
+import functools
 import signal
 import sys
 import time
 import uuid
 
-import functools
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging

@@ -13,6 +13,7 @@
 #    under the License.
 
 import hashlib
+
 import mock
 
 from neutron.common import constants

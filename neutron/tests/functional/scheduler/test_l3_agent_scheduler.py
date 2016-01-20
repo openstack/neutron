@@ -15,6 +15,7 @@
 
 import collections
 import random
+
 import testscenarios
 
 from neutron import context

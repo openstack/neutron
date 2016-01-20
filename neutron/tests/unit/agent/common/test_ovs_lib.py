@@ -13,6 +13,7 @@
 #    under the License.
 
 import collections
+
 import mock
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils

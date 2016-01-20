@@ -14,9 +14,9 @@
 #    under the License.
 
 import abc
-import six
 
 from oslo_log import log
+import six
 
 from neutron._i18n import _LW
 from neutron.extensions import portbindings

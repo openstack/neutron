@@ -14,9 +14,9 @@
 #    under the License.
 
 import re
-import six
 
 from oslo_config import cfg
+import six
 
 from neutron._i18n import _
 from neutron.api import extensions

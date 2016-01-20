@@ -18,6 +18,7 @@ import re
 import eventlet
 import mock
 import netaddr
+from oslo_log import log as logging
 import six
 import testtools
 
@@ -28,8 +29,6 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
-
-from oslo_log import log as logging
 
 
 class TestParseMappings(base.BaseTestCase):

@@ -13,7 +13,6 @@
 #    under the License.
 
 import mock
-
 from oslo_config import cfg
 
 from neutron.agent.common import config

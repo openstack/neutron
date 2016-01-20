@@ -15,6 +15,7 @@
 #    under the License.
 
 import collections
+
 import mock
 
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc

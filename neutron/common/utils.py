@@ -25,7 +25,6 @@ import errno
 import functools
 import hashlib
 import multiprocessing
-import netaddr
 import os
 import random
 import signal
@@ -36,6 +35,7 @@ import uuid
 
 import debtcollector
 from eventlet.green import subprocess
+import netaddr
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging

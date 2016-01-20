@@ -13,8 +13,8 @@
 #    under the License.
 
 import math
-import netaddr
 
+import netaddr
 from oslo_config import cfg
 
 from neutron.common import constants

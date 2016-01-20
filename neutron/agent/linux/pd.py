@@ -13,15 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
 import functools
 import signal
-import six
 
-from stevedore import driver
-
+import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
+import six
+from stevedore import driver
 
 from neutron._i18n import _
 from neutron.agent.linux import utils as linux_utils

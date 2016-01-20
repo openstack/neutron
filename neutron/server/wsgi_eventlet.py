@@ -12,7 +12,6 @@
 #    under the License.
 
 import eventlet
-
 from oslo_log import log
 
 from neutron._i18n import _LI

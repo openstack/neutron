@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import platform
 import random
 import string
 import warnings
 
 import fixtures
+import mock
 import six
 
 from neutron.api.v2 import attributes

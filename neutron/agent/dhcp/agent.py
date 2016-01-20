@@ -17,7 +17,6 @@ import collections
 import os
 
 import eventlet
-
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging

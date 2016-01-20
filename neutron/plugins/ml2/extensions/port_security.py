@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
+
 from neutron._i18n import _LI
 from neutron.api.v2 import attributes as attrs
 from neutron.common import utils
@@ -20,7 +22,6 @@ from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
 from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2 import driver_api as api
-from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 

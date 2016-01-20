@@ -13,8 +13,8 @@
 #    under the License.
 
 import contextlib
-import netaddr
 
+import netaddr
 import webob.exc
 
 from neutron.api.v2 import attributes as attr
