@@ -1,0 +1,7 @@
+---
+prelude: >
+    An OVS agent configured to run in DVR mode will fail in case it can't get
+    proper DVR configs from server on start. Such agent will no longer fallback
+    to non-DVR mode since it may lead to inconsistency in the DVR enabled
+    cluster as Neutron server does not really distinguish DVR and non-DVR OVS
+    agents.

@@ -2469,10 +2469,10 @@ class TestOvsDvrNeutronAgent(object):
                                side_effect=oslo_messaging.RemoteError),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br):
-            self.agent.dvr_agent.get_dvr_mac_address()
-            self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
-            self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
-            self.assertEqual([mock.call.install_normal()], int_br.mock_calls)
+            with testtools.ExpectedException(SystemExit):
+                self.agent.dvr_agent.get_dvr_mac_address()
+                self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
+                self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
 
     def test_get_dvr_mac_address_retried(self):
         valid_entry = {'host': 'cn1', 'mac_address': 'aa:22:33:44:55:66'}
@@ -2503,11 +2503,12 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(utils, "execute"),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br):
-            self.agent.dvr_agent.get_dvr_mac_address()
-            self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
-            self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
-            self.assertEqual(self.agent.dvr_agent.plugin_rpc.
-                             get_dvr_mac_address_by_host.call_count, 5)
+            with testtools.ExpectedException(SystemExit):
+                self.agent.dvr_agent.get_dvr_mac_address()
+                self.assertIsNone(self.agent.dvr_agent.dvr_mac_address)
+                self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
+                self.assertEqual(self.agent.dvr_agent.plugin_rpc.
+                                 get_dvr_mac_address_by_host.call_count, 5)
 
     def test_dvr_mac_address_update(self):
         self._setup_for_dvr_test()
