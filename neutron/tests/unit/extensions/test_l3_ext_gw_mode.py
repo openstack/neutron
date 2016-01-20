@@ -16,6 +16,7 @@
 
 import mock
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
@@ -387,6 +388,24 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                         ext_gw_info}},
                             expected_code=expected_code,
                             neutron_context=neutron_context)
+
+    def test_router_create_with_gwinfo_invalid_ext_ip(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+            ext_info = {
+                'network_id': s['subnet']['network_id'],
+                'external_fixed_ips': [{'ip_address': '10.0.0.'}]
+            }
+            error_code = exc.HTTPBadRequest.code
+            res = self._create_router(
+                self.fmt, _uuid(), arg_list=('external_gateway_info',),
+                external_gateway_info=ext_info,
+                expected_code=error_code
+            )
+            msg = ("Invalid input for external_gateway_info. "
+                   "Reason: '10.0.0.' is not a valid IP address.")
+            body = jsonutils.loads(res.body)
+            self.assertEqual(msg, body['NeutronError']['message'])
 
     def test_router_create_show_no_ext_gwinfo(self):
         name = 'router1'
