@@ -1,22 +1,25 @@
-# Chinese (Traditional, Taiwan) translations for neutron.
-# Copyright (C) 2016 ORGANIZATION
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
+# Translators:
+# Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-06 06:29+0000\n"
+"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language: zh_Hant_TW\n"
+"Language: zh-TW\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
 "Language-Team: Chinese (Taiwan)\n"
-"Plural-Forms: nplurals=1; plural=0\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -371,14 +374,6 @@ msgid ""
 msgstr ""
 "不能具有多個包含相同網路 ID 的路由器埠（如果兩者都包含 IPv6 子網路）。現有埠 "
 "%(p)s 具有 IPv6 子網路和網路 ID %(nid)s"
-
-#, python-format
-msgid ""
-"Cannot host %(router_type)s router %(router_id)s on %(agent_mode)s L3 agent "
-"%(agent_id)s."
-msgstr ""
-"無法在下列 %(agent_mode)s L3 代理程式上管理 %(router_type)s 路由器 "
-"%(router_id)s：%(agent_id)s。"
 
 msgid "Cannot match priority on flow deletion or modification"
 msgstr "無法符合流程刪除作業或修改作業上的優先順序"
@@ -1233,14 +1228,6 @@ msgstr ""
 msgid "No providers specified for '%s' service, exiting"
 msgstr "未給 '%s' 服務指定提供者，正在結束"
 
-#, python-format
-msgid ""
-"Not allowed to manually assign a %(router_type)s router %(router_id)s from "
-"an existing DVR node to another L3 agent %(agent_id)s."
-msgstr ""
-"不容許手動將 %(router_type)s 路由器 %(router_id)s 從現有 DVR 節點指派給另一"
-"個 L3 代理程式 %(agent_id)s。"
-
 msgid "Not authorized."
 msgstr "未獲授權。"
 
@@ -1581,15 +1568,6 @@ msgstr ""
 "在帶有 GRE/VXLAN 通道的送出 IP 封包上，設定或取消設定「不劃分片段 (DF)」位"
 "元。"
 
-#, python-format
-msgid ""
-"Some tenants have more than one security group named 'default': "
-"%(duplicates)s. All duplicate 'default' security groups must be resolved "
-"before upgrading the database."
-msgstr ""
-"部分承租人具有多個名稱為 'default' 的安全群組：%(duplicates)s。必須先解決所有"
-"重複的 'default' 安全群組，才能升級資料庫。"
-
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
@@ -1924,9 +1902,6 @@ msgstr "非預期的回應碼：%s"
 #, python-format
 msgid "Unexpected response: %s"
 msgstr "非預期的回應：%s"
-
-msgid "Unimplemented commands"
-msgstr "未實作的指令"
 
 msgid "Unknown API version specified"
 msgstr "指定的 API 版本不明"

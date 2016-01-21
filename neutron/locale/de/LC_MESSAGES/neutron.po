@@ -1,22 +1,26 @@
-# German translations for neutron.
-# Copyright (C) 2016 ORGANIZATION
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
+# Translators:
+# Ettore Atalan <atalanttore@googlemail.com>, 2014
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev248\n"
+"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-06 06:29+0000\n"
+"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2015-09-06 10:15+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
 "Language-Team: German\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
 
 #, python-format
 msgid ""
@@ -398,14 +402,6 @@ msgstr ""
 "Mehrere Routerports können nicht dieselbe Netz-ID verwenden, wenn beide IPv6-"
 "Teilnetze enthalten. Der vorhandene Port %(p)s verfügt über das IPv6-"
 "Teilnetz und die Netz-ID  %(nid)s"
-
-#, python-format
-msgid ""
-"Cannot host %(router_type)s router %(router_id)s on %(agent_mode)s L3 agent "
-"%(agent_id)s."
-msgstr ""
-"Hosten von %(router_type)s-Router %(router_id)s auf %(agent_mode)s-L3-Agent "
-"%(agent_id)s nicht möglich."
 
 msgid "Cannot match priority on flow deletion or modification"
 msgstr ""
@@ -1341,15 +1337,6 @@ msgstr ""
 msgid "No providers specified for '%s' service, exiting"
 msgstr "Keine Provider angegeben für Service '%s', wird beendet"
 
-#, python-format
-msgid ""
-"Not allowed to manually assign a %(router_type)s router %(router_id)s from "
-"an existing DVR node to another L3 agent %(agent_id)s."
-msgstr ""
-"Es ist nicht zulässig, eine %(router_type)s-Router-%(router_id)s eines "
-"vorhandenen DVR-Knotens manuell einem anderen L3-Agenten %(agent_id)s "
-"zuzuordnen."
-
 msgid "Not authorized."
 msgstr "Nicht autorisiert."
 
@@ -1753,16 +1740,6 @@ msgstr ""
 "DF-Bit (Don't Fragment) auf GRE/VXLAN-Tunnel für abgehende IP-Pakete "
 "festlegen oder die Festlegung aufheben."
 
-#, python-format
-msgid ""
-"Some tenants have more than one security group named 'default': "
-"%(duplicates)s. All duplicate 'default' security groups must be resolved "
-"before upgrading the database."
-msgstr ""
-"Einige Nutzer verfügen über mehrere Sicherheitsgruppen mit dem Namen "
-"'default': %(duplicates)s. Alle doppelten Sicherheitsgruppen mit dem Namen "
-"'default' müssen aufgelöst werden, bevor die Datenbank aktualisiert wird."
-
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
 "admin privileges"
@@ -2158,9 +2135,6 @@ msgstr "Unerwarteter Antwortcode: %s"
 #, python-format
 msgid "Unexpected response: %s"
 msgstr "Unerwartete Antwort: %s"
-
-msgid "Unimplemented commands"
-msgstr "Nicht implementierte Befehle"
 
 msgid "Unknown API version specified"
 msgstr "Unbekannte API-Version angegeben"
