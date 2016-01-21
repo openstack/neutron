@@ -82,6 +82,7 @@ Neutron Internals
    provisioning_blocks
    retries
    l3_agent_extensions
+   live_migration
 
 Testing
 -------

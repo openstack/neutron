@@ -1,0 +1,144 @@
+..
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+Generated using plantuml.
+
+@startuml
+
+title live-migration with ovs-hybrid plug : nova<->neutron interactions
+
+participant nova_conductor
+participant nova_compute1
+participant nova_compute2
+participant neutron_server
+participant neutron_l2_agent2
+participant neutron_l2_agent1
+participant neutron_l3_agent2
+participant neutron_l3_agent1
+
+nova_conductor -> nova_compute1 : live_migrate
+activate nova_compute1
+nova_compute1 -> nova_compute2 : RPC.call : pre_live_migrate()
+activate nova_compute2
+nova_compute2 -> neutron_server : REST : list_port()
+activate neutron_server
+neutron_server -> nova_compute2
+deactivate neutron_server
+
+group port plugged on host2
+    nova_compute2 -> nova_compute2 : plug_vifs()
+    activate neutron_l2_agent2
+    neutron_l2_agent2 -> neutron_server : RPC.call : get_devices_details_list_and_failed_devices(devices : [port])
+    activate neutron_server
+    neutron_server -> neutron_l2_agent2
+    deactivate neutron_server
+    neutron_l2_agent2 -> neutron_server : RPC.call : update_device_list(devices_up : [port])
+    activate neutron_server
+    neutron_server -> neutron_l2_agent2
+    deactivate neutron_server
+    note over neutron_server
+        port status is never
+        changed since port
+        is not bound to host2
+    end note
+    deactivate neutron_l2_agent2
+end
+
+nova_compute2 -> nova_compute1
+deactivate nova_compute2
+
+group proactive dvr router creation
+    nova_compute1 -> neutron_server : REST : update_port('binding:profile'={'migrating_to':'host2'})
+    activate neutron_server
+    neutron_server -> neutron_l3_agent1: RPC.cast(fanout) : port_update(port)
+    activate neutron_l3_agent1
+    destroy neutron_l3_agent1
+    note over neutron_l3_agent1
+        "migrating_to" does
+        not match host
+    end note
+    neutron_server -> neutron_l3_agent2: RPC.cast(fanout) : port_update(port)
+    activate neutron_l3_agent2
+    note over neutron_l3_agent2
+        proactively create DVR router
+    end note
+    deactivate neutron_l3_agent2
+    neutron_server -> nova_compute1
+    deactivate neutron_server
+end
+
+note over nova_compute1, nova_compute2
+    libvirt handles the live-migration
+end note
+note left of nova_compute1
+    live migration
+    succeded
+end note
+
+nova_compute1 -> nova_compute1 : post_live_migration
+group port unplugged on host1
+    nova_compute1 -> nova_compute1 : unplug_vifs()
+    activate neutron_l2_agent1
+    neutron_l2_agent1 -> neutron_server : RPC.call : update_device_list(devices_down : [port])
+    activate neutron_server
+    neutron_server -> neutron_server : update_port_status(DOWN)
+    neutron_server -> neutron_l2_agent1
+    deactivate neutron_l2_agent1
+    note over neutron_server
+        port status changed to
+        DOWN since port is bound
+        to host1
+    end note
+    deactivate neutron_server
+end
+
+nova_compute1 -> nova_compute2 : RPC.cast : post_live_migration_at_destination()
+deactivate nova_compute1
+activate nova_compute2
+nova_compute2 -> neutron_server : REST : update_port({'binding:host_id':'host2', 'binding:profile':{}})
+activate neutron_server
+neutron_server -> neutron_server : update_port_status(DOWN)
+neutron_server -> neutron_l2_agent1 : RPC.cast(fanout) : port_update(port)
+activate neutron_l2_agent1
+destroy neutron_l2_agent1
+note over neutron_l2_agent1
+    port not hosted
+    on host1
+end note
+
+neutron_server -> neutron_l2_agent2 : RPC.cast(fanout) : port_update(port)
+activate neutron_l2_agent2
+neutron_server -> nova_compute2
+deactivate nova_compute2
+deactivate neutron_server
+
+group port_update processed by agent that really hosts the port
+    neutron_l2_agent2 -> neutron_server : RPC.call : get_devices_details_list_and_failed_devices(devices : [port])
+    activate neutron_server
+    neutron_server -> neutron_server : update_port_status(BUILD)
+    neutron_server -> neutron_l2_agent2
+    deactivate neutron_server
+    neutron_l2_agent2 -> neutron_server : RPC.call : update_device_list(devices_up : [port])
+    activate neutron_server
+    neutron_server -> neutron_server : update_port_status(ACTIVE)
+    neutron_server -> neutron_l2_agent2
+    deactivate neutron_server
+    note over neutron_server
+        port status changed to
+        ACTIVE since port
+        is now bound to host2
+    end note
+    deactivate neutron_l2_agent2
+end group
+
+@enduml
