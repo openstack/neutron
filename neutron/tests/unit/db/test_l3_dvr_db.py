@@ -466,47 +466,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 fip, floatingip, router))
         self.assertFalse(create_fip.called)
 
-    def test_remove_router_interface_delete_router_l3agent_binding(self):
-        interface_info = {'subnet_id': '123'}
-        router = mock.MagicMock()
-        router.extra_attributes.distributed = True
-        plugin = mock.MagicMock()
-        plugin.get_l3_agents_hosting_routers = mock.Mock(
-            return_value=[mock.MagicMock()])
-        plugin.get_subnet_ids_on_router = mock.Mock(
-            return_value=interface_info)
-        plugin.check_dvr_serviceable_ports_on_host = mock.Mock(
-            return_value=False)
-        plugin.remove_router_from_l3_agent = mock.Mock(
-            return_value=None)
-        with mock.patch.object(self.mixin, '_get_router') as grtr,\
-                mock.patch.object(self.mixin, '_get_device_owner') as gdev,\
-                mock.patch.object(self.mixin,
-                                  '_remove_interface_by_subnet') as rmintf,\
-                mock.patch.object(
-                    self.mixin,
-                    'delete_csnat_router_interface_ports') as delintf,\
-                mock.patch.object(manager.NeutronManager,
-                                  'get_service_plugins') as gplugin,\
-                mock.patch.object(self.mixin,
-                                  '_make_router_interface_info') as mkintf,\
-                mock.patch.object(self.mixin,
-                                  'notify_router_interface_action') as notify:
-            grtr.return_value = router
-            gdev.return_value = mock.Mock()
-            rmintf.return_value = (mock.MagicMock(), mock.MagicMock())
-            mkintf.return_value = mock.Mock()
-            gplugin.return_value = {plugin_const.L3_ROUTER_NAT: plugin}
-            delintf.return_value = None
-            notify.return_value = None
-
-            self.mixin.manager = manager
-            self.mixin.remove_router_interface(
-                self.ctx, mock.Mock(), interface_info)
-            self.assertTrue(plugin.get_l3_agents_hosting_routers.called)
-            self.assertTrue(plugin.check_dvr_serviceable_ports_on_host.called)
-            self.assertTrue(plugin.remove_router_from_l3_agent.called)
-
     def test_remove_router_interface_csnat_ports_removal(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
