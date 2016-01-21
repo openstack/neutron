@@ -14,7 +14,6 @@ import mock
 
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
-from neutron.db import models_v2
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests.unit.objects import test_base
@@ -126,24 +125,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         rule_obj.create()
 
         return policy_obj, rule_obj
-
-    def _create_test_network(self):
-        # TODO(ihrachys): replace with network.create() once we get an object
-        # implementation for networks
-        self._network = db_api.create_object(self.context, models_v2.Network,
-                                             {'name': 'test-network1'})
-
-    def _create_test_port(self, network):
-        # TODO(ihrachys): replace with port.create() once we get an object
-        # implementation for ports
-        self._port = db_api.create_object(self.context, models_v2.Port,
-                                          {'name': 'test-port1',
-                                           'network_id': network['id'],
-                                           'mac_address': 'fake_mac',
-                                           'admin_state_up': True,
-                                           'status': 'ACTIVE',
-                                           'device_id': 'fake_device',
-                                           'device_owner': 'fake_owner'})
 
     def test_attach_network_get_network_policy(self):
 
