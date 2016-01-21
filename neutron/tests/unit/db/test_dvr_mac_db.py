@@ -16,9 +16,11 @@
 import mock
 from oslo_config import cfg
 
+from neutron.common import constants
 from neutron import context
 from neutron.db import dvr_mac_db
 from neutron.extensions import dvr
+from neutron.extensions import portbindings
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -127,3 +129,33 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.ctx, subnet['subnet']['id'], fixed_ips)
                 self.assertEqual(gw_port['port']['mac_address'],
                                  dvr_subnet['gateway_mac'])
+
+    def test_get_ports_on_host_by_subnet(self):
+        HOST = 'host1'
+        host_arg = {portbindings.HOST_ID: HOST}
+        arg_list = (portbindings.HOST_ID,)
+        with self.subnet() as subnet,\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                          arg_list=arg_list, **host_arg) as compute_port,\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_DHCP,
+                          arg_list=arg_list, **host_arg) as dhcp_port,\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_LOADBALANCER,
+                          arg_list=arg_list, **host_arg) as lb_port,\
+                self.port(device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                          arg_list=arg_list, **host_arg),\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: 'other'}),\
+                self.port(subnet=subnet,
+                          device_owner=constants.DEVICE_OWNER_NETWORK_PREFIX,
+                          arg_list=arg_list, **host_arg):
+            expected_ids = [port['port']['id'] for port in
+                            [compute_port, dhcp_port, lb_port]]
+            dvr_ports = self.mixin.get_ports_on_host_by_subnet(
+                self.ctx, HOST, subnet['subnet']['id'])
+            self.assertEqual(len(expected_ids), len(dvr_ports))
+            self.assertEqual(expected_ids, [port['id'] for port in dvr_ports])
