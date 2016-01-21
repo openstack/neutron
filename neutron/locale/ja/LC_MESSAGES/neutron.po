@@ -1,29 +1,33 @@
-# Japanese translations for neutron.
+# Translations template for neutron.
 # Copyright (C) 2015 ORGANIZATION
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
 # Akihiro Motoki <amotoki@gmail.com>, 2013
+# Akihiro Motoki <amotoki@gmail.com>, 2013
 # Sasuke(Kyohei MORIYAMA) <>, 2015
 # NachiUeno <nati.ueno@gmail.com>, 2013
+# NachiUeno <nati.ueno@gmail.com>, 2013
+# Sasuke(Kyohei MORIYAMA) <>, 2015
 # Tomoyuki KATO <tomo@dream.daynight.jp>, 2013
 # Akihiro Motoki <amotoki@gmail.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 7.0.1.dev41\n"
+"Project-Id-Version: neutron 7.0.2.dev74\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-11-01 06:12+0000\n"
+"POT-Creation-Date: 2016-01-13 20:56+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2015-10-24 12:14+0000\n"
 "Last-Translator: Akihiro Motoki <amotoki@gmail.com>\n"
 "Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
 "Language-Team: Japanese\n"
-"Plural-Forms: nplurals=1; plural=0\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
 
 #, python-format
 msgid ""
