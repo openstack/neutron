@@ -13,12 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import netaddr
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
+from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
@@ -444,3 +446,43 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         subnet_req = ipam_req.SpecificSubnetRequest(
             'tenant_id', 'meh', '192.168.0.0/24')
         self.ipam_pool.allocate_subnet(subnet_req)
+
+    def test_update_allocation_pools_with_no_pool_change(self):
+        cidr = '10.0.0.0/24'
+        ipam_subnet = self._create_and_allocate_ipam_subnet(
+            cidr)[0]
+        ipam_subnet.subnet_manager.delete_allocation_pools = mock.Mock()
+        ipam_subnet.create_allocation_pools = mock.Mock()
+        alloc_pools = [netaddr.IPRange('10.0.0.2', '10.0.0.254')]
+        # Make sure allocation pools recreation does not happen in case of
+        # unchanged allocation pools
+        ipam_subnet.update_allocation_pools(alloc_pools, cidr)
+        self.assertFalse(
+            ipam_subnet.subnet_manager.delete_allocation_pools.called)
+        self.assertFalse(ipam_subnet.create_allocation_pools.called)
+
+    def _test__no_pool_changes(self, new_pools):
+        id = 'some-id'
+        ipam_subnet = driver.NeutronDbSubnet(id, self.ctx)
+        pools = [db_models.IpamAllocationPool(ipam_subnet_id=id,
+                                              first_ip='192.168.10.20',
+                                              last_ip='192.168.10.41'),
+                 db_models.IpamAllocationPool(ipam_subnet_id=id,
+                                              first_ip='192.168.10.50',
+                                              last_ip='192.168.10.60')]
+
+        ipam_subnet.subnet_manager.list_pools = mock.Mock(return_value=pools)
+        return ipam_subnet._no_pool_changes(self.ctx.session, new_pools)
+
+    def test__no_pool_changes_negative(self):
+        pool_list = [[netaddr.IPRange('192.168.10.2', '192.168.10.254')],
+                     [netaddr.IPRange('192.168.10.20', '192.168.10.41')],
+                     [netaddr.IPRange('192.168.10.20', '192.168.10.41'),
+                      netaddr.IPRange('192.168.10.51', '192.168.10.60')]]
+        for pools in pool_list:
+            self.assertFalse(self._test__no_pool_changes(pools))
+
+    def test__no_pool_changes_positive(self):
+        pools = [netaddr.IPRange('192.168.10.20', '192.168.10.41'),
+                 netaddr.IPRange('192.168.10.50', '192.168.10.60')]
+        self.assertTrue(self._test__no_pool_changes(pools))
