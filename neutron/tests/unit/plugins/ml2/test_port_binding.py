@@ -47,16 +47,16 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.plugin.start_rpc_listeners()
 
     def _check_response(self, port, vif_type, has_port_filter, bound, status):
-        self.assertEqual(port[portbindings.VIF_TYPE], vif_type)
+        self.assertEqual(vif_type, port[portbindings.VIF_TYPE])
         vif_details = port[portbindings.VIF_DETAILS]
         port_status = port['status']
         if bound:
             # TODO(rkukura): Replace with new VIF security details
-            self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
-                             has_port_filter)
-            self.assertEqual(port_status, status or 'DOWN')
+            self.assertEqual(has_port_filter,
+                             vif_details[portbindings.CAP_PORT_FILTER])
+            self.assertEqual(status or 'DOWN', port_status)
         else:
-            self.assertEqual(port_status, 'DOWN')
+            self.assertEqual('DOWN', port_status)
 
     def _test_port_binding(self, host, vif_type, has_port_filter, bound,
                            status=None, network_type='local'):
@@ -72,7 +72,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             details = self.plugin.endpoints[0].get_device_details(
                 neutron_context, agent_id="theAgentId", device=port_id)
             if bound:
-                self.assertEqual(details['network_type'], network_type)
+                self.assertEqual(network_type, details['network_type'])
                 self.assertEqual(mac_address, details['mac_address'])
             else:
                 self.assertNotIn('network_type', details)
@@ -152,10 +152,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             neutron_context=neutron_context)
                 port_data = updated_port['port']
                 if new_host is not None:
-                    self.assertEqual(port_data[portbindings.HOST_ID],
-                                     new_host)
+                    self.assertEqual(new_host,
+                                     port_data[portbindings.HOST_ID])
                 else:
-                    self.assertEqual(port_data[portbindings.HOST_ID], host)
+                    self.assertEqual(host, port_data[portbindings.HOST_ID])
                 if new_host is not None and new_host != host:
                     notify_mock.assert_called_once_with(mock.ANY)
                 else:

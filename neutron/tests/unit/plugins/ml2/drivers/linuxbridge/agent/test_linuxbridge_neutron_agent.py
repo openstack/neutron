@@ -649,7 +649,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         with mock.patch.object(
                 bridge_lib.BridgeDevice, 'get_interfaces') as get_ifs_fn:
             get_ifs_fn.return_value = ['tap2101', 'eth0.100', 'vxlan-1000']
-            self.assertEqual(self.lbm.get_tap_devices_count('br0'), 1)
+            self.assertEqual(1, self.lbm.get_tap_devices_count('br0'))
 
     def test_get_interface_details(self):
         with mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn,\
@@ -683,9 +683,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             list_fn.return_value = ipdict
             with mock.patch.object(self.lbm, 'ensure_bridge') as ens:
                 self.assertEqual(
-                    self.lbm.ensure_flat_bridge("123", None, "eth0"),
-                    "eth0"
-                )
+                    "eth0",
+                    self.lbm.ensure_flat_bridge("123", None, "eth0"))
                 self.assertTrue(list_fn.called)
                 self.assertTrue(getgw_fn.called)
                 ens.assert_called_once_with("brq123", "eth0",
@@ -707,19 +706,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   'get_interface_details') as get_int_det_fn:
             ens_vl_fn.return_value = "eth0.1"
             get_int_det_fn.return_value = (None, None)
-            self.assertEqual(self.lbm.ensure_vlan_bridge("123",
+            self.assertEqual("eth0.1",
+                             self.lbm.ensure_vlan_bridge("123",
                                                          None,
                                                          "eth0",
-                                                         "1"),
-                             "eth0.1")
+                                                         "1"))
             ens.assert_called_with("brq123", "eth0.1", None, None)
 
             get_int_det_fn.return_value = ("ips", "gateway")
-            self.assertEqual(self.lbm.ensure_vlan_bridge("123",
+            self.assertEqual("eth0.1",
+                             self.lbm.ensure_vlan_bridge("123",
                                                          None,
                                                          "eth0",
-                                                         "1"),
-                             "eth0.1")
+                                                         "1"))
             ens.assert_called_with("brq123", "eth0.1", "ips", "gateway")
 
     def test_ensure_vlan_bridge_with_existed_brq(self):
@@ -748,16 +747,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_ensure_vlan(self):
         with mock.patch.object(ip_lib, 'device_exists') as de_fn:
             de_fn.return_value = True
-            self.assertEqual(self.lbm.ensure_vlan("eth0", "1"), "eth0.1")
+            self.assertEqual("eth0.1", self.lbm.ensure_vlan("eth0", "1"))
             de_fn.return_value = False
             with mock.patch.object(utils, 'execute') as exec_fn:
                 exec_fn.return_value = False
-                self.assertEqual(self.lbm.ensure_vlan("eth0", "1"), "eth0.1")
+                self.assertEqual("eth0.1", self.lbm.ensure_vlan("eth0", "1"))
                 # FIXME(kevinbenton): validate the params to the exec_fn calls
-                self.assertEqual(exec_fn.call_count, 2)
+                self.assertEqual(2, exec_fn.call_count)
                 exec_fn.return_value = True
                 self.assertIsNone(self.lbm.ensure_vlan("eth0", "1"))
-                self.assertEqual(exec_fn.call_count, 3)
+                self.assertEqual(3, exec_fn.call_count)
 
     def test_ensure_vxlan(self):
         seg_id = "12345678"
@@ -765,19 +764,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.lbm.vxlan_mode = lconst.VXLAN_MCAST
         with mock.patch.object(ip_lib, 'device_exists') as de_fn:
             de_fn.return_value = True
-            self.assertEqual(self.lbm.ensure_vxlan(seg_id), "vxlan-" + seg_id)
+            self.assertEqual("vxlan-" + seg_id, self.lbm.ensure_vxlan(seg_id))
             de_fn.return_value = False
             with mock.patch.object(self.lbm.ip,
                                    'add_vxlan') as add_vxlan_fn:
                 add_vxlan_fn.return_value = FakeIpDevice()
-                self.assertEqual(self.lbm.ensure_vxlan(seg_id),
-                                 "vxlan-" + seg_id)
+                self.assertEqual("vxlan-" + seg_id,
+                                 self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
                                                 dev=self.lbm.local_int)
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
-                self.assertEqual(self.lbm.ensure_vxlan(seg_id),
-                                 "vxlan-" + seg_id)
+                self.assertEqual("vxlan-" + seg_id,
+                                 self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
                                                 dev=self.lbm.local_int,
@@ -835,7 +834,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             bridge_device.disable_stp.return_value = False
             bridge_device.disable_ipv6.return_value = False
             bridge_device.link.set_up.return_value = False
-            self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
+            self.assertEqual("br0", self.lbm.ensure_bridge("br0", None))
 
             bridge_device.owns_interface.return_value = False
             self.lbm.ensure_bridge("br0", "eth0")

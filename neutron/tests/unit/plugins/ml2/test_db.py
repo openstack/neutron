@@ -320,7 +320,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session, port_id, 'foo_host', router.id)
         expected = (self.ctx.session.query(models.DVRPortBinding).
                     filter_by(port_id=port_id).one())
-        self.assertEqual(expected.port_id, port_id)
+        self.assertEqual(port_id, expected.port_id)
 
     def test_ensure_dvr_port_binding_multiple_bindings(self):
         network_id = 'foo_network_id'

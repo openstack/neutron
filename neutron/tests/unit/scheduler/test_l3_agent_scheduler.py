@@ -608,9 +608,9 @@ class L3SchedulerTestBaseMixin(object):
             self, router, agent_list, exp_host, count=1):
         candidates = self.get_l3_agent_candidates(self.adminContext,
                                                   router, agent_list)
-        self.assertEqual(len(candidates), count)
+        self.assertEqual(count, len(candidates))
         if count:
-            self.assertEqual(candidates[0]['host'], exp_host)
+            self.assertEqual(exp_host, candidates[0]['host'])
 
     def test_get_l3_agent_candidates_legacy(self):
         self._register_l3_dvr_agents()
@@ -768,8 +768,8 @@ class L3AgentChanceSchedulerTestCase(L3SchedulerTestCaseMixin,
                     self.adminContext, [r1['router']['id']],
                     admin_state_up=True)
 
-                self.assertEqual(len(agents), 1)
-                self.assertEqual(random_mock.call_count, 1)
+                self.assertEqual(1, len(agents))
+                self.assertEqual(1, random_mock.call_count)
 
                 with self.router_with_ext_gw(name='r2', subnet=subnet) as r2:
                     agents = self.get_l3_agents_hosting_routers(
@@ -777,7 +777,7 @@ class L3AgentChanceSchedulerTestCase(L3SchedulerTestCaseMixin,
                         admin_state_up=True)
 
                     self.assertEqual(len(agents), 1)
-                    self.assertEqual(random_mock.call_count, 2)
+                    self.assertEqual(2, random_mock.call_count)
 
         random_patch.stop()
 
@@ -828,7 +828,7 @@ class L3AgentLeastRoutersSchedulerTestCase(L3SchedulerTestCaseMixin,
                 agents = self.get_l3_agents_hosting_routers(
                     self.adminContext, [r1['router']['id']],
                     admin_state_up=True)
-                self.assertEqual(len(agents), 1)
+                self.assertEqual(1, len(agents))
 
                 agent_id1 = agents[0]['id']
 
@@ -836,7 +836,7 @@ class L3AgentLeastRoutersSchedulerTestCase(L3SchedulerTestCaseMixin,
                     agents = self.get_l3_agents_hosting_routers(
                         self.adminContext, [r2['router']['id']],
                         admin_state_up=True)
-                    self.assertEqual(len(agents), 1)
+                    self.assertEqual(1, len(agents))
 
                     agent_id2 = agents[0]['id']
 
@@ -852,7 +852,7 @@ class L3AgentLeastRoutersSchedulerTestCase(L3SchedulerTestCaseMixin,
                         agents = self.get_l3_agents_hosting_routers(
                             self.adminContext, [r3['router']['id']],
                             admin_state_up=True)
-                        self.assertEqual(len(agents), 1)
+                        self.assertEqual(1, len(agents))
 
                         agent_id3 = agents[0]['id']
 
@@ -1186,7 +1186,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                            '.get_ports', return_value=[dvr_port]):
             router_id = self.dut.get_dvr_routers_by_subnet_ids(
                 self.adminContext, [subnet_id])
-            self.assertEqual(router_id.pop(), r1['id'])
+            self.assertEqual(r1['id'], router_id.pop())
 
     def test_get_subnet_ids_on_router(self):
         dvr_port = {
@@ -1228,7 +1228,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                return_value=[dvr_port]):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
-            self.assertEqual(len(sub_ids), 0)
+            self.assertEqual(0, len(sub_ids))
 
     def _prepare_schedule_snat_tests(self):
         agent = agents_db.Agent()

@@ -1064,10 +1064,10 @@ class TestOvsNeutronAgent(object):
                                                    'int-br-eth'),
             ]
             parent.assert_has_calls(expected_calls)
-            self.assertEqual(self.agent.int_ofports["physnet1"],
-                             "int_ofport")
-            self.assertEqual(self.agent.phys_ofports["physnet1"],
-                             "phy_ofport")
+            self.assertEqual("int_ofport",
+                             self.agent.int_ofports["physnet1"])
+            self.assertEqual("phy_ofport",
+                             self.agent.phys_ofports["physnet1"])
 
     def test_setup_physical_bridges_using_veth_interconnection(self):
         self.agent.use_veth_interconnection = True
@@ -1101,10 +1101,10 @@ class TestOvsNeutronAgent(object):
                               mock.call.add_veth('int-br-eth',
                                                  'phy-br-eth')]
             parent.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual(self.agent.int_ofports["physnet1"],
-                             "int_veth_ofport")
-            self.assertEqual(self.agent.phys_ofports["physnet1"],
-                             "phys_veth_ofport")
+            self.assertEqual("int_veth_ofport",
+                             self.agent.int_ofports["physnet1"])
+            self.assertEqual("phys_veth_ofport",
+                             self.agent.phys_ofports["physnet1"])
 
     def test_setup_physical_bridges_change_from_veth_to_patch_conf(self):
         with mock.patch.object(sys, "exit"),\
@@ -1142,10 +1142,10 @@ class TestOvsNeutronAgent(object):
                                                    'int-br-eth'),
             ]
             parent.assert_has_calls(expected_calls)
-            self.assertEqual(self.agent.int_ofports["physnet1"],
-                             "int_ofport")
-            self.assertEqual(self.agent.phys_ofports["physnet1"],
-                             "phy_ofport")
+            self.assertEqual("int_ofport",
+                             self.agent.int_ofports["physnet1"])
+            self.assertEqual("phy_ofport",
+                             self.agent.phys_ofports["physnet1"])
 
     def test_setup_tunnel_br(self):
         self.tun_br = mock.Mock()
@@ -1220,11 +1220,11 @@ class TestOvsNeutronAgent(object):
 
             lvm.vif_ports = {}
             self.agent.port_unbound("vif1", "netuid12345")
-            self.assertEqual(reclvl_fn.call_count, 2)
+            self.assertEqual(2, reclvl_fn.call_count)
 
             lvm.vif_ports = {"vif1": mock.Mock()}
             self.agent.port_unbound("vif3", "netuid12345")
-            self.assertEqual(reclvl_fn.call_count, 2)
+            self.assertEqual(2, reclvl_fn.call_count)
 
     def _prepare_l2_pop_ofports(self):
         lvm1 = mock.Mock()
@@ -1431,7 +1431,7 @@ class TestOvsNeutronAgent(object):
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
-            self.assertEqual(ofport, 0)
+            self.assertEqual(0, ofport)
 
     def test_setup_tunnel_port_error_negative_df_disabled(self):
         with mock.patch.object(
@@ -1450,7 +1450,7 @@ class TestOvsNeutronAgent(object):
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
-            self.assertEqual(ofport, 0)
+            self.assertEqual(0, ofport)
 
     def test_setup_tunnel_port_error_negative_tunnel_csum(self):
         with mock.patch.object(
@@ -1469,7 +1469,7 @@ class TestOvsNeutronAgent(object):
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
-            self.assertEqual(ofport, 0)
+            self.assertEqual(0, ofport)
 
     def test_tunnel_sync_with_ml2_plugin(self):
         fake_tunnel_details = {'tunnels': [{'ip_address': '100.101.31.15'}]}
@@ -1771,7 +1771,7 @@ class TestOvsNeutronAgent(object):
             [mock.call(port=1)],
             self.agent.int_br.delete_arp_spoofing_protection.mock_calls)
         # make sure the state was updated with the new map
-        self.assertEqual(self.agent.vifname_to_ofport_map, newmap)
+        self.assertEqual(newmap, self.agent.vifname_to_ofport_map)
 
     def test_update_stale_ofport_rules_treats_moved(self):
         self.agent.prevent_arp_spoofing = True

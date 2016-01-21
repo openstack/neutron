@@ -66,7 +66,7 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         address_scope_res = address_scope_req.get_response(self.ext_api)
         if expected_res_status:
-            self.assertEqual(address_scope_res.status_int, expected_res_status)
+            self.assertEqual(expected_res_status, address_scope_res.status_int)
         return address_scope_res
 
     def _make_address_scope(self, fmt, ip_version, admin=False, **kwargs):

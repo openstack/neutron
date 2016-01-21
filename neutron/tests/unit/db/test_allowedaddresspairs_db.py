@@ -151,7 +151,7 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                                     port_security_enabled=False,
                                     allowed_address_pairs=address_pairs)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, 409)
+            self.assertEqual(409, res.status_int)
 
             address_pairs = []
             res = self._create_port(self.fmt, net['network']['id'],

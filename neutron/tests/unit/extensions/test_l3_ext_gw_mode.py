@@ -469,9 +469,9 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                         return
                     body = self._show('routers', r['router']['id'])
                     res_gw_info = body['router']['external_gateway_info']
-                    self.assertEqual(res_gw_info['network_id'], ext_net_id)
-                    self.assertEqual(res_gw_info['enable_snat'],
-                                     snat_expected_value)
+                    self.assertEqual(ext_net_id, res_gw_info['network_id'])
+                    self.assertEqual(snat_expected_value,
+                                     res_gw_info['enable_snat'])
                 finally:
                     self._remove_external_gateway_from_router(
                         r['router']['id'], ext_net_id)

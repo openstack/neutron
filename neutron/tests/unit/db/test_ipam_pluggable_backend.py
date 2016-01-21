@@ -462,7 +462,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
                 self.assertEqual(1, len(ips))
-                self.assertEqual(ips[0]['ip_address'], auto_ip)
+                self.assertEqual(auto_ip, ips[0]['ip_address'])
                 # Update port with another new ip
                 data = {"port": {"fixed_ips": [{
                         'subnet_id': subnet['subnet']['id'],
@@ -489,7 +489,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
                 self.assertEqual(1, len(ips))
-                self.assertEqual(ips[0]['ip_address'], auto_ip)
+                self.assertEqual(auto_ip, ips[0]['ip_address'])
                 req = self.new_delete_request('ports', port['port']['id'])
                 res = req.get_response(self.api)
 
@@ -502,14 +502,14 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
                 self.assertEqual(1, len(ips))
-                self.assertEqual(ips[0]['ip_address'], ip)
+                self.assertEqual(ip, ips[0]['ip_address'])
                 req = self.new_delete_request('ports', port['port']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
                 with self.port(subnet=subnet, fixed_ips=ips) as port:
                     ips = port['port']['fixed_ips']
                     self.assertEqual(1, len(ips))
-                    self.assertEqual(ips[0]['ip_address'], ip)
+                    self.assertEqual(ip, ips[0]['ip_address'])
 
     @mock.patch('neutron.ipam.driver.Pool')
     def test_update_ips_for_port_passes_port_dict_to_factory(self, pool_mock):

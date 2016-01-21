@@ -75,7 +75,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
             prefix_set = netaddr.IPSet(iterable=prefix_list)
             allocated_set = netaddr.IPSet(iterable=[detail.subnet_cidr])
             self.assertTrue(allocated_set.issubset(prefix_set))
-            self.assertEqual(detail.prefixlen, 21)
+            self.assertEqual(21, detail.prefixlen)
 
     def test_allocate_specific_subnet(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
@@ -90,8 +90,8 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
             res = sa.allocate_subnet(req)
             detail = res.get_details()
             sp = self._get_subnetpool(self.ctx, self.plugin, sp['id'])
-            self.assertEqual(str(detail.subnet_cidr), '10.1.2.0/24')
-            self.assertEqual(detail.prefixlen, 24)
+            self.assertEqual('10.1.2.0/24', str(detail.subnet_cidr))
+            self.assertEqual(24, detail.prefixlen)
 
     def test_insufficient_prefix_space_for_any_allocation(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
@@ -146,8 +146,8 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                              gateway_ip='10.1.2.254')
             res = sa.allocate_subnet(req)
             detail = res.get_details()
-            self.assertEqual(detail.gateway_ip,
-                             netaddr.IPAddress('10.1.2.254'))
+            self.assertEqual(netaddr.IPAddress('10.1.2.254'),
+                             detail.gateway_ip)
 
     def test_allocate_specific_ipv6_subnet_specific_gateway(self):
         # Same scenario as described in bug #1466322
@@ -163,8 +163,8 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                                  '2210::ffff:ffff:ffff:ffff')
             res = sa.allocate_subnet(req)
             detail = res.get_details()
-            self.assertEqual(detail.gateway_ip,
-                             netaddr.IPAddress('2210::ffff:ffff:ffff:ffff'))
+            self.assertEqual(netaddr.IPAddress('2210::ffff:ffff:ffff:ffff'),
+                             detail.gateway_ip)
 
     def test__allocation_value_for_tenant_no_allocations(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
@@ -172,7 +172,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                       21, 4)
         sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
         value = sa._allocations_used_by_tenant(32)
-        self.assertEqual(value, 0)
+        self.assertEqual(0, value)
 
     def test_subnetpool_default_quota_exceeded(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',

@@ -69,17 +69,17 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._set_net_external(n1['network']['id'])
             with self.network():
                 body = self._list('networks')
-                self.assertEqual(len(body['networks']), 2)
+                self.assertEqual(2, len(body['networks']))
 
                 body = self._list('networks',
                                   query_params="%s=True" %
                                                external_net.EXTERNAL)
-                self.assertEqual(len(body['networks']), 1)
+                self.assertEqual(1, len(body['networks']))
 
                 body = self._list('networks',
                                   query_params="%s=False" %
                                                external_net.EXTERNAL)
-                self.assertEqual(len(body['networks']), 1)
+                self.assertEqual(1, len(body['networks']))
 
     def test_list_nets_external_pagination(self):
         if self._skip_native_pagination:
@@ -157,7 +157,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                    set_context='True',
                                    tenant_id='noadmin'):
                         pass
-                    self.assertEqual(ctx_manager.exception.code, 403)
+                    self.assertEqual(403, ctx_manager.exception.code)
 
     def test_create_port_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
@@ -172,7 +172,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                               set_context='True',
                               tenant_id='noadmin'):
                 pass
-            self.assertEqual(ctx_manager.exception.code, 403)
+            self.assertEqual(403, ctx_manager.exception.code)
 
     def test_create_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
@@ -186,6 +186,6 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             with self.network() as net:
                 req = self.new_delete_request('networks', net['network']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+                self.assertEqual(exc.HTTPNoContent.code, res.status_int)
                 (l3_mock.delete_disassociated_floatingips
                  .assert_called_once_with(mock.ANY, net['network']['id']))
