@@ -378,6 +378,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 and_(models_v2.Port.network_id == network_id,
                      ~models_v2.Port.device_owner.in_(
                          constants.ROUTER_INTERFACE_OWNERS_SNAT)))
+            updated_ports = []
             for port in ports:
                 ip_request = ipam_req.AutomaticAddressRequest(
                     prefix=subnet['cidr'],
@@ -394,6 +395,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # the corresponding port has been deleted.
                     with context.session.begin_nested():
                         context.session.add(allocated)
+                    updated_ports.append(port['id'])
                 except db_exc.DBReferenceError:
                     LOG.debug("Port %s was deleted while updating it with an "
                               "IPv6 auto-address. Ignoring.", port['id'])
@@ -404,6 +406,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     except Exception:
                         LOG.debug("Reverting IP allocation failed for %s",
                                   ip_address)
+            return updated_ports
 
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None

@@ -578,8 +578,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
         if ipv6_utils.is_auto_address_subnet(subnet):
-            self.ipam.add_auto_addrs_on_network_ports(context, subnet,
-                                                      ipam_subnet)
+            updated_ports = self.ipam.add_auto_addrs_on_network_ports(context,
+                                subnet, ipam_subnet)
+            for port_id in updated_ports:
+                port_info = {'port': {'id': port_id}}
+                self.update_port(context, port_id, port_info)
+
         return self._make_subnet_dict(subnet, context=context)
 
     def _get_subnetpool_id(self, subnet):
