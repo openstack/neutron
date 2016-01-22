@@ -1619,15 +1619,16 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
             ]
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          s['subnet']['id'],
+                                          None)
+
             # we fail the first time, but not the second, when
             # the clean-up takes place
             notify.side_effect = [
                 exceptions.CallbackFailure(errors=errors), None
             ]
-            self._router_interface_action('add',
-                                          r['router']['id'],
-                                          s['subnet']['id'],
-                                          None)
             self._router_interface_action(
                 'remove',
                 r['router']['id'],
@@ -1643,11 +1644,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
             ]
-            notify.side_effect = exceptions.CallbackFailure(errors=errors)
+
             self._set_net_external(s['subnet']['network_id'])
             self._add_external_gateway_to_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
+            notify.side_effect = exceptions.CallbackFailure(errors=errors)
             self._remove_external_gateway_from_router(
                 r['router']['id'],
                 s['subnet']['network_id'],
@@ -1912,7 +1914,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     self.fmt,
                     public_sub['subnet']['network_id'],
                     port_id=private_port['port']['id'],
-                    set_context=True)
+                    set_context=False)
                 self.assertTrue(agent_notification.called)
 
     def test_floating_port_status_not_applicable(self):
@@ -2021,6 +2023,65 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                      body_2['floatingip']['port_id'])
                     self.assertEqual(str(ip_range[-2]),
                                      body_2['floatingip']['fixed_ip_address'])
+
+    def test_first_floatingip_associate_notification(self):
+        with self.port() as p:
+            private_sub = {'subnet': {'id':
+                                      p['port']['fixed_ips'][0]['subnet_id']}}
+            with self.floatingip_no_assoc(private_sub) as fip:
+                port_id = p['port']['id']
+                ip_address = p['port']['fixed_ips'][0]['ip_address']
+                with mock.patch.object(registry, 'notify') as notify:
+                    body = self._update('floatingips',
+                                        fip['floatingip']['id'],
+                                        {'floatingip': {'port_id': port_id}})
+                    fip_addr = fip['floatingip']['floating_ip_address']
+                    fip_network_id = fip['floatingip']['floating_network_id']
+                    router_id = body['floatingip']['router_id']
+                    body = self._show('routers', router_id)
+                    ext_gw_info = body['router']['external_gateway_info']
+                    ext_fixed_ip = ext_gw_info['external_fixed_ips'][0]
+                    notify.assert_called_once_with(
+                                          resources.FLOATING_IP,
+                                          events.AFTER_UPDATE,
+                                          mock.ANY,
+                                          context=mock.ANY,
+                                          fixed_ip_address=ip_address,
+                                          fixed_port_id=port_id,
+                                          floating_ip_address=fip_addr,
+                                          floating_network_id=fip_network_id,
+                                          last_known_router_id=None,
+                                          router_id=router_id,
+                                          next_hop=ext_fixed_ip['ip_address'])
+
+    def test_floatingip_disassociate_notification(self):
+        with self.port() as p:
+            private_sub = {'subnet': {'id':
+                                      p['port']['fixed_ips'][0]['subnet_id']}}
+            with self.floatingip_no_assoc(private_sub) as fip:
+                port_id = p['port']['id']
+                body = self._update('floatingips',
+                                    fip['floatingip']['id'],
+                                    {'floatingip': {'port_id': port_id}})
+                with mock.patch.object(registry, 'notify') as notify:
+                    fip_addr = fip['floatingip']['floating_ip_address']
+                    fip_network_id = fip['floatingip']['floating_network_id']
+                    router_id = body['floatingip']['router_id']
+                    self._update('floatingips',
+                                 fip['floatingip']['id'],
+                                 {'floatingip': {'port_id': None}})
+                    notify.assert_called_once_with(
+                                          resources.FLOATING_IP,
+                                          events.AFTER_UPDATE,
+                                          mock.ANY,
+                                          context=mock.ANY,
+                                          fixed_ip_address=None,
+                                          fixed_port_id=None,
+                                          floating_ip_address=fip_addr,
+                                          floating_network_id=fip_network_id,
+                                          last_known_router_id=router_id,
+                                          router_id=None,
+                                          next_hop=None)
 
     def test_floatingip_update_different_router(self):
         # Create subnet with different CIDRs to account for plugins which

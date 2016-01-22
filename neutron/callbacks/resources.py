@@ -11,6 +11,7 @@
 #    under the License.
 
 # String literals representing core resources.
+FLOATING_IP = 'floating_ip'
 PORT = 'port'
 PROCESS = 'process'
 ROUTER = 'router'
