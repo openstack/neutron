@@ -17,18 +17,18 @@ from neutron.cmd.eventlet import server
 from neutron.tests import base
 
 
-@mock.patch('neutron.cmd.eventlet.server.main_wsgi_eventlet')
-@mock.patch('neutron.cmd.eventlet.server.main_wsgi_pecan')
+@mock.patch('neutron.server.wsgi_eventlet.eventlet_wsgi_server')
+@mock.patch('neutron.server.wsgi_pecan.pecan_wsgi_server')
 class TestNeutronServer(base.BaseTestCase):
 
     def test_legacy_server(self, pecan_mock, legacy_mock):
         cfg.CONF.set_override('web_framework', 'legacy')
-        server.main()
+        server._main_neutron_server()
         pecan_mock.assert_not_called()
         legacy_mock.assert_called_with()
 
     def test_pecan_server(self, pecan_mock, legacy_mock):
         cfg.CONF.set_override('web_framework', 'pecan')
-        server.main()
+        server._main_neutron_server()
         pecan_mock.assert_called_with()
         legacy_mock.assert_not_called()

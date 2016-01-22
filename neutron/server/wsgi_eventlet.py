@@ -16,13 +16,12 @@ import eventlet
 from oslo_log import log
 
 from neutron._i18n import _LI
-from neutron import server
 from neutron import service
 
 LOG = log.getLogger(__name__)
 
 
-def _eventlet_wsgi_server():
+def eventlet_wsgi_server():
     pool = eventlet.GreenPool()
 
     neutron_api = service.serve_wsgi(service.NeutronApiService)
@@ -45,7 +44,3 @@ def _eventlet_wsgi_server():
         api_thread.link(lambda gt: rpc_thread.kill())
 
     pool.waitall()
-
-
-def main():
-    server.boot_server(_eventlet_wsgi_server)
