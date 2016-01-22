@@ -461,7 +461,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         :param subnet_ids: IDs of subnets to look ports on
         :param except_port: ID of the port to ignore (used when checking if
         DVR router should be removed from host before actual port remove)
-        :return:
+        :return: return True if dvr serviceable port exists on host,
+                 otherwise return False
         """
         # db query will return ports for all subnets if subnet_ids is empty,
         # so need to check first
