@@ -21,6 +21,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron import context
 from neutron.db import api as db_api
+from neutron.db import models_v2
 from neutron.objects import base
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -298,6 +299,24 @@ class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
+
+    def _create_test_network(self):
+        # TODO(ihrachys): replace with network.create() once we get an object
+        # implementation for networks
+        self._network = db_api.create_object(self.context, models_v2.Network,
+                                             {'name': 'test-network1'})
+
+    def _create_test_port(self, network):
+        # TODO(ihrachys): replace with port.create() once we get an object
+        # implementation for ports
+        self._port = db_api.create_object(self.context, models_v2.Port,
+                                          {'name': 'test-port1',
+                                           'network_id': network['id'],
+                                           'mac_address': 'fake_mac',
+                                           'admin_state_up': True,
+                                           'status': 'ACTIVE',
+                                           'device_id': 'fake_device',
+                                           'device_owner': 'fake_owner'})
 
     def test_get_by_id_create_update_delete(self):
         obj = self._test_class(self.context, **self.db_obj)
