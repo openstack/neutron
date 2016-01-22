@@ -232,6 +232,10 @@ def _run_wsgi(app_name):
     if not app:
         LOG.error(_LE('No known API applications configured.'))
         return
+    return run_wsgi_app(app)
+
+
+def run_wsgi_app(app):
     server = wsgi.Server("Neutron")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
                  workers=_get_api_workers())
