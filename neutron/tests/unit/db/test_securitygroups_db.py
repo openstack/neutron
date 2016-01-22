@@ -235,3 +235,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             mock_notify.assert_has_calls([mock.call('security_group_rule',
                 'precommit_delete', mock.ANY, context=mock.ANY,
                 security_group_rule_id=mock.ANY)])
+
+    def test_get_ip_proto_name_and_num(self):
+        protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),
+                     'blah', '111']
+        protocol_names_nums = (
+            [[constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_UDP)],
+             [constants.PROTO_NAME_TCP, str(constants.PROTO_NUM_TCP)],
+             ['blah', 'blah'], ['111', '111']])
+
+        for i, protocol in enumerate(protocols):
+            self.assertEqual(protocol_names_nums[i],
+                             self.mixin._get_ip_proto_name_and_num(protocol))

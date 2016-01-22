@@ -424,6 +424,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             protocol = constants.IP_PROTOCOL_NAME_ALIASES[protocol]
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
+    def _get_ip_proto_name_and_num(self, protocol):
+        if protocol is None:
+            return
+        protocol = str(protocol)
+        if protocol in constants.IP_PROTOCOL_MAP:
+            return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
+        elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
+            return [constants.IP_PROTOCOL_NUM_TO_NAME_MAP.get(protocol),
+                    protocol]
+        return [protocol, protocol]
+
     def _validate_port_range(self, rule):
         """Check that port_range is valid."""
         if (rule['port_range_min'] is None and
@@ -539,6 +550,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             value = sgr.get(key)
             if value:
                 res[key] = [value]
+        # protocol field will get corresponding name and number
+        value = sgr.get('protocol')
+        if value:
+            res['protocol'] = self._get_ip_proto_name_and_num(value)
         return res
 
     def _check_for_duplicate_rules(self, context, security_group_rules):
@@ -571,7 +586,21 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # below to check for these corner cases.
         for db_rule in db_rules:
             rule_id = db_rule.pop('id', None)
-            if (security_group_rule['security_group_rule'] == db_rule):
+            # remove protocol and match separately for number and type
+            db_protocol = db_rule.pop('protocol', None)
+            sg_protocol = (
+                security_group_rule['security_group_rule'].pop('protocol',
+                                                               None))
+            is_protocol_matching = (
+                self._get_ip_proto_name_and_num(db_protocol) ==
+                self._get_ip_proto_name_and_num(sg_protocol))
+            are_rules_matching = (
+                security_group_rule['security_group_rule'] == db_rule)
+            # reinstate protocol field for further processing
+            if sg_protocol:
+                security_group_rule['security_group_rule']['protocol'] = (
+                    sg_protocol)
+            if (is_protocol_matching and are_rules_matching):
                 raise ext_sg.SecurityGroupRuleExists(rule_id=rule_id)
 
     def _validate_ip_prefix(self, rule):
