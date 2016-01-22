@@ -91,6 +91,19 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin.create_security_group_rule(
                     self.ctx, mock.MagicMock())
 
+    def test__check_for_duplicate_rules_in_db_does_not_drop_protocol(self):
+        with mock.patch.object(self.mixin, 'get_security_group_rules',
+                               return_value=[mock.Mock()]):
+            context = mock.Mock()
+            rule_dict = {
+                'security_group_rule': {'protocol': None,
+                                        'tenant_id': 'fake',
+                                        'security_group_id': 'fake',
+                                        'direction': 'fake'}
+            }
+            self.mixin._check_for_duplicate_rules_in_db(context, rule_dict)
+        self.assertIn('protocol', rule_dict['security_group_rule'])
+
     def test_delete_security_group_rule_in_use(self):
         with mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
@@ -235,3 +248,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             mock_notify.assert_has_calls([mock.call('security_group_rule',
                 'precommit_delete', mock.ANY, context=mock.ANY,
                 security_group_rule_id=mock.ANY)])
+
+    def test_get_ip_proto_name_and_num(self):
+        protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),
+                     'blah', '111']
+        protocol_names_nums = (
+            [[constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_UDP)],
+             [constants.PROTO_NAME_TCP, str(constants.PROTO_NUM_TCP)],
+             ['blah', 'blah'], ['111', '111']])
+
+        for i, protocol in enumerate(protocols):
+            self.assertEqual(protocol_names_nums[i],
+                             self.mixin._get_ip_proto_name_and_num(protocol))

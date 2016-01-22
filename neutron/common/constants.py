@@ -128,6 +128,8 @@ IP_PROTOCOL_MAP = {PROTO_NAME_AH: PROTO_NUM_AH,
 
 IP_PROTOCOL_NAME_ALIASES = {PROTO_NAME_IPV6_ICMP_LEGACY: PROTO_NAME_IPV6_ICMP}
 
+IP_PROTOCOL_NUM_TO_NAME_MAP = {str(v): k for k, v in IP_PROTOCOL_MAP.items()}
+
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
