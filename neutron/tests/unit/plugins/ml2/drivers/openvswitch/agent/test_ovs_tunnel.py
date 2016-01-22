@@ -509,11 +509,15 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_daemon_loop(self):
-        reply_ge_1 = {'added': set(['tap0']),
-                      'removed': set([])}
+        reply_ge_1 = {'added': [{'name': 'tap0', 'ofport': 3,
+                                 'external_ids': {
+                                     'attached-mac': 'test_mac'}}],
+                      'removed': []}
 
-        reply_ge_2 = {'added': set([]),
-                  'removed': set(['tap0'])}
+        reply_ge_2 = {'added': [],
+                      'removed': [{'name': 'tap0', 'ofport': 3,
+                                   'external_ids': {
+                                       'attached-mac': 'test_mac'}}]}
 
         reply_pe_1 = {'current': set(['tap0']),
                       'added': set(['tap0']),
@@ -559,8 +563,11 @@ class TunnelTest(object):
                 (reply_pe_2, reply_ancillary, devices_not_ready)]
             interface_polling = mock.Mock()
             interface_polling.get_events.side_effect = [reply_ge_1, reply_ge_2]
+            failed_devices = {'removed': set([]), 'added': set([])}
+            failed_ancillary_devices = {'removed': set([]), 'added': set([])}
             process_network_ports.side_effect = [
-                False, Exception('Fake exception to get out of the loop')]
+                failed_devices,
+                Exception('Fake exception to get out of the loop')]
 
             n_agent = self._build_agent()
 
@@ -577,8 +584,10 @@ class TunnelTest(object):
             log_exception.assert_called_once_with(
                 "Error while processing VIF ports")
             process_p_events.assert_has_calls([
-                mock.call(reply_ge_1, set(), set(), devices_not_ready, set()),
+                mock.call(reply_ge_1, set(), set(), devices_not_ready,
+                          failed_devices, failed_ancillary_devices, set()),
                 mock.call(reply_ge_2, set(['tap0']), set(), devices_not_ready,
+                          failed_devices, failed_ancillary_devices,
                           set())
             ])
             process_network_ports.assert_has_calls([
