@@ -954,6 +954,40 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
+    def test_create_security_group_rule_duplicate_rules_proto_name_num(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NAME_TCP, '22', '22')
+                self._create_security_group_rule(self.fmt, rule)
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NUM_TCP, '22', '22')
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_security_group_rule_duplicate_rules_proto_num_name(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NUM_UDP, '50', '100')
+                self._create_security_group_rule(self.fmt, rule)
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NAME_UDP, '50', '100')
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
     def test_create_security_group_rule_min_port_greater_max(self):
         name = 'webservers'
         description = 'my webservers'

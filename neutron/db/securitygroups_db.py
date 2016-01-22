@@ -37,11 +37,6 @@ from neutron.extensions import securitygroup as ext_sg
 
 LOG = logging.getLogger(__name__)
 
-IP_PROTOCOL_MAP = {constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
-                   constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
-                   constants.PROTO_NAME_ICMP: constants.PROTO_NUM_ICMP,
-                   constants.PROTO_NAME_ICMP_V6: constants.PROTO_NUM_ICMP_V6}
-
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron security group."""
@@ -418,7 +413,18 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # problems with comparing int and string in PostgreSQL. Here this
         # string is converted to int to give an opportunity to use it as
         # before.
-        return int(IP_PROTOCOL_MAP.get(protocol, protocol))
+        return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
+
+    def _get_ip_proto_name_and_num(self, protocol):
+        if protocol is None:
+            return
+        protocol = str(protocol)
+        if protocol in constants.IP_PROTOCOL_MAP:
+            return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
+        elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
+            return [constants.IP_PROTOCOL_NUM_TO_NAME_MAP.get(protocol),
+                    protocol]
+        return [protocol, protocol]
 
     def _validate_port_range(self, rule):
         """Check that port_range is valid."""
@@ -525,6 +531,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             value = sgr.get(key)
             if value:
                 res[key] = [value]
+        # protocol field will get corresponding name and number
+        value = sgr.get('protocol')
+        if value:
+            res['protocol'] = self._get_ip_proto_name_and_num(value)
         return res
 
     def _check_for_duplicate_rules(self, context, security_group_rules):
@@ -553,10 +563,23 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # relying on this behavior. Therefore, we do the filtering
         # below to check for these corner cases.
         for db_rule in db_rules:
-            # need to remove id from db_rule for matching
-            id = db_rule.pop('id')
-            if (security_group_rule['security_group_rule'] == db_rule):
-                raise ext_sg.SecurityGroupRuleExists(id=id)
+            rule_id = db_rule.pop('id', None)
+            # remove protocol and match separately for number and type
+            db_protocol = db_rule.pop('protocol', None)
+            sg_protocol = (
+                security_group_rule['security_group_rule'].pop('protocol',
+                                                               None))
+            is_protocol_matching = (
+                self._get_ip_proto_name_and_num(db_protocol) ==
+                self._get_ip_proto_name_and_num(sg_protocol))
+            are_rules_matching = (
+                security_group_rule['security_group_rule'] == db_rule)
+            # reinstate protocol field for further processing
+            if sg_protocol:
+                security_group_rule['security_group_rule']['protocol'] = (
+                    sg_protocol)
+            if (is_protocol_matching and are_rules_matching):
+                raise ext_sg.SecurityGroupRuleExists(id=rule_id)
 
     def _validate_ip_prefix(self, rule):
         """Check that a valid cidr was specified as remote_ip_prefix
