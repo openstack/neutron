@@ -242,7 +242,8 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             floating_ip = {'floating_network_id': ext_net_id,
                            'router_id': router['id'],
                            'port_id': int_port['port']['id'],
-                           'tenant_id': int_port['port']['tenant_id']}
+                           'tenant_id': int_port['port']['tenant_id'],
+                           'dns_name': '', 'dns_domain': ''}
             with mock.patch.object(
                     self.l3_plugin, '_l3_rpc_notifier') as l3_notif:
                 self.l3_plugin.create_floatingip(
@@ -307,7 +308,8 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             floating_ip = {'floating_network_id': ext_net_id,
                            'router_id': router1['id'],
                            'port_id': int_port1['port']['id'],
-                           'tenant_id': int_port1['port']['tenant_id']}
+                           'tenant_id': int_port1['port']['tenant_id'],
+                           'dns_name': '', 'dns_domain': ''}
             floating_ip = self.l3_plugin.create_floatingip(
                 self.context, {'floatingip': floating_ip})
 
@@ -365,7 +367,8 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             floating_ip = {'floating_network_id': ext_net_id,
                            'router_id': router['id'],
                            'port_id': int_port['port']['id'],
-                           'tenant_id': int_port['port']['tenant_id']}
+                           'tenant_id': int_port['port']['tenant_id'],
+                           'dns_name': '', 'dns_domain': ''}
             floating_ip = self.l3_plugin.create_floatingip(
                 self.context, {'floatingip': floating_ip})
             with mock.patch.object(

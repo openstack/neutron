@@ -1,0 +1,14 @@
+---
+prelude: >
+    Support integration with external DNS service.
+features:
+    - Floating IPs can have dns_name and dns_domain attributes associated
+      with them
+    - Ports can have a dns_name attribute associated with them. The network
+      where a port is created can have a dns_domain associated with it
+    - Floating IPs and ports will be published in an external DNS service
+      if they have dns_name and dns_domain attributes associated with them.
+    - The reference driver integrates neutron with designate
+    - Drivers for other DNSaaS can be implemented
+    - Driver is configured in the default section of neutron.conf using
+      parameter 'external_dns_driver'

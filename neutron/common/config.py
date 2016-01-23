@@ -127,6 +127,8 @@ core_opts = [
     cfg.StrOpt('dns_domain',
                default='openstacklocal',
                help=_('Domain to use for building the hostnames')),
+    cfg.StrOpt('external_dns_driver',
+               help=_('Driver for external DNS integration.')),
     cfg.BoolOpt('dhcp_agent_notification', default=True,
                 help=_("Allow sending resource operation"
                        " notification to DHCP agent")),

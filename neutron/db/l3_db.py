@@ -820,7 +820,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             raise l3.FloatingIPNotFound(floatingip_id=id)
         return floatingip
 
-    def _make_floatingip_dict(self, floatingip, fields=None):
+    def _make_floatingip_dict(self, floatingip, fields=None,
+                              process_extensions=True):
         res = {'id': floatingip['id'],
                'tenant_id': floatingip['tenant_id'],
                'floating_ip_address': floatingip['floating_ip_address'],
@@ -829,6 +830,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                'port_id': floatingip['fixed_port_id'],
                'fixed_ip_address': floatingip['fixed_ip_address'],
                'status': floatingip['status']}
+        # NOTE(mlavalle): The following assumes this mixin is used in a
+        # class inheriting from CommonDbMixin, which is true for all existing
+        # plugins.
+        if process_extensions:
+            self._apply_dict_extend_functions(l3.FLOATINGIPS, res, floatingip)
         return self._fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
@@ -1070,8 +1076,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             self._update_fip_assoc(context, fip,
                                    floatingip_db, external_port)
             context.session.add(floatingip_db)
+            floatingip_dict = self._make_floatingip_dict(
+                floatingip_db, process_extensions=False)
+            dns_actions_data = self._process_dns_floatingip_create_precommit(
+                context, floatingip_dict, fip)
 
-        return self._make_floatingip_dict(floatingip_db)
+        self._process_dns_floatingip_create_postcommit(context,
+                                                       floatingip_dict,
+                                                       dns_actions_data)
+        return floatingip_dict
 
     def create_floatingip(self, context, floatingip,
             initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
@@ -1088,7 +1101,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self._core_plugin.get_port(
                                        context.elevated(), fip_port_id))
-        return old_floatingip, self._make_floatingip_dict(floatingip_db)
+            floatingip_dict = self._make_floatingip_dict(floatingip_db)
+            dns_actions_data = self._process_dns_floatingip_update_precommit(
+                context, floatingip_dict)
+        self._process_dns_floatingip_update_postcommit(context,
+                                                       floatingip_dict,
+                                                       dns_actions_data)
+        return old_floatingip, floatingip_dict
 
     def _floatingips_to_router_ids(self, floatingips):
         return list(set([floatingip['router_id']
@@ -1108,6 +1127,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
+        floatingip_dict = self._make_floatingip_dict(floatingip)
+        self._process_dns_floatingip_delete(context, floatingip_dict)
         # Foreign key cascade will take care of the removal of the
         # floating IP record once the port is deleted. We can't start
         # a transaction first to remove it ourselves because the delete_port
@@ -1115,7 +1136,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         self._core_plugin.delete_port(context.elevated(),
                                       floatingip['floating_port_id'],
                                       l3_port_check=False)
-        return self._make_floatingip_dict(floatingip)
+        return floatingip_dict
 
     def delete_floatingip(self, context, id):
         self._delete_floatingip(context, id)

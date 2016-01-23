@@ -33,15 +33,18 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import utils
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
+from neutron.db import dns_db
 from neutron.db import external_net_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -263,9 +266,9 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 # This plugin class is for tests with plugin that integrates L3.
 class TestL3NatIntPlugin(TestL3NatBasePlugin,
-                         l3_db.L3_NAT_db_mixin):
+                         l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
 
-    supported_extension_aliases = ["external-net", "router"]
+    supported_extension_aliases = ["external-net", "router", "dns-integration"]
 
 
 # This plugin class is for tests with plugin that integrates L3 and L3 agent
@@ -293,9 +296,9 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
 # delegate away L3 routing functionality
 class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
                              l3_dvr_db.L3_NAT_with_dvr_db_mixin,
-                             l3_db.L3_NAT_db_mixin):
+                             l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
 
-    supported_extension_aliases = ["router"]
+    supported_extension_aliases = ["router", "dns-integration"]
 
     def get_plugin_type(self):
         return service_constants.L3_ROUTER_NAT
@@ -1190,6 +1193,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             expected_port_update = {
                 'device_owner': l3_constants.DEVICE_OWNER_ROUTER_INTF,
                 'device_id': r['router']['id']}
+            plugin = manager.NeutronManager.get_plugin()
+            if utils.is_extension_supported(plugin, dns.Dns.get_alias()):
+                expected_port_update['dns_name'] = ''
             update_port.assert_called_with(
                 mock.ANY, p['port']['id'], {'port': expected_port_update})
             # fetch port and confirm device_id
