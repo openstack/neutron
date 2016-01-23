@@ -14,8 +14,8 @@
 
 import binascii
 import collections
-import netaddr
 
+import netaddr
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six

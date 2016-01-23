@@ -14,6 +14,7 @@
 #    under the License.
 
 from itertools import chain as iter_chain
+
 import jinja2
 import netaddr
 from oslo_config import cfg

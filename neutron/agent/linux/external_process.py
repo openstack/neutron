@@ -15,13 +15,13 @@
 import abc
 import collections
 import os.path
-import six
 
 import eventlet
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import fileutils
+import six
 
 from neutron._i18n import _, _LW, _LE
 from neutron.agent.common import config as agent_cfg

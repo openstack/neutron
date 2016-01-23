@@ -15,7 +15,6 @@
 
 import mock
 import netaddr
-
 from oslo_db import exception as db_exc
 
 from neutron.api.v2 import attributes
@@ -26,7 +25,6 @@ from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
 from neutron import manager
-
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_plugin
 from neutron.tests.unit import testlib_api
 

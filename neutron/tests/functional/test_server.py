@@ -13,14 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import httplib2
-import mock
 import os
 import signal
 import socket
 import time
 import traceback
 
+import httplib2
+import mock
 from oslo_config import cfg
 import psutil
 

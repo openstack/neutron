@@ -12,9 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import testscenarios
-
 from oslo_utils import uuidutils
+import testscenarios
 
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment

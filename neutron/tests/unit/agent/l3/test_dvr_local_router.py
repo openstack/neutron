@@ -14,7 +14,6 @@
 
 import mock
 import netaddr
-
 from oslo_log import log
 from oslo_utils import uuidutils
 

@@ -14,13 +14,14 @@
 
 import abc
 
+import six
+
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import exceptions as nexception
 from neutron import manager
-import six
 
 ADDRESS_SCOPE = 'address_scope'
 ADDRESS_SCOPES = '%ss' % ADDRESS_SCOPE

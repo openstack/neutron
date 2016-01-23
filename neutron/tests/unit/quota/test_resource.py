@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import uuid
 
+import mock
 from oslo_config import cfg
 
 from neutron import context

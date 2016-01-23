@@ -14,13 +14,12 @@
 #    under the License.
 
 import string
-import testtools
 
 import mock
 import netaddr
-import webob.exc
-
 from oslo_utils import uuidutils
+import testtools
+import webob.exc
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes

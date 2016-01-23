@@ -14,8 +14,9 @@
 #    under the License.
 
 import collections
-import mock
 import uuid
+
+import mock
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib

@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from six.moves import http_client as httplib
-
 from oslo_config import cfg
+from six.moves import http_client as httplib
 from webob import exc
 
 from neutron import context

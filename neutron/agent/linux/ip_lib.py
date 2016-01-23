@@ -13,14 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+import re
+
 import debtcollector
 import eventlet
 import netaddr
-import os
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
-import re
 import six
 
 from neutron._i18n import _, _LE

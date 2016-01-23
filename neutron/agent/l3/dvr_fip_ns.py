@@ -14,13 +14,14 @@
 
 import os
 
+from oslo_log import log as logging
+
 from neutron.agent.l3 import fip_rule_priority_allocator as frpa
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
-from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import namedtuple
 import os
 
-from collections import namedtuple
 import mock
 from oslo_config import cfg
 from oslo_policy import policy as oslo_policy

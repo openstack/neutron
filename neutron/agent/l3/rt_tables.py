@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import os
-import six
 
+import netaddr
 from oslo_log import log as logging
+import six
 
 from neutron.agent.common import utils as common_utils
 from neutron.agent.linux import ip_lib

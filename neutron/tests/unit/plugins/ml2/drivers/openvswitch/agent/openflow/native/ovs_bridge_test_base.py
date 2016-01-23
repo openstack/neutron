@@ -15,7 +15,6 @@
 #    under the License.
 
 import mock
-
 from oslo_utils import importutils
 
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \

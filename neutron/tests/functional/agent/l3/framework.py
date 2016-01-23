@@ -17,11 +17,10 @@ import functools
 
 import mock
 import netaddr
-import testtools
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib

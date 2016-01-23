@@ -12,9 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import oslo_messaging
-
 from oslo_log import log as logging
+import oslo_messaging
 
 from neutron._i18n import _LW
 from neutron.common import constants

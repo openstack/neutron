@@ -12,14 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
-
 from alembic import script as alembic_script
 from contextlib import contextmanager
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_base
 from oslo_db.sqlalchemy import test_migrations
+import six
 import sqlalchemy
 from sqlalchemy import event
 import sqlalchemy.types as types

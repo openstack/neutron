@@ -13,7 +13,6 @@
 #    under the License.
 
 import netaddr
-
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LW

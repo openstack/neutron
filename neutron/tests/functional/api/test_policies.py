@@ -15,12 +15,10 @@
 
 import os.path
 
-from neutron import context
-from neutron import policy
-
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-
+from neutron import context
+from neutron import policy
 from neutron.tests import base
 from neutron.tests import tools
 

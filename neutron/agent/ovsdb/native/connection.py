@@ -13,13 +13,13 @@
 #    under the License.
 
 import os
-from six.moves import queue as Queue
 import threading
 import traceback
 
 from ovs.db import idl
 from ovs import poller
 import retrying
+from six.moves import queue as Queue
 
 from neutron.agent.ovsdb.native import helpers
 from neutron.agent.ovsdb.native import idlutils

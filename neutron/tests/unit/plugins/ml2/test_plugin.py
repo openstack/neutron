@@ -14,12 +14,12 @@
 #    under the License.
 
 import functools
+import uuid
 
 import fixtures
 import mock
 import six
 import testtools
-import uuid
 import webob
 
 from oslo_db import exception as db_exc

@@ -14,10 +14,10 @@
 #    under the License.
 
 import copy
-
-import eventlet
 from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
+
+import eventlet
 import mock
 import netaddr
 from oslo_log import log

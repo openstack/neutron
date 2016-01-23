@@ -14,8 +14,8 @@
 #    under the License.
 
 import abc
-import netaddr
 
+import netaddr
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import six

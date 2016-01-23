@@ -13,15 +13,15 @@
 #    under the License.
 
 import itertools
+
 import netaddr
 from oslo_log import log as logging
+from oslo_utils import excutils
 from oslo_utils import uuidutils
+import six
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
-
-from oslo_utils import excutils
-import six
 
 from neutron._i18n import _, _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api

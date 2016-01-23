@@ -15,6 +15,7 @@
 #    under the License.
 
 import math
+
 import mock
 
 from neutron.common import constants as const

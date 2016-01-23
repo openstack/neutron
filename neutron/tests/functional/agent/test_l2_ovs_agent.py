@@ -17,6 +17,7 @@
 import time
 
 from eventlet.timeout import Timeout
+
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base

@@ -16,11 +16,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import copy
-import testscenarios
 
 import netaddr
 from oslo_config import cfg
+import testscenarios
 
 from neutron.agent import firewall
 from neutron.agent.linux import iptables_firewall

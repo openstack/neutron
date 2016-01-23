@@ -15,10 +15,9 @@
 
 import mock
 import netaddr
-import webob.exc
-
 from oslo_config import cfg
 from oslo_utils import uuidutils
+import webob.exc
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc

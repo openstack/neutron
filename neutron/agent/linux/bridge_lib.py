@@ -17,6 +17,7 @@
 #    under the License.
 
 import os
+
 from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
