@@ -551,6 +551,32 @@ class TestOvsNeutronAgent(object):
                 vif_port_set, registered_ports, port_tags_dict=port_tags_dict)
         self.assertEqual(expected, actual)
 
+    def test_update_retries_map_and_remove_devs_not_to_retry(self):
+        failed_devices_retries_map = {
+            'device_not_to_retry': constants.MAX_DEVICE_RETRIES,
+            'device_to_retry': 2,
+            'ancillary_not_to_retry': constants.MAX_DEVICE_RETRIES,
+            'ancillary_to_retry': 1}
+        failed_devices = {
+            'added': set(['device_not_to_retry']),
+            'removed': set(['device_to_retry', 'new_device'])}
+        failed_ancillary_devices = {'added': set(['ancillary_to_retry']),
+                                    'removed': set(['ancillary_not_to_retry'])}
+        expected_failed_devices_retries_map = {
+            'device_to_retry': 3, 'new_device': 1, 'ancillary_to_retry': 2}
+        (new_failed_devices_retries_map, devices_not_to_retry,
+         ancillary_devices_not_t_retry) = self.agent._get_devices_not_to_retry(
+            failed_devices, failed_ancillary_devices,
+            failed_devices_retries_map)
+        self.agent._remove_devices_not_to_retry(
+            failed_devices, failed_ancillary_devices, devices_not_to_retry,
+            ancillary_devices_not_t_retry)
+        self.assertIn('device_to_retry', failed_devices['removed'])
+        self.assertNotIn('device_not_to_retry', failed_devices['added'])
+        self.assertEqual(
+            expected_failed_devices_retries_map,
+            new_failed_devices_retries_map)
+
     def test_bind_devices(self):
         devices_up = ['tap1']
         devices_down = ['tap2']

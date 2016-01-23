@@ -1762,6 +1762,64 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return (port_info, ancillary_port_info, consecutive_resyncs,
                 ports_not_ready_yet)
 
+    def _remove_devices_not_to_retry(self, failed_devices,
+                                     failed_ancillary_devices,
+                                     devices_not_to_retry,
+                                     ancillary_devices_not_to_retry):
+        """This method removes the devices that exceeded the number of retries
+           from failed_devices and failed_ancillary_devices
+
+        """
+        for event in ['added', 'removed']:
+            failed_devices[event] = (
+                failed_devices[event] - devices_not_to_retry[event])
+            failed_ancillary_devices[event] = (
+                failed_ancillary_devices[event] -
+                ancillary_devices_not_to_retry[event])
+
+    def _get_devices_not_to_retry(self, failed_devices,
+                                  failed_ancillary_devices,
+                                  failed_devices_retries_map):
+        """Return the devices not to retry and update the retries map"""
+        new_failed_devices_retries_map = {}
+        devices_not_to_retry = {}
+        ancillary_devices_not_to_retry = {}
+
+        def _increase_retries(devices_set):
+            devices_not_to_retry = set()
+            for dev in devices_set:
+                retries = failed_devices_retries_map.get(dev, 0)
+                if retries >= constants.MAX_DEVICE_RETRIES:
+                    devices_not_to_retry.add(dev)
+                    LOG.warning(_LW(
+                        "Device %(dev)s failed for %(times)s times and won't "
+                        "be retried anymore"), {
+                            'dev': dev, 'times': constants.MAX_DEVICE_RETRIES})
+                else:
+                    new_failed_devices_retries_map[dev] = retries + 1
+            return devices_not_to_retry
+
+        for event in ['added', 'removed']:
+            devices_not_to_retry[event] = _increase_retries(
+                failed_devices[event])
+            ancillary_devices_not_to_retry[event] = _increase_retries(
+                failed_ancillary_devices[event])
+
+        return (new_failed_devices_retries_map, devices_not_to_retry,
+                ancillary_devices_not_to_retry)
+
+    def update_retries_map_and_remove_devs_not_to_retry(
+            self, failed_devices, failed_ancillary_devices,
+            failed_devices_retries_map):
+        (new_failed_devices_retries_map, devices_not_to_retry,
+         ancillary_devices_not_to_retry) = self._get_devices_not_to_retry(
+            failed_devices, failed_ancillary_devices,
+            failed_devices_retries_map)
+        self._remove_devices_not_to_retry(
+            failed_devices, failed_ancillary_devices, devices_not_to_retry,
+            ancillary_devices_not_to_retry)
+        return new_failed_devices_retries_map
+
     def rpc_loop(self, polling_manager=None):
         if not polling_manager:
             polling_manager = polling.get_polling_manager(
@@ -1778,7 +1836,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ports_not_ready_yet = set()
         failed_devices = {'added': set(), 'removed': set()}
         failed_ancillary_devices = {'added': set(), 'removed': set()}
-
+        failed_devices_retries_map = {}
         while self._check_and_handle_signal():
             if self.fullsync:
                 LOG.info(_LI("rpc_loop doing a full sync."))
@@ -1893,6 +1951,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         ancillary_ports = ancillary_port_info['current']
 
                     polling_manager.polling_completed()
+                    failed_devices_retries_map = (
+                        self.update_retries_map_and_remove_devs_not_to_retry(
+                            failed_devices, failed_ancillary_devices,
+                            failed_devices_retries_map))
                     # Keep this flag in the last line of "try" block,
                     # so we can sure that no other Exception occurred.
                     ovs_restarted = False
