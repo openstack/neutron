@@ -65,6 +65,10 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             mock.call('router', 'after_delete', self.agent, router=router)]
         event_handler.assert_has_calls(expected_calls)
 
+    def test_legacy_router_update_floatingip_statuses(self):
+        self._test_update_floatingip_statuses(
+            self.generate_router_info(enable_ha=False))
+
     def test_legacy_router_lifecycle(self):
         self._router_lifecycle(enable_ha=False, dual_stack=True)
 
