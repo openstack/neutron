@@ -19,6 +19,7 @@ from oslo_utils import importutils
 from pecan import request
 from pecan import response
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
