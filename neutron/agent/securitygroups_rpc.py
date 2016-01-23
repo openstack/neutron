@@ -160,13 +160,13 @@ class SecurityGroupAgentRpc(object):
                 self.context, list(device_ids))
 
         with self.firewall.defer_apply():
-            for device in devices.values():
-                self.firewall.prepare_port_filter(device)
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
                           devices.keys())
                 self._update_security_group_info(
                     security_groups, security_group_member_ips)
+            for device in devices.values():
+                self.firewall.prepare_port_filter(device)
 
     def _update_security_group_info(self, security_groups,
                                     security_group_member_ips):
@@ -250,14 +250,14 @@ class SecurityGroupAgentRpc(object):
                 self.context, device_ids)
 
         with self.firewall.defer_apply():
-            for device in devices.values():
-                LOG.debug("Update port filter for %s", device['device'])
-                self.firewall.update_port_filter(device)
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
                           devices.keys())
                 self._update_security_group_info(
                     security_groups, security_group_member_ips)
+            for device in devices.values():
+                LOG.debug("Update port filter for %s", device['device'])
+                self.firewall.update_port_filter(device)
 
     def firewall_refresh_needed(self):
         return self.global_refresh_firewall or self.devices_to_refilter
