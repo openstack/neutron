@@ -17,6 +17,7 @@ import os
 from alembic import command as alembic_command
 from alembic import config as alembic_config
 from alembic import environment
+from alembic import migration as alembic_migration
 from alembic import script as alembic_script
 from alembic import util as alembic_util
 import debtcollector
@@ -29,6 +30,7 @@ import six
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import migration
+from neutron.db.migration.connection import DBConnection
 
 
 HEAD_FILENAME = 'HEAD'
@@ -435,6 +437,32 @@ def update_head_file(config):
         f.write('\n'.join(head))
 
 
+def _get_current_database_heads(config):
+    with DBConnection(config.neutron_config.database.connection) as conn:
+        opts = {
+            'version_table': get_alembic_version_table(config)
+        }
+        context = alembic_migration.MigrationContext.configure(
+            conn, opts=opts)
+        return context.get_current_heads()
+
+
+def has_offline_migrations(config, cmd):
+    heads_map = _get_heads_map(config)
+    if heads_map[CONTRACT_BRANCH] not in _get_current_database_heads(config):
+        # If there is at least one contract revision not applied to database,
+        # it means we should shut down all neutron-server instances before
+        # proceeding with upgrade.
+        project = config.get_main_option('neutron_project')
+        alembic_util.msg(_('Need to apply migrations from %(project)s '
+                           'contract branch. This will require all Neutron '
+                           'server instances to be shutdown before '
+                           'proceeding with the upgrade.') %
+            {"project": project})
+        return True
+    return False
+
+
 def add_command_parsers(subparsers):
     for name in ['current', 'history', 'branches', 'heads']:
         parser = add_alembic_subparser(subparsers, name)
@@ -476,6 +504,13 @@ def add_command_parsers(subparsers):
     parser.add_argument('--sql', action='store_true')
     add_branch_options(parser)
     parser.set_defaults(func=do_revision)
+
+    parser = subparsers.add_parser(
+        'has_offline_migrations',
+        help='Determine whether there are pending migration scripts that '
+             'require full shutdown for all services that directly access '
+             'database.')
+    parser.set_defaults(func=has_offline_migrations)
 
 
 command_opt = cfg.SubCommandOpt('command',
@@ -610,6 +645,21 @@ def _get_subproject_base(subproject):
     return entrypoint.module_name.split('.')[0]
 
 
+def get_alembic_version_table(config):
+    script_dir = alembic_script.ScriptDirectory.from_config(config)
+    alembic_version_table = [None]
+
+    def alembic_version_table_from_env(rev, context):
+        alembic_version_table[0] = context.version_table
+        return []
+
+    with environment.EnvironmentContext(config, script_dir,
+                                       fn=alembic_version_table_from_env):
+        script_dir.run_env()
+
+    return alembic_version_table[0]
+
+
 def get_alembic_configs():
     '''Return a list of alembic configs, one per project.
     '''
@@ -688,6 +738,12 @@ def get_engine_config():
 def main():
     CONF(project='neutron')
     validate_cli_options()
+    return_val = False
     for config in get_alembic_configs():
         #TODO(gongysh) enable logging
-        CONF.command.func(config, CONF.command.name)
+        return_val |= bool(CONF.command.func(config, CONF.command.name))
+
+    if CONF.command.name == 'has_offline_migrations' and not return_val:
+        alembic_util.msg(_('No offline migrations pending.'))
+
+    return return_val
