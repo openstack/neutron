@@ -51,6 +51,19 @@ def _get_cache_region(conf):
     return region
 
 
+def _get_memory_cache_region(expiration_time=5):
+    conf = cfg.ConfigOpts()
+    register_oslo_configs(conf)
+    cache_conf_dict = {
+        'enabled': True,
+        'backend': 'oslo_cache.dict',
+        'expiration_time': expiration_time,
+    }
+    for k, v in cache_conf_dict.items():
+        conf.set_override(k, v, group='cache')
+    return _get_cache_region(conf)
+
+
 def _get_cache_region_for_legacy(url):
     parsed = parse.urlparse(url)
     backend = parsed.scheme
@@ -65,17 +78,8 @@ def _get_cache_region_for_legacy(url):
         if not query and '?' in parsed.path:
             query = parsed.path.split('?', 1)[-1]
         parameters = parse.parse_qs(query)
-
-        conf = cfg.ConfigOpts()
-        register_oslo_configs(conf)
-        cache_conf_dict = {
-            'enabled': True,
-            'backend': 'oslo_cache.dict',
-            'expiration_time': int(parameters.get('default_ttl', [0])[0]),
-        }
-        for k, v in cache_conf_dict.items():
-            conf.set_override(k, v, group='cache')
-        return _get_cache_region(conf)
+        return _get_memory_cache_region(
+            expiration_time=int(parameters.get('default_ttl', [0])[0]))
     else:
         raise RuntimeError(_('Old style configuration can use only memory '
                              '(dict) backend'))

@@ -570,6 +570,17 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             oslo_policy.Rules.from_dict,
             {'test_policy': 'tenant_id:(wrong_stuff)'})
 
+    def test_tenant_id_check_caches_extracted_fields(self):
+
+        plugin = directory.get_plugin()
+        with mock.patch.object(plugin, 'get_network',
+                               return_value={'tenant_id': 'fake'}) as getter:
+            action = "create_port:mac"
+            for i in range(2):
+                target = {'network_id': 'whatever'}
+                policy.enforce(self.context, action, target)
+        self.assertEqual(1, getter.call_count)
+
     def _test_enforce_tenant_id_raises(self, bad_rule):
         self._set_rules(admin_or_owner=bad_rule)
         # Trigger a policy with rule admin_or_owner

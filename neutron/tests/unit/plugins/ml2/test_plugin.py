@@ -670,6 +670,28 @@ class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
     admin = False
 
 
+class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
+
+    def make_port_in_shared_network(self):
+        context_ = self._get_context()
+        # create shared network owned by the tenant; we use direct driver call
+        # because default policy does not allow users to create shared networks
+        net = self.driver.create_network(
+            context.get_admin_context(),
+            {'network': {'name': 'net1',
+                         'tenant_id': context_.tenant,
+                         'admin_state_up': True,
+                         'shared': True}})
+        # create port that belongs to another tenant
+        return self._make_port(
+            self.fmt, net['id'],
+            set_context=True, tenant_id='fake_tenant')
+
+    def test_port_list_in_shared_network_queries_constant(self):
+        self._assert_object_list_queries_constant(
+            self.make_port_in_shared_network, 'ports')
+
+
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test__port_provisioned_with_blocks(self):

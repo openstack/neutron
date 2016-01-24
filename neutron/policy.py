@@ -29,6 +29,7 @@ import six
 
 from neutron._i18n import _, _LE, _LW
 from neutron.api.v2 import attributes
+from neutron.common import cache_utils as cache
 from neutron.common import constants as const
 
 
@@ -209,7 +210,34 @@ class OwnerCheck(policy.Check):
             raise exceptions.PolicyInitError(
                 policy="%s:%s" % (kind, match),
                 reason=err_reason)
+        self._cache = cache._get_memory_cache_region(expiration_time=5)
         super(OwnerCheck, self).__init__(kind, match)
+
+    @cache.cache_method_results
+    def _extract(self, resource_type, resource_id, field):
+        # NOTE(salv-orlando): This check currently assumes the parent
+        # resource is handled by the core plugin. It might be worth
+        # having a way to map resources to plugins so to make this
+        # check more general
+        f = getattr(directory.get_plugin(), 'get_%s' % resource_type)
+        # f *must* exist, if not found it is better to let neutron
+        # explode. Check will be performed with admin context
+        context = importutils.import_module('neutron.context')
+        try:
+            data = f(context.get_admin_context(),
+                     resource_id,
+                     fields=[field])
+        except exceptions.NotFound as e:
+            # NOTE(kevinbenton): a NotFound exception can occur if a
+            # list operation is happening at the same time as one of
+            # the parents and its children being deleted. So we issue
+            # a RetryRequest so the API will redo the lookup and the
+            # problem items will be gone.
+            raise db_exc.RetryRequest(e)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_LE('Policy check error while calling %s!'), f)
+        return data[field]
 
     def __call__(self, target, creds, enforcer):
         if self.target_field not in target:
@@ -248,30 +276,10 @@ class OwnerCheck(policy.Check):
                 raise exceptions.PolicyCheckError(
                     policy="%s:%s" % (self.kind, self.match),
                     reason=err_reason)
-            # NOTE(salv-orlando): This check currently assumes the parent
-            # resource is handled by the core plugin. It might be worth
-            # having a way to map resources to plugins so to make this
-            # check more general
-            f = getattr(directory.get_plugin(), 'get_%s' % parent_res)
-            # f *must* exist, if not found it is better to let neutron
-            # explode. Check will be performed with admin context
-            context = importutils.import_module('neutron.context')
-            try:
-                data = f(context.get_admin_context(),
-                         target[parent_foreign_key],
-                         fields=[parent_field])
-                target[self.target_field] = data[parent_field]
-            except exceptions.NotFound as e:
-                # NOTE(kevinbenton): a NotFound exception can occur if a
-                # list operation is happening at the same time as one of
-                # the parents and its children being deleted. So we issue
-                # a RetryRequest so the API will redo the lookup and the
-                # problem items will be gone.
-                raise db_exc.RetryRequest(e)
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    LOG.exception(_LE('Policy check error while calling %s!'),
-                                  f)
+
+            target[self.target_field] = self._extract(
+                parent_res, target[parent_foreign_key], parent_field)
+
         match = self.match % target
         if self.kind in creds:
             return match == six.text_type(creds[self.kind])
