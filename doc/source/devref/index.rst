@@ -70,6 +70,7 @@ Neutron Internals
    oslo-incubator
    callbacks
    dns_order
+   external_dns_integration
    upgrade
    i18n
    instrumentation
