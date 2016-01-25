@@ -264,6 +264,11 @@ class TestResourceController(TestRootController):
                                      params={'port': {'name': 'test'}},
                                      headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 200)
+        json_body = jsonutils.loads(response.body)
+        self.assertEqual(1, len(json_body))
+        self.assertIn('port', json_body)
+        self.assertEqual('test', json_body['port']['name'])
+        self.assertEqual('tenid', json_body['port']['tenant_id'])
 
     def test_delete(self):
         response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
