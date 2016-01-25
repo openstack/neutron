@@ -21,7 +21,7 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Neutron Stadiun i18n
+Neutron Stadium i18n
 ====================
 
 * Refer to oslo_i18n documentation for the general mechanisms that should
