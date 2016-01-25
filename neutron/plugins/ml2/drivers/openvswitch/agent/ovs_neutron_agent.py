@@ -1016,7 +1016,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                           "tunneling enabled on this agent, since this "
                           "version of OVS does not support tunnels or patch "
                           "ports. Agent terminated!"))
-            exit(1)
+            sys.exit(1)
         if self.conf.AGENT.drop_flows_on_start:
             self.tun_br.delete_flows()
 

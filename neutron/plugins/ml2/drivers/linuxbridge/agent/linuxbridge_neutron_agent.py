@@ -889,7 +889,7 @@ class LinuxBridgeNeutronAgentRPC(service.Service):
             else:
                 LOG.error(_LE("Unable to obtain MAC address for unique ID. "
                               "Agent terminated!"))
-                exit(1)
+                sys.exit(1)
 
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
