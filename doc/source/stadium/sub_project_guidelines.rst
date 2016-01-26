@@ -170,11 +170,18 @@ To release a sub-project, follow the following steps:
   `this <https://pypi.python.org/pypi/networking-odl>`_.
 * A sub-project owner should next go to Launchpad and release this version
   using the "Release Now" button for the release itself.
-* A sub-project owner should update any bugs that were fixed with this
-  release to "Fix Released" in Launchpad.
+* If a sub-project uses the "delay-release" option, a sub-project owner should
+  update any bugs that were fixed with this release to "Fix Released" in
+  Launchpad.  This step is not necessary if the sub-project uses the
+  "direct-release" option, which is the default.  [#jeepyb_release_options]_
 * A sub-project owner should add the tarball to the Launchpad page for the
   release using the "Add download file" link.
 * A sub-project owner should add the next milestone to the Launchpad series, or
   if a new series is required, create the new series and a new milestone.
 * Finally a sub-project owner should send an email to the openstack-announce
   mailing list announcing the new release.
+
+References
+~~~~~~~~~~
+
+.. [#jeepyb_release_options] http://lists.openstack.org/pipermail/openstack-dev/2015-December/081724.html
