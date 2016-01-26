@@ -25,6 +25,8 @@ Neutron Specific Commandments
          assertEqual(observed_http_code, expected_http_code).
 - [N333] Validate that LOG.warning is used instead of LOG.warn. The latter
   is deprecated.
+- [N340] Check usage of <module>.i18n (and neutron.i18n)
+- [N341] Check usage of _ from python builtins
 
 Creating Unit Tests
 -------------------

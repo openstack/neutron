@@ -10,7 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
+from flake8 import engine
+from hacking.tests import test_doctest as hacking_doctest
+import pep8
+import testscenarios
 import testtools
+from testtools import content
+from testtools import matchers
 
 from neutron.hacking import checks
 from neutron.tests import base
@@ -273,3 +281,84 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             0, len(list(checks.check_assertequal_for_httpcode(pass_code,
                                         "neutron/tests/test_assert.py"))))
+
+# The following is borrowed from hacking/tests/test_doctest.py.
+# Tests defined in docstring is easier to understand
+# in some cases, for example, hacking rules which take tokens as argument.
+
+# TODO(amotoki): Migrate existing unit tests above to docstring tests.
+# NOTE(amotoki): Is it better to enhance HackingDocTestCase in hacking repo to
+# pass filename to pep8.Checker so that we can reuse it in this test.
+# I am not sure whether unit test class is public.
+
+SELFTEST_REGEX = re.compile(r'\b(Okay|N\d{3})(\((\S+)\))?:\s(.*)')
+
+
+# Each scenario is (name, dict(filename=..., lines=.., options=..., code=...))
+file_cases = []
+
+
+class HackingDocTestCase(hacking_doctest.HackingTestCase):
+
+    scenarios = file_cases
+
+    def test_pep8(self):
+
+        # NOTE(jecarey): Add tests marked as off_by_default to enable testing
+        turn_on = set(['H106'])
+        if self.options.select:
+            turn_on.update(self.options.select)
+        self.options.select = tuple(turn_on)
+
+        report = pep8.BaseReport(self.options)
+        checker = pep8.Checker(filename=self.filename, lines=self.lines,
+                               options=self.options, report=report)
+        checker.check_all()
+        self.addDetail('doctest', content.text_content(self.raw))
+        if self.code == 'Okay':
+            self.assertThat(
+                len(report.counters),
+                matchers.Not(matchers.GreaterThan(
+                    len(self.options.benchmark_keys))),
+                "incorrectly found %s" % ', '.join(
+                    [key for key in report.counters
+                     if key not in self.options.benchmark_keys]))
+        else:
+            self.addDetail('reason',
+                           content.text_content("Failed to trigger rule %s" %
+                                                self.code))
+            self.assertIn(self.code, report.counters)
+
+
+def _get_lines(check):
+    for line in check.__doc__.splitlines():
+        line = line.lstrip()
+        match = SELFTEST_REGEX.match(line)
+        if match is None:
+            continue
+        yield (line, match.groups())
+
+
+def load_tests(loader, tests, pattern):
+
+    flake8_style = engine.get_style_guide(parse_argv=False,
+                                          # Ignore H104 otherwise it's
+                                          # raised on doctests.
+                                          ignore=('F', 'H104'))
+    options = flake8_style.options
+
+    for name, check in checks.__dict__.items():
+        if not hasattr(check, 'name'):
+            continue
+        if check.name != checks.__name__:
+            continue
+        if not check.__doc__:
+            continue
+        for (lineno, (raw, line)) in enumerate(_get_lines(check)):
+            code, __, filename, source = line
+            lines = [part.replace(r'\t', '\t') + '\n'
+                     for part in source.split(r'\n')]
+            file_cases.append(("%s-line-%s" % (name, lineno),
+                              dict(lines=lines, raw=raw, options=options,
+                                   code=code, filename=filename)))
+    return testscenarios.load_tests_apply_scenarios(loader, tests, pattern)

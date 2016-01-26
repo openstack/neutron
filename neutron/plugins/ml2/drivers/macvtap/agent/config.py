@@ -16,6 +16,8 @@
 
 from oslo_config import cfg
 
+from neutron._i18n import _
+
 DEFAULT_INTERFACE_MAPPINGS = []
 
 macvtap_opts = [

@@ -25,6 +25,7 @@ from sqlalchemy.orm import exc as sa_exc
 
 from neutron_lib import constants as lib_consts
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 from neutron.db import address_scope_db

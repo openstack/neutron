@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy import sql
 from sqlalchemy.sql import expression as expr
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
