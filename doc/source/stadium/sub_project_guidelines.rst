@@ -174,8 +174,8 @@ To release a sub-project, follow the following steps:
   update any bugs that were fixed with this release to "Fix Released" in
   Launchpad.  This step is not necessary if the sub-project uses the
   "direct-release" option, which is the default.  [#jeepyb_release_options]_
-* A sub-project owner should add the tarball to the Launchpad page for the
-  release using the "Add download file" link.
+* The new release will be available on `OpenStack Releases
+  <http://docs.openstack.org/releases/>`_.
 * A sub-project owner should add the next milestone to the Launchpad series, or
   if a new series is required, create the new series and a new milestone.
 * Finally a sub-project owner should send an email to the openstack-announce
