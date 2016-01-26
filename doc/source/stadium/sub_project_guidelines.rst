@@ -148,13 +148,19 @@ Sub-Project Release Process
 
 Only members of the `neutron-release
 <https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can do
-releases. The same group can create stable branches. Make sure you talk to
-a member of neutron-release to perform your release.
+the following release related tasks:
+
+* Make releases
+* Create stable branches
+* Make stable branches end of life
+
+Make sure you talk to a member of neutron-release to perform these tasks.
+
+Follow the process found `here <http://docs.openstack.org/developer/neutron/policies/bugs.html#plugin-and-driver-repositories>`_
+for creating a bug for your request.
 
 To release a sub-project, follow the following steps:
 
-* First, follow the process found `here <http://docs.openstack.org/developer/neutron/policies/bugs.html#plugin-and-driver-repositories>`_
-  for creating a bug for your release and/or stable branch creation.
 * For projects which have not moved to post-versioning, we need to push an
   alpha tag to avoid pbr complaining. A member of the neutron-release group
   will handle this.
@@ -180,6 +186,17 @@ To release a sub-project, follow the following steps:
   if a new series is required, create the new series and a new milestone.
 * Finally a sub-project owner should send an email to the openstack-announce
   mailing list announcing the new release.
+
+To make a branch end of life, follow the following steps:
+
+* A member of neutron-release will abandon all open change reviews on
+  the branch.
+* A member of neutron-release will push an EOL tag on the branch.
+  (eg. "icehouse-eol")
+* A sub-project owner should request the infrastructure team to delete
+  the branch by sending an email to the infrastructure mailing list, not by
+  bothering the infrastructure team on IRC.
+* A sub-project owner should tweak jenkins jobs in project-config if any.
 
 References
 ~~~~~~~~~~
