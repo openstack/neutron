@@ -133,9 +133,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             self.fip_ns.local_subnets.release(self.router_id)
             self.rtr_fip_subnet = None
             ns_ip.del_veth(fip_2_rtr_name)
-            # NOTE (Swami): The fg interface and the namespace will be deleted
-            # when the external gateway port is removed. This will be
-            # initiated from the server through an RPC call.
 
     def add_floating_ip(self, fip, interface_name, device):
         if not self._add_fip_addr_to_device(fip, device):
