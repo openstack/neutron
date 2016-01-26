@@ -227,3 +227,97 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
+
+    def _setup_address_scope(self, internal_address_scope1,
+                             internal_address_scope2, gw_address_scope=None):
+        router_info = self.generate_router_info(enable_ha=False,
+                                                num_internal_ports=2)
+        address_scope1 = {l3_constants.IP_VERSION_4: internal_address_scope1}
+        address_scope2 = {l3_constants.IP_VERSION_4: internal_address_scope2}
+        if gw_address_scope:
+            router_info['gw_port']['address_scopes'] = {
+                l3_constants.IP_VERSION_4: gw_address_scope}
+        router_info[l3_constants.INTERFACE_KEY][0]['address_scopes'] = (
+            address_scope1)
+        router_info[l3_constants.INTERFACE_KEY][1]['address_scopes'] = (
+            address_scope2)
+
+        router = self.manage_router(self.agent, router_info)
+        router_ip_cidr1 = self._port_first_ip_cidr(router.internal_ports[0])
+        router_ip1 = router_ip_cidr1.partition('/')[0]
+        router_ip_cidr2 = self._port_first_ip_cidr(router.internal_ports[1])
+        router_ip2 = router_ip_cidr2.partition('/')[0]
+
+        br_int = framework.get_ovs_bridge(
+            self.agent.conf.ovs_integration_bridge)
+        test_machine1 = self.useFixture(
+            machine_fixtures.FakeMachine(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr1),
+                router_ip1))
+        test_machine2 = self.useFixture(
+            machine_fixtures.FakeMachine(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr2),
+                router_ip2))
+
+        return test_machine1, test_machine2, router
+
+    def test_connection_from_same_address_scope(self):
+        test_machine1, test_machine2, _ = self._setup_address_scope(
+            'scope1', 'scope1')
+        # Internal networks that are in the same address scope can connected
+        # each other
+        net_helpers.assert_ping(test_machine1.namespace, test_machine2.ip, 5)
+        net_helpers.assert_ping(test_machine2.namespace, test_machine1.ip, 5)
+
+    def test_connection_from_diff_address_scope(self):
+        test_machine1, test_machine2, _ = self._setup_address_scope(
+            'scope1', 'scope2')
+        # Internal networks that are not in the same address scope should
+        # not reach each other
+        test_machine1.assert_no_ping(test_machine2.ip)
+        test_machine2.assert_no_ping(test_machine1.ip)
+
+    def test_fip_connection_for_address_scope(self):
+        (machine_same_scope, machine_diff_scope,
+            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
+
+        router.router[l3_constants.FLOATINGIP_KEY] = []
+        fip_same_scope = '19.4.4.10'
+        self._add_fip(router, fip_same_scope,
+                      fixed_address=machine_same_scope.ip,
+                      fixed_ip_address_scope='scope1')
+        fip_diff_scope = '19.4.4.11'
+        self._add_fip(router, fip_diff_scope,
+                      fixed_address=machine_diff_scope.ip,
+                      fixed_ip_address_scope='scope2')
+        router.process(self.agent)
+
+        br_ex = framework.get_ovs_bridge(
+            self.agent.conf.external_network_bridge)
+        src_machine = self.useFixture(
+            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24'))
+        # Floating ip should work no matter of address scope
+        net_helpers.assert_ping(src_machine.namespace, fip_same_scope, 5)
+        net_helpers.assert_ping(src_machine.namespace, fip_diff_scope, 5)
+
+    def test_direct_route_for_address_scope(self):
+        (machine_same_scope, machine_diff_scope,
+            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
+
+        gw_port = router.get_ex_gw_port()
+        gw_ip = self._port_first_ip_cidr(gw_port).partition('/')[0]
+        br_ex = framework.get_ovs_bridge(
+            self.agent.conf.external_network_bridge)
+
+        src_machine = self.useFixture(
+            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24', gw_ip))
+        # For the internal networks that are in the same address scope as
+        # external network, they can directly route to external network
+        net_helpers.assert_ping(
+            src_machine.namespace, machine_same_scope.ip, 5)
+        # For the internal networks that are not in the same address scope as
+        # external networks. SNAT will be used. Direct route will not work
+        # here.
+        src_machine.assert_no_ping(machine_diff_scope.ip)
