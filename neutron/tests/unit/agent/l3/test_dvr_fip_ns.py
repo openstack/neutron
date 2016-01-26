@@ -39,23 +39,23 @@ class TestDvrFipNs(base.BaseTestCase):
                                               use_ipv6=True)
 
     def test_subscribe(self):
-        is_first = self.fip_ns.subscribe(mock.sentinel.router_id)
+        is_first = self.fip_ns.subscribe(mock.sentinel.external_net_id)
         self.assertTrue(is_first)
 
     def test_subscribe_not_first(self):
-        self.fip_ns.subscribe(mock.sentinel.router_id)
-        is_first = self.fip_ns.subscribe(mock.sentinel.router_id2)
+        self.fip_ns.subscribe(mock.sentinel.external_net_id)
+        is_first = self.fip_ns.subscribe(mock.sentinel.external_net_id2)
         self.assertFalse(is_first)
 
     def test_unsubscribe(self):
-        self.fip_ns.subscribe(mock.sentinel.router_id)
-        is_last = self.fip_ns.unsubscribe(mock.sentinel.router_id)
+        self.fip_ns.subscribe(mock.sentinel.external_net_id)
+        is_last = self.fip_ns.unsubscribe(mock.sentinel.external_net_id)
         self.assertTrue(is_last)
 
     def test_unsubscribe_not_last(self):
-        self.fip_ns.subscribe(mock.sentinel.router_id)
-        self.fip_ns.subscribe(mock.sentinel.router_id2)
-        is_last = self.fip_ns.unsubscribe(mock.sentinel.router_id2)
+        self.fip_ns.subscribe(mock.sentinel.external_net_id)
+        self.fip_ns.subscribe(mock.sentinel.external_net_id2)
+        is_last = self.fip_ns.unsubscribe(mock.sentinel.external_net_id2)
         self.assertFalse(is_last)
 
     def test_allocate_rule_priority(self):

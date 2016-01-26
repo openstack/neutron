@@ -74,4 +74,5 @@ class AgentMixin(object):
         """Delete fip namespace after external network removed."""
         fip_ns = self.get_fip_ns(ext_net_id)
         if fip_ns.agent_gateway_port and not fip_ns.destroyed:
+            fip_ns.unsubscribe(ext_net_id)
             fip_ns.delete()

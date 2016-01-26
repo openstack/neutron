@@ -251,7 +251,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         mIPRule().rule.delete.assert_called_with(
             ip=str(netaddr.IPNetwork(fip_cidr).ip), table=16, priority=FIP_PRI)
         mIPDevice().route.delete_route.assert_called_with(fip_cidr, str(s.ip))
-        self.assertFalse(ri.fip_ns.unsubscribe.called)
         ri.fip_ns.local_subnets.allocate.assert_not_called()
 
         ri.dist_fip_count = 1
@@ -266,7 +265,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
             fip_ns.get_int_device_name(router['id']))
         mIPDevice().route.delete_gateway.assert_called_once_with(
             str(fip_to_rtr.ip), table=16)
-        fip_ns.unsubscribe.assert_called_once_with(ri.router_id)
+        self.assertFalse(ri.fip_ns.unsubscribe.called)
         ri.fip_ns.local_subnets.allocate.assert_called_once_with(ri.router_id)
 
     def _test_add_floating_ip(self, ri, fip, is_failure):

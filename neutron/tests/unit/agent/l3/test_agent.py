@@ -890,6 +890,72 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             floating_ips[0], mock.sentinel.interface_name, device)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    def test_create_dvr_fip_interfaces_if_fipnamespace_exist(self, lla_write):
+        fake_network_id = _uuid()
+        subnet_id = _uuid()
+        fake_floatingips = {'floatingips': [
+            {'id': _uuid(),
+             'floating_ip_address': '20.0.0.3',
+             'fixed_ip_address': '192.168.0.1',
+             'floating_network_id': _uuid(),
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
+        agent_gateway_port = (
+            [{'fixed_ips': [
+                {'ip_address': '20.0.0.30',
+                 'prefixlen': 24,
+                 'subnet_id': subnet_id}],
+             'subnets': [
+                 {'id': subnet_id,
+                  'gateway_ip': '20.0.0.1'}],
+             'id': _uuid(),
+             'network_id': fake_network_id,
+             'mac_address': 'ca:fe:de:ad:be:ef'}]
+        )
+
+        router = l3_test_common.prepare_router_data(enable_snat=True)
+        router[l3_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
+        router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router['distributed'] = True
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = dvr_router.DvrEdgeRouter(
+            agent, HOSTNAME, router['id'], router, **self.ri_kwargs)
+        ext_gw_port = ri.router.get('gw_port')
+        ri.fip_ns = agent.get_fip_ns(ext_gw_port['network_id'])
+        ri.dist_fip_count = 0
+        agent.process_router_add = mock.Mock()
+        ri.fip_ns.create_rtr_2_fip_link = mock.Mock()
+        with mock.patch.object(ri, 'get_floating_ips') as fips, \
+                mock.patch.object(ri.fip_ns,
+                                  'create') as create_fip, \
+                mock.patch.object(ri, 'get_floating_agent_gw_interface'
+                                  ) as fip_gw_port:
+            fips.return_value = fake_floatingips
+            fip_gw_port.return_value = agent_gateway_port[0]
+            ri.create_dvr_fip_interfaces(ext_gw_port)
+            self.assertTrue(fip_gw_port.called)
+            self.assertTrue(fips.called)
+            self.assertTrue(create_fip.called)
+            self.assertEqual(agent_gateway_port[0],
+                             ri.fip_ns.agent_gateway_port)
+            # Now let us associate the fip to the router
+            ri.floating_ip_added_dist(fips, "192.168.0.1/32")
+            self.assertEqual(1, ri.dist_fip_count)
+            # Now let us disassociate the fip from the router
+            ri.floating_ip_removed_dist("192.168.0.1/32")
+            self.assertEqual(0, ri.dist_fip_count)
+            # Calling create_dvr_fip_interfaces again to make sure
+            # that the fip namespace create is not called again.
+            # If the create is not called again, that would contain
+            # the duplicate rules configuration in the fip namespace.
+            ri.create_dvr_fip_interfaces(ext_gw_port)
+            self.assertTrue(fip_gw_port.called)
+            self.assertTrue(fips.called)
+            create_fip.assert_called_once_with()
+            self.assertEqual(2, agent.process_router_add.call_count)
+            self.assertEqual(2, ri.fip_ns.create_rtr_2_fip_link.call_count)
+
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_create_dvr_fip_interfaces_for_late_binding(self, lla_write):
         fake_network_id = _uuid()
         fake_subnet_id = _uuid()
@@ -1020,7 +1086,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.fip_ns.subscribe = mock.Mock(return_value=True)
         ri.fip_ns.agent_router_gateway = mock.Mock()
         ri.rtr_fip_subnet = None
-        ri.dist_fip_count = 1
+        ri.dist_fip_count = 0
 
         with mock.patch.object(ri, 'get_floating_ips') as fips,\
                 mock.patch.object(ri, 'get_floating_agent_gw_interface'

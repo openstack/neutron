@@ -80,13 +80,13 @@ class FipNamespace(namespaces.Namespace):
     def has_subscribers(self):
         return len(self._subscribers) != 0
 
-    def subscribe(self, router_id):
+    def subscribe(self, external_net_id):
         is_first = not self.has_subscribers()
-        self._subscribers.add(router_id)
+        self._subscribers.add(external_net_id)
         return is_first
 
-    def unsubscribe(self, router_id):
-        self._subscribers.discard(router_id)
+    def unsubscribe(self, external_net_id):
+        self._subscribers.discard(external_net_id)
         return not self.has_subscribers()
 
     def allocate_rule_priority(self, floating_ip):
