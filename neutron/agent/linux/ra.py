@@ -65,11 +65,19 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
    RDNSS {% for dns in dns_servers %} {{ dns }} {% endfor %} {};
    {% endif %}
 
-   {% for prefix in prefixes %}
+   {% for prefix in auto_config_prefixes %}
    prefix {{ prefix }}
    {
         AdvOnLink on;
         AdvAutonomous on;
+   };
+   {% endfor %}
+
+   {% for prefix in stateful_config_prefixes %}
+   prefix {{ prefix }}
+   {
+        AdvOnLink on;
+        AdvAutonomous off;
    };
    {% endfor %}
 };
@@ -103,6 +111,8 @@ class DaemonMonitor(object):
             auto_config_prefixes = [subnet['cidr'] for subnet in v6_subnets if
                     subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC or
                     subnet['ipv6_ra_mode'] == constants.DHCPV6_STATELESS]
+            stateful_config_prefixes = [subnet['cidr'] for subnet in v6_subnets
+                    if subnet['ipv6_ra_mode'] == constants.DHCPV6_STATEFUL]
             interface_name = self._dev_name_helper(p['id'])
             slaac_subnets = [subnet for subnet in v6_subnets if
                 subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC]
@@ -111,7 +121,8 @@ class DaemonMonitor(object):
             buf.write('%s' % CONFIG_TEMPLATE.render(
                 ra_modes=list(ra_modes),
                 interface_name=interface_name,
-                prefixes=auto_config_prefixes,
+                auto_config_prefixes=auto_config_prefixes,
+                stateful_config_prefixes=stateful_config_prefixes,
                 dns_servers=dns_servers[0:MAX_RDNSS_ENTRIES],
                 constants=constants,
                 min_rtr_adv_interval=self._agent_conf.min_rtr_adv_interval,
