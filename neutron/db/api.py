@@ -107,7 +107,7 @@ def get_objects(context, model, **kwargs):
 
 def create_object(context, model, values):
     with context.session.begin(subtransactions=True):
-        if 'id' not in values:
+        if 'id' not in values and hasattr(model, 'id'):
             values['id'] = uuidutils.generate_uuid()
         db_obj = model(**values)
         context.session.add(db_obj)
