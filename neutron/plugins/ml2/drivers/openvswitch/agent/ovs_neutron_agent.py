@@ -198,9 +198,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
 
-        self.tun_br_ofports = {p_const.TYPE_GENEVE: {},
-                               p_const.TYPE_GRE: {},
-                               p_const.TYPE_VXLAN: {}}
+        self._reset_tunnel_ofports()
 
         self.polling_interval = agent_conf.polling_interval
         self.minimize_polling = agent_conf.minimize_polling
@@ -350,6 +348,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _dispose_local_vlan_hints(self):
         self.available_local_vlans.update(self._local_vlan_hints.values())
         self._local_vlan_hints = {}
+
+    def _reset_tunnel_ofports(self):
+        self.tun_br_ofports = {p_const.TYPE_GENEVE: {},
+                               p_const.TYPE_GRE: {},
+                               p_const.TYPE_VXLAN: {}}
 
     def setup_rpc(self):
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
@@ -1852,6 +1855,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.setup_integration_br()
                 self.setup_physical_bridges(self.bridge_mappings)
                 if self.enable_tunneling:
+                    self._reset_tunnel_ofports()
                     self.setup_tunnel_br()
                     self.setup_tunnel_br_flows()
                     tunnel_sync = True
