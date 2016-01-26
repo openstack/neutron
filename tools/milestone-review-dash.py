@@ -34,7 +34,7 @@ def _search_task(project, **kwargs):
         return
     gerrit_query = "("
     for b in bugs:
-        gerrit_query += ("topic:bug/%d OR " % b.bug.id)
+        gerrit_query += ("message:%d OR " % b.bug.id)
     gerrit_query = gerrit_query[:-4]
     gerrit_query += ")\n\n"
     return gerrit_query
