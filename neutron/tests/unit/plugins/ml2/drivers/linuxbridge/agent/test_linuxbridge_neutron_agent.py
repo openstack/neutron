@@ -559,7 +559,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_device_by_ip',
                                return_value=FAKE_DEFAULT_DEV):
-            result = self.lbm.get_local_ip_device(LOCAL_IP)
+            self.lbm.local_ip = LOCAL_IP
+            result = self.lbm.get_local_ip_device()
             self.assertEqual(FAKE_DEFAULT_DEV, result)
 
     def test_local_ip_validation_with_invalid_ip(self):
@@ -569,7 +570,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(sys, 'exit') as exit,\
                 mock.patch.object(linuxbridge_neutron_agent.LOG,
                                   'error') as log:
-            self.lbm.get_local_ip_device(LOCAL_IP)
+            self.lbm.local_ip = LOCAL_IP
+            self.lbm.get_local_ip_device()
             self.assertEqual(1, log.call_count)
             exit.assert_called_once_with(1)
 

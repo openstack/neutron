@@ -78,7 +78,7 @@ class LinuxBridgeManager(object):
         self.local_ip = cfg.CONF.VXLAN.local_ip
         self.vxlan_mode = lconst.VXLAN_NONE
         if cfg.CONF.VXLAN.enable_vxlan:
-            device = self.get_local_ip_device(self.local_ip)
+            device = self.get_local_ip_device()
             self.validate_vxlan_group_with_local_ip()
             self.local_int = device.name
             self.check_vxlan_support()
@@ -121,15 +121,15 @@ class LinuxBridgeManager(object):
                        'ip': self.local_ip})
             sys.exit(1)
 
-    def get_local_ip_device(self, local_ip):
+    def get_local_ip_device(self):
         """Return the device with local_ip on the host."""
-        device = self.ip.get_device_by_ip(local_ip)
+        device = self.ip.get_device_by_ip(self.local_ip)
         if not device:
             LOG.error(_LE("Tunneling cannot be enabled without the local_ip "
                           "bound to an interface on the host. Please "
                           "configure local_ip %s on the host interface to "
                           "be used for tunneling and restart the agent."),
-                      local_ip)
+                      self.local_ip)
             sys.exit(1)
         return device
 
