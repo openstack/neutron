@@ -189,6 +189,16 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             'ports': {'192.168.0.10': [['00:00:00:00:00:00', '0.0.0.0'],
                                        ['fa:16:3e:ff:8c:0f', '10.0.0.6']]},
             'network_type': 'vxlan'}}
+        entries['chg_ip'] = {
+            'foouuid': {
+                '192.168.0.1': {'before': [['fa:16:3e:ff:8c:0f', '10.0.0.6']],
+                                'after': [['fa:16:3e:ff:8c:0f', '10.0.0.7']]},
+                '192.168.0.2': {'before': [['fa:16:3e:ff:8c:0e', '10.0.0.8']]}
+            },
+            'foouuid2': {
+                '192.168.0.1': {'before': [['ff:16:3e:ff:8c:0e', '1.0.0.8']]}
+            }
+        }
 
         mixin = l2population_rpc.L2populationRpcCallBackMixin
         entries = mixin._unmarshall_fdb_entries(entries)
@@ -199,6 +209,18 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertIsInstance(port_info_list[1], l2pop_rpc.PortInfo)
         self.assertEqual(('00:00:00:00:00:00', '0.0.0.0'), port_info_list[0])
         self.assertEqual(('fa:16:3e:ff:8c:0f', '10.0.0.6'), port_info_list[1])
+        agt1 = entries['chg_ip']['foouuid']['192.168.0.1']
+        self.assertIsInstance(agt1['before'][0], l2pop_rpc.PortInfo)
+        self.assertIsInstance(agt1['after'][0], l2pop_rpc.PortInfo)
+        self.assertEqual(('fa:16:3e:ff:8c:0f', '10.0.0.6'), agt1['before'][0])
+        self.assertEqual(('fa:16:3e:ff:8c:0f', '10.0.0.7'), agt1['after'][0])
+        agt1_net2 = entries['chg_ip']['foouuid2']['192.168.0.1']
+        self.assertEqual(('ff:16:3e:ff:8c:0e', '1.0.0.8'),
+                         agt1_net2['before'][0])
+        self.assertIsInstance(agt1_net2['before'][0], l2pop_rpc.PortInfo)
+        agt2 = entries['chg_ip']['foouuid']['192.168.0.2']
+        self.assertIsInstance(agt2['before'][0], l2pop_rpc.PortInfo)
+        self.assertEqual(('fa:16:3e:ff:8c:0e', '10.0.0.8'), agt2['before'][0])
 
     def test__marshall_fdb_entries(self):
         entries = {'foouuid': {
