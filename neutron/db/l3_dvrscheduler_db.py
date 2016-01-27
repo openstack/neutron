@@ -488,6 +488,60 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         LOG.debug('Hosts for router %s: %s', router_id, hosts)
         return hosts
 
+    def _get_dvr_subnet_ids_on_host_query(self, context, host):
+        query = context.session.query(
+            models_v2.IPAllocation.subnet_id).distinct()
+        query = query.join(models_v2.IPAllocation.port)
+        query = query.join(models_v2.Port.port_binding)
+        query = query.filter(ml2_models.PortBinding.host == host)
+        owner_filter = or_(
+            models_v2.Port.device_owner.startswith(
+                n_const.DEVICE_OWNER_COMPUTE_PREFIX),
+            models_v2.Port.device_owner.in_(
+                n_utils.get_other_dvr_serviced_device_owners()))
+        query = query.filter(owner_filter)
+        return query
+
+    def _get_dvr_router_ids_for_host(self, context, host):
+        subnet_ids_on_host_query = self._get_dvr_subnet_ids_on_host_query(
+            context, host)
+        query = context.session.query(models_v2.Port.device_id).distinct()
+        query = query.filter(
+            models_v2.Port.device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE)
+        query = query.join(models_v2.Port.fixed_ips)
+        query = query.filter(
+            models_v2.IPAllocation.subnet_id.in_(subnet_ids_on_host_query))
+        router_ids = [item[0] for item in query]
+        LOG.debug('DVR routers on host %s: %s', host, router_ids)
+        return router_ids
+
+    def _get_router_ids_for_agent(self, context, agent_db, router_ids):
+        result_set = set(super(L3_DVRsch_db_mixin,
+                            self)._get_router_ids_for_agent(
+            context, agent_db, router_ids))
+        router_ids = set(router_ids or [])
+        if router_ids and result_set == router_ids:
+            # no need for extra dvr checks if requested routers are
+            # explicitly scheduled to the agent
+            return list(result_set)
+
+        # dvr routers are not explicitly scheduled to agents on hosts with
+        # dvr serviceable ports, so need special handling
+        if self._get_agent_mode(agent_db) in [n_const.L3_AGENT_MODE_DVR,
+                                              n_const.L3_AGENT_MODE_DVR_SNAT]:
+            if not router_ids:
+                result_set |= set(self._get_dvr_router_ids_for_host(
+                    context, agent_db['host']))
+            else:
+                for router_id in (router_ids - result_set):
+                    subnet_ids = self.get_subnet_ids_on_router(
+                        context, router_id)
+                    if subnet_ids and self.check_dvr_serviceable_ports_on_host(
+                            context, agent_db['host'], list(subnet_ids)):
+                        result_set.add(router_id)
+
+        return list(result_set)
+
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
     LOG.debug('Received %(resource)s %(event)s', {

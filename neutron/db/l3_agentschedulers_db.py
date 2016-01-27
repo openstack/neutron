@@ -366,6 +366,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             context, constants.AGENT_TYPE_L3, host)
         if not agentschedulers_db.services_available(agent.admin_state_up):
             return []
+        return self._get_router_ids_for_agent(context, agent, router_ids)
+
+    def _get_router_ids_for_agent(self, context, agent, router_ids):
+        """Get IDs of routers that the agent should host
+
+        Overridden for DVR to handle agents in 'dvr' mode which have
+        no explicit bindings with routers
+        """
         query = context.session.query(RouterL3AgentBinding.router_id)
         query = query.filter(
             RouterL3AgentBinding.l3_agent_id == agent.id)
@@ -378,10 +386,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def list_active_sync_routers_on_active_l3_agent(
             self, context, host, router_ids):
-        router_ids = self.list_router_ids_on_host(context, host, router_ids)
+        agent = self._get_agent_by_type_and_host(
+            context, constants.AGENT_TYPE_L3, host)
+        if not agentschedulers_db.services_available(agent.admin_state_up):
+            return []
+        router_ids = self._get_router_ids_for_agent(
+            context, agent, router_ids)
         if router_ids:
-            agent = self._get_agent_by_type_and_host(
-                context, constants.AGENT_TYPE_L3, host)
             return self._get_active_l3_agent_routers_sync_data(context, host,
                                                                agent,
                                                                router_ids)
