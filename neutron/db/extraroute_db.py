@@ -104,7 +104,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 quota=cfg.CONF.max_routes)
 
         filters = {'device_id': [router_id]}
-        ports = self._core_plugin.get_ports(context, filters)
+        ports = self._core_plugin.get_ports(context.elevated(), filters)
         cidrs = []
         ips = []
         for port in ports:

@@ -1,0 +1,3 @@
+---
+features:
+  - Allow non-admin users to define "external" extra-routes.
