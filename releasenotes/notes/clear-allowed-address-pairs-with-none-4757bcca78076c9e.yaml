@@ -1,0 +1,9 @@
+---
+prelude: >
+    Allowed address pairs can now be cleared by passing
+    None in addition to an empty list. This is to make
+    it possible to use the --action=clear option with
+    the neutron client.
+    neutron port-update <uuid> --allowed-address-pairs action=clear
+fixes:
+  - Fixes bug 1537734
