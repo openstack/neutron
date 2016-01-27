@@ -96,6 +96,7 @@ ADDRESS_PAIRS = 'allowed_address_pairs'
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         ADDRESS_PAIRS: {'allow_post': True, 'allow_put': True,
+                        'convert_to': attr.convert_none_to_empty_list,
                         'convert_list_to':
                         attr.convert_kvp_list_to_dict,
                         'validate': {'type:validate_allowed_address_pairs':
