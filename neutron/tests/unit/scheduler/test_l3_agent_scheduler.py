@@ -931,7 +931,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'port', 'after_create', mock.ANY, **kwargs)
             l3plugin.update_arp_entry_for_dvr_service_port.\
                 assert_called_once_with(
-                    self.adminContext, kwargs.get('port'), 'add')
+                    self.adminContext, kwargs.get('port'))
             l3plugin.dvr_handle_new_service_port.assert_called_once_with(
                 self.adminContext, kwargs.get('port'))
 
@@ -1002,7 +1002,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
             l3plugin.update_arp_entry_for_dvr_service_port.\
                 assert_called_once_with(
-                    self.adminContext, kwargs.get('port'), 'add')
+                    self.adminContext, kwargs.get('port'))
             self.assertFalse(l3plugin.dvr_handle_new_service_port.called)
 
     def test__notify_l3_agent_update_port_with_port_binding_change(self):
@@ -1030,7 +1030,9 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             l3plugin.remove_router_from_l3_agent.assert_called_once_with(
                 mock.ANY, 'foo_agent', 'foo_id')
             self.assertEqual(
-                2, l3plugin.update_arp_entry_for_dvr_service_port.call_count)
+                1, l3plugin.update_arp_entry_for_dvr_service_port.call_count)
+            self.assertEqual(
+                1, l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
             l3plugin.dvr_handle_new_service_port.assert_called_once_with(
                 self.adminContext, kwargs.get('port'))
 
@@ -1069,10 +1071,10 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 'port', 'after_update', plugin, **kwargs)
 
             self.assertEqual(
-                1, l3plugin.update_arp_entry_for_dvr_service_port.call_count)
-            l3plugin.update_arp_entry_for_dvr_service_port.\
+                1, l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
+            l3plugin.delete_arp_entry_for_dvr_service_port.\
                 assert_called_once_with(
-                    self.adminContext, mock.ANY, 'del')
+                    self.adminContext, mock.ANY)
 
             self.assertFalse(
                 l3plugin.dvr_handle_new_service_port.called)
@@ -1098,9 +1100,9 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             }
             l3_dvrscheduler_db._notify_port_delete(
                 'port', 'after_delete', plugin, **kwargs)
-            l3plugin.update_arp_entry_for_dvr_service_port.\
+            l3plugin.delete_arp_entry_for_dvr_service_port.\
                 assert_called_once_with(
-                    self.adminContext, mock.ANY, 'del')
+                    self.adminContext, mock.ANY)
             l3plugin.remove_router_from_l3_agent.assert_called_once_with(
                 mock.ANY, 'foo_agent', 'foo_id')
 
