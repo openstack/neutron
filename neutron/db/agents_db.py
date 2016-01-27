@@ -365,9 +365,13 @@ class AgentExtRpcCallback(object):
     This class implements the server side of an rpc interface.  The client side
     can be found in neutron.agent.rpc.PluginReportStateAPI.  For more
     information on changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+
+    API version history:
+        1.0 - Initial version.
+        1.1 - report_state now returns agent state.
     """
 
-    target = oslo_messaging.Target(version='1.0',
+    target = oslo_messaging.Target(version='1.1',
                                    namespace=constants.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
