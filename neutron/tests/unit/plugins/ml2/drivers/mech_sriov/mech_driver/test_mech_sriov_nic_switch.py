@@ -150,7 +150,7 @@ class SriovSwitchMechVnicTypeTestCase(SriovNicSwitchMechanismBaseTestCase):
 
     def test_vnic_type_direct_physical(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT_PHYSICAL,
-                                           mech_driver.VIF_TYPE_HW_VEB)
+                                           mech_driver.VIF_TYPE_HOSTDEV_PHY)
 
 
 class SriovSwitchMechProfileTestCase(SriovNicSwitchMechanismBaseTestCase):

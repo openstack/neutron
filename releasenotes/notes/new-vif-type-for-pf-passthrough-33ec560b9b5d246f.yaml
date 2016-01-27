@@ -1,0 +1,6 @@
+---
+features:
+  - SriovNicSwitchMechanismDriver driver now exposes a new VIF type
+    'hostdev_physical' for ports with vnic type 'direct-physical' (used for
+    SR-IOV PF passthrough). This will enable Nova to provision PFs as Neutron
+    ports.

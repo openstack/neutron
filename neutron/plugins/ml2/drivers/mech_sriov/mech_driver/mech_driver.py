@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from oslo_config import cfg
 from oslo_log import log
 
@@ -29,6 +28,7 @@ from neutron.services.qos import qos_consts
 
 LOG = log.getLogger(__name__)
 VIF_TYPE_HW_VEB = 'hw_veb'
+VIF_TYPE_HOSTDEV_PHY = 'hostdev_physical'
 FLAT_VLAN = 0
 
 sriov_opts = [
@@ -60,7 +60,6 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,
-                 vif_type=VIF_TYPE_HW_VEB,
                  vif_details={portbindings.CAP_PORT_FILTER: False},
                  supported_vnic_types=[portbindings.VNIC_DIRECT,
                                        portbindings.VNIC_MACVTAP,
@@ -69,14 +68,18 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
         """Initialize base class for SriovNicSwitch L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
-        :param vif_type: Value for binding:vif_type when bound
         :param vif_details: Dictionary with details for VIF driver when bound
         :param supported_vnic_types: The binding:vnic_type values we can bind
         :param supported_pci_vendor_info: The pci_vendor_info values to bind
         """
         self.agent_type = agent_type
         self.supported_vnic_types = supported_vnic_types
-        self.vif_type = vif_type
+        # NOTE(ndipanov): PF passthrough requires a different vif type
+        self.vnic_type_for_vif_type = (
+            {vtype: VIF_TYPE_HOSTDEV_PHY
+                if vtype == portbindings.VNIC_DIRECT_PHYSICAL
+                else VIF_TYPE_HW_VEB
+             for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
         self.supported_network_types = (p_const.TYPE_VLAN, p_const.TYPE_FLAT)
 
@@ -100,6 +103,9 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
                       vnic_type)
             return
 
+        vif_type = self.vnic_type_for_vif_type.get(vnic_type,
+                                                   VIF_TYPE_HW_VEB)
+
         if not self._check_supported_pci_vendor_device(context):
             LOG.debug("Refusing to bind due to unsupported pci_vendor device")
             return
@@ -112,25 +118,25 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             # either. This should be changed in the future so physical
             # functions can use device mapping checks and the plugin can
             # get port status updates.
-            self.try_to_bind(context, None)
+            self.try_to_bind(context, None, vif_type)
             return
 
         for agent in context.host_agents(self.agent_type):
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
-                if self.try_to_bind(context, agent):
+                if self.try_to_bind(context, agent, vif_type):
                     return
             else:
                 LOG.warning(_LW("Attempting to bind with dead agent: %s"),
                             agent)
 
-    def try_to_bind(self, context, agent):
+    def try_to_bind(self, context, agent, vif_type):
         for segment in context.segments_to_bind:
             if self.check_segment(segment, agent):
                 port_status = (constants.PORT_STATUS_ACTIVE if agent is None
                                else constants.PORT_STATUS_DOWN)
                 context.set_binding(segment[api.ID],
-                                    self.vif_type,
+                                    vif_type,
                                     self._get_vif_details(segment),
                                     port_status)
                 LOG.debug("Bound using segment: %s", segment)
