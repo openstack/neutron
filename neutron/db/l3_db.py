@@ -993,7 +993,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                               'last_known_router_id': previous_router_id})
         next_hop = None
         if router_id:
-            router = self._get_router(context, router_id)
+            # NOTE(tidwellr) use admin context here
+            # tenant may not own the router and that's OK on a FIP association
+            router = self._get_router(context.elevated(), router_id)
             gw_port = router.gw_port
             for fixed_ip in gw_port.fixed_ips:
                 addr = netaddr.IPAddress(fixed_ip.ip_address)

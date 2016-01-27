@@ -2089,6 +2089,30 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           router_id=None,
                                           next_hop=None)
 
+    def test_floatingip_association_on_unowned_router(self):
+        # create a router owned by one tenant and associate the FIP with a
+        # different tenant, assert that the FIP association succeeds
+        with self.subnet(cidr='11.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.port() as private_port:
+                with self.router(tenant_id='router-owner',
+                                 set_context=True) as r:
+                    sid = private_port['port']['fixed_ips'][0]['subnet_id']
+                    private_sub = {'subnet': {'id': sid}}
+
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action(
+                        'add', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                    self._make_floatingip(self.fmt,
+                                          public_sub['subnet']['network_id'],
+                                          port_id=private_port['port']['id'],
+                                          fixed_ip=None,
+                                          set_context=True)
+
     def test_floatingip_update_different_router(self):
         # Create subnet with different CIDRs to account for plugins which
         # do not support overlapping IPs
