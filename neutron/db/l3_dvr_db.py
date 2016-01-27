@@ -298,8 +298,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     LOG.debug("CSNAT port updated for IPv6 subnet: "
                               "%s", updated_port)
         router_interface_info = self._make_router_interface_info(
-            router_id, port['tenant_id'], port['id'], subnet['id'],
-            [subnet['id']])
+            router_id, port['tenant_id'], port['id'], port['network_id'],
+            subnet['id'], [subnet['id']])
         self.notify_router_interface_action(
             context, router_interface_info, 'add')
         return router_interface_info
@@ -322,7 +322,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 return port
 
     def _check_for_multiprefix_csnat_port_and_update(
-        self, context, router, subnet, port):
+        self, context, router, network_id, subnet_id):
         """Checks if the csnat port contains multiple ipv6 prefixes.
 
         If the csnat port contains multiple ipv6 prefixes for the given
@@ -331,13 +331,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         it with the right fixed_ip.
         This function returns true if it is a multiprefix port.
         """
-        subnet_id = subnet['id']
         if router.gw_port:
             # If router has a gateway port, check if it has IPV6 subnet
             cs_port = (
                 self._find_router_port_by_network_and_device_owner(
-                    router, subnet['network_id'],
-                    l3_const.DEVICE_OWNER_ROUTER_SNAT))
+                    router, network_id, l3_const.DEVICE_OWNER_ROUTER_SNAT))
             if cs_port:
                 fixed_ips = (
                     [fixedip for fixedip in
@@ -351,68 +349,49 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     return True
         return False
 
-    def _check_dvr_router_remove_required_and_notify_agent(
-        self, context, router, port, subnet):
-        if router.extra_attributes.distributed:
-            is_multiple_prefix_csport = (
-                self._check_for_multiprefix_csnat_port_and_update(
-                    context, router, subnet, port))
-            if not is_multiple_prefix_csport:
-                # Single prefix port - go ahead and delete the port
-                self.delete_csnat_router_interface_ports(
-                    context.elevated(), router, subnet_id=subnet['id'])
-            plugin = manager.NeutronManager.get_service_plugins().get(
-                        constants.L3_ROUTER_NAT)
-            l3_agents = plugin.get_l3_agents_hosting_routers(context,
-                                                             [router['id']])
-            subnet_ids = plugin.get_subnet_ids_on_router(
-                context, router['id'])
-            if subnet_ids:
-                binding_table = l3_dvrsched_db.CentralizedSnatL3AgentBinding
-                snat_binding = context.session.query(binding_table).filter_by(
-                    router_id=router['id']).first()
-                for l3_agent in l3_agents:
-                    is_this_snat_agent = (
-                        snat_binding and
-                        snat_binding.l3_agent_id == l3_agent['id'])
-                    if (is_this_snat_agent or
-                        plugin.check_dvr_serviceable_ports_on_host(
-                            context, l3_agent['host'], subnet_ids)):
-                        continue
-                    plugin.remove_router_from_l3_agent(
-                        context, l3_agent['id'], router['id'])
-        router_interface_info = self._make_router_interface_info(
-            router['id'], port['tenant_id'], port['id'], subnet['id'],
-            [subnet['id']])
-        self.notify_router_interface_action(
-            context, router_interface_info, 'remove')
-        return router_interface_info
-
     def remove_router_interface(self, context, router_id, interface_info):
-        remove_by_port, remove_by_subnet = (
-            self._validate_interface_info(interface_info, for_removal=True)
-        )
-        port_id = interface_info.get('port_id')
-        subnet_id = interface_info.get('subnet_id')
         router = self._get_router(context, router_id)
-        device_owner = self._get_device_owner(context, router)
+        if not router.extra_attributes.distributed:
+            return super(
+                L3_NAT_with_dvr_db_mixin, self).remove_router_interface(
+                    context, router_id, interface_info)
 
-        if remove_by_port:
-            port, subnets = self._remove_interface_by_port(
-                    context, router_id, port_id, subnet_id, device_owner)
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
+        router_hosts_before = plugin._get_dvr_hosts_for_router(
+            context, router_id)
 
-        # remove_by_subnet is not used here, because the validation logic of
-        # _validate_interface_info ensures that at least one of remote_by_*
-        # is True.
-        else:
-            port, subnets = self._remove_interface_by_subnet(
-                    context, router_id, subnet_id, device_owner)
+        interface_info = super(
+            L3_NAT_with_dvr_db_mixin, self).remove_router_interface(
+                context, router_id, interface_info)
 
-        subnet = subnets[0]
-        router_interface_info = (
-            self._check_dvr_router_remove_required_and_notify_agent(
-                context, router, port, subnet))
-        return router_interface_info
+        router_hosts_after = plugin._get_dvr_hosts_for_router(
+            context, router_id)
+        removed_hosts = set(router_hosts_before) - set(router_hosts_after)
+        if removed_hosts:
+            agents = plugin.get_l3_agents(context,
+                                          filters={'host': removed_hosts})
+            binding_table = l3_dvrsched_db.CentralizedSnatL3AgentBinding
+            snat_binding = context.session.query(binding_table).filter_by(
+                router_id=router_id).first()
+            for agent in agents:
+                is_this_snat_agent = (
+                    snat_binding and snat_binding.l3_agent_id == agent['id'])
+                if not is_this_snat_agent:
+                    plugin.remove_router_from_l3_agent(
+                        context, agent['id'], router_id)
+
+        is_multiple_prefix_csport = (
+            self._check_for_multiprefix_csnat_port_and_update(
+                context, router, interface_info['network_id'],
+                interface_info['subnet_id']))
+        if not is_multiple_prefix_csport:
+            # Single prefix port - go ahead and delete the port
+            self.delete_csnat_router_interface_ports(
+                context.elevated(), router,
+                subnet_id=interface_info['subnet_id'])
+
+        return interface_info
 
     def _get_snat_sync_interfaces(self, context, router_ids):
         """Query router interfaces that relate to list of router_ids."""
