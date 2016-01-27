@@ -21,6 +21,7 @@ import urllib2
 
 import mock
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 import six
@@ -510,6 +511,18 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                               self.context,
                               action,
                               target)
+
+    def test_retryrequest_on_notfound(self):
+        failure = exceptions.NetworkNotFound(net_id='whatever')
+        action = "create_port:mac"
+        with mock.patch.object(manager.NeutronManager.get_instance().plugin,
+                               'get_network', side_effect=failure):
+            target = {'network_id': 'whatever'}
+            try:
+                policy.enforce(self.context, action, target)
+                self.fail("Did not raise RetryRequest")
+            except db_exc.RetryRequest as e:
+                self.assertEqual(failure, e.inner_exc)
 
     def test_enforce_tenant_id_check_parent_resource_bw_compatibility(self):
 
