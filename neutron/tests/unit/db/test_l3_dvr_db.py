@@ -529,10 +529,11 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _test_update_arp_entry_for_dvr_service_port(
             self, device_owner, action):
-        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp,\
-                mock.patch.object(self.mixin, '_get_router') as grtr:
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp:
             plugin = mock.Mock()
-            dvr_router = mock.Mock()
             l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
             gp.return_value = plugin
             port = {
@@ -551,11 +552,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 'id': 'dvr_port_id',
                 'fixed_ips': mock.ANY,
                 'device_owner': l3_const.DEVICE_OWNER_DVR_INTERFACE,
-                'device_id': 'dvr_router_id'
+                'device_id': router['id']
             }
             plugin.get_ports.return_value = [dvr_port]
-            grtr.return_value = dvr_router
-            dvr_router.extra_attributes.distributed = True
             if action == 'add':
                 self.mixin.update_arp_entry_for_dvr_service_port(
                     self.ctx, port)
