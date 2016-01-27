@@ -74,6 +74,11 @@ Document common pitfalls as well as good practices done during plugin developmen
 * When adding behavior to the L2 and L3 db base classes, do not assume that
   there is an agent on the other side of the message broker that interacts
   with the server. Plugins may not rely on `agents <https://review.openstack.org/#/c/174020/>`_ at all.
+* Be mindful of required capabilities when you develop plugin extensions. The
+  `Extension description <https://github.com/openstack/neutron/blob/master/neutron/api/extensions.py#L122>`_ provides the ability to specify the list of required capabilities
+  for the extension you are developing. By declaring this list, the server will
+  not start up if the requirements are not met, thus avoiding leading the system
+  to experience undetermined behavior at runtime.
 
 Database interaction
 ~~~~~~~~~~~~~~~~~~~~

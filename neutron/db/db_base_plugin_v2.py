@@ -1172,7 +1172,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          status=p.get('status', constants.PORT_STATUS_ACTIVE),
                          device_id=p['device_id'],
                          device_owner=p['device_owner'])
-        if 'dns_name' in p:
+        if ('dns-integration' in self.supported_extension_aliases and
+            'dns_name' in p):
             request_dns_name = self._get_request_dns_name(p)
             port_data['dns_name'] = request_dns_name
 
@@ -1190,13 +1191,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
             ips = self.ipam.allocate_ips_for_port_and_store(context, port,
                                                             port_id)
-            if 'dns_name' in p:
+            if ('dns-integration' in self.supported_extension_aliases and
+                'dns_name' in p):
                 dns_assignment = []
                 if ips:
                     dns_assignment = self._get_dns_names_for_port(
                         context, ips, request_dns_name)
 
-        if 'dns_name' in p:
+        if ('dns-integration' in self.supported_extension_aliases and
+            'dns_name' in p):
             db_port['dns_assignment'] = dns_assignment
         return self._make_port_dict(db_port, process_extensions=False)
 

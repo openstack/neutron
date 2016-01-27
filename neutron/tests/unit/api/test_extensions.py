@@ -502,6 +502,13 @@ class RequestExtensionTest(base.BaseTestCase):
 
 class ExtensionManagerTest(base.BaseTestCase):
 
+    def test_missing_required_extensions(self):
+        ext_mgr = extensions.ExtensionManager('')
+        attr_map = {}
+        ext_mgr.add_extension(ext_stubs.StubExtensionWithReqs('foo_alias'))
+        self.assertRaises(exceptions.ExtensionsNotFound,
+                          ext_mgr.extend_resources, "2.0", attr_map)
+
     def test_invalid_extensions_are_not_registered(self):
 
         class InvalidExtension(object):
