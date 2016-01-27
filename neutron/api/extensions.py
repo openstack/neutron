@@ -66,34 +66,34 @@ class PluginInterface(object):
 class ExtensionDescriptor(object):
     """Base class that defines the contract for extensions."""
 
+    @abc.abstractmethod
     def get_name(self):
         """The name of the extension.
 
         e.g. 'Fox In Socks'
         """
-        raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_alias(self):
         """The alias for the extension.
 
         e.g. 'FOXNSOX'
         """
-        raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_description(self):
         """Friendly description for the extension.
 
         e.g. 'The Fox In Socks Extension'
         """
-        raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_updated(self):
         """The timestamp when the extension was last updated.
 
         e.g. '2011-01-22T13:25:27-06:00'
         """
         # NOTE(justinsb): Not sure of the purpose of this is, vs the XML NS
-        raise NotImplementedError()
 
     def get_resources(self):
         """List of extensions.ResourceExtension extension objects.
