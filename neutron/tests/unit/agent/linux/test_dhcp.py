@@ -1129,6 +1129,7 @@ class TestDnsmasq(TestBase):
                           '--log-dhcp',
                           ('--log-facility=%s' % dhcp_dns_log)],
                          network)
+        self.makedirs.assert_called_with(os.path.join('/tmp', network.id))
 
     def test_spawn_cfg_no_local_resolv(self):
         self.conf.set_override('dnsmasq_local_resolv', False)
