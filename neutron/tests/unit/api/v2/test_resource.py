@@ -215,7 +215,7 @@ class ResourceTestCase(base.BaseTestCase):
                                                    'format': 'json'})}
 
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
+        self.assertEqual(exc.HTTPGatewayTimeout.code, res.status_int)
         self.assertIn(msg_translation,
                       str(wsgi.JSONDeserializer().deserialize(res.body)))
 

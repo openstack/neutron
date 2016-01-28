@@ -228,6 +228,15 @@ def check_assertisinstance(logical_line, filename):
             yield (0, msg)
 
 
+def check_assertequal_for_httpcode(logical_line, filename):
+    msg = ("N332: Use assertEqual(expected_http_code, observed_http_code) "
+           "instead of assertEqual(observed_http_code, expected_http_code)")
+    if 'neutron/tests/' in filename:
+        if re.search(r"assertEqual\(\s*[^,]*,[^,]*HTTP[^\.]*\.code\s*\)",
+                     logical_line):
+            yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -243,3 +252,4 @@ def factory(register):
     register(check_assertfalse)
     register(check_assertempty)
     register(check_assertisinstance)
+    register(check_assertequal_for_httpcode)
