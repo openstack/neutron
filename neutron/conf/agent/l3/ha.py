@@ -43,6 +43,18 @@ OPTS = [
                       'keepalived server connection requests. '
                       'More threads create a higher CPU load '
                       'on the agent node.')),
+    cfg.IntOpt('ha_vrrp_health_check_interval',
+               default=0,
+               help=_('The VRRP health check interval in seconds. Values > 0 '
+                      'enable VRRP health checks. Setting it to 0 disables '
+                      'VRRP health checks. Recommended value is 5. '
+                      'This will cause pings to be sent to the gateway '
+                      'IP address(es) - requires ICMP_ECHO_REQUEST '
+                      'to be enabled on the gateway. '
+                      'If gateway fails, all routers will be reported '
+                      'as master, and master election will be repeated '
+                      'in round-robin fashion, until one of the router '
+                      'restore the gateway connection.')),
 ]
 
 

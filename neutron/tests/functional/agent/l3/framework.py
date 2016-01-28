@@ -591,6 +591,16 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ha_device = ip_lib.IPDevice(device_name, router.ha_namespace)
         ha_device.link.set_down()
 
+    @staticmethod
+    def fail_gw_router_port(router):
+        r_br = ip_lib.IPDevice(router.driver.conf.external_network_bridge)
+        r_br.link.set_down()
+
+    @staticmethod
+    def restore_gw_router_port(router):
+        r_br = ip_lib.IPDevice(router.driver.conf.external_network_bridge)
+        r_br.link.set_up()
+
     @classmethod
     def _get_addresses_on_device(cls, namespace, interface):
         return [address['cidr'] for address in
