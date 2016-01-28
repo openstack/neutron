@@ -30,6 +30,7 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import exceptions
 import neutron.extensions
 from neutron import manager
+from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration
 from neutron import wsgi
 
@@ -440,11 +441,18 @@ class ExtensionManager(object):
                 # Exit loop as no progress was made
                 break
         if exts_to_process:
-            LOG.error(_LE("It was impossible to process the following "
-                          "extensions: %s because of missing requirements."),
-                      ','.join(exts_to_process.keys()))
-            raise exceptions.ExtensionsNotFound(
-                extensions=list(exts_to_process.keys()))
+            unloadable_extensions = set(exts_to_process.keys())
+            LOG.error(_LE("Unable to process extensions (%s) because "
+                          "the configured plugins do not satisfy "
+                          "their requirements. Some features will not "
+                          "work as expected."),
+                      ', '.join(unloadable_extensions))
+            # Fail gracefully for default extensions, just in case some out
+            # of tree plugins are not entirely up to speed
+            default_extensions = set(const.DEFAULT_SERVICE_PLUGINS.values())
+            if not unloadable_extensions <= default_extensions:
+                raise exceptions.ExtensionsNotFound(
+                    extensions=list(unloadable_extensions))
 
         # Extending extensions' attributes map.
         for ext in processed_exts.values():

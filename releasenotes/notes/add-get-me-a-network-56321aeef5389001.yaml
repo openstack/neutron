@@ -1,0 +1,9 @@
+---
+prelude: >
+    The "get-me-a-network" feature simplifies the process
+    for launching an instance with basic network connectivity
+    (via an externally connected private tenant network).
+features:
+  - Once Nova takes advantage of this feature, a user can
+    launch an instance without explicitly provisioning
+    network resources.

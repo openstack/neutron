@@ -111,6 +111,15 @@ class NeutronManagerTestCase(base.BaseTestCase):
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
         self.assertIn(constants.DUMMY, svc_plugins.keys())
 
+    def test_load_default_service_plugins(self):
+        self.patched_default_svc_plugins.return_value = {
+            'neutron.tests.unit.dummy_plugin.DummyServicePlugin': 'DUMMY'
+        }
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        mgr = manager.NeutronManager.get_instance()
+        svc_plugins = mgr.get_service_plugins()
+        self.assertIn('DUMMY', svc_plugins)
+
     def test_post_plugin_validation(self):
         cfg.CONF.import_opt('dhcp_agents_per_network',
                             'neutron.db.agentschedulers_db')

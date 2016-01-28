@@ -350,6 +350,7 @@ class BaseTestCase(DietTestCase):
         cp = PluginFixture(core_plugin)
         self.useFixture(cp)
         self.patched_dhcp_periodic = cp.patched_dhcp_periodic
+        self.patched_default_svc_plugins = cp.patched_default_svc_plugins
 
     def setup_notification_driver(self, notification_driver=None):
         self.addCleanup(fake_notifier.reset)
@@ -365,6 +366,11 @@ class PluginFixture(fixtures.Fixture):
         self.core_plugin = core_plugin
 
     def _setUp(self):
+        # Do not load default service plugins in the testing framework
+        # as all the mocking involved can cause havoc.
+        self.default_svc_plugins_p = mock.patch(
+            'neutron.manager.NeutronManager._get_default_service_plugins')
+        self.patched_default_svc_plugins = self.default_svc_plugins_p.start()
         self.dhcp_periodic_p = mock.patch(
             'neutron.db.agentschedulers_db.DhcpAgentSchedulerDbMixin.'
             'start_periodic_dhcp_agent_status_check')
