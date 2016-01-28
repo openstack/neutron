@@ -36,9 +36,6 @@ class Subnetallocation(extensions.ExtensionDescriptor):
     def get_updated(cls):
         return "2015-03-30T10:00:00-00:00"
 
-    def get_required_extensions(self):
-        return ["router"]
-
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""

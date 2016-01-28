@@ -255,6 +255,9 @@ class Dns(extensions.ExtensionDescriptor):
     def get_updated(cls):
         return "2015-08-15T18:00:00-00:00"
 
+    def get_required_extensions(self):
+        return ["router"]
+
     def get_extended_resources(self, version):
         if version == "2.0":
             return EXTENDED_ATTRIBUTES_2_0
