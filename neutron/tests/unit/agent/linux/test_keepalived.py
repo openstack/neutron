@@ -11,10 +11,15 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+#
 
-from neutron_lib import constants as n_consts
+import os
+
+import mock
 import testtools
 import textwrap
+
+from neutron_lib import constants as n_consts
 
 from neutron.agent.linux import keepalived
 from neutron.tests import base
@@ -29,6 +34,8 @@ KEEPALIVED_GLOBAL_CONFIG = textwrap.dedent("""\
     }""") % dict(
         email_from=keepalived.KEEPALIVED_EMAIL_FROM,
         router_id=keepalived.KEEPALIVED_ROUTER_ID)
+VRRP_ID = 1
+VRRP_INTERVAL = 5
 
 
 class KeepalivedGetFreeRangeTestCase(base.BaseTestCase):
@@ -316,7 +323,32 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
                 }
             }""")
         instance = keepalived.KeepalivedInstance(
-            'MASTER', 'eth0', 1, ['169.254.192.0/18'])
+            'MASTER', 'eth0', VRRP_ID, ['169.254.192.0/18'])
+        self.assertEqual(expected, os.linesep.join(instance.build_config()))
+
+    def test_build_config_no_vips_track_script(self):
+        expected = """
+vrrp_script ha_health_check_1 {
+    script "/etc/ha_confs/qrouter-x/ha_check_script_1.sh"
+    interval 5
+    fall 2
+    rise 2
+}
+
+vrrp_instance VR_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 1
+    priority 50
+    garp_master_delay 60
+    virtual_ipaddress {
+        169.254.0.1/24 dev eth0
+    }
+}"""
+        instance = keepalived.KeepalivedInstance(
+            'MASTER', 'eth0', VRRP_ID, ['169.254.192.0/18'])
+        instance.track_script = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
         self.assertEqual(expected, '\n'.join(instance.build_config()))
 
 
@@ -346,3 +378,74 @@ class KeepalivedVirtualRouteTestCase(base.BaseTestCase):
     def test_virtual_route_without_dev(self):
         route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
         self.assertEqual('50.0.0.0/8 via 1.2.3.4', route.build_config())
+
+
+class KeepalivedTrackScriptTestCase(base.BaseTestCase):
+
+    def test_build_config_preamble(self):
+        exp_conf = [
+            '',
+            'vrrp_script ha_health_check_1 {',
+            '    script "/etc/ha_confs/qrouter-x/ha_check_script_1.sh"',
+            '    interval 5',
+            '    fall 2',
+            '    rise 2',
+            '}',
+            '']
+        ts = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
+        self.assertEqual(exp_conf, ts.build_config_preamble())
+
+    def test_get_config_str(self):
+        ts = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
+        ts.routes = [
+            keepalived.KeepalivedVirtualRoute('12.0.0.0/24', '10.0.0.1'), ]
+        self.assertEqual('''    track_script {
+        ha_health_check_1
+    }''',
+            ts.get_config_str())
+
+    def test_get_script_str(self):
+        ts = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
+        ts.routes = [
+            keepalived.KeepalivedVirtualRoute('12.0.0.0/24', '10.0.0.1'), ]
+        ts.vips = [
+            keepalived.KeepalivedVipAddress('192.168.0.3/18', 'ha-xxx'), ]
+
+        self.assertEqual("""#!/bin/bash -eu
+ip a | grep 192.168.0.3 || exit 0
+ping -c 1 -w 1 10.0.0.1 1>/dev/null || exit 1""",
+                         ts._get_script_str())
+
+    def test_get_script_str_no_routes(self):
+        ts = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
+
+        self.assertEqual('#!/bin/bash -eu\n', ts._get_script_str())
+
+    def test_write_check_script(self):
+        conf_dir = '/etc/ha_confs/qrouter-x'
+        ts = keepalived.KeepalivedTrackScript(VRRP_INTERVAL, conf_dir, VRRP_ID)
+        ts.routes = [
+            keepalived.KeepalivedVirtualRoute('12.0.0.0/24', '10.0.0.1'),
+            keepalived.KeepalivedVirtualRoute('2001:db8::1', '2001:db8::1'), ]
+        with mock.patch.object(keepalived, 'file_utils') as patched_utils:
+            ts.write_check_script()
+            patched_utils.replace_file.assert_called_with(
+                os.path.join(conf_dir, 'ha_check_script_1.sh'),
+                """#!/bin/bash -eu
+
+ping -c 1 -w 1 10.0.0.1 1>/dev/null || exit 1
+ping6 -c 1 -w 1 2001:db8::1 1>/dev/null || exit 1""",
+                0o520
+            )
+
+    def test_write_check_script_no_routes(self):
+        conf_dir = '/etc/ha_confs/qrouter-x'
+        ts = keepalived.KeepalivedTrackScript(
+            VRRP_INTERVAL, conf_dir, VRRP_ID)
+        with mock.patch.object(keepalived, 'file_utils') as patched_utils:
+            ts.write_check_script()
+            patched_utils.replace_file.assert_not_called()

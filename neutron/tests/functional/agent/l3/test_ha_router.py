@@ -335,6 +335,54 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         self.assertEqual(master_router, new_slave)
         self.assertEqual(slave_router, new_master)
 
+    def test_ha_router_lost_gw_connection(self):
+        self.agent.conf.set_override(
+            'ha_vrrp_health_check_interval', 5)
+        self.failover_agent.conf.set_override(
+            'ha_vrrp_health_check_interval', 5)
+
+        router1, router2 = self.create_ha_routers()
+
+        master_router, slave_router = self._get_master_and_slave_routers(
+            router1, router2)
+
+        self.fail_gw_router_port(master_router)
+
+        # NOTE: passing slave_router as first argument, because we expect
+        # that this router should be the master
+        new_master, new_slave = self._get_master_and_slave_routers(
+            slave_router, master_router)
+
+        self.assertEqual(master_router, new_slave)
+        self.assertEqual(slave_router, new_master)
+
+    def test_both_ha_router_lost_gw_connection(self):
+        self.agent.conf.set_override(
+            'ha_vrrp_health_check_interval', 5)
+        self.failover_agent.conf.set_override(
+            'ha_vrrp_health_check_interval', 5)
+
+        router1, router2 = self.create_ha_routers()
+
+        master_router, slave_router = self._get_master_and_slave_routers(
+            router1, router2)
+
+        self.fail_gw_router_port(master_router)
+        self.fail_gw_router_port(slave_router)
+
+        common_utils.wait_until_true(
+            lambda: master_router.ha_state == 'master')
+        common_utils.wait_until_true(
+            lambda: slave_router.ha_state == 'master')
+
+        self.restore_gw_router_port(master_router)
+
+        new_master, new_slave = self._get_master_and_slave_routers(
+            master_router, slave_router)
+
+        self.assertEqual(master_router, new_master)
+        self.assertEqual(slave_router, new_slave)
+
 
 class LinuxBridgeL3HATestCase(L3HATestCase):
     INTERFACE_DRIVER = 'neutron.agent.linux.interface.BridgeInterfaceDriver'
