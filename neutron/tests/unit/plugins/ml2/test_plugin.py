@@ -909,15 +909,15 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                   return_value=fip_set),\
                 mock.patch.object(
                     self.l3plugin,
-                    'dvr_deletens_if_no_port',
-                    return_value=[ns_to_delete]) as dvr_delns_ifno_port:
+                    'get_dvr_routers_to_remove',
+                    return_value=[ns_to_delete]) as get_dvr_routers_to_remove:
 
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
 
             self.assertTrue(notify.call_count)
-            dvr_delns_ifno_port.assert_called_once_with(self.context,
-                                                        port['port']['id'])
+            get_dvr_routers_to_remove.assert_called_once_with(
+                self.context, port['port']['id'])
 
     def test_delete_last_vm_port(self):
         self._test_delete_dvr_serviced_port(device_owner=DEVICE_OWNER_COMPUTE)

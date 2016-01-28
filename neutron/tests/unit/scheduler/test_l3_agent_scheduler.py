@@ -913,7 +913,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertFalse(
                 l3plugin.dvr_handle_new_service_port.called)
             self.assertFalse(l3plugin.remove_router_from_l3_agent.called)
-            self.assertFalse(l3plugin.dvr_deletens_if_no_port.called)
+            self.assertFalse(l3plugin.get_dvr_routers_to_remove.called)
 
     def test__notify_l3_agent_new_port_action(self):
         kwargs = {
@@ -978,7 +978,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertFalse(
                 l3plugin.dvr_handle_new_service_port.called)
             self.assertFalse(l3plugin.remove_router_from_l3_agent.called)
-            self.assertFalse(l3plugin.dvr_deletens_if_no_port.called)
+            self.assertFalse(l3plugin.get_dvr_routers_to_remove.called)
 
     def test__notify_l3_agent_update_port_with_mac_address_update(self):
         kwargs = {
@@ -1022,7 +1022,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(manager.NeutronManager,
                                'get_service_plugins',
                                return_value={'L3_ROUTER_NAT': l3plugin}),\
-                mock.patch.object(l3plugin, 'dvr_deletens_if_no_port',
+                mock.patch.object(l3plugin, 'get_dvr_routers_to_remove',
                                   return_value=[{'agent_id': 'foo_agent',
                                                  'router_id': 'foo_id'}]):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
@@ -1064,7 +1064,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(manager.NeutronManager,
                                'get_service_plugins',
                                return_value={'L3_ROUTER_NAT': l3plugin}),\
-                mock.patch.object(l3plugin, 'dvr_deletens_if_no_port',
+                mock.patch.object(l3plugin, 'get_dvr_routers_to_remove',
                                   return_value=[{'agent_id': 'foo_agent',
                                              'router_id': 'foo_id'}]):
             l3_dvrscheduler_db._notify_l3_agent_port_update(

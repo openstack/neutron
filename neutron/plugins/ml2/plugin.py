@@ -1386,7 +1386,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 mech_context = driver_context.PortContext(
                     self, context, port, network, binding, levels)
                 if is_dvr_enabled and utils.is_dvr_serviced(device_owner):
-                    removed_routers = l3plugin.dvr_deletens_if_no_port(
+                    removed_routers = l3plugin.get_dvr_routers_to_remove(
                         context, id)
                 self.mechanism_manager.delete_port_precommit(mech_context)
                 bound_mech_contexts.append(mech_context)
