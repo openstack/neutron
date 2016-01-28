@@ -17,6 +17,7 @@ import collections
 import re
 
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_policy import policy
 from oslo_utils import excutils
@@ -257,6 +258,13 @@ class OwnerCheck(policy.Check):
                          target[parent_foreign_key],
                          fields=[parent_field])
                 target[self.target_field] = data[parent_field]
+            except exceptions.NotFound as e:
+                # NOTE(kevinbenton): a NotFound exception can occur if a
+                # list operation is happening at the same time as one of
+                # the parents and its children being deleted. So we issue
+                # a RetryRequest so the API will redo the lookup and the
+                # problem items will be gone.
+                raise db_exc.RetryRequest(e)
             except Exception:
                 with excutils.save_and_reraise_exception():
                     LOG.exception(_LE('Policy check error while calling %s!'),
