@@ -13,30 +13,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest import test
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 import testtools
 
 from neutron.tests.api import base
-from neutron.tests.api import clients
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 
 
 class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
-
     force_tenant_isolation = True
+    credentials = ['primary', 'alt', 'admin']
 
     @classmethod
     def resource_setup(cls):
         super(FloatingIPAdminTestJSON, cls).resource_setup()
         cls.ext_net_id = CONF.network.public_network_id
         cls.floating_ip = cls.create_floatingip(cls.ext_net_id)
-        cls.alt_manager = clients.Manager(cls.isolated_creds.get_alt_creds())
-        admin_manager = clients.AdminManager()
-        cls.identity_admin_client = admin_manager.identity_client
         cls.alt_client = cls.alt_manager.network_client
         cls.network = cls.create_network()
         cls.subnet = cls.create_subnet(cls.network)
@@ -123,7 +119,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
         test_tenant = data_utils.rand_name('test_tenant_')
         test_description = data_utils.rand_name('desc_')
         tenant = self.identity_admin_client.create_tenant(
-            name=test_tenant, description=test_description)
+            name=test_tenant, description=test_description)['tenant']
         tenant_id = tenant['id']
         self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
 
@@ -135,7 +131,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
                           floating_ip['id'], port_id=port['port']['id'])
 
     @testtools.skipUnless(
-        CONF.network_feature_enabled.specify_floating_ip_address_available,
+        CONF.neutron_plugin_options.specify_floating_ip_address_available,
         "Feature for specifying floating IP address is disabled")
     @test.attr(type='smoke')
     @test.idempotent_id('332a8ae4-402e-4b98-bb6f-532e5a87b8e0')

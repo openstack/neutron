@@ -16,13 +16,13 @@
 import socket
 
 import netaddr
+from tempest.common import custom_matchers
+from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
 from neutron.tests.api import base_security_groups as sec_base
-from neutron.tests.tempest.common import custom_matchers
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 
@@ -317,9 +317,6 @@ class PortsAdminExtendedAttrsTestJSON(base.BaseAdminNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(PortsAdminExtendedAttrsTestJSON, cls).resource_setup()
-        cls.identity_client = cls._get_identity_admin_client()
-        cls.tenant = cls.identity_client.get_tenant_by_name(
-            CONF.identity.tenant_name)
         cls.network = cls.create_network()
         cls.host_id = socket.gethostname()
 

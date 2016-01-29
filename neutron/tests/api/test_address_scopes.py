@@ -12,19 +12,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest import test
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
-from neutron.tests.api import clients
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
+
 
 CONF = config.CONF
 ADDRESS_SCOPE_NAME = 'smoke-address-scope'
 
 
-class AddressScopeTestBase(base.BaseNetworkTest):
+class AddressScopeTestBase(base.BaseAdminNetworkTest):
 
     @classmethod
     def resource_setup(cls):
@@ -32,14 +32,6 @@ class AddressScopeTestBase(base.BaseNetworkTest):
         if not test.is_extension_enabled('address-scope', 'network'):
             msg = "address-scope extension not enabled."
             raise cls.skipException(msg)
-        try:
-            creds = cls.isolated_creds.get_admin_creds()
-            cls.os_adm = clients.Manager(credentials=creds)
-        except NotImplementedError:
-            msg = ("Missing Administrative Network API credentials "
-                   "in configuration.")
-            raise cls.skipException(msg)
-        cls.admin_client = cls.os_adm.network_client
 
     def _create_address_scope(self, is_admin=False, **kwargs):
         name = data_utils.rand_name(ADDRESS_SCOPE_NAME)

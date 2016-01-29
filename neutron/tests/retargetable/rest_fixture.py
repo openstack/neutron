@@ -21,7 +21,7 @@ from tempest_lib import exceptions as tlib_exceptions
 
 from neutron.tests import base
 from neutron.tests.retargetable import client_fixtures
-from neutron.tests.tempest import test as t_test
+from tempest import test as t_test
 
 
 class RestClientFixture(client_fixtures.AbstractClientFixture):

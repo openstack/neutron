@@ -13,26 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib.services.identity.v2.token_client import TokenClient
-from tempest_lib.services.identity.v3.token_client import V3TokenClient
+from tempest.common import cred_provider
+from tempest import manager
+from tempest.services.identity.v2.json.tenants_client import \
+    TenantsClient
 
-from neutron.tests.tempest.common import cred_provider
 from neutron.tests.tempest import config
-from neutron.tests.tempest import manager
-from neutron.tests.tempest.services.identity.v2.json.identity_client import \
-    IdentityClientJSON
-from neutron.tests.tempest.services.identity.v3.json.credentials_client \
-     import CredentialsClientJSON
-from neutron.tests.tempest.services.identity.v3.json.endpoints_client import \
-    EndPointClientJSON
-from neutron.tests.tempest.services.identity.v3.json.identity_client import \
-    IdentityV3ClientJSON
-from neutron.tests.tempest.services.identity.v3.json.policy_client import \
-     PolicyClientJSON
-from neutron.tests.tempest.services.identity.v3.json.region_client import \
-     RegionClientJSON
-from neutron.tests.tempest.services.identity.v3.json.service_client import \
-    ServiceClientJSON
 from neutron.tests.tempest.services.network.json.network_client import \
      NetworkClientJSON
 
@@ -78,28 +64,14 @@ class Manager(manager.Manager):
     def _set_identity_clients(self):
         params = {
             'service': CONF.identity.catalog_type,
-            'region': CONF.identity.region,
-            'endpoint_type': 'adminURL'
+            'region': CONF.identity.region
         }
         params.update(self.default_params_with_timeout_values)
-
-        self.identity_client = IdentityClientJSON(self.auth_provider,
-                                                  **params)
-        self.identity_v3_client = IdentityV3ClientJSON(self.auth_provider,
-                                                       **params)
-        self.endpoints_client = EndPointClientJSON(self.auth_provider,
-                                                   **params)
-        self.service_client = ServiceClientJSON(self.auth_provider, **params)
-        self.policy_client = PolicyClientJSON(self.auth_provider, **params)
-        self.region_client = RegionClientJSON(self.auth_provider, **params)
-        self.credentials_client = CredentialsClientJSON(self.auth_provider,
-                                                        **params)
-        # Token clients do not use the catalog. They only need default_params.
-        self.token_client = TokenClient(CONF.identity.uri,
-                                        **self.default_params)
-        if CONF.identity_feature_enabled.api_v3:
-            self.token_v3_client = V3TokenClient(CONF.identity.uri_v3,
-                                                 **self.default_params)
+        params_v2_admin = params.copy()
+        params_v2_admin['endpoint_type'] = CONF.identity.v2_admin_endpoint_type
+        # Client uses admin endpoint type of Keystone API v2
+        self.tenants_client = TenantsClient(self.auth_provider,
+                                            **params_v2_admin)
 
 
 class AdminManager(Manager):

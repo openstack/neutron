@@ -12,17 +12,18 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import itertools
 
 import netaddr
 import six
+from tempest.common import custom_matchers
+from tempest import test
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
-from neutron.tests.tempest.common import custom_matchers
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 

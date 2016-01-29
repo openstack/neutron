@@ -16,12 +16,12 @@
 import uuid
 
 import netaddr
+from tempest import test
 from tempest_lib.common.utils import data_utils
 from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import test_subnetpools
 from neutron.tests.tempest import config
-from neutron.tests.tempest import test
 
 CONF = config.CONF
 SUBNETPOOL_NAME = 'smoke-subnetpool'
