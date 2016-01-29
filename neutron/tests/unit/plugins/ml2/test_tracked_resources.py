@@ -15,7 +15,10 @@ from oslo_utils import uuidutils
 
 from neutron import context
 from neutron.db.quota import api as quota_db_api
+from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
+from neutron.tests.unit.plugins.ml2 import base as ml2_base
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -50,13 +53,13 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
             self.ctx, resource_name, self._tenant_id)
 
 
-class TestTrackedResourcesEventHandler(BaseTestTrackedResources):
+class BaseTestEventHandler(object):
 
     def setUp(self):
         handler_patch = mock.patch(
             'neutron.quota.resource.TrackedResource._db_event_handler')
         self.handler_mock = handler_patch.start()
-        super(TestTrackedResourcesEventHandler, self).setUp()
+        super(BaseTestEventHandler, self).setUp()
 
     def _verify_event_handler_calls(self, data, expected_call_count=1):
         if not hasattr(data, '__iter__') or isinstance(data, dict):
@@ -69,6 +72,10 @@ class TestTrackedResourcesEventHandler(BaseTestTrackedResources):
                 self.assertEqual(model['id'], item['id'])
                 self.assertEqual(model['tenant_id'], item['tenant_id'])
             call_idx = call_idx - 1
+
+
+class TestTrackedResourcesEventHandler(BaseTestEventHandler,
+                                       BaseTestTrackedResources):
 
     def test_create_delete_network_triggers_event(self):
         self._test_init('network')
@@ -146,6 +153,33 @@ class TestTrackedResourcesEventHandler(BaseTestTrackedResources):
         self._verify_event_handler_calls(sec_group_rule, expected_call_count=4)
         self._delete('security-group-rules', sec_group_rule['id'])
         self._verify_event_handler_calls(sec_group_rule, expected_call_count=5)
+
+
+class TestL3ResourcesEventHandler(BaseTestEventHandler,
+                                  ml2_base.ML2TestFramework,
+                                  test_l3.L3NatTestCaseMixin):
+
+    def setUp(self):
+        super(TestL3ResourcesEventHandler, self).setUp()
+        ext_mgr = test_l3.L3TestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+
+    def test_create_delete_floating_ip_triggers_event(self):
+        net = self._make_network('json', 'meh', True)
+        subnet = self._make_subnet('json', net, '14.0.0.1',
+                                   '14.0.0.0/24')['subnet']
+        self._set_net_external(subnet['network_id'])
+        floatingip = self._make_floatingip('json', subnet['network_id'])
+        internal_port = self._show(
+            'ports', floatingip['floatingip']['port_id'])['ports'][0]
+        # When a floatingip is created it also creates port, therefore
+        # there will be four calls in total to the event handler
+        self._verify_event_handler_calls(floatingip['floatingip'],
+                                         expected_call_count=4)
+        self._delete('floatingips', floatingip['floatingip']['id'])
+        # Expecting 2 more calls - 1 for the port, 1 for the floatingip
+        self._verify_event_handler_calls(
+            [internal_port, floatingip['floatingip']], expected_call_count=6)
 
 
 class TestTrackedResources(BaseTestTrackedResources):
