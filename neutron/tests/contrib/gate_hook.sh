@@ -61,6 +61,7 @@ case $VENV in
 "api"|"api-pecan"|"full-pecan"|"dsvm-scenario")
     load_rc_hook api_extensions
     load_rc_hook qos
+    load_conf_hook osprofiler
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
     fi

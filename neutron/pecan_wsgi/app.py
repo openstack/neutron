@@ -88,10 +88,12 @@ def _wrap_app(app):
     app.set_latent(
         allow_headers=['X-Auth-Token', 'X-Identity-Status', 'X-Roles',
                        'X-Service-Catalog', 'X-User-Id', 'X-Tenant-Id',
-                       'X-OpenStack-Request-ID'],
+                       'X-OpenStack-Request-ID',
+                       'X-Trace-Info', 'X-Trace-HMAC'],
         allow_methods=['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
         expose_headers=['X-Auth-Token', 'X-Subject-Token', 'X-Service-Token',
-                        'X-OpenStack-Request-ID']
+                        'X-OpenStack-Request-ID',
+                        'X-Trace-Info', 'X-Trace-HMAC']
     )
 
     return app

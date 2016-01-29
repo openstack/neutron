@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
+from osprofiler import profiler
 
 from neutron._i18n import _LE, _LI, _LW
 from neutron.common import utils as n_utils
@@ -112,6 +113,7 @@ class OVSPort(object):
         return self.ofport
 
 
+@profiler.trace_cls("ovs_dvr_agent")
 class OVSDVRNeutronAgent(object):
     '''
     Implements OVS-based DVR(Distributed Virtual Router), for overlay networks.

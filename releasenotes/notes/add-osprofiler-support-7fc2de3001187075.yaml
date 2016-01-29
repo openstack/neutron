@@ -1,0 +1,32 @@
+---
+fixes:
+  - Missing OSprofiler support was added. This cross-project profiling library
+    allows to trace various OpenStack requests through all OpenStack
+    services that support it. To initiate OpenStack
+    request tracing `--profile <HMAC_KEY>` option needs to be added to
+    the CLI command. This key needs to present one of the secret keys
+    defined in neutron.conf configuration file with `hmac_keys` option
+    under the `[profiler]` configuration section. To enable or disable
+    Neutron profiling the appropriate `enabled` option under the same
+    section needs to be set either to `True` or `False`. By default
+    Neutron will trace all API and RPC requests, but there is an opportunity
+    to trace DB requests as well. For this purpose `trace_sqlalchemy`
+    option needs to be set to `True`. As a prerequisite OSprofiler
+    library and its storage backend needs to be installed to the
+    environment. If so (and if profiling is enabled in neutron.conf)
+    the trace can be generated via command -
+    `$ neutron --profile SECRET_KEY <subcommand>`.
+    At the end of output there will be message with <trace_id>, and
+    to plot nice HTML graphs the following command should be used -
+    `$ osprofiler trace show <trace_id> --html --out result.html`
+upgrade:
+  - OSprofiler support was introduced. To allow its usage the api-paste.ini
+    file needs to be modified to contain osprofiler middleware. Also
+    `[profiler]` section needs to be added to the neutron.conf file with
+    `enabled`, `hmac_keys` and `trace_sqlalchemy` flags defined.
+security:
+  - OSprofiler support requires passing of trace information
+    between various OpenStack services. This information is
+    securely signed by one of HMAC keys, defined in neutron.conf configuration
+    file. To allow cross-project tracing user should use the key, that is
+    common among all OpenStack services he or she wants to trace.

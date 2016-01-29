@@ -28,6 +28,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import systemd
+from osprofiler import profiler
 import six
 from six import moves
 
@@ -98,6 +99,7 @@ def has_zero_prefixlen_address(ip_addresses):
     return any(netaddr.IPNetwork(ip).prefixlen == 0 for ip in ip_addresses)
 
 
+@profiler.trace_cls("rpc")
 class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       dvr_rpc.DVRAgentRpcCallbackMixin):

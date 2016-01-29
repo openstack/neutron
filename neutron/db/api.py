@@ -23,6 +23,8 @@ from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import enginefacade
 from oslo_utils import excutils
 from oslo_utils import uuidutils
+import osprofiler.sqlalchemy
+import sqlalchemy
 
 from neutron.db import common_db_mixin
 
@@ -57,6 +59,11 @@ def _create_facade_lazily():
     if _FACADE is None:
         context_manager.configure(sqlite_fk=True, **cfg.CONF.database)
         _FACADE = context_manager._factory.get_legacy_facade()
+
+        if cfg.CONF.profiler.enabled and cfg.CONF.profiler.trace_sqlalchemy:
+            osprofiler.sqlalchemy.add_tracing(sqlalchemy,
+                                              _FACADE.get_engine(),
+                                              "db")
 
     return _FACADE
 
