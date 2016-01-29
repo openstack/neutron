@@ -44,7 +44,7 @@ class DnsExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2):
     """Test plugin to mixin the DNS Integration extensions.
     """
 
-    supported_extension_aliases = ["dns-integration"]
+    supported_extension_aliases = ["dns-integration", "router"]
 
 
 class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
