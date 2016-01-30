@@ -1400,8 +1400,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                                  exc.HTTPNotFound.code)
 
 
-class OvsDhcpAgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
-                                   test_agent.AgentDBTestMixIn,
+class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,
                                    test_plugin.NeutronDbPluginV2TestCase):
     plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'

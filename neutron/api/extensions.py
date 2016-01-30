@@ -440,10 +440,11 @@ class ExtensionManager(object):
                 # Exit loop as no progress was made
                 break
         if exts_to_process:
-            # NOTE(salv-orlando): Consider whether this error should be fatal
             LOG.error(_LE("It was impossible to process the following "
                           "extensions: %s because of missing requirements."),
                       ','.join(exts_to_process.keys()))
+            raise exceptions.ExtensionsNotFound(
+                extensions=list(exts_to_process.keys()))
 
         # Extending extensions' attributes map.
         for ext in processed_exts.values():

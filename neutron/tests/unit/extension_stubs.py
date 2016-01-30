@@ -37,6 +37,12 @@ class StubExtension(extensions.ExtensionDescriptor):
         return ""
 
 
+class StubExtensionWithReqs(StubExtension):
+
+    def get_required_extensions(self):
+        return ["foo"]
+
+
 class StubPlugin(object):
 
     def __init__(self, supported_extensions=None):
