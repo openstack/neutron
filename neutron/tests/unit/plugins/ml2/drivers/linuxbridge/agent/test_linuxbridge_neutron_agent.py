@@ -31,6 +31,9 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent \
 from neutron.tests import base
 
 LOCAL_IP = '192.168.0.33'
+LOCAL_IPV6 = '2001:db8:1::33'
+VXLAN_GROUPV6 = 'ff05::/120'
+PORT_1 = 'abcdef01-12ddssdfds-fdsfsd'
 DEVICE_1 = 'tapabcdef01-12'
 BRIDGE_MAPPING_VALUE = 'br-eth2'
 BRIDGE_MAPPINGS = {'physnet0': BRIDGE_MAPPING_VALUE}
@@ -49,12 +52,24 @@ class FakeIpDevice(object):
         self.link = FakeIpLinkCommand()
 
 
+def get_linuxbridge_manager(bridge_mappings, interface_mappings):
+    with mock.patch.object(ip_lib.IPWrapper, 'get_device_by_ip',
+                           return_value=FAKE_DEFAULT_DEV),\
+            mock.patch.object(ip_lib, 'device_exists', return_value=True),\
+            mock.patch.object(linuxbridge_neutron_agent.LinuxBridgeManager,
+                              'check_vxlan_support'):
+        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
+        return linuxbridge_neutron_agent.LinuxBridgeManager(
+            bridge_mappings, interface_mappings)
+
+
 class TestLinuxBridge(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridge, self).setUp()
         interface_mappings = INTERFACE_MAPPINGS
         bridge_mappings = BRIDGE_MAPPINGS
+        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
 
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_device_by_ip', return_value=FAKE_DEFAULT_DEV),\
@@ -107,6 +122,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
+        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
         self.get_devices_p = mock.patch.object(ip_lib.IPWrapper, 'get_devices')
         self.get_devices = self.get_devices_p.start()
         self.get_devices.return_value = [ip_lib.IPDevice('eth77')]
@@ -379,6 +395,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         super(TestLinuxBridgeManager, self).setUp()
         self.interface_mappings = INTERFACE_MAPPINGS
         self.bridge_mappings = BRIDGE_MAPPINGS
+        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
 
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_device_by_ip',
@@ -418,6 +435,31 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(
                 self.lbm.interface_exists_on_bridge("br-int", "abd")
             )
+
+    def _test_vxlan_group_validation(self, bad_local_ip, bad_vxlan_group):
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_device_by_ip',
+                               return_value=FAKE_DEFAULT_DEV),\
+                mock.patch.object(sys, 'exit') as exit,\
+                mock.patch.object(linuxbridge_neutron_agent.LOG,
+                                  'error') as log:
+            self.lbm.local_ip = bad_local_ip
+            cfg.CONF.set_override('vxlan_group', bad_vxlan_group, 'VXLAN')
+            self.lbm.validate_vxlan_group_with_local_ip()
+            self.assertEqual(1, log.call_count)
+            exit.assert_called_once_with(1)
+
+    def test_vxlan_group_validation_with_mismatched_local_ip(self):
+        self._test_vxlan_group_validation(LOCAL_IP, VXLAN_GROUPV6)
+
+    def test_vxlan_group_validation_with_unicast_group(self):
+        self._test_vxlan_group_validation(LOCAL_IP, '240.0.0.0')
+
+    def test_vxlan_group_validation_with_invalid_cidr(self):
+        self._test_vxlan_group_validation(LOCAL_IP, '224.0.0.1/')
+
+    def test_vxlan_group_validation_with_v6_unicast_group(self):
+        self._test_vxlan_group_validation(LOCAL_IPV6, '2001:db8::')
 
     def test_get_existing_bridge_name(self):
         phy_net = 'physnet0'
@@ -464,10 +506,17 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self.assertEqual('239.1.2.0', self.lbm.get_vxlan_group(vn_id))
         vn_id = 257
         self.assertEqual('239.1.2.1', self.lbm.get_vxlan_group(vn_id))
-        cfg.CONF.set_override('vxlan_group', '240.0.0.0', 'VXLAN')
-        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
-        cfg.CONF.set_override('vxlan_group', '224.0.0.1/', 'VXLAN')
-        self.assertIsNone(self.lbm.get_vxlan_group(vn_id))
+
+    def test_get_vxlan_group_with_ipv6(self):
+        cfg.CONF.set_override('local_ip', LOCAL_IPV6, 'VXLAN')
+        self.lbm.local_ip = LOCAL_IPV6
+        cfg.CONF.set_override('vxlan_group', VXLAN_GROUPV6, 'VXLAN')
+        vn_id = p_const.MAX_VXLAN_VNI
+        self.assertEqual('ff05::ff', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 256
+        self.assertEqual('ff05::', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 257
+        self.assertEqual('ff05::1', self.lbm.get_vxlan_group(vn_id))
 
     def test_get_all_neutron_bridges(self):
         br_list = ["br-int", "brq1", "brq2", "br-ex"]
@@ -1098,8 +1147,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def setUp(self):
-        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
         super(TestLinuxBridgeRpcCallbacks, self).setUp()
+        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
 
         class FakeLBAgent(object):
             def __init__(self):
