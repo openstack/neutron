@@ -51,10 +51,12 @@ from neutron.plugins.common import constants as service_constants
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
+from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import base as test_extensions_base
 from neutron.tests.unit.extensions import test_agent
+from neutron.tests.unit.plugins.ml2 import base as ml2_base
 
 LOG = logging.getLogger(__name__)
 
@@ -2917,6 +2919,41 @@ class L3AgentDbSepTestCase(L3BaseForSepTests, L3AgentDbTestCaseBase):
         super(L3AgentDbSepTestCase, self).setUp()
         self.core_plugin = TestNoL3NatPlugin()
         self.plugin = TestL3NatServicePlugin()
+
+
+class TestL3DbOperationBounds(test_db_base_plugin_v2.DbOperationBoundMixin,
+                              L3NatTestCaseMixin,
+                              ml2_base.ML2TestFramework):
+    def setUp(self):
+        super(TestL3DbOperationBounds, self).setUp()
+        ext_mgr = L3TestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+
+    def test_router_list_queries_constant(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+
+            def router_maker():
+                ext_info = {'network_id': s['subnet']['network_id']}
+                self._create_router(self.fmt, _uuid(),
+                                    arg_list=('external_gateway_info',),
+                                    external_gateway_info=ext_info)
+
+            self._assert_object_list_queries_constant(router_maker, 'routers')
+
+    def test_floatingip_list_queries_constant(self):
+        with self.floatingip_with_assoc() as flip:
+            internal_port = self._show('ports', flip['floatingip']['port_id'])
+            internal_net_id = internal_port['port']['network_id']
+
+            def float_maker():
+                port = self._make_port(self.fmt, internal_net_id)
+                self._make_floatingip(
+                    self.fmt, flip['floatingip']['floating_network_id'],
+                    port_id=port['port']['id'])
+
+            self._assert_object_list_queries_constant(float_maker,
+                                                      'floatingips')
 
 
 class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase):
