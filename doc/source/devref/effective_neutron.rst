@@ -65,6 +65,40 @@ Document common pitfalls as well as good practices done during database developm
   on the query object. Read the warnings for more details about in-python cascades.
 * ...
 
+* Sometimes in code we use the following structures:
+
+  .. code:: python
+
+     def create():
+        with context.session.begin(subtransactions=True):
+            create_something()
+            try:
+                _do_other_thing_with_created_object()
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    delete_something()
+
+     def _do_other_thing_with_created_object():
+        with context.session.begin(subtransactions=True):
+            ....
+
+  The problem is that when exception is raised in ``_do_other_thing_with_created_object``
+  it is caught in except block, but the object cannot be deleted in except
+  section because internal transaction from ``_do_other_thing_with_created_object``
+  has been rolled back. To avoid this nested transactions should be used.
+  For such cases help function ``safe_creation`` has been created in
+  ``neutron/db/common_db_mixin.py``.
+  So, the example above should be replaced with:
+
+  .. code:: python
+
+     _safe_creation(context, create_something, delete_someting,
+                    _do_other_thing_with_created_object)
+
+  Where nested transaction is used in _do_other_thing_with_created_object
+  function.
+
+
 System development
 ~~~~~~~~~~~~~~~~~~
 
