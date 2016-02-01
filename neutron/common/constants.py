@@ -41,6 +41,7 @@ DEVICE_OWNER_ROUTER_SNAT = "network:router_centralized_snat"
 DEVICE_OWNER_LOADBALANCER = "neutron:LOADBALANCER"
 DEVICE_OWNER_LOADBALANCERV2 = "neutron:LOADBALANCERV2"
 
+DEVICE_OWNER_COMPUTE_PREFIX = "compute:"
 DEVICE_OWNER_PREFIXES = ["network:", "neutron:"]
 
 # Collection used to identify devices owned by router interfaces.
