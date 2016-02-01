@@ -15,7 +15,6 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.agent.common import config
 
 DEFAULT_BRIDGE_MAPPINGS = []
 DEFAULT_INTERFACE_MAPPINGS = []
@@ -63,34 +62,6 @@ bridge_opts = [
                 help=_("List of <physical_network>:<physical_bridge>")),
 ]
 
-agent_opts = [
-    cfg.IntOpt('polling_interval', default=2,
-               help=_("The number of seconds the agent will wait between "
-                      "polling for local device changes.")),
-    cfg.IntOpt('quitting_rpc_timeout', default=10,
-               help=_("Set new timeout in seconds for new rpc calls after "
-                      "agent receives SIGTERM. If value is set to 0, rpc "
-                      "timeout won't be changed")),
-    # TODO(kevinbenton): The following opt is duplicated between the OVS agent
-    # and the Linuxbridge agent to make it easy to back-port. These shared opts
-    # should be moved into a common agent config options location as part of
-    # the deduplication work.
-    cfg.BoolOpt('prevent_arp_spoofing', default=True,
-                help=_("Enable suppression of ARP responses that don't match "
-                       "an IP address that belongs to the port from which "
-                       "they originate. Note: This prevents the VMs attached "
-                       "to this agent from spoofing, it doesn't protect them "
-                       "from other devices which have the capability to spoof "
-                       "(e.g. bare metal or VMs attached to agents without "
-                       "this flag set to True). Spoofing rules will not be "
-                       "added to any ports that have port security disabled. "
-                       "For LinuxBridge, this requires ebtables. For OVS, it "
-                       "requires a version that supports matching ARP "
-                       "headers."))
-]
-
 
 cfg.CONF.register_opts(vxlan_opts, "VXLAN")
 cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
-cfg.CONF.register_opts(agent_opts, "AGENT")
-config.register_agent_state_opts_helper(cfg.CONF)
