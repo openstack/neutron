@@ -399,15 +399,16 @@ class Dnsmasq(DhcpLocalProcess):
             try:
                 if not os.path.exists(self.conf.dnsmasq_base_log_dir):
                     os.makedirs(self.conf.dnsmasq_base_log_dir)
+            except OSError:
+                LOG.error(_LE('Error while create dnsmasq base log dir: %s'),
+                    self.conf.dnsmasq_base_log_dir)
+            else:
                 log_filename = os.path.join(
                     self.conf.dnsmasq_base_log_dir,
                     self.network.id, 'dhcp_dns_log')
                 cmd.append('--log-queries')
                 cmd.append('--log-dhcp')
                 cmd.append('--log-facility=%s' % log_filename)
-            except OSError:
-                LOG.error(_LE('Error while create dnsmasq base log dir: %s'),
-                    self.conf.dnsmasq_base_log_dir)
 
         return cmd
 
