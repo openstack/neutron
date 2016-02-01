@@ -29,6 +29,7 @@ import testscenarios
 from neutron.common import constants
 from neutron import context as n_context
 from neutron.db import agents_db
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_agentschedulers_db
@@ -271,6 +272,37 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def test__bind_routers_ha_no_binding(self):
         self._test__bind_routers_ha(has_binding=False)
+
+    def test_create_ha_port_and_bind_duplicate(self):
+        agent = agents_db.Agent(id='foo_agent')
+        context = n_context.get_admin_context()
+        with mock.patch.object(self.plugin, 'get_ha_network',
+                               return_value=mock.Mock()),\
+                mock.patch.object(self.scheduler, 'bind_router') as bind,\
+                mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog,\
+                mock.patch.object(db_api, 'autonested_transaction',
+                                  side_effect=db_exc.DBDuplicateEntry):
+            self.scheduler.create_ha_port_and_bind(self.plugin, context,
+                                                   'foo_router', 'test',
+                                                   agent)
+            self.assertEqual(1, flog.call_count)
+            args, kwargs = flog.call_args
+            self.assertIn('already scheduled for agent', args[0])
+            bind.assert_called_once_with(context, 'foo_router', agent)
+
+    def test__bind_ha_router_to_agents(self):
+        agent = agents_db.Agent(id='foo_agent')
+        context = n_context.get_admin_context()
+        with mock.patch.object(self.plugin, 'get_ha_router_port_bindings',
+                               return_value=[mock.Mock()]),\
+            mock.patch.object(db_api, 'autonested_transaction',
+                              side_effect=db_exc.DBDuplicateEntry),\
+            mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog:
+            self.scheduler._bind_ha_router_to_agents(self.plugin, context,
+                                                     'foo_router', [agent])
+            self.assertEqual(1, flog.call_count)
+            args, kwargs = flog.call_args
+            self.assertIn('already scheduled for agent', args[0])
 
     def test__get_candidates_iterable_on_early_returns(self):
         plugin = mock.MagicMock()
