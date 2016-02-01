@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-import copy
 
 from oslo_log import log as logging
 import oslo_messaging
@@ -46,9 +45,8 @@ class L2populationAgentNotifyAPI(object):
                    'method': method,
                    'fdb_entries': fdb_entries})
 
-        marshalled_fdb_entries = self._marshall_fdb_entries(fdb_entries)
         cctxt = self.client.prepare(topic=self.topic_l2pop_update, fanout=True)
-        cctxt.cast(context, method, fdb_entries=marshalled_fdb_entries)
+        cctxt.cast(context, method, fdb_entries=fdb_entries)
 
     def _notification_host(self, context, method, fdb_entries, host):
         LOG.debug('Notify l2population agent %(host)s at %(topic)s the '
@@ -58,9 +56,8 @@ class L2populationAgentNotifyAPI(object):
                    'method': method,
                    'fdb_entries': fdb_entries})
 
-        marshalled_fdb_entries = self._marshall_fdb_entries(fdb_entries)
         cctxt = self.client.prepare(topic=self.topic_l2pop_update, server=host)
-        cctxt.cast(context, method, fdb_entries=marshalled_fdb_entries)
+        cctxt.cast(context, method, fdb_entries=fdb_entries)
 
     def add_fdb_entries(self, context, fdb_entries, host=None):
         if fdb_entries:
@@ -88,28 +85,3 @@ class L2populationAgentNotifyAPI(object):
             else:
                 self._notification_fanout(context, 'update_fdb_entries',
                                           fdb_entries)
-
-    @staticmethod
-    def _marshall_fdb_entries(fdb_entries):
-        """Prepares fdb_entries for serialization to JSON for RPC.
-
-        All methods in this class that send messages should call this to
-        marshall fdb_entries for the wire.
-
-        :param fdb_entries: Original fdb_entries data-structure.  Looks like:
-            {
-                <uuid>: {
-                    ...,
-                    'ports': {
-                        <ip address>: [ PortInfo, ...  ],
-                        ...
-
-        :returns: Deep copy with PortInfo converted to [mac, ip]
-        """
-        marshalled = copy.deepcopy(fdb_entries)
-        for value in marshalled.values():
-            if 'ports' in value:
-                for address, port_infos in value['ports'].items():
-                    value['ports'][address] = [[mac, ip]
-                                               for mac, ip in port_infos]
-        return marshalled
