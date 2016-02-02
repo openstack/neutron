@@ -873,7 +873,7 @@ class Dnsmasq(DhcpLocalProcess):
             for ip_version in (4, 6):
                 vx_ips = [ip for ip in ips
                           if netaddr.IPAddress(ip).version == ip_version]
-                if vx_ips:
+                if len(vx_ips) > 1:
                     options.append(
                         self._format_option(
                             ip_version, i, 'dns-server',
