@@ -65,9 +65,9 @@ DHCP_OPTS = [
                help=_('Location to store DHCP server config files')),
     cfg.StrOpt('dhcp_domain',
                default='openstacklocal',
-               help=_('Domain to use for building the hostnames.'
+               help=_('Domain to use for building the hostnames. '
                       'This option is deprecated. It has been moved to '
-                      'neutron.conf as dns_domain. It will removed from here '
+                      'neutron.conf as dns_domain. It will be removed '
                       'in a future release'),
                deprecated_for_removal=True),
 ]
