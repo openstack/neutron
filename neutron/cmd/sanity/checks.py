@@ -355,6 +355,17 @@ def ipset_supported():
         return False
 
 
+def ip6tables_supported():
+    try:
+        cmd = ['ip6tables', '--version']
+        agent_utils.execute(cmd)
+        return True
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking for installed ip6tables. "
+                  "Exception: %s", e)
+        return False
+
+
 def get_minimal_dibbler_version_supported():
     return MINIMUM_DIBBLER_VERSION
 
