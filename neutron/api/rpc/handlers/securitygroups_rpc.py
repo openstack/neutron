@@ -157,7 +157,16 @@ class SecurityGroupAgentRpcApiMixin(object):
     def security_groups_provider_updated(self, context,
                                          devices_to_update=None):
         """Notify provider updated security groups."""
-        cctxt = self.client.prepare(version='1.3',
+        # NOTE(ihrachys) the version here should really be 1.3, but since we
+        # don't support proper version pinning yet, we leave it intact to allow
+        # to work with older agents. The reason why we should not require the
+        # version here is that in rolling upgrade scenarios we always upgrade
+        # server first, and since the notification is directed from the newer
+        # server to older agents, and those agents don't have their RPC entry
+        # point bumped to 1.3 yet, we cannot safely enforce the minimal
+        # version. Newer payload works for older agents because agent handlers
+        # are written so that we silently ignore unknown parameters.
+        cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
         cctxt.cast(context, 'security_groups_provider_updated',
