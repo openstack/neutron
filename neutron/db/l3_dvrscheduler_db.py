@@ -75,18 +75,31 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     the state of the router and the Compute Nodes.
     """
 
-    def dvr_handle_new_service_port(self, context, port):
+    def dvr_handle_new_service_port(self, context, port, dest_host=None):
         """Handle new dvr service port creation.
 
         When a new dvr service port is created, this function will
         schedule a dvr router to new compute node if needed and notify
         l3 agent on that node.
+        The 'dest_host' will provide the destinaton host of the port in
+        case of service port migration.
         """
-        port_host = port[portbindings.HOST_ID]
+        port_host = dest_host or port[portbindings.HOST_ID]
         l3_agent_on_host = (self.get_l3_agents(
             context, filters={'host': [port_host]}) or [None])[0]
         if not l3_agent_on_host:
             return
+
+        if dest_host:
+            # Make sure we create the floatingip agent gateway port
+            # for the destination node if fip is associated with this
+            # fixed port
+            l3plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            (
+                l3plugin.
+                check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
+                    context, port, dest_host))
 
         subnet_ids = [ip['subnet_id'] for ip in port['fixed_ips']]
         router_ids = self.get_dvr_routers_by_subnet_ids(context, subnet_ids)
@@ -304,17 +317,26 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         if not subnet_ids:
             return False
 
-        core_plugin = manager.NeutronManager.get_plugin()
-        filters = {'fixed_ips': {'subnet_id': subnet_ids},
-                   portbindings.HOST_ID: [host]}
-        ports_query = core_plugin._get_ports_query(context, filters=filters)
-        owner_filter = or_(
+        Binding = ml2_models.PortBinding
+        IPAllocation = models_v2.IPAllocation
+        Port = models_v2.Port
+
+        query = context.session.query(Binding)
+        query = query.join(Binding.port)
+        query = query.join(Port.fixed_ips)
+        query = query.filter(
+            IPAllocation.subnet_id.in_(subnet_ids))
+        device_filter = or_(
             models_v2.Port.device_owner.startswith(
                 n_const.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
                 n_utils.get_other_dvr_serviced_device_owners()))
-        ports_query = ports_query.filter(owner_filter)
-        return ports_query.first() is not None
+        query = query.filter(device_filter)
+        host_filter = or_(
+            ml2_models.PortBinding.host == host,
+            ml2_models.PortBinding.profile.contains(host))
+        query = query.filter(host_filter)
+        return query.first() is not None
 
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
@@ -352,6 +374,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
     if new_port and original_port:
         original_device_owner = original_port.get('device_owner', '')
         new_device_owner = new_port.get('device_owner', '')
+        is_new_device_dvr_serviced = n_utils.is_dvr_serviced(new_device_owner)
         l3plugin = manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT)
         context = kwargs['context']
@@ -374,7 +397,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                 }
                 _notify_port_delete(
                     event, resource, trigger, **removed_router_args)
-            if not n_utils.is_dvr_serviced(new_device_owner):
+            if not is_new_device_dvr_serviced:
                 return
         is_fixed_ips_changed = (
             'fixed_ips' in new_port and
@@ -384,9 +407,17 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
             new_port[portbindings.HOST_ID] and
             (original_port[portbindings.HOST_ID] !=
                 new_port[portbindings.HOST_ID]))
-        if (is_new_port_binding_changed and
-            n_utils.is_dvr_serviced(new_device_owner)):
-            l3plugin.dvr_handle_new_service_port(context, new_port)
+        dest_host = None
+        new_port_profile = new_port.get(portbindings.PROFILE)
+        if new_port_profile:
+            dest_host = new_port_profile.get('migrating_to')
+        # If dest_host is set, then the port profile has changed
+        # and this port is in migration. The call below will
+        # pre-create the router on the new host
+        if ((is_new_port_binding_changed or dest_host) and
+            is_new_device_dvr_serviced):
+            l3plugin.dvr_handle_new_service_port(context, new_port,
+                                                 dest_host=dest_host)
             l3plugin.update_arp_entry_for_dvr_service_port(
                 context, new_port)
         elif kwargs.get('mac_address_updated') or is_fixed_ips_changed:

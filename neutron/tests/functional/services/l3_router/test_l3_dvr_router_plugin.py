@@ -528,6 +528,85 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self._test_router_remove_from_agent_on_vm_port_deletion(
             non_admin_port=True)
 
+    def test_dvr_router_notifications_for_live_migration_with_fip(self):
+        self._dvr_router_notifications_for_live_migration(
+            with_floatingip=True)
+
+    def test_dvr_router_notifications_for_live_migration_without_fip(self):
+        self._dvr_router_notifications_for_live_migration()
+
+    def _dvr_router_notifications_for_live_migration(
+            self, with_floatingip=False):
+        """Check the router notifications go to the right hosts
+        with live migration without hostbinding on the port.
+        """
+        # register l3 agents in dvr mode in addition to existing dvr_snat agent
+        HOST1, HOST2 = 'host1', 'host2'
+        for host in [HOST1, HOST2]:
+            helpers.register_l3_agent(
+                host=host, agent_mode=constants.L3_AGENT_MODE_DVR)
+
+        router = self._create_router()
+        arg_list = (portbindings.HOST_ID,)
+        with self.subnet() as ext_subnet,\
+                self.subnet(cidr='20.0.0.0/24') as subnet1,\
+                self.port(subnet=subnet1,
+                          device_owner=DEVICE_OWNER_COMPUTE,
+                          arg_list=arg_list,
+                          **{portbindings.HOST_ID: HOST1}) as vm_port:
+            # make net external
+            ext_net_id = ext_subnet['subnet']['network_id']
+            self._update('networks', ext_net_id,
+                     {'network': {external_net.EXTERNAL: True}})
+            # add external gateway to router
+            self.l3_plugin.update_router(
+                self.context, router['id'],
+                {'router': {
+                    'external_gateway_info': {'network_id': ext_net_id}}})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet1['subnet']['id']})
+            if with_floatingip:
+                floating_ip = {'floating_network_id': ext_net_id,
+                               'router_id': router['id'],
+                               'port_id': vm_port['port']['id'],
+                               'tenant_id': vm_port['port']['tenant_id'],
+                               'dns_name': '', 'dns_domain': ''}
+                floating_ip = self.l3_plugin.create_floatingip(
+                    self.context, {'floatingip': floating_ip})
+
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier,\
+                    mock.patch.object(
+                        self.l3_plugin,
+                        'create_fip_agent_gw_port_if_not_exists'
+                                     ) as fip_agent:
+                live_migration_port_profile = {
+                    'migrating_to': HOST2
+                }
+                # Update the VM Port with Migration porbinding Profile.
+                # With this change, it should trigger a notification to
+                # the Destination host to create a Router ahead of time
+                # before the VM Port binding has changed to HOST2.
+                updated_port = self.core_plugin.update_port(
+                    self.context, vm_port['port']['id'],
+                    {'port': {
+                        portbindings.PROFILE: live_migration_port_profile}})
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST2)
+                # Check the port-binding is still with the old HOST1, but
+                # the router update notification has been sent to the new
+                # host 'HOST2' based on the live migration profile change.
+                self.assertEqual(updated_port[portbindings.HOST_ID], HOST1)
+                self.assertNotEqual(updated_port[portbindings.HOST_ID], HOST2)
+                if with_floatingip:
+                    fip_agent.return_value = True
+                    # Since we have already created the floatingip for the
+                    # port, it should be creating the floatingip agent gw
+                    # port for the new host if it does not exist.
+                    fip_agent.assert_called_once_with(
+                        mock.ANY, floating_ip['floating_network_id'], HOST2)
+
     def test_router_notifications(self):
         """Check that notifications go to the right hosts in different
         conditions

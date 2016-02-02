@@ -474,7 +474,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if router:
                 router_floatingips = router.get(l3_const.FLOATINGIP_KEY, [])
                 if router['distributed']:
-                    if floating_ip.get('host', None) != host:
+                    if (floating_ip.get('host', None) != host and
+                        floating_ip.get('dest_host') is None):
                         continue
                     LOG.debug("Floating IP host: %s", floating_ip['host'])
                 router_floatingips.append(floating_ip)
@@ -507,16 +508,29 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         floating_ip_port_ids = [fip['port_id'] for fip in floating_ips
                                 if fip['router_id'] in dvr_router_ids]
         if floating_ip_port_ids:
-            port_filter = {portbindings.HOST_ID: [host],
-                           'id': floating_ip_port_ids}
+            port_filter = {'id': floating_ip_port_ids}
             ports = self._core_plugin.get_ports(context, port_filter)
-            port_dict = dict((port['id'], port) for port in ports)
+            port_dict = {}
+            for port in ports:
+                # Make sure that we check for cases were the port
+                # might be in a pre-live migration state or also
+                # check for the portbinding profile 'migrating_to'
+                # key for the host.
+                port_profile = port.get(portbindings.PROFILE)
+                port_in_migration = (
+                    port_profile and
+                    port_profile.get('migrating_to') == host)
+                if (port[portbindings.HOST_ID] == host or port_in_migration):
+                    port_dict.update({port['id']: port})
             # Add the port binding host to the floatingip dictionary
             for fip in floating_ips:
                 vm_port = port_dict.get(fip['port_id'], None)
                 if vm_port:
                     fip['host'] = self._get_dvr_service_port_hostid(
                         context, fip['port_id'], port=vm_port)
+                    fip['dest_host'] = (
+                        self._get_dvr_migrating_service_port_hostid(
+                            context, fip['port_id'], port=vm_port))
         routers_dict = self._process_routers(context, routers)
         self._process_floating_ips_dvr(context, routers_dict,
                                        floating_ips, host, agent)
@@ -539,6 +553,18 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         device_owner = port_db['device_owner'] if port_db else ""
         if n_utils.is_dvr_serviced(device_owner):
             return port_db[portbindings.HOST_ID]
+
+    def _get_dvr_migrating_service_port_hostid(
+        self, context, port_id, port=None):
+        """Returns the migrating host_id from the migrating profile."""
+        port_db = port or self._core_plugin.get_port(context, port_id)
+        port_profile = port_db.get(portbindings.PROFILE)
+        port_dest_host = None
+        if port_profile:
+            port_dest_host = port_profile.get('migrating_to')
+        device_owner = port_db['device_owner'] if port_db else ""
+        if n_utils.is_dvr_serviced(device_owner):
+            return port_dest_host
 
     def _get_agent_gw_ports_exist_for_network(
             self, context, network_id, host, agent_id):
@@ -569,6 +595,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 self._core_plugin.ipam.delete_port(context, p['id'])
                 if host_id:
                     return
+
+    def check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
+            self, context, port, host):
+        """Create fip agent_gw_port on host if not exists"""
+        fip = self._get_floatingip_on_port(context, port_id=port['id'])
+        if not fip:
+            return
+        network_id = fip.get('floating_network_id')
+        agent_gw_port = self.create_fip_agent_gw_port_if_not_exists(
+            context.elevated(), network_id, host)
+        LOG.debug("Port-in-Migration: Floatingip Agent Gateway port "
+                  "%(gw)s created for the future host: %(dest_host)s",
+                  {'gw': agent_gw_port,
+                   'dest_host': host})
 
     def create_fip_agent_gw_port_if_not_exists(
         self, context, network_id, host):
@@ -790,8 +830,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         if is_distributed_router(router):
             host = self._get_dvr_service_port_hostid(context, fixed_port_id)
+            dest_host = self._get_dvr_migrating_service_port_hostid(
+                context, fixed_port_id)
             self.l3_rpc_notifier.routers_updated_on_host(
                 context, [router_id], host)
+            if dest_host and dest_host != host:
+                self.l3_rpc_notifier.routers_updated_on_host(
+                    context, [router_id], dest_host)
         else:
             self.notify_router_updated(context, router_id)
 
