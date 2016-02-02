@@ -173,8 +173,7 @@ class L3Scheduler(object):
             # active any time
             current_l3_agents = plugin.get_l3_agents_hosting_routers(
                 context, [sync_router['id']], admin_state_up=True)
-            is_router_distributed = sync_router.get('distributed', False)
-            if current_l3_agents and not is_router_distributed:
+            if current_l3_agents:
                 LOG.debug('Router %(router_id)s has already been hosted '
                           'by L3 agent %(agent_id)s',
                           {'router_id': sync_router['id'],
@@ -185,16 +184,14 @@ class L3Scheduler(object):
             if not active_l3_agents:
                 LOG.warn(_LW('No active L3 agents'))
                 return []
-            potential_candidates = list(
-                set(active_l3_agents) - set(current_l3_agents))
-            new_l3agents = []
-            if potential_candidates:
-                new_l3agents = plugin.get_l3_agent_candidates(
-                    context, sync_router, potential_candidates)
-                if not new_l3agents:
-                    LOG.warn(_LW('No L3 agents can host the router %s'),
-                             sync_router['id'])
-            return new_l3agents
+            candidates = plugin.get_l3_agent_candidates(context,
+                                                        sync_router,
+                                                        active_l3_agents)
+            if not candidates:
+                LOG.warn(_LW('No L3 agents can host the router %s'),
+                         sync_router['id'])
+
+            return candidates
 
     def _bind_routers(self, context, plugin, routers, l3_agent):
         for router in routers:
@@ -235,26 +232,7 @@ class L3Scheduler(object):
         sync_router = plugin.get_router(context, router_id)
         candidates = candidates or self._get_candidates(
             plugin, context, sync_router)
-        chosen_agent = None
-        if sync_router.get('distributed', False):
-            for chosen_agent in candidates:
-                self.bind_router(context, router_id, chosen_agent)
-
-            # For Distributed routers check for SNAT Binding before
-            # calling the schedule_snat_router
-            snat_bindings = plugin.get_snat_bindings(context, [router_id])
-            router_gw_exists = sync_router.get('external_gateway_info', False)
-            if not snat_bindings and router_gw_exists:
-                # If GW exists for DVR routers and no SNAT binding
-                # call the schedule_snat_router
-                chosen_agent = plugin.schedule_snat_router(
-                    context, router_id, sync_router)
-            elif not router_gw_exists and snat_bindings:
-                # If DVR router and no Gateway but SNAT Binding exists then
-                # call the unbind_snat_servicenode to unbind the snat service
-                # from agent
-                plugin.unbind_snat_servicenode(context, router_id)
-        elif not candidates:
+        if not candidates:
             return
         elif sync_router.get('ha', False):
             chosen_agents = self._bind_ha_router(plugin, context,
