@@ -53,6 +53,7 @@ PORT_PREFIX = 'port'
 VETH0_PREFIX = 'test-veth0'
 VETH1_PREFIX = 'test-veth1'
 PATCH_PREFIX = 'patch'
+MACVTAP_PREFIX = 'macvtap'
 
 # port name should be shorter than DEVICE_NAME_MAX_LEN because if this
 # port is used to provide vlan connection between two linuxbridge
@@ -541,6 +542,40 @@ class NamedVethFixture(VethFixture):
         if name.startswith(VETH1_PREFIX):
             return tests_base.get_rand_device_name(VETH1_PREFIX)
         return name
+
+
+class MacvtapFixture(fixtures.Fixture):
+    """Create a macvtap.
+
+    :param src_dev: source device for macvtap
+    :type src_dev: IPDevice
+    :param mode: mode of macvtap
+    :type mode: string
+    :ivar ip_dev: created macvtap
+    :type ip_dev: IPDevice
+    """
+    def __init__(self, src_dev=None, mode=None, prefix=MACVTAP_PREFIX):
+        super(MacvtapFixture, self).__init__()
+        self.src_dev = src_dev
+        self.mode = mode
+        self.prefix = prefix
+
+    def _setUp(self):
+        ip_wrapper = ip_lib.IPWrapper()
+        self.ip_dev = common_base.create_resource(
+            self.prefix,
+            ip_wrapper.add_macvtap,
+            self.src_dev, mode=self.mode)
+        self.addCleanup(self.destroy)
+
+    def destroy(self):
+        ip_wrapper = ip_lib.IPWrapper(self.ip_dev.namespace)
+        if (ip_wrapper.netns.exists(self.ip_dev.namespace) or
+            self.ip_dev.namespace is None):
+            try:
+                self.ip_dev.link.delete()
+            except RuntimeError:
+                pass
 
 
 @six.add_metaclass(abc.ABCMeta)
