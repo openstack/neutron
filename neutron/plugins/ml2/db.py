@@ -219,13 +219,6 @@ def ensure_dvr_port_binding(session, port_id, host, router_id=None):
                 filter_by(port_id=port_id, host=host).one())
 
 
-def delete_dvr_port_binding(session, port_id, host):
-    with session.begin(subtransactions=True):
-        (session.query(models.DVRPortBinding).
-         filter_by(port_id=port_id, host=host).
-         delete(synchronize_session=False))
-
-
 def delete_dvr_port_binding_if_stale(session, binding):
     if not binding.router_id and binding.status == n_const.PORT_STATUS_DOWN:
         with session.begin(subtransactions=True):
