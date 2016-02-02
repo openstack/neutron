@@ -208,8 +208,8 @@ class Notifier(object):
             response = self.nclient.server_external_events.create(
                 batched_events)
         except nova_exceptions.NotFound:
-            LOG.warning(_LW("Nova returned NotFound for event: %s"),
-                        batched_events)
+            LOG.debug("Nova returned NotFound for event: %s",
+                      batched_events)
         except Exception:
             LOG.exception(_LE("Failed to notify nova on events: %s"),
                           batched_events)
