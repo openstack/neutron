@@ -88,8 +88,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         if not l3_agent_on_host:
             return
 
-        ips = port['fixed_ips']
-        router_ids = self.get_dvr_routers_by_portid(context, port['id'], ips)
+        subnet_ids = [ip['subnet_id'] for ip in port['fixed_ips']]
+        router_ids = self.get_dvr_routers_by_subnet_ids(context, subnet_ids)
         if router_ids:
             LOG.debug('DVR: Handle new service port, host %(host)s, '
                       'router ids %(router_ids)s',
@@ -97,21 +97,19 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             self.l3_rpc_notifier.routers_updated_on_host(
                 context, router_ids, port_host)
 
-    def get_dvr_routers_by_portid(self, context, port_id, fixed_ips=None):
+    def get_dvr_routers_by_subnet_ids(self, context, subnet_ids):
         """Gets the dvr routers on vmport subnets."""
+        if not subnet_ids:
+            return set()
+
         router_ids = set()
-        if fixed_ips is None:
-            port_dict = self._core_plugin.get_port(context, port_id)
-            fixed_ips = port_dict['fixed_ips']
-        for fixedip in fixed_ips:
-            vm_subnet = fixedip['subnet_id']
-            filter_sub = {'fixed_ips': {'subnet_id': [vm_subnet]},
-                          'device_owner':
-                          [n_const.DEVICE_OWNER_DVR_INTERFACE]}
-            subnet_ports = self._core_plugin.get_ports(
-                context, filters=filter_sub)
-            for subnet_port in subnet_ports:
-                router_ids.add(subnet_port['device_id'])
+        filter_sub = {'fixed_ips': {'subnet_id': subnet_ids},
+                      'device_owner':
+                      [n_const.DEVICE_OWNER_DVR_INTERFACE]}
+        subnet_ports = self._core_plugin.get_ports(
+            context, filters=filter_sub)
+        for subnet_port in subnet_ports:
+            router_ids.add(subnet_port['device_id'])
         return router_ids
 
     def get_subnet_ids_on_router(self, context, router_id):
@@ -129,24 +127,24 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                           'for router %s', router_id)
         return subnet_ids
 
-    def get_dvr_routers_to_remove(self, context, port_id, port_host=None):
-        """Returns info about which routers should be removed from <port_host>
+    def get_dvr_routers_to_remove(self, context, deleted_port):
+        """Returns info about which routers should be removed
 
-        In case dvr serviceable port is about to be deleted we need to check
+        In case dvr serviceable port was deleted we need to check
         if any dvr routers should be removed from l3 agent on port's host
         """
+        if not n_utils.is_dvr_serviced(deleted_port['device_owner']):
+            return []
+
         admin_context = context.elevated()
-        router_ids = self.get_dvr_routers_by_portid(admin_context, port_id)
-        if not port_host:
-            port_host = ml2_db.get_port_binding_host(admin_context.session,
-                                                     port_id)
-            if not port_host:
-                LOG.debug('Host name not found for port %s', port_id)
-                return []
+        port_host = deleted_port[portbindings.HOST_ID]
+        subnet_ids = [ip['subnet_id'] for ip in deleted_port['fixed_ips']]
+        router_ids = self.get_dvr_routers_by_subnet_ids(admin_context,
+                                                        subnet_ids)
 
         if not router_ids:
             LOG.debug('No DVR routers for this DVR port %(port)s '
-                      'on host %(host)s', {'port': port_id,
+                      'on host %(host)s', {'port': deleted_port['id'],
                                            'host': port_host})
             return []
         agent = self._get_agent_by_type_and_host(
@@ -163,7 +161,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             subnet_ids = self.get_subnet_ids_on_router(admin_context,
                                                        router_id)
             if self.check_dvr_serviceable_ports_on_host(
-                    admin_context, port_host, subnet_ids, except_port=port_id):
+                    admin_context, port_host, subnet_ids):
                 continue
             filter_rtr = {'device_id': [router_id],
                           'device_owner':
@@ -310,10 +308,10 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
 def _notify_port_delete(event, resource, trigger, **kwargs):
     context = kwargs['context']
     port = kwargs['port']
-    removed_routers = kwargs['removed_routers']
     l3plugin = manager.NeutronManager.get_service_plugins().get(
         service_constants.L3_ROUTER_NAT)
     l3plugin.delete_arp_entry_for_dvr_service_port(context, port)
+    removed_routers = l3plugin.get_dvr_routers_to_remove(context, port)
     for info in removed_routers:
         l3plugin.l3_rpc_notifier.router_removed_from_agent(
             context, info['router_id'], info['host'])
@@ -339,8 +337,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         if is_port_no_longer_serviced or is_port_moved:
             removed_routers = l3plugin.get_dvr_routers_to_remove(
                 context,
-                original_port['id'],
-                port_host=original_port[portbindings.HOST_ID])
+                original_port)
             if removed_routers:
                 removed_router_args = {
                     'context': context,

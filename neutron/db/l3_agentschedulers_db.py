@@ -446,15 +446,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def check_dvr_serviceable_ports_on_host(
-            self, context, host, subnet_ids, except_port=None):
+    def check_dvr_serviceable_ports_on_host(self, context, host, subnet_ids):
         """Check for existence of dvr serviceable ports on host
 
         :param context: request context
         :param host: host to look ports on
         :param subnet_ids: IDs of subnets to look ports on
-        :param except_port: ID of the port to ignore (used when checking if
-        DVR router should be removed from host before actual port remove)
         :return: return True if dvr serviceable port exists on host,
                  otherwise return False
         """
@@ -472,8 +469,6 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 constants.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
                 n_utils.get_other_dvr_serviced_device_owners()))
-        if except_port:
-            ports_query = ports_query.filter(models_v2.Port.id != except_port)
         ports_query = ports_query.filter(owner_filter)
         return ports_query.first() is not None
 

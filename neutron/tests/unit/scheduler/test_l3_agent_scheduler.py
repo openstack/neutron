@@ -1090,12 +1090,11 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             kwargs = {
                 'context': self.adminContext,
                 'port': mock.ANY,
-                'removed_routers': [
-                    {'agent_id': 'foo_agent',
-                     'router_id': 'foo_id',
-                     'host': 'foo_host'},
-                ],
             }
+            removed_routers = [{'agent_id': 'foo_agent',
+                                'router_id': 'foo_id',
+                                'host': 'foo_host'}]
+            l3plugin.get_dvr_routers_to_remove.return_value = removed_routers
             l3_dvrscheduler_db._notify_port_delete(
                 'port', 'after_delete', plugin, **kwargs)
             l3plugin.delete_arp_entry_for_dvr_service_port.\
@@ -1162,14 +1161,15 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                     self.adminContext, {'r1', 'r2'}, 'host1'))
             self.assertFalse(self.dut.l3_rpc_notifier.routers_updated.called)
 
-    def test_get_dvr_routers_by_portid(self):
+    def test_get_dvr_routers_by_subnet_ids(self):
+        subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0'
         dvr_port = {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
                 'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': [
                     {
-                        'subnet_id': '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
+                        'subnet_id': subnet_id,
                         'ip_address': '10.10.10.1'
                     }
                 ]
@@ -1184,8 +1184,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             return_value=dvr_port),\
                 mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
                            '.get_ports', return_value=[dvr_port]):
-            router_id = self.dut.get_dvr_routers_by_portid(self.adminContext,
-                                                           dvr_port['id'])
+            router_id = self.dut.get_dvr_routers_by_subnet_ids(
+                self.adminContext, [subnet_id])
             self.assertEqual(router_id.pop(), r1['id'])
 
     def test_get_subnet_ids_on_router(self):
