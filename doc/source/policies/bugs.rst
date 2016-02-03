@@ -101,6 +101,20 @@ is as follows:
 
 * Create a bug report to your Launchpad project: provide details as to what
   you would like to release;
+
+  * If you provide an exact commit in the bug report then you need to be a bit
+    careful.  In most cases, you'll want to tag the *merge* commit that merges
+    your last commit in to the branch.  `This bug`__ shows an instance where
+    this mistake was caught.  Notice the difference between the `incorrect
+    commit`__ and the `correct one`__ which is the merge commit.  ``git log
+    6191994..22dd683 --oneline`` shows that the first one misses a handful of
+    important commits that the second one catches.  This is the nature of
+    merging to master.
+
+.. __: https://bugs.launchpad.net/neutron/+bug/1540633
+.. __: https://github.com/openstack/networking-infoblox/commit/6191994515
+.. __: https://github.com/openstack/networking-infoblox/commit/22dd683e1a
+
 * Add Neutron to the list of affected projects.
 * Add 'release-subproject' tag to the list of tags for the bug report.
 * The Neutron release management team will watch these bugs, and work with
