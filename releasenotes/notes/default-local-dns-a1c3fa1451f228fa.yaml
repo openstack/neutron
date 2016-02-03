@@ -1,14 +1,20 @@
 ---
 fixes:
-  - Prior to Mitaka, neither specifying DNS resolvers via the
-    'dnsmasq_dns_servers' option in the DHCP agent configuration file nor via
-    neutron subnet options causes the dnsmasq service to offer the IP address
-    on which it resides to instances for name resolution. However, the static
-    dnsmasq '--no-resolv' process argument prevents name resolution via dnsmasq
-    leaving instances without name resolution. In Mitaka+, the
-    'dnsmasq_local_resolv' option in the DHCP agent configuration file enables
-    (by default) the dnsmasq service to provide name resolution for instances
-    via DNS resolvers on the host running the DHCP agent by effectively
-    removing the '--no-resolv' option from the dnsmasq process arguments.
-    Adding custom DNS resolvers to the 'dnsmasq_dns_servers' option in the DHCP
-    agent configuration file disables this feature.
+  - Prior to Mitaka, name resolution in instances requires specifying DNS
+    resolvers via the 'dnsmasq_dns_servers' option in the DHCP agent
+    configuration file or via neutron subnet options. In this case, the
+    data plane must provide connectivity between instances and upstream DNS
+    resolvers. Omitting both of these methods causes the dnsmasq service
+    to offer the IP address on which it resides to instances for name
+    resolution. However, the static dnsmasq '--no-resolv' process argument
+    prevents name resolution via dnsmasq, leaving instances without name
+    resolution.
+    Mitaka introduces the 'dnsmasq_local_resolv' option, default value False
+    to preserve backward-compatibility, that enables the dnsmasq service to
+    provide name resolution for instances via DNS resolvers on the host
+    running the DHCP agent. In this case, the data plane must provide
+    connectivity between the host and upstream DNS resolvers rather than
+    between the instances and upstream DNS resolvers. Specifying DNS
+    resolvers via the 'dnsmasq_dns_servers' option in the DHCP agent
+    configuration overrides the 'dnsmasq_local_resolv' option for all subnets
+    using the DHCP agent.
