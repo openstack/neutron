@@ -25,7 +25,8 @@ L3_ROUTER_NAT = "L3_ROUTER_NAT"
 FLAVORS = "FLAVORS"
 QOS = "QOS"
 
-# Maps extension alias to service type
+# Maps extension alias to service type that
+# can be implemented by the core plugin.
 EXT_TO_SERVICE_MAPPING = {
     'dummy': DUMMY,
     'lbaas': LOADBALANCER,
@@ -34,7 +35,6 @@ EXT_TO_SERVICE_MAPPING = {
     'vpnaas': VPN,
     'metering': METERING,
     'router': L3_ROUTER_NAT,
-    'flavors': FLAVORS,
     'qos': QOS,
 }
 
