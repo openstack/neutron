@@ -142,6 +142,12 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
     last_known_router_id = sa.Column(sa.String(36))
     status = sa.Column(sa.String(16))
     router = orm.relationship(Router, backref='floating_ips')
+    __table_args__ = (
+        sa.UniqueConstraint(
+            floating_network_id, fixed_port_id, fixed_ip_address,
+            name=('uniq_floatingips0floatingnetworkid'
+                 '0fixedportid0fixedipaddress')),
+        model_base.BASEV2.__table_args__,)
 
 
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
