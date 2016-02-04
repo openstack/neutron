@@ -83,9 +83,102 @@ projects for the criteria that is applicable:
 Official Sub-Project List
 -------------------------
 
-The official source of all repositories that exist under the Neutron project is:
+The official source of all repositories that are a part of Neutron or another
+official OpenStack project team is here:
 
     http://governance.openstack.org/reference/projects/neutron.html
+
+We list the Neutron repositories, as well as other Neutron affiliated projects
+here to provide references and note the functionality they provide.
+
+Functionality legend
+~~~~~~~~~~~~~~~~~~~~
+
+- base: the base Neutron platform
+- client: API client implementation
+- core: a monolithic plugin that can implement API at multiple layers L3-L7;
+- dashboard: Horizon dashboard integration
+- docker: a Docker network plugin that uses Neutron to provide networking services to Docker containers;
+- fw: a Firewall service plugin;
+- intent: a service plugin that provides a declarative API to realize networking;
+- ipam: an IP address management driver;
+- l2: a Layer 2 service;
+- l3: a Layer 3 service plugin;
+- lb: a Load Balancer service plugin;
+- ml2: an ML2 mechanism driver;
+- sfc; traffic steering based on traffic classification
+- vpn: a VPN service plugin;
+
+Neutron projects
+~~~~~~~~~~~~~~~~
+
+This table shows the list of official Neutron repositories and their
+functionality.
+
++-------------------------------+-----------------------+
+| Name                          |    Functionality      |
++===============================+=======================+
+| dragonflow_                   | core                  |
++-------------------------------+-----------------------+
+| kuryr_                        | docker                |
++-------------------------------+-----------------------+
+| networking-ale-omniswitch_    | ml2                   |
++-------------------------------+-----------------------+
+| networking-arista_            | ml2,l3                |
++-------------------------------+-----------------------+
+| networking-bagpipe_           | ml2                   |
++-------------------------------+-----------------------+
+| networking-bgpvpn_            | vpn                   |
++-------------------------------+-----------------------+
+| networking-calico_            | ml2                   |
++-------------------------------+-----------------------+
+| networking-cisco_             | core,ml2,l3,fw,vpn    |
++-------------------------------+-----------------------+
+| networking-fujitsu_           | ml2                   |
++-------------------------------+-----------------------+
+| networking-hyperv_            | ml2                   |
++-------------------------------+-----------------------+
+| networking-infoblox_          | ipam                  |
++-------------------------------+-----------------------+
+| networking-l2gw_              | l2                    |
++-------------------------------+-----------------------+
+| networking-midonet_           | core,ml2,l3,lb,fw     |
++-------------------------------+-----------------------+
+| networking-odl_               | ml2,l3,lb,fw          |
++-------------------------------+-----------------------+
+| networking-ofagent_           | ml2                   |
++-------------------------------+-----------------------+
+| networking-onos_              | ml2,l3                |
++-------------------------------+-----------------------+
+| networking-ovn_               | core                  |
++-------------------------------+-----------------------+
+| networking-plumgrid_          | core                  |
++-------------------------------+-----------------------+
+| networking-powervm_           | ml2                   |
++-------------------------------+-----------------------+
+| networking-sfc_               | sfc                   |
++-------------------------------+-----------------------+
+| networking-vsphere_           | ml2                   |
++-------------------------------+-----------------------+
+| neutron_                      | base,l2,ml2,core,l3   |
++-------------------------------+-----------------------+
+| neutron-lbaas_                | lb                    |
++-------------------------------+-----------------------+
+| neutron-lbaas-dashboard_      | dashboard             |
++-------------------------------+-----------------------+
+| neutron-fwaas_                | fw                    |
++-------------------------------+-----------------------+
+| neutron-lib_                  | base                  |
++-------------------------------+-----------------------+
+| neutron-vpnaas_               | vpn                   |
++-------------------------------+-----------------------+
+| octavia_                      | lb                    |
++-------------------------------+-----------------------+
+| python-neutronclient_         | client                |
++-------------------------------+-----------------------+
+| vmware-nsx_                   | core                  |
++-------------------------------+-----------------------+
+
 
 Affiliated projects
 ~~~~~~~~~~~~~~~~~~~
@@ -93,86 +186,24 @@ Affiliated projects
 This table shows the affiliated projects that integrate with Neutron,
 in one form or another.  These projects typically leverage the pluggable
 capabilities of Neutron, the Neutron API, or a combination of both.
-This list may contain projects that are already listed in the governance
-repo but are summarized here to describe the functionality they provide.
 
 +-------------------------------+-----------------------+
 | Name                          |    Functionality      |
 +===============================+=======================+
-| dragonflow_                   |           l3          |
+| networking-bigswitch_         | ml2,core,l3           |
 +-------------------------------+-----------------------+
-| kuryr_                        |         docker        |
+| networking-brocade_           | ml2,l3                |
 +-------------------------------+-----------------------+
-| networking-ale-omniswitch_    |          ml2          |
+| networking-edge-vpn_          | vpn                   |
 +-------------------------------+-----------------------+
-| networking-arista_            |         ml2,l3        |
+| networking-mlnx_              | ml2                   |
 +-------------------------------+-----------------------+
-| networking-bagpipe-l2_        |          ml2          |
+| networking-nec_               | core                  |
 +-------------------------------+-----------------------+
-| networking-bgpvpn_            |          vpn          |
+| nuage-openstack-neutron_      | core                  |
 +-------------------------------+-----------------------+
-| networking-bigswitch_         |      ml2,core,l3      |
+| networking-ovs-dpdk_          | ml2                   |
 +-------------------------------+-----------------------+
-| networking-brocade_           |        ml2,l3         |
-+-------------------------------+-----------------------+
-| networking-calico_            |          ml2          |
-+-------------------------------+-----------------------+
-| networking-cisco_             |  core,ml2,l3,fw,vpn   |
-+-------------------------------+-----------------------+
-| networking-edge-vpn_          |          vpn          |
-+-------------------------------+-----------------------+
-| networking-fujitsu_           |          ml2          |
-+-------------------------------+-----------------------+
-| networking-hyperv_            |          ml2          |
-+-------------------------------+-----------------------+
-| networking-infoblox_          |         ipam          |
-+-------------------------------+-----------------------+
-| networking-l2gw_              |         l2            |
-+-------------------------------+-----------------------+
-| networking-midonet_           |  core,ml2,l3,lb,fw    |
-+-------------------------------+-----------------------+
-| networking-mlnx_              |          ml2          |
-+-------------------------------+-----------------------+
-| networking-nec_               |         core          |
-+-------------------------------+-----------------------+
-| nuage-openstack-neutron_      |         core          |
-+-------------------------------+-----------------------+
-| networking-odl_               |      ml2,l3,lb,fw     |
-+-------------------------------+-----------------------+
-| networking-ofagent_           |          ml2          |
-+-------------------------------+-----------------------+
-| networking-onos_              |        ml2,l3         |
-+-------------------------------+-----------------------+
-| networking-ovn_               |          ml2          |
-+-------------------------------+-----------------------+
-| networking-ovs-dpdk_          |          ml2          |
-+-------------------------------+-----------------------+
-| networking-plumgrid_          |          core         |
-+-------------------------------+-----------------------+
-| networking-powervm_           |          ml2          |
-+-------------------------------+-----------------------+
-| networking-sfc_               |  service composition  |
-+-------------------------------+-----------------------+
-| networking-vsphere_           |          ml2          |
-+-------------------------------+-----------------------+
-| vmware-nsx_                   |          core         |
-+-------------------------------+-----------------------+
-| octavia_                      |          lb           |
-+-------------------------------+-----------------------+
-
-Functionality legend
-++++++++++++++++++++
-
-- l2: a Layer 2 service;
-- ml2: an ML2 mechanism driver;
-- core: a monolithic plugin that can implement API at multiple layers L3-L7;
-- l3: a Layer 3 service plugin;
-- fw: a Firewall service plugin;
-- vpn: a VPN service plugin;
-- lb: a Load Balancer service plugin;
-- intent: a service plugin that provides a declarative API to realize networking;
-- docker: a Docker network plugin that uses Neutron to provide networking services to Docker containers;
-- ipam: an IP address management driver;
 
 .. _networking-ale-omniswitch:
 
@@ -192,14 +223,12 @@ Arista
 * Launchpad: https://launchpad.net/networking-arista
 * Pypi: https://pypi.python.org/pypi/networking-arista
 
-.. _networking-bagpipe-l2:
+.. _networking-bagpipe:
 
 BaGPipe
 +++++++
 
-* Git: https://git.openstack.org/cgit/openstack/networking-bagpipe-l2
-* Launchpad: https://launchpad.net/bagpipe-l2
-* Pypi: https://pypi.python.org/pypi/bagpipe-l2
+* Git: https://git.openstack.org/cgit/openstack/networking-bagpipe
 
 .. _networking-bgpvpn:
 
@@ -329,6 +358,62 @@ NEC
 * Git: https://git.openstack.org/cgit/openstack/networking-nec
 * Launchpad: https://launchpad.net/networking-nec
 * PyPI: https://pypi.python.org/pypi/networking-nec
+
+.. _neutron:
+
+Neutron
++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron
+* Launchpad: https://launchpad.net/neutron
+
+.. _python-neutronclient:
+
+Neutron Client
+++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/python-neutronclient
+* Launchpad: https://launchpad.net/python-neutronclient
+
+.. _neutron-fwaas:
+
+Neutron FWaaS
++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-fwaas
+* Launchpad: https://launchpad.net/neutron
+
+.. _neutron-lbaas:
+
+Neutron LBaaS
++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-lbaas
+* Launchpad: https://launchpad.net/neutron
+
+.. _neutron-lbaas-dashboard:
+
+Neutron LBaaS Dashboard
++++++++++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-lbaas-dashboard
+* Launchpad: https://launchpad.net/neutron
+
+.. _neutron-lib:
+
+Neutron Library
++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-lib
+* Launchpad: https://launchpad.net/neutron
+
+.. _neutron-vpnaas:
+
+Neutron VPNaaS
+++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-vpnaas
+* Launchpad: https://launchpad.net/neutron
 
 .. _nuage-openstack-neutron:
 
