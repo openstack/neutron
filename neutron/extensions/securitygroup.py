@@ -93,7 +93,7 @@ class SecurityGroupRemoteGroupAndRemoteIpPrefix(nexception.InvalidInput):
 
 
 class SecurityGroupProtocolRequiredWithPorts(nexception.InvalidInput):
-    message = _("Must also specifiy protocol if port range is given.")
+    message = _("Must also specify protocol if port range is given.")
 
 
 class SecurityGroupNotSingleGroupRules(nexception.InvalidInput):
