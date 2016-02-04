@@ -21,7 +21,6 @@ from six.moves import socketserver
 from neutron._i18n import _LI, _LW
 from neutron.common import rpc as n_rpc
 from neutron.pecan_wsgi import app as pecan_app
-from neutron import server
 
 LOG = log.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class ThreadedSimpleServer(socketserver.ThreadingMixIn,
     pass
 
 
-def _pecan_wsgi_server():
+def pecan_wsgi_server():
     LOG.info(_LI("Pecan WSGI server starting..."))
     # No AMQP connection should be created within this process
     n_rpc.RPC_DISABLED = True
@@ -54,7 +53,3 @@ def _pecan_wsgi_server():
     )
 
     wsgi.serve_forever()
-
-
-def main():
-    server.boot_server(_pecan_wsgi_server)
