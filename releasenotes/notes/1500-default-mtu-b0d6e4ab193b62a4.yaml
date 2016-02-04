@@ -1,0 +1,29 @@
+---
+prelude: >
+  - The ML2 plug-in supports calculating the MTU for instances
+    using overlay networks by subtracting the overlay protocol
+    overhead from the value of 'path_mtu', ideally the physical
+    (underlying) network MTU, and providing the smaller value to
+    instances via DHCP. Prior to Mitaka, 'path_mtu' defaults to
+    0 which disables this feature. In Mitaka, 'path_mtu' defaults
+    to 1500, a typical MTU for physical networks, to improve the
+    "out of box" experience for typical deployments.
+features:
+  - In Mitaka, the combination of 'path_mtu' defaulting to 1500 and
+    'advertise_mtu' defaulting to True provides a value of MTU accounting
+    for any overlay protocol overhead on the network to instances using
+    DHCP. For example, an instance attaching to a VXLAN network receives
+    a 1450 MTU from DHCP accounting for 50 bytes of overhead from the
+    VXLAN overlay protocol if using IPv4 endpoints.
+issues:
+  - The combination of 'path_mtu' and 'advertise_mtu' only adjusts the
+    MTU for instances rather than all virtual network components between
+    instances and provider/public networks. In particular, setting
+    'path_mtu' to a value greater than 1500 can cause packet loss even
+    if the physical network supports it. Also, the calculation does not
+    consider additional overhead from IPv6 endpoints.
+upgrade:
+  - Operators using the ML2 plug-in with 'path_mtu' defaulting to 0 may need
+    to perform a database migration to update the MTU for existing networks
+    and possibly disable existing workarounds for MTU problems such as
+    increasing the physical network MTU to 1550.
