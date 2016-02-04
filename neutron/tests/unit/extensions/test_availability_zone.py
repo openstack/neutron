@@ -98,6 +98,11 @@ class TestAZNetworkCase(AZTestCommon):
         ext_mgr = AZExtensionManager()
         super(TestAZNetworkCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
+    def test_availability_zones_in_create_response(self):
+        with self.network() as net:
+            self.assertIn('availability_zone_hints', net['network'])
+            self.assertIn('availability_zones', net['network'])
+
     def test_create_network_with_az(self):
         self._register_azs()
         az_hints = ['nova1']
