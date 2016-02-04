@@ -507,6 +507,27 @@ class L3SchedulerTestBaseMixin(object):
                                           already_scheduled=True,
                                           external_gw=external_gw_info)
 
+    def test_remove_router_from_l3_agent_in_dvr_mode(self):
+        self._register_l3_dvr_agents()
+        self.assertRaises(l3agent.DVRL3CannotRemoveFromDvrAgent,
+                          self.remove_router_from_l3_agent,
+                          self.adminContext,
+                          self.l3_dvr_agent_id,
+                          mock.ANY)
+
+    def test_remove_router_from_l3_agent_in_dvr_snat_mode(self):
+        self._register_l3_dvr_agents()
+        router = self._create_router_for_l3_agent_dvr_test(
+            distributed=True)
+        agent_id = self.l3_dvr_snat_id
+        l3_notifier = mock.Mock()
+        self.agent_notifiers = {constants.AGENT_TYPE_L3: l3_notifier}
+        self.remove_router_from_l3_agent(self.adminContext, agent_id,
+                                         router['router']['id'])
+        l3_notifier.router_removed_from_agent.assert_called_once_with(
+            self.adminContext, router['router']['id'],
+            self.l3_dvr_snat_agent.host)
+
     def _prepare_schedule_dvr_tests(self):
         scheduler = l3_agent_scheduler.ChanceScheduler()
         agent = agents_db.Agent()

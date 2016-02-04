@@ -243,6 +243,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         which leads to re-schedule or be added to another agent manually.
         """
         agent = self._get_agent(context, agent_id)
+        agent_mode = self._get_agent_mode(agent)
+        if agent_mode == constants.L3_AGENT_MODE_DVR:
+            raise l3agentscheduler.DVRL3CannotRemoveFromDvrAgent()
+
         self._unbind_router(context, router_id, agent_id)
 
         router = self.get_router(context, router_id)

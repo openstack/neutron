@@ -178,6 +178,11 @@ class DVRL3CannotAssignToDvrAgent(exceptions.Conflict):
                 "agent in 'dvr' mode.")
 
 
+class DVRL3CannotRemoveFromDvrAgent(exceptions.Conflict):
+    message = _("Not allowed to manually remove a router from "
+                "an agent in 'dvr' mode.")
+
+
 class L3AgentSchedulerPluginBase(object):
     """REST API to operate the l3 agent scheduler.
 
