@@ -95,6 +95,9 @@ repository if needed.
   implementations for features.  Any sub-project that serves as an interface to
   proprietary technology should most likely be a separate project team.  This
   imposes a barrier on access to the technology for dev/test and CI integration.
+* If the project only interacts with Neutron on REST API boundaries (client of
+  Neutron's API, or Neutron is a client of its API), it should probably be a
+  separate project.  python-neutronclient is an obvious exception here.
 
 Official Sub-Project List
 -------------------------
@@ -136,8 +139,6 @@ functionality.
 | Name                          |    Functionality      |
 +===============================+=======================+
 | dragonflow_                   | core                  |
-+-------------------------------+-----------------------+
-| kuryr_                        | docker                |
 +-------------------------------+-----------------------+
 | networking-bagpipe_           | ml2                   |
 +-------------------------------+-----------------------+
@@ -187,6 +188,8 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 +-------------------------------+-----------------------+
 | Name                          |    Functionality      |
 +===============================+=======================+
+| kuryr_                        | docker                |
++-------------------------------+-----------------------+
 | networking-ale-omniswitch_    | ml2                   |
 +-------------------------------+-----------------------+
 | networking-arista_            | ml2,l3                |
@@ -221,6 +224,30 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 +-------------------------------+-----------------------+
 | vmware-nsx_                   | core                  |
 +-------------------------------+-----------------------+
+
+Project Teams FAQ
+~~~~~~~~~~~~~~~~~
+
+**Q: What does a sub-project gain as a part of the Neutron project team?**
+
+A project under Neutron is no more an official part of OpenStack than another
+OpenStack project team.  Projects under Neutron share some resources.  In
+particular, they get managed backports, managed releases, managed CVEs, RFEs,
+bugs, docs and everything that pertain the SDLC of the Neutron end-to-end
+project.
+
+**Q: Why is kuryr a separate project?**
+
+Kuryr was started and incubated within the Neutron team.  However, it interfaces
+with Neutron as a client of the Neutron API, so it makes sense to stand as an
+independent project.
+
+**Q: Why is Octavia included under Neutron?**
+
+neutron-lbaas, neutron-lbaas-dashboard, and Octavia are all considered a unit.
+If we split one, we need to split them together.  We can't split these yet, as
+they are a part of the official "neutron" deliverable.  This needs to be done on
+a release boundary when the lbaas team is ready to do so.
 
 .. _networking-ale-omniswitch:
 
