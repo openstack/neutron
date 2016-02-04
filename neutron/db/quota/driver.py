@@ -60,7 +60,7 @@ class DbQuotaDriver(object):
     def delete_tenant_quota(context, tenant_id):
         """Delete the quota entries for a given tenant_id.
 
-        Atfer deletion, this tenant will use default quota values in conf.
+        After deletion, this tenant will use default quota values in conf.
         """
         with context.session.begin():
             tenant_quotas = context.session.query(quota_models.Quota)
