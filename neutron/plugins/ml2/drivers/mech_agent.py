@@ -64,7 +64,14 @@ class AgentMechanismDriverBase(api.MechanismDriver):
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s",
                       vnic_type)
             return
-        for agent in context.host_agents(self.agent_type):
+        agents = context.host_agents(self.agent_type)
+        if not agents:
+            LOG.warning(_LW("Port %(pid)s on network %(network)s not bound, "
+                            "no agent registered on host %(host)s"),
+                        {'pid': context.current['id'],
+                         'network': context.network.current['id'],
+                         'host': context.host})
+        for agent in agents:
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
                 for segment in context.segments_to_bind:
