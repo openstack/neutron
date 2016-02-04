@@ -21,9 +21,13 @@ LOG = log.getLogger(__name__)
 
 
 def eventlet_wsgi_server():
+    neutron_api = service.serve_wsgi(service.NeutronApiService)
+    start_api_and_rpc_workers(neutron_api)
+
+
+def start_api_and_rpc_workers(neutron_api):
     pool = eventlet.GreenPool()
 
-    neutron_api = service.serve_wsgi(service.NeutronApiService)
     api_thread = pool.spawn(neutron_api.wait)
 
     try:
