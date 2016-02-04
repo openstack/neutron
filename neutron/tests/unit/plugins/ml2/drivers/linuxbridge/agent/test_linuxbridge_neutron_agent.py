@@ -391,6 +391,25 @@ class TestCommonAgentLoop(base.BaseTestCase):
                                                                   'tap4']))
         agent.treat_devices_removed.assert_called_with(set(['tap1']))
 
+    def test_treat_devices_added_updated_no_local_interface(self):
+        agent = self.agent
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'physical_network': 'physnet1',
+                        'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX}
+        agent.ext_manager = mock.Mock()
+        agent.plugin_rpc = mock.Mock()
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.mgr = mock.Mock()
+        agent.mgr.plug_interface.return_value = False
+        agent.mgr.ensure_port_admin_state = mock.Mock()
+        agent.treat_devices_added_updated(set(['tap1']))
+        self.assertFalse(agent.mgr.ensure_port_admin_state.called)
+
     def test_treat_devices_added_updated_admin_state_up_true(self):
         agent = self.agent
         mock_details = {'device': 'dev123',

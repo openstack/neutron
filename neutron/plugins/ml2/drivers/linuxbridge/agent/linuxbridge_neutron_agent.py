@@ -1061,9 +1061,10 @@ class CommonAgentLoop(service.Service):
                 # 1) An existing race with libvirt caused by the behavior of
                 #    the old implementation. See Bug #1312016
                 # 2) The new code is much more readable
-                self.mgr.ensure_port_admin_state(
-                    device,
-                    device_details['admin_state_up'])
+                if interface_plugged:
+                    self.mgr.ensure_port_admin_state(
+                        device,
+                        device_details['admin_state_up'])
                 # update plugin about port status if admin_state is up
                 if device_details['admin_state_up']:
                     if interface_plugged:
