@@ -733,7 +733,7 @@ class LinuxBridgeRpcCallbacks(
                          network_id)
                 return
         else:
-            LOG.error(_LE("Network %s is not available."), network_id)
+            LOG.debug("Network %s is not on this agent.", network_id)
             return
 
         bridge_name = self.agent.mgr.get_bridge_name(network_id)
