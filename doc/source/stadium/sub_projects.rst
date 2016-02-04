@@ -75,10 +75,26 @@ Inclusion Criteria
 
 As mentioned before, the Neutron PTL must approve the inclusion of each
 additional repository under the Neutron project.  That evaluation will be
-primarily based on the new project requirements used for all new OpenStack
-projects for the criteria that is applicable:
+initially based on the new project requirements used for all new OpenStack
+projects for the criteria that is applicable.  If there's any question about
+this, the review should be deferred to the TC as a new OpenStack project team.
 
     http://governance.openstack.org/reference/new-projects-requirements.html
+
+Including *everything* related to Neutron under the Neutron project team has not
+scaled well, so some Neutron related projects are encouraged to form a new
+OpenStack project team.  The following list of guidelines are not hard rules.
+There may be exceptions.  Instead, they serve as criteria that may influence the
+decision one way or the other.
+
+These criteria are designed around how easy it would be for members of the
+loosely defined "Neutron team" to jump in and help fix or even take over a given
+repository if needed.
+
+* Neutron stays quite busy developing and maintaining open source
+  implementations for features.  Any sub-project that serves as an interface to
+  proprietary technology should most likely be a separate project team.  This
+  imposes a barrier on access to the technology for dev/test and CI integration.
 
 Official Sub-Project List
 -------------------------
@@ -123,23 +139,11 @@ functionality.
 +-------------------------------+-----------------------+
 | kuryr_                        | docker                |
 +-------------------------------+-----------------------+
-| networking-ale-omniswitch_    | ml2                   |
-+-------------------------------+-----------------------+
-| networking-arista_            | ml2,l3                |
-+-------------------------------+-----------------------+
 | networking-bagpipe_           | ml2                   |
 +-------------------------------+-----------------------+
 | networking-bgpvpn_            | vpn                   |
 +-------------------------------+-----------------------+
 | networking-calico_            | ml2                   |
-+-------------------------------+-----------------------+
-| networking-cisco_             | core,ml2,l3,fw,vpn    |
-+-------------------------------+-----------------------+
-| networking-fujitsu_           | ml2                   |
-+-------------------------------+-----------------------+
-| networking-hyperv_            | ml2                   |
-+-------------------------------+-----------------------+
-| networking-infoblox_          | ipam                  |
 +-------------------------------+-----------------------+
 | networking-l2gw_              | l2                    |
 +-------------------------------+-----------------------+
@@ -153,13 +157,7 @@ functionality.
 +-------------------------------+-----------------------+
 | networking-ovn_               | core                  |
 +-------------------------------+-----------------------+
-| networking-plumgrid_          | core                  |
-+-------------------------------+-----------------------+
-| networking-powervm_           | ml2                   |
-+-------------------------------+-----------------------+
 | networking-sfc_               | sfc                   |
-+-------------------------------+-----------------------+
-| networking-vsphere_           | ml2                   |
 +-------------------------------+-----------------------+
 | neutron_                      | base,l2,ml2,core,l3   |
 +-------------------------------+-----------------------+
@@ -177,8 +175,6 @@ functionality.
 +-------------------------------+-----------------------+
 | python-neutron-pd-driver_     | pd                    |
 +-------------------------------+-----------------------+
-| vmware-nsx_                   | core                  |
-+-------------------------------+-----------------------+
 
 
 Affiliated projects
@@ -191,19 +187,39 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 +-------------------------------+-----------------------+
 | Name                          |    Functionality      |
 +===============================+=======================+
+| networking-ale-omniswitch_    | ml2                   |
++-------------------------------+-----------------------+
+| networking-arista_            | ml2,l3                |
++-------------------------------+-----------------------+
 | networking-bigswitch_         | ml2,core,l3           |
 +-------------------------------+-----------------------+
 | networking-brocade_           | ml2,l3                |
 +-------------------------------+-----------------------+
+| networking-cisco_             | core,ml2,l3,fw,vpn    |
++-------------------------------+-----------------------+
 | networking-edge-vpn_          | vpn                   |
++-------------------------------+-----------------------+
+| networking-fujitsu_           | ml2                   |
++-------------------------------+-----------------------+
+| networking-hyperv_            | ml2                   |
++-------------------------------+-----------------------+
+| networking-infoblox_          | ipam                  |
 +-------------------------------+-----------------------+
 | networking-mlnx_              | ml2                   |
 +-------------------------------+-----------------------+
 | networking-nec_               | core                  |
 +-------------------------------+-----------------------+
+| networking-plumgrid_          | core                  |
++-------------------------------+-----------------------+
+| networking-powervm_           | ml2                   |
++-------------------------------+-----------------------+
 | nuage-openstack-neutron_      | core                  |
 +-------------------------------+-----------------------+
 | networking-ovs-dpdk_          | ml2                   |
++-------------------------------+-----------------------+
+| networking-vsphere_           | ml2                   |
++-------------------------------+-----------------------+
+| vmware-nsx_                   | core                  |
 +-------------------------------+-----------------------+
 
 .. _networking-ale-omniswitch:

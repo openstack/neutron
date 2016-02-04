@@ -118,8 +118,6 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-calico      | Neil Jerram               | neiljerram           |
 +------------------------+---------------------------+----------------------+
-| networking-infoblox    | John Belamaric            | johnbelamaric        |
-+------------------------+---------------------------+----------------------+
 | networking-l2gw        | Sukhdev Kapur             | sukhdev              |
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu25                |
@@ -140,15 +138,9 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-ovn         | Russell Bryant            | russellb             |
 +------------------------+---------------------------+----------------------+
-| networking-plumgrid    | Fawad Khaliq              | fawadkhaliq          |
-+------------------------+---------------------------+----------------------+
 | networking-sfc         | Cathy Zhang               | cathy                |
 +------------------------+---------------------------+----------------------+
-| networking-vshpere     | Vivekanandan Narasimhan   | viveknarasimhan      |
-+------------------------+---------------------------+----------------------+
 | octavia                | German Eichberger         | xgerman              |
-+------------------------+---------------------------+----------------------+
-| vmware-nsx             | Gary Kotton               | garyk                |
 +------------------------+---------------------------+----------------------+
 
 Existing Core Reviewers
