@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Return code for `quota delete` for a tenant whose
+    quota has not been previously defined has been
+    changed from 204 to 404.

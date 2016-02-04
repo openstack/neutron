@@ -61,11 +61,15 @@ class DbQuotaDriver(object):
         """Delete the quota entries for a given tenant_id.
 
         After deletion, this tenant will use default quota values in conf.
+        Raise a "not found" error if the quota for the given tenant was
+        never defined.
         """
         with context.session.begin():
             tenant_quotas = context.session.query(quota_models.Quota)
             tenant_quotas = tenant_quotas.filter_by(tenant_id=tenant_id)
-            tenant_quotas.delete()
+            if not tenant_quotas.delete():
+                # No record deleted means the quota was not found
+                raise exceptions.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
     def get_all_quotas(context, resources):
