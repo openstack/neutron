@@ -284,6 +284,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.vif_details = ''
             db.clear_binding_levels(session, port_id, original_host)
             mech_context._clear_binding_levels()
+            port['status'] = const.PORT_STATUS_DOWN
+            super(Ml2Plugin, self).update_port(
+                mech_context._plugin_context, port_id,
+                {attributes.PORT: {'status': const.PORT_STATUS_DOWN}})
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
             binding.vif_type = portbindings.VIF_TYPE_UNBOUND
