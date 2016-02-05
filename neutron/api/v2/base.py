@@ -332,6 +332,7 @@ class Controller(object):
         if hasattr(self, '_nova_notifier'):
             self._nova_notifier.send_network_change(action, orig, returned)
 
+    @db_api.retry_db_errors
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -339,6 +340,7 @@ class Controller(object):
         policy.init()
         return self._items(request, True, parent_id)
 
+    @db_api.retry_db_errors
     def show(self, request, id, **kwargs):
         """Returns detailed information about the requested entity."""
         try:
