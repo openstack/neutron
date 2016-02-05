@@ -448,8 +448,8 @@ and finally, start your neutron-server again.
 If you have multiple neutron-server instances in your cloud, and there are
 pending contract scripts not applied to the database, full shutdown of all
 those services is required before 'upgrade --contract' is executed. You can
-determine whether there are any pending contract scripts by checking return
-code for the following command::
+determine whether there are any pending contract scripts by checking the
+message returned from the following command::
 
  neutron-db-manage has_offline_migrations
 
