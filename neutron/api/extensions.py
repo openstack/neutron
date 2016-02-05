@@ -562,20 +562,26 @@ class PluginAwareExtensionManager(ExtensionManager):
                                 service_plugins)
         return cls._instance
 
+    def get_plugin_supported_extension_aliases(self, plugin):
+        """Return extension aliases supported by a given plugin"""
+        aliases = set()
+        # we also check all classes that the plugins inherit to see if they
+        # directly provide support for an extension
+        for item in [plugin] + plugin.__class__.mro():
+            try:
+                aliases |= set(
+                    getattr(item, "supported_extension_aliases", []))
+            except TypeError:
+                # we land here if a class has a @property decorator for
+                # supported extension aliases. They only work on objects.
+                pass
+        return aliases
+
     def get_supported_extension_aliases(self):
         """Gets extension aliases supported by all plugins."""
         aliases = set()
         for plugin in self.plugins.values():
-            # we also check all classes that the plugins inherit to see if they
-            # directly provide support for an extension
-            for item in [plugin] + plugin.__class__.mro():
-                try:
-                    aliases |= set(
-                        getattr(item, "supported_extension_aliases", []))
-                except TypeError:
-                    # we land here if a class has an @property decorator for
-                    # supported extension aliases. They only work on objects.
-                    pass
+            aliases |= self.get_plugin_supported_extension_aliases(plugin)
         return aliases
 
     @classmethod
