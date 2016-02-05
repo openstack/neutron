@@ -150,10 +150,17 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ipam_driver.remove_subnet(subnet_id)
 
     def allocate_ips_for_port_and_store(self, context, port, port_id):
-        network_id = port['port']['network_id']
+        # Make a copy of port dict to prevent changing
+        # incoming dict by adding 'id' to it.
+        # Deepcopy doesn't work correctly in this case, because copy of
+        # ATTR_NOT_SPECIFIED object happens. Address of copied object doesn't
+        # match original object, so 'is' check fails
+        port_copy = {'port': port['port'].copy()}
+        port_copy['port']['id'] = port_id
+        network_id = port_copy['port']['network_id']
         ips = []
         try:
-            ips = self._allocate_ips_for_port(context, port)
+            ips = self._allocate_ips_for_port(context, port_copy)
             for ip in ips:
                 ip_address = ip['ip_address']
                 subnet_id = ip['subnet_id']
@@ -168,7 +175,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                               "Reverting IP allocation")
                     ipam_driver = driver.Pool.get_instance(None, context)
                     self._ipam_deallocate_ips(context, ipam_driver,
-                                              port['port'], ips,
+                                              port_copy['port'], ips,
                                               revert_on_fail=False)
 
     def _allocate_ips_for_port(self, context, port):
