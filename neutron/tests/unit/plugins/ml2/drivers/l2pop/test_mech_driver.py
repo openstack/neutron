@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo_serialization import jsonutils
 import testtools
 
 from neutron.common import constants
@@ -138,22 +139,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(('00:00:00:00:00:00', '0.0.0.0'), port_info_list[0])
         self.assertEqual(('fa:16:3e:ff:8c:0f', '10.0.0.6'), port_info_list[1])
 
-    def test__marshall_fdb_entries(self):
-        entries = {'foouuid': {
-            'segment_id': 1001,
-            'ports': {'192.168.0.10': [('00:00:00:00:00:00', '0.0.0.0'),
-                                       ('fa:16:3e:ff:8c:0f', '10.0.0.6')]},
-            'network_type': 'vxlan'}}
-
-        entries = l2pop_rpc.L2populationAgentNotifyAPI._marshall_fdb_entries(
-            entries)
-
-        port_info_list = entries['foouuid']['ports']['192.168.0.10']
-        # Check that the PortInfo tuples have been converted to list
-        self.assertIsInstance(port_info_list[0], list)
-        self.assertIsInstance(port_info_list[1], list)
-        self.assertEqual(['00:00:00:00:00:00', '0.0.0.0'], port_info_list[0])
-        self.assertEqual(['fa:16:3e:ff:8c:0f', '10.0.0.6'], port_info_list[1])
+    def test_portinfo_marshalled_as_list(self):
+        entry = ['fa:16:3e:ff:8c:0f', '10.0.0.6']
+        payload = {'netuuid': {'ports': {'1': [l2pop_rpc.PortInfo(*entry)]}}}
+        result = jsonutils.loads(jsonutils.dumps(payload))
+        self.assertEqual(entry, result['netuuid']['ports']['1'][0])
 
     def test_fdb_add_called(self):
         self._register_ml2_agents()
