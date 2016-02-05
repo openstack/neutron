@@ -127,5 +127,5 @@ class DVRPortBinding(model_base.BASEV2):
     port = orm.relationship(
         models_v2.Port,
         backref=orm.backref("dvr_port_binding",
-                            lazy='joined', uselist=False,
+                            lazy='joined',
                             cascade='delete'))
