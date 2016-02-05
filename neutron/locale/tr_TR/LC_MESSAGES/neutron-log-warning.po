@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
+"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"POT-Creation-Date: 2016-02-05 04:27+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -222,9 +222,6 @@ msgstr "Hiçbir L3 ajanı %s yönlendiricisini sunamaz"
 
 msgid "No active L3 agents"
 msgstr "Etkin L3 ajanı yok"
-
-msgid "No active L3 agents found for SNAT"
-msgstr "SNAT için etkin L3 ajanı bulunamadı"
 
 #, python-format
 msgid "No flat network found on physical network %s"

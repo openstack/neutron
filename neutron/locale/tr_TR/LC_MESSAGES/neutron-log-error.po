@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
+"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"POT-Creation-Date: 2016-02-05 04:27+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -195,13 +195,6 @@ msgstr "Alt ağ %s için geçit bağlantı noktası alınamadı"
 #, python-format
 msgid "DVR: Duplicate DVR router interface detected for subnet %s"
 msgstr "DVR: %s alt ağı için çift DVR yönlendirici arayüzü algılandı"
-
-msgid ""
-"DVR: Failed to obtain a valid local DVR MAC address - L2 Agent operating in "
-"Non-DVR Mode"
-msgstr ""
-"DVR: Geçerli yerel DVR MAC adresi elde etme başarısız - L2 Ajan Non-DVR "
-"kipinde işletiliyor"
 
 msgid "DVR: Failed updating arp entry"
 msgstr "DVR: arp kayıt güncelleme hatası"
@@ -801,22 +794,6 @@ msgstr ""
 
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr "mechanism_manager.delete_subnet_postcommit başarısız"
-
-#, python-format
-msgid ""
-"process_ancillary_network_ports - iteration:%d - failure while retrieving "
-"port details from server"
-msgstr ""
-"process_ancillary_network_ports - yineleme:%d - sunucudan bağlantı noktası "
-"detaylarını alma başarısız"
-
-#, python-format
-msgid ""
-"process_network_ports - iteration:%d - failure while retrieving port details "
-"from server"
-msgstr ""
-"process_network_ports - yineleme:%d - sunucudan bağlantı noktası detaylarını "
-"alma başarısız"
 
 #, python-format
 msgid "tunnel_type %s not supported by agent"
