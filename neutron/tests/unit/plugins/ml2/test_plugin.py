@@ -393,7 +393,7 @@ class TestMl2NetworksWithVlanTransparencyAndMTU(TestMl2NetworksV2):
         res = network_req.get_response(self.api)
         self.assertEqual(201, res.status_int)
         network = self.deserialize(self.fmt, res)['network']
-        self.assertEqual(network['mtu'], 1000)
+        self.assertEqual(1000, network['mtu'])
         self.assertIn('vlan_transparent', network)
 
 

@@ -84,7 +84,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:
-            self.assertEqual(port_res.status_int, expected_res_status)
+            self.assertEqual(expected_res_status, port_res.status_int)
         return port_res
 
     def _test_list_resources(self, resource, items, neutron_context=None,
@@ -104,8 +104,8 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                 self.assertEqual(port['port'][k], v)
             self.assertIn('mac_address', port['port'])
             ips = port['port']['fixed_ips']
-            self.assertEqual(len(ips), 1)
-            self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+            self.assertEqual(1, len(ips))
+            self.assertEqual('10.0.0.2', ips[0]['ip_address'])
             self.assertEqual('myname', port['port']['name'])
             self._verify_dns_assigment(port['port'],
                                        ips_list=['10.0.0.2'])
@@ -135,8 +135,8 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             data = {'port': {'admin_state_up': False, 'dns_name': 'vm1'}}
             req = self.new_update_request('ports', data, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(res['port']['admin_state_up'],
-                             data['port']['admin_state_up'])
+            self.assertEqual(data['port']['admin_state_up'],
+                             res['port']['admin_state_up'])
             self._verify_dns_assigment(res['port'],
                                        ips_list=['10.0.0.2'],
                                        dns_name='vm1')
@@ -146,8 +146,8 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             data = {'port': {'admin_state_up': False, 'dns_name': 'vm1'}}
             req = self.new_update_request('ports', data, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(res['port']['admin_state_up'],
-                             data['port']['admin_state_up'])
+            self.assertEqual(data['port']['admin_state_up'],
+                             res['port']['admin_state_up'])
             self._verify_dns_assigment(res['port'],
                                        ips_list=['10.0.0.2'])
 
@@ -157,7 +157,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         ips_list = ips_list or []
         ipv4_cidrs = ipv4_cidrs or []
         ipv6_cidrs = ipv6_cidrs or []
-        self.assertEqual(port['dns_name'], dns_name)
+        self.assertEqual(dns_name, port['dns_name'])
         dns_assignment = port['dns_assignment']
         if ips_list:
             self.assertEqual(len(dns_assignment), len(ips_list))
@@ -240,8 +240,8 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
-                self.assertEqual(len(ips), 1)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEqual(1, len(ips))
+                self.assertEqual('10.0.0.2', ips[0]['ip_address'])
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
                 data = {'port': {'fixed_ips': [{'subnet_id':
                                                 subnet['subnet']['id'],
@@ -250,7 +250,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                                               port['port']['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
-                self.assertEqual(len(ips), 1)
+                self.assertEqual(1, len(ips))
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.10')
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
                 self._verify_dns_assigment(res['port'], ips_list=['10.0.0.10'])
@@ -259,8 +259,8 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
-                self.assertEqual(len(ips), 1)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEqual(1, len(ips))
+                self.assertEqual('10.0.0.2', ips[0]['ip_address'])
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
                 data = {'port': {'fixed_ips': [{'subnet_id':
                                                 subnet['subnet']['id'],
@@ -270,7 +270,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                                               port['port']['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
-                self.assertEqual(len(ips), 2)
+                self.assertEqual(2, len(ips))
                 self.assertIn({'ip_address': '10.0.0.2',
                                'subnet_id': subnet['subnet']['id']}, ips)
                 self.assertIn({'ip_address': '10.0.0.10',
@@ -281,54 +281,54 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
 
     def test_create_port_with_multiple_ipv4_and_ipv6_subnets(self):
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets()
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_dns_domain_no_period(
         self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1')
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_dns_domain_period(
         self):
         cfg.CONF.set_override('dns_domain', 'example.com.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1')
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_pqdn_and_no_dns_domain(
         self):
         cfg.CONF.set_override('dns_domain', '')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets()
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_and_dns_domain_no_period(
         self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.example.com.')
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_and_dns_domain_period(
         self):
         cfg.CONF.set_override('dns_domain', 'example.com.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.example.com.')
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_fqdn_default_domain_period(
         self):
         cfg.CONF.set_override('dns_domain', 'openstacklocal.')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets()
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(201, res.status_code)
 
     def test_create_port_multiple_v4_v6_subnets_bad_fqdn_and_dns_domain(
         self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name='vm1.bad-domain.com.')
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(400, res.status_code)
         expected_error = ('The dns_name passed is a FQDN. Its higher level '
                           'labels must be equal to the dns_domain option in '
                           'neutron.conf')
@@ -345,7 +345,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                     num_labels + 'a' * filler_len)
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name=dns_name)
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(400, res.status_code)
         expected_error = ("When the two are concatenated to form a FQDN "
                           "(with a '.' at the end), the resulting length "
                           "exceeds the maximum size")
@@ -435,7 +435,7 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         for dns_name in dns_names:
             res = self._create_port(self.fmt, net_id=network['network']['id'],
                                     dns_name=dns_name)
-            self.assertEqual(res.status_code, 400)
+            self.assertEqual(400, res.status_code)
             is_expected_message = (
                 'cannot be converted to lowercase string' in res.text or
                 'not a valid PQDN or FQDN. Reason:' in res.text)
@@ -471,4 +471,4 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         for dns_name in dns_names:
             res = self._create_port(self.fmt, net_id=network['network']['id'],
                                     dns_name=dns_name)
-            self.assertEqual(res.status_code, 201)
+            self.assertEqual(201, res.status_code)

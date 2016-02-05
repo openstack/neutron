@@ -40,47 +40,47 @@ class RequestTestCase(base.BaseTestCase):
         request = wsgi.Request.blank('/tests/123')
         request.headers["Content-Type"] = "application/json; charset=UTF-8"
         result = request.get_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
     def test_content_type_from_accept(self):
         content_type = 'application/json'
         request = wsgi.Request.blank('/tests/123')
         request.headers["Accept"] = content_type
         result = request.best_match_content_type()
-        self.assertEqual(result, content_type)
+        self.assertEqual(content_type, result)
 
     def test_content_type_from_accept_best(self):
         request = wsgi.Request.blank('/tests/123')
         request.headers["Accept"] = "application/json"
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
         request = wsgi.Request.blank('/tests/123')
         request.headers["Accept"] = ("application/json; q=0.3, "
                                      "application/xml; q=0.9")
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
     def test_content_type_from_query_extension(self):
         request = wsgi.Request.blank('/tests/123.json')
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
         request = wsgi.Request.blank('/tests/123.invalid')
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
     def test_content_type_accept_and_query_extension(self):
         request = wsgi.Request.blank('/tests/123.json')
         request.headers["Accept"] = "application/xml"
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
     def test_content_type_accept_default(self):
         request = wsgi.Request.blank('/tests/123.unsupported')
         request.headers["Accept"] = "application/unsupported1"
         result = request.best_match_content_type()
-        self.assertEqual(result, "application/json")
+        self.assertEqual("application/json", result)
 
     def test_context_with_neutron_context(self):
         ctxt = context.Context('fake_user', 'fake_tenant')
@@ -108,7 +108,7 @@ class RequestTestCase(base.BaseTestCase):
                                                           'es', 'zh']
         request.headers['Accept-Language'] = 'known-language'
         language = request.best_match_language()
-        self.assertEqual(language, 'known-language')
+        self.assertEqual('known-language', language)
 
         # If the Accept-Leader is an unknown language, missing or empty,
         # the best match locale should be None
@@ -147,9 +147,9 @@ class ResourceTestCase(base.BaseTestCase):
         environ = {'wsgiorg.routing_args': (None, {'action': 'test',
                                                    'format': 'json'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
-        self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
-                         expected_res)
+        self.assertEqual(exc.HTTPInternalServerError.code, res.status_int)
+        self.assertEqual(expected_res,
+                         wsgi.JSONDeserializer().deserialize(res.body))
 
     @mock.patch('oslo_i18n.translate')
     def test_unmapped_neutron_error_localized(self, mock_translation):
@@ -168,7 +168,7 @@ class ResourceTestCase(base.BaseTestCase):
                                                    'format': 'json'})}
 
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(exc.HTTPInternalServerError.code, res.status_int)
         self.assertIn(msg_translation,
                       str(wsgi.JSONDeserializer().deserialize(res.body)))
 
@@ -192,9 +192,9 @@ class ResourceTestCase(base.BaseTestCase):
         environ = {'wsgiorg.routing_args': (None, {'action': 'test',
                                                    'format': 'json'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
-        self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
-                         expected_res)
+        self.assertEqual(exc.HTTPGatewayTimeout.code, res.status_int)
+        self.assertEqual(expected_res,
+                         wsgi.JSONDeserializer().deserialize(res.body))
 
     @mock.patch('oslo_i18n.translate')
     def test_mapped_neutron_error_localized(self, mock_translation):
@@ -278,7 +278,7 @@ class ResourceTestCase(base.BaseTestCase):
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         res = resource.get('', extra_environ=environ)
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(200, res.status_int)
 
     def test_status_204(self):
         controller = mock.MagicMock()
@@ -288,7 +288,7 @@ class ResourceTestCase(base.BaseTestCase):
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'delete'})}
         res = resource.delete('', extra_environ=environ)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(204, res.status_int)
 
     def _test_error_log_level(self, expected_webob_exc, expect_log_info=False,
                               use_fault_map=True, exc_raised=None):
@@ -304,7 +304,7 @@ class ResourceTestCase(base.BaseTestCase):
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         with mock.patch.object(wsgi_resource, 'LOG') as log:
             res = resource.get('', extra_environ=environ, expect_errors=True)
-            self.assertEqual(res.status_int, expected_webob_exc.code)
+            self.assertEqual(expected_webob_exc.code, res.status_int)
         self.assertEqual(expect_log_info, log.info.called)
         self.assertNotEqual(expect_log_info, log.exception.called)
 
@@ -336,7 +336,7 @@ class ResourceTestCase(base.BaseTestCase):
 
         environ = {}
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(exc.HTTPInternalServerError.code, res.status_int)
 
     def test_post_with_body(self):
         controller = mock.MagicMock()
@@ -347,4 +347,4 @@ class ResourceTestCase(base.BaseTestCase):
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         res = resource.post('', params='{"key": "val"}',
                             extra_environ=environ)
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(200, res.status_int)

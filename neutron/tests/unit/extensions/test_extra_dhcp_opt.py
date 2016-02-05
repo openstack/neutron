@@ -163,7 +163,7 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             req = self.new_update_request('ports', update_port,
                                           port['port']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
+            self.assertEqual(webob.exc.HTTPOk.code, res.status_int)
             port = self.deserialize('json', res)
             self._check_opts(expected_opts,
                              port['port'][edo_ext.EXTRADHCPOPTS])
@@ -258,7 +258,7 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             req = self.new_update_request('ports', update_port,
                                           port['port']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_update_port_with_blank_name_extradhcpopt(self):
         opt_list = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
@@ -277,7 +277,7 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             req = self.new_update_request('ports', update_port,
                                           port['port']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_update_port_with_blank_router_extradhcpopt(self):
         opt_list = [{'opt_name': 'bootfile-name',

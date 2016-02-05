@@ -76,7 +76,7 @@ class AgentDBTestMixIn(object):
                                neutron_context=neutron_context,
                                query_params=query_string)
         if expected_res_status:
-            self.assertEqual(agent_res.status_int, expected_res_status)
+            self.assertEqual(expected_res_status, agent_res.status_int)
         return agent_res
 
     def _register_agent_states(self, lbaas_agents=False):
@@ -142,7 +142,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
         _req.environ['neutron.context'] = context.Context(
             '', 'tenant_id')
         res = _req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+        self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
 
     def test_list_agent(self):
         agents = self._register_agent_states()

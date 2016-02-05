@@ -60,15 +60,15 @@ class TestParseMappings(base.BaseTestCase):
             self.parse(['key1:val', 'key2:val'])
 
     def test_parse_mappings_succeeds_for_one_mapping(self):
-        self.assertEqual(self.parse(['key:val']), {'key': 'val'})
+        self.assertEqual({'key': 'val'}, self.parse(['key:val']))
 
     def test_parse_mappings_succeeds_for_n_mappings(self):
-        self.assertEqual(self.parse(['key1:val1', 'key2:val2']),
-                         {'key1': 'val1', 'key2': 'val2'})
+        self.assertEqual({'key1': 'val1', 'key2': 'val2'},
+                         self.parse(['key1:val1', 'key2:val2']))
 
     def test_parse_mappings_succeeds_for_duplicate_value(self):
-        self.assertEqual(self.parse(['key1:val', 'key2:val'], False),
-                         {'key1': 'val', 'key2': 'val'})
+        self.assertEqual({'key1': 'val', 'key2': 'val'},
+                         self.parse(['key1:val', 'key2:val'], False))
 
     def test_parse_mappings_succeeds_for_no_mappings(self):
         self.assertEqual({}, self.parse(['']))
@@ -253,12 +253,12 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
     def test_parse_one_net_no_vlan_range(self):
         config_str = "net1"
         expected_networks = ("net1", None)
-        self.assertEqual(self.parse_one(config_str), expected_networks)
+        self.assertEqual(expected_networks, self.parse_one(config_str))
 
     def test_parse_one_net_and_vlan_range(self):
         config_str = "net1:100:199"
         expected_networks = ("net1", (100, 199))
-        self.assertEqual(self.parse_one(config_str), expected_networks)
+        self.assertEqual(expected_networks, self.parse_one(config_str))
 
     def test_parse_one_net_incomplete_range(self):
         config_str = "net1:100"
@@ -294,7 +294,7 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
     def test_parse_one_net_and_max_range(self):
         config_str = "net1:1:4094"
         expected_networks = ("net1", (1, 4094))
-        self.assertEqual(self.parse_one(config_str), expected_networks)
+        self.assertEqual(expected_networks, self.parse_one(config_str))
 
     def test_parse_one_net_range_bad_vlan1(self):
         config_str = "net1:9000:150"
@@ -318,33 +318,33 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
     def test_parse_list_one_net_no_vlan_range(self):
         config_list = ["net1"]
         expected_networks = {"net1": []}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_list_one_net_vlan_range(self):
         config_list = ["net1:100:199"]
         expected_networks = {"net1": [(100, 199)]}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_two_nets_no_vlan_range(self):
         config_list = ["net1",
                        "net2"]
         expected_networks = {"net1": [],
                              "net2": []}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_two_nets_range_and_no_range(self):
         config_list = ["net1:100:199",
                        "net2"]
         expected_networks = {"net1": [(100, 199)],
                              "net2": []}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_two_nets_no_range_and_range(self):
         config_list = ["net1",
                        "net2:200:299"]
         expected_networks = {"net1": [],
                              "net2": [(200, 299)]}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_two_nets_bad_vlan_range1(self):
         config_list = ["net1:100",
@@ -369,7 +369,7 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
         expected_networks = {"net1": [(100, 199),
                                       (1000, 1099)],
                              "net2": [(200, 299)]}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
     def test_parse_two_nets_and_append_1_3(self):
         config_list = ["net1:100:199",
@@ -378,23 +378,23 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
         expected_networks = {"net1": [(100, 199),
                                       (1000, 1099)],
                              "net2": [(200, 299)]}
-        self.assertEqual(self.parse_list(config_list), expected_networks)
+        self.assertEqual(expected_networks, self.parse_list(config_list))
 
 
 class TestDictUtils(base.BaseTestCase):
     def test_dict2str(self):
         dic = {"key1": "value1", "key2": "value2", "key3": "value3"}
         expected = "key1=value1,key2=value2,key3=value3"
-        self.assertEqual(utils.dict2str(dic), expected)
+        self.assertEqual(expected, utils.dict2str(dic))
 
     def test_str2dict(self):
         string = "key1=value1,key2=value2,key3=value3"
         expected = {"key1": "value1", "key2": "value2", "key3": "value3"}
-        self.assertEqual(utils.str2dict(string), expected)
+        self.assertEqual(expected, utils.str2dict(string))
 
     def test_dict_str_conversion(self):
         dic = {"key1": "value1", "key2": "value2"}
-        self.assertEqual(utils.str2dict(utils.dict2str(dic)), dic)
+        self.assertEqual(dic, utils.str2dict(utils.dict2str(dic)))
 
     def test_diff_list_of_dict(self):
         old_list = [{"key1": "value1"},
@@ -633,12 +633,12 @@ class TestCidrIsHost(base.BaseTestCase):
 
 class TestIpVersionFromInt(base.BaseTestCase):
     def test_ip_version_from_int_ipv4(self):
-        self.assertEqual(utils.ip_version_from_int(4),
-                         constants.IPv4)
+        self.assertEqual(constants.IPv4,
+                         utils.ip_version_from_int(4))
 
     def test_ip_version_from_int_ipv6(self):
-        self.assertEqual(utils.ip_version_from_int(6),
-                         constants.IPv6)
+        self.assertEqual(constants.IPv6,
+                         utils.ip_version_from_int(6))
 
     def test_ip_version_from_int_illegal_int(self):
         self.assertRaises(ValueError,

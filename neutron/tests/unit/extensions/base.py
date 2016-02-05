@@ -117,4 +117,4 @@ class ExtensionTestCase(testlib_api.WebTestCase):
             test_base._get_path(path, id=entity_id, fmt=self.fmt))
         delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
         delete_entity.assert_called_with(mock.ANY, entity_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        self.assertEqual(exc.HTTPNoContent.code, res.status_int)

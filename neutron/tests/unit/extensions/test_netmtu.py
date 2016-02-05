@@ -61,8 +61,8 @@ class NetmtuExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             self.assertEqual(1, len(res['networks']))
             self.assertEqual(res['networks'][0]['name'],
                              net1['network']['name'])
-            self.assertEqual(res['networks'][0].get('mtu'),
-                             constants.DEFAULT_NETWORK_MTU)
+            self.assertEqual(constants.DEFAULT_NETWORK_MTU,
+                             res['networks'][0].get('mtu'))
 
     def test_show_network_mtu(self):
         with self.network(name='net1') as net:
@@ -70,5 +70,5 @@ class NetmtuExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['network']['name'],
                              net['network']['name'])
-            self.assertEqual(res['network']['mtu'],
-                             constants.DEFAULT_NETWORK_MTU)
+            self.assertEqual(constants.DEFAULT_NETWORK_MTU,
+                             res['network']['mtu'])

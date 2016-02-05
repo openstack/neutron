@@ -63,7 +63,7 @@ class AgentSchedulerTestMixIn(object):
                       expected_code=exc.HTTPOk.code):
         req = self._path_req(path, admin_context=admin_context)
         res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, expected_code)
+        self.assertEqual(expected_code, res.status_int)
         return self.deserialize(self.fmt, res)
 
     def _path_req(self, path, method='GET', data=None,
@@ -142,7 +142,7 @@ class AgentSchedulerTestMixIn(object):
                                         {'router_id': router_id},
                                         admin_context=admin_context)
         res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, expected_code)
+        self.assertEqual(expected_code, res.status_int)
 
     def _add_network_to_dhcp_agent(self, id, network_id,
                                    expected_code=exc.HTTPCreated.code,
@@ -154,7 +154,7 @@ class AgentSchedulerTestMixIn(object):
                                         {'network_id': network_id},
                                         admin_context=admin_context)
         res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, expected_code)
+        self.assertEqual(expected_code, res.status_int)
 
     def _remove_network_from_dhcp_agent(self, id, network_id,
                                         expected_code=exc.HTTPNoContent.code,
@@ -166,7 +166,7 @@ class AgentSchedulerTestMixIn(object):
         req = self._path_delete_request(path,
                                         admin_context=admin_context)
         res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, expected_code)
+        self.assertEqual(expected_code, res.status_int)
 
     def _remove_router_from_l3_agent(self, id, router_id,
                                      expected_code=exc.HTTPNoContent.code,
@@ -177,7 +177,7 @@ class AgentSchedulerTestMixIn(object):
                                         self.fmt)
         req = self._path_delete_request(path, admin_context=admin_context)
         res = req.get_response(self.ext_api)
-        self.assertEqual(res.status_int, expected_code)
+        self.assertEqual(expected_code, res.status_int)
 
     def _assert_notify(self, notifications, expected_event_type):
         event_types = [event['event_type'] for event in notifications]

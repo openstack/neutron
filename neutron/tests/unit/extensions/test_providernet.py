@@ -134,7 +134,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
                                      'shared': False})
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=exp_input)
-        self.assertEqual(res.status_int, web_exc.HTTPCreated.code)
+        self.assertEqual(web_exc.HTTPCreated.code, res.status_int)
 
     def test_network_create_with_bad_provider_attrs_400(self):
         ctx = context.get_admin_context()
@@ -153,16 +153,16 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         instance.update_network.assert_called_with(mock.ANY,
                                                    net_id,
                                                    network=exp_input)
-        self.assertEqual(res.status_int, web_exc.HTTPOk.code)
+        self.assertEqual(web_exc.HTTPOk.code, res.status_int)
 
     def test_network_create_with_provider_attrs_noadmin_returns_403(self):
         tenant_id = 'no_admin'
         ctx = context.Context('', tenant_id, is_admin=False)
         res, _1 = self._post_network_with_provider_attrs(ctx, True)
-        self.assertEqual(res.status_int, web_exc.HTTPForbidden.code)
+        self.assertEqual(web_exc.HTTPForbidden.code, res.status_int)
 
     def test_network_update_with_provider_attrs_noadmin_returns_403(self):
         tenant_id = 'no_admin'
         ctx = context.Context('', tenant_id, is_admin=False)
         res, _1, _2 = self._put_network_with_provider_attrs(ctx, True)
-        self.assertEqual(res.status_int, web_exc.HTTPForbidden.code)
+        self.assertEqual(web_exc.HTTPForbidden.code, res.status_int)
