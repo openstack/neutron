@@ -62,20 +62,21 @@ DHCP_AGENT_OPTS = [
 DHCP_OPTS = [
     cfg.StrOpt('dhcp_confs',
                default='$state_path/dhcp',
-               help=_('Location to store DHCP server config files')),
+               help=_('Location to store DHCP server config files.')),
     cfg.StrOpt('dhcp_domain',
                default='openstacklocal',
                help=_('Domain to use for building the hostnames. '
                       'This option is deprecated. It has been moved to '
                       'neutron.conf as dns_domain. It will be removed '
-                      'in a future release'),
+                      'in a future release.'),
                deprecated_for_removal=True),
 ]
 
 DNSMASQ_OPTS = [
     cfg.StrOpt('dnsmasq_config_file',
                default='',
-               help=_('Override the default dnsmasq settings with this file')),
+               help=_('Override the default dnsmasq settings '
+                      'with this file.')),
     cfg.ListOpt('dnsmasq_dns_servers',
                 help=_('Comma-separated list of the DNS servers which will be '
                        'used as forwarders.'),
@@ -97,5 +98,5 @@ DNSMASQ_OPTS = [
         default=(2 ** 24),
         help=_('Limit number of leases to prevent a denial-of-service.')),
     cfg.BoolOpt('dhcp_broadcast_reply', default=False,
-                help=_("Use broadcast in DHCP replies")),
+                help=_("Use broadcast in DHCP replies.")),
 ]
