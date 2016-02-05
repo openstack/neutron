@@ -411,6 +411,51 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                             self.mock_fanout.assert_called_with(
                                 mock.ANY, 'add_fdb_entries', expected2)
 
+    def test_fdb_add_called_dualstack(self):
+        self._register_ml2_agents()
+
+        host_arg = {portbindings.HOST_ID: HOST,
+                    'admin_state_up': True}
+        with self.subnet(self._network) as subnet,\
+            self.subnet(
+                self._network,
+                cidr='2001:db8::/64',
+                ip_version=6,
+                gateway_ip='fe80::1',
+                ipv6_address_mode=constants.IPV6_SLAAC) as subnet2:
+            with self.port(
+                subnet,
+                fixed_ips=[{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet2['subnet']['id']}],
+                device_owner=DEVICE_OWNER_COMPUTE,
+                arg_list=(portbindings.HOST_ID,),
+                **host_arg
+            ) as port:
+                p1 = port['port']
+
+                device = 'tap' + p1['id']
+
+                self.mock_fanout.reset_mock()
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device)
+
+                p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
+                expected = {p1['network_id']:
+                            {'ports':
+                             {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                           l2pop_rpc.PortInfo(
+                                               p1['mac_address'],
+                                               p1_ips[0]),
+                                           l2pop_rpc.PortInfo(
+                                               p1['mac_address'],
+                                               p1_ips[1])]},
+                             'network_type': 'vxlan',
+                             'segment_id': 1}}
+
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', expected)
+
     def test_update_port_down(self):
         self._register_ml2_agents()
 
