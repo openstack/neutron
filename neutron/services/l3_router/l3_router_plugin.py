@@ -32,6 +32,7 @@ from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
 from neutron.plugins.common import constants
 from neutron.quota import resource_registry
+from neutron import service
 from neutron.services import service_base
 
 
@@ -62,20 +63,23 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     def __init__(self):
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
-        self.start_periodic_l3_agent_status_check()
+        self.add_periodic_l3_agent_status_check()
         super(L3RouterPlugin, self).__init__()
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
         l3_db.subscribe()
-        self.start_rpc_listeners()
+        self.agent_notifiers.update(
+            {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
+
+        rpc_worker = service.RpcWorker([self], worker_process_count=0)
+
+        self.add_worker(rpc_worker)
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
         # RPC support
         self.topic = topics.L3PLUGIN
         self.conn = n_rpc.create_connection()
-        self.agent_notifiers.update(
-            {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
         self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
