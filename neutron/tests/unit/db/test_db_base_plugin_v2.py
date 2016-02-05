@@ -4039,10 +4039,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                   '_get_subnet',
                                   return_value=mock.Mock()).start()
             # Add an IPv6 auto-address subnet to the network
-            v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
-                                          'fe80::/64', ip_version=6,
-                                          ipv6_ra_mode=addr_mode,
-                                          ipv6_address_mode=addr_mode)
+            with mock.patch.object(manager.NeutronManager.get_plugin(),
+                                   'update_port') as mock_updated_port:
+                v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
+                                              'fe80::/64', ip_version=6,
+                                              ipv6_ra_mode=addr_mode,
+                                              ipv6_address_mode=addr_mode)
             if (insert_db_reference_error
                 or device_owner == constants.DEVICE_OWNER_ROUTER_SNAT
                 or device_owner in constants.ROUTER_INTERFACE_OWNERS):
@@ -4052,6 +4054,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             else:
                 # Confirm that the port has been updated with an address
                 # from the new auto-address subnet
+                mock_updated_port.assert_called_with(mock.ANY,
+                                                     port['port']['id'],
+                                                     mock.ANY)
                 req = self.new_show_request('ports', port['port']['id'],
                                             self.fmt)
                 sport = self.deserialize(self.fmt, req.get_response(self.api))
