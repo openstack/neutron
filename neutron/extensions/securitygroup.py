@@ -211,8 +211,7 @@ def _validate_name_not_default(data, valid_values=None):
 
 attr.validators['type:name_not_default'] = _validate_name_not_default
 
-sg_supported_protocols = [None, const.PROTO_NAME_TCP, const.PROTO_NAME_UDP,
-                          const.PROTO_NAME_ICMP, const.PROTO_NAME_ICMP_V6]
+sg_supported_protocols = [None] + list(const.IP_PROTOCOL_MAP.keys())
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 
 # Attribute Map
