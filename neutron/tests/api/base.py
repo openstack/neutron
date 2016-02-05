@@ -426,10 +426,10 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def create_subnetpool(cls, name, is_admin=False, **kwargs):
         if is_admin:
-            body = cls.admin_client.create_subnetpool(name=name, **kwargs)
+            body = cls.admin_client.create_subnetpool(name, **kwargs)
             cls.admin_subnetpools.append(body['subnetpool'])
         else:
-            body = cls.client.create_subnetpool(name=name, **kwargs)
+            body = cls.client.create_subnetpool(name, **kwargs)
             cls.subnetpools.append(body['subnetpool'])
         return body['subnetpool']
 
