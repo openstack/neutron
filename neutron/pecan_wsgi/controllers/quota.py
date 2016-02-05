@@ -28,6 +28,12 @@ from neutron.quota import resource_registry
 
 LOG = log.getLogger(__name__)
 RESOURCE_NAME = "quota"
+TENANT_ID_ATTR = {'tenant_id':
+                  {'allow_post': False,
+                   'allow_put': False,
+                   'required_by_policy': True,
+                   'validate': {'type:string': attributes.TENANT_ID_MAX_LEN},
+                   'is_visible': True}}
 
 
 class QuotasController(utils.NeutronPecanController):
@@ -81,6 +87,10 @@ class QuotaController(utils.NeutronPecanController):
                 'validate': {
                     'type:range': [-1, constants.DB_INTEGER_MAX_VALUE]},
                 'is_visible': True}
+        # The quota resource must always declare a tenant_id attribute,
+        # otherwise the attribute will be stripped off when generating the
+        # response
+        attr_dict.update(TENANT_ID_ATTR)
 
     @utils.expose(generic=True)
     def index(self):
