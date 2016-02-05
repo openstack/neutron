@@ -27,6 +27,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.dhcp import agent
 from neutron.agent import dhcp_agent
 from neutron.agent.linux import dhcp
+from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -79,6 +80,8 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self.agent = agent.DhcpAgentWithStateReport('localhost')
 
         self.ovs_driver = interface.OVSInterfaceDriver(self.conf)
+
+        self.conf.set_override('check_child_processes_interval', 1, 'AGENT')
 
     def network_dict_for_dhcp(self, dhcp_enabled=True, ip_version=4):
         net_id = uuidutils.generate_uuid()
@@ -232,6 +235,12 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self.addCleanup(proc.wait)
         self.addCleanup(proc.kill)
 
+    def _get_metadata_proxy_process(self, network):
+        return external_process.ProcessManager(
+            self.conf,
+            network.id,
+            network.namespace)
+
 
 class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
 
@@ -260,3 +269,38 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         port.mac_address = str(bad_mac_address)
         self._plug_port_for_dhcp_request(network, port)
         self.assert_bad_allocation_for_port(network, port)
+
+    def _spawn_network_metadata_proxy(self):
+        network = self.network_dict_for_dhcp()
+        self.conf.set_override('enable_isolated_metadata', True)
+        self.addCleanup(self.agent.disable_isolated_metadata_proxy, network)
+        self.configure_dhcp_for_network(network=network)
+        pm = self._get_metadata_proxy_process(network)
+        utils.wait_until_true(
+            lambda: pm.active,
+            timeout=5,
+            sleep=0.01,
+            exception=RuntimeError("Metadata proxy didn't spawn"))
+        return (pm, network)
+
+    def test_metadata_proxy_respawned(self):
+        pm, network = self._spawn_network_metadata_proxy()
+        old_pid = pm.pid
+
+        utils.execute(['kill', '-9', old_pid], run_as_root=True)
+        utils.wait_until_true(
+            lambda: pm.active and pm.pid != old_pid,
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError("Metadata proxy didn't respawn"))
+
+    def test_stale_metadata_proxy_killed(self):
+        pm, network = self._spawn_network_metadata_proxy()
+
+        self.conf.set_override('enable_isolated_metadata', False)
+        self.configure_dhcp_for_network(network=network)
+        utils.wait_until_true(
+            lambda: not pm.active,
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError("Stale metadata proxy didn't get killed"))
