@@ -17,6 +17,7 @@ import copy
 
 import netaddr
 from oslo_config import cfg
+from oslo_db import api as oslo_db_api
 from oslo_log import log as logging
 from oslo_utils import excutils
 import webob.exc
@@ -311,6 +312,7 @@ class Controller(object):
         if hasattr(self, '_nova_notifier'):
             self._nova_notifier.send_network_change(action, orig, returned)
 
+    @oslo_db_api.wrap_db_retry(max_retries=10, retry_on_request=True)
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -318,6 +320,7 @@ class Controller(object):
         policy.init()
         return self._items(request, True, parent_id)
 
+    @oslo_db_api.wrap_db_retry(max_retries=10, retry_on_request=True)
     def show(self, request, id, **kwargs):
         """Returns detailed information about the requested entity."""
         try:
