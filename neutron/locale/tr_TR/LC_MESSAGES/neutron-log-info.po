@@ -8,9 +8,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b2.dev460\n"
+"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-01-19 03:50+0000\n"
+"POT-Creation-Date: 2016-02-05 04:27+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -474,9 +474,6 @@ msgstr ""
 "%s yönlendiricisi bu ajan tarafından yönetilmiyor. Muhtemelen eş zamanlı "
 "olarak silindi."
 
-msgid "SNAT already bound to a service node."
-msgstr "SNAT zaten bir servis düğümüne bağlı."
-
 #, python-format
 msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr ""
@@ -537,9 +534,6 @@ msgstr "Bağlantı noktası %s atlanıyor çünkü üzerinde yapılandırılmı�
 
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr "Belirtilen IP adresleri alt ağ IP sürümüyle eşleşmiyor"
-
-msgid "Stopping linuxbridge agent."
-msgstr "Linuxbridge ajanı durduruluyor."
 
 #, python-format
 msgid "Subnet %s was deleted concurrently"
