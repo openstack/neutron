@@ -1,0 +1,7 @@
+---
+features:
+  - The RPC and notification queues have been separated into different queues.
+    Specify the transport_url to be used for notifications within the
+    [oslo_messaging_notifications] section of the configuration file.
+    If no transport_url is specified in [oslo_messaging_notifications],
+    the transport_url used for RPC will be used.
