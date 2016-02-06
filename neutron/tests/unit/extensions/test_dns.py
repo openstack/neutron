@@ -58,9 +58,11 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         super(DnsExtensionTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, **kwargs):
+                     arg_list=None, set_context=False, tenant_id=None,
+                     **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         data = {'port': {'network_id': net_id,
-                         'tenant_id': self._tenant_id}}
+                         'tenant_id': tenant_id}}
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
@@ -77,10 +79,10 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt)
-        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+        if set_context and tenant_id:
             # create a specific auth context for this request
             port_req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
+                '', tenant_id)
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:

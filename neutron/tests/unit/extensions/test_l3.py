@@ -328,6 +328,7 @@ class L3NatTestCaseMixin(object):
     def _create_router(self, fmt, tenant_id, name=None,
                        admin_state_up=None, set_context=False,
                        arg_list=None, **kwargs):
+        tenant_id = tenant_id or _uuid()
         data = {'router': {'tenant_id': tenant_id}}
         if name:
             data['router']['name'] = name
@@ -405,7 +406,7 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def router(self, name='router1', admin_state_up=True,
-               fmt=None, tenant_id=_uuid(),
+               fmt=None, tenant_id=None,
                external_gateway_info=None, set_context=False,
                **kwargs):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
@@ -419,9 +420,11 @@ class L3NatTestCaseMixin(object):
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False,
-                           floating_ip=None, subnet_id=False):
+                           floating_ip=None, subnet_id=False,
+                           tenant_id=None):
+        tenant_id = tenant_id or self._tenant_id
         data = {'floatingip': {'floating_network_id': network_id,
-                               'tenant_id': self._tenant_id}}
+                               'tenant_id': tenant_id}}
         if port_id:
             data['floatingip']['port_id'] = port_id
             if fixed_ip:
@@ -433,17 +436,18 @@ class L3NatTestCaseMixin(object):
         if subnet_id:
             data['floatingip']['subnet_id'] = subnet_id
         floatingip_req = self.new_create_request('floatingips', data, fmt)
-        if set_context and self._tenant_id:
+        if set_context and tenant_id:
             # create a specific auth context for this request
             floatingip_req.environ['neutron.context'] = context.Context(
-                '', self._tenant_id)
+                '', tenant_id)
         return floatingip_req.get_response(self.ext_api)
 
     def _make_floatingip(self, fmt, network_id, port_id=None,
-                         fixed_ip=None, set_context=False, floating_ip=None,
-                         http_status=exc.HTTPCreated.code):
+                         fixed_ip=None, set_context=False, tenant_id=None,
+                         floating_ip=None, http_status=exc.HTTPCreated.code):
         res = self._create_floatingip(fmt, network_id, port_id,
-                                      fixed_ip, set_context, floating_ip)
+                                      fixed_ip, set_context, floating_ip,
+                                      tenant_id=tenant_id)
         self.assertEqual(http_status, res.status_int)
         return self.deserialize(fmt, res)
 
@@ -459,15 +463,20 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
-                              set_context=False):
-        with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                              set_context=False, tenant_id=None):
+        with self.subnet(cidr='11.0.0.0/24',
+                         set_context=set_context,
+                         tenant_id=tenant_id) as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             private_port = None
             if port_id:
                 private_port = self._show('ports', port_id)
-            with test_db_base_plugin_v2.optional_ctx(private_port,
-                                             self.port) as private_port:
-                with self.router() as r:
+            with test_db_base_plugin_v2.optional_ctx(
+                    private_port, self.port,
+                    set_context=set_context,
+                    tenant_id=tenant_id) as private_port:
+                with self.router(set_context=set_context,
+                                 tenant_id=tenant_id) as r:
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
                     private_sub = {'subnet': {'id': sid}}
                     floatingip = None
@@ -484,6 +493,7 @@ class L3NatTestCaseMixin(object):
                         public_sub['subnet']['network_id'],
                         port_id=private_port['port']['id'],
                         fixed_ip=fixed_ip,
+                        tenant_id=tenant_id,
                         set_context=set_context)
                     yield floatingip
 
@@ -3048,32 +3058,40 @@ class TestL3DbOperationBounds(test_db_base_plugin_v2.DbOperationBoundMixin,
         super(TestL3DbOperationBounds, self).setUp()
         ext_mgr = L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+        self.kwargs = self.get_api_kwargs()
 
     def test_router_list_queries_constant(self):
-        with self.subnet() as s:
+        with self.subnet(**self.kwargs) as s:
             self._set_net_external(s['subnet']['network_id'])
 
             def router_maker():
                 ext_info = {'network_id': s['subnet']['network_id']}
-                self._create_router(self.fmt, _uuid(),
+                self._create_router(self.fmt,
                                     arg_list=('external_gateway_info',),
-                                    external_gateway_info=ext_info)
+                                    external_gateway_info=ext_info,
+                                    **self.kwargs)
 
             self._assert_object_list_queries_constant(router_maker, 'routers')
 
     def test_floatingip_list_queries_constant(self):
-        with self.floatingip_with_assoc() as flip:
+        with self.floatingip_with_assoc(**self.kwargs) as flip:
             internal_port = self._show('ports', flip['floatingip']['port_id'])
             internal_net_id = internal_port['port']['network_id']
 
             def float_maker():
-                port = self._make_port(self.fmt, internal_net_id)
+                port = self._make_port(
+                    self.fmt, internal_net_id, **self.kwargs)
                 self._make_floatingip(
                     self.fmt, flip['floatingip']['floating_network_id'],
-                    port_id=port['port']['id'])
+                    port_id=port['port']['id'],
+                    **self.kwargs)
 
             self._assert_object_list_queries_constant(float_maker,
                                                       'floatingips')
+
+
+class TestL3DbOperationBoundsTenant(TestL3DbOperationBounds):
+    admin = False
 
 
 class L3NatDBTestCaseMixin(object):
