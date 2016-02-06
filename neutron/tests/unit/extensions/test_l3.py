@@ -677,7 +677,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.fmt, _uuid(), arg_list=('external_gateway_info',),
                 set_context=True, external_gateway_info=ext_info
             )
-            self.assertEqual(res.status_int, exc.HTTPForbidden.code)
+            self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
     def test_router_list(self):
         with self.router() as v1, self.router() as v2, self.router() as v3:

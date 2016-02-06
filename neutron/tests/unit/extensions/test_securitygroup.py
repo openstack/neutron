@@ -849,7 +849,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                remote_group_id)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
-        self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_bad_security_group_id(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
@@ -864,7 +864,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                remote_ip_prefix)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
-        self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_security_group_rule_bad_tenant(self):
         with self.security_group() as sg:
@@ -880,7 +880,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_security_group_rule_bad_tenant_remote_group_id(self):
         with self.security_group() as sg:
@@ -901,7 +901,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_security_group_rule_bad_tenant_security_group_rule(self):
         with self.security_group() as sg:
@@ -921,7 +921,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_security_group_rule_bad_remote_group_id(self):
         name = 'webservers'
@@ -939,7 +939,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                remote_group_id=remote_group_id)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
-        self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_create_security_group_rule_duplicate_rules(self):
         name = 'webservers'
@@ -953,7 +953,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_create_security_group_rule_min_port_greater_max(self):
         name = 'webservers'
@@ -968,8 +968,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                         'ingress', protocol, '50', '22')
                     res = self._create_security_group_rule(self.fmt, rule)
                     self.deserialize(self.fmt, res)
-                    self.assertEqual(res.status_int,
-                                     webob.exc.HTTPBadRequest.code)
+                    self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                     res.status_int)
 
     def test_create_security_group_rule_ports_but_no_protocol(self):
         name = 'webservers'
@@ -981,7 +981,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     sg['security_group']['id'], 'ingress', None, '22', '22')
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_port_range_min_only(self):
         name = 'webservers'
@@ -994,7 +994,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     const.PROTO_NAME_TCP, '22', None)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_port_range_max_only(self):
         name = 'webservers'
@@ -1007,7 +1007,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     const.PROTO_NAME_TCP, None, '22')
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_icmp_type_too_big(self):
         name = 'webservers'
@@ -1020,7 +1020,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     const.PROTO_NAME_ICMP, '256', None)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_icmp_code_too_big(self):
         name = 'webservers'
@@ -1033,7 +1033,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     const.PROTO_NAME_ICMP, '8', '256')
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_icmp_with_code_only(self):
         name = 'webservers'
@@ -1047,8 +1047,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                         const.PROTO_NAME_ICMP, None, code)
                     res = self._create_security_group_rule(self.fmt, rule)
                     self.deserialize(self.fmt, res)
-                    self.assertEqual(res.status_int,
-                                     webob.exc.HTTPBadRequest.code)
+                    self.assertEqual(webob.exc.HTTPBadRequest.code,
+                                     res.status_int)
 
     def test_list_ports_security_group(self):
         with self.network() as n:
@@ -1527,7 +1527,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                         security_groups=['not_valid'])
 
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_create_security_group_rule_with_specific_id(self):
         neutron_context = context.Context('', 'test-tenant')

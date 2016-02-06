@@ -560,7 +560,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _validate_behavior_on_bulk_success(self, res, collection,
                                            names=['test_0', 'test_1']):
-        self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
         items = self.deserialize(self.fmt, res)[collection]
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['name'], 'test_0')
@@ -1686,8 +1686,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '2607:f0d0:1002:51::5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int,
-                             webob.exc.HTTPClientError.code)
+            self.assertEqual(webob.exc.HTTPClientError.code,
+                             res.status_int)
 
     @mock.patch.object(non_ipam.IpamNonPluggableBackend,
                        '_allocate_specific_ip')

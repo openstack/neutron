@@ -224,7 +224,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                                          rule2['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
             res1 = self._create_port(
                 self.fmt, n['network']['id'],
@@ -396,7 +396,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                                          rule2['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
             res1 = self._create_port(
                 self.fmt, n['network']['id'],
@@ -446,7 +446,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 'security_group_rules': [rule1['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
             res1 = self._create_port(
                 self.fmt, n['network']['id'],
@@ -567,7 +567,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                                          rule2['security_group_rule']]}
             res = self._create_security_group_rule(self.fmt, rules)
             self.deserialize(self.fmt, res)
-            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
             dhcp_port = self._create_port(
                 self.fmt, n['network']['id'],
