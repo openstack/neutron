@@ -397,16 +397,17 @@ class Dnsmasq(DhcpLocalProcess):
             cmd.append('--dhcp-broadcast')
 
         if self.conf.dnsmasq_base_log_dir:
+            log_dir = os.path.join(
+                self.conf.dnsmasq_base_log_dir,
+                self.network.id)
             try:
-                if not os.path.exists(self.conf.dnsmasq_base_log_dir):
-                    os.makedirs(self.conf.dnsmasq_base_log_dir)
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir)
             except OSError:
-                LOG.error(_LE('Error while create dnsmasq base log dir: %s'),
-                    self.conf.dnsmasq_base_log_dir)
+                LOG.error(_LE('Error while create dnsmasq log dir: %s'),
+                    log_dir)
             else:
-                log_filename = os.path.join(
-                    self.conf.dnsmasq_base_log_dir,
-                    self.network.id, 'dhcp_dns_log')
+                log_filename = os.path.join(log_dir, 'dhcp_dns_log')
                 cmd.append('--log-queries')
                 cmd.append('--log-dhcp')
                 cmd.append('--log-facility=%s' % log_filename)
