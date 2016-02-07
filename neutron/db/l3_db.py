@@ -1654,6 +1654,27 @@ def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
         l3plugin.notify_router_updated(context, router_id)
 
 
+def _notify_subnetpool_address_scope_update(resource, event,
+                                            trigger, **kwargs):
+    context = kwargs['context']
+    subnetpool_id = kwargs['subnetpool_id']
+
+    query = context.session.query(RouterPort.router_id)
+    query = query.join(models_v2.Port)
+    query = query.join(
+        models_v2.Subnet,
+        models_v2.Subnet.network_id == models_v2.Port.network_id)
+    query = query.filter(
+        models_v2.Subnet.subnetpool_id == subnetpool_id,
+        RouterPort.port_type.in_(l3_constants.ROUTER_PORT_OWNERS))
+    query = query.distinct()
+
+    router_ids = [r[0] for r in query]
+    l3plugin = manager.NeutronManager.get_service_plugins().get(
+        constants.L3_ROUTER_NAT)
+    l3plugin.notify_routers_updated(context, router_ids)
+
+
 def subscribe():
     registry.subscribe(
         _prevent_l3_port_delete_callback, resources.PORT, events.BEFORE_DELETE)
@@ -1661,6 +1682,10 @@ def subscribe():
         _notify_routers_callback, resources.PORT, events.AFTER_DELETE)
     registry.subscribe(
         _notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+        events.AFTER_UPDATE)
+    registry.subscribe(
+        _notify_subnetpool_address_scope_update,
+        resources.SUBNETPOOL_ADDRESS_SCOPE,
         events.AFTER_UPDATE)
 
 # NOTE(armax): multiple l3 service plugins (potentially out of tree) inherit

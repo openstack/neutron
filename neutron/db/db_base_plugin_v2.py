@@ -1034,12 +1034,24 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._validate_address_scope_id(context, reader.address_scope_id,
                                             id, reader.prefixes,
                                             reader.ip_version)
+            address_scope_changed = (orig_sp.address_scope_id !=
+                                     reader.address_scope_id)
+
             orig_sp.update(self._filter_non_model_columns(
                                                       reader.subnetpool,
                                                       models_v2.SubnetPool))
             self._update_subnetpool_prefixes(context,
                                              reader.prefixes,
                                              id)
+
+        if address_scope_changed:
+            # Notify about the update of subnetpool's address scope
+            kwargs = {'context': context, 'subnetpool_id': id}
+            registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                            events.AFTER_UPDATE,
+                            self.update_subnetpool,
+                            **kwargs)
+
         for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
             updated['key'] = str(updated[key])
 

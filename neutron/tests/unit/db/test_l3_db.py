@@ -16,6 +16,9 @@
 import mock
 import testtools
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import exceptions as n_exc
 from neutron.db import l3_db
 from neutron.extensions import l3
@@ -185,3 +188,14 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         self.db.get_floatingip = mock.Mock()
         with testtools.ExpectedException(n_exc.ServicePortInUse):
             self.db.prevent_l3_port_deletion(mock.Mock(), None)
+
+    @mock.patch.object(l3_db, '_notify_subnetpool_address_scope_update')
+    def test_subscribe_address_scope_of_subnetpool(self, notify):
+        l3_db.subscribe()
+        registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                        events.AFTER_UPDATE, mock.ANY, context=mock.ANY,
+                        subnetpool_id='fake_id')
+        notify.assert_called_once_with(resources.SUBNETPOOL_ADDRESS_SCOPE,
+                                       events.AFTER_UPDATE, mock.ANY,
+                                       context=mock.ANY,
+                                       subnetpool_id='fake_id')
