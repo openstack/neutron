@@ -41,7 +41,7 @@ function compile_ovs {
     local build_modules=${1:-True}
     local prefix=$2
 
-    if [ -n $prefix ]; then
+    if [ -n "$prefix" ]; then
         prefix="--prefix=$prefix"
     fi
 
