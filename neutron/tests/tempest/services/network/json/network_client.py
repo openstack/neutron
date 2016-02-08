@@ -194,8 +194,10 @@ class NetworkClientJSON(service_client.ServiceClient):
         self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
-    def list_subnetpools(self):
+    def list_subnetpools(self, **filters):
         uri = self.get_uri("subnetpools")
+        if filters:
+            uri = '?'.join([uri, urlparse.urlencode(filters)])
         resp, body = self.get(uri)
         body = {'subnetpools': self.deserialize_list(body)}
         self.expected_success(200, resp.status)
@@ -713,6 +715,13 @@ class NetworkClientJSON(service_client.ServiceClient):
 
     def list_qos_rule_types(self):
         uri = '%s/qos/rule-types' % self.uri_prefix
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def get_auto_allocated_topology(self, tenant_id=None):
+        uri = '%s/auto-allocated-topology/%s' % (self.uri_prefix, tenant_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
         body = json.loads(body)
