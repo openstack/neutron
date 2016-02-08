@@ -458,6 +458,22 @@ class LinuxBridgeManager(object):
 
     def add_tap_interface(self, network_id, network_type, physical_network,
                           segmentation_id, tap_device_name):
+        """Add tap interface and handle interface missing exeptions."""
+        try:
+            return self._add_tap_interface(network_id, network_type,
+                                           physical_network, segmentation_id,
+                                           tap_device_name)
+        except Exception:
+            with excutils.save_and_reraise_exception() as ctx:
+                if not ip_lib.device_exists(tap_device_name):
+                    # the exception was likely a side effect of the tap device
+                    # being removed during handling so we just return false
+                    # like we would if it didn't exist to begin with.
+                    ctx.reraise = False
+                    return False
+
+    def _add_tap_interface(self, network_id, network_type, physical_network,
+                          segmentation_id, tap_device_name):
         """Add tap interface.
 
         If a VIF has been plugged into a network, this function will
