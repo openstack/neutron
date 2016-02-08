@@ -1228,6 +1228,37 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_ensure_port_admin_state_down(self):
         self._test_ensure_port_admin_state(False)
 
+    def test_get_agent_id_bridge_mappings(self):
+        lbm = get_linuxbridge_manager(BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
+        with mock.patch.object(utils,
+                               "get_interface_mac",
+                               return_value='16:63:69:10:a0:59') as mock_gim:
+
+            agent_id = lbm.get_agent_id()
+            self.assertEqual("lb16636910a059", agent_id)
+            mock_gim.assert_called_with(BRIDGE_MAPPING_VALUE)
+
+    def test_get_agent_id_no_bridge_mappings(self):
+        devices_mock = [
+            mock.MagicMock(),
+            mock.MagicMock()
+        ]
+        devices_mock[0].name = "eth1"
+        devices_mock[1].name = "eth2"
+        bridge_mappings = {}
+        lbm = get_linuxbridge_manager(bridge_mappings, INTERFACE_MAPPINGS)
+        with mock.patch.object(ip_lib.IPWrapper,
+                              'get_devices',
+                              return_value=devices_mock), \
+                mock.patch.object(
+                    utils,
+                    "get_interface_mac",
+                    return_value='16:63:69:10:a0:59') as mock_gim:
+
+            agent_id = lbm.get_agent_id()
+            self.assertEqual("lb16636910a059", agent_id)
+            mock_gim.assert_called_with("eth1")
+
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def setUp(self):
