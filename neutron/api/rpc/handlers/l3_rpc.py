@@ -63,7 +63,16 @@ class L3RpcCallback(object):
         return self._l3plugin
 
     def get_router_ids(self, context, host):
-        """Returns IDs of routers scheduled to l3 agent on <host>"""
+        """Returns IDs of routers scheduled to l3 agent on <host>
+
+        This will autoschedule unhosted routers to l3 agent on <host> and then
+        return all ids of routers scheduled to it.
+        """
+        if utils.is_extension_supported(
+                self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+            if cfg.CONF.router_auto_schedule:
+                self.l3plugin.auto_schedule_routers(context, host,
+                                                    router_ids=None)
         return self.l3plugin.list_router_ids_on_host(context, host)
 
     @db_api.retry_db_errors
@@ -80,7 +89,10 @@ class L3RpcCallback(object):
         context = neutron_context.get_admin_context()
         if utils.is_extension_supported(
             self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
-            if cfg.CONF.router_auto_schedule:
+            # only auto schedule routers that were specifically requested;
+            # on agent full sync routers will be auto scheduled in
+            # get_router_ids()
+            if cfg.CONF.router_auto_schedule and router_ids:
                 self.l3plugin.auto_schedule_routers(context, host, router_ids)
             routers = (
                 self.l3plugin.list_active_sync_routers_on_active_l3_agent(
