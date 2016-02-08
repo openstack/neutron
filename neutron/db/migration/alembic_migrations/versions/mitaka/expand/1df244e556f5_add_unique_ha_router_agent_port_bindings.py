@@ -28,6 +28,8 @@ down_revision = '659bf3d90664'
 from alembic import op
 import sqlalchemy as sa
 
+from neutron._i18n import _
+
 from neutron.common import exceptions
 
 UNIQUE_NAME = 'uniq_ha_router_agent_port_bindings0port_id0l3_agent_id'
