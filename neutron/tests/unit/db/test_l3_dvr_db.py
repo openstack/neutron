@@ -573,10 +573,13 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             gp.return_value = plugin
             port = {
                 'id': 'my_port_id',
-                'fixed_ips': [{
-                    'ip_address': 'my_ip',
-                    'subnet_id': 'my_subnet_id',
-                }],
+                'fixed_ips': [
+                    {'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323',
+                     'ip_address': '10.0.0.11'},
+                    {'subnet_id': '2b7c8a07-6f8e-4937-8701-f1d5da1a807c',
+                     'ip_address': '10.0.0.21'},
+                    {'subnet_id': '48534187-f077-4e81-93ff-81ec4cc0ad3b',
+                     'ip_address': 'fd45:1515:7e0:0:f816:3eff:fe1a:1111'}],
                 'mac_address': 'my_mac',
                 'device_owner': device_owner
             }
@@ -591,9 +594,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             dvr_router.extra_attributes.distributed = True
             self.mixin.dvr_vmarp_table_update(self.ctx, port, action)
             if action == 'add':
-                self.assertTrue(l3_notify.add_arp_entry.called)
+                self.assertEqual(3, l3_notify.add_arp_entry.call_count)
             elif action == 'del':
-                self.assertTrue(l3_notify.del_arp_entry.called)
+                self.assertTrue(3, l3_notify.del_arp_entry.call_count)
 
     def test_dvr_vmarp_table_update_with_service_port_added(self):
         action = 'add'
