@@ -356,7 +356,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 elif not update_shared and entry:
                     context.session.delete(entry)
                     context.session.expire(network, ['rbac_entries'])
-            network.update(n)
+            # The filter call removes attributes from the body received from
+            # the API that are logically tied to network resources but are
+            # stored in other database tables handled by extensions
+            network.update(self._filter_non_model_columns(n,
+                                                          models_v2.Network))
         return self._make_network_dict(network, context=context)
 
     def delete_network(self, context, id):

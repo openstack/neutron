@@ -57,6 +57,19 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         ext_mgr = DnsExtensionManager()
         super(DnsExtensionTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
+    def _create_network(self, fmt, name, admin_state_up,
+                        arg_list=None, set_context=False, tenant_id=None,
+                        **kwargs):
+        new_arg_list = ('dns_domain',)
+        if arg_list is not None:
+            new_arg_list = arg_list + new_arg_list
+        return super(DnsExtensionTestCase,
+                     self)._create_network(fmt, name, admin_state_up,
+                                           arg_list=new_arg_list,
+                                           set_context=set_context,
+                                           tenant_id=tenant_id,
+                                           **kwargs)
+
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, set_context=False, tenant_id=None,
                      **kwargs):
@@ -474,3 +487,14 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self._create_port(self.fmt, net_id=network['network']['id'],
                                     dns_name=dns_name)
             self.assertEqual(201, res.status_code)
+
+    def test_update_network_dns_domain(self):
+        with self.network() as network:
+            data = {'network': {'dns_domain': 'my-domain.org.'}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(200, res.status_code)
+            self.assertNotIn('dns_domain',
+                             self.deserialize(self.fmt, res)['network'])
