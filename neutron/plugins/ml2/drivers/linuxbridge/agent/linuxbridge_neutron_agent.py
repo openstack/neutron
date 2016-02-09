@@ -670,7 +670,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     def get_agent_id(self):
         if self.bridge_mappings:
-            mac = utils.get_interface_mac(self.bridge_mappings.values[0])
+            mac = utils.get_interface_mac(
+                list(self.bridge_mappings.values())[0])
         else:
             devices = ip_lib.IPWrapper().get_devices(True)
             if devices:
