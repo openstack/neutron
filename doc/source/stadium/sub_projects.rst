@@ -85,7 +85,8 @@ Including *everything* related to Neutron under the Neutron project team has not
 scaled well, so some Neutron related projects are encouraged to form a new
 OpenStack project team.  The following list of guidelines are not hard rules.
 There may be exceptions.  Instead, they serve as criteria that may influence the
-decision one way or the other.
+decision one way or the other. Sub-projects will be reviewed regularly to see
+how they meet these criteria.
 
 These criteria are designed around how easy it would be for members of the
 loosely defined "Neutron team" to jump in and help fix or even take over a given
@@ -105,6 +106,14 @@ repository if needed.
   advanced service is more likely to make sense as an independent project.
   This is subject to change as the Neutron project evolves and continues to
   explore the boundaries that work best for the project.
+* OpenStack project teams are based around both technology and groups of people.
+  If a sub-project is directly driven by a subset of members of the Neutron team,
+  with the wider approval of the Neutron team, then it makes sense to retain it
+  under the Neutron project team.  Conversely, a project that was developed
+  without oversight or engagement of any of the Neutron members cannot qualify.
+  For the sake of this criterion, a member of the team is a known (core or not)
+  contributor with a substantial track record of Neutron development.
+
 
 Official Sub-Project List
 -------------------------
@@ -234,6 +243,23 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 
 Project Teams FAQ
 ~~~~~~~~~~~~~~~~~
+
+**Q: When talking about contributor overlap, what is a contributor?**
+
+A Neutron contributor is someone who spends some portion of their time helping
+with all of the things needed to run the Neutron project: bug triage, writing
+and reviewing blueprints, writing and reviewing code, writing and reviewing
+documentation, helping debug issues found by users or CI, and more.
+
+**Q: Why choose contributor overlap over technical overlap?**
+
+Technical overlap, or software qualities, are more difficult to pinpoint and
+require a more extensive assessment from the PTL and the Neutron team, which
+in turn has the danger of translating itself into a nearly full-time
+policing/enforcement job. Wrongdoing will always be spotted, regardless of
+whichever criteria is applied, and trusting known members of the team to do
+the right thing should be an adequate safety net to preserve the sanity of
+Neutron as a whole.
 
 **Q: What does a sub-project gain as a part of the Neutron project team?**
 
