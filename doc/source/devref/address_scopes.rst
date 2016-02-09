@@ -170,3 +170,43 @@ references a single subnet pool::
     |                |        |                  |        |              |
     |                |        |                  |        |              |
     +----------------+        +------------------+        +--------------+
+
+L3 Agent
+~~~~~~~~
+
+The L3 agent is limited in its support for multiple address scopes.  Within a
+router in the reference implementation, traffic is marked on ingress with the
+address scope corresponding to the network it is coming from.  If that traffic
+would route to an interface in a different address scope, the traffic is
+blocked unless an exception is made.
+
+One exception is made for floating IP traffic.  When traffic is headed to a
+floating IP, DNAT is applied and the traffic is allowed to route to the private
+IP address potentially crossing the address scope boundary.  When traffic
+flows from an internal port to the external network and a floating IP is
+assigned, that traffic is also allowed.
+
+Another exception is made for traffic from an internal network to the external
+network when SNAT is enabled.  In this case, SNAT to the router's fixed IP
+address is applied to the traffic.  However, SNAT is not used if the external
+network has an explicit address scope assigned and it matches the internal
+network's.  In that case, traffic routes straight through without NAT.  The
+internal network's addresses are viable on the external network in this case.
+
+The reference implementation has limitations.  Even with multiple address
+scopes, a router implementation is unable to connect to two networks with
+overlapping IP addresses.  There are two reasons for this.
+
+First, a single routing table is used inside the namespace.  An implementation
+using multiple routing tables has been in the works but there are some
+unresolved issues with it.
+
+Second, the default SNAT feature cannot be supported with the current Linux
+conntrack implementation unless a double NAT is used (one NAT to get from the
+address scope to an intermediate address specific to the scope and a second NAT
+to get from that intermediate address to an external address).  Single NAT
+won't work if there are duplicate addresses across the scopes.
+
+Due to these complications the router will still refuse to connect to
+overlapping subnets.  We can look in to an implementation that overcomes these
+limitations in the future.

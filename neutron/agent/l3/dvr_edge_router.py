@@ -20,6 +20,7 @@ from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.common import constants as l3_constants
 
 LOG = logging.getLogger(__name__)
 
@@ -207,3 +208,28 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         super(DvrEdgeRouter, self).delete(agent)
         if self.snat_namespace:
             self.snat_namespace.delete()
+
+    def process_address_scope(self):
+        super(DvrEdgeRouter, self).process_address_scope()
+
+        if not self._is_this_snat_host():
+            return
+
+        snat_iptables_manager = self.snat_iptables_manager
+        # Prepare address scope iptables rule for dvr snat interfaces
+        internal_ports = self.get_snat_interfaces()
+        ports_scopemark = self._get_port_devicename_scopemark(
+            internal_ports, self._get_snat_int_device_name)
+        # Prepare address scope iptables rule for external port
+        external_port = self.get_ex_gw_port()
+        if external_port:
+            external_port_scopemark = self._get_port_devicename_scopemark(
+                [external_port], self.get_external_device_name)
+            for ip_version in (l3_constants.IP_VERSION_4,
+                               l3_constants.IP_VERSION_6):
+                ports_scopemark[ip_version].update(
+                    external_port_scopemark[ip_version])
+
+        with snat_iptables_manager.defer_apply():
+            self._add_address_scope_mark(
+                snat_iptables_manager, ports_scopemark)

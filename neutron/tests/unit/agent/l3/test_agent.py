@@ -744,7 +744,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 self.assertIn(r.rule, expected_rules)
         expected_rules = [
             '-i %s -j MARK --set-xmark 0x2/%s' %
-            (interface_name, l3_constants.ROUTER_MARK_MASK)]
+            (interface_name, l3_constants.ROUTER_MARK_MASK),
+            '-o %s -m connmark --mark 0x0/%s -j CONNMARK '
+            '--save-mark --nfmask %s --ctmask %s' %
+            (interface_name,
+             l3router.ADDRESS_SCOPE_MARK_MASK,
+             l3router.ADDRESS_SCOPE_MARK_MASK,
+             l3router.ADDRESS_SCOPE_MARK_MASK)]
         for r in mangle_rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
@@ -809,6 +815,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fake_fip_id: 'ACTIVE'}
         ri.external_gateway_added = mock.Mock()
         ri.external_gateway_updated = mock.Mock()
+        ri.process_address_scope = mock.Mock()
         fake_floatingips1 = {'floatingips': [
             {'id': fake_fip_id,
              'floating_ip_address': '8.8.8.8',
@@ -1140,7 +1147,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         mangle_rules_delta = [
             r for r in orig_mangle_rules
             if r not in ri.iptables_manager.ipv4['mangle'].rules]
-        self.assertEqual(1, len(mangle_rules_delta))
+        self.assertEqual(2, len(mangle_rules_delta))
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
         self.assertEqual(1, self.send_adv_notif.call_count)
@@ -1167,7 +1174,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         mangle_rules_delta = [
             r for r in ri.iptables_manager.ipv4['mangle'].rules
             if r not in orig_mangle_rules]
-        self.assertEqual(1, len(mangle_rules_delta))
+        self.assertEqual(2, len(mangle_rules_delta))
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
         self.assertEqual(1, self.send_adv_notif.call_count)
