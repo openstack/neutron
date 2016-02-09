@@ -63,6 +63,13 @@ RESOURCE_ATTRIBUTE_MAP = {
                           'convert_to': attributes.convert_to_int,
                           'is_visible': True},
     },
+    attributes.SUBNETS: {
+        SEGMENT_ID: {'allow_post': True,
+                     'allow_put': False,
+                     'default': None,
+                     'validate': {'type:uuid_or_none': None},
+                     'is_visible': True, },
+    },
 }
 
 

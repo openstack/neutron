@@ -318,8 +318,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         added = []
         changes = self._get_changed_ips_for_port(context, original_ips,
                                                  new_ips, device_owner)
-        net_id_filter = {'network_id': [network_id]}
-        subnets = self._get_subnets(context, filters=net_id_filter)
+        subnets = self._ipam_get_subnets(
+            context, network_id=network_id, segment_id=None)
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id,
                                                changes.add, device_owner,
@@ -351,8 +351,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
-        net_id_filter = {'network_id': [p['network_id']]}
-        subnets = self._get_subnets(context, filters=net_id_filter)
+        subnets = self._ipam_get_subnets(
+            context, network_id=p['network_id'], segment_id=None)
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)

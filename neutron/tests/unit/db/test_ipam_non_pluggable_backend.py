@@ -20,8 +20,8 @@ from oslo_config import cfg
 
 from neutron.common import constants
 from neutron.common import ipv6_utils
-from neutron.db import db_base_plugin_common
 from neutron.db import db_base_plugin_v2
+from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import models_v2
 from neutron.tests import base
@@ -143,8 +143,8 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
         # were not actually created, so no ipam_subnet exists
         cfg.CONF.set_override("ipam_driver", None)
         plugin = db_base_plugin_v2.NeutronDbPluginV2()
-        with mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
-                               '_get_subnets') as get_subnets:
+        with mock.patch.object(ipam_backend_mixin.IpamBackendMixin,
+                               '_ipam_get_subnets') as get_subnets:
             with mock.patch.object(non_ipam.IpamNonPluggableBackend,
                                    '_check_unique_ip') as check_unique:
                 context = mock.Mock()

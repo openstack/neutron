@@ -21,3 +21,18 @@ from neutron_lib import exceptions
 
 class SegmentNotFound(exceptions.NotFound):
     message = _("Segment %(segment_id)s could not be found.")
+
+
+class SubnetsNotAllAssociatedWithSegments(exceptions.BadRequest):
+    message = _("All of the subnets on network '%(network_id)s' must either "
+                "all be associated with segments or all not associated with "
+                "any segment.")
+
+
+class SubnetCantAssociateToDynamicSegment(exceptions.BadRequest):
+    message = _("A subnet cannot be associated with a dynamic segment.")
+
+
+class NetworkIdsDontMatch(exceptions.BadRequest):
+    message = _("The subnet's network id, '%(subnet_network)s', doesn't match "
+                "the network_id of segment '%(segment_id)s'")

@@ -44,6 +44,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
+from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import l3_db
 from neutron.db import models_v2
@@ -324,7 +325,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if cidr:
             data['subnet']['cidr'] = cidr
         for arg in ('ip_version', 'tenant_id', 'subnetpool_id', 'prefixlen',
-                    'enable_dhcp', 'allocation_pools',
+                    'enable_dhcp', 'allocation_pools', 'segment_id',
                     'dns_nameservers', 'host_routes',
                     'shared', 'ipv6_ra_mode', 'ipv6_address_mode'):
             # Arg must be present and not null (but can be false)
@@ -449,11 +450,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
                      dns_nameservers=None, host_routes=None, shared=None,
                      ipv6_ra_mode=None, ipv6_address_mode=None,
-                     tenant_id=None, set_context=False):
+                     tenant_id=None, set_context=False, segment_id=None):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
                                   subnetpool_id=subnetpool_id,
+                                  segment_id=segment_id,
                                   gateway_ip=gateway,
                                   tenant_id=(tenant_id or
                                              network['network']['tenant_id']),
@@ -607,6 +609,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                gateway_ip=constants.ATTR_NOT_SPECIFIED,
                cidr='10.0.0.0/24',
                subnetpool_id=None,
+               segment_id=None,
                fmt=None,
                ip_version=4,
                allocation_pools=None,
@@ -631,6 +634,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        enable_dhcp,
                                        dns_nameservers,
                                        host_routes,
+                                       segment_id=segment_id,
                                        shared=shared,
                                        ipv6_ra_mode=ipv6_ra_mode,
                                        ipv6_address_mode=ipv6_address_mode,
@@ -1292,8 +1296,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             data = {'port': {'fixed_ips': [{'subnet_id':
                                             subnet['subnet']['id']}]}}
             # mock _get_subnets, to return this subnet
-            mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
-                              '_get_subnets',
+            mock.patch.object(ipam_backend_mixin.IpamBackendMixin,
+                              '_ipam_get_subnets',
                               return_value=[subnet['subnet']]).start()
             # Delete subnet, to mock the subnet as stale.
             self._delete('subnets', subnet['subnet']['id'])
