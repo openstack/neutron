@@ -81,6 +81,45 @@ issues of the week to be shared with the larger team during the weekly IRC
 meeting and tracked in the meeting notes.
 
 
+Getting Ready to Serve as the Neutron Bug Deputy
+------------------------------------------------
+
+If you are interested in serving as the Neutron bug deputy, there are several
+steps you will need to follow in order to be prepared.
+
+* Request to be added to the `neutron-bugs team in Launchpad <https://launchpad.net/%7Eneutron-bugs>`_.
+  This request will be approved when you are assigned a bug deputy slot.
+* Read this page in full.  Keep this document in mind at all times as it
+  describes the duties of the bug deputy and how to triage bugs particularly
+  around setting the importance and tags of bugs.
+* Sign up for neutron bug emails from LaunchPad.
+
+  * Navigate to the `LaunchPad Neutron bug list <https://bugs.launchpad.net/openstack/+bugs?field.tag=neutron>`_.
+  * On the right hand side, click on "Subscribe to bug mail".
+  * In the pop-up that is displayed, keep the recipient as "Yourself", and your
+    subscription something useful like "Neutron Bugs".  You can choose either
+    option for how much mail you get, but keep in mind that getting mail for
+    all changes - while informative - will result in several dozen emails per
+    day at least.
+  * Do the same for the `LaunchPad python-neutronclient bug list <https://bugs.launchpad.net/openstack/+bugs?field.tag=python-neutronclient>`_.
+
+* Configure the information you get from `LaunchPad <https://bugs.launchpad.net/neutron>`_
+  to make visible additional information, especially the 'age' of the bugs. You
+  accomplish that by clicking the little gear on the left hand side of the
+  screen at the top of the bugs list.  This provides an overview of information
+  for each bug on a single page.
+* Optional: Set up your mail client to highlight bug email that indicates a new
+  bug has been filed, since those are the ones you will be wanting to triage.
+  Filter based on email from "@bugs.launchpad.net" with "[NEW]" in the subject
+  line.
+* Volunteer during the course of the Neutron team meeting, when volunteers to
+  be bug deputy are requested (usually towards the beginning of the meeting).
+* View your scheduled week on the `Neutron Meetings page <https://wiki.openstack.org/wiki/Network/Meetings#Bug_deputy>`_.
+* During your shift, if it is feasible for your timezone, plan on attending the
+  Neutron Drivers meeting.  That way if you have tagged any bugs as RFE, you
+  can be present to discuss them.
+
+
 Plugin and Driver Repositories
 ------------------------------
 
@@ -209,8 +248,11 @@ The process of bug triaging consists of the following steps:
 * Check if a bug was filed for a correct component (project). If not, either
   change the project or mark it as "Invalid".
 * Check if a similar bug was filed before. Rely on your memory if Launchpad
-  is not clever enough to spot a duplicate upon submission. If so, mark it
-  as a duplicate of the previous bug.
+  is not clever enough to spot a duplicate upon submission.  You may also
+  check already verified bugs for `Neutron <https://review.openstack.org/#/q/status:open+label:Verified-2+project:openstack/neutron>`_
+  and `python-neutronclient <https://review.openstack.org/#/q/status:open+label:Verified-2+project:openstack/python-neutronclient>`_
+  to see if the bug has been reported.  If so, mark it as a duplicate of the
+  previous bug.
 * Check if the bug meets the requirements of a good bug report, by checking
   that the guidelines_ are being followed. Omitted information is still
   acceptable if the issue is clear nonetheless; use your good judgement and
@@ -223,6 +265,8 @@ If the bug report is sound, move next:
 
 * Revise tags as recommended by the submitter. Ensure they are 'official'
   tags.
+* As deputy one is usually excused not to process RFE bugs which are the
+  responsibility of the drivers team members.
 * Depending on ease of reproduction (or if the issue can be spotted in the
   code), mark it as 'Confirmed'. If you are unable to assess/triage the
   issue because you do not have access to a repro environment, consider
@@ -232,6 +276,11 @@ If the bug report is sound, move next:
   in progress. Sometimes more than one patch is required to address an
   issue, make sure that there is at least one patch that 'Closes' the bug
   or document/question what it takes to mark the bug as fixed.
+* If the bug indicates test or gate failure, look at the failures for that
+  test over time using `Openstack Health <http://status.openstack.org/openstack-health/#/>`_
+  or `Openstack Logstash <http://logstash.openstack.org/#/dashboard/file/logstash.json>`_.
+  This can help to validate whether the bug identifies an issue that is
+  occurring all of the time, some of the time, or only for the bug submitter.
 * If the bug is the result of a misuse of the system, mark the bug either
   as 'Won't fix', or 'Opinion' if you are still on the fence and need
   other people's input.
