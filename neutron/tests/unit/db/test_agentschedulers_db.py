@@ -1056,7 +1056,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                             {'router': router})
             with mock.patch.object(
                     self.l3plugin,
-                    'check_dvr_serviceable_ports_on_host') as ports_exist:
+                    '_check_dvr_serviceable_ports_on_host') as ports_exist:
                 # emulating dvr serviceable ports exist on compute node
                 ports_exist.return_value = True
                 self.l3plugin.schedule_router(

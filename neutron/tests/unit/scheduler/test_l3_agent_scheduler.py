@@ -626,7 +626,8 @@ class L3SchedulerTestBaseMixin(object):
         # test dvr agent_mode case no candidates
         router['distributed'] = True
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_dvr_serviceable_ports_on_host = mock.Mock(return_value=True)
+        self._check_dvr_serviceable_ports_on_host = mock.Mock(
+            return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, None, count=0)
 
     def test_get_l3_agent_candidates_dvr_no_vms(self):
@@ -640,7 +641,7 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
         # Test no VMs present case
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_dvr_serviceable_ports_on_host = mock.Mock(
+        self._check_dvr_serviceable_ports_on_host = mock.Mock(
             return_value=False)
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR, count=0)
@@ -656,7 +657,8 @@ class L3SchedulerTestBaseMixin(object):
 
         agent_list = [self.l3_dvr_snat_agent]
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_dvr_serviceable_ports_on_host = mock.Mock(return_value=True)
+        self._check_dvr_serviceable_ports_on_host = mock.Mock(
+            return_value=True)
         self._check_get_l3_agent_candidates(router, agent_list, HOST_DVR_SNAT)
 
     def test_get_l3_agent_candidates_dvr_snat_no_vms(self):
@@ -669,11 +671,11 @@ class L3SchedulerTestBaseMixin(object):
         router['distributed'] = True
 
         agent_list = [self.l3_dvr_snat_agent]
-        self.check_dvr_serviceable_ports_on_host = mock.Mock(
+        self._check_dvr_serviceable_ports_on_host = mock.Mock(
             return_value=False)
         # Test no VMs present case
         self.get_subnet_ids_on_router = mock.Mock()
-        self.check_dvr_serviceable_ports_on_host.return_value = False
+        self._check_dvr_serviceable_ports_on_host.return_value = False
         self._check_get_l3_agent_candidates(
             router, agent_list, HOST_DVR_SNAT, count=1)
 
