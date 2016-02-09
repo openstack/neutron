@@ -160,7 +160,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 continue
             subnet_ids = self.get_subnet_ids_on_router(admin_context,
                                                        router_id)
-            if self.check_dvr_serviceable_ports_on_host(
+            if self._check_dvr_serviceable_ports_on_host(
                     admin_context, port_host, subnet_ids):
                 continue
             filter_rtr = {'device_id': [router_id],
@@ -282,11 +282,39 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 for router_id in (router_ids - result_set):
                     subnet_ids = self.get_subnet_ids_on_router(
                         context, router_id)
-                    if subnet_ids and self.check_dvr_serviceable_ports_on_host(
-                            context, agent_db['host'], list(subnet_ids)):
+                    if (subnet_ids and
+                            self._check_dvr_serviceable_ports_on_host(
+                                    context, agent_db['host'],
+                                    list(subnet_ids))):
                         result_set.add(router_id)
 
         return list(result_set)
+
+    def _check_dvr_serviceable_ports_on_host(self, context, host, subnet_ids):
+        """Check for existence of dvr serviceable ports on host
+
+        :param context: request context
+        :param host: host to look ports on
+        :param subnet_ids: IDs of subnets to look ports on
+        :return: return True if dvr serviceable port exists on host,
+                 otherwise return False
+        """
+        # db query will return ports for all subnets if subnet_ids is empty,
+        # so need to check first
+        if not subnet_ids:
+            return False
+
+        core_plugin = manager.NeutronManager.get_plugin()
+        filters = {'fixed_ips': {'subnet_id': subnet_ids},
+                   portbindings.HOST_ID: [host]}
+        ports_query = core_plugin._get_ports_query(context, filters=filters)
+        owner_filter = or_(
+            models_v2.Port.device_owner.startswith(
+                n_const.DEVICE_OWNER_COMPUTE_PREFIX),
+            models_v2.Port.device_owner.in_(
+                n_utils.get_other_dvr_serviced_device_owners()))
+        ports_query = ports_query.filter(owner_filter)
+        return ports_query.first() is not None
 
 
 def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
