@@ -113,10 +113,10 @@ class WorkerService(worker.NeutronWorker):
 class Server(object):
     """Server class to manage multiple WSGI sockets and applications."""
 
-    def __init__(self, name, num_threads=1000, disable_ssl=False):
+    def __init__(self, name, num_threads=None, disable_ssl=False):
         # Raise the default from 8192 to accommodate large tokens
         eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
-        self.num_threads = num_threads
+        self.num_threads = num_threads or CONF.wsgi_default_pool_size
         self.disable_ssl = disable_ssl
         # Pool for a greenthread in which wsgi server will be running
         self.pool = eventlet.GreenPool(1)
