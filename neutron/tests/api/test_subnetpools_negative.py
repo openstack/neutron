@@ -180,9 +180,9 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
             ip_version=4)
         address_scope_id = address_scope['id']
-        created_subbnetpool = self._create_subnetpool(self.client)
+        created_subnetpool = self._create_subnetpool(self.client)
         self.assertRaises(lib_exc.NotFound, self.client.update_subnetpool,
-                          created_subbnetpool['id'],
+                          created_subnetpool['id'],
                           address_scope_id=address_scope_id)
 
     def _test_update_subnetpool_prefix_intersect_helper(

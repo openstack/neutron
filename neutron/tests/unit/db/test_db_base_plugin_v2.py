@@ -321,7 +321,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                            'cidr': cidr,
                            'ip_version': 4,
                            'tenant_id': self._tenant_id}}
-        for arg in ('ip_version', 'tenant_id',
+        if cidr:
+            data['subnet']['cidr'] = cidr
+        for arg in ('ip_version', 'tenant_id', 'subnetpool_id', 'prefixlen',
                     'enable_dhcp', 'allocation_pools',
                     'dns_nameservers', 'host_routes',
                     'shared', 'ipv6_ra_mode', 'ipv6_address_mode'):
@@ -443,7 +445,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
-    def _make_subnet(self, fmt, network, gateway, cidr,
+    def _make_subnet(self, fmt, network, gateway, cidr, subnetpool_id=None,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
                      dns_nameservers=None, host_routes=None, shared=None,
                      ipv6_ra_mode=None, ipv6_address_mode=None,
@@ -451,6 +453,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
+                                  subnetpool_id=subnetpool_id,
                                   gateway_ip=gateway,
                                   tenant_id=(tenant_id or
                                              network['network']['tenant_id']),
@@ -588,6 +591,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def subnet(self, network=None,
                gateway_ip=attributes.ATTR_NOT_SPECIFIED,
                cidr='10.0.0.0/24',
+               subnetpool_id=None,
                fmt=None,
                ip_version=4,
                allocation_pools=None,
@@ -606,6 +610,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        network_to_use,
                                        gateway_ip,
                                        cidr,
+                                       subnetpool_id,
                                        allocation_pools,
                                        ip_version,
                                        enable_dhcp,

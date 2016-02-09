@@ -170,6 +170,56 @@ class NetworkClientJSON(service_client.ServiceClient):
                 return method_functors[index](name[prefix_len:])
         raise AttributeError(name)
 
+    # Subnetpool methods
+    def create_subnetpool(self, name, **kwargs):
+        subnetpool_data = {'name': name}
+        for arg in kwargs:
+           subnetpool_data[arg] = kwargs[arg]
+
+        post_data = {'subnetpool': subnetpool_data}
+        body = self.serialize_list(post_data, "subnetpools", "subnetpool")
+        uri = self.get_uri("subnetpools")
+        resp, body = self.post(uri, body)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def get_subnetpool(self, id):
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.get(subnetpool_uri)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_subnetpool(self, id):
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.delete(subnetpool_uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_subnetpools(self):
+        uri = self.get_uri("subnetpools")
+        resp, body = self.get(uri)
+        body = {'subnetpools': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_subnetpool(self, id, **kwargs):
+        subnetpool_data = {}
+        for arg in kwargs:
+           subnetpool_data[arg] = kwargs[arg]
+
+        post_data = {'subnetpool': subnetpool_data}
+        body = self.serialize_list(post_data, "subnetpools", "subnetpool")
+        uri = self.get_uri("subnetpools")
+        subnetpool_uri = '%s/%s' % (uri, id)
+        resp, body = self.put(subnetpool_uri, body)
+        body = {'subnetpool': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     # Common methods that are hard to automate
     def create_bulk_network(self, names, shared=False):
         network_list = [{'name': name, 'shared': shared} for name in names]

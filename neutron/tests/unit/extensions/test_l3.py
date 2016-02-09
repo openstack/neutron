@@ -463,8 +463,9 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
-                              set_context=False, tenant_id=None):
-        with self.subnet(cidr='11.0.0.0/24',
+                              public_cidr='11.0.0.0/24', set_context=False,
+                              tenant_id=None):
+        with self.subnet(cidr=public_cidr,
                          set_context=set_context,
                          tenant_id=tenant_id) as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
