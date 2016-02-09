@@ -213,20 +213,20 @@ class IPWrapper(SubProcessBase):
                   local=None, port=None, proxy=False):
         cmd = ['add', name, 'type', 'vxlan', 'id', vni]
         if group:
-                cmd.extend(['group', group])
+            cmd.extend(['group', group])
         if dev:
-                cmd.extend(['dev', dev])
+            cmd.extend(['dev', dev])
         if ttl:
-                cmd.extend(['ttl', ttl])
+            cmd.extend(['ttl', ttl])
         if tos:
-                cmd.extend(['tos', tos])
+            cmd.extend(['tos', tos])
         if local:
-                cmd.extend(['local', local])
+            cmd.extend(['local', local])
         if proxy:
-                cmd.append('proxy')
+            cmd.append('proxy')
         # tuple: min,max
         if port and len(port) == 2:
-                cmd.extend(['port', port[0], port[1]])
+            cmd.extend(['port', port[0], port[1]])
         elif port:
             raise exceptions.NetworkVxlanPortRangeError(vxlan_range=port)
         self._as_root([], 'link', cmd)
