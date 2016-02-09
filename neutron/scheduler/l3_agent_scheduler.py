@@ -91,29 +91,19 @@ class L3Scheduler(object):
                 context, filters={'id': unscheduled_router_ids})
         return []
 
-    def _get_routers_to_schedule(self, context, plugin,
-                                 router_ids=None, exclude_distributed=False):
+    def _get_routers_to_schedule(self, context, plugin, router_ids=None):
         """Verify that the routers specified need to be scheduled.
 
         :param context: the context
         :param plugin: the core plugin
         :param router_ids: the list of routers to be checked for scheduling
-        :param exclude_distributed: whether or not to consider dvr routers
         :returns: the list of routers to be scheduled
         """
         if router_ids is not None:
             routers = plugin.get_routers(context, filters={'id': router_ids})
-            unscheduled_routers = self._filter_unscheduled_routers(
-                context, plugin, routers)
+            return self._filter_unscheduled_routers(context, plugin, routers)
         else:
-            unscheduled_routers = self._get_unscheduled_routers(context,
-                                                                plugin)
-
-        if exclude_distributed:
-            unscheduled_routers = [
-                r for r in unscheduled_routers if not r.get('distributed')
-            ]
-        return unscheduled_routers
+            return self._get_unscheduled_routers(context, plugin)
 
     def _get_routers_can_schedule(self, context, plugin, routers, l3_agent):
         """Get the subset of routers that can be scheduled on the L3 agent."""
@@ -143,11 +133,8 @@ class L3Scheduler(object):
         if not l3_agent:
             return False
 
-        # NOTE(armando-migliaccio): DVR routers should not be auto
-        # scheduled because auto-scheduling may interfere with the
-        # placement rules for IR and SNAT namespaces.
         unscheduled_routers = self._get_routers_to_schedule(
-            context, plugin, router_ids, exclude_distributed=True)
+            context, plugin, router_ids)
         if not unscheduled_routers:
             if utils.is_extension_supported(
                     plugin, constants.L3_HA_MODE_EXT_ALIAS):
