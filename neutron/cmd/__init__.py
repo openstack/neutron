@@ -12,9 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging as sys_logging
+
 from oslo_reports import guru_meditation_report as gmr
 
 from neutron import version
+
+# During the call to gmr.TextGuruMeditation.setup_autorun(), Guru Meditation
+# Report tries to start logging. Set a handler here to accommodate this.
+logger = sys_logging.getLogger(None)
+if not logger.handlers:
+    logger.addHandler(sys_logging.StreamHandler())
 
 _version_string = version.version_info.release_string()
 gmr.TextGuruMeditation.setup_autorun(version=_version_string)
