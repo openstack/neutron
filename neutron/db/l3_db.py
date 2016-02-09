@@ -391,6 +391,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         if new_valid_gw_port_attachment:
             subnets = self._core_plugin.get_subnets_by_network(context,
                                                                new_network_id)
+            try:
+                kwargs = {'context': context, 'router_id': router_id,
+                          'network_id': new_network_id, 'subnets': subnets}
+                registry.notify(
+                    resources.ROUTER_GATEWAY, events.BEFORE_CREATE, self,
+                    **kwargs)
+            except exceptions.CallbackFailure as e:
+                # raise the underlying exception
+                raise e.errors[0].error
+
             for subnet in subnets:
                 self._check_for_dup_router_subnet(context, router,
                                                   new_network_id, subnet['id'],
