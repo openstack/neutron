@@ -61,6 +61,11 @@
     "update_network:router:external": "rule:admin_only",
     "delete_network": "rule:admin_or_owner",
 
+    "create_segment": "rule:admin_only",
+    "get_segment": "rule:admin_only",
+    "update_segment": "rule:admin_only",
+    "delete_segment": "rule:admin_only",
+
     "network_device": "field:port:device_owner=~^network:",
     "create_port": "",
     "create_port:device_owner": "not rule:network_device or rule:context_is_advsvc or rule:admin_or_network_owner",
