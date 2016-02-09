@@ -86,6 +86,7 @@ class FirewallTestCase(base.BaseSudoTestCase):
         super(FirewallTestCase, self).setUp()
         self.tester = self.useFixture(
             conn_testers.LinuxBridgeConnectionTester())
+        self.addOnException(self.tester.collect_debug_info)
         self.firewall = self.create_iptables_firewall()
         vm_mac = self.tester.vm_mac_address
         vm_port_id = self.tester.vm_port_id
