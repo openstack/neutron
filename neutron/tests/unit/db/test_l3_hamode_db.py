@@ -65,12 +65,12 @@ class L3HATestFramework(testlib_api.SqlTestCase):
             'host_2', constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
-                       ctx=None):
+                       ctx=None, admin_state_up=True):
         if ctx is None:
             ctx = self.admin_ctx
         ctx.tenant_id = tenant_id
         router = {'name': 'router1',
-                  'admin_state_up': True,
+                  'admin_state_up': admin_state_up,
                   'tenant_id': tenant_id}
         if ha is not None:
             router['ha'] = ha
@@ -209,9 +209,12 @@ class L3HATestCase(L3HATestFramework):
         self.assertTrue(router['ha'])
 
     def test_ha_router_create_with_distributed(self):
-        self.assertRaises(l3_ext_ha_mode.DistributedHARouterNotSupported,
-                          self._create_router,
-                          distributed=True)
+        router = self._create_router(ha=True, distributed=True)
+        self.assertTrue(router['ha'])
+        self.assertTrue(router['distributed'])
+        ha_network = self.plugin.get_ha_network(self.admin_ctx,
+                                                router['tenant_id'])
+        self.assertIsNotNone(ha_network)
 
     def test_no_ha_router_create(self):
         router = self._create_router(ha=False)
@@ -232,6 +235,12 @@ class L3HATestCase(L3HATestFramework):
 
         router = self._create_router(ha=None)
         self.assertTrue(router['ha'])
+
+    def test_ha_router_delete_with_distributed(self):
+        router = self._create_router(ha=True, distributed=True)
+        self.plugin.delete_router(self.admin_ctx, router['id'])
+        self.assertRaises(l3.RouterNotFound, self.plugin._get_router,
+                          self.admin_ctx, router['id'])
 
     def test_migration_from_ha(self):
         router = self._create_router()
@@ -256,13 +265,44 @@ class L3HATestCase(L3HATestFramework):
                           router['id'],
                           ha=True)
 
-    def test_migrate_ha_router_to_distributed(self):
-        router = self._create_router()
+    def test_migrate_ha_router_to_distributed_and_ha(self):
+        router = self._create_router(ha=True, admin_state_up=False,
+                                     distributed=False)
         self.assertTrue(router['ha'])
-
-        self.assertRaises(l3_ext_ha_mode.DistributedHARouterNotSupported,
+        self.assertRaises(l3_ext_ha_mode.DVRmodeUpdateOfHaNotSupported,
                           self._update_router,
                           router['id'],
+                          ha=True,
+                          distributed=True)
+
+    def test_migrate_ha_router_to_distributed_and_not_ha(self):
+        router = self._create_router(ha=True, admin_state_up=False,
+                                     distributed=False)
+        self.assertTrue(router['ha'])
+        self.assertRaises(l3_ext_ha_mode.DVRmodeUpdateOfHaNotSupported,
+                          self._update_router,
+                          router['id'],
+                          ha=False,
+                          distributed=True)
+
+    def test_migrate_dvr_router_to_ha_and_not_dvr(self):
+        router = self._create_router(ha=False, admin_state_up=False,
+                                     distributed=True)
+        self.assertTrue(router['distributed'])
+        self.assertRaises(l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported,
+                          self._update_router,
+                          router['id'],
+                          ha=True,
+                          distributed=True)
+
+    def test_migrate_dvr_router_to_ha_and_dvr(self):
+        router = self._create_router(ha=False, admin_state_up=False,
+                                     distributed=True)
+        self.assertTrue(router['distributed'])
+        self.assertRaises(l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported,
+                          self._update_router,
+                          router['id'],
+                          ha=True,
                           distributed=True)
 
     def test_migrate_distributed_router_to_ha(self):
@@ -270,7 +310,7 @@ class L3HATestCase(L3HATestFramework):
         self.assertFalse(router['ha'])
         self.assertTrue(router['distributed'])
 
-        self.assertRaises(l3_ext_ha_mode.DistributedHARouterNotSupported,
+        self.assertRaises(l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported,
                           self._update_router,
                           router['id'],
                           ha=True)
@@ -280,7 +320,7 @@ class L3HATestCase(L3HATestFramework):
         self.assertFalse(router['ha'])
         self.assertFalse(router['distributed'])
 
-        self.assertRaises(l3_ext_ha_mode.DistributedHARouterNotSupported,
+        self.assertRaises(l3_ext_ha_mode.UpdateToDvrHamodeNotSupported,
                           self._update_router,
                           router['id'],
                           ha=True,
@@ -603,10 +643,10 @@ class L3HATestCase(L3HATestFramework):
         self.assertEqual('active', routers[0][constants.HA_ROUTER_STATE_KEY])
 
     def test_exclude_dvr_agents_for_ha_candidates(self):
-        """Test dvr agents are not counted in the ha candidates.
-
+        """Test dvr agents configured with "dvr" only, as opposed to "dvr_snat",
+        are excluded.
         This test case tests that when get_number_of_agents_for_scheduling
-        is called, it doesn't count dvr agents.
+        is called, it does not count dvr only agents.
         """
         # Test setup registers two l3 agents.
         # Register another l3 agent with dvr mode and assert that
@@ -615,6 +655,19 @@ class L3HATestCase(L3HATestFramework):
         num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
             self.admin_ctx)
         self.assertEqual(2, num_ha_candidates)
+
+    def test_include_dvr_snat_agents_for_ha_candidates(self):
+        """Test dvr agents configured with "dvr_snat" are excluded.
+        This test case tests that when get_number_of_agents_for_scheduling
+        is called, it ounts dvr_snat agents.
+        """
+        # Test setup registers two l3 agents.
+        # Register another l3 agent with dvr mode and assert that
+        # get_number_of_ha_agent_candidates return 2.
+        helpers.register_l3_agent('host_3', constants.L3_AGENT_MODE_DVR_SNAT)
+        num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
+            self.admin_ctx)
+        self.assertEqual(3, num_ha_candidates)
 
     def test_get_number_of_agents_for_scheduling_not_enough_agents(self):
         cfg.CONF.set_override('min_l3_agents_per_router', 3)

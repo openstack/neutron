@@ -1,0 +1,14 @@
+---
+prelude: >
+    High Availability (HA) of SNAT service is supported
+    for Distributed Virtual Routers (DVRs).
+features:
+  - High Availability support for SNAT services on Distributed
+    Virtual Routers.  Routers can now be created with the flags
+    distributed=True and ha=True. The created routers will provide
+    Distributed Virtual Routing as well as SNAT high availability on the
+    l3 agents configured for dvr_snat mode.
+issues:
+  - Only creation of dvr/ha routers is currently supported.
+    Upgrade from other types of routers to dvr/ha router is not
+    supported on this release.

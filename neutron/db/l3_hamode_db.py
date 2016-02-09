@@ -402,10 +402,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
-
-        if is_ha and l3_dvr_db.is_distributed_router(router['router']):
-            raise l3_ha.DistributedHARouterNotSupported()
-
         router['router']['ha'] = is_ha
         router_dict = super(L3_HA_NAT_db_mixin,
                             self).create_router(context, router)
@@ -436,11 +432,29 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         requested_ha_state = data.pop('ha', None)
         requested_distributed_state = data.get('distributed', None)
+        # cvr to dvrha
+        if not original_distributed_state and not original_ha_state:
+            if (requested_ha_state is True and
+                    requested_distributed_state is True):
+                raise l3_ha.UpdateToDvrHamodeNotSupported()
 
-        if ((original_ha_state and requested_distributed_state) or
-            (requested_ha_state and original_distributed_state) or
-            (requested_ha_state and requested_distributed_state)):
-            raise l3_ha.DistributedHARouterNotSupported()
+        # cvrha to any dvr...
+        elif not original_distributed_state and original_ha_state:
+            if requested_distributed_state is True:
+                raise l3_ha.DVRmodeUpdateOfHaNotSupported()
+
+        # dvr to any ha...
+        elif original_distributed_state and not original_ha_state:
+            if requested_ha_state is True:
+                raise l3_ha.HAmodeUpdateOfDvrNotSupported()
+
+        #dvrha to any cvr...
+        elif original_distributed_state and original_ha_state:
+            if requested_distributed_state is False:
+                raise l3_ha.DVRmodeUpdateOfDvrHaNotSupported()
+            #elif dvrha to dvr
+            if requested_ha_state is False:
+                raise l3_ha.HAmodeUpdateOfDvrHaNotSupported()
 
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
@@ -554,6 +568,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         return query.all()
 
+    @staticmethod
+    def _check_router_agent_ha_binding(context, router_id, agent_id):
+        query = context.session.query(L3HARouterAgentPortBinding)
+        query = query.filter(
+            L3HARouterAgentPortBinding.router_id == router_id,
+            L3HARouterAgentPortBinding.l3_agent_id == agent_id)
+        return query.first() is not None
+
     def _get_bindings_and_update_router_state_for_dead_agents(self, context,
                                                               router_id):
         """Return bindings. In case if dead agents were detected update router
@@ -654,7 +676,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
         device_filter = {'device_id': states.keys(),
                          'device_owner':
-                         [constants.DEVICE_OWNER_ROUTER_INTF]}
+                         [constants.DEVICE_OWNER_ROUTER_INTF,
+                          constants.DEVICE_OWNER_ROUTER_SNAT]}
         ports = self._core_plugin.get_ports(admin_ctx, filters=device_filter)
         active_ports = (port for port in ports
             if states[port['device_id']] == constants.HA_ROUTER_STATE_ACTIVE)

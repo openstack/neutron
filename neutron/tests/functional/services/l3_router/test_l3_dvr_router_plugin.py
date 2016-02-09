@@ -33,9 +33,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.l3_agent = helpers.register_l3_agent(
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
-    def _create_router(self, distributed=True):
+    def _create_router(self, distributed=True, ha=False):
         return (super(L3DvrTestCase, self).
-                _create_router(distributed=distributed))
+                _create_router(distributed=distributed, ha=ha))
 
     def test_update_router_db_centralized_to_distributed(self):
         router = self._create_router(distributed=False)
@@ -527,7 +527,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self._test_router_remove_from_agent_on_vm_port_deletion(
             non_admin_port=True)
 
-    def test_dvr_router_notifications(self):
+    def test_router_notifications(self):
         """Check that notifications go to the right hosts in different
         conditions
         """
