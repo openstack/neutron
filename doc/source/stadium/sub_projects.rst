@@ -106,6 +106,7 @@ Functionality legend
 - l3: a Layer 3 service plugin;
 - lb: a Load Balancer service plugin;
 - ml2: an ML2 mechanism driver;
+- pd: prefix delegation
 - sfc; traffic steering based on traffic classification
 - vpn: a VPN service plugin;
 
@@ -173,6 +174,8 @@ functionality.
 | neutron-vpnaas_               | vpn                   |
 +-------------------------------+-----------------------+
 | python-neutronclient_         | client                |
++-------------------------------+-----------------------+
+| python-neutron-pd-driver_     | pd                    |
 +-------------------------------+-----------------------+
 | vmware-nsx_                   | core                  |
 +-------------------------------+-----------------------+
@@ -372,6 +375,13 @@ Neutron Client
 
 * Git: https://git.openstack.org/cgit/openstack/python-neutronclient
 * Launchpad: https://launchpad.net/python-neutronclient
+
+.. _python-neutron-pd-driver:
+
+Neutron Prefix Delegation
++++++++++++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/python-neutron-pd-driver
 
 .. _neutron-fwaas:
 
