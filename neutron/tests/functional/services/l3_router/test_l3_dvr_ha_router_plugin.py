@@ -299,3 +299,6 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
 
     def test__get_router_ids_for_agent(self):
         self.skipTest('Valid for DVR-only routers')
+
+    def test_router_auto_scheduling(self):
+        self.skipTest('Valid for DVR-only routers')

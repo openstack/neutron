@@ -14,6 +14,7 @@
 
 import mock
 
+from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import topics
@@ -900,3 +901,18 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
 
             l3_notifier.router_removed_from_agent.assert_called_once_with(
                 self.context, router['id'], HOST1)
+
+    def test_router_auto_scheduling(self):
+        router = self._create_router()
+        agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])
+        # router is not scheduled yet
+        self.assertEqual([], agents['agents'])
+
+        l3_rpc_handler = l3_rpc.L3RpcCallback()
+        # router should be auto scheduled once l3 agent requests router ids
+        l3_rpc_handler.get_router_ids(self.context, self.l3_agent['host'])
+        agents = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        self.assertEqual(1, len(agents['agents']))
+        self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
