@@ -909,6 +909,23 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                    "physnet9", "1")
                 self.assertEqual(1, log.call_count)
 
+    @mock.patch.object(ip_lib, "device_exists", return_value=False)
+    def test_add_tap_interface_with_interface_disappearing(self, exists):
+        with mock.patch.object(self.lbm, "_add_tap_interface",
+                               side_effect=RuntimeError("No such dev")):
+            self.assertFalse(self.lbm.add_tap_interface("123",
+                                                        p_const.TYPE_VLAN,
+                                                        "physnet1", None,
+                                                        "tap1", "foo"))
+
+    @mock.patch.object(ip_lib, "device_exists", return_value=True)
+    def test_add_tap_interface_with_other_error(self, exists):
+        with mock.patch.object(self.lbm, "_add_tap_interface",
+                               side_effect=RuntimeError("No more fuel")):
+            self.assertRaises(RuntimeError, self.lbm.add_tap_interface, "123",
+                              p_const.TYPE_VLAN, "physnet1", None, "tap1",
+                              "foo")
+
     def test_add_tap_interface_owner_other(self):
         with mock.patch.object(ip_lib, "device_exists"):
             with mock.patch.object(self.lbm, "ensure_local_bridge"):
