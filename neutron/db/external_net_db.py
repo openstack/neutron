@@ -19,6 +19,10 @@ from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import exceptions as c_exc
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
@@ -36,7 +40,8 @@ class ExternalNetwork(model_base.BASEV2):
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            primary_key=True)
-
+    # introduced by auto-allocated-topology extension
+    is_default = sa.Column(sa.Boolean(), nullable=True)
     # Add a relationship to the Network model in order to instruct
     # SQLAlchemy to eagerly load this association
     network = orm.relationship(
@@ -106,12 +111,34 @@ class External_net_db_mixin(object):
         if not external_set:
             return
 
+        # TODO(armax): these notifications should switch to *_COMMIT
+        # when the event becomes available, as this block is expected
+        # to be called within a plugin's session
         if external:
-            # expects to be called within a plugin's session
+            try:
+                registry.notify(
+                    resources.EXTERNAL_NETWORK, events.BEFORE_CREATE,
+                    self, context=context,
+                    request=req_data, network=net_data)
+            except c_exc.CallbackFailure as e:
+                # raise the underlying exception
+                raise e.errors[0].error
             context.session.add(ExternalNetwork(network_id=net_data['id']))
+            registry.notify(
+                resources.EXTERNAL_NETWORK, events.AFTER_CREATE,
+                self, context=context,
+                request=req_data, network=net_data)
         net_data[external_net.EXTERNAL] = external
 
     def _process_l3_update(self, context, net_data, req_data):
+        try:
+            registry.notify(
+                resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE,
+                self, context=context,
+                request=req_data, network=net_data)
+        except c_exc.CallbackFailure as e:
+            # raise the underlying exception
+            raise e.errors[0].error
 
         new_value = req_data.get(external_net.EXTERNAL)
         net_id = net_data['id']
