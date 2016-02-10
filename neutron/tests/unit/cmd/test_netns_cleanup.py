@@ -48,13 +48,16 @@ class TestNetnsCleanup(base.BaseTestCase):
         self.test_kill_dhcp(False)
 
     def test_eligible_for_deletion_ns_not_uuid(self):
+        conf = mock.Mock()
+        conf.agent_type = None
         ns = 'not_a_uuid'
-        self.assertFalse(util.eligible_for_deletion(mock.Mock(), ns))
+        self.assertFalse(util.eligible_for_deletion(conf, ns))
 
     def _test_eligible_for_deletion_helper(self, prefix, force, is_empty,
                                            expected):
         ns = prefix + '6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
+        conf.agent_type = None
 
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.return_value.namespace_is_empty.return_value = is_empty
@@ -83,6 +86,23 @@ class TestNetnsCleanup(base.BaseTestCase):
 
     def test_eligible_for_deletion_snat_namespace(self):
         self._test_eligible_for_deletion_helper('snat-', False, True, True)
+
+    def test_eligible_for_deletion_filtered_by_agent_type(self):
+        ns_dhcp = 'qdhcp-' + '6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
+        ns_l3 = 'qrouter-' + '6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
+        conf = mock.Mock()
+        conf.agent_type = 'dhcp'
+
+        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
+            ip_wrap.return_value.namespace_is_empty.return_value = True
+            self.assertEqual(True,
+                             util.eligible_for_deletion(conf, ns_dhcp, False))
+            self.assertEqual(False,
+                             util.eligible_for_deletion(conf, ns_l3, False))
+
+            expected_calls = [mock.call(namespace=ns_dhcp),
+                              mock.call().namespace_is_empty()]
+            ip_wrap.assert_has_calls(expected_calls)
 
     def test_unplug_device_regular_device(self):
         conf = mock.Mock()
