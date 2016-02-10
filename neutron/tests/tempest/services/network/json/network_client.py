@@ -52,10 +52,6 @@ class NetworkClientJSON(service_client.ServiceClient):
             'subnets': '',
             'subnetpools': '',
             'ports': '',
-            'ipsecpolicies': 'vpn',
-            'vpnservices': 'vpn',
-            'ikepolicies': 'vpn',
-            'ipsec-site-connections': 'vpn',
             'metering_labels': 'metering',
             'metering_label_rules': 'metering',
             'firewall_rules': 'fw',
@@ -85,9 +81,6 @@ class NetworkClientJSON(service_client.ServiceClient):
         resource_plural_map = {
             'security_groups': 'security_groups',
             'security_group_rules': 'security_group_rules',
-            'ipsecpolicy': 'ipsecpolicies',
-            'ikepolicy': 'ikepolicies',
-            'ipsec_site_connection': 'ipsec-site-connections',
             'quotas': 'quotas',
             'firewall_policy': 'firewall_policies',
             'qos_policy': 'policies',
@@ -469,21 +462,6 @@ class NetworkClientJSON(service_client.ServiceClient):
                                                  network_id)
         resp, body = self.delete(uri)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp, body)
-
-    def create_ikepolicy(self, name, **kwargs):
-        post_body = {
-            "ikepolicy": {
-                "name": name,
-            }
-        }
-        for key, val in kwargs.items():
-            post_body['ikepolicy'][key] = val
-        body = json.dumps(post_body)
-        uri = '%s/vpn/ikepolicies' % (self.uri_prefix)
-        resp, body = self.post(uri, body)
-        self.expected_success(201, resp.status)
-        body = json.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def update_extra_routes(self, router_id, nexthop, destination):
