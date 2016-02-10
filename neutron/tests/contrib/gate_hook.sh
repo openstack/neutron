@@ -40,14 +40,6 @@ then
 
 elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
 then
-    cat > $DEVSTACK_PATH/local.conf <<EOF
-[[post-config|/etc/neutron/neutron_vpnaas.conf]]
-
-[service_providers]
-service_provider=VPN:openswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
-
-EOF
-
     if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
     then
         cat >> $DEVSTACK_PATH/local.conf <<EOF
@@ -60,7 +52,6 @@ EOF
     fi
 
     export DEVSTACK_LOCAL_CONFIG+="
-enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas
 enable_plugin neutron git://git.openstack.org/openstack/neutron
 enable_service q-qos
 "
