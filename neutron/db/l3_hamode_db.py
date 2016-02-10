@@ -635,7 +635,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         for router in routers_dict.values():
             interface = router.get(constants.HA_INTERFACE_KEY)
             if interface:
-                self._populate_subnets_for_ports(context, [interface])
+                self._populate_mtu_and_subnets_for_ports(context, [interface])
 
         return list(routers_dict.values())
 

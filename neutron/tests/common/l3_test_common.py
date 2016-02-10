@@ -177,7 +177,7 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
 
 def router_append_subnet(router, count=1, ip_version=4,
                          ipv6_subnet_modes=None, interface_id=None,
-                         dns_nameservers=None):
+                         dns_nameservers=None, network_mtu=0):
     if ip_version == 6:
         subnet_mode_none = {'ra_mode': None, 'address_mode': None}
         if not ipv6_subnet_modes:
@@ -238,6 +238,7 @@ def router_append_subnet(router, count=1, ip_version=4,
         mac_address.dialect = netaddr.mac_unix
         interfaces.append(
             {'id': _uuid(),
+             'mtu': network_mtu,
              'network_id': _uuid(),
              'admin_state_up': True,
              'mac_address': str(mac_address),

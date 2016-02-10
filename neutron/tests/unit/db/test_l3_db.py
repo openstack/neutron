@@ -72,7 +72,10 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     def test__populate_ports_for_subnets_none(self):
         """Basic test that the method runs correctly with no ports"""
         ports = []
-        self.db._populate_subnets_for_ports(mock.sentinel.context, ports)
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = []
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
         self.assertEqual([], ports)
 
     @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
@@ -91,17 +94,22 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         ports = [{'network_id': 'net_id',
                   'id': 'port_id',
                   'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id}]}]
-        self.db._populate_subnets_for_ports(mock.sentinel.context, ports)
-        keys = ('id', 'cidr', 'gateway_ip', 'ipv6_ra_mode', 'subnetpool_id',
-                'dns_nameservers')
-        address_scopes = {4: None, 6: mock.sentinel.address_scope_id}
-        self.assertEqual([{'extra_subnets': [],
-                           'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id,
-                                          'prefixlen': 64}],
-                           'id': 'port_id',
-                           'network_id': 'net_id',
-                           'subnets': [{k: subnet[k] for k in keys}],
-                           'address_scopes': address_scopes}], ports)
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = [{'id': 'net_id', 'mtu': 1446}]
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
+            keys = ('id', 'cidr', 'gateway_ip', 'ipv6_ra_mode',
+                    'subnetpool_id', 'dns_nameservers')
+            address_scopes = {4: None, 6: mock.sentinel.address_scope_id}
+            self.assertEqual([{'extra_subnets': [],
+                               'fixed_ips': [{'subnet_id':
+                                              mock.sentinel.subnet_id,
+                                              'prefixlen': 64}],
+                               'id': 'port_id',
+                               'mtu': 1446,
+                               'network_id': 'net_id',
+                               'subnets': [{k: subnet[k] for k in keys}],
+                               'address_scopes': address_scopes}], ports)
 
     def test__get_sync_floating_ips_no_query(self):
         """Basic test that no query is performed if no router ids are passed"""
