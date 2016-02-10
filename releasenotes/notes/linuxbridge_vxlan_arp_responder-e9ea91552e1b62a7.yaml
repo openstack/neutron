@@ -1,0 +1,21 @@
+---
+upgrade:
+    When using ML2 and the Linux Bridge agent, the default value for the ARP
+    Responder under L2Population has changed. The responder is now disabled to
+    improve compatibility with the allowed-address-pair extension and to match
+    the default behavior of the ML2 OVS agent. The logical network will now
+    utilize traditional flood and learn through the overlay. When upgrading,
+    existing vxlan devices will retain their old setup and be unimpacted by
+    changes to this flag. To apply this to older devices created with the
+    Liberty agent, the vxlan device must be removed and then the Mitaka agent
+    restarted. The agent will recreate the vxlan devices with the current
+    settings upon restart. To maintain pre-Mitaka behavior, enable the
+    arp_responder in the Linux Bridge agent VXLAN config file prior to starting
+    the updated agent.
+
+fixes:
+    The Linuxbridge agent now supports the ability to toggle the local ARP
+    responder when L2Population is enabled. This ensures compatibility with
+    the allowed-address-pairs extension.
+  - closes bug 1445089
+
