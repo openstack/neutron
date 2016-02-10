@@ -738,7 +738,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 self.assertIsNone(self.lbm.ensure_vlan("eth0", "1"))
                 self.assertEqual(exec_fn.call_count, 3)
 
-    def test_ensure_vxlan(self):
+    def test_ensure_vxlan(self, expected_proxy=True):
         seg_id = "12345678"
         self.lbm.local_int = 'eth0'
         self.lbm.vxlan_mode = lconst.VXLAN_MCAST
@@ -760,7 +760,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
                                                 dev=self.lbm.local_int,
-                                                proxy=True)
+                                                proxy=expected_proxy)
+
+    def test_ensure_vxlan_arp_responder_disabled(self):
+        cfg.CONF.set_override('arp_responder', False, 'VXLAN')
+        self.test_ensure_vxlan(expected_proxy=False)
 
     def test_update_interface_ip_details(self):
         gwdict = dict(gateway='1.1.1.1',
