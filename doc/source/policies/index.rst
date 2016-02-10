@@ -31,4 +31,3 @@ items.
    gate-failure-triage
    code-reviews
    thirdparty-ci
-   office-hours
