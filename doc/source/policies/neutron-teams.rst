@@ -108,10 +108,6 @@ updating the core review team for the sub-project's repositories.
 |                        +---------------------------+----------------------+
 |                        | Gal Sagie                 | gsagie               |
 +------------------------+---------------------------+----------------------+
-| kuryr                  | Antoni Segura Puimedon    | apuimedo             |
-|                        +---------------------------+----------------------+
-|                        | Gal Sagie                 | gsagie               |
-+------------------------+---------------------------+----------------------+
 | networking-bgpvpn      | Mathieu Rohon             | matrohon             |
 |                        +---------------------------+----------------------+
 |                        | Thomas Morin              | tmorin               |
