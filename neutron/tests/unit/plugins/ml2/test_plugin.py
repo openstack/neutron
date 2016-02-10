@@ -746,18 +746,32 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertIsNone(l3plugin.disassociate_floatingips(ctx, port_id))
 
     def test_create_port_tolerates_db_deadlock(self):
-        ctx = context.get_admin_context()
         with self.network() as net:
             with self.subnet(network=net) as subnet:
-                segments = ml2_db.get_networks_segments(ctx.session,
-                                                        [net['network']['id']])
+                _orig = ml2_db.get_locked_port_and_binding
+                self._failed = False
+
+                def fail_once(*args, **kwargs):
+                    if not self._failed:
+                        self._failed = True
+                        raise db_exc.DBDeadlock()
+                    return _orig(*args, **kwargs)
                 with mock.patch('neutron.plugins.ml2.plugin.'
-                                'db.get_networks_segments') as get_seg_mock:
-                    get_seg_mock.side_effect = [db_exc.DBDeadlock, segments,
-                                                segments, segments]
-                    with self.port(subnet=subnet) as port:
+                                'db.get_locked_port_and_binding',
+                                side_effect=fail_once) as get_port_mock:
+                    port_kwargs = {portbindings.HOST_ID: 'host1',
+                                   'subnet': subnet,
+                                   'device_id': 'deadlocktest'}
+                    with self.port(arg_list=(portbindings.HOST_ID,),
+                                   **port_kwargs) as port:
                         self.assertTrue(port['port']['id'])
-                        self.assertEqual(4, get_seg_mock.call_count)
+                        self.assertTrue(get_port_mock.called)
+                        # make sure that we didn't create more than one port on
+                        # the retry
+                        query_params = "network_id=%s" % net['network']['id']
+                        query_params += "&device_id=%s" % 'deadlocktest'
+                        ports = self._list('ports', query_params=query_params)
+                        self.assertEqual(1, len(ports['ports']))
 
     def test_delete_port_tolerates_db_deadlock(self):
         ctx = context.get_admin_context()
