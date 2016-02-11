@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
 import re
 import time
 
@@ -37,12 +38,11 @@ from neutron.common import config
 
 LOG = logging.getLogger(__name__)
 LB_NS_PREFIX = 'qlbaas-'
-NS_MANGLING_PATTERN = ('(%s|%s|%s|%s|%s)' % (dhcp.NS_PREFIX,
-                                          l3_agent.NS_PREFIX,
-                                          dvr.SNAT_NS_PREFIX,
-                                          dvr_fip_ns.FIP_NS_PREFIX,
-                                          LB_NS_PREFIX) +
-                       attributes.UUID_PATTERN)
+NS_PREFIXES = {
+    'dhcp': [dhcp.NS_PREFIX],
+    'l3': [l3_agent.NS_PREFIX, dvr.SNAT_NS_PREFIX, dvr_fip_ns.FIP_NS_PREFIX],
+    'lbaas': [LB_NS_PREFIX],
+}
 
 
 class FakeDhcpPlugin(object):
@@ -64,6 +64,9 @@ def setup_conf():
         cfg.BoolOpt('force',
                     default=False,
                     help=_('Delete the namespace by removing all devices.')),
+        cfg.StrOpt('agent-type',
+                   choices=['dhcp', 'l3', 'lbaas'],
+                   help=_('Cleanup resources of a specific agent type only.')),
     ]
 
     conf = cfg.CONF
@@ -103,8 +106,15 @@ def eligible_for_deletion(conf, namespace, force=False):
     is passed as a parameter.
     """
 
+    if conf.agent_type:
+        prefixes = NS_PREFIXES.get(conf.agent_type)
+    else:
+        prefixes = itertools.chain(*NS_PREFIXES.values())
+    ns_mangling_pattern = '(%s%s)' % ('|'.join(prefixes),
+                                      attributes.UUID_PATTERN)
+
     # filter out namespaces without UUID as the name
-    if not re.match(NS_MANGLING_PATTERN, namespace):
+    if not re.match(ns_mangling_pattern, namespace):
         return False
 
     ip = ip_lib.IPWrapper(namespace=namespace)
