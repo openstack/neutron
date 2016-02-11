@@ -161,6 +161,10 @@ class NeutronManager(object):
                 LOG.info(_LI("Service %s is supported by the core plugin"),
                          service_type)
 
+    def _get_default_service_plugins(self):
+        """Get default service plugins to be loaded."""
+        return constants.DEFAULT_SERVICE_PLUGINS.keys()
+
     def _load_service_plugins(self):
         """Loads service plugins.
 
@@ -171,6 +175,7 @@ class NeutronManager(object):
         self._load_services_from_core_plugin()
 
         plugin_providers = cfg.CONF.service_plugins
+        plugin_providers.extend(self._get_default_service_plugins())
         LOG.debug("Loading service plugins: %s", plugin_providers)
         for provider in plugin_providers:
             if provider == '':
