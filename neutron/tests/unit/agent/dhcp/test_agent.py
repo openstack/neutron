@@ -1318,6 +1318,21 @@ class TestDeviceManager(base.BaseTestCase):
                           'device_id': mock.ANY}})])
         self.assertIn(fake_dhcp_port, net.ports)
 
+    def test_setup_plug_exception(self):
+        plugin = mock.Mock()
+        plugin.create_dhcp_port.return_value = fake_dhcp_port
+        self.ensure_device_is_ready.return_value = False
+        self.mock_driver.get_device_name.return_value = 'tap12345678-12'
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        dh._set_default_route = mock.Mock()
+        dh._cleanup_stale_devices = mock.Mock()
+        dh.driver = mock.Mock()
+        dh.driver.plug.side_effect = OSError()
+        net = copy.deepcopy(fake_network)
+        self.assertRaises(OSError, dh.setup, net)
+        plugin.release_dhcp_port.assert_called_once_with(
+            net.id, mock.ANY)
+
     def test_setup_ipv6(self):
         self._test_setup_helper(True, net=fake_network_ipv6,
                                 port=fake_ipv6_port)

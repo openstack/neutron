@@ -24,6 +24,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_utils import excutils
 from oslo_utils import uuidutils
 import six
 
@@ -1194,11 +1195,19 @@ class DeviceManager(object):
                                          namespace=network.namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
         else:
-            self.driver.plug(network.id,
-                             port.id,
-                             interface_name,
-                             port.mac_address,
-                             namespace=network.namespace)
+            try:
+                self.driver.plug(network.id,
+                                 port.id,
+                                 interface_name,
+                                 port.mac_address,
+                                 namespace=network.namespace)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_LE('Unable to plug DHCP port for '
+                                      'network %s. Releasing port.'),
+                                  network.id)
+                    self.plugin.release_dhcp_port(network.id, port.device_id)
+
             self.fill_dhcp_udp_checksums(namespace=network.namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
