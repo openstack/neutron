@@ -16,6 +16,7 @@
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import importutils
+import pecan
 from pecan import request
 from pecan import response
 
@@ -48,7 +49,7 @@ class QuotasController(utils.NeutronPecanController):
     def _lookup(self, tenant_id, *remainder):
         return QuotaController(self._driver, tenant_id), remainder
 
-    @utils.expose()
+    @utils.expose(generic=True)
     def index(self):
         neutron_context = request.context.get('neutron_context')
         # FIXME(salv-orlando): There shouldn't be any need to to this eplicit
@@ -60,6 +61,12 @@ class QuotasController(utils.NeutronPecanController):
                 self._driver.get_all_quotas(
                     neutron_context,
                     resource_registry.get_all_resources())}
+
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PUT')
+    @utils.when(index, method='DELETE')
+    def not_supported(self):
+        pecan.abort(405)
 
 
 class QuotaController(utils.NeutronPecanController):
@@ -102,6 +109,10 @@ class QuotaController(utils.NeutronPecanController):
         self._driver.delete_tenant_quota(neutron_context,
                                          self._tenant_id)
         response.status = 204
+
+    @utils.when(index, method='POST')
+    def not_supported(self):
+        pecan.abort(405)
 
 
 def get_tenant_quotas(tenant_id, driver=None):

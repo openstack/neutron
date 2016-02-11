@@ -20,7 +20,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron import manager
-from neutron.pecan_wsgi.controllers import root
+from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron import policy
 from neutron.quota import resource_registry
 
@@ -94,7 +94,7 @@ def initialize_all():
             else:
                 LOG.warn(_LW("No plugin found for resource:%s. API calls "
                              "may not be correctly dispatched"), resource)
-            controller = root.CollectionsController(collection, resource)
+            controller = res_ctrl.CollectionsController(collection, resource)
         else:
             LOG.debug("There are already controllers for resource:%s",
                       resource)
