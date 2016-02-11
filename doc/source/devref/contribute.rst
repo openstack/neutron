@@ -343,8 +343,7 @@ oslo.i18n
 
   .. note::
 
-     **DOMAIN** name should match your **repository** name ``${REPOSITORY}``.
-     (Note that it is not a top level python path name ``${MODULE_NAME}``.)
+     **DOMAIN** name should match your **module** name ``${MODULE_NAME}``.
 
 * Import ``_()`` from your ``${MODULE_NAME}/_i18n.py``.
 
@@ -361,7 +360,6 @@ You need to create or edit the following files to start translation support:
 
 * setup.cfg
 * babel.cfg
-* skeleton POT file
 
 We have a good example for an oslo project at
 https://review.openstack.org/#/c/98248/.
@@ -371,33 +369,22 @@ Add the following to ``setup.cfg``::
     [extract_messages]
     keywords = _ gettext ngettext l_ lazy_gettext
     mapping_file = babel.cfg
-    output_file = ${REPOSITORY}/locale/${REPOSITORY}.pot
+    output_file = ${MODULE_NAME}/locale/${MODULE_NAME}.pot
 
     [compile_catalog]
-    directory = ${REPOSITORY}/locale
-    domain = ${REPOSITORY}
+    directory = ${MODULE_NAME}/locale
+    domain = ${MODULE_NAME}
 
     [update_catalog]
-    domain = ${REPOSITORY}
-    output_dir = ${REPOSITORY}/locale
-    input_file = ${REPOSITORY}/locale/${REPOSITORY}.pot
+    domain = ${MODULE_NAME}
+    output_dir = ${MODULE_NAME}/locale
+    input_file = ${MODULE_NAME}/locale/${MODULE_NAME}.pot
 
-Note that ``${REPOSITORY}`` is used in all names. Both come from the
-implementation of the current infra scripts. Changing it affects many
-projects, so it is not a good idea.
+Note that ``${MODULE_NAME}`` is used in all names.
 
 Create ``babel.cfg`` with the following contents::
 
     [python: **.py]
-
-Finally, create a skeleton POT file.
-To import translation, we need to place it at the proper place.
-Run the following commands in the top directory of your repository::
-
-  $ mkdir -p ${REPOSITORY}/locale
-  $ tox -e venv -- python setup.py extract_messages
-
-Now you see ``${REPOSITORY}/locale/${REPOSITORY}.pot``.
 
 Enable Translation
 ~~~~~~~~~~~~~~~~~~
