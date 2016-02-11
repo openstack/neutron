@@ -143,6 +143,23 @@ class SecGroupTest(base.BaseSecGroupTest):
                           rule_list)
 
     @test.attr(type='smoke')
+    @test.idempotent_id('c72c1c0c-2193-4aca-fff2-b1442640bbbb')
+    def test_create_security_group_rule_description(self):
+        if not test.is_extension_enabled('standard-attr-description',
+                                         'network'):
+            msg = "standard-attr-description not enabled."
+            raise self.skipException(msg)
+        sg = self._create_security_group()[0]['security_group']
+        rule = self.client.create_security_group_rule(
+            security_group_id=sg['id'], protocol='tcp',
+            direction='ingress', ethertype=self.ethertype,
+            description='d1'
+        )['security_group_rule']
+        self.assertEqual('d1', rule['description'])
+        body = self.client.show_security_group_rule(rule['id'])
+        self.assertEqual('d1', body['security_group_rule']['description'])
+
+    @test.attr(type='smoke')
     @test.idempotent_id('87dfbcf9-1849-43ea-b1e4-efa3eeae9f71')
     def test_create_security_group_rule_with_additional_args(self):
         """Verify security group rule with additional arguments works.

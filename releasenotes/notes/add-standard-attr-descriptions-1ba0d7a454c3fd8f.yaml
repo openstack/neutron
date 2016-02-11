@@ -1,0 +1,8 @@
+---
+prelude: >
+    Add description field to security group rules, networks, ports, routers,
+    floating IPs, and subnet pools.
+features:
+  - Security group rules, networks, ports, routers, floating IPs, and subnet
+    pools may now contain an optional description which allows users to
+    easily store details about entities.

@@ -44,7 +44,6 @@ class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
-    description = sa.Column(sa.String(attributes.DESCRIPTION_MAX_LEN))
 
 
 class DefaultSecurityGroup(model_base.BASEV2):
@@ -317,6 +316,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'description': security_group['description']}
         res['security_group_rules'] = [self._make_security_group_rule_dict(r)
                                        for r in security_group.rules]
+        self._apply_dict_extend_functions(ext_sg.SECURITYGROUPS, res,
+                                          security_group)
         return self._fields(res, fields)
 
     def _make_security_group_binding_dict(self, security_group, fields=None):
@@ -397,7 +398,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 protocol=rule_dict['protocol'],
                 port_range_min=rule_dict['port_range_min'],
                 port_range_max=rule_dict['port_range_max'],
-                remote_ip_prefix=rule_dict.get('remote_ip_prefix'))
+                remote_ip_prefix=rule_dict.get('remote_ip_prefix'),
+                description=rule_dict.get('description')
+            )
             context.session.add(db)
             self._registry_notify(resources.SECURITY_GROUP_RULE,
                               events.PRECOMMIT_CREATE,
@@ -515,6 +518,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
                'remote_group_id': security_group_rule['remote_group_id']}
 
+        self._apply_dict_extend_functions(ext_sg.SECURITYGROUPRULES, res,
+                                          security_group_rule)
         return self._fields(res, fields)
 
     def _make_security_group_rule_filter_dict(self, security_group_rule):
@@ -525,7 +530,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         include_if_present = ['protocol', 'port_range_max', 'port_range_min',
                               'ethertype', 'remote_ip_prefix',
-                              'remote_group_id']
+                              'remote_group_id', 'description']
         for key in include_if_present:
             value = sgr.get(key)
             if value:
@@ -547,7 +552,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # Check in database if rule exists
         filters = self._make_security_group_rule_filter_dict(
             security_group_rule)
-        db_rules = self.get_security_group_rules(context, filters)
+        db_rules = self.get_security_group_rules(
+            context, filters,
+            fields=security_group_rule['security_group_rule'].keys())
         # Note(arosen): the call to get_security_group_rules wildcards
         # values in the filter that have a value of [None]. For
         # example, filters = {'remote_group_id': [None]} will return
@@ -559,7 +566,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # below to check for these corner cases.
         for db_rule in db_rules:
             # need to remove id from db_rule for matching
-            id = db_rule.pop('id')
             if (security_group_rule['security_group_rule'] == db_rule):
                 raise ext_sg.SecurityGroupRuleExists(id=id)
 

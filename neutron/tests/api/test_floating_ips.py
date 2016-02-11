@@ -119,6 +119,26 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         self.assertIsNone(updated_floating_ip['router_id'])
 
     @test.attr(type='smoke')
+    @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442641ffff')
+    def test_create_update_floatingip_description(self):
+        if not test.is_extension_enabled('standard-attr-description',
+                                         'network'):
+            msg = "standard-attr-description not enabled."
+            raise self.skipException(msg)
+        body = self.client.create_floatingip(
+            floating_network_id=self.ext_net_id,
+            port_id=self.ports[0]['id'],
+            description='d1'
+        )['floatingip']
+        self.assertEqual('d1', body['description'])
+        body = self.client.show_floatingip(body['id'])['floatingip']
+        self.assertEqual('d1', body['description'])
+        body = self.client.update_floatingip(body['id'], description='d2')
+        self.assertEqual('d2', body['floatingip']['description'])
+        body = self.client.show_floatingip(body['floatingip']['id'])
+        self.assertEqual('d2', body['floatingip']['description'])
+
+    @test.attr(type='smoke')
     @test.idempotent_id('e1f6bffd-442f-4668-b30e-df13f2705e77')
     def test_floating_ip_delete_port(self):
         # Create a floating IP

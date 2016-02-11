@@ -579,6 +579,14 @@ class RequestExtensionTest(base.BaseTestCase):
 
 class ExtensionManagerTest(base.BaseTestCase):
 
+    def test_optional_extensions_no_error(self):
+        ext_mgr = extensions.ExtensionManager('')
+        attr_map = {}
+        ext_mgr.add_extension(ext_stubs.StubExtension('foo_alias',
+                                                      optional=['cats']))
+        ext_mgr.extend_resources("2.0", attr_map)
+        self.assertIn('foo_alias', ext_mgr.extensions)
+
     def test_missing_required_extensions_raise_error(self):
         ext_mgr = extensions.ExtensionManager('')
         attr_map = {}

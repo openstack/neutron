@@ -45,6 +45,7 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import sqlalchemyutils
+from neutron.db import standardattrdescription_db as stattr_db
 from neutron.extensions import l3
 from neutron import ipam
 from neutron.ipam import subnet_alloc
@@ -80,7 +81,8 @@ def _check_subnet_not_used(context, subnet_id):
 
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         neutron_plugin_base_v2.NeutronPluginBaseV2,
-                        rbac_mixin.RbacPluginMixin):
+                        rbac_mixin.RbacPluginMixin,
+                        stattr_db.StandardAttrDescriptionMixin):
     """V2 Neutron plugin interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
@@ -319,7 +321,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
                     'mtu': n.get('mtu', constants.DEFAULT_NETWORK_MTU),
-                    'status': n.get('status', constants.NET_STATUS_ACTIVE)}
+                    'status': n.get('status', constants.NET_STATUS_ACTIVE),
+                    'description': n.get('description')}
             network = models_v2.Network(**args)
             if n['shared']:
                 entry = rbac_db.NetworkRBAC(
@@ -989,7 +992,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          'is_default': sp_reader.is_default,
                          'shared': sp_reader.shared,
                          'default_quota': sp_reader.default_quota,
-                         'address_scope_id': sp_reader.address_scope_id}
+                         'address_scope_id': sp_reader.address_scope_id,
+                         'description': sp_reader.description}
             subnetpool = models_v2.SubnetPool(**pool_args)
             context.session.add(subnetpool)
             for prefix in sp_reader.prefixes:
@@ -1027,10 +1031,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         for key in ['id', 'name', 'ip_version', 'min_prefixlen',
                     'max_prefixlen', 'default_prefixlen', 'is_default',
                     'shared', 'default_quota', 'address_scope_id',
-                    'standard_attr']:
+                    'standard_attr', 'description']:
             self._write_key(key, updated, model, new_pool)
-        self._apply_dict_extend_functions(attributes.SUBNETPOOLS,
-                                          updated, model)
         return updated
 
     def _write_key(self, key, update, orig, new_dict):
@@ -1079,7 +1081,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
             updated['key'] = str(updated[key])
-
+        self._apply_dict_extend_functions(attributes.SUBNETPOOLS,
+                                          updated, orig_sp)
         return updated
 
     def get_subnetpool(self, context, id, fields=None):
@@ -1212,7 +1215,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          admin_state_up=p['admin_state_up'],
                          status=p.get('status', constants.PORT_STATUS_ACTIVE),
                          device_id=p['device_id'],
-                         device_owner=p['device_owner'])
+                         device_owner=p['device_owner'],
+                         description=p.get('description'))
         if ('dns-integration' in self.supported_extension_aliases and
             'dns_name' in p):
             request_dns_name = self._get_request_dns_name(p)

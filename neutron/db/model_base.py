@@ -16,6 +16,7 @@
 from oslo_db.sqlalchemy import models
 from oslo_utils import uuidutils
 import sqlalchemy as sa
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm
 
@@ -107,6 +108,7 @@ class StandardAttribute(BASEV2, models.TimestampMixin):
     # before a 2-byte prefix is required. We shouldn't get anywhere near this
     # limit with our table names...
     resource_type = sa.Column(sa.String(255), nullable=False)
+    description = sa.Column(sa.String(attr.DESCRIPTION_MAX_LEN))
 
 
 class HasStandardAttributes(object):
@@ -130,8 +132,10 @@ class HasStandardAttributes(object):
                                 single_parent=True,
                                 uselist=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, description='', *args, **kwargs):
         super(HasStandardAttributes, self).__init__(*args, **kwargs)
         # here we automatically create the related standard attribute object
         self.standard_attr = StandardAttribute(
-            resource_type=self.__tablename__)
+            resource_type=self.__tablename__, description=description)
+
+    description = association_proxy('standard_attr', 'description')

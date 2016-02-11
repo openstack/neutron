@@ -149,6 +149,17 @@ class ExtensionDescriptor(object):
         """Returns a list of extensions to be processed before this one."""
         return []
 
+    def get_optional_extensions(self):
+        """Returns a list of extensions to be processed before this one.
+
+        Unlike get_required_extensions. This will not fail the loading of
+        the extension if one of these extensions is not present. This is
+        useful for an extension that extends multiple resources across
+        other extensions that should still work for the remaining extensions
+        when one is missing.
+        """
+        return []
+
     def update_attributes_map(self, extended_attributes,
                               extension_attrs_map=None):
         """Update attributes map for this extension.
@@ -432,6 +443,7 @@ class ExtensionManager(object):
         """
         processed_exts = {}
         exts_to_process = self.extensions.copy()
+        check_optionals = True
         # Iterate until there are unprocessed extensions or if no progress
         # is made in a whole iteration
         while exts_to_process:
@@ -442,12 +454,21 @@ class ExtensionManager(object):
                 required_exts_set = set(ext.get_required_extensions())
                 if required_exts_set - set(processed_exts):
                     continue
+                optional_exts_set = set(ext.get_optional_extensions())
+                if check_optionals and optional_exts_set - set(processed_exts):
+                    continue
                 extended_attrs = ext.get_extended_resources(version)
                 for res, resource_attrs in six.iteritems(extended_attrs):
                     attr_map.setdefault(res, {}).update(resource_attrs)
                 processed_exts[ext_name] = ext
                 del exts_to_process[ext_name]
             if len(processed_exts) == processed_ext_count:
+                # if we hit here, it means there are unsatisfied
+                # dependencies. try again without optionals since optionals
+                # are only necessary to set order if they are present.
+                if check_optionals:
+                    check_optionals = False
+                    continue
                 # Exit loop as no progress was made
                 break
         if exts_to_process:

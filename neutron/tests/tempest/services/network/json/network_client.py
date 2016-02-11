@@ -439,6 +439,8 @@ class NetworkClientJSON(service_client.ServiceClient):
         update_body['name'] = kwargs.get('name', body['router']['name'])
         update_body['admin_state_up'] = kwargs.get(
             'admin_state_up', body['router']['admin_state_up'])
+        if 'description' in kwargs:
+            update_body['description'] = kwargs['description']
         cur_gw_info = body['router']['external_gateway_info']
         if cur_gw_info:
             # TODO(kevinbenton): setting the external gateway info is not

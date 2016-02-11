@@ -213,10 +213,12 @@ attr.validators['type:name_not_default'] = _validate_name_not_default
 
 sg_supported_protocols = [None] + list(const.IP_PROTOCOL_MAP.keys())
 sg_supported_ethertypes = ['IPv4', 'IPv6']
+SECURITYGROUPS = 'security_groups'
+SECURITYGROUPRULES = 'security_group_rules'
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
-    'security_groups': {
+    SECURITYGROUPS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -231,10 +233,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'required_by_policy': True,
                       'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
                       'is_visible': True},
-        'security_group_rules': {'allow_post': False, 'allow_put': False,
-                                 'is_visible': True},
+        SECURITYGROUPRULES: {'allow_post': False, 'allow_put': False,
+                             'is_visible': True},
     },
-    'security_group_rules': {
+    SECURITYGROUPRULES: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -270,7 +272,6 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-SECURITYGROUPS = 'security_groups'
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {SECURITYGROUPS: {'allow_post': True,
                                'allow_put': True,
