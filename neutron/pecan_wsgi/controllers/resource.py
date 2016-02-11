@@ -106,7 +106,7 @@ class ItemController(utils.NeutronPecanController):
         # Bulk update is not supported, 'resources' always contains a single
         # elemenet
         data = {self.resource: resources[0]}
-        return updater(neutron_context, self.item, data)
+        return {self.resource: updater(neutron_context, self.item, data)}
 
     @utils.when(index, method='DELETE')
     def delete(self):
