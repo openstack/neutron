@@ -98,6 +98,13 @@ repository if needed.
 * If the project only interacts with Neutron on REST API boundaries (client of
   Neutron's API, or Neutron is a client of its API), it should probably be a
   separate project.  python-neutronclient is an obvious exception here.
+* The area of functionality of a sub-project should be taken into consideration.
+  The closer the functionality is to the base functionality implemented in
+  openstack/neutron, the more likely it makes sense under the Neutron project
+  team.  Conversely, something "higher" in the stack considered an optional
+  advanced service is more likely to make sense as an independent project.
+  This is subject to change as the Neutron project evolves and continues to
+  explore the boundaries that work best for the project.
 
 Official Sub-Project List
 -------------------------
@@ -241,6 +248,14 @@ project.
 Kuryr was started and incubated within the Neutron team.  However, it interfaces
 with Neutron as a client of the Neutron API, so it makes sense to stand as an
 independent project.
+
+**Q: Why are several "advanced service" projects still included under Neutron?**
+
+neutron-lbaas, neutron-fwaas, and neutron-vpnaas are all included under the
+Neutron project team largely for historical reasons.  They were originally a
+part of neutron itself and are still a part of the neutron deliverable in terms
+of OpenStack governance.  Because of the deliverable inclusion, they should really
+only be considered for a move on a release boundary.
 
 **Q: Why is Octavia included under Neutron?**
 
