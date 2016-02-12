@@ -122,6 +122,12 @@ class AgentDBTestMixIn(object):
             host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR)
         return [dvr_snat_agent, dvr_agent]
 
+    def _register_l3_agent(self, host):
+        helpers.register_l3_agent(host)
+
+    def _register_bgp_dragent(self, host):
+        helpers.register_bgp_dragent(host)
+
 
 class AgentDBTestCase(AgentDBTestMixIn,
                       test_db_base_plugin_v2.NeutronDbPluginV2TestCase):

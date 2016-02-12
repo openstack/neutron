@@ -223,5 +223,10 @@
     "add_gateway_network": "rule:admin_only",
     "remove_gateway_network": "rule:admin_only",
 
-    "get_advertised_routes":"rule:admin_only"
+    "get_advertised_routes":"rule:admin_only",
+
+    "add_bgp_speaker_to_dragent": "rule:admin_only",
+    "remove_bgp_speaker_from_dragent": "rule:admin_only",
+    "list_bgp_speaker_on_dragent": "rule:admin_only",
+    "list_dragent_hosting_bgp_speaker": "rule:admin_only"
 }
