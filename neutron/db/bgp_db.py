@@ -129,6 +129,20 @@ class BgpDbMixin(common_db.CommonDbMixin):
             bgp_speaker = self._get_bgp_speaker(context, bgp_speaker_id)
             return self._make_bgp_speaker_dict(bgp_speaker, fields)
 
+    def get_bgp_speaker_with_advertised_routes(self, context,
+                                               bgp_speaker_id):
+        bgp_speaker_attrs = ['id', 'local_as', 'tenant_id']
+        bgp_peer_attrs = ['peer_ip', 'remote_as', 'password']
+        with context.session.begin(subtransactions=True):
+            bgp_speaker = self.get_bgp_speaker(context, bgp_speaker_id,
+                                               fields=bgp_speaker_attrs)
+            res = dict((k, bgp_speaker[k]) for k in bgp_speaker_attrs)
+            res['peers'] = self.get_bgp_peers_by_bgp_speaker(context,
+                                                         bgp_speaker['id'],
+                                                         fields=bgp_peer_attrs)
+            res['advertised_routes'] = []
+            return res
+
     def update_bgp_speaker(self, context, bgp_speaker_id, bgp_speaker):
         bp = bgp_speaker[bgp_ext.BGP_SPEAKER_BODY_KEY_NAME]
         with context.session.begin(subtransactions=True):
@@ -210,6 +224,15 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                     filters=filters, fields=fields,
                                     sorts=sorts, limit=limit,
                                     page_reverse=page_reverse)
+
+    def get_bgp_peers_by_bgp_speaker(self, context,
+                                     bgp_speaker_id, fields=None):
+        filters = [BgpSpeakerPeerBinding.bgp_speaker_id == bgp_speaker_id,
+                   BgpSpeakerPeerBinding.bgp_peer_id == BgpPeer.id]
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(BgpPeer)
+            query = query.filter(*filters)
+            return [self._make_bgp_peer_dict(x) for x in query.all()]
 
     def get_bgp_peer(self, context, bgp_peer_id, fields=None):
         bgp_peer_db = self._get_bgp_peer(context, bgp_peer_id)

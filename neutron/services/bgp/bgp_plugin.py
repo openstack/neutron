@@ -13,15 +13,21 @@
 # under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.api.rpc.agentnotifiers import bgp_dr_rpc_agent_api
+from neutron.api.rpc.handlers import bgp_speaker_rpc as bs_rpc
+from neutron.common import rpc as n_rpc
 from neutron.db import bgp_db
 from neutron.db import bgp_dragentscheduler_db
 from neutron.extensions import bgp as bgp_ext
 from neutron.extensions import bgp_dragentscheduler as dras_ext
+from neutron.services.bgp.common import constants as bgp_consts
 from neutron.services import service_base
 
 PLUGIN_NAME = bgp_ext.BGP_EXT_ALIAS + '_svc_plugin'
+LOG = logging.getLogger(__name__)
 
 
 class BgpPlugin(service_base.ServicePluginBase,
@@ -35,6 +41,7 @@ class BgpPlugin(service_base.ServicePluginBase,
         super(BgpPlugin, self).__init__()
         self.bgp_drscheduler = importutils.import_object(
             cfg.CONF.bgp_drscheduler_driver)
+        self._setup_rpc()
 
     def get_plugin_name(self):
         return PLUGIN_NAME
@@ -46,3 +53,42 @@ class BgpPlugin(service_base.ServicePluginBase,
         """returns string description of the plugin."""
         return ("BGP dynamic routing service for announcement of next-hops "
                 "for tenant networks, floating IP's, and DVR host routes.")
+
+    def _setup_rpc(self):
+        self.topic = bgp_consts.BGP_PLUGIN
+        self.conn = n_rpc.create_connection()
+        self.agent_notifiers[bgp_consts.AGENT_TYPE_BGP_ROUTING] = (
+            bgp_dr_rpc_agent_api.BgpDrAgentNotifyApi()
+        )
+        self._bgp_rpc = self.agent_notifiers[bgp_consts.AGENT_TYPE_BGP_ROUTING]
+        self.endpoints = [bs_rpc.BgpSpeakerRpcCallback()]
+        self.conn.create_consumer(self.topic, self.endpoints,
+                                  fanout=False)
+        self.conn.consume_in_threads()
+
+    def add_bgp_peer(self, context, bgp_speaker_id, bgp_peer_info):
+        ret_value = super(BgpPlugin, self).add_bgp_peer(context,
+                                                        bgp_speaker_id,
+                                                        bgp_peer_info)
+        hosted_bgp_dragents = self.get_dragents_hosting_bgp_speakers(
+                                                             context,
+                                                             [bgp_speaker_id])
+        for agent in hosted_bgp_dragents:
+            self._bgp_rpc.bgp_peer_associated(context, bgp_speaker_id,
+                                              ret_value['bgp_peer_id'],
+                                              agent.host)
+        return ret_value
+
+    def remove_bgp_peer(self, context, bgp_speaker_id, bgp_peer_info):
+        hosted_bgp_dragents = self.get_dragents_hosting_bgp_speakers(
+            context, [bgp_speaker_id])
+
+        ret_value = super(BgpPlugin, self).remove_bgp_peer(context,
+                                                           bgp_speaker_id,
+                                                           bgp_peer_info)
+
+        for agent in hosted_bgp_dragents:
+            self._bgp_rpc.bgp_peer_disassociated(context,
+                                                 bgp_speaker_id,
+                                                 ret_value['bgp_peer_id'],
+                                                 agent.host)
