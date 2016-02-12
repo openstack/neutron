@@ -98,15 +98,15 @@ def get_schema_helper(connection, schema_name):
     err, strm = stream.Stream.open_block(
         stream.Stream.open(connection))
     if err:
-        raise Exception("Could not connect to %s" % (
-            connection,))
+        raise Exception(_("Could not connect to %s") % connection)
     rpc = jsonrpc.Connection(strm)
     req = jsonrpc.Message.create_request('get_schema', [schema_name])
     err, resp = rpc.transact_block(req)
     rpc.close()
     if err:
-        raise Exception("Could not retrieve schema from %s: %s" % (
-            connection, os.strerror(err)))
+        raise Exception(_("Could not retrieve schema from %(conn)s: "
+                          "%(err)s") % {'conn': connection,
+                                        'err': os.strerror(err)})
     elif resp.error:
         raise Exception(resp.error)
     return idl.SchemaHelper(None, resp.result)
@@ -122,7 +122,7 @@ def wait_for_change(_idl, timeout, seqno=None):
         ovs_poller.timer_wait(timeout * 1000)
         ovs_poller.block()
         if time.time() > stop:
-            raise Exception("Timeout")
+            raise Exception(_("Timeout"))
 
 
 def get_column_value(row, col):
