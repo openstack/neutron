@@ -485,13 +485,13 @@ class Dnsmasq(DhcpLocalProcess):
         (entry for stateless IPv6 for v6 options)
 
         dnsmasq internal details for processing host file entries
-        1) dnsmaq reads the host file from EOF.
+        1) dnsmasq reads the host file from EOF.
         2) So it first picks up stateless IPv6 entry,
            fa:16:3e:8f:9d:65,set:aabc7d33-4874-429e-9637-436e4232d2cd
         3) But dnsmasq doesn't have sufficient checks to skip this entry and
            pick next entry, to process dhcp IPv4 request.
-        4) So dnsmaq uses this this entry to process dhcp IPv4 request.
-        5) As there is no ip in this entry, dnsmaq logs "no address available"
+        4) So dnsmasq uses this this entry to process dhcp IPv4 request.
+        5) As there is no ip in this entry, dnsmasq logs "no address available"
            and fails to send DHCPOFFER message.
 
         As we rely on internal details of dnsmasq to understand and fix the
@@ -733,7 +733,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         The generated file is sent to the --addn-hosts option of dnsmasq,
         and lists the hosts on the network which should be resolved even if
-        the dnsmaq instance did not give a lease to the host (see the
+        the dnsmasq instance did not give a lease to the host (see the
         `_output_hosts_file` method).
         Each line in this file is in the same form as a standard /etc/hosts
         file.
