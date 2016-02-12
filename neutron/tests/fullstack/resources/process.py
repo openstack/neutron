@@ -15,6 +15,7 @@
 import datetime
 from distutils import spawn
 import os
+import signal
 
 import fixtures
 from neutronclient.common import exceptions as nc_exc
@@ -34,13 +35,15 @@ DEFAULT_LOG_DIR = '/tmp/dsvm-fullstack-logs/'
 
 
 class ProcessFixture(fixtures.Fixture):
-    def __init__(self, test_name, process_name, exec_name, config_filenames):
+    def __init__(self, test_name, process_name, exec_name, config_filenames,
+                 kill_signal=signal.SIGKILL):
         super(ProcessFixture, self).__init__()
         self.test_name = test_name
         self.process_name = process_name
         self.exec_name = exec_name
         self.config_filenames = config_filenames
         self.process = None
+        self.kill_signal = kill_signal
 
     def _setUp(self):
         self.start()
@@ -63,7 +66,7 @@ class ProcessFixture(fixtures.Fixture):
         self.process.start(block=True)
 
     def stop(self):
-        self.process.stop(block=True)
+        self.process.stop(block=True, kill_signal=self.kill_signal)
 
 
 class RabbitmqEnvironmentFixture(fixtures.Fixture):
@@ -108,7 +111,8 @@ class NeutronServerFixture(fixtures.Fixture):
             test_name=self.test_name,
             process_name=self.NEUTRON_SERVER,
             exec_name=self.NEUTRON_SERVER,
-            config_filenames=config_filenames))
+            config_filenames=config_filenames,
+            kill_signal=signal.SIGTERM))
 
         utils.wait_until_true(self.server_is_live)
 
