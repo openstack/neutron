@@ -17,6 +17,7 @@ import os
 
 import mock
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import six
@@ -1111,6 +1112,20 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                            content_type='application/' + self.fmt,
                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
+
+    def test_retry_on_index(self):
+        instance = self.plugin.return_value
+        instance.get_networks.side_effect = [db_exc.RetryRequest(None), []]
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks', fmt=self.fmt))
+        self.assertTrue(instance.get_networks.called)
+
+    def test_retry_on_show(self):
+        instance = self.plugin.return_value
+        instance.get_network.side_effect = [db_exc.RetryRequest(None), {}]
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks', _uuid(), fmt=self.fmt))
+        self.assertTrue(instance.get_network.called)
 
 
 class SubresourceTest(base.BaseTestCase):
