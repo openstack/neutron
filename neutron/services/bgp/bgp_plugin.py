@@ -12,20 +12,29 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
+from oslo_utils import importutils
+
 from neutron.db import bgp_db
+from neutron.db import bgp_dragentscheduler_db
 from neutron.extensions import bgp as bgp_ext
+from neutron.extensions import bgp_dragentscheduler as dras_ext
 from neutron.services import service_base
 
 PLUGIN_NAME = bgp_ext.BGP_EXT_ALIAS + '_svc_plugin'
 
 
 class BgpPlugin(service_base.ServicePluginBase,
-                bgp_db.BgpDbMixin):
+                bgp_db.BgpDbMixin,
+                bgp_dragentscheduler_db.BgpDrAgentSchedulerDbMixin):
 
-    supported_extension_aliases = [bgp_ext.BGP_EXT_ALIAS]
+    supported_extension_aliases = [bgp_ext.BGP_EXT_ALIAS,
+                                   dras_ext.BGP_DRAGENT_SCHEDULER_EXT_ALIAS]
 
     def __init__(self):
         super(BgpPlugin, self).__init__()
+        self.bgp_drscheduler = importutils.import_object(
+            cfg.CONF.bgp_drscheduler_driver)
 
     def get_plugin_name(self):
         return PLUGIN_NAME
