@@ -1,5 +1,6 @@
 LIBDIR=$DEST/neutron/devstack/lib
 
+source $LIBDIR/bgp
 source $LIBDIR/flavors
 source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
@@ -14,6 +15,9 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled q-qos; then
                 configure_qos
+            fi
+            if is_service_enabled q-bgp; then
+                configure_bgp
             fi
             ;;
         post-config)

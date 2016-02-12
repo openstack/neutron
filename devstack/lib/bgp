@@ -1,0 +1,7 @@
+function configure_bgp_service_plugin {
+    _neutron_service_plugin_class_add "bgp"
+}
+
+function configure_bgp {
+    configure_bgp_service_plugin
+}

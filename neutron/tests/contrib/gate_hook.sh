@@ -63,7 +63,10 @@ EOF
 enable_plugin neutron-vpnaas git://git.openstack.org/openstack/neutron-vpnaas
 enable_plugin neutron git://git.openstack.org/openstack/neutron
 enable_service q-qos
+enable_service q-bgp
 "
+# TODO(armax): figure out a cleaner way to maintain this
+# gate hook and expose API extensions.
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
 elif [ "$VENV" == "dsvm-plus" ]
@@ -72,6 +75,7 @@ then
     export DEVSTACK_LOCAL_CONFIG+="
 enable_plugin neutron git://git.openstack.org/openstack/neutron
 enable_service q-qos
+enable_service q-bgp
 "
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
