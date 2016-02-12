@@ -97,11 +97,11 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 
 class Qos(extensions.ExtensionDescriptor):
-    """Quality of service API extension."""
+    """Quality of Service API extension."""
 
     @classmethod
     def get_name(cls):
-        return "qos"
+        return "Quality of Service"
 
     @classmethod
     def get_alias(cls):
