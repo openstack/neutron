@@ -42,10 +42,12 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
         return self.plugin.create_network(self.ctx, network)
 
     def _prepare_ipv6_pd_subnet(self):
+        # TODO(Carl) Use the default subnet pool extension when available
         subnet = {'subnet': {'network_id': self.network['id'],
                              'tenant_id': 'tenant_id',
                              'cidr': None,
                              'ip_version': 6,
+                             'subnetpool_id': constants.IPV6_PD_POOL_ID,
                              'name': 'ipv6_pd',
                              'enable_dhcp': True,
                              'host_routes': None,

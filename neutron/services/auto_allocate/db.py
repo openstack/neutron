@@ -175,20 +175,20 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                       default_external_networks[0]['network_id'])
         return default_external_networks[0]
 
-    def _get_supported_versions(self, context):
-        """Return the IP versions of default subnet pools available."""
+    def _get_supported_subnetpools(self, context):
+        """Return the default subnet pools available."""
         default_subnet_pools = [
             self.core_plugin.get_default_subnetpool(
                 context, ver) for ver in (4, 6)
         ]
-        ip_versions = [
-            s['ip_version'] for s in default_subnet_pools if s
+        available_pools = [
+            s for s in default_subnet_pools if s
         ]
-        if not ip_versions:
+        if not available_pools:
             LOG.error(_LE("No default pools available"))
             raise n_exc.NotFound()
 
-        return ip_versions
+        return available_pools
 
     def _provision_tenant_private_network(self, context, tenant_id):
         """Create a tenant private network/subnets."""
@@ -203,12 +203,13 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             network = p_utils.create_network(
                 self.core_plugin, context, {'network': network_args})
             subnets = []
-            for ip_version in self._get_supported_versions(context):
+            for pool in self._get_supported_subnetpools(context):
                 subnet_args = {
-                    'name': 'auto_allocated_subnet_v%s' % ip_version,
+                    'name': 'auto_allocated_subnet_v%s' % pool['ip_version'],
                     'network_id': network['id'],
                     'tenant_id': tenant_id,
-                    'ip_version': ip_version,
+                    'ip_version': pool['ip_version'],
+                    'subnetpool_id': pool['id'],
                 }
                 subnets.append(p_utils.create_subnet(
                     self.core_plugin, context, {'subnet': subnet_args}))
