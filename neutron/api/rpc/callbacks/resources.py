@@ -30,6 +30,11 @@ _TYPE_TO_CLS_MAP = {
     QOS_POLICY: _QOS_POLICY_CLS,
 }
 
+LOCAL_RESOURCE_VERSIONS = {
+    resource_type: cls.VERSION
+    for resource_type, cls in _TYPE_TO_CLS_MAP.items()
+}
+
 
 def get_resource_type(resource_cls):
     if not resource_cls:

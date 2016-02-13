@@ -21,6 +21,7 @@ from oslo_versionedobjects import fields as obj_fields
 import testtools
 
 from neutron.api.rpc.callbacks import resources
+from neutron.api.rpc.callbacks import version_manager
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import topics
 from neutron import context
@@ -194,7 +195,7 @@ class ResourcesPushRpcApiTestCase(ResourcesRpcBaseTestCase):
         with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
                 return_value=FakeResource):
             observed = self.rpc._prepare_object_fanout_context(
-                self.resource_obj)
+                self.resource_obj, self.resource_obj.VERSION)
 
         self.rpc.client.prepare.assert_called_once_with(
             fanout=True, topic=expected_topic)
@@ -203,8 +204,10 @@ class ResourcesPushRpcApiTestCase(ResourcesRpcBaseTestCase):
     def test_pushy(self):
         with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
                 return_value=FakeResource):
-            self.rpc.push(
-                self.context, self.resource_obj, 'TYPE')
+            with mock.patch.object(version_manager, 'get_resource_versions',
+                    return_value=set([FakeResource.VERSION])):
+                self.rpc.push(
+                    self.context, self.resource_obj, 'TYPE')
 
         self.cctxt_mock.cast.assert_called_once_with(
             self.context, 'push',
