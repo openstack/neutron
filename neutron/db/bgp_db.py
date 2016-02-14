@@ -876,13 +876,10 @@ class BgpDbMixin(common_db.CommonDbMixin):
             query = query.filter(
                   BgpSpeakerNetworkBinding.network_id == network_id,
                   BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id)
-            try:
-                return query.all()
-            except sa_exc.NoResultFound:
-                raise bgp_ext.NetworkNotBound(network_id=network_id)
+            return query.all()
 
-    def _bgp_speaker_for_gateway_network(self, context,
-                                         network_id, ip_version):
+    def _bgp_speakers_for_gw_network_by_family(self, context,
+                                               network_id, ip_version):
         """Return the BgpSpeaker by given gateway network and ip_version"""
         with context.session.begin(subtransactions=True):
             query = context.session.query(BgpSpeaker)
@@ -890,12 +887,7 @@ class BgpDbMixin(common_db.CommonDbMixin):
                   BgpSpeakerNetworkBinding.network_id == network_id,
                   BgpSpeakerNetworkBinding.bgp_speaker_id == BgpSpeaker.id,
                   BgpSpeakerNetworkBinding.ip_version == ip_version)
-            try:
-                return query.one()
-            except sa_exc.NoResultFound:
-                raise bgp_ext.NetworkNotBoundForIpVersion(
-                                                        network_id=network_id,
-                                                        ip_version=ip_version)
+            return query.all()
 
     def _make_advertised_routes_list(self, routes):
         route_list = ({'destination': x,
