@@ -18,3 +18,10 @@ AGENT_TYPE_BGP_ROUTING = 'BGP dynamic routing agent'
 BGP_DRAGENT = 'bgp_dragent'
 
 BGP_PLUGIN = 'q-bgp-plugin'
+
+# List of supported authentication types.
+SUPPORTED_AUTH_TYPES = ['none', 'md5']
+
+# Supported AS number range
+MIN_ASNUM = 1
+MAX_ASNUM = 65535
