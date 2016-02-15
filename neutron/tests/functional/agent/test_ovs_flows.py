@@ -23,18 +23,23 @@ from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from testtools.content import text_content
 
+from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
+from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
 from neutron.tests.functional import base
 from neutron.tests import tools
 
+
+OVS_TRACE_FINAL_FLOW = 'Final flow'
+OVS_TRACE_DATAPATH_ACTIONS = 'Datapath actions'
 
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
@@ -88,6 +93,24 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
             retry_count -= 1
             if retry_count < 0:
                 raise Exception('port allocation failed')
+
+    def _run_trace(self, brname, spec):
+        required_keys = [OVS_TRACE_FINAL_FLOW, OVS_TRACE_DATAPATH_ACTIONS]
+        t = utils.execute(["ovs-appctl", "ofproto/trace", brname, spec],
+                          run_as_root=True)
+        trace = {}
+        trace_lines = t.splitlines()
+        for line in trace_lines:
+            (l, sep, r) = line.partition(':')
+            if not sep:
+                continue
+            elif l in required_keys:
+                trace[l] = r
+        for k in required_keys:
+            if k not in trace:
+                self.fail("%s not found in trace %s" % (k, trace_lines))
+
+        return trace
 
     def _kick_main(self):
         with mock.patch.object(ovsagt, 'main', self._agent_main):
@@ -280,3 +303,97 @@ class CanaryTableTestCase(OVSAgentTestBase):
         self.br_int.setup_canary_table()
         self.assertEqual(constants.OVS_NORMAL,
                          self.br_int.check_canary_table())
+
+
+class OVSFlowTestCase(OVSAgentTestBase):
+    """Tests defined in this class use ovs-appctl ofproto/trace commands,
+    which simulate processing of imaginary packets, to check desired actions
+    are correctly set up by OVS flows.  In this way, subtle variations in
+    flows between of_interface drivers are absorbed and the same tests work
+    against those drivers.
+    """
+
+    def setUp(self):
+        cfg.CONF.set_override('enable_distributed_routing',
+                              True,
+                              group='AGENT')
+        super(OVSFlowTestCase, self).setUp()
+        self.phys_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.br_phys = self.br_phys_cls(self.phys_br.br_name)
+        self.br_phys.set_secure_mode()
+        self.br_phys.setup_controllers(cfg.CONF)
+        self.router_addr = '192.168.0.1/24'
+        self.namespace = self.useFixture(
+            net_helpers.NamespaceFixture()).name
+        self.phys_p = self.useFixture(
+            net_helpers.OVSPortFixture(self.br_phys, self.namespace)).port
+
+        self.tun_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.br_tun = self.br_tun_cls(self.tun_br.br_name)
+        self.br_tun.set_secure_mode()
+        self.br_tun.setup_controllers(cfg.CONF)
+        self.tun_p = self.br_tun.add_patch_port(
+            cfg.CONF.OVS.tun_peer_patch_port,
+            cfg.CONF.OVS.int_peer_patch_port)
+        self.br_tun.setup_default_table(self.tun_p, True)
+
+    def test_provision_local_vlan(self):
+        kwargs = {'port': 123, 'lvid': 888, 'segmentation_id': 777}
+        self.br_phys.provision_local_vlan(distributed=False, **kwargs)
+        trace = self._run_trace(self.phys_br.br_name,
+                                "in_port=%(port)d,dl_src=12:34:56:78:aa:bb,"
+                                "dl_dst=24:12:56:78:aa:bb,dl_type=0x0800,"
+                                "nw_src=192.168.0.1,nw_dst=192.168.0.2,"
+                                "nw_proto=1,nw_tos=0,nw_ttl=128,"
+                                "icmp_type=8,icmp_code=0,dl_vlan=%(lvid)d"
+                                % kwargs)
+        self.assertTrue(("dl_vlan=%(segmentation_id)d" % kwargs) in
+                        trace["Final flow"])
+
+    def test_install_dvr_to_src_mac(self):
+        other_dvr_mac = 'fa:16:3f:01:de:ad'
+        other_dvr_port = 333
+        kwargs = {'vlan_tag': 888,
+                  'gateway_mac': '12:34:56:78:aa:bb',
+                  'dst_mac': '12:34:56:78:cc:dd',
+                  'dst_port': 123}
+        self.br_int.install_dvr_to_src_mac(network_type='vlan', **kwargs)
+        self.br_int.add_dvr_mac_vlan(mac=other_dvr_mac, port=other_dvr_port)
+
+        trace = self._run_trace(self.br.br_name,
+                                "in_port=%d," % other_dvr_port +
+                                "dl_src=" + other_dvr_mac + "," +
+                                "dl_dst=%(dst_mac)s,dl_type=0x0800,"
+                                "nw_src=192.168.0.1,nw_dst=192.168.0.2,"
+                                "nw_proto=1,nw_tos=0,nw_ttl=128,"
+                                "icmp_type=8,icmp_code=0,"
+                                "dl_vlan=%(vlan_tag)d" % kwargs)
+        self.assertTrue("vlan_tci=0x0000" in trace["Final flow"])
+        self.assertTrue(("dl_src=%(gateway_mac)s" % kwargs) in
+                        trace["Final flow"])
+
+    def test_install_flood_to_tun(self):
+        attrs = {
+            'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
+            'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
+        }
+        kwargs = {'vlan': 777, 'tun_id': 888}
+        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        ofport = self.br_tun.add_tunnel_port(port_name, attrs['remote_ip'],
+                                             attrs['local_ip'])
+        self.br_tun.install_flood_to_tun(ports=[ofport], **kwargs)
+        test_packet = ("icmp,in_port=%d," % self.tun_p +
+                       "dl_src=12:34:56:ab:cd:ef,dl_dst=12:34:56:78:cc:dd,"
+                       "nw_src=192.168.0.1,nw_dst=192.168.0.2,nw_ecn=0,"
+                       "nw_tos=0,nw_ttl=128,icmp_type=8,icmp_code=0,"
+                       "dl_vlan=%(vlan)d,dl_vlan_pcp=0" % kwargs)
+        trace = self._run_trace(self.tun_br.br_name, test_packet)
+        self.assertTrue(("tun_id=0x%(tun_id)x" % kwargs) in
+                        trace["Final flow"])
+        self.assertTrue("vlan_tci=0x0000," in trace["Final flow"])
+
+        self.br_tun.delete_flood_to_tun(kwargs['vlan'])
+
+        trace = self._run_trace(self.tun_br.br_name, test_packet)
+        self.assertEqual(" unchanged", trace["Final flow"])
+        self.assertTrue("drop" in trace["Datapath actions"])
