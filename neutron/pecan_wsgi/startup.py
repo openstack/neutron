@@ -45,7 +45,7 @@ def _plugin_for_resource(collection):
               {'collection': collection, 'aliases': ext_res_mappings.keys()})
     # find the plugin that supports this extension
     for plugin in ext_mgr.plugins.values():
-        ext_aliases = getattr(plugin, 'supported_extension_aliases', [])
+        ext_aliases = ext_mgr.get_plugin_supported_extension_aliases(plugin)
         for alias in ext_aliases:
             if alias in ext_res_mappings:
                 # This plugin implements this resource
