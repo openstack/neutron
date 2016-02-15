@@ -15,10 +15,15 @@
 import functools
 
 import fixtures
+from oslo_log import log as logging
 
 from neutron.agent import firewall
+from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
+
+LOG = logging.getLogger(__name__)
 
 
 class ConnectionTesterException(Exception):
@@ -107,6 +112,12 @@ class ConnectionTester(fixtures.Fixture):
     @property
     def peer_ip_address(self):
         return self._peer.ip
+
+    def collect_debug_info(self, exc_info):
+        conntrack_entries = utils.execute(['conntrack', '-L'],
+                                          run_as_root=True,
+                                          check_exit_code=False)
+        LOG.debug("Conntrack entries:\n%s", conntrack_entries)
 
     def flush_arp_tables(self):
         """Flush arptables in all used namespaces"""
@@ -305,3 +316,19 @@ class LinuxBridgeConnectionTester(ConnectionTester):
     def flush_arp_tables(self):
         self._bridge.neigh.flush(4, 'all')
         super(LinuxBridgeConnectionTester, self).flush_arp_tables()
+
+    def collect_debug_info(self, exc_info):
+        super(LinuxBridgeConnectionTester, self).collect_debug_info(exc_info)
+        ip_wrapper = ip_lib.IPWrapper(self.bridge_namespace)
+        ipt_rules = ip_wrapper.netns.execute(['iptables', '-L', '-nv'],
+                                             run_as_root=True)
+        LOG.debug('iptables rules in %s namespace:\n%s',
+                  self.bridge_namespace,
+                  ipt_rules)
+        for namespace in (self.vm_namespace, self.peer_namespace):
+            ip_wrapper = ip_lib.IPWrapper(namespace)
+            ip_output = ip_wrapper.netns.execute(['ip', 'a'],
+                                                 run_as_root=True)
+            LOG.debug('"ip a" in namespace %s:\n%s',
+                      namespace,
+                      ip_output)
