@@ -116,11 +116,16 @@ class CallbacksManager(object):
         :param trigger: the trigger. A reference to the sender of the event.
         """
         errors = self._notify_loop(resource, event, trigger, **kwargs)
-        if errors and event.startswith(events.BEFORE):
-            abort_event = event.replace(
-                events.BEFORE, events.ABORT)
-            self._notify_loop(resource, abort_event, trigger, **kwargs)
-            raise exceptions.CallbackFailure(errors=errors)
+        if errors:
+            if event.startswith(events.BEFORE):
+                abort_event = event.replace(
+                    events.BEFORE, events.ABORT)
+                self._notify_loop(resource, abort_event, trigger, **kwargs)
+
+                raise exceptions.CallbackFailure(errors=errors)
+
+            if event.startswith(events.PRECOMMIT):
+                raise exceptions.CallbackFailure(errors=errors)
 
     def clear(self):
         """Brings the manager to a clean slate."""

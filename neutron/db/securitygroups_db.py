@@ -122,6 +122,18 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return self._create_bulk('security_group', context,
                                  security_group_rule)
 
+    def _registry_notify(self, res, event, id=None, exc_cls=None, **kwargs):
+        # NOTE(armax): a callback exception here will prevent the request
+        # from being processed. This is a hook point for backend's validation;
+        # we raise to propagate the reason for the failure.
+        try:
+            registry.notify(res, event, self, **kwargs)
+        except exceptions.CallbackFailure as e:
+            if exc_cls:
+                reason = _('cannot perform %(event)s due to %(reason)s'), {
+                           'event': event, 'reason': e}
+                raise exc_cls(reason=reason, id=id)
+
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.
 
@@ -134,15 +146,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'security_group': s,
             'is_default': default_sg,
         }
-        # NOTE(armax): a callback exception here will prevent the request
-        # from being processed. This is a hook point for backend's validation;
-        # we raise to propagate the reason for the failure.
-        try:
-            registry.notify(
-                resources.SECURITY_GROUP, events.BEFORE_CREATE, self,
-                **kwargs)
-        except exceptions.CallbackFailure as e:
-            raise ext_sg.SecurityGroupConflict(reason=e)
+
+        self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_CREATE,
+                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
 
         tenant_id = s['tenant_id']
 
@@ -177,6 +183,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     direction='egress',
                     ethertype=ethertype)
                 context.session.add(egress_rule)
+                self._registry_notify(resources.SECURITY_GROUP,
+                                      events.PRECOMMIT_CREATE,
+                                      exc_cls=ext_sg.SecurityGroupConflict,
+                                      **kwargs)
 
         secgroup_dict = self._make_security_group_dict(security_group_db)
 
@@ -258,18 +268,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'security_group_id': id,
             'security_group': sg,
         }
-        # NOTE(armax): a callback exception here will prevent the request
-        # from being processed. This is a hook point for backend's validation;
-        # we raise to propagate the reason for the failure.
-        try:
-            registry.notify(
-                resources.SECURITY_GROUP, events.BEFORE_DELETE, self,
-                **kwargs)
-        except exceptions.CallbackFailure as e:
-            reason = _('cannot be deleted due to %s') % e
-            raise ext_sg.SecurityGroupInUse(id=id, reason=reason)
+        self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_DELETE,
+                              exc_cls=ext_sg.SecurityGroupInUse, id=id,
+                              **kwargs)
 
         with context.session.begin(subtransactions=True):
+            self._registry_notify(resources.SECURITY_GROUP,
+                                  events.PRECOMMIT_DELETE,
+                                  exc_cls=ext_sg.SecurityGroupInUse, id=id,
+                                  **kwargs)
             context.session.delete(sg)
 
         kwargs.pop('security_group')
@@ -284,20 +291,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'security_group_id': id,
             'security_group': s,
         }
-        # NOTE(armax): a callback exception here will prevent the request
-        # from being processed. This is a hook point for backend's validation;
-        # we raise to propagate the reason for the failure.
-        try:
-            registry.notify(
-                resources.SECURITY_GROUP, events.BEFORE_UPDATE, self,
-                **kwargs)
-        except exceptions.CallbackFailure as e:
-            raise ext_sg.SecurityGroupConflict(reason=e)
+        self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_UPDATE,
+                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
 
         with context.session.begin(subtransactions=True):
             sg = self._get_security_group(context, id)
             if sg['name'] == 'default' and 'name' in s:
                 raise ext_sg.SecurityGroupCannotUpdateDefault()
+            self._registry_notify(
+                    resources.SECURITY_GROUP,
+                    events.PRECOMMIT_UPDATE,
+                    exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
             sg.update(s)
         sg_dict = self._make_security_group_dict(sg)
 
@@ -378,15 +382,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'context': context,
             'security_group_rule': rule_dict
         }
-        # NOTE(armax): a callback exception here will prevent the request
-        # from being processed. This is a hook point for backend's validation;
-        # we raise to propagate the reason for the failure.
-        try:
-            registry.notify(
-                resources.SECURITY_GROUP_RULE, events.BEFORE_CREATE, self,
-                **kwargs)
-        except exceptions.CallbackFailure as e:
-            raise ext_sg.SecurityGroupConflict(reason=e)
+        self._registry_notify(resources.SECURITY_GROUP_RULE,
+                              events.BEFORE_CREATE,
+                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
 
         with context.session.begin(subtransactions=True):
             db = SecurityGroupRule(
@@ -401,6 +399,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 port_range_max=rule_dict['port_range_max'],
                 remote_ip_prefix=rule_dict.get('remote_ip_prefix'))
             context.session.add(db)
+            self._registry_notify(resources.SECURITY_GROUP_RULE,
+                              events.PRECOMMIT_CREATE,
+                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
         res_rule_dict = self._make_security_group_rule_dict(db)
         kwargs['security_group_rule'] = res_rule_dict
         registry.notify(
@@ -614,20 +615,19 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             'context': context,
             'security_group_rule_id': id
         }
-        # NOTE(armax): a callback exception here will prevent the request
-        # from being processed. This is a hook point for backend's validation;
-        # we raise to propagate the reason for the failure.
-        try:
-            registry.notify(
-                resources.SECURITY_GROUP_RULE, events.BEFORE_DELETE, self,
-                **kwargs)
-        except exceptions.CallbackFailure as e:
-            reason = _('cannot be deleted due to %s') % e
-            raise ext_sg.SecurityGroupRuleInUse(id=id, reason=reason)
+        self._registry_notify(resources.SECURITY_GROUP_RULE,
+                              events.BEFORE_DELETE, id=id,
+                              exc_cls=ext_sg.SecurityGroupRuleInUse, **kwargs)
 
         with context.session.begin(subtransactions=True):
             query = self._model_query(context, SecurityGroupRule).filter(
                 SecurityGroupRule.id == id)
+
+            self._registry_notify(resources.SECURITY_GROUP_RULE,
+                                  events.PRECOMMIT_DELETE,
+                                  exc_cls=ext_sg.SecurityGroupRuleInUse, id=id,
+                                  **kwargs)
+
             try:
                 # As there is a filter on a primary key it is not possible for
                 # MultipleResultsFound to be raised

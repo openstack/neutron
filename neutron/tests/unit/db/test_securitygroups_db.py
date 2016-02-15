@@ -12,16 +12,34 @@
 # limitations under the License.
 
 import mock
+import sqlalchemy
 import testtools
 
+from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup
 from neutron.tests.unit import testlib_api
+
+
+FAKE_SECGROUP = {'security_group': {"tenant_id": 'fake', 'description':
+                 'fake', 'name': 'fake'}}
+
+FAKE_SECGROUP_RULE = {'security_group_rule': {"tenant_id": 'fake',
+    'description': 'fake', 'name': 'fake', 'port_range_min':
+    '21', 'protocol': 'tcp', 'port_range_max': '23',
+    'remote_ip_prefix': '10.0.0.1', 'ethertype': 'IPv4',
+    'remote_group_id': None, 'security_group_id': 'None',
+    'direction': 'ingress'}}
+
+
+def fake_callback(resource, event, *args, **kwargs):
+    raise KeyError('bar')
 
 
 class SecurityGroupDbMixinImpl(securitygroups_db.SecurityGroupDbMixin,
@@ -103,3 +121,115 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             with testtools.ExpectedException(
                 securitygroup.SecurityGroupEthertypeConflictWithProtocol):
                 self.mixin._validate_ethertype_and_protocol(rule)
+
+    def test_security_group_precommit_create_event_fail(self):
+        registry.subscribe(fake_callback, resources.SECURITY_GROUP,
+                           events.PRECOMMIT_CREATE)
+        with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
+                              'rollback') as mock_rollback:
+            self.assertRaises(securitygroup.SecurityGroupConflict,
+                              self.mixin.create_security_group,
+                              self.ctx, FAKE_SECGROUP)
+            self.assertTrue(mock_rollback.called)
+
+    def test_security_group_precommit_update_event_fail(self):
+        registry.subscribe(fake_callback, resources.SECURITY_GROUP,
+                           events.PRECOMMIT_UPDATE)
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
+                              'rollback') as mock_rollback:
+            self.assertRaises(securitygroup.SecurityGroupConflict,
+                              self.mixin.update_security_group,
+                              self.ctx, sg_dict['id'], FAKE_SECGROUP)
+            self.assertTrue(mock_rollback.called)
+
+    def test_security_group_precommit_delete_event_fail(self):
+        registry.subscribe(fake_callback, resources.SECURITY_GROUP,
+                           events.PRECOMMIT_DELETE)
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
+                              'rollback') as mock_rollback:
+            self.assertRaises(securitygroup.SecurityGroupInUse,
+                              self.mixin.delete_security_group,
+                              self.ctx, sg_dict['id'])
+            self.assertTrue(mock_rollback.called)
+
+    def test_security_group_precommit_create_event(self):
+        with mock.patch.object(registry, "notify") as mock_notify:
+            self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+            mock_notify.assert_has_calls([mock.call('security_group',
+                'precommit_create', mock.ANY, context=mock.ANY,
+                is_default=mock.ANY, security_group=mock.ANY)])
+
+    def test_security_group_precommit_update_event(self):
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        with mock.patch.object(registry, "notify") as mock_notify:
+            self.mixin.update_security_group(self.ctx, sg_dict['id'],
+                                             FAKE_SECGROUP)
+            mock_notify.assert_has_calls([mock.call('security_group',
+                'precommit_update', mock.ANY, context=mock.ANY,
+                security_group=mock.ANY, security_group_id=sg_dict['id'])])
+
+    def test_security_group_precommit_delete_event(self):
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        with mock.patch.object(registry, "notify") as mock_notify:
+            self.mixin.delete_security_group(self.ctx, sg_dict['id'])
+            mock_notify.assert_has_calls([mock.call('security_group',
+                'precommit_delete', mock.ANY, context=mock.ANY,
+                security_group=mock.ANY, security_group_id=sg_dict['id'])])
+
+    def test_security_group_rule_precommit_create_event_fail(self):
+        registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,
+                           events.PRECOMMIT_CREATE)
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        fake_rule = FAKE_SECGROUP_RULE
+        fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
+        with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
+                              'rollback') as mock_rollback,\
+            mock.patch.object(self.mixin, '_get_security_group'):
+            self.assertRaises(securitygroup.SecurityGroupConflict,
+                              self.mixin.create_security_group_rule,
+                              self.ctx, fake_rule)
+            self.assertTrue(mock_rollback.called)
+
+    def test_security_group_rule_precommit_delete_event_fail(self):
+        registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,
+                           events.PRECOMMIT_DELETE)
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        fake_rule = FAKE_SECGROUP_RULE
+        fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
+        with mock.patch.object(sqlalchemy.orm.session.SessionTransaction,
+                              'rollback') as mock_rollback,\
+            mock.patch.object(self.mixin, '_get_security_group'):
+            sg_rule_dict = self.mixin.create_security_group_rule(self.ctx,
+                   fake_rule)
+            self.assertRaises(securitygroup.SecurityGroupRuleInUse,
+                              self.mixin.delete_security_group_rule, self.ctx,
+                              sg_rule_dict['id'])
+            self.assertTrue(mock_rollback.called)
+
+    def test_security_group_rule_precommit_create_event(self):
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        fake_rule = FAKE_SECGROUP_RULE
+        fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
+        with mock.patch.object(registry, "notify") as mock_notify, \
+            mock.patch.object(self.mixin, '_get_security_group'):
+            self.mixin.create_security_group_rule(self.ctx,
+                   fake_rule)
+            mock_notify.assert_has_calls([mock.call('security_group_rule',
+                'precommit_create', mock.ANY, context=mock.ANY,
+                security_group_rule=mock.ANY)])
+
+    def test_security_group_rule_precommit_delete_event(self):
+        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        fake_rule = FAKE_SECGROUP_RULE
+        fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
+        with mock.patch.object(registry, "notify") as mock_notify, \
+            mock.patch.object(self.mixin, '_get_security_group'):
+            sg_rule_dict = self.mixin.create_security_group_rule(self.ctx,
+                   fake_rule)
+            self.mixin.delete_security_group_rule(self.ctx,
+                    sg_rule_dict['id'])
+            mock_notify.assert_has_calls([mock.call('security_group_rule',
+                'precommit_delete', mock.ANY, context=mock.ANY,
+                security_group_rule_id=mock.ANY)])
