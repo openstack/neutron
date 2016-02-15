@@ -23,7 +23,7 @@ from neutron.agent.linux import ra
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
-from neutron.i18n import _LW
+from neutron.i18n import _, _LW
 
 LOG = logging.getLogger(__name__)
 INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
@@ -191,8 +191,9 @@ class RouterInfo(object):
             self.process_floating_ip_nat_rules()
         except Exception:
             # TODO(salv-orlando): Less broad catching
-            raise n_exc.FloatingIpSetupException(
-                'L3 agent failure to setup NAT for floating IPs')
+            msg = _('L3 agent failure to setup NAT for floating IPs')
+            LOG.exception(msg)
+            raise n_exc.FloatingIpSetupException(msg)
 
     def _add_fip_addr_to_device(self, fip, device):
         """Configures the floating ip address on the device.
@@ -264,8 +265,9 @@ class RouterInfo(object):
             return self.process_floating_ip_addresses(interface_name)
         except Exception:
             # TODO(salv-orlando): Less broad catching
-            raise n_exc.FloatingIpSetupException('L3 agent failure to setup '
-                'floating IPs')
+            msg = _('L3 agent failure to setup floating IPs')
+            LOG.exception(msg)
+            raise n_exc.FloatingIpSetupException(msg)
 
     def put_fips_in_error_state(self):
         fip_statuses = {}
