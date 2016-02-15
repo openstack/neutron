@@ -16,7 +16,7 @@ import collections
 import netaddr
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LW
+from neutron._i18n import _, _LE, _LW
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -245,8 +245,9 @@ class RouterInfo(object):
             self.process_floating_ip_nat_rules()
         except Exception:
             # TODO(salv-orlando): Less broad catching
-            raise n_exc.FloatingIpSetupException(
-                'L3 agent failure to setup NAT for floating IPs')
+            msg = _('L3 agent failure to setup NAT for floating IPs')
+            LOG.exception(msg)
+            raise n_exc.FloatingIpSetupException(msg)
 
     def _add_fip_addr_to_device(self, fip, device):
         """Configures the floating ip address on the device.
@@ -322,8 +323,9 @@ class RouterInfo(object):
             return self.process_floating_ip_addresses(interface_name)
         except Exception:
             # TODO(salv-orlando): Less broad catching
-            raise n_exc.FloatingIpSetupException('L3 agent failure to setup '
-                'floating IPs')
+            msg = _('L3 agent failure to setup floating IPs')
+            LOG.exception(msg)
+            raise n_exc.FloatingIpSetupException(msg)
 
     def put_fips_in_error_state(self):
         fip_statuses = {}
