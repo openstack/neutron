@@ -122,6 +122,7 @@ agent_opts = [
                        "to respond to an ARP request locally without "
                        "performing a costly ARP broadcast into the overlay.")),
     cfg.BoolOpt('prevent_arp_spoofing', default=True,
+                deprecated_for_removal=True,
                 help=_("Enable suppression of ARP responses that don't match "
                        "an IP address that belongs to the port from which "
                        "they originate. Note: This prevents the VMs attached "
@@ -132,7 +133,9 @@ agent_opts = [
                        "added to any ports that have port security disabled. "
                        "For LinuxBridge, this requires ebtables. For OVS, it "
                        "requires a version that supports matching ARP "
-                       "headers.")),
+                       "headers. This option will be removed in Newton so "
+                       "the only way to disable protection will be via the "
+                       "port security extension.")),
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
