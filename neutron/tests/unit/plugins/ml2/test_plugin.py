@@ -1067,6 +1067,92 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             # should have returned before calling _make_port_dict
             self.assertFalse(mpd_mock.mock_calls)
 
+    def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
+        with self.port() as port:
+            plugin = manager.NeutronManager.get_plugin()
+            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+                                                         port['port']['id'])[1]
+            binding['host'] = 'fake_host'
+            binding['vif_type'] = port_vif_type
+            # Generates port context to be used before the bind.
+            port_context = driver_context.PortContext(
+                plugin, self.context, port['port'],
+                plugin.get_network(self.context, port['port']['network_id']),
+                binding, None)
+            bound_context = mock.MagicMock()
+            # Bound context is how port_context is expected to look
+            # after _bind_port.
+            bound_context.vif_type = bound_vif_type
+            return plugin, port_context, bound_context
+
+    def test__attempt_binding(self):
+        # Simulate a successful binding for vif_type unbound
+        # and keep the same binding state for other vif types.
+        vif_types = [(portbindings.VIF_TYPE_BINDING_FAILED,
+                      portbindings.VIF_TYPE_BINDING_FAILED),
+                     (portbindings.VIF_TYPE_UNBOUND,
+                      portbindings.VIF_TYPE_OVS),
+                     (portbindings.VIF_TYPE_OVS,
+                      portbindings.VIF_TYPE_OVS)]
+
+        for port_vif_type, bound_vif_type in vif_types:
+            plugin, port_context, bound_context = (
+                self._create_port_and_bound_context(port_vif_type,
+                                                    bound_vif_type))
+            with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin._bind_port',
+                            return_value=bound_context) as bd_mock:
+                context, need_notify, try_again = (plugin._attempt_binding(
+                    port_context, False))
+                expected_need_notify = port_vif_type not in (
+                    portbindings.VIF_TYPE_BINDING_FAILED,
+                    portbindings.VIF_TYPE_OVS)
+
+                if bound_vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
+                    expected_vif_type = port_vif_type
+                    expected_try_again = True
+                    expected_bd_mock_called = True
+                else:
+                    expected_vif_type = portbindings.VIF_TYPE_OVS
+                    expected_try_again = False
+                    expected_bd_mock_called = (port_vif_type ==
+                                               portbindings.VIF_TYPE_UNBOUND)
+
+                self.assertEqual(expected_need_notify, need_notify)
+                self.assertEqual(expected_vif_type, context.vif_type)
+                self.assertEqual(expected_try_again, try_again)
+                self.assertEqual(expected_bd_mock_called, bd_mock.called)
+
+    def test__attempt_binding_retries(self):
+        # Simulate cases of both successful and failed binding states for
+        # vif_type unbound
+        vif_types = [(portbindings.VIF_TYPE_UNBOUND,
+                      portbindings.VIF_TYPE_BINDING_FAILED),
+                     (portbindings.VIF_TYPE_UNBOUND,
+                      portbindings.VIF_TYPE_OVS)]
+
+        for port_vif_type, bound_vif_type in vif_types:
+            plugin, port_context, bound_context = (
+                self._create_port_and_bound_context(port_vif_type,
+                                                    bound_vif_type))
+            with mock.patch(
+                    'neutron.plugins.ml2.plugin.Ml2Plugin._bind_port',
+                    return_value=bound_context),\
+                    mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin._commit_'
+                               'port_binding',
+                               return_value=(bound_context, True, False)),\
+                    mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
+                               '_attempt_binding',
+                               side_effect=plugin._attempt_binding) as at_mock:
+                    plugin._bind_port_if_needed(port_context)
+                    if bound_vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
+                        # An unsuccessful binding attempt should be retried
+                        # MAX_BIND_TRIES amount of times.
+                        self.assertEqual(ml2_plugin.MAX_BIND_TRIES,
+                                         at_mock.call_count)
+                    else:
+                        # Successful binding should only be attempted once.
+                        self.assertEqual(1, at_mock.call_count)
+
     def test_port_binding_profile_not_changed(self):
         profile = {'e': 5}
         profile_arg = {portbindings.PROFILE: profile}

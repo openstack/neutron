@@ -301,18 +301,32 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _bind_port_if_needed(self, context, allow_notify=False,
                              need_notify=False):
-        # Binding limit does not need to be tunable because no
-        # more than a couple of attempts should ever be required in
-        # normal operation.
         for count in range(1, MAX_BIND_TRIES + 1):
             if count > 1:
+                # yield for binding retries so that we give other threads a
+                # chance to do their work
+                greenthread.sleep(0)
+
                 # multiple attempts shouldn't happen very often so we log each
                 # attempt after the 1st.
-                greenthread.sleep(0)  # yield
                 LOG.info(_LI("Attempt %(count)s to bind port %(port)s"),
                          {'count': count, 'port': context.current['id']})
-            context, need_notify, try_again = self._attempt_binding(
+
+            bind_context, need_notify, try_again = self._attempt_binding(
                 context, need_notify)
+
+            if count == MAX_BIND_TRIES or not try_again:
+                if self._should_bind_port(context):
+                    # At this point, we attempted to bind a port and reached
+                    # its final binding state. Binding either succeeded or
+                    # exhausted all attempts, thus no need to try again.
+                    # Now, the port and its binding state should be committed.
+                    context, need_notify, try_again = (
+                        self._commit_port_binding(context, bind_context,
+                                                  need_notify, try_again))
+                else:
+                    context = bind_context
+
             if not try_again:
                 if allow_notify and need_notify:
                     self._notify_port_updated(context)
@@ -323,50 +337,26 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                   {'port': context.current['id'], 'max': MAX_BIND_TRIES})
         return context
 
-    def _attempt_binding(self, context, need_notify):
-        # Since the mechanism driver bind_port() calls must be made
-        # outside a DB transaction locking the port state, it is
-        # possible (but unlikely) that the port's state could change
-        # concurrently while these calls are being made. If another
-        # thread or process succeeds in binding the port before this
-        # thread commits its results, the already committed results are
-        # used. If attributes such as binding:host_id,
-        # binding:profile, or binding:vnic_type are updated
-        # concurrently, the try_again flag is returned to indicate that
-        # the commit was unsuccessful.
-        plugin_context = context._plugin_context
-        port_id = context.current['id']
-        binding = context._binding
-        try_again = False
-        # First, determine whether it is necessary and possible to
-        # bind the port.
-        if (binding.vif_type != portbindings.VIF_TYPE_UNBOUND
-                or not binding.host):
-            # We either don't need to bind the port or can't
-            return context, need_notify, try_again
+    def _should_bind_port(self, context):
+        return (context._binding.host and context._binding.vif_type
+                in (portbindings.VIF_TYPE_UNBOUND,
+                    portbindings.VIF_TYPE_BINDING_FAILED))
 
-        # The port isn't already bound and the necessary
-        # information is available, so attempt to bind the port.
-        bind_context = self._bind_port(context)
-        # Now try to commit result of attempting to bind the port.
-        new_context, did_commit = self._commit_port_binding(
-            plugin_context, port_id, binding, bind_context)
-        if not new_context:
-            # The port has been deleted concurrently, so just
-            # return the unbound result from the initial
-            # transaction that completed before the deletion.
-            LOG.debug("Port %s has been deleted concurrently",
-                      port_id)
-            need_notify = False
-            return context, need_notify, try_again
-        # Need to notify if we succeed and our results were
-        # committed.
-        if did_commit and (new_context._binding.vif_type !=
-                           portbindings.VIF_TYPE_BINDING_FAILED):
-            need_notify = True
-            return new_context, need_notify, try_again
-        try_again = True
-        return new_context, need_notify, try_again
+    def _attempt_binding(self, context, need_notify):
+        try_again = False
+
+        if self._should_bind_port(context):
+            bind_context = self._bind_port(context)
+
+            if bind_context.vif_type != portbindings.VIF_TYPE_BINDING_FAILED:
+                # Binding succeeded. Suggest notifying of successful binding.
+                need_notify = True
+            else:
+                # Current attempt binding failed, try to bind again.
+                try_again = True
+            context = bind_context
+
+        return context, need_notify, try_again
 
     def _bind_port(self, orig_context):
         # Construct a new PortContext from the one from the previous
@@ -390,10 +380,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.bind_port(new_context)
         return new_context
 
-    def _commit_port_binding(self, plugin_context, port_id, orig_binding,
-                             new_context):
+    def _commit_port_binding(self, orig_context, bind_context,
+                             need_notify, try_again):
+        port_id = orig_context.current['id']
+        plugin_context = orig_context._plugin_context
         session = plugin_context.session
-        new_binding = new_context._binding
+        orig_binding = orig_context._binding
+        new_binding = bind_context._binding
 
         # After we've attempted to bind the port, we begin a
         # transaction, get the current port state, and decide whether
@@ -404,12 +397,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # mechanism driver update_port_*commit() calls.
             port_db, cur_binding = db.get_locked_port_and_binding(session,
                                                                   port_id)
+            # Since the mechanism driver bind_port() calls must be made
+            # outside a DB transaction locking the port state, it is
+            # possible (but unlikely) that the port's state could change
+            # concurrently while these calls are being made. If another
+            # thread or process succeeds in binding the port before this
+            # thread commits its results, the already committed results are
+            # used. If attributes such as binding:host_id, binding:profile,
+            # or binding:vnic_type are updated concurrently, the try_again
+            # flag is returned to indicate that the commit was unsuccessful.
             if not port_db:
-                # The port has been deleted concurrently.
-                return (None, False)
+                # The port has been deleted concurrently, so just
+                # return the unbound result from the initial
+                # transaction that completed before the deletion.
+                LOG.debug("Port %s has been deleted concurrently", port_id)
+                return orig_context, False, False
             oport = self._make_port_dict(port_db)
             port = self._make_port_dict(port_db)
-            network = new_context.network.current
+            network = bind_context.network.current
             if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
                 # REVISIT(rkukura): The PortBinding instance from the
                 # ml2_port_bindings table, returned as cur_binding
@@ -453,29 +458,34 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 cur_binding.vif_type = new_binding.vif_type
                 cur_binding.vif_details = new_binding.vif_details
                 db.clear_binding_levels(session, port_id, cur_binding.host)
-                db.set_binding_levels(session, new_context._binding_levels)
-                cur_context._binding_levels = new_context._binding_levels
+                db.set_binding_levels(session, bind_context._binding_levels)
+                cur_context._binding_levels = bind_context._binding_levels
 
                 # Update PortContext's port dictionary to reflect the
                 # updated binding state.
                 self._update_port_dict_binding(port, cur_binding)
 
                 # Update the port status if requested by the bound driver.
-                if (new_context._binding_levels and
-                    new_context._new_port_status):
-                    port_db.status = new_context._new_port_status
-                    port['status'] = new_context._new_port_status
+                if (bind_context._binding_levels and
+                    bind_context._new_port_status):
+                    port_db.status = bind_context._new_port_status
+                    port['status'] = bind_context._new_port_status
 
                 # Call the mechanism driver precommit methods, commit
                 # the results, and call the postcommit methods.
                 self.mechanism_manager.update_port_precommit(cur_context)
         if commit:
+            # Continue, using the port state as of the transaction that
+            # just finished, whether that transaction committed new
+            # results or discovered concurrent port state changes.
+            # Also, Trigger notification for successful binding commit.
             self.mechanism_manager.update_port_postcommit(cur_context)
+            need_notify = True
+            try_again = False
+        else:
+            try_again = True
 
-        # Continue, using the port state as of the transaction that
-        # just finished, whether that transaction committed new
-        # results or discovered concurrent port state changes.
-        return (cur_context, commit)
+        return cur_context, need_notify, try_again
 
     def _update_port_dict_binding(self, port, binding):
         port[portbindings.VNIC_TYPE] = binding.vnic_type

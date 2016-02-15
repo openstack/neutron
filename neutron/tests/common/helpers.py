@@ -142,6 +142,13 @@ def kill_agent(agent_id):
             'heartbeat_timestamp': hour_ago}})
 
 
+def revive_agent(agent_id):
+    now = timeutils.utcnow()
+    FakePlugin().update_agent(
+        context.get_admin_context(), agent_id,
+        {'agent': {'started_at': now, 'heartbeat_timestamp': now}})
+
+
 def set_agent_admin_state(agent_id, admin_state_up=False):
     FakePlugin().update_agent(
         context.get_admin_context(),
