@@ -14,6 +14,7 @@ import copy
 
 import mock
 from oslo_db import exception as obj_exc
+from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -77,7 +78,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.IntegerField: tools.get_random_integer,
     obj_fields.StringField: tools.get_random_string,
-    obj_fields.UUIDField: tools.get_random_string,
+    obj_fields.UUIDField: uuidutils.generate_uuid,
     obj_fields.ListOfObjectsField: lambda: []
 }
 

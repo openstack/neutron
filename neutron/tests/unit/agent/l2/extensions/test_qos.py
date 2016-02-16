@@ -29,10 +29,9 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.services.qos import qos_consts
 from neutron.tests import base
 
-
 BASE_TEST_POLICY = {'context': None,
                     'name': 'test1',
-                    'id': 'fake_policy_id'}
+                    'id': uuidutils.generate_uuid()}
 
 TEST_POLICY = policy.QosPolicy(**BASE_TEST_POLICY)
 
@@ -40,13 +39,16 @@ TEST_POLICY_DESCR = policy.QosPolicy(description='fake_descr',
                                      **BASE_TEST_POLICY)
 
 TEST_POLICY2 = policy.QosPolicy(context=None,
-                                name='test2', id='fake_policy_id_2')
+                                name='test2', id=uuidutils.generate_uuid())
 
 TEST_PORT = {'port_id': 'test_port_id',
              'qos_policy_id': TEST_POLICY.id}
 
 TEST_PORT2 = {'port_id': 'test_port_id_2',
              'qos_policy_id': TEST_POLICY2.id}
+
+FAKE_RULE_ID = uuidutils.generate_uuid()
+REALLY_FAKE_RULE_ID = uuidutils.generate_uuid()
 
 
 class FakeDriver(qos.QosAgentDriver):
@@ -75,14 +77,14 @@ class QosAgentDriverTestCase(base.BaseTestCase):
         self.driver = FakeDriver()
         self.policy = TEST_POLICY
         self.rule = (
-            rule.QosBandwidthLimitRule(context=None, id='fake_rule_id',
+            rule.QosBandwidthLimitRule(context=None, id=FAKE_RULE_ID,
                                        qos_policy_id=self.policy.id,
                                        max_kbps=100, max_burst_kbps=200))
         self.policy.rules = [self.rule]
         self.port = {'qos_policy_id': None, 'network_qos_policy_id': None,
                      'device_owner': 'random-device-owner'}
 
-        self.fake_rule = QosFakeRule(context=None, id='really_fake_rule_id',
+        self.fake_rule = QosFakeRule(context=None, id=REALLY_FAKE_RULE_ID,
                                      qos_policy_id=self.policy.id)
 
     def test_create(self):
@@ -304,7 +306,7 @@ class QosExtensionReflushRulesTestCase(QosExtensionBaseTestCase):
 
         self.policy = policy.QosPolicy(**BASE_TEST_POLICY)
         self.rule = (
-            rule.QosBandwidthLimitRule(context=None, id='fake_rule_id',
+            rule.QosBandwidthLimitRule(context=None, id=FAKE_RULE_ID,
                                        qos_policy_id=self.policy.id,
                                        max_kbps=100, max_burst_kbps=10))
         self.policy.rules = [self.rule]
@@ -322,7 +324,7 @@ class QosExtensionReflushRulesTestCase(QosExtensionBaseTestCase):
     def test_is_reflush_required_change_policy_rule(self):
         self.qos_ext.policy_map.set_port_policy(self.port, self.policy)
         updated_rule = (rule.QosBandwidthLimitRule(context=None,
-                                                id='fake_rule_id',
+                                                id=FAKE_RULE_ID,
                                                 qos_policy_id=self.policy.id,
                                                 max_kbps=200,
                                                 max_burst_kbps=20))
@@ -339,7 +341,7 @@ class QosExtensionReflushRulesTestCase(QosExtensionBaseTestCase):
     def test_is_reflush_required_add_rules(self):
         self.qos_ext.policy_map.set_port_policy(self.port, self.policy)
         self.new_policy.rules = [self.rule]
-        fake_rule = QosFakeRule(context=None, id='really_fake_rule_id',
+        fake_rule = QosFakeRule(context=None, id=REALLY_FAKE_RULE_ID,
                                 qos_policy_id=self.policy.id)
         self.new_policy.rules.append(fake_rule)
         self.assertTrue(self.qos_ext._policy_rules_modified(self.policy,
