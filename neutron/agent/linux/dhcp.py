@@ -368,7 +368,7 @@ class Dnsmasq(DhcpLocalProcess):
                 possible_leases += cidr.size
 
         if cfg.CONF.advertise_mtu:
-            mtu = self.network.mtu
+            mtu = getattr(self.network, 'mtu', 0)
             # Do not advertise unknown mtu
             if mtu > 0:
                 cmd.append('--dhcp-option-force=option:mtu,%d' % mtu)
