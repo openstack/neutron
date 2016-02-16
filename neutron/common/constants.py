@@ -47,6 +47,7 @@ PAGINATION_INFINITE = 'infinite'
 SORT_DIRECTION_ASC = 'asc'
 SORT_DIRECTION_DESC = 'desc'
 
+ETHERTYPE_NAME_ARP = 'arp'
 ETHERTYPE_IPV6 = 0x86DD
 
 # Protocol names and numbers for Security Groups/Firewalls

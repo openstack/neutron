@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from neutron.agent import firewall
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import constants
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
@@ -52,8 +53,8 @@ class ConnectionTester(fixtures.Fixture):
 
     UDP = net_helpers.NetcatTester.UDP
     TCP = net_helpers.NetcatTester.TCP
-    ICMP = 'icmp'
-    ARP = 'arp'
+    ICMP = constants.PROTO_NAME_ICMP
+    ARP = constants.ETHERTYPE_NAME_ARP
     INGRESS = firewall.INGRESS_DIRECTION
     EGRESS = firewall.EGRESS_DIRECTION
 
