@@ -130,8 +130,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             registry.notify(res, event, self, **kwargs)
         except exceptions.CallbackFailure as e:
             if exc_cls:
-                reason = _('cannot perform %(event)s due to %(reason)s'), {
-                           'event': event, 'reason': e}
+                reason = (_('cannot perform %(event)s due to %(reason)s') %
+                          {'event': event, 'reason': e})
                 raise exc_cls(reason=reason, id=id)
 
     def create_security_group(self, context, security_group, default_sg=False):
