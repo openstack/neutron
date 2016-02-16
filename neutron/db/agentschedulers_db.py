@@ -259,14 +259,14 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         cutoff = self.get_cutoff_time(agent_dead_limit)
 
         context = ncontext.get_admin_context()
-        down_bindings = (
-            context.session.query(NetworkDhcpAgentBinding).
-            join(agents_db.Agent).
-            filter(agents_db.Agent.heartbeat_timestamp < cutoff,
-                   agents_db.Agent.admin_state_up))
-        dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
-
         try:
+            down_bindings = (
+                context.session.query(NetworkDhcpAgentBinding).
+                join(agents_db.Agent).
+                filter(agents_db.Agent.heartbeat_timestamp < cutoff,
+                       agents_db.Agent.admin_state_up))
+            dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
+
             for binding in self._filter_bindings(context, down_bindings):
                 LOG.warn(_LW("Removing network %(network)s from agent "
                              "%(agent)s because the agent did not report "
