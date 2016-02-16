@@ -20,6 +20,7 @@ import mock
 from oslo_config import cfg
 import oslo_messaging as messaging
 from oslo_messaging import conffixture as messaging_conffixture
+import testtools
 
 from neutron.common import rpc
 from neutron import context
@@ -140,7 +141,7 @@ class TestRPC(base.DietTestCase):
         self.assertEqual(['foo', 'bar'], exmods)
 
     @mock.patch.object(rpc, 'RequestContextSerializer')
-    @mock.patch.object(messaging, 'RPCClient')
+    @mock.patch.object(rpc, 'BackingOffClient')
     def test_get_client(self, mock_client, mock_ser):
         rpc.TRANSPORT = mock.Mock()
         tgt = mock.Mock()
@@ -302,6 +303,132 @@ class ServiceTestCase(base.DietTestCase):
             service.stop()
             rpc_server.stop.assert_called_once_with()
             rpc_server.wait.assert_called_once_with()
+
+
+class TimeoutTestCase(base.DietTestCase):
+    def setUp(self):
+        super(TimeoutTestCase, self).setUp()
+
+        self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
+        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.response_timeout = 0
+        self.useFixture(self.messaging_conf)
+
+        self.addCleanup(rpc.cleanup)
+        rpc.init(CONF)
+        rpc.TRANSPORT = mock.MagicMock()
+        rpc.TRANSPORT._send.side_effect = messaging.MessagingTimeout
+        target = messaging.Target(version='1.0', topic='testing')
+        self.client = rpc.get_client(target)
+        self.call_context = mock.Mock()
+        self.sleep = mock.patch('time.sleep').start()
+        rpc.TRANSPORT.conf.rpc_response_timeout = 10
+
+    def test_timeout_unaffected_when_explicitly_set(self):
+        rpc.TRANSPORT.conf.rpc_response_timeout = 5
+        ctx = self.client.prepare(topic='sandwiches', timeout=77)
+        with testtools.ExpectedException(messaging.MessagingTimeout):
+            ctx.call(self.call_context, 'create_pb_and_j')
+        # ensure that the timeout was not increased and the back-off sleep
+        # wasn't called
+        self.assertEqual(
+            5, rpc._ContextWrapper._METHOD_TIMEOUTS['create_pb_and_j'])
+        self.assertFalse(self.sleep.called)
+
+    def test_timeout_store_defaults(self):
+        # any method should default to the configured timeout
+        self.assertEqual(rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+        self.assertEqual(rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_2'])
+        # a change to an existing should not affect new or existing ones
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_2'] = 7000
+        self.assertEqual(rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+        self.assertEqual(rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_3'])
+
+    def test_method_timeout_sleep(self):
+        rpc.TRANSPORT.conf.rpc_response_timeout = 2
+        for i in range(100):
+            with testtools.ExpectedException(messaging.MessagingTimeout):
+                self.client.call(self.call_context, 'method_1')
+            # sleep value should always be between 0 and configured timeout
+            self.assertGreaterEqual(self.sleep.call_args_list[0][0][0], 0)
+            self.assertLessEqual(self.sleep.call_args_list[0][0][0], 2)
+            self.sleep.reset_mock()
+
+    def test_method_timeout_increases_on_timeout_exception(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 1
+        for i in range(5):
+            with testtools.ExpectedException(messaging.MessagingTimeout):
+                self.client.call(self.call_context, 'method_1')
+
+        # we only care to check the timeouts sent to the transport
+        timeouts = [call[1]['timeout']
+                    for call in rpc.TRANSPORT._send.call_args_list]
+        self.assertEqual([1, 2, 4, 8, 16], timeouts)
+
+    def test_method_timeout_10x_config_ceiling(self):
+        rpc.TRANSPORT.conf.rpc_response_timeout = 10
+        # 5 doublings should max out at the 10xdefault ceiling
+        for i in range(5):
+            with testtools.ExpectedException(messaging.MessagingTimeout):
+                self.client.call(self.call_context, 'method_1')
+        self.assertEqual(10 * rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+        with testtools.ExpectedException(messaging.MessagingTimeout):
+            self.client.call(self.call_context, 'method_1')
+        self.assertEqual(10 * rpc.TRANSPORT.conf.rpc_response_timeout,
+                         rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+
+    def test_timeout_unchanged_on_other_exception(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 1
+        rpc.TRANSPORT._send.side_effect = ValueError
+        with testtools.ExpectedException(ValueError):
+            self.client.call(self.call_context, 'method_1')
+        rpc.TRANSPORT._send.side_effect = messaging.MessagingTimeout
+        with testtools.ExpectedException(messaging.MessagingTimeout):
+            self.client.call(self.call_context, 'method_1')
+        timeouts = [call[1]['timeout']
+                    for call in rpc.TRANSPORT._send.call_args_list]
+        self.assertEqual([1, 1], timeouts)
+
+    def test_timeouts_for_methods_tracked_independently(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 1
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_2'] = 1
+        for method in ('method_1', 'method_1', 'method_2',
+                       'method_1', 'method_2'):
+            with testtools.ExpectedException(messaging.MessagingTimeout):
+                self.client.call(self.call_context, method)
+        timeouts = [call[1]['timeout']
+                    for call in rpc.TRANSPORT._send.call_args_list]
+        self.assertEqual([1, 2, 1, 4, 2], timeouts)
+
+    def test_timeouts_for_namespaces_tracked_independently(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['ns1.method'] = 1
+        rpc._ContextWrapper._METHOD_TIMEOUTS['ns2.method'] = 1
+        for ns in ('ns1', 'ns2'):
+            self.client.target.namespace = ns
+            for i in range(4):
+                with testtools.ExpectedException(messaging.MessagingTimeout):
+                    self.client.call(self.call_context, 'method')
+        timeouts = [call[1]['timeout']
+                    for call in rpc.TRANSPORT._send.call_args_list]
+        self.assertEqual([1, 2, 4, 8, 1, 2, 4, 8], timeouts)
+
+    def test_method_timeout_increases_with_prepare(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 1
+        ctx = self.client.prepare(version='1.4')
+        with testtools.ExpectedException(messaging.MessagingTimeout):
+            ctx.call(self.call_context, 'method_1')
+        with testtools.ExpectedException(messaging.MessagingTimeout):
+            ctx.call(self.call_context, 'method_1')
+
+        # we only care to check the timeouts sent to the transport
+        timeouts = [call[1]['timeout']
+                    for call in rpc.TRANSPORT._send.call_args_list]
+        self.assertEqual([1, 2], timeouts)
 
 
 class TestConnection(base.DietTestCase):
