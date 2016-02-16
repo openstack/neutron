@@ -31,6 +31,15 @@ from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovs_agent
 
 
+def agent_main_wrapper(bridge_classes):
+    ovs_agent.main(bridge_classes)
+    # The following call terminates Ryu's AppManager.run_apps(),
+    # which is needed for clean shutdown of an agent process.
+    # The close() call must be called in another thread, otherwise
+    # it suicides and ends prematurely.
+    hub.spawn(app_manager.AppManager.get_instance().close)
+
+
 class OVSNeutronAgentRyuApp(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
@@ -47,4 +56,4 @@ class OVSNeutronAgentRyuApp(app_manager.RyuApp):
             'br_phys': _make_br_cls(br_phys.OVSPhysicalBridge),
             'br_tun': _make_br_cls(br_tun.OVSTunnelBridge),
         }
-        return hub.spawn(ovs_agent.main, bridge_classes)
+        return hub.spawn(agent_main_wrapper, bridge_classes)
