@@ -35,7 +35,7 @@ CONF = cfg.CONF
 
 # This message will be written to temporary file each time
 # start method is called.
-FAKE_START_MSG = "start".encode("utf-8")
+FAKE_START_MSG = b"start"
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 

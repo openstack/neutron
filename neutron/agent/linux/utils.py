@@ -29,8 +29,8 @@ from eventlet import greenthread
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_rootwrap import client
+from oslo_utils import encodeutils
 from oslo_utils import excutils
-import six
 from six.moves import http_client as httplib
 
 from neutron._i18n import _, _LE
@@ -104,11 +104,10 @@ def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False):
     try:
-        if (process_input is None or
-            isinstance(process_input, six.binary_type)):
-            _process_input = process_input
+        if process_input is not None:
+            _process_input = encodeutils.to_utf8(process_input)
         else:
-            _process_input = process_input.encode('utf-8')
+            _process_input = None
         if run_as_root and cfg.CONF.AGENT.root_helper_daemon:
             returncode, _stdout, _stderr = (
                 execute_rootwrap_daemon(cmd, process_input, addl_env))
@@ -153,8 +152,7 @@ def get_interface_mac(interface):
     MAC_END = 24
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     dev = interface[:constants.DEVICE_NAME_MAX_LEN]
-    if isinstance(dev, six.text_type):
-        dev = dev.encode('utf-8')
+    dev = encodeutils.to_utf8(dev)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]

@@ -20,7 +20,7 @@ import hashlib
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
+from oslo_utils import encodeutils
 import webob.exc
 
 from neutron._i18n import _, _LI
@@ -180,10 +180,7 @@ def get_interface_name(name, prefix='', max_len=n_const.DEVICE_NAME_MAX_LEN):
                            "given length for an interface name."))
 
     namelen = max_len - len(prefix) - INTERFACE_HASH_LEN
-    if isinstance(name, six.text_type):
-        hashed_name = hashlib.sha1(name.encode('utf-8'))
-    else:
-        hashed_name = hashlib.sha1(name)
+    hashed_name = hashlib.sha1(encodeutils.to_utf8(name))
     new_name = ('%(prefix)s%(truncated)s%(hash)s' %
                 {'prefix': prefix, 'truncated': name[0:namelen],
                  'hash': hashed_name.hexdigest()[0:INTERFACE_HASH_LEN]})

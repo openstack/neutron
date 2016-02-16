@@ -135,12 +135,11 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
             self.mock_popen.return_value = [bytes_odata, b'']
             result = utils.execute(['cat'], process_input=str_idata)
             self.mock_popen.assert_called_once_with(bytes_idata)
-            self.assertEqual(str_odata, result)
         else:
             self.mock_popen.return_value = [str_odata, '']
             result = utils.execute(['cat'], process_input=str_idata)
             self.mock_popen.assert_called_once_with(str_idata)
-            self.assertEqual(str_odata, result)
+        self.assertEqual(str_odata, result)
 
     def test_return_str_data(self):
         str_data = "%s\n" % self.test_file
