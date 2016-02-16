@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 
 from neutron.api.rpc.callbacks import events
 from neutron import context
@@ -30,16 +31,16 @@ class TestQosRpcNotificationDriver(base.BaseQosTestCase):
                                  '.ResourcesPushRpcApi').start()
         self.rpc_api = rpc_api_cls.return_value
         self.driver = message_queue.RpcQosServiceNotificationDriver()
-
+        policy_id = uuidutils.generate_uuid()
         self.policy_data = {'policy': {
-                            'id': 7777777,
-                            'tenant_id': 888888,
+                            'id': policy_id,
+                            'tenant_id': uuidutils.generate_uuid(),
                             'name': 'testi-policy',
                             'description': 'test policyi description',
                             'shared': True}}
 
         self.rule_data = {'bandwidth_limit_rule': {
-                            'id': 7777777,
+                            'id': policy_id,
                             'max_kbps': 100,
                             'max_burst_kbps': 150}}
 

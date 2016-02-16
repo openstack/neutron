@@ -12,6 +12,7 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -49,15 +50,16 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.qos_plugin.notification_driver_manager = mock.Mock()
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
+        policy_id = uuidutils.generate_uuid()
         self.policy_data = {
-            'policy': {'id': 7777777,
-                       'tenant_id': 888888,
+            'policy': {'id': policy_id,
+                       'tenant_id': uuidutils.generate_uuid(),
                        'name': 'test-policy',
                        'description': 'Test policy description',
                        'shared': True}}
 
         self.rule_data = {
-            'bandwidth_limit_rule': {'id': 7777777,
+            'bandwidth_limit_rule': {'id': policy_id,
                                      'max_kbps': 100,
                                      'max_burst_kbps': 150}}
 
