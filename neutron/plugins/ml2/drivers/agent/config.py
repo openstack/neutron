@@ -31,6 +31,7 @@ agent_opts = [
     # should be moved into a common agent config options location as part of
     # the deduplication work.
     cfg.BoolOpt('prevent_arp_spoofing', default=True,
+                deprecated_for_removal=True,
                 help=_("Enable suppression of ARP responses that don't match "
                        "an IP address that belongs to the port from which "
                        "they originate. Note: This prevents the VMs attached "
@@ -41,7 +42,9 @@ agent_opts = [
                        "added to any ports that have port security disabled. "
                        "For LinuxBridge, this requires ebtables. For OVS, it "
                        "requires a version that supports matching ARP "
-                       "headers."))
+                       "headers. This option will be removed in Newton so "
+                       "the only way to disable protection will be via the "
+                       "port security extension."))
 ]
 
 cfg.CONF.register_opts(agent_opts, "AGENT")
