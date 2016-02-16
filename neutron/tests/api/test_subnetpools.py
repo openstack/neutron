@@ -17,9 +17,7 @@ from tempest import test
 from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
-from neutron.tests.tempest import config
 
-CONF = config.CONF
 SUBNETPOOL_NAME = 'smoke-subnetpool'
 SUBNET_NAME = 'smoke-subnet'
 

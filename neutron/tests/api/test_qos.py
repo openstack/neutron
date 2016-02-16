@@ -18,9 +18,6 @@ import testtools
 
 from neutron.services.qos import qos_consts
 from neutron.tests.api import base
-from neutron.tests.tempest import config
-
-CONF = config.CONF
 
 
 class QosTestJSON(base.BaseAdminNetworkTest):
