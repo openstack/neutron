@@ -352,6 +352,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | api_                          | A bug affecting the API layer         | Salvatore Orlando    |
 +-------------------------------+---------------------------------------+----------------------+
+| auto-allocated-topology_      | A bug affecting get-me-a-network      | Henry Gessau         |
++-------------------------------+---------------------------------------+----------------------+
 | baremetal_                    | A bug affecting Ironic support        | Sukhdev Kapur        |
 +-------------------------------+---------------------------------------+----------------------+
 | db_                           | A bug affecting the DB layer          | Henry Gessau         |
@@ -444,6 +446,14 @@ API
 
 * `API - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=api>`_
 * `API - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=api>`_
+
+.. _auto-allocated-topology:
+
+Auto Allocated Topology
++++++++++++++++++++++++
+
+* `Auto Allocated Topology - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=auto-allocated-topology>`_
+* `Auto Allocated Topology - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=auto-allocated-topology>`_
 
 .. _baremetal:
 
