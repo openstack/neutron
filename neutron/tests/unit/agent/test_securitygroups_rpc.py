@@ -1277,12 +1277,12 @@ class SecurityGroupAgentEnhancedRpcTestCase(
             'fake_sgid2', {'IPv4': [], 'IPv6': []})
         # ignore device which is not filtered
         self.firewall.assert_has_calls([mock.call.defer_apply(),
-                                        mock.call.prepare_port_filter(
-                                            self.fake_device),
                                         mock.call.update_security_group_rules(
                                             'fake_sgid2', []),
                                         tmp_mock1,
                                         tmp_mock2,
+                                        mock.call.prepare_port_filter(
+                                            self.fake_device),
                                         mock.call.defer_apply(),
                                         mock.call.remove_port_filter(
                                             self.fake_device),
@@ -1327,39 +1327,40 @@ class SecurityGroupAgentEnhancedRpcTestCase(
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.refresh_firewall()
         calls = [mock.call.defer_apply(),
-                 mock.call.prepare_port_filter(self.fake_device),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules(
                      'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members(
                      'fake_sgid2', {'IPv4': [], 'IPv6': []}),
+                 mock.call.prepare_port_filter(self.fake_device),
                  mock.call.defer_apply(),
-                 mock.call.update_port_filter(self.fake_device),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules(
                      'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members(
-                     'fake_sgid2', {'IPv4': [], 'IPv6': []})]
+                     'fake_sgid2', {'IPv4': [], 'IPv6': []}),
+                 mock.call.update_port_filter(self.fake_device)]
+
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_devices_enhanced_rpc(self):
         self.agent.prepare_devices_filter(['fake_device'])
         self.agent.refresh_firewall([self.fake_device])
         calls = [mock.call.defer_apply(),
-                 mock.call.prepare_port_filter(self.fake_device),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
                      {'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members('fake_sgid2', {
                      'IPv4': [], 'IPv6': []
                  }),
+                 mock.call.prepare_port_filter(self.fake_device),
                  mock.call.defer_apply(),
-                 mock.call.update_port_filter(self.fake_device),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
                      {'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members('fake_sgid2', {
-                     'IPv4': [], 'IPv6': []})
+                     'IPv4': [], 'IPv6': []}),
+                 mock.call.update_port_filter(self.fake_device)
                  ]
         self.firewall.assert_has_calls(calls)
 
