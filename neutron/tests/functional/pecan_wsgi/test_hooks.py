@@ -23,6 +23,7 @@ from neutron import context
 from neutron.db.quota import driver as quota_driver
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource
+from neutron.pecan_wsgi.hooks import policy_enforcement as pe
 from neutron import policy
 from neutron.tests.functional.pecan_wsgi import test_functional
 
@@ -220,7 +221,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         self.assertNotIn('restricted_attr', json_response['mehs'][0])
 
 
-class TestNotifierHook(test_functional.PecanFunctionalTest):
+class TestDHCPNotifierHook(test_functional.PecanFunctionalTest):
 
     def setUp(self):
         # the DHCP notifier needs to be mocked so that correct operations can
@@ -230,7 +231,7 @@ class TestNotifierHook(test_functional.PecanFunctionalTest):
         patcher = mock.patch('neutron.api.rpc.agentnotifiers.'
                              'dhcp_rpc_agent_api.DhcpAgentNotifyAPI.notify')
         self.mock_notifier = patcher.start()
-        super(TestNotifierHook, self).setUp()
+        super(TestDHCPNotifierHook, self).setUp()
 
     def test_dhcp_notifications_disabled(self):
         cfg.CONF.set_override('dhcp_agent_notification', False)
@@ -290,3 +291,73 @@ class TestNotifierHook(test_functional.PecanFunctionalTest):
         self.mock_notifier.assert_has_calls(
             [mock.call(mock.ANY, {'network': item_1}, 'network.create.end'),
              mock.call(mock.ANY, {'network': item_2}, 'network.create.end')])
+
+
+class TestNovaNotifierHook(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        patcher = mock.patch('neutron.pecan_wsgi.hooks.notifier.NotifierHook.'
+                             '_nova_notify')
+        self.mock_notifier = patcher.start()
+        super(TestNovaNotifierHook, self).setUp()
+
+    def test_nova_notifications_disabled(self):
+        cfg.CONF.set_override('notify_nova_on_port_data_changes', False)
+        self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh'}},
+            headers={'X-Project-Id': 'tenid'})
+        self.assertFalse(self.mock_notifier.called)
+
+    def test_post_put_delete_triggers_notification(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh'}}, headers=req_headers)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.mock_notifier.assert_called_once_with('create', 'network', {},
+                                                   json_body)
+        self.mock_notifier.reset_mock()
+        network_id = json_body['network']['id']
+
+        # NOTE(kevinbenton): the original passed into the notifier does
+        # not contain all of the fields of the object. Only those required
+        # by the policy engine are included.
+        orig = pe.fetch_resource(context.get_admin_context(),
+                                 'network', network_id)
+        response = self.app.put_json(
+            '/v2.0/networks/%s.json' % network_id,
+            params={'network': {'name': 'meh-2'}},
+            headers=req_headers)
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.mock_notifier.assert_called_once_with('update', 'network',
+                                                   orig, json_body)
+        self.mock_notifier.reset_mock()
+
+        orig = pe.fetch_resource(context.get_admin_context(),
+                                 'network', network_id)
+        response = self.app.delete(
+            '/v2.0/networks/%s.json' % network_id, headers=req_headers)
+        self.assertEqual(204, response.status_int)
+        # No need to validate data content sent to the notifier as it's just
+        # going to load the object from the database
+        self.mock_notifier.assert_called_once_with('delete', 'network', {},
+                                                   {'network': orig})
+
+    def test_bulk_create_triggers_notifications(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params={'networks': [{'name': 'meh_1'},
+                                 {'name': 'meh_2'}]},
+            headers=req_headers)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        item_1 = json_body['networks'][0]
+        item_2 = json_body['networks'][1]
+        self.assertEqual(
+            [mock.call('create', 'network', {}, {'network': item_1}),
+             mock.call('create', 'network', {}, {'network': item_2})],
+            self.mock_notifier.mock_calls)
