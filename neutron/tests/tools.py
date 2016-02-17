@@ -109,10 +109,15 @@ class SafeCleanupFixture(fixtures.Fixture):
         self.addCleanup(cleanUp)
 
 
-"""setup_mock_calls and verify_mock_calls are convenient methods
-to setup a sequence of mock calls.
+import unittest
 
-expected_calls_and_values is a list of (expected_call, return_value):
+from neutron.common import utils
+
+
+def setup_mock_calls(mocked_call, expected_calls_and_values):
+    """A convenient method to setup a sequence of mock calls.
+
+    expected_calls_and_values is a list of (expected_call, return_value):
 
         expected_calls_and_values = [
             (mock.call(["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
@@ -124,23 +129,34 @@ expected_calls_and_values is a list of (expected_call, return_value):
             ....
         ]
 
-* expected_call should be mock.call(expected_arg, ....)
-* return_value is passed to side_effect of a mocked call.
-  A return value or an exception can be specified.
-"""
-
-import unittest
-
-from neutron.common import utils
-
-
-def setup_mock_calls(mocked_call, expected_calls_and_values):
+    * expected_call should be mock.call(expected_arg, ....)
+    * return_value is passed to side_effect of a mocked call.
+      A return value or an exception can be specified.
+    """
     return_values = [call[1] for call in expected_calls_and_values]
     mocked_call.side_effect = return_values
 
 
 def verify_mock_calls(mocked_call, expected_calls_and_values,
                       any_order=False):
+    """A convenient method to setup a sequence of mock calls.
+
+    expected_calls_and_values is a list of (expected_call, return_value):
+
+        expected_calls_and_values = [
+            (mock.call(["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
+                        self.BR_NAME, pname]),
+             None),
+            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
+                        pname, "type=gre"]),
+             None),
+            ....
+        ]
+
+    * expected_call should be mock.call(expected_arg, ....)
+    * return_value is passed to side_effect of a mocked call.
+      A return value or an exception can be specified.
+    """
     expected_calls = [call[0] for call in expected_calls_and_values]
     mocked_call.assert_has_calls(expected_calls, any_order=any_order)
 
