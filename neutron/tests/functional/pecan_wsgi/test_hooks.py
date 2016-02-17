@@ -361,3 +361,122 @@ class TestNovaNotifierHook(test_functional.PecanFunctionalTest):
             [mock.call('create', 'network', {}, {'network': item_1}),
              mock.call('create', 'network', {}, {'network': item_2})],
             self.mock_notifier.mock_calls)
+
+
+class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        patcher = mock.patch('neutron.pecan_wsgi.hooks.notifier.NotifierHook.'
+                             '_notifier')
+        self.mock_notifier = patcher.start().info
+        super(TestMetricsNotifierHook, self).setUp()
+
+    def test_post_put_delete_triggers_notification(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        payload = {'network': {'name': 'meh'}}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params=payload, headers=req_headers)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.create.start', payload),
+             mock.call(mock.ANY, 'network.create.end', json_body)],
+            self.mock_notifier.mock_calls)
+        self.mock_notifier.reset_mock()
+        network_id = json_body['network']['id']
+
+        payload = {'network': {'name': 'meh-2'}}
+        response = self.app.put_json(
+            '/v2.0/networks/%s.json' % network_id,
+            params=payload, headers=req_headers)
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        # id should be in payload sent to notifier
+        payload['id'] = network_id
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.update.start', payload),
+             mock.call(mock.ANY, 'network.update.end', json_body)],
+            self.mock_notifier.mock_calls)
+        self.mock_notifier.reset_mock()
+
+        response = self.app.delete(
+            '/v2.0/networks/%s.json' % network_id, headers=req_headers)
+        self.assertEqual(204, response.status_int)
+        payload = {'network_id': network_id}
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.delete.start', payload),
+             mock.call(mock.ANY, 'network.delete.end', payload)],
+            self.mock_notifier.mock_calls)
+
+    def test_bulk_create_triggers_notification(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        payload = {'networks': [{'name': 'meh_1'}, {'name': 'meh_2'}]}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params=payload,
+            headers=req_headers)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.assertEqual(2, self.mock_notifier.call_count)
+        self.mock_notifier.assert_has_calls(
+            [mock.call(mock.ANY, 'network.create.start', payload),
+             mock.call(mock.ANY, 'network.create.end', json_body)])
+
+    def test_bad_create_doesnt_emit_end(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        payload = {'network': {'name': 'meh'}}
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin, 'create_network',
+                               side_effect=ValueError):
+            response = self.app.post_json(
+                '/v2.0/networks.json',
+                params=payload, headers=req_headers,
+                expect_errors=True)
+        self.assertEqual(500, response.status_int)
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.create.start', mock.ANY)],
+            self.mock_notifier.mock_calls)
+
+    def test_bad_update_doesnt_emit_end(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        payload = {'network': {'name': 'meh'}}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params=payload, headers=req_headers,
+            expect_errors=True)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.mock_notifier.reset_mock()
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin, 'update_network',
+                               side_effect=ValueError):
+            response = self.app.put_json(
+                '/v2.0/networks/%s.json' % json_body['network']['id'],
+                params=payload, headers=req_headers,
+                expect_errors=True)
+            self.assertEqual(500, response.status_int)
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.update.start', mock.ANY)],
+            self.mock_notifier.mock_calls)
+
+    def test_bad_delete_doesnt_emit_end(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        payload = {'network': {'name': 'meh'}}
+        response = self.app.post_json(
+            '/v2.0/networks.json',
+            params=payload, headers=req_headers,
+            expect_errors=True)
+        self.assertEqual(201, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.mock_notifier.reset_mock()
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(plugin, 'delete_network',
+                               side_effect=ValueError):
+            response = self.app.delete(
+                '/v2.0/networks/%s.json' % json_body['network']['id'],
+                headers=req_headers, expect_errors=True)
+            self.assertEqual(500, response.status_int)
+        self.assertEqual(
+            [mock.call(mock.ANY, 'network.delete.start', mock.ANY)],
+            self.mock_notifier.mock_calls)

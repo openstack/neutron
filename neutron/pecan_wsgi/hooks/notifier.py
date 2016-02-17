@@ -20,6 +20,7 @@ from pecan import hooks
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants
+from neutron.common import rpc as n_rpc
 from neutron import manager
 from neutron.pecan_wsgi import constants as pecan_constants
 
@@ -29,7 +30,11 @@ LOG = log.getLogger(__name__)
 class NotifierHook(hooks.PecanHook):
     priority = 135
 
-    # TODO(kevinbenton): implement ceilo notifier
+    @property
+    def _notifier(self):
+        if not hasattr(self, '_notifier_inst'):
+            self._notifier_inst = n_rpc.get_notifier('network')
+        return self._notifier_inst
 
     def _nova_notify(self, action, resource, *args):
         action_resource = '%s_%s' % (action, resource)
@@ -54,6 +59,26 @@ class NotifierHook(hooks.PecanHook):
             item = {resource_name: resource}
             LOG.debug("Sending DHCP agent notification for: %s", item)
             dhcp_agent_notifier.notify(context, item, notifier_method)
+
+    def before(self, state):
+        if state.request.method not in ('POST', 'PUT', 'DELETE'):
+            return
+        resource = state.request.context.get('resource')
+        if not resource:
+            return
+        action = pecan_constants.ACTION_MAP.get(state.request.method)
+        event = '%s.%s.start' % (resource, action)
+        if action in ('create', 'update'):
+            # notifier just gets plain old body without any treatment other
+            # than the population of the object ID being operated on
+            payload = state.request.json.copy()
+            if action == 'update':
+                payload['id'] = state.request.context.get('resource_id')
+        elif action == 'delete':
+            resource_id = state.request.context.get('resource_id')
+            payload = {resource + '_id': resource_id}
+        self._notifier.info(state.request.context.get('neutron_context'),
+                            event, payload)
 
     def after(self, state):
         # if the after hook is executed the request completed successfully and
@@ -109,3 +134,24 @@ class NotifierHook(hooks.PecanHook):
             for resource in resources:
                 self._nova_notify(action, resource_name, orig,
                                   {resource_name: resource})
+
+        event = '%s.%s.end' % (resource_name, action)
+        if action == 'delete':
+            if state.response.status_int > 300:
+                # don't notify when unsuccessful
+                # NOTE(kevinbenton): we may want to be more strict with the
+                # response codes
+                return
+            resource_id = state.request.context.get('resource_id')
+            payload = {resource_name + '_id': resource_id}
+        elif action in ('create', 'update'):
+            if not resources:
+                # create/update did not complete so no notification
+                return
+            if len(resources) > 1:
+                payload = {collection_name: resources}
+            else:
+                payload = {resource_name: resources[0]}
+        else:
+            return
+        self._notifier.info(neutron_context, event, payload)
