@@ -1,0 +1,11 @@
+---
+features:
+  - New security groups firewall driver is introduced.
+    It's based on OpenFlow using connection tracking.
+issues:
+  - OVS firewall driver doesn't work well with other features
+    using openflow.
+other:
+  - OVS firewall driver requires OVS 2.5 version or higher
+    with linux kernel 4.3 or higher. More info at
+    `OVS github page <https://github.com/openvswitch/ovs/blob/master/FAQ.md>`_.

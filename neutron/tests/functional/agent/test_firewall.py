@@ -18,6 +18,7 @@
 #    under the License.
 
 import copy
+import functools
 
 import netaddr
 from oslo_config import cfg
@@ -25,7 +26,9 @@ import testscenarios
 
 from neutron.agent import firewall
 from neutron.agent.linux import iptables_firewall
+from neutron.agent.linux import openvswitch_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
+from neutron.cmd.sanity import checks
 from neutron.common import constants
 from neutron.tests.common import conn_testers
 from neutron.tests.functional import base
@@ -47,6 +50,15 @@ reverse_transport_protocol = {
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
+def skip_if_not_iptables(f):
+    @functools.wraps(f)
+    def wrap(self, *args, **kwargs):
+        if not hasattr(self, 'enable_ipset'):
+            self.skipTest("This test doesn't use iptables")
+        return f(self, *args, **kwargs)
+    return wrap
+
+
 def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
     rule = copy.copy(base)
     if port_range_min:
@@ -60,15 +72,34 @@ class FirewallTestCase(base.BaseSudoTestCase):
     FAKE_SECURITY_GROUP_ID = 'fake_sg_id'
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
     scenarios = [('IptablesFirewallDriver without ipset',
-                  {'enable_ipset': False}),
+                  {'enable_ipset': False,
+                   'initialize': 'initialize_iptables'}),
                  ('IptablesFirewallDriver with ipset',
-                  {'enable_ipset': True})]
+                  {'enable_ipset': True,
+                   'initialize': 'initialize_iptables'}),
+                 ('OVS Firewall Driver',
+                  {'initialize': 'initialize_ovs'})]
 
-    def create_iptables_firewall(self):
+    def initialize_iptables(self):
         cfg.CONF.set_override('enable_ipset', self.enable_ipset,
                               'SECURITYGROUP')
-        return iptables_firewall.IptablesFirewallDriver(
-            namespace=self.tester.bridge_namespace)
+        tester = self.useFixture(conn_testers.LinuxBridgeConnectionTester())
+        firewall_drv = iptables_firewall.IptablesFirewallDriver(
+            namespace=tester.bridge_namespace)
+        return tester, firewall_drv
+
+    def initialize_ovs(self):
+        # Tests for ovs requires kernel >= 4.3 and OVS >= 2.5
+        if not checks.ovs_conntrack_supported():
+            self.skipTest("Open vSwitch with conntrack is not installed "
+                          "on this machine. To run tests for OVS/CT firewall,"
+                          " please meet the requirements (kernel>=4.3, "
+                          "OVS>=2.5. More info at"
+                          "https://github.com/openvswitch/ovs/blob/master/"
+                          "FAQ.md")
+        tester = self.useFixture(conn_testers.OVSConnectionTester())
+        firewall_drv = openvswitch_firewall.OVSFirewallDriver(tester.bridge)
+        return tester, firewall_drv
 
     @staticmethod
     def _create_port_description(port_id, ip_addresses, mac_address, sg_ids):
@@ -84,21 +115,28 @@ class FirewallTestCase(base.BaseSudoTestCase):
     def setUp(self):
         cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
         super(FirewallTestCase, self).setUp()
-        self.tester = self.useFixture(
-            conn_testers.LinuxBridgeConnectionTester())
+        self.tester, self.firewall = getattr(self, self.initialize)()
         self.addOnException(self.tester.collect_debug_info)
-        self.firewall = self.create_iptables_firewall()
-        vm_mac = self.tester.vm_mac_address
-        vm_port_id = self.tester.vm_port_id
         self.src_port_desc = self._create_port_description(
-            vm_port_id, [self.tester.vm_ip_address], vm_mac,
+            self.tester.vm_port_id,
+            [self.tester.vm_ip_address],
+            self.tester.vm_mac_address,
             [self.FAKE_SECURITY_GROUP_ID])
+        # FIXME(jlibosva): We should consider to call prepare_port_filter with
+        # deferred bridge depending on its performance
         self.firewall.prepare_port_filter(self.src_port_desc)
 
     def _apply_security_group_rules(self, sg_id, sg_rules):
         with self.firewall.defer_apply():
             self.firewall.update_security_group_rules(sg_id, sg_rules)
+            self.firewall.update_port_filter(self.src_port_desc)
 
+    def _apply_security_group_members(self, sg_id, members):
+        with self.firewall.defer_apply():
+            self.firewall.update_security_group_members(sg_id, members)
+            self.firewall.update_port_filter(self.src_port_desc)
+
+    @skip_if_not_iptables
     def test_rule_application_converges(self):
         sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress'},
                     {'ethertype': 'IPv6', 'direction': 'egress'},
@@ -163,6 +201,7 @@ class FirewallTestCase(base.BaseSudoTestCase):
                 # and the new one was inserted in the correct position
                 self.assertEqual([], self.firewall.iptables._apply())
 
+    @skip_if_not_iptables
     def test_rule_ordering_correct(self):
         sg_rules = [
             {'ethertype': 'IPv4', 'direction': 'egress', 'protocol': 'tcp',
@@ -235,6 +274,7 @@ class FirewallTestCase(base.BaseSudoTestCase):
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
 
+    @skip_if_not_iptables
     def test_mac_spoofing_works_without_port_security_enabled(self):
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
@@ -286,6 +326,7 @@ class FirewallTestCase(base.BaseSudoTestCase):
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
 
+    @skip_if_not_iptables
     def test_ip_spoofing_works_without_port_security_enabled(self):
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
@@ -437,7 +478,7 @@ class FirewallTestCase(base.BaseSudoTestCase):
         packets_sent = self.tester.get_sent_icmp_packets(direction)
         packets_received = self.tester.get_received_icmp_packets(direction)
         self.assertGreater(packets_sent, 0)
-        self.assertEqual(0, packets_received)
+        self.assertEqual(packets_received, 0)
 
     def test_remote_security_groups(self):
         remote_sg_id = 'remote_sg_id'
@@ -446,21 +487,19 @@ class FirewallTestCase(base.BaseSudoTestCase):
             [self.tester.peer_ip_address],
             self.tester.peer_mac_address,
             [remote_sg_id])
-        self.firewall.prepare_port_filter(peer_port_desc)
 
+        vm_sg_members = {'IPv4': [self.tester.peer_ip_address]}
         peer_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',
                           'protocol': 'icmp'}]
-        self._apply_security_group_rules(remote_sg_id, peer_sg_rules)
+        self.firewall.update_security_group_rules(remote_sg_id, peer_sg_rules)
+        self.firewall.update_security_group_members(remote_sg_id,
+                                                    vm_sg_members)
+        self.firewall.prepare_port_filter(peer_port_desc)
 
         vm_sg_rules = [{'ethertype': 'IPv4', 'direction': 'ingress',
                         'protocol': 'icmp', 'remote_group_id': remote_sg_id}]
         self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID,
                                          vm_sg_rules)
-
-        vm_sg_members = {'IPv4': [self.tester.peer_ip_address]}
-        with self.firewall.defer_apply():
-            self.firewall.update_security_group_members(
-                remote_sg_id, vm_sg_members)
 
         self.tester.assert_connection(protocol=self.tester.ICMP,
                                       direction=self.tester.INGRESS)

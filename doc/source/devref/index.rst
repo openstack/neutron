@@ -75,6 +75,7 @@ Neutron Internals
    i18n
    instrumentation
    address_scopes
+   openvswitch_firewall
 
 Testing
 -------

@@ -19,7 +19,6 @@ import functools
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_utils import importutils
 
 from neutron._i18n import _, _LI, _LW
 from neutron.agent import firewall
@@ -87,21 +86,30 @@ class SecurityGroupAgentRpc(object):
     """Enables SecurityGroup agent support in agent implementations."""
 
     def __init__(self, context, plugin_rpc, local_vlan_map=None,
-                 defer_refresh_firewall=False,):
+                 defer_refresh_firewall=False, integration_bridge=None):
         self.context = context
         self.plugin_rpc = plugin_rpc
-        self.init_firewall(defer_refresh_firewall)
+        self.init_firewall(defer_refresh_firewall, integration_bridge)
         self.local_vlan_map = local_vlan_map
 
-    def init_firewall(self, defer_refresh_firewall=False):
-        firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver
+    def init_firewall(self, defer_refresh_firewall=False,
+                      integration_bridge=None):
+        firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver or 'noop'
         LOG.debug("Init firewall settings (driver=%s)", firewall_driver)
         if not _is_valid_driver_combination():
             LOG.warn(_LW("Driver configuration doesn't match "
                          "with enable_security_group"))
-        if not firewall_driver:
-            firewall_driver = 'neutron.agent.firewall.NoopFirewallDriver'
-        self.firewall = importutils.import_object(firewall_driver)
+        firewall_class = firewall.load_firewall_driver_class(firewall_driver)
+        try:
+            self.firewall = firewall_class(
+                integration_bridge=integration_bridge)
+        except TypeError as e:
+            LOG.warning(_LW("Firewall driver {fw_driver} doesn't accept "
+                            "integration_bridge parameter in __init__(): "
+                            "{err}"),
+                     fw_driver=firewall_driver,
+                     err=e)
+            self.firewall = firewall_class()
         # The following flag will be set to true if port filter must not be
         # applied as soon as a rule or membership notification is received
         self.defer_refresh_firewall = defer_refresh_firewall

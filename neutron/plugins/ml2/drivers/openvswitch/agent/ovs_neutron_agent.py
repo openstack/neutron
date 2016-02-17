@@ -163,7 +163,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         #                 ML2 l2 population mechanism driver.
         self.enable_distributed_routing = agent_conf.enable_distributed_routing
         self.arp_responder_enabled = agent_conf.arp_responder and self.l2_pop
-        self.prevent_arp_spoofing = agent_conf.prevent_arp_spoofing
 
         host = self.conf.host
         self.agent_id = 'ovs-agent-%s' % host
@@ -277,7 +276,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Security group agent support
         self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc, self.local_vlan_map,
-                defer_refresh_firewall=True)
+                defer_refresh_firewall=True, integration_bridge=self.int_br)
+
+        self.prevent_arp_spoofing = (
+            agent_conf.prevent_arp_spoofing and
+            not self.sg_agent.firewall.provides_arp_spoofing_protection)
 
         # Initialize iteration counter
         self.iter_num = 0
@@ -819,7 +822,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 LOG.debug("Port %s was deleted concurrently, skipping it",
                           port.port_name)
                 continue
-            if cur_tag != lvm.vlan:
+            # Uninitialized port has tag set to []
+            if cur_tag and cur_tag != lvm.vlan:
                 self.int_br.delete_flows(in_port=port.ofport)
             if self.prevent_arp_spoofing:
                 self.setup_arp_spoofing_protection(self.int_br,

@@ -53,6 +53,8 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
 
     def setUp(self):
         super(OpenvswitchMechanismBaseTestCase, self).setUp()
+        cfg.CONF.set_override('firewall_driver', 'iptables_hybrid',
+                              'SECURITYGROUP')
         self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
         self.driver.initialize()
 
