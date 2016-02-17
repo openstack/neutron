@@ -4182,22 +4182,37 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(webob.exc.HTTPClientError.code,
                                  res.status_int)
 
-    def test_update_subnet_gw_ip_in_use_returns_409(self):
+    def test_update_subnet_gw_ip_in_use_by_router_returns_409(self):
         with self.network() as network:
-            with self.subnet(
-                network=network,
-                allocation_pools=[{'start': '10.0.0.100',
-                                   'end': '10.0.0.253'}]) as subnet:
-                subnet_data = subnet['subnet']
+            with self.subnet(network=network,
+                             allocation_pools=[{'start': '10.0.0.2',
+                                                'end': '10.0.0.8'}]) as subnet:
+                s = subnet['subnet']
                 with self.port(
-                    subnet=subnet,
-                    fixed_ips=[{'subnet_id': subnet_data['id'],
-                                'ip_address': subnet_data['gateway_ip']}]):
+                    subnet=subnet, fixed_ips=[{'subnet_id': s['id'],
+                                               'ip_address': s['gateway_ip']}]
+                ) as port:
+                    # this protection only applies to router ports so we need
+                    # to make this port belong to a router
+                    ctx = context.get_admin_context()
+                    with ctx.session.begin():
+                        router = l3_db.Router()
+                        ctx.session.add(router)
+                    with ctx.session.begin():
+                        rp = l3_db.RouterPort(router_id=router.id,
+                                              port_id=port['port']['id'])
+                        ctx.session.add(rp)
                     data = {'subnet': {'gateway_ip': '10.0.0.99'}}
                     req = self.new_update_request('subnets', data,
-                                                  subnet_data['id'])
+                                                  s['id'])
                     res = req.get_response(self.api)
                     self.assertEqual(409, res.status_int)
+                    # should work fine if it's not a router port
+                    with ctx.session.begin():
+                        ctx.session.delete(rp)
+                        ctx.session.delete(router)
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int, 200)
 
     def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
         with self.network() as network:
