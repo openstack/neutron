@@ -194,7 +194,7 @@ class TunnelTest(object):
                                      constants.NONEXISTENT_PEER), ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type'),
+                                 'type', log_errors=False),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
                                      constants.NONEXISTENT_PEER),
         ]
@@ -640,7 +640,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type'),
+                                 'type', log_errors=False),
             mock.call.add_port(self.inta)
         ]
 
