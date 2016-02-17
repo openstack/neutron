@@ -170,6 +170,30 @@ Document common pitfalls as well as good practices done during database developm
   Where nested transaction is used in _do_other_thing_with_created_object
   function.
 
+* Beware of ResultProxy.inserted_primary_key which returns a list of last
+  inserted primary keys not the last inserted primary key:
+
+  .. code:: python
+
+     result = session.execute(mymodel.insert().values(**values))
+     # result.inserted_primary_key is a list even if we inserted a unique row!
+
+* Beware of pymysql which can silently unwrap a list with an element (and hide
+  a wrong use of ResultProxy.inserted_primary_key for example):
+
+  .. code:: python
+     e.execute("create table if not exists foo (bar integer)")
+     e.execute(foo.insert().values(bar=1))
+     e.execute(foo.insert().values(bar=[2]))
+
+  The 2nd insert should crash (list provided, integer expected). It crashs at
+  least with mysql and postgresql backends, but succeeds with pymysql because
+  it transforms them into:
+
+  .. code:: sql
+     INSERT INTO foo (bar) VALUES (1)
+     INSERT INTO foo (bar) VALUES ((2))
+
 
 System development
 ~~~~~~~~~~~~~~~~~~
