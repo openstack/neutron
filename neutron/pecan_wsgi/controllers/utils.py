@@ -39,5 +39,11 @@ class NeutronPecanController(object):
     def __init__(self, collection, resource):
         self.collection = collection
         self.resource = resource
-        self.plugin = manager.NeutronManager.get_plugin_for_resource(
-            self.resource)
+        self._plugin = None
+
+    @property
+    def plugin(self):
+        if not self._plugin:
+            self._plugin = manager.NeutronManager.get_plugin_for_resource(
+                self.resource)
+        return self._plugin
