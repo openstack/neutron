@@ -110,8 +110,8 @@ Migration Branches
 
 Neutron makes use of alembic branches for two purposes.
 
-1. Indepedent Sub-Project Tables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Independent Sub-Project Tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Various `sub-projects <sub_projects.html>`_ can be installed with Neutron. Each
 sub-project registers its own alembic branch which is responsible for migrating
