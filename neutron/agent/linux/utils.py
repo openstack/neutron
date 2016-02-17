@@ -373,6 +373,12 @@ class UnixDomainHTTPConnection(httplib.HTTPConnection):
 
 
 class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
+    # TODO(jlibosva): This is just a workaround not to set TCP_NODELAY on
+    # socket due to 40714b1ffadd47b315ca07f9b85009448f0fe63d evenlet change
+    # This should be removed once
+    # https://github.com/eventlet/eventlet/issues/301 is fixed
+    disable_nagle_algorithm = False
+
     def __init__(self, request, client_address, server):
         if client_address == '':
             client_address = ('<local>', 0)
