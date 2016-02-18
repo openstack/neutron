@@ -39,6 +39,11 @@ function generate_testr_results {
     fi
 }
 
+if [ "$venv" == "api-pecan" ]; then
+    # api-pecan is the same as the regular api job
+    venv='api'
+fi
+
 if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
 then
     owner=stack
