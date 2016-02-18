@@ -23,10 +23,32 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
 from neutron.tests import base
 
 
+class TestIsValidPrefix(base.BaseTestCase):
+    def test_valid_prefix_ipv4(self):
+        is_valid = rules.is_valid_prefix('10.0.0.0/0')
+        self.assertTrue(is_valid)
+
+    def test_invalid_prefix_ipv4(self):
+        is_valid = rules.is_valid_prefix('0.0.0.0/0')
+        self.assertFalse(is_valid)
+
+    def test_valid_prefix_ipv6(self):
+        is_valid = rules.is_valid_prefix('ffff::0/0')
+        self.assertTrue(is_valid)
+
+    def test_invalid_prefix_ipv6(self):
+        is_valid = rules.is_valid_prefix('0000:0::0/0')
+        self.assertFalse(is_valid)
+        is_valid = rules.is_valid_prefix('::0/0')
+        self.assertFalse(is_valid)
+        is_valid = rules.is_valid_prefix('::/0')
+        self.assertFalse(is_valid)
+
+
 class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def setUp(self):
         super(TestCreateFlowsFromRuleAndPort, self).setUp()
-        ovs_port = mock.Mock()
+        ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00')
         ovs_port.ofport = 1
         port_dict = {'device': 'port_id'}
         self.port = ovsfw.OFPort(port_dict, ovs_port)
@@ -44,7 +66,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
 
         self.assertEqual(expected_template, self.passed_flow_template)
 
-    def test_create_flows_from_rule_and_port_no_ip(self):
+    def test_create_flows_from_rule_and_port_no_ip_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
             'direction': firewall.INGRESS_DIRECTION,
@@ -57,7 +79,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         self._test_create_flows_from_rule_and_port_helper(rule,
                                                           expected_template)
 
-    def test_create_flows_from_rule_and_port_src_and_dst(self):
+    def test_create_flows_from_rule_and_port_src_and_dst_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
             'direction': firewall.INGRESS_DIRECTION,
@@ -74,7 +96,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         self._test_create_flows_from_rule_and_port_helper(rule,
                                                           expected_template)
 
-    def test_create_flows_from_rule_and_port_src_and_dst_with_zero(self):
+    def test_create_flows_from_rule_and_port_src_and_dst_with_zero_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
             'direction': firewall.INGRESS_DIRECTION,
@@ -90,11 +112,57 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         self._test_create_flows_from_rule_and_port_helper(rule,
                                                           expected_template)
 
+    def test_create_flows_from_rule_and_port_no_ip_ipv6(self):
+        rule = {
+            'ethertype': constants.IPv6,
+            'direction': firewall.INGRESS_DIRECTION,
+        }
+        expected_template = {
+            'priority': 70,
+            'dl_type': constants.ETHERTYPE_IPV6,
+            'reg5': self.port.ofport,
+        }
+        self._test_create_flows_from_rule_and_port_helper(rule,
+                                                          expected_template)
+
+    def test_create_flows_from_rule_and_port_src_and_dst_ipv6(self):
+        rule = {
+            'ethertype': constants.IPv6,
+            'direction': firewall.INGRESS_DIRECTION,
+            'source_ip_prefix': '2001:db8:bbbb::1/64',
+            'dest_ip_prefix': '2001:db8:aaaa::1/64',
+        }
+        expected_template = {
+            'priority': 70,
+            'dl_type': constants.ETHERTYPE_IPV6,
+            'reg5': self.port.ofport,
+            'ipv6_src': '2001:db8:bbbb::1/64',
+            'ipv6_dst': '2001:db8:aaaa::1/64',
+        }
+        self._test_create_flows_from_rule_and_port_helper(rule,
+                                                          expected_template)
+
+    def test_create_flows_from_rule_and_port_src_and_dst_with_zero_ipv6(self):
+        rule = {
+            'ethertype': constants.IPv6,
+            'direction': firewall.INGRESS_DIRECTION,
+            'source_ip_prefix': '2001:db8:bbbb::1/64',
+            'dest_ip_prefix': '::/0',
+        }
+        expected_template = {
+            'priority': 70,
+            'dl_type': constants.ETHERTYPE_IPV6,
+            'reg5': self.port.ofport,
+            'ipv6_src': '2001:db8:bbbb::1/64',
+        }
+        self._test_create_flows_from_rule_and_port_helper(rule,
+                                                          expected_template)
+
 
 class TestCreateProtocolFlows(base.BaseTestCase):
     def setUp(self):
         super(TestCreateProtocolFlows, self).setUp()
-        ovs_port = mock.Mock()
+        ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00')
         ovs_port.ofport = 1
         port_dict = {'device': 'port_id'}
         self.port = ovsfw.OFPort(port_dict, ovs_port)

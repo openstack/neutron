@@ -22,6 +22,7 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import rules
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import ipv6_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
@@ -58,6 +59,8 @@ class OFPort(object):
     def __init__(self, port_dict, ovs_port):
         self.id = port_dict['device']
         self.mac = ovs_port.vif_mac
+        self.lla_address = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+            constants.IPV6_LLA_PREFIX, self.mac))
         self.ofport = ovs_port.ofport
         self.sec_groups = list()
         self.fixed_ips = port_dict.get('fixed_ips', [])
@@ -86,6 +89,8 @@ class OFPort(object):
                                                         version=4)
         self.allowed_pairs_v6 = self._get_allowed_pairs(port_dict,
                                                         version=6)
+        # Neighbour discovery uses LLA
+        self.allowed_pairs_v6.add((self.mac, self.lla_address))
         self.fixed_ips = port_dict.get('fixed_ips', [])
         self.neutron_port_dict = port_dict.copy()
 
@@ -300,8 +305,22 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_egress(port)
         self._initialize_ingress(port)
 
+    def _initialize_egress_ipv6_icmp(self, port):
+        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
+            self._add_flow(
+                table=ovs_consts.BASE_EGRESS_TABLE,
+                priority=95,
+                in_port=port.ofport,
+                reg5=port.ofport,
+                dl_type=constants.ETHERTYPE_IPV6,
+                nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                icmp_type=icmp_type,
+                actions='normal'
+            )
+
     def _initialize_egress(self, port):
         """Identify egress traffic and send it to egress base"""
+        self._initialize_egress_ipv6_icmp(port)
 
         # Apply mac/ip pairs for IPv4
         allowed_pairs = port.allowed_pairs_v4.union(
@@ -334,16 +353,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         allowed_pairs = port.allowed_pairs_v6.union(
             {(port.mac, ip_addr) for ip_addr in port.ipv6_addresses})
         for mac_addr, ip_addr in allowed_pairs:
-            self._add_flow(
-                table=ovs_consts.BASE_EGRESS_TABLE,
-                priority=95,
-                in_port=port.ofport,
-                reg5=port.ofport,
-                dl_type=constants.ETHERTYPE_IPV6,
-                nw_proto=constants.PROTO_NUM_IPV6_ICMP,
-                icmp_type=constants.ICMPV6_TYPE_NA,
-                actions='normal'
-            )
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
@@ -436,6 +445,19 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 actions='normal'
             )
 
+    def _initialize_ingress_ipv6_icmp(self, port):
+        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
+            self._add_flow(
+                table=ovs_consts.BASE_INGRESS_TABLE,
+                priority=100,
+                reg5=port.ofport,
+                dl_dst=port.mac,
+                dl_type=constants.ETHERTYPE_IPV6,
+                nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                icmp_type=icmp_type,
+                actions='output:{:d}'.format(port.ofport),
+            )
+
     def _initialize_ingress(self, port):
         # Allow incoming ARPs
         self._add_flow(
@@ -446,17 +468,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             dl_dst=port.mac,
             actions='output:{:d}'.format(port.ofport),
         )
-        # Neighbor soliciation
-        self._add_flow(
-            table=ovs_consts.BASE_INGRESS_TABLE,
-            priority=100,
-            reg5=port.ofport,
-            dl_dst=port.mac,
-            dl_type=constants.ETHERTYPE_IPV6,
-            nw_proto=constants.PROTO_NUM_IPV6_ICMP,
-            icmp_type=constants.ICMPV6_TYPE_NC,
-            actions='output:{:d}'.format(port.ofport),
-        )
+        self._initialize_ingress_ipv6_icmp(port)
+
         # DHCP offers
         for dl_type, src_port, dst_port in (
                 (constants.ETHERTYPE_IP, 67, 68),

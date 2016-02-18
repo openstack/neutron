@@ -54,6 +54,9 @@ class ConnectionTester(fixtures.Fixture):
     INGRESS = firewall.INGRESS_DIRECTION
     EGRESS = firewall.EGRESS_DIRECTION
 
+    def __init__(self, ip_cidr):
+        self.ip_cidr = ip_cidr
+
     def _setUp(self):
         self._protocol_to_method = {
             self.UDP: self._test_transport_connectivity,
@@ -122,6 +125,7 @@ class ConnectionTester(fixtures.Fixture):
         try:
             nc_tester.test_connectivity()
         except RuntimeError as exc:
+            nc_tester.stop_processes()
             raise ConnectionTesterException(
                 "%s connection over %s protocol with %s source port and "
                 "%s destination port can't be established: %s" % (
@@ -186,6 +190,7 @@ class ConnectionTester(fixtures.Fixture):
             if nc_tester.is_established:
                 nc_tester.test_connectivity()
             else:
+                nc_tester.stop_processes()
                 raise ConnectionTesterException(
                     '%s connection with protocol %s, source port %s and '
                     'destination port %s is not established' % nc_params)
@@ -289,11 +294,12 @@ class OVSConnectionTester(ConnectionTester):
 
     """
 
-    def setUp(self):
-        super(OVSConnectionTester, self).setUp()
+    def _setUp(self):
+        super(OVSConnectionTester, self)._setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self._peer, self._vm = self.useFixture(
-            machine_fixtures.PeerMachines(self.bridge)).machines
+            machine_fixtures.PeerMachines(
+                self.bridge, self.ip_cidr)).machines
         self._set_port_attrs(self._peer.port)
         self._set_port_attrs(self._vm.port)
 
@@ -337,7 +343,8 @@ class LinuxBridgeConnectionTester(ConnectionTester):
         super(LinuxBridgeConnectionTester, self)._setUp()
         self.bridge = self.useFixture(net_helpers.LinuxBridgeFixture()).bridge
         self._peer, self._vm = self.useFixture(
-            machine_fixtures.PeerMachines(self.bridge)).machines
+            machine_fixtures.PeerMachines(
+                self.bridge, self.ip_cidr)).machines
 
     @property
     def bridge_namespace(self):
