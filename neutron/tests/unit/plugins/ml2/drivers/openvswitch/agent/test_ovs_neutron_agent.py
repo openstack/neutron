@@ -578,6 +578,40 @@ class TestOvsNeutronAgent(object):
             expected_failed_devices_retries_map,
             new_failed_devices_retries_map)
 
+    def test_add_port_tag_info(self):
+        self.agent.local_vlan_map["net1"] = mock.Mock()
+        self.agent.local_vlan_map["net1"].vlan = "1"
+        ovs_db_list = [{'name': 'tap1',
+                        'tag': [],
+                        'other_config': {'segmentation_id': '1'}},
+                       {'name': 'tap2',
+                        'tag': [],
+                        'other_config': {}},
+                       {'name': 'tap3',
+                        'tag': [],
+                        'other_config': None}]
+        vif_port1 = mock.Mock()
+        vif_port1.port_name = 'tap1'
+        vif_port2 = mock.Mock()
+        vif_port2.port_name = 'tap2'
+        vif_port3 = mock.Mock()
+        vif_port3.port_name = 'tap3'
+        port_details = [
+            {'network_id': 'net1', 'vif_port': vif_port1},
+            {'network_id': 'net1', 'vif_port': vif_port2},
+            {'network_id': 'net1', 'vif_port': vif_port3}]
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            int_br.get_ports_attributes.return_value = ovs_db_list
+            self.agent._add_port_tag_info(port_details)
+            set_db_attribute_calls = \
+                [mock.call.set_db_attribute("Port", "tap1",
+                    "other_config", {"segmentation_id": "1", "tag": "1"}),
+                 mock.call.set_db_attribute("Port", "tap2",
+                    "other_config", {"tag": "1"}),
+                 mock.call.set_db_attribute("Port", "tap3",
+                    "other_config", {"tag": "1"})]
+            int_br.assert_has_calls(set_db_attribute_calls, any_order=True)
+
     def test_bind_devices(self):
         devices_up = ['tap1']
         devices_down = ['tap2']

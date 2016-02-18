@@ -800,6 +800,25 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      port_other_config)
         return True
 
+    def _add_port_tag_info(self, need_binding_ports):
+        port_names = [p['vif_port'].port_name for p in need_binding_ports]
+        port_info = self.int_br.get_ports_attributes(
+            "Port", columns=["name", "tag", "other_config"],
+            ports=port_names, if_exists=True)
+        info_by_port = {x['name']: [x['tag'], x['other_config']]
+                        for x in port_info}
+        for port_detail in need_binding_ports:
+            lvm = self.local_vlan_map.get(port_detail['network_id'])
+            if not lvm:
+                continue
+            port = port_detail['vif_port']
+            cur_info = info_by_port.get(port.port_name)
+            if cur_info is not None and cur_info[0] != lvm.vlan:
+                other_config = cur_info[1] or {}
+                other_config['tag'] = lvm.vlan
+                self.int_br.set_db_attribute(
+                    "Port", port.port_name, "other_config", other_config)
+
     def _bind_devices(self, need_binding_ports):
         devices_up = []
         devices_down = []
@@ -1574,6 +1593,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # TODO(salv-orlando): Optimize avoiding applying filters
         # unnecessarily, (eg: when there are no IP address changes)
         added_ports = port_info.get('added', set())
+        self._add_port_tag_info(need_binding_devices)
         if security_disabled_ports:
             added_ports -= set(security_disabled_ports)
         self.sg_agent.setup_port_filters(added_ports,
