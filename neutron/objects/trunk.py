@@ -43,6 +43,12 @@ class SubPort(base.NeutronDbObject):
 
     fields_no_update = ['segmentation_type', 'segmentation_id']
 
+    def to_dict(self):
+        _dict = super(SubPort, self).to_dict()
+        # trunk_id is redundant in the subport dict.
+        _dict.pop('trunk_id')
+        return _dict
+
     def create(self):
         with db_api.autonested_transaction(self.obj_context.session):
             try:
@@ -66,6 +72,11 @@ class SubPort(base.NeutronDbObject):
                     raise t_exc.TrunkNotFound(trunk_id=self.trunk_id)
 
                 raise n_exc.PortNotFound(port_id=self.port_id)
+            except base.NeutronDbObjectDuplicateEntry:
+                raise t_exc.DuplicateSubPort(
+                    segmentation_type=self.segmentation_type,
+                    segmentation_id=self.segmentation_id,
+                    trunk_id=self.trunk_id)
 
 
 @obj_base.VersionedObjectRegistry.register

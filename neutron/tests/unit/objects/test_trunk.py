@@ -13,9 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron_lib import exceptions as n_exc
+from oslo_db import exception as obj_exc
 from oslo_utils import uuidutils
 
+from neutron.objects.db import api as obj_db_api
 from neutron.objects import trunk as t_obj
 from neutron.services.trunk import exceptions as t_exc
 from neutron.tests.unit.objects import test_base
@@ -25,6 +29,12 @@ from neutron.tests.unit import testlib_api
 class SubPortObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = t_obj.SubPort
+
+    def test_create_duplicates(self):
+        with mock.patch.object(obj_db_api, 'create_object',
+                               side_effect=obj_exc.DBDuplicateEntry):
+            obj = self._test_class(self.context, **self.obj_fields[0])
+            self.assertRaises(t_exc.DuplicateSubPort, obj.create)
 
 
 class SubPortDbObjectTestCase(test_base.BaseDbObjectTestCase,

@@ -24,3 +24,22 @@ class TrunkPortInUse(n_exc.InUse):
 
 class TrunkNotFound(n_exc.NotFound):
     message = _("Trunk %(trunk_id)s could not be found.")
+
+
+class SubPortNotFound(n_exc.NotFound):
+    message = _("SubPort on trunk %(trunk_id)s with parent port %(port_id)s "
+                "could not be found.")
+
+
+class DuplicateSubPort(n_exc.InUse):
+    message = _("segmentation_type %(segmentation_type)s and segmentation_id "
+                "%(segmentation_id)s already in use on trunk %(trunk_id)s.")
+
+
+class ParentPortInUse(n_exc.InUse):
+    message = _("Port %(port_id)s is currently in use and is not "
+                "eligible for use as a parent port.")
+
+
+class TrunkInUse(n_exc.InUse):
+    message = _("Trunk %(trunk_id)s is currently in use.")
