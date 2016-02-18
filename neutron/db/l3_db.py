@@ -176,17 +176,41 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._apply_dict_extend_functions(l3.ROUTERS, res, router)
         return self._fields(res, fields)
 
+    def filter_allocating_and_missing_routers(self, context, routers):
+        """Filter out routers that shouldn't go to the agent.
+
+        Any routers in the ALLOCATING state will be excluded by
+        this query because this indicates that the server is still
+        building necessary dependent sub-resources for the router and it
+        is not ready for consumption by the agent. It will also filter
+        out any routers that no longer exist to prevent conditions where
+        only part of a router's information was populated in sync_routers
+        due to it being deleted during the sync.
+        """
+        router_ids = set(r['id'] for r in routers)
+        query = (context.session.query(Router.id).
+                 filter(
+                     Router.id.in_(router_ids),
+                     Router.status != l3_constants.ROUTER_STATUS_ALLOCATING))
+        valid_routers = set(r.id for r in query)
+        if router_ids - valid_routers:
+            LOG.debug("Removing routers that were either concurrently "
+                      "deleted or are in the ALLOCATING state: %s",
+                      (router_ids - valid_routers))
+        return [r for r in routers if r['id'] in valid_routers]
+
     def _create_router_db(self, context, router, tenant_id):
         """Create the DB object."""
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
+            status = router.get('status', l3_constants.ROUTER_STATUS_ACTIVE)
             router_db = Router(id=(router.get('id') or
                                    uuidutils.generate_uuid()),
                                tenant_id=tenant_id,
                                name=router['name'],
                                admin_state_up=router['admin_state_up'],
-                               status="ACTIVE",
+                               status=status,
                                description=router.get('description'))
             context.session.add(router_db)
             return router_db

@@ -1479,11 +1479,11 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
         # Mock scheduling so that the test can control it explicitly
         mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
                           '_notify_ha_interfaces_updated').start()
-
-        router1 = self._create_ha_router()
-        router2 = self._create_ha_router()
-        router3 = self._create_ha_router(ha=False)
-        router4 = self._create_ha_router(ha=False)
+        with mock.patch.object(self.plugin, 'schedule_router'):
+            router1 = self._create_ha_router()
+            router2 = self._create_ha_router()
+            router3 = self._create_ha_router(ha=False)
+            router4 = self._create_ha_router(ha=False)
 
         # Agent 1 will host 0 routers, agent 2 will host 1, agent 3 will
         # host 2, and agent 4 will host 3.
@@ -1907,12 +1907,11 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
 
     def test_az_scheduler_ha_auto_schedule(self):
         cfg.CONF.set_override('max_l3_agents_per_router', 3)
-        r1 = self._create_ha_router(az_hints=['az1', 'az3'])
         self._set_l3_agent_admin_state(self.adminContext, self.agent2['id'],
                                        state=False)
         self._set_l3_agent_admin_state(self.adminContext, self.agent6['id'],
                                        state=False)
-        self.plugin.schedule_router(self.adminContext, r1['id'])
+        r1 = self._create_ha_router(az_hints=['az1', 'az3'])
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r1['id']])
         self.assertEqual(2, len(agents))
