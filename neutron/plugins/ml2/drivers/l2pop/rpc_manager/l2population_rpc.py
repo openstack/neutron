@@ -14,6 +14,7 @@
 #    under the License.
 
 import abc
+import itertools
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -62,10 +63,26 @@ class L2populationRpcCallBackMixin(object):
                     'ports': {
                         <ip address>: [ [<mac>, <ip>], ...  ],
                         ...
+        Or in the case of an update:
+            { 'chg_ip': {
+                '<uuid>': {
+                    '<agent1-IP>': {
+                        'before': [ [<mac>, <ip>], ... ],
+                        'after' : [ [<mac>, <ip>], ... ],
+                    },
+                    '<agent2-IP>': {
+                        'before': ...
 
         :returns: Deep copy with [<mac>, <ip>] converted to PortInfo
         """
         unmarshalled = dict(fdb_entries)
+        chg_ip_nets = [net.values()
+                       for net in unmarshalled.get('chg_ip', {}).values()]
+        for agent in itertools.chain.from_iterable(chg_ip_nets):
+            for when in ('before', 'after'):
+                if when in agent:
+                    agent[when] = [l2pop_rpc.PortInfo(*pi)
+                                   for pi in agent[when]]
         for value in unmarshalled.values():
             if 'ports' in value:
                 value['ports'] = dict(
