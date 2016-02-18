@@ -1779,7 +1779,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if ipv6_pd:
             cidr = None
             gateway = None
-            # TODO(Carl) Use the default subnet pool extension when available
             subnetpool_id = constants.IPV6_PD_POOL_ID
             cfg.CONF.set_override('ipv6_pd_enabled', True)
         return (self._make_subnet(self.fmt, network, gateway=gateway,
@@ -2929,109 +2928,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
-    def test_create_subnet_only_ip_version_v4(self):
-        # TODO(carl_baldwin): add test to allow create_subnet
-        # to work with 'default' flag for subnet pool on
-        with self.network() as network:
-            tenant_id = network['network']['tenant_id']
-            subnetpool_prefix = '10.0.0.0/8'
-            with self.subnetpool(prefixes=[subnetpool_prefix],
-                                 admin=True,
-                                 name="My subnet pool",
-                                 tenant_id=tenant_id,
-                                 min_prefixlen='25',
-                                 is_default=True) as subnetpool:
-                subnetpool_id = subnetpool['subnetpool']['id']
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '4',
-                        'prefixlen': '27',
-                        'tenant_id': tenant_id,
-                        'subnetpool_id': subnetpool_id}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
-                ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
-                self.assertEqual(27, ip_net.prefixlen)
-                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
-
-    def test_create_subnet_only_ip_version_v4_old(self):
-        # TODO(john-davidge): Remove after Mitaka release.
-        with self.network() as network:
-            tenant_id = network['network']['tenant_id']
-            subnetpool_prefix = '10.0.0.0/8'
-            with self.subnetpool(prefixes=[subnetpool_prefix],
-                                 admin=False,
-                                 name="My subnet pool",
-                                 tenant_id=tenant_id,
-                                 min_prefixlen='25') as subnetpool:
-                subnetpool_id = subnetpool['subnetpool']['id']
-                cfg.CONF.set_override('default_ipv4_subnet_pool',
-                                      subnetpool_id)
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '4',
-                        'prefixlen': '27',
-                        'tenant_id': tenant_id,
-                        'subnetpool_id': subnetpool_id}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
-                ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
-                self.assertEqual(27, ip_net.prefixlen)
-                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
-
-    def test_create_subnet_only_ip_version_v6(self):
-        # this test mirrors its v4 counterpart
-        with self.network() as network:
-            tenant_id = network['network']['tenant_id']
-            subnetpool_prefix = '2000::/56'
-            with self.subnetpool(prefixes=[subnetpool_prefix],
-                                 admin=True,
-                                 name="My ipv6 subnet pool",
-                                 tenant_id=tenant_id,
-                                 min_prefixlen='64',
-                                 is_default=True) as subnetpool:
-                subnetpool_id = subnetpool['subnetpool']['id']
-                cfg.CONF.set_override('ipv6_pd_enabled', False)
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '6',
-                        'tenant_id': tenant_id,
-                        'subnetpool_id': subnetpool_id}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
-                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
-                ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
-                self.assertEqual(64, ip_net.prefixlen)
-
-    def test_create_subnet_only_ip_version_v6_old(self):
-        # TODO(john-davidge): Remove after Mitaka release.
-        with self.network() as network:
-            tenant_id = network['network']['tenant_id']
-            subnetpool_prefix = '2000::/56'
-            with self.subnetpool(prefixes=[subnetpool_prefix],
-                                 admin=False,
-                                 name="My ipv6 subnet pool",
-                                 tenant_id=tenant_id,
-                                 min_prefixlen='64') as subnetpool:
-                subnetpool_id = subnetpool['subnetpool']['id']
-                cfg.CONF.set_override('default_ipv6_subnet_pool',
-                                      subnetpool_id)
-                cfg.CONF.set_override('ipv6_pd_enabled', False)
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '6',
-                        'tenant_id': tenant_id,
-                        'subnetpool_id': subnetpool_id}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
-                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
-                ip_net = netaddr.IPNetwork(subnet['cidr'])
-                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
-                self.assertEqual(64, ip_net.prefixlen)
-
     def test_create_subnet_bad_V4_cidr_prefix_len(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
@@ -3065,41 +2961,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
-
-    def _test_create_subnet_V6_pd_modes(self, ra_addr_mode, expect_fail=False):
-        cfg.CONF.set_override('ipv6_pd_enabled', True)
-        # TODO(carl_baldwin): replace explicit subnetpool_id with request to
-        # default subnetpool
-        with self.network() as network:
-            data = {'subnet': {'network_id': network['network']['id'],
-                    'ip_version': '6',
-                    'tenant_id': network['network']['tenant_id'],
-                    'subnetpool_id': constants.IPV6_PD_POOL_ID}}
-            if ra_addr_mode:
-                data['subnet']['ipv6_ra_mode'] = ra_addr_mode
-                data['subnet']['ipv6_address_mode'] = ra_addr_mode
-            subnet_req = self.new_create_request('subnets', data)
-            res = subnet_req.get_response(self.api)
-            if expect_fail:
-                self.assertEqual(webob.exc.HTTPClientError.code,
-                                 res.status_int)
-            else:
-                subnet = self.deserialize(self.fmt, res)['subnet']
-                self.assertEqual(constants.IPV6_PD_POOL_ID,
-                                 subnet['subnetpool_id'])
-
-    def test_create_subnet_V6_pd_slaac(self):
-        self._test_create_subnet_V6_pd_modes('slaac')
-
-    def test_create_subnet_V6_pd_stateless(self):
-        self._test_create_subnet_V6_pd_modes('dhcpv6-stateless')
-
-    def test_create_subnet_V6_pd_statefull(self):
-        self._test_create_subnet_V6_pd_modes('dhcpv6-statefull',
-                                             expect_fail=True)
-
-    def test_create_subnet_V6_pd_no_mode(self):
-        self._test_create_subnet_V6_pd_modes(None, expect_fail=True)
 
     def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
         cidr_1 = '10.0.0.0/23'

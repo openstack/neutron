@@ -593,10 +593,51 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         :param subnet: The subnet dict from the request
         """
-        subnetpool_id = subnet.get('subnetpool_id',
-                                   attributes.ATTR_NOT_SPECIFIED)
-        if subnetpool_id != attributes.ATTR_NOT_SPECIFIED:
+        use_default_subnetpool = subnet.get('use_default_subnetpool')
+        if use_default_subnetpool == attributes.ATTR_NOT_SPECIFIED:
+            use_default_subnetpool = False
+        subnetpool_id = subnet.get('subnetpool_id')
+        if subnetpool_id == attributes.ATTR_NOT_SPECIFIED:
+            subnetpool_id = None
+
+        if use_default_subnetpool and subnetpool_id:
+            msg = _('subnetpool_id and use_default_subnetpool cannot both be '
+                    'specified')
+            raise n_exc.BadRequest(resource='subnets', msg=msg)
+
+        if subnetpool_id:
             return subnetpool_id
+
+        if not use_default_subnetpool:
+            return
+
+        cidr = subnet.get('cidr')
+        if attributes.is_attr_set(cidr):
+            ip_version = netaddr.IPNetwork(cidr).version
+        else:
+            ip_version = subnet.get('ip_version')
+            if not attributes.is_attr_set(ip_version):
+                msg = _('ip_version must be specified in the absence of '
+                        'cidr and subnetpool_id')
+                raise n_exc.BadRequest(resource='subnets', msg=msg)
+
+        if ip_version == 6 and cfg.CONF.ipv6_pd_enabled:
+            return constants.IPV6_PD_POOL_ID
+
+        subnetpool = self.get_default_subnetpool(context, ip_version)
+        if subnetpool:
+            return subnetpool['id']
+
+        # Until the default_subnet_pool config options are removed in the N
+        # release, check for them after get_default_subnetpool returns None.
+        # TODO(john-davidge): Remove after Mitaka release.
+        if ip_version == 4 and cfg.CONF.default_ipv4_subnet_pool:
+            return cfg.CONF.default_ipv4_subnet_pool
+        if ip_version == 6 and cfg.CONF.default_ipv6_subnet_pool:
+            return cfg.CONF.default_ipv6_subnet_pool
+
+        msg = _('No default subnetpool found for IPv%s') % ip_version
+        raise n_exc.BadRequest(resource='subnets', msg=msg)
 
     def create_subnet(self, context, subnet):
 
