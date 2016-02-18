@@ -22,7 +22,7 @@
 
 
 Open vSwitch Firewall Driver
-===========================
+============================
 
 The OVS driver has the same API as the current iptables firewall driver,
 keeping the state of security groups and ports inside of the firewall.
