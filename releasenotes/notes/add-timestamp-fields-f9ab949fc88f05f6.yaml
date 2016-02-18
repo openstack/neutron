@@ -1,0 +1,6 @@
+---
+prelude: >
+    Timestamp fields are now added to neutron core resources.
+features:
+  - Add timestamp fields 'created_at', 'updated_at' into neutron core
+    resources like network, subnet, port and subnetpool.
