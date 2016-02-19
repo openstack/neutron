@@ -205,9 +205,9 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
                                   ) as mock_get_router_networks:
             ports = self.handler._get_ports(remote_address,
                                             router_id=router_id)
-            mock_get_router_networks.called_once_with(router_id)
-        mock_get_ip_addr.assert_called_once_with(remote_address, networks)
-        self.assertEqual(expected, ports)
+            mock_get_router_networks.assert_called_once_with(router_id)
+            mock_get_ip_addr.assert_called_once_with(remote_address, networks)
+            self.assertEqual(expected, ports)
 
     def test_get_ports_no_id(self):
         self.assertRaises(TypeError, self.handler._get_ports, 'remote_address')

@@ -105,6 +105,11 @@ class HackingTestCase(base.BaseTestCase):
         fail_code3 = """
                mock = Mock()
                mock.method(1, 2, 3, test='wow')
+               mock.method.called_once_with()
+               """
+        fail_code4 = """
+               mock = Mock()
+               mock.method(1, 2, 3, test='wow')
                mock.method.assert_has_called()
                """
         pass_code = """
@@ -124,10 +129,13 @@ class HackingTestCase(base.BaseTestCase):
             1, len(list(checks.check_assert_called_once_with(fail_code2,
                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
+            1, len(list(checks.check_assert_called_once_with(fail_code3,
+                                            "neutron/tests/test_assert.py"))))
+        self.assertEqual(
             0, len(list(checks.check_assert_called_once_with(pass_code,
                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            1, len(list(checks.check_assert_called_once_with(fail_code3,
+            1, len(list(checks.check_assert_called_once_with(fail_code4,
                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
             0, len(list(checks.check_assert_called_once_with(pass_code2,

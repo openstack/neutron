@@ -1505,8 +1505,8 @@ class TestDeviceManager(base.BaseTestCase):
             uuid5.return_value = '1ae5f96c-c527-5079-82ea-371a01645457'
 
             dh = dhcp.DeviceManager(cfg.CONF, None)
-            uuid5.called_once_with(uuid.NAMESPACE_DNS, cfg.CONF.host)
             self.assertEqual(dh.get_device_id(fake_net), expected)
+            uuid5.assert_called_once_with(uuid.NAMESPACE_DNS, cfg.CONF.host)
 
     def test_update(self):
         # Try with namespaces and no metadata network
