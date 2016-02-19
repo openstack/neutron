@@ -51,13 +51,17 @@ function compile_ovs {
         localstatedir="--localstatedir=$localstatedir"
     fi
 
-    cd $DEST
-    if [ ! -d $OVS_REPO_NAME ] ; then
-        git clone $OVS_REPO
-        cd $OVS_REPO_NAME
+    OVS_DIR=$DEST/$OVS_REPO_NAME
+    if [ ! -d $OVS_DIR ] ; then
+        # We can't use git_clone here because we want to ignore ERROR_ON_CLONE
+        git_timed clone $OVS_REPO $OVS_DIR
+        cd $OVS_DIR
         git checkout $OVS_BRANCH
     else
-        cd $OVS_REPO_NAME
+        # Even though the directory already exists, call git_clone to update it
+        # if needed based on the RECLONE option
+        git_clone $OVS_REPO $OVS_DIR $OVS_BRANCH
+        cd $OVS_DIR
     fi
 
     # TODO: Can you create package list files like you can inside devstack?
