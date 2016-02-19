@@ -1035,6 +1035,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         try:
             bound_context = self._bind_port_if_needed(mech_context)
+        except os_db_exception.DBDeadlock:
+            # bind port can deadlock in normal operation so we just cleanup
+            # the port and let the API retry
+            with excutils.save_and_reraise_exception():
+                LOG.debug("_bind_port_if_needed deadlock, deleting port %s",
+                          result['id'])
+                self.delete_port(context, result['id'])
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("_bind_port_if_needed "
