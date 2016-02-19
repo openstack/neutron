@@ -124,8 +124,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         On update and delete, make sure the tenant losing access does not have
         resources that depend on that access.
         """
-        if object_type != 'network':
-            # we only care about network policies
+        if object_type != 'network' or policy['action'] != 'access_as_shared':
+            # we only care about shared network policies
             return
         # The object a policy targets cannot be changed so we can look
         # at the original network for the update event as well.

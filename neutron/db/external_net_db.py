@@ -26,9 +26,12 @@ from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
+from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import external_net
+from neutron.extensions import rbac as rbac_ext
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 
@@ -65,8 +68,14 @@ class External_net_db_mixin(object):
         # Apply the external network filter only in non-admin and non-advsvc
         # context
         if self.model_query_scope(context, original_model):
-            conditions = expr.or_(ExternalNetwork.network_id != expr.null(),
-                                  *conditions)
+            # the table will already be joined to the rbac entries for the
+            # shared check so we don't need to worry about ensuring that
+            rbac_model = original_model.rbac_entries.property.mapper.class_
+            tenant_allowed = (
+                (rbac_model.action == 'access_as_external') &
+                (rbac_model.target_tenant == context.tenant_id) |
+                (rbac_model.target_tenant == '*'))
+            conditions = expr.or_(tenant_allowed, *conditions)
         return conditions
 
     def _network_result_filter_hook(self, query, filters):
@@ -124,13 +133,16 @@ class External_net_db_mixin(object):
                 # raise the underlying exception
                 raise e.errors[0].error
             context.session.add(ExternalNetwork(network_id=net_data['id']))
+            context.session.add(rbac_db.NetworkRBAC(
+                  object_id=net_data['id'], action='access_as_external',
+                  target_tenant='*', tenant_id=net_data['tenant_id']))
             registry.notify(
                 resources.EXTERNAL_NETWORK, events.AFTER_CREATE,
                 self, context=context,
                 request=req_data, network=net_data)
         net_data[external_net.EXTERNAL] = external
 
-    def _process_l3_update(self, context, net_data, req_data):
+    def _process_l3_update(self, context, net_data, req_data, allow_all=True):
         try:
             registry.notify(
                 resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE,
@@ -151,6 +163,10 @@ class External_net_db_mixin(object):
         if new_value:
             context.session.add(ExternalNetwork(network_id=net_id))
             net_data[external_net.EXTERNAL] = True
+            if allow_all:
+                context.session.add(rbac_db.NetworkRBAC(
+                      object_id=net_id, action='access_as_external',
+                      target_tenant='*', tenant_id=net_data['tenant_id']))
         else:
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
@@ -163,6 +179,8 @@ class External_net_db_mixin(object):
 
             context.session.query(ExternalNetwork).filter_by(
                 network_id=net_id).delete()
+            context.session.query(rbac_db.NetworkRBAC).filter_by(
+                object_id=net_id, action='access_as_external').delete()
             net_data[external_net.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
@@ -177,3 +195,82 @@ class External_net_db_mixin(object):
             raise n_exc.TooManyExternalNetworks()
         else:
             return nets[0]['id'] if nets else None
+
+    def _process_ext_policy_create(self, resource, event, trigger, context,
+                                   object_type, policy, **kwargs):
+        if (object_type != 'network' or
+                policy['action'] != 'access_as_external'):
+            return
+        net = self.get_network(context, policy['object_id'])
+        if not context.is_admin and net['tenant_id'] != context.tenant_id:
+            msg = _("Only admins can manipulate policies on networks they "
+                    "do not own.")
+            raise n_exc.InvalidInput(error_message=msg)
+        if not self._network_is_external(context, policy['object_id']):
+            # we automatically convert the network into an external network
+            self._process_l3_update(context, net,
+                                    {external_net.EXTERNAL: True},
+                                    allow_all=False)
+
+    def _validate_ext_not_in_use_by_tenant(self, resource, event, trigger,
+                                           context, object_type, policy,
+                                           **kwargs):
+        if (object_type != 'network' or
+                policy['action'] != 'access_as_external'):
+            return
+        if event == events.BEFORE_UPDATE:
+            new_tenant = kwargs['policy_tenant']['target_tenant']
+            if new_tenant == policy['target_tenant']:
+                # nothing to validate if the tenant didn't change
+                return
+        ports = context.session.query(models_v2.Port.id).filter_by(
+            device_owner=DEVICE_OWNER_ROUTER_GW,
+            network_id=policy['object_id'])
+        router = context.session.query(l3_db.Router).filter(
+            l3_db.Router.gw_port_id.in_(ports))
+        rbac = rbac_db.NetworkRBAC
+        if policy['target_tenant'] != '*':
+            router = router.filter(
+                l3_db.Router.tenant_id == policy['target_tenant'])
+            # if there is a wildcard entry we can safely proceed without the
+            # router lookup because they will have access either way
+            if context.session.query(rbac_db.NetworkRBAC).filter(
+                    rbac.object_id == policy['object_id'],
+                    rbac.action == 'access_as_external',
+                    rbac.target_tenant == '*').count():
+                return
+        else:
+            # deleting the wildcard is okay as long as the tenants with
+            # attached routers have their own entries and the network is
+            # not the default external network.
+            is_default = context.session.query(ExternalNetwork).filter_by(
+                network_id=policy['object_id'], is_default=True).count()
+            if is_default:
+                msg = _("Default external networks must be shared to "
+                        "everyone.")
+                raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],
+                                               details=msg)
+            tenants_with_entries = (
+                context.session.query(rbac.target_tenant).
+                filter(rbac.object_id == policy['object_id'],
+                       rbac.action == 'access_as_external',
+                       rbac.target_tenant != '*'))
+            router = router.filter(
+                ~l3_db.Router.tenant_id.in_(tenants_with_entries))
+        if router.count():
+            msg = _("There are routers attached to this network that "
+                    "depend on this policy for access.")
+            raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],
+                                           details=msg)
+
+    def _register_external_net_rbac_hooks(self):
+        registry.subscribe(self._process_ext_policy_create,
+                           'rbac-policy', events.BEFORE_CREATE)
+        for e in (events.BEFORE_UPDATE, events.BEFORE_DELETE):
+            registry.subscribe(self._validate_ext_not_in_use_by_tenant,
+                               'rbac-policy', e)
+
+    def __new__(cls, *args, **kwargs):
+        new = super(External_net_db_mixin, cls).__new__(cls, *args, **kwargs)
+        new._register_external_net_rbac_hooks()
+        return new

@@ -70,7 +70,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                    # action depends on type so validation has to occur in
                    # the extension
                    'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
-                   'is_visible': True},
+                   # we set enforce_policy so operators can define policies
+                   # that restrict actions
+                   'is_visible': True, 'enforce_policy': True,
+                   'default': None},
     }
 }
 
