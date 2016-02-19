@@ -242,6 +242,20 @@ class L3HATestCase(framework.L3AgentTestFramework):
         interface_name = router.get_external_device_name(port['id'])
         router.external_gateway_removed(port, interface_name)
 
+    def test_removing_floatingip_immediately(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+        ex_gw_port = router.get_ex_gw_port()
+        interface_name = router.get_external_device_interface_name(ex_gw_port)
+        utils.wait_until_true(lambda: router.ha_state == 'master')
+        self._add_fip(router, '172.168.1.20', fixed_address='10.0.0.3')
+        router.process(self.agent)
+        router.router[l3_constants.FLOATINGIP_KEY] = []
+        # The purpose of the test is to simply make sure no exception is raised
+        # Because router.process will consume the FloatingIpSetupException,
+        # call the configure_fip_addresses directly here
+        router.configure_fip_addresses(interface_name)
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
