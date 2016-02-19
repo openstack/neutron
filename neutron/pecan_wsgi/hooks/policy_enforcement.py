@@ -26,6 +26,7 @@ from neutron.api.v2 import attributes as v2_attributes
 from neutron.common import constants as const
 from neutron.extensions import quotasv2
 from neutron import manager
+from neutron.pecan_wsgi import constants as pecan_constants
 from neutron.pecan_wsgi.controllers import quota
 from neutron import policy
 
@@ -37,9 +38,7 @@ def _custom_getter(resource, resource_id):
 
 
 class PolicyHook(hooks.PecanHook):
-    priority = 135
-    ACTION_MAP = {'POST': 'create', 'PUT': 'update', 'GET': 'get',
-                  'DELETE': 'delete'}
+    priority = 140
 
     def _fetch_resource(self, neutron_context, resource, resource_id):
         attrs = v2_attributes.get_resource_info(resource)
@@ -75,13 +74,15 @@ class PolicyHook(hooks.PecanHook):
         needs_prefetch = (state.request.method == 'PUT' or
                           state.request.method == 'DELETE')
         policy.init()
-        action = '%s_%s' % (self.ACTION_MAP[state.request.method], resource)
+        action = '%s_%s' % (pecan_constants.ACTION_MAP[state.request.method],
+                            resource)
 
         # NOTE(salv-orlando): As bulk updates are not supported, in case of PUT
         # requests there will be only a single item to process, and its
         # identifier would have been already retrieved by the lookup process;
         # in the case of DELETE requests there won't be any item to process in
         # the request body
+        merged_resources = []
         if needs_prefetch:
             try:
                 item = resources_copy.pop()
@@ -93,10 +94,14 @@ class PolicyHook(hooks.PecanHook):
                                                  resource,
                                                  resource_id))
             obj.update(item)
+            merged_resources.append(obj.copy())
             obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
             # Put back the item in the list so that policies could be enforced
             resources_copy.append(obj)
-
+        # TODO(salv-orlando): as other hooks might need to prefetch resources,
+        # store them in the request context. However, this should be done in a
+        # separate hook which is conventietly called before all other hooks
+        state.request.context['request_resources'] = merged_resources
         for item in resources_copy:
             try:
                 policy.enforce(
@@ -127,7 +132,7 @@ class PolicyHook(hooks.PecanHook):
             data = state.response.json
         except simplejson.JSONDecodeError:
             return
-        action = '%s_%s' % (self.ACTION_MAP[state.request.method],
+        action = '%s_%s' % (pecan_constants.ACTION_MAP[state.request.method],
                             resource)
         if not data or (resource not in data and collection not in data):
             return
@@ -154,8 +159,7 @@ class PolicyHook(hooks.PecanHook):
 
         if is_single:
             resp = resp[0]
-        data[key] = resp
-        state.response.json = data
+        state.response.json = {key: resp}
 
     def _get_filtered_item(self, request, resource, collection, data):
         neutron_context = request.context.get('neutron_context')
