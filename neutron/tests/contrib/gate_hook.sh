@@ -45,7 +45,7 @@ then
         cat >> $DEVSTACK_PATH/local.conf <<EOF
 [[post-config|/etc/neutron/neutron.conf]]
 
-[default]
+[DEFAULT]
 web_framework=pecan
 
 EOF
