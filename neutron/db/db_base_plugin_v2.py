@@ -589,16 +589,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return self._make_subnet_dict(subnet, context=context)
 
     def _get_subnetpool_id(self, context, subnet):
-        """Returns the subnetpool id for this request
-
-        If the pool id was explicitly set in the request then that will be
-        returned, even if it is None.
-
-        Otherwise, the default pool for the IP version requested will be
-        returned.  This will either be a pool id or None (the default for each
-        configuration parameter).  This implies that the ip version must be
-        either set implicitly with a specific cidr or explicitly using
-        ip_version attribute.
+        """Return the subnetpool id for this request
 
         :param subnet: The subnet dict from the request
         """
@@ -606,30 +597,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                    attributes.ATTR_NOT_SPECIFIED)
         if subnetpool_id != attributes.ATTR_NOT_SPECIFIED:
             return subnetpool_id
-
-        cidr = subnet.get('cidr')
-        if attributes.is_attr_set(cidr):
-            ip_version = netaddr.IPNetwork(cidr).version
-        else:
-            ip_version = subnet.get('ip_version')
-            if not attributes.is_attr_set(ip_version):
-                msg = _('ip_version must be specified in the absence of '
-                        'cidr and subnetpool_id')
-                raise n_exc.BadRequest(resource='subnets', msg=msg)
-
-        if ip_version == 6 and cfg.CONF.ipv6_pd_enabled:
-            return constants.IPV6_PD_POOL_ID
-
-        subnetpool = self.get_default_subnetpool(context, ip_version)
-        if subnetpool:
-            return subnetpool['id']
-
-        # Until the default_subnet_pool config options are removed in the N
-        # release, check for them after get_default_subnetpool returns None.
-        # TODO(john-davidge): Remove after Mitaka release.
-        if ip_version == 4:
-            return cfg.CONF.default_ipv4_subnet_pool
-        return cfg.CONF.default_ipv6_subnet_pool
 
     def create_subnet(self, context, subnet):
 
@@ -649,6 +616,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
 
         subnetpool_id = self._get_subnetpool_id(context, s)
+        if not subnetpool_id and not has_cidr:
+            # TODO(carl_baldwin): allow requests asking for 'default' pools
+            msg = _('a subnetpool must be specified in the absence of a cidr')
+            raise n_exc.BadRequest(resource='subnets', msg=msg)
+
         if subnetpool_id:
             self.ipam.validate_pools_with_subnetpool(s)
             if subnetpool_id == constants.IPV6_PD_POOL_ID:
