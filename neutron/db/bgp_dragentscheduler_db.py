@@ -18,6 +18,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy.orm import exc
 
 from neutron._i18n import _
 from neutron._i18n import _LW
@@ -36,7 +37,7 @@ BGP_DRAGENT_SCHEDULER_OPTS = [
         'bgp_drscheduler_driver',
         default='neutron.services.bgp.scheduler'
                 '.bgp_dragent_scheduler.ChanceScheduler',
-        help=_('Driver used for scheduling BGP speakers to BGP DrAgent')),
+        help=_('Driver used for scheduling BGP speakers to BGP DrAgent'))
 ]
 
 cfg.CONF.register_opts(BGP_DRAGENT_SCHEDULER_OPTS)
@@ -73,7 +74,12 @@ class BgpDrAgentSchedulerDbMixin(bgp_dras_ext.BgpDrSchedulerPluginBase,
 
     def schedule_bgp_speaker(self, context, created_bgp_speaker):
         if self.bgp_drscheduler:
-            self.bgp_drscheduler.schedule(context, created_bgp_speaker)
+            agents = self.bgp_drscheduler.schedule(context,
+                                                   created_bgp_speaker)
+            for agent in agents:
+                self._bgp_rpc.bgp_speaker_created(context,
+                                                  created_bgp_speaker['id'],
+                                                  agent.host)
         else:
             LOG.warning(_LW("Cannot schedule BgpSpeaker to DrAgent. "
                             "Reason: No scheduler registered."))
@@ -107,6 +113,8 @@ class BgpDrAgentSchedulerDbMixin(bgp_dras_ext.BgpDrSchedulerPluginBase,
             binding.agent_id = agent_id
             context.session.add(binding)
 
+        self._bgp_rpc.bgp_speaker_created(context, speaker_id, agent_db.host)
+
     def remove_bgp_speaker_from_dragent(self, context, agent_id, speaker_id):
         with context.session.begin(subtransactions=True):
             agent_db = self._get_agent(context, agent_id)
@@ -128,6 +136,8 @@ class BgpDrAgentSchedulerDbMixin(bgp_dras_ext.BgpDrSchedulerPluginBase,
                       'BgpDrAgent %(agent_id)s',
                       {'bgp_speaker_id': speaker_id,
                        'agent_id': agent_id})
+
+        self._bgp_rpc.bgp_speaker_removed(context, speaker_id, agent_db.host)
 
     def get_dragents_hosting_bgp_speakers(self, context, bgp_speaker_ids,
                                           active=None, admin_state_up=None):
@@ -175,3 +185,31 @@ class BgpDrAgentSchedulerDbMixin(bgp_dras_ext.BgpDrSchedulerPluginBase,
         return {'bgp_speakers':
                 self.get_bgp_speakers(context,
                                       filters={'id': bgp_speaker_ids})}
+
+    def get_bgp_speakers_for_agent_host(self, context, host):
+        agent = self._get_agent_by_type_and_host(
+            context, bgp_consts.AGENT_TYPE_BGP_ROUTING, host)
+        if not agent.admin_state_up:
+            return {}
+
+        query = context.session.query(BgpSpeakerDrAgentBinding)
+        query = query.filter(BgpSpeakerDrAgentBinding.agent_id == agent.id)
+        try:
+            binding = query.one()
+        except exc.NoResultFound:
+            return []
+        bgp_speaker = self.get_bgp_speaker_with_advertised_routes(
+                                context, binding['bgp_speaker_id'])
+        return [bgp_speaker]
+
+    def get_bgp_speaker_by_speaker_id(self, context, bgp_speaker_id):
+        try:
+            return self.get_bgp_speaker(context, bgp_speaker_id)
+        except exc.NoResultFound:
+            return {}
+
+    def get_bgp_peer_by_peer_id(self, context, bgp_peer_id):
+        try:
+            return self.get_bgp_peer(context, bgp_peer_id)
+        except exc.NoResultFound:
+            return {}

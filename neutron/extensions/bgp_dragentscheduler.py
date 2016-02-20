@@ -169,3 +169,15 @@ class BgpDrSchedulerPluginBase(object):
     @abc.abstractmethod
     def list_bgp_speaker_on_dragent(self, context, agent_id):
         pass
+
+    @abc.abstractmethod
+    def get_bgp_speakers_for_agent_host(self, context, host):
+        pass
+
+    @abc.abstractmethod
+    def get_bgp_speaker_by_speaker_id(self, context, speaker_id):
+        pass
+
+    @abc.abstractmethod
+    def get_bgp_peer_by_peer_id(self, context, bgp_peer_id):
+        pass

@@ -13,8 +13,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-AGENT_TYPE_BGP_ROUTING = 'BGP dynamic routing agent'
+import itertools
 
-BGP_DRAGENT = 'bgp_dragent'
+import neutron.services.bgp.agent.config
 
-BGP_PLUGIN = 'q-bgp-plugin'
+
+def list_bgp_agent_opts():
+    return [
+        ('BGP',
+         itertools.chain(
+             neutron.services.bgp.agent.config.BGP_DRIVER_OPTS,
+             neutron.services.bgp.agent.config.BGP_PROTO_CONFIG_OPTS)
+         )
+    ]

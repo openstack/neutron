@@ -24,6 +24,9 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-agt; then
                 configure_l2_agent
             fi
+            if is_service_enabled q-bgp && is_service_enabled q-bgp-agt; then
+                configure_bgp_dragent
+            fi
             #Note: sriov agent should run with OVS or linux bridge agent
             #because they are the mechanisms that bind the DHCP and router ports.
             #Currently devstack lacks the option to run two agents on the same node.
@@ -39,10 +42,16 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-sriov-agt; then
                 start_l2_agent_sriov
             fi
+            if is_service_enabled q-bgp && is_service_enabled q-bgp-agt; then
+                start_bgp_dragent
+            fi
             ;;
     esac
 elif [[ "$1" == "unstack" ]]; then
     if is_service_enabled q-sriov-agt; then
         stop_l2_agent_sriov
+    fi
+    if is_service_enabled q-bgp && is_service_enabled q-bgp-agt; then
+        stop_bgp_dragent
     fi
 fi
