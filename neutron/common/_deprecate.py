@@ -16,6 +16,8 @@ import debtcollector
 import inspect
 import os
 
+from neutron._i18n import _
+
 
 class _DeprecateSubset(object):
     def __init__(self, my_globals, other_mod):
@@ -43,4 +45,5 @@ class _DeprecateSubset(object):
         try:
             return self.my_globals[name]
         except KeyError:
-            raise AttributeError()
+            raise AttributeError(
+                _("'module' object has no attribute '%s'") % name)
