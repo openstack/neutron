@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Advanced Services
-=================
+Service Extensions
+==================
 
 Historically, Neutron supported the following advanced services:
 
@@ -33,8 +33,19 @@ Historically, Neutron supported the following advanced services:
    VPNaaS functionality.
 
 Starting with the Kilo release, these services are split into separate
-repositories managed by extended reviewer teams.
+repositories, and more extensions are being developed as well. Service
+plugins are a clean way of adding functionality in a cohesive manner
+and yet, keeping them decoupled from the guts of the framework. The
+aforementioned features are developed as extensions (also known as
+service plugins), and more capabilities are being added to Neutron
+following the same pattern. For those that are deemed 'orthogonal'
+to any network service (e.g. tags, timestamps, auto_allocate, etc),
+there is an informal `mechanism <https://github.com/openstack/neutron/blob/aadf2f30f84dff3d85f380a7ff4e16dbbb0c6bb0/neutron/plugins/common/constants.py#L41>`_
+to have these loaded automatically at server startup. If you
+consider adding an entry to the dictionary, please be kind and
+reach out to your PTL or a member of the drivers team for approval.
 
 #. http://git.openstack.org/cgit/openstack/neutron-fwaas/
 #. http://git.openstack.org/cgit/openstack/neutron-lbaas/
 #. http://git.openstack.org/cgit/openstack/neutron-vpnaas/
+
