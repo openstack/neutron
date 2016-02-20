@@ -66,7 +66,7 @@ Neutron Internals
    l2_agents
    ovs_vhostuser
    quality_of_service
-   advanced_services
+   service_extensions
    oslo-incubator
    callbacks
    dns_order
