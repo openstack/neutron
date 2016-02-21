@@ -1544,7 +1544,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         LOG.info(_LI("Devices down  %s "), devices_down)
         failed_devices = set(devices_down.get('failed_devices_down'))
         if failed_devices:
-            LOG.debug("Port removal failed for %(devices)s", failed_devices)
+            LOG.debug("Port removal failed for %s", failed_devices)
         for detail in devices_down.get('devices_down'):
             if detail['exists']:
                 LOG.info(_LI("Port %s updated."), detail['device'])
