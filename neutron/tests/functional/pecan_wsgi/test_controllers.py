@@ -13,6 +13,7 @@
 from collections import namedtuple
 
 import mock
+from oslo_config import cfg
 from oslo_serialization import jsonutils
 import pecan
 from pecan import request
@@ -21,6 +22,7 @@ from neutron.api.v2 import attributes
 from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
+from neutron.plugins.common import constants
 from neutron.tests.functional.pecan_wsgi import test_functional
 
 _SERVICE_PLUGIN_RESOURCE = 'serviceplugin'
@@ -394,3 +396,69 @@ class TestRequestProcessing(TestResourceController):
         response = self.do_request('/v2.0/dummy/serviceplugins.json')
         self.assertEqual(200, response.status_int)
         self.assertEqual(_SERVICE_PLUGIN_INDEX_BODY, response.json_body)
+
+
+class TestRouterController(TestResourceController):
+    """Specialized tests for the router resource controller
+
+    This test class adds tests specific for the router controller in
+    order to verify the 'member_action' functionality, which this
+    controller uses for adding and removing router interfaces.
+    """
+
+    def setUp(self):
+        cfg.CONF.set_override(
+            'service_plugins',
+            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'])
+
+        super(TestRouterController, self).setUp()
+
+        # Create a network, a subnet, and a router
+        pl = manager.NeutronManager.get_plugin()
+        service_plugins = manager.NeutronManager.get_service_plugins()
+        l3_plugin = service_plugins[constants.L3_ROUTER_NAT]
+        ctx = context.get_admin_context()
+        network_id = pl.create_network(
+            ctx,
+            {'network':
+             {'name': 'pecannet',
+              'tenant_id': 'tenid',
+              'shared': False,
+              'admin_state_up': True,
+              'status': 'ACTIVE'}})['id']
+        self.subnet = pl.create_subnet(
+            ctx,
+            {'subnet':
+             {'tenant_id': 'tenid',
+              'network_id': network_id,
+              'name': 'pecansub',
+              'ip_version': 4,
+              'cidr': '10.20.30.0/24',
+              'gateway_ip': '10.20.30.1',
+              'enable_dhcp': True,
+              'allocation_pools': [
+                  {'start': '10.20.30.2',
+                   'end': '10.20.30.254'}],
+              'dns_nameservers': [],
+              'host_routes': []}})
+        self.router = l3_plugin.create_router(
+            ctx,
+            {'router':
+             {'name': 'pecanrtr',
+              'tenant_id': 'tenid',
+              'admin_state_up': True}})
+
+    def test_member_actions_processing(self):
+        response = self.app.put_json(
+            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            params={'subnet_id': self.subnet['id']},
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, response.status_int)
+
+    def test_non_existing_member_action_returns_404(self):
+        response = self.app.put_json(
+            '/v2.0/routers/%s/do_meh.json' % self.router['id'],
+            params={'subnet_id': 'doesitevenmatter'},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(404, response.status_int)

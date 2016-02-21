@@ -13,10 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
+from oslo_serialization import jsonutils
 from pecan import hooks
 
 from neutron.api.v2 import attributes as v2_attributes
 from neutron.api.v2 import base as v2_base
+
+LOG = log.getLogger(__name__)
 
 
 class BodyValidationHook(hooks.PecanHook):
@@ -32,10 +36,24 @@ class BodyValidationHook(hooks.PecanHook):
         is_create = state.request.method == 'POST'
         if not resource:
             return
+
+        try:
+            json_data = jsonutils.loads(state.request.body)
+        except ValueError:
+            LOG.debug("No JSON Data in %(method)s request for %(collection)s",
+                      {'method': state.request.method,
+                       'collections': collection})
+            return
+        # Raw data are consumed by member actions such as add_router_interface
+        state.request.context['request_data'] = json_data
+        if not (resource in json_data or collection in json_data):
+            # there is no resource in the request. This can happen when a
+            # member action is being processed.
+            return
         # Prepare data to be passed to the plugin from request body
         data = v2_base.Controller.prepare_request_body(
             neutron_context,
-            state.request.json,
+            json_data,
             is_create,
             resource,
             v2_attributes.get_collection_info(collection),

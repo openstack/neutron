@@ -15,7 +15,6 @@
 
 from neutron.pecan_wsgi.hooks import body_validation
 from neutron.pecan_wsgi.hooks import context
-from neutron.pecan_wsgi.hooks import member_action
 from neutron.pecan_wsgi.hooks import notifier
 from neutron.pecan_wsgi.hooks import ownership_validation
 from neutron.pecan_wsgi.hooks import policy_enforcement
@@ -25,7 +24,6 @@ from neutron.pecan_wsgi.hooks import translation
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook
 ContextHook = context.ContextHook
-MemberActionHook = member_action.MemberActionHook
 BodyValidationHook = body_validation.BodyValidationHook
 OwnershipValidationHook = ownership_validation.OwnershipValidationHook
 PolicyHook = policy_enforcement.PolicyHook
