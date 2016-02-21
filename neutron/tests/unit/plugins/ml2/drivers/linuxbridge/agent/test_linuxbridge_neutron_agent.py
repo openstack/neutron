@@ -24,6 +24,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
@@ -191,6 +192,22 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
 
+    def test_treat_devices_removed_with_prevent_arp_spoofing_true(self):
+        agent = self.agent
+        agent.prevent_arp_spoofing = True
+        agent._ensure_port_admin_state = mock.Mock()
+        devices = [DEVICE_1]
+        with mock.patch.object(agent.plugin_rpc,
+                               "update_device_down") as fn_udd,\
+                mock.patch.object(agent.sg_agent,
+                                  "remove_devices_filter"):
+            fn_udd.return_value = {'device': DEVICE_1,
+                                   'exists': True}
+            with mock.patch.object(arp_protect,
+                                   'delete_arp_spoofing_protection') as de_arp:
+                agent.treat_devices_removed(devices)
+                de_arp.assert_called_with(devices)
+
     def _test_scan_devices(self, previous, updated,
                            fake_current, expected, sync):
         self.agent.br_mgr = mock.Mock()
@@ -307,6 +324,21 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=True)
 
+    def test_scan_devices_with_prevent_arp_spoofing_true(self):
+        self.agent.prevent_arp_spoofing = True
+        previous = None
+        fake_current = set([1, 2])
+        updated = set()
+        expected = {'current': set([1, 2]),
+                    'updated': set(),
+                    'added': set([1, 2]),
+                    'removed': set()}
+        with mock.patch.object(arp_protect,
+                               'delete_unreferenced_arp_protection') as de_arp:
+            self._test_scan_devices(previous, updated, fake_current, expected,
+                                sync=False)
+            de_arp.assert_called_with(fake_current)
+
     def test_process_network_devices(self):
         agent = self.agent
         device_info = {'current': set(),
@@ -367,6 +399,29 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                                                      'physnet1',
                                                      'port123')
         self.assertFalse(agent.plugin_rpc.update_device_up.called)
+
+    def test_treat_devices_added_updated_prevent_arp_spoofing_true(self):
+        agent = self.agent
+        agent.prevent_arp_spoofing = True
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'physical_network': 'physnet1',
+                        'device_owner': 'network:fake'}
+        tap_name = constants.TAP_DEVICE_PREFIX + mock_details['port_id']
+        agent.plugin_rpc = mock.Mock()
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.br_mgr = mock.Mock()
+        agent.br_mgr.add_interface.return_value = True
+        agent.br_mgr.get_tap_device_name.return_value = tap_name
+        agent._ensure_port_admin_state = mock.Mock()
+        with mock.patch.object(arp_protect,
+                               'setup_arp_spoofing_protection') as set_arp:
+            agent.treat_devices_added_updated(set(['tap1']))
+            set_arp.assert_called_with(tap_name, mock_details)
 
     def test_set_rpc_timeout(self):
         self.agent.stop()
