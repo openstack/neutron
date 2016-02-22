@@ -18,7 +18,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import api as db_api
@@ -428,8 +428,8 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
         """
         if not subnet_request.subnet_id:
             raise ipam_exc.InvalidSubnetRequest(
-                reason=("An identifier must be specified when updating "
-                        "a subnet"))
+                reason=_("An identifier must be specified when updating "
+                         "a subnet"))
         if not subnet_request.allocation_pools:
             LOG.debug("Update subnet request for subnet %s did not specify "
                       "new allocation pools, there is nothing to do",
