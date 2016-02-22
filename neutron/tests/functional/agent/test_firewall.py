@@ -116,7 +116,6 @@ class FirewallTestCase(base.BaseSudoTestCase):
         cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
         super(FirewallTestCase, self).setUp()
         self.tester, self.firewall = getattr(self, self.initialize)()
-        self.addOnException(self.tester.collect_debug_info)
         self.src_port_desc = self._create_port_description(
             self.tester.vm_port_id,
             [self.tester.vm_ip_address],
