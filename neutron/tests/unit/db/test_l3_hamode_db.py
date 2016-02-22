@@ -14,9 +14,11 @@
 
 import mock
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
+import testtools
 
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
@@ -583,6 +585,82 @@ class L3HATestCase(L3HATestFramework):
 
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
         self.assertEqual(networks_before, networks_after)
+
+    def test_create_ha_interfaces_and_ensure_network_net_exists(self):
+        router = self._create_router()
+        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
+        with mock.patch.object(self.plugin, '_create_ha_network') as create:
+            self.plugin._create_ha_interfaces_and_ensure_network(
+                self.admin_ctx, router_db)
+            self.assertFalse(create.called)
+
+    def test_create_ha_interfaces_and_ensure_network_concurrent_create(self):
+        # create a non-ha router so we can manually invoke the create ha
+        # interfaces call down below
+        router = self._create_router(ha=False)
+        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
+        orig_create = self.plugin._create_ha_network
+        created_nets = []
+
+        def _create_ha_network(*args, **kwargs):
+            # create the network and then raise the error to simulate another
+            # worker creating the network before us.
+            created_nets.append(orig_create(*args, **kwargs))
+            raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
+        with mock.patch.object(self.plugin, '_create_ha_network',
+                               new=_create_ha_network):
+            net = self.plugin._create_ha_interfaces_and_ensure_network(
+                self.admin_ctx, router_db)[1]
+        # ensure that it used the concurrently created network
+        self.assertEqual([net], created_nets)
+
+    def _test_ensure_with_patched_int_create(self, _create_ha_interfaces):
+        # create a non-ha router so we can manually invoke the create ha
+        # interfaces call down below
+        router = self._create_router(ha=False)
+        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
+        with mock.patch.object(self.plugin, '_create_ha_interfaces',
+                               new=_create_ha_interfaces):
+            self.plugin._create_ha_interfaces_and_ensure_network(
+                self.admin_ctx, router_db)
+            self.assertTrue(_create_ha_interfaces.called)
+
+    def test_create_ha_interfaces_and_ensure_network_concurrent_delete(self):
+        orig_create = self.plugin._create_ha_interfaces
+
+        def _create_ha_interfaces(ctx, rdb, ha_net):
+            # concurrent delete on the first attempt
+            if not getattr(_create_ha_interfaces, 'called', False):
+                setattr(_create_ha_interfaces, 'called', True)
+                self.core_plugin.delete_network(self.admin_ctx,
+                                                ha_net['network_id'])
+            return orig_create(ctx, rdb, ha_net)
+        self._test_ensure_with_patched_int_create(_create_ha_interfaces)
+
+    def test_create_ha_interfaces_and_ensure_network_concurrent_swap(self):
+        orig_create = self.plugin._create_ha_interfaces
+
+        def _create_ha_interfaces(ctx, rdb, ha_net):
+            # concurrent delete on the first attempt
+            if not getattr(_create_ha_interfaces, 'called', False):
+                setattr(_create_ha_interfaces, 'called', True)
+                self.core_plugin.delete_network(self.admin_ctx,
+                                                ha_net['network_id'])
+                self.plugin._create_ha_network(self.admin_ctx,
+                                               rdb.tenant_id)
+            return orig_create(ctx, rdb, ha_net)
+
+        self._test_ensure_with_patched_int_create(_create_ha_interfaces)
+
+    def test_create_ha_network_tenant_binding_raises_duplicate(self):
+        router = self._create_router()
+        network = self.plugin.get_ha_network(self.admin_ctx,
+                                             router['tenant_id'])
+        self.plugin._create_ha_network_tenant_binding(
+            self.admin_ctx, 't1', network['network_id'])
+        with testtools.ExpectedException(db_exc.DBDuplicateEntry):
+            self.plugin._create_ha_network_tenant_binding(
+                self.admin_ctx, 't1', network['network_id'])
 
     def test_create_ha_interfaces_binding_failure_rolls_back_ports(self):
         router = self._create_router()
