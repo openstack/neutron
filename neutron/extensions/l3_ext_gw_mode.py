@@ -32,7 +32,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                    'convert_to': attrs.convert_to_boolean},
                    'external_fixed_ips': {
                        'convert_list_to': attrs.convert_kvp_list_to_dict,
-                       'validate': {'type:fixed_ips': None},
+                       'type:fixed_ips': None,
                        'default': None,
                        'required': False}
                    }
