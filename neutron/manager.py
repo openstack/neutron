@@ -258,7 +258,12 @@ class NeutronManager(object):
 
     @classmethod
     def get_controller_for_resource(cls, resource):
-        return cls.get_instance().resource_controller_mappings.get(resource)
+        res_ctrl_mappings = cls.get_instance().resource_controller_mappings
+        # If no controller is found for resource, try replacing dashes with
+        # underscores
+        return res_ctrl_mappings.get(
+            resource,
+            res_ctrl_mappings.get(resource.replace('-', '_')))
 
     @classmethod
     def get_service_plugin_by_path_prefix(cls, path_prefix):

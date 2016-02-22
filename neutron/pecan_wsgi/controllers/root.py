@@ -97,9 +97,11 @@ class V2Controller(object):
                          "code 404"), collection)
             pecan.abort(404)
         # Store resource and collection names in pecan request context so that
-        # hooks can leverage them if necessary
+        # hooks can leverage them if necessary. The following code uses
+        # attributes from the controller instance to ensure names have been
+        # properly sanitized (eg: replacing dashes with underscores)
         request.context['resource'] = controller.resource
-        request.context['collection'] = collection
+        request.context['collection'] = controller.collection
         return controller, remainder
 
 

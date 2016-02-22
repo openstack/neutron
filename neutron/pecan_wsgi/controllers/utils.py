@@ -37,8 +37,9 @@ def when(index, *args, **kwargs):
 class NeutronPecanController(object):
 
     def __init__(self, collection, resource):
-        self.collection = collection
-        self.resource = resource
+        # Ensure dashes are always replaced with underscores
+        self.collection = collection and collection.replace('-', '_')
+        self.resource = resource and resource.replace('-', '_')
         self._plugin = None
 
     @property

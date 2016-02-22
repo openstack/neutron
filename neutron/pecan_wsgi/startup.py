@@ -109,7 +109,7 @@ def initialize_all():
                       resource)
 
         manager.NeutronManager.set_controller_for_resource(
-            collection, controller)
+            controller.collection, controller)
         LOG.info(_LI("Added controller for resource %(resource)s "
                      "via URI path segment:%(collection)s"),
                  {'resource': resource,

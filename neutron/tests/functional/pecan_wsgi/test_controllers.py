@@ -32,6 +32,7 @@ _SERVICE_PLUGIN_INDEX_BODY = {_SERVICE_PLUGIN_COLLECTION: []}
 
 class FakeServicePluginController(object):
     resource = _SERVICE_PLUGIN_RESOURCE
+    collection = _SERVICE_PLUGIN_COLLECTION
 
     @pecan.expose(generic=True,
                   content_type='application/json',
