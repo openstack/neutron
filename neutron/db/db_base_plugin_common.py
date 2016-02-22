@@ -152,6 +152,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
                'address_scope_id': subnetpool['address_scope_id']}
+        self._apply_dict_extend_functions(attributes.SUBNETPOOLS, res,
+                                          subnetpool)
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
