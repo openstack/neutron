@@ -87,8 +87,6 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         """Test to validate snat redirect rules not cleared with snat move."""
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(enable_snat=True)
-        router_info[lib_constants.FLOATINGIP_KEY] = []
-        router_info[n_const.FLOATINGIP_AGENT_INTF_KEY] = []
         router1 = self.manage_router(self.agent, router_info)
         router1.router['gw_port_host'] = ""
         self.agent._process_updated_router(router1.router)
@@ -96,19 +94,21 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertTrue(self._namespace_exists(router_updated.ns_name))
         ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
         ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
-        self.assertEqual(5, len(ip4_rules_list))
-        # IPRule list should have 5 entries.
+        self.assertEqual(6, len(ip4_rules_list))
+        # IPRule list should have 6 entries.
         # Three entries from 'default', 'main' and 'local' table.
+        # One rule for the floatingip.
         # The remaining 2 is for the two router interfaces(csnat ports).
         default_rules_list_count = 0
         interface_rules_list_count = 0
         for ip_rule in ip4_rules_list:
             tbl_index = ip_rule['table']
-            if tbl_index in ['local', 'default', 'main']:
+            if tbl_index in ['local', 'default', 'main',
+                             str(dvr_fip_ns.FIP_RT_TBL)]:
                 default_rules_list_count = default_rules_list_count + 1
             else:
                 interface_rules_list_count = interface_rules_list_count + 1
-        self.assertEqual(3, default_rules_list_count)
+        self.assertEqual(4, default_rules_list_count)
         self.assertEqual(2, interface_rules_list_count)
 
     def test_dvr_update_gateway_port_with_no_gw_port_in_namespace(self):
@@ -177,13 +177,16 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.mock_plugin_api.get_external_network_id.return_value = ext_net_id
 
         # Create the fip namespace up front
-        dvr_fip_ns.FipNamespace(ext_net_id,
-                                self.agent.conf,
-                                self.agent.driver,
-                                self.agent.use_ipv6).create()
+        fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
+                                         self.agent.conf,
+                                         self.agent.driver,
+                                         self.agent.use_ipv6)
+        fip_ns.create()
         # Create the router with the fip, this shouldn't allow the
         # update_gateway_port to be called without the fg- port
         fip_subscribe.return_value = False
+        fip_ns.agent_gateway_port = (
+            router_info[n_const.FLOATINGIP_AGENT_INTF_KEY])
         # This will raise the exception and will also clear
         # subscription for the ext_net_id
         self.assertRaises(n_exc.FloatingIpSetupException,
@@ -191,6 +194,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                           self.agent,
                           router_info)
         fip_subscribe.return_value = True
+        self.manage_router(self.agent, router_info)
         # Now update the router again
         router = self.manage_router(self.agent, router_info)
         fg_port = router.fip_ns.agent_gateway_port
@@ -369,8 +373,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # gateway_port information before the l3_agent will create it.
         # The port returned needs to have the same information as
         # router_info['gw_port']
-        self.mock_plugin_api.get_agent_gateway_port.return_value = router_info[
-            'gw_port']
+        fip_agent_gw_port = self._get_fip_agent_gw_port_for_router(
+            router_info['gw_port'])
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port)
 
         # We also need to mock the get_external_network_id method to
         # get the correct fip namespace.
@@ -440,12 +446,13 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                                  enable_gw=True,
                                  agent=None,
                                  extra_routes=False,
+                                 enable_floating_ip=True,
                                  **kwargs):
         if not agent:
             agent = self.agent
         router = l3_test_common.prepare_router_data(
             enable_snat=enable_snat,
-            enable_floating_ip=True,
+            enable_floating_ip=enable_floating_ip,
             enable_ha=enable_ha,
             extra_routes=extra_routes,
             num_internal_ports=2,
@@ -454,24 +461,57 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         internal_ports = router.get(lib_constants.INTERFACE_KEY, [])
         router['distributed'] = True
         router['gw_port_host'] = agent.conf.host
-
-        floating_ip = router['_floatingips'][0]
-        floating_ip['host'] = agent.conf.host
+        if enable_floating_ip:
+                floating_ip = router['_floatingips'][0]
+                floating_ip['host'] = agent.conf.host
         if enable_gw:
             external_gw_port = router['gw_port']
             router['gw_port'][portbindings.HOST_ID] = agent.conf.host
-            floating_ip['floating_network_id'] = external_gw_port['network_id']
-            floating_ip['port_id'] = internal_ports[0]['id']
-            floating_ip['status'] = 'ACTIVE'
-
             self._add_snat_port_info_to_router(router, internal_ports)
             # FIP has a dependency on external gateway. So we need to create
             # the snat_port info and fip_agent_gw_port_info irrespective of
             # the agent type the dvr supports. The namespace creation is
             # dependent on the agent_type.
-            self._add_fip_agent_gw_port_info_to_router(router,
-                                                       external_gw_port)
+            if enable_floating_ip:
+                floating_ip = router['_floatingips'][0]
+                floating_ip['host'] = agent.conf.host
+                floating_ip['floating_network_id'] = (
+                    external_gw_port['network_id'])
+                floating_ip['port_id'] = internal_ports[0]['id']
+                floating_ip['status'] = 'ACTIVE'
+
+                self._add_fip_agent_gw_port_info_to_router(router,
+                                                           external_gw_port)
         return router
+
+    def _get_fip_agent_gw_port_for_router(
+        self, external_gw_port):
+        # Add fip agent gateway port information to the router_info
+        if external_gw_port:
+            # Get values from external gateway port
+            fixed_ip = external_gw_port['fixed_ips'][0]
+            float_subnet = external_gw_port['subnets'][0]
+            port_ip = fixed_ip['ip_address']
+            # Pick an ip address which is not the same as port_ip
+            fip_gw_port_ip = str(netaddr.IPAddress(port_ip) + 5)
+            # Add floatingip agent gateway port info to router
+            prefixlen = netaddr.IPNetwork(float_subnet['cidr']).prefixlen
+            fip_agent_gw_port_info = {
+                'subnets': [
+                    {'cidr': float_subnet['cidr'],
+                     'gateway_ip': float_subnet['gateway_ip'],
+                     'id': fixed_ip['subnet_id']}],
+                'network_id': external_gw_port['network_id'],
+                'device_owner': lib_constants.DEVICE_OWNER_AGENT_GW,
+                'mac_address': 'fa:16:3e:80:8d:89',
+                portbindings.HOST_ID: self.agent.conf.host,
+                'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                               'ip_address': fip_gw_port_ip,
+                               'prefixlen': prefixlen}],
+                'id': framework._uuid(),
+                'device_id': framework._uuid()
+            }
+            return fip_agent_gw_port_info
 
     def _add_fip_agent_gw_port_info_to_router(self, router, external_gw_port):
         # Add fip agent gateway port information to the router_info
@@ -853,7 +893,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router1 = self.manage_router(self.agent, router_info)
         fip_ns = router1.fip_ns.get_name()
         self.assertTrue(self._namespace_exists(router1.ns_name))
-        self.assertFalse(self._namespace_exists(fip_ns))
+        # FIP Namespace creation does not depend on the floatingip's
+        # anymore and will be created on each agent when there is
+        # a valid gateway.
+        self.assertTrue(self._namespace_exists(fip_ns))
         self._assert_snat_namespace_does_not_exist(router1)
 
     def test_dvr_router_fip_create_for_migrating_port(self):
@@ -901,6 +944,26 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         fip_ns = router1.fip_ns.get_name()
         self.assertTrue(self._namespace_exists(router1.ns_name))
         self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_does_not_exist(router1)
+
+    def test_dvr_router_fip_namespace_create_without_floatingip(self):
+        """Test to validate the floatingip namespace creation without fip.
+
+        This test validates the condition where floatingip namespace gets
+        created on the agent when the gateway is added and without floatingip
+        configured for the router.
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info(enable_floating_ip=False)
+        fip_agent_gw_port = self._get_fip_agent_gw_port_for_router(
+            router_info['gw_port'])
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port)
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self.assertTrue(router1.rtr_fip_connect)
         self._assert_snat_namespace_does_not_exist(router1)
 
     def _assert_snat_namespace_exists(self, router):
@@ -1111,6 +1174,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self._assert_extra_routes(router_updated, namespace=snat_ns_name)
         if check_fpr_int_rule_delete:
             router_updated.router[lib_constants.FLOATINGIP_KEY] = []
+            router_updated.router['gw_port'] = ""
+            router_updated.router['gw_port_host'] = ""
+            router_updated.router['external_gateway_info'] = ""
             self.agent._process_updated_router(router_updated.router)
             new_router_info = self.agent.router_info[router_updated.router_id]
             self.assertTrue(self._namespace_exists(fip_ns_name))

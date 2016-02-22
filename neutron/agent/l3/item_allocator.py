@@ -64,6 +64,18 @@ class ItemAllocator(object):
             LOG.debug("Re-writing file %s due to read error", state_file)
             self._write_allocations()
 
+    def lookup(self, key):
+        """Try to lookup an item of ItemClass type.
+
+        See if there are any current or remembered allocations for the key.
+        """
+        if key in self.allocations:
+            return self.allocations[key]
+
+        if key in self.remembered:
+            self.allocations[key] = self.remembered.pop(key)
+            return self.allocations[key]
+
     def allocate(self, key):
         """Try to allocate an item of ItemClass type.
 
@@ -81,12 +93,9 @@ class ItemAllocator(object):
         allocations to free the pool.  This final desperate step will not
         happen often in practice.
         """
-        if key in self.allocations:
-            return self.allocations[key]
-
-        if key in self.remembered:
-            self.allocations[key] = self.remembered.pop(key)
-            return self.allocations[key]
+        entry = self.lookup(key)
+        if entry:
+            return entry
 
         if not self.pool:
             # Desperate times.  Try to get more in the pool.

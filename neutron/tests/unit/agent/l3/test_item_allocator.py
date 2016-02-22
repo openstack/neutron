@@ -66,16 +66,20 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertEqual({}, a.allocations)
         self.assertTrue(write.called)
 
-    def test_allocate(self):
+    def test_allocate_and_lookup(self):
         test_pool = set([TestObject(33000), TestObject(33001)])
         a = ia.ItemAllocator('/file', TestObject, test_pool)
         with mock.patch.object(ia.ItemAllocator, '_write') as write:
             test_object = a.allocate('test')
 
+        # a lookup should find the same object
+        lookup_object = a.lookup('test')
+
         self.assertIn('test', a.allocations)
         self.assertIn(test_object, a.allocations.values())
         self.assertNotIn(test_object, a.pool)
         self.assertTrue(write.called)
+        self.assertEqual(test_object, lookup_object)
 
     def test_allocate_repeated_call_with_same_key(self):
         test_pool = set([TestObject(33000), TestObject(33001),

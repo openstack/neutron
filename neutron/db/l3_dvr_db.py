@@ -491,22 +491,29 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         return routers
 
-    def _process_routers(self, context, routers):
+    def _process_routers(self, context, routers, agent):
         routers_dict = {}
         snat_intfs_by_router_id = self._get_snat_sync_interfaces(
             context, [r['id'] for r in routers])
+        fip_sync_interfaces = None
+        LOG.debug("FIP Agent: %s ", agent.id)
         for router in routers:
             routers_dict[router['id']] = router
             if router['gw_port_id']:
                 snat_router_intfs = snat_intfs_by_router_id[router['id']]
                 LOG.debug("SNAT ports returned: %s ", snat_router_intfs)
                 router[l3_const.SNAT_ROUTER_INTF_KEY] = snat_router_intfs
+                if not fip_sync_interfaces:
+                    fip_sync_interfaces = self._get_fip_sync_interfaces(
+                        context, agent.id)
+                    LOG.debug("FIP Agent ports: %s", fip_sync_interfaces)
+                router[l3_const.FLOATINGIP_AGENT_INTF_KEY] = (
+                    fip_sync_interfaces)
+
         return routers_dict
 
     def _process_floating_ips_dvr(self, context, routers_dict,
-                                  floating_ips, host, agent):
-        fip_sync_interfaces = None
-        LOG.debug("FIP Agent : %s ", agent.id)
+                                  floating_ips, host):
         for floating_ip in floating_ips:
             router = routers_dict.get(floating_ip['router_id'])
             if router:
@@ -518,12 +525,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     LOG.debug("Floating IP host: %s", floating_ip['host'])
                 router_floatingips.append(floating_ip)
                 router[const.FLOATINGIP_KEY] = router_floatingips
-                if not fip_sync_interfaces:
-                    fip_sync_interfaces = self._get_fip_sync_interfaces(
-                        context, agent.id)
-                    LOG.debug("FIP Agent ports: %s", fip_sync_interfaces)
-                router[l3_const.FLOATINGIP_AGENT_INTF_KEY] = (
-                    fip_sync_interfaces)
 
     def _get_fip_sync_interfaces(self, context, fip_agent_id):
         """Query router interfaces that relate to list of router_ids."""
@@ -569,9 +570,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     fip['dest_host'] = (
                         self._get_dvr_migrating_service_port_hostid(
                             context, fip['port_id'], port=vm_port))
-        routers_dict = self._process_routers(context, routers)
+        routers_dict = self._process_routers(context, routers, agent)
         self._process_floating_ips_dvr(context, routers_dict,
-                                       floating_ips, host, agent)
+                                       floating_ips, host)
         ports_to_populate = []
         for router in routers_dict.values():
             if router.get('gw_port'):

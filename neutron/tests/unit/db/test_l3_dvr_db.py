@@ -24,7 +24,6 @@ from oslo_utils import uuidutils
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
@@ -381,29 +380,20 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return_value=fipagent)
         self.mixin._get_fip_sync_interfaces = mock.Mock(
             return_value='fip_interface')
-        agent = mock.Mock()
-        agent.id = fipagent['id']
-
         self.mixin._process_floating_ips_dvr(self.ctx, routers, [floatingip],
-                                             hostid, agent)
+                                             hostid)
         return (router, floatingip)
 
     def test_floatingip_on_port_not_host(self):
         router, fip = self._floatingip_on_port_test_setup(None)
 
         self.assertNotIn(const.FLOATINGIP_KEY, router)
-        self.assertNotIn(n_const.FLOATINGIP_AGENT_INTF_KEY, router)
 
     def test_floatingip_on_port_with_host(self):
         router, fip = self._floatingip_on_port_test_setup(_uuid())
 
-        self.assertTrue(self.mixin._get_fip_sync_interfaces.called)
-
         self.assertIn(const.FLOATINGIP_KEY, router)
-        self.assertIn(n_const.FLOATINGIP_AGENT_INTF_KEY, router)
         self.assertIn(fip, router[const.FLOATINGIP_KEY])
-        self.assertIn('fip_interface',
-            router[n_const.FLOATINGIP_AGENT_INTF_KEY])
 
     def _setup_test_create_floatingip(
         self, fip, floatingip_db, router_db):
