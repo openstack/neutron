@@ -29,9 +29,11 @@ import mock
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
+from oslo_utils import excutils
 from oslo_utils import strutils
 from oslotest import base
 import six
+import testtools
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
@@ -151,6 +153,19 @@ class DietTestCase(base.BaseTestCase):
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
+
+    def addOnException(self, handler):
+
+        def safe_handler(*args, **kwargs):
+            try:
+                return handler(*args, **kwargs)
+            except Exception:
+                with excutils.save_and_reraise_exception(reraise=False) as ctx:
+                    self.addDetail('failure in exception handler %s' % handler,
+                                   testtools.content.TracebackContent(
+                                       (ctx.type_, ctx.value, ctx.tb), self))
+
+        return super(DietTestCase, self).addOnException(safe_handler)
 
     def check_for_systemexit(self, exc_info):
         if isinstance(exc_info[1], SystemExit):
