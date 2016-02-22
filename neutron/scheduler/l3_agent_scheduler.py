@@ -15,6 +15,7 @@
 
 import abc
 import collections
+import functools
 import itertools
 import random
 
@@ -255,13 +256,24 @@ class L3Scheduler(object):
             return False
         return True
 
+    def _add_port_from_net(self, plugin, ctxt, router_id, tenant_id, ha_net):
+        """small wrapper function to unpack network id from ha_network"""
+        return plugin.add_ha_port(ctxt, router_id, ha_net.network.id,
+                                  tenant_id)
+
     def create_ha_port_and_bind(self, plugin, context, router_id,
                                 tenant_id, agent):
         """Creates and binds a new HA port for this agent."""
-        ha_network = plugin.get_ha_network(context, tenant_id)
+        ctxt = context.elevated()
+        creator = functools.partial(self._add_port_from_net,
+                                    plugin, ctxt, router_id, tenant_id)
+        dep_getter = functools.partial(plugin.get_ha_network, ctxt, tenant_id)
+        dep_creator = functools.partial(plugin._create_ha_network,
+                                        ctxt, tenant_id)
+        dep_id_attr = 'network_id'
         try:
-            port_binding = plugin.add_ha_port(context.elevated(), router_id,
-                                          ha_network.network.id, tenant_id)
+            port_binding = utils.create_object_with_dependency(
+                creator, dep_getter, dep_creator, dep_id_attr)[0]
             with db_api.autonested_transaction(context.session):
                 port_binding.l3_agent_id = agent['id']
         except db_exc.DBDuplicateEntry:

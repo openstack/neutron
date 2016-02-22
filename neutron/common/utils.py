@@ -32,6 +32,7 @@ import signal
 import socket
 import sys
 import tempfile
+import time
 import uuid
 
 import debtcollector
@@ -39,6 +40,7 @@ from eventlet.green import subprocess
 import netaddr
 from oslo_concurrency import lockutils
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
@@ -48,6 +50,7 @@ from stevedore import driver
 
 from neutron._i18n import _, _LE
 from neutron.common import constants as n_const
+from neutron.db import api as db_api
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
@@ -645,3 +648,88 @@ def port_rule_masking(port_min, port_max):
                                     _hex_format(mask)))
 
     return rules
+
+
+def create_object_with_dependency(creator, dep_getter, dep_creator,
+                                  dep_id_attr):
+    """Creates an object that binds to a dependency while handling races.
+
+    creator is a function that expected to take the result of either
+    dep_getter or dep_creator.
+
+    The result of dep_getter and dep_creator must have an attribute of
+    dep_id_attr be used to determine if the dependency changed during object
+    creation.
+
+    dep_getter should return None if the dependency does not exist
+
+    dep_creator can raise a DBDuplicateEntry to indicate that a concurrent
+    create of the dependency occured and the process will restart to get the
+    concurrently created one
+
+    This function will return both the created object and the dependency it
+    used/created.
+
+    This function protects against all of the cases where the dependency can
+    be concurrently removed by catching exceptions and restarting the
+    process of creating the dependency if one no longer exists. It will
+    give up after neutron.db.api.MAX_RETRIES and raise the exception it
+    encounters after that.
+
+    TODO(kevinbenton): currently this does not try to delete the dependency
+    it created. This matches the semantics of the HA network logic it is used
+    for but it should be modified to cleanup in the future.
+    """
+    result, dependency, dep_id = None, None, None
+    for attempts in range(1, db_api.MAX_RETRIES + 1):
+        # we go to max + 1 here so the exception handlers can raise their
+        # errors at the end
+        try:
+            dependency = dep_getter() or dep_creator()
+            dep_id = getattr(dependency, dep_id_attr)
+        except db_exc.DBDuplicateEntry:
+            # dependency was concurrently created.
+            with excutils.save_and_reraise_exception() as ctx:
+                if attempts < db_api.MAX_RETRIES:
+                    # sleep for a random time between 0 and 1 second to
+                    # make sure a concurrent worker doesn't retry again
+                    # at exactly the same time
+                    time.sleep(random.uniform(0, 1))
+                    ctx.reraise = False
+                    continue
+        try:
+            result = creator(dependency)
+            break
+        except Exception:
+            with excutils.save_and_reraise_exception() as ctx:
+                # check if dependency we tried to use was removed during
+                # object creation
+                if attempts < db_api.MAX_RETRIES:
+                    dependency = dep_getter()
+                    if not dependency or dep_id != getattr(dependency,
+                                                           dep_id_attr):
+                        ctx.reraise = False
+    return result, dependency
+
+
+def transaction_guard(f):
+    """Ensures that the context passed in is not in a transaction.
+
+    Various Neutron methods modifying resources have assumptions that they will
+    not be called inside of a transaction because they perform operations that
+    expect all data to be committed to the database (e.g. ML2 postcommit calls)
+    and/or they have side effects on external systems.
+    So calling them in a transaction can lead to consistency errors on failures
+    since the side effect will not be reverted on a DB rollback.
+
+    If you receive this error, you must alter your code to handle the fact that
+    the thing you are calling can have side effects so using transactions to
+    undo on failures is not possible.
+    """
+    @functools.wraps(f)
+    def inner(self, context, *args, **kwargs):
+        if context.session.is_active:
+            raise RuntimeError(_("Method cannot be called within a "
+                                 "transaction."))
+        return f(self, context, *args, **kwargs)
+    return inner
