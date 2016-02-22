@@ -26,6 +26,8 @@ from neutron import manager
 ADDRESS_SCOPE = 'address_scope'
 ADDRESS_SCOPES = '%ss' % ADDRESS_SCOPE
 ADDRESS_SCOPE_ID = 'address_scope_id'
+IPV4_ADDRESS_SCOPE = 'ipv4_%s' % ADDRESS_SCOPE
+IPV6_ADDRESS_SCOPE = 'ipv6_%s' % ADDRESS_SCOPE
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
@@ -63,6 +65,14 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': attr.ATTR_NOT_SPECIFIED,
                            'validate': {'type:uuid_or_none': None},
                            'is_visible': True}
+    },
+    attr.NETWORKS: {
+        IPV4_ADDRESS_SCOPE: {'allow_post': False,
+                             'allow_put': False,
+                             'is_visible': True},
+        IPV6_ADDRESS_SCOPE: {'allow_post': False,
+                             'allow_put': False,
+                             'is_visible': True},
     }
 }
 
