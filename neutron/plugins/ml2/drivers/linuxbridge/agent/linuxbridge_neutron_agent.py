@@ -128,11 +128,13 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return None
         return self.bridge_mappings.get(physical_network)
 
-    def get_bridge_name(self, network_id):
+    @staticmethod
+    def get_bridge_name(network_id):
         if not network_id:
             LOG.warning(_LW("Invalid Network ID, will lead to incorrect "
                             "bridge name"))
-        bridge_name = BRIDGE_NAME_PREFIX + network_id[0:11]
+        bridge_name = BRIDGE_NAME_PREFIX + \
+            network_id[:lconst.RESOURCE_ID_LENGTH]
         return bridge_name
 
     def get_subinterface_name(self, physical_interface, vlan_id):
@@ -142,11 +144,13 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         subinterface_name = '%s.%s' % (physical_interface, vlan_id)
         return subinterface_name
 
-    def get_tap_device_name(self, interface_id):
+    @staticmethod
+    def get_tap_device_name(interface_id):
         if not interface_id:
             LOG.warning(_LW("Invalid Interface ID, will lead to incorrect "
                             "tap device name"))
-        tap_device_name = constants.TAP_DEVICE_PREFIX + interface_id[0:11]
+        tap_device_name = constants.TAP_DEVICE_PREFIX + \
+            interface_id[:lconst.RESOURCE_ID_LENGTH]
         return tap_device_name
 
     def get_vxlan_device_name(self, segmentation_id):
