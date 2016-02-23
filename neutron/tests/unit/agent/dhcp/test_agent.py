@@ -1309,7 +1309,8 @@ class TestDeviceManager(base.BaseTestCase):
                                            port.id,
                                            'tap12345678-12',
                                            'aa:bb:cc:dd:ee:ff',
-                                           namespace=net.namespace))
+                                           namespace=net.namespace,
+                                           mtu=None))
         self.mock_driver.assert_has_calls(expected)
 
         dh._set_default_route.assert_called_once_with(net, 'tap12345678-12')
