@@ -80,7 +80,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
-        self.conf.set_override('state_path', '')
+        self.conf.set_override('state_path', '/tmp')
         self.conf.set_override('ra_confs', '/tmp')
         self.conf.set_override('pd_dhcp_driver', '')
 
