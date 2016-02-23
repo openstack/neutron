@@ -15,11 +15,11 @@
 
 import netaddr
 from oslo_log import log as logging
-import six
 
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import constants
+from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
@@ -72,9 +72,7 @@ def create_protocol_flows(direction, flow_template, port, rule):
         pass
 
     flows = create_port_range_flows(flow_template, rule)
-    if not flows:
-        return [flow_template]
-    return flows
+    return flows or [flow_template]
 
 
 def create_port_range_flows(flow_template, rule):
@@ -83,27 +81,31 @@ def create_port_range_flows(flow_template, rule):
         return []
     flows = []
     src_port_match = '{:s}_src'.format(protocol)
-    #FIXME(jlibosva): Actually source_port_range_min is just a dead code in
-    #                 security groups rpc layer and should be removed
     src_port_min = rule.get('source_port_range_min')
     src_port_max = rule.get('source_port_range_max')
     dst_port_match = '{:s}_dst'.format(protocol)
     dst_port_min = rule.get('port_range_min')
     dst_port_max = rule.get('port_range_max')
 
+    dst_port_range = []
+    if dst_port_min and dst_port_max:
+        dst_port_range = utils.port_rule_masking(dst_port_min, dst_port_max)
+
+    src_port_range = []
     if src_port_min and src_port_max:
-        for port in six.moves.range(src_port_min, src_port_max + 1):
+        src_port_range = utils.port_rule_masking(src_port_min, src_port_max)
+        for port in src_port_range:
             flow = flow_template.copy()
             flow[src_port_match] = port
-            try:
-                for port in six.moves.range(dst_port_min, dst_port_max + 1):
+            if dst_port_range:
+                for port in dst_port_range:
                     dst_flow = flow.copy()
                     dst_flow[dst_port_match] = port
                     flows.append(dst_flow)
-            except TypeError:
+            else:
                 flows.append(flow)
-    elif dst_port_min and dst_port_max:
-        for port in six.moves.range(dst_port_min, dst_port_max + 1):
+    else:
+        for port in dst_port_range:
             flow = flow_template.copy()
             flow[dst_port_match] = port
             flows.append(flow)

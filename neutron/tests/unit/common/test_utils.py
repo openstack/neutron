@@ -738,3 +738,43 @@ class TestSafeDecodeUtf8(base.BaseTestCase):
         s = bytes('test-py2', 'utf_16')
         decoded_str = utils.safe_decode_utf8(s)
         self.assertIsInstance(decoded_str, six.text_type)
+
+
+class TestPortRuleMasking(base.BaseTestCase):
+    def test_port_rule_masking(self):
+        compare_rules = lambda x, y: set(x) == set(y) and len(x) == len(y)
+
+        # Test 1.
+        port_min = 5
+        port_max = 12
+        expected_rules = ['0x0005', '0x000c', '0x0006/0xfffe',
+                          '0x0008/0xfffc']
+        rules = utils.port_rule_masking(port_min, port_max)
+        self.assertTrue(compare_rules(rules, expected_rules))
+
+        # Test 2.
+        port_min = 20
+        port_max = 130
+        expected_rules = ['0x0014/0xfffe', '0x0016/0xfffe', '0x0018/0xfff8',
+                          '0x0020/0xffe0', '0x0040/0xffc0', '0x0080/0xfffe',
+                          '0x0082']
+        rules = utils.port_rule_masking(port_min, port_max)
+        self.assertEqual(expected_rules, rules)
+
+        # Test 3.
+        port_min = 4501
+        port_max = 33057
+        expected_rules = ['0x1195', '0x1196/0xfffe', '0x1198/0xfff8',
+                          '0x11a0/0xffe0', '0x11c0/0xffc0', '0x1200/0xfe00',
+                          '0x1400/0xfc00', '0x1800/0xf800', '0x2000/0xe000',
+                          '0x4000/0xc000', '0x8021/0xff00', '0x8101/0xffe0',
+                          '0x8120/0xfffe']
+
+        rules = utils.port_rule_masking(port_min, port_max)
+        self.assertEqual(expected_rules, rules)
+
+    def test_port_rule_masking_min_higher_than_max(self):
+        port_min = 10
+        port_max = 5
+        with testtools.ExpectedException(ValueError):
+            utils.port_rule_masking(port_min, port_max)
