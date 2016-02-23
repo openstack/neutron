@@ -26,7 +26,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import ipv6_utils
-from neutron.i18n import _LE, _LI
+from neutron.i18n import _LE, _LI, _LW
 
 
 LOG = logging.getLogger(__name__)
@@ -242,15 +242,19 @@ class LinuxInterfaceDriver(object):
 
     @abc.abstractmethod
     def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
+                 bridge=None, namespace=None, prefix=None, mtu=None):
         """Plug in the interface only for new devices that don't exist yet."""
 
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None, prefix=None):
+             bridge=None, namespace=None, prefix=None, mtu=None):
         if not ip_lib.device_exists(device_name,
                                     namespace=namespace):
-            self.plug_new(network_id, port_id, device_name, mac_address,
-                          bridge, namespace, prefix)
+            try:
+                self.plug_new(network_id, port_id, device_name, mac_address,
+                              bridge, namespace, prefix, mtu)
+            except TypeError:
+                self.plug_new(network_id, port_id, device_name, mac_address,
+                              bridge, namespace, prefix)
         else:
             LOG.info(_LI("Device %s already exists"), device_name)
 
@@ -278,7 +282,7 @@ class LinuxInterfaceDriver(object):
 
 class NullDriver(LinuxInterfaceDriver):
     def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
+                 bridge=None, namespace=None, prefix=None, mtu=None):
         pass
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
@@ -313,7 +317,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         ovs.replace_port(device_name, *attrs)
 
     def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
+                 bridge=None, namespace=None, prefix=None, mtu=None):
         """Plug in the interface."""
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
@@ -338,11 +342,13 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         ns_dev.link.set_address(mac_address)
 
-        if self.conf.network_device_mtu:
-            ns_dev.link.set_mtu(self.conf.network_device_mtu)
+        mtu = self.conf.network_device_mtu or mtu
+        if mtu:
+            ns_dev.link.set_mtu(mtu)
             if self.conf.ovs_use_veth:
-                root_dev.link.set_mtu(self.conf.network_device_mtu)
-
+                root_dev.link.set_mtu(mtu)
+        else:
+            LOG.warning(_LW("No MTU configured for port %s"), port_id)
         # Add an interface created by ovs to the namespace.
         if not self.conf.ovs_use_veth and namespace:
             namespace_obj = ip.ensure_namespace(namespace)
@@ -430,7 +436,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
         utils.execute(cmd, run_as_root=True)
 
     def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
+                 bridge=None, namespace=None, prefix=None, mtu=None):
         """Plug in the interface."""
         ip = ip_lib.IPWrapper()
         tap_name = self._get_tap_name(device_name, prefix)
@@ -443,9 +449,12 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
         ns_dev = ip.device(device_name)
         ns_dev.link.set_address(mac_address)
 
-        if self.conf.network_device_mtu:
-            ns_dev.link.set_mtu(self.conf.network_device_mtu)
-            root_dev.link.set_mtu(self.conf.network_device_mtu)
+        mtu = self.conf.network_device_mtu or mtu
+        if mtu:
+            ns_dev.link.set_mtu(mtu)
+            root_dev.link.set_mtu(mtu)
+        else:
+            LOG.warning(_LW("No MTU configured for port %s"), port_id)
 
         if namespace:
             namespace_obj = ip.ensure_namespace(namespace)
@@ -474,7 +483,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
     DEV_NAME_PREFIX = 'ns-'
 
     def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None):
+                 bridge=None, namespace=None, prefix=None, mtu=None):
         """Plugin the interface."""
         ip = ip_lib.IPWrapper()
 
@@ -487,9 +496,12 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         root_veth.disable_ipv6()
         ns_veth.link.set_address(mac_address)
 
-        if self.conf.network_device_mtu:
-            root_veth.link.set_mtu(self.conf.network_device_mtu)
-            ns_veth.link.set_mtu(self.conf.network_device_mtu)
+        mtu = self.conf.network_device_mtu or mtu
+        if mtu:
+            root_veth.link.set_mtu(mtu)
+            ns_veth.link.set_mtu(mtu)
+        else:
+            LOG.warning(_LW("No MTU configured for port %s"), port_id)
 
         root_veth.link.set_up()
         ns_veth.link.set_up()

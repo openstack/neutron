@@ -1,0 +1,20 @@
+---
+features:
+  - Use the value of the network 'mtu' attribute for the MTU
+    of virtual network interfaces such as veth pairs, patch
+    ports, and tap devices involving a particular network.
+  - Enable end-to-end support for arbitrary MTUs including
+    jumbo frames between instances and provider networks by
+    moving MTU disparities between flat or VLAN networks and
+    overlay networks from layer-2 devices to layer-3 devices
+    that support path MTU discovery (PMTUD).
+upgrade:
+  - Does not change MTU for existing virtual network interfaces.
+  - Actions that create virtual network interfaces on an existing
+    network with the 'mtu' attribute containing a value greater
+    than zero could cause issues for network traffic traversing
+    existing and new virtual network interfaces.
+fixes:
+  - Explicitly configure MTU of virtual network interfaces
+    rather than using default values or incorrect values that
+    do not account for overlay protocol overhead.

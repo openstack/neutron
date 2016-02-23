@@ -244,6 +244,15 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
                                             dhcp_enabled=dhcp_enabled)
             self.assert_dhcp_resources(network, dhcp_enabled)
 
+    def test_agent_mtu_set_on_interface_driver(self):
+        network = self.network_dict_for_dhcp()
+        network["mtu"] = 789
+        self.configure_dhcp_for_network(network=network)
+        port = network.ports[0]
+        iface_name = self.get_interface_name(network, port)
+        dev = ip_lib.IPDevice(iface_name, network.namespace)
+        self.assertEqual(789, dev.link.mtu)
+
     def test_good_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
