@@ -3,7 +3,7 @@ prelude: >
   Neutron now provides network IP availability information.
 features:
   - A new API endpoint /v2.0/network-ip-availabilities that allows an admin
-    to quickly get counts of used_ips and total_ips for network(s). New
-    endpoint allows filtering by network_id, network_name, tenant_id, and
+    to quickly get counts of used_ips and total_ips for network(s) is available.
+    New endpoint allows filtering by network_id, network_name, tenant_id, and
     ip_version. Response returns network and nested subnet data that includes
     used and total IPs.
