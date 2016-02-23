@@ -262,38 +262,38 @@ def enable_tests_from_config():
     """
 
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
-        cfg.CONF.set_override('ovs_vxlan', True)
+        cfg.CONF.set_default('ovs_vxlan', True)
     if 'geneve' in cfg.CONF.AGENT.tunnel_types:
-        cfg.CONF.set_override('ovs_geneve', True)
+        cfg.CONF.set_default('ovs_geneve', True)
     if ('vxlan' in cfg.CONF.ml2.type_drivers or
             cfg.CONF.VXLAN.enable_vxlan):
-        cfg.CONF.set_override('iproute2_vxlan', True)
+        cfg.CONF.set_default('iproute2_vxlan', True)
     if cfg.CONF.AGENT.tunnel_types:
-        cfg.CONF.set_override('ovs_patch', True)
+        cfg.CONF.set_default('ovs_patch', True)
     if not cfg.CONF.OVS.use_veth_interconnection:
-        cfg.CONF.set_override('ovs_patch', True)
+        cfg.CONF.set_default('ovs_patch', True)
     if (cfg.CONF.notify_nova_on_port_status_changes or
             cfg.CONF.notify_nova_on_port_data_changes):
-        cfg.CONF.set_override('nova_notify', True)
+        cfg.CONF.set_default('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
-        cfg.CONF.set_override('arp_responder', True)
+        cfg.CONF.set_default('arp_responder', True)
     if cfg.CONF.AGENT.prevent_arp_spoofing:
-        cfg.CONF.set_override('arp_header_match', True)
-        cfg.CONF.set_override('icmpv6_header_match', True)
+        cfg.CONF.set_default('arp_header_match', True)
+        cfg.CONF.set_default('icmpv6_header_match', True)
     if cfg.CONF.ml2_sriov.agent_required:
-        cfg.CONF.set_override('vf_management', True)
+        cfg.CONF.set_default('vf_management', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
-        cfg.CONF.set_override('read_netns', True)
+        cfg.CONF.set_default('read_netns', True)
     if cfg.CONF.dhcp_driver == 'neutron.agent.linux.dhcp.Dnsmasq':
-        cfg.CONF.set_override('dnsmasq_version', True)
+        cfg.CONF.set_default('dnsmasq_version', True)
     if cfg.CONF.OVS.ovsdb_interface == 'native':
-        cfg.CONF.set_override('ovsdb_native', True)
+        cfg.CONF.set_default('ovsdb_native', True)
     if cfg.CONF.l3_ha:
-        cfg.CONF.set_override('keepalived_ipv6_support', True)
+        cfg.CONF.set_default('keepalived_ipv6_support', True)
     if cfg.CONF.SECURITYGROUP.enable_ipset:
-        cfg.CONF.set_override('ipset_installed', True)
+        cfg.CONF.set_default('ipset_installed', True)
     if cfg.CONF.SECURITYGROUP.enable_security_group:
-        cfg.CONF.set_override('ip6tables_installed', True)
+        cfg.CONF.set_default('ip6tables_installed', True)
 
 
 def all_tests_passed():
