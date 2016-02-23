@@ -73,7 +73,7 @@ class QosPolicy(base.NeutronDbObject):
             self.reload_rules()
 
     def reload_rules(self):
-        rules = rule_obj_impl.get_rules(self._context, self.id)
+        rules = rule_obj_impl.get_rules(self.obj_context, self.id)
         setattr(self, 'rules', rules)
         self.obj_reset_changes(['rules'])
 
@@ -139,14 +139,14 @@ class QosPolicy(base.NeutronDbObject):
 
     # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
-        with db_api.autonested_transaction(self._context.session):
+        with db_api.autonested_transaction(self.obj_context.session):
             super(QosPolicy, self).create()
             self.reload_rules()
 
     def delete(self):
-        with db_api.autonested_transaction(self._context.session):
+        with db_api.autonested_transaction(self.obj_context.session):
             for object_type, model in self.binding_models.items():
-                binding_db_obj = obj_db_api.get_object(self._context, model,
+                binding_db_obj = obj_db_api.get_object(self.obj_context, model,
                                                        policy_id=self.id)
                 if binding_db_obj:
                     raise exceptions.QosPolicyInUse(
@@ -157,32 +157,32 @@ class QosPolicy(base.NeutronDbObject):
             super(QosPolicy, self).delete()
 
     def attach_network(self, network_id):
-        qos_db_api.create_policy_network_binding(self._context,
+        qos_db_api.create_policy_network_binding(self.obj_context,
                                                  policy_id=self.id,
                                                  network_id=network_id)
 
     def attach_port(self, port_id):
-        qos_db_api.create_policy_port_binding(self._context,
+        qos_db_api.create_policy_port_binding(self.obj_context,
                                               policy_id=self.id,
                                               port_id=port_id)
 
     def detach_network(self, network_id):
-        qos_db_api.delete_policy_network_binding(self._context,
+        qos_db_api.delete_policy_network_binding(self.obj_context,
                                                  policy_id=self.id,
                                                  network_id=network_id)
 
     def detach_port(self, port_id):
-        qos_db_api.delete_policy_port_binding(self._context,
+        qos_db_api.delete_policy_port_binding(self.obj_context,
                                               policy_id=self.id,
                                               port_id=port_id)
 
     def get_bound_networks(self):
         return qos_db_api.get_network_ids_by_network_policy_binding(
-            self._context, self.id)
+            self.obj_context, self.id)
 
     def get_bound_ports(self):
         return qos_db_api.get_port_ids_by_port_policy_binding(
-            self._context, self.id)
+            self.obj_context, self.id)
 
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
