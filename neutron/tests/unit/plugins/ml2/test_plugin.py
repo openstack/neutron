@@ -378,7 +378,7 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
 class TestMl2NetworksWithVlanTransparencyAndMTU(TestMl2NetworksV2):
     def setUp(self, plugin=None):
         config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
-        config.cfg.CONF.set_override('segment_mtu', 1000, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 1000)
         config.cfg.CONF.set_override('advertise_mtu', True)
         config.cfg.CONF.set_override('vlan_transparent', True)
         super(TestMl2NetworksWithVlanTransparencyAndMTU, self).setUp(plugin)

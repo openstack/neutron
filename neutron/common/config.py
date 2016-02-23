@@ -175,7 +175,16 @@ core_opts = [
                choices=('legacy', 'pecan'),
                help=_("This will choose the web framework in which to run "
                       "the Neutron API server. 'pecan' is a new experiemental "
-                      "rewrite of the API server."))
+                      "rewrite of the API server.")),
+    cfg.IntOpt('global_physnet_mtu', default=1500,
+               deprecated_name='segment_mtu', deprecated_group='ml2',
+               help=_('MTU of the underlying physical network. Neutron uses '
+                      'this value to calculate MTU for all virtual network '
+                      'components. For flat and VLAN networks, neutron uses '
+                      'this value without modification. For overlay networks '
+                      'such as VXLAN, neutron automatically subtracts the '
+                      'overlay protocol overhead from this value. Defaults '
+                      'to 1500, the standard value for Ethernet.'))
 ]
 
 core_cli_opts = [

@@ -1,0 +1,11 @@
+---
+deprecations:
+  - The 'segment_mtu' option of the ML2 configuration has been
+    deprecated and replaced with the 'global_physnet_mtu' option
+    in the main Neutron configuration. This option is meant to
+    be used by all plugins for an operator to reference their
+    physical network's MTU, regardless of the backend plugin.
+    Plugins should access this config option via the
+    'get_deployment_physnet_mtu' method added to
+    neutron.plugins.common.utils to avoid being broken on any
+    potential renames in the future.

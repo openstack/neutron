@@ -18,6 +18,7 @@ Common utilities and helper functions for OpenStack Networking Plugins.
 
 import hashlib
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import six
 import webob.exc
@@ -30,6 +31,17 @@ from neutron.plugins.common import constants as p_const
 
 INTERFACE_HASH_LEN = 6
 LOG = logging.getLogger(__name__)
+
+
+def get_deployment_physnet_mtu():
+    """Retrieves global physical network MTU setting.
+
+    Plugins should use this function to retrieve the MTU set by the operator
+    that is equal to or less than the MTU of their nodes' physical interfaces.
+    Note that it is the responsibility of the plugin to deduct the value of
+    any encapsulation overhead required before advertising it to VMs.
+    """
+    return cfg.CONF.global_physnet_mtu
 
 
 def is_valid_vlan_tag(vlan):
