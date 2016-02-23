@@ -46,6 +46,9 @@ PROFILE = 'binding:profile'
 CAP_PORT_FILTER = 'port_filter'
 OVS_HYBRID_PLUG = 'ovs_hybrid_plug'
 VIF_DETAILS_VLAN = 'vlan'
+VIF_DETAILS_MACVTAP_SOURCE = 'macvtap_source'
+VIF_DETAILS_MACVTAP_MODE = 'macvtap_mode'
+VIF_DETAILS_PHYSICAL_INTERFACE = 'physical_interface'
 
 # The keys below are used in the VIF_DETAILS attribute to convey
 # information related to the configuration of the vhost-user VIF driver.
@@ -63,6 +66,10 @@ VHOST_USER_SOCKET = 'vhostuser_socket'
 #                        method should be used when binding the
 #                        vhost-user vif.
 VHOST_USER_OVS_PLUG = 'vhostuser_ovs_plug'
+
+# VIF_TYPE: vif_types are required by Nova to determine which vif_driver to
+#           use to attach a virtual server to the network
+
 # - vhost-user:  The vhost-user interface type is a standard virtio interface
 #                provided by qemu 2.1+. This constant defines the neutron side
 #                of the vif binding type to provide a common definition
@@ -75,7 +82,15 @@ VIF_TYPE_DISTRIBUTED = 'distributed'
 VIF_TYPE_OVS = 'ovs'
 VIF_TYPE_BRIDGE = 'bridge'
 VIF_TYPE_OTHER = 'other'
+# vif_type_macvtap: Tells Nova that the macvtap vif_driver should be used to
+#                   create a vif. It does not require the VNIC_TYPE_MACVTAP,
+#                   which is defined further below. E.g. Macvtap agent uses
+#                   vnic_type 'normal'.
+VIF_TYPE_MACVTAP = 'macvtap'
 
+# VNIC_TYPE: It's used to determine which mechanism driver to use to bind a
+#            port. It can be specified via the Neutron API. Default is normal,
+#            used by OVS and LinuxBridge agent.
 VNIC_NORMAL = 'normal'
 VNIC_DIRECT = 'direct'
 VNIC_MACVTAP = 'macvtap'
