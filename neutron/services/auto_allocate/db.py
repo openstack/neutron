@@ -39,6 +39,7 @@ from neutron.services.auto_allocate import models
 
 LOG = logging.getLogger(__name__)
 IS_DEFAULT = 'is_default'
+CHECK_REQUIREMENTS = 'dry-run'
 
 
 def _extend_external_network_default(self, net_res, net_db):
@@ -91,6 +92,15 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
         The topology will be provisioned upon return, if network is missing.
         """
+        if CHECK_REQUIREMENTS in fields:
+            # for dry-run requests, simply validates that subsequent
+            # requests can be fullfilled based on a set of requirements
+            # such as existence of default networks, pools, etc.
+            return self._check_requirements(context)
+        elif fields:
+            raise n_exc.BadRequest(resource='auto_allocate',
+                msg=_("Unrecognized field"))
+
         tenant_id = self._validate(context, tenant_id)
         # Check for an existent topology
         network_id = self._get_auto_allocated_network(context, tenant_id)
@@ -122,6 +132,16 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             self._l3_plugin = manager.NeutronManager.get_service_plugins().get(
                 constants.L3_ROUTER_NAT)
         return self._l3_plugin
+
+    def _check_requirements(self, context):
+        """Raise if requirements are not met."""
+        self._get_default_external_network(context)
+        try:
+            self._get_supported_subnetpools(context)
+        except n_exc.NotFound:
+            raise exceptions.AutoAllocationFailure(
+                reason=_("No default subnetpools defined"))
+        return {'id': 'dry-run=pass'}
 
     def _validate(self, context, tenant_id):
         """Validate and return the tenant to be associated to the topology."""
