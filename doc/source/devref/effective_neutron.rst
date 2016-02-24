@@ -182,15 +182,17 @@ Document common pitfalls as well as good practices done during database developm
   a wrong use of ResultProxy.inserted_primary_key for example):
 
   .. code:: python
+
      e.execute("create table if not exists foo (bar integer)")
      e.execute(foo.insert().values(bar=1))
      e.execute(foo.insert().values(bar=[2]))
 
-  The 2nd insert should crash (list provided, integer expected). It crashs at
+  The 2nd insert should crash (list provided, integer expected). It crashes at
   least with mysql and postgresql backends, but succeeds with pymysql because
   it transforms them into:
 
   .. code:: sql
+
      INSERT INTO foo (bar) VALUES (1)
      INSERT INTO foo (bar) VALUES ((2))
 
