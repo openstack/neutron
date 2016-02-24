@@ -26,6 +26,7 @@ import fixtures
 import mock
 import netaddr
 import six
+import unittest2
 
 import neutron
 from neutron.api.v2 import attributes
@@ -117,8 +118,6 @@ class SafeCleanupFixture(fixtures.Fixture):
         self.addCleanup(cleanUp)
 
 
-import unittest
-
 from neutron.common import utils
 
 
@@ -175,7 +174,7 @@ def fail(msg=None):
     This method is equivalent to TestCase.fail without requiring a
     testcase instance (usefully for reducing coupling).
     """
-    raise unittest.TestCase.failureException(msg)
+    raise unittest2.TestCase.failureException(msg)
 
 
 class UnorderedList(list):

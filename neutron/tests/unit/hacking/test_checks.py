@@ -282,6 +282,19 @@ class HackingTestCase(base.BaseTestCase):
             0, len(list(checks.check_assertequal_for_httpcode(pass_code,
                                         "neutron/tests/test_assert.py"))))
 
+    def test_unittest_imports(self):
+        f = checks.check_unittest_imports
+
+        self.assertLinePasses(f, 'from unittest2')
+        self.assertLinePasses(f, 'import unittest2')
+        self.assertLinePasses(f, 'from unitest2 import case')
+        self.assertLinePasses(f, 'unittest2.TestSuite')
+
+        self.assertLineFails(f, 'from unittest import case')
+        self.assertLineFails(f, 'from unittest.TestSuite')
+        self.assertLineFails(f, 'import unittest')
+
+
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand
 # in some cases, for example, hacking rules which take tokens as argument.

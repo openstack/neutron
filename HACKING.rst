@@ -25,6 +25,7 @@ Neutron Specific Commandments
          assertEqual(observed_http_code, expected_http_code).
 - [N333] Validate that LOG.warning is used instead of LOG.warn. The latter
   is deprecated.
+- [N334] Use unittest2 uniformly across Neutron.
 - [N340] Check usage of <module>.i18n (and neutron.i18n)
 - [N341] Check usage of _ from python builtins
 
@@ -38,7 +39,9 @@ without the patch and passes with the patch.
 
 All unittest classes must ultimately inherit from testtools.TestCase. In the
 Neutron test suite, this should be done by inheriting from
-neutron.tests.base.BaseTestCase.
+neutron.tests.base.BaseTestCase. If the third party unittest library has to
+be used directly then it is recommended to use unittest2 as it contains bug
+fixes to unittest for all versions of Python prior to version 3.5.
 
 All setUp and tearDown methods must upcall using the super() method.
 tearDown methods should be avoided and addCleanup calls should be preferred.
