@@ -500,7 +500,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
             if interface:
                 self._populate_subnets_for_ports(context, [interface])
 
-        return routers_dict.values()
+        # we don't want to return HA routers without HA interfaces created yet
+        return [r for r in list(routers_dict.values())
+                if not r.get('ha') or r.get(constants.HA_INTERFACE_KEY)]
 
     def get_ha_sync_data_for_host(self, context, host=None, router_ids=None,
                                   active=None):
