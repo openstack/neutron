@@ -15,6 +15,7 @@
 
 import pecan
 
+from neutron.api.v2 import attributes as api_attributes
 from neutron import manager
 
 # Utility functions for Pecan controllers.
@@ -40,6 +41,7 @@ class NeutronPecanController(object):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
+        self._resource_info = api_attributes.get_collection_info(collection)
         self._plugin = None
 
     @property

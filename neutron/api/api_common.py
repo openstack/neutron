@@ -17,7 +17,6 @@ import functools
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
 from six.moves.urllib import parse
 from webob import exc
 
@@ -30,7 +29,13 @@ LOG = logging.getLogger(__name__)
 
 
 def get_filters(request, attr_info, skips=None):
-    """Extracts the filters from the request string.
+    return get_filters_from_dict(request.GET.dict_of_lists(),
+                                 attr_info,
+                                 skips)
+
+
+def get_filters_from_dict(data, attr_info, skips=None):
+    """Extracts the filters from a dict of query parameters.
 
     Returns a dict of lists for the filters:
     check=a&check=b&name=Bob&
@@ -39,7 +44,7 @@ def get_filters(request, attr_info, skips=None):
     """
     skips = skips or []
     res = {}
-    for key, values in six.iteritems(request.GET.dict_of_lists()):
+    for key, values in data.items():
         if key in skips:
             continue
         values = [v for v in values if v]

@@ -15,6 +15,7 @@
 import pecan
 from pecan import request
 
+from neutron.api import api_common
 from neutron.pecan_wsgi.controllers import utils
 
 
@@ -79,8 +80,11 @@ class CollectionsController(utils.NeutronPecanController):
         # after making sure policy enforced fields remain
         kwargs.pop('fields', None)
         _listify = lambda x: x if isinstance(x, list) else [x]
-        filters = {k: _listify(v) for k, v in kwargs.items()}
-        # TODO(kevinbenton): convert these using api_common.get_filters
+        filters = api_common.get_filters_from_dict(
+            {k: _listify(v) for k, v in kwargs.items()},
+            self._resource_info,
+            skips=['fields', 'sort_key', 'sort_dir',
+                   'limit', 'marker', 'page_reverse'])
         lister = getattr(self.plugin, 'get_%s' % self.collection)
         neutron_context = request.context['neutron_context']
         return {self.collection: lister(neutron_context, filters=filters)}
