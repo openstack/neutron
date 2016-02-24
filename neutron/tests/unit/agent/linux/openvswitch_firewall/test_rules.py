@@ -166,8 +166,8 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'actions': 'resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             'nw_proto': constants.PROTO_NUM_TCP,
-            'tcp_dst': port
-        } for port in range(22, 24)]
+            'tcp_dst': '0x0016/0xfffe'
+        }]
         self._test_create_protocol_flows_helper(
             firewall.EGRESS_DIRECTION, rule, expected_flows)
 
@@ -189,10 +189,8 @@ class TestCreatePortRangeFlows(base.BaseTestCase):
             'port_range_max': 11,
         }
         expected_flows = [
-            {'tcp_src': 123, 'tcp_dst': 10},
-            {'tcp_src': 123, 'tcp_dst': 11},
-            {'tcp_src': 124, 'tcp_dst': 10},
-            {'tcp_src': 124, 'tcp_dst': 11},
+            {'tcp_src': '0x007b', 'tcp_dst': '0x000a/0xfffe'},
+            {'tcp_src': '0x007c', 'tcp_dst': '0x000a/0xfffe'},
         ]
         self._test_create_port_range_flows_helper(expected_flows, rule)
 
@@ -203,8 +201,8 @@ class TestCreatePortRangeFlows(base.BaseTestCase):
             'source_port_range_max': 124,
         }
         expected_flows = [
-            {'tcp_src': 123},
-            {'tcp_src': 124},
+            {'tcp_src': '0x007b'},
+            {'tcp_src': '0x007c'},
         ]
         self._test_create_port_range_flows_helper(expected_flows, rule)
 
@@ -215,8 +213,7 @@ class TestCreatePortRangeFlows(base.BaseTestCase):
             'port_range_max': 11,
         }
         expected_flows = [
-            {'tcp_dst': 10},
-            {'tcp_dst': 11},
+            {'tcp_dst': '0x000a/0xfffe'},
         ]
         self._test_create_port_range_flows_helper(expected_flows, rule)
 

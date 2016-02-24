@@ -336,7 +336,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             priority=70,
             reg5=self.port_ofport,
             table=ovs_consts.RULES_INGRESS_TABLE,
-            tcp_dst=123)
+            tcp_dst='0x007b')
         calls = self.mock_bridge.br.add_flow.call_args_list
         for call in exp_ingress_classifier, exp_egress_classifier, filter_rule:
             self.assertIn(call, calls)

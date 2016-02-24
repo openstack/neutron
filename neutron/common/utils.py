@@ -24,6 +24,7 @@ import decimal
 import errno
 import functools
 import hashlib
+import math
 import multiprocessing
 import os
 import random
@@ -51,6 +52,8 @@ from neutron.common import constants as n_const
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
+# Unsigned 16 bit MAX.
+MAX_UINT16 = 0xffff
 
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
@@ -544,3 +547,101 @@ def safe_decode_utf8(s):
     if six.PY3 and isinstance(s, bytes):
         return s.decode('utf-8', 'surrogateescape')
     return s
+
+
+#TODO(jlibosva): Move this to neutron-lib and reuse in networking-ovs-dpdk
+def _create_mask(lsb_mask):
+    return (MAX_UINT16 << int(math.floor(math.log(lsb_mask, 2)))) \
+           & MAX_UINT16
+
+
+def _reduce_mask(mask, step=1):
+    mask <<= step
+    return mask & MAX_UINT16
+
+
+def _increase_mask(mask, step=1):
+    for index in range(step):
+        mask >>= 1
+        mask |= 0x8000
+    return mask
+
+
+def _hex_format(number):
+    return format(number, '#06x')
+
+
+def port_rule_masking(port_min, port_max):
+    # Check port_max >= port_min.
+    if port_max < port_min:
+        raise ValueError(_("'port_max' is smaller than 'port_min'"))
+
+    # Rules to be added to OVS.
+    rules = []
+
+    # Loop from the lower part. Increment port_min.
+    bit_right = 1
+    mask = MAX_UINT16
+    t_port_min = port_min
+    while True:
+        # Obtain last significative bit.
+        bit_min = port_min & bit_right
+        # Take care of first bit.
+        if bit_right == 1:
+            if bit_min > 0:
+                rules.append("%s" % (_hex_format(t_port_min)))
+            else:
+                mask = _create_mask(2)
+                rules.append("%s/%s" % (_hex_format(t_port_min & mask),
+                                        _hex_format(mask)))
+        elif bit_min == 0:
+            mask = _create_mask(bit_right)
+            t_port_min += bit_right
+            # If the temporal variable we are using exceeds the
+            # port_max value, exit the loop.
+            if t_port_min > port_max:
+                break
+            rules.append("%s/%s" % (_hex_format(t_port_min & mask),
+                                    _hex_format(mask)))
+
+        # If the temporal variable we are using exceeds the
+        # port_max value, exit the loop.
+        if t_port_min > port_max:
+            break
+        bit_right <<= 1
+
+    # Loop from the higher part.
+    bit_position = int(round(math.log(port_max, 2)))
+    bit_left = 1 << bit_position
+    mask = MAX_UINT16
+    mask = _reduce_mask(mask, bit_position)
+    # Find the most significative bit of port_max, higher
+    # than the most significative bit of port_min.
+    while mask < MAX_UINT16:
+        bit_max = port_max & bit_left
+        bit_min = port_min & bit_left
+        if bit_max > bit_min:
+            # Difference found.
+            break
+        # Rotate bit_left to the right and increase mask.
+        bit_left >>= 1
+        mask = _increase_mask(mask)
+
+    while bit_left > 1:
+        # Obtain next most significative bit.
+        bit_left >>= 1
+        bit_max = port_max & bit_left
+        if bit_left == 1:
+            if bit_max == 0:
+                rules.append("%s" % (_hex_format(port_max)))
+            else:
+                mask = _create_mask(2)
+                rules.append("%s/%s" % (_hex_format(port_max & mask),
+                                        _hex_format(mask)))
+        elif bit_max > 0:
+            t_port_max = port_max - bit_max
+            mask = _create_mask(bit_left)
+            rules.append("%s/%s" % (_hex_format(t_port_max),
+                                    _hex_format(mask)))
+
+    return rules
