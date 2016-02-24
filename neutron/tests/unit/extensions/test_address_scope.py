@@ -430,6 +430,52 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
     def test_not_update_subnetpool_address_scope_not_notify(self):
         self._test_update_subnetpool_address_scope_notify(False)
 
+    def test_network_create_contain_address_scope_attr(self):
+        with self.network() as network:
+            result = self._show('networks', network['network']['id'])
+            keys = [ext_address_scope.IPV4_ADDRESS_SCOPE,
+                    ext_address_scope.IPV6_ADDRESS_SCOPE]
+            for k in keys:
+                # Correlated address scopes should initially be None
+                self.assertIsNone(result['network'][k])
+
+    def test_correlate_network_with_address_scope(self):
+        with self.address_scope(name='v4-as') as v4_addr_scope, \
+                self.address_scope(
+                    name='v6-as',
+                    ip_version=constants.IP_VERSION_6) as v6_addr_scope, \
+                self.network() as network:
+            v4_as_id = v4_addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('10.10.10.0/24')
+            v4_subnetpool = self._test_create_subnetpool(
+                [subnet.cidr], name='v4-sp',
+                min_prefixlen='24', address_scope_id=v4_as_id)
+            v4_subnetpool_id = v4_subnetpool['subnetpool']['id']
+            v6_as_id = v6_addr_scope['address_scope']['id']
+            subnet = netaddr.IPNetwork('fd5c:6ee1:c7ae::/64')
+            v6_subnetpool = self._test_create_subnetpool(
+                [subnet.cidr], name='v6-sp',
+                min_prefixlen='64', address_scope_id=v6_as_id)
+            v6_subnetpool_id = v6_subnetpool['subnetpool']['id']
+            data = {'subnet': {
+                    'network_id': network['network']['id'],
+                    'subnetpool_id': v4_subnetpool_id,
+                    'ip_version': 4,
+                    'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            self.deserialize(self.fmt, req.get_response(self.api))
+            data['subnet']['subnetpool_id'] = v6_subnetpool_id
+            data['subnet']['ip_version'] = 6
+            req = self.new_create_request('subnets', data)
+            self.deserialize(self.fmt, req.get_response(self.api))
+            result = self._show('networks', network['network']['id'])
+            self.assertEqual(
+                v4_as_id,
+                result['network'][ext_address_scope.IPV4_ADDRESS_SCOPE])
+            self.assertEqual(
+                v6_as_id,
+                result['network'][ext_address_scope.IPV6_ADDRESS_SCOPE])
+
     def test_delete_address_scope_in_use(self):
         with self.address_scope(name='foo-address-scope') as addr_scope:
             address_scope_id = addr_scope['address_scope']['id']

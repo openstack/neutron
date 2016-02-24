@@ -183,6 +183,13 @@ class Subnet(model_base.HasStandardAttributes, model_base.BASEV2,
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
     subnetpool_id = sa.Column(sa.String(36), index=True)
+    # NOTE: Explicitly specify join conditions for the relationship because
+    # subnetpool_id in subnet might be 'prefix_delegation' when the IPv6 Prefix
+    # Delegation is enabled
+    subnetpool = orm.relationship(
+        'SubnetPool', lazy='joined',
+        foreign_keys='Subnet.subnetpool_id',
+        primaryjoin='Subnet.subnetpool_id==SubnetPool.id')
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(64))

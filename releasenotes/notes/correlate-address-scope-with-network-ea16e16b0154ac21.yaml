@@ -1,0 +1,4 @@
+---
+features:
+  - Add derived attributes to the network to tell users which address scopes
+    the network is in.
