@@ -14,7 +14,6 @@
 #    under the License.
 
 import copy
-import simplejson
 
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -130,7 +129,7 @@ class PolicyHook(hooks.PecanHook):
             return
         try:
             data = state.response.json
-        except simplejson.JSONDecodeError:
+        except ValueError:
             return
         action = '%s_%s' % (pecan_constants.ACTION_MAP[state.request.method],
                             resource)
