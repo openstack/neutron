@@ -119,6 +119,9 @@ class FakeMachine(FakeMachineBase):
         self.port.link.set_address(mac_address)
         self.port.link.set_up()
 
+    def set_default_gateway(self, default_gw):
+        self.port.route.add_gateway(default_gw)
+
 
 class PeerMachines(fixtures.Fixture):
     """Create 'amount' peered machines on an ip_cidr.
