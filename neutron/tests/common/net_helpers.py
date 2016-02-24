@@ -288,6 +288,8 @@ class Pinger(object):
 
     stats_pattern = re.compile(
         r'^(?P<trans>\d+) packets transmitted,.*(?P<recv>\d+) received.*$')
+    unreachable_pattern = re.compile(
+        r'.* Destination .* Unreachable')
     TIMEOUT = 15
 
     def __init__(self, namespace, address, count=None, timeout=1):
@@ -296,6 +298,7 @@ class Pinger(object):
         self.address = address
         self.count = count
         self.timeout = timeout
+        self.destination_unreachable = False
         self.sent = 0
         self.received = 0
 
@@ -307,6 +310,10 @@ class Pinger(object):
 
     def _parse_stats(self):
         for line in self.proc.stdout:
+            if (not self.destination_unreachable and
+                    self.unreachable_pattern.match(line)):
+                self.destination_unreachable = True
+                continue
             result = self.stats_pattern.match(line)
             if result:
                 self.sent = int(result.group('trans'))
@@ -330,6 +337,14 @@ class Pinger(object):
             self.proc.kill(signal.SIGINT)
             self._wait_for_death()
             self._parse_stats()
+
+    def wait(self):
+        if self.count:
+            self._wait_for_death()
+            self._parse_stats()
+        else:
+            raise RuntimeError("Pinger is running infinitelly, use stop() "
+                               "first")
 
 
 class NetcatTester(object):

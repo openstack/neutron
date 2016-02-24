@@ -136,3 +136,6 @@ OPENFLOW11 = "OpenFlow11"
 OPENFLOW12 = "OpenFlow12"
 OPENFLOW13 = "OpenFlow13"
 OPENFLOW14 = "OpenFlow14"
+
+# A placeholder for dead vlans.
+DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1

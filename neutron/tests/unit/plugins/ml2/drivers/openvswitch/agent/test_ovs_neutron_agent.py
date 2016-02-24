@@ -297,13 +297,13 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent, 'int_br') as int_br:
             int_br.db_get_val.return_value = cur_tag
             self.agent.port_dead(port)
-        if cur_tag is None or cur_tag == self.mod_agent.DEAD_VLAN_TAG:
+        if cur_tag is None or cur_tag == constants.DEAD_VLAN_TAG:
             self.assertFalse(int_br.set_db_attribute.called)
             self.assertFalse(int_br.drop_port.called)
         else:
             int_br.assert_has_calls([
                 mock.call.set_db_attribute("Port", mock.ANY, "tag",
-                                           self.mod_agent.DEAD_VLAN_TAG,
+                                           constants.DEAD_VLAN_TAG,
                                            log_errors=True),
                 mock.call.drop_port(in_port=port.ofport),
             ])
@@ -312,7 +312,7 @@ class TestOvsNeutronAgent(object):
         self._test_port_dead()
 
     def test_port_dead_with_port_already_dead(self):
-        self._test_port_dead(self.mod_agent.DEAD_VLAN_TAG)
+        self._test_port_dead(constants.DEAD_VLAN_TAG)
 
     def test_port_dead_with_valid_tag(self):
         self._test_port_dead(cur_tag=1)
@@ -1046,7 +1046,7 @@ class TestOvsNeutronAgent(object):
             # the main things we care about are that it gets put in the
             # dead vlan and gets blocked
             int_br.set_db_attribute.assert_any_call(
-                'Port', vif.port_name, 'tag', self.mod_agent.DEAD_VLAN_TAG,
+                'Port', vif.port_name, 'tag', constants.DEAD_VLAN_TAG,
                 log_errors=False)
             int_br.drop_port.assert_called_once_with(in_port=vif.ofport)
 

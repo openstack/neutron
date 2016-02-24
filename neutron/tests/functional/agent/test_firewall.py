@@ -19,9 +19,11 @@
 
 import copy
 import functools
+import random
 
 import netaddr
 from oslo_config import cfg
+from oslo_log import log as logging
 import testscenarios
 
 from neutron.agent import firewall
@@ -33,9 +35,9 @@ from neutron.common import constants
 from neutron.tests.common import conn_testers
 from neutron.tests.functional import base
 
+LOG = logging.getLogger(__name__)
 
 load_tests = testscenarios.load_tests_apply_scenarios
-
 
 reverse_direction = {
     conn_testers.ConnectionTester.INGRESS:
@@ -46,17 +48,20 @@ reverse_transport_protocol = {
     conn_testers.ConnectionTester.TCP: conn_testers.ConnectionTester.UDP,
     conn_testers.ConnectionTester.UDP: conn_testers.ConnectionTester.TCP}
 
-
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+VLAN_COUNT = 4096
 
 
-def skip_if_not_iptables(f):
-    @functools.wraps(f)
-    def wrap(self, *args, **kwargs):
-        if not hasattr(self, 'enable_ipset'):
-            self.skipTest("This test doesn't use iptables")
-        return f(self, *args, **kwargs)
-    return wrap
+def skip_if_firewall(firewall_name):
+    def outter(f):
+        @functools.wraps(f)
+        def wrap(self, *args, **kwargs):
+            if self.firewall_name == firewall_name:
+                self.skipTest("This test doesn't use %s firewall" %
+                              firewall_name)
+            return f(self, *args, **kwargs)
+        return wrap
+    return outter
 
 
 def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
@@ -73,18 +78,24 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
     scenarios = [('IptablesFirewallDriver without ipset',
                   {'enable_ipset': False,
-                   'initialize': 'initialize_iptables'}),
+                   'initialize': 'initialize_iptables',
+                   'firewall_name': 'iptables'}),
                  ('IptablesFirewallDriver with ipset',
                   {'enable_ipset': True,
-                   'initialize': 'initialize_iptables'}),
+                   'initialize': 'initialize_iptables',
+                   'firewall_name': 'iptables'}),
                  ('OVS Firewall Driver',
-                  {'initialize': 'initialize_ovs'})]
+                  {'initialize': 'initialize_ovs',
+                   'firewall_name': 'openvswitch'})]
     ip_cidr = None
+    vlan_range = set(range(VLAN_COUNT))
 
     def setUp(self):
         cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
         super(BaseFirewallTestCase, self).setUp()
         self.tester, self.firewall = getattr(self, self.initialize)()
+        if self.firewall_name == "openvswitch":
+            self.assign_vlan_to_peers()
         self.src_port_desc = self._create_port_description(
             self.tester.vm_port_id,
             [self.tester.vm_ip_address],
@@ -117,6 +128,19 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         firewall_drv = openvswitch_firewall.OVSFirewallDriver(tester.bridge)
         return tester, firewall_drv
 
+    def assign_vlan_to_peers(self):
+        vlan = self.get_not_used_vlan()
+        LOG.debug("Using %d vlan tag for this test", vlan)
+        self.tester.set_vm_tag(vlan)
+        self.tester.set_peer_tag(vlan)
+
+    def get_not_used_vlan(self):
+        port_vlans = self.firewall.int_br.br.ovsdb.db_find(
+                'Port', ('tag', '!=', '[]'), columns=['tag']).execute()
+        used_vlan_tags = {val['tag'] for val in port_vlans}
+        available_vlans = self.vlan_range - used_vlan_tags
+        return random.choice(list(available_vlans))
+
     @staticmethod
     def _create_port_description(port_id, ip_addresses, mac_address, sg_ids):
         return {'admin_state_up': True,
@@ -142,7 +166,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
 class FirewallTestCase(BaseFirewallTestCase):
     ip_cidr = '192.168.0.1/24'
 
-    @skip_if_not_iptables
+    @skip_if_firewall('openvswitch')
     def test_rule_application_converges(self):
         sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress'},
                     {'ethertype': 'IPv6', 'direction': 'egress'},
@@ -207,7 +231,7 @@ class FirewallTestCase(BaseFirewallTestCase):
                 # and the new one was inserted in the correct position
                 self.assertEqual([], self.firewall.iptables._apply())
 
-    @skip_if_not_iptables
+    @skip_if_firewall('openvswitch')
     def test_rule_ordering_correct(self):
         sg_rules = [
             {'ethertype': 'IPv4', 'direction': 'egress', 'protocol': 'tcp',
@@ -280,7 +304,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
 
-    @skip_if_not_iptables
+    @skip_if_firewall('openvswitch')
     def test_mac_spoofing_works_without_port_security_enabled(self):
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
@@ -332,7 +356,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
 
-    @skip_if_not_iptables
+    @skip_if_firewall('openvswitch')
     def test_ip_spoofing_works_without_port_security_enabled(self):
         self.src_port_desc['port_security_enabled'] = False
         self.firewall.update_port_filter(self.src_port_desc)
@@ -456,7 +480,8 @@ class FirewallTestCase(BaseFirewallTestCase):
                                          direction=self.tester.EGRESS,
                                          src_port=source_port_max + 1)
 
-    def test_established_connection_is_not_cut(self):
+    @skip_if_firewall('iptables')
+    def test_established_connection_is_cut(self):
         port = 12345
         sg_rules = [{'ethertype': constants.IPv4,
                      'direction': firewall.INGRESS_DIRECTION,
@@ -470,7 +495,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         self.tester.establish_connection(**connection)
 
         self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, list())
-        self.tester.assert_established_connection(**connection)
+        self.tester.assert_no_established_connection(**connection)
 
     def test_preventing_firewall_blink(self):
         direction = self.tester.INGRESS
@@ -514,9 +539,35 @@ class FirewallTestCase(BaseFirewallTestCase):
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
 
+    def test_related_connection(self):
+        """Test ICMP net unreachable packets get back
+
+        When destination address of ip traffic is not reachable, ICMP packets
+        are returned. This packets are marked as RELATED traffic by conntrack
+        and this test case validates such packets are not dropped by the
+        firewall as ingress ICMP packets are not allowed in this test case. The
+        used address below 1.2.3.4 is outside of subnet that is used in tester
+        object.
+
+        """
+        # Enable ip forwarding on the interface in order to reply with
+        # destionation net unreachable
+        self.tester._peer.execute([
+            'sysctl', '-w', 'net.ipv4.conf.%s.forwarding=1' %
+            self.tester._peer.port.name])
+        self.tester.set_vm_default_gateway(self.tester.peer_ip_address)
+        vm_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',
+                        'protocol': 'icmp'}]
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID,
+                                         vm_sg_rules)
+
+        self.tester.assert_net_unreachable(self.tester.EGRESS, '1.2.3.4')
+
 
 class FirewallTestCaseIPv6(BaseFirewallTestCase):
-    scenarios = [('OVS Firewall Driver', {'initialize': 'initialize_ovs'})]
+    scenarios = [('OVS Firewall Driver',
+                  {'initialize': 'initialize_ovs',
+                   'firewall_name': 'openvswitch'})]
     ip_cidr = '2001:db8:aaaa::1/64'
 
     def test_icmp_from_specific_address(self):
