@@ -1,0 +1,17 @@
+---
+prelude: >
+  - The ML2 plug-in supports calculating the MTU for networks
+    that are realized as flat or VLAN networks, by consulting the
+    'segment_mtu' option. Prior to Mitaka, 'segment_mtu' defaults to 0 which
+    disables this feature. This creates slightly confusing API results when
+    querying Neutron networks, since the plugins that support the MTU API
+    extension would return networks with the MTU equal to zero. Networks
+    with an MTU of zero make little sense, since nothing could ever be transmitted.
+    In Mitaka, 'segment_mtu' now defaults to 1500 which is the standard MTU for Ethernet
+    networks in order to improve the "out of box" experience for typical deployments.
+features:
+  - In Mitaka, queries to the Networking API for network objects will now
+    return network objects that contain a sane MTU value.
+upgrade:
+  - Operators using the ML2 plug-in with existing data may need
+    to perform a database migration to update the MTU for existing networks
