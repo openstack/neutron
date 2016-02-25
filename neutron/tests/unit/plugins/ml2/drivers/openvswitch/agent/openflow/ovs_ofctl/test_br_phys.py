@@ -37,7 +37,6 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
     def test_setup_default_table(self):
         self.br.setup_default_table()
         expected = [
-            call.delete_flows(),
             call.add_flow(priority=0, table=0, actions='normal'),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
