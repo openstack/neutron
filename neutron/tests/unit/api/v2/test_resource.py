@@ -290,6 +290,18 @@ class ResourceTestCase(base.BaseTestCase):
         res = resource.delete('', extra_environ=environ)
         self.assertEqual(204, res.status_int)
 
+    def test_action_status(self):
+        controller = mock.MagicMock()
+        controller.test = lambda request: {'foo': 'bar'}
+        action_status = {'test_200': 200, 'test_201': 201, 'test_204': 204}
+        resource = webtest.TestApp(
+            wsgi_resource.Resource(controller,
+                                   action_status=action_status))
+        for action in action_status:
+            environ = {'wsgiorg.routing_args': (None, {'action': action})}
+            res = resource.get('', extra_environ=environ)
+            self.assertEqual(action_status[action], res.status_int)
+
     def _test_error_log_level(self, expected_webob_exc, expect_log_info=False,
                               use_fault_map=True, exc_raised=None):
         if not exc_raised:

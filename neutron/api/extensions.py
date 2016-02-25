@@ -275,6 +275,16 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
                     submap.connect(path)
                     submap.connect("%s.:(format)" % path)
 
+            for action, method in resource.collection_methods.items():
+                conditions = dict(method=[method])
+                path = "/%s" % resource.collection
+                with mapper.submapper(controller=resource.controller,
+                                      action=action,
+                                      path_prefix=path_prefix,
+                                      conditions=conditions) as submap:
+                    submap.connect(path)
+                    submap.connect("%s.:(format)" % path)
+
             mapper.resource(resource.collection, resource.collection,
                             controller=resource.controller,
                             member=resource.member_actions,
@@ -632,14 +642,17 @@ class ResourceExtension(object):
     """Add top level resources to the OpenStack API in Neutron."""
 
     def __init__(self, collection, controller, parent=None, path_prefix="",
-                 collection_actions=None, member_actions=None, attr_map=None):
+                 collection_actions=None, member_actions=None, attr_map=None,
+                 collection_methods=None):
         collection_actions = collection_actions or {}
+        collection_methods = collection_methods or {}
         member_actions = member_actions or {}
         attr_map = attr_map or {}
         self.collection = collection
         self.controller = controller
         self.parent = parent
         self.collection_actions = collection_actions
+        self.collection_methods = collection_methods
         self.member_actions = member_actions
         self.path_prefix = path_prefix
         self.attr_map = attr_map
