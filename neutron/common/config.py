@@ -28,6 +28,7 @@ from oslo_service import wsgi
 
 from neutron._i18n import _, _LI
 from neutron.api.v2 import attributes
+from neutron.common import constants
 from neutron.common import utils
 from neutron import policy
 from neutron import version
@@ -176,7 +177,7 @@ core_opts = [
                help=_("This will choose the web framework in which to run "
                       "the Neutron API server. 'pecan' is a new experiemental "
                       "rewrite of the API server.")),
-    cfg.IntOpt('global_physnet_mtu', default=1500,
+    cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
                deprecated_name='segment_mtu', deprecated_group='ml2',
                help=_('MTU of the underlying physical network. Neutron uses '
                       'this value to calculate MTU for all virtual network '
