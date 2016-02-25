@@ -30,7 +30,6 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
     dvr_process_next_table_id = constants.LOCAL_VLAN_TRANSLATION
 
     def setup_default_table(self):
-        self.delete_flows()
         self.install_normal()
 
     @staticmethod
