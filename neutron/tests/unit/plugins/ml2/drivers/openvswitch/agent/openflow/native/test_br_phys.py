@@ -38,7 +38,6 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.setup_default_table()
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=0,
                 instructions=[

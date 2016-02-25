@@ -880,6 +880,7 @@ class TestOvsNeutronAgent(object):
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
+                mock.call.phys_br.set_agent_uuid_stamp(mock.ANY),
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.db_get_val('Interface', 'int-br-eth',
@@ -964,6 +965,7 @@ class TestOvsNeutronAgent(object):
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
+                mock.call.phys_br.set_agent_uuid_stamp(mock.ANY),
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.delete_port('int-br-eth'),
