@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.api import test_bgp_speaker_extensions as test_base
 from tempest import test

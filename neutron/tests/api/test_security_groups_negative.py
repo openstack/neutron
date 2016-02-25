@@ -15,8 +15,8 @@
 
 import uuid
 
+from tempest.lib import exceptions as lib_exc
 from tempest import test
-from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base_security_groups as base
 from neutron.tests.tempest import config

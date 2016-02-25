@@ -12,8 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import exceptions
 from tempest import test
-from tempest_lib import exceptions
 import testtools
 
 from neutron.services.qos import qos_consts
@@ -112,7 +112,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         # In theory, we could make the test conditional on which ml2 drivers
         # are enabled in gate (or more specifically, on which supported qos
         # rules are claimed by core plugin), but that option doesn't seem to be
-        # available thru tempest_lib framework
+        # available thru tempest.lib framework
         expected_rule_types = []
         expected_rule_details = ['type']
 

@@ -14,8 +14,8 @@
 #    under the License.
 
 import netaddr
+from tempest.lib.common.utils import data_utils
 from tempest import test
-from tempest_lib.common.utils import data_utils
 
 from neutron.tests.api import base
 from neutron.tests.tempest import config

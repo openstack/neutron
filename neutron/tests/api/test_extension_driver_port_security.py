@@ -14,8 +14,8 @@
 #    under the License.
 
 import ddt
+from tempest.lib import exceptions as lib_exc
 from tempest import test
-from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
 from neutron.tests.api import base_security_groups as base_security

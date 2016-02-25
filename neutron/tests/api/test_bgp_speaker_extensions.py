@@ -13,8 +13,8 @@
 #    under the License.
 
 from tempest import config
+from tempest.lib import exceptions as lib_exc
 from tempest import test
-from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import base
 from tempest.common import tempest_fixtures as fixtures

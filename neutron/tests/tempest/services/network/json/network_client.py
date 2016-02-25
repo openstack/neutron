@@ -15,7 +15,7 @@ import time
 from oslo_serialization import jsonutils as json
 from six.moves.urllib import parse as urlparse
 from tempest.common import service_client
-from tempest_lib import exceptions as lib_exc
+from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.tempest import exceptions
 

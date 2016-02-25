@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest_lib import exceptions
+from tempest.lib import exceptions
 
 TempestException = exceptions.TempestException
 

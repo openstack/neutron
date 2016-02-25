@@ -16,9 +16,9 @@
 import uuid
 
 import netaddr
+from tempest.lib.common.utils import data_utils
+from tempest.lib import exceptions as lib_exc
 from tempest import test
-from tempest_lib.common.utils import data_utils
-from tempest_lib import exceptions as lib_exc
 
 from neutron.tests.api import test_subnetpools
 
