@@ -127,7 +127,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "net-mtu", "vlan-transparent",
                                     "address-scope",
                                     "availability_zone",
-                                    "network_availability_zone"]
+                                    "network_availability_zone",
+                                    "default-subnetpools"]
 
     @property
     def supported_extension_aliases(self):

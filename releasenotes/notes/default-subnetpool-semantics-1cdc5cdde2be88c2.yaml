@@ -1,0 +1,27 @@
+---
+features:
+  - The subnet API now includes a new
+    use_default_subnetpool attribute.  This attribute can
+    be specified on creating a subnet in lieu of a
+    subnetpool_id.  The two are mutually exclusive.  If
+    it is specified as True, the default subnet pool for
+    the requested ip_version will be looked up and used.
+    If no default exists, an error will be returned.
+deprecations:
+  - The default_subnet_pools option is now deprecated and
+    will be removed in the Newton release.  The same
+    functionality is now provided by setting is_default
+    attribute on subnetpools to True using the API or
+    client.
+fixes:
+  - Before Mitaka, when a default subnetpool was defined
+    in the configuration, a request to create a subnet
+    would fall back to using it if no specific subnet
+    pool was specified.  This behavior broke the
+    semantics of subnet create calls in this scenario and
+    is now considered an API bug.  This bug has been
+    fixed so that there is no automatic fallback with the
+    presence of a default subnet pool.  Workflows which
+    depended on this new behavior will have to be
+    modified to set the new use_default_subnetpool
+    attribute when creating a subnet.
