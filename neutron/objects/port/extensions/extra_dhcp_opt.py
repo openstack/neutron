@@ -13,7 +13,7 @@
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db import extradhcpopt_db as models
+from neutron.db.extra_dhcp_opt import models
 from neutron.objects import base
 
 

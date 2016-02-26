@@ -30,7 +30,7 @@ from neutron.db import bgp_dragentscheduler_db  # noqa
 from neutron.db import dns_db  # noqa
 from neutron.db import dvr_mac_db  # noqa
 from neutron.db import external_net_db  # noqa
-from neutron.db import extradhcpopt_db  # noqa
+from neutron.db.extra_dhcp_opt import models  # noqa
 from neutron.db import extraroute_db  # noqa
 from neutron.db import flavors_db  # noqa
 from neutron.db import l3_agentschedulers_db  # noqa
