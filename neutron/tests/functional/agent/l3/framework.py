@@ -98,7 +98,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def generate_router_info(self, enable_ha, ip_version=4, extra_routes=True,
                              enable_fip=True, enable_snat=True,
-                             num_internal_ports=1,
                              dual_stack=False, v6_ext_gw_with_sub=True):
         if ip_version == 6 and not dual_stack:
             enable_snat = False
@@ -107,8 +106,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
         return l3_test_common.prepare_router_data(ip_version=ip_version,
                                                  enable_snat=enable_snat,
-                                                 num_internal_ports=(
-                                                     num_internal_ports),
                                                  enable_floating_ip=enable_fip,
                                                  enable_ha=enable_ha,
                                                  extra_routes=extra_routes,
@@ -297,13 +294,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         agent._router_removed(router_id)
 
     def _add_fip(self, router, fip_address, fixed_address='10.0.0.2',
-                 host=None, fixed_ip_address_scope=None):
+                 host=None):
         fip = {'id': _uuid(),
                'port_id': _uuid(),
                'floating_ip_address': fip_address,
                'fixed_ip_address': fixed_address,
-               'host': host,
-               'fixed_ip_address_scope': fixed_ip_address_scope}
+               'host': host}
         router.router[l3_constants.FLOATINGIP_KEY].append(fip)
 
     def _add_internal_interface_by_subnet(self, router, count=1,
