@@ -129,6 +129,11 @@ class NeutronDbObject(NeutronObject):
             obj.obj_reset_changes()
         return objs
 
+    @classmethod
+    def is_accessible(cls, context, db_obj):
+        return (context.is_admin or
+                context.tenant_id == db_obj.tenant_id)
+
     def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()
         for field in self.synthetic_fields:

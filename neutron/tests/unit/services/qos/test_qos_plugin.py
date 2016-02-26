@@ -76,11 +76,17 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertIsInstance(
             method.call_args[0][1], policy_object.QosPolicy)
 
-    def test_add_policy(self):
+    @mock.patch(
+        'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
+        '.create_rbac_policy')
+    def test_add_policy(self, *mocks):
         self.qos_plugin.create_policy(self.ctxt, self.policy_data)
         self._validate_notif_driver_params('create_policy')
 
-    def test_update_policy(self):
+    @mock.patch(
+        'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
+        '.create_rbac_policy')
+    def test_update_policy(self, *mocks):
         fields = base_object.get_updatable_fields(
             policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(

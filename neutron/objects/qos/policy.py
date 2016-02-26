@@ -13,23 +13,32 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
+
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
+from six import add_metaclass
 
 from neutron._i18n import _
 from neutron.common import exceptions
 from neutron.db import api as db_api
+from neutron.db import models_v2
 from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
+from neutron.db.rbac_db_models import QosPolicyRBAC
 from neutron.objects import base
 from neutron.objects.qos import rule as rule_obj_impl
+from neutron.objects import rbac_db
 
 
 @obj_base.VersionedObjectRegistry.register
+@add_metaclass(rbac_db.RbacNeutronMetaclass)
 class QosPolicy(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
+    # required by RbacNeutronMetaclass
+    rbac_db_model = QosPolicyRBAC
     db_model = qos_db_model.QosPolicy
 
     port_binding_model = qos_db_model.QosPortPolicyBinding
@@ -47,6 +56,9 @@ class QosPolicy(base.NeutronDbObject):
     fields_no_update = ['id', 'tenant_id']
 
     synthetic_fields = ['rules']
+
+    binding_models = {'network': network_binding_model,
+                      'port': port_binding_model}
 
     def to_dict(self):
         dict_ = super(QosPolicy, self).to_dict()
@@ -80,14 +92,6 @@ class QosPolicy(base.NeutronDbObject):
         raise exceptions.QosRuleNotFound(policy_id=self.id,
                                          rule_id=rule_id)
 
-    @staticmethod
-    def _is_policy_accessible(context, db_obj):
-        #TODO(QoS): Look at I3426b13eede8bfa29729cf3efea3419fb91175c4 for
-        #           other possible solutions to this.
-        return (context.is_admin or
-                db_obj.shared or
-                db_obj.tenant_id == context.tenant_id)
-
     @classmethod
     def get_by_id(cls, context, id):
         # We want to get the policy regardless of its tenant id. We'll make
@@ -96,7 +100,7 @@ class QosPolicy(base.NeutronDbObject):
         with db_api.autonested_transaction(admin_context.session):
             policy_obj = super(QosPolicy, cls).get_by_id(admin_context, id)
             if (not policy_obj or
-                not cls._is_policy_accessible(context, policy_obj)):
+                not cls.is_accessible(context, policy_obj)):
                 return
 
             policy_obj.reload_rules()
@@ -112,7 +116,7 @@ class QosPolicy(base.NeutronDbObject):
                                                      **kwargs)
             result = []
             for obj in objs:
-                if not cls._is_policy_accessible(context, obj):
+                if not cls.is_accessible(context, obj):
                     continue
                 obj.reload_rules()
                 result.append(obj)
@@ -142,12 +146,8 @@ class QosPolicy(base.NeutronDbObject):
             self.reload_rules()
 
     def delete(self):
-        models = (
-            ('network', self.network_binding_model),
-            ('port', self.port_binding_model)
-        )
         with db_api.autonested_transaction(self._context.session):
-            for object_type, model in models:
+            for object_type, model in self.binding_models.items():
                 binding_db_obj = db_api.get_object(self._context, model,
                                                    policy_id=self.id)
                 if binding_db_obj:
@@ -177,3 +177,30 @@ class QosPolicy(base.NeutronDbObject):
         qos_db_api.delete_policy_port_binding(self._context,
                                               policy_id=self.id,
                                               port_id=port_id)
+
+    @classmethod
+    def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
+                              binding_db_id_column, policy_id):
+        return list(itertools.chain.from_iterable(
+            session.query(bound_db.tenant_id).join(
+                binding_db, bound_db.id == binding_db_id_column).filter(
+                binding_db.policy_id == policy_id).all()))
+
+    @classmethod
+    def get_bound_tenant_ids(cls, context, policy_id):
+        """Implements RbacNeutronObject.get_bound_tenant_ids.
+
+        :returns: set -- a set of tenants' ids dependant on QosPolicy.
+        """
+        net = models_v2.Network
+        qosnet = qos_db_model.QosNetworkPolicyBinding
+        port = models_v2.Port
+        qosport = qos_db_model.QosPortPolicyBinding
+        bound_tenants = []
+        with db_api.autonested_transaction(context.session):
+            bound_tenants.extend(cls._get_bound_tenant_ids(
+                context.session, qosnet, net, qosnet.network_id, policy_id))
+            bound_tenants.extend(
+                cls._get_bound_tenant_ids(context.session, qosport, port,
+                                          qosport.port_id, policy_id))
+        return set(bound_tenants)
