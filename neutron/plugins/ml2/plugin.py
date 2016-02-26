@@ -1685,3 +1685,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         segments = db.get_network_segments(context.session, network_id)
         return self.mechanism_manager.filter_hosts_with_segment_access(
             context, segments, candidate_hosts, self.get_agents)
+
+    def check_segment_for_agent(self, segment, agent):
+        for mech_driver in self.mechanism_manager.ordered_mech_drivers:
+            driver_agent_type = getattr(mech_driver.obj, 'agent_type', None)
+            if driver_agent_type and driver_agent_type == agent['agent_type']:
+                if mech_driver.obj.check_segment_for_agent(segment, agent):
+                    return True
+        return False

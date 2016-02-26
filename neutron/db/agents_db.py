@@ -43,6 +43,7 @@ from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron import manager
+from neutron.services.segments import db as segments_db
 
 LOG = logging.getLogger(__name__)
 
@@ -396,6 +397,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 self._log_heartbeat(agent_state, agent_db, configurations_dict)
                 status = n_const.AGENT_NEW
             greenthread.sleep(0)
+            segments_db.update_segment_host_mapping_for_agent(
+                context, agent_state['host'], self, agent_state)
         return status
 
     def create_or_update_agent(self, context, agent):
