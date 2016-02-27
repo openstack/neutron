@@ -16,6 +16,7 @@
 import abc
 
 import sqlalchemy as sa
+from sqlalchemy.ext import declarative
 from sqlalchemy.orm import validates
 
 from neutron._i18n import _
@@ -54,10 +55,12 @@ class RBACColumns(model_base.HasId, model_base.HasTenant):
         # to reference the type. sub-classes should set their own
         pass
 
-    __table_args__ = (
-        sa.UniqueConstraint('target_tenant', 'object_id', 'action'),
-        model_base.BASEV2.__table_args__
-    )
+    @declarative.declared_attr
+    def __table_args__(cls):
+        return (
+            sa.UniqueConstraint('target_tenant', 'object_id', 'action'),
+            model_base.BASEV2.__table_args__
+        )
 
     @validates('action')
     def _validate_action(self, key, action):
