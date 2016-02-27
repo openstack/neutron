@@ -21,6 +21,27 @@ import unittest2
 from neutron.tests import base
 
 
+class BrokenExceptionHandlerTestCase(base.DietTestCase):
+    # Embedded to hide from the regular test discovery
+    class MyTestCase(base.DietTestCase):
+        def setUp(self):
+            super(BrokenExceptionHandlerTestCase.MyTestCase, self).setUp()
+            self.addOnException(self._diag_collect)
+
+        def _diag_collect(self, exc_info):
+            raise ValueError('whoopsie daisy')
+
+        def runTest(self):
+            raise IndexError("Thou shalt not pass by reference")
+
+    def test_broken_exception_handler(self):
+        result = self.MyTestCase().run()
+        # ensure both exceptions are logged
+        self.assertIn('Thou shalt', result.errors[0][1])
+        self.assertIn('whoopsie', result.errors[0][1])
+        self.assertFalse(result.wasSuccessful())
+
+
 class SystemExitTestCase(base.DietTestCase):
     # Embedded to hide from the regular test discovery
     class MyTestCase(base.DietTestCase):
