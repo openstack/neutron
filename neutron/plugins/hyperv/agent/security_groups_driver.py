@@ -17,7 +17,7 @@ from debtcollector import moves
 from hyperv.neutron import security_groups_driver as sg_driver
 from oslo_log import log as logging
 
-from neutron.i18n import _LW
+from neutron._i18n import _LW
 
 LOG = logging.getLogger(__name__)
 
