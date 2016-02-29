@@ -233,6 +233,15 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         update_res['rbac_policy'].pop('target_tenant')
         self.assertEqual(res['policy'], update_res['rbac_policy'])
 
+    @test.idempotent_id('86c3529b-1231-40de-803c-affefefef321')
+    def test_duplicate_policy_error(self):
+        res = self._make_admin_net_and_subnet_shared_to_tenant_id(
+            self.client.tenant_id)
+        with testtools.ExpectedException(lib_exc.Conflict):
+            self.admin_client.create_rbac_policy(
+                object_type='network', object_id=res['network']['id'],
+                action='access_as_shared', target_tenant=self.client.tenant_id)
+
     @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff3fff')
     def test_port_presence_prevents_network_rbac_policy_deletion(self):
