@@ -445,11 +445,14 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                     LOG.error(_LE("No FloatingIP agent gateway port "
                                   "returned from server for 'network-id': "
                                   "%s"), ex_gw_port['network_id'])
-            if is_first and fip_agent_port:
+            if fip_agent_port:
                 if 'subnets' not in fip_agent_port:
                     LOG.error(_LE('Missing subnet/agent_gateway_port'))
                 else:
-                    self.fip_ns.create_gateway_port(fip_agent_port)
+                    if is_first:
+                        self.fip_ns.create_gateway_port(fip_agent_port)
+                    else:
+                        self.fip_ns.update_gateway_port(fip_agent_port)
 
             if (self.fip_ns.agent_gateway_port and
                 (self.dist_fip_count == 0)):
