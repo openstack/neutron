@@ -17,7 +17,9 @@ import eventlet
 import fixtures
 import mock
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 from oslo_utils import importutils
+from testtools.content import text_content
 
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
@@ -117,6 +119,7 @@ class _ARPSpoofTestCase(object):
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
+        self.addOnException(self.collect_flows_and_ports)
         super(_ARPSpoofTestCase, self).setUp()
         self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
@@ -131,6 +134,21 @@ class _ARPSpoofTestCase(object):
             net_helpers.OVSPortFixture(self.br, self.dst_namespace)).port
         # wait to add IPs until after anti-spoof rules to ensure ARP doesn't
         # happen before
+
+    def collect_flows_and_ports(self, exc_info):
+        nicevif = lambda x: ['%s=%s' % (k, getattr(x, k))
+                             for k in ['ofport', 'port_name', 'switch',
+                                       'vif_id', 'vif_mac']]
+        nicedev = lambda x: ['%s=%s' % (k, getattr(x, k))
+                             for k in ['name', 'namespace']] + x.addr.list()
+        details = {'flows': self.br.dump_all_flows(),
+                   'vifs': map(nicevif, self.br.get_vif_ports()),
+                   'src_ip': self.src_addr,
+                   'dest_ip': self.dst_addr,
+                   'sourt_port': nicedev(self.src_p),
+                   'dest_port': nicedev(self.dst_p)}
+        self.addDetail('arp-test-state',
+                       text_content(jsonutils.dumps(details, indent=5)))
 
     @common_base.no_skip_on_missing_deps
     def skip_without_arp_support(self):
