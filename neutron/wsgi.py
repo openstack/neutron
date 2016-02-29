@@ -633,7 +633,7 @@ class Resource(Application):
         return response
 
     def dispatch(self, request, action, action_args):
-        """Find action-spefic method on controller and call it."""
+        """Find action-specific method on controller and call it."""
 
         controller_method = getattr(self.controller, action)
         try:
