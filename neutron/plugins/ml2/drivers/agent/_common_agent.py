@@ -36,10 +36,6 @@ from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
 
 LOG = logging.getLogger(__name__)
 
-LB_AGENT_BINARY = 'neutron-linuxbridge-agent'
-BRIDGE_NAME_PREFIX = "brq"
-VXLAN_INTERFACE_PREFIX = "vxlan-"
-
 
 class CommonAgentLoop(service.Service):
 
@@ -116,8 +112,9 @@ class CommonAgentLoop(service.Service):
                                                        self.agent_state,
                                                        True)
             if agent_status == constants.AGENT_REVIVED:
-                LOG.info(_LI('Agent has just been revived. '
-                             'Doing a full sync.'))
+                LOG.info(_LI('%s Agent has just been revived. '
+                             'Doing a full sync.'),
+                         self.agent_type)
                 self.fullsync = True
             self.agent_state.pop('start_flag', None)
         except Exception:
@@ -362,7 +359,7 @@ class CommonAgentLoop(service.Service):
                 or device_info.get('removed'))
 
     def daemon_loop(self):
-        LOG.info(_LI("LinuxBridge Agent RPC Daemon Started!"))
+        LOG.info(_LI("%s Agent RPC Daemon Started!"), self.agent_type)
         device_info = None
         sync = True
 
@@ -374,7 +371,8 @@ class CommonAgentLoop(service.Service):
                 self.fullsync = False
 
             if sync:
-                LOG.info(_LI("Agent out of sync with plugin!"))
+                LOG.info(_LI("%s Agent out of sync with plugin!"),
+                         self.agent_type)
 
             device_info = self.scan_devices(previous=device_info, sync=sync)
             sync = False
