@@ -33,6 +33,8 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
 
+UINT64_BITMASK = (1 << 64) - 1
+
 # Default timeout for ovs-vsctl command
 DEFAULT_OVS_VSCTL_TIMEOUT = 10
 
@@ -177,10 +179,14 @@ class OVSBridge(BaseOVS):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
-        self.agent_uuid_stamp = 0
+        self._default_cookie = generate_random_cookie()
+
+    @property
+    def default_cookie(self):
+        return self._default_cookie
 
     def set_agent_uuid_stamp(self, val):
-        self.agent_uuid_stamp = val
+        self._default_cookie = val
 
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
@@ -286,7 +292,7 @@ class OVSBridge(BaseOVS):
         if action != 'del':
             for kw in kwargs_list:
                 if 'cookie' not in kw:
-                    kw['cookie'] = self.agent_uuid_stamp
+                    kw['cookie'] = self._default_cookie
         flow_strs = [_build_flow_expr_str(kw, action) for kw in kwargs_list]
         self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
 
@@ -300,8 +306,15 @@ class OVSBridge(BaseOVS):
         self.do_action_flows('del', [kwargs])
 
     def dump_flows_for_table(self, table):
+        return self.dump_flows_for(table=table)
+
+    def dump_flows_for(self, **kwargs):
         retval = None
-        flow_str = "table=%s" % table
+        if "cookie" in kwargs:
+            kwargs["cookie"] = check_cookie_mask(str(kwargs["cookie"]))
+        flow_str = ",".join("=".join([key, str(val)])
+            for key, val in kwargs.items())
+
         flows = self.run_ofctl("dump-flows", [flow_str])
         if flows:
             retval = '\n'.join(item for item in flows.splitlines()
@@ -680,3 +693,14 @@ def _build_flow_expr_str(flow_dict, cmd):
         flow_expr_arr.append(actions)
 
     return ','.join(flow_expr_arr)
+
+
+def generate_random_cookie():
+    return uuid.uuid4().int & UINT64_BITMASK
+
+
+def check_cookie_mask(cookie):
+    if '/' not in cookie:
+        return cookie + '/-1'
+    else:
+        return cookie

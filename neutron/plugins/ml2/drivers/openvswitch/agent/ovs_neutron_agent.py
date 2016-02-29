@@ -18,7 +18,6 @@ import functools
 import signal
 import sys
 import time
-import uuid
 
 import netaddr
 from oslo_config import cfg
@@ -51,6 +50,8 @@ from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
+    import ovs_agent_extension_api as ovs_ext_api
+from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_dvr_neutron_agent
 
 
@@ -62,7 +63,6 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
 
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1
-UINT64_BITMASK = (1 << 64) - 1
 
 
 class _mac_mydialect(netaddr.mac_unix):
@@ -178,8 +178,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Keep track of int_br's device count for use by _report_state()
         self.int_br_device_count = 0
 
-        self.agent_uuid_stamp = uuid.uuid4().int & UINT64_BITMASK
-
         self.int_br = self.br_int_cls(ovs_conf.integration_bridge)
         self.setup_integration_br()
         # Stores port update notifications for processing in main rpc loop
@@ -191,7 +189,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         self.setup_rpc()
-        self.init_extension_manager(self.connection)
         self.bridge_mappings = self._parse_bridge_mappings(
             ovs_conf.bridge_mappings)
         self.setup_physical_bridges(self.bridge_mappings)
@@ -216,6 +213,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # The patch_int_ofport and patch_tun_ofport are updated
             # here inside the call to setup_tunnel_br()
             self.setup_tunnel_br(ovs_conf.tunnel_bridge)
+
+        self.init_extension_manager(self.connection)
 
         self.dvr_agent = ovs_dvr_neutron_agent.OVSDVRNeutronAgent(
             self.context,
@@ -384,8 +383,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ext_manager.register_opts(self.conf)
         self.ext_manager = (
             ext_manager.AgentExtensionsManager(self.conf))
+        self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
+                                                          self.tun_br)
         self.ext_manager.initialize(
-            connection, constants.EXTENSION_DRIVER_TYPE)
+            connection, constants.EXTENSION_DRIVER_TYPE,
+            self.agent_api)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in six.iteritems(self.local_vlan_map):
@@ -969,7 +971,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''Setup the integration bridge.
 
         '''
-        self.int_br.set_agent_uuid_stamp(self.agent_uuid_stamp)
         # Ensure the integration bridge is created.
         # ovs_lib.OVSBridge.create() will run
         #   ovs-vsctl -- --may-exist add-br BRIDGE_NAME
@@ -1019,7 +1020,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''
         if not self.tun_br:
             self.tun_br = self.br_tun_cls(tun_br_name)
-        self.tun_br.set_agent_uuid_stamp(self.agent_uuid_stamp)
 
         # tun_br.create() won't recreate bridge if it exists, but will handle
         # cases where something like datapath_type has changed

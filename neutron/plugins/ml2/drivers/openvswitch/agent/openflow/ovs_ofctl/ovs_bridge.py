@@ -18,11 +18,14 @@
 from neutron.agent.common import ovs_lib
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow \
+    import br_cookie
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import ofswitch
 
 
-class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin, ovs_lib.OVSBridge):
+class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
+                     br_cookie.OVSBridgeCookieMixin, ovs_lib.OVSBridge):
     """Common code for bridges used by OVS agent"""
 
     def setup_controllers(self, conf):

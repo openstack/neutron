@@ -108,7 +108,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         ]
         actions = [
             ofpp.NXActionLearn(table_id=constants.UCAST_TO_TUN,
-                               cookie=self.agent_uuid_stamp,
+                               cookie=self.default_cookie,
                                priority=1,
                                hard_timeout=300,
                                specs=flow_specs),

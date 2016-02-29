@@ -107,7 +107,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                             "load:0->NXM_OF_VLAN_TCI[],"
                             "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
                             "output:NXM_OF_IN_PORT[]" %
-                            {'cookie': self.agent_uuid_stamp,
+                            {'cookie': self.default_cookie,
                              'table': constants.UCAST_TO_TUN})
             # Once remote mac addresses are learnt, output packet to patch_int
             deferred_br.add_flow(table=constants.LEARN_FROM_TUN,

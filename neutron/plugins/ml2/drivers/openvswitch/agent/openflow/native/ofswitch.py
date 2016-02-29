@@ -135,10 +135,9 @@ class OpenFlowSwitchMixin(object):
         return flows
 
     def cleanup_flows(self):
-        cookies = set([f.cookie for f in self.dump_flows()])
+        cookies = set([f.cookie for f in self.dump_flows()]) - \
+                  self.reserved_cookies
         for c in cookies:
-            if c == self.agent_uuid_stamp:
-                continue
             LOG.warn(_LW("Deleting flow with cookie 0x%(cookie)x") % {
                 'cookie': c})
             self.delete_flows(cookie=c, cookie_mask=((1 << 64) - 1))
@@ -182,7 +181,7 @@ class OpenFlowSwitchMixin(object):
         match = self._match(ofp, ofpp, match, **match_kwargs)
         msg = ofpp.OFPFlowMod(dp,
                               table_id=table_id,
-                              cookie=self.agent_uuid_stamp,
+                              cookie=self.default_cookie,
                               match=match,
                               priority=priority,
                               instructions=instructions)

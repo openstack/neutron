@@ -891,15 +891,20 @@ class TestDeferredOVSBridge(base.BaseTestCase):
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
             self.assertRaises(AttributeError, getattr, deferred_br, 'failure')
 
+    def test_default_cookie(self):
+        self.br = ovs_lib.OVSBridge("br-tun")
+        uuid_stamp1 = self.br.default_cookie
+        self.assertEqual(uuid_stamp1, self.br.default_cookie)
+
     def test_cookie_passed_to_addmod(self):
         self.br = ovs_lib.OVSBridge("br-tun")
-        self.br.set_agent_uuid_stamp(1234)
+        stamp = str(self.br.default_cookie)
         expected_calls = [
             mock.call('add-flows', ['-'],
                       'hard_timeout=0,idle_timeout=0,priority=1,'
-                      'cookie=1234,actions=drop'),
+                      'cookie=' + stamp + ',actions=drop'),
             mock.call('mod-flows', ['-'],
-                      'cookie=1234,actions=drop')
+                      'cookie=' + stamp + ',actions=drop')
         ]
         with mock.patch.object(self.br, 'run_ofctl') as f:
             with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
