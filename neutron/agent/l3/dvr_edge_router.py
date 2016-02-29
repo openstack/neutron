@@ -174,6 +174,9 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         return host == self.host
 
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
+        super(DvrEdgeRouter, self)._handle_router_snat_rules(
+            ex_gw_port, interface_name)
+
         if not self._is_this_snat_host():
             return
         if not self.get_ex_gw_port():
@@ -186,7 +189,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         with self.snat_iptables_manager.defer_apply():
             self._empty_snat_chains(self.snat_iptables_manager)
 
-            # NOTE DVR doesn't add the jump to float snat like the super class.
+            # NOTE: DVR adds the jump to float snat via super class,
+            # but that is in the router namespace and not snat.
 
             self._add_snat_rules(ex_gw_port, self.snat_iptables_manager,
                                  interface_name)
