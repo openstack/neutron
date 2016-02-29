@@ -55,23 +55,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                    (i['host'] == self.host) or
                    (i.get('dest_host') == self.host))]
 
-    def _handle_fip_nat_rules(self, interface_name):
-        """Configures NAT rules for Floating IPs for DVR."""
-        self.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
-        self.iptables_manager.ipv4['nat'].empty_chain('snat')
-
-        # Add back the jump to float-snat
-        self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
-
-        # And add the NAT rule back
-        rule = ('POSTROUTING', '! -i %(interface_name)s '
-                '! -o %(interface_name)s -m conntrack ! '
-                '--ctstate DNAT -j ACCEPT' %
-                {'interface_name': interface_name})
-        self.iptables_manager.ipv4['nat'].add_rule(*rule)
-
-        self.iptables_manager.apply()
-
     def floating_ip_added_dist(self, fip, fip_cidr):
         """Add floating IP to FIP namespace."""
         floating_ip = fip['floating_ip_address']
@@ -429,7 +412,40 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             self._snat_redirect_remove(gateway, p, internal_interface)
 
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
-        pass
+        """Configures NAT rules for Floating IPs for DVR."""
+
+        self.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        self.iptables_manager.ipv4['nat'].empty_chain('snat')
+        self.iptables_manager.ipv4['mangle'].empty_chain('mark')
+
+        ex_gw_port = self.get_ex_gw_port()
+        if not ex_gw_port:
+            return
+
+        ext_device_name = self.get_external_device_interface_name(ex_gw_port)
+        floatingips = self.get_floating_ips()
+        if not ext_device_name or not floatingips:
+            # Without router to fip device, or without any floating ip,
+            # the snat rules should not be added
+            return
+
+        # We can surely get ipv4 external gateway address, as we have
+        # ex_gw_port and floating ip here
+        ipv4_fixed_ips = [ip for ip in ex_gw_port['fixed_ips']
+                          if netaddr.IPAddress(ip['ip_address']).version == 4]
+        if not ipv4_fixed_ips:
+            return
+        ex_gw_ip = ipv4_fixed_ips[0]['ip_address']
+
+        # Add back the jump to float-snat
+        self.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+        rules = self.external_gateway_nat_fip_rules(ex_gw_ip, ext_device_name)
+        for rule in rules:
+            self.iptables_manager.ipv4['nat'].add_rule(*rule)
+        rules = self.external_gateway_mangle_rules(ext_device_name)
+        for rule in rules:
+            self.iptables_manager.ipv4['mangle'].add_rule(*rule)
 
     def _get_address_scope_mark(self):
         # Prepare address scope iptables rule for internal ports

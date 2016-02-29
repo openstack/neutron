@@ -1700,15 +1700,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'foo_router_id',
             {},
             **self.ri_kwargs)
-        ri.iptables_manager = mock.Mock()
+        ri.iptables_manager = mock.MagicMock()
         ri._is_this_snat_host = mock.Mock(return_value=True)
-        ri.get_ex_gw_port = mock.Mock(return_value=mock.ANY)
+        ri.get_ex_gw_port = mock.Mock(return_value=None)
 
-        with mock.patch.object(dvr_router.LOG, 'debug') as log_debug:
-            ri._handle_router_snat_rules(mock.ANY, mock.ANY)
+        ri._handle_router_snat_rules(None, mock.ANY)
         self.assertIsNone(ri.snat_iptables_manager)
         self.assertFalse(ri.iptables_manager.called)
-        self.assertTrue(log_debug.called)
 
     def test_handle_router_snat_rules_add_back_jump(self):
         ri = l3router.RouterInfo(_uuid(), {}, **self.ri_kwargs)
