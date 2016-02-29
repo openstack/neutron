@@ -24,8 +24,10 @@ then
     configure_host_for_func_testing
 
     if [[ "$VENV" =~ "dsvm-functional" ]]; then
-        # Build from current branch-2.5 commit (2016-01-15)
-        OVS_BRANCH=eedd0ef239301f68964313e93dfd7ec41fc7814c
+        # The OVS_BRANCH variable is used by git checkout. In the case below
+        # we use a commit on branch-2.5 that fixes compilation with the
+        # latest ubuntu trusty kernel.
+        OVS_BRANCH="a35342879f1a7d8b1503d4945bd0791c58f5fc87"
         for package in openvswitch openvswitch-switch openvswitch-common; do
             if is_package_installed $package; then
                 uninstall_package $package
