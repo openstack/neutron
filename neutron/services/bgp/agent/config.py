@@ -13,6 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BGP_DRIVER_OPTS = []
+from oslo_config import cfg
 
-BGP_PROTO_CONFIG_OPTS = []
+from neutron._i18n import _
+
+BGP_DRIVER_OPTS = [
+    cfg.StrOpt('bgp_speaker_driver',
+               default=None,
+               help=_("BGP speaker driver class to be instantiated."))
+]
+
+BGP_PROTO_CONFIG_OPTS = [
+    cfg.StrOpt('bgp_router_id',
+               help=_("32-bit BGP identifier, typically an IPv4 address "
+                      "owned by the system running the BGP DrAgent."))
+]

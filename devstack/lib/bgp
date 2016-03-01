@@ -1,3 +1,5 @@
+RYU_BGP_SPEAKER_DRIVER="neutron.services.bgp.driver.ryu.driver.RyuBgpDriver"
+
 function configure_bgp_service_plugin {
     _neutron_service_plugin_class_add "bgp"
 }
@@ -14,6 +16,10 @@ function configure_bgp_dragent {
     if [ -n "$BGP_ROUTER_ID" ]; then
         iniset $Q_BGP_DRAGENT_CONF_FILE BGP bgp_router_id $BGP_ROUTER_ID
     fi
+    if [ -z "$BGP_SPEAKER_DRIVER" ]; then
+        BGP_SPEAKER_DRIVER=$RYU_BGP_SPEAKER_DRIVER
+    fi
+    iniset $Q_BGP_DRAGENT_CONF_FILE BGP bgp_speaker_driver $BGP_SPEAKER_DRIVER
 }
 
 function start_bgp_dragent {

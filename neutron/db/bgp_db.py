@@ -206,6 +206,11 @@ class BgpDbMixin(common_db.CommonDbMixin):
 
     def create_bgp_peer(self, context, bgp_peer):
         ri = bgp_peer[bgp_ext.BGP_PEER_BODY_KEY_NAME]
+        auth_type = ri.get('auth_type')
+        password = ri.get('password')
+        if auth_type == 'md5' and not password:
+            raise bgp_ext.InvalidBgpPeerMd5Authentication()
+
         with context.session.begin(subtransactions=True):
             res_keys = ['tenant_id', 'name', 'remote_as', 'peer_ip',
                         'auth_type', 'password']

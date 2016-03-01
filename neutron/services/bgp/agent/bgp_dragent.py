@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import periodic_task
+from oslo_utils import importutils
 
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
@@ -31,6 +32,7 @@ from neutron.extensions import bgp as bgp_ext
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron import manager
 from neutron.services.bgp.common import constants as bgp_consts
+from neutron.services.bgp.driver import exceptions as driver_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class BgpDrAgent(manager.Manager):
 
     def __init__(self, host, conf=None):
         super(BgpDrAgent, self).__init__()
-        self.conf = conf
+        self.initialize_driver(conf)
         self.needs_resync_reasons = collections.defaultdict(list)
         self.needs_full_sync_reason = None
 
@@ -60,6 +62,27 @@ class BgpDrAgent(manager.Manager):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = BgpDrPluginApi(bgp_consts.BGP_PLUGIN,
                                          self.context, host)
+
+    def initialize_driver(self, conf):
+        self.conf = conf or cfg.CONF.BGP
+        try:
+            self.dr_driver_cls = (
+                    importutils.import_object(self.conf.bgp_speaker_driver,
+                                              self.conf))
+        except ImportError:
+            LOG.exception(_LE("Error while importing BGP speaker driver %s"),
+                          self.conf.bgp_speaker_driver)
+            raise SystemExit(1)
+
+    def _handle_driver_failure(self, bgp_speaker_id, method, driver_exec):
+        self.schedule_resync(reason=driver_exec,
+                             speaker_id=bgp_speaker_id)
+        LOG.error(_LE('Call to driver for BGP Speaker %(bgp_speaker)s '
+                      '%(method)s has failed with exception '
+                      '%(driver_exec)s.'),
+                  {'bgp_speaker': bgp_speaker_id,
+                   'method': method,
+                   'driver_exec': driver_exec})
 
     def after_start(self):
         self.run()
@@ -225,9 +248,9 @@ class BgpDrAgent(manager.Manager):
 
     def add_bgp_peer_helper(self, bgp_speaker_id, bgp_peer_id):
         """Add BGP peer."""
-        # Check if the BGP Speaker is already added or not
+        # Ideally BGP Speaker must be added by now, If not then let's
+        # re-sync.
         if not self.cache.is_bgp_speaker_added(bgp_speaker_id):
-            # Something went wrong. Let's re-sync
             self.schedule_resync(speaker_id=bgp_speaker_id,
                                  reason="BGP Speaker Out-of-sync")
             return
@@ -243,9 +266,9 @@ class BgpDrAgent(manager.Manager):
 
     def add_routes_helper(self, bgp_speaker_id, routes):
         """Advertise routes to BGP speaker."""
-        # Check if the BGP Speaker is already added or not
+        # Ideally BGP Speaker must be added by now, If not then let's
+        # re-sync.
         if not self.cache.is_bgp_speaker_added(bgp_speaker_id):
-            # Something went wrong. Let's re-sync
             self.schedule_resync(speaker_id=bgp_speaker_id,
                                  reason="BGP Speaker Out-of-sync")
             return
@@ -260,8 +283,9 @@ class BgpDrAgent(manager.Manager):
 
     def withdraw_routes_helper(self, bgp_speaker_id, routes):
         """Withdraw routes advertised by BGP speaker."""
+        # Ideally BGP Speaker must be added by now, If not then let's
+        # re-sync.
         if not self.cache.is_bgp_speaker_added(bgp_speaker_id):
-            # Something went wrong. Let's re-sync
             self.schedule_resync(speaker_id=bgp_speaker_id,
                                  reason="BGP Speaker Out-of-sync")
             return
@@ -321,6 +345,13 @@ class BgpDrAgent(manager.Manager):
                   ' speaking for local_as %(local_as)s',
                   {'speaker_id': bgp_speaker['id'],
                    'local_as': bgp_speaker['local_as']})
+        try:
+            self.dr_driver_cls.add_bgp_speaker(bgp_speaker['local_as'])
+        except driver_exc.BgpSpeakerAlreadyScheduled:
+            return
+        except Exception as e:
+            self._handle_driver_failure(bgp_speaker['id'],
+                                        'add_bgp_speaker', e)
 
         # Add peer and route information to the driver.
         self.add_bgp_peers_to_bgp_speaker(bgp_speaker)
@@ -336,9 +367,17 @@ class BgpDrAgent(manager.Manager):
 
             LOG.debug('Calling driver for removing BGP speaker %(speaker_as)s',
                       {'speaker_as': bgp_speaker_as})
+            try:
+                self.dr_driver_cls.delete_bgp_speaker(bgp_speaker_as)
+            except Exception as e:
+                self._handle_driver_failure(bgp_speaker_id,
+                                            'remove_bgp_speaker', e)
             return
 
-        # Something went wrong. Let's re-sync
+        # Ideally, only the added speakers can be removed by the neutron
+        # server. Looks like there might be some synchronization
+        # issue between the server and the agent. Let's initiate a re-sync
+        # to resolve the issue.
         self.schedule_resync(speaker_id=bgp_speaker_id,
                              reason="BGP Speaker Out-of-sync")
 
@@ -363,10 +402,20 @@ class BgpDrAgent(manager.Manager):
                   {'peer_ip': bgp_peer['peer_ip'],
                    'remote_as': bgp_peer['remote_as'],
                    'local_as': bgp_speaker_as})
+        try:
+            self.dr_driver_cls.add_bgp_peer(bgp_speaker_as,
+                                            bgp_peer['peer_ip'],
+                                            bgp_peer['remote_as'],
+                                            bgp_peer['auth_type'],
+                                            bgp_peer['password'])
+        except Exception as e:
+            self._handle_driver_failure(bgp_speaker_id,
+                                        'add_bgp_peer', e)
 
     def remove_bgp_peer_from_bgp_speaker(self, bgp_speaker_id, bgp_peer_ip):
+        # Ideally BGP Speaker must be added by now, If not then let's
+        # re-sync.
         if not self.cache.is_bgp_speaker_added(bgp_speaker_id):
-            # Something went wrong. Let's re-sync
             self.schedule_resync(speaker_id=bgp_speaker_id,
                                  reason="BGP Speaker Out-of-sync")
             return
@@ -381,9 +430,18 @@ class BgpDrAgent(manager.Manager):
                       '%(peer_ip)s from BGP Speaker running for '
                       'local_as=%(local_as)d',
                       {'peer_ip': bgp_peer_ip, 'local_as': bgp_speaker_as})
+            try:
+                self.dr_driver_cls.delete_bgp_peer(bgp_speaker_as,
+                                                   bgp_peer_ip)
+            except Exception as e:
+                self._handle_driver_failure(bgp_speaker_id,
+                                            'remove_bgp_peer', e)
             return
 
-        # Peer should have been found, Some problem, Let's re-sync
+        # Ideally, only the added peers can be removed by the neutron
+        # server. Looks like there might be some synchronization
+        # issue between the server and the agent. Let's initiate a re-sync
+        # to resolve the issue.
         self.schedule_resync(speaker_id=bgp_speaker_id,
                              reason="BGP Peer Out-of-sync")
 
@@ -406,6 +464,13 @@ class BgpDrAgent(manager.Manager):
                   'next_hop: %(nexthop)s',
                   {'cidr': route['destination'],
                    'nexthop': route['next_hop']})
+        try:
+            self.dr_driver_cls.advertise_route(bgp_speaker_as,
+                                               route['destination'],
+                                               route['next_hop'])
+        except Exception as e:
+            self._handle_driver_failure(bgp_speaker_id,
+                                        'advertise_route', e)
 
     def withdraw_route_via_bgp_speaker(self, bgp_speaker_id,
                                        bgp_speaker_as, route):
@@ -415,8 +480,19 @@ class BgpDrAgent(manager.Manager):
                   'next_hop: %(nexthop)s',
                   {'cidr': route['destination'],
                    'nexthop': route['next_hop']})
+            try:
+                self.dr_driver_cls.withdraw_route(bgp_speaker_as,
+                                                  route['destination'],
+                                                  route['next_hop'])
+            except Exception as e:
+                self._handle_driver_failure(bgp_speaker_id,
+                                            'withdraw_route', e)
             return
-        # Something went wrong. Let's re-sync
+
+        # Ideally, only the advertised routes can be withdrawn by the
+        # neutron server. Looks like there might be some synchronization
+        # issue between the server and the agent. Let's initiate a re-sync
+        # to resolve the issue.
         self.schedule_resync(speaker_id=bgp_speaker_id,
                              reason="Advertised routes Out-of-sync")
 

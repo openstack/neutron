@@ -19,13 +19,13 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper as rh
 from neutron.common import exceptions
+from neutron.services.bgp.common import constants as bgp_consts
 
 BGP_EXT_ALIAS = 'bgp'
 BGP_SPEAKER_RESOURCE_NAME = 'bgp-speaker'
 BGP_SPEAKER_BODY_KEY_NAME = 'bgp_speaker'
 BGP_PEER_BODY_KEY_NAME = 'bgp_peer'
 
-bgp_supported_auth_types = ['none', 'md5']
 
 RESOURCE_ATTRIBUTE_MAP = {
     BGP_SPEAKER_RESOURCE_NAME + 's': {
@@ -36,7 +36,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'validate': {'type:string': attr.NAME_MAX_LEN},
                  'is_visible': True, 'default': ''},
         'local_as': {'allow_post': True, 'allow_put': False,
-                     'validate': {'type:range': (1, 65535)},
+                     'validate': {'type:range': (bgp_consts.MIN_ASNUM,
+                                                 bgp_consts.MAX_ASNUM)},
                      'is_visible': True, 'default': None,
                      'required_by_policy': False,
                      'enforce_policy': False},
@@ -88,13 +89,15 @@ RESOURCE_ATTRIBUTE_MAP = {
                     'validate': {'type:ip_address': None},
                     'is_visible': True},
         'remote_as': {'allow_post': True, 'allow_put': False,
-                     'validate': {'type:range': (1, 65535)},
+                     'validate': {'type:range': (bgp_consts.MIN_ASNUM,
+                                                 bgp_consts.MAX_ASNUM)},
                      'is_visible': True, 'default': None,
                      'required_by_policy': False,
                      'enforce_policy': False},
         'auth_type': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:values': bgp_supported_auth_types},
+                      'validate': {'type:values':
+                                   bgp_consts.SUPPORTED_AUTH_TYPES},
                       'is_visible': True},
         'password': {'allow_post': True, 'allow_put': True,
                      'required_by_policy': True,
@@ -145,6 +148,10 @@ class DuplicateBgpPeerIpException(exceptions.Conflict):
     _message = _("BGP Speaker %(bgp_speaker_id)s is already configured to "
                  "peer with a BGP Peer at %(peer_ip)s, it cannot peer with "
                  "BGP Peer %(bgp_peer_id)s.")
+
+
+class InvalidBgpPeerMd5Authentication(exceptions.BadRequest):
+    message = _("A password must be supplied when using auth_type md5.")
 
 
 class Bgp(extensions.ExtensionDescriptor):

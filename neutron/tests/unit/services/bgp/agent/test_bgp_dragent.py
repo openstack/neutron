@@ -40,12 +40,14 @@ FAKE_BGP_SPEAKER = {'id': FAKE_BGPSPEAKER_UUID,
                     'local_as': 12345,
                     'peers': [{'remote_as': '2345',
                                'peer_ip': '1.1.1.1',
+                               'auth_type': 'none',
                                'password': ''}],
                     'advertised_routes': []}
 
 FAKE_BGP_PEER = {'id': FAKE_BGPPEER_UUID,
                  'remote_as': '2345',
                  'peer_ip': '1.1.1.1',
+                 'auth_type': 'none',
                  'password': ''}
 
 FAKE_ROUTE = {'id': FAKE_BGPSPEAKER_UUID,
@@ -65,6 +67,9 @@ class TestBgpDrAgent(base.BaseTestCase):
         cfg.CONF.register_opts(bgp_config.BGP_PROTO_CONFIG_OPTS, 'BGP')
         mock_log_p = mock.patch.object(bgp_dragent, 'LOG')
         self.mock_log = mock_log_p.start()
+        self.driver_cls_p = mock.patch(
+            'neutron.services.bgp.agent.bgp_dragent.importutils.import_class')
+        self.driver_cls = self.driver_cls_p.start()
         self.context = context.get_admin_context()
 
     def test_bgp_dragent_manager(self):
@@ -446,7 +451,7 @@ class TestBgpDrAgent(base.BaseTestCase):
 
     def test_add_bgp_peer_not_cached(self):
         bgp_peer = {'peer_ip': '1.1.1.1', 'remote_as': 34567,
-                    'password': 'abc'}
+                    'auth_type': 'md5', 'password': 'abc'}
         cached_bgp_speaker = {'foo-id': {'bgp_speaker': {'local_as': 12345},
                                          'peers': {},
                                          'advertised_routes': []}}
@@ -455,7 +460,7 @@ class TestBgpDrAgent(base.BaseTestCase):
 
     def test_add_bgp_peer_already_cached(self):
         bgp_peer = {'peer_ip': '1.1.1.1', 'remote_as': 34567,
-                    'password': 'abc'}
+                    'auth_type': 'md5', 'password': 'abc'}
         cached_peers = {'1.1.1.1': {'peer_ip': '1.1.1.1', 'remote_as': 34567}}
         cached_bgp_speaker = {'foo-id': {'bgp_speaker': {'local_as': 12345},
                                          'peers': cached_peers,
@@ -520,6 +525,10 @@ class TestBgpDrAgentEventHandler(base.BaseTestCase):
         cache_cls = self.cache_p.start()
         self.cache = mock.Mock()
         cache_cls.return_value = self.cache
+
+        self.driver_cls_p = mock.patch(
+            'neutron.services.bgp.agent.bgp_dragent.importutils.import_class')
+        self.driver_cls = self.driver_cls_p.start()
 
         self.bgp_dr = bgp_dragent.BgpDrAgent(HOSTNAME)
         self.schedule_full_resync_p = mock.patch.object(

@@ -329,3 +329,9 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                     self.assertEqual(1, len(speaker['networks']))
                     self.assertEqual(network_id,
                                      speaker['networks'][0])
+
+    def test_create_bgp_peer_md5_auth_no_password(self):
+        bgp_peer = {'bgp_peer': {'auth_type': 'md5', 'password': None}}
+        self.assertRaises(bgp.InvalidBgpPeerMd5Authentication,
+                          self.bgp_plugin.create_bgp_peer,
+                          self.context, bgp_peer)
