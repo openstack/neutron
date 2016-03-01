@@ -24,6 +24,7 @@ from oslo_config import cfg
 from oslo_db import options as db_options
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_middleware import cors
 from oslo_service import wsgi
 
 from neutron._i18n import _, _LI
@@ -260,6 +261,7 @@ def reset_service():
     # Note that this is called only in case a service is running in
     # daemon mode.
     setup_logging()
+    set_config_defaults()
     policy.refresh()
 
 
@@ -271,3 +273,33 @@ def load_paste_app(app_name):
     loader = wsgi.Loader(cfg.CONF)
     app = loader.load_app(app_name)
     return app
+
+
+def set_config_defaults():
+    """This method updates all configuration default values."""
+    set_cors_middleware_defaults()
+
+
+def set_cors_middleware_defaults():
+    """Update default configuration options for oslo.middleware."""
+    # CORS Defaults
+    # TODO(krotscheck): Update with https://review.openstack.org/#/c/285368/
+    cfg.set_defaults(cors.CORS_OPTS,
+                     allow_headers=['X-Auth-Token',
+                                    'X-Identity-Status',
+                                    'X-Roles',
+                                    'X-Service-Catalog',
+                                    'X-User-Id',
+                                    'X-Tenant-Id',
+                                    'X-OpenStack-Request-ID'],
+                     expose_headers=['X-Auth-Token',
+                                     'X-Subject-Token',
+                                     'X-Service-Token',
+                                     'X-OpenStack-Request-ID',
+                                     'OpenStack-Volume-microversion'],
+                     allow_methods=['GET',
+                                    'PUT',
+                                    'POST',
+                                    'DELETE',
+                                    'PATCH']
+                     )
