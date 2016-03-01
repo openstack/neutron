@@ -193,13 +193,12 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             routers_deleted=[],
             routers_deleted_during_resync=routers_deleted_during_resync)
 
-    def test_fip_connection_from_same_subnet(self):
-        '''Test connection to floatingip which is associated with
-           fixed_ip on the same subnet of the source fixed_ip.
-           In other words it confirms that return packets surely
-           go through the router.
-        '''
-        router_info = self.generate_router_info(enable_ha=False)
+    def _setup_fip_with_fixed_ip_from_same_subnet(self, enable_snat):
+        """Setup 2 FakeMachines from same subnet, one with floatingip
+        associated.
+        """
+        router_info = self.generate_router_info(enable_ha=False,
+                                                enable_snat=enable_snat)
         router = self.manage_router(self.agent, router_info)
         router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
         router_ip = router_ip_cidr.partition('/')[0]
@@ -218,6 +217,16 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
+        return src_machine, dst_machine, dst_fip
+
+    def test_fip_connection_from_same_subnet(self):
+        '''Test connection to floatingip which is associated with
+           fixed_ip on the same subnet of the source fixed_ip.
+           In other words it confirms that return packets surely
+           go through the router.
+        '''
+        src_machine, dst_machine, dst_fip = (
+            self._setup_fip_with_fixed_ip_from_same_subnet(enable_snat=True))
         protocol_port = net_helpers.get_free_namespace_port(
             l3_constants.PROTO_NAME_TCP, dst_machine.namespace)
         # client sends to fip
@@ -227,6 +236,16 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             protocol=net_helpers.NetcatTester.TCP)
         self.addCleanup(netcat.stop_processes)
         self.assertTrue(netcat.test_connectivity())
+
+    def test_ping_floatingip_reply_with_floatingip(self):
+        src_machine, _, dst_fip = (
+            self._setup_fip_with_fixed_ip_from_same_subnet(enable_snat=False))
+
+        # Verify that the ping replys with fip
+        ns_ip_wrapper = ip_lib.IPWrapper(src_machine.namespace)
+        result = ns_ip_wrapper.netns.execute(
+            ['ping', '-c', 1, '-W', 5, dst_fip])
+        self._assert_ping_reply_from_expected_address(result, dst_fip)
 
     def _setup_address_scope(self, internal_address_scope1,
                              internal_address_scope2, gw_address_scope=None):

@@ -694,19 +694,12 @@ class RouterInfo(object):
         gw_port = self._router.get('gw_port')
         self._handle_router_snat_rules(gw_port, interface_name)
 
-    def external_gateway_nat_postroute_rules(self, interface_name):
+    def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
         dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
             'POSTROUTING', '! -i %(interface_name)s '
                            '! -o %(interface_name)s -m conntrack ! '
                            '--ctstate DNAT -j ACCEPT' %
                            {'interface_name': interface_name})
-        return [dont_snat_traffic_to_internal_ports_if_not_to_floating_ip]
-
-    def external_gateway_nat_snat_rules(self, ex_gw_ip, interface_name):
-        snat_normal_external_traffic = (
-            'snat', '-o %s -j SNAT --to-source %s' %
-                    (interface_name, ex_gw_ip))
-
         # Makes replies come back through the router to reverse DNAT
         ext_in_mark = self.agent_conf.external_ingress_mark
         snat_internal_traffic_to_floating_ip = (
@@ -714,8 +707,14 @@ class RouterInfo(object):
                     '-m conntrack --ctstate DNAT '
                     '-j SNAT --to-source %s'
                     % (ext_in_mark, l3_constants.ROUTER_MARK_MASK, ex_gw_ip))
-        return [snat_normal_external_traffic,
+        return [dont_snat_traffic_to_internal_ports_if_not_to_floating_ip,
                 snat_internal_traffic_to_floating_ip]
+
+    def external_gateway_nat_snat_rules(self, ex_gw_ip, interface_name):
+        snat_normal_external_traffic = (
+            'snat', '-o %s -j SNAT --to-source %s' %
+                    (interface_name, ex_gw_ip))
+        return [snat_normal_external_traffic]
 
     def external_gateway_mangle_rules(self, interface_name):
         mark = self.agent_conf.external_ingress_mark
@@ -740,19 +739,20 @@ class RouterInfo(object):
             for ip_addr in ex_gw_port['fixed_ips']:
                 ex_gw_ip = ip_addr['ip_address']
                 if netaddr.IPAddress(ex_gw_ip).version == 4:
-                    rules = self.external_gateway_nat_postroute_rules(
-                        interface_name)
-                    for rule in rules:
-                        iptables_manager.ipv4['nat'].add_rule(*rule)
                     if self._snat_enabled:
                         rules = self.external_gateway_nat_snat_rules(
                             ex_gw_ip, interface_name)
                         for rule in rules:
                             iptables_manager.ipv4['nat'].add_rule(*rule)
-                        rules = self.external_gateway_mangle_rules(
-                            interface_name)
-                        for rule in rules:
-                            iptables_manager.ipv4['mangle'].add_rule(*rule)
+
+                    rules = self.external_gateway_nat_fip_rules(
+                        ex_gw_ip, interface_name)
+                    for rule in rules:
+                        iptables_manager.ipv4['nat'].add_rule(*rule)
+                    rules = self.external_gateway_mangle_rules(interface_name)
+                    for rule in rules:
+                        iptables_manager.ipv4['mangle'].add_rule(*rule)
+
                     break
 
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
