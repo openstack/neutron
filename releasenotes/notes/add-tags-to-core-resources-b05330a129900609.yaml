@@ -1,0 +1,5 @@
+---
+prelude: >
+    Add tag mechanism for network resources
+features:
+  - Users can set tags on their network resources.

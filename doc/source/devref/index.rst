@@ -77,6 +77,7 @@ Neutron Internals
    address_scopes
    openvswitch_firewall
    network_ip_availability
+   tag
 
 Testing
 -------
