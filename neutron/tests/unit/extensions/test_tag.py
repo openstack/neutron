@@ -65,6 +65,28 @@ class TestTagApiBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _assertEqualTags(self, expected, actual):
         self.assertEqual(set(expected), set(actual))
 
+    def _make_query_string(self, tags, tags_any, not_tags, not_tags_any):
+        filter_strings = []
+        if tags:
+            filter_strings.append("tags=" + ','.join(tags))
+        if tags_any:
+            filter_strings.append("tags-any=" + ','.join(tags_any))
+        if not_tags:
+            filter_strings.append("not-tags=" + ','.join(not_tags))
+        if not_tags_any:
+            filter_strings.append("not-tags-any=" + ','.join(not_tags_any))
+
+        return '&'.join(filter_strings)
+
+    def _get_tags_filter_resources(self, tags=None, tags_any=None,
+                                   not_tags=None, not_tags_any=None):
+        params = self._make_query_string(tags, tags_any, not_tags,
+                                         not_tags_any)
+        req = self._req('GET', self.resource, params=params)
+        res = req.get_response(self.api)
+        res = self.deserialize(self.fmt, res)
+        return res[self.resource]
+
 
 class TestNetworkTagApi(TestTagApiBase):
     resource = 'networks'
@@ -153,3 +175,68 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(204, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags([], tags)
+
+
+class TestNetworkTagFilter(TestTagApiBase):
+    resource = 'networks'
+    member = 'network'
+
+    def setUp(self):
+        super(TestNetworkTagFilter, self).setUp()
+        self._prepare_network_tags()
+
+    def _prepare_network_tags(self):
+        res = self._make_network(self.fmt, 'net1', True)
+        net1_id = res['network']['id']
+        res = self._make_network(self.fmt, 'net2', True)
+        net2_id = res['network']['id']
+        res = self._make_network(self.fmt, 'net3', True)
+        net3_id = res['network']['id']
+        res = self._make_network(self.fmt, 'net4', True)
+        net4_id = res['network']['id']
+        res = self._make_network(self.fmt, 'net5', True)
+        net5_id = res['network']['id']
+
+        self._put_tags(net1_id, ['red'])
+        self._put_tags(net2_id, ['red', 'blue'])
+        self._put_tags(net3_id, ['red', 'blue', 'green'])
+        self._put_tags(net4_id, ['green'])
+        # net5: no tags
+        tags = self._get_resource_tags(net5_id)
+        self._assertEqualTags([], tags)
+
+    def _assertEqualResources(self, expected, res):
+        actual = [n['name'] for n in res]
+        self.assertEqual(set(expected), set(actual))
+
+    def test_filter_tags_single(self):
+        res = self._get_tags_filter_resources(tags=['red'])
+        self._assertEqualResources(['net1', 'net2', 'net3'], res)
+
+    def test_filter_tags_multi(self):
+        res = self._get_tags_filter_resources(tags=['red', 'blue'])
+        self._assertEqualResources(['net2', 'net3'], res)
+
+    def test_filter_tags_any_single(self):
+        res = self._get_tags_filter_resources(tags_any=['blue'])
+        self._assertEqualResources(['net2', 'net3'], res)
+
+    def test_filter_tags_any_multi(self):
+        res = self._get_tags_filter_resources(tags_any=['red', 'blue'])
+        self._assertEqualResources(['net1', 'net2', 'net3'], res)
+
+    def test_filter_not_tags_single(self):
+        res = self._get_tags_filter_resources(not_tags=['red'])
+        self._assertEqualResources(['net4', 'net5'], res)
+
+    def test_filter_not_tags_multi(self):
+        res = self._get_tags_filter_resources(not_tags=['red', 'blue'])
+        self._assertEqualResources(['net1', 'net4', 'net5'], res)
+
+    def test_filter_not_tags_any_single(self):
+        res = self._get_tags_filter_resources(not_tags_any=['blue'])
+        self._assertEqualResources(['net1', 'net4', 'net5'], res)
+
+    def test_filter_not_tags_any_multi(self):
+        res = self._get_tags_filter_resources(not_tags_any=['red', 'blue'])
+        self._assertEqualResources(['net4', 'net5'], res)
