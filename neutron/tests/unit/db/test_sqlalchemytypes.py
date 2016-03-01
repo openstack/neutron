@@ -177,3 +177,59 @@ class CIDRTestCase(SqlAlchemyTypesBaseTestCase):
         for cidr in wrong_cidrs:
             self.assertRaises(exception.DBError, self._add_row,
                               id=uuidutils.generate_uuid(), cidr=cidr)
+
+
+class MACAddressTestCase(SqlAlchemyTypesBaseTestCase):
+
+    def _get_test_table(self, meta):
+        return sa.Table(
+            'fakemacaddressmodels',
+            meta,
+            sa.Column('id', sa.String(36), primary_key=True, nullable=False),
+            sa.Column('mac', sqlalchemytypes.MACAddress)
+        )
+
+    def _get_one(self, value):
+        row_select = self.test_table.select().\
+            where(self.test_table.c.mac == value)
+        return self.engine.execute(row_select).first()
+
+    def _get_all(self):
+        rows_select = self.test_table.select()
+        return self.engine.execute(rows_select).fetchall()
+
+    def _update_row(self, key, mac):
+        self.engine.execute(
+            self.test_table.update().values(mac=mac).
+            where(self.test_table.c.mac == key))
+
+    def _delete_row(self):
+        self.engine.execute(
+            self.test_table.delete())
+
+    def test_crud(self):
+        mac_addresses = ['FA:16:3E:00:00:01', 'FA:16:3E:00:00:02']
+
+        for mac in mac_addresses:
+            mac = netaddr.EUI(mac)
+            self._add_row(id=uuidutils.generate_uuid(), mac=mac)
+            obj = self._get_one(mac)
+            self.assertEqual(mac, obj['mac'])
+            random_mac = netaddr.EUI(tools.get_random_mac())
+            self._update_row(mac, random_mac)
+            obj = self._get_one(random_mac)
+            self.assertEqual(random_mac, obj['mac'])
+
+        objs = self._get_all()
+        self.assertEqual(len(mac_addresses), len(objs))
+        self._delete_rows()
+        objs = self._get_all()
+        self.assertEqual(0, len(objs))
+
+    def test_wrong_mac(self):
+        wrong_macs = ["fake", "", -1,
+                      "FK:16:3E:00:00:02",
+                      "FA:16:3E:00:00:020"]
+        for mac in wrong_macs:
+            self.assertRaises(exception.DBError, self._add_row,
+                              id=uuidutils.generate_uuid(), mac=mac)
