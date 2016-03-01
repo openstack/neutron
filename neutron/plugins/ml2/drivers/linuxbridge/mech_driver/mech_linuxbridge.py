@@ -18,6 +18,7 @@ from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
+from neutron.services.qos import qos_consts
 
 
 class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
@@ -29,6 +30,8 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     to have connectivity to at least one segment of the port's
     network.
     """
+
+    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()

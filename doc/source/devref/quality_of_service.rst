@@ -283,13 +283,15 @@ with them.
 Agent backends
 ~~~~~~~~~~~~~~
 
-At the moment, QoS is supported by Open vSwitch and SR-IOV ml2 drivers.
+At the moment, QoS is supported by Open vSwitch, SR-IOV and Linux bridge
+ml2 drivers.
 
 Each agent backend defines a QoS driver that implements the QosAgentDriver
 interface:
 
 * Open vSwitch (QosOVSAgentDriver);
-* SR-IOV (QosSRIOVAgentDriver).
+* SR-IOV (QosSRIOVAgentDriver);
+* Linux bridge (QosLinuxbridgeAgentDriver).
 
 
 Open vSwitch
@@ -326,6 +328,22 @@ to 1 Mbps only. If the limit is set to something that does not divide to 1000
 kbps chunks, then the effective limit is rounded to the nearest integer Mbps
 value.
 
+Linux bridge
+~~~~~~~~~~~~
+
+The Linux bridge implementation relies on the new tc_lib functions:
+
+* set_bw_limit
+* update_bw_limit
+* delete_bw_limit
+
+The ingress bandwidth limit is configured on the tap port by setting a simple
+`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on the
+port. It requires a value of HZ parameter configured in kernel on the host.
+This value is neccessary to calculate the minimal burst value which is set in
+tc. Details about how it is calculated can be found in
+`http://unix.stackexchange.com/a/100797`_. This solution is similar to Open
+vSwitch implementation.
 
 Configuration
 -------------
@@ -377,6 +395,11 @@ Functional tests
 Additions to ovs_lib to set bandwidth limits on ports are covered in:
 
 * neutron.tests.functional.agent.test_ovs_lib
+
+
+New functional tests for tc_lib to set bandwidth limits on ports are in:
+
+* neutron.tests.functional.agent.linux.test_tc_lib
 
 
 API tests

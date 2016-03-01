@@ -18,3 +18,8 @@ bridge: CommandFilter, bridge, root
 ip: IpFilter, ip, root
 find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -printf, %.*
 ip_exec: IpNetnsExecFilter, ip, root
+
+# tc commands needed for QoS support
+tc_replace_tbf: RegExpFilter, tc, root, tc, qdisc, replace, dev, .+, root, tbf, rate, .+, latency, .+, burst, .+
+tc_delete: RegExpFilter, tc, root, tc, qdisc, del, dev, .+, root
+tc_show: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
