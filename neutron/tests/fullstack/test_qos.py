@@ -163,8 +163,16 @@ class TestQoSWithL2Agent(base.BaseFullStackTestCase):
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
 
     def setUp(self):
+        # We limit this test to using the openvswitch mech driver, because DSCP
+        # is presently not implemented for Linux Bridge.  The 'rule_types' API
+        # call only returns rule types that are supported by all configured
+        # mech drivers.  So in a fullstack scenario, where both the OVS and the
+        # Linux Bridge mech drivers are configured, the DSCP rule type will be
+        # unavailable since it is not implemented in Linux Bridge.
+        mech_driver = 'openvswitch'
         host_desc = []  # No need to register agents for this test case
-        env_desc = environment.EnvironmentDescription(qos=True, l2_pop=True)
+        env_desc = environment.EnvironmentDescription(qos=True, l2_pop=True,
+                                                      mech_drivers=mech_driver)
         env = environment.Environment(env_desc, host_desc)
         super(TestQoSWithL2Population, self).setUp(env)
 

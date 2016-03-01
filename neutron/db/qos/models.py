@@ -77,3 +77,13 @@ class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
                               unique=True)
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)
+
+
+class QosDscpMarkingRule(models_v2.HasId, model_base.BASEV2):
+    __tablename__ = 'qos_dscp_marking_rules'
+    qos_policy_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('qos_policies.id',
+                                            ondelete='CASCADE'),
+                              nullable=False,
+                              unique=True)
+    dscp_mark = sa.Column(sa.Integer)

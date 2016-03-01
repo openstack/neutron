@@ -26,9 +26,10 @@ from neutron.tests import tools
 # NOTE: The hashes in this list should only be changed if they come with a
 # corresponding version bump in the affected objects.
 object_data = {
-    'QosBandwidthLimitRule': '1.0-4e44a8f5c2895ab1278399f87b40a13d',
-    'QosRuleType': '1.0-d0df298d49eeffab91af18d1a4cf7eaf',
-    'QosPolicy': '1.0-721fa60ea8f0e8f15d456d6e917dfe59',
+    'QosBandwidthLimitRule': '1.1-4e44a8f5c2895ab1278399f87b40a13d',
+    'QosDscpMarkingRule': '1.1-0313c6554b34fd10c753cb63d638256c',
+    'QosRuleType': '1.1-8a53fef4c6a43839d477a85b787d22ce',
+    'QosPolicy': '1.1-721fa60ea8f0e8f15d456d6e917dfe59',
 }
 
 

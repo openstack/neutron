@@ -63,6 +63,15 @@ class QosAgentDriver(object):
         """
         self._handle_update_create_rules('create', port, qos_policy)
 
+    def consume_api(self, agent_api):
+        """Consume the AgentAPI instance from the QoSAgentExtension class
+
+        This allows QosAgentDrivers to gain access to resources limited to the
+        NeutronAgent when this method is overridden.
+
+        :param agent_api: An instance of an agent specific API
+        """
+
     def update(self, port, qos_policy):
         """Apply QoS rules on port.
 
@@ -176,12 +185,16 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
             'neutron.qos.agent_drivers', driver_type)()
+        self.qos_driver.consume_api(self.agent_api)
         self.qos_driver.initialize()
 
         self.policy_map = PortPolicyMap()
 
         registry.subscribe(self._handle_notification, resources.QOS_POLICY)
         self._register_rpc_consumers(connection)
+
+    def consume_api(self, agent_api):
+        self.agent_api = agent_api
 
     def _register_rpc_consumers(self, connection):
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]

@@ -172,9 +172,10 @@ class TestMl2SupportedQosRuleTypes(Ml2PluginV2TestCase):
         # make sure both plugins have the same supported qos rule types
         for mock_ in mocks:
             mock_.return_value = qos_consts.VALID_RULE_TYPES
-        self.assertEqual(
-            qos_consts.VALID_RULE_TYPES,
-            self.driver.mechanism_manager.supported_qos_rule_types)
+        for rule in qos_consts.VALID_RULE_TYPES:
+            self.assertIn(
+                rule,
+                self.driver.mechanism_manager.supported_qos_rule_types)
 
     @mock.patch.object(mech_test.TestMechanismDriver,
                        'supported_qos_rule_types',
@@ -187,9 +188,10 @@ class TestMl2SupportedQosRuleTypes(Ml2PluginV2TestCase):
                        return_value=False)
     def test_rule_types_with_driver_that_does_not_implement_binding(self,
                                                                     *mocks):
-        self.assertEqual(
-            qos_consts.VALID_RULE_TYPES,
-            self.driver.mechanism_manager.supported_qos_rule_types)
+        for rule in qos_consts.VALID_RULE_TYPES:
+            self.assertIn(
+                rule,
+                self.driver.mechanism_manager.supported_qos_rule_types)
 
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,

@@ -22,6 +22,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
+from neutron.common import constants as common_constants
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
@@ -78,6 +79,17 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': 0,
                                   'validate': {'type:non_negative': None}}})
+    },
+    'dscp_marking_rules': {
+        'parent': {'collection_name': 'policies',
+                   'member_name': 'policy'},
+        'parameters': dict(QOS_RULE_COMMON_FIELDS,
+                           **{'dscp_mark': {
+                                  'allow_post': True, 'allow_put': True,
+                                  'convert_to': attr.convert_to_int,
+                                  'is_visible': True, 'default': None,
+                                  'validate': {'type:values': common_constants.
+                                              VALID_DSCP_MARKS}}})
     }
 }
 
@@ -227,6 +239,32 @@ class QoSPluginBase(service_base.ServicePluginBase):
 
     @abc.abstractmethod
     def delete_policy_bandwidth_limit_rule(self, context, rule_id, policy_id):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_dscp_marking_rule(self, context, rule_id,
+                                     policy_id, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_dscp_marking_rules(self, context, policy_id,
+                                      filters=None, fields=None,
+                                      sorts=None, limit=None,
+                                      marker=None, page_reverse=False):
+        pass
+
+    @abc.abstractmethod
+    def create_policy_dscp_marking_rule(self, context, policy_id,
+                                        dscp_marking_rule):
+        pass
+
+    @abc.abstractmethod
+    def update_policy_dscp_marking_rule(self, context, rule_id, policy_id,
+                                        dscp_marking_rule):
+        pass
+
+    @abc.abstractmethod
+    def delete_policy_dscp_marking_rule(self, context, rule_id, policy_id):
         pass
 
     @abc.abstractmethod

@@ -120,6 +120,9 @@ IP_PROTOCOL_MAP = {PROTO_NAME_AH: PROTO_NUM_AH,
                    PROTO_NAME_UDPLITE: PROTO_NUM_UDPLITE,
                    PROTO_NAME_VRRP: PROTO_NUM_VRRP}
 
+VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
+                    36, 38, 40, 46, 48, 56]
+
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
