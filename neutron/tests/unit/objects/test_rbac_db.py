@@ -19,11 +19,11 @@ import sqlalchemy as sa
 
 from neutron.callbacks import events
 from neutron.common import exceptions as n_exc
-from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base
+from neutron.objects.db import api as obj_db_api
 from neutron.objects import rbac_db
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -133,10 +133,10 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         mock_validate_rbac_update.assert_not_called()
 
     @mock.patch.object(_test_class, 'validate_rbac_policy_update')
-    @mock.patch.object(_test_class, 'get_by_id',
+    @mock.patch.object(_test_class, 'get_object',
                        return_value={'tenant_id': 'tyrion_lannister'})
     def test_validate_rbac_policy_change_allowed_for_admin_or_owner(
-            self, mock_get_by_id, mock_validate_update):
+            self, mock_get_object, mock_validate_update):
         context = mock.Mock(is_admin=True, tenant_id='db_obj_owner_id')
         self._rbac_policy_generate_change_events(
             resource=None, trigger='dummy_trigger', context=context,
@@ -147,10 +147,10 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         self.assertTrue(self._test_class.validate_rbac_policy_update.called)
 
     @mock.patch.object(_test_class, 'validate_rbac_policy_update')
-    @mock.patch.object(_test_class, 'get_by_id',
+    @mock.patch.object(_test_class, 'get_object',
                        return_value={'tenant_id': 'king_beyond_the_wall'})
     def test_validate_rbac_policy_change_forbidden_for_outsiders(
-            self, mock_get_by_id, mock_validate_update):
+            self, mock_get_object, mock_validate_update):
         context = mock.Mock(is_admin=False, tenant_id='db_obj_owner_id')
         self.assertRaises(
             n_exc.InvalidInput,
@@ -175,21 +175,21 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         self._test_validate_rbac_policy_delete_handles_policy(
             {'action': 'unknown_action'})
 
-    @mock.patch.object(_test_class, 'get_by_id')
+    @mock.patch.object(_test_class, 'get_object')
     def test_validate_rbac_policy_delete_skips_db_object_owner(self,
-                                                               mock_get_by_id):
+                                                            mock_get_object):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
                   'target_tenant': 'fake_tenant_id',
                   'object_id': 'fake_obj_id',
                   'tenant_id': 'fake_tenant_id'}
-        mock_get_by_id.return_value.tenant_id = policy['target_tenant']
+        mock_get_object.return_value.tenant_id = policy['target_tenant']
         self._test_validate_rbac_policy_delete_handles_policy(policy)
 
-    @mock.patch.object(_test_class, 'get_by_id')
+    @mock.patch.object(_test_class, 'get_object')
     @mock.patch.object(_test_class, 'get_bound_tenant_ids',
                        return_value='tenant_id_shared_with')
     def test_validate_rbac_policy_delete_fails_single_tenant_and_in_use(
-            self, get_bound_tenant_ids_mock, mock_get_by_id):
+            self, get_bound_tenant_ids_mock, mock_get_object):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
                   'target_tenant': 'tenant_id_shared_with',
                   'tenant_id': 'object_owner_tenant_id',
@@ -241,7 +241,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
                   'tenant_id': 'object_owner_tenant_id',
                   'object_id': 'fake_obj_id'}
         context = mock.Mock()
-        with mock.patch.object(self._test_class, 'get_by_id'):
+        with mock.patch.object(self._test_class, 'get_object'):
             self.assertRaises(
                 ext_rbac.RbacPolicyInUse,
                 self._test_class.validate_rbac_policy_delete,
@@ -253,7 +253,8 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
                 policy=policy)
 
     @mock.patch.object(_test_class, 'attach_rbac')
-    @mock.patch.object(db_api, 'get_object', return_value=['fake_rbac_policy'])
+    @mock.patch.object(obj_db_api, 'get_object',
+                       return_value=['fake_rbac_policy'])
     @mock.patch.object(_test_class, '_validate_rbac_policy_delete')
     def test_update_shared_avoid_duplicate_update(
             self, mock_validate_delete, get_object_mock, attach_rbac_mock):
@@ -267,7 +268,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         self.assertFalse(attach_rbac_mock.called)
 
     @mock.patch.object(_test_class, 'attach_rbac')
-    @mock.patch.object(db_api, 'get_object', return_value=[])
+    @mock.patch.object(obj_db_api, 'get_object', return_value=[])
     @mock.patch.object(_test_class, '_validate_rbac_policy_delete')
     def test_update_shared_wildcard(
             self, mock_validate_delete, get_object_mock, attach_rbac_mock):
@@ -283,7 +284,8 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
             obj_id, test_neutron_obj._context.tenant_id)
 
     @mock.patch.object(_test_class, 'attach_rbac')
-    @mock.patch.object(db_api, 'get_object', return_value=['fake_rbac_policy'])
+    @mock.patch.object(obj_db_api, 'get_object',
+                       return_value=['fake_rbac_policy'])
     @mock.patch.object(_test_class, '_validate_rbac_policy_delete')
     def test_update_shared_remove_wildcard_sharing(
             self, mock_validate_delete, get_object_mock, attach_rbac_mock):

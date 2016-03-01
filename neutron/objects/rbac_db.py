@@ -28,6 +28,7 @@ from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base
+from neutron.objects.db import api as obj_db_api
 
 
 @add_metaclass(abc.ABCMeta)
@@ -123,7 +124,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         if policy['action'] != models.ACCESS_SHARED:
             return
         target_tenant = policy['target_tenant']
-        db_obj = cls.get_by_id(context, policy['object_id'])
+        db_obj = cls.get_object(context, id=policy['object_id'])
         if db_obj.tenant_id == target_tenant:
             return
         cls._validate_rbac_policy_delete(context=context,
@@ -160,7 +161,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # (hopefully) melded with this one.
         if object_type != cls.rbac_db_model.object_type:
             return
-        db_obj = cls.get_by_id(context.elevated(), policy['object_id'])
+        db_obj = cls.get_object(context.elevated(), id=policy['object_id'])
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             if (not context.is_admin and
                     db_obj['tenant_id'] != context.tenant_id):
@@ -184,7 +185,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     def update_shared(self, is_shared_new, obj_id):
         admin_context = self._context.elevated()
-        shared_prev = db_api.get_object(admin_context, self.rbac_db_model,
+        shared_prev = obj_db_api.get_object(admin_context, self.rbac_db_model,
                                         object_id=obj_id, target_tenant='*',
                                         action=models.ACCESS_SHARED)
         is_shared_prev = bool(shared_prev)

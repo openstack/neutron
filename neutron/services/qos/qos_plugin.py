@@ -61,7 +61,7 @@ class QoSPlugin(qos.QoSPluginBase):
         policy.delete()
 
     def _get_policy_obj(self, context, policy_id):
-        obj = policy_object.QosPolicy.get_by_id(context, policy_id)
+        obj = policy_object.QosPolicy.get_object(context, id=policy_id)
         if obj is None:
             raise n_exc.QosPolicyNotFound(policy_id=policy_id)
         return obj
@@ -132,8 +132,8 @@ class QoSPlugin(qos.QoSPluginBase):
         with db_api.autonested_transaction(context.session):
             # first, validate that we have access to the policy
             self._get_policy_obj(context, policy_id)
-            rule = rule_object.QosBandwidthLimitRule.get_by_id(
-                context, rule_id)
+            rule = rule_object.QosBandwidthLimitRule.get_object(
+                context, id=rule_id)
         if not rule:
             raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
         return rule
