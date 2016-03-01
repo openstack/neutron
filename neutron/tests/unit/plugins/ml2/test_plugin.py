@@ -1992,3 +1992,19 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
             # run the transaction balancing function defined in this test
             plugin.delete_port(self.context, 'fake_id')
             self.assertTrue(self.notify.call_count)
+
+
+class TestTransactionGuard(Ml2PluginV2TestCase):
+    def test_delete_network_guard(self):
+        plugin = ml2_plugin.Ml2Plugin()
+        ctx = context.get_admin_context()
+        with ctx.session.begin(subtransactions=True):
+            with testtools.ExpectedException(RuntimeError):
+                plugin.delete_network(ctx, 'id')
+
+    def test_delete_subnet_guard(self):
+        plugin = ml2_plugin.Ml2Plugin()
+        ctx = context.get_admin_context()
+        with ctx.session.begin(subtransactions=True):
+            with testtools.ExpectedException(RuntimeError):
+                plugin.delete_subnet(ctx, 'id')

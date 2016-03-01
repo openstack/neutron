@@ -49,3 +49,32 @@ reach out to your PTL or a member of the drivers team for approval.
 #. http://git.openstack.org/cgit/openstack/neutron-lbaas/
 #. http://git.openstack.org/cgit/openstack/neutron-vpnaas/
 
+
+Calling the Core Plugin from Services
+-------------------------------------
+
+There are many cases where a service may want to create a resource
+managed by the core plugin (e.g. ports, networks, subnets). This
+can be achieved by importing the Neutron Manager and getting a direct
+reference to the core plugin:
+
+.. code:: python
+   from neutron import manager
+
+   plugin = manager.NeutronManager.get_plugin()
+   plugin.create_port(context, port_dict)
+
+
+However, there is an important caveat. Calls to the core plugin in
+almost every case should not be made inside of an ongoing transaction.
+This is because many plugins (including ML2), can be configured to
+make calls to a backend after creating or modifying an object. If
+the call is made inside of a transaction and the transaction is
+rolled back after the core plugin call, the backend will not be
+notified that the change was undone. This will lead to consistency
+errors between the core plugin and its configured backend(s).
+
+ML2 has a guard against certain methods being called with an active
+DB transaction to help prevent developers from accidentally making
+this mistake. It will raise an error that says explicitly that the
+method should not be called within a transaction.
