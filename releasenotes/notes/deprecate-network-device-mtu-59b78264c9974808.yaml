@@ -1,0 +1,6 @@
+---
+deprecations:
+  - The 'network_device_mtu' option is deprecated and will
+    be removed in the 'Newton' cycle. Please use the
+    system-wide segment_mtu setting which the agents will
+    take into account when wiring VIFs.
