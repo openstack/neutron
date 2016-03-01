@@ -1,0 +1,19 @@
+---
+prelude: >
+    Adding MacVtap ML2 driver and L2 Agent as new vswitch choice
+features:
+  - Libvirt qemu/kvm instances can now be attached via MacVtap in
+    bridge mode to a network. VLAN and FLAT attachments are
+    supported. Other attachmentes than compute are not supported.
+issues:
+  - To ensure any kind of migration works between all compute nodes,
+    make sure that the same physical_interface_mappings is
+    configured on each MacVtap compute node. Having different
+    mappings could cause live migration to fail (if the configured
+    physical network interface does not exist on the target host), or
+    even worse, result in an instance placed on the wrong physical
+    network (if the physical network interface exists on the target
+    host, but is used by another physical network or not used at all
+    by OpenStack). Such an instance does not have access to its
+    configured networks anymore. It then has layer 2 connectivity to
+    either another OpenStack network, or one of the hosts networks.

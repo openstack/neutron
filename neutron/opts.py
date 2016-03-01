@@ -45,6 +45,7 @@ import neutron.openstack.common.cache.cache
 import neutron.plugins.ml2.config
 import neutron.plugins.ml2.drivers.agent.config
 import neutron.plugins.ml2.drivers.linuxbridge.agent.common.config
+import neutron.plugins.ml2.drivers.macvtap.agent.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver
 import neutron.plugins.ml2.drivers.openvswitch.agent.common.config
@@ -196,6 +197,17 @@ def list_l3_agent_opts():
              neutron.agent.linux.pd.OPTS,
              neutron.agent.linux.ra.OPTS)
          )
+    ]
+
+
+def list_macvtap_opts():
+    return [
+        ('macvtap',
+         neutron.plugins.ml2.drivers.macvtap.agent.config.macvtap_opts),
+        ('agent',
+         neutron.plugins.ml2.drivers.agent.config.agent_opts),
+        ('securitygroup',
+         neutron.agent.securitygroups_rpc.security_group_opts)
     ]
 
 

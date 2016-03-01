@@ -153,6 +153,8 @@ DEVICE_NAME_MAX_LEN = 15
 
 # vhost-user device names start with "vhu"
 VHOST_USER_DEVICE_PREFIX = 'vhu'
+# Device names start with "macvtap"
+MACVTAP_DEVICE_PREFIX = 'macvtap'
 # The vswitch side of a veth pair for a nova iptables filter setup
 VETH_DEVICE_PREFIX = 'qvo'
 # prefix for SNAT interface in DVR

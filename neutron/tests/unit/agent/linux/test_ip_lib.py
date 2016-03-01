@@ -331,6 +331,15 @@ class TestIpWrapper(base.BaseTestCase):
                                              run_as_root=True, namespace=None,
                                              log_fail_as_error=True)
 
+    def test_add_macvtap(self):
+        ip_lib.IPWrapper().add_macvtap('macvtap0', 'eth0', 'bridge')
+        self.execute.assert_called_once_with([], 'link',
+                                             ('add', 'link', 'eth0', 'name',
+                                              'macvtap0', 'type', 'macvtap',
+                                              'mode', 'bridge'),
+                                             run_as_root=True, namespace=None,
+                                             log_fail_as_error=True)
+
     def test_del_veth(self):
         ip_lib.IPWrapper().del_veth('fpr-1234')
         self.execute.assert_called_once_with([], 'link',
@@ -707,6 +716,10 @@ class TestIpLinkCommand(TestIPCmdBase):
     def test_set_address(self):
         self.link_cmd.set_address('aa:bb:cc:dd:ee:ff')
         self._assert_sudo([], ('set', 'eth0', 'address', 'aa:bb:cc:dd:ee:ff'))
+
+    def test_set_allmulticast_on(self):
+        self.link_cmd.set_allmulticast_on()
+        self._assert_sudo([], ('set', 'eth0', 'allmulticast', 'on'))
 
     def test_set_mtu(self):
         self.link_cmd.set_mtu(1500)

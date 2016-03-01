@@ -176,6 +176,12 @@ class IPWrapper(SubProcessBase):
         return (IPDevice(name1, namespace=self.namespace),
                 IPDevice(name2, namespace=namespace2))
 
+    def add_macvtap(self, name, src_dev, mode='bridge'):
+        args = ['add', 'link', src_dev, 'name', name, 'type', 'macvtap',
+                'mode', mode]
+        self._as_root([], 'link', tuple(args))
+        return IPDevice(name, namespace=self.namespace)
+
     def del_veth(self, name):
         """Delete a virtual interface between two namespaces."""
         self._as_root([], 'link', ('del', name))
@@ -491,6 +497,9 @@ class IpLinkCommand(IpDeviceCommandBase):
 
     def set_address(self, mac_address):
         self._as_root([], ('set', self.name, 'address', mac_address))
+
+    def set_allmulticast_on(self):
+        self._as_root([], ('set', self.name, 'allmulticast', 'on'))
 
     def set_mtu(self, mtu_size):
         self._as_root([], ('set', self.name, 'mtu', mtu_size))
