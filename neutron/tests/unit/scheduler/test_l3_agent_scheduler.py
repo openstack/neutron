@@ -22,6 +22,7 @@ import mock
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import timeutils
+from sqlalchemy import orm
 import testscenarios
 
 from neutron.common import constants
@@ -35,6 +36,7 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
+from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron.extensions import portbindings
@@ -1279,6 +1281,42 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         router['availability_zone_hints'] = az_hints
         return self.plugin.create_router(self.adminContext,
                                          {'router': router})
+
+    def test_create_ha_port_and_bind_catch_integrity_error(self):
+        router = self._create_ha_router(tenant_id='foo_tenant')
+        agent = {'id': 'foo_agent'}
+
+        orig_fn = orm.Session.add
+
+        def db_ref_err_for_add_haportbinding(s, instance):
+            if instance.__class__.__name__ == 'L3HARouterAgentPortBinding':
+                instance.router_id = 'nonexistent_router'
+            return orig_fn(s, instance)
+
+        with mock.patch.object(self.plugin.router_scheduler,
+                               'bind_router') as bind_router:
+            with mock.patch.object(
+                    orm.Session, 'add',
+                    side_effect=db_ref_err_for_add_haportbinding,
+                    autospec=True):
+                self.plugin.router_scheduler.create_ha_port_and_bind(
+                    self.plugin, self.adminContext,
+                    router['id'], router['tenant_id'], agent)
+                self.assertFalse(bind_router.called)
+
+    def test_create_ha_port_and_bind_catch_router_not_found(self):
+        router = self._create_ha_router(tenant_id='foo_tenant')
+        agent = {'id': 'foo_agent'}
+
+        with mock.patch.object(self.plugin.router_scheduler,
+                               'bind_router') as bind_router:
+            with mock.patch.object(
+                    self.plugin, 'add_ha_port',
+                    side_effect=l3.RouterNotFound(router_id='foo_router')):
+                self.plugin.router_scheduler.create_ha_port_and_bind(
+                    self.plugin, self.adminContext,
+                    router['id'], router['tenant_id'], agent)
+                self.assertFalse(bind_router.called)
 
 
 class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):

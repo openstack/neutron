@@ -21,6 +21,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 import sqlalchemy as sa
+from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 
 from neutron._i18n import _, _LI
@@ -36,6 +37,7 @@ from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
@@ -318,12 +320,22 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return num_agents
 
     def _create_ha_port_binding(self, context, router_id, port_id):
-        with context.session.begin(nested=True):
-            portbinding = L3HARouterAgentPortBinding(port_id=port_id,
-                                                     router_id=router_id)
-            context.session.add(portbinding)
+        try:
+            with context.session.begin(nested=True):
+                portbinding = L3HARouterAgentPortBinding(port_id=port_id,
+                                                         router_id=router_id)
+                context.session.add(portbinding)
 
-        return portbinding
+            return portbinding
+        except db_exc.DBReferenceError as e:
+            with excutils.save_and_reraise_exception() as ctxt:
+                if isinstance(e.inner_exception, sql_exc.IntegrityError):
+                    ctxt.reraise = False
+                    LOG.debug(
+                        'Failed to create HA router agent PortBinding, '
+                        'Router %s has already been removed '
+                        'by concurrent operation', router_id)
+                    raise l3.RouterNotFound(router_id=router_id)
 
     def add_ha_port(self, context, router_id, network_id, tenant_id):
         # NOTE(kevinbenton): we have to block any ongoing transactions because
