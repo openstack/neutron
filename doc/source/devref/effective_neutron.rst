@@ -119,6 +119,10 @@ Document common pitfalls as well as good practices done during database developm
   Where nested transaction is used in _do_other_thing_with_created_object
   function.
 
+  The ``_safe_creation function can also be passed the ``transaction=False``
+  argument to prevent any transaction from being created just to leverage
+  the automatic deletion on exception logic.
+
 
 System development
 ~~~~~~~~~~~~~~~~~~
