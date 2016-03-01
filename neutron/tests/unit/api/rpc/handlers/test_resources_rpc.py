@@ -143,6 +143,21 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
                           resource_id)
 
 
+class ResourcesPushToServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
+
+    def test_report_versions(self):
+        callbacks = resources_rpc.ResourcesPushToServerRpcCallback()
+        with mock.patch('neutron.api.rpc.callbacks.version_manager'
+                        '.update_versions') as update_versions:
+            version_map = {'A': '1.0'}
+            callbacks.report_agent_resource_versions(context=mock.ANY,
+                                      agent_type='DHCP Agent',
+                                      agent_host='fake-host',
+                                      version_map=version_map)
+            update_versions.assert_called_once_with(mock.ANY,
+                                                    version_map)
+
+
 class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):

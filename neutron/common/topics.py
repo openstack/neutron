@@ -27,6 +27,7 @@ UPDATE = 'update'
 
 AGENT = 'q-agent-notifier'
 PLUGIN = 'q-plugin'
+SERVER_RESOURCE_VERSIONS = 'q-server-resource-versions'
 L3PLUGIN = 'q-l3-plugin'
 REPORTS = 'q-reports-plugin'
 DHCP = 'q-dhcp-notifer'

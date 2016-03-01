@@ -21,6 +21,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
+from oslo_utils import importutils
 from oslo_utils import timeutils
 import six
 import sqlalchemy as sa
@@ -28,6 +29,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
 from neutron._i18n import _, _LE, _LI, _LW
+from neutron.api.rpc.callbacks import version_manager
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
@@ -68,6 +70,11 @@ AGENT_OPTS = [
 ]
 cfg.CONF.register_opts(AGENT_OPTS)
 
+# this is the ratio from agent_down_time to the time we use to consider
+# the agents down for considering their resource versions in the
+# version_manager callback
+DOWNTIME_VERSIONS_RATIO = 2
+
 
 class Agent(model_base.BASEV2, model_base.HasId):
     """Represents agents running in neutron deployments."""
@@ -98,6 +105,10 @@ class Agent(model_base.BASEV2, model_base.HasId):
     description = sa.Column(sa.String(attributes.DESCRIPTION_MAX_LEN))
     # configurations: a json dict string, I think 4095 is enough
     configurations = sa.Column(sa.String(4095), nullable=False)
+    # resource_versions: json dict, 8191 allows for ~256 resource versions
+    #                    assuming ~32byte length "'name': 'ver',"
+    #                    the whole row limit is 65535 bytes in mysql
+    resource_versions = sa.Column(sa.String(8191))
     # load - number of resources hosted by the agent
     load = sa.Column(sa.Integer, server_default='0', nullable=False)
 
@@ -162,6 +173,11 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
 class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     """Mixin class to add agent extension to db_base_plugin_v2."""
 
+    def __init__(self, *args, **kwargs):
+        version_manager.set_consumer_versions_callback(
+            self._get_agents_resource_versions)
+        super(AgentDbMixin, self).__init__(*args, **kwargs)
+
     def _get_agent(self, context, id):
         try:
             agent = self._get_by_id(context, Agent, id)
@@ -186,18 +202,28 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                      {'agent_type': agent_type, 'agent_id': agent.id})
         return agent
 
-    @classmethod
-    def is_agent_down(cls, heart_beat_time):
+    @staticmethod
+    def is_agent_down(heart_beat_time):
         return timeutils.is_older_than(heart_beat_time,
                                        cfg.CONF.agent_down_time)
 
+    @staticmethod
+    def is_agent_considered_for_versions(agent_dict):
+        return not timeutils.is_older_than(agent_dict['heartbeat_timestamp'],
+                                           cfg.CONF.agent_down_time *
+                                           DOWNTIME_VERSIONS_RATIO)
+
     def get_configuration_dict(self, agent_db):
+        return self._get_dict(agent_db, 'configurations')
+
+    def _get_dict(self, agent_db, dict_name):
         try:
-            conf = jsonutils.loads(agent_db.configurations)
+            conf = jsonutils.loads(getattr(agent_db, dict_name))
         except Exception:
-            msg = _LW('Configuration for agent %(agent_type)s on host %(host)s'
-                      ' is invalid.')
-            LOG.warn(msg, {'agent_type': agent_db.agent_type,
+            msg = _LW('Dictionary %(dict_name)s for agent %(agent_type)s on '
+                      'host %(host)s is invalid.')
+            LOG.warn(msg, {'dict_name': dict_name,
+                           'agent_type': agent_db.agent_type,
                            'host': agent_db.host})
             conf = {}
         return conf
@@ -217,9 +243,9 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             ext_agent.RESOURCE_NAME + 's')
         res = dict((k, agent[k]) for k in attr
                    if k not in ['alive', 'configurations'])
-        res['alive'] = not AgentDbMixin.is_agent_down(
-            res['heartbeat_timestamp'])
-        res['configurations'] = self.get_configuration_dict(agent)
+        res['alive'] = not self.is_agent_down(res['heartbeat_timestamp'])
+        res['configurations'] = self._get_dict(agent, 'configurations')
+        res['resource_versions'] = self._get_dict(agent, 'resource_versions')
         res['availability_zone'] = agent['availability_zone']
         return self._fields(res, fields)
 
@@ -245,7 +271,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                       filters=filters, fields=fields)
         alive = filters and filters.get('alive', None)
         if alive:
-            # alive filter will be a list
             alive = attributes.convert_to_boolean(alive[0])
             agents = [agent for agent in agents if agent['alive'] == alive]
         return agents
@@ -311,6 +336,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 res['availability_zone'] = agent_state['availability_zone']
             configurations_dict = agent_state.get('configurations', {})
             res['configurations'] = jsonutils.dumps(configurations_dict)
+            resource_versions_dict = agent_state.get('resource_versions', {})
+            res['resource_versions'] = jsonutils.dumps(resource_versions_dict)
             res['load'] = self._get_agent_load(agent_state)
             current_time = timeutils.utcnow()
             try:
@@ -340,7 +367,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
 
     def create_or_update_agent(self, context, agent):
         """Create or update agent according to report."""
-
         try:
             return self._create_or_update_agent(context, agent)
         except db_exc.DBDuplicateEntry:
@@ -357,6 +383,29 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             # _get_agent_by_type_and_host() will return the existing
             # agent entry, which will be updated multiple times
             return self._create_or_update_agent(context, agent)
+
+    def _get_agents_considered_for_versions(self):
+        up_agents = self.get_agents(context.get_admin_context(),
+                                    filters={'admin_state_up': [True]})
+        return filter(self.is_agent_considered_for_versions, up_agents)
+
+    def _get_agents_resource_versions(self, tracker):
+        """Get the known agent resource versions and update the tracker.
+
+        Receives a version_manager.ResourceConsumerTracker instance and it's
+        expected to look up in to the database and update every agent resource
+        versions.
+        This method is called from version_manager when the cached information
+        has passed TTL.
+        """
+        for agent in self._get_agents_considered_for_versions():
+            resource_versions = agent.get('resource_versions', {})
+            consumer = version_manager.AgentConsumer(
+                agent_type=agent['agent_type'], host=agent['host'])
+            LOG.debug("Update consumer %(consumer)s versions to: "
+                      "%(versions)s", {'consumer': consumer,
+                                       'versions': resource_versions})
+            tracker.set_versions(consumer, resource_versions)
 
 
 class AgentExtRpcCallback(object):
@@ -378,6 +427,12 @@ class AgentExtRpcCallback(object):
     def __init__(self, plugin=None):
         super(AgentExtRpcCallback, self).__init__()
         self.plugin = plugin
+        #TODO(ajo): fix the resources circular dependency issue by dynamically
+        #           registering object types in the RPC callbacks api
+        resources_rpc = importutils.import_module(
+            'neutron.api.rpc.handlers.resources_rpc')
+        # Initialize RPC api directed to other neutron-servers
+        self.server_versions_rpc = resources_rpc.ResourcesPushToServersRpcApi()
 
     def report_state(self, context, **kwargs):
         """Report state from agent to server.
@@ -398,7 +453,20 @@ class AgentExtRpcCallback(object):
             return
         if not self.plugin:
             self.plugin = manager.NeutronManager.get_plugin()
-        return self.plugin.create_or_update_agent(context, agent_state)
+        agent_status = self.plugin.create_or_update_agent(context, agent_state)
+        self._update_local_agent_resource_versions(context, agent_state)
+        return agent_status
+
+    def _update_local_agent_resource_versions(self, context, agent_state):
+        resource_versions_dict = agent_state.get('resource_versions', {})
+        version_manager.update_versions(
+            version_manager.AgentConsumer(agent_type=agent_state['agent_type'],
+                                          host=agent_state['host']),
+            resource_versions_dict)
+        # report other neutron-servers about this quickly
+        self.server_versions_rpc.report_agent_resource_versions(
+            context, agent_state['agent_type'], agent_state['host'],
+            resource_versions_dict)
 
     def _check_clock_sync_on_agent_start(self, agent_state, agent_time):
         """Checks if the server and the agent times are in sync.
