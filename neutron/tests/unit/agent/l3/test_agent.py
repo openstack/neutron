@@ -1085,11 +1085,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # IpTablesRule instances
         nat_rules_delta = [r for r in orig_nat_rules
                            if r not in ri.iptables_manager.ipv4['nat'].rules]
-        self.assertEqual(len(nat_rules_delta), 3)
+        self.assertEqual(len(nat_rules_delta), 1)
         mangle_rules_delta = [
             r for r in orig_mangle_rules
             if r not in ri.iptables_manager.ipv4['mangle'].rules]
-        self.assertEqual(len(mangle_rules_delta), 1)
+        self.assertEqual(len(mangle_rules_delta), 0)
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
         self.assertEqual(self.send_adv_notif.call_count, 1)
@@ -1112,11 +1112,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # IpTablesRule instances
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
                            if r not in orig_nat_rules]
-        self.assertEqual(len(nat_rules_delta), 3)
+        self.assertEqual(len(nat_rules_delta), 1)
         mangle_rules_delta = [
             r for r in ri.iptables_manager.ipv4['mangle'].rules
             if r not in orig_mangle_rules]
-        self.assertEqual(len(mangle_rules_delta), 1)
+        self.assertEqual(len(mangle_rules_delta), 0)
         self._verify_snat_mangle_rules(nat_rules_delta, mangle_rules_delta,
                                        router)
         self.assertEqual(self.send_adv_notif.call_count, 1)
@@ -1182,20 +1182,31 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Get NAT rules with the gw_port
         router['gw_port'] = gw_port
         ri = l3router.RouterInfo(router['id'], router, **self.ri_kwargs)
-        orig_ext_gw_nat_rules = ri.external_gateway_nat_rules
-        with mock.patch.object(
-                ri,
-                'external_gateway_nat_rules') as external_gateway_nat_rules:
-            external_gateway_nat_rules.side_effect = orig_ext_gw_nat_rules
+        p = ri.external_gateway_nat_fip_rules
+        s = ri.external_gateway_nat_snat_rules
+        attrs_to_mock = dict(
+            [(a, mock.DEFAULT) for a in
+                ['external_gateway_nat_fip_rules',
+                 'external_gateway_nat_snat_rules']]
+        )
+        with mock.patch.multiple(ri, **attrs_to_mock) as mocks:
+            mocks['external_gateway_nat_fip_rules'].side_effect = p
+            mocks['external_gateway_nat_snat_rules'].side_effect = s
             self._process_router_instance_for_agent(agent, ri, router)
             new_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
 
             # NAT rules should only change for dual_stack operation
             if dual_stack:
-                self.assertTrue(external_gateway_nat_rules.called)
+                self.assertTrue(
+                    mocks['external_gateway_nat_fip_rules'].called)
+                self.assertTrue(
+                    mocks['external_gateway_nat_snat_rules'].called)
                 self.assertNotEqual(orig_nat_rules, new_nat_rules)
             else:
-                self.assertFalse(external_gateway_nat_rules.called)
+                self.assertFalse(
+                    mocks['external_gateway_nat_fip_rules'].called)
+                self.assertFalse(
+                    mocks['external_gateway_nat_snat_rules'].called)
                 self.assertEqual(orig_nat_rules, new_nat_rules)
 
     def test_process_ipv6_only_gw(self):
