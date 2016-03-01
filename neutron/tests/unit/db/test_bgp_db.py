@@ -20,6 +20,7 @@ from neutron.api.v2 import attributes as attrs
 from neutron.common import exceptions as n_exc
 from neutron.extensions import bgp
 from neutron.extensions import external_net
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as p_const
 from neutron.services.bgp import bgp_plugin
@@ -144,6 +145,11 @@ class BgpEntityCreationMixin(object):
 class BgpTests(test_plugin.Ml2PluginV2TestCase,
                BgpEntityCreationMixin):
     fmt = 'json'
+
+    def setup_parent(self):
+        self.l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
+                          'TestL3NatAgentSchedulingServicePlugin')
+        super(BgpTests, self).setup_parent()
 
     def setUp(self):
         super(BgpTests, self).setUp()
@@ -774,6 +780,184 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                         fip_prefix_found = True
                 self.assertTrue(tenant_prefix_found)
                 self.assertTrue(fip_prefix_found)
+
+    def test_get_routes_by_bgp_speaker_id_with_fip_dvr(self):
+        gw_prefix = '172.16.10.0/24'
+        tenant_prefix = '10.10.10.0/24'
+        tenant_id = _uuid()
+        scope_data = {'tenant_id': tenant_id, 'ip_version': 4,
+                      'shared': True, 'name': 'bgp-scope'}
+        scope = self.plugin.create_address_scope(
+                                                self.context,
+                                                {'address_scope': scope_data})
+        with self.router_with_external_and_tenant_networks(
+                                               tenant_id=tenant_id,
+                                               gw_prefix=gw_prefix,
+                                               tenant_prefix=tenant_prefix,
+                                               address_scope=scope,
+                                               distributed=True) as res:
+            router, ext_net, int_net = res
+            ext_gw_info = router['external_gateway_info']
+            gw_net_id = ext_net['network']['id']
+            tenant_net_id = int_net['network']['id']
+            fixed_port_data = {'port':
+                               {'name': 'test',
+                                'network_id': tenant_net_id,
+                                'tenant_id': tenant_id,
+                                'admin_state_up': True,
+                                'device_id': _uuid(),
+                                'device_owner': 'compute:nova',
+                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                portbindings.HOST_ID: 'test-host'}}
+            fixed_port = self.plugin.create_port(self.context,
+                                                 fixed_port_data)
+            self.plugin._create_or_update_agent(self.context,
+                                                {'agent_type': 'L3 agent',
+                                                 'host': 'test-host',
+                                                 'binary': 'neutron-l3-agent',
+                                                 'topic': 'test'})
+            fip_gw = self.l3plugin.create_fip_agent_gw_port_if_not_exists(
+                                                                 self.context,
+                                                                 gw_net_id,
+                                                                 'test-host')
+            fip_data = {'floatingip': {'floating_network_id': gw_net_id,
+                                       'tenant_id': tenant_id,
+                                       'port_id': fixed_port['id']}}
+            fip = self.l3plugin.create_floatingip(self.context, fip_data)
+            fip_prefix = fip['floating_ip_address'] + '/32'
+            with self.bgp_speaker(4, 1234, networks=[gw_net_id]) as speaker:
+                bgp_speaker_id = speaker['id']
+                routes = self.bgp_plugin.get_routes_by_bgp_speaker_id(
+                                                               self.context,
+                                                               bgp_speaker_id)
+                routes = list(routes)
+                cvr_gw_ip = ext_gw_info['external_fixed_ips'][0]['ip_address']
+                dvr_gw_ip = fip_gw['fixed_ips'][0]['ip_address']
+                self.assertEqual(2, len(routes))
+                tenant_route_verified = False
+                fip_route_verified = False
+                for route in routes:
+                    if route['destination'] == tenant_prefix:
+                        self.assertEqual(cvr_gw_ip, route['next_hop'])
+                        tenant_route_verified = True
+                    if route['destination'] == fip_prefix:
+                        self.assertEqual(dvr_gw_ip, route['next_hop'])
+                        fip_route_verified = True
+                self.assertTrue(tenant_route_verified)
+                self.assertTrue(fip_route_verified)
+
+    def test__get_dvr_fip_host_routes_by_binding(self):
+        gw_prefix = '172.16.10.0/24'
+        tenant_prefix = '10.10.10.0/24'
+        tenant_id = _uuid()
+        scope_data = {'tenant_id': tenant_id, 'ip_version': 4,
+                      'shared': True, 'name': 'bgp-scope'}
+        scope = self.plugin.create_address_scope(
+                                                self.context,
+                                                {'address_scope': scope_data})
+        with self.router_with_external_and_tenant_networks(
+                                               tenant_id=tenant_id,
+                                               gw_prefix=gw_prefix,
+                                               tenant_prefix=tenant_prefix,
+                                               address_scope=scope,
+                                               distributed=True) as res:
+            router, ext_net, int_net = res
+            gw_net_id = ext_net['network']['id']
+            tenant_net_id = int_net['network']['id']
+            fixed_port_data = {'port':
+                               {'name': 'test',
+                                'network_id': tenant_net_id,
+                                'tenant_id': tenant_id,
+                                'admin_state_up': True,
+                                'device_id': _uuid(),
+                                'device_owner': 'compute:nova',
+                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                portbindings.HOST_ID: 'test-host'}}
+            fixed_port = self.plugin.create_port(self.context,
+                                                 fixed_port_data)
+            self.plugin._create_or_update_agent(self.context,
+                                                {'agent_type': 'L3 agent',
+                                                 'host': 'test-host',
+                                                 'binary': 'neutron-l3-agent',
+                                                 'topic': 'test'})
+            fip_gw = self.l3plugin.create_fip_agent_gw_port_if_not_exists(
+                                                                 self.context,
+                                                                 gw_net_id,
+                                                                 'test-host')
+            fip_data = {'floatingip': {'floating_network_id': gw_net_id,
+                                       'tenant_id': tenant_id,
+                                       'port_id': fixed_port['id']}}
+            fip = self.l3plugin.create_floatingip(self.context, fip_data)
+            fip_prefix = fip['floating_ip_address'] + '/32'
+            with self.bgp_speaker(4, 1234, networks=[gw_net_id]) as speaker:
+                bgp_speaker_id = speaker['id']
+                routes = self.bgp_plugin._get_dvr_fip_host_routes_by_binding(
+                                                               self.context,
+                                                               gw_net_id,
+                                                               bgp_speaker_id)
+                routes = list(routes)
+                dvr_gw_ip = fip_gw['fixed_ips'][0]['ip_address']
+                self.assertEqual(1, len(routes))
+                self.assertEqual(dvr_gw_ip, routes[0]['next_hop'])
+                self.assertEqual(fip_prefix, routes[0]['destination'])
+
+    def test__get_dvr_fip_host_routes_by_router(self):
+        gw_prefix = '172.16.10.0/24'
+        tenant_prefix = '10.10.10.0/24'
+        tenant_id = _uuid()
+        scope_data = {'tenant_id': tenant_id, 'ip_version': 4,
+                      'shared': True, 'name': 'bgp-scope'}
+        scope = self.plugin.create_address_scope(
+                                                self.context,
+                                                {'address_scope': scope_data})
+        with self.router_with_external_and_tenant_networks(
+                                               tenant_id=tenant_id,
+                                               gw_prefix=gw_prefix,
+                                               tenant_prefix=tenant_prefix,
+                                               address_scope=scope,
+                                               distributed=True) as res:
+            router, ext_net, int_net = res
+            gw_net_id = ext_net['network']['id']
+            tenant_net_id = int_net['network']['id']
+            fixed_port_data = {'port':
+                               {'name': 'test',
+                                'network_id': tenant_net_id,
+                                'tenant_id': tenant_id,
+                                'admin_state_up': True,
+                                'device_id': _uuid(),
+                                'device_owner': 'compute:nova',
+                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                portbindings.HOST_ID: 'test-host'}}
+            fixed_port = self.plugin.create_port(self.context,
+                                                 fixed_port_data)
+            self.plugin._create_or_update_agent(self.context,
+                                                {'agent_type': 'L3 agent',
+                                                 'host': 'test-host',
+                                                 'binary': 'neutron-l3-agent',
+                                                 'topic': 'test'})
+            fip_gw = self.l3plugin.create_fip_agent_gw_port_if_not_exists(
+                                                                 self.context,
+                                                                 gw_net_id,
+                                                                 'test-host')
+            fip_data = {'floatingip': {'floating_network_id': gw_net_id,
+                                       'tenant_id': tenant_id,
+                                       'port_id': fixed_port['id']}}
+            fip = self.l3plugin.create_floatingip(self.context, fip_data)
+            fip_prefix = fip['floating_ip_address'] + '/32'
+            with self.bgp_speaker(4, 1234, networks=[gw_net_id]) as speaker:
+                bgp_speaker_id = speaker['id']
+                routes = self.bgp_plugin._get_dvr_fip_host_routes_by_router(
+                                                               self.context,
+                                                               bgp_speaker_id,
+                                                               router['id'])
+                routes = list(routes)
+                dvr_gw_ip = fip_gw['fixed_ips'][0]['ip_address']
+                self.assertEqual(1, len(routes))
+                self.assertEqual(dvr_gw_ip, routes[0]['next_hop'])
+                self.assertEqual(fip_prefix, routes[0]['destination'])
 
     def test_get_routes_by_bgp_speaker_binding_with_fip(self):
         gw_prefix = '172.16.10.0/24'

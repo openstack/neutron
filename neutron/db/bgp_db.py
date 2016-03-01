@@ -34,6 +34,7 @@ from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import bgp as bgp_ext
+from neutron.plugins.ml2 import models as ml2_models
 
 
 LOG = logging.getLogger(__name__)
@@ -464,7 +465,10 @@ class BgpDbMixin(common_db.CommonDbMixin):
             fip_routes = self._get_central_fip_host_routes_by_bgp_speaker(
                                                                context,
                                                                bgp_speaker_id)
-            return itertools.chain(fip_routes, net_routes)
+            dvr_fip_routes = self._get_dvr_fip_host_routes_by_bgp_speaker(
+                                                               context,
+                                                               bgp_speaker_id)
+            return itertools.chain(fip_routes, net_routes, dvr_fip_routes)
 
     def get_routes_by_bgp_speaker_binding(self, context,
                                           bgp_speaker_id, network_id):
@@ -478,7 +482,11 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                                            context,
                                                            network_id,
                                                            bgp_speaker_id)
-        return itertools.chain(fip_routes, net_routes)
+            dvr_fip_routes = self._get_dvr_fip_host_routes_by_binding(
+                                                               context,
+                                                               network_id,
+                                                               bgp_speaker_id)
+        return itertools.chain(fip_routes, net_routes, dvr_fip_routes)
 
     def _get_routes_by_router(self, context, router_id):
         bgp_speaker_ids = self._get_bgp_speaker_ids_by_router(context,
@@ -493,8 +501,12 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                                                context,
                                                                router_id,
                                                                bgp_speaker_id)
-            routes = list(itertools.chain(fip_routes, net_routes))
-            route_dict[bgp_speaker_id] = routes
+            dvr_fip_routes = self._get_dvr_fip_host_routes_by_router(
+                                                               context,
+                                                               router_id,
+                                                               bgp_speaker_id)
+            routes = itertools.chain(fip_routes, net_routes, dvr_fip_routes)
+            route_dict[bgp_speaker_id] = list(routes)
         return route_dict
 
     def _get_central_fip_host_routes_by_router(self, context, router_id,
@@ -532,6 +544,21 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                     l3_db.Router.id == router_attrs.router_id)
             query = query.filter(router_attrs.distributed != sa.sql.true())
             return self._host_route_list_from_tuples(query.all())
+
+    def _get_dvr_fip_host_routes_by_router(self, context, bgp_speaker_id,
+                                           router_id):
+        with context.session.begin(subtransactions=True):
+            gw_query = self._get_gateway_query(context, bgp_speaker_id)
+
+            fip_query = self._get_fip_query(context, bgp_speaker_id)
+            fip_query.filter(l3_db.FloatingIP.router_id == router_id)
+
+            #Create the join query
+            join_query = self._join_fip_by_host_binding_to_agent_gateway(
+                context,
+                fip_query.subquery(),
+                gw_query.subquery())
+            return self._host_route_list_from_tuples(join_query.all())
 
     def _get_central_fip_host_routes_by_binding(self, context,
                                                 network_id, bgp_speaker_id):
@@ -571,6 +598,24 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                     l3_db.Router.id == router_attrs.router_id)
             query = query.filter(router_attrs.distributed != sa.sql.true())
             return self._host_route_list_from_tuples(query.all())
+
+    def _get_dvr_fip_host_routes_by_binding(self, context, network_id,
+                                            bgp_speaker_id):
+        with context.session.begin(subtransactions=True):
+            BgpBinding = BgpSpeakerNetworkBinding
+
+            gw_query = self._get_gateway_query(context, bgp_speaker_id)
+            gw_query.filter(BgpBinding.network_id == network_id)
+
+            fip_query = self._get_fip_query(context, bgp_speaker_id)
+            fip_query.filter(BgpBinding.network_id == network_id)
+
+            #Create the join query
+            join_query = self._join_fip_by_host_binding_to_agent_gateway(
+                context,
+                fip_query.subquery(),
+                gw_query.subquery())
+            return self._host_route_list_from_tuples(join_query.all())
 
     def _get_central_fip_host_routes_by_bgp_speaker(self, context,
                                                     bgp_speaker_id):
@@ -612,6 +657,65 @@ class BgpDbMixin(common_db.CommonDbMixin):
                                     l3_db.Router.id == router_attrs.router_id)
             query = query.filter(router_attrs.distributed != sa.sql.true())
             return self._host_route_list_from_tuples(query.all())
+
+    def _get_gateway_query(self, context, bgp_speaker_id):
+        BgpBinding = BgpSpeakerNetworkBinding
+        ML2PortBinding = ml2_models.PortBinding
+        IpAllocation = models_v2.IPAllocation
+        Port = models_v2.Port
+        gw_query = context.session.query(Port.network_id,
+                                         ML2PortBinding.host,
+                                         IpAllocation.ip_address)
+
+        #Subquery for FIP agent gateway ports
+        gw_query = gw_query.filter(
+            ML2PortBinding.port_id == Port.id,
+            IpAllocation.port_id == Port.id,
+            IpAllocation.subnet_id == models_v2.Subnet.id,
+            models_v2.Subnet.ip_version == 4,
+            Port.device_owner == lib_consts.DEVICE_OWNER_AGENT_GW,
+            Port.network_id == BgpBinding.network_id,
+            BgpBinding.bgp_speaker_id == bgp_speaker_id,
+            BgpBinding.ip_version == 4)
+        return gw_query
+
+    def _get_fip_query(self, context, bgp_speaker_id):
+        BgpBinding = BgpSpeakerNetworkBinding
+        ML2PortBinding = ml2_models.PortBinding
+
+        #Subquery for floating IP's
+        fip_query = context.session.query(
+            l3_db.FloatingIP.floating_network_id,
+            ML2PortBinding.host,
+            l3_db.FloatingIP.floating_ip_address)
+        fip_query = fip_query.filter(
+            l3_db.FloatingIP.fixed_port_id == ML2PortBinding.port_id,
+            l3_db.FloatingIP.floating_network_id == BgpBinding.network_id,
+            BgpBinding.bgp_speaker_id == bgp_speaker_id)
+        return fip_query
+
+    def _get_dvr_fip_host_routes_by_bgp_speaker(self, context,
+                                                bgp_speaker_id):
+        with context.session.begin(subtransactions=True):
+            gw_query = self._get_gateway_query(context, bgp_speaker_id)
+            fip_query = self._get_fip_query(context, bgp_speaker_id)
+
+            #Create the join query
+            join_query = self._join_fip_by_host_binding_to_agent_gateway(
+                context,
+                fip_query.subquery(),
+                gw_query.subquery())
+            return self._host_route_list_from_tuples(join_query.all())
+
+    def _join_fip_by_host_binding_to_agent_gateway(self, context,
+                                                   fip_subq, gw_subq):
+        join_query = context.session.query(fip_subq.c.floating_ip_address,
+                                           gw_subq.c.ip_address)
+        and_cond = and_(
+            gw_subq.c.host == fip_subq.c.host,
+            gw_subq.c.network_id == fip_subq.c.floating_network_id)
+
+        return join_query.join(gw_subq, and_cond)
 
     def _get_tenant_network_routes_by_binding(self, context,
                                               network_id, bgp_speaker_id):
