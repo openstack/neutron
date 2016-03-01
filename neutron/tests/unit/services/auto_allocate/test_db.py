@@ -17,10 +17,10 @@ from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class AutoAllocateTestCase(base.BaseTestCase):
+class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
 
     def setUp(self):
         super(AutoAllocateTestCase, self).setUp()
@@ -46,3 +46,35 @@ class AutoAllocateTestCase(base.BaseTestCase):
             mock_cleanup.assert_called_once_with(
                 self.ctx, network_id='network_foo',
                 router_id='router_foo', subnets=[])
+
+    def test_get_auto_allocated_topology_dry_run_happy_path_for_kevin(self):
+        with mock.patch.object(self.mixin, '_check_requirements') as f:
+            self.mixin.get_auto_allocated_topology(
+                self.ctx, mock.ANY, fields=['dry-run'])
+            self.assertEqual(1, f.call_count)
+
+    def test_get_auto_allocated_topology_dry_run_bad_input(self):
+        self.assertRaises(n_exc.BadRequest,
+            self.mixin.get_auto_allocated_topology,
+            self.ctx, mock.ANY, fields=['foo'])
+
+    def test__check_requirements_fail_on_missing_ext_net(self):
+        self.assertRaises(exceptions.AutoAllocationFailure,
+            self.mixin._check_requirements, self.ctx)
+
+    def test__check_requirements_fail_on_missing_pools(self):
+        with mock.patch.object(
+            self.mixin, '_get_default_external_network'),\
+            mock.patch.object(
+                self.mixin, '_get_supported_subnetpools') as g:
+            g.side_effect = n_exc.NotFound()
+            self.assertRaises(exceptions.AutoAllocationFailure,
+                self.mixin._check_requirements, self.ctx)
+
+    def test__check_requirements_happy_path_for_kevin(self):
+        with mock.patch.object(
+            self.mixin, '_get_default_external_network'),\
+            mock.patch.object(
+                self.mixin, '_get_supported_subnetpools'):
+            result = self.mixin._check_requirements(self.ctx)
+            self.assertEqual(list(result.values())[0], 'dry-run=pass')
