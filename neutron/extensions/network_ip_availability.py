@@ -13,14 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import oslo_log.log as logging
-
 import neutron.api.extensions as extensions
 import neutron.api.v2.attributes as attr
 import neutron.api.v2.base as base
 import neutron.services.network_ip_availability.plugin as plugin
-
-LOG = logging.getLogger(__name__)
 
 RESOURCE_NAME = "network_ip_availability"
 RESOURCE_PLURAL = "network_ip_availabilities"

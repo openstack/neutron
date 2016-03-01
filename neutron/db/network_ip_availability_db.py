@@ -18,9 +18,6 @@ import six
 from sqlalchemy import func
 
 import neutron.db.models_v2 as mod
-import oslo_log.log as logging
-
-LOG = logging.getLogger(__name__)
 
 NETWORK_ID = 'network_id'
 NETWORK_NAME = 'network_name'
