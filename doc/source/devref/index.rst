@@ -76,6 +76,7 @@ Neutron Internals
    instrumentation
    address_scopes
    openvswitch_firewall
+   network_ip_availability
 
 Testing
 -------

@@ -43,6 +43,8 @@
     "get_network:provider:physical_network": "rule:admin_only",
     "get_network:provider:segmentation_id": "rule:admin_only",
     "get_network:queue_id": "rule:admin_only",
+    "get_network_ip_availabilities": "rule:admin_only",
+    "get_network_ip_availability": "rule:admin_only",
     "create_network:shared": "rule:admin_only",
     "create_network:router:external": "rule:admin_only",
     "create_network:is_default": "rule:admin_only",
