@@ -60,7 +60,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
 
     def test__check_requirements_fail_on_missing_ext_net(self):
         self.assertRaises(exceptions.AutoAllocationFailure,
-            self.mixin._check_requirements, self.ctx)
+            self.mixin._check_requirements, self.ctx, 'foo_tenant')
 
     def test__check_requirements_fail_on_missing_pools(self):
         with mock.patch.object(
@@ -69,12 +69,13 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
                 self.mixin, '_get_supported_subnetpools') as g:
             g.side_effect = n_exc.NotFound()
             self.assertRaises(exceptions.AutoAllocationFailure,
-                self.mixin._check_requirements, self.ctx)
+                self.mixin._check_requirements, self.ctx, 'foo_tenant')
 
     def test__check_requirements_happy_path_for_kevin(self):
         with mock.patch.object(
             self.mixin, '_get_default_external_network'),\
             mock.patch.object(
                 self.mixin, '_get_supported_subnetpools'):
-            result = self.mixin._check_requirements(self.ctx)
-            self.assertEqual(list(result.values())[0], 'dry-run=pass')
+            result = self.mixin._check_requirements(self.ctx, 'foo_tenant')
+            expected = {'id': 'dry-run=pass', 'tenant_id': 'foo_tenant'}
+            self.assertEqual(expected, result)
