@@ -62,7 +62,8 @@ class Notifier(object):
             auth=auth)
 
         extensions = [
-            ext for ext in nova_client.discover_extensions(NOVA_API_VERSION)
+            ext for ext in nova_client.discover_extensions(NOVA_API_VERSION,
+                                                           only_contrib=True)
             if ext.name == "server_external_events"]
         self.nclient = nova_client.Client(
             NOVA_API_VERSION,
