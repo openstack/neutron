@@ -813,3 +813,21 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # external networks. SNAT will be used. Direct route will not work
         # here.
         src_machine.assert_no_ping(machine_diff_scope.ip)
+
+    def test_connection_from_diff_address_scope_with_fip(self):
+        (machine_same_scope, machine_diff_scope,
+            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
+        fip = '19.4.4.11'
+        self._add_fip(router, fip,
+                      fixed_address=machine_diff_scope.ip,
+                      host=self.agent.conf.host,
+                      fixed_ip_address_scope='scope2')
+        router.process(self.agent)
+
+        # For the internal networks that are in the same address scope as
+        # external network, they should be able to reach the floating ip
+        net_helpers.assert_ping(machine_same_scope.namespace, fip, 5)
+        # For the port with fip, it should be able to reach the internal
+        # networks that are in the same address scope as external network
+        net_helpers.assert_ping(machine_diff_scope.namespace,
+                                machine_same_scope.ip, 5)
