@@ -192,7 +192,8 @@ class LinuxInterfaceDriver(object):
         for route in new_onlink_cidrs - existing_onlink_cidrs:
             LOG.debug("adding onlink route(%s)", route)
             device.route.add_onlink_route(route)
-        for route in existing_onlink_cidrs - new_onlink_cidrs:
+        for route in (existing_onlink_cidrs - new_onlink_cidrs -
+                      set(preserve_ips or [])):
             LOG.debug("deleting onlink route(%s)", route)
             device.route.delete_onlink_route(route)
 

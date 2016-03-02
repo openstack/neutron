@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron.common import constants
 
 
 def check_subnet_ip(cidr, ip_address):
@@ -25,6 +26,20 @@ def check_subnet_ip(cidr, ip_address):
     return (ip != net.network
             and (net.version == 6 or ip != net[-1])
             and net.netmask & ip == net.network)
+
+
+def check_gateway_invalid_in_subnet(cidr, gateway):
+    """Check whether the gw IP address is invalid on the subnet."""
+    ip = netaddr.IPAddress(gateway)
+    net = netaddr.IPNetwork(cidr)
+    # Check whether the gw IP is in-valid on subnet.
+    # If gateway is in the subnet, it cannot be the
+    # 'network' or the 'broadcast address (only in IPv4)'.
+    # If gateway is out of subnet, there is no way to
+    # check since we don't have gateway's subnet cidr.
+    return (ip in net and
+            (ip == net.network or
+             (net.version == constants.IP_VERSION_4 and ip == net[-1])))
 
 
 def check_gateway_in_subnet(cidr, gateway):
