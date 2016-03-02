@@ -390,7 +390,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 sn_port['fixed_ips'],
                 sn_port['mac_address'],
                 ri._get_snat_int_device_name(sn_port['id']),
-                dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+                dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+                mtu=None)
         elif action == 'remove':
             self.device_exists.return_value = False
             ri.get_snat_port_for_internal_port = mock.Mock(

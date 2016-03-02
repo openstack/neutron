@@ -1230,7 +1230,8 @@ class DeviceManager(object):
                                  port.id,
                                  interface_name,
                                  port.mac_address,
-                                 namespace=network.namespace)
+                                 namespace=network.namespace,
+                                 mtu=network.get('mtu'))
             except Exception:
                 with excutils.save_and_reraise_exception():
                     LOG.exception(_LE('Unable to plug DHCP port for '

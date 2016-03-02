@@ -361,12 +361,12 @@ class RouterInfo(object):
 
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 fixed_ips, mac_address,
-                                interface_name, prefix):
+                                interface_name, prefix, mtu=None):
         LOG.debug("adding internal network: prefix(%s), port(%s)",
                   prefix, port_id)
         self.driver.plug(network_id, port_id, interface_name, mac_address,
                          namespace=ns_name,
-                         prefix=prefix)
+                         prefix=prefix, mtu=mtu)
 
         ip_cidrs = common_utils.fixed_ip_cidrs(fixed_ips)
         self.driver.init_router_port(
@@ -391,7 +391,8 @@ class RouterInfo(object):
                                      fixed_ips,
                                      mac_address,
                                      interface_name,
-                                     INTERNAL_DEV_PREFIX)
+                                     INTERNAL_DEV_PREFIX,
+                                     mtu=port.get('mtu'))
 
     def internal_network_removed(self, port):
         interface_name = self.get_internal_device_name(port['id'])
@@ -557,7 +558,8 @@ class RouterInfo(object):
                          ex_gw_port['mac_address'],
                          bridge=self.agent_conf.external_network_bridge,
                          namespace=ns_name,
-                         prefix=EXTERNAL_DEV_PREFIX)
+                         prefix=EXTERNAL_DEV_PREFIX,
+                         mtu=ex_gw_port.get('mtu'))
 
     def _get_external_gw_ips(self, ex_gw_port):
         gateway_ips = []

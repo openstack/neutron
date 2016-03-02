@@ -106,7 +106,8 @@ class FipNamespace(namespaces.Namespace):
                          ex_gw_port['mac_address'],
                          bridge=self.agent_conf.external_network_bridge,
                          namespace=ns_name,
-                         prefix=FIP_EXT_DEV_PREFIX)
+                         prefix=FIP_EXT_DEV_PREFIX,
+                         mtu=ex_gw_port.get('mtu'))
 
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name,
@@ -257,9 +258,11 @@ class FipNamespace(namespaces.Namespace):
             self._internal_ns_interface_added(str(fip_2_rtr),
                                               fip_2_rtr_name,
                                               fip_ns_name)
-            if self.agent_conf.network_device_mtu:
-                int_dev[0].link.set_mtu(self.agent_conf.network_device_mtu)
-                int_dev[1].link.set_mtu(self.agent_conf.network_device_mtu)
+            mtu = (self.agent_conf.network_device_mtu or
+                   ri.get_ex_gw_port().get('mtu'))
+            if mtu:
+                int_dev[0].link.set_mtu(mtu)
+                int_dev[1].link.set_mtu(mtu)
             int_dev[0].link.set_up()
             int_dev[1].link.set_up()
 

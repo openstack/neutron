@@ -117,4 +117,5 @@ class DvrEdgeHaRouter(DvrEdgeRouter, HaRouter):
         self.driver.plug(port['network_id'], port['id'],
                          interface_name, port['mac_address'],
                          namespace=self.snat_namespace.name,
-                         prefix=dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+                         prefix=dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+                         mtu=port.get('mtu'))
