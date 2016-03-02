@@ -1,0 +1,19 @@
+---
+prelude: >
+    External networks can now be controlled using the
+    RBAC framework that was added in Liberty. This allows
+    networks to be made available to specific tenants
+    (as opposed to all tenants) to be used as an external
+    gateway for routers and floating IPs.
+features:
+  - External networks can now be controlled using the
+    RBAC framework that was added in Liberty. This allows
+    networks to be made available to specific tenants
+    (as opposed to all tenants) to be used as an external
+    gateway for routers and floating IPs.
+    By default this feature will also allow regular tenants
+    to make their networks available as external networks
+    to other individual tenants (or even themselves), but
+    they are prevented from using the wildcard to share to
+    all tenants. This behavior can be adjusted via
+    policy.json by the operator if desired.

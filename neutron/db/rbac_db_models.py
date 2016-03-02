@@ -23,9 +23,11 @@ from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 from neutron.db import model_base
+from neutron import manager
 
 
 ACCESS_SHARED = 'access_as_shared'
+ACCESS_EXTERNAL = 'access_as_external'
 
 
 class InvalidActionForType(n_exc.InvalidInput):
@@ -94,7 +96,11 @@ class NetworkRBAC(RBACColumns, model_base.BASEV2):
     object_type = 'network'
 
     def get_valid_actions(self):
-        return (ACCESS_SHARED,)
+        actions = (ACCESS_SHARED,)
+        pl = manager.NeutronManager.get_plugin()
+        if 'external-net' in pl.supported_extension_aliases:
+            actions += (ACCESS_EXTERNAL,)
+        return actions
 
 
 class QosPolicyRBAC(RBACColumns, model_base.BASEV2):

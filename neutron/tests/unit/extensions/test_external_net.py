@@ -141,12 +141,17 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = manager.NeutronManager.get_plugin()
         ctx = context.Context('edinson', 'cavani')
         model = models_v2.Network
-        txt = "externalnetworks.network_id IS NOT NULL"
+        txt = ("networkrbacs.action = :action_1 AND "
+               "networkrbacs.target_tenant = :target_tenant_1 OR "
+               "networkrbacs.target_tenant = :target_tenant_2")
         conditions = plugin._network_filter_hook(ctx, model, [])
         self.assertEqual(conditions.__str__(), txt)
         # Try to concatenate conditions
+        txt2 = (txt.replace('tenant_1', 'tenant_3').
+                replace('tenant_2', 'tenant_4').
+                replace('action_1', 'action_2'))
         conditions = plugin._network_filter_hook(ctx, model, conditions)
-        self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt))
+        self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt2))
 
     def test_create_port_external_network_non_admin_fails(self):
         with self.network(router__external=True) as ext_net:
