@@ -39,14 +39,15 @@ class Request(wsgi.Request):
     pass
 
 
-def Resource(controller, faults=None, deserializers=None, serializers=None):
+def Resource(controller, faults=None, deserializers=None, serializers=None,
+             action_status=None):
     """Represents an API entity resource and the associated serialization and
     deserialization logic
     """
     default_deserializers = {'application/json': wsgi.JSONDeserializer()}
     default_serializers = {'application/json': wsgi.JSONDictSerializer()}
     format_types = {'json': 'application/json'}
-    action_status = dict(create=201, delete=204)
+    action_status = action_status or dict(create=201, delete=204)
 
     default_deserializers.update(deserializers or {})
     default_serializers.update(serializers or {})

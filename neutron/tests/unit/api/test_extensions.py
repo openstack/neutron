@@ -160,6 +160,9 @@ class ResourceExtensionTest(base.BaseTestCase):
         def custom_member_action(self, request, id):
             return {'member_action': 'value'}
 
+        def custom_collection_method(self, request, **kwargs):
+            return {'collection': 'value'}
+
         def custom_collection_action(self, request, **kwargs):
             return {'collection': 'value'}
 
@@ -354,6 +357,80 @@ class ResourceExtensionTest(base.BaseTestCase):
 
         self.assertEqual(200, response.status_int)
         self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
+
+    def test_resource_extension_for_get_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.get("/tweedles")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual("value", jsonutils.loads(response.body)['collection'])
+
+    def test_resource_extension_for_put_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "PUT"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.put("/tweedles")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual('value', jsonutils.loads(response.body)['collection'])
+
+    def test_resource_extension_for_post_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "POST"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.post("/tweedles")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual('value', jsonutils.loads(response.body)['collection'])
+
+    def test_resource_extension_for_delete_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "DELETE"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.delete("/tweedles")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual('value', jsonutils.loads(response.body)['collection'])
+
+    def test_resource_ext_for_formatted_req_on_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.get("/tweedles.json")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual("value", jsonutils.loads(response.body)['collection'])
+
+    def test_resource_ext_for_nested_resource_custom_collection_method(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_method': "GET"}
+        parent = {'collection_name': 'beetles', 'member_name': 'beetle'}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_methods=collections,
+                                               parent=parent)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.get("/beetles/beetle_id/tweedles")
+
+        self.assertEqual(200, response.status_int)
+        self.assertEqual("value", jsonutils.loads(response.body)['collection'])
 
     def test_resource_extension_with_custom_member_action_and_attr_map(self):
         controller = self.ResourceExtensionController()
