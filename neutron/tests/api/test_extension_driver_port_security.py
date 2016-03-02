@@ -141,6 +141,8 @@ class PortSecTest(base_security.BaseSecGroupTest,
 
     @test.attr(type=['negative', 'smoke'])
     @test.idempotent_id('ed93e453-3f8d-495e-8e7e-b0e268c2ebd9')
+    @test.requires_ext(extension='port-security', service='network')
+    @test.requires_ext(extension='allowed-address-pairs', service='network')
     def test_allow_address_pairs(self):
         network = self.create_network()
         self.create_subnet(network)
