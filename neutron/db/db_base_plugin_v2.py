@@ -1026,9 +1026,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         for key in ['id', 'name', 'ip_version', 'min_prefixlen',
                     'max_prefixlen', 'default_prefixlen', 'is_default',
-                    'shared', 'default_quota', 'address_scope_id']:
+                    'shared', 'default_quota', 'address_scope_id',
+                    'standard_attr']:
             self._write_key(key, updated, model, new_pool)
-
+        self._apply_dict_extend_functions(attributes.SUBNETPOOLS,
+                                          updated, model)
         return updated
 
     def _write_key(self, key, update, orig, new_dict):
