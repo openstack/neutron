@@ -43,13 +43,3 @@ class BaseSecGroupTest(base.BaseNetworkTest):
         for secgroup in list_body['security_groups']:
             secgroup_list.append(secgroup['id'])
         self.assertNotIn(secgroup_id, secgroup_list)
-
-    def _delete_security_group_rule(self, rule_id):
-        self.client.delete_security_group_rule(rule_id)
-        # Asserting that the security group is not found in the list
-        # after deletion
-        list_body = self.client.list_security_group_rules()
-        rules_list = list()
-        for rule in list_body['security_group_rules']:
-            rules_list.append(rule['id'])
-        self.assertNotIn(rule_id, rules_list)
