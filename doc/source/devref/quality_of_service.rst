@@ -342,7 +342,7 @@ The ingress bandwidth limit is configured on the tap port by setting a simple
 port. It requires a value of HZ parameter configured in kernel on the host.
 This value is neccessary to calculate the minimal burst value which is set in
 tc. Details about how it is calculated can be found in
-`http://unix.stackexchange.com/a/100797`_. This solution is similar to Open
+`here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
 vSwitch implementation.
 
 Configuration
