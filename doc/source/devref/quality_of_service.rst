@@ -256,20 +256,8 @@ The flow of updates is as follows:
 Agent side design
 -----------------
 
-To ease code reusability between agents and to avoid the need to patch an agent
-for each new core resource extension, pluggable L2 agent extensions were
-introduced. They can be especially interesting to third parties that don't want
-to maintain their code in Neutron tree.
-
-Extensions are meant to receive handle_port events, and do whatever they need
-with them.
-
-* neutron.agent.l2.agent_extension:
-  This module defines an abstract extension interface.
-
-* neutron.agent.l2.extensions.manager:
-  This module contains a manager that allows to register multiple extensions,
-  and passes handle_port events down to all enabled extensions.
+Reference agents implement QoS functionality using an `L2 agent extension
+<l2_agent_extensions>`_.
 
 * neutron.agent.l2.extensions.qos
   defines QoS L2 agent extension. It receives handle_port and delete_port

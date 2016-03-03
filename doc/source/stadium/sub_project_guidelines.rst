@@ -34,6 +34,11 @@ Code Reuse
 At all times, avoid using any Neutron symbols that are explicitly marked as
 private (those have an underscore at the start of their names).
 
+Try to avoid copy pasting the code from Neutron to extend it. Instead, rely on
+enormous number of different plugin entry points provided by Neutron (L2 agent
+extensions, API extensions, service plugins, core plugins, ML2 mechanism
+drivers, etc.)
+
 Oslo Incubator
 ~~~~~~~~~~~~~~
 
