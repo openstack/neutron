@@ -134,7 +134,7 @@ class TestIpamAnySubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request_bad_gateway(self):
         cfg.CONF.set_override('force_gateway_on_subnet', True)
-        self.assertRaises(ValueError,
+        self.assertRaises(ipam_exc.IpamValueInvalid,
                           ipam_req.AnySubnetRequest,
                           self.tenant_id,
                           self.subnet_id,
@@ -153,7 +153,7 @@ class TestIpamAnySubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request_allocation_pool_wrong_version(self):
         pools = [netaddr.IPRange('0.0.0.4', '0.0.0.5')]
-        self.assertRaises(ValueError,
+        self.assertRaises(ipam_exc.IpamValueInvalid,
                           ipam_req.AnySubnetRequest,
                           self.tenant_id,
                           self.subnet_id,
@@ -163,7 +163,7 @@ class TestIpamAnySubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request_allocation_pool_not_in_net(self):
         pools = [netaddr.IPRange('0.0.0.64', '0.0.0.128')]
-        self.assertRaises(ValueError,
+        self.assertRaises(ipam_exc.IpamValueInvalid,
                           ipam_req.AnySubnetRequest,
                           self.tenant_id,
                           self.subnet_id,
@@ -185,7 +185,7 @@ class TestIpamSpecificSubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request_bad_gateway(self):
         cfg.CONF.set_override('force_gateway_on_subnet', True)
-        self.assertRaises(ValueError,
+        self.assertRaises(ipam_exc.IpamValueInvalid,
                           ipam_req.SpecificSubnetRequest,
                           self.tenant_id,
                           self.subnet_id,
