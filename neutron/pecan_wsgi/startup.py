@@ -19,7 +19,6 @@ from neutron._i18n import _LI, _LW
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import router
-from neutron.extensions import quotasv2
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron import policy
@@ -34,27 +33,22 @@ def _plugin_for_resource(collection):
         return manager.NeutronManager.get_plugin()
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
     # Multiple extensions can map to the same resource. This happens
-    # because of 'attribute' extensions. Due to the way in which neutron
-    # plugins and request dispatching is constructed, it is impossible for
-    # the same resource to be handled by more than one plugin. Therefore
-    # all the extensions mapped to a given resource will necessarily be
-    # implemented by the same plugin.
-    # Also, quotas are peculiar, as they are not handled by any plugin.
-    # However, since plugins list quotas among the extensions they support
-    # this implies that the Pecan server at startup might believe the core
-    # plugin handles quotas too. The following also ensures no plugin is
-    # ever associate wiht the 'quotas' extension.
+    # because of 'attribute' extensions. These extensions may come from
+    # various plugins and only one of them is the primary one responsible
+    # for the resource while the others just append fields to the response
+    # (e.g. timestamps). So we have to find the plugin that supports the
+    # extension and has the getter for the collection.
     ext_res_mappings = dict((ext.get_alias(), collection) for
                             ext in ext_mgr.extensions.values() if
-                            collection in ext.get_extended_resources('2.0') and
-                            collection != quotasv2.RESOURCE_COLLECTION)
+                            collection in ext.get_extended_resources('2.0'))
     LOG.debug("Extension mappings for: %(collection)s: %(aliases)s",
               {'collection': collection, 'aliases': ext_res_mappings.keys()})
     # find the plugin that supports this extension
     for plugin in ext_mgr.plugins.values():
         ext_aliases = ext_mgr.get_plugin_supported_extension_aliases(plugin)
         for alias in ext_aliases:
-            if alias in ext_res_mappings:
+            if (alias in ext_res_mappings and
+                    hasattr(plugin, 'get_%s' % collection)):
                 # This plugin implements this resource
                 return plugin
     LOG.warn(_LW("No plugin found for:%s"), collection)
