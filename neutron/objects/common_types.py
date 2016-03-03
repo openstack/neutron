@@ -141,3 +141,21 @@ class MACAddress(obj_fields.FieldType):
 
 class MACAddressField(obj_fields.AutoTypedField):
     AUTO_TYPE = MACAddress()
+
+
+class IPNetwork(obj_fields.FieldType):
+    """IPNetwork custom field.
+
+    This custom field is different from the one provided by
+    oslo.versionedobjects library: it does not reset string representation for
+    the field.
+    """
+    def coerce(self, obj, attr, value):
+        if not isinstance(value, netaddr.IPNetwork):
+            msg = _("Field value %s is not a netaddr.IPNetwork") % value
+            raise ValueError(msg)
+        return super(IPNetwork, self).coerce(obj, attr, value)
+
+
+class IPNetworkField(obj_fields.AutoTypedField):
+    AUTO_TYPE = IPNetwork()

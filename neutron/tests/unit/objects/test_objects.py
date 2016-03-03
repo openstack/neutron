@@ -29,7 +29,7 @@ object_data = {
     'AddressScope': '1.0-681cb915f973c92350fe2c797dec2ea4',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'PortSecurity': '1.0-cf5b382a0112080ec4e0f23f697c7ab2',
-    'AllowedAddressPair': '1.0-0d7380d7d4a32f72e6ae509af1476297',
+    'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'QosBandwidthLimitRule': '1.1-4e44a8f5c2895ab1278399f87b40a13d',
     'QosDscpMarkingRule': '1.1-0313c6554b34fd10c753cb63d638256c',
     'QosRuleType': '1.1-8a53fef4c6a43839d477a85b787d22ce',

@@ -22,7 +22,7 @@ from neutron._i18n import _, _LW
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
-from neutron.db import allowedaddresspairs_db as addr_pair
+from neutron.db.allowed_address_pairs import models as addr_pair
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg

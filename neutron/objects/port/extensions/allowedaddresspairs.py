@@ -10,12 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
-
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db import allowedaddresspairs_db as models
+from neutron.common import utils
+from neutron.db.allowed_address_pairs import models
 from neutron.objects import base
 from neutron.objects import common_types
 
@@ -32,7 +31,7 @@ class AllowedAddressPair(base.NeutronDbObject):
     fields = {
         'port_id': obj_fields.UUIDField(),
         'mac_address': common_types.MACAddressField(),
-        'ip_address': obj_fields.IPAddressField(),
+        'ip_address': common_types.IPNetworkField(),
     }
 
     # TODO(mhickey): get rid of it once we switch the db model to using
@@ -51,7 +50,11 @@ class AllowedAddressPair(base.NeutronDbObject):
     def modify_fields_from_db(cls, db_obj):
         fields = super(AllowedAddressPair, cls).modify_fields_from_db(db_obj)
         if 'ip_address' in fields:
-            fields['ip_address'] = netaddr.IPAddress(fields['ip_address'])
+            # retain string format as stored in the database
+            fields['ip_address'] = utils.AuthenticIPNetwork(
+                fields['ip_address'])
         if 'mac_address' in fields:
-            fields['mac_address'] = netaddr.EUI(fields['mac_address'])
+            # retain string format as stored in the database
+            fields['mac_address'] = utils.AuthenticEUI(
+                fields['mac_address'])
         return fields
