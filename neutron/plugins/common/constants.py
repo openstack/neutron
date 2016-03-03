@@ -41,6 +41,7 @@ EXT_TO_SERVICE_MAPPING = {
 # Maps default service plugins entry points to their extension aliases
 DEFAULT_SERVICE_PLUGINS = {
     'auto_allocate': 'auto-allocated-topology',
+    'tag': 'tag',
 }
 
 # Service operation status constants
