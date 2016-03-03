@@ -49,15 +49,25 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
         self.assertEqual(self.expected_config.get_config_str(),
                          self.manager.get_conf_on_disk())
 
-    def test_keepalived_respawns(self):
+    def _test_keepalived_respawns(self, normal_exit=True):
         self.manager.spawn()
         process = self.manager.get_process()
+        pid = process.pid
         self.assertTrue(process.active)
 
-        process.disable(sig='15')
+        exit_code = '-15' if normal_exit else '-9'
 
+        # Exit the process, and see that when it comes back
+        # It's indeed a different process
+        utils.execute(['kill', exit_code, pid], run_as_root=True)
         utils.wait_until_true(
             lambda: process.active,
             timeout=5,
             sleep=0.01,
             exception=RuntimeError(_("Keepalived didn't respawn")))
+
+    def test_keepalived_respawns(self):
+        self._test_keepalived_respawns()
+
+    def test_keepalived_respawn_with_unexpected_exit(self):
+        self._test_keepalived_respawns(False)
