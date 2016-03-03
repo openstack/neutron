@@ -14,6 +14,7 @@
 
 from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
+from neutron.db import models_v2
 from neutron.services import service_base
 from neutron.services.timestamp import timestamp_db as ts_db
 
@@ -31,6 +32,15 @@ class TimeStampPlugin(service_base.ServicePluginBase,
                           attributes.SUBNETS, attributes.SUBNETPOOLS]:
             db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
                 resources, [self.extend_resource_dict_timestamp])
+
+        for model in [models_v2.Network, models_v2.Port, models_v2.Subnet,
+                      models_v2.SubnetPool]:
+            db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+                model,
+                "change_since_query",
+                None,
+                None,
+                self._change_since_result_filter_hook)
 
     def get_plugin_type(self):
         return 'timestamp_core'

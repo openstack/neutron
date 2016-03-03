@@ -4,3 +4,6 @@ prelude: >
 features:
   - Add timestamp fields 'created_at', 'updated_at' into neutron core
     resources like network, subnet, port and subnetpool.
+  - And support for querying these resources by changed-since, it will
+    return the resources changed after the specfic time string like
+    YYYY-MM-DDTHH:MM:SS

@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+import time
+
 from oslo_log import log
 from oslo_utils import timeutils
 from sqlalchemy import event
@@ -19,6 +22,7 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LW
+from neutron.common import exceptions as n_exc
 from neutron.db import model_base
 
 LOG = log.getLogger(__name__)
@@ -28,6 +32,36 @@ class TimeStamp_db_mixin(object):
     """Mixin class to add Time Stamp methods."""
 
     ISO8601_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+    def _change_since_result_filter_hook(self, query, filters):
+        # this block is for change_since query
+        # we get the changed_since string from filters.
+        # And translate it from string to datetime type.
+        # Then compare with the timestamp in db which has
+        # datetime type.
+        values = filters and filters.get('changed_since', [])
+        if not values:
+            return query
+        data = filters['changed_since'][0]
+        try:
+            # this block checks queried timestamp format.
+            datetime.datetime.fromtimestamp(time.mktime(
+                time.strptime(data,
+                              self.ISO8601_TIME_FORMAT)))
+        except Exception:
+            msg = _LW("The input changed_since must be in the "
+                      "following format: YYYY-MM-DDTHH:MM:SS")
+            raise n_exc.InvalidInput(error_message=msg)
+        changed_since_string = timeutils.parse_isotime(data)
+        changed_since = (timeutils.
+                         normalize_time(changed_since_string))
+        target_model_class = list(query._mapper_adapter_map.keys())[0]
+        query = query.join(model_base.StandardAttribute,
+                           target_model_class.standard_attr_id ==
+                           model_base.StandardAttribute.id).filter(
+                           model_base.StandardAttribute.updated_at
+                           >= changed_since)
+        return query
 
     def update_timestamp(self, session, context, instances):
         objs_list = session.new.union(session.dirty)
