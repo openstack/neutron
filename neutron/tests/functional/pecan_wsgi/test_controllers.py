@@ -18,6 +18,7 @@ from oslo_serialization import jsonutils
 import pecan
 from pecan import request
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron import manager
@@ -115,23 +116,14 @@ class TestExtensionsController(TestRootController):
     base_url = '/v2.0/extensions'
 
     def _get_supported_extensions(self):
-        supported_extensions = set()
-        for plugin in manager.NeutronManager.get_service_plugins().values():
-            supported_extensions |= set(plugin.supported_extension_aliases)
-        return supported_extensions
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        return ext_mgr.get_supported_extension_aliases()
 
     def test_index(self):
         response = self.app.get(self.base_url)
         self.assertEqual(response.status_int, 200)
         json_body = jsonutils.loads(response.body)
         returned_aliases = [ext['alias'] for ext in json_body['extensions']]
-        # FIXME(salv-orlando): workaround for issue concerning rbac-policies
-        # not showing up in supported_extension_aliases
-        try:
-            returned_aliases.remove('rbac-policies')
-        except ValueError:
-            # The extension was not loaded, do not bother
-            pass
         supported_extensions = self._get_supported_extensions()
         self.assertEqual(supported_extensions, set(returned_aliases))
 
