@@ -12,6 +12,8 @@
 #    under the License.
 #
 
+import functools
+
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -118,6 +120,9 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
 
     # support only _apply_dict_extend_functions supported resources
     # at the moment.
-    for resource in resource_model_map:
+    for resource, model in resource_model_map.items():
         common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
             resource, [_extend_tags_dict])
+        common_db_mixin.CommonDbMixin.register_model_query_hook(
+            model, "tag", None, None,
+            functools.partial(tag_model.apply_tag_filters, model))

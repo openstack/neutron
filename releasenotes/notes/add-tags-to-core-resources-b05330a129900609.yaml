@@ -3,3 +3,5 @@ prelude: >
     Add tag mechanism for network resources
 features:
   - Users can set tags on their network resources.
+  - Networks can be filtered by tags. The supported filters are
+    'tags', 'tags-any', 'not-tags' and 'not-tags-any'.
