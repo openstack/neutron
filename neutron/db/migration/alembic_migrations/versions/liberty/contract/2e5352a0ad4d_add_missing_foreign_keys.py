@@ -37,5 +37,8 @@ TABLE_NAME = 'flavorserviceprofilebindings'
 def upgrade():
     inspector = reflection.Inspector.from_engine(op.get_bind())
     fk_constraints = inspector.get_foreign_keys(TABLE_NAME)
+    for fk in fk_constraints:
+        fk['options']['ondelete'] = 'CASCADE'
+
     migration.remove_foreign_keys(TABLE_NAME, fk_constraints)
     migration.create_foreign_keys(TABLE_NAME, fk_constraints)
