@@ -20,7 +20,6 @@ import contextlib
 import gc
 import os
 import os.path
-import random
 import weakref
 
 import eventlet.timeout
@@ -43,6 +42,7 @@ from neutron.callbacks import registry
 from neutron.common import config
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
+from neutron.common import utils
 from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron import policy
@@ -84,10 +84,10 @@ def get_rand_name(max_length=None, prefix='test'):
         if length <= 0:
             raise ValueError("'max_length' must be bigger than 'len(prefix)'.")
 
-        suffix = ''.join(str(random.randint(0, 9)) for i in range(length))
     else:
-        suffix = hex(random.randint(0x10000000, 0x7fffffff))[2:]
-    return prefix + suffix
+        length = 8
+
+    return prefix + utils.get_random_string(length)
 
 
 def get_rand_device_name(prefix='test'):

@@ -19,11 +19,9 @@
 """Utilities and helper functions."""
 
 import collections
-import datetime
 import decimal
 import errno
 import functools
-import hashlib
 import math
 import multiprocessing
 import os
@@ -249,17 +247,9 @@ def get_random_mac(base_mac):
 
 def get_random_string(length):
     """Get a random hex string of the specified length.
-
-    based on Cinder library
-      cinder/transfer/api.py
     """
-    rndstr = ""
-    random.seed(datetime.datetime.now().microsecond)
-    while len(rndstr) < length:
-        base_str = str(random.random()).encode('utf-8')
-        rndstr += hashlib.sha224(base_str).hexdigest()
 
-    return rndstr[0:length]
+    return "{0:0{1}x}".format(random.getrandbits(length * 4), length)
 
 
 def get_dhcp_agent_device_id(network_id, host):
