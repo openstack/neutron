@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from tempest import config
 from tempest.lib import exceptions as lib_exc
 from tempest import test
@@ -41,7 +42,24 @@ class BgpSpeakerTestJSONBase(base.BaseAdminNetworkTest):
             msg = "BGP Speaker extension is not enabled."
             raise cls.skipException(msg)
 
+        cls.admin_routerports = []
+        cls.admin_floatingips = []
+        cls.admin_routers = []
         cls.ext_net_id = CONF.network.public_network_id
+
+    @classmethod
+    def resource_cleanup(cls):
+        for floatingip in cls.admin_floatingips:
+            cls._try_delete_resource(cls.admin_client.delete_floatingip,
+                                     floatingip['id'])
+        for routerport in cls.admin_routerports:
+            cls._try_delete_resource(
+                      cls.admin_client.remove_router_interface_with_subnet_id,
+                      routerport['router_id'], routerport['subnet_id'])
+        for router in cls.admin_routers:
+            cls._try_delete_resource(cls.admin_client.delete_router,
+                                     router['id'])
+        super(BgpSpeakerTestJSONBase, cls).resource_cleanup()
 
     def create_bgp_speaker(self, auto_delete=True, **args):
         data = {'bgp_speaker': args}
@@ -171,3 +189,94 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         bgp_speaker = self.admin_client.get_bgp_speaker(bgp_speaker_id)
         network_list = bgp_speaker['bgp-speaker']['networks']
         self.assertTrue(not network_list)
+
+    @test.idempotent_id('5bef22ad-5e70-4f7b-937a-dc1944642996')
+    def test_get_advertised_routes_null_address_scope(self):
+        self.useFixture(fixtures.LockFixture('gateway_network_binding'))
+        bgp_speaker = self.create_bgp_speaker(**self.default_bgp_speaker_args)
+        bgp_speaker_id = bgp_speaker['bgp-speaker']['id']
+        self.admin_client.add_bgp_gateway_network(bgp_speaker_id,
+                                                  self.ext_net_id)
+        routes = self.admin_client.get_bgp_advertised_routes(bgp_speaker_id)
+        self.assertEqual(0, len(routes['advertised_routes']))
+
+    @test.idempotent_id('cae9cdb1-ad65-423c-9604-d4cd0073616e')
+    def test_get_advertised_routes_floating_ips(self):
+        self.useFixture(fixtures.LockFixture('gateway_network_binding'))
+        bgp_speaker = self.create_bgp_speaker(**self.default_bgp_speaker_args)
+        bgp_speaker_id = bgp_speaker['bgp-speaker']['id']
+        self.admin_client.add_bgp_gateway_network(bgp_speaker_id,
+                                                  self.ext_net_id)
+        tenant_net = self.create_network()
+        tenant_subnet = self.create_subnet(tenant_net)
+        ext_gw_info = {'network_id': self.ext_net_id}
+        router = self.admin_client.create_router(
+                                            'my-router',
+                                            external_gateway_info=ext_gw_info,
+                                            admin_state_up=True,
+                                            distributed=False)
+        self.admin_routers.append(router['router'])
+        self.admin_client.add_router_interface_with_subnet_id(
+                                                       router['router']['id'],
+                                                       tenant_subnet['id'])
+        self.admin_routerports.append({'router_id': router['router']['id'],
+                                       'subnet_id': tenant_subnet['id']})
+        tenant_port = self.create_port(tenant_net)
+        floatingip = self.create_floatingip(self.ext_net_id)
+        self.admin_floatingips.append(floatingip)
+        self.client.update_floatingip(floatingip['id'],
+                                      port_id=tenant_port['id'])
+        routes = self.admin_client.get_bgp_advertised_routes(bgp_speaker_id)
+        self.assertEqual(1, len(routes['advertised_routes']))
+        self.assertEqual(floatingip['floating_ip_address'] + '/32',
+                         routes['advertised_routes'][0]['destination'])
+
+    @test.idempotent_id('c9ad566e-fe8f-4559-8303-bbad9062a30c')
+    def test_get_advertised_routes_tenant_networks(self):
+        self.useFixture(fixtures.LockFixture('gateway_network_binding'))
+        addr_scope = self.create_address_scope('my-scope', ip_version=4)
+        ext_net = self.create_shared_network(**{'router:external': True})
+        tenant_net = self.create_network()
+        ext_subnetpool = self.create_subnetpool(
+                                            'test-pool-ext',
+                                            is_admin=True,
+                                            default_prefixlen=24,
+                                            address_scope_id=addr_scope['id'],
+                                            prefixes=['8.0.0.0/8'])
+        tenant_subnetpool = self.create_subnetpool(
+                                            'tenant-test-pool',
+                                            default_prefixlen=25,
+                                            address_scope_id=addr_scope['id'],
+                                            prefixes=['10.10.0.0/16'])
+        self.create_subnet({'id': ext_net['id']},
+                           cidr=netaddr.IPNetwork('8.0.0.0/24'),
+                           ip_version=4,
+                           client=self.admin_client,
+                           subnetpool_id=ext_subnetpool['id'])
+        tenant_subnet = self.create_subnet(
+                                       {'id': tenant_net['id']},
+                                       cidr=netaddr.IPNetwork('10.10.0.0/24'),
+                                       ip_version=4,
+                                       subnetpool_id=tenant_subnetpool['id'])
+        ext_gw_info = {'network_id': ext_net['id']}
+        router = self.admin_client.create_router(
+                                            'my-router',
+                                            external_gateway_info=ext_gw_info,
+                                            distributed=False)['router']
+        self.admin_routers.append(router)
+        self.admin_client.add_router_interface_with_subnet_id(
+                                                       router['id'],
+                                                       tenant_subnet['id'])
+        self.admin_routerports.append({'router_id': router['id'],
+                                       'subnet_id': tenant_subnet['id']})
+        bgp_speaker = self.create_bgp_speaker(**self.default_bgp_speaker_args)
+        bgp_speaker_id = bgp_speaker['bgp-speaker']['id']
+        self.admin_client.add_bgp_gateway_network(bgp_speaker_id,
+                                                  ext_net['id'])
+        routes = self.admin_client.get_bgp_advertised_routes(bgp_speaker_id)
+        self.assertEqual(1, len(routes['advertised_routes']))
+        self.assertEqual(tenant_subnet['cidr'],
+                         routes['advertised_routes'][0]['destination'])
+        fixed_ip = router['external_gateway_info']['external_fixed_ips'][0]
+        self.assertEqual(fixed_ip['ip_address'],
+                         routes['advertised_routes'][0]['next_hop'])

@@ -318,7 +318,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_subnet(self, fmt, net_id, cidr,
                        expected_res_status=None, **kwargs):
         data = {'subnet': {'network_id': net_id,
-                           'cidr': cidr,
                            'ip_version': 4,
                            'tenant_id': self._tenant_id}}
         if cidr:
