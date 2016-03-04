@@ -9,15 +9,19 @@
 # from neutron master via a hard-coded URL. That last case should only
 # happen with devs running unit tests locally.
 
-# From the tox.ini config page:
-# install_command=ARGV
-# default:
-# pip install {opts} {packages}
-
 ZUUL_CLONER=/usr/zuul-env/bin/zuul-cloner
 tempest_installed=$(python -c "import tempest" 2>/dev/null ; echo $?)
 
 set -e
+
+install_cmd="pip install"
+
+CONSTRAINTS_FILE=$1
+shift
+
+if [ "$CONSTRAINTS_FILE" -ne "unconstrained" ]; then
+    install_cmd="$install_cmd -c$CONSTRAINTS_FILE"
+fi
 
 if [ $tempest_installed -eq 0 ]; then
     echo "Tempest already installed; using existing package"
@@ -28,10 +32,10 @@ elif [ -x "$ZUUL_CLONER" ]; then
         /opt/git \
         git://git.openstack.org \
         openstack/tempest
-    pip install -e openstack/tempest
+    $install_cmd -e openstack/tempest
     popd
 else
-    pip install -U -egit+https://git.openstack.org/openstack/tempest#egg=tempest
+    $install_cmd -U -egit+https://git.openstack.org/openstack/tempest#egg=tempest
 fi
 
-pip install -U $*
+$install_cmd -U $*
