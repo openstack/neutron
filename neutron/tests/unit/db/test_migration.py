@@ -325,6 +325,24 @@ class TestCli(base.BaseTestCase):
               'sql': False}]
         )
 
+    @mock.patch('alembic.script.ScriptDirectory.walk_revisions')
+    def test_upgrade_milestone_expand_before_contract(self, walk_mock):
+        c_revs = [FakeRevision(labels={cli.CONTRACT_BRANCH}) for r in range(5)]
+        c_revs[1].module.neutron_milestone = [migration.LIBERTY]
+        e_revs = [FakeRevision(labels={cli.EXPAND_BRANCH}) for r in range(5)]
+        e_revs[3].module.neutron_milestone = [migration.LIBERTY]
+        walk_mock.return_value = c_revs + e_revs
+        self._main_test_helper(
+            ['prog', '--subproject', 'neutron', 'upgrade', 'liberty'],
+            'upgrade',
+            [{'desc': cli.EXPAND_BRANCH,
+              'revision': e_revs[3].revision,
+              'sql': False},
+             {'desc': cli.CONTRACT_BRANCH,
+              'revision': c_revs[1].revision,
+              'sql': False}]
+        )
+
     def assert_command_fails(self, command):
         # Avoid cluttering stdout with argparse error messages
         mock.patch('argparse.ArgumentParser._print_message').start()

@@ -209,7 +209,12 @@ def do_upgrade(config, cmd):
             revision = 'heads'
 
     if revision in migration.NEUTRON_MILESTONES:
-        revisions = _find_milestone_revisions(config, revision, branch)
+        expand_revisions = _find_milestone_revisions(config, revision,
+                                                     EXPAND_BRANCH)
+        contract_revisions = _find_milestone_revisions(config, revision,
+                                                       CONTRACT_BRANCH)
+        # Expand revisions must be run before contract revisions
+        revisions = expand_revisions + contract_revisions
     else:
         revisions = [(revision, branch)]
 
