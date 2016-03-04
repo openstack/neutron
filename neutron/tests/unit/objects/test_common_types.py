@@ -81,6 +81,35 @@ class DscpMarkFieldTest(test_base.BaseTestCase, TestField):
             self.assertEqual("%s" % in_val, self.field.stringify(in_val))
 
 
+class IPNetworkPrefixLenFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IPNetworkPrefixLenFieldTest, self).setUp()
+        self.field = common_types.IPNetworkPrefixLenField()
+        self.coerce_good_values = [(x, x) for x in (0, 32, 128, 42)]
+        self.coerce_bad_values = ['len', '1', 129, -1]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class IPVersionEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IPVersionEnumFieldTest, self).setUp()
+        self.field = common_types.IPVersionEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.IP_ALLOWED_VERSIONS]
+        self.coerce_bad_values = [5, 0, -1, 'str']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
 class FlowDirectionEnumFieldTest(test_base.BaseTestCase, TestField):
     def setUp(self):
         super(FlowDirectionEnumFieldTest, self).setUp()

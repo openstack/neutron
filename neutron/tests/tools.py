@@ -24,10 +24,12 @@ import warnings
 
 import fixtures
 import mock
+import netaddr
 import six
 
 import neutron
 from neutron.api.v2 import attributes
+from neutron.common import constants
 
 
 class AttributeMapMemento(fixtures.Fixture):
@@ -230,6 +232,17 @@ def get_random_integer(range_begin=0, range_end=1000):
     return random.randint(range_begin, range_end)
 
 
+def get_random_prefixlen(version=4):
+    maxlen = constants.IPV4_MAX_PREFIXLEN
+    if version == 6:
+        maxlen = constants.IPV6_MAX_PREFIXLEN
+    return random.randint(0, maxlen)
+
+
+def get_random_ip_version():
+    return random.choice(constants.IP_ALLOWED_VERSIONS)
+
+
 def get_random_cidr(version=4):
     if version == 4:
         return '10.%d.%d.0/%d' % (random.randint(3, 254),
@@ -245,6 +258,10 @@ def get_random_mac():
         random.randint(0x00, 0xff),
         random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x: "%02x" % x, mac))
+
+
+def get_random_ip_network(version=4):
+    return netaddr.IPNetwork(get_random_cidr(version=version))
 
 
 def is_bsd():

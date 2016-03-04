@@ -228,6 +228,11 @@ EGRESS_DIRECTION = 'egress'
 VALID_DIRECTIONS = (INGRESS_DIRECTION, EGRESS_DIRECTION)
 VALID_ETHERTYPES = (lib_constants.IPv4, lib_constants.IPv6)
 
+IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
+
+IPV4_MAX_PREFIXLEN = 32
+IPV6_MAX_PREFIXLEN = 128
+
 # Neutron-lib migration shim. This will wrap any constants that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.
