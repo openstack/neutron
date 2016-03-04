@@ -33,34 +33,33 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
         self.model_map = {
             self._test_class.db_model: self.db_objs,
+            self._test_class.rbac_db_model: [],
+            self._test_class.port_binding_model: [],
+            self._test_class.network_binding_model: [],
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules}
+
+        self.get_object = mock.patch.object(
+            db_api, 'get_object', side_effect=self.fake_get_object).start()
+        self.get_objects = mock.patch.object(
+            db_api, 'get_objects', side_effect=self.fake_get_objects).start()
 
     def fake_get_objects(self, context, model, **kwargs):
         return self.model_map[model]
 
-    def fake_get_object(self, context, model, id):
+    def fake_get_object(self, context, model, **kwargs):
         objects = self.model_map[model]
-        return [obj for obj in objects if obj['id'] == id][0]
+        if not objects:
+            return None
+        return [obj for obj in objects if obj['id'] == kwargs['id']][0]
 
     def test_get_objects(self):
         admin_context = self.context.elevated()
-        with mock.patch.object(
-            db_api, 'get_objects',
-            side_effect=self.fake_get_objects) as get_objects_mock:
-
-            with mock.patch.object(
-                db_api, 'get_object',
-                side_effect=self.fake_get_object):
-
-                with mock.patch.object(
-                    self.context,
-                    'elevated',
-                    return_value=admin_context) as context_mock:
-
-                    objs = self._test_class.get_objects(self.context)
-                    context_mock.assert_called_once_with()
-            get_objects_mock.assert_any_call(
-                admin_context, self._test_class.db_model)
+        with mock.patch.object(self.context, 'elevated',
+                               return_value=admin_context) as context_mock:
+            objs = self._test_class.get_objects(self.context)
+        context_mock.assert_called_once_with()
+        self.get_objects.assert_any_call(
+            admin_context, self._test_class.db_model)
         self._validate_objects(self.db_objs, objs)
 
     def test_get_objects_valid_fields(self):
