@@ -666,7 +666,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         subnetpool_id = self._get_subnetpool_id(context, s)
         if not subnetpool_id and not has_cidr:
-            # TODO(carl_baldwin): allow requests asking for 'default' pools
             msg = _('a subnetpool must be specified in the absence of a cidr')
             raise n_exc.BadRequest(resource='subnets', msg=msg)
 
