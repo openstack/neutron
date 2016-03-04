@@ -46,8 +46,7 @@ class NetworkClientJSON(service_client.ServiceClient):
 
         # The following list represents resource names that do not require
         # changing underscore to a hyphen
-        hyphen_exceptions = ["health_monitors", "firewall_rules",
-                             "firewall_policies", "service_profiles"]
+        hyphen_exceptions = ["health_monitors", "service_profiles"]
         # the following map is used to construct proper URI
         # for the given neutron resource
         service_resource_prefix_map = {
@@ -65,9 +64,6 @@ class NetworkClientJSON(service_client.ServiceClient):
             'ipsec-site-connections': 'vpn',
             'metering_labels': 'metering',
             'metering_label_rules': 'metering',
-            'firewall_rules': 'fw',
-            'firewall_policies': 'fw',
-            'firewalls': 'fw',
             'policies': 'qos',
             'bandwidth_limit_rules': 'qos',
             'rule_types': 'qos',
@@ -96,7 +92,6 @@ class NetworkClientJSON(service_client.ServiceClient):
             'ikepolicy': 'ikepolicies',
             'ipsec_site_connection': 'ipsec-site-connections',
             'quotas': 'quotas',
-            'firewall_policy': 'firewall_policies',
             'qos_policy': 'policies',
             'rbac_policy': 'rbac_policies',
         }
@@ -599,33 +594,6 @@ class NetworkClientJSON(service_client.ServiceClient):
         uri = '%s/agents/%s/dhcp-networks' % (self.uri_prefix, agent_id)
         resp, body = self.post(uri, body)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
-
-    def insert_firewall_rule_in_policy(self, firewall_policy_id,
-                                       firewall_rule_id, insert_after="",
-                                       insert_before=""):
-        uri = '%s/fw/firewall_policies/%s/insert_rule' % (self.uri_prefix,
-                                                          firewall_policy_id)
-        body = {
-            "firewall_rule_id": firewall_rule_id,
-            "insert_after": insert_after,
-            "insert_before": insert_before
-        }
-        body = json.dumps(body)
-        resp, body = self.put(uri, body)
-        self.expected_success(200, resp.status)
-        body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
-
-    def remove_firewall_rule_from_policy(self, firewall_policy_id,
-                                         firewall_rule_id):
-        uri = '%s/fw/firewall_policies/%s/remove_rule' % (self.uri_prefix,
-                                                          firewall_policy_id)
-        update_body = {"firewall_rule_id": firewall_rule_id}
-        update_body = json.dumps(update_body)
-        resp, body = self.put(uri, update_body)
-        self.expected_success(200, resp.status)
         body = json.loads(body)
         return service_client.ResponseBody(resp, body)
 
