@@ -32,7 +32,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
         return self._plugin_loaded
 
     def _get_policy_obj(self, context, policy_id):
-        obj = policy_object.QosPolicy.get_by_id(context, policy_id)
+        obj = policy_object.QosPolicy.get_object(context, id=policy_id)
         if obj is None:
             raise n_exc.QosPolicyNotFound(policy_id=policy_id)
         return obj

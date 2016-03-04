@@ -144,7 +144,7 @@ effort.
 
 Every NeutronObject supports the following operations:
 
-* get_by_id: returns specific object that is represented by the id passed as an
+* get_object: returns specific object that is represented by the id passed as an
   argument.
 * get_objects: returns all objects of the type, potentially with a filter
   applied.

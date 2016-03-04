@@ -27,6 +27,7 @@ from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.db.rbac_db_models import QosPolicyRBAC
 from neutron.objects import base
+from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
 
@@ -93,12 +94,13 @@ class QosPolicy(base.NeutronDbObject):
                                          rule_id=rule_id)
 
     @classmethod
-    def get_by_id(cls, context, id):
+    def get_object(cls, context, **kwargs):
         # We want to get the policy regardless of its tenant id. We'll make
         # sure the tenant has permission to access the policy later on.
         admin_context = context.elevated()
         with db_api.autonested_transaction(admin_context.session):
-            policy_obj = super(QosPolicy, cls).get_by_id(admin_context, id)
+            policy_obj = super(QosPolicy, cls).get_object(admin_context,
+                                                          **kwargs)
             if (not policy_obj or
                 not cls.is_accessible(context, policy_obj)):
                 return
@@ -125,9 +127,9 @@ class QosPolicy(base.NeutronDbObject):
     @classmethod
     def _get_object_policy(cls, context, model, **kwargs):
         with db_api.autonested_transaction(context.session):
-            binding_db_obj = db_api.get_object(context, model, **kwargs)
+            binding_db_obj = obj_db_api.get_object(context, model, **kwargs)
             if binding_db_obj:
-                return cls.get_by_id(context, binding_db_obj['policy_id'])
+                return cls.get_object(context, id=binding_db_obj['policy_id'])
 
     @classmethod
     def get_network_policy(cls, context, network_id):
@@ -148,8 +150,8 @@ class QosPolicy(base.NeutronDbObject):
     def delete(self):
         with db_api.autonested_transaction(self._context.session):
             for object_type, model in self.binding_models.items():
-                binding_db_obj = db_api.get_object(self._context, model,
-                                                   policy_id=self.id)
+                binding_db_obj = obj_db_api.get_object(self._context, model,
+                                                       policy_id=self.id)
                 if binding_db_obj:
                     raise exceptions.QosPolicyInUse(
                         policy_id=self.id,

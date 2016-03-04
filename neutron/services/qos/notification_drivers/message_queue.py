@@ -33,7 +33,7 @@ def _get_qos_policy_cb(resource, policy_id, **kwargs):
         )
         return
 
-    policy = policy_object.QosPolicy.get_by_id(context, policy_id)
+    policy = policy_object.QosPolicy.get_object(context, id=policy_id)
     return policy
 
 
