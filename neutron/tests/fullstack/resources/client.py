@@ -133,3 +133,17 @@ class ClientFixture(fixtures.Fixture):
                         qos_policy_id)
 
         return rule['bandwidth_limit_rule']
+
+    def create_dscp_marking_rule(self, tenant_id, qos_policy_id, dscp_mark=0):
+        rule = {'tenant_id': tenant_id}
+        if dscp_mark:
+            rule['dscp_mark'] = dscp_mark
+        rule = self.client.create_dscp_marking_rule(
+            policy=qos_policy_id,
+            body={'dscp_marking_rule': rule})
+
+        self.addCleanup(_safe_method(self.client.delete_dscp_marking_rule),
+                        rule['dscp_marking_rule']['id'],
+                        qos_policy_id)
+
+        return rule['dscp_marking_rule']
