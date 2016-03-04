@@ -139,7 +139,10 @@ class RpcWorker(worker.NeutronWorker):
         super(RpcWorker, self).start()
         for plugin in self._plugins:
             if hasattr(plugin, self.start_listeners_method):
-                servers = getattr(plugin, self.start_listeners_method)()
+                try:
+                    servers = getattr(plugin, self.start_listeners_method)()
+                except NotImplementedError:
+                    continue
                 self._servers.extend(servers)
 
     def wait(self):
