@@ -277,8 +277,8 @@ If the bug report is sound, move next:
   issue, make sure that there is at least one patch that 'Closes' the bug
   or document/question what it takes to mark the bug as fixed.
 * If the bug indicates test or gate failure, look at the failures for that
-  test over time using `Openstack Health <http://status.openstack.org/openstack-health/#/>`_
-  or `Openstack Logstash <http://logstash.openstack.org/#/dashboard/file/logstash.json>`_.
+  test over time using `OpenStack Health <http://status.openstack.org/openstack-health/#/>`_
+  or `OpenStack Logstash <http://logstash.openstack.org/#/dashboard/file/logstash.json>`_.
   This can help to validate whether the bug identifies an issue that is
   occurring all of the time, some of the time, or only for the bug submitter.
 * If the bug is the result of a misuse of the system, mark the bug either
