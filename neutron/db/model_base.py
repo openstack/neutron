@@ -79,7 +79,7 @@ class NeutronBaseV2(NeutronBase):
 BASEV2 = declarative.declarative_base(cls=NeutronBaseV2)
 
 
-class StandardAttribute(BASEV2):
+class StandardAttribute(BASEV2, models.TimestampMixin):
     """Common table to associate all Neutron API resources.
 
     By having Neutron objects related to this table, we can associate new
