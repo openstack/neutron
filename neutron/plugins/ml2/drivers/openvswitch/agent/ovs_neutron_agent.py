@@ -1650,6 +1650,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
 
     def tunnel_sync(self):
+        LOG.info(_LI("Configuring tunnel endpoints to other OVS agents"))
+
         try:
             for tunnel_type in self.tunnel_types:
                 details = self.plugin_rpc.tunnel_sync(self.context,
@@ -1920,11 +1922,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 continue
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
-                LOG.info(_LI("Agent tunnel out of sync with plugin!"))
                 try:
                     tunnel_sync = self.tunnel_sync()
                 except Exception:
-                    LOG.exception(_LE("Error while synchronizing tunnels"))
+                    LOG.exception(
+                            _LE("Error while configuring tunnel endpoints"))
                     tunnel_sync = True
             ovs_restarted |= (ovs_status == constants.OVS_RESTARTED)
             devices_need_retry = (any(failed_devices.values()) or
