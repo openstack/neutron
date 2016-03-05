@@ -154,6 +154,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             namespace=snat_ns.name,
             use_ipv6=self.use_ipv6)
 
+        self._initialize_address_scope_iptables(self.snat_iptables_manager)
+
     def _create_snat_namespace(self):
         # TODO(mlavalle): in the near future, this method should contain the
         # code in the L3 agent that creates a gateway for a dvr. The first step
