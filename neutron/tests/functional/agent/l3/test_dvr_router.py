@@ -17,6 +17,7 @@ import functools
 
 import mock
 import netaddr
+import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_snat_ns
@@ -26,6 +27,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants as l3_constants
 from neutron.extensions import portbindings
 from neutron.tests.common import l3_test_common
+from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
 
@@ -269,30 +271,35 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # Add snat port information to the router
         snat_port_list = router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
         if not snat_port_list and internal_ports:
-            # Get values from internal port
-            port = internal_ports[0]
-            fixed_ip = port['fixed_ips'][0]
-            snat_subnet = port['subnets'][0]
-            port_ip = fixed_ip['ip_address']
-            # Pick an ip address which is not the same as port_ip
-            snat_ip = str(netaddr.IPAddress(port_ip) + 5)
-            # Add the info to router as the first snat port
-            # in the list of snat ports
-            prefixlen = netaddr.IPNetwork(snat_subnet['cidr']).prefixlen
-            router[l3_constants.SNAT_ROUTER_INTF_KEY] = [
-                {'subnets': [
-                    {'cidr': snat_subnet['cidr'],
-                     'gateway_ip': snat_subnet['gateway_ip'],
-                     'id': fixed_ip['subnet_id']}],
-                 'network_id': port['network_id'],
-                 'device_owner': l3_constants.DEVICE_OWNER_ROUTER_SNAT,
-                 'mac_address': 'fa:16:3e:80:8d:89',
-                 'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
-                                'ip_address': snat_ip,
-                                'prefixlen': prefixlen}],
-                 'id': framework._uuid(),
-                 'device_id': framework._uuid()}
-            ]
+            router[l3_constants.SNAT_ROUTER_INTF_KEY] = []
+            for port in internal_ports:
+                # Get values from internal port
+                fixed_ip = port['fixed_ips'][0]
+                snat_subnet = port['subnets'][0]
+                port_ip = fixed_ip['ip_address']
+                # Pick an ip address which is not the same as port_ip
+                snat_ip = str(netaddr.IPAddress(port_ip) + 5)
+                # Add the info to router as the first snat port
+                # in the list of snat ports
+                prefixlen = netaddr.IPNetwork(snat_subnet['cidr']).prefixlen
+                snat_router_port = {
+                    'subnets': [
+                        {'cidr': snat_subnet['cidr'],
+                         'gateway_ip': snat_subnet['gateway_ip'],
+                         'id': fixed_ip['subnet_id']}],
+                    'network_id': port['network_id'],
+                    'device_owner': l3_constants.DEVICE_OWNER_ROUTER_SNAT,
+                    'mac_address': 'fa:16:3e:80:8d:89',
+                    'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                                   'ip_address': snat_ip,
+                                   'prefixlen': prefixlen}],
+                    'id': framework._uuid(),
+                    'device_id': framework._uuid()}
+                # Get the address scope if there is any
+                if 'address_scopes' in port:
+                    snat_router_port['address_scopes'] = port['address_scopes']
+                router[l3_constants.SNAT_ROUTER_INTF_KEY].append(
+                    snat_router_port)
 
     def _assert_dvr_external_device(self, router):
         external_port = router.get_ex_gw_port()
@@ -700,3 +707,109 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(self._namespace_exists(fip_ns_name))
         self.assertTrue(fip_ns.destroyed)
         self.assertTrue(fip_ns.unsubscribe.called)
+
+    def _setup_address_scope(self, internal_address_scope1,
+                             internal_address_scope2, gw_address_scope=None):
+        router_info = self.generate_dvr_router_info(enable_snat=True)
+        address_scope1 = {
+            str(l3_constants.IP_VERSION_4): internal_address_scope1}
+        address_scope2 = {
+            str(l3_constants.IP_VERSION_4): internal_address_scope2}
+        if gw_address_scope:
+            router_info['gw_port']['address_scopes'] = {
+                str(l3_constants.IP_VERSION_4): gw_address_scope}
+        router_info[l3_constants.INTERFACE_KEY][0]['address_scopes'] = (
+            address_scope1)
+        router_info[l3_constants.INTERFACE_KEY][1]['address_scopes'] = (
+            address_scope2)
+        # Renew the address scope
+        router_info[l3_constants.SNAT_ROUTER_INTF_KEY] = []
+        self._add_snat_port_info_to_router(
+            router_info, router_info[l3_constants.INTERFACE_KEY])
+
+        router = self.manage_router(self.agent, router_info)
+        router_ip_cidr1 = self._port_first_ip_cidr(router.internal_ports[0])
+        router_ip1 = router_ip_cidr1.partition('/')[0]
+        router_ip_cidr2 = self._port_first_ip_cidr(router.internal_ports[1])
+        router_ip2 = router_ip_cidr2.partition('/')[0]
+
+        br_int = framework.get_ovs_bridge(
+            self.agent.conf.ovs_integration_bridge)
+        test_machine1 = self.useFixture(
+            machine_fixtures.FakeMachine(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr1, 10),
+                router_ip1))
+        test_machine2 = self.useFixture(
+            machine_fixtures.FakeMachine(
+                br_int,
+                net_helpers.increment_ip_cidr(router_ip_cidr2, 10),
+                router_ip2))
+
+        return test_machine1, test_machine2, router
+
+    def test_connection_from_same_address_scope(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        test_machine1, test_machine2, _ = self._setup_address_scope(
+            'scope1', 'scope1')
+        # Internal networks that are in the same address scope can connected
+        # each other
+        net_helpers.assert_ping(test_machine1.namespace, test_machine2.ip, 5)
+        net_helpers.assert_ping(test_machine2.namespace, test_machine1.ip, 5)
+
+    def test_connection_from_diff_address_scope(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        test_machine1, test_machine2, _ = self._setup_address_scope(
+            'scope1', 'scope2')
+        # Internal networks that are not in the same address scope should
+        # not reach each other
+        test_machine1.assert_no_ping(test_machine2.ip)
+        test_machine2.assert_no_ping(test_machine1.ip)
+
+    @testtools.skip('bug/1543885')
+    def test_fip_connection_for_address_scope(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        (machine_same_scope, machine_diff_scope,
+            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
+
+        router.router[l3_constants.FLOATINGIP_KEY] = []
+        fip_same_scope = '19.4.4.10'
+        self._add_fip(router, fip_same_scope,
+                      fixed_address=machine_same_scope.ip,
+                      host=self.agent.conf.host,
+                      fixed_ip_address_scope='scope1')
+        fip_diff_scope = '19.4.4.11'
+        self._add_fip(router, fip_diff_scope,
+                      fixed_address=machine_diff_scope.ip,
+                      host=self.agent.conf.host,
+                      fixed_ip_address_scope='scope2')
+        router.process(self.agent)
+
+        br_ex = framework.get_ovs_bridge(
+            self.agent.conf.external_network_bridge)
+        src_machine = self.useFixture(
+            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24'))
+        # Floating ip should work no matter of address scope
+        net_helpers.assert_ping(src_machine.namespace, fip_same_scope, 5)
+        net_helpers.assert_ping(src_machine.namespace, fip_diff_scope, 5)
+
+    def test_direct_route_for_address_scope(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        (machine_same_scope, machine_diff_scope,
+            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
+
+        gw_port = router.get_ex_gw_port()
+        gw_ip = self._port_first_ip_cidr(gw_port).partition('/')[0]
+        br_ex = framework.get_ovs_bridge(
+            self.agent.conf.external_network_bridge)
+
+        src_machine = self.useFixture(
+            machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24', gw_ip))
+        # For the internal networks that are in the same address scope as
+        # external network, they can directly route to external network
+        net_helpers.assert_ping(
+            src_machine.namespace, machine_same_scope.ip, 5)
+        # For the internal networks that are not in the same address scope as
+        # external networks. SNAT will be used. Direct route will not work
+        # here.
+        src_machine.assert_no_ping(machine_diff_scope.ip)
