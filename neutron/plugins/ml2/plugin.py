@@ -1462,8 +1462,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                            filter(models_v2.Port.id.startswith(port_id)).
                            one())
             except sa_exc.NoResultFound:
-                LOG.debug("No ports have port_id starting with %s",
-                          port_id)
+                LOG.info(_LI("No ports have port_id starting with %s"),
+                         port_id)
                 return
             except sa_exc.MultipleResultsFound:
                 LOG.error(_LE("Multiple ports have port_id starting with %s"),

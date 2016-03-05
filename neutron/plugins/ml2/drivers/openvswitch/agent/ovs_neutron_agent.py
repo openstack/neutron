@@ -1491,7 +1491,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                           details['network_id'])
                 self.ext_manager.handle_port(self.context, details)
             else:
-                LOG.warn(_LW("Device %s not defined on plugin"), device)
+                LOG.warning(
+                    _LW("Device %s not defined on plugin or binding failed"),
+                    device)
                 if (port and port.ofport != -1):
                     self.port_dead(port)
         return (skipped_devices, need_binding_devices,
