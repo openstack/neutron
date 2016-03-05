@@ -1,6 +1,6 @@
 ---
 prelude: >
-  - The ML2 plug-in supports calculating the MTU for instances
+    The ML2 plug-in supports calculating the MTU for instances
     using overlay networks by subtracting the overlay protocol
     overhead from the value of 'path_mtu', ideally the physical
     (underlying) network MTU, and providing the smaller value to

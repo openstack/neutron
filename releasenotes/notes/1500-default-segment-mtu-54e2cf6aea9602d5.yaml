@@ -1,6 +1,6 @@
 ---
 prelude: >
-  - The ML2 plug-in supports calculating the MTU for networks
+    The ML2 plug-in supports calculating the MTU for networks
     that are realized as flat or VLAN networks, by consulting the
     'segment_mtu' option. Prior to Mitaka, 'segment_mtu' defaults to 0 which
     disables this feature. This creates slightly confusing API results when
