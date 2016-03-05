@@ -55,9 +55,6 @@ log_translation_hint = re.compile(
     '|'.join('(?:%s)' % _regex_for_level(level, hint)
              for level, hint in six.iteritems(_all_log_levels)))
 
-oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
-oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
-oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
 contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
 
 
@@ -131,24 +128,6 @@ def check_assert_called_once_with(logical_line, filename):
             msg = ("N322: Possible use of no-op mock method. "
                    "please use assert_has_calls.")
             yield (0, msg)
-
-
-def check_oslo_namespace_imports(logical_line):
-    if re.match(oslo_namespace_imports_from_dot, logical_line):
-        msg = ("N323: '%s' must be used instead of '%s'.") % (
-               logical_line.replace('oslo.', 'oslo_'),
-               logical_line)
-        yield(0, msg)
-    elif re.match(oslo_namespace_imports_from_root, logical_line):
-        msg = ("N323: '%s' must be used instead of '%s'.") % (
-               logical_line.replace('from oslo import ', 'import oslo_'),
-               logical_line)
-        yield(0, msg)
-    elif re.match(oslo_namespace_imports_dot, logical_line):
-        msg = ("N323: '%s' must be used instead of '%s'.") % (
-               logical_line.replace('import', 'from').replace('.', ' import '),
-               logical_line)
-        yield(0, msg)
 
 
 def check_no_contextlib_nested(logical_line, filename):
@@ -244,7 +223,6 @@ def factory(register):
     register(use_jsonutils)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
-    register(check_oslo_namespace_imports)
     register(check_no_contextlib_nested)
     register(check_python3_xrange)
     register(check_no_basestring)
