@@ -19,7 +19,6 @@ from neutron._i18n import _
 
 BGP_DRIVER_OPTS = [
     cfg.StrOpt('bgp_speaker_driver',
-               default=None,
                help=_("BGP speaker driver class to be instantiated."))
 ]
 

@@ -1,5 +1,3 @@
-RYU_BGP_SPEAKER_DRIVER="neutron.services.bgp.driver.ryu.driver.RyuBgpDriver"
-
 function configure_bgp_service_plugin {
     _neutron_service_plugin_class_add "bgp"
 }
