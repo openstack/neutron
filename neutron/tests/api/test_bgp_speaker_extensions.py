@@ -16,6 +16,7 @@ import netaddr
 from tempest import config
 from tempest.lib import exceptions as lib_exc
 from tempest import test
+import testtools
 
 from neutron.tests.api import base
 from tempest.common import tempest_fixtures as fixtures
@@ -160,6 +161,7 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         bgp_peers_list = bgp_speaker['bgp-speaker']['peers']
         self.assertTrue(not bgp_peers_list)
 
+    @testtools.skip('bug/1553374')
     @test.idempotent_id('23c8eb37-d10d-4f43-b2e7-6542cb6a4405')
     def test_add_gateway_network(self):
         self.useFixture(fixtures.LockFixture('gateway_network_binding'))
@@ -173,6 +175,7 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         self.assertEqual(1, len(network_list))
         self.assertTrue(self.ext_net_id in network_list)
 
+    @testtools.skip('bug/1553374')
     @test.idempotent_id('6cfc7137-0d99-4a3d-826c-9d1a3a1767b0')
     def test_remove_gateway_network(self):
         self.useFixture(fixtures.LockFixture('gateway_network_binding'))
@@ -190,6 +193,7 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         network_list = bgp_speaker['bgp-speaker']['networks']
         self.assertTrue(not network_list)
 
+    @testtools.skip('bug/1553374')
     @test.idempotent_id('5bef22ad-5e70-4f7b-937a-dc1944642996')
     def test_get_advertised_routes_null_address_scope(self):
         self.useFixture(fixtures.LockFixture('gateway_network_binding'))
@@ -200,6 +204,7 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         routes = self.admin_client.get_bgp_advertised_routes(bgp_speaker_id)
         self.assertEqual(0, len(routes['advertised_routes']))
 
+    @testtools.skip('bug/1553374')
     @test.idempotent_id('cae9cdb1-ad65-423c-9604-d4cd0073616e')
     def test_get_advertised_routes_floating_ips(self):
         self.useFixture(fixtures.LockFixture('gateway_network_binding'))
@@ -231,6 +236,7 @@ class BgpSpeakerTestJSON(BgpSpeakerTestJSONBase):
         self.assertEqual(floatingip['floating_ip_address'] + '/32',
                          routes['advertised_routes'][0]['destination'])
 
+    @testtools.skip('bug/1553374')
     @test.idempotent_id('c9ad566e-fe8f-4559-8303-bbad9062a30c')
     def test_get_advertised_routes_tenant_networks(self):
         self.useFixture(fixtures.LockFixture('gateway_network_binding'))
