@@ -96,8 +96,6 @@ class BaseNetworkTest(test.BaseTestCase):
         cls.service_profiles = []
         cls.flavors = []
         cls.metering_label_rules = []
-        cls.fw_rules = []
-        cls.fw_policies = []
         cls.qos_rules = []
         cls.qos_policies = []
         cls.ethertype = "IPv" + str(cls._ip_version)
@@ -109,14 +107,6 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def resource_cleanup(cls):
         if CONF.service_available.neutron:
-            # Clean up firewall policies
-            for fw_policy in cls.fw_policies:
-                cls._try_delete_resource(cls.client.delete_firewall_policy,
-                                         fw_policy['id'])
-            # Clean up firewall rules
-            for fw_rule in cls.fw_rules:
-                cls._try_delete_resource(cls.client.delete_firewall_rule,
-                                         fw_rule['id'])
             # Clean up QoS rules
             for qos_rule in cls.qos_rules:
                 cls._try_delete_resource(cls.admin_client.delete_qos_rule,
@@ -320,26 +310,6 @@ class BaseNetworkTest(test.BaseTestCase):
         interface = cls.client.add_router_interface_with_subnet_id(
             router_id, subnet_id)
         return interface
-
-    @classmethod
-    def create_firewall_rule(cls, action, protocol):
-        """Wrapper utility that returns a test firewall rule."""
-        body = cls.client.create_firewall_rule(
-            name=data_utils.rand_name("fw-rule"),
-            action=action,
-            protocol=protocol)
-        fw_rule = body['firewall_rule']
-        cls.fw_rules.append(fw_rule)
-        return fw_rule
-
-    @classmethod
-    def create_firewall_policy(cls):
-        """Wrapper utility that returns a test firewall policy."""
-        body = cls.client.create_firewall_policy(
-            name=data_utils.rand_name("fw-policy"))
-        fw_policy = body['firewall_policy']
-        cls.fw_policies.append(fw_policy)
-        return fw_policy
 
     @classmethod
     def create_qos_policy(cls, name, description, shared, tenant_id=None):
