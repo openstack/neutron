@@ -946,14 +946,15 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
-            with self.security_group_rule(security_group_id):
+            with self.security_group_rule(security_group_id) as sgr:
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_TCP, '22', '22')
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+                self.assertIn(sgr['security_group_rule']['id'],
+                              res.json['NeutronError']['message'])
 
     def test_create_security_group_rule_min_port_greater_max(self):
         name = 'webservers'

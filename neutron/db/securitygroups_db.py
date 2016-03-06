@@ -552,9 +552,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # Check in database if rule exists
         filters = self._make_security_group_rule_filter_dict(
             security_group_rule)
-        db_rules = self.get_security_group_rules(
-            context, filters,
-            fields=security_group_rule['security_group_rule'].keys())
+        keys = security_group_rule['security_group_rule'].keys()
+        fields = list(keys) + ['id']
+        db_rules = self.get_security_group_rules(context, filters,
+                                                 fields=fields)
         # Note(arosen): the call to get_security_group_rules wildcards
         # values in the filter that have a value of [None]. For
         # example, filters = {'remote_group_id': [None]} will return
@@ -565,9 +566,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # relying on this behavior. Therefore, we do the filtering
         # below to check for these corner cases.
         for db_rule in db_rules:
-            # need to remove id from db_rule for matching
+            rule_id = db_rule.pop('id', None)
             if (security_group_rule['security_group_rule'] == db_rule):
-                raise ext_sg.SecurityGroupRuleExists(id=id)
+                raise ext_sg.SecurityGroupRuleExists(rule_id=rule_id)
 
     def _validate_ip_prefix(self, rule):
         """Check that a valid cidr was specified as remote_ip_prefix
