@@ -138,4 +138,6 @@ class HasStandardAttributes(object):
         self.standard_attr = StandardAttribute(
             resource_type=self.__tablename__, description=description)
 
-    description = association_proxy('standard_attr', 'description')
+    @declarative.declared_attr
+    def description(cls):
+        return association_proxy('standard_attr', 'description')
