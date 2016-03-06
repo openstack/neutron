@@ -24,10 +24,11 @@ class BaseSecGroupTest(base.BaseNetworkTest):
     def resource_setup(cls):
         super(BaseSecGroupTest, cls).resource_setup()
 
-    def _create_security_group(self):
+    def _create_security_group(self, **kwargs):
         # Create a security group
         name = data_utils.rand_name('secgroup-')
-        group_create_body = self.client.create_security_group(name=name)
+        group_create_body = self.client.create_security_group(name=name,
+                                                              **kwargs)
         self.addCleanup(self._delete_security_group,
                         group_create_body['security_group']['id'])
         self.assertEqual(group_create_body['security_group']['name'], name)

@@ -142,8 +142,8 @@ class Port(model_base.HasStandardAttributes, model_base.BASEV2,
     def __init__(self, id=None, tenant_id=None, name=None, network_id=None,
                  mac_address=None, admin_state_up=None, status=None,
                  device_id=None, device_owner=None, fixed_ips=None,
-                 dns_name=None):
-        super(Port, self).__init__()
+                 dns_name=None, **kwargs):
+        super(Port, self).__init__(**kwargs)
         self.id = id
         self.tenant_id = tenant_id
         self.name = name

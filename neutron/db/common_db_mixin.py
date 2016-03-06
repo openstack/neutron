@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 from sqlalchemy import and_
+from sqlalchemy.ext import associationproxy
 from sqlalchemy import or_
 from sqlalchemy import sql
 
@@ -211,7 +212,13 @@ class CommonDbMixin(object):
                     if not value:
                         query = query.filter(sql.false())
                         return query
-                    query = query.filter(column.in_(value))
+                    if isinstance(column, associationproxy.AssociationProxy):
+                        # association proxies don't support in_ so we have to
+                        # do multiple equals matches
+                        query = query.filter(
+                            or_(*[column == v for v in value]))
+                    else:
+                        query = query.filter(column.in_(value))
                 elif key == 'shared' and hasattr(model, 'rbac_entries'):
                     # translate a filter on shared into a query against the
                     # object's rbac entries
@@ -301,9 +308,11 @@ class CommonDbMixin(object):
         return None
 
     def _filter_non_model_columns(self, data, model):
-        """Remove all the attributes from data which are not columns of
-        the model passed as second parameter.
+        """Remove all the attributes from data which are not columns or
+        association proxies of the model passed as second parameter
         """
         columns = [c.name for c in model.__table__.columns]
         return dict((k, v) for (k, v) in
-                    six.iteritems(data) if k in columns)
+                    six.iteritems(data) if k in columns or
+                    isinstance(getattr(model, k, None),
+                               associationproxy.AssociationProxy))

@@ -69,6 +69,24 @@ class PortsTestJSON(sec_base.BaseSecGroupTest):
         self.assertEqual(updated_port['name'], new_name)
         self.assertFalse(updated_port['admin_state_up'])
 
+    @test.attr(type='smoke')
+    @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640bbbb')
+    def test_create_update_port_description(self):
+        if not test.is_extension_enabled('standard-attr-description',
+                                         'network'):
+            msg = "standard-attr-description not enabled."
+            raise self.skipException(msg)
+        body = self.create_port(self.network,
+                                description='d1')
+        self.assertEqual('d1', body['description'])
+        body = self.client.list_ports(id=body['id'])['ports'][0]
+        self.assertEqual('d1', body['description'])
+        body = self.client.update_port(body['id'],
+                                       description='d2')
+        self.assertEqual('d2', body['port']['description'])
+        body = self.client.list_ports(id=body['port']['id'])['ports'][0]
+        self.assertEqual('d2', body['description'])
+
     @test.idempotent_id('67f1b811-f8db-43e2-86bd-72c074d4a42c')
     def test_create_bulk_port(self):
         network1 = self.network

@@ -21,8 +21,9 @@ from neutron import wsgi
 
 class StubExtension(extensions.ExtensionDescriptor):
 
-    def __init__(self, alias="stub_extension"):
+    def __init__(self, alias="stub_extension", optional=None):
         self.alias = alias
+        self.optional = optional or []
 
     def get_name(self):
         return "Stub Extension"
@@ -35,6 +36,9 @@ class StubExtension(extensions.ExtensionDescriptor):
 
     def get_updated(self):
         return ""
+
+    def get_optional_extensions(self):
+        return self.optional
 
 
 class StubExtensionWithReqs(StubExtension):

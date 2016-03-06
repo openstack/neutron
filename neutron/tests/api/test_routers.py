@@ -80,6 +80,22 @@ class RoutersTest(base.BaseRouterTest):
         self.assertEqual(show_body['router']['name'], updated_name)
 
     @test.attr(type='smoke')
+    @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
+    def test_create_update_router_description(self):
+        if not test.is_extension_enabled('standard-attr-description',
+                                         'network'):
+            msg = "standard-attr-description not enabled."
+            raise self.skipException(msg)
+        body = self.create_router(description='d1', router_name='test')
+        self.assertEqual('d1', body['description'])
+        body = self.client.show_router(body['id'])['router']
+        self.assertEqual('d1', body['description'])
+        body = self.client.update_router(body['id'], description='d2')
+        self.assertEqual('d2', body['router']['description'])
+        body = self.client.show_router(body['router']['id'])['router']
+        self.assertEqual('d2', body['description'])
+
+    @test.attr(type='smoke')
     @test.idempotent_id('e54dd3a3-4352-4921-b09d-44369ae17397')
     def test_create_router_setting_tenant_id(self):
         # Test creating router from admin user setting tenant_id.

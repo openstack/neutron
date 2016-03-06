@@ -104,6 +104,25 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
                       "Created subnetpool name should be in the list")
 
     @test.attr(type='smoke')
+    @test.idempotent_id('c72c1c0c-2193-4aca-ddd4-b1442640bbbb')
+    def test_create_update_subnetpool_description(self):
+        if not test.is_extension_enabled('standard-attr-description',
+                                         'network'):
+            msg = "standard-attr-description not enabled."
+            raise self.skipException(msg)
+        body = self._create_subnetpool(description='d1')
+        self.assertEqual('d1', body['description'])
+        sub_id = body['id']
+        body = filter(lambda x: x['id'] == sub_id,
+                      self.client.list_subnetpools()['subnetpools'])[0]
+        self.assertEqual('d1', body['description'])
+        body = self.client.update_subnetpool(sub_id, description='d2')
+        self.assertEqual('d2', body['subnetpool']['description'])
+        body = filter(lambda x: x['id'] == sub_id,
+                      self.client.list_subnetpools()['subnetpools'])[0]
+        self.assertEqual('d2', body['description'])
+
+    @test.attr(type='smoke')
     @test.idempotent_id('741d08c2-1e3f-42be-99c7-0ea93c5b728c')
     def test_get_subnetpool(self):
         created_subnetpool = self._create_subnetpool()
