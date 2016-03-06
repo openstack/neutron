@@ -406,7 +406,10 @@ class NetworksTestJSON(base.BaseNetworkTest):
     def test_external_network_visibility(self):
         """Verifies user can see external networks but not subnets."""
         body = self.client.list_networks(**{'router:external': True})
-        networks = [network['id'] for network in body['networks']]
+        # shared external networks are excluded since their subnets are
+        # visible
+        networks = [network['id'] for network in body['networks']
+                    if not network['shared']]
         self.assertNotEmpty(networks, "No external networks found")
 
         nonexternal = [net for net in body['networks'] if
