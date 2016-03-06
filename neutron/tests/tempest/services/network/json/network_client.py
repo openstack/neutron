@@ -14,13 +14,13 @@ import time
 
 from oslo_serialization import jsonutils as json
 from six.moves.urllib import parse as urlparse
-from tempest.common import service_client
+from tempest.lib.common import rest_client as service_client
 from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.tempest import exceptions
 
 
-class NetworkClientJSON(service_client.ServiceClient):
+class NetworkClientJSON(service_client.RestClient):
 
     """
     Tempest REST client for Neutron. Uses v2 of the Neutron API, since the
