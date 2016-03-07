@@ -12,10 +12,8 @@ upgrade:
     settings upon restart. To maintain pre-Mitaka behavior, enable the
     arp_responder in the Linux Bridge agent VXLAN config file prior to starting
     the updated agent.
-
 fixes:
   - The Linuxbridge agent now supports the ability to toggle the local ARP
     responder when L2Population is enabled. This ensures compatibility with
     the allowed-address-pairs extension.
     closes bug 1445089
-
