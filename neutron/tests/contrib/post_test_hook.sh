@@ -60,10 +60,6 @@ fi
 cd $NEUTRON_DIR
 sudo chown -R $owner:stack $NEUTRON_DIR
 
-# NOTE(armax): this is a gate hook and we should run in a constrained env
-# to avoid breakage from uncontrolled upper constraints
-venv=$venv-constraints
-
 # Run tests
 echo "Running neutron $venv test suite"
 set +e
