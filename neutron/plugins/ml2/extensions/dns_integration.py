@@ -90,7 +90,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def process_update_port(self, plugin_context, request_data, db_data):
         dns_name = request_data.get(dns.DNSNAME)
-        if dns_name is None:
+        has_fixed_ips = 'fixed_ips' in request_data
+        if dns_name is None and not has_fixed_ips:
             return
         network = self._get_network(plugin_context, db_data['network_id'])
         if not network[dns.DNSDOMAIN]:
@@ -101,22 +102,21 @@ class DNSExtensionDriver(api.ExtensionDriver):
         dns_data_db = plugin_context.session.query(dns_db.PortDNS).filter_by(
             port_id=db_data['id']).one_or_none()
         if dns_data_db:
-            if dns_name:
-                if dns_data_db['current_dns_name'] != dns_name:
-                    dns_data_db['previous_dns_name'] = (dns_data_db[
-                        'current_dns_name'])
-                    dns_data_db['previous_dns_domain'] = (dns_data_db[
-                        'current_dns_domain'])
+            is_dns_name_changed = (dns_name is not None and
+                    dns_data_db['current_dns_name'] != dns_name)
+
+            if is_dns_name_changed or (has_fixed_ips and
+                                       dns_data_db['current_dns_name']):
+                dns_data_db['previous_dns_name'] = (
+                    dns_data_db['current_dns_name'])
+                dns_data_db['previous_dns_domain'] = (
+                    dns_data_db['current_dns_domain'])
+                if is_dns_name_changed:
                     dns_data_db['current_dns_name'] = dns_name
-                    dns_data_db['current_dns_domain'] = dns_domain
-                return
-            if dns_data_db['current_dns_name']:
-                dns_data_db['previous_dns_name'] = (dns_data_db[
-                    'current_dns_name'])
-                dns_data_db['previous_dns_domain'] = (dns_data_db[
-                    'current_dns_domain'])
-                dns_data_db['current_dns_name'] = ''
-                dns_data_db['current_dns_domain'] = ''
+                    if dns_name:
+                        dns_data_db['current_dns_domain'] = dns_domain
+                    else:
+                        dns_data_db['current_dns_domain'] = ''
             return
         if dns_name:
             plugin_context.session.add(dns_db.PortDNS(
@@ -277,23 +277,27 @@ def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
     original_port = kwargs.get('original_port')
     if not original_port:
         return
-    if updated_port[dns.DNSNAME] == original_port[dns.DNSNAME]:
+    original_ips = [ip['ip_address'] for ip in original_port['fixed_ips']]
+    updated_ips = [ip['ip_address'] for ip in updated_port['fixed_ips']]
+    if (updated_port[dns.DNSNAME] == original_port[dns.DNSNAME] and
+            set(original_ips) == set(updated_ips)):
+        return
+    if (updated_port[dns.DNSNAME] == original_port[dns.DNSNAME] and
+            not original_port[dns.DNSNAME]):
         return
     dns_data_db = context.session.query(dns_db.PortDNS).filter_by(
         port_id=updated_port['id']).one_or_none()
     if not dns_data_db:
         return
     if dns_data_db['previous_dns_name']:
-        records = [ip['ip_address'] for ip in original_port['fixed_ips']]
         _remove_data_from_external_dns_service(
             context, dns_driver, dns_data_db['previous_dns_domain'],
-            dns_data_db['previous_dns_name'], records)
+            dns_data_db['previous_dns_name'], original_ips)
     if dns_data_db['current_dns_name']:
-        records = [ip['ip_address'] for ip in updated_port['fixed_ips']]
         _send_data_to_external_dns_service(context, dns_driver,
                                            dns_data_db['current_dns_domain'],
                                            dns_data_db['current_dns_name'],
-                                           records)
+                                           updated_ips)
 
 
 def _delete_port_in_external_dns_service(resource, event, trigger, **kwargs):
