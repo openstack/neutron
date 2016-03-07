@@ -19,7 +19,7 @@ install_cmd="pip install"
 CONSTRAINTS_FILE=$1
 shift
 
-if [ "$CONSTRAINTS_FILE" -ne "unconstrained" ]; then
+if [ "$CONSTRAINTS_FILE" != "unconstrained" ]; then
     install_cmd="$install_cmd -c$CONSTRAINTS_FILE"
 fi
 
