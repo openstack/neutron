@@ -187,8 +187,9 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_port_context(context, False)
 
     def update_port_precommit(self, context):
-        if (context.original_top_bound_segment and
-            not context.top_bound_segment):
+        if ((context.original_top_bound_segment and
+             not context.top_bound_segment) or
+            (context.host == "host-fail")):
             self.bound_ports.remove((context.original['id'],
                                      context.original_host))
         self._check_port_context(context, True)
@@ -234,3 +235,8 @@ class TestMechanismDriver(api.MechanismDriver):
                                     portbindings.VIF_TYPE_OVS,
                                     {portbindings.CAP_PORT_FILTER: False})
                 self.bound_ports.add((context.current['id'], host))
+        elif host == "host-fail":
+            context.set_binding(None,
+                                portbindings.VIF_TYPE_BINDING_FAILED,
+                                {portbindings.CAP_PORT_FILTER: False})
+            self.bound_ports.add((context.current['id'], host))
