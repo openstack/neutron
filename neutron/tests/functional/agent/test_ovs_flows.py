@@ -16,6 +16,8 @@
 import eventlet
 import fixtures
 import mock
+import testscenarios
+
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
@@ -38,12 +40,19 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
 
-class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
-                        base.BaseSudoTestCase):
+class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
+                       base.BaseSudoTestCase):
+    scenarios = testscenarios.multiply_scenarios([
+        ('ofctl', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
+                                  'agent.openflow.ovs_ofctl.main')}),
+        ('native', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
+                                  'agent.openflow.native.main')})],
+        test_ovs_lib.OVSBridgeTestBase.scenarios)
+
     def setUp(self):
-        super(_OVSAgentTestBase, self).setUp()
+        super(OVSAgentTestBase, self).setUp()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.of_interface_mod = importutils.import_module(self._MAIN_MODULE)
+        self.of_interface_mod = importutils.import_module(self.main_module)
         self.br_int_cls = None
         self.br_tun_cls = None
         self.br_phys_cls = None
@@ -104,23 +113,13 @@ class _OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
         self.main_ev.wait()
 
 
-class _OVSAgentOFCtlTestBase(_OVSAgentTestBase):
-    _MAIN_MODULE = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
-                    'openflow.ovs_ofctl.main')
-
-
-class _OVSAgentNativeTestBase(_OVSAgentTestBase):
-    _MAIN_MODULE = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
-                    'openflow.native.main')
-
-
-class _ARPSpoofTestCase(object):
+class ARPSpoofTestCase(OVSAgentTestBase):
     def setUp(self):
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
         self.addOnException(self.collect_flows_and_ports)
-        super(_ARPSpoofTestCase, self).setUp()
+        super(ARPSpoofTestCase, self).setUp()
         self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
         self.dst_addr = '192.168.0.2'
@@ -273,15 +272,7 @@ class _ARPSpoofTestCase(object):
             self.br_int, vif, details)
 
 
-class ARPSpoofOFCtlTestCase(_ARPSpoofTestCase, _OVSAgentOFCtlTestBase):
-    pass
-
-
-class ARPSpoofNativeTestCase(_ARPSpoofTestCase, _OVSAgentNativeTestBase):
-    pass
-
-
-class _CanaryTableTestCase(object):
+class CanaryTableTestCase(OVSAgentTestBase):
     def test_canary_table(self):
         self.br_int.delete_flows()
         self.assertEqual(constants.OVS_RESTARTED,
@@ -289,11 +280,3 @@ class _CanaryTableTestCase(object):
         self.br_int.setup_canary_table()
         self.assertEqual(constants.OVS_NORMAL,
                          self.br_int.check_canary_table())
-
-
-class CanaryTableOFCtlTestCase(_CanaryTableTestCase, _OVSAgentOFCtlTestBase):
-    pass
-
-
-class CanaryTableNativeTestCase(_CanaryTableTestCase, _OVSAgentNativeTestBase):
-    pass
