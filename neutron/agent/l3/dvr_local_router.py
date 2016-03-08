@@ -415,7 +415,19 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         internal_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
         ports_scopemark = self._get_port_devicename_scopemark(
             internal_ports, self.get_internal_device_name)
-        # DVR local router don't need to consider external port
+        # DVR local router will use rfp port as external port
+        ext_port = self.get_ex_gw_port()
+        if not ext_port:
+            return ports_scopemark
+
+        ext_device_name = self.get_external_device_interface_name(ext_port)
+        if not ext_device_name:
+            return ports_scopemark
+
+        ext_scope = self._get_external_address_scope()
+        ext_scope_mark = self.get_address_scope_mark_mask(ext_scope)
+        ports_scopemark[l3_constants.IP_VERSION_4][ext_device_name] = (
+            ext_scope_mark)
         return ports_scopemark
 
     def process_external(self, agent):

@@ -206,11 +206,13 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         # Be sure that add_rule is called somewhere in the middle
         self.assertFalse(ipv4_nat.add_rule.called)
 
-    def test_process_floating_ip_address_scope_rules(self):
+    def test_process_floating_ip_address_scope_rules_diff_scopes(self):
         ri = self._create_router()
         fips = [{'fixed_ip_address': mock.sentinel.ip,
-                 'floating_ip_address': mock.sentinel.fip}]
+                 'floating_ip_address': mock.sentinel.fip,
+                 'fixed_ip_address_scope': 'scope1'}]
         ri.get_floating_ips = mock.Mock(return_value=fips)
+        ri._get_external_address_scope = mock.Mock(return_value='scope2')
         ipv4_mangle = ri.iptables_manager.ipv4['mangle'] = mock.MagicMock()
         ri.floating_mangle_rules = mock.Mock(
             return_value=[(mock.sentinel.chain1, mock.sentinel.rule1)])
@@ -222,11 +224,28 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         self.assertEqual(mock.call.clear_rules_by_tag('floating_ip'),
                          ipv4_mangle.mock_calls[0])
         # Be sure that add_rule is called somewhere in the middle
-        self.assertEqual(2, ipv4_mangle.add_rule.call_count)
+        self.assertEqual(1, ipv4_mangle.add_rule.call_count)
         self.assertEqual(mock.call.add_rule(mock.sentinel.chain1,
                                             mock.sentinel.rule1,
                                             tag='floating_ip'),
-                         ipv4_mangle.mock_calls[2])
+                         ipv4_mangle.mock_calls[1])
+
+    def test_process_floating_ip_address_scope_rules_same_scopes(self):
+        ri = self._create_router()
+        fips = [{'fixed_ip_address': mock.sentinel.ip,
+                 'floating_ip_address': mock.sentinel.fip,
+                 'fixed_ip_address_scope': 'scope1'}]
+        ri.get_floating_ips = mock.Mock(return_value=fips)
+        ri._get_external_address_scope = mock.Mock(return_value='scope1')
+        ipv4_mangle = ri.iptables_manager.ipv4['mangle'] = mock.MagicMock()
+
+        ri.process_floating_ip_address_scope_rules()
+
+        # Be sure that the rules are cleared first
+        self.assertEqual(mock.call.clear_rules_by_tag('floating_ip'),
+                         ipv4_mangle.mock_calls[0])
+        # Be sure that add_rule is not called somewhere in the middle
+        self.assertFalse(ipv4_mangle.add_rule.called)
 
     def test_process_floating_ip_mangle_rules_removed(self):
         ri = self._create_router()
