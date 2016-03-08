@@ -76,9 +76,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                                      host,
                                                      cached_networks)
         if not port_context:
-            LOG.warning(_LW("Device %(device)s requested by agent "
-                            "%(agent_id)s not found in database"),
-                        {'device': device, 'agent_id': agent_id})
+            LOG.debug("Device %(device)s requested by agent "
+                      "%(agent_id)s not found in database",
+                      {'device': device, 'agent_id': agent_id})
             return {'device': device}
 
         segment = port_context.bottom_bound_segment
