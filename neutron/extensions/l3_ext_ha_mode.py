@@ -89,8 +89,8 @@ class HAMaximumAgentsNumberNotValid(exceptions.NeutronException):
 
 class HAMinimumAgentsNumberNotValid(exceptions.NeutronException):
     message = (_("min_l3_agents_per_router config parameter is not valid. "
-                 "It has to be equal to or more than %s for HA.") %
-               n_const.MINIMUM_AGENTS_FOR_HA)
+                 "It has to be greater than or equal to %s for HA.") %
+               n_const.MINIMUM_MINIMUM_AGENTS_FOR_HA)
 
 
 class L3_ext_ha_mode(extensions.ExtensionDescriptor):

@@ -62,9 +62,9 @@ L3_HA_OPTS = [
                       "scheduled on. If it is set to 0 then the router will "
                       "be scheduled on every agent.")),
     cfg.IntOpt('min_l3_agents_per_router',
-               default=n_const.MINIMUM_AGENTS_FOR_HA,
-               help=_("Minimum number of L3 agents which a HA router will be "
-                      "scheduled on.")),
+               default=n_const.DEFAULT_MINIMUM_AGENTS_FOR_HA,
+               help=_("Minimum number of L3 agents that have to be available "
+                      "in order to allow a new HA router to be scheduled.")),
     cfg.StrOpt('l3_ha_net_cidr',
                default=n_const.L3_HA_NET_CIDR,
                help=_('Subnet used for the l3 HA admin network.')),
@@ -178,7 +178,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             raise l3_ha.HAMaximumAgentsNumberNotValid(
                 max_agents=max_agents, min_agents=min_agents)
 
-        if min_agents < n_const.MINIMUM_AGENTS_FOR_HA:
+        if min_agents < n_const.MINIMUM_MINIMUM_AGENTS_FOR_HA:
             raise l3_ha.HAMinimumAgentsNumberNotValid()
 
     def __init__(self):
