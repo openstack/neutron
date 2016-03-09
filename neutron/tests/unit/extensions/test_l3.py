@@ -33,7 +33,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
-from neutron.common import utils
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
@@ -44,7 +43,6 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
-from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -1204,9 +1202,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             expected_port_update = {
                 'device_owner': l3_constants.DEVICE_OWNER_ROUTER_INTF,
                 'device_id': r['router']['id']}
-            plugin = manager.NeutronManager.get_plugin()
-            if utils.is_extension_supported(plugin, dns.Dns.get_alias()):
-                expected_port_update['dns_name'] = ''
             update_port.assert_called_with(
                 mock.ANY, p['port']['id'], {'port': expected_port_update})
             # fetch port and confirm device_id

@@ -1285,7 +1285,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 original_ips = self._make_fixed_ip_dict(port['fixed_ips'])
                 original_dns_name = port.get('dns_name', '')
                 request_dns_name = self._get_request_dns_name(new_port)
-                if not request_dns_name:
+                if 'dns_name' in new_port and not request_dns_name:
                     new_port['dns_name'] = ''
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, port, new_port, new_mac)
