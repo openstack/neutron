@@ -52,11 +52,6 @@ ml2_opts = [
                       'this feature and instances typically default to a '
                       '1500 MTU. Only impacts instances, not neutron network '
                       'components such as bridges and routers.')),
-    cfg.IntOpt('segment_mtu', default=1500,
-               help=_('The maximum permissible size of an unfragmented '
-                      'packet travelling a L2 network segment. The default '
-                      'value of 1500 is used as the segment MTU, to reflect '
-                      'standard Ethernet.')),
     cfg.ListOpt('physical_network_mtus',
                 default=[],
                 help=_("A list of mappings of physical networks to MTU "

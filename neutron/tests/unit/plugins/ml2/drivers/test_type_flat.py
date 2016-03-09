@@ -122,22 +122,22 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         self.assertIsNone(observed)
 
     def test_get_mtu(self):
-        config.cfg.CONF.set_override('segment_mtu', 1475, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 1475)
         config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1450, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('segment_mtu', 1375, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 1375)
         config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1375, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
         config.cfg.CONF.set_override('path_mtu', 1425, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1400, self.driver.get_mtu('physnet2'))
 
-        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
         config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
         self.driver.physnet_mtus = {}
         self.assertEqual(0, self.driver.get_mtu('physnet1'))

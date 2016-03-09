@@ -56,25 +56,25 @@ class GreTypeTest(base_type_tunnel.TunnelTypeTestMixin,
                 self.assertEqual(base_type_tunnel.HOST_TWO, endpoint['host'])
 
     def test_get_mtu(self):
-        config.cfg.CONF.set_override('segment_mtu', 1500, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 1500)
         config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1475 - p_const.GRE_ENCAP_OVERHEAD,
                          self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('segment_mtu', 1425, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 1425)
         config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1400, 'physnet2': 1400}
         self.assertEqual(1425 - p_const.GRE_ENCAP_OVERHEAD,
                          self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
         config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1425}
         self.assertEqual(1475 - p_const.GRE_ENCAP_OVERHEAD,
                          self.driver.get_mtu('physnet2'))
 
-        config.cfg.CONF.set_override('segment_mtu', 0, group='ml2')
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
         config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
         self.driver.physnet_mtus = {}
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
