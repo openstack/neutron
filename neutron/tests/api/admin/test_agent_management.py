@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.common import tempest_fixtures
+from neutron.tests.tempest.common import tempest_fixtures
 from tempest import test
 
 from neutron.tests.api import base

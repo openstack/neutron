@@ -19,7 +19,7 @@ from tempest import test
 import testtools
 
 from neutron.tests.api import base
-from tempest.common import tempest_fixtures as fixtures
+from neutron.tests.tempest.common import tempest_fixtures as fixtures
 
 CONF = config.CONF
 
