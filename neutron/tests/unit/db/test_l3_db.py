@@ -207,3 +207,45 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                                        events.AFTER_UPDATE, mock.ANY,
                                        context=mock.ANY,
                                        subnetpool_id='fake_id')
+
+
+class L3_NAT_db_mixin(base.BaseTestCase):
+    def setUp(self):
+        super(L3_NAT_db_mixin, self).setUp()
+        self.db = l3_db.L3_NAT_db_mixin()
+
+    def _test_create_router(self, external_gateway_info=None):
+        router_db = l3_db.Router(id='123')
+        router_dict = {'id': '123', 'tenant_id': '456',
+                       'external_gateway_info': external_gateway_info}
+        # Need to use a copy here as the create_router method pops the gateway
+        # information
+        router_input = {'router': router_dict.copy()}
+
+        with mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_create_router_db',
+                               return_value=router_db) as crd,\
+            mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_router_dict',
+                              return_value=router_dict),\
+            mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                              '_update_router_gw_info') as urgi,\
+            mock.patch.object(l3_db.L3_NAT_db_mixin, 'notify_router_updated')\
+            as nru:
+
+            self.db.create_router(mock.ANY, router_input)
+            self.assertTrue(crd.called)
+            if external_gateway_info:
+                self.assertTrue(urgi.called)
+                self.assertTrue(nru.called)
+            else:
+                self.assertFalse(urgi.called)
+                self.assertFalse(nru.called)
+
+    def test_create_router_no_gateway(self):
+        self._test_create_router()
+
+    def test_create_router_gateway(self):
+        ext_gateway_info = {'network_id': 'net-id', 'enable_snat': True,
+                            'external_fixed_ips': [
+                                {'subnet_id': 'subnet-id',
+                                 'ip_address': 'ip'}]}
+        self._test_create_router(ext_gateway_info)
