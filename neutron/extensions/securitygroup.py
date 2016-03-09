@@ -114,7 +114,7 @@ class DuplicateSecurityGroupRuleInPost(nexception.InUse):
 
 
 class SecurityGroupRuleExists(nexception.InUse):
-    message = _("Security group rule already exists. Rule id is %(id)s.")
+    message = _("Security group rule already exists. Rule id is %(rule_id)s.")
 
 
 class SecurityGroupRuleInUse(nexception.InUse):
