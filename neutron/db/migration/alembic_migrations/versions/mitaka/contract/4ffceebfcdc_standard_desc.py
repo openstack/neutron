@@ -21,13 +21,18 @@ Create Date: 2016-02-10 23:12:04.012457
 
 """
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron.db import migration
+
+
 # revision identifiers, used by Alembic.
 revision = '4ffceebfcdc'
 down_revision = '5ffceebfada'
 depends_on = ('0e66c5227a8a',)
 
-from alembic import op
-import sqlalchemy as sa
+neutron_milestone = [migration.MITAKA]
 
 
 # A simple model of the security groups table with only the fields needed for
