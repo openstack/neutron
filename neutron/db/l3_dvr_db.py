@@ -14,6 +14,7 @@
 import collections
 
 from oslo_config import cfg
+from oslo_log import helpers as log_helper
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six
@@ -493,6 +494,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         LOG.debug("Return the FIP ports: %s ", interfaces)
         return interfaces
 
+    @log_helper.log_method_call
     def _get_dvr_sync_data(self, context, host, agent, router_ids=None,
                           active=None):
         routers, interfaces, floating_ips = self._get_router_info_list(
