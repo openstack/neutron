@@ -156,8 +156,8 @@ class DhcpRpcCallback(object):
         try:
             network = plugin.get_network(context, network_id)
         except n_exc.NetworkNotFound:
-            LOG.warn(_LW("Network %s could not be found, it might have "
-                         "been deleted concurrently."), network_id)
+            LOG.debug("Network %s could not be found, it might have "
+                      "been deleted concurrently.", network_id)
             return
         filters = dict(network_id=[network_id])
         network['subnets'] = plugin.get_subnets(context, filters=filters)
