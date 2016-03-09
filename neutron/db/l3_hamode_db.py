@@ -18,6 +18,7 @@ import functools
 import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
 import sqlalchemy as sa
@@ -631,6 +632,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
              if state == constants.HA_ROUTER_STATE_ACTIVE),
             None)
 
+    @log_helpers.log_method_call
     def _process_sync_ha_data(self, context, routers, host):
         routers_dict = dict((router['id'], router) for router in routers)
 
@@ -653,6 +655,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return [r for r in list(routers_dict.values())
                 if not r.get('ha') or r.get(constants.HA_INTERFACE_KEY)]
 
+    @log_helpers.log_method_call
     def get_ha_sync_data_for_host(self, context, host, agent,
                                   router_ids=None, active=None):
         agent_mode = self._get_agent_mode(agent)
