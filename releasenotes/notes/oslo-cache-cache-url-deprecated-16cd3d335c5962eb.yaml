@@ -1,0 +1,9 @@
+---
+features:
+  - Neutron switched to using oslo.cache library to cache port state in
+    metadata agent. With it, more caching backends are now available, including
+    Memcached and Mongo. More details in oslo.cache documentation.
+deprecations:
+  - The cache_url configuration option is deprecated as of Newton, and will be
+    removed in Ocata. Please configure metadata cache using [cache] group,
+    setting enable = True and configuring your backend.

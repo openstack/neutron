@@ -29,6 +29,7 @@ import neutron.agent.linux.ra
 import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
+import neutron.common.cache_utils
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.db.agents_db
@@ -43,7 +44,6 @@ import neutron.db.migration.cli
 import neutron.extensions.allowedaddresspairs
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
-import neutron.openstack.common.cache.cache
 import neutron.plugins.ml2.config
 import neutron.plugins.ml2.drivers.agent.config
 import neutron.plugins.ml2.drivers.linuxbridge.agent.common.config
@@ -218,7 +218,7 @@ def list_metadata_agent_opts():
              neutron.agent.metadata.config.SHARED_OPTS,
              neutron.agent.metadata.config.METADATA_PROXY_HANDLER_OPTS,
              neutron.agent.metadata.config.UNIX_DOMAIN_METADATA_PROXY_OPTS,
-             neutron.openstack.common.cache.cache._get_oslo_configs())
+             neutron.common.cache_utils.cache_opts)
          ),
         ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS)
     ]

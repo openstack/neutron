@@ -30,12 +30,11 @@ from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import config
 from neutron.agent import rpc as agent_rpc
+from neutron.common import cache_utils as cache
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils
 from neutron import context
-from neutron.openstack.common.cache import cache
 
 LOG = logging.getLogger(__name__)
 
@@ -76,10 +75,7 @@ class MetadataProxyHandler(object):
 
     def __init__(self, conf):
         self.conf = conf
-        if self.conf.cache_url:
-            self._cache = cache.get_cache(self.conf.cache_url)
-        else:
-            self._cache = False
+        self._cache = cache.get_cache(self.conf)
 
         self.plugin_rpc = MetadataPluginAPI(topics.PLUGIN)
         self.context = context.get_admin_context_without_session()
@@ -121,13 +117,13 @@ class MetadataProxyHandler(object):
 
         return filters
 
-    @utils.cache_method_results
+    @cache.cache_method_results
     def _get_router_networks(self, router_id):
         """Find all networks connected to given router."""
         internal_ports = self._get_ports_from_server(router_id=router_id)
         return tuple(p['network_id'] for p in internal_ports)
 
-    @utils.cache_method_results
+    @cache.cache_method_results
     def _get_ports_for_remote_address(self, remote_address, networks):
         """Get list of ports that has given ip address and are part of
         given networks.
