@@ -182,7 +182,8 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
                 return True
 
     def external_dns_not_needed(self, context, network):
-        if not DNS_DRIVER:
+        dns_driver = _get_dns_driver()
+        if not dns_driver:
             return True
         if network['router:external']:
             return True
