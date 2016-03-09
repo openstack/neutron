@@ -361,6 +361,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             admin_ctx, {'router_id': [router_id]}):
             raise l3.RouterExternalGatewayInUseByFloatingIp(
                 router_id=router_id, net_id=router.gw_port['network_id'])
+        gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
         with context.session.begin(subtransactions=True):
             gw_port = router.gw_port
             router.gw_port = None
@@ -372,7 +373,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.notify(resources.ROUTER_GATEWAY,
                         events.AFTER_DELETE, self,
                         router_id=router_id,
-                        network_id=old_network_id)
+                        network_id=old_network_id,
+                        gateway_ips=gw_ips)
 
     def _check_router_gw_port_in_use(self, context, router_id):
         try:
@@ -822,15 +824,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     context, router_id, subnet_id, device_owner)
 
         gw_network_id = None
+        gw_ips = []
         router = self._get_router(context, router_id)
         if router.gw_port:
             gw_network_id = router.gw_port.network_id
+            gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
 
         registry.notify(resources.ROUTER_INTERFACE,
                         events.AFTER_DELETE,
                         self,
                         cidrs=[x['cidr'] for x in subnets],
-                        network_id=gw_network_id)
+                        network_id=gw_network_id,
+                        gateway_ips=gw_ips)
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'],

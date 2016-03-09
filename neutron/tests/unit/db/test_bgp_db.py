@@ -828,3 +828,33 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                         fip_prefix_found = True
                 self.assertTrue(tenant_prefix_found)
                 self.assertTrue(fip_prefix_found)
+
+    def test__bgp_speakers_for_gateway_network_by_ip_version(self):
+        with self.network() as ext_net, self.bgp_speaker(6, 1234) as s1,\
+            self.bgp_speaker(6, 4321) as s2:
+            gw_net_id = ext_net['network']['id']
+            self._update('networks', gw_net_id,
+                         {'network': {external_net.EXTERNAL: True}})
+            self.bgp_plugin.add_gateway_network(self.context,
+                                                s1['id'],
+                                                {'network_id': gw_net_id})
+            self.bgp_plugin.add_gateway_network(self.context,
+                                                s2['id'],
+                                                {'network_id': gw_net_id})
+            speakers = self.bgp_plugin._bgp_speakers_for_gw_network_by_family(
+                                                                 self.context,
+                                                                 gw_net_id,
+                                                                 6)
+            self.assertEqual(2, len(speakers))
+
+    def test__bgp_speakers_for_gateway_network_by_ip_version_no_binding(self):
+        with self.network() as ext_net, self.bgp_speaker(6, 1234),\
+            self.bgp_speaker(6, 4321):
+            gw_net_id = ext_net['network']['id']
+            self._update('networks', gw_net_id,
+                         {'network': {external_net.EXTERNAL: True}})
+            speakers = self.bgp_plugin._bgp_speakers_for_gw_network_by_family(
+                                                                 self.context,
+                                                                 gw_net_id,
+                                                                 6)
+            self.assertTrue(not speakers)
