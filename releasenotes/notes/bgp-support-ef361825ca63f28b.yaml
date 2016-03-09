@@ -1,0 +1,23 @@
+---
+prelude: >
+    Announcement of tenant prefixes and host routes for floating
+    IP's via BGP is supported
+features:
+  - Announcement of tenant subnets via BGP using centralized Neutron
+    router gateway port as the next-hop
+  - Announcement of floating IP host routes via BGP using the centralized
+    Neutron router gateway port as the next-hop
+  - Announcement of floating IP host routes via BGP using the floating
+    IP agent gateway as the next-hop when the floating IP is associated
+    through a distributed router
+issues:
+  - When using DVR, if a floating IP is associated to a fixed IP direct
+    access to the fixed IP is not possible when traffic is sent from
+    outside of a Neutron tenant network (north-south traffic). Traffic
+    sent between tenant networks (east-west traffic) is not affected.
+    When using a distributed router, the floating IP will mask the fixed
+    IP making it inaccessible, even though the tenant subnet is being
+    announced as accessible through the centralized SNAT router. In such
+    a case, traffic sent to the instance should be directed to the
+    floating IP. This is a limitation of the Neutron L3 agent when using
+    DVR and will be addressed in a future release.
