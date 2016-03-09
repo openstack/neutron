@@ -498,3 +498,14 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                         namespace, interface, ip_address):
         self.assertIn(
             ip_address, self._get_addresses_on_device(namespace, interface))
+
+    def _assert_ping_reply_from_expected_address(
+        self, ping_result, expected_address):
+        ping_results = ping_result.split('\n')
+        self.assertGreater(
+            len(ping_results), 1,
+            "The result from ping should be multiple lines")
+        self.assertIn(
+            expected_address, ping_results[1],
+            ("Expect to see %s in the reply of ping, but failed" %
+             expected_address))
