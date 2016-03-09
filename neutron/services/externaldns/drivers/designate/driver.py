@@ -175,8 +175,8 @@ class Designate(driver.ExternalDNSService):
 
     def _get_bytes_or_nybles_to_skip(self, in_addr_name):
         if 'in-addr.arpa' in in_addr_name:
-            return (32 - CONF.designate.ipv4_ptr_zone_prefix_size) / 8
-        return (128 - CONF.designate.ipv6_ptr_zone_prefix_size) / 4
+            return int((32 - CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+        return int((128 - CONF.designate.ipv6_ptr_zone_prefix_size) / 4)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
         designate, designate_admin = get_clients(context)
