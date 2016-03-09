@@ -29,9 +29,16 @@ LOG = log.getLogger(__name__)
 class NotifierHook(hooks.PecanHook):
     priority = 135
 
-    # TODO(kevinbenton): implement
-    # ceilo notifier
-    # nova notifier
+    # TODO(kevinbenton): implement ceilo notifier
+
+    def _nova_notify(self, action, resource, *args):
+        action_resource = '%s_%s' % (action, resource)
+        if not hasattr(self, '_nova_notifier'):
+            # this is scoped to avoid a dependency on nova client when nova
+            # notifications aren't enabled
+            from neutron.notifiers import nova
+            self._nova_notifier = nova.Notifier()
+        self._nova_notifier.send_network_change(action_resource, *args)
 
     def _notify_dhcp_agent(self, context, resource_name, action, resources):
         plugin = manager.NeutronManager.get_plugin_for_resource(resource_name)
@@ -67,23 +74,38 @@ class NotifierHook(hooks.PecanHook):
             # The object has been deleted, so we must notify the agent with the
             # data of the original object
             data = {collection_name:
-                    state.request.context.get('request_resources', [])}
+                    state.request.context.get('original_resources', [])}
         else:
             try:
                 data = jsonutils.loads(state.response.body)
             except ValueError:
                 if not state.response.body:
                     data = {}
-        # Send a notification only if a resource can be identified in the
-        # response. This means that for operations such as add_router_interface
-        # no notification will be sent
-        if cfg.CONF.dhcp_agent_notification and data:
-            resources = []
+        resources = []
+        if data:
             if resource_name in data:
                 resources = [data[resource_name]]
             elif collection_name in data:
                 # This was a bulk request
                 resources = data[collection_name]
+        # Send a notification only if a resource can be identified in the
+        # response. This means that for operations such as add_router_interface
+        # no notification will be sent
+        if cfg.CONF.dhcp_agent_notification and data:
             self._notify_dhcp_agent(
                 neutron_context, resource_name,
                 action, resources)
+
+        if cfg.CONF.notify_nova_on_port_data_changes:
+            orig = {}
+            if action == 'update':
+                orig = state.request.context.get('original_resources')[0]
+            elif action == 'delete':
+                # NOTE(kevinbenton): the nova notifier is a bit strange because
+                # it expects the original to be in the last argument on a
+                # delete rather than in the 'original_obj' position
+                resources = (
+                    state.request.context.get('original_resources') or [])
+            for resource in resources:
+                self._nova_notify(action, resource_name, orig,
+                                  {resource_name: resource})

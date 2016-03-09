@@ -46,6 +46,9 @@ class Notifier(object):
         # and each Notifier is handling it's own auth. That means that we are
         # authenticating the exact same thing len(controllers) times. This
         # should be an easy thing to optimize.
+        # FIXME(kevinbenton): remove this comment and the one above once the
+        # switch to pecan is complete since only one notifier is constructed
+        # in the pecan notification hook.
         auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
 
         session = ks_loading.load_session_from_conf_options(

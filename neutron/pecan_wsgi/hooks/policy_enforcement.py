@@ -36,30 +36,31 @@ def _custom_getter(resource, resource_id):
         return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
+def fetch_resource(neutron_context, resource, resource_id):
+    attrs = v2_attributes.get_resource_info(resource)
+    if not attrs:
+        # this isn't a request for a normal resource. it could be
+        # an action like removing a network from a dhcp agent.
+        # return None and assume the custom controller for this will
+        # handle the necessary logic.
+        return
+    field_list = [name for (name, value) in attrs.items()
+                  if (value.get('required_by_policy') or
+                      value.get('primary_key') or 'default' not in value)]
+    plugin = manager.NeutronManager.get_plugin_for_resource(resource)
+    if plugin:
+        getter = getattr(plugin, 'get_%s' % resource)
+        # TODO(kevinbenton): the parent_id logic currently in base.py
+        return getter(neutron_context, resource_id, fields=field_list)
+    else:
+        # Some legit resources, like quota, do not have a plugin yet.
+        # Retrieving the original object is nevertheless important
+        # for policy checks.
+        return _custom_getter(resource, resource_id)
+
+
 class PolicyHook(hooks.PecanHook):
     priority = 140
-
-    def _fetch_resource(self, neutron_context, resource, resource_id):
-        attrs = v2_attributes.get_resource_info(resource)
-        if not attrs:
-            # this isn't a request for a normal resource. it could be
-            # an action like removing a network from a dhcp agent.
-            # return None and assume the custom controller for this will
-            # handle the necessary logic.
-            return
-        field_list = [name for (name, value) in attrs.items()
-                      if (value.get('required_by_policy') or
-                          value.get('primary_key') or 'default' not in value)]
-        plugin = manager.NeutronManager.get_plugin_for_resource(resource)
-        if plugin:
-            getter = getattr(plugin, 'get_%s' % resource)
-            # TODO(kevinbenton): the parent_id logic currently in base.py
-            return getter(neutron_context, resource_id, fields=field_list)
-        else:
-            # Some legit resources, like quota, do not have a plugin yet.
-            # Retrieving the original object is nevertheless important
-            # for policy checks.
-            return _custom_getter(resource, resource_id)
 
     def before(self, state):
         # This hook should be run only for PUT,POST and DELETE methods and for
@@ -87,7 +88,7 @@ class PolicyHook(hooks.PecanHook):
         # identifier would have been already retrieved by the lookup process;
         # in the case of DELETE requests there won't be any item to process in
         # the request body
-        merged_resources = []
+        original_resources = []
         if needs_prefetch:
             try:
                 item = resources_copy.pop()
@@ -95,12 +96,12 @@ class PolicyHook(hooks.PecanHook):
                 # Ops... this was a delete after all!
                 item = {}
             resource_id = state.request.context.get('resource_id')
-            resource_obj = self._fetch_resource(neutron_context,
-                                                resource, resource_id)
+            resource_obj = fetch_resource(neutron_context,
+                                          resource, resource_id)
             if resource_obj:
+                original_resources.append(resource_obj)
                 obj = copy.copy(resource_obj)
                 obj.update(item)
-                merged_resources.append(obj.copy())
                 obj[const.ATTRIBUTES_TO_UPDATE] = item.keys()
                 # Put back the item in the list so that policies could be
                 # enforced
@@ -108,7 +109,7 @@ class PolicyHook(hooks.PecanHook):
         # TODO(salv-orlando): as other hooks might need to prefetch resources,
         # store them in the request context. However, this should be done in a
         # separate hook which is conventietly called before all other hooks
-        state.request.context['request_resources'] = merged_resources
+        state.request.context['original_resources'] = original_resources
         for item in resources_copy:
             try:
                 policy.enforce(
