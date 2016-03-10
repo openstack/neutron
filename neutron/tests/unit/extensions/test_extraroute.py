@@ -19,6 +19,7 @@ from webob import exc
 
 from neutron.common import constants
 from neutron.common import utils
+from neutron import context
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
@@ -58,11 +59,15 @@ class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
 
 
 class ExtraRouteDBTestCaseBase(object):
-    def _routes_update_prepare(self, router_id, subnet_id,
-                               port_id, routes, skip_add=False):
+    def _routes_update_prepare(
+            self, router_id, subnet_id,
+            port_id, routes, skip_add=False, tenant_id=None):
         if not skip_add:
-            self._router_interface_action('add', router_id, subnet_id, port_id)
-        self._update('routers', router_id, {'router': {'routes': routes}})
+            self._router_interface_action(
+                'add', router_id, subnet_id, port_id, tenant_id=None)
+        ctxt = context.Context('', tenant_id) if tenant_id else None
+        self._update('routers', router_id, {'router': {'routes': routes}},
+                     neutron_context=ctxt)
         return self._show('routers', router_id)
 
     def _routes_update_cleanup(self, port_id, subnet_id, router_id, routes):
@@ -82,13 +87,26 @@ class ExtraRouteDBTestCaseBase(object):
                                                 None, r['router']['id'], [])
 
     def test_route_update_with_external_route(self):
+        my_tenant = 'tenant1'
         routes = [{'destination': '135.207.0.0/16', 'nexthop': '10.0.1.3'}]
-        with self.subnet(cidr='10.0.1.0/24') as ext_subnet:
+        with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as ext_subnet:
             self._set_net_external(ext_subnet['subnet']['network_id'])
             ext_info = {'network_id': ext_subnet['subnet']['network_id']}
-            with self.router(external_gateway_info=ext_info) as r:
+            with self.router(
+                    external_gateway_info=ext_info, tenant_id=my_tenant) as r:
                 body = self._routes_update_prepare(
-                    r['router']['id'], None, None, routes, skip_add=True)
+                    r['router']['id'], None, None, routes, skip_add=True,
+                    tenant_id=my_tenant)
+                self.assertEqual(routes, body['router']['routes'])
+
+    def test_route_update_with_route_via_another_tenant_subnet(self):
+        my_tenant = 'tenant1'
+        routes = [{'destination': '135.207.0.0/16', 'nexthop': '10.0.1.3'}]
+        with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as subnet:
+            with self.router(tenant_id=my_tenant) as r:
+                body = self._routes_update_prepare(
+                    r['router']['id'], subnet['subnet']['id'], None, routes,
+                    tenant_id=my_tenant)
                 self.assertEqual(routes, body['router']['routes'])
 
     def test_route_clear_routes_with_None(self):
