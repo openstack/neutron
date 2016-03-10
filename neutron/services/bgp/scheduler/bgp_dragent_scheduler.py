@@ -140,7 +140,7 @@ class BgpDrAgentSchedulerBase(BgpDrAgentFilter):
 
             if agents_db.AgentDbMixin.is_agent_down(
                     bgp_dragent.heartbeat_timestamp):
-                LOG.warn(_LW('BgpDrAgent %s is down'), bgp_dragent.id)
+                LOG.warning(_LW('BgpDrAgent %s is down'), bgp_dragent.id)
                 return False
 
             if self._is_bgp_speaker_hosted(context, bgp_dragent['id']):

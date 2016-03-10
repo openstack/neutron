@@ -138,8 +138,8 @@ class OpenFlowSwitchMixin(object):
         cookies = set([f.cookie for f in self.dump_flows()]) - \
                   self.reserved_cookies
         for c in cookies:
-            LOG.warn(_LW("Deleting flow with cookie 0x%(cookie)x") % {
-                'cookie': c})
+            LOG.warning(_LW("Deleting flow with cookie 0x%(cookie)x"),
+                        {'cookie': c})
             self.delete_flows(cookie=c, cookie_mask=((1 << 64) - 1))
 
     def install_goto_next(self, table_id):

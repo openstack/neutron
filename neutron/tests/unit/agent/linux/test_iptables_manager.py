@@ -927,7 +927,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
     def test_remove_nonexistent_rule(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
             self.iptables.ipv4['filter'].remove_rule('nonexistent', '-j DROP')
-        log.warn.assert_called_once_with(
+        log.warning.assert_called_once_with(
             'Tried to remove rule that was not there: '
             '%(chain)r %(rule)r %(wrap)r %(top)r',
             {'wrap': True, 'top': False, 'rule': '-j DROP',
@@ -1001,7 +1001,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             acc = self.iptables.get_traffic_counters('chain1')
             self.assertIsNone(acc)
         self.assertEqual(0, self.execute.call_count)
-        log.warn.assert_called_once_with(
+        log.warning.assert_called_once_with(
             'Attempted to get traffic counters of chain %s which '
             'does not exist', 'chain1')
 

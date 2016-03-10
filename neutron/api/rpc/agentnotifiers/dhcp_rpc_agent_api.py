@@ -70,9 +70,10 @@ class DhcpAgentNotifyAPI(object):
                     context, 'network_create_end',
                     {'network': {'id': network['id']}}, agent['host'])
         elif not existing_agents:
-            LOG.warn(_LW('Unable to schedule network %s: no agents available; '
-                         'will retry on subsequent port and subnet creation '
-                         'events.'), network['id'])
+            LOG.warning(_LW('Unable to schedule network %s: no agents '
+                            'available; will retry on subsequent port '
+                            'and subnet creation events.'),
+                        network['id'])
         return new_agents + existing_agents
 
     def _get_enabled_agents(self, context, network, agents, method, payload):
@@ -87,12 +88,13 @@ class DhcpAgentNotifyAPI(object):
         len_enabled_agents = len(enabled_agents)
         len_active_agents = len(active_agents)
         if len_active_agents < len_enabled_agents:
-            LOG.warn(_LW("Only %(active)d of %(total)d DHCP agents associated "
-                         "with network '%(net_id)s' are marked as active, so "
-                         "notifications may be sent to inactive agents."),
-                     {'active': len_active_agents,
-                      'total': len_enabled_agents,
-                      'net_id': network_id})
+            LOG.warning(_LW("Only %(active)d of %(total)d DHCP agents "
+                            "associated with network '%(net_id)s' "
+                            "are marked as active, so notifications "
+                            "may be sent to inactive agents."),
+                        {'active': len_active_agents,
+                         'total': len_enabled_agents,
+                         'net_id': network_id})
         if not enabled_agents:
             num_ports = self.plugin.get_ports_count(
                 context, {'network_id': [network_id]})

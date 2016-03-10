@@ -63,8 +63,8 @@ def _is_valid_driver_combination():
 
 def is_firewall_enabled():
     if not _is_valid_driver_combination():
-        LOG.warn(_LW("Driver configuration doesn't match with "
-                     "enable_security_group"))
+        LOG.warning(_LW("Driver configuration doesn't match with "
+                        "enable_security_group"))
 
     return cfg.CONF.SECURITYGROUP.enable_security_group
 
@@ -97,8 +97,8 @@ class SecurityGroupAgentRpc(object):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver or 'noop'
         LOG.debug("Init firewall settings (driver=%s)", firewall_driver)
         if not _is_valid_driver_combination():
-            LOG.warn(_LW("Driver configuration doesn't match "
-                         "with enable_security_group"))
+            LOG.warning(_LW("Driver configuration doesn't match "
+                            "with enable_security_group"))
         firewall_class = firewall.load_firewall_driver_class(firewall_driver)
         try:
             self.firewall = firewall_class(

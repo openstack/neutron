@@ -182,7 +182,7 @@ class TestAgentsDbMixin(TestAgentsDbBase):
                    'alive': True}]
         with mock.patch.object(self.plugin, 'get_agents',
                                return_value=agents),\
-                mock.patch.object(agents_db.LOG, 'warn') as warn,\
+                mock.patch.object(agents_db.LOG, 'warning') as warn,\
                 mock.patch.object(agents_db.LOG, 'debug') as debug:
             self.plugin.agent_health_check()
             self.assertTrue(debug.called)

@@ -108,7 +108,7 @@ class NeutronDebugAgent(object):
             try:
                 ip.netns.delete(namespace)
             except Exception:
-                LOG.warn(_LW('Failed to delete namespace %s'), namespace)
+                LOG.warning(_LW('Failed to delete namespace %s'), namespace)
         else:
             self.driver.unplug(self.driver.get_device_name(port),
                                bridge=bridge)

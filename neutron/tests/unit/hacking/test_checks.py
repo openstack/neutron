@@ -29,7 +29,6 @@ class HackingTestCase(base.BaseTestCase):
         expected_marks = {
             'error': '_LE',
             'info': '_LI',
-            'warn': '_LW',
             'warning': '_LW',
             'critical': '_LC',
             'exception': '_LE',

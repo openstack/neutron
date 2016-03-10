@@ -198,8 +198,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                       '%(host)s', {'agent_type': agent_type, 'host': host})
             return
         if self.is_agent_down(agent.heartbeat_timestamp):
-            LOG.warn(_LW('%(agent_type)s agent %(agent_id)s is not active'),
-                     {'agent_type': agent_type, 'agent_id': agent.id})
+            LOG.warning(_LW('%(agent_type)s agent %(agent_id)s is not active'),
+                        {'agent_type': agent_type, 'agent_id': agent.id})
         return agent
 
     @staticmethod
@@ -222,9 +222,9 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         except Exception:
             msg = _LW('Dictionary %(dict_name)s for agent %(agent_type)s on '
                       'host %(host)s is invalid.')
-            LOG.warn(msg, {'dict_name': dict_name,
-                           'agent_type': agent_db.agent_type,
-                           'host': agent_db.host})
+            LOG.warning(msg, {'dict_name': dict_name,
+                              'agent_type': agent_db.agent_type,
+                              'host': agent_db.host})
             conf = {}
         return conf
 
@@ -286,11 +286,11 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                (agent['agent_type'],
                                 agent['heartbeat_timestamp'],
                                 agent['host']) for agent in dead_agents])
-            LOG.warn(_LW("Agent healthcheck: found %(count)s dead agents "
-                         "out of %(total)s:\n%(data)s"),
-                     {'count': len(dead_agents),
-                      'total': len(agents),
-                      'data': data})
+            LOG.warning(_LW("Agent healthcheck: found %(count)s dead agents "
+                            "out of %(total)s:\n%(data)s"),
+                        {'count': len(dead_agents),
+                         'total': len(agents),
+                         'data': data})
         else:
             LOG.debug("Agent healthcheck: found %s active agents",
                       len(agents))

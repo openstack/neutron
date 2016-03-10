@@ -93,8 +93,8 @@ class V2Controller(object):
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
         if not controller:
-            LOG.warn(_LW("No controller found for: %s - returning response "
-                         "code 404"), collection)
+            LOG.warning(_LW("No controller found for: %s - returning response "
+                            "code 404"), collection)
             pecan.abort(404)
         # Store resource and collection names in pecan request context so that
         # hooks can leverage them if necessary. The following code uses

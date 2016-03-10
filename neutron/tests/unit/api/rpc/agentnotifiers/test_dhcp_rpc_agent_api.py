@@ -51,7 +51,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
             new_agents = []
         self.assertEqual(new_agents + existing_agents, agents)
         self.assertEqual(expected_casts, self.mock_cast.call_count)
-        self.assertEqual(expected_warnings, self.mock_log.warn.call_count)
+        self.assertEqual(expected_warnings, self.mock_log.warning.call_count)
 
     def test__schedule_network(self):
         agent = agents_db.Agent()
@@ -86,7 +86,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         if not cfg.CONF.enable_services_on_agents_with_admin_state_down:
             agents = [x for x in agents if x.admin_state_up]
         self.assertEqual(agents, enabled_agents)
-        self.assertEqual(expected_warnings, self.mock_log.warn.call_count)
+        self.assertEqual(expected_warnings, self.mock_log.warning.call_count)
         self.assertEqual(expected_errors, self.mock_log.error.call_count)
 
     def test__get_enabled_agents(self):

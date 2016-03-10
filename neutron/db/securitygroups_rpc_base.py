@@ -375,8 +375,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         try:
             mac_address = query.one()[0]
         except (exc.NoResultFound, exc.MultipleResultsFound):
-            LOG.warn(_LW('No valid gateway port on subnet %s is '
-                         'found for IPv6 RA'), subnet['id'])
+            LOG.warning(_LW('No valid gateway port on subnet %s is '
+                            'found for IPv6 RA'), subnet['id'])
             return
         lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
             n_const.IPV6_LLA_PREFIX,

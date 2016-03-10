@@ -276,8 +276,8 @@ class MeteringAgentWithStateReport(MeteringAgent):
             self.use_call = False
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_LW("Neutron server does not support state report."
-                         " State report for this agent will be disabled."))
+            LOG.warning(_LW("Neutron server does not support state report. "
+                            "State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:

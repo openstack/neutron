@@ -212,7 +212,7 @@ class ResourceRegistry(object):
 
     def register_resource(self, resource):
         if resource.name in self._resources:
-            LOG.warn(_LW('%s is already registered'), resource.name)
+            LOG.warning(_LW('%s is already registered'), resource.name)
         if resource.name in self._tracked_resource_mappings:
             resource.register_events()
         self._resources[resource.name] = resource

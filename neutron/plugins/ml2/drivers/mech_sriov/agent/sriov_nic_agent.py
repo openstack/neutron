@@ -326,7 +326,7 @@ class SriovNicSwitchAgent(object):
                     self.ext_manager.delete_port(self.context, port)
                 else:
                     LOG.warning(_LW("port_id to device with MAC "
-                                 "%s not found"), mac)
+                                    "%s not found"), mac)
                 dev_details = self.plugin_rpc.update_device_down(self.context,
                                                                  mac,
                                                                  self.agent_id,

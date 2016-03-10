@@ -532,17 +532,17 @@ class ExtensionManager(object):
                     ext_name = mod_name[0].upper() + mod_name[1:]
                     new_ext_class = getattr(mod, ext_name, None)
                     if not new_ext_class:
-                        LOG.warn(_LW('Did not find expected name '
-                                     '"%(ext_name)s" in %(file)s'),
-                                 {'ext_name': ext_name,
-                                  'file': ext_path})
+                        LOG.warning(_LW('Did not find expected name '
+                                        '"%(ext_name)s" in %(file)s'),
+                                    {'ext_name': ext_name,
+                                     'file': ext_path})
                         continue
                     new_ext = new_ext_class()
                     self.add_extension(new_ext)
             except Exception as exception:
-                LOG.warn(_LW("Extension file %(f)s wasn't loaded due to "
-                             "%(exception)s"),
-                         {'f': f, 'exception': exception})
+                LOG.warning(_LW("Extension file %(f)s wasn't loaded due to "
+                                "%(exception)s"),
+                            {'f': f, 'exception': exception})
 
     def add_extension(self, ext):
         # Do nothing if the extension doesn't check out
@@ -578,9 +578,9 @@ class PluginAwareExtensionManager(ExtensionManager):
         alias = extension.get_alias()
         supports_extension = alias in self.get_supported_extension_aliases()
         if not supports_extension:
-            LOG.warn(_LW("Extension %s not supported by any of loaded "
-                         "plugins"),
-                     alias)
+            LOG.warning(_LW("Extension %s not supported by any of loaded "
+                            "plugins"),
+                        alias)
         return supports_extension
 
     def _plugins_implement_interface(self, extension):
@@ -589,8 +589,9 @@ class PluginAwareExtensionManager(ExtensionManager):
         for plugin in self.plugins.values():
             if isinstance(plugin, extension.get_plugin_interface()):
                 return True
-        LOG.warn(_LW("Loaded plugins do not implement extension %s interface"),
-                 extension.get_alias())
+        LOG.warning(_LW("Loaded plugins do not implement extension "
+                        "%s interface"),
+                    extension.get_alias())
         return False
 
     @classmethod

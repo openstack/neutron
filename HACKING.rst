@@ -23,6 +23,8 @@ Neutron Specific Commandments
 - [N331] Detect wrong usage with assertTrue(isinstance()).
 - [N332] Use assertEqual(expected_http_code, observed_http_code) instead of
          assertEqual(observed_http_code, expected_http_code).
+- [N333] Validate that LOG.warning is used instead of LOG.warn. The latter
+  is deprecated.
 
 Creating Unit Tests
 -------------------

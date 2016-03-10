@@ -24,10 +24,10 @@ LOG = logging.getLogger(__name__)
 # TODO(claudiub): Remove this module at the beginning of the O cycle.
 
 new_driver = 'hyperv.neutron.security_groups_driver.HyperVSecurityGroupsDriver'
-LOG.warn(_LW("You are using the deprecated firewall driver: %(deprecated)s. "
-             "Use the recommended driver %(new)s instead."),
-         {'deprecated': '%s.HyperVSecurityGroupsDriver' % __name__,
-          'new': new_driver})
+LOG.warning(_LW("You are using the deprecated firewall driver: "
+                "%(deprecated)s.Use the recommended driver %(new)s instead."),
+            {'deprecated': '%s.HyperVSecurityGroupsDriver' % __name__,
+             'new': new_driver})
 
 HyperVSecurityGroupsDriver = moves.moved_class(
     sg_driver.HyperVSecurityGroupsDriver,
