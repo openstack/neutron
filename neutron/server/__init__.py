@@ -28,6 +28,7 @@ def boot_server(server_func):
     # the configuration will be read into the cfg.CONF global data structure
     config.init(sys.argv[1:])
     config.setup_logging()
+    config.set_config_defaults()
     if not cfg.CONF.config_file:
         sys.exit(_("ERROR: Unable to find configuration file via the default"
                    " search paths (~/.neutron/, ~/, /etc/neutron/, /etc/) and"
