@@ -129,7 +129,7 @@ class DhcpAgent(manager.Manager):
             if (isinstance(e, oslo_messaging.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
-                LOG.warning(_LW("Network %s has been deleted."), network.id)
+                LOG.debug("Network %s has been deleted.", network.id)
             else:
                 LOG.exception(_LE('Unable to %(action)s dhcp for %(net_id)s.'),
                               {'net_id': network.id, 'action': action})
@@ -203,7 +203,7 @@ class DhcpAgent(manager.Manager):
         try:
             network = self.plugin_rpc.get_network_info(network_id)
             if not network:
-                LOG.warning(_LW('Network %s has been deleted.'), network_id)
+                LOG.debug('Network %s has been deleted.', network_id)
             return network
         except Exception as e:
             self.schedule_resync(e, network_id)
