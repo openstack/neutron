@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.common import cred_provider
 from tempest import manager
 from tempest.services.identity.v2.json.tenants_client import \
     TenantsClient
@@ -72,17 +71,3 @@ class Manager(manager.Manager):
         # Client uses admin endpoint type of Keystone API v2
         self.tenants_client = TenantsClient(self.auth_provider,
                                             **params_v2_admin)
-
-
-class AdminManager(Manager):
-
-    """
-    Manager object that uses the admin credentials for its
-    managed client objects
-    """
-
-    def __init__(self, service=None):
-        super(AdminManager, self).__init__(
-            credentials=cred_provider.get_configured_credentials(
-                'identity_admin'),
-            service=service)
