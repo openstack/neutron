@@ -16,8 +16,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+
+# NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
+# devices are listed here (i.e. when using Xen)
+BRIDGE_FS = "/sys/class/net/"
+BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + "%s/brport"
+
+
+def get_interface_bridged_time(interface):
+    try:
+        return os.stat(BRIDGE_PORT_FS_FOR_DEVICE % interface).st_mtime
+    except OSError:
+        pass
 
 
 class BridgeDevice(ip_lib.IPDevice):
