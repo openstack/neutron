@@ -11,6 +11,7 @@
 #    under the License.
 
 import abc
+import copy
 
 from neutron_lib import exceptions
 from oslo_db import exception as obj_exc
@@ -115,13 +116,57 @@ class NeutronDbObject(NeutronObject):
 
     fields_no_update = []
 
+    # dict with name mapping: {'field_name_in_object': 'field_name_in_db'}
+    fields_need_translation = {}
+
     def from_db_object(self, *objs):
+        db_objs = [self.modify_fields_from_db(db_obj) for db_obj in objs]
         for field in self.fields:
-            for db_obj in objs:
+            for db_obj in db_objs:
                 if field in db_obj:
                     setattr(self, field, db_obj[field])
                 break
         self.obj_reset_changes()
+
+    @classmethod
+    def modify_fields_to_db(cls, fields):
+        """
+        This method enables to modify the fields and its
+        content before data is inserted into DB.
+
+         It uses the fields_need_translation dict with structure:
+        {
+            'field_name_in_object': 'field_name_in_db'
+        }
+
+        :param fields: dict of fields from NeutronDbObject
+        :return: modified dict of fields
+        """
+        result = copy.deepcopy(dict(fields))
+        for field, field_db in cls.fields_need_translation.items():
+            if field in result:
+                result[field_db] = result.pop(field)
+        return result
+
+    @classmethod
+    def modify_fields_from_db(cls, db_obj):
+        """
+        This method enables to modify the fields and its
+        content after data was fetched from DB.
+
+        It uses the fields_need_translation dict with structure:
+        {
+            'field_name_in_object': 'field_name_in_db'
+        }
+
+        :param db_obj: dict of object fetched from database
+        :return: modified dict of DB values
+        """
+        result = dict(db_obj)
+        for field, field_db in cls.fields_need_translation.items():
+            if field_db in result:
+                result[field] = result.pop(field_db)
+        return result
 
     @classmethod
     def get_object(cls, context, **kwargs):
@@ -140,7 +185,7 @@ class NeutronDbObject(NeutronObject):
 
         db_obj = obj_db_api.get_object(context, cls.db_model, **kwargs)
         if db_obj:
-            obj = cls(context, **db_obj)
+            obj = cls(context, **cls.modify_fields_from_db(db_obj))
             obj.obj_reset_changes()
             return obj
 
@@ -148,10 +193,12 @@ class NeutronDbObject(NeutronObject):
     def get_objects(cls, context, **kwargs):
         cls.validate_filters(**kwargs)
         db_objs = obj_db_api.get_objects(context, cls.db_model, **kwargs)
-        objs = [cls(context, **db_obj) for db_obj in db_objs]
-        for obj in objs:
+        result = []
+        for db_obj in db_objs:
+            obj = cls(context, **cls.modify_fields_from_db(db_obj))
             obj.obj_reset_changes()
-        return objs
+            result.append(obj)
+        return result
 
     @classmethod
     def is_accessible(cls, context, db_obj):
@@ -181,18 +228,17 @@ class NeutronDbObject(NeutronObject):
         fields = self._get_changed_persistent_fields()
         try:
             db_obj = obj_db_api.create_object(self._context, self.db_model,
-                                              fields)
+                                              self.modify_fields_to_db(fields))
         except obj_exc.DBDuplicateEntry as db_exc:
             raise NeutronDbObjectDuplicateEntry(object_class=self.__class__,
                                                 db_exception=db_exc)
-
         self.from_db_object(db_obj)
 
     def _get_composite_keys(self):
         keys = {}
         for key in self.primary_keys:
             keys[key] = getattr(self, key)
-        return keys
+        return self.modify_fields_to_db(keys)
 
     def update(self):
         updates = self._get_changed_persistent_fields()
@@ -200,8 +246,8 @@ class NeutronDbObject(NeutronObject):
 
         if updates:
             db_obj = obj_db_api.update_object(self._context, self.db_model,
-                                              updates,
-                                              **self._get_composite_keys())
+                                            self.modify_fields_to_db(updates),
+                                            **self._get_composite_keys())
             self.from_db_object(self, db_obj)
 
     def delete(self):
