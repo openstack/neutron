@@ -121,6 +121,11 @@ class MacvtapManager(amb.CommonAgentManagerBase):
                           "Agent terminated!"))
             sys.exit(1)
 
+    def get_devices_modified_timestamps(self, devices):
+        # TODO(kevinbenton): this should be implemented to detect
+        # rapid Nova instance rebuilds.
+        return {}
+
     def get_all_devices(self):
         devices = set()
         all_device_names = os.listdir(MACVTAP_FS)

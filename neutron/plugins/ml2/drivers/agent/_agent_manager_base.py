@@ -138,6 +138,16 @@ class CommonAgentManagerBase(object):
         """
 
     @abc.abstractmethod
+    def get_devices_modified_timestamps(self, devices):
+        """Get a dictionary of modified timestamps by device
+
+        The devices passed in are expected to be the same format that
+        get_all_devices returns.
+
+        :return: dict -- A dictionary of timestamps keyed by device
+        """
+
+    @abc.abstractmethod
     def get_extension_driver_type(self):
         """Get the agent extension driver type.
 
