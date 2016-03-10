@@ -68,7 +68,8 @@ class TimeStamp_db_mixin(object):
 
         while objs_list:
             obj = objs_list.pop()
-            if hasattr(obj, 'standard_attr') and obj.standard_attr_id:
+            if (isinstance(obj, model_base.HasStandardAttributes)
+                and obj.standard_attr_id):
                 obj.standard_attr.updated_at = timeutils.utcnow()
 
     def register_db_events(self):

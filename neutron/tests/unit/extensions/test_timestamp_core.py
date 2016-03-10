@@ -15,9 +15,13 @@
 import datetime
 import six
 
+import mock
 from oslo_config import cfg
 
+from neutron import context
 from neutron.db import db_base_plugin_v2
+from neutron.db import models_v2
+from neutron.db import tag_db as tag_module
 from neutron.extensions import timestamp_core as timestamp
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -223,3 +227,40 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
                                             'changed_since=%s' % changed_since)
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(list(res.values())[0]['type'], 'InvalidInput')
+
+
+class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
+    """Test timestamp_db.TimeStamp_db_mixin()"""
+
+    def setUp(self):
+        super(TimeStampDBMixinTestCase, self).setUp()
+
+    def _save_network(self, network_id):
+        ctx = context.get_admin_context()
+        with ctx.session.begin(subtransactions=True):
+            ctx.session.add(models_v2.Network(id=network_id))
+        network = ctx.session.query(models_v2.Network).one()
+        return network.standard_attr_id
+
+    # Use tag as non StandardAttribute object
+    def _save_tag(self, tags, standard_attr_id):
+        ctx = context.get_admin_context()
+        for tag in tags:
+            with ctx.session.begin(subtransactions=True):
+                tag_db = tag_module.Tag(standard_attr_id=standard_attr_id,
+                                        tag=tag)
+                ctx.session.add(tag_db)
+
+    def test_update_timpestamp(self):
+        network_id = "foo_network_id"
+        tags = ["red", "blue"]
+        with mock.patch('oslo_utils.timeutils.utcnow') as timenow:
+            timenow.return_value = datetime.datetime(2016, 3, 11, 0, 0)
+
+            # Test to update StandardAttribute object
+            standard_attr_id = self._save_network(network_id)
+            self.assertEqual(1, timenow.call_count)
+
+            # Test not to update non StandardAttribute object
+            self._save_tag(tags, standard_attr_id)
+            self.assertEqual(1, timenow.call_count)
