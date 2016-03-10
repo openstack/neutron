@@ -382,6 +382,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | l2-pop_                       | A bug in L2 Population mech driver    | Kevin Benton         |
 +-------------------------------+---------------------------------------+----------------------+
+| l3-bgp_                       | A bug affecting BGP service plugin    | Vikram Choudhary     |
++-------------------------------+---------------------------------------+----------------------+
 | l3-dvr-backlog_               | A bug affecting distributed routing   | Ryan Moats           |
 +-------------------------------+---------------------------------------+----------------------+
 | l3-ha_                        | A bug affecting L3 HA (vrrp)          | Assaf Muller         |
@@ -542,6 +544,14 @@ L2 Population
 
 * `L2 Pop - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=l2-pop>`_
 * `L2 Pop - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=l2-pop>`_
+
+.. _l3-bgp:
+
+L3 BGP
+++++++
+
+* `L3 BGP - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=l3-bgp`_
+* `L3 BGP - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=l3-bgp`_
 
 .. _l3-dvr-backlog:
 
