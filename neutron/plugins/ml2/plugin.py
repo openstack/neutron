@@ -548,10 +548,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not segment:
             # REVISIT(rkukura): This should notify agent to unplug port
             network = mech_context.network.current
-            LOG.warning(_LW("In _notify_port_updated(), no bound segment for "
-                            "port %(port_id)s on network %(network_id)s"),
-                        {'port_id': port['id'],
-                         'network_id': network['id']})
+            LOG.debug("In _notify_port_updated(), no bound segment for "
+                      "port %(port_id)s on network %(network_id)s",
+                      {'port_id': port['id'], 'network_id': network['id']})
             return
         self.notifier.port_update(mech_context._plugin_context, port,
                                   segment[api.NETWORK_TYPE],
