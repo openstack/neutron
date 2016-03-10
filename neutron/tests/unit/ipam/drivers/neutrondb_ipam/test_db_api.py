@@ -15,11 +15,11 @@
 
 import mock
 
-from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron import context
+from neutron.db import api as ndb_api
 from neutron.ipam.drivers.neutrondb_ipam import db_api
 from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam import exceptions as ipam_exc
@@ -152,11 +152,13 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
     def test_update_range_reraise_error(self):
         session = mock.Mock()
         session.query.side_effect = orm_exc.ObjectDeletedError(None, None)
-        self.assertRaises(db_exc.RetryRequest,
-                          self.subnet_manager.update_range,
-                          session,
-                          mock.Mock(),
-                          first_ip='1.2.3.5')
+
+        @ndb_api.retry_db_errors
+        def go():
+            self.subnet_manager.update_range(session, mock.Mock(),
+                                             first_ip='1.2.3.5')
+
+        self.assertRaises(ipam_exc.IPAllocationFailed, go)
 
     def test_delete_range(self):
         self._create_pools([self.single_pool])
@@ -168,10 +170,12 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
     def test_delete_range_reraise_error(self):
         session = mock.Mock()
         session.query.side_effect = orm_exc.ObjectDeletedError(None, None)
-        self.assertRaises(db_exc.RetryRequest,
-                          self.subnet_manager.delete_range,
-                          session,
-                          mock.Mock())
+
+        @ndb_api.retry_db_errors
+        def go():
+            self.subnet_manager.delete_range(session, mock.Mock())
+
+        self.assertRaises(ipam_exc.IPAllocationFailed, go)
 
     def test_check_unique_allocation(self):
         self.assertTrue(self.subnet_manager.check_unique_allocation(

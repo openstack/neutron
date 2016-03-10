@@ -15,12 +15,12 @@
 
 import mock
 import netaddr
-from oslo_db import exception as db_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
+from neutron.db import api as ndb_api
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
@@ -455,6 +455,8 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
             'first_ip': '10.0.0.15', 'last_ip': '10.0.0.15'}]
         ipam_subnet.subnet_manager.delete_range.return_value = 0
 
-        self.assertRaises(db_exc.RetryRequest,
-                          ipam_subnet._allocate_specific_ip,
-                          self.ctx.session, ip)
+        @ndb_api.retry_db_errors
+        def go():
+            ipam_subnet._allocate_specific_ip(self.ctx.session, ip)
+
+        self.assertRaises(ipam_exc.IPAllocationFailed, go)

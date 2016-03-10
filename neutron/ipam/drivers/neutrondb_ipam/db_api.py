@@ -164,7 +164,7 @@ class IpamSubnetManager(object):
                 first_ip=db_range.first_ip).filter_by(
                 last_ip=db_range.last_ip).update(opts)
         except orm_exc.ObjectDeletedError:
-            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed)
+            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed())
 
     def delete_range(self, session, db_range):
         """Return count of deleted ranges
@@ -179,7 +179,7 @@ class IpamSubnetManager(object):
                 first_ip=db_range.first_ip).filter_by(
                 last_ip=db_range.last_ip).delete()
         except orm_exc.ObjectDeletedError:
-            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed)
+            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed())
 
     def create_range(self, session, allocation_pool_id,
                      range_start, range_end):
