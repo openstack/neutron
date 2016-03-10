@@ -320,6 +320,17 @@ class CommonAgentLoop(service.Service):
             self.mgr.delete_arp_spoofing_protection(devices)
         return resync
 
+    @staticmethod
+    def _get_devices_locally_modified(timestamps, previous_timestamps):
+        """Returns devices with previous timestamps that do not match new.
+
+        If a device did not have a timestamp previously, it will not be
+        returned because this means it is new.
+        """
+        return {device for device, timestamp in timestamps.items()
+                if previous_timestamps.get(device) and
+                timestamp != previous_timestamps.get(device)}
+
     def scan_devices(self, previous, sync):
         device_info = {}
 
@@ -333,11 +344,25 @@ class CommonAgentLoop(service.Service):
             previous = {'added': set(),
                         'current': set(),
                         'updated': set(),
-                        'removed': set()}
+                        'removed': set(),
+                        'timestamps': {}}
             # clear any orphaned ARP spoofing rules (e.g. interface was
             # manually deleted)
             if self.prevent_arp_spoofing:
                 self.mgr.delete_unreferenced_arp_protection(current_devices)
+
+        # check to see if any devices were locally modified based on their
+        # timestamps changing since the previous iteration. If a timestamp
+        # doesn't exist for a device, this calculation is skipped for that
+        # device.
+        device_info['timestamps'] = self.mgr.get_devices_modified_timestamps(
+            current_devices)
+        locally_updated = self._get_devices_locally_modified(
+            device_info['timestamps'], previous['timestamps'])
+        if locally_updated:
+            LOG.debug("Adding locally changed devices to updated set: %s",
+                      locally_updated)
+            updated_devices |= locally_updated
 
         if sync:
             # This is the first iteration, or the previous one had a problem.

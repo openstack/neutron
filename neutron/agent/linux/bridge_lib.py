@@ -40,6 +40,13 @@ def is_bridged_interface(interface):
         return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % interface)
 
 
+def get_interface_bridged_time(interface):
+    try:
+        return os.stat(BRIDGE_PORT_FS_FOR_DEVICE % interface).st_mtime
+    except OSError:
+        pass
+
+
 def get_bridge_names():
     return os.listdir(BRIDGE_FS)
 

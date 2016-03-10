@@ -42,6 +42,16 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
     def test_get_bridge_names(self):
         self.assertIn(self.bridge.name, bridge_lib.get_bridge_names())
 
+    def test_get_interface_bridged_time(self):
+        port = self.port_fixture.br_port
+        t1 = bridge_lib.get_interface_bridged_time(port)
+        self.bridge.delif(port)
+        self.bridge.addif(port)
+        t2 = bridge_lib.get_interface_bridged_time(port)
+        self.assertIsNotNone(t1)
+        self.assertIsNotNone(t2)
+        self.assertGreater(t2, t1)
+
     def test_get_interface_bridge(self):
         bridge = bridge_lib.BridgeDevice.get_interface_bridge(
             self.port_fixture.br_port.name)

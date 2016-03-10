@@ -551,6 +551,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             device.link.delete()
             LOG.debug("Done deleting interface %s", interface)
 
+    def get_devices_modified_timestamps(self, devices):
+        return {d: bridge_lib.get_interface_bridged_time(d) for d in devices}
+
     def get_all_devices(self):
         devices = set()
         for device in bridge_lib.get_bridge_names():
