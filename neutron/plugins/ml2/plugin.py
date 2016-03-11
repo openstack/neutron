@@ -657,7 +657,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             self._ensure_default_security_group(context, tenant_id)
-            result = super(Ml2Plugin, self).create_network(context, network)
+            net_db = self.create_network_db(context, network)
+            result = self._make_network_dict(net_db, process_extensions=False,
+                                             context=context)
             self.extension_manager.process_create_network(context, net_data,
                                                           result)
             self._process_l3_create(context, result, net_data)
@@ -670,30 +672,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_network_precommit(mech_context)
 
             if net_data.get(api.MTU, 0) > 0:
-                res = super(Ml2Plugin, self).update_network(context,
-                    result['id'], {'network': {api.MTU: net_data[api.MTU]}})
-                result[api.MTU] = res.get(api.MTU, 0)
+                net_db[api.MTU] = net_data[api.MTU]
+                result[api.MTU] = net_data[api.MTU]
 
             if az_ext.AZ_HINTS in net_data:
                 self.validate_availability_zones(context, 'network',
                                                  net_data[az_ext.AZ_HINTS])
                 az_hints = az_ext.convert_az_list_to_string(
                                                 net_data[az_ext.AZ_HINTS])
-                res = super(Ml2Plugin, self).update_network(context,
-                    result['id'], {'network': {az_ext.AZ_HINTS: az_hints}})
-                result[az_ext.AZ_HINTS] = res[az_ext.AZ_HINTS]
+                net_db[az_ext.AZ_HINTS] = az_hints
+                result[az_ext.AZ_HINTS] = az_hints
 
             # Update the transparent vlan if configured
             if utils.is_extension_supported(self, 'vlan-transparent'):
                 vlt = vlantransparent.get_vlan_transparent(net_data)
-                super(Ml2Plugin, self).update_network(context,
-                    result['id'], {'network': {'vlan_transparent': vlt}})
+                net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
 
-        # NOTE(kevinbenton): this extra lookup is necessary to get the
-        # latest db model for the extension functions
-        net_model = self._get_network(context, result['id'])
-        self._apply_dict_extend_functions('networks', result, net_model)
+        self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
 
     def create_network(self, context, network):
@@ -1065,7 +1061,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.exc_to_retry(os_db_exception.DBDuplicateEntry),\
                 session.begin(subtransactions=True):
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
-            result = super(Ml2Plugin, self).create_port(context, port)
+            port_db = self.create_port_db(context, port)
+            result = self._make_port_dict(port_db, process_extensions=False)
             self.extension_manager.process_create_port(context, attrs, result)
             self._portsec_ext_port_create_processing(context, result, port)
 
@@ -1086,10 +1083,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                       dhcp_opts)
             self.mechanism_manager.create_port_precommit(mech_context)
 
-        # NOTE(kevinbenton): this extra lookup is necessary to get the
-        # latest db model for the extension functions
-        port_model = self._get_port(context, result['id'])
-        self._apply_dict_extend_functions('ports', result, port_model)
+        self._apply_dict_extend_functions('ports', result, port_db)
         return result, mech_context
 
     def create_port(self, context, port):
