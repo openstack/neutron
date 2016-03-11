@@ -1619,6 +1619,10 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.router() as r,\
                 self.subnet() as s,\
                 mock.patch.object(registry, 'notify') as notify:
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          s['subnet']['id'],
+                                          None)
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -1628,10 +1632,6 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             notify.side_effect = [
                 exceptions.CallbackFailure(errors=errors), None
             ]
-            self._router_interface_action('add',
-                                          r['router']['id'],
-                                          s['subnet']['id'],
-                                          None)
             self._router_interface_action(
                 'remove',
                 r['router']['id'],
