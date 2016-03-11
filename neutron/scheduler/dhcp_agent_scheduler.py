@@ -26,6 +26,7 @@ from neutron._i18n import _LI, _LW
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.db import api as db_api
 from neutron.extensions import availability_zone as az_ext
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
@@ -142,7 +143,6 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         # customize the bind logic
         bound_agents = agents[:]
         for agent in agents:
-            context.session.begin(subtransactions=True)
             # saving agent_id to use it after rollback to avoid
             # DetachedInstanceError
             agent_id = agent.id
@@ -150,13 +150,12 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             binding.dhcp_agent_id = agent_id
             binding.network_id = network_id
             try:
-                context.session.add(binding)
-                # try to actually write the changes and catch integrity
-                # DBDuplicateEntry
-                context.session.commit()
+                with db_api.autonested_transaction(context.session):
+                    context.session.add(binding)
+                    # try to actually write the changes and catch integrity
+                    # DBDuplicateEntry
             except db_exc.DBDuplicateEntry:
                 # it's totally ok, someone just did our job!
-                context.session.rollback()
                 bound_agents.remove(agent)
                 LOG.info(_LI('Agent %s already present'), agent_id)
             LOG.debug('Network %(network_id)s is scheduled to be '
