@@ -1,0 +1,14 @@
+---
+prelude: >
+    max_fixed_ips_per_port has been deprecated and
+    will be removed in the Newton or Ocata cycle
+    depending on when all identified usecases of the
+    options are satisfied via another quota system.
+deprecations:
+  - max_fixed_ips_per_port has been deprecated and
+    will be removed in the Newton or Ocata cycle
+    depending on when all identified usecases of the
+    options are satisfied via another quota system.
+    If you depend on this configuration option to
+    stop tenants from consuming IP addresses, please
+    leave a comment on the `bug report <https://launchpad.net/bugs/1502356>`_.
