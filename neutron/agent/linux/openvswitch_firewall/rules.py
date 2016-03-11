@@ -14,9 +14,11 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants as n_consts
 from oslo_log import log as logging
 
 from neutron.agent import firewall
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import constants
 from neutron.common import utils
@@ -24,6 +26,15 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
 LOG = logging.getLogger(__name__)
+
+FORBIDDEN_PREFIXES = (n_consts.IPv4_ANY, n_consts.IPv6_ANY)
+
+
+def is_valid_prefix(ip_prefix):
+    # IPv6 have multiple ways how to describe ::/0 network, converting to
+    # IPNetwork and back to string unifies it
+    return (ip_prefix and
+            str(netaddr.IPNetwork(ip_prefix)) not in FORBIDDEN_PREFIXES)
 
 
 def create_flows_from_rule_and_port(rule, port):
@@ -38,11 +49,17 @@ def create_flows_from_rule_and_port(rule, port):
         'reg5': port.ofport,
     }
 
-    if dst_ip_prefix and dst_ip_prefix != "0.0.0.0/0":
-        flow_template["nw_dst"] = dst_ip_prefix
+    if is_valid_prefix(dst_ip_prefix):
+        if ip_lib.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_4:
+            flow_template["nw_dst"] = dst_ip_prefix
+        elif ip_lib.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_6:
+            flow_template["ipv6_dst"] = dst_ip_prefix
 
-    if src_ip_prefix and src_ip_prefix != "0.0.0.0/0":
-        flow_template["nw_src"] = src_ip_prefix
+    if is_valid_prefix(src_ip_prefix):
+        if ip_lib.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_4:
+            flow_template["nw_src"] = src_ip_prefix
+        elif ip_lib.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_6:
+            flow_template["ipv6_src"] = src_ip_prefix
 
     flows = create_protocol_flows(direction, flow_template, port, rule)
 
@@ -66,7 +83,7 @@ def create_protocol_flows(direction, flow_template, port, rule):
     protocol = rule.get('protocol')
     try:
         flow_template['nw_proto'] = ovsfw_consts.protocol_to_nw_proto[protocol]
-        if rule['ethertype'] == constants.IPv6 and protocol == 'icmp':
+        if rule['ethertype'] == n_consts.IPv6 and protocol == 'icmp':
             flow_template['nw_proto'] = constants.PROTO_NUM_IPV6_ICMP
     except KeyError:
         pass

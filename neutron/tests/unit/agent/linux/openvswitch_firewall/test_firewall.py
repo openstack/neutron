@@ -24,6 +24,10 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
 from neutron.tests import base
 
 
+def create_ofport(port_dict):
+    return ovsfw.OFPort(port_dict, mock.Mock(vif_mac='00:00:00:00:00:00'))
+
+
 class TestSecurityGroup(base.BaseTestCase):
     def setUp(self):
         super(TestSecurityGroup, self).setUp()
@@ -59,7 +63,7 @@ class TestOFPort(base.BaseTestCase):
         self.ipv6_addresses = ['fe80::f816:3eff:fe2e:1']
         port_dict = {'device': 1,
                      'fixed_ips': self.ipv4_addresses + self.ipv6_addresses}
-        self.port = ovsfw.OFPort(port_dict, mock.Mock())
+        self.port = create_ofport(port_dict)
 
     def test_ipv4_address(self):
         ipv4_addresses = self.port.ipv4_addresses
@@ -95,15 +99,19 @@ class TestOFPort(base.BaseTestCase):
         new_port_dict.update({
             'fixed_ips': added_ips,
             'allowed_address_pairs': [
-                {'mac_address': 'foo', 'ip_address': '192.168.0.1'},
-                {'mac_address': 'bar', 'ip_address': '2003::f'}],
+                {'mac_address': '00:00:00:00:00:01',
+                 'ip_address': '192.168.0.1'},
+                {'mac_address': '00:00:00:00:00:01',
+                 'ip_address': '2003::f'}],
         })
         self.port.update(new_port_dict)
         self.assertEqual(new_port_dict, self.port.neutron_port_dict)
         self.assertIsNot(new_port_dict, self.port.neutron_port_dict)
         self.assertEqual(added_ips, self.port.fixed_ips)
-        self.assertEqual({('foo', '192.168.0.1')}, self.port.allowed_pairs_v4)
-        self.assertEqual({('bar', '2003::f')}, self.port.allowed_pairs_v6)
+        self.assertEqual({('00:00:00:00:00:01', '192.168.0.1')},
+                         self.port.allowed_pairs_v4)
+        self.assertIn(('00:00:00:00:00:01', '2003::f'),
+                      self.port.allowed_pairs_v6)
 
 
 class TestSGPortMap(base.BaseTestCase):
@@ -137,8 +145,8 @@ class TestSGPortMap(base.BaseTestCase):
         sg_1 = ovsfw.SecurityGroup(1)
         sg_2 = ovsfw.SecurityGroup(2)
         sg_3 = ovsfw.SecurityGroup(3)
-        port_a = ovsfw.OFPort({'device': 'a'}, mock.Mock())
-        port_b = ovsfw.OFPort({'device': 'b'}, mock.Mock())
+        port_a = create_ofport({'device': 'a'})
+        port_b = create_ofport({'device': 'b'})
         self.map.ports = {'a': port_a, 'b': port_b}
         self.map.sec_groups = {1: sg_1, 2: sg_2, 3: sg_3}
         port_a.sec_groups = [sg_1, sg_2]
@@ -148,7 +156,7 @@ class TestSGPortMap(base.BaseTestCase):
         sg_3.ports = {port_b}
 
     def test_create_port(self):
-        port = ovsfw.OFPort({'device': 'a'}, mock.Mock())
+        port = create_ofport({'device': 'a'})
         sec_groups = ['1', '2']
         port_dict = {'security_groups': sec_groups}
         self.map.create_port(port, port_dict)
@@ -209,7 +217,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.firewall = ovsfw.OVSFirewallDriver(mock_bridge)
         self.mock_bridge = self.firewall.int_br
         self.mock_bridge.reset_mock()
-        self.fake_ovs_port = FakeOVSPort('port', 1, 'macaddr')
+        self.fake_ovs_port = FakeOVSPort('port', 1, '00:00:00:00:00:00')
         self.mock_bridge.br.get_vif_port_by_id.return_value = \
             self.fake_ovs_port
 
@@ -278,7 +286,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         port_dict = {
             'device': 'port-id',
             'security_groups': [123, 456]}
-        of_port = ovsfw.OFPort(port_dict, mock.Mock())
+        of_port = create_ofport(port_dict)
         self.firewall.sg_port_map.ports[of_port.id] = of_port
         port = self.firewall.get_or_create_ofport(port_dict)
         sg1, sg2 = sorted(

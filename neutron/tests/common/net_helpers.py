@@ -335,9 +335,14 @@ class Pinger(object):
 class NetcatTester(object):
     TCP = n_const.PROTO_NAME_TCP
     UDP = n_const.PROTO_NAME_UDP
+    VERSION_TO_ALL_ADDRESS = {
+        4: '0.0.0.0',
+        6: '::',
+    }
 
     def __init__(self, client_namespace, server_namespace, address,
-                 dst_port, protocol, server_address='0.0.0.0', src_port=None):
+                 dst_port, protocol, server_address=None, src_port=None):
+
         """
         Tool for testing connectivity on transport layer using netcat
         executable.
@@ -363,12 +368,14 @@ class NetcatTester(object):
         self._client_process = None
         self._server_process = None
         self.address = address
-        self.server_address = server_address
         self.dst_port = str(dst_port)
         self.src_port = str(src_port) if src_port else None
         if protocol not in TRANSPORT_PROTOCOLS:
             raise ValueError("Unsupported protocol %s" % protocol)
         self.protocol = protocol
+        ip_version = netaddr.IPAddress(address).version
+        self.server_address = (
+            server_address or self.VERSION_TO_ALL_ADDRESS[ip_version])
 
     @property
     def client_process(self):
@@ -393,7 +400,7 @@ class NetcatTester(object):
         return bool(self._client_process and not self._client_process.poll())
 
     def establish_connection(self):
-        if self._client_process:
+        if self.is_established:
             raise RuntimeError('%(proto)s connection to %(ip_addr)s is already'
                                ' established' %
                                {'proto': self.protocol,

@@ -68,7 +68,7 @@ def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
     sg_rules.append(rule)
 
 
-class FirewallTestCase(base.BaseSudoTestCase):
+class BaseFirewallTestCase(base.BaseSudoTestCase):
     FAKE_SECURITY_GROUP_ID = 'fake_sg_id'
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
     scenarios = [('IptablesFirewallDriver without ipset',
@@ -79,11 +79,26 @@ class FirewallTestCase(base.BaseSudoTestCase):
                    'initialize': 'initialize_iptables'}),
                  ('OVS Firewall Driver',
                   {'initialize': 'initialize_ovs'})]
+    ip_cidr = None
+
+    def setUp(self):
+        cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
+        super(BaseFirewallTestCase, self).setUp()
+        self.tester, self.firewall = getattr(self, self.initialize)()
+        self.src_port_desc = self._create_port_description(
+            self.tester.vm_port_id,
+            [self.tester.vm_ip_address],
+            self.tester.vm_mac_address,
+            [self.FAKE_SECURITY_GROUP_ID])
+        # FIXME(jlibosva): We should consider to call prepare_port_filter with
+        # deferred bridge depending on its performance
+        self.firewall.prepare_port_filter(self.src_port_desc)
 
     def initialize_iptables(self):
         cfg.CONF.set_override('enable_ipset', self.enable_ipset,
                               'SECURITYGROUP')
-        tester = self.useFixture(conn_testers.LinuxBridgeConnectionTester())
+        tester = self.useFixture(
+            conn_testers.LinuxBridgeConnectionTester(self.ip_cidr))
         firewall_drv = iptables_firewall.IptablesFirewallDriver(
             namespace=tester.bridge_namespace)
         return tester, firewall_drv
@@ -97,7 +112,8 @@ class FirewallTestCase(base.BaseSudoTestCase):
                           "OVS>=2.5. More info at"
                           "https://github.com/openvswitch/ovs/blob/master/"
                           "FAQ.md")
-        tester = self.useFixture(conn_testers.OVSConnectionTester())
+        tester = self.useFixture(
+            conn_testers.OVSConnectionTester(self.ip_cidr))
         firewall_drv = openvswitch_firewall.OVSFirewallDriver(tester.bridge)
         return tester, firewall_drv
 
@@ -112,19 +128,6 @@ class FirewallTestCase(base.BaseSudoTestCase):
                 'security_groups': sg_ids,
                 'status': 'ACTIVE'}
 
-    def setUp(self):
-        cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
-        super(FirewallTestCase, self).setUp()
-        self.tester, self.firewall = getattr(self, self.initialize)()
-        self.src_port_desc = self._create_port_description(
-            self.tester.vm_port_id,
-            [self.tester.vm_ip_address],
-            self.tester.vm_mac_address,
-            [self.FAKE_SECURITY_GROUP_ID])
-        # FIXME(jlibosva): We should consider to call prepare_port_filter with
-        # deferred bridge depending on its performance
-        self.firewall.prepare_port_filter(self.src_port_desc)
-
     def _apply_security_group_rules(self, sg_id, sg_rules):
         with self.firewall.defer_apply():
             self.firewall.update_security_group_rules(sg_id, sg_rules)
@@ -134,6 +137,10 @@ class FirewallTestCase(base.BaseSudoTestCase):
         with self.firewall.defer_apply():
             self.firewall.update_security_group_members(sg_id, members)
             self.firewall.update_port_filter(self.src_port_desc)
+
+
+class FirewallTestCase(BaseFirewallTestCase):
+    ip_cidr = '192.168.0.1/24'
 
     @skip_if_not_iptables
     def test_rule_application_converges(self):
@@ -504,5 +511,98 @@ class FirewallTestCase(base.BaseSudoTestCase):
                                       direction=self.tester.INGRESS)
         self.tester.assert_no_connection(protocol=self.tester.TCP,
                                          direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+
+
+class FirewallTestCaseIPv6(BaseFirewallTestCase):
+    scenarios = [('OVS Firewall Driver', {'initialize': 'initialize_ovs'})]
+    ip_cidr = '2001:db8:aaaa::1/64'
+
+    def test_icmp_from_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.INGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_ICMP,
+                     'source_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.INGRESS)
+
+    def test_icmp_to_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.EGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_ICMP,
+                     'destination_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.EGRESS)
+
+    def test_tcp_from_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.INGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_TCP,
+                     'source_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                         direction=self.tester.INGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.TCP,
+                                      direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+
+    def test_tcp_to_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.EGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_TCP,
+                     'destination_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                         direction=self.tester.EGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.TCP,
+                                      direction=self.tester.EGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         direction=self.tester.EGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+
+    def test_udp_from_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.INGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_UDP,
+                     'source_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         direction=self.tester.INGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.UDP,
+                                      direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+
+    def test_udp_to_specific_address(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.EGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_UDP,
+                     'destination_ip_prefix': self.tester.peer_ip_address}]
+
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         direction=self.tester.EGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.UDP,
+                                      direction=self.tester.EGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                         direction=self.tester.EGRESS)
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
