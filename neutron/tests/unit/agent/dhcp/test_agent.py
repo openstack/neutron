@@ -312,18 +312,16 @@ class TestDhcpAgent(base.BaseTestCase):
         network = mock.Mock()
         network.id = '1'
         self.driver.return_value.foo.side_effect = exc or Exception
-        with mock.patch.object(dhcp_agent.LOG, trace_level) as log:
-            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            with mock.patch.object(dhcp,
-                                   'schedule_resync') as schedule_resync:
-                self.assertIsNone(dhcp.call_driver('foo', network))
-                self.driver.assert_called_once_with(cfg.CONF,
-                                                    mock.ANY,
-                                                    mock.ANY,
-                                                    mock.ANY,
-                                                    mock.ANY)
-                self.assertEqual(log.call_count, 1)
-                self.assertEqual(expected_sync, schedule_resync.called)
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp,
+                               'schedule_resync') as schedule_resync:
+            self.assertIsNone(dhcp.call_driver('foo', network))
+            self.driver.assert_called_once_with(cfg.CONF,
+                                                mock.ANY,
+                                                mock.ANY,
+                                                mock.ANY,
+                                                mock.ANY)
+            self.assertEqual(expected_sync, schedule_resync.called)
 
     def test_call_driver_ip_address_generation_failure(self):
         error = oslo_messaging.RemoteError(
@@ -707,13 +705,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_dhcp_helper_network_none(self):
         self.plugin.get_network_info.return_value = None
-        with mock.patch.object(dhcp_agent.LOG, 'warning') as log:
-            self.dhcp.enable_dhcp_helper('fake_id')
-            self.plugin.assert_has_calls(
-                [mock.call.get_network_info('fake_id')])
-            self.assertFalse(self.call_driver.called)
-            self.assertTrue(log.called)
-            self.assertFalse(self.dhcp.schedule_resync.called)
+        self.dhcp.enable_dhcp_helper('fake_id')
+        self.plugin.assert_has_calls(
+            [mock.call.get_network_info('fake_id')])
+        self.assertFalse(self.call_driver.called)
+        self.assertFalse(self.dhcp.schedule_resync.called)
 
     def test_enable_dhcp_helper_exception_during_rpc(self):
         self.plugin.get_network_info.side_effect = Exception
