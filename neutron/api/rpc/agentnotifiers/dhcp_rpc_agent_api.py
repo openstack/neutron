@@ -18,6 +18,9 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron._i18n import _LE, _LW
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -51,6 +54,11 @@ class DhcpAgentNotifyAPI(object):
         self._plugin = plugin
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
+        # register callbacks for router interface changes
+        registry.subscribe(self._after_router_interface_created,
+                           resources.ROUTER_INTERFACE, events.AFTER_CREATE)
+        registry.subscribe(self._after_router_interface_deleted,
+                           resources.ROUTER_INTERFACE, events.AFTER_DELETE)
 
     @property
     def plugin(self):
@@ -170,6 +178,18 @@ class DhcpAgentNotifyAPI(object):
     def agent_updated(self, context, admin_state_up, host):
         self._cast_message(context, 'agent_updated',
                            {'admin_state_up': admin_state_up}, host)
+
+    def _after_router_interface_created(self, resource, event, trigger,
+                                        **kwargs):
+        self._notify_agents(kwargs['context'], 'port_create_end',
+                            {'port': kwargs['port']},
+                            kwargs['port']['network_id'])
+
+    def _after_router_interface_deleted(self, resource, event, trigger,
+                                        **kwargs):
+        self._notify_agents(kwargs['context'], 'port_delete_end',
+                            {'port_id': kwargs['port']['id']},
+                            kwargs['port']['network_id'])
 
     def notify(self, context, data, method_name):
         # data is {'key' : 'value'} with only one key

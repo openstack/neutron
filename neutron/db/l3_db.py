@@ -712,11 +712,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.notify(resources.ROUTER_INTERFACE,
                         events.AFTER_CREATE,
                         self,
+                        context=context,
                         network_id=gw_network_id,
                         gateway_ips=gw_ips,
                         cidrs=[x['cidr'] for x in subnets],
                         port_id=port['id'],
                         router_id=router_id,
+                        port=port,
                         interface_info=interface_info)
 
         return self._make_router_interface_info(
@@ -833,9 +835,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.notify(resources.ROUTER_INTERFACE,
                         events.AFTER_DELETE,
                         self,
+                        context=context,
                         cidrs=[x['cidr'] for x in subnets],
                         network_id=gw_network_id,
-                        gateway_ips=gw_ips)
+                        gateway_ips=gw_ips,
+                        port=port)
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'],
