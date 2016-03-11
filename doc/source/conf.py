@@ -45,7 +45,6 @@ sys.path.insert(0, NEUTRON_DIR)
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
-              'sphinx.ext.pngmath',
               'sphinx.ext.graphviz',
               'sphinx.ext.todo',
               'oslosphinx']
