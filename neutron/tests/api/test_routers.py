@@ -41,45 +41,6 @@ class RoutersTest(base.BaseRouterTest):
                            CONF.network.tenant_network_v6_cidr)
 
     @test.attr(type='smoke')
-    @test.idempotent_id('f64403e2-8483-4b34-8ccd-b09a87bcc68c')
-    def test_create_show_list_update_delete_router(self):
-        # Create a router
-        # NOTE(salv-orlando): Do not invoke self.create_router
-        # as we need to check the response code
-        name = data_utils.rand_name('router-')
-        create_body = self.client.create_router(
-            name, external_gateway_info={
-                "network_id": CONF.network.public_network_id},
-            admin_state_up=False)
-        self.addCleanup(self._delete_router, create_body['router']['id'])
-        self.assertEqual(create_body['router']['name'], name)
-        self.assertEqual(
-            create_body['router']['external_gateway_info']['network_id'],
-            CONF.network.public_network_id)
-        self.assertFalse(create_body['router']['admin_state_up'])
-        # Show details of the created router
-        show_body = self.client.show_router(create_body['router']['id'])
-        self.assertEqual(show_body['router']['name'], name)
-        self.assertEqual(
-            show_body['router']['external_gateway_info']['network_id'],
-            CONF.network.public_network_id)
-        self.assertFalse(show_body['router']['admin_state_up'])
-        # List routers and verify if created router is there in response
-        list_body = self.client.list_routers()
-        routers_list = list()
-        for router in list_body['routers']:
-            routers_list.append(router['id'])
-        self.assertIn(create_body['router']['id'], routers_list)
-        # Update the name of router and verify if it is updated
-        updated_name = 'updated ' + name
-        update_body = self.client.update_router(create_body['router']['id'],
-                                                name=updated_name)
-        self.assertEqual(update_body['router']['name'], updated_name)
-        show_body = self.client.show_router(
-            create_body['router']['id'])
-        self.assertEqual(show_body['router']['name'], updated_name)
-
-    @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
     def test_create_update_router_description(self):
         if not test.is_extension_enabled('standard-attr-description',
@@ -94,24 +55,6 @@ class RoutersTest(base.BaseRouterTest):
         self.assertEqual('d2', body['router']['description'])
         body = self.client.show_router(body['router']['id'])['router']
         self.assertEqual('d2', body['description'])
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('e54dd3a3-4352-4921-b09d-44369ae17397')
-    def test_create_router_setting_tenant_id(self):
-        # Test creating router from admin user setting tenant_id.
-        test_tenant = data_utils.rand_name('test_tenant_')
-        test_description = data_utils.rand_name('desc_')
-        tenant = self.identity_admin_client.create_tenant(
-            name=test_tenant, description=test_description)['tenant']
-        tenant_id = tenant['id']
-        self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
-
-        name = data_utils.rand_name('router-')
-        create_body = self.admin_client.create_router(name,
-                                                      tenant_id=tenant_id)
-        self.addCleanup(self.admin_client.delete_router,
-                        create_body['router']['id'])
-        self.assertEqual(tenant_id, create_body['router']['tenant_id'])
 
     @test.idempotent_id('847257cc-6afd-4154-b8fb-af49f5670ce8')
     @test.requires_ext(extension='ext-gw-mode', service='network')
@@ -144,46 +87,6 @@ class RoutersTest(base.BaseRouterTest):
             self._verify_router_gateway(create_body['router']['id'],
                                         exp_ext_gw_info=external_gateway_info)
 
-    @test.attr(type='smoke')
-    @test.idempotent_id('b42e6e39-2e37-49cc-a6f4-8467e940900a')
-    def test_add_remove_router_interface_with_subnet_id(self):
-        network = self.create_network()
-        subnet = self.create_subnet(network)
-        router = self._create_router(data_utils.rand_name('router-'))
-        # Add router interface with subnet id
-        interface = self.client.add_router_interface_with_subnet_id(
-            router['id'], subnet['id'])
-        self.addCleanup(self._remove_router_interface_with_subnet_id,
-                        router['id'], subnet['id'])
-        self.assertIn('subnet_id', interface.keys())
-        self.assertIn('port_id', interface.keys())
-        # Verify router id is equal to device id in port details
-        show_port_body = self.client.show_port(
-            interface['port_id'])
-        self.assertEqual(show_port_body['port']['device_id'],
-                         router['id'])
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('2b7d2f37-6748-4d78-92e5-1d590234f0d5')
-    def test_add_remove_router_interface_with_port_id(self):
-        network = self.create_network()
-        self.create_subnet(network)
-        router = self._create_router(data_utils.rand_name('router-'))
-        port_body = self.client.create_port(
-            network_id=network['id'])
-        # add router interface to port created above
-        interface = self.client.add_router_interface_with_port_id(
-            router['id'], port_body['port']['id'])
-        self.addCleanup(self._remove_router_interface_with_port_id,
-                        router['id'], port_body['port']['id'])
-        self.assertIn('subnet_id', interface.keys())
-        self.assertIn('port_id', interface.keys())
-        # Verify router id is equal to device id in port details
-        show_port_body = self.client.show_port(
-            interface['port_id'])
-        self.assertEqual(show_port_body['port']['device_id'],
-                         router['id'])
-
     def _verify_router_gateway(self, router_id, exp_ext_gw_info=None):
         show_body = self.admin_client.show_router(router_id)
         actual_ext_gw_info = show_body['router']['external_gateway_info']
@@ -207,20 +110,6 @@ class RoutersTest(base.BaseRouterTest):
         public_subnet_id = public_net_body['network']['subnets'][0]
         self.assertIn(public_subnet_id,
                       [x['subnet_id'] for x in fixed_ips])
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('6cc285d8-46bf-4f36-9b1a-783e3008ba79')
-    def test_update_router_set_gateway(self):
-        router = self._create_router(data_utils.rand_name('router-'))
-        self.client.update_router(
-            router['id'],
-            external_gateway_info={
-                'network_id': CONF.network.public_network_id})
-        # Verify operation - router
-        self._verify_router_gateway(
-            router['id'],
-            {'network_id': CONF.network.public_network_id})
-        self._verify_gateway_port(router['id'])
 
     @test.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
     @test.requires_ext(extension='ext-gw-mode', service='network')
@@ -253,20 +142,6 @@ class RoutersTest(base.BaseRouterTest):
             {'network_id': CONF.network.public_network_id,
              'enable_snat': False})
         self._verify_gateway_port(router['id'])
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('ad81b7ee-4f81-407b-a19c-17e623f763e8')
-    def test_update_router_unset_gateway(self):
-        router = self._create_router(
-            data_utils.rand_name('router-'),
-            external_network_id=CONF.network.public_network_id)
-        self.client.update_router(router['id'], external_gateway_info={})
-        self._verify_router_gateway(router['id'])
-        # No gateway port expected
-        list_body = self.admin_client.list_ports(
-            network_id=CONF.network.public_network_id,
-            device_id=router['id'])
-        self.assertFalse(list_body['ports'])
 
     @test.idempotent_id('f2faf994-97f4-410b-a831-9bc977b64374')
     @test.requires_ext(extension='ext-gw-mode', service='network')
@@ -320,45 +195,6 @@ class RoutersTest(base.BaseRouterTest):
 
     def _delete_extra_routes(self, router_id):
         self.client.delete_extra_routes(router_id)
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('a8902683-c788-4246-95c7-ad9c6d63a4d9')
-    def test_update_router_admin_state(self):
-        self.router = self._create_router(data_utils.rand_name('router-'))
-        self.assertFalse(self.router['admin_state_up'])
-        # Update router admin state
-        update_body = self.client.update_router(self.router['id'],
-                                                admin_state_up=True)
-        self.assertTrue(update_body['router']['admin_state_up'])
-        show_body = self.client.show_router(self.router['id'])
-        self.assertTrue(show_body['router']['admin_state_up'])
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('802c73c9-c937-4cef-824b-2191e24a6aab')
-    def test_add_multiple_router_interfaces(self):
-        network01 = self.create_network(
-            network_name=data_utils.rand_name('router-network01-'))
-        network02 = self.create_network(
-            network_name=data_utils.rand_name('router-network02-'))
-        subnet01 = self.create_subnet(network01)
-        sub02_cidr = netaddr.IPNetwork(self.tenant_cidr).next()
-        subnet02 = self.create_subnet(network02, cidr=sub02_cidr)
-        router = self._create_router(data_utils.rand_name('router-'))
-        interface01 = self._add_router_interface_with_subnet_id(router['id'],
-                                                                subnet01['id'])
-        self._verify_router_interface(router['id'], subnet01['id'],
-                                      interface01['port_id'])
-        interface02 = self._add_router_interface_with_subnet_id(router['id'],
-                                                                subnet02['id'])
-        self._verify_router_interface(router['id'], subnet02['id'],
-                                      interface02['port_id'])
-
-    def _verify_router_interface(self, router_id, subnet_id, port_id):
-        show_port_body = self.client.show_port(port_id)
-        interface_port = show_port_body['port']
-        self.assertEqual(router_id, interface_port['device_id'])
-        self.assertEqual(subnet_id,
-                         interface_port['fixed_ips'][0]['subnet_id'])
 
     @test.attr(type='smoke')
     @test.idempotent_id('01f185d1-d1a6-4cf9-abf7-e0e1384c169c')

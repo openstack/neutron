@@ -287,8 +287,32 @@ be made about implementation. Only the contract defined by Neutron's REST API
 should be validated, and all interaction with the daemon should be via
 a REST client.
 
-neutron/tests/api was copied from the Tempest project. The Tempest networking
-API directory was frozen and any new tests belong to the Neutron repository.
+neutron/tests/api was copied from the Tempest project. At the time, there was
+an overlap of tests between the Tempest and Neutron repositories. This overlap
+was then eliminated by carving out a subset of resources that belong to
+Tempest, with the rest in Neutron.
+
+API tests that belong to Tempest deal with a subset of Neutron's resources:
+
+* Port
+* Network
+* Subnet
+* Security Group
+* Router
+* Floating IP
+
+These resources were chosen for their ubiquitously. They are found in most
+Neutron depoloyments regardless of plugin, and are directly involved in the
+networking and security of an instance. Together, they form the bare minimum
+needed by Neutron.
+
+This is excluding extensions to these resources (For example: Extra DHCP
+options to subnets, or snat_gateway mode to routers) that are not mandatory
+in the majority of cases.
+
+Tests for other resources should be contributed to the Neutron repository.
+Scenario tests should be similarly split up between Tempest and Neutron
+according to the API they're targeting.
 
 Development Process
 -------------------
