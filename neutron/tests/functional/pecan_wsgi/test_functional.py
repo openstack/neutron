@@ -73,7 +73,7 @@ class TestErrors(PecanFunctionalTest):
 class TestRequestID(PecanFunctionalTest):
 
     def test_request_id(self):
-        response = self.app.get('/')
+        response = self.app.get('/v2.0/')
         self.assertIn('x-openstack-request-id', response.headers)
         self.assertTrue(
             response.headers['x-openstack-request-id'].startswith('req-'))
@@ -88,7 +88,7 @@ class TestKeystoneAuth(PecanFunctionalTest):
         pass
 
     def test_auth_enforced(self):
-        response = self.app.get('/', expect_errors=True)
+        response = self.app.get('/v2.0/', expect_errors=True)
         self.assertEqual(response.status_int, 401)
 
 

@@ -19,6 +19,7 @@ from oslo_middleware import cors
 from oslo_middleware import request_id
 import pecan
 
+from neutron.api import versions
 from neutron.common import exceptions as n_exc
 from neutron.pecan_wsgi import hooks
 from neutron.pecan_wsgi import startup
@@ -74,6 +75,9 @@ def _wrap_app(app):
     else:
         raise n_exc.InvalidConfigurationOption(
             opt_name='auth_strategy', opt_value=cfg.CONF.auth_strategy)
+
+    # version can be unauthenticated so it goes outside of auth
+    app = versions.Versions(app)
 
     # This should be the last middleware in the list (which results in
     # it being the first in the middleware chain). This is to ensure

@@ -41,10 +41,12 @@ class RootController(object):
 
     @utils.expose(generic=True)
     def index(self):
-        builder = versions_view.get_view_builder(pecan.request)
-        versions = [builder.build(version) for version in _get_version_info()]
-        return dict(versions=versions)
+        # NOTE(kevinbenton): The pecan framework does not handle
+        # any requests to the root because they are intercepted
+        # by the 'version' returning wrapper.
+        pass
 
+    @utils.when(index, method='GET')
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
     @utils.when(index, method='PATCH')
