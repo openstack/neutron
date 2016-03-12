@@ -368,6 +368,8 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | db_                           | A bug affecting the DB layer          | Henry Gessau         |
 +-------------------------------+---------------------------------------+----------------------+
+| deprecation_                  | To track config/feature deprecations  | Neutron PTL/drivers  |
++-------------------------------+---------------------------------------+----------------------+
 | dns_                          | A bug affecting DNS integration       | Miguel Lavalle       |
 +-------------------------------+---------------------------------------+----------------------+
 | doc_                          | A bug affecting in-tree doc           | Edgar Magana         |
@@ -482,6 +484,15 @@ DB
 
 * `DB - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=db>`_
 * `DB - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=db>`_
+
+.. _deprecation:
+
+Deprecation
++++++++++++
+
+* `Deprecation - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=deprecation>`_
+* `DeprecationB - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=deprecation>`_
+
 
 .. _dns:
 
