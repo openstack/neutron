@@ -62,10 +62,10 @@ class TestRootController(test_functional.PecanFunctionalTest):
         manager.NeutronManager.set_controller_for_resource(
             _SERVICE_PLUGIN_COLLECTION, FakeServicePluginController())
 
-    def _test_method_returns_405(self, method):
+    def _test_method_returns_code(self, method, code=200):
         api_method = getattr(self.app, method)
         response = api_method(self.base_url, expect_errors=True)
-        self.assertEqual(response.status_int, 405)
+        self.assertEqual(response.status_int, code)
 
     def test_get(self):
         response = self.app.get(self.base_url)
@@ -77,20 +77,12 @@ class TestRootController(test_functional.PecanFunctionalTest):
             self.assertIn(attr, versions[0])
             self.assertEqual(value, versions[0][attr])
 
-    def test_post(self):
-        self._test_method_returns_405('post')
-
-    def test_put(self):
-        self._test_method_returns_405('put')
-
-    def test_patch(self):
-        self._test_method_returns_405('patch')
-
-    def test_delete(self):
-        self._test_method_returns_405('delete')
-
-    def test_head(self):
-        self._test_method_returns_405('head')
+    def test_methods(self):
+        self._test_method_returns_code('post')
+        self._test_method_returns_code('patch')
+        self._test_method_returns_code('delete')
+        self._test_method_returns_code('head')
+        self._test_method_returns_code('put')
 
 
 class TestV2Controller(TestRootController):
@@ -115,6 +107,14 @@ class TestV2Controller(TestRootController):
         response = self.app.get('%s/idonotexist.json' % self.base_url,
                                 expect_errors=True)
         self.assertEqual(response.status_int, 404)
+
+    def test_methods(self):
+        self._test_method_returns_code('post', 405)
+        self._test_method_returns_code('put', 405)
+        self._test_method_returns_code('patch', 405)
+        self._test_method_returns_code('delete', 405)
+        self._test_method_returns_code('head', 405)
+        self._test_method_returns_code('delete', 405)
 
 
 class TestExtensionsController(TestRootController):
@@ -141,6 +141,14 @@ class TestExtensionsController(TestRootController):
         self.assertEqual(response.status_int, 200)
         json_body = jsonutils.loads(response.body)
         self.assertEqual(test_alias, json_body['extension']['alias'])
+
+    def test_methods(self):
+        self._test_method_returns_code('post', 405)
+        self._test_method_returns_code('put', 405)
+        self._test_method_returns_code('patch', 405)
+        self._test_method_returns_code('delete', 405)
+        self._test_method_returns_code('head', 405)
+        self._test_method_returns_code('delete', 405)
 
 
 class TestQuotasController(test_functional.PecanFunctionalTest):
@@ -229,6 +237,7 @@ class TestResourceController(TestRootController):
     """Test generic controller"""
     # TODO(salv-orlando): This test case must not explicitly test the 'port'
     # resource. Also it should validate correct plugin/resource association
+    base_url = '/v2.0'
 
     def setUp(self):
         super(TestResourceController, self).setUp()
@@ -278,6 +287,14 @@ class TestResourceController(TestRootController):
 
     def test_plugin_initialized(self):
         self.assertIsNotNone(manager.NeutronManager._instance)
+
+    def test_methods(self):
+        self._test_method_returns_code('post', 405)
+        self._test_method_returns_code('put', 405)
+        self._test_method_returns_code('patch', 405)
+        self._test_method_returns_code('delete', 405)
+        self._test_method_returns_code('head', 405)
+        self._test_method_returns_code('delete', 405)
 
 
 class TestRequestProcessing(TestResourceController):
