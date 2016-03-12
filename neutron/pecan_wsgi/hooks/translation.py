@@ -35,5 +35,5 @@ class ExceptionTranslationHook(hooks.PecanHook):
         # leaked unexpected exception, convert to boring old 500 error and
         # hide message from user in case it contained sensitive details
         LOG.exception(_LE("An unexpected exception was caught: %s"), e)
-        raise webob.exc.HTTPInternalServerError(
+        return webob.exc.HTTPInternalServerError(
             _("An unexpected internal error occurred."))
