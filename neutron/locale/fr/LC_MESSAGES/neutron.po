@@ -14,9 +14,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-05 04:27+0000\n"
+"POT-Creation-Date: 2016-03-12 03:36+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -373,10 +373,6 @@ msgstr "AllowedAddressPair doit contenir ip_address"
 msgid "An interface driver must be specified"
 msgstr "Un pilote d'interface doit être spécifié."
 
-#, python-format
-msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s."
-msgstr "Une valeur non valide a été fournie pour %(opt_name)s : %(opt_value)s."
-
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
 "the neutron.ml2.mechanism_drivers namespace."
@@ -386,9 +382,6 @@ msgstr ""
 
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "Une erreur inconnue s'est produite. Renouvelez votre demande."
-
-msgid "An unknown exception occurred."
-msgstr "Exception inconnue générée."
 
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
@@ -692,21 +685,12 @@ msgid "Could not deserialize data"
 msgstr "Impossible de désérialiser des données"
 
 #, python-format
-msgid "Creation failed. %(dev_name)s already exists."
-msgstr "Echec de la création. %(dev_name)s existe déjà."
-
-#, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
 "to update."
 msgstr ""
 "L'adresse IP de la passerelle en cours %(ip_address)s est déjà en cours "
 "d'utilisation par le port %(port_id)s. Impossible de mettre à jour"
-
-msgid "Currently distributed HA routers are not supported."
-msgstr ""
-"Les routeurs haute disponibilité (HA) distribués ne sont actuellement pas "
-"pris en charge."
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -945,26 +929,6 @@ msgstr ""
 "False ne sont pas sélectionnés pour la planification automatique, quelle que "
 "soit la valeur de cette option. Toutefois, il est possible de procéder à une "
 "planification manuelle pour ces agents si cette option a pour valeur True."
-
-msgid ""
-"Enable suppression of ARP responses that don't match an IP address that "
-"belongs to the port from which they originate. Note: This prevents the VMs "
-"attached to this agent from spoofing, it doesn't protect them from other "
-"devices which have the capability to spoof (e.g. bare metal or VMs attached "
-"to agents without this flag set to True). Spoofing rules will not be added "
-"to any ports that have port security disabled. For LinuxBridge, this "
-"requires ebtables. For OVS, it requires a version that supports matching ARP "
-"headers."
-msgstr ""
-"Activer la suppression des réponses ARP qui ne correspondent pas à une "
-"adresse IP appartenant à leur port d'origine. Remarque : Cela empêche les "
-"machines virtuelles rattachées à cet agent d'être usurpées, mais cela ne les "
-"protège pas d'autres périphériques qui ont la possibilité d'usurper (par "
-"exemple, des machines non virtualisées ou virtuelles rattachées à des agents "
-"alors que cet indicateur n'a pas pour valeur True). Les règles d'usurpation "
-"ne seront pas ajoutées aux ports pour lesquels la sécurité de port est "
-"désactivée. Pour LinuxBridge, cela nécessite ebtables. Pour OVS, cela "
-"nécessite une version prenant en charge les en-têtes ARP correspondants. "
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1262,12 +1226,6 @@ msgstr ""
 "L'adresse IP %(ip_address)s n'est pas une adresse IP valide pour les sous-"
 "réseaux du réseau indiqué."
 
-#, python-format
-msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
-msgstr ""
-"L'adresse IP %(ip_address)s n'est pas une adresse IP valide pour le sous-"
-"réseau indiqué."
-
 msgid "IP address used by Nova metadata server."
 msgstr "Adresse IP utilisée par le serveur de métadonnées Nova"
 
@@ -1431,10 +1389,6 @@ msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "Entrée non valide pour %(attr)s. Cause : %(reason)s."
 
 #, python-format
-msgid "Invalid input for operation: %(error_message)s."
-msgstr "Entrée non valide pour l'opération : %(error_message)s."
-
-#, python-format
 msgid ""
 "Invalid input. '%(target_dict)s' must be a dictionary with keys: "
 "%(expected_keys)s"
@@ -1562,9 +1516,6 @@ msgstr "Emplacement du socket de domaine UNIX du proxy de métadonnées"
 msgid "Location of pid file of this process."
 msgstr "Emplacement du fichier pid de ce processus."
 
-msgid "Location to store DHCP server config files"
-msgstr "Emplacement de stockage des fichiers de configuration du serveur DHCP"
-
 msgid "Location to store IPv6 PD files."
 msgstr "Emplacement pour stocker les fichiers IPv6 PD"
 
@@ -1580,9 +1531,6 @@ msgstr ""
 
 msgid "Log agent heartbeats"
 msgstr "Consigner les pulsations d'agent"
-
-msgid "MTU setting for device."
-msgstr "Paramètre MTU de l'unité."
 
 msgid "MTU size of veth interfaces"
 msgstr "Taille de MTU des interfaces veth"
@@ -1653,9 +1601,6 @@ msgstr "Clé manquante dans le mappage : '%s'"
 msgid "Missing value in mapping: '%s'"
 msgstr "Valeur manquante dans le mappage : '%s'"
 
-msgid "More than one external network exists."
-msgstr "Plusieurs réseaux externes existent."
-
 #, python-format
 msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
 msgstr ""
@@ -1718,10 +1663,6 @@ msgid "Negative relative revision (downgrade) not supported"
 msgstr "Révision relative négative (rétromigration) non prise en charge"
 
 #, python-format
-msgid "Network %(net_id)s could not be found."
-msgstr "Le réseau %(net_id)s est introuvable."
-
-#, python-format
 msgid "Network %s does not contain any IPv4 subnet"
 msgstr "Le réseau %s ne contient pas de sous-réseau IPv4 "
 
@@ -1776,10 +1717,6 @@ msgstr ""
 "Pas d'autres adresses IP disponibles pour le sous-réseau %(subnet_id)s."
 
 #, python-format
-msgid "No more IP addresses available on network %(net_id)s."
-msgstr "Pas d'autres adresses IP disponibles sur le réseau %(net_id)s."
-
-#, python-format
 msgid ""
 "No more Virtual Router Identifier (VRID) available when creating router "
 "%(router_id)s. The limit of number of HA Routers per tenant is 254."
@@ -1791,9 +1728,6 @@ msgstr ""
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
 msgstr "Aucun fournisseur indiqué pour le service de '%s', sortie"
-
-msgid "Not authorized."
-msgstr "Non autorisé."
 
 #, python-format
 msgid ""
@@ -1898,16 +1832,8 @@ msgid "OVSDB Error: %s"
 msgstr "Erreur OVSDB: %s "
 
 #, python-format
-msgid "Object %(id)s not found."
-msgstr "Objet %(id)s non trouvé."
-
-#, python-format
 msgid "Object action %(action)s failed because: %(reason)s."
 msgstr "L'action de l'objet %(action)s a échoué car : %(reason)s"
-
-msgid "One or more ports have an IP allocation from this subnet."
-msgstr ""
-"Un ou plusieurs ports ont une allocation d'adresse IP de ce sous-réseau."
 
 msgid "Only admin can view or configure quota"
 msgstr "Seul l'administrateur peut afficher ou configurer des quotas"
@@ -1943,9 +1869,6 @@ msgstr ""
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "Opération non prise en charge sur le périphérique %(dev_name)s"
-
-msgid "Override the default dnsmasq settings with this file"
-msgstr "Remplacez les paramètres dnsmasq par défaut par ce fichier."
 
 msgid "Owner type of the device: network/compute"
 msgstr "Type de propriétaire de l'unité : réseau/ordinateur"
@@ -2002,14 +1925,6 @@ msgstr "Le port %(id)s ne dispose pas de l'adresse IP fixe %(address)s."
 #, python-format
 msgid "Port %(port)s does not exist on %(bridge)s!"
 msgstr "Le port %(port)s au sein du pont %(bridge)s"
-
-#, python-format
-msgid "Port %(port_id)s could not be found on network %(net_id)s."
-msgstr "Le port %(port_id)s est inexistant au sein du réseau %(net_id)s."
-
-#, python-format
-msgid "Port %(port_id)s could not be found."
-msgstr "Le port %(port_id)s est introuvable."
 
 #, python-format
 msgid ""
@@ -2100,10 +2015,6 @@ msgstr "La politique de QoS %(policy_id)s est introuvable."
 msgid "QoS rule %(rule_id)s for policy %(policy_id)s could not be found."
 msgstr ""
 "La règle QoS %(rule_id)s pour la politique %(policy_id)s est inexistante."
-
-#, python-format
-msgid "Quota exceeded for resources: %(overs)s."
-msgstr "Quota dépassé pour les ressources : %(overs)s"
 
 #, python-format
 msgid "RBAC policy of type %(object_type)s with ID %(id)s not found"
@@ -2320,10 +2231,6 @@ msgid "Security group rule %(id)s does not exist"
 msgstr "La règle de groupe de sécurité %(id)s n'existe pas."
 
 #, python-format
-msgid "Security group rule already exists. Rule id is %(id)s."
-msgstr "La règle de groupe de sécurité existe déjà. L'ID règle est %(id)s."
-
-#, python-format
 msgid ""
 "Security group rule protocol %(protocol)s not supported. Only protocol "
 "values %(values)s and integer representations [0 to 255] are supported."
@@ -2414,10 +2321,6 @@ msgstr "Préfixe de chaîne utilisé pour correspondre aux noms IPset."
 #, python-format
 msgid "Sub-project %s not installed."
 msgstr "Le sous projet %s n'est pas installé."
-
-#, python-format
-msgid "Subnet %(subnet_id)s could not be found."
-msgstr "Le sous-réseau %(subnet_id)s est introuvable."
 
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
@@ -2667,9 +2570,6 @@ msgstr "Le type de contenu %s de la requete est invalide."
 msgid "The resource could not be found."
 msgstr "La ressource est introuvable."
 
-msgid "The resource is in use."
-msgstr "La ressource est en cours d'utilisation."
-
 #, python-format
 msgid ""
 "The router %(router_id)s has been already hosted by the L3 Agent "
@@ -2682,9 +2582,6 @@ msgid ""
 msgstr ""
 "Le serveur a perdu la connexion ou est incapable d'effectuer l'opération "
 "demandée."
-
-msgid "The service is unavailable."
-msgstr "Le service n'est pas disponible."
 
 msgid "The service plugins Neutron will use"
 msgstr "Plug-in de service utilisés ultérieurement par Neutron"
@@ -2792,50 +2689,12 @@ msgstr ""
 
 #, python-format
 msgid ""
-"Unable to complete operation for network %(net_id)s. The IP address "
-"%(ip_address)s is in use."
-msgstr ""
-"Impossible de terminer l'opération pour le réseau %(net_id)s. L'adresse IP "
-"%(ip_address)s est en cours d'utilisation."
-
-#, python-format
-msgid ""
-"Unable to complete operation for network %(net_id)s. The mac address %(mac)s "
-"is in use."
-msgstr ""
-"Impossible de terminer l'opération pour le réseau %(net_id)s. L'adresse Mac "
-"%(mac)s est en cours d'utilisation."
-
-#, python-format
-msgid ""
 "Unable to complete operation on address scope %(address_scope_id)s. There "
 "are one or more subnet pools in use on the address scope"
 msgstr ""
 "Impossible de terminer l'opération sur la portée d'adresse "
 "%(address_scope_id)s. Un ou plusieurs pools de sous-réseau supplémentaires "
 "sont utilisés sur la portée d'adresse"
-
-#, python-format
-msgid ""
-"Unable to complete operation on network %(net_id)s. There are one or more "
-"ports still in use on the network."
-msgstr ""
-"Impossible de terminer l'opération sur le réseau %(net_id)s. Un ou plusieurs "
-"ports sont encore en cours d'utilisation sur le réseau."
-
-#, python-format
-msgid ""
-"Unable to complete operation on port %(port_id)s for network %(net_id)s. "
-"Port already has an attached device %(device_id)s."
-msgstr ""
-"Impossible de terminer l'opération sur le port %(port_id)s pour le réseau "
-"%(net_id)s. Le port a déjà une unité connectée %(device_id)s."
-
-#, python-format
-msgid "Unable to complete operation on subnet %(subnet_id)s %(reason)s."
-msgstr ""
-"Impossible de finaliser l'opération sur le sous réseau %(subnet_id)s  pour "
-"la raison %(reason)s."
 
 #, python-format
 msgid "Unable to convert value in %s"
@@ -2862,26 +2721,6 @@ msgstr ""
 "Impossible de créer le réseau. Aucun réseau disponible trouvé dans le "
 "maximum de tentatives autorisées."
 
-msgid ""
-"Unable to create the network. No tenant network is available for allocation."
-msgstr ""
-"Impossible de créer le réseau. Aucun réseau titulaire n'est disponible pour "
-"l'allocation. "
-
-#, python-format
-msgid ""
-"Unable to create the network. The VLAN %(vlan_id)s on physical network "
-"%(physical_network)s is in use."
-msgstr ""
-"Impossible de créer le réseau. Le réseau local virtuel %(vlan_id)s situé sur "
-"le réseau physique %(physical_network)s est en cours d'utilisation. "
-
-#, python-format
-msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
-msgstr ""
-"Incapable de créer le réseau. L' ID tunnel %(tunnel_id)s est en cours "
-"d'utilisation."
-
 #, python-format
 msgid "Unable to delete subnet pool: %(reason)s."
 msgstr "Impossible de supprimer le pool de sous-réseau : %(reason)s."
@@ -2899,10 +2738,6 @@ msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
 msgstr ""
 "Impossible de trouver l'adresse IP %(ip_address)s dans le sous réseau "
 "%(subnet_id)s"
-
-#, python-format
-msgid "Unable to find any IP address on external network %(net_id)s."
-msgstr "Impossible de trouver une adresse IP sur le réseau externe %(net_id)s."
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -3010,9 +2845,6 @@ msgstr ""
 "Utilisez le pilote de mécanisme l2population ML2 pour connaître les adresses "
 "MAC et IP et pour améliorer l'évolutivité du tunnel."
 
-msgid "Use broadcast in DHCP replies"
-msgstr "Utilisez diffusion dans les réponses DHCP"
-
 msgid "Use either --delta or relative revision, not both"
 msgstr ""
 "Utiliser soit un --delta, soit une révision relative, mais pas les deux"
@@ -3031,12 +2863,6 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "Utilisateur (UID ou nom) exécutant ce process après son initialisation"
-
-#, python-format
-msgid "User does not have admin privileges: %(reason)s."
-msgstr ""
-"L'utilisateur n'a pas les privilèges administrateur pour la raison: "
-"%(reason)s"
 
 msgid "VRRP authentication password"
 msgstr "Mot de passe pour l'authentification VRRP"
@@ -3125,10 +2951,6 @@ msgstr ""
 
 msgid "binding:profile value too large"
 msgstr "Valeur de liaison:profil excessive"
-
-#, python-format
-msgid "cannot be deleted due to %s"
-msgstr "ne peut pas être supprimé(e) en raison de %s"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr et prefixlen ne doivent pas être fournis ensemble"

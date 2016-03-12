@@ -7,9 +7,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-05 04:27+0000\n"
+"POT-Creation-Date: 2016-03-12 03:37+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -69,11 +69,6 @@ msgid "Cannot find vfs %(vfs)s in device %(dev_name)s"
 msgstr "%(dev_name)s aygıtında vfs %(vfs)s bulunamıyor"
 
 #, python-format
-msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
-msgstr ""
-"%(host)s istemcisi üstündeki %(agent_type)s ajanı için yapılandırma geçersiz."
-
-#, python-format
 msgid "Could not expand segment %s"
 msgstr "Dilim %s genişletilemedi"
 
@@ -85,22 +80,12 @@ msgid "DVR functionality requires a server upgrade."
 msgstr "DVR işlevselliği sunucu yükseltmesi gerektiriyor."
 
 #, python-format
-msgid "Device %(device)s requested by agent %(agent_id)s not found in database"
-msgstr ""
-"%(agent_id)s ajanı tarafından istenen %(device)s aygıtı veri tabanında "
-"bulunamadı"
-
-#, python-format
 msgid ""
 "Device %(device)s requested by agent %(agent_id)s on network %(network_id)s "
 "not bound, vif_type: %(vif_type)s"
 msgstr ""
 "%(network_id)s ağı üstündeki %(agent_id)s ajanı tarafından istenen "
 "%(device)s aygıtı bağlı değil, vif_type: %(vif_type)s"
-
-#, python-format
-msgid "Device %s not defined on plugin"
-msgstr "Aygıt %s eklenti üzerinde tanımlanmamış"
 
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
@@ -140,14 +125,6 @@ msgstr "Başarısız olmuş openvswitch bağlantı noktası bulundu: %s"
 #, python-format
 msgid "Found not yet ready openvswitch port: %s"
 msgstr "Henüz hazır olmayan openvswitch bağlantı noktası bulundu: %s"
-
-#, python-format
-msgid ""
-"In _notify_port_updated(), no bound segment for port %(port_id)s on network "
-"%(network_id)s"
-msgstr ""
-"_notify_port_updated() içinde, %(network_id)s ağı üzerindeki %(port_id)s "
-"bağlantı noktası için bağlı dilim yok"
 
 #, python-format
 msgid "Info for router %s was not found. Performing router cleanup"
@@ -191,14 +168,6 @@ msgstr ""
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr "Yüklü eklentiler eklenti %s arayüzünü uygulamıyor"
-
-#, python-format
-msgid "Network %s could not be found, it might have been deleted concurrently."
-msgstr "%s ağı bulunamadı, eş zamanlı olarak silinmiş olabilir."
-
-#, python-format
-msgid "Network %s has been deleted."
-msgstr "Ağ %s silindi."
 
 #, python-format
 msgid ""
@@ -249,10 +218,6 @@ msgstr "%(physical_network)s fiziksel ağında vlan_id %(vlan_id)s bulunamadı"
 #, python-format
 msgid "Nova event: %s returned with failed status"
 msgstr "Nova olayı: %s başarısız durum döndürdü"
-
-#, python-format
-msgid "Nova returned NotFound for event: %s"
-msgstr "Nova %s eylemi için NotFound döndürdü"
 
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
