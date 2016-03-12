@@ -43,6 +43,7 @@ DEFAULT_SERVICE_PLUGINS = {
     'auto_allocate': 'auto-allocated-topology',
     'tag': 'tag',
     'timestamp_core': 'timestamp_core',
+    'network_ip_availability': 'network-ip-availability'
 }
 
 # Service operation status constants
