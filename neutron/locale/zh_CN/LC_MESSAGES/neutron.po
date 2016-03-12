@@ -17,9 +17,9 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-05 04:27+0000\n"
+"POT-Creation-Date: 2016-03-12 03:36+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -363,9 +363,6 @@ msgstr ""
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "发生未知错误。请再次尝试您的请求。"
 
-msgid "An unknown exception occurred."
-msgstr "发生未知异常。"
-
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "在 POST 中，不允许属性“%s”"
@@ -624,17 +621,10 @@ msgid "Could not deserialize data"
 msgstr "未能对数据进行反序列化"
 
 #, python-format
-msgid "Creation failed. %(dev_name)s already exists."
-msgstr "创建失败。%(dev_name)s 已存在。"
-
-#, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
 "to update."
 msgstr "当前网关 IP %(ip_address)s 已由端口 %(port_id)s 使用。无法更新。"
-
-msgid "Currently distributed HA routers are not supported."
-msgstr "当前，分布式 HA 路由器不受支持。"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -843,23 +833,6 @@ msgstr ""
 "的 admin_state_up 变为 False 时，将禁用该代理上的服务。无论此选项如何，都不会"
 "选择 admin_state_up 为 False 的代理进行自动调度。但是，如果此选项为 True，那"
 "么可以手动调度这样的代理。"
-
-msgid ""
-"Enable suppression of ARP responses that don't match an IP address that "
-"belongs to the port from which they originate. Note: This prevents the VMs "
-"attached to this agent from spoofing, it doesn't protect them from other "
-"devices which have the capability to spoof (e.g. bare metal or VMs attached "
-"to agents without this flag set to True). Spoofing rules will not be added "
-"to any ports that have port security disabled. For LinuxBridge, this "
-"requires ebtables. For OVS, it requires a version that supports matching ARP "
-"headers."
-msgstr ""
-"对于与 IP 地址不匹配的 ARP 响应（该 IP 地址属于这些 ARP 响应所源自的端口）启"
-"用压缩。注意：这将防止连接至此代理的 VM 进行电子欺骗，但是它不会防止来自其他"
-"具有电子欺骗能力的设备（例如，裸露的金属，或者是连接至代理，但是未将此标志设"
-"置为 True 的 VM）的电子欺骗。不会将电子欺骗规则添加至任何已启用端口安全性的端"
-"口。对于 LinuxBridge，这需要 ebtables。对于 OVS，它需要一个支持相匹配的 ARP "
-"头的版本。"
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1101,10 +1074,6 @@ msgid ""
 "specified network."
 msgstr "对于所指定网络上的任何子网，IP 地址 %(ip_address)s 不是有效 IP。"
 
-#, python-format
-msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
-msgstr "对于所指定子网，IP 地址 %(ip_address)s 是无效 IP。"
-
 msgid "IP address used by Nova metadata server."
 msgstr "Nova 元数据服务器使用的 IP 地址。"
 
@@ -1242,10 +1211,6 @@ msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "输入对于 %(attr)s 无效。原因：%(reason)s。"
 
 #, python-format
-msgid "Invalid input for operation: %(error_message)s."
-msgstr "针对操作的输入无效：%(error_message)s。"
-
-#, python-format
 msgid ""
 "Invalid input. '%(target_dict)s' must be a dictionary with keys: "
 "%(expected_keys)s"
@@ -1356,9 +1321,6 @@ msgstr "元数据代理 UNIX 域套接字的位置"
 msgid "Location of pid file of this process."
 msgstr "此进程的 pid 文件的位置。"
 
-msgid "Location to store DHCP server config files"
-msgstr "用于存储 DHCP 服务器配置文件的位置"
-
 msgid "Location to store IPv6 PD files."
 msgstr "用来存储 IPv6 PD 文件的位置。"
 
@@ -1373,9 +1335,6 @@ msgstr "用于存储保持活动的/连接跟踪的配置文件的位置"
 
 msgid "Log agent heartbeats"
 msgstr "日志代理程序脉动信号"
-
-msgid "MTU setting for device."
-msgstr "存在设备的 MTU 设置。"
 
 msgid "MTU size of veth interfaces"
 msgstr "veth 接口的 MTU 大小"
@@ -1546,10 +1505,6 @@ msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr "没有更多 IP 地址可用于子网 %(subnet_id)s。"
 
 #, python-format
-msgid "No more IP addresses available on network %(net_id)s."
-msgstr "在网络 %(net_id)s 上，没有更多 IP 地址可用。"
-
-#, python-format
 msgid ""
 "No more Virtual Router Identifier (VRID) available when creating router "
 "%(router_id)s. The limit of number of HA Routers per tenant is 254."
@@ -1560,9 +1515,6 @@ msgstr ""
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
 msgstr "没有为“%s”服务指定任何提供程序，正在退出"
-
-msgid "Not authorized."
-msgstr "未授权。"
 
 #, python-format
 msgid ""
@@ -1639,13 +1591,6 @@ msgstr "每个租户允许的子网数。负值表示无限。"
 msgid "OK"
 msgstr "确定"
 
-#, python-format
-msgid "Object %(id)s not found."
-msgstr "找不到对象 %(id)s。"
-
-msgid "One or more ports have an IP allocation from this subnet."
-msgstr "一个或多个端口具有从此子网进行的 IP 分配。"
-
 msgid "Only admin can view or configure quota"
 msgstr "只有管理员才能查看或配置配额"
 
@@ -1674,9 +1619,6 @@ msgstr ""
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "操作在设备 %(dev_name)s 上不受支持"
-
-msgid "Override the default dnsmasq settings with this file"
-msgstr "请使用此文件来覆盖缺省 dnsmasq 设置"
 
 msgid "Owner type of the device: network/compute"
 msgstr "设备的所有者类型如下：网络/计算"
@@ -1972,10 +1914,6 @@ msgstr "安全组 %(id)s 不存在"
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr "安全组规则 %(id)s 不存在"
-
-#, python-format
-msgid "Security group rule already exists. Rule id is %(id)s."
-msgstr "安全组规则已存在。规则标识为 %(id)s。"
 
 #, python-format
 msgid ""
@@ -2355,38 +2293,11 @@ msgstr "对于 %(subnet_id)s，无法完成操作。主机路由数超过限制 
 
 #, python-format
 msgid ""
-"Unable to complete operation for network %(net_id)s. The IP address "
-"%(ip_address)s is in use."
-msgstr "对于网络 %(net_id)s，无法完成操作。IP 地址 %(ip_address)s 在使用中。"
-
-#, python-format
-msgid ""
-"Unable to complete operation for network %(net_id)s. The mac address %(mac)s "
-"is in use."
-msgstr "对于网络 %(net_id)s，无法完成操作。MAC 地址 %(mac)s 在使用中。"
-
-#, python-format
-msgid ""
 "Unable to complete operation on address scope %(address_scope_id)s. There "
 "are one or more subnet pools in use on the address scope"
 msgstr ""
 "无法对地址范围 %(address_scope_id)s 完成操作。在该地址范围内，正在使用一个或"
 "多个子网池"
-
-#, python-format
-msgid ""
-"Unable to complete operation on network %(net_id)s. There are one or more "
-"ports still in use on the network."
-msgstr ""
-"无法在网络 %(net_id)s 上完成操作。在该网络上，一个或多个端口仍然在使用中。"
-
-#, python-format
-msgid ""
-"Unable to complete operation on port %(port_id)s for network %(net_id)s. "
-"Port already has an attached device %(device_id)s."
-msgstr ""
-"对于网络 %(net_id)s，无法在端口 %(port_id)s 上完成操作。端口已具有连接的设备 "
-"%(device_id)s。"
 
 #, python-format
 msgid "Unable to convert value in %s"
@@ -2409,22 +2320,6 @@ msgid ""
 "attempts."
 msgstr "无法创建网络。未在最大允许尝试次数中发现任何可用网络。"
 
-msgid ""
-"Unable to create the network. No tenant network is available for allocation."
-msgstr "无法创建该网络。没有任何租户网络可用于分配。"
-
-#, python-format
-msgid ""
-"Unable to create the network. The VLAN %(vlan_id)s on physical network "
-"%(physical_network)s is in use."
-msgstr ""
-"无法创建该网络。物理网络 %(physical_network)s 上的 VLAN %(vlan_id)s 在使用"
-"中。"
-
-#, python-format
-msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
-msgstr "无法创建该网络。隧道标识 %(tunnel_id)s 在使用中。"
-
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "无法为 %s 确定网卡地址"
@@ -2436,10 +2331,6 @@ msgstr "在请求主体中找不到“%s”"
 #, python-format
 msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
 msgstr "在子网 %(subnet_id)s 上找不到 IP 地址 %(ip_address)s"
-
-#, python-format
-msgid "Unable to find any IP address on external network %(net_id)s."
-msgstr "在外部网络上找不到任何 IP 地址%(net_id)s."
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2536,9 +2427,6 @@ msgid ""
 msgstr ""
 "请使用 ML2 l2population 机制驱动程序以了解远程 MAC 和 IP 并提高隧道可伸缩性。"
 
-msgid "Use broadcast in DHCP replies"
-msgstr "在DHCP应答中使用广播"
-
 msgid "Use either --delta or relative revision, not both"
 msgstr "请使用 --delta 或者相关修订版，但是不能同时指定这两者"
 
@@ -2626,10 +2514,6 @@ msgstr "仅允许将 allocation_pools 用于特定子网请求。"
 
 msgid "binding:profile value too large"
 msgstr "binding:profile 值太大"
-
-#, python-format
-msgid "cannot be deleted due to %s"
-msgstr "由于 %s 而无法删除"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "不得同时指定 cidr 和 prefixlen"

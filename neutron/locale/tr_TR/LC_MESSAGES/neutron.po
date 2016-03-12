@@ -9,9 +9,9 @@
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-05 04:27+0000\n"
+"POT-Creation-Date: 2016-03-12 03:36+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -324,9 +324,6 @@ msgstr ""
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin."
 
-msgid "An unknown exception occurred."
-msgstr "Bilinmeyen bir istisna oluştu."
-
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "'%s' özniteliğine POST içinde izin verilmez"
@@ -536,19 +533,12 @@ msgid "Could not deserialize data"
 msgstr "Veri serisi çözülemedi"
 
 #, python-format
-msgid "Creation failed. %(dev_name)s already exists."
-msgstr "Oluşturma başarısız. %(dev_name)s zaten mevcut."
-
-#, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
 "to update."
 msgstr ""
 "Mevcut geçit ip'si %(ip_address)s %(port_id)s bağlantı noktası tarafından "
 "zaten kullanılıyor. Güncellenemiyor."
-
-msgid "Currently distributed HA routers are not supported."
-msgstr "Şu anda dağıtık HA yönlendiriciler desteklenmiyor."
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -749,24 +739,6 @@ msgstr ""
 "üzerindeki servisler kapatılacaktır. admin_state_up False olan ajanlar bu "
 "seçeneğe bakılmaksızın otomatik zamanlama için seçilmezler. Ama bu seçenek "
 "True ise bu tür ajanlara elle zamanlama yapılabilir."
-
-msgid ""
-"Enable suppression of ARP responses that don't match an IP address that "
-"belongs to the port from which they originate. Note: This prevents the VMs "
-"attached to this agent from spoofing, it doesn't protect them from other "
-"devices which have the capability to spoof (e.g. bare metal or VMs attached "
-"to agents without this flag set to True). Spoofing rules will not be added "
-"to any ports that have port security disabled. For LinuxBridge, this "
-"requires ebtables. For OVS, it requires a version that supports matching ARP "
-"headers."
-msgstr ""
-"Aslen geldikleri bağlantı noktasına ait IP adresiyle eşleşmeyen ARP "
-"yanıtlarının bastırılmasını etkinleştir. Not: Bu, bu ajana bağlı VM'lerin "
-"yanıltma yapmasını önler, yanıltma yeteneği olan başka aygıtlardan korumaz "
-"(örn. çıplak metal veya bu bayrağı True olarak ayarlanmamış ajanlara bağlı "
-"VM'ler). Yanıltma kuralları bağlantı noktası güvenliği kapalı bağlantı "
-"noktalarına eklenmeyecektir. LinuxBridge için, bu ebtables gerektirir. OVS "
-"için, ARP başlıklarını eşleştirmeyi destekleyen bir sürüm gerektirir."
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -993,10 +965,6 @@ msgstr ""
 "%(ip_address)s IP adresi belirtilen ağdaki alt ağlardan hiçbiri için geçerli "
 "bir IP değil."
 
-#, python-format
-msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
-msgstr "%(ip_address)s IP adresi belirtilen alt ağ için geçerli bir IP değil."
-
 msgid "IP address used by Nova metadata server."
 msgstr "Nova metadata sunucusu tarafından kullanılan IP adresi."
 
@@ -1122,10 +1090,6 @@ msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s için geçersiz girdi. Sebep: %(reason)s."
 
 #, python-format
-msgid "Invalid input for operation: %(error_message)s."
-msgstr "İşlem için geçersiz girdi: %(error_message)s"
-
-#, python-format
 msgid ""
 "Invalid input. '%(target_dict)s' must be a dictionary with keys: "
 "%(expected_keys)s"
@@ -1214,9 +1178,6 @@ msgstr "Metadata Vekil UNIX alan soketi konumu"
 msgid "Location of pid file of this process."
 msgstr "Bu sürecin pid dosyasının konumu."
 
-msgid "Location to store DHCP server config files"
-msgstr "DHCP sunucu yapılandırma dosyalarının depolanacağı konum"
-
 msgid "Location to store IPv6 RA config files"
 msgstr "IPv6 RA yapılandırma dosyalarının kaydedileceği konum"
 
@@ -1228,9 +1189,6 @@ msgstr "Keepalived/conntrackd yapılandırma dosyalarının tutulacağı konum"
 
 msgid "Log agent heartbeats"
 msgstr "Ajan kalp atışlarını kaydet"
-
-msgid "MTU setting for device."
-msgstr "Aygıt için MTU ayarı."
 
 msgid "MTU size of veth interfaces"
 msgstr "veth arayüzlerinin MTU boyutu"
@@ -1377,10 +1335,6 @@ msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr "%(subnet_id)s alt ağı için kullanılabilir başka IP adresi yok."
 
 #, python-format
-msgid "No more IP addresses available on network %(net_id)s."
-msgstr "%(net_id)s ağında başka kullanılabilir IP adresi yok."
-
-#, python-format
 msgid ""
 "No more Virtual Router Identifier (VRID) available when creating router "
 "%(router_id)s. The limit of number of HA Routers per tenant is 254."
@@ -1392,9 +1346,6 @@ msgstr ""
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
 msgstr "'%s' servisi için sağlayıcı belirtilmemiş, çıkılıyor"
-
-msgid "Not authorized."
-msgstr "Yetkiniz yok."
 
 #, python-format
 msgid ""
@@ -1489,9 +1440,6 @@ msgstr ""
 msgid "OK"
 msgstr "Tamam"
 
-msgid "One or more ports have an IP allocation from this subnet."
-msgstr "Bir ya da fazla bağlantı noktasının bu alt ağdan ayrılmış IP'si var."
-
 msgid "Only admin can view or configure quota"
 msgstr "Yalnızca yönetici kotaları görüntüleyebilir ya da yapılandırabilir"
 
@@ -1515,9 +1463,6 @@ msgid ""
 msgstr ""
 "İşlem %(op)s %(port_id)s bağlantı noktası üzerinde %(device_owner)s "
 "device_owner için  desteklenmiyor."
-
-msgid "Override the default dnsmasq settings with this file"
-msgstr "Bu dosyayla varsayılan dnsmasq ayarlarının üzerine yazın"
 
 msgid "Owner type of the device: network/compute"
 msgstr "Aygıt sahip türü: ağ/hesap"
@@ -1767,10 +1712,6 @@ msgstr "%(id)s güvenlik grubu mevcut değil"
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr "Güvenlik grubu kuralı %(id)s mevcut değil"
-
-#, python-format
-msgid "Security group rule already exists. Rule id is %(id)s."
-msgstr "Güvenlik grubu kuralı zaten mevcut. Kural kimliği %(id)s."
 
 #, python-format
 msgid ""
@@ -2106,36 +2047,6 @@ msgstr ""
 "sınırını aşıyor."
 
 #, python-format
-msgid ""
-"Unable to complete operation for network %(net_id)s. The IP address "
-"%(ip_address)s is in use."
-msgstr ""
-"%(net_id)s ağı için işlem tamamlanamadı. %(ip_address)s IP adresi kullanımda."
-
-#, python-format
-msgid ""
-"Unable to complete operation for network %(net_id)s. The mac address %(mac)s "
-"is in use."
-msgstr ""
-"%(net_id)s ağı için işlem tamamlanamadı. Mac adresi %(mac)s kullanımda."
-
-#, python-format
-msgid ""
-"Unable to complete operation on network %(net_id)s. There are one or more "
-"ports still in use on the network."
-msgstr ""
-"%(net_id)s ağı üzerinde işlem tamamlanamadı. Ağda hala kullanımda olan bir "
-"ya da daha fazla bağlantı noktası var."
-
-#, python-format
-msgid ""
-"Unable to complete operation on port %(port_id)s for network %(net_id)s. "
-"Port already has an attached device %(device_id)s."
-msgstr ""
-"%(net_id)s ağı için %(port_id)s bağlantı noktası üzerinde işlem "
-"tamamlanamadı. Bağlantı noktasına eklenmiş aygıt %(device_id)s zaten var."
-
-#, python-format
 msgid "Unable to convert value in %s"
 msgstr "%s degeri dönüştürülemiyor"
 
@@ -2158,22 +2069,6 @@ msgstr ""
 "Ağ oluşturulamıyor. İzin verilen azami deneme içinde kullanılabilir ağ "
 "bulunamadı."
 
-msgid ""
-"Unable to create the network. No tenant network is available for allocation."
-msgstr "Ağ oluşturulamıyor. Ayırma için hiçbir kiracı ağ kullanılabilir değil."
-
-#, python-format
-msgid ""
-"Unable to create the network. The VLAN %(vlan_id)s on physical network "
-"%(physical_network)s is in use."
-msgstr ""
-"Ağ oluşturulamıyor. %(physical_network)s fiziksel ağındaki %(vlan_id)s VLAN "
-"kullanımda."
-
-#, python-format
-msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
-msgstr "Ağ oluşturulamıyor. Tünel ID'si %(tunnel_id)s kullanımda."
-
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "%s içim mac adresi tanımlanamadı"
@@ -2185,10 +2080,6 @@ msgstr "İstek gövdesinde '%s' bulunamadı"
 #, python-format
 msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
 msgstr "%(subnet_id)s alt ağında %(ip_address)s IP adresi bulunamıyor"
-
-#, python-format
-msgid "Unable to find any IP address on external network %(net_id)s."
-msgstr "%(net_id)s harici ağında IP adresi bulunamadı."
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2279,9 +2170,6 @@ msgid ""
 msgstr ""
 "Uzak MAC ve IP'leri öğrenmek ve tünel ölçeklenebilirliğini artırmak için ML2 "
 "l2population mekanizması sürücüsünü kullan."
-
-msgid "Use broadcast in DHCP replies"
-msgstr "DHCP yanıtlarında yayın kullan"
 
 msgid "Use either --delta or relative revision, not both"
 msgstr "Ya --delta ya ilişkili sürüm kullanın, ikisini birden değil"
@@ -2381,10 +2269,6 @@ msgstr "allocation_pools yalnızca belirli alt ağ istekleri için izinli."
 
 msgid "binding:profile value too large"
 msgstr "bağ:profil değeri çok büyük"
-
-#, python-format
-msgid "cannot be deleted due to %s"
-msgstr "%s sebebiyle silinemez"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr ve prefixlen birlikte verilmemelidir"

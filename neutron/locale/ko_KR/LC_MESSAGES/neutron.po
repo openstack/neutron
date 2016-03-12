@@ -14,9 +14,9 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b3.dev148\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-05 04:27+0000\n"
+"POT-Creation-Date: 2016-03-12 03:36+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -371,9 +371,6 @@ msgstr ""
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "알 수 없는 오류가 발생했습니다. 요청을 다시 시도하십시오. "
 
-msgid "An unknown exception occurred."
-msgstr "알 수 없는 예외가 발생했습니다. "
-
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "'%s' 속성은 POST에서 허용되지 않음"
@@ -638,19 +635,12 @@ msgid "Could not deserialize data"
 msgstr "데이터를 직렬화 해제할 수 없음"
 
 #, python-format
-msgid "Creation failed. %(dev_name)s already exists."
-msgstr "작성 실패. %(dev_name)s이(가) 이미 존재합니다. "
-
-#, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. Unable "
 "to update."
 msgstr ""
 "현재 게이트웨이 ip %(ip_address)s을(를) 포트 %(port_id)s에서 이미 사용하고 있"
 "습니다.업데이트할 수 없습니다."
-
-msgid "Currently distributed HA routers are not supported."
-msgstr "현재 분배된 HA 라우터는 지원되지 않습니다. "
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -872,23 +862,6 @@ msgstr ""
 "admin_state_up False인 에이전트는 이 옵션과 관계 없이 자동 스케줄링에 사용하"
 "도록 선택하지 않습니다. 그러나 이 옵션이 True이면 이러한 에이전트에 수동 스케"
 "줄링을 사용할 수 있습니다."
-
-msgid ""
-"Enable suppression of ARP responses that don't match an IP address that "
-"belongs to the port from which they originate. Note: This prevents the VMs "
-"attached to this agent from spoofing, it doesn't protect them from other "
-"devices which have the capability to spoof (e.g. bare metal or VMs attached "
-"to agents without this flag set to True). Spoofing rules will not be added "
-"to any ports that have port security disabled. For LinuxBridge, this "
-"requires ebtables. For OVS, it requires a version that supports matching ARP "
-"headers."
-msgstr ""
-"시작되는 포트에 속하는 IP 주소와 일치하지 않는 ARP 응답의 억제를 사용으로 설"
-"정하십시오. 참고: 이는 이 에이전트에 연결된 VM의 위조를 방지하지만 위조 기능"
-"을 가진 다른 디바이스(예: 이 플래그가 True로 설정되지 않는 에이전트에 연결된 "
-"베어메탈 또는 VM)로부터 보호하지는 않습니다. 위조 규칙은 포트 보안이 사용 안"
-"함으로 설정된 포트에는 추가되지 않습니다. LinuxBridge의 경우에는 ebtables가 "
-"필요합니다. OVS의 경우에는 일치하는 ARP 헤더를 지원하는 버전이 필요합니다. "
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1136,11 +1109,6 @@ msgstr ""
 "IP 주소 %(ip_address)s이(가) 지정된 네트워크의 서브넷에 대해 올바른 IP가아닙"
 "니다. "
 
-#, python-format
-msgid "IP address %(ip_address)s is not a valid IP for the specified subnet."
-msgstr ""
-"IP 주소 %(ip_address)s이(가) 지정된 서브넷에 대해 올바른 IP가 아닙니다."
-
 msgid "IP address used by Nova metadata server."
 msgstr "Nova 메타데이터 서버가 사용한 IP 주소입니다. "
 
@@ -1288,10 +1256,6 @@ msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s에 대한 올바르지 않은 입력입니다. 이유: %(reason)s."
 
 #, python-format
-msgid "Invalid input for operation: %(error_message)s."
-msgstr "오퍼레이션에 대한 올바르지 않은 입력: %(error_message)s."
-
-#, python-format
 msgid ""
 "Invalid input. '%(target_dict)s' must be a dictionary with keys: "
 "%(expected_keys)s"
@@ -1410,9 +1374,6 @@ msgstr "메타데이터 프록시 UNIX 도메인 소켓의 위치"
 msgid "Location of pid file of this process."
 msgstr "이 프로세스의 pid 파일 위치입니다."
 
-msgid "Location to store DHCP server config files"
-msgstr "DHCP 서버 구성 파일을 저장할 위치"
-
 msgid "Location to store IPv6 PD files."
 msgstr "IPv6 PD 파일을 저장할 위치입니다. "
 
@@ -1427,9 +1388,6 @@ msgstr "keepalived/conntrackd 구성 파일을 저장할 위치"
 
 msgid "Log agent heartbeats"
 msgstr "로그 에이전트 하트비트"
-
-msgid "MTU setting for device."
-msgstr "디바이스의 MTU 설정입니다. "
 
 msgid "MTU size of veth interfaces"
 msgstr "veth 인터페이스의 MTU 크기"
@@ -1601,10 +1559,6 @@ msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr "서브넷 %(subnet_id)s에 대해 사용 가능한 IP 주소가 더 이상 없습니다. "
 
 #, python-format
-msgid "No more IP addresses available on network %(net_id)s."
-msgstr "%(net_id)s 네트워크에서 추가 IP 주소를 사용할 수 없습니다. "
-
-#, python-format
 msgid ""
 "No more Virtual Router Identifier (VRID) available when creating router "
 "%(router_id)s. The limit of number of HA Routers per tenant is 254."
@@ -1615,9 +1569,6 @@ msgstr ""
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
 msgstr "'%s' 서비스에 대해 제공자가 지정되지 않음, 종료하는 중"
-
-msgid "Not authorized."
-msgstr "권한이 없습니다. "
 
 #, python-format
 msgid ""
@@ -1697,13 +1648,6 @@ msgstr "테넌트당 허용되는 서브넷 수입니다. 음수 값은 무제�
 msgid "OK"
 msgstr "OK"
 
-#, python-format
-msgid "Object %(id)s not found."
-msgstr "오브젝트 %(id)s을(를) 찾을 수 없습니다. "
-
-msgid "One or more ports have an IP allocation from this subnet."
-msgstr "하나 이상의 포트에 이 서브넷의 IP 할당이 있습니다. "
-
 msgid "Only admin can view or configure quota"
 msgstr "관리자만이 할당량을 보거나 구성할 수 있습니다. "
 
@@ -1733,9 +1677,6 @@ msgstr ""
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "디바이스 %(dev_name)s에 대한 조작이 지원되지 않음"
-
-msgid "Override the default dnsmasq settings with this file"
-msgstr "기본 dnsmasq 설정을 이 파일로 대체합니다."
 
 msgid "Owner type of the device: network/compute"
 msgstr "디바이스의 소유자 유형: network/compute"
@@ -2051,10 +1992,6 @@ msgstr "%(id)s 보안 그룹이 존재하지 않음"
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr "보안 그룹 규칙 %(id)s이(가) 존재하지 않음"
-
-#, python-format
-msgid "Security group rule already exists. Rule id is %(id)s."
-msgstr "보안 그룹 규칙이 이미 있습니다. 규칙 ID는 %(id)s입니다."
 
 #, python-format
 msgid ""
@@ -2478,43 +2415,11 @@ msgstr ""
 
 #, python-format
 msgid ""
-"Unable to complete operation for network %(net_id)s. The IP address "
-"%(ip_address)s is in use."
-msgstr ""
-"%(net_id)s 네트워크에 대한 조작을 완료할 수 없습니다. IP 주소 %(ip_address)s"
-"이(가) 사용 중입니다. "
-
-#, python-format
-msgid ""
-"Unable to complete operation for network %(net_id)s. The mac address %(mac)s "
-"is in use."
-msgstr ""
-"%(net_id)s 네트워크에 대한 조작을 완료할 수 없습니다. MAC 주소 %(mac)s이(가) "
-"사용 중입니다. "
-
-#, python-format
-msgid ""
 "Unable to complete operation on address scope %(address_scope_id)s. There "
 "are one or more subnet pools in use on the address scope"
 msgstr ""
 "주소 범위 %(address_scope_id)s에 대한 조작을 완료할 수 없습니다. 주소 범위에 "
 "사용 중인 서브넷 풀이 하나 이상 있습니다. "
-
-#, python-format
-msgid ""
-"Unable to complete operation on network %(net_id)s. There are one or more "
-"ports still in use on the network."
-msgstr ""
-"%(net_id)s네트워크에서 조작을 완료할 수 없습니다. 네트워크에 여전히 사용 중"
-"인 하나 이상의 포트가 있습니다. "
-
-#, python-format
-msgid ""
-"Unable to complete operation on port %(port_id)s for network %(net_id)s. "
-"Port already has an attached device %(device_id)s."
-msgstr ""
-"%(net_id)s 네트워크에 대한 %(port_id)s 포트의 오퍼레이션을 완료할 수 없습니"
-"다. 포트에 이미 접속된 디바이스 %(device_id)s이(가) 있습니다. "
 
 #, python-format
 msgid "Unable to convert value in %s"
@@ -2541,24 +2446,6 @@ msgstr ""
 "네트워크를 작성할 수 없습니다. 허용되는 최대 시도 수만큼 시도한 후 사용 가능"
 "한 네트워크를 찾을 수 없습니다."
 
-msgid ""
-"Unable to create the network. No tenant network is available for allocation."
-msgstr ""
-"네트워크를 작성할 수 없습니다. 테넌트 네트워크를 할당에 사용할 수 없습니다. "
-
-#, python-format
-msgid ""
-"Unable to create the network. The VLAN %(vlan_id)s on physical network "
-"%(physical_network)s is in use."
-msgstr ""
-"네트워크를 작성할 수 없습니다. 실제 네트워크 %(physical_network)s의 VLAN "
-"%(vlan_id)s이(가) 사용 중입니다. "
-
-#, python-format
-msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
-msgstr ""
-"네트워크를 작성할 수 없습니다. 터널 ID %(tunnel_id)s이(가) 사용 중입니다. "
-
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "%s의 맥 주소를 확인할 수 없습니다"
@@ -2570,10 +2457,6 @@ msgstr "요청 본문에서 '%s'을(를) 찾을 수 없음"
 #, python-format
 msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
 msgstr "서브넷 %(subnet_id)s에서 IP 주소 %(ip_address)s을(를) 찾을 수 없음"
-
-#, python-format
-msgid "Unable to find any IP address on external network %(net_id)s."
-msgstr "외부 네트워크 %(net_id)s에서 IP 주소를 찾을 수 없음"
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2674,9 +2557,6 @@ msgstr ""
 "원격 MAC 및 IP를 학습하고 터널 확장성을 개선하려면 ML2 l2population 메커니즘 "
 "드라이버를 사용하십시오."
 
-msgid "Use broadcast in DHCP replies"
-msgstr "DHCP 응답에 브로드캐스트 사용"
-
 msgid "Use either --delta or relative revision, not both"
 msgstr "--델타 또는 상대적 개정판 중 하나 사용"
 
@@ -2770,10 +2650,6 @@ msgstr "allocation_pools는 특정 서브넷 요청에만 사용할 수 있습�
 
 msgid "binding:profile value too large"
 msgstr "바인딩:프로파일 값이 너무 김"
-
-#, python-format
-msgid "cannot be deleted due to %s"
-msgstr "%s(으)로 인해 삭제할 수 없음"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr 및 prefixlen을 함께 입력하지 않아야 함"
