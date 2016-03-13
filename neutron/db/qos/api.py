@@ -42,6 +42,12 @@ def delete_policy_network_binding(context, policy_id, network_id):
                                               policy_id=policy_id)
 
 
+def get_network_ids_by_network_policy_binding(context, policy_id):
+    query = (db.model_query(context, models.QosNetworkPolicyBinding)
+            .filter_by(policy_id=policy_id).all())
+    return [entry.network_id for entry in query]
+
+
 def create_policy_port_binding(context, policy_id, port_id):
     try:
         with context.session.begin(subtransactions=True):
@@ -63,3 +69,9 @@ def delete_policy_port_binding(context, policy_id, port_id):
     except orm_exc.NoResultFound:
         raise n_exc.PortQosBindingNotFound(port_id=port_id,
                                            policy_id=policy_id)
+
+
+def get_port_ids_by_port_policy_binding(context, policy_id):
+    query = (db.model_query(context, models.QosPortPolicyBinding)
+            .filter_by(policy_id=policy_id).all())
+    return [entry.port_id for entry in query]

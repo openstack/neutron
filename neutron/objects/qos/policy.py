@@ -182,6 +182,14 @@ class QosPolicy(base.NeutronDbObject):
                                               policy_id=self.id,
                                               port_id=port_id)
 
+    def get_bound_networks(self):
+        return qos_db_api.get_network_ids_by_network_policy_binding(
+            self._context, self.id)
+
+    def get_bound_ports(self):
+        return qos_db_api.get_port_ids_by_port_policy_binding(
+            self._context, self.id)
+
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
                               binding_db_id_column, policy_id):

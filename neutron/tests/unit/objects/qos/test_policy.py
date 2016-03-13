@@ -13,6 +13,7 @@
 import mock
 
 from neutron.common import exceptions as n_exc
+from neutron.db import models_v2
 from neutron.objects.db import api as db_api
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
@@ -159,6 +160,32 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
                           obj.attach_network, 'non-existent-network')
 
+    def test_attach_network_get_policy_network(self):
+
+        obj = self._create_test_policy()
+        obj.attach_network(self._network['id'])
+
+        networks = obj.get_bound_networks()
+        self.assertEqual(1, len(networks))
+        self.assertEqual(self._network['id'], networks[0])
+
+    def test_attach_and_get_multiple_policy_networks(self):
+
+        net1_id = self._network['id']
+        net2 = db_api.create_object(self.context,
+                                    models_v2.Network,
+                                    {'name': 'test-network2'})
+        net2_id = net2['id']
+
+        obj = self._create_test_policy()
+        obj.attach_network(net1_id)
+        obj.attach_network(net2_id)
+
+        networks = obj.get_bound_networks()
+        self.assertEqual(2, len(networks))
+        self.assertTrue(net1_id in networks)
+        self.assertTrue(net2_id in networks)
+
     def test_attach_port_nonexistent_port(self):
 
         obj = self._create_test_policy()
@@ -192,6 +219,38 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy.get_port_policy(self.context,
                                                       self._port['id'])
         self.assertEqual(obj, policy_obj)
+
+    def test_attach_and_get_multiple_policy_ports(self):
+
+        port1_id = self._port['id']
+        port2 = db_api.create_object(self.context, models_v2.Port,
+                                     {'tenant_id': 'fake_tenant_id',
+                                     'name': 'test-port2',
+                                     'network_id': self._network['id'],
+                                     'mac_address': 'fake_mac2',
+                                     'admin_state_up': True,
+                                     'status': 'ACTIVE',
+                                     'device_id': 'fake_device',
+                                     'device_owner': 'fake_owner'})
+        port2_id = port2['id']
+
+        obj = self._create_test_policy()
+        obj.attach_port(port1_id)
+        obj.attach_port(port2_id)
+
+        ports = obj.get_bound_ports()
+        self.assertEqual(2, len(ports))
+        self.assertTrue(port1_id in ports)
+        self.assertTrue(port2_id in ports)
+
+    def test_attach_port_get_policy_port(self):
+
+        obj = self._create_test_policy()
+        obj.attach_port(self._port['id'])
+
+        ports = obj.get_bound_ports()
+        self.assertEqual(1, len(ports))
+        self.assertEqual(self._port['id'], ports[0])
 
     def test_detach_port(self):
         obj = self._create_test_policy()
