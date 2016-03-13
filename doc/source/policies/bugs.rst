@@ -273,7 +273,8 @@ The process of bug triaging consists of the following steps:
 If the bug report is sound, move next:
 
 * Revise tags as recommended by the submitter. Ensure they are 'official'
-  tags.
+  tags. If the bug report talks about deprecating features or config
+  variables, add a deprecation tag to the list.
 * As deputy one is usually excused not to process RFE bugs which are the
   responsibility of the drivers team members.
 * Depending on ease of reproduction (or if the issue can be spotted in the
