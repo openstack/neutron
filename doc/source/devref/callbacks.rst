@@ -329,6 +329,13 @@ The output is:
 FAQ
 ---
 
+Are callbacks a mechanism for remote or local communication (intra vs inter-process)?
+
+   Callbacks as described in this document are a local communication mechanism that
+   allows multiple entities in the same process space to communicate with one another.
+   For Neutron specific remote (IPC) mechanisms, you can see read more in
+   :doc:`RPC API <rpc_api>` or :doc:`Messaging callbacks <rpc_callbacks>`.
+
 Can I use the callbacks registry to subscribe and notify non-core resources and events?
 
    Short answer is yes. The callbacks module defines literals for what are considered core Neutron
