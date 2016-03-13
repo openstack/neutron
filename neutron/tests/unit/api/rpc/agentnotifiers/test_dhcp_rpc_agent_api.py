@@ -138,19 +138,24 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                      mock.ANY, 'foo_network_id')
         self.assertEqual(1, self.mock_fanout.call_count)
 
-    def _test__notify_agents(self, method,
-                             expected_scheduling=0, expected_casts=0):
+    def _test__notify_agents_with_function(
+        self, function, expected_scheduling=0, expected_casts=0):
         with mock.patch.object(self.notifier, '_schedule_network') as f:
             with mock.patch.object(self.notifier, '_get_enabled_agents') as g:
                 agent = agents_db.Agent()
                 agent.admin_state_up = True
                 agent.heartbeat_timestamp = timeutils.utcnow()
                 g.return_value = [agent]
-                dummy_payload = {'port': {}}
-                self.notifier._notify_agents(mock.Mock(), method,
-                                             dummy_payload, 'foo_network_id')
+                function()
                 self.assertEqual(expected_scheduling, f.call_count)
                 self.assertEqual(expected_casts, self.mock_cast.call_count)
+
+    def _test__notify_agents(self, method,
+                             expected_scheduling=0, expected_casts=0):
+        self._test__notify_agents_with_function(
+            lambda: self.notifier._notify_agents(
+                mock.Mock(), method, {'port': {}}, 'foo_network_id'),
+            expected_scheduling, expected_casts)
 
     def test__notify_agents_cast_required_with_scheduling(self):
         self._test__notify_agents('port_create_end',
@@ -167,6 +172,20 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
     def test__notify_agents_no_action(self):
         self._test__notify_agents('network_create_end',
                                   expected_scheduling=0, expected_casts=0)
+
+    def test__notify_agents_with_router_interface_add(self):
+        self._test__notify_agents_with_function(
+            lambda: self.notifier._after_router_interface_created(
+                mock.ANY, mock.ANY, mock.ANY, context=mock.Mock(),
+                port={'id': 'foo_port_id', 'network_id': 'foo_network_id'}),
+            expected_scheduling=1, expected_casts=1)
+
+    def test__notify_agents_with_router_interface_delete(self):
+        self._test__notify_agents_with_function(
+            lambda: self.notifier._after_router_interface_deleted(
+                mock.ANY, mock.ANY, mock.ANY, context=mock.Mock(),
+                port={'id': 'foo_port_id', 'network_id': 'foo_network_id'}),
+            expected_scheduling=0, expected_casts=1)
 
     def test__fanout_message(self):
         self.notifier._fanout_message(mock.ANY, mock.ANY, mock.ANY)

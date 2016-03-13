@@ -309,11 +309,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             registry.notify(resources.ROUTER_INTERFACE,
                         events.AFTER_CREATE,
                         self,
+                        context=context,
                         network_id=gw_network_id,
                         gateway_ips=gw_ips,
                         cidrs=[x['cidr'] for x in subnets],
                         port_id=port['id'],
                         router_id=router_id,
+                        port=port,
                         interface_info=interface_info)
         return router_interface_info
 
