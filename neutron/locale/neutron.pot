@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev136\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev145\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 06:01+0000\n"
+"POT-Creation-Date: 2016-03-13 06:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -917,7 +917,7 @@ msgstr ""
 msgid "Resource not found."
 msgstr ""
 
-#: neutron/api/versions.py:42
+#: neutron/api/versions.py:44
 msgid "Unknown API version specified"
 msgstr ""
 
@@ -2020,7 +2020,7 @@ msgstr ""
 msgid "Driver used for scheduling BGP speakers to BGP DrAgent"
 msgstr ""
 
-#: neutron/db/common_db_mixin.py:192
+#: neutron/db/common_db_mixin.py:203
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
@@ -2452,7 +2452,7 @@ msgstr ""
 msgid "add_ha_port cannot be called inside of a transaction."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:482
+#: neutron/db/l3_hamode_db.py:483
 msgid ""
 "Cannot change HA attribute of active routers. Please set router "
 "admin_state_up to False prior to upgrade."
@@ -3719,7 +3719,11 @@ msgstr ""
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:282
+#: neutron/plugins/ml2/plugin.py:112
+msgid "Method cannot be called within a transaction."
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:306
 msgid "binding:profile value too large"
 msgstr ""
 
