@@ -45,7 +45,7 @@ class IpConntrackManager(object):
         return cmd_ns
 
     def _get_conntrack_cmds(self, device_info_list, rule, remote_ip=None):
-        conntrack_cmds = []
+        conntrack_cmds = set()
         cmd = self._generate_conntrack_cmd_by_rule(rule, self.namespace)
         ethertype = rule.get('ethertype')
         for device_info in device_info_list:
@@ -59,7 +59,7 @@ class IpConntrackManager(object):
                 if remote_ip and str(
                         netaddr.IPNetwork(remote_ip).version) in ethertype:
                     ip_cmd.extend(['-s', str(remote_ip)])
-                conntrack_cmds.append(cmd + ip_cmd)
+                conntrack_cmds.add(tuple(cmd + ip_cmd))
         return conntrack_cmds
 
     def _delete_conntrack_state(self, device_info_list, rule, remote_ip=None):
@@ -67,7 +67,7 @@ class IpConntrackManager(object):
                                                   rule, remote_ip)
         for cmd in conntrack_cmds:
             try:
-                self.execute(cmd, run_as_root=True,
+                self.execute(list(cmd), run_as_root=True,
                              check_exit_code=True,
                              extra_ok_codes=[1])
             except RuntimeError:
