@@ -12,6 +12,7 @@
 
 import abc
 import copy
+import itertools
 
 from neutron_lib import exceptions
 from oslo_db import exception as obj_exc
@@ -107,6 +108,18 @@ class NeutronObject(obj_base.VersionedObject,
         raise NotImplementedError()
 
 
+class DeclarativeObject(abc.ABCMeta):
+
+    def __init__(cls, name, bases, dct):
+        super(DeclarativeObject, cls).__init__(name, bases, dct)
+        for base in itertools.chain([cls], bases):
+            if hasattr(base, 'primary_keys'):
+                cls.fields_no_update += base.primary_keys
+        # avoid duplicate entries
+        cls.fields_no_update = list(set(cls.fields_no_update))
+
+
+@six.add_metaclass(DeclarativeObject)
 class NeutronDbObject(NeutronObject):
 
     # should be overridden for all persistent objects
@@ -214,10 +227,6 @@ class NeutronDbObject(NeutronObject):
 
     def _validate_changed_fields(self, fields):
         fields = fields.copy()
-        # We won't allow id update anyway, so let's pop it out not to trigger
-        # update on id field touched by the consumer
-        fields.pop('id', None)
-
         forbidden_updates = set(self.fields_no_update) & set(fields.keys())
         if forbidden_updates:
             raise NeutronObjectUpdateForbidden(fields=forbidden_updates)
