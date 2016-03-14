@@ -17,7 +17,9 @@ import abc
 import sys
 
 from neutron_lib import constants
+from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
+from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import six
 
@@ -107,4 +109,11 @@ class QosDscpMarkingRule(QosRule):
         DSCP_MARK: common_types.DscpMarkField(),
     }
 
-    rule_type = qos_consts.RULE_TYPE_DSCP_MARK
+    rule_type = qos_consts.RULE_TYPE_DSCP_MARKING
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            raise exception.IncompatibleObjectVersion(
+                                 objver=target_version,
+                                 objname="QosDscpMarkingRule")

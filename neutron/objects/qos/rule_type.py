@@ -32,7 +32,6 @@ class QosRuleType(base.NeutronObject):
     # Version 1.1: Added DscpMarkingRule
     VERSION = '1.1'
 
-    #TODO(davidsha) add obj_make_compatible and associated tests.
     fields = {
         'type': RuleTypeField(),
     }

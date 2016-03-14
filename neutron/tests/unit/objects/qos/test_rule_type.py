@@ -44,3 +44,19 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
 
     def test_wrong_type(self):
         self.assertRaises(ValueError, rule_type.QosRuleType, type='bad_type')
+
+    @staticmethod
+    def _policy_through_version(obj, version):
+        primitive = obj.obj_to_primitive(target_version=version)
+        return rule_type.QosRuleType.clean_obj_from_primitive(primitive)
+
+    def test_object_version(self):
+        qos_rule_type = rule_type.QosRuleType()
+        rule_type_v1_1 = self._policy_through_version(qos_rule_type, '1.1')
+
+        self.assertIn(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                      tuple(rule_type_v1_1.fields['type'].AUTO_TYPE.
+                      _valid_values))
+        self.assertIn(qos_consts.RULE_TYPE_DSCP_MARKING,
+                      tuple(rule_type_v1_1.fields['type'].AUTO_TYPE.
+                      _valid_values))

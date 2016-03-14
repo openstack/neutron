@@ -737,7 +737,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         policy_rules = retrieved_policy['policy']['rules']
         self.assertEqual(1, len(policy_rules))
         self.assertEqual(rule['id'], policy_rules[0]['id'])
-        self.assertEqual(qos_consts.RULE_TYPE_DSCP_MARK,
+        self.assertEqual(qos_consts.RULE_TYPE_DSCP_MARKING,
                          policy_rules[0]['type'])
 
     @test.idempotent_id('08553ffe-030f-4037-b486-7e0b8fb9385a')

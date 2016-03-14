@@ -190,7 +190,7 @@ class TestDscpMarkingQoS(BaseQoSRuleTestCase):
         rule = self.safe_client.create_dscp_marking_rule(
             self.tenant_id, qos_policy_id, dscp_mark)
         # Make it consistent with GET reply
-        rule['type'] = qos_consts.RULE_TYPE_DSCP_MARK
+        rule['type'] = qos_consts.RULE_TYPE_DSCP_MARKING
         rule['qos_policy_id'] = qos_policy_id
         qos_policy['rules'].append(rule)
 
