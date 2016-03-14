@@ -154,6 +154,8 @@ class DietTestCase(base.BaseTestCase):
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
 
+        tools.reset_random_seed()
+
     def addOnException(self, handler):
 
         def safe_handler(*args, **kwargs):
