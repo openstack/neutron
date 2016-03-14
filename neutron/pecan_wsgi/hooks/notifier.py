@@ -81,8 +81,6 @@ class NotifierHook(hooks.PecanHook):
                             event, payload)
 
     def after(self, state):
-        # if the after hook is executed the request completed successfully and
-        # therefore notifications must be sent
         resource_name = state.request.context.get('resource')
         collection_name = state.request.context.get('collection')
         neutron_context = state.request.context.get('neutron_context')
@@ -93,6 +91,10 @@ class NotifierHook(hooks.PecanHook):
         action = pecan_constants.ACTION_MAP.get(state.request.method)
         if not action or action == 'get':
             LOG.debug("No notification will be sent for action: %s", action)
+            return
+        if state.response.status_int > 300:
+            LOG.debug("No notification will be sent due to unsuccessful "
+                      "status code: %s", state.response.status_int)
             return
 
         if action == 'delete':
@@ -120,7 +122,6 @@ class NotifierHook(hooks.PecanHook):
             self._notify_dhcp_agent(
                 neutron_context, resource_name,
                 action, resources)
-
         if cfg.CONF.notify_nova_on_port_data_changes:
             orig = {}
             if action == 'update':
@@ -137,11 +138,6 @@ class NotifierHook(hooks.PecanHook):
 
         event = '%s.%s.end' % (resource_name, action)
         if action == 'delete':
-            if state.response.status_int > 300:
-                # don't notify when unsuccessful
-                # NOTE(kevinbenton): we may want to be more strict with the
-                # response codes
-                return
             resource_id = state.request.context.get('resource_id')
             payload = {resource_name + '_id': resource_id}
         elif action in ('create', 'update'):
