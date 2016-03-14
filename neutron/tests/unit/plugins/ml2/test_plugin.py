@@ -798,7 +798,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
             self._test_operation_resillient_to_ipallocation_failure(do_request)
 
-    @testtools.skip('bug/1556178')
     def _test_operation_resillient_to_ipallocation_failure(self, func):
         from sqlalchemy import event
 
