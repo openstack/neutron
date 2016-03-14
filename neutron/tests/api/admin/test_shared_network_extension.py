@@ -283,6 +283,14 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         port = self.client2.create_port(network_id=net['id'])['port']
         self.client.delete_port(port['id'])
 
+    @test.idempotent_id('f7539232-389a-4e9c-9e37-e42a129eb541')
+    def test_tenant_cant_delete_other_tenants_ports(self):
+        net = self.create_network()
+        port = self.client.create_port(network_id=net['id'])['port']
+        self.addCleanup(self.client.delete_port, port['id'])
+        with testtools.ExpectedException(lib_exc.NotFound):
+            self.client2.delete_port(port['id'])
+
     @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff4fff')
     def test_regular_client_shares_to_another_regular_client(self):
