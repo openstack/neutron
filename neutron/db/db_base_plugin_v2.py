@@ -310,6 +310,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def create_network(self, context, network):
         """Handle creation of a single network."""
+        net_db = self.create_network_db(context, network)
+        return self._make_network_dict(net_db, process_extensions=False,
+                                       context=context)
+
+    def create_network_db(self, context, network):
         # single request processing
         n = network['network']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
@@ -330,8 +335,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     target_tenant='*', tenant_id=network['tenant_id'])
                 context.session.add(entry)
             context.session.add(network)
-        return self._make_network_dict(network, process_extensions=False,
-                                       context=context)
+        return network
 
     def update_network(self, context, id, network):
         n = network['network']
@@ -1201,6 +1205,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         raise n_exc.MacAddressGenerationFailure(net_id=network_id)
 
     def create_port(self, context, port):
+        db_port = self.create_port_db(context, port)
+        return self._make_port_dict(db_port, process_extensions=False)
+
+    def create_port_db(self, context, port):
         p = port['port']
         port_id = p.get('id') or uuidutils.generate_uuid()
         network_id = p['network_id']
@@ -1245,11 +1253,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 if ips:
                     dns_assignment = self._get_dns_names_for_port(
                         context, ips, request_dns_name)
-
-        if ('dns-integration' in self.supported_extension_aliases and
-            'dns_name' in p):
-            db_port['dns_assignment'] = dns_assignment
-        return self._make_port_dict(db_port, process_extensions=False)
+                db_port['dns_assignment'] = dns_assignment
+        return db_port
 
     def _validate_port_for_update(self, context, db_port, new_port, new_mac):
         changed_owner = 'device_owner' in new_port
