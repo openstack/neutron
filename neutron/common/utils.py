@@ -518,7 +518,7 @@ def port_rule_masking(port_min, port_max):
 
 
 def create_object_with_dependency(creator, dep_getter, dep_creator,
-                                  dep_id_attr):
+                                  dep_id_attr, dep_deleter):
     """Creates an object that binds to a dependency while handling races.
 
     creator is a function that expected to take the result of either
@@ -527,6 +527,9 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
     The result of dep_getter and dep_creator must have an attribute of
     dep_id_attr be used to determine if the dependency changed during object
     creation.
+
+    dep_deleter will be called with a the result of dep_creator if the creator
+    function fails due to a non-dependency reason or the retries are exceeded.
 
     dep_getter should return None if the dependency does not exist.
 
@@ -542,17 +545,16 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
     process of creating the dependency if one no longer exists. It will
     give up after neutron.db.api.MAX_RETRIES and raise the exception it
     encounters after that.
-
-    TODO(kevinbenton): currently this does not try to delete the dependency
-    it created. This matches the semantics of the HA network logic it is used
-    for but it should be modified to cleanup in the future.
     """
-    result, dependency, dep_id = None, None, None
+    result, dependency, dep_id, made_locally = None, None, None, False
     for attempts in range(1, db_api.MAX_RETRIES + 1):
         # we go to max + 1 here so the exception handlers can raise their
         # errors at the end
         try:
-            dependency = dep_getter() or dep_creator()
+            dependency = dep_getter()
+            if not dependency:
+                dependency = dep_creator()
+                made_locally = True
             dep_id = getattr(dependency, dep_id_attr)
         except db_exc.DBDuplicateEntry:
             # dependency was concurrently created.
@@ -576,6 +578,16 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
                     if not dependency or dep_id != getattr(dependency,
                                                            dep_id_attr):
                         ctx.reraise = False
+                        continue
+                # we have exceeded retries or have encountered a non-dependency
+                # related failure so we try to clean up the dependency if we
+                # created it before re-raising
+                if made_locally and dependency:
+                    try:
+                        dep_deleter(dependency)
+                    except Exception:
+                        LOG.exception(_LE("Failed cleaning up dependency %s"),
+                                      dep_id)
     return result, dependency
 
 

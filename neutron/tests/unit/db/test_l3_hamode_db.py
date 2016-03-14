@@ -643,6 +643,14 @@ class L3HATestCase(L3HATestFramework):
                 self.admin_ctx, router_db)
             self.assertTrue(_create_ha_interfaces.called)
 
+    def test_create_ha_interfaces_and_ensure_network_interface_failure(self):
+
+        def _create_ha_interfaces(ctx, rdb, ha_net):
+            raise ValueError('broken')
+        with testtools.ExpectedException(ValueError):
+            self._test_ensure_with_patched_int_create(_create_ha_interfaces)
+        self.assertEqual([], self.core_plugin.get_networks(self.admin_ctx))
+
     def test_create_ha_interfaces_and_ensure_network_concurrent_delete(self):
         orig_create = self.plugin._create_ha_interfaces
 
