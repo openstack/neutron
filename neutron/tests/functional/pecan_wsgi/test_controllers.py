@@ -15,6 +15,7 @@ from collections import namedtuple
 import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 import pecan
@@ -267,6 +268,26 @@ class TestResourceController(TestRootController):
                              'tenant_id': 'tenid'}},
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 201)
+
+    def test_post_with_retry(self):
+        self._create_failed = False
+        orig = self.plugin.create_port
+
+        def new_create(*args, **kwargs):
+            if not self._create_failed:
+                self._create_failed = True
+                raise db_exc.RetryRequest(ValueError())
+            return orig(*args, **kwargs)
+
+        with mock.patch.object(self.plugin, 'create_port',
+                               new=new_create):
+            response = self.app.post_json(
+                '/v2.0/ports.json',
+                params={'port': {'network_id': self.port['network_id'],
+                                 'admin_state_up': True,
+                                 'tenant_id': 'tenid'}},
+                headers={'X-Project-Id': 'tenid'})
+            self.assertEqual(201, response.status_int)
 
     def test_put(self):
         response = self.app.put_json('/v2.0/ports/%s.json' % self.port['id'],
