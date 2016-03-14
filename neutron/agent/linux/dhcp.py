@@ -1051,7 +1051,9 @@ class Dnsmasq(DhcpLocalProcess):
         with 3rd party backends.
         """
         if conf.force_metadata:
-            return True
+            # Only ipv4 subnet, with dhcp enabled, will use metadata proxy.
+            return any(s for s in network.subnets
+                       if s.ip_version == 4 and s.enable_dhcp)
 
         if conf.enable_metadata_network and conf.enable_isolated_metadata:
             # check if the network has a metadata subnet
@@ -1064,7 +1066,10 @@ class Dnsmasq(DhcpLocalProcess):
             return False
 
         isolated_subnets = cls.get_isolated_subnets(network)
-        return any(isolated_subnets[subnet.id] for subnet in network.subnets)
+        # Only ipv4 isolated subnet, which has dhcp enabled, will use
+        # metadata proxy.
+        return any(isolated_subnets[s.id] for s in network.subnets
+                   if s.ip_version == 4 and s.enable_dhcp)
 
 
 class DeviceManager(object):
