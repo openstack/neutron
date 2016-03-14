@@ -1974,8 +1974,8 @@ class TestDnsmasq(TestBase):
 
     def test_should_force_metadata_returns_true(self):
         self.conf.set_override("force_metadata", True)
-        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(self.conf,
-                                                            mock.ANY))
+        self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeDualNetworkDualDHCP()))
 
     def _test__generate_opts_per_subnet_helper(self, config_opts,
                                                expected_mdt_ip):

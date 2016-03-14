@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import os.path
 
 import eventlet
@@ -313,3 +314,42 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             timeout=5,
             sleep=0.1,
             exception=RuntimeError("Stale metadata proxy didn't get killed"))
+
+    def _test_metadata_proxy_spawn_kill_with_subnet_create_delete(self):
+        network = self.network_dict_for_dhcp(ip_version=6)
+        self.configure_dhcp_for_network(network=network)
+        pm = self._get_metadata_proxy_process(network)
+
+        # A newly created network with ipv6 subnet will not have metadata proxy
+        self.assertFalse(pm.active)
+
+        new_network = copy.deepcopy(network)
+        dhcp_enabled_ipv4_subnet = self.create_subnet_dict(network.id)
+        new_network.subnets.append(dhcp_enabled_ipv4_subnet)
+        self.mock_plugin_api.get_network_info.return_value = new_network
+        self.agent.refresh_dhcp_helper(network.id)
+        # Metadata proxy should be spawned for the newly added subnet
+        utils.wait_until_true(
+            lambda: pm.active,
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError("Metadata proxy didn't spawn"))
+
+        self.mock_plugin_api.get_network_info.return_value = network
+        self.agent.refresh_dhcp_helper(network.id)
+        # Metadata proxy should be killed because network doesn't need it.
+        utils.wait_until_true(
+            lambda: not pm.active,
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError("Metadata proxy didn't get killed"))
+
+    def test_enable_isolated_metadata_for_subnet_create_delete(self):
+        self.conf.set_override('force_metadata', False)
+        self.conf.set_override('enable_isolated_metadata', True)
+        self._test_metadata_proxy_spawn_kill_with_subnet_create_delete()
+
+    def test_force_metadata_for_subnet_create_delete(self):
+        self.conf.set_override('force_metadata', True)
+        self.conf.set_override('enable_isolated_metadata', False)
+        self._test_metadata_proxy_spawn_kill_with_subnet_create_delete()
