@@ -182,10 +182,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     direction='egress',
                     ethertype=ethertype)
                 context.session.add(egress_rule)
-                self._registry_notify(resources.SECURITY_GROUP,
-                                      events.PRECOMMIT_CREATE,
-                                      exc_cls=ext_sg.SecurityGroupConflict,
-                                      **kwargs)
+
+            self._registry_notify(resources.SECURITY_GROUP,
+                                  events.PRECOMMIT_CREATE,
+                                  exc_cls=ext_sg.SecurityGroupConflict,
+                                  **kwargs)
 
         secgroup_dict = self._make_security_group_dict(security_group_db)
 
