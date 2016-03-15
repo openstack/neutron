@@ -6,17 +6,18 @@
 # Gabriel Wainer, 2013
 # Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Eric Baum <ecbaum@gmail.com>, 2016. #zanata
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev160\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:36+0000\n"
+"POT-Creation-Date: 2016-03-15 03:21+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-02-03 07:06+0000\n"
-"Last-Translator: Lucas Palm <lapalm@us.ibm.com>\n"
+"PO-Revision-Date: 2016-03-14 02:53+0000\n"
+"Last-Translator: Eric Baum <ecbaum@gmail.com>\n"
 "Language: pt-BR\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.0\n"
@@ -276,6 +277,19 @@ msgstr "Acesso à este recurso foi negado."
 msgid "Action to be executed when a child process dies"
 msgstr "Ação a ser executada quando um processo-filho morre"
 
+msgid ""
+"Add comments to iptables rules. Set to false to disallow the addition of "
+"comments to generated iptables rules that describe each rule's purpose. "
+"System must support the iptables comments module for addition of comments."
+msgstr ""
+"Adicionar comentários a regras do iptables. Configure como falso para "
+"desabilitar a adição de comentários para tabelas de regras geradas que "
+"descrevam o propósito de cada regra. O sistema deve suportar o módulo de "
+"comentários do iptables para adicionar comentários."
+
+msgid "Address not present on interface"
+msgstr "Endereço não está presente na interface"
+
 #, python-format
 msgid "Address scope %(address_scope_id)s could not be found"
 msgstr "O escopo de endereço %(address_scope_id)s não pôde ser localizado"
@@ -381,6 +395,9 @@ msgstr ""
 "Reagende roteadores automaticamente de agentes L3 offline para agentes L3 "
 "online."
 
+msgid "Availability zone of this node"
+msgstr "Zona de disponibilidade deste nó"
+
 msgid "Available commands"
 msgstr "Comandos disponíveis"
 
@@ -418,6 +435,10 @@ msgstr "O corpo contém dados inválidos"
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr "A ponte %(bridge)s não existe."
+
+#, python-format
+msgid "Bridge %s does not exist"
+msgstr "A bridge %s não existe"
 
 msgid "Bulk operation not supported"
 msgstr "Operação em massa não suportada"
@@ -653,6 +674,10 @@ msgstr ""
 "Não foi possível associar-se à %(host)s:%(port)s após tentar por %(time)d "
 "segundos"
 
+#, python-format
+msgid "Could not connect to %s"
+msgstr "Não foi possível conectar-se a %s"
+
 msgid "Could not deserialize data"
 msgstr "Não foi possível desserializar dados"
 
@@ -775,6 +800,15 @@ msgstr ""
 msgid "Domain to use for building the hostnames"
 msgstr "Domínio a ser usado para construir os nomes dos hosts"
 
+msgid ""
+"Domain to use for building the hostnames. This option is deprecated. It has "
+"been moved to neutron.conf as dns_domain. It will be removed in a future "
+"release."
+msgstr ""
+"Domínio utilizado para a construção dos nomes de host. Esta opção foi "
+"descontinuada. Ela foi movida para neutron.conf como dns_domain. Ela será "
+"removida em uma próxima versão."
+
 msgid "Downgrade no longer supported"
 msgstr "O downgrade não é mais suportado"
 
@@ -813,6 +847,9 @@ msgstr "Regra de marcação duplicada em POST."
 
 msgid "Duplicate Security Group Rule in POST."
 msgstr "Regra do Grupo de Segurança Duplicada no Autoteste Inicial."
+
+msgid "Duplicate address detected"
+msgstr "Endereço duplicado detectado"
 
 #, python-format
 msgid "Duplicate hostroute '%s'"
@@ -1055,6 +1092,9 @@ msgstr "Falha ao configurar uid %s"
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr "Falha ao setar porta do túnel %(type)s para %(ip)s"
+
+msgid "Failure applying iptables rules"
+msgstr "Falha ao aplicar regras do iptables"
 
 #, python-format
 msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
@@ -1382,6 +1422,12 @@ msgstr "Keepalived não sofreu spawn novamente"
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "Chave %(key)s no mapeamento: '%(mapping)s' não exclusivo"
 
+msgid "L3 agent failure to setup NAT for floating IPs"
+msgstr "Falaha do agente L3 ao configurar o NAT para IPs flutuantes"
+
+msgid "L3 agent failure to setup floating IPs"
+msgstr "Falha do agente L3 ao configurar IPs flutuantes"
+
 #, python-format
 msgid "Limit must be an integer 0 or greater and not '%d'"
 msgstr "O limite deve ser um número inteiro de 0 ou superior e não '%d'"
@@ -1425,6 +1471,9 @@ msgstr "Local de soquete de domínio UNIX de Proxy de Metadados"
 msgid "Location of pid file of this process."
 msgstr "Local do arquivo pid deste processo."
 
+msgid "Location to store DHCP server config files."
+msgstr "Local para armazenar arquivos de configuração do servidor DHCP"
+
 msgid "Location to store IPv6 PD files."
 msgstr "Local para armazenar arquivos IPv6 PD."
 
@@ -1440,6 +1489,15 @@ msgstr "Local para armazenar os arquivos de configuração keepalived/conntrackd
 msgid "Log agent heartbeats"
 msgstr "Registrar pulsações do agente"
 
+msgid ""
+"MTU setting for device. This option will be removed in Newton. Please use "
+"the system-wide segment_mtu setting which the agents will take into account "
+"when wiring VIFs."
+msgstr ""
+"Configuração de MTU para o dispositivo. Esta opção será removida na versão "
+"Newton. Por favor use a configuração system-wide_segment_mtu que os agentes "
+"considerarão ao conectar as VIFs."
+
 msgid "MTU size of veth interfaces"
 msgstr "Tamanho MTU de interfaces vEth"
 
@@ -1448,6 +1506,9 @@ msgstr "Faça com que o agente l2 seja executado no modo DVR."
 
 msgid "Malformed request body"
 msgstr "Corpo da solicitação malformado"
+
+msgid "MaxRtrAdvInterval setting for radvd.conf"
+msgstr "Configuração de MaxRtrAdvInterval para o radvd.conf"
 
 msgid "Maximum number of allowed address pairs"
 msgstr "Número máximo de pares de endereço permitido"
@@ -1488,6 +1549,9 @@ msgid ""
 "another"
 msgstr ""
 "Regra de marcação com remote_ip_prefix %(remote_ip_prefix)s sobrepõe outra"
+
+msgid "MinRtrAdvInterval setting for radvd.conf"
+msgstr "Configuração de MinRtrAdvInterval para o radvd.conf"
 
 msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr "Minimizar pesquisa monitorando ovsdb para alterações da interface."
@@ -1539,6 +1603,17 @@ msgstr "O nome '%s' não deve começar nem terminar com um hífen."
 
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Nome da ponte Open vSwitch a ser usado"
+
+msgid ""
+"Name of bridge used for external network traffic. This should be set to an "
+"empty value for the Linux Bridge. When this parameter is set, each L3 agent "
+"can be associated with no more than one external network. This option is "
+"deprecated and will be removed in the M release."
+msgstr ""
+"Nome da bridge utilizado para o tráfego de redes externas. Este valor deve "
+"ser vazio para a Linux Bridge. Quando este parâmetro é setado, cada agente "
+"L3 pode ser associado a não mais de uma rede externa. Esta opção está "
+"obsoleta e será removida na versão M."
 
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
@@ -1722,6 +1797,13 @@ msgstr ""
 "Número de sub-redes permitidas por locatário. Um valor negativo significa "
 "ilimitado."
 
+msgid ""
+"Number of threads to use during sync process. Should not exceed connection "
+"pool size configured on server."
+msgstr ""
+"Número de threads utilizadas durante o processo de sincronização. Não devem "
+"exceder o limite do pool de conexões configurado no servidor."
+
 msgid "OK"
 msgstr "OK"
 
@@ -1758,6 +1840,9 @@ msgstr ""
 #, python-format
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "Operação não suportada no dispositivo %(dev_name)s"
+
+msgid "Override the default dnsmasq settings with this file."
+msgstr "Sobrescreva as configurações padrão de dnsmasq com este arquivo."
 
 msgid "Owner type of the device: network/compute"
 msgstr "Tipo de proprietário do dispositivo: rede/cálculo"
@@ -1796,6 +1881,10 @@ msgstr "Opções de upgrade de fase não aceitam especificação de revisão"
 msgid "Ping timeout"
 msgstr "Tempo Limite de Ping"
 
+#, python-format
+msgid "Plugin '%s' not found."
+msgstr "Plugin '%s' não encontrado."
+
 msgid "Plugin does not support updating provider attributes"
 msgstr "O plug-in não suporta atualização de atributos do provedor"
 
@@ -1810,6 +1899,10 @@ msgid ""
 msgstr ""
 "A porta %(port_id)s está associada a um arrendatário diferente de IP "
 "Flutuante %(floatingip_id)s e, portanto, não pode ser ligada."
+
+#, python-format
+msgid "Port %s does not exist"
+msgstr "A porta %s não existe"
 
 #, python-format
 msgid ""
@@ -2317,7 +2410,7 @@ msgid "The driver used to manage the DHCP server."
 msgstr "O driver usado para gerenciar o servidor DHCP."
 
 msgid "The driver used to manage the virtual interface."
-msgstr "O driver usado para gerenciar a interface virtual."
+msgstr "Driver usado para gerenciar a interface virtual."
 
 #, python-format
 msgid ""
@@ -2450,6 +2543,9 @@ msgstr ""
 "conjunto com DVR. Este modo deve ser usado para um agente L3 em execução em "
 "um nó centralizado (ou em implementações de host único, por exemplo, "
 "devstack)"
+
+msgid "Timeout"
+msgstr "Tempo limite"
 
 msgid ""
 "Timeout in seconds to wait for a single OpenFlow request. Used only for "
@@ -2662,6 +2758,9 @@ msgstr ""
 "Utilize o driver de mecanismo de população ML2 l2 para aprender sobre MAC e "
 "IPs remotos e melhorar a escalabilidade do túnel."
 
+msgid "Use broadcast in DHCP replies."
+msgstr "Usar broadcast em respostas DHCP."
+
 msgid "Use either --delta or relative revision, not both"
 msgstr "Use --delta ou revisão relativa, não ambos"
 
@@ -2864,7 +2963,7 @@ msgid "provider:physical_network specified for %s network"
 msgstr "provider:physical_network especificado para a rede %s"
 
 msgid "record"
-msgstr "record"
+msgstr "registro"
 
 msgid "respawn_interval must be >= 0 if provided."
 msgstr "respawn_interval deve ser >= 0 se fornecida."

@@ -18,13 +18,13 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev145\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev160\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 17:47+0000\n"
+"POT-Creation-Date: 2016-03-15 03:21+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-12 05:07+0000\n"
+"PO-Revision-Date: 2016-03-14 12:06+0000\n"
 "Last-Translator: Linda <duleish@cn.ibm.com>\n"
 "Language: zh-CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -83,6 +83,22 @@ msgstr ""
 
 #, python-format
 msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) host %(host)s (original host %(original_host)s) vif type "
+"%(vif_type)s (original vif type %(original_vif_type)s) vif details "
+"%(vif_details)s (original vif details %(original_vif_details)s) binding "
+"levels %(levels)s (original binding levels %(original_levels)s) on network "
+"%(network)s with segments to bind %(segments_to_bind)s"
+msgstr ""
+"在带有要绑定的分段 %(segments_to_bind)s 的网络 %(network)s 上使用以下设置调用"
+"了 %(method)s：端口设置 %(current)s（原始设置 %(original)s），主机 "
+"%(host)s（原始主机 %(original_host)s），vif 类型 %(vif_type)s（原始 vif 类型 "
+"%(original_vif_type)s）vif 详细信息 %(vif_details)s（原始 vif 详细信息 "
+"%(original_vif_details)s），绑定级别 %(levels)s（原始绑定级别 "
+"%(original_levels)s）"
+
+#, python-format
+msgid ""
 "%(method)s called with subnet settings %(current)s (original settings "
 "%(original)s)"
 msgstr "已使用子网设置 %(current)s 调用 %(method)s（原始设置 %(original)s）"
@@ -94,6 +110,10 @@ msgstr "%(method)s 失败。"
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s“%(addr)s”与 ip_version“%(ip_version)s”不匹配"
+
+#, python-format
+msgid "%(param)s must be in %(range)s range."
+msgstr "%(param)s 必须在 %(range)s 范围内。"
 
 #, python-format
 msgid "%s cannot be called while in offline mode"
@@ -291,6 +311,11 @@ msgstr ""
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0不允许作为CIDR前缀长度"
 
+msgid ""
+"32-bit BGP identifier, typically an IPv4 address owned by the system running "
+"the BGP DrAgent."
+msgstr "32 位 BGP 标识，通常是运行 BGP DrAgent 的系统所拥有的 IPv4 地址。"
+
 msgid "A QoS driver must be specified"
 msgstr "必须指定 QoS 驱动程序"
 
@@ -301,6 +326,10 @@ msgid ""
 "A decimal value as Vendor's Registered Private Enterprise Number as required "
 "by RFC3315 DUID-EN."
 msgstr "作为 RFC3315 DUID-EN 所需要的供应商的已注册私营企业号的十进制值。"
+
+#, python-format
+msgid "A default external network already exists: %(net_id)s."
+msgstr "缺省外部网络已存在：%(net_id)s。"
 
 msgid ""
 "A default subnetpool for this IP family has already been set. Only one "
@@ -370,6 +399,9 @@ msgstr "代理 %(id)s 不是 L3 代理或已禁用"
 msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
 msgstr "代理 %(id)s 是无效 DHCP 代理或已禁用"
 
+msgid "Agent has just been revived"
+msgstr "代理程序已苏醒"
+
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
 "case, user's resources will not be scheduled automatically to the agent "
@@ -408,6 +440,9 @@ msgstr "允许运行 metadata代理"
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr "允许将资源操作通知发送至 DHCP 代理"
 
+msgid "Allow the creation of PTR records"
+msgstr "允许创建 PTR 记录"
+
 msgid "Allow the usage of the bulk API"
 msgstr "允许使用成批 API"
 
@@ -439,8 +474,35 @@ msgstr ""
 "Neutron 路由器。在此情况下，不会在 VM 中插入 DHCP 选项 121，因为它们能够通过"
 "路由器到达 169.254.169.254。此选项要求 enable_isolated_metadata = True。"
 
+#, python-format
+msgid ""
+"Already hosting BGP Speaker for local_as=%(current_as)d with router_id="
+"%(rtid)s."
+msgstr ""
+"已托管对应 local_as=%(current_as)d 和 router_id=%(rtid)s 的 BGP Speaker。"
+
+#, python-format
+msgid ""
+"Already hosting maximum number of BGP Speakers. Allowed scheduled count="
+"%(count)d"
+msgstr "托管的 BGP Speaker 已达到最大数目。允许安排数为 %(count)d"
+
+msgid "An RBAC policy already exists with those values."
+msgstr "已存在带有这些值的 RBAC 策略。"
+
+msgid "An identifier must be specified when updating a subnet"
+msgstr "更新子网时，必须指定标识"
+
 msgid "An interface driver must be specified"
 msgstr "必须指定接口驱动程序"
+
+msgid ""
+"An ordered list of extension driver entrypoints to be loaded from the "
+"neutron.ml2.extension_drivers namespace. For example: extension_drivers = "
+"port_security,qos"
+msgstr ""
+"要从 neutron.ml2.extension_drivers 名称空间装入的扩展驱动程序入口点的有序列"
+"表。例如：extension_drivers = port_security,qos"
 
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
@@ -449,12 +511,25 @@ msgstr ""
 "要从 neutron.ml2.mechanism_drivers 名称空间装入的联网机制驱动程序入口点的已排"
 "序列表。"
 
+msgid "An unexpected internal error occurred."
+msgstr "发生了意外内部错误。"
+
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "发生未知错误。请再次尝试您的请求。"
+
+msgid "Async process didn't respawn"
+msgstr "同步进程未重新衍生"
 
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "在 POST 中，不允许属性“%s”"
+
+#, python-format
+msgid "Authentication type not supported. Requested type=%(auth_type)s."
+msgstr "不受支持的认证类型。请求的类型为 %(auth_type)s。"
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr "管理员上下文中要指定的连接授权 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "自动从脱机 DHCP 代理移除网络。"
@@ -475,11 +550,25 @@ msgstr "可用的命令"
 
 #, python-format
 msgid ""
+"BGP Peer %(peer_ip)s for remote_as=%(remote_as)s, running for BGP Speaker "
+"%(speaker_as)d not added yet."
+msgstr ""
+"未添加对应 remote_as=%(remote_as)s 且正针对 BGP Speaker %(speaker_as)d 运行"
+"的 BGP Peer %(peer_ip)s。"
+
+#, python-format
+msgid ""
 "BGP Speaker %(bgp_speaker_id)s is already configured to peer with a BGP Peer "
 "at %(peer_ip)s, it cannot peer with BGP Peer %(bgp_peer_id)s."
 msgstr ""
 "BGP Speaker %(bgp_speaker_id)s 已配置为与 BGP Peer（位于 %(peer_ip)s）同级。"
 "它不能与 BGP Peer %(bgp_peer_id)s 同级。"
+
+#, python-format
+msgid ""
+"BGP Speaker for local_as=%(local_as)s with router_id=%(rtid)s not added yet."
+msgstr ""
+"尚未添加对应 local_as=%(local_as)s 和 router_id=%(rtid)s 的 BGP Speaker。"
 
 #, python-format
 msgid ""
@@ -503,6 +592,9 @@ msgstr "BGP Speaker %(bgp_speaker_id)s 未由 BgpDrAgent %(agent_id)s 托管。"
 #, python-format
 msgid "BGP speaker %(id)s could not be found."
 msgstr "找不到 BGP Speaker %(id)s。"
+
+msgid "BGP speaker driver class to be instantiated."
+msgstr "要实例化的 BGP Speaker 驱动程序类。"
 
 msgid "Backend does not support VLAN Transparency."
 msgstr "后端不支持 VLAN 透明。"
@@ -538,6 +630,10 @@ msgstr "BgpDrAgent %(agent_id)s 已与 BGP Speaker 相关联。"
 #, python-format
 msgid "BgpDrAgent %(id)s is invalid or has been disabled."
 msgstr "BgpDrAgent %(id)s 无效或已禁用。"
+
+#, python-format
+msgid "BgpDrAgent updated: %s"
+msgstr "BgpDrAgent 已更新：%s"
 
 msgid "Body contains invalid data"
 msgstr "主体中包含无效数据"
@@ -639,6 +735,11 @@ msgid ""
 msgstr ""
 "不得存在多个具有相同网络标识的路由器端口（如果它们都包含 IPv6 子网）。现有端"
 "口 %(p)s 具有 IPv6 子网和网络标识 %(nid)s"
+
+#, python-format
+msgid ""
+"Cannot host distributed router %(router_id)s on legacy L3 agent %(agent_id)s."
+msgstr "无法在传统 L3 代理程序 %(agent_id)s 上托管分布式路由器 %(router_id)s。"
 
 msgid "Cannot match priority on flow deletion or modification"
 msgstr "无法匹配删除或修改流时的优先级"
@@ -746,6 +847,61 @@ msgid "Client certificate for nova metadata api server."
 msgstr "nova 元数据 API 服务器的客户机证书。"
 
 msgid ""
+"Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
+"network_device to the agent's node-specific list of virtual functions that "
+"should not be used for virtual networking. vfs_to_exclude is a semicolon-"
+"separated list of virtual functions to exclude from network_device. The "
+"network_device in the mapping should appear in the physical_device_mappings "
+"list."
+msgstr ""
+"<network_device>:<vfs_to_exclude> 元组的逗号分隔列表，这些元组将 "
+"network_device 映射至代理程序的特定于节点的不应用于虚拟联网的功能列表。"
+"vfs_to_exclude 是要从 network_device 中排除的虚拟功能的分号分隔列表。映射中"
+"的 network_vlan_ranges 应出现在 physical_device_mappings 列表中。"
+
+msgid ""
+"Comma-separated list of <physical_network>:<bridge> tuples mapping physical "
+"network names to the agent's node-specific Open vSwitch bridge names to be "
+"used for flat and VLAN networks. The length of bridge names should be no "
+"more than 11. Each bridge must exist, and should have a physical network "
+"interface configured as a port. All physical networks configured on the "
+"server should have mappings to appropriate bridges on each agent. Note: If "
+"you remove a bridge from this mapping, make sure to disconnect it from the "
+"integration bridge as it won't be managed by the agent anymore. Deprecated "
+"for ofagent."
+msgstr ""
+"<physical_network>:<bridge> 元组的逗号分隔列表，这些元组将物理网络名称映射至"
+"代理程序的特定于节点的 Open vSwitch 网桥名（将用于平面网络和 VLAN 网络）。网"
+"桥名称的长度不应超过 11。每个网桥必须存在，并且应具有配置为端口的物理网络接"
+"口。服务器上配置的所有物理网络在每个代理程序上应具有指向相应网桥的映射。注"
+"意：如果从此映射中移除网桥，请确保断开它与集成网桥的连接，因为它不再由代理程"
+"序管理。已不推荐对代理程序使用。"
+
+msgid ""
+"Comma-separated list of <physical_network>:<network_device> tuples mapping "
+"physical network names to the agent's node-specific physical network device "
+"interfaces of SR-IOV physical function to be used for VLAN networks. All "
+"physical networks listed in network_vlan_ranges on the server should have "
+"mappings to appropriate interfaces on each agent."
+msgstr ""
+" <physical_network>:<network_device> 元组的逗号分隔列表，这些元组将物理网络名"
+"称映射至代理程序的 SR-IOV 物理功能的特定于节点的物理网络设备接口（将用于 "
+"VLAN 网络）。服务器上的 network_vlan_ranges 中列示的所有物理网络在每个代理程"
+"序上应具有指向相应接口的映射。"
+
+msgid ""
+"Comma-separated list of <physical_network>:<physical_interface> tuples "
+"mapping physical network names to the agent's node-specific physical network "
+"interfaces to be used for flat and VLAN networks. All physical networks "
+"listed in network_vlan_ranges on the server should have mappings to "
+"appropriate interfaces on each agent."
+msgstr ""
+"<physical_network>:<physical_interface> 元组的逗号分隔列表，这些元组将物理网"
+"络名称映射至代理程序的特定于节点的物理网络接口（将用于平面网络和 VLAN 网"
+"络）。服务器上的 network_vlan_ranges 中列示的所有物理网络在每个代理程序上应具"
+"有指向相应接口的映射。"
+
+msgid ""
 "Comma-separated list of <tun_min>:<tun_max> tuples enumerating ranges of GRE "
 "tunnel IDs that are available for tenant network allocation"
 msgstr ""
@@ -765,6 +921,14 @@ msgid ""
 msgstr ""
 "可用于租户网络分配的 VXLAN VNI 标识的 <vni_min>:<vni_max> 元组枚举范围的逗号"
 "分隔列表"
+
+msgid ""
+"Comma-separated list of supported PCI vendor devices, as defined by "
+"vendor_id:product_id according to the PCI ID Repository. Default enables "
+"support for Intel and Mellanox SR-IOV capable NICs."
+msgstr ""
+"根据 PCI 标识存储库，vendor_id:product_id 定义的受支持的 PCI 供应商设备的逗号"
+"分隔列表。缺省值启用对支持 Intel 和 Mellanox SR-IOV 的 NIC 的支持。"
 
 msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
@@ -946,6 +1110,10 @@ msgstr "请通过除去所有设备来删除名称空间。"
 msgid "Deleting port %s"
 msgstr "正在删除端口 %s"
 
+#, python-format
+msgid "Deployment error: %(reason)s."
+msgstr "部署错误：%(reason)s。"
+
 msgid "Destroy IPsets even if there is an iptables reference."
 msgstr "即使存在 iptables 引用，也会破坏 IPset。"
 
@@ -1112,6 +1280,14 @@ msgstr ""
 "广播到 Overlay 中。"
 
 msgid ""
+"Enable local ARP responder which provides local responses instead of "
+"performing ARP broadcast into the overlay. Enabling local ARP responder is "
+"not fullycompatible with the allowed-address-pairs extension."
+msgstr ""
+"启用本地 ARP 响应程序，这将提供本地响应而不是对重叠部分执行 ARP 广播。启用本"
+"地 ARP 响应程序并未与 allowed-address-pairs 扩展完全兼容。"
+
+msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -1122,6 +1298,25 @@ msgstr ""
 "的 admin_state_up 变为 False 时，将禁用该代理上的服务。无论此选项如何，都不会"
 "选择 admin_state_up 为 False 的代理进行自动调度。但是，如果此选项为 True，那"
 "么可以手动调度这样的代理。"
+
+msgid ""
+"Enable suppression of ARP responses that don't match an IP address that "
+"belongs to the port from which they originate. Note: This prevents the VMs "
+"attached to this agent from spoofing, it doesn't protect them from other "
+"devices which have the capability to spoof (e.g. bare metal or VMs attached "
+"to agents without this flag set to True). Spoofing rules will not be added "
+"to any ports that have port security disabled. For LinuxBridge, this "
+"requires ebtables. For OVS, it requires a version that supports matching ARP "
+"headers. This option will be removed in Newton so the only way to disable "
+"protection will be via the port security extension."
+msgstr ""
+"启用阻止符合以下条件的 APR 响应的功能：这些响应与属于发出这些响应的端口的 IP "
+"地址不匹配。 注意：这可避免附加至此代理程序的 VM 遭受电子诈骗，它无法保护 VM "
+"抵御来自能够进行电子诈骗的其他设备（例如，裸机或附加至未将此标记设置为 True "
+"的代理程序的 VM）的攻击。系统不会将电子诈骗规则添加至已禁用端口安全性的任何端"
+"口。对于 LinuxBridge，这需要 ebtables。对于 OVS，它需要支持匹配 ARP 头的版"
+"本。此选项在 Newton 中将被移除，所以禁用保护的唯一方法将是通过端口安全性扩展"
+"进行。"
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1218,6 +1413,12 @@ msgstr ""
 #, python-format
 msgid "Extension %(driver)s failed."
 msgstr "扩展 %(driver)s 失败。"
+
+#, python-format
+msgid ""
+"Extension driver %(driver)s required for service plugin %(service_plugin)s "
+"not found."
+msgstr "找不到服务插件 %(service_plugin)s 所需的扩展驱动程序 %(driver)s。"
 
 msgid ""
 "Extension to use alongside ml2 plugin's l2population mechanism driver. It "
@@ -1351,6 +1552,9 @@ msgstr "应用 iptable 规则时失败"
 msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
 msgstr "等待地址 %(address)s 变得就绪时发生故障：%(reason)s"
 
+msgid "Flat provider networks are disabled"
+msgstr "平面供应商网络被禁用"
+
 #, python-format
 msgid "Flavor %(flavor_id)s could not be found."
 msgstr "找不到 Flavor %(flavor_id)s。"
@@ -1377,6 +1581,10 @@ msgstr ""
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "对于 TCP/UDP 协议，port_range_min 必须小于等于 port_range_max"
 
+#, python-format
+msgid "For class %(object_type)s missing primary keys: %(missing_keys)s"
+msgstr "对于类 %(object_type)s，缺少主键：%(missing_keys)s"
+
 msgid "Force ip_lib calls to use the root helper"
 msgstr "强制ip_lib呼叫使用root helper"
 
@@ -1389,6 +1597,9 @@ msgid ""
 "Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
 "%(subnet_cidr)s."
 msgstr "对于子网 %(subnet_cidr)s，找到重叠的分配池：%(pool_1)s %(pool_2)s"
+
+msgid "Gateway IP version inconsistent with allocation pool version"
+msgstr "网关 IP 版本与分配池版本不一致"
 
 #, python-format
 msgid ""
@@ -1404,6 +1615,16 @@ msgstr "网关 IP %(ip_address)s 与分配池 %(pool)s 冲突。"
 
 msgid "Gateway is not valid on subnet"
 msgstr "网关在子网上无效"
+
+msgid ""
+"Geneve encapsulation header size is dynamic, this value is used to calculate "
+"the maximum MTU for the driver. This is the sum of the sizes of the outer "
+"ETH + IP + UDP + GENEVE header sizes. The default size for this field is 50, "
+"which is the size of the Geneve header without any additional option headers."
+msgstr ""
+"Geneve 封装头大小是动态的，此值用于计算驱动程序的最大 MTU。这是外部 ETH + IP "
+"+ UDP + GENEVE 头大小的总和。此字段的缺省大小为 50，这是没有任何附加选项头的 "
+"Geneve 头的大小。"
 
 msgid "Group (gid or name) running metadata proxy after its initialization"
 msgstr "在元数据代理的初始化之后，运行该代理的组（gid 或名称）"
@@ -1472,6 +1693,9 @@ msgstr "对于所指定网络上的任何子网，IP 地址 %(ip_address)s 不�
 
 msgid "IP address used by Nova metadata server."
 msgstr "Nova 元数据服务器使用的 IP 地址。"
+
+msgid "IP allocation failed. Try again later."
+msgstr "IP 分配失败。请稍后重试。"
 
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 分配需要 subnet_id 或 ip_address"
@@ -1605,6 +1829,17 @@ msgstr "没有足够的前缀空间来分配子网大小 /%s"
 msgid "Insufficient rights for removing default security group."
 msgstr "权利不足，无法移除缺省安全组。"
 
+msgid ""
+"Integration bridge to use. Do not change this parameter unless you have a "
+"good reason to. This is the name of the OVS integration bridge. There is one "
+"per hypervisor. The integration bridge acts as a virtual 'patch bay'. All VM "
+"VIFs are attached to this bridge and then 'patched' according to their "
+"network connectivity."
+msgstr ""
+"要使用的集成网桥。不要更改此参数，除非您有正当原因。这是 OVS 集成网桥的名称。"
+"每个 hypervisor 都有一个集成网桥。此集成网桥充当虚拟“接线架”。所有 VM VIF 附"
+"加至此网桥，然后根据其网络连接进行“接线”。"
+
 msgid "Interface to monitor"
 msgstr "要监视的接口"
 
@@ -1671,6 +1906,10 @@ msgstr "主机路由“%s”的数据格式无效"
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
 msgstr "名称服务器“%s”的数据格式无效"
+
+#, python-format
+msgid "Invalid ethertype %(ethertype)s for protocol %(protocol)s."
+msgstr "ethertype %(ethertype)s 对协议 %(protocol)s 无效。"
 
 #, python-format
 msgid "Invalid extension environment: %(reason)s."
@@ -1766,6 +2005,9 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr "保持活动的未重新衍生"
 
+msgid "Keepalived didn't spawn"
+msgstr "Keepalived 未衍生"
+
 #, python-format
 msgid ""
 "Kernel HZ value %(value)s is not valid. This value must be greater than 0."
@@ -1806,6 +2048,14 @@ msgid ""
 "type_drivers namespace."
 msgstr ""
 "要从 neutron.ml2.type_drivers 名称空间装入的网络类型驱动程序入口点的列表。"
+
+msgid ""
+"List of physical_network names with which flat networks can be created. Use "
+"default '*' to allow flat networks with arbitrary physical_network names. "
+"Use an empty list to disable flat networks."
+msgstr ""
+"可通过其创建平面网络的 physical_network 名称的列表。使用缺省值“*”将允许平面网"
+"络使用任意 physical_network 名称。使用空列表将禁用平面网络。"
 
 msgid "Local IP address of the VXLAN endpoints."
 msgstr "VXLAN 端点的本地 IP 地址。"
@@ -1904,6 +2154,23 @@ msgid "Maximum number of routes per router"
 msgstr "每个路由器的最大路由数目"
 
 msgid ""
+"Maximum size of an IP packet (MTU) that can traverse the underlying physical "
+"network infrastructure without fragmentation. For instances using a self-"
+"service/private network, neutron subtracts the overlay protocol overhead "
+"from this value and provides it to instances via DHCP option 26. For "
+"example, using a value of 9000, DHCP provides 8950 to instances using a "
+"VXLAN network that contains 50 bytes of overhead. Using a value of 0 "
+"disables this feature and instances typically default to a 1500 MTU. Only "
+"impacts instances, not neutron network components such as bridges and "
+"routers."
+msgstr ""
+"可遍历底层物理网络基础设施而无需分段的 IP 包 (MTU) 的最大大小。对于使用独立/"
+"专用网络的实例，neutron 从此值减去重叠网络开销，并将其提供给基于 DHCP 选项 "
+"26 的实例。例如，如果使用值 9000，那么 DHCP 提供 8950 给使用包含 50 字节开销"
+"的 VXLAN 网络的实例。如果使用值 0，那么将禁用此功能部件，并且实例通常缺省为使"
+"用 1500 MTU。此项仅影响实例，不影响网桥和路由器之类的网络组件。"
+
+msgid ""
 "Metadata Proxy UNIX domain socket mode, 4 values allowed: 'deduce': deduce "
 "mode from metadata_proxy_user/group values, 'user': set metadata proxy "
 "socket mode to 0o644, to use when metadata_proxy_user is agent effective "
@@ -1937,6 +2204,9 @@ msgstr ""
 "带有 remote_ip_prefix %(remote_ip_prefix)s 的测量标签规则与另一测量标签规则重"
 "叠"
 
+msgid "Method cannot be called within a transaction."
+msgstr "不能在事务中调用方法。"
+
 msgid "Migration from distributed router to centralized is not supported"
 msgstr "不支持从分布式路由器迁移至集中路由器"
 
@@ -1964,6 +2234,27 @@ msgstr "映射中缺少值：“%s”"
 msgid "Multicast IP subnet is not supported if enable_dhcp is True."
 msgstr "如果 enable_dhcp 为 True，那么多点广播 IP 子网不受支持。"
 
+msgid ""
+"Multicast group for VXLAN. When configured, will enable sending all "
+"broadcast traffic to this multicast group. When left unconfigured, will "
+"disable multicast VXLAN mode."
+msgstr ""
+"VXLAN 的多点广播组。如果配置了此项，那么系统允许将所有广播流量发送至此多点广"
+"播组。如果保留为未配置，那么系统将禁用多点广播 VXLAN 方式。"
+
+msgid ""
+"Multicast group(s) for vxlan interface. A range of group addresses may be "
+"specified by using CIDR notation. Specifying a range allows different VNIs "
+"to use different group addresses, reducing or eliminating spurious broadcast "
+"traffic to the tunnel endpoints. To reserve a unique group for each possible "
+"(24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be the same on "
+"all the agents."
+msgstr ""
+"VXLAN 接口的多点广播组。必须使用 CIDR 注释指定一定范围的组地址。指定范围允许"
+"不同 VNI 使用不同组地址，从而减少或消除发送至通道端点的伪造广播流量。为对每个"
+"可能的（24 位）VNI 保留唯一组，请使用 /8，例如，239.0.0.0/8。此设置在所有代理"
+"程序上必须相同。"
+
 #, python-format
 msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
 msgstr "找到多个符合以下条件的代理：agent_type=%(agent_type)s 且 host=%(host)s"
@@ -1982,6 +2273,9 @@ msgstr "对于服务 %s，已指定多个提供程序"
 
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr "不允许在成批安全组规则创建中使用多个 tenant_id"
+
+msgid "Must also specify protocol if port range is given."
+msgstr "如果指定了端口范围，那么还必须指定协议。"
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "必须在添加或删除流时指定一个或多个操作"
@@ -2114,9 +2408,18 @@ msgstr "Neutron 插件提供程序模块"
 msgid "Neutron quota driver class"
 msgstr "Neutron 配额驱动程序类"
 
+msgid "New value for first_ip or last_ip has to be specified."
+msgstr "必须对 first_ip 或 last_ip 指定新值。"
+
+msgid "No default router:external network"
+msgstr "没有缺省路由器：外部网络"
+
 #, python-format
 msgid "No default subnetpool found for IPv%s"
 msgstr "找不到对应 IPv%s 的缺省子网池"
+
+msgid "No default subnetpools defined"
+msgstr "未定义缺省子网池"
 
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
@@ -2141,8 +2444,18 @@ msgstr "没有脱机迁移处于暂挂状态。"
 msgid "No providers specified for '%s' service, exiting"
 msgstr "没有为“%s”服务指定任何提供程序，正在退出"
 
+#, python-format
+msgid "No shared key in %s fields"
+msgstr "%s 字段中没有共享键"
+
 msgid "No versions callback provided in ResourceVersionsManager"
 msgstr "ResourceVersionsManager 中未提供版本回调"
+
+msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
+msgstr "不允许以“dvr”方式将路由器手动分配给代理程序。"
+
+msgid "Not allowed to manually remove a router from an agent in 'dvr' mode."
+msgstr "不允许以“dvr”方式从代理程序手动移除路由器。"
 
 #, python-format
 msgid ""
@@ -2171,6 +2484,22 @@ msgstr "关于配置元数据服务器套接字的储备请求数"
 
 msgid "Number of backlog requests to configure the socket with"
 msgstr "积压许多配置socket的请求"
+
+msgid ""
+"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
+"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
+"As a consequence, range of values is 8, 16 and 24"
+msgstr ""
+"ipv4 PTR 区域中将被视为网络前缀的位数。它必须符合字节限制。最小值为 8。最大值"
+"为 24。因此，有效值包括：8、16 和 24。"
+
+msgid ""
+"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
+"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
+"As a consequence, range of values is 4, 8, 12, 16,..., 124"
+msgstr ""
+"ipv6 PTR 区域中将被视为网络前缀的位数。它必须符合字节限制。最小值为 4。最大值"
+"为 124。因此，有效值包括：4，8，12，16，...，124。"
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
@@ -2227,6 +2556,16 @@ msgstr "同步过程中要使用的线程数。不应超过在服务器上配置
 msgid "OK"
 msgstr "确定"
 
+msgid ""
+"OVS datapath to use. 'system' is the default value and corresponds to the "
+"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
+msgstr ""
+"要使用的 OVS 数据路径。“system”是缺省值，对应内核数据路径，要启用用户空间数据"
+"路径，请将此值设置为“netdev”。"
+
+msgid "OVS vhost-user socket directory."
+msgstr "OVS vhost-user 套接字目录。"
+
 #, python-format
 msgid "OVSDB Error: %s"
 msgstr "OVSDB 错误：%s"
@@ -2243,6 +2582,9 @@ msgstr "只有管理员才有权访问另一租户的配额"
 
 msgid "Only admins can manipulate policies on networks they do not own."
 msgstr "只有管理员可以处理他们并不拥有的网络上的策略。"
+
+msgid "Only admins can manipulate policies on objects they do not own"
+msgstr "只有管理员才能处理针对并非他们所有的对象的策略"
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "一次仅允许为一个安全概要文件更新规则"
@@ -2264,6 +2606,14 @@ msgstr ""
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "操作在设备 %(dev_name)s 上不受支持"
 
+msgid ""
+"Ordered list of network_types to allocate as tenant networks. The default "
+"value 'local' is useful for single-box testing but provides no connectivity "
+"between hosts."
+msgstr ""
+"要作为租户网络分配的 network_type 的有序列表。缺省值“local”对单框测试很有用，"
+"但不会在主机之间提供连接。"
+
 msgid "Override the default dnsmasq settings with this file."
 msgstr "使用此文件覆盖缺省 dnsmasq 设置。"
 
@@ -2278,11 +2628,22 @@ msgid "Package %s not installed"
 msgstr "未安装软件包 %s"
 
 #, python-format
+msgid "Parameter %(param)s must be of %(param_type)s type."
+msgstr "参数 %(param)s 必须为 %(param_type)s 类型。"
+
+#, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "解析 bridge_mappings 失败：%s。"
 
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "解析受支持的 pci_vendor_devs 失败"
+
+msgid "Password for connecting to designate in admin context"
+msgstr "管理员上下文中要指定的连接密码"
+
+#, python-format
+msgid "Password not specified for authentication type=%(auth_type)s."
+msgstr "未对认证类型 %(auth_type)s 指定密码。"
 
 msgid "Path to PID file for this process"
 msgstr "此进程的 PID 文件的路径"
@@ -2400,6 +2761,10 @@ msgid "Protocol to access nova metadata, http or https"
 msgstr "用于访问 nova 元数据的协议（HTTP 或 HTTPS）"
 
 #, python-format
+msgid "Provider name %(name)s is limited by %(len)s characters"
+msgstr "供应商名称 %(name)s 被限制为不超过 %(len)s 个字符"
+
+#, python-format
 msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
 msgstr "%(object_type)s %(object_id)s 使用了 QoS 策略 %(policy_id)s。"
 
@@ -2440,6 +2805,15 @@ msgid ""
 "to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 "当启动定期任务调度程序以减少拥堵时要随机延迟的秒数范围.(通过设置为 0 来禁用)"
+
+msgid "Ranges must be in the same IP version"
+msgstr "范围必须为同一 IP 版本"
+
+msgid "Ranges must be netaddr.IPRange"
+msgstr "范围必须为 netaddr.IPRange"
+
+msgid "Ranges must not overlap"
+msgstr "范围不能重叠"
 
 #, python-format
 msgid ""
@@ -2497,6 +2871,10 @@ msgid ""
 msgstr "在启动时重置流表。将此项设置为 True 将导致短暂的通信中断。"
 
 #, python-format
+msgid "Resource %(resource)s %(resource_id)s could not be found."
+msgstr "找不到资源 %(resource)s %(resource_id)s。"
+
+#, python-format
 msgid "Resource %(resource_id)s of type %(resource_type)s not found"
 msgstr "找不到类型为 %(resource_type)s 的资源 %(resource_id)s"
 
@@ -2536,6 +2914,10 @@ msgstr "在可能的情况下，要使用的 Root Helper 守护程序应用程�
 
 msgid "Root permissions are required to drop privileges."
 msgstr "删除特权需要 root 用户许可权。"
+
+#, python-format
+msgid "Route %(cidr)s not advertised for BGP Speaker %(speaker_as)d."
+msgstr "未针对 BGP Speaker %(speaker_as)d 通告路由 %(cidr)s。"
 
 #, python-format
 msgid "Router %(router_id)s %(reason)s"
@@ -2641,6 +3023,17 @@ msgstr "安全组 %(id)s 不存在"
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr "安全组规则 %(id)s 不存在"
+
+#, python-format
+msgid "Security group rule already exists. Rule id is %(rule_id)s."
+msgstr "安全组规则已存在，规则标识为 %(rule_id)s。"
+
+#, python-format
+msgid ""
+"Security group rule for ethertype '%(ethertype)s' not supported. Allowed "
+"values are %(values)s."
+msgstr ""
+"ethertype “%(ethertype)s” 的安全组规则不受支持。允许的值为 %(values)s。"
 
 #, python-format
 msgid ""
@@ -2764,6 +3157,9 @@ msgid ""
 "pool."
 msgstr "同一网络上的子网必须分配自同一子网池。"
 
+msgid "Suffix to append to all namespace names."
+msgstr "要附加至所有名称空间名称的后缀。"
+
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
@@ -2793,8 +3189,18 @@ msgid "Table %s can only be queried by UUID"
 msgstr "只能按 UUID 来查询表 %s"
 
 #, python-format
+msgid "Tag %(tag)s could not be found."
+msgstr "找不到标记 %(tag)s。"
+
+#, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "不允许租户 %(tenant_id)s 在此网络上创建 %(resource)s"
+
+msgid "Tenant id for connecting to designate in admin context"
+msgstr "管理员上下文中要指定的连接租户标识"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr "管理员上下文中要指定的连接租户名"
 
 msgid "Tenant network creation is not enabled."
 msgstr "未启用租户网络创建。"
@@ -2920,6 +3326,13 @@ msgstr "用于管理 DHCP 服务器的驱动程序。"
 
 msgid "The driver used to manage the virtual interface."
 msgstr "用于管理虚拟接口的驱动程序。"
+
+msgid ""
+"The email address to be used when creating PTR zones. If not specified, the "
+"email address will be admin@<dns_domain>"
+msgstr ""
+"创建 PTR 区域时要使用的电子邮件地址。如果未指定，那么电子邮件地址将为 "
+"admin@<dns_domain>"
 
 #, python-format
 msgid ""
@@ -3081,6 +3494,11 @@ msgid ""
 "Used only for 'native' driver."
 msgstr "等待用于连接控制器的本地交换机时的超时（秒）。仅用于“本机”驱动程序。"
 
+msgid ""
+"Too long prefix provided. New name would exceed given length for an "
+"interface name."
+msgstr "提供的前缀太长。新名称将超出接口名称的给定长度。"
+
 msgid "Too many availability_zone_hints specified"
 msgstr "指定了过多 availability_zone_hints"
 
@@ -3103,6 +3521,9 @@ msgid ""
 msgstr ""
 "要使用的 nova 端点的类型。系统将在 keystone 目录中查找此端点，值应该为 "
 "public、internal 或 admin 的其中之一。"
+
+msgid "URL for connecting to designate"
+msgstr "要指定的连接 URL"
 
 msgid "URL to database"
 msgstr "指向数据库的 URL"
@@ -3215,6 +3636,12 @@ msgid ""
 "%%(<field_name>)s"
 msgstr "无法从:%s中匹配目标域. 匹配应该使用以下形式%%(域名)s"
 
+msgid "Unable to provide external connectivity"
+msgstr "无法提供外部连接"
+
+msgid "Unable to provide tenant private network"
+msgstr "无法提供租户专用网络"
+
 #, python-format
 msgid ""
 "Unable to reconfigure sharing settings for network %(network)s. Multiple "
@@ -3271,6 +3698,10 @@ msgid "Unknown chain: %r"
 msgstr "链未知：%r"
 
 #, python-format
+msgid "Unknown network type %(network_type)s."
+msgstr "未知网络类型 %(network_type)s。"
+
+#, python-format
 msgid "Unknown quota resources %(unknown)s."
 msgstr "配额资源 %(unknown)s 未知。"
 
@@ -3283,6 +3714,9 @@ msgstr "无法识别动作"
 #, python-format
 msgid "Unrecognized attribute(s) '%s'"
 msgstr "无法识别属性“%s”"
+
+msgid "Unrecognized field"
+msgstr "无法识别字段"
 
 msgid "Unspecified minimum subnet pool prefix."
 msgstr "未指定最低子网池前缀。"
@@ -3331,6 +3765,14 @@ msgstr ""
 "列示系统上的名称空间时使用 root helper。根据安全配置，这可能不是必需的。如果 "
 "root helper 不是必需的，请将其设置为 False 以改进性能。"
 
+msgid ""
+"Use veths instead of patch ports to interconnect the integration bridge to "
+"physical networks. Support kernel without Open vSwitch patch port support so "
+"long as it is set to True."
+msgstr ""
+"使用 veth 而不是接线端口以使集成网桥与物理网络互连。设置为 True 时支持不具备 "
+"Open vSwitch 接线端口支持的内核。"
+
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr "在元数据代理的初始化之后，运行该代理的用户（uid 或名称）"
 
@@ -3343,6 +3785,9 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "在此进程的初始化之后，运行此进程的用户（uid 或名称）"
+
+msgid "Username for connecting to designate in admin context"
+msgstr "管理员上下文中要指定的连接用户名"
 
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
@@ -3383,6 +3828,21 @@ msgid ""
 msgstr ""
 "%(parameter)s 的值必须是 %(number)s 的倍数，最大值为 %(maximum)s，最小值为 "
 "%(minimum)s"
+
+msgid ""
+"Value of host kernel tick rate (hz) for calculating minimum burst value in "
+"bandwidth limit rules for a port with QoS. See kernel configuration file for "
+"HZ value and tc-tbf manual for more information."
+msgstr ""
+"主机内核节拍率的值 (hz)，用于计算带有 QoS 的端口的带宽限制规则中的最小脉冲"
+"值。请参阅内核配置文件以获取 HZ 值，并参阅 tc-tbf 手册以获取更多信息。"
+
+msgid ""
+"Value of latency (ms) for calculating size of queue for a port with QoS. See "
+"tc-tbf manual for more information."
+msgstr ""
+"延迟值 (ms)，用于计算带有 QoS 的端口的队列的大小。请参阅 tc-tbf 手册以了解更"
+"多信息。"
 
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
@@ -3458,6 +3918,15 @@ msgstr "不能在事务内部调用 add_ha_port。"
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr "仅允许将 allocation_pools 用于特定子网请求。"
 
+msgid "allocation_pools are not in the subnet"
+msgstr "allocation_pools 不在子网内"
+
+msgid "allocation_pools use the wrong ip version"
+msgstr "allocation_pools 使用错误的 IP 版本"
+
+msgid "already a synthetic attribute"
+msgstr "已是综合属性"
+
 msgid "binding:profile value too large"
 msgstr "binding:profile 值太大"
 
@@ -3482,6 +3951,10 @@ msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "在没有 port_id 的情况下，无法指定 fixed_ip_address"
 
 #, python-format
+msgid "gateway_ip %s is not in the subnet"
+msgstr "gateway_ip %s 不在子网内"
+
+#, python-format
 msgid "has device owner %s"
 msgstr "具有设备所有者 %s"
 
@@ -3491,6 +3964,10 @@ msgstr "正在使用"
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
 msgstr "对设备 %(dev_name)s 执行 IP 命令失败：%(reason)s"
+
+#, python-format
+msgid "ip command failed: %(reason)s"
+msgstr "ip 命令失败：%(reason)s"
 
 #, python-format
 msgid "ip link capability %(capability)s is not supported"
@@ -3542,6 +4019,9 @@ msgid ""
 msgstr ""
 "min_l3_agents_per_router 配置参数无效。它必须等于或大于 %s，才能确保 HA。"
 
+msgid "must provide exactly 2 arguments - cidr and MAC"
+msgstr "必须提供正好 2 个自变量：cidr 和 MAC"
+
 msgid "network_type required"
 msgstr "需要 network_type"
 
@@ -3567,6 +4047,10 @@ msgstr "平面供应商网络需要的物理网络"
 msgid "provider:physical_network specified for %s network"
 msgstr "提供程序：已为%s 网络指定 physical_network"
 
+#, python-format
+msgid "rbac_db_model not found in %s"
+msgstr "在 %s 中找不到 rbac_db_model"
+
 msgid "record"
 msgstr "记录"
 
@@ -3579,6 +4063,9 @@ msgstr "segmentation_id 超出范围，从(%(min)s 到 %(max)s)"
 
 msgid "segmentation_id requires physical_network for VLAN provider network"
 msgstr "segmentation_id 需要 VLAN 提供程序网络的 physical_network"
+
+msgid "shared attribute switching to synthetic"
+msgstr "共享属性正切换为综合属性"
 
 #, python-format
 msgid ""
@@ -3596,6 +4083,10 @@ msgstr "下一中继段未与路由器连接"
 
 msgid "the nexthop is used by router"
 msgstr "路由器已使用下一中继段"
+
+#, python-format
+msgid "unable to load %s"
+msgstr "无法装入 %s"
 
 msgid ""
 "uuid provided from the command line so external_process can track us via /"

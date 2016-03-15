@@ -18,13 +18,13 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
+"Project-Id-Version: neutron 8.0.0.0b4.dev160\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:36+0000\n"
+"POT-Creation-Date: 2016-03-15 03:21+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-11 09:24+0000\n"
+"PO-Revision-Date: 2016-03-14 08:58+0000\n"
 "Last-Translator: Tsutomu Kimura <ebb0de2@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -84,6 +84,22 @@ msgstr ""
 "%(method)s が、ネットワーク設定 %(current)s (元の設定 %(original)s) および"
 "ネットワークセグメント %(segments)s を使用して呼び出されました"
 
+#, fuzzy, python-format
+msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) host %(host)s (original host %(original_host)s) vif type "
+"%(vif_type)s (original vif type %(original_vif_type)s) vif details "
+"%(vif_details)s (original vif details %(original_vif_details)s) binding "
+"levels %(levels)s (original binding levels %(original_levels)s) on network "
+"%(network)s with segments to bind %(segments_to_bind)s"
+msgstr ""
+"ネットワーク %(network)s 上で、バインド対象のセグメント %(segments_to_bind)s "
+"とともに、 ポート設定 %(current)s (original settings %(original)s)、ホスト "
+"%(host)s (original host %(original_host)s)、VIF タイプ %(vif_type)s "
+"(original vif type %(original_vif_type)s)、VIF 詳細 %(vif_details)s "
+"(original vif details %(original_vif_details)s)、バインドレベル %(levels)s "
+"(original binding levels %(original_levels)s) を指定して呼び出した %(method)s"
+
 #, python-format
 msgid ""
 "%(method)s called with subnet settings %(current)s (original settings "
@@ -99,6 +115,10 @@ msgstr "%(method)s が失敗しました。"
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' が ip_version '%(ip_version)s' と一致しません"
+
+#, python-format
+msgid "%(param)s must be in %(range)s range."
+msgstr "%(param)s は %(range)s の範囲内である必要があります。"
 
 #, python-format
 msgid "%s cannot be called while in offline mode"
@@ -302,6 +322,17 @@ msgstr ""
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 は、CIDR プレフィックス長として許可されていません"
 
+#, fuzzy
+msgid ""
+"32-bit BGP identifier, typically an IPv4 address owned by the system running "
+"the BGP DrAgent."
+msgstr ""
+"32 ビットの BGP 識別子。通常は、BGP DrAgent を起動するシステムが管理する "
+"IPv4 アドレスを指します。"
+
+msgid "A QoS driver must be specified"
+msgstr "QoS ドライバーを指定する必要があります"
+
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "サブネットプールがない場合、cidr の指定は必須です"
 
@@ -309,6 +340,10 @@ msgid ""
 "A decimal value as Vendor's Registered Private Enterprise Number as required "
 "by RFC3315 DUID-EN."
 msgstr "RFC3315 DUID-EN が必要とするベンダーが登録した私企業番号の 10 進数値。"
+
+#, python-format
+msgid "A default external network already exists: %(net_id)s."
+msgstr "デフォルトの外部ネットワークが既に存在します: %(net_id)s"
 
 msgid ""
 "A default subnetpool for this IP family has already been set. Only one "
@@ -339,7 +374,7 @@ msgid "Aborting periodic_sync_routers_task due to an error."
 msgstr "エラーのため periodic_sync_routers_task を中止します。"
 
 msgid "Access to this resource was denied."
-msgstr "このリソースへのアクセスは拒否されました"
+msgstr "このリソースへのアクセスは拒否されました。"
 
 msgid "Action to be executed when a child process dies"
 msgstr "子プロセスが異常終了したときに実行されるアクション"
@@ -360,6 +395,13 @@ msgstr "インターフェース上に存在しないアドレス"
 #, python-format
 msgid "Address scope %(address_scope_id)s could not be found"
 msgstr "アドレスのスコープ %(address_scope_id)s が見つかりませんでした"
+
+#, fuzzy
+msgid ""
+"Address to listen on for OpenFlow connections. Used only for 'native' driver."
+msgstr ""
+"OpenFlow 接続をリッスンするアドレス。「ネイティブ」のドライバーでのみ使用でき"
+"ます。"
 
 msgid "Adds external network attribute to network resource."
 msgstr "外部ネットワーク属性がネットワークリソースに追加されます。"
@@ -382,6 +424,9 @@ msgstr ""
 "エージェント %(id)s は、有効な DHCP エージェントでないか、使用不可になってい"
 "ます"
 
+msgid "Agent has just been revived"
+msgstr "エージェントが復活したばかりです"
+
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
 "case, user's resources will not be scheduled automatically to the agent "
@@ -391,9 +436,9 @@ msgstr ""
 "処理を開始します。この場合、 管理者が admin_state_up を True に変更するまで、"
 "ユーザーのリソースは自動的にエージェントに設定されません。"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Agent updated: %(payload)s"
-msgstr "エージェントがアップデートされました: %(payload)s"
+msgstr "エージェントが更新されました: %(payload)s"
 
 #, python-format
 msgid ""
@@ -423,6 +468,9 @@ msgstr "メタデータプロキシーの実行を許可します。"
 
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr "DHCP エージェントへのリソース操作通知の送信を許可"
+
+msgid "Allow the creation of PTR records"
+msgstr "PTR レコードを作成できます"
 
 msgid "Allow the usage of the bulk API"
 msgstr "Bulk API の使用を許可"
@@ -459,11 +507,27 @@ msgstr ""
 "れません。このオプションを設定するには「enable_isolated_metadata = True」と設"
 "定する必要があります。"
 
+#, python-format
+msgid ""
+"Already hosting BGP Speaker for local_as=%(current_as)d with router_id="
+"%(rtid)s."
+msgstr ""
+"router_id=%(rtid)s と設定した上で local_as=%(current_as)d を設定した BGP ス"
+"ピーカーを既にホストしています。"
+
+#, python-format
+msgid ""
+"Already hosting maximum number of BGP Speakers. Allowed scheduled count="
+"%(count)d"
+msgstr ""
+"既に最大数の BGP スピーカーをホストしています。scheduled_count=%(count)d が許"
+"容されます。"
+
 msgid "An RBAC policy already exists with those values."
 msgstr "これらの値に関して RBAC ポリシーが既に存在します。"
 
 msgid "An identifier must be specified when updating a subnet"
-msgstr "サブネットをアップデートする際には ID を指定する必要があります"
+msgstr "サブネットを更新する際には ID を指定する必要があります"
 
 msgid "An interface driver must be specified"
 msgstr "インターフェースドライバーを指定してください"
@@ -490,9 +554,20 @@ msgstr "予期しない内部エラーが発生しました。"
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "不明なエラーが発生しました。要求を再試行してください。"
 
+msgid "Async process didn't respawn"
+msgstr "非同期プロセスが再生成されませんでした"
+
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "属性 '%s' は POST では許可されません"
+
+#, python-format
+msgid "Authentication type not supported. Requested type=%(auth_type)s."
+msgstr ""
+"認証タイプがサポートされません。リクエストされたタイプは %(auth_type)s です。"
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr "管理者のコンテキストで指定すべき接続のための認証 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "ネットワークをオフライン DHCP エージェントから自動的に削除します。"
@@ -504,7 +579,7 @@ msgstr ""
 "ントに自動的に変更します。"
 
 msgid "Availability zone of this node"
-msgstr "このノードが利用できるゾーン"
+msgstr "このノードのアベイラビリティーゾーン"
 
 #, python-format
 msgid "AvailabilityZone %(availability_zone)s could not be found."
@@ -516,11 +591,26 @@ msgstr "使用可能なコマンド"
 
 #, python-format
 msgid ""
+"BGP Peer %(peer_ip)s for remote_as=%(remote_as)s, running for BGP Speaker "
+"%(speaker_as)d not added yet."
+msgstr ""
+"まだ追加されていない BGP スピーカー %(speaker_as)d のために起動する、"
+"remote_as=%(remote_as)s の BGP ピア %(peer_ip)s。"
+
+#, python-format
+msgid ""
 "BGP Speaker %(bgp_speaker_id)s is already configured to peer with a BGP Peer "
 "at %(peer_ip)s, it cannot peer with BGP Peer %(bgp_peer_id)s."
 msgstr ""
 "BGP スピーカー %(bgp_speaker_id)s は %(peer_ip)s で BGP ピアと連携するよう設"
 "定されているため、BGP ピア %(bgp_peer_id)s と連携することはできません。"
+
+#, python-format
+msgid ""
+"BGP Speaker for local_as=%(local_as)s with router_id=%(rtid)s not added yet."
+msgstr ""
+"router_id=%(rtid)s をまだ追加せずに local_as=%(local_as)s を設定したBGP ス"
+"ピーカー"
 
 #, python-format
 msgid ""
@@ -548,6 +638,9 @@ msgstr ""
 #, python-format
 msgid "BGP speaker %(id)s could not be found."
 msgstr "BGP スピーカー %(id)s が見つかりませんでした。"
+
+msgid "BGP speaker driver class to be instantiated."
+msgstr "インスタンス化される BGP スピーカーのドライバークラス"
 
 msgid "Backend does not support VLAN Transparency."
 msgstr "バックエンドでは VLAN Transparency はサポートされていません。"
@@ -585,6 +678,10 @@ msgstr "BgpDrAgent %(agent_id)s は既に BGP スピーカーと関連付けら�
 #, python-format
 msgid "BgpDrAgent %(id)s is invalid or has been disabled."
 msgstr "BgpDrAgent %(id)s が無効であるか、使用不可にされています。"
+
+#, python-format
+msgid "BgpDrAgent updated: %s"
+msgstr "更新された BgpDrAgent : %s"
 
 msgid "Body contains invalid data"
 msgstr "ボディーに無効なデータが含まれています"
@@ -708,9 +805,8 @@ msgstr ""
 "レガシーの L3 エージェント %(agent_id)s で分散ルーター %(router_id)s をホスト"
 "できません。"
 
-#, fuzzy
 msgid "Cannot match priority on flow deletion or modification"
-msgstr "flowの削除か設定の優先度が一致できません"
+msgstr "flow の削除か設定の優先度が一致できません"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr ""
@@ -744,6 +840,9 @@ msgstr "ssl の認証局公開鍵 (CA cert) ファイル"
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s."
 msgstr "変更によって、以下のリソースの使用量が 0 未満になります: %(unders)s."
+
+msgid "Check ebtables installation"
+msgstr "ebtables のインストールをチェックします"
 
 msgid "Check for ARP header match support"
 msgstr "ARP ヘッダーマッチのサポートを検査します"
@@ -789,6 +888,9 @@ msgstr "最小 dnsmasq バージョンを検査します"
 
 msgid "Check netns permission settings"
 msgstr "netns 許可設定を検査します"
+
+msgid "Check ovs conntrack support"
+msgstr "ovs の conntrack サポートをチェックします"
 
 msgid "Check ovsdb native interface support"
 msgstr "ovsdb ネイティブインターフェースのサポートの検査"
@@ -918,27 +1020,26 @@ msgstr ""
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s のイーサネットタイプ値 %(ethertype)s が競合しています"
 
-#, fuzzy
 msgid ""
 "Controls whether the neutron security group API is enabled in the server. It "
 "should be false when using no security groups or using the nova security "
 "group API."
 msgstr ""
-"Neutron セキュリティーグループ API をサーバーで有効にするかどうかを制御しま"
+"Neutron セキュリティーグループ API をサーバーで有効化するかどうかを制御しま"
 "す。セキュリティーグループを使用しない場合、または Nova セキュリティーグルー"
 "プ API を使用する場合には、False にする必要があります。"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
-msgstr "%(time)d 秒間の試行後に %(host)s:%(port)s にバインドできませんでした"
+msgstr ""
+"%(time)d 秒間試行しましたが %(host)s:%(port)s にバインドできませんでした"
 
 #, python-format
 msgid "Could not connect to %s"
 msgstr "%s に接続できませんでした"
 
-#, fuzzy
 msgid "Could not deserialize data"
-msgstr "データを非直列化することができませんでした"
+msgstr "データをデシリアライズすることができませんでした"
 
 #, python-format
 msgid "Could not retrieve schema from %(conn)s: %(err)s"
@@ -953,25 +1054,24 @@ msgstr ""
 "れています。更新できません。"
 
 msgid "Currently update of HA mode for a DVR/HA router is not supported."
-msgstr "現在、DVR/HA ルーターの HA モードのアップデートはサポートされません。"
+msgstr "現在、DVR/HA ルーターの HA モードの更新はサポートされません。"
 
 msgid "Currently update of HA mode for a distributed router is not supported."
-msgstr "現在、分散ルーターの HA モードのアップデートはサポートされません。"
+msgstr "現在、分散ルーターの HA モードの更新はサポートされません。"
 
 msgid ""
 "Currently update of distributed mode for a DVR/HA router is not supported"
-msgstr "現在、DVR/HA ルーターの分散モードのアップデートはサポートされません。"
+msgstr "現在、DVR/HA ルーターの分散モードの更新はサポートされません。"
 
 msgid "Currently update of distributed mode for an HA router is not supported."
-msgstr "現在、HA ルーターの分散モードのアップデートはサポートされません。"
+msgstr "現在、HA ルーターの分散モードの更新はサポートされません。"
 
 msgid ""
 "Currently updating a router from DVR/HA to non-DVR  non-HA is not supported."
-msgstr ""
-"現在、DVR/HA から DVR/HA 以外へのルーターのアップデートはサポートされません。"
+msgstr "現在、DVR/HA から DVR/HA 以外へのルーターの更新はサポートされません。"
 
 msgid "Currently updating a router to DVR/HA is not supported."
-msgstr "現在、DVR/HA へのルーターのアップデートはサポートされません。"
+msgstr "現在、DVR/HA へのルーターの更新はサポートされません。"
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -1106,6 +1206,10 @@ msgstr "すべてのデバイスを削除して、名前空間を削除します
 msgid "Deleting port %s"
 msgstr "ポート %s を削除しています"
 
+#, python-format
+msgid "Deployment error: %(reason)s."
+msgstr "実装エラー: %(reason)s"
+
 msgid "Destroy IPsets even if there is an iptables reference."
 msgstr "iptables の参照がある場合でも IPset を破棄します。"
 
@@ -1161,9 +1265,8 @@ msgstr "ドライバー %s はプロバイダー全体で固有ではありま�
 msgid "Driver for external DNS integration."
 msgstr "外部 DNS の連携のためのドライバー。"
 
-#, fuzzy
 msgid "Driver for security groups firewall in the L2 agent"
-msgstr "L2エージェントのセキュリティグループファイアウォールのドライバ"
+msgstr "L2 エージェントのセキュリティーグループのファイアウォールのドライバー"
 
 msgid "Driver to use for scheduling network to DHCP agent"
 msgstr ""
@@ -1187,6 +1290,9 @@ msgstr ""
 msgid "Driver used for scheduling BGP speakers to BGP DrAgent"
 msgstr ""
 "BGP DrAgent に対する BGP スピーカーのスケジューリングに使用するドライバー"
+
+msgid "Drivers list to use to send the update notification"
+msgstr "更新の通知を送信するために使用するドライバーリスト。"
 
 #, python-format
 msgid "Duplicate IP address '%s'"
@@ -1304,6 +1410,28 @@ msgstr ""
 "ジェントは、このオプションとは無関係に、自動スケジューリング用には選択されま"
 "せん。ただし、このオプションが True の場合、このようなエージェントに対しては"
 "手動スケジューリングが使用できます。"
+
+msgid ""
+"Enable suppression of ARP responses that don't match an IP address that "
+"belongs to the port from which they originate. Note: This prevents the VMs "
+"attached to this agent from spoofing, it doesn't protect them from other "
+"devices which have the capability to spoof (e.g. bare metal or VMs attached "
+"to agents without this flag set to True). Spoofing rules will not be added "
+"to any ports that have port security disabled. For LinuxBridge, this "
+"requires ebtables. For OVS, it requires a version that supports matching ARP "
+"headers. This option will be removed in Newton so the only way to disable "
+"protection will be via the port security extension."
+msgstr ""
+"ARP レスポンスが最初に発生したポートに関連するIP アドレスにマッチしない ARP "
+"レスポンスを消去します。注意: この結果、このエージェントに追加されたする VM "
+"はスプーフィングを行うことができなくなるものの、スプーフィングを行うことがで"
+"きる他のデバイス (このフラグを Trueに設定せずにエージェントに追加されたベアメ"
+"タルや VM など) からこれらの VM を保護することはできません。スプーフィング"
+"ルールは、ポートセキュリティーを無効化したポートには追加できません。"
+"LinuxBridge の場合、このためには ebtables が必要です。OVS の場合は、マッチす"
+"る ARP ヘッダーをサポートするバージョンが必要です。このオプションは Newtron "
+"では削除されるため、保護を無効化するにはポートセキュリティーの拡張機能を必ず"
+"使用する必要があります。"
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1552,7 +1680,7 @@ msgstr "gid %s の設定に失敗しました。"
 msgid "Failed to set uid %s"
 msgstr "uid %s の設定に失敗しました"
 
-#, python-format
+#, fuzzy, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr "%(ip)s に対する %(type)s トンネルポートをセットアップできませんでした"
 
@@ -2050,8 +2178,19 @@ msgstr ""
 "Iptables はメタデータの適切な要求を示すために使用されるマークを分割します。こ"
 "のマークを 0xffff でマスキングすることで、後半の 16 ビットのみを使用します。"
 
+#, fuzzy
+msgid ""
+"Keep in track in the database of current resourcequota usage. Plugins which "
+"do not leverage the neutron database should set this flag to False"
+msgstr ""
+"現在のリソースのクォータの使用状況に関するデータベースを管理します。neutron "
+"データベースを使用しないプラグインはこのフラグを False に設定します。"
+
 msgid "Keepalived didn't respawn"
 msgstr "keepalived が再作成されませんでした"
+
+msgid "Keepalived didn't spawn"
+msgstr "Keepalived が生成されませんでした"
 
 #, python-format
 msgid ""
@@ -2173,9 +2312,8 @@ msgstr "veth インターフェースの MTU サイズ"
 msgid "Make the l2 agent run in DVR mode."
 msgstr "L2 エージェントを DVR モードで実行します。"
 
-#, fuzzy
 msgid "Malformed request body"
-msgstr "誤った形式の要求本体"
+msgstr "誤った形式のリクエスト本文"
 
 #, python-format
 msgid "Malformed request body: %(reason)s."
@@ -2267,6 +2405,9 @@ msgstr ""
 "remote_ip_prefix %(remote_ip_prefix)s を持つ計測ラベル規則が他の計測ラベル規"
 "則と重なり合っています"
 
+msgid "Method cannot be called within a transaction."
+msgstr "トランザクション内にメソッドを呼び出すことができません"
+
 msgid "Migration from distributed router to centralized is not supported"
 msgstr "分散ルーターから集中ルーターへの移行はサポートされません"
 
@@ -2298,6 +2439,31 @@ msgstr ""
 "enable_dhcp が True の場合は、マルチキャスト IP サブネットはサポートされませ"
 "ん。"
 
+msgid ""
+"Multicast group for VXLAN. When configured, will enable sending all "
+"broadcast traffic to this multicast group. When left unconfigured, will "
+"disable multicast VXLAN mode."
+msgstr ""
+"VXLAN のマルチキャストグループ。設定されると、このマルチキャストグループにす"
+"べてのブロードキャストトラフィックを送信できます。設定されないと、マルチキャ"
+"スト VXLAN モードを無効化します。"
+
+#, fuzzy
+msgid ""
+"Multicast group(s) for vxlan interface. A range of group addresses may be "
+"specified by using CIDR notation. Specifying a range allows different VNIs "
+"to use different group addresses, reducing or eliminating spurious broadcast "
+"traffic to the tunnel endpoints. To reserve a unique group for each possible "
+"(24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be the same on "
+"all the agents."
+msgstr ""
+"vxlan インターフェースのマルチキャストグループ。CIDR の表記を使用することで、"
+"一定の範囲のグループアドレスを指定できます。範囲を指定するとさまざまな VNI が"
+"さまざまなグループアドレスを使用できるため、トンネルのエンドポイントへの不適"
+"切なブロードキャストトラフィックの提供を削減または排除できます。設定可能な各 "
+"(24 ビットの) VNI に独自のグループを予約するには、 /8 (239.0.0.0/8 など) を使"
+"用します。この設定はすべてのエージェントで同じである必要があります。"
+
 #, python-format
 msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
 msgstr ""
@@ -2308,9 +2474,9 @@ msgstr ""
 msgid "Multiple default providers for service %s"
 msgstr "サービス %s のデフォルトのプロバイダーが複数あります"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Multiple plugins for service %s were configured"
-msgstr "サービス %s の複数のプラグインが構成されていました"
+msgstr "サービス %s に対して複数のプラグインが構成されていました"
 
 #, python-format
 msgid "Multiple providers specified for service %s"
@@ -2471,9 +2637,15 @@ msgstr "Neutron 割り当て量ドライバークラス"
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "first_ip または last_ip に対して新規の値を指定する必要があります。"
 
+msgid "No default router:external network"
+msgstr "デフォルトの router:external ネットワークがありません"
+
 #, python-format
 msgid "No default subnetpool found for IPv%s"
 msgstr "IPv%s に関するデフォルトのサブネットプールが見つかりません"
+
+msgid "No default subnetpools defined"
+msgstr "定義されたデフォルトのサブネットプールがありません"
 
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
@@ -2534,16 +2706,34 @@ msgstr ""
 msgid "Number of RPC worker processes dedicated to state reports queue"
 msgstr "レポートのキューを報告するためにのみ機能する RPC ワーカープロセスの数"
 
-#, fuzzy
 msgid "Number of RPC worker processes for service"
-msgstr "サービスの RPC ワーカプロセスの数"
+msgstr "RPC サービスのワーカプロセスの数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "メタデータサーバーソケットの構成に使用されるバックログ要求の数"
 
-#, fuzzy
 msgid "Number of backlog requests to configure the socket with"
-msgstr "ソケットを構成するためのバックログ要求の数"
+msgstr "ソケットに設定するリクエストのバックログ数"
+
+#, fuzzy
+msgid ""
+"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
+"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
+"As a consequence, range of values is 8, 16 and 24"
+msgstr ""
+"ネットワークのプレフィックスとみなされる Ipv4 PTR ゾーン内のビット数。バイト"
+"境界と連携する必要があります。最小値は 8 で、最大値は 24 です。そのため、値の"
+"範囲は 8、16、および 24 です。"
+
+#, fuzzy
+msgid ""
+"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
+"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
+"As a consequence, range of values is 4, 8, 12, 16,..., 124"
+msgstr ""
+"ネットワークのプレフィックスとみなされる Ipv6 PTR ゾーン内のビット数。nyble "
+"境界と連携する必要があります。最小値は 4 で、最大値は 124 です。そのため、値"
+"の範囲は 4、 8、12、16、... 124 です。"
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
@@ -2586,7 +2776,7 @@ msgid ""
 "Number of separate API worker processes for service. If not specified, the "
 "default is equal to the number of CPUs available for best performance."
 msgstr ""
-"サービスに関する個別の API のワーカープロセスの数。これを指定しない場合、デ"
+"サービスに使用する個別の API のワーカープロセスの数。指定されなかった場合、デ"
 "フォルト値は最適なパフォーマンスを実現するために使用可能な CPU の数と一致しま"
 "す。"
 
@@ -2608,6 +2798,17 @@ msgstr ""
 
 msgid "OK"
 msgstr "OK"
+
+msgid ""
+"OVS datapath to use. 'system' is the default value and corresponds to the "
+"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
+msgstr ""
+"使用する OVS データパス。デフォルトは 'system' であり、これはカーネルのデータ"
+"パスに該当します。ユーザースペースのデータパスを有効化するには、この値を "
+"'netdev' に設定します。"
+
+msgid "OVS vhost-user socket directory."
+msgstr "OVS の vhost-user ソケット・ディレクトリー。"
 
 #, python-format
 msgid "OVSDB Error: %s"
@@ -2638,6 +2839,9 @@ msgstr "一度に 1 つのセキュリティープロファイルのルールの
 
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "remote_ip_prefix または remote_group_id のみを指定できます。"
+
+msgid "OpenFlow interface to use."
+msgstr "使用する OpenFlow インターフェース。"
 
 #, python-format
 msgid ""
@@ -2674,11 +2878,22 @@ msgid "Package %s not installed"
 msgstr "パッケージ %s はインストールされていません"
 
 #, python-format
+msgid "Parameter %(param)s must be of %(param_type)s type."
+msgstr "パラメーター %(param)s は %(param_type)s タイプである必要があります。"
+
+#, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "bridge_mappings の解析に失敗しました: %s。"
 
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "サポートされている pci_vendor_devs の解析に失敗しました"
+
+msgid "Password for connecting to designate in admin context"
+msgstr "管理者のコンテキストで指定すべき接続用パスワード"
+
+#, fuzzy, python-format
+msgid "Password not specified for authentication type=%(auth_type)s."
+msgstr "パスワードは認証タイプ %(auth_type)s で指定されていません。"
 
 msgid "Path to PID file for this process"
 msgstr "このプロセスの PID ファイルのパス"
@@ -2774,6 +2989,13 @@ msgstr ""
 "セキュリティーグループを使用するには、ポートセキュリティーを使用可能にする必"
 "要があり、ポートには IP アドレスが必要です。"
 
+#, fuzzy
+msgid ""
+"Port to listen on for OpenFlow connections. Used only for 'native' driver."
+msgstr ""
+"OpenFlow 接続をリッスンするポート。「ネイティブ」のドライバーでのみ使用できま"
+"す。"
+
 #, python-format
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
 msgstr ""
@@ -2803,6 +3025,10 @@ msgstr "プロセスが実行されていません"
 
 msgid "Protocol to access nova metadata, http or https"
 msgstr "Nova メタデータ、http、または https にアクセスするためのプロトコル"
+
+#, python-format
+msgid "Provider name %(name)s is limited by %(len)s characters"
+msgstr "プロバイダー名 %(name)s の制限は %(len)s 文字までです。"
 
 #, python-format
 msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
@@ -2920,6 +3146,14 @@ msgstr ""
 "ネットワーク %(network_id)s の CIDR %(cidr)s を持つ要求されたサブネットは、別"
 "のサブネットとオーバーラップしています"
 
+#, fuzzy
+msgid ""
+"Reset flow table on start. Setting this to True will cause brief traffic "
+"interruption."
+msgstr ""
+"起動時にフローテーブルをリセットします。この値を True に設定すると、一時的に"
+"トラフィックが中断します。"
+
 #, python-format
 msgid "Resource %(resource)s %(resource_id)s could not be found."
 msgstr "リソース %(resource)s %(resource_id)s が見つかりませんでした。"
@@ -2938,6 +3172,13 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "リソース本体が必要です"
+
+msgid ""
+"Resource name(s) that are supported in quota features. This option is now "
+"deprecated for removal."
+msgstr ""
+"クォータ機能でサポートされるリソースの名前。現在、このオプションは提供を終了"
+"しています。"
 
 msgid "Resource not found."
 msgstr "リソースが見つかりません。"
@@ -2959,6 +3200,11 @@ msgstr "利用可能な場合に使用するルートヘルパーのデーモン
 
 msgid "Root permissions are required to drop privileges."
 msgstr "特権を除去するにはルート許可が必要です。"
+
+#, fuzzy, python-format
+msgid "Route %(cidr)s not advertised for BGP Speaker %(speaker_as)d."
+msgstr ""
+"経路 %(cidr)s は BGP スピーカー %(speaker_as)d のために提供されていません。"
 
 #, python-format
 msgid "Router %(router_id)s %(reason)s"
@@ -3095,6 +3341,9 @@ msgstr ""
 msgid "Segments and provider values cannot both be set."
 msgstr "セグメントとプロバイダーの両方を設定することはできません。"
 
+msgid "Selects the Agent Type reported"
+msgstr "報告される Agent Type を選択します"
+
 msgid ""
 "Send notification to nova when port data (fixed_ips/floatingip) changes so "
 "nova can update its cache."
@@ -3174,6 +3423,14 @@ msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
 
+#, fuzzy
+msgid ""
+"Set or un-set the tunnel header checksum  on outgoing IP packet carrying GRE/"
+"VXLAN tunnel."
+msgstr ""
+"GRE/VXLAN トンネル を使用する現在有効な IP パケットに対するトンネルヘッダーの"
+"チェックサムの設定または設定解除を行います。"
+
 msgid "Shared address scope can't be unshared"
 msgstr "共有アドレスのスコープは共有を解除できません"
 
@@ -3217,6 +3474,9 @@ msgstr ""
 "同じサブネットプールから同じネットワーク上にホストされるサブネットを割り当て"
 "ることはできません。"
 
+msgid "Suffix to append to all namespace names."
+msgstr "すべての名前空間の名前に追加するサフィックス。"
+
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
@@ -3256,6 +3516,12 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "テナント %(tenant_id)s は、このネットワークでの %(resource)s の作成を許可され"
 "ていません"
+
+msgid "Tenant id for connecting to designate in admin context"
+msgstr "管理者のコンテキストで指定すべき接続用テナント ID"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr "管理者のコンテキストで接続すべき接続用テナント名"
 
 msgid "Tenant network creation is not enabled."
 msgstr "テナントネットワークの作成は使用できません。"
@@ -3396,6 +3662,13 @@ msgstr "DHCP サーバーの管理に使用されるドライバー。"
 
 msgid "The driver used to manage the virtual interface."
 msgstr "仮想インターフェースの管理に使用されるドライバー。"
+
+msgid ""
+"The email address to be used when creating PTR zones. If not specified, the "
+"email address will be admin@<dns_domain>"
+msgstr ""
+"PTR ゾーンの作成時に使用する E メールアドレス。指定しない場合、E メールアドレ"
+"スは admin@<dns_domain> になります。"
 
 #, python-format
 msgid ""
@@ -3568,7 +3841,21 @@ msgid ""
 "commands will fail with ALARMCLOCK error."
 msgstr ""
 "ovs-vsctl コマンドのタイムアウト時間 (秒)。タイムアウトが発生すると、ovs コマ"
-"ンドは ALARMCLOCK エラーを発生させ、終了します。"
+"ンドは ALARMCLOCK エラーで失敗します。"
+
+msgid ""
+"Timeout in seconds to wait for a single OpenFlow request. Used only for "
+"'native' driver."
+msgstr ""
+"単一の OpenFlow リクエストを待機するタイムアウト時間 (秒)。「ネイティブ」のド"
+"ライバーでのみ使用できます。"
+
+msgid ""
+"Timeout in seconds to wait for the local switch connecting the controller. "
+"Used only for 'native' driver."
+msgstr ""
+"コントローラーに接続するローカルスイッチを待機するタイムアウト時間 (秒)。「ネ"
+"イティブ」のドライバーでのみ使用できます。"
 
 msgid ""
 "Too long prefix provided. New name would exceed given length for an "
@@ -3600,6 +3887,9 @@ msgid ""
 msgstr ""
 "使用する nova のエンドポイントの名前。このエンドポイントは keystone のカタロ"
 "グで参照され、public、internal、または admin のいずれかである必要があります。"
+
+msgid "URL for connecting to designate"
+msgstr "指定すべき接続用 URL"
 
 msgid "URL to database"
 msgstr "データベースへの URL"
@@ -3691,7 +3981,7 @@ msgstr "サブネットプールを削除できません: %(reason)s"
 
 #, fuzzy, python-format
 msgid "Unable to determine mac address for %s"
-msgstr "%s の MAC アドレス収集ができません"
+msgstr "%s の MAC アドレスを識別できません"
 
 #, python-format
 msgid "Unable to find '%s' in request body"
@@ -3702,9 +3992,9 @@ msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
 msgstr ""
 "サブネット %(subnet_id)s 上で IP アドレス %(ip_address)s が見つかりません"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Unable to find resource name in %s"
-msgstr "%sの中のリソース名を見つけることはできません"
+msgstr "%s にリソース名を見つけることはできません"
 
 msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
 msgstr "EUI64 によって IPv4 プレフィックスの IP アドレスを生成できません"
@@ -3725,6 +4015,12 @@ msgstr ""
 "%s からターゲットフィールドを特定できません。一致の形式は %%(<field_name>)s "
 "でなければなりません"
 
+msgid "Unable to provide external connectivity"
+msgstr "外部接続を提供できません"
+
+msgid "Unable to provide tenant private network"
+msgstr "テナントのプライベートネットワークを提供できません"
+
 #, python-format
 msgid ""
 "Unable to reconfigure sharing settings for network %(network)s. Multiple "
@@ -3735,20 +4031,19 @@ msgstr ""
 
 #, python-format
 msgid "Unable to update address scope %(address_scope_id)s : %(reason)s"
-msgstr ""
-"アドレスのスコープ %(address_scope_id)s をアップデートできません: %(reason)s"
+msgstr "アドレスのスコープ %(address_scope_id)s を更新できません: %(reason)s"
 
 #, python-format
 msgid "Unable to update the following object fields: %(fields)s"
-msgstr "以下のオブジェクトのフィールドをアップデートできません: %(fields)s"
+msgstr "以下のオブジェクトのフィールドを更新できません: %(fields)s"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Unable to verify match:%(match)s as the parent resource: %(res)s was not "
 "found"
 msgstr ""
-"一致 %(match)s を親リソースとして検査できません: %(res)s が見つかりませんでし"
-"た"
+"match:%(match)s を親リソースとして検査できません: %(res)s が見つかりませんで"
+"した"
 
 #, python-format
 msgid "Unexpected label for script %(script_name)s: %(labels)s"
@@ -3803,6 +4098,9 @@ msgstr "認識されないアクション"
 msgid "Unrecognized attribute(s) '%s'"
 msgstr "認識されない属性 '%s'"
 
+msgid "Unrecognized field"
+msgstr "認識されないフィールド"
+
 msgid "Unspecified minimum subnet pool prefix."
 msgstr "最小サブネットプールのプレフィックスが指定されていません。"
 
@@ -3853,6 +4151,15 @@ msgstr ""
 "ティー構成によっては、この処理は必要ない場合があります。ルートヘルパーが必要"
 "ない場合は、パフォーマンスを高めるためにこの値を False に設定します。"
 
+msgid ""
+"Use veths instead of patch ports to interconnect the integration bridge to "
+"physical networks. Support kernel without Open vSwitch patch port support so "
+"long as it is set to True."
+msgstr ""
+"patch port ではなく veth を使用することで、統合ブリッジを物理ネットワークに連"
+"携させます。Open vSwitch の patch port のサポートが True に設定されている限"
+"り、当該サポートが存在しない場合でもカーネルをサポートします。"
+
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr "メタデータプロキシーを初期化後に実行しているユーザー (uid または名前)"
 
@@ -3865,6 +4172,10 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "初期化後にこのプロセスを実行するユーザー (uid または名前)"
+
+#, fuzzy
+msgid "Username for connecting to designate in admin context"
+msgstr "管理者のコンテキストで指定すべき接続用ユーザー名"
 
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
@@ -3907,6 +4218,7 @@ msgstr ""
 "%(parameter)s の値は %(number)s の倍数であり、その最大値は  %(maximum)s、最小"
 "値は %(minimum)s である必要があります"
 
+#, fuzzy
 msgid ""
 "Value of host kernel tick rate (hz) for calculating minimum burst value in "
 "bandwidth limit rules for a port with QoS. See kernel configuration file for "
