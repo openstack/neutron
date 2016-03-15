@@ -18,6 +18,7 @@ from oslo_db.sqlalchemy import test_base
 from neutron.db.migration import cli as migration
 from neutron.tests.common import base
 from neutron.tests.fullstack.resources import client as client_resource
+from neutron.tests import tools
 
 
 class BaseFullStackTestCase(base.MySQLTestCase):
@@ -25,6 +26,10 @@ class BaseFullStackTestCase(base.MySQLTestCase):
 
     def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
+        # NOTE(ihrachys): seed should be reset before environment fixture below
+        # since the latter starts services that may rely on generated port
+        # numbers
+        tools.reset_random_seed()
         self.create_db_tables()
         self.environment = environment
         self.environment.test_name = self.get_name()
