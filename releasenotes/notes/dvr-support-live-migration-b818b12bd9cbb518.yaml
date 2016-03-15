@@ -1,22 +1,14 @@
 ---
 prelude: >
-    Fix DVR support for service port live migration.
+    Improve DVR's resiliency during Nova VM live
+    migration events.
 fixes:
-  - Create DVR routers pro-actively on the destination
-    node for migrating dvr service port.
-  - If the DVR service port has associated floatingip,
-    then the floatingip namespace would be created on
-    the destination node.
+  - Create DVR router namespaces pro-actively on the
+    destination node during live migration events. This
+    helps minimize packet loss to floating IP traffic.
 issues:
-  - Right now we do not have status update notification
-    for L3 networks into Nova for nova to take necessary
-    action on failure to create the L3 networks.
-    So we do not report back failure and will be handled
-    in next release. In this case there might be a delay
-    in creating the routers and fip namespace after the
-    DVR service port migrates.
-  - If the nova reverts or cancels the live migration
-    after it informs the neutron and before it migrates
-    the dvr service port, then we do not cleanup the router
-    and fip namespace that was created on the destination
-    node.
+  - More synchronization between Nova and Neutron is needed
+    to properly handle live migration failures on either
+    side. For instance, if live migration is reverted or
+    canceled, some dangling Neutron resources may be left
+    on the destination host.
