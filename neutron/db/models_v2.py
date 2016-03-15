@@ -15,6 +15,7 @@
 
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy import sql
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
@@ -248,7 +249,8 @@ class SubnetPool(model_base.HasStandardAttributes, model_base.BASEV2,
     min_prefixlen = sa.Column(sa.Integer, nullable=False)
     max_prefixlen = sa.Column(sa.Integer, nullable=False)
     shared = sa.Column(sa.Boolean, nullable=False)
-    is_default = sa.Column(sa.Boolean, nullable=False)
+    is_default = sa.Column(sa.Boolean, nullable=False,
+                           server_default=sql.false())
     default_quota = sa.Column(sa.Integer, nullable=True)
     hash = sa.Column(sa.String(36), nullable=False, server_default='')
     address_scope_id = sa.Column(sa.String(36), nullable=True)

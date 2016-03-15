@@ -27,10 +27,12 @@ down_revision = '59cb5b6cf4d'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 
 def upgrade():
     op.add_column('subnetpools',
                   sa.Column('is_default',
                             sa.Boolean(),
+                            server_default=sql.false(),
                             nullable=False))
