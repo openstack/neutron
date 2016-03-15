@@ -495,6 +495,30 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(self._namespace_exists(fip_ns))
         self._assert_snat_namespace_does_not_exist(router1)
 
+    def test_dvr_router_fip_create_for_migrating_port(self):
+        """Test to validate the floatingip create on port migrate.
+
+        This test validates the condition where floatingip host
+        mismatches with the agent, but the 'dest_host' variable
+        matches with the agent host, due to port pre-migrate
+        phase.
+
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        floating_ip = router_info['_floatingips'][0]
+        floating_ip['host'] = 'my_new_host'
+        floating_ip['dest_host'] = self.agent.host
+        # Now we have the floatingip 'host' pointing to host that
+        # does not match to the 'agent.host' and the floatingip
+        # 'dest_host' matches with the agent.host in the case
+        # of live migration due to the port_profile update from
+        # nova.
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns))
+
     def test_dvr_router_fip_late_binding(self):
         """Test to validate the floatingip migration or latebinding.
 
