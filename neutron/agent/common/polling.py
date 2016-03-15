@@ -22,3 +22,4 @@ else:
     from neutron.agent.linux import polling
 
 get_polling_manager = polling.get_polling_manager
+InterfacePollingMinimizer = polling.InterfacePollingMinimizer

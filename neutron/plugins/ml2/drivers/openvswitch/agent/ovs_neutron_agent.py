@@ -34,7 +34,6 @@ from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import polling as linux_polling
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -1913,7 +1912,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # BasePollingManager that will be implemented by AlwaysPoll as
                 # no action and by InterfacePollingMinimizer as start/stop
                 if isinstance(
-                    polling_manager, linux_polling.InterfacePollingMinimizer):
+                    polling_manager, polling.InterfacePollingMinimizer):
                     polling_manager.stop()
                     polling_manager.start()
             elif ovs_status == constants.OVS_DEAD:
