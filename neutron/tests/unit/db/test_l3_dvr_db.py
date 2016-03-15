@@ -430,11 +430,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                   '_get_dvr_service_port_hostid') as vmp,\
                 mock.patch.object(
                     self.mixin,
+                    '_get_dvr_migrating_service_port_hostid'
+                                 ) as mvmp,\
+                mock.patch.object(
+                    self.mixin,
                     'create_fip_agent_gw_port_if_not_exists') as c_fip,\
                 mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
                                   '_update_fip_assoc'):
             grtr.return_value = router_db
             vmp.return_value = 'my-host'
+            mvmp.return_value = 'my-future-host'
             self.mixin._update_fip_assoc(
                 self.ctx, fip, floatingip_db, port)
             return c_fip
