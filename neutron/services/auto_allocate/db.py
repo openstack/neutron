@@ -52,7 +52,7 @@ def _extend_external_network_default(self, net_res, net_db):
 def _ensure_external_network_default_value_callback(
     resource, event, trigger, context, request, network):
     """Ensure the is_default db field matches the create/update request."""
-    is_default = request.get(IS_DEFAULT)
+    is_default = request.get(IS_DEFAULT, False)
     if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE) and is_default:
         # ensure there is only one default external network at any given time
         obj = (context.session.query(external_net_db.ExternalNetwork).

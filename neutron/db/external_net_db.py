@@ -16,6 +16,7 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
+from sqlalchemy import sql
 from sqlalchemy.sql import expression as expr
 
 from neutron.api.v2 import attributes
@@ -44,7 +45,8 @@ class ExternalNetwork(model_base.BASEV2):
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            primary_key=True)
     # introduced by auto-allocated-topology extension
-    is_default = sa.Column(sa.Boolean(), nullable=True)
+    is_default = sa.Column(sa.Boolean(), nullable=False,
+                           server_default=sql.false())
     # Add a relationship to the Network model in order to instruct
     # SQLAlchemy to eagerly load this association
     network = orm.relationship(
