@@ -16,6 +16,7 @@ import random
 
 import mock
 from oslo_db import exception as obj_exc
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
@@ -36,6 +37,7 @@ from neutron.tests import tools
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
 OBJECTS_BASE_OBJ_FROM_PRIMITIVE = ('oslo_versionedobjects.base.'
                                    'VersionedObject.obj_from_primitive')
+TIMESTAMP_FIELDS = ['created_at', 'updated_at']
 
 
 class FakeModel(object):
@@ -237,12 +239,18 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
     common_types.IPVersionEnumField: tools.get_random_ip_version,
+    obj_fields.DateTimeField: timeutils.utcnow,
 }
 
 
 def get_obj_db_fields(obj):
     return {field: getattr(obj, field) for field in obj.fields
             if field not in obj.synthetic_fields}
+
+
+def remove_timestamps_from_fields(obj_fields):
+    return {field: value for field, value in obj_fields.items()
+            if field not in TIMESTAMP_FIELDS}
 
 
 class _BaseObjectTestCase(object):
@@ -474,6 +482,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             with mock.patch.object(obj_db_api, 'get_objects',
                 side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.db_obj)
+                # get new values and fix keys
+                update_mock.return_value = self.db_objs[1].copy()
+                for key, value in obj._get_composite_keys().items():
+                    update_mock.return_value[key] = value
                 obj.update()
                 update_mock.assert_called_once_with(
                     self.context, self._test_class.db_model,
@@ -631,8 +643,14 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
                                                'device_id': 'fake_device',
                                                'device_owner': 'fake_owner'})
 
+    def _make_object(self, fields):
+        return self._test_class(
+            self.context, **remove_timestamps_from_fields(fields))
+
     def test_get_object_create_update_delete(self):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        # Timestamps can't be initialized and multiple objects may use standard
+        # attributes so we need to remove timestamps when creating objects
+        obj = self._make_object(self.obj_fields[0])
         obj.create()
 
         new = self._test_class.get_object(self.context,
@@ -657,7 +675,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self.assertIsNone(new)
 
     def test_update_non_existent_object_raises_not_found(self):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         obj.obj_reset_changes()
 
         fields_to_update = self.get_updatable_fields(self.obj_fields[0])
@@ -670,17 +688,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self.assertRaises(n_exc.ObjectNotFound, obj.update)
 
     def test_delete_non_existent_object_raises_not_found(self):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.ObjectNotFound, obj.delete)
 
     @mock.patch(SQLALCHEMY_COMMIT)
     def test_create_single_transaction(self, mock_commit):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         obj.create()
         self.assertEqual(1, mock_commit.call_count)
 
     def test_update_single_transaction(self):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         obj.create()
 
         fields_to_update = self.get_updatable_fields(self.obj_fields[1])
@@ -695,7 +713,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self.assertEqual(1, mock_commit.call_count)
 
     def test_delete_single_transaction(self):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         obj.create()
 
         with mock.patch(SQLALCHEMY_COMMIT) as mock_commit:
@@ -709,7 +727,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
 
     @mock.patch(SQLALCHEMY_COMMIT)
     def test_get_object_single_transaction(self, mock_commit):
-        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj = self._make_object(self.obj_fields[0])
         obj.create()
 
         obj = self._test_class.get_object(self.context,
