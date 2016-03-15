@@ -1121,6 +1121,29 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self._test_list_resources('port', [port2],
                                               neutron_context=n_context)
 
+    def test_list_ports_for_network_owner(self):
+        with self.network(tenant_id='tenant_1') as network:
+            with self.subnet(network) as subnet:
+                with self.port(subnet, tenant_id='tenant_1') as port1,\
+                        self.port(subnet, tenant_id='tenant_2') as port2:
+                    # network owner request, should return all ports
+                    port_res = self._list_ports(
+                        'json', set_context=True, tenant_id='tenant_1')
+                    port_list = self.deserialize('json', port_res)['ports']
+                    port_ids = [p['id'] for p in port_list]
+                    self.assertEqual(2, len(port_list))
+                    self.assertIn(port1['port']['id'], port_ids)
+                    self.assertIn(port2['port']['id'], port_ids)
+
+                    # another tenant request, only return ports belong to it
+                    port_res = self._list_ports(
+                        'json', set_context=True, tenant_id='tenant_2')
+                    port_list = self.deserialize('json', port_res)['ports']
+                    port_ids = [p['id'] for p in port_list]
+                    self.assertEqual(1, len(port_list))
+                    self.assertNotIn(port1['port']['id'], port_ids)
+                    self.assertIn(port2['port']['id'], port_ids)
+
     def test_list_ports_with_sort_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
@@ -1225,6 +1248,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self._delete('ports', port['port']['id'])
             self._show('ports', port['port']['id'],
                        expected_code=webob.exc.HTTPNotFound.code)
+
+    def test_delete_port_by_network_owner(self):
+        with self.network(tenant_id='tenant_1') as network:
+            with self.subnet(network) as subnet:
+                with self.port(subnet, tenant_id='tenant_2') as port:
+                    self._delete(
+                        'ports', port['port']['id'],
+                        neutron_context=context.Context('', 'tenant_1'))
+                    self._show('ports', port['port']['id'],
+                               expected_code=webob.exc.HTTPNotFound.code)
 
     def test_update_port(self):
         with self.port() as port:

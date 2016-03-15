@@ -312,3 +312,11 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return [{'subnet_id': ip["subnet_id"],
                  'ip_address': ip["ip_address"]}
                 for ip in ips]
+
+    def _port_filter_hook(self, context, original_model, conditions):
+        # Apply the port filter only in non-admin and non-advsvc context
+        if self.model_query_scope(context, original_model):
+            conditions |= (
+                (context.tenant_id == models_v2.Network.tenant_id) &
+                (models_v2.Network.id == models_v2.Port.network_id))
+        return conditions

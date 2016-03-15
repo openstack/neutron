@@ -60,10 +60,13 @@ def refresh(policy_file=None):
 
 
 def get_resource_and_action(action, pluralized=None):
-    """Extract resource and action (write, read) from api operation."""
+    """Return resource and enforce_attr_based_check(boolean) per
+       resource and action extracted from api operation.
+    """
     data = action.split(':', 1)[0].split('_', 1)
     resource = pluralized or ("%ss" % data[-1])
-    return (resource, data[0] != 'get')
+    enforce_attr_based_check = data[0] not in ('get', 'delete')
+    return (resource, enforce_attr_based_check)
 
 
 def set_rules(policies, overwrite=True):
@@ -150,9 +153,9 @@ def _build_match_rule(action, target, pluralized):
        (e.g.: create_router:external_gateway_info:network_id)
     """
     match_rule = policy.RuleCheck('rule', action)
-    resource, is_write = get_resource_and_action(action, pluralized)
-    # Attribute-based checks shall not be enforced on GETs
-    if is_write:
+    resource, enforce_attr_based_check = get_resource_and_action(
+        action, pluralized)
+    if enforce_attr_based_check:
         # assigning to variable with short name for improving readability
         res_map = attributes.RESOURCE_ATTRIBUTE_MAP
         if resource in res_map:
