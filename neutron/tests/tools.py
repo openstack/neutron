@@ -205,6 +205,15 @@ def get_random_cidr(version=4):
     return '2001:db8:%x::/&d' % (random.getrandbits(16), 64)
 
 
+def get_random_mac():
+    """Generate a random mac address starting with fe:16:3e"""
+    mac = [0xfe, 0x16, 0x3e,
+        random.randint(0x00, 0xff),
+        random.randint(0x00, 0xff),
+        random.randint(0x00, 0xff)]
+    return ':'.join(map(lambda x: "%02x" % x, mac))
+
+
 def is_bsd():
     """Return True on BSD-based systems."""
 

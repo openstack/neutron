@@ -47,3 +47,19 @@ class CIDR(types.TypeDecorator):
                                    "type.") % {'type': type(value),
                                                'value': value})
         return str(value)
+
+
+class MACAddress(types.TypeDecorator):
+
+    impl = types.String(64)
+
+    def process_result_value(self, value, dialect):
+        return netaddr.EUI(value)
+
+    def process_bind_param(self, value, dialect):
+        if not isinstance(value, netaddr.EUI):
+            raise AttributeError(_("Received type '%(type)s' and value "
+                                   "'%(value)s'. Expecting netaddr.EUI "
+                                   "type.") % {'type': type(value),
+                                               'value': value})
+        return str(value)
