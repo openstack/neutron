@@ -1349,40 +1349,49 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_add_interface_dup_subnet2_returns_400(self):
         with self.router() as r:
-            with self.subnet() as s:
-                with self.port(subnet=s) as p1:
-                    with self.port(subnet=s) as p2:
+            with self.subnet() as s1, self.subnet(cidr='1.0.0.0/24') as s2:
+                with self.port(subnet=s1) as p1, self.port(subnet=s2) as p2:
+                    with self.port(subnet=s1) as p3:
+                        for p in [p1, p2]:
+                            self._router_interface_action('add',
+                                                          r['router']['id'],
+                                                          None,
+                                                          p['port']['id'])
                         self._router_interface_action('add',
                                                       r['router']['id'],
                                                       None,
-                                                      p1['port']['id'])
-                        self._router_interface_action('add',
-                                                      r['router']['id'],
-                                                      None,
-                                                      p2['port']['id'],
+                                                      p3['port']['id'],
                                                       expected_code=exc.
                                                       HTTPBadRequest.code)
 
     def test_router_add_interface_overlapped_cidr_returns_400(self):
         with self.router() as r:
-            with self.subnet(cidr='10.0.1.0/24') as s1:
+            with self.subnet(cidr='10.0.1.0/24') as s1, self.subnet(
+                    cidr='10.0.2.0/24') as s2:
                 self._router_interface_action('add',
                                               r['router']['id'],
                                               s1['subnet']['id'],
                                               None)
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s2['subnet']['id'],
+                                              None)
 
                 def try_overlapped_cidr(cidr):
-                    with self.subnet(cidr=cidr) as s2:
+                    with self.subnet(cidr=cidr) as s3:
                         self._router_interface_action('add',
                                                       r['router']['id'],
-                                                      s2['subnet']['id'],
+                                                      s3['subnet']['id'],
                                                       None,
                                                       expected_code=exc.
                                                       HTTPBadRequest.code)
                 # another subnet with same cidr
                 try_overlapped_cidr('10.0.1.0/24')
+                try_overlapped_cidr('10.0.2.0/24')
                 # another subnet with overlapped cidr including s1
                 try_overlapped_cidr('10.0.0.0/16')
+                # another subnet with overlapped cidr including s2
+                try_overlapped_cidr('10.0.2.128/28')
 
     def test_router_add_interface_no_data_returns_400(self):
         with self.router() as r:

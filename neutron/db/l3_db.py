@@ -430,10 +430,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 # raise the underlying exception
                 raise e.errors[0].error
 
-            for subnet in subnets:
-                self._check_for_dup_router_subnet(context, router,
-                                                  new_network_id, subnet['id'],
-                                                  subnet['cidr'])
+            self._check_for_dup_router_subnets(context, router,
+                                               new_network_id, subnets)
             self._create_router_gw_port(context, router,
                                         new_network_id, ext_ips)
             registry.notify(resources.ROUTER_GATEWAY,
@@ -532,38 +530,42 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return self._get_collection_count(context, Router,
                                           filters=filters)
 
-    def _check_for_dup_router_subnet(self, context, router,
-                                     network_id, subnet_id, subnet_cidr):
-        try:
-            # It's possible these ports are on the same network, but
-            # different subnets.
-            new_ipnet = netaddr.IPNetwork(subnet_cidr)
-            for p in (rp.port for rp in router.attached_ports):
-                for ip in p['fixed_ips']:
-                    if ip['subnet_id'] == subnet_id:
-                        msg = (_("Router already has a port on subnet %s")
-                               % subnet_id)
-                        raise n_exc.BadRequest(resource='router', msg=msg)
-                    # Ignore temporary Prefix Delegation CIDRs
-                    if subnet_cidr == l3_constants.PROVISIONAL_IPV6_PD_PREFIX:
-                        continue
-                    sub_id = ip['subnet_id']
-                    cidr = self._core_plugin.get_subnet(context.elevated(),
-                                                        sub_id)['cidr']
-                    ipnet = netaddr.IPNetwork(cidr)
-                    match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
-                    match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
-                    if match1 or match2:
-                        data = {'subnet_cidr': subnet_cidr,
-                                'subnet_id': subnet_id,
-                                'cidr': cidr,
-                                'sub_id': sub_id}
-                        msg = (_("Cidr %(subnet_cidr)s of subnet "
-                                 "%(subnet_id)s overlaps with cidr %(cidr)s "
-                                 "of subnet %(sub_id)s") % data)
-                        raise n_exc.BadRequest(resource='router', msg=msg)
-        except exc.NoResultFound:
-            pass
+    def _check_for_dup_router_subnets(self, context, router,
+                                      network_id, new_subnets):
+        # It's possible these ports are on the same network, but
+        # different subnets.
+        new_subnet_ids = {s['id'] for s in new_subnets}
+        router_subnets = []
+        for p in (rp.port for rp in router.attached_ports):
+            for ip in p['fixed_ips']:
+                if ip['subnet_id'] in new_subnet_ids:
+                    msg = (_("Router already has a port on subnet %s")
+                           % ip['subnet_id'])
+                    raise n_exc.BadRequest(resource='router', msg=msg)
+                router_subnets.append(ip['subnet_id'])
+        # Ignore temporary Prefix Delegation CIDRs
+        new_subnets = [s for s in new_subnets
+                       if s['cidr'] != l3_constants.PROVISIONAL_IPV6_PD_PREFIX]
+        id_filter = {'id': router_subnets}
+        subnets = self._core_plugin.get_subnets(context.elevated(),
+                                                filters=id_filter)
+        for sub in subnets:
+            cidr = sub['cidr']
+            ipnet = netaddr.IPNetwork(cidr)
+            for s in new_subnets:
+                new_cidr = s['cidr']
+                new_ipnet = netaddr.IPNetwork(new_cidr)
+                match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
+                match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
+                if match1 or match2:
+                    data = {'subnet_cidr': new_cidr,
+                            'subnet_id': s['id'],
+                            'cidr': cidr,
+                            'sub_id': sub['id']}
+                    msg = (_("Cidr %(subnet_cidr)s of subnet "
+                             "%(subnet_id)s overlaps with cidr %(cidr)s "
+                             "of subnet %(sub_id)s") % data)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""
@@ -625,10 +627,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 subnet = self._core_plugin.get_subnet(context,
                                                       fixed_ip['subnet_id'])
                 subnets.append(subnet)
-                self._check_for_dup_router_subnet(context, router,
-                                                  port['network_id'],
-                                                  subnet['id'],
-                                                  subnet['cidr'])
+
+            if subnets:
+                self._check_for_dup_router_subnets(context, router,
+                                                   port['network_id'],
+                                                   subnets)
 
             # Keep the restriction against multiple IPv4 subnets
             if len([s for s in subnets if s['ip_version'] == 4]) > 1:
@@ -659,10 +662,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                    'external router cannot be added to Neutron Router.') %
                    subnet['id'])
             raise n_exc.BadRequest(resource='router', msg=msg)
-        self._check_for_dup_router_subnet(context, router,
-                                          subnet['network_id'],
-                                          subnet_id,
-                                          subnet['cidr'])
+        self._check_for_dup_router_subnets(context, router,
+                                           subnet['network_id'], [subnet])
         fixed_ip = {'ip_address': subnet['gateway_ip'],
                     'subnet_id': subnet['id']}
 
