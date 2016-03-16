@@ -24,6 +24,7 @@ Create Date: 2015-11-20 11:27:53.419742
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 # revision identifiers, used by Alembic.
 revision = '19f26505c74f'
@@ -44,4 +45,5 @@ def upgrade():
     )
 
     op.add_column('externalnetworks',
-                  sa.Column('is_default', sa.Boolean(), nullable=True))
+                  sa.Column('is_default', sa.Boolean(), nullable=False,
+                            server_default=sql.false()))
