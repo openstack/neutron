@@ -1033,6 +1033,15 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             ports = self.deserialize(self.fmt, res)
             self.assertEqual(0, len(ports['ports']))
 
+    def test_get_ports_count(self):
+        with self.port(), self.port(), self.port(), self.port() as p:
+            tenid = p['port']['tenant_id']
+            ctx = context.Context(user_id=None, tenant_id=tenid,
+                                  is_admin=False)
+            pl = manager.NeutronManager.get_plugin()
+            count = pl.get_ports_count(ctx, filters={'tenant_id': [tenid]})
+            self.assertEqual(4, count)
+
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
 

@@ -1437,6 +1437,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     db_base_plugin_common.DbBasePluginCommon.register_model_query_hook(
         models_v2.Port,
         "port",
-        None,
+        '_port_query_hook',
         '_port_filter_hook',
         None)
