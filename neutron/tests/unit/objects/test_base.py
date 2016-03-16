@@ -51,7 +51,9 @@ class FakeNeutronObject(base.NeutronDbObject):
         'field2': obj_fields.StringField()
     }
 
-    fields_no_update = ['id']
+    primary_keys = ['id']
+
+    fields_no_update = ['field1']
 
     synthetic_fields = ['field2']
 
@@ -115,8 +117,6 @@ class FakeNeutronObjectRenamedField(base.NeutronDbObject):
 
     synthetic_fields = ['field2']
 
-    fields_no_update = ['id']
-
     fields_need_translation = {'field_ovo': 'field_db'}
 
 
@@ -136,8 +136,6 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     }
 
     synthetic_fields = ['field2']
-
-    fields_no_update = ['id']
 
 
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
@@ -333,6 +331,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_changes(self, update_mock):
         fields_to_update = self.get_updatable_fields(self.db_obj)
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test class %r' %
+                          self._test_class)
+
         with mock.patch.object(base.NeutronDbObject,
                                '_get_changed_persistent_fields',
                                return_value=fields_to_update):
@@ -360,6 +362,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                return_value=self.db_obj):
             obj = self._test_class(self.context, **self.obj_fields[1])
             fields_to_update = self.get_updatable_fields(self.obj_fields[1])
+            if not fields_to_update:
+                self.skipTest('No updatable fields found in test class %r' %
+                              self._test_class)
             with mock.patch.object(base.NeutronDbObject,
                                    '_get_changed_persistent_fields',
                                    return_value=fields_to_update):
@@ -382,6 +387,21 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         observed_obj = self._test_class.clean_obj_from_primitive('foo', 'bar')
         self.assertIs(expected_obj, observed_obj)
         self.assertTrue(observed_obj.obj_reset_changes.called)
+
+    def test_update_primary_key_forbidden_fail(self):
+        obj = self._test_class(self.context, **self.db_obj)
+        obj.obj_reset_changes()
+
+        if not self._test_class.primary_keys:
+            self.skipTest(
+                'All non-updatable fields found in test class %r '
+                'are primary keys' % self._test_class)
+
+        for key, val in self.db_obj.items():
+            if key in self._test_class.primary_keys:
+                setattr(obj, key, val)
+
+        self.assertRaises(base.NeutronObjectUpdateForbidden, obj.update)
 
 
 class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
@@ -455,7 +475,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         obj = self._test_class(self.context, **self.obj_fields[0])
         obj.obj_reset_changes()
 
-        for key, val in self.get_updatable_fields(self.obj_fields[0]).items():
+        fields_to_update = self.get_updatable_fields(self.obj_fields[0])
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test class %r' %
+                          self._test_class)
+        for key, val in fields_to_update.items():
             setattr(obj, key, val)
 
         self.assertRaises(n_exc.ObjectNotFound, obj.update)
@@ -474,7 +498,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         obj = self._test_class(self.context, **self.obj_fields[0])
         obj.create()
 
-        for key, val in self.get_updatable_fields(self.obj_fields[1]).items():
+        fields_to_update = self.get_updatable_fields(self.obj_fields[1])
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test class %r' %
+                          self._test_class)
+        for key, val in fields_to_update.items():
             setattr(obj, key, val)
 
         with mock.patch(SQLALCHEMY_COMMIT) as mock_commit:

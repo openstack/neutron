@@ -48,11 +48,14 @@ class QoSPlugin(qos.QoSPluginBase):
 
     @db_base_plugin_common.convert_result_to_dict
     def update_policy(self, context, policy_id, policy):
-        policy = policy_object.QosPolicy(context, **policy['policy'])
-        policy.id = policy_id
-        policy.update()
-        self.notification_driver_manager.update_policy(context, policy)
-        return policy
+        obj = policy_object.QosPolicy(context, id=policy_id)
+        obj.obj_reset_changes()
+        for k, v in policy['policy'].items():
+            if k != 'id':
+                setattr(obj, k, v)
+        obj.update()
+        self.notification_driver_manager.update_policy(context, obj)
+        return obj
 
     def delete_policy(self, context, policy_id):
         policy = policy_object.QosPolicy(context)
@@ -107,8 +110,11 @@ class QoSPlugin(qos.QoSPluginBase):
             # check if the rule belong to the policy
             policy.get_rule_by_id(rule_id)
             rule = rule_object.QosBandwidthLimitRule(
-                context, **bandwidth_limit_rule['bandwidth_limit_rule'])
-            rule.id = rule_id
+                context, id=rule_id)
+            rule.obj_reset_changes()
+            for k, v in bandwidth_limit_rule['bandwidth_limit_rule'].items():
+                if k != 'id':
+                    setattr(rule, k, v)
             rule.update()
             policy.reload_rules()
         self.notification_driver_manager.update_policy(context, policy)
