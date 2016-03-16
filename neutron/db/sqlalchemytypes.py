@@ -31,3 +31,19 @@ class IPAddress(types.TypeDecorator):
                                                'value': value})
 
         return str(value)
+
+
+class CIDR(types.TypeDecorator):
+
+    impl = types.String(64)
+
+    def process_result_value(self, value, dialect):
+        return netaddr.IPNetwork(value)
+
+    def process_bind_param(self, value, dialect):
+        if not isinstance(value, netaddr.IPNetwork):
+            raise AttributeError(_("Received type '%(type)s' and value "
+                                   "'%(value)s'. Expecting netaddr.IPNetwork "
+                                   "type.") % {'type': type(value),
+                                               'value': value})
+        return str(value)
