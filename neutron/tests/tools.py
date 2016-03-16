@@ -13,10 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import importlib
 import os
 import platform
 import random
 import string
+import sys
 import time
 import warnings
 
@@ -24,6 +26,7 @@ import fixtures
 import mock
 import six
 
+import neutron
 from neutron.api.v2 import attributes
 
 
@@ -183,6 +186,36 @@ class UnorderedList(list):
 
     def __neq__(self, other):
         return not self == other
+
+
+def import_modules_recursively(topdir):
+    '''Import and return all modules below the topdir directory.'''
+    modules = []
+    for root, dirs, files in os.walk(topdir):
+        for file_ in files:
+            if file_[-3:] != '.py':
+                continue
+
+            module = file_[:-3]
+            if module == '__init__':
+                continue
+
+            import_base = root.replace('/', '.')
+
+            # NOTE(ihrachys): in Python3, or when we are not located in the
+            # directory containing neutron code, __file__ is absolute, so we
+            # should truncate it to exclude PYTHONPATH prefix
+            prefixlen = len(os.path.dirname(neutron.__file__))
+            import_base = 'neutron' + import_base[prefixlen:]
+
+            module = '.'.join([import_base, module])
+            if module not in sys.modules:
+                importlib.import_module(module)
+            modules.append(module)
+
+        for dir_ in dirs:
+            modules.extend(import_modules_recursively(dir_))
+    return modules
 
 
 def get_random_string(n=10):
