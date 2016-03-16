@@ -218,7 +218,7 @@ class Subnet(model_base.HasStandardAttributes, model_base.BASEV2,
     # subnets don't have their own rbac_entries, they just inherit from
     # the network rbac entries
     rbac_entries = orm.relationship(
-        rbac_db_models.NetworkRBAC, lazy='joined',
+        rbac_db_models.NetworkRBAC, lazy='joined', uselist=True,
         foreign_keys='Subnet.network_id',
         primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
 
