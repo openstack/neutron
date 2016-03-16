@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from oslo_versionedobjects import fields as obj_fields
 import six
 
@@ -145,3 +146,27 @@ class EtherTypeEnumField(obj_fields.AutoTypedField):
 class IpProtocolEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(
         valid_values=list(constants.IP_PROTOCOL_MAP.keys()))
+
+
+class MACAddress(obj_fields.FieldType):
+    """MACAddress custom field.
+
+    This custom field is different from the one provided by
+    oslo.versionedobjects library: it uses netaddr.EUI type instead of strings.
+    """
+    def _validate_value(self, value):
+        if not isinstance(value, netaddr.EUI):
+            msg = _("Field value %s is not a netaddr.EUI") % value
+            raise ValueError(msg)
+
+    def coerce(self, obj, attr, value):
+        self._validate_value(value)
+        return super(MACAddress, self).coerce(obj, attr, value)
+
+    def stringify(self, value):
+        self._validate_value(value)
+        return super(MACAddress, self).stringify(value)
+
+
+class MACAddressField(obj_fields.AutoTypedField):
+    AUTO_TYPE = MACAddress()

@@ -16,6 +16,7 @@ import abc
 from neutron.common import constants
 from neutron.objects import common_types
 from neutron.tests import base as test_base
+from neutron.tests import tools
 
 
 class TestField(object):
@@ -93,6 +94,27 @@ class IPNetworkPrefixLenFieldTest(test_base.BaseTestCase, TestField):
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
             self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class MACAddressFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(MACAddressFieldTest, self).setUp()
+        self.field = common_types.MACAddressField()
+        mac1 = tools.get_random_EUI()
+        mac2 = tools.get_random_EUI()
+        self.coerce_good_values = [(mac1, mac1), (mac2, mac2)]
+        self.coerce_bad_values = [
+            'XXXX', 'ypp', 'g3:vvv',
+            # the field type is strict and does not allow to pass strings, even
+            # if they represent a valid MAC address
+            tools.get_random_mac(),
+        ]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual('%s' % in_val, self.field.stringify(in_val))
 
 
 class IPVersionEnumFieldTest(test_base.BaseTestCase, TestField):
