@@ -24,6 +24,7 @@ Tests in this module will be skipped unless:
 
 from oslo_config import cfg
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import utils
 from neutron.tests.common import net_helpers
@@ -133,3 +134,18 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         devices = self.monitor.get_events()
         self.assertTrue(devices.get('added'),
                         'Initial call should always be true')
+
+    def test_get_events_includes_ofport(self):
+        utils.wait_until_true(lambda: self.monitor.has_updates)
+        self.monitor.get_events()  # clear initial events
+        br = self.useFixture(net_helpers.OVSBridgeFixture())
+        p1 = self.useFixture(net_helpers.OVSPortFixture(br.bridge))
+
+        def p1_event_has_ofport():
+            if not self.monitor.has_updates:
+                return
+            for e in self.monitor.new_events['added']:
+                if (e['name'] == p1.port.name and
+                        e['ofport'] != ovs_lib.UNASSIGNED_OFPORT):
+                    return True
+        utils.wait_until_true(p1_event_has_ofport)
