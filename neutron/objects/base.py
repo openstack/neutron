@@ -18,9 +18,11 @@ from neutron_lib import exceptions
 from oslo_db import exception as obj_exc
 from oslo_utils import reflection
 from oslo_versionedobjects import base as obj_base
+from oslo_versionedobjects import fields as obj_fields
 import six
 
 from neutron._i18n import _
+from neutron.db import api as db_api
 from neutron.objects.db import api as obj_db_api
 
 
@@ -52,6 +54,11 @@ class NeutronPrimaryKeyMissing(exceptions.BadRequest):
         )
 
 
+class NeutronSyntheticFieldMultipleForeignKeys(exceptions.NeutronException):
+    message = _("Synthetic fields %(fields)s shouldn't have more than one "
+                "foreign key")
+
+
 def get_updatable_fields(cls, fields):
     fields = fields.copy()
     for field in cls.fields_no_update:
@@ -72,7 +79,24 @@ class NeutronObject(obj_base.VersionedObject,
         self.obj_set_defaults()
 
     def to_dict(self):
-        return dict(self.items())
+        dict_ = dict(self.items())
+        for field in self.synthetic_fields:
+            if field in dict_:
+                if isinstance(dict_[field], obj_fields.ListOfObjectsField):
+                    dict_[field] = [obj.to_dict() for obj in dict_[field]]
+                elif isinstance(dict_[field], obj_fields.ObjectField):
+                    dict_[field] = (
+                        dict_[field].to_dict() if dict_[field] else None)
+        return dict_
+
+    @classmethod
+    def is_synthetic(cls, field):
+        return field in cls.synthetic_fields
+
+    @classmethod
+    def is_object_field(cls, field):
+        return (isinstance(cls.fields[field], obj_fields.ListOfObjectsField) or
+                isinstance(cls.fields[field], obj_fields.ObjectField))
 
     @classmethod
     def clean_obj_from_primitive(cls, primitive, context=None):
@@ -87,7 +111,7 @@ class NeutronObject(obj_base.VersionedObject,
     @classmethod
     def validate_filters(cls, **kwargs):
         bad_filters = [key for key in kwargs
-                       if key not in cls.fields or key in cls.synthetic_fields]
+                       if key not in cls.fields or cls.is_synthetic(key)]
         if bad_filters:
             bad_filters = ', '.join(bad_filters)
             msg = _("'%s' is not supported for filtering") % bad_filters
@@ -127,6 +151,14 @@ class NeutronDbObject(NeutronObject):
 
     primary_keys = ['id']
 
+    # this is a dict to store the association between the foreign key and the
+    # corresponding key in the main table, e.g. port extension have 'port_id'
+    # as foreign key, that is associated with the key 'id' of the table Port,
+    # so foreign_keys = {'port_id': 'id'}. The assumption is the association is
+    # the same for all object fields. E.g. all the port extension will use
+    # 'port_id' as key.
+    foreign_keys = {}
+
     fields_no_update = []
 
     # dict with name mapping: {'field_name_in_object': 'field_name_in_db'}
@@ -136,9 +168,10 @@ class NeutronDbObject(NeutronObject):
         db_objs = [self.modify_fields_from_db(db_obj) for db_obj in objs]
         for field in self.fields:
             for db_obj in db_objs:
-                if field in db_obj:
+                if field in db_obj and not self.is_synthetic(field):
                     setattr(self, field, db_obj[field])
                 break
+        self.load_synthetic_db_fields()
         self.obj_reset_changes()
 
     @classmethod
@@ -182,6 +215,12 @@ class NeutronDbObject(NeutronObject):
         return result
 
     @classmethod
+    def _load_object(cls, context, db_obj):
+        obj = cls(context)
+        obj.from_db_object(db_obj)
+        return obj
+
+    @classmethod
     def get_object(cls, context, **kwargs):
         """
         This method fetches object from DB and convert it to versioned
@@ -196,22 +235,17 @@ class NeutronDbObject(NeutronObject):
             raise NeutronPrimaryKeyMissing(object_class=cls.__class__,
                                            missing_keys=missing_keys)
 
-        db_obj = obj_db_api.get_object(context, cls.db_model, **kwargs)
-        if db_obj:
-            obj = cls(context, **cls.modify_fields_from_db(db_obj))
-            obj.obj_reset_changes()
-            return obj
+        with db_api.autonested_transaction(context.session):
+            db_obj = obj_db_api.get_object(context, cls.db_model, **kwargs)
+            if db_obj:
+                return cls._load_object(context, db_obj)
 
     @classmethod
     def get_objects(cls, context, **kwargs):
         cls.validate_filters(**kwargs)
-        db_objs = obj_db_api.get_objects(context, cls.db_model, **kwargs)
-        result = []
-        for db_obj in db_objs:
-            obj = cls(context, **cls.modify_fields_from_db(db_obj))
-            obj.obj_reset_changes()
-            result.append(obj)
-        return result
+        with db_api.autonested_transaction(context.session):
+            db_objs = obj_db_api.get_objects(context, cls.db_model, **kwargs)
+            return [cls._load_object(context, db_obj) for db_obj in db_objs]
 
     @classmethod
     def is_accessible(cls, context, db_obj):
@@ -233,15 +267,55 @@ class NeutronDbObject(NeutronObject):
 
         return fields
 
+    def load_synthetic_db_fields(self):
+        """
+        This method loads the synthetic fields that are stored in a different
+        table from the main object
+
+        This method doesn't take care of loading synthetic fields that aren't
+        stored in the DB, e.g. 'shared' in rbac policy
+        """
+
+        # TODO(rossella_s) Find a way to handle ObjectFields with
+        # subclasses=True
+        for field in self.synthetic_fields:
+            try:
+                objclasses = obj_base.VersionedObjectRegistry.obj_classes(
+                ).get(self.fields[field].objname)
+            except AttributeError:
+                # NOTE(rossella_s) this is probably because this field is not
+                # an ObjectField
+                continue
+            if not objclasses:
+                # NOTE(rossella_s) some synthetic fields are not handled by
+                # this method, for example the ones that have subclasses, see
+                # QosRule
+                continue
+            objclass = objclasses[0]
+            if len(objclass.foreign_keys.keys()) > 1:
+                raise NeutronSyntheticFieldMultipleForeignKeys(field=field)
+            objs = objclass.get_objects(
+                self._context, **{
+                    k: getattr(
+                        self, v) for k, v in objclass.foreign_keys.items()})
+            if isinstance(self.fields[field], obj_fields.ObjectField):
+                setattr(self, field, objs[0] if objs else None)
+            else:
+                setattr(self, field, objs)
+            self.obj_reset_changes([field])
+
     def create(self):
         fields = self._get_changed_persistent_fields()
-        try:
-            db_obj = obj_db_api.create_object(self._context, self.db_model,
-                                              self.modify_fields_to_db(fields))
-        except obj_exc.DBDuplicateEntry as db_exc:
-            raise NeutronDbObjectDuplicateEntry(object_class=self.__class__,
-                                                db_exception=db_exc)
-        self.from_db_object(db_obj)
+        with db_api.autonested_transaction(self._context.session):
+            try:
+                db_obj = obj_db_api.create_object(
+                    self._context, self.db_model,
+                    self.modify_fields_to_db(fields))
+            except obj_exc.DBDuplicateEntry as db_exc:
+                raise NeutronDbObjectDuplicateEntry(
+                    object_class=self.__class__, db_exception=db_exc)
+
+            self.from_db_object(db_obj)
 
     def _get_composite_keys(self):
         keys = {}
@@ -254,10 +328,12 @@ class NeutronDbObject(NeutronObject):
         updates = self._validate_changed_fields(updates)
 
         if updates:
-            db_obj = obj_db_api.update_object(self._context, self.db_model,
-                                            self.modify_fields_to_db(updates),
-                                            **self._get_composite_keys())
-            self.from_db_object(self, db_obj)
+            with db_api.autonested_transaction(self._context.session):
+                db_obj = obj_db_api.update_object(
+                    self._context, self.db_model,
+                    self.modify_fields_to_db(updates),
+                    **self._get_composite_keys())
+                self.from_db_object(self, db_obj)
 
     def delete(self):
         obj_db_api.delete_object(self._context, self.db_model,

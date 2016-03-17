@@ -105,6 +105,14 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(QosPolicyDbObjectTestCase, self).setUp()
+        self.db_qos_bandwidth_rules = [
+            self.get_random_fields(rule.QosBandwidthLimitRule)
+            for _ in range(3)]
+
+        self.model_map.update({
+            rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules
+        })
+
         self._create_test_network()
         self._create_test_port(self._network)
 
