@@ -340,9 +340,10 @@ class ESwitchManager(object):
         """
         if exclude_devices is None:
             exclude_devices = {}
-        for phys_net, dev_name in six.iteritems(device_mappings):
-            self._create_emb_switch(phys_net, dev_name,
-                                    exclude_devices.get(dev_name, set()))
+        for phys_net, dev_names in six.iteritems(device_mappings):
+            for dev_name in dev_names:
+                self._create_emb_switch(phys_net, dev_name,
+                                        exclude_devices.get(dev_name, set()))
 
     def _create_emb_switch(self, phys_net, dev_name, exclude_devices):
         embedded_switch = EmbSwitch(phys_net, dev_name, exclude_devices)

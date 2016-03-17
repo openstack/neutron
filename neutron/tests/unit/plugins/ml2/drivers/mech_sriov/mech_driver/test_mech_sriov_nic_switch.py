@@ -61,10 +61,10 @@ class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     AGENT_TYPE = constants.AGENT_TYPE_NIC_SWITCH
     VLAN_SEGMENTS = base.AgentMechanismVlanTestCase.VLAN_SEGMENTS
 
-    GOOD_MAPPINGS = {'fake_physical_network': 'fake_device'}
+    GOOD_MAPPINGS = {'fake_physical_network': ['fake_device']}
     GOOD_CONFIGS = {'device_mappings': GOOD_MAPPINGS}
 
-    BAD_MAPPINGS = {'wrong_physical_network': 'wrong_device'}
+    BAD_MAPPINGS = {'wrong_physical_network': ['wrong_device']}
     BAD_CONFIGS = {'device_mappings': BAD_MAPPINGS}
 
     AGENTS = [{'alive': True,

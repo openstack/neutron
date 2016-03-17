@@ -1,0 +1,8 @@
+---
+prelude: >
+  Several NICs per physical network can be used with SR-IOV.
+fixes:
+  - The 'physical_device_mappings' of sriov_nic configuration now can accept
+    more than one NIC per physical network. For example, if 'physnet2' is
+    connected to enp1s0f0 and enp1s0f1, 'physnet2:enp1s0f0,physnet2:enp1s0f1'
+    will be a valid option.

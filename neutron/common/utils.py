@@ -214,12 +214,14 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
                             close_fds=close_fds, env=env)
 
 
-def parse_mappings(mapping_list, unique_values=True):
+def parse_mappings(mapping_list, unique_values=True, unique_keys=True):
     """Parse a list of mapping strings into a dictionary.
 
     :param mapping_list: a list of strings of the form '<key>:<value>'
     :param unique_values: values must be unique if True
-    :returns: a dict mapping keys to values
+    :param unique_keys: keys must be unique if True, else implies that keys
+    and values are not unique
+    :returns: a dict mapping keys to values or to list of values
     """
     mappings = {}
     for mapping in mapping_list:
@@ -235,14 +237,20 @@ def parse_mappings(mapping_list, unique_values=True):
         value = split_result[1].strip()
         if not value:
             raise ValueError(_("Missing value in mapping: '%s'") % mapping)
-        if key in mappings:
-            raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
-                               "unique") % {'key': key, 'mapping': mapping})
-        if unique_values and value in mappings.values():
-            raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
-                               "not unique") % {'value': value,
+        if unique_keys:
+            if key in mappings:
+                raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
+                                   "unique") % {'key': key,
                                                 'mapping': mapping})
-        mappings[key] = value
+            if unique_values and value in mappings.values():
+                raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
+                                   "not unique") % {'value': value,
+                                                    'mapping': mapping})
+            mappings[key] = value
+        else:
+            mappings.setdefault(key, [])
+            if value not in mappings[key]:
+                mappings[key].append(value)
     return mappings
 
 
