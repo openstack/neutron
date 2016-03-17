@@ -222,6 +222,7 @@ function _install_post_devstack {
 
     if is_ubuntu; then
         install_package isc-dhcp-client
+        install_package netcat-openbsd
     elif is_fedora; then
         install_package dhclient
     else
