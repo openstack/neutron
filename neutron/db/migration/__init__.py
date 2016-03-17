@@ -165,7 +165,7 @@ def create_foreign_keys(table, foreign_keys):
             referent_table=fk['referred_table'],
             local_cols=fk['constrained_columns'],
             remote_cols=fk['referred_columns'],
-            ondelete='CASCADE'
+            ondelete=fk['options'].get('ondelete')
         )
 
 
