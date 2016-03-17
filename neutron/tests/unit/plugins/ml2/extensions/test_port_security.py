@@ -13,20 +13,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2.extensions import port_security
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 class TestML2ExtensionPortSecurity(test_plugin.Ml2PluginV2TestCase):
-    def test_extend_port_dict_no_port_security(self):
-        """Test _extend_port_security_dict won't crash
-        if port_security item is None
-        """
+    def _test_extend_dict_no_port_security(self, func):
+        """Test extend_*_dict won't crash if port_security item is None."""
         for db_data in ({'port_security': None, 'name': 'net1'}, {}):
             response_data = {}
+            session = mock.Mock()
 
             driver = port_security.PortSecurityExtensionDriver()
-            driver._extend_port_security_dict(response_data, db_data)
+            getattr(driver, func)(session, db_data, response_data)
 
             self.assertTrue(response_data[psec.PORTSECURITY])
+
+    def test_extend_port_dict_no_port_security(self):
+        self._test_extend_dict_no_port_security('extend_port_dict')
+
+    def test_extend_network_dict_no_port_security(self):
+        self._test_extend_dict_no_port_security('extend_network_dict')

@@ -41,8 +41,7 @@ class PortSecurityExtensionDriver(api.ExtensionDriver,
     def process_create_network(self, context, data, result):
         # Create the network extension attributes.
         if psec.PORTSECURITY not in data:
-            data[psec.PORTSECURITY] = (psec.EXTENDED_ATTRIBUTES_2_0['networks']
-                                       [psec.PORTSECURITY]['default'])
+            data[psec.PORTSECURITY] = psec.DEFAULT_PORT_SECURITY
         self._process_network_port_security_create(context, data, result)
 
     def process_update_network(self, context, data, result):
@@ -65,15 +64,6 @@ class PortSecurityExtensionDriver(api.ExtensionDriver,
 
     def extend_port_dict(self, session, db_data, result):
         self._extend_port_security_dict(result, db_data)
-
-    def _extend_port_security_dict(self, response_data, db_data):
-        if db_data.get('port_security') is None:
-            response_data[psec.PORTSECURITY] = (
-                psec.EXTENDED_ATTRIBUTES_2_0['networks']
-                [psec.PORTSECURITY]['default'])
-        else:
-            response_data[psec.PORTSECURITY] = (
-                                db_data['port_security'][psec.PORTSECURITY])
 
     def _determine_port_security(self, context, port):
         """Returns a boolean (port_security_enabled).
