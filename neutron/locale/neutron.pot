@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev145\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-13 06:02+0000\n"
+"POT-Creation-Date: 2016-03-18 06:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,19 +36,19 @@ msgstr ""
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
 
-#: neutron/policy.py:199
+#: neutron/policy.py:202
 #, python-format
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
 msgstr ""
 
-#: neutron/policy.py:229
+#: neutron/policy.py:232
 #, python-format
 msgid "Unable to find resource name in %s"
 msgstr ""
 
-#: neutron/policy.py:238
+#: neutron/policy.py:241
 #, python-format
 msgid ""
 "Unable to verify match:%(match)s as the parent resource: %(res)s was not "
@@ -1171,7 +1171,7 @@ msgstr ""
 
 #: neutron/api/v2/base.py:205 neutron/api/v2/base.py:366
 #: neutron/api/v2/base.py:550 neutron/api/v2/base.py:617
-#: neutron/extensions/bgp_dragentscheduler.py:63
+#: neutron/api/v2/base.py:712 neutron/extensions/bgp_dragentscheduler.py:63
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:94
 #: neutron/pecan_wsgi/hooks/policy_enforcement.py:126
@@ -1202,12 +1202,6 @@ msgstr ""
 #: neutron/api/v2/base.py:688
 #, python-format
 msgid "Cannot update read-only attribute %s"
-msgstr ""
-
-#: neutron/api/v2/base.py:710
-#: neutron/pecan_wsgi/hooks/ownership_validation.py:51
-#, python-format
-msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 
 #: neutron/api/v2/resource.py:132
@@ -2024,7 +2018,7 @@ msgstr ""
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:139 neutron/db/external_net_db.py:206
+#: neutron/db/db_base_plugin_v2.py:139 neutron/db/external_net_db.py:208
 msgid "Only admins can manipulate policies on networks they do not own."
 msgstr ""
 
@@ -2058,103 +2052,103 @@ msgstr ""
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:420
+#: neutron/db/db_base_plugin_v2.py:424
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:447
+#: neutron/db/db_base_plugin_v2.py:451
 msgid "Subnet has a prefix length that is incompatible with DHCP service enabled."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:455
+#: neutron/db/db_base_plugin_v2.py:459
 msgid "Multicast IP subnet is not supported if enable_dhcp is True."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:459
+#: neutron/db/db_base_plugin_v2.py:463
 msgid "Loopback IP subnet is not supported if enable_dhcp is True."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:476
+#: neutron/db/db_base_plugin_v2.py:480
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:498 neutron/db/db_base_plugin_v2.py:512
+#: neutron/db/db_base_plugin_v2.py:502 neutron/db/db_base_plugin_v2.py:516
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:505
+#: neutron/db/db_base_plugin_v2.py:509
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:521
+#: neutron/db/db_base_plugin_v2.py:525
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:525
+#: neutron/db/db_base_plugin_v2.py:529
 msgid "ipv6_address_mode is not valid when ip_version is 4"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:533
+#: neutron/db/db_base_plugin_v2.py:537
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:542
+#: neutron/db/db_base_plugin_v2.py:546
 msgid "IPv6 RA Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:548
+#: neutron/db/db_base_plugin_v2.py:552
 msgid "IPv6 Address Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:619
+#: neutron/db/db_base_plugin_v2.py:623
 msgid "subnetpool_id and use_default_subnetpool cannot both be specified"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:635
+#: neutron/db/db_base_plugin_v2.py:639
 msgid "ip_version must be specified in the absence of cidr and subnetpool_id"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:654
+#: neutron/db/db_base_plugin_v2.py:658
 #, python-format
 msgid "No default subnetpool found for IPv%s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:666
+#: neutron/db/db_base_plugin_v2.py:670
 msgid "cidr and prefixlen must not be supplied together"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:676
+#: neutron/db/db_base_plugin_v2.py:680
 msgid "a subnetpool must be specified in the absence of a cidr"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:694
+#: neutron/db/db_base_plugin_v2.py:698
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:955
+#: neutron/db/db_base_plugin_v2.py:959
 #, python-format
 msgid ""
 "subnetpool %(subnetpool_id)s cannot be updated when associated with "
 "shared address scope %(address_scope_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:969
+#: neutron/db/db_base_plugin_v2.py:973
 msgid ""
 "A default subnetpool for this IP family has already been set. Only one "
 "default may exist per IP family"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1026
+#: neutron/db/db_base_plugin_v2.py:1030
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1124
+#: neutron/db/db_base_plugin_v2.py:1128
 msgid "Subnet pool has existing allocations"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1132
+#: neutron/db/db_base_plugin_v2.py:1136
 msgid "mac address update"
 msgstr ""
 
@@ -2176,11 +2170,11 @@ msgid ""
 "fa:16:3f:4f:00:00. The default is 3 octet"
 msgstr ""
 
-#: neutron/db/external_net_db.py:249
+#: neutron/db/external_net_db.py:251
 msgid "Default external networks must be shared to everyone."
 msgstr ""
 
-#: neutron/db/external_net_db.py:261
+#: neutron/db/external_net_db.py:263
 msgid ""
 "There are routers attached to this network that depend on this policy for"
 " access."
@@ -2317,71 +2311,71 @@ msgid ""
 "be added to Neutron Router."
 msgstr ""
 
-#: neutron/db/l3_db.py:874
+#: neutron/db/l3_db.py:878
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: neutron/db/l3_db.py:924
+#: neutron/db/l3_db.py:928
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:928
+#: neutron/db/l3_db.py:932
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:940
+#: neutron/db/l3_db.py:944
 #, python-format
 msgid ""
 "Floating IP %(floatingip_id)s is associated with non-IPv4 address "
 "%s(internal_ip)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:944
+#: neutron/db/l3_db.py:948
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to %s, since that is not an IPv4 "
 "address."
 msgstr ""
 
-#: neutron/db/l3_db.py:952
+#: neutron/db/l3_db.py:956
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:959
+#: neutron/db/l3_db.py:963
 #, python-format
 msgid "Cannot add floating IP to port %s that has no fixed IPv4 addresses"
 msgstr ""
 
-#: neutron/db/l3_db.py:963
+#: neutron/db/l3_db.py:967
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPv4 addresses.  Must provide a specific IPv4 "
 "address when assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:992
+#: neutron/db/l3_db.py:996
 msgid "fixed_ip_address cannot be specified without a port_id"
-msgstr ""
-
-#: neutron/db/l3_db.py:1061
-#, python-format
-msgid "Network %s is not a valid external network"
 msgstr ""
 
 #: neutron/db/l3_db.py:1065
 #, python-format
+msgid "Network %s is not a valid external network"
+msgstr ""
+
+#: neutron/db/l3_db.py:1069
+#, python-format
 msgid "Network %s does not contain any IPv4 subnet"
 msgstr ""
 
-#: neutron/db/l3_db.py:1279
+#: neutron/db/l3_db.py:1283
 #, python-format
 msgid "has device owner %s"
 msgstr ""
@@ -2402,11 +2396,11 @@ msgid ""
 "admin_state_up to False prior to upgrade."
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:602
+#: neutron/db/l3_dvr_db.py:644
 msgid "Unable to create the Agent Gateway Port"
 msgstr ""
 
-#: neutron/db/l3_dvr_db.py:633
+#: neutron/db/l3_dvr_db.py:675
 msgid "Unable to create the SNAT Interface Port"
 msgstr ""
 
@@ -2470,13 +2464,34 @@ msgstr ""
 msgid "cannot perform %(event)s due to %(reason)s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:690
+#: neutron/db/securitygroups_db.py:691
 msgid "Default security group"
 msgstr ""
 
 #: neutron/db/securitygroups_rpc_base.py:58
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
+msgstr ""
+
+#: neutron/db/sqlalchemytypes.py:28
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting "
+"netaddr.IPAddress type."
+msgstr ""
+
+#: neutron/db/sqlalchemytypes.py:45
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting "
+"netaddr.IPNetwork type."
+msgstr ""
+
+#: neutron/db/sqlalchemytypes.py:61
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI "
+"type."
 msgstr ""
 
 #: neutron/db/sqlalchemyutils.py:70
@@ -3577,24 +3592,24 @@ msgstr ""
 msgid "An identifier must be specified when updating a subnet"
 msgstr ""
 
-#: neutron/objects/base.py:26
+#: neutron/objects/base.py:28
 #, python-format
 msgid "Unable to update the following object fields: %(fields)s"
 msgstr ""
 
-#: neutron/objects/base.py:30
+#: neutron/objects/base.py:32
 #, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
 msgstr ""
 
-#: neutron/objects/base.py:42
+#: neutron/objects/base.py:44
 #, python-format
 msgid "For class %(object_type)s missing primary keys: %(missing_keys)s"
 msgstr ""
 
-#: neutron/objects/base.py:91
+#: neutron/objects/base.py:93
 #, python-format
 msgid "'%s' is not supported for filtering"
 msgstr ""
@@ -3624,6 +3639,11 @@ msgstr ""
 #: neutron/objects/qos/policy.py:74
 #, python-format
 msgid "unable to load %s"
+msgstr ""
+
+#: neutron/pecan_wsgi/hooks/ownership_validation.py:51
+#, python-format
+msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 
 #: neutron/pecan_wsgi/hooks/translation.py:39
@@ -4050,12 +4070,12 @@ msgstr ""
 msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:305
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:304
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2058
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2057
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."

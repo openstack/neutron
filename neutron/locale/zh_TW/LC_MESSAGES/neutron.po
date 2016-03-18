@@ -9,13 +9,13 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev160\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-15 03:21+0000\n"
+"POT-Creation-Date: 2016-03-17 15:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-15 03:42+0000\n"
+"PO-Revision-Date: 2016-03-18 12:36+0000\n"
 "Last-Translator: Jennifer <cristxu@tw.ibm.com>\n"
 "Language: zh-TW\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -75,6 +75,22 @@ msgstr ""
 
 #, python-format
 msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) host %(host)s (original host %(original_host)s) vif type "
+"%(vif_type)s (original vif type %(original_vif_type)s) vif details "
+"%(vif_details)s (original vif details %(original_vif_details)s) binding "
+"levels %(levels)s (original binding levels %(original_levels)s) on network "
+"%(network)s with segments to bind %(segments_to_bind)s"
+msgstr ""
+"在包含區段的網路 %(network)s 上，已使用埠設定 %(current)s（原始設定 "
+"%(original)s）主機 %(host)s（原始主機 %(original_host)s）VIF 類型 "
+"%(vif_type)s（原始 VIF 類型 %(original_vif_type)s）VIF 詳細資料 "
+"%(vif_details)s（原始 VIF 詳細資料 %(original_vif_details)s）連結層次 "
+"%(levels)s（原始連結層次 %(original_levels)s）呼叫了 %(method)s，以連結 "
+"%(segments_to_bind)s"
+
+#, python-format
+msgid ""
 "%(method)s called with subnet settings %(current)s (original settings "
 "%(original)s)"
 msgstr ""
@@ -87,6 +103,10 @@ msgstr "%(method)s 失敗。"
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' 與 ip_version '%(ip_version)s' 不符"
+
+#, python-format
+msgid "%(param)s must be in %(range)s range."
+msgstr "%(param)s 必須在 %(range)s 範圍內。"
 
 #, python-format
 msgid "%s cannot be called while in offline mode"
@@ -413,6 +433,9 @@ msgstr "容許執行 meta 資料 Proxy。"
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr "容許將資源作業通知傳送給 DHCP 代理程式"
 
+msgid "Allow the creation of PTR records"
+msgstr "容許建立 PTR 記錄"
+
 msgid "Allow the usage of the bulk API"
 msgstr "容許使用主體 API"
 
@@ -488,9 +511,19 @@ msgstr "發生非預期的內部錯誤。"
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "發生不明錯誤。請重試要求。"
 
+msgid "Async process didn't respawn"
+msgstr "同步程序未再次大量產生"
+
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "POST 中不接受屬性 '%s'"
+
+#, python-format
+msgid "Authentication type not supported. Requested type=%(auth_type)s."
+msgstr "鑑別類型不受支援。要求的類型 = %(auth_type)s。"
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr "用於連接以在管理環境定義中指定的授權 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "從離線 DHCP 代理程式自動移除網路。"
@@ -1969,6 +2002,9 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr "Keepalived 未再次大量產生"
 
+msgid "Keepalived didn't spawn"
+msgstr "Keepalived 未大量產生"
+
 #, python-format
 msgid ""
 "Kernel HZ value %(value)s is not valid. This value must be greater than 0."
@@ -2447,6 +2483,22 @@ msgid "Number of backlog requests to configure the socket with"
 msgstr "要配置給 Socket 的待辦事項要求數目"
 
 msgid ""
+"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
+"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
+"As a consequence, range of values is 8, 16 and 24"
+msgstr ""
+"將被視為網路字首之 IPv4 PTR 區域中的位元數目。它必須與位元組界限對齊。下限值"
+"為 8。上限值為 24。因此，值的範圍是 8、16 和 24"
+
+msgid ""
+"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
+"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
+"As a consequence, range of values is 4, 8, 12, 16,..., 124"
+msgstr ""
+"將被視為網路字首之 IPv6 PTR 區域中的位元數目。它必須與 nyble 界限對齊。下限值"
+"為 4。上限值為 124。因此，值的範圍是 4、8、12、16、...、124"
+
+msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
 msgstr "每個承租人所容許的浮動 IP 數目。負數值表示無限制。"
 
@@ -2573,11 +2625,22 @@ msgid "Package %s not installed"
 msgstr "未安裝套件 %s"
 
 #, python-format
+msgid "Parameter %(param)s must be of %(param_type)s type."
+msgstr "參數 %(param)s 必須是 %(param_type)s 類型。"
+
+#, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "剖析 bridge_mappings 時失敗：%s。"
 
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "剖析受支援的 pci_vendor_devs 失敗"
+
+msgid "Password for connecting to designate in admin context"
+msgstr "用於連接以在管理環境定義中指定的密碼"
+
+#, python-format
+msgid "Password not specified for authentication type=%(auth_type)s."
+msgstr "針對鑑別類型 = %(auth_type)s，未指定密碼。"
 
 msgid "Path to PID file for this process"
 msgstr "用於此程序的 PID 檔案路徑"
@@ -2750,6 +2813,25 @@ msgstr "範圍不得重疊"
 
 #, python-format
 msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
+msgstr "接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.EUI 類型。"
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
+"type."
+msgstr ""
+"接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.IPAddress 類型。"
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
+"type."
+msgstr ""
+"接收到類型 '%(type)s' 和值 '%(value)s'。預期為 netaddr.IPNetwork 類型。"
+
+#, python-format
+msgid ""
 "Release aware branch labels (%s) are deprecated. Please switch to expand@ "
 "and contract@ labels."
 msgstr "版本相關分支標籤 (%s) 已遭到淘汰。請切換至 expand@ 和 contract@ 標籤。"
@@ -2846,6 +2928,10 @@ msgstr "可能時要使用的根說明程式常駐程式應用程式。"
 
 msgid "Root permissions are required to drop privileges."
 msgstr "需要 root 權限才能捨棄專用權。"
+
+#, python-format
+msgid "Route %(cidr)s not advertised for BGP Speaker %(speaker_as)d."
+msgstr "未針對 BGP 喇叭 %(speaker_as)d 通告路徑 %(cidr)s。"
 
 #, python-format
 msgid "Router %(router_id)s %(reason)s"
@@ -3090,6 +3176,13 @@ msgid ""
 "pool."
 msgstr "在同一網路上管理的子網路必須從同一子網路儲存區中進行配置。"
 
+msgid "Suffix to append to all namespace names."
+msgstr "要附加至所有名稱空間名稱的字尾。"
+
+#, python-format
+msgid "Synthetic fields %(fields)s shouldn't have more than one foreign key"
+msgstr "合成欄位 %(fields)s 不應具有多個外部索引鍵"
+
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
@@ -3125,6 +3218,12 @@ msgstr "找不到標記 %(tag)s。"
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "Tenant %(tenant_id)s 不可在此網路上建立 %(resource)s"
+
+msgid "Tenant id for connecting to designate in admin context"
+msgstr "用於連接以在管理環境定義中指定的租戶 ID"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr "用於連接以在管理環境定義中指定的租戶名稱"
 
 msgid "Tenant network creation is not enabled."
 msgstr "未啟用 Tenant 網路建立作業。"
@@ -3251,6 +3350,13 @@ msgstr "用於管理 DHCP 伺服器的驅動程式。"
 
 msgid "The driver used to manage the virtual interface."
 msgstr "用於管理虛擬介面的驅動程式。"
+
+msgid ""
+"The email address to be used when creating PTR zones. If not specified, the "
+"email address will be admin@<dns_domain>"
+msgstr ""
+"建立 PTR 區域時，要使用的電子郵件位址。如果未指定，則電子郵件位址將是 "
+"admin@<dns_domain>"
 
 #, python-format
 msgid ""
@@ -3444,6 +3550,9 @@ msgid ""
 msgstr ""
 "要使用之 Nova 端點的類型。此端點將在 Keystone 型錄予以查閱，並且應該是共用、"
 "內部或管理的其中一個。"
+
+msgid "URL for connecting to designate"
+msgstr "用於連接以指定的 URL"
 
 msgid "URL to database"
 msgstr "資料庫 URL"
@@ -3707,6 +3816,9 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "在此程序起始設定之後執行此程序的使用者（UID 或名稱）"
+
+msgid "Username for connecting to designate in admin context"
+msgstr "用於連接以在管理環境定義中指定的使用者名稱"
 
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
