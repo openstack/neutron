@@ -113,11 +113,14 @@ def run_command(url, username, password, user_args, cmd_input):
     try:
         session = XenAPI.Session(url)
         session.login_with_password(username, password)
-        host = session.xenapi.session.get_this_host(session.handle)
-        result = session.xenapi.host.call_plugin(
-            host, 'netwrap', 'run_command',
-            {'cmd': json.dumps(user_args), 'cmd_input': json.dumps(cmd_input)})
-        return json.loads(result)
+        try:
+            host = session.xenapi.session.get_this_host(session.handle)
+            result = session.xenapi.host.call_plugin(
+                host, 'netwrap', 'run_command',
+                {'cmd': json.dumps(user_args), 'cmd_input': json.dumps(cmd_input)})
+            return json.loads(result)
+        finally:
+            session.xenapi.session.logout()
     except Exception as e:
         traceback.print_exc()
         sys.exit(RC_XENAPI_ERROR)
