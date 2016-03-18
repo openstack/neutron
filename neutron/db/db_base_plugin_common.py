@@ -320,3 +320,13 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 (context.tenant_id == models_v2.Network.tenant_id) &
                 (models_v2.Network.id == models_v2.Port.network_id))
         return conditions
+
+    def _port_query_hook(self, context, original_model, query):
+        # we need to outerjoin to networks if the model query scope
+        # is necessary so we can filter based on network id. without
+        # this the conditions in the filter hook cause the networks
+        # table to be added to the FROM statement so we get lots of
+        # duplicated rows that break the COUNT operation
+        if self.model_query_scope(context, original_model):
+            query = query.outerjoin(models_v2.Network)
+        return query
