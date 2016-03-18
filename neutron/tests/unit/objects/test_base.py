@@ -11,6 +11,7 @@
 #    under the License.
 
 import copy
+import random
 
 import mock
 from oslo_db import exception as obj_exc
@@ -19,11 +20,13 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron import context
 from neutron.db import models_v2
 from neutron.objects import base
+from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -182,13 +185,18 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
+def get_random_dscp_mark():
+    return random.choice(constants.VALID_DSCP_MARKS)
+
+
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.IntegerField: tools.get_random_integer,
     obj_fields.StringField: tools.get_random_string,
     obj_fields.UUIDField: uuidutils.generate_uuid,
     obj_fields.ObjectField: lambda: None,
-    obj_fields.ListOfObjectsField: lambda: []
+    obj_fields.ListOfObjectsField: lambda: [],
+    common_types.DscpMarkField: get_random_dscp_mark,
 }
 
 

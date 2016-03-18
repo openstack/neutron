@@ -114,7 +114,7 @@ class ML2ConfigFixture(ConfigFixture):
         super(ML2ConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
-        mechanism_drivers = 'openvswitch,linuxbridge'
+        mechanism_drivers = self.env_desc.mech_drivers
         if self.env_desc.l2_pop:
             mechanism_drivers += ',l2population'
 

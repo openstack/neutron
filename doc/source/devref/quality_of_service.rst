@@ -157,8 +157,13 @@ Base object class is defined in:
 For QoS, new neutron objects were implemented:
 
 * QosPolicy: directly maps to the conceptual policy resource, as defined above.
-* QosBandwidthLimitRule: class that represents the only rule type supported by
-  initial QoS design.
+* QosBandwidthLimitRule: defines the instance-egress bandwidth limit rule
+  type, characterized by a max kbps and a max burst kbits.
+* QosDscpMarkingRule: defines the DSCP rule type, characterized by an even integer
+  between 0 and 56.  These integers are the result of the bits in the DiffServ section
+  of the IP header, and only certain configurations are valid.  As a result, the list
+  of valid DSCP rule types is: 0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
+  34, 36, 38, 40, 46, 48, and 56.
 
 Those are defined in:
 
@@ -298,6 +303,18 @@ ingress_policing_burst.
 That approach is less flexible than linux-htb, Queues and OvS QoS profiles,
 which we may explore in the future, but which will need to be used in
 combination with openflow rules.
+
+The Open vSwitch DSCP marking implementation relies on the recent addition
+of the ovs_agent_extension_api OVSAgentExtensionAPI to request access to the
+integration bridge functions:
+
+* add_flow
+* mod_flow
+* delete_flows
+* dump_flows_for
+
+The DSCP markings are in fact configured on the port by means of
+openflow rules.
 
 SR-IOV
 ++++++

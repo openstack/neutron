@@ -29,6 +29,18 @@ from neutron.tests.functional.agent.l2 import base
 
 TEST_POLICY_ID1 = "a2d72369-4246-4f19-bd3c-af51ec8d70cd"
 TEST_POLICY_ID2 = "46ebaec0-0570-43ac-82f6-60d2b03168c5"
+TEST_DSCP_MARK_1 = 14
+TEST_DSCP_MARK_2 = 30
+TEST_DSCP_MARKING_RULE_1 = rule.QosDscpMarkingRule(
+        context=None,
+        qos_policy_id=TEST_POLICY_ID1,
+        id="9f126d84-551a-4dcf-bb01-0e9c0df0c793",
+        dscp_mark=TEST_DSCP_MARK_1)
+TEST_DSCP_MARKING_RULE_2 = rule.QosDscpMarkingRule(
+        context=None,
+        qos_policy_id=TEST_POLICY_ID2,
+        id="7f126d84-551a-4dcf-bb01-0e9c0df0c793",
+        dscp_mark=TEST_DSCP_MARK_2)
 TEST_BW_LIMIT_RULE_1 = rule.QosBandwidthLimitRule(
         context=None,
         qos_policy_id=TEST_POLICY_ID1,
@@ -48,8 +60,12 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         super(OVSAgentQoSExtensionTestFramework, self).setUp()
         self.config.set_override('extensions', ['qos'], 'agent')
         self._set_pull_mock()
-        self.set_test_qos_rules(TEST_POLICY_ID1, [TEST_BW_LIMIT_RULE_1])
-        self.set_test_qos_rules(TEST_POLICY_ID2, [TEST_BW_LIMIT_RULE_2])
+        self.set_test_qos_rules(TEST_POLICY_ID1,
+                                [TEST_BW_LIMIT_RULE_1,
+                                TEST_DSCP_MARKING_RULE_1])
+        self.set_test_qos_rules(TEST_POLICY_ID2,
+                                [TEST_BW_LIMIT_RULE_2,
+                                TEST_DSCP_MARKING_RULE_2])
 
     def _set_pull_mock(self):
 
@@ -107,6 +123,27 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         l2_extensions.wait_until_bandwidth_limit_rule_applied(
             self.agent.int_br, port['vif_name'], rule)
 
+    def _assert_dscp_marking_rule_is_set(self, port, dscp_rule):
+        port_num = self.agent.int_br._get_port_ofport(port['vif_name'])
+
+        flows = self.agent.int_br.dump_flows_for(table='0',
+                                                 in_port=str(port_num))
+        tos_mark = l2_extensions.extract_mod_nw_tos_action(flows)
+        self.assertEqual(dscp_rule.dscp_mark << 2, tos_mark)
+
+    def _assert_dscp_marking_rule_not_set(self, port):
+        port_num = self.agent.int_br._get_port_ofport(port['vif_name'])
+
+        flows = self.agent.int_br.dump_flows_for(table='0',
+                                                 in_port=str(port_num))
+
+        tos_mark = l2_extensions.extract_mod_nw_tos_action(flows)
+        self.assertIsNone(tos_mark)
+
+    def wait_until_dscp_marking_rule_applied(self, port, dscp_mark):
+        l2_extensions.wait_until_dscp_marking_rule_applied(
+            self.agent.int_br, port['vif_name'], dscp_mark)
+
     def _create_port_with_qos(self):
         port_dict = self._create_test_port_dict()
         port_dict['qos_policy_id'] = TEST_POLICY_ID1
@@ -149,6 +186,37 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
                                                  TEST_BW_LIMIT_RULE_2)
 
         self._assert_bandwidth_limit_rule_not_set(self.ports[2])
+
+    def test_port_creation_with_dscp_marking(self):
+        """Make sure dscp marking rules are set in low level to ports."""
+
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports(amount=1,
+                                              policy_id=TEST_POLICY_ID1))
+        self.wait_until_ports_state(self.ports, up=True)
+
+        for port in self.ports:
+            self._assert_dscp_marking_rule_is_set(
+                port, TEST_DSCP_MARKING_RULE_1)
+
+    def test_port_creation_with_different_dscp_markings(self):
+        """Make sure different types of policies end on the right ports."""
+
+        port_dicts = self.create_test_ports(amount=3)
+
+        port_dicts[0]['qos_policy_id'] = TEST_POLICY_ID1
+        port_dicts[1]['qos_policy_id'] = TEST_POLICY_ID2
+
+        self.setup_agent_and_ports(port_dicts)
+        self.wait_until_ports_state(self.ports, up=True)
+
+        self._assert_dscp_marking_rule_is_set(self.ports[0],
+                                              TEST_DSCP_MARKING_RULE_1)
+
+        self._assert_dscp_marking_rule_is_set(self.ports[1],
+                                              TEST_DSCP_MARKING_RULE_2)
+
+        self._assert_dscp_marking_rule_not_set(self.ports[2])
 
     def test_simple_port_policy_update(self):
         self.setup_agent_and_ports(

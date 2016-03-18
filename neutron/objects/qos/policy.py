@@ -15,6 +15,7 @@
 
 import itertools
 
+from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from six import add_metaclass
@@ -36,7 +37,8 @@ from neutron.objects import rbac_db
 @add_metaclass(rbac_db.RbacNeutronMetaclass)
 class QosPolicy(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: QosDscpMarkingRule introduced
+    VERSION = '1.1'
 
     # required by RbacNeutronMetaclass
     rbac_db_model = QosPolicyRBAC
@@ -206,3 +208,13 @@ class QosPolicy(base.NeutronDbObject):
                 cls._get_bound_tenant_ids(context.session, qosport, port,
                                           qosport.port_id, policy_id))
         return set(bound_tenants)
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            if 'rules' in primitive:
+                bw_obj_name = rule_obj_impl.QosBandwidthLimitRule.obj_name()
+                primitive['rules'] = filter(
+                    lambda rule: (rule['versioned_object.name'] ==
+                                  bw_obj_name),
+                    primitive['rules'])

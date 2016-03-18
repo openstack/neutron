@@ -25,7 +25,10 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
+from neutron.objects import common_types
 from neutron.services.qos import qos_consts
+
+DSCP_MARK = 'dscp_mark'
 
 
 def get_rules(context, qos_policy_id):
@@ -42,6 +45,13 @@ def get_rules(context, qos_policy_id):
 
 @six.add_metaclass(abc.ABCMeta)
 class QosRule(base.NeutronDbObject):
+    # Version 1.0: Initial version, only BandwidthLimitRule
+    #         1.1: Added DscpMarkingRule
+    #
+    #NOTE(mangelajo): versions need to be handled from the top QosRule object
+    #                 because it's the only reference QosPolicy can make
+    #                 to them via obj_relationships version map
+    VERSION = '1.1'
 
     fields = {
         'id': obj_fields.UUIDField(),
@@ -77,8 +87,6 @@ class QosRule(base.NeutronDbObject):
 
 @obj_base.VersionedObjectRegistry.register
 class QosBandwidthLimitRule(QosRule):
-    # Version 1.0: Initial version
-    VERSION = '1.0'
 
     db_model = qos_db_model.QosBandwidthLimitRule
 
@@ -88,3 +96,15 @@ class QosBandwidthLimitRule(QosRule):
     }
 
     rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
+
+
+@obj_base.VersionedObjectRegistry.register
+class QosDscpMarkingRule(QosRule):
+
+    db_model = qos_db_model.QosDscpMarkingRule
+
+    fields = {
+        DSCP_MARK: common_types.DscpMarkField(),
+    }
+
+    rule_type = qos_consts.RULE_TYPE_DSCP_MARK

@@ -84,3 +84,22 @@ class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = policy.QosPolicy(self.context,
                                       id=generated_qos_policy_id)
         policy_obj.create()
+
+
+class QosDscpMarkingRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
+
+    _test_class = rule.QosDscpMarkingRule
+
+
+class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
+                                         testlib_api.SqlTestCase):
+
+    _test_class = rule.QosDscpMarkingRule
+
+    def setUp(self):
+        super(QosDscpMarkingRuleDbObjectTestCase, self).setUp()
+        # Prepare policy to be able to insert a rule
+        generated_qos_policy_id = self.db_obj['qos_policy_id']
+        policy_obj = policy.QosPolicy(self.context,
+                                      id=generated_qos_policy_id)
+        policy_obj.create()

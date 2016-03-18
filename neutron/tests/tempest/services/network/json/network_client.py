@@ -699,6 +699,50 @@ class NetworkClientJSON(service_client.RestClient):
         self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
+    def create_dscp_marking_rule(self, policy_id, dscp_mark):
+        uri = '%s/qos/policies/%s/dscp_marking_rules' % (
+            self.uri_prefix, policy_id)
+        post_data = self.serialize(
+            {'dscp_marking_rule': {
+                'dscp_mark': dscp_mark}
+            })
+        resp, body = self.post(uri, post_data)
+        self.expected_success(201, resp.status)
+        body = json.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_dscp_marking_rules(self, policy_id):
+        uri = '%s/qos/policies/%s/dscp_marking_rules' % (
+            self.uri_prefix, policy_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def show_dscp_marking_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/dscp_marking_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def update_dscp_marking_rule(self, policy_id, rule_id, **kwargs):
+        uri = '%s/qos/policies/%s/dscp_marking_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        post_data = {'dscp_marking_rule': kwargs}
+        resp, body = self.put(uri, json.dumps(post_data))
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_dscp_marking_rule(self, policy_id, rule_id):
+        uri = '%s/qos/policies/%s/dscp_marking_rules/%s' % (
+            self.uri_prefix, policy_id, rule_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     def list_qos_rule_types(self):
         uri = '%s/qos/rule-types' % self.uri_prefix
         resp, body = self.get(uri)

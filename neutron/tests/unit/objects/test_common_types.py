@@ -11,6 +11,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from neutron.common import constants
 from neutron.objects import common_types
 from neutron.tests import base as test_base
@@ -40,9 +42,9 @@ class TestField(object):
             self.assertEqual(out_val, self.field.from_primitive(
                 ObjectLikeThing, 'attr', prim_val))
 
+    @abc.abstractmethod
     def test_stringify(self):
-        for in_val, out_val in self.coerce_good_values:
-            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+        '''This test should validate stringify() format for new field types.'''
 
     def test_stringify_invalid(self):
         for in_val in self.coerce_bad_values:
@@ -58,3 +60,22 @@ class IPV6ModeEnumFieldTest(test_base.BaseTestCase, TestField):
         self.coerce_bad_values = ['6', 4, 'type', 'slaacc']
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class DscpMarkFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(DscpMarkFieldTest, self).setUp()
+        self.field = common_types.DscpMarkField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.VALID_DSCP_MARKS]
+        self.coerce_bad_values = ['6', 'str', [], {}, object()]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("%s" % in_val, self.field.stringify(in_val))

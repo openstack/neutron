@@ -25,7 +25,11 @@ from neutron.common import exceptions
 from neutron import context
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.plugins.ml2.drivers.openvswitch.agent import (
+        ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
+    ovs_bridge)
 from neutron.services.qos import qos_consts
 from neutron.tests import base
 
@@ -128,6 +132,10 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
         self.qos_ext = qos.QosAgentExtension()
         self.context = context.get_admin_context()
         self.connection = mock.Mock()
+        self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
+                         ovs_bridge.OVSAgentBridge('br-int'),
+                         ovs_bridge.OVSAgentBridge('br-tun'))
+        self.qos_ext.consume_api(self.agent_api)
 
         # Don't rely on used driver
         mock.patch(

@@ -81,7 +81,7 @@ class QoSPlugin(qos.QoSPluginBase):
                      page_reverse=False):
         return policy_object.QosPolicy.get_objects(context, **filters)
 
-    #TODO(QoS): Consider adding a proxy catch-all for rules, so
+    #TODO(mangelajo): need to add a proxy catch-all for rules, so
     #           we capture the API function call, and just pass
     #           the rule type as a parameter removing lots of
     #           future code duplication when we have more rules.
@@ -158,6 +158,78 @@ class QoSPlugin(qos.QoSPluginBase):
             filters[qos_consts.QOS_POLICY_ID] = policy_id
             return rule_object.QosBandwidthLimitRule.get_objects(context,
                                                                  **filters)
+
+    @db_base_plugin_common.convert_result_to_dict
+    def create_policy_dscp_marking_rule(self, context, policy_id,
+                                        dscp_marking_rule):
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosDscpMarkingRule(
+                context, qos_policy_id=policy_id,
+                **dscp_marking_rule['dscp_marking_rule'])
+            rule.create()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
+        return rule
+
+    @db_base_plugin_common.convert_result_to_dict
+    def update_policy_dscp_marking_rule(self, context, rule_id, policy_id,
+                                        dscp_marking_rule):
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            # check if the rule belong to the policy
+            policy.get_rule_by_id(rule_id)
+            rule = rule_object.QosDscpMarkingRule(
+                context, id=rule_id)
+            rule.obj_reset_changes()
+            for k, v in dscp_marking_rule['dscp_marking_rule'].items():
+                if k != 'id':
+                    setattr(rule, k, v)
+            rule.update()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
+        return rule
+
+    def delete_policy_dscp_marking_rule(self, context, rule_id, policy_id):
+        # make sure we will have a policy object to push resource update
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            policy = self._get_policy_obj(context, policy_id)
+            rule = policy.get_rule_by_id(rule_id)
+            rule.delete()
+            policy.reload_rules()
+        self.notification_driver_manager.update_policy(context, policy)
+
+    @db_base_plugin_common.filter_fields
+    @db_base_plugin_common.convert_result_to_dict
+    def get_policy_dscp_marking_rule(self, context, rule_id,
+                                     policy_id, fields=None):
+        # make sure we have access to the policy when fetching the rule
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            self._get_policy_obj(context, policy_id)
+            rule = rule_object.QosDscpMarkingRule.get_object(
+                context, id=rule_id)
+        if not rule:
+            raise n_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
+        return rule
+
+    @db_base_plugin_common.filter_fields
+    @db_base_plugin_common.convert_result_to_dict
+    def get_policy_dscp_marking_rules(self, context, policy_id,
+                                      filters=None, fields=None,
+                                      sorts=None, limit=None,
+                                      marker=None, page_reverse=False):
+        # make sure we have access to the policy when fetching rules
+        with db_api.autonested_transaction(context.session):
+            # first, validate that we have access to the policy
+            self._get_policy_obj(context, policy_id)
+            filters = filters or dict()
+            filters[qos_consts.QOS_POLICY_ID] = policy_id
+            return rule_object.QosDscpMarkingRule.get_objects(context,
+                                                              **filters)
 
     # TODO(QoS): enforce rule types when accessing rule objects
     @db_base_plugin_common.filter_fields

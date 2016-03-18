@@ -704,3 +704,144 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
         # make sure the rbac-policy is invisible to the tenant for which it's
         # being shared
         self.assertFalse(self.client.list_rbac_policies()['rbac_policies'])
+
+
+class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
+    VALID_DSCP_MARK1 = 56
+    VALID_DSCP_MARK2 = 48
+
+    @classmethod
+    def resource_setup(cls):
+        super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
+        if not test.is_extension_enabled('qos', 'network'):
+            msg = "qos extension not enabled."
+            raise cls.skipException(msg)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
+    def test_rule_create(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_dscp_marking_rule(
+            policy['id'], self.VALID_DSCP_MARK1)['dscp_marking_rule']
+
+        # Test 'show rule'
+        retrieved_rule = self.admin_client.show_dscp_marking_rule(
+            policy['id'], rule['id'])
+        retrieved_rule = retrieved_rule['dscp_marking_rule']
+        self.assertEqual(rule['id'], retrieved_rule['id'])
+        self.assertEqual(self.VALID_DSCP_MARK1, retrieved_rule['dscp_mark'])
+
+        # Test 'list rules'
+        rules = self.admin_client.list_dscp_marking_rules(policy['id'])
+        rules = rules['dscp_marking_rules']
+        rules_ids = [r['id'] for r in rules]
+        self.assertIn(rule['id'], rules_ids)
+
+        # Test 'show policy'
+        retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
+        policy_rules = retrieved_policy['policy']['rules']
+        self.assertEqual(1, len(policy_rules))
+        self.assertEqual(rule['id'], policy_rules[0]['id'])
+        self.assertEqual(qos_consts.RULE_TYPE_DSCP_MARK,
+                         policy_rules[0]['type'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('8a59b00b-ab01-4787-92f8-93a5cdf5e378')
+    def test_rule_create_fail_for_the_same_type(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.admin_client.create_dscp_marking_rule(
+            policy['id'], self.VALID_DSCP_MARK1)['dscp_marking_rule']
+
+        self.assertRaises(exceptions.Conflict,
+                          self.admin_client.create_dscp_marking_rule,
+                          policy_id=policy['id'],
+                          dscp_mark=self.VALID_DSCP_MARK2)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
+    def test_rule_update(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_dscp_marking_rule(
+            policy['id'], self.VALID_DSCP_MARK1)['dscp_marking_rule']
+
+        self.admin_client.update_dscp_marking_rule(
+            policy['id'], rule['id'], dscp_mark=self.VALID_DSCP_MARK2)
+
+        retrieved_policy = self.admin_client.show_dscp_marking_rule(
+            policy['id'], rule['id'])
+        retrieved_policy = retrieved_policy['dscp_marking_rule']
+        self.assertEqual(self.VALID_DSCP_MARK2, retrieved_policy['dscp_mark'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
+    def test_rule_delete(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_dscp_marking_rule(
+            policy['id'], self.VALID_DSCP_MARK1)['dscp_marking_rule']
+
+        retrieved_policy = self.admin_client.show_dscp_marking_rule(
+            policy['id'], rule['id'])
+        retrieved_policy = retrieved_policy['dscp_marking_rule']
+        self.assertEqual(rule['id'], retrieved_policy['id'])
+
+        self.admin_client.delete_dscp_marking_rule(policy['id'], rule['id'])
+        self.assertRaises(exceptions.NotFound,
+                          self.admin_client.show_dscp_marking_rule,
+                          policy['id'], rule['id'])
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f211222c-5808-46cb-a961-983bbab6b852')
+    def test_rule_create_rule_nonexistent_policy(self):
+        self.assertRaises(
+            exceptions.NotFound,
+            self.admin_client.create_dscp_marking_rule,
+            'policy', self.VALID_DSCP_MARK1)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
+    def test_rule_create_forbidden_for_regular_tenants(self):
+        self.assertRaises(
+            exceptions.Forbidden,
+            self.client.create_dscp_marking_rule,
+            'policy', self.VALID_DSCP_MARK1)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('33646b08-4f05-4493-a48a-bde768a18533')
+    def test_invalid_rule_create(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.admin_client.create_dscp_marking_rule,
+            policy['id'], 58)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
+    def test_get_rules_by_policy(self):
+        policy1 = self.create_qos_policy(name='test-policy1',
+                                         description='test policy1',
+                                         shared=False)
+        rule1 = self.admin_client.create_dscp_marking_rule(
+            policy1['id'], self.VALID_DSCP_MARK1)['dscp_marking_rule']
+
+        policy2 = self.create_qos_policy(name='test-policy2',
+                                         description='test policy2',
+                                         shared=False)
+        rule2 = self.admin_client.create_dscp_marking_rule(
+            policy2['id'], self.VALID_DSCP_MARK2)['dscp_marking_rule']
+
+        # Test 'list rules'
+        rules = self.admin_client.list_dscp_marking_rules(policy1['id'])
+        rules = rules['dscp_marking_rules']
+        rules_ids = [r['id'] for r in rules]
+        self.assertIn(rule1['id'], rules_ids)
+        self.assertNotIn(rule2['id'], rules_ids)
