@@ -76,6 +76,12 @@ PROTO_NAME_UDP = 'udp'
 PROTO_NAME_UDPLITE = 'udplite'
 PROTO_NAME_VRRP = 'vrrp'
 
+# TODO(amotoki): It should be moved to neutron-lib.
+# For backward-compatibility of security group rule API,
+# we keep the old value for IPv6 ICMP.
+# It should be clean up in the future.
+PROTO_NAME_IPV6_ICMP_LEGACY = 'icmpv6'
+
 PROTO_NUM_AH = 51
 PROTO_NUM_DCCP = 33
 PROTO_NUM_EGP = 8
@@ -119,6 +125,8 @@ IP_PROTOCOL_MAP = {PROTO_NAME_AH: PROTO_NUM_AH,
                    PROTO_NAME_UDP: PROTO_NUM_UDP,
                    PROTO_NAME_UDPLITE: PROTO_NUM_UDPLITE,
                    PROTO_NAME_VRRP: PROTO_NUM_VRRP}
+
+IP_PROTOCOL_NAME_ALIASES = {PROTO_NAME_IPV6_ICMP_LEGACY: PROTO_NAME_IPV6_ICMP}
 
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),

@@ -106,6 +106,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_validate_ethertype_and_protocol(self):
         fake_ipv4_rules = [{'protocol': constants.PROTO_NAME_IPV6_ICMP,
                             'ethertype': constants.IPv4},
+                           {'protocol': constants.PROTO_NAME_IPV6_ICMP_LEGACY,
+                            'ethertype': constants.IPv4},
                            {'protocol': constants.PROTO_NAME_IPV6_ENCAP,
                             'ethertype': constants.IPv4},
                            {'protocol': constants.PROTO_NAME_IPV6_ROUTE,

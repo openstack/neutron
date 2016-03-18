@@ -420,6 +420,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # problems with comparing int and string in PostgreSQL. Here this
         # string is converted to int to give an opportunity to use it as
         # before.
+        if protocol in constants.IP_PROTOCOL_NAME_ALIASES:
+            protocol = constants.IP_PROTOCOL_NAME_ALIASES[protocol]
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
     def _validate_port_range(self, rule):
@@ -455,6 +457,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if rule['protocol'] in [constants.PROTO_NAME_IPV6_ENCAP,
                                 constants.PROTO_NAME_IPV6_FRAG,
                                 constants.PROTO_NAME_IPV6_ICMP,
+                                constants.PROTO_NAME_IPV6_ICMP_LEGACY,
                                 constants.PROTO_NAME_IPV6_NONXT,
                                 constants.PROTO_NAME_IPV6_OPTS,
                                 constants.PROTO_NAME_IPV6_ROUTE]:
