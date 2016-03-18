@@ -37,3 +37,7 @@ touch_filter2: RegExpFilter, /usr/bin/touch, root, touch, /etc/netns/qdhcp-[0-9a
 
 # needed by test_ovs_flows which runs ovs-appctl ofproto/trace
 ovstrace_filter: RegExpFilter, ovs-appctl, root, ovs-appctl, ofproto/trace, .*, .*
+
+# needed for TestGetRootHelperChildPid
+bash_filter: RegExpFilter, /bin/bash, root, bash, -c, \(sleep 100\)
+sleep_kill: KillFilter, root, sleep, -9
