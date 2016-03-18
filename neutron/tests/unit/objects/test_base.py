@@ -469,6 +469,27 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             obj = self._test_class(self.context, **self.obj_fields[0])
             self.assertRaises(base.NeutronDbObjectDuplicateEntry, obj.create)
 
+    def test_update_nonidentifying_fields(self):
+        if not self._test_class.primary_keys:
+            self.skipTest(
+                'Test class %r has no primary keys' % self._test_class)
+
+        with mock.patch.object(obj_base.VersionedObject, 'obj_reset_changes'):
+            expected = self._test_class(self.context, **self.obj_fields[0])
+            for key, val in self.obj_fields[1].items():
+                if key not in expected.primary_keys:
+                    setattr(expected, key, val)
+            observed = self._test_class(self.context, **self.obj_fields[0])
+            observed.update_nonidentifying_fields(self.obj_fields[1],
+                                                  reset_changes=True)
+            self.assertEqual(expected, observed)
+            self.assertTrue(observed.obj_reset_changes.called)
+
+        with mock.patch.object(obj_base.VersionedObject, 'obj_reset_changes'):
+            obj = self._test_class(self.context, **self.obj_fields[0])
+            obj.update_nonidentifying_fields(self.obj_fields[1])
+            self.assertFalse(obj.obj_reset_changes.called)
+
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_no_changes(self, update_mock):
         with mock.patch.object(base.NeutronDbObject,

@@ -21,6 +21,7 @@ from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
+from neutron.services.qos import qos_consts
 from neutron.tests.unit.services.qos import base
 
 
@@ -156,6 +157,17 @@ class TestQosPlugin(base.BaseQosTestCase):
                 n_exc.QosRuleNotFound,
                 self.qos_plugin.delete_policy_bandwidth_limit_rule,
                 self.ctxt, self.rule.id, _policy.id)
+
+    def test_get_policy_bandwidth_limit_rule(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosBandwidthLimitRule.'
+                            'get_object') as get_object_mock:
+                self.qos_plugin.get_policy_bandwidth_limit_rule(
+                    self.ctxt, self.rule.id, self.policy.id)
+                get_object_mock.assert_called_once_with(self.ctxt,
+                    id=self.rule.id)
 
     def test_get_policy_bandwidth_limit_rules_for_policy(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -300,3 +312,19 @@ class TestQosPlugin(base.BaseQosTestCase):
                 n_exc.QosPolicyNotFound,
                 self.qos_plugin.delete_policy_bandwidth_limit_rule,
                 self.ctxt, self.rule.id, self.policy.id)
+
+    def test_verify_bad_method_call(self):
+        self.assertRaises(AttributeError, getattr, self.qos_plugin,
+                          'create_policy_bandwidth_limit_rules')
+
+    def test_get_rule_types(self):
+        core_plugin = manager.NeutronManager.get_plugin()
+        rule_types_mock = mock.PropertyMock(
+            return_value=qos_consts.VALID_RULE_TYPES)
+        filters = {'type': 'type_id'}
+        with mock.patch.object(core_plugin, 'supported_qos_rule_types',
+                               new_callable=rule_types_mock,
+                               create=True):
+            types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
+            self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
+                             sorted(type_['type'] for type_ in types))
