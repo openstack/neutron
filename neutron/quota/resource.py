@@ -36,8 +36,7 @@ def _count_resource(context, plugin, collection_name, tenant_id):
     # and count in python, allowing older plugins to still be supported
     try:
         obj_count_getter = getattr(plugin, count_getter_name)
-        meh = obj_count_getter(context, filters={'tenant_id': [tenant_id]})
-        return meh
+        return obj_count_getter(context, filters={'tenant_id': [tenant_id]})
     except (NotImplementedError, AttributeError):
         obj_getter = getattr(plugin, "get_%s" % collection_name)
         obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
