@@ -154,6 +154,7 @@ class AsyncProcess(object):
         if self._process:
             return utils.get_root_helper_child_pid(
                 self._process.pid,
+                self.cmd_without_namespace,
                 run_as_root=self.run_as_root)
 
     def _kill(self, kill_signal):
