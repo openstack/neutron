@@ -274,6 +274,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                               **kwargs)
 
         with context.session.begin(subtransactions=True):
+            # pass security_group_rule_ids to ensure
+            # consistency with deleted rules
+            kwargs['security_group_rule_ids'] = [r['id'] for r in sg.rules]
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_DELETE,
                                   exc_cls=ext_sg.SecurityGroupInUse, id=id,

@@ -214,13 +214,19 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 'precommit_update', mock.ANY, context=mock.ANY,
                 security_group=mock.ANY, security_group_id=sg_dict['id'])])
 
-    def test_security_group_precommit_delete_event(self):
+    def test_security_group_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
         with mock.patch.object(registry, "notify") as mock_notify:
             self.mixin.delete_security_group(self.ctx, sg_dict['id'])
-            mock_notify.assert_has_calls([mock.call('security_group',
-                'precommit_delete', mock.ANY, context=mock.ANY,
-                security_group=mock.ANY, security_group_id=sg_dict['id'])])
+            mock_notify.assert_has_calls(
+                [mock.call('security_group', 'precommit_delete',
+                           mock.ANY, context=mock.ANY, security_group=mock.ANY,
+                           security_group_id=sg_dict['id'],
+                           security_group_rule_ids=[mock.ANY, mock.ANY]),
+                 mock.call('security_group', 'after_delete',
+                           mock.ANY, context=mock.ANY,
+                           security_group_id=sg_dict['id'],
+                           security_group_rule_ids=[mock.ANY, mock.ANY])])
 
     def test_security_group_rule_precommit_create_event_fail(self):
         registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,
