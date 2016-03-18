@@ -26,11 +26,13 @@ from neutron._i18n import _
 # Neutron milestones for upgrade aliases
 LIBERTY = 'liberty'
 MITAKA = 'mitaka'
+NEWTON = 'newton'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
     LIBERTY,
     MITAKA,
+    NEWTON,
 ]
 
 CREATION_OPERATIONS = (sa.sql.ddl.CreateIndex,
