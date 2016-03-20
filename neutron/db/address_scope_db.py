@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
-from neutron.common import constants
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.extensions import address_scope as ext_address_scope

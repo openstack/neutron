@@ -14,6 +14,7 @@
 
 import collections
 import netaddr
+from neutron_lib import constants as l3_constants
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE, _LW
@@ -21,7 +22,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ra
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
@@ -351,7 +352,7 @@ class RouterInfo(object):
     def _internal_network_updated(self, port, subnet_id, prefix, old_prefix,
                                   updated_cidrs):
         interface_name = self.get_internal_device_name(port['id'])
-        if prefix != l3_constants.PROVISIONAL_IPV6_PD_PREFIX:
+        if prefix != n_const.PROVISIONAL_IPV6_PD_PREFIX:
             fixed_ips = port['fixed_ips']
             for fixed_ip in fixed_ips:
                 if fixed_ip['subnet_id'] == subnet_id:
@@ -432,7 +433,7 @@ class RouterInfo(object):
         if 'subnets' in port:
             for subnet in port['subnets']:
                 if (netaddr.IPNetwork(subnet['cidr']).version == 6 and
-                    subnet['cidr'] != l3_constants.PROVISIONAL_IPV6_PD_PREFIX):
+                    subnet['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX):
                     return True
 
     def enable_radvd(self, internal_ports=None):
@@ -707,7 +708,7 @@ class RouterInfo(object):
             'snat', '-m mark ! --mark %s/%s '
                     '-m conntrack --ctstate DNAT '
                     '-j SNAT --to-source %s'
-                    % (ext_in_mark, l3_constants.ROUTER_MARK_MASK, ex_gw_ip))
+                    % (ext_in_mark, n_const.ROUTER_MARK_MASK, ex_gw_ip))
         return [dont_snat_traffic_to_internal_ports_if_not_to_floating_ip,
                 snat_internal_traffic_to_floating_ip]
 
@@ -721,7 +722,7 @@ class RouterInfo(object):
         mark = self.agent_conf.external_ingress_mark
         mark_packets_entering_external_gateway_port = (
             'mark', '-i %s -j MARK --set-xmark %s/%s' %
-                    (interface_name, mark, l3_constants.ROUTER_MARK_MASK))
+                    (interface_name, mark, n_const.ROUTER_MARK_MASK))
         return [mark_packets_entering_external_gateway_port]
 
     def _empty_snat_chains(self, iptables_manager):

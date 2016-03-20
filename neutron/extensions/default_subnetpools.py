@@ -11,9 +11,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import constants
 
 
 EXTENDED_ATTRIBUTES_2_0 = {

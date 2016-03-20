@@ -12,19 +12,19 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import constants
-
+from neutron.common import constants as n_const
 
 HA_INFO = 'ha'
 EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {
         HA_INFO: {'allow_post': True, 'allow_put': True,
-                  'default': attributes.ATTR_NOT_SPECIFIED, 'is_visible': True,
+                  'default': constants.ATTR_NOT_SPECIFIED, 'is_visible': True,
                   'enforce_policy': True,
                   'convert_to': attributes.convert_to_boolean_if_not_none}
     }
@@ -90,7 +90,7 @@ class HAMaximumAgentsNumberNotValid(exceptions.NeutronException):
 class HAMinimumAgentsNumberNotValid(exceptions.NeutronException):
     message = (_("min_l3_agents_per_router config parameter is not valid. "
                  "It has to be equal to or more than %s for HA.") %
-               constants.MINIMUM_AGENTS_FOR_HA)
+               n_const.MINIMUM_AGENTS_FOR_HA)
 
 
 class L3_ext_ha_mode(extensions.ExtensionDescriptor):

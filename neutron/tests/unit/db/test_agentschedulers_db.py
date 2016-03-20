@@ -16,6 +16,7 @@
 import datetime
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 import oslo_messaging
@@ -27,7 +28,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -618,7 +619,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 network_id=port1['port']['network_id'])
             port_list = self.deserialize('json', port_res)
             self.assertEqual(port_list['ports'][0]['device_id'],
-                             constants.DEVICE_ID_RESERVED_DHCP_PORT)
+                             n_const.DEVICE_ID_RESERVED_DHCP_PORT)
 
     def _test_get_active_networks_from_admin_state_down_agent(self,
                                                               keep_services):
@@ -1083,9 +1084,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_dvr_router_csnat_rescheduling(self):
         helpers.register_l3_agent(
-            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTA, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
         helpers.register_l3_agent(
-            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTB, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
         with self.subnet() as s:
             net_id = s['subnet']['network_id']
             self._set_net_external(net_id)
@@ -1110,9 +1111,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_dvr_router_manual_rescheduling(self):
         helpers.register_l3_agent(
-            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTA, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
         helpers.register_l3_agent(
-            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTB, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
         with self.subnet() as s:
             net_id = s['subnet']['network_id']
             self._set_net_external(net_id)
@@ -1395,7 +1396,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 {'admin_state_up': False}, DHCP_HOSTA)
 
     def _network_port_create(
-            self, hosts, gateway=attributes.ATTR_NOT_SPECIFIED, owner=None):
+            self, hosts, gateway=constants.ATTR_NOT_SPECIFIED, owner=None):
         for host in hosts:
             helpers.register_dhcp_agent(host)
         with self.network() as net1:
@@ -1462,7 +1463,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 return mock_sched.called
 
     def test_reserved_dhcp_port_creation(self):
-        device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
+        device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT
         self.assertFalse(self._is_schedule_network_called(device_id))
 
     def test_unreserved_dhcp_port_creation(self):

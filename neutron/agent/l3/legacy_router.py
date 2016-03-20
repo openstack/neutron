@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as l3_constants
+
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as l3_constants
 
 
 class LegacyRouter(router.RouterInfo):

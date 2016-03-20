@@ -16,6 +16,7 @@ import binascii
 import collections
 
 import netaddr
+from neutron_lib import constants as l3_constants
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six
@@ -24,7 +25,7 @@ from neutron._i18n import _LE, _LW
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
 
@@ -347,7 +348,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def get_floating_agent_gw_interface(self, ext_net_id):
         """Filter Floating Agent GW port for the external network."""
-        fip_ports = self.router.get(l3_constants.FLOATINGIP_AGENT_INTF_KEY, [])
+        fip_ports = self.router.get(n_const.FLOATINGIP_AGENT_INTF_KEY, [])
         return next(
             (p for p in fip_ports if p['network_id'] == ext_net_id), None)
 

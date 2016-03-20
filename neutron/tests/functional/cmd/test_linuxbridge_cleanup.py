@@ -15,9 +15,9 @@
 
 import fixtures
 import mock
+from neutron_lib import constants
 
 from neutron.agent.linux import ip_lib
-from neutron.common import constants
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
 from neutron.tests.common import config_fixtures

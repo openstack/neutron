@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_log import versionutils
 import testtools
 
@@ -22,7 +23,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants
 from neutron.tests import base
 
 

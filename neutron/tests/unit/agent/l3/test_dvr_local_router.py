@@ -14,6 +14,7 @@
 
 import mock
 import netaddr
+from neutron_lib import constants as l3_constants
 from oslo_log import log
 from oslo_utils import uuidutils
 
@@ -28,7 +29,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config as base_config
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.extensions import portbindings
 from neutron.tests import base
@@ -506,7 +507,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         )
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
-        router[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = dvr_router.DvrLocalRouter(

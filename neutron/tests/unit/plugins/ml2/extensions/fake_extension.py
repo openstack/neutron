@@ -10,30 +10,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
+
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         'network_extension': {'allow_post': True,
                               'allow_put': True,
-                              'default': attr.ATTR_NOT_SPECIFIED,
+                              'default': constants.ATTR_NOT_SPECIFIED,
                               'is_visible': True,
                               'enforce_policy': True},
     },
     'subnets': {
         'subnet_extension': {'allow_post': True,
                              'allow_put': True,
-                             'default': attr.ATTR_NOT_SPECIFIED,
+                             'default': constants.ATTR_NOT_SPECIFIED,
                              'is_visible': True,
                              'enforce_policy': True},
     },
     'ports': {
         'port_extension': {'allow_post': True,
                            'allow_put': True,
-                           'default': attr.ATTR_NOT_SPECIFIED,
+                           'default': constants.ATTR_NOT_SPECIFIED,
                            'is_visible': True,
                            'enforce_policy': True},
     },

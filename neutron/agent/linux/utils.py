@@ -26,6 +26,7 @@ import threading
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_rootwrap import client
@@ -35,7 +36,6 @@ from six.moves import http_client as httplib
 
 from neutron._i18n import _, _LE
 from neutron.agent.common import config
-from neutron.common import constants
 from neutron.common import utils
 from neutron import wsgi
 

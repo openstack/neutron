@@ -13,6 +13,7 @@
 from collections import namedtuple
 
 import mock
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
@@ -20,8 +21,6 @@ import pecan
 from pecan import request
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
-from neutron.common import constants as n_const
 from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
@@ -251,7 +250,7 @@ class TestResourceController(TestRootController):
         self.port = self.plugin.create_port(context.get_admin_context(), {
             'port':
             {'tenant_id': 'tenid', 'network_id': network_id,
-             'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+             'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
              'mac_address': '00:11:22:33:44:55',
              'admin_state_up': True, 'device_id': 'FF',
              'device_owner': 'pecan', 'name': 'pecan'}})

@@ -13,13 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session
 import testtools
 
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import model_base
@@ -120,19 +119,19 @@ class IpamTestCase(object):
                   'enable_dhcp': False,
                   'gateway_ip': '10.10.10.1',
                   'shared': False,
-                  'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
-                  'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
-                  'host_routes': attributes.ATTR_NOT_SPECIFIED}
+                  'allocation_pools': constants.ATTR_NOT_SPECIFIED,
+                  'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
+                  'host_routes': constants.ATTR_NOT_SPECIFIED}
         return self.plugin.create_subnet(self.cxt, {'subnet': subnet})
 
     def _create_port(self, port_id, fixed_ips=None):
         port_fixed_ips = (fixed_ips if fixed_ips else
-                          attributes.ATTR_NOT_SPECIFIED)
+                          constants.ATTR_NOT_SPECIFIED)
         port = {'tenant_id': self.tenant_id,
                 'name': 'test_port',
                 'id': port_id,
                 'network_id': self.network_id,
-                'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                'mac_address': constants.ATTR_NOT_SPECIFIED,
                 'admin_state_up': True,
                 'status': constants.PORT_STATUS_ACTIVE,
                 'device_id': 'test_dev_id',

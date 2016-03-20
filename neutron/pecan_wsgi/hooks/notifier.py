@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log
 from oslo_serialization import jsonutils
 from pecan import hooks
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
-from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron import manager
 from neutron.pecan_wsgi import constants as pecan_constants

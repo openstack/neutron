@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 
-from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_context
 from neutron.tests import base

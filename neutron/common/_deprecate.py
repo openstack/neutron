@@ -14,7 +14,6 @@
 import copy
 import debtcollector
 import inspect
-import os
 
 from neutron._i18n import _
 
@@ -29,16 +28,12 @@ class _DeprecateSubset(object):
         if (not name.startswith("__") and not inspect.ismodule(a) and
             name in vars(self.other_mod)):
 
-            # These should be enabled after most have been cleaned up
-            # in neutron proper, which may not happen during the busy M-3.
-
-            if os.getenv('NEUTRON_SHOW_DEPRECATION_WARNINGS'):
-                debtcollector.deprecate(
-                    name,
-                    message='moved to neutron_lib',
-                    version='mitaka',
-                    removal_version='newton',
-                    stacklevel=4)
+            debtcollector.deprecate(
+                name,
+                message='moved to neutron_lib',
+                version='mitaka',
+                removal_version='newton',
+                stacklevel=4)
 
             return vars(self.other_mod)[name]
 

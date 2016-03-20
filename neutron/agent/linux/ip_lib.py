@@ -18,6 +18,7 @@ import re
 
 import eventlet
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -26,7 +27,6 @@ import six
 
 from neutron._i18n import _, _LE
 from neutron.agent.common import utils
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 
 LOG = logging.getLogger(__name__)

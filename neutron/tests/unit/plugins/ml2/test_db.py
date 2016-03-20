@@ -16,10 +16,10 @@
 import warnings
 
 import mock
+from neutron_lib import constants
 from oslo_utils import uuidutils
 from sqlalchemy.orm import query
 
-from neutron.common import constants
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db

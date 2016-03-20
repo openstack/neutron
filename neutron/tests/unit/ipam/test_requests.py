@@ -12,10 +12,10 @@
 
 import mock
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron import context
 from neutron.ipam import driver

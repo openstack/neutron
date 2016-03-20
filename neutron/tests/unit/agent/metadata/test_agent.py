@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as n_const
 import testtools
 import webob
 
@@ -20,7 +21,6 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
 from neutron.agent.metadata import config
 from neutron.agent import metadata_agent
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.tests import base
 

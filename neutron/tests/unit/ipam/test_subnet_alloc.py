@@ -15,12 +15,11 @@
 
 import mock
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.ipam import requests as ipam_req
@@ -42,9 +41,9 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
 
     def _create_subnet_pool(self, plugin, ctx, name, prefix_list,
                             min_prefixlen, ip_version,
-                            max_prefixlen=attributes.ATTR_NOT_SPECIFIED,
-                            default_prefixlen=attributes.ATTR_NOT_SPECIFIED,
-                            default_quota=attributes.ATTR_NOT_SPECIFIED,
+                            max_prefixlen=constants.ATTR_NOT_SPECIFIED,
+                            default_prefixlen=constants.ATTR_NOT_SPECIFIED,
+                            default_quota=constants.ATTR_NOT_SPECIFIED,
                             shared=False, is_default=False):
         subnetpool = {'subnetpool': {'name': name,
                                      'tenant_id': self._tenant_id,

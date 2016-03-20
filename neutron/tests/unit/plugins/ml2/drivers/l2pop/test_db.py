@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants
+from neutron_lib import constants
+
 from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import portbindings

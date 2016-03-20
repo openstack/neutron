@@ -18,12 +18,12 @@ import re
 import eventlet
 import mock
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_log import log as logging
 import six
 import testtools
 
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.plugins.common import constants as p_const

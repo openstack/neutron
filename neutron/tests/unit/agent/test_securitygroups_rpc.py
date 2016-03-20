@@ -17,6 +17,7 @@ import collections
 import contextlib
 
 import mock
+from neutron_lib import constants as const
 from oslo_config import cfg
 import oslo_messaging
 from testtools import matchers
@@ -26,7 +27,7 @@ from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import constants as const
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import rpc as n_rpc
 from neutron import context
@@ -578,7 +579,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             dhcp_rest = self.deserialize(self.fmt, dhcp_port)
             dhcp_mac = dhcp_rest['port']['mac_address']
             dhcp_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                const.IPV6_LLA_PREFIX,
+                n_const.IPV6_LLA_PREFIX,
                 dhcp_mac))
 
             res1 = self._create_port(
@@ -680,7 +681,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
+                            ipv6_ra_mode=n_const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -702,7 +703,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                const.IPV6_LLA_PREFIX,
+                n_const.IPV6_LLA_PREFIX,
                 gateway_mac))
 
             ports_rest1 = self._make_port(
@@ -748,7 +749,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
+                            ipv6_ra_mode=n_const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -770,7 +771,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                const.IPV6_LLA_PREFIX,
+                n_const.IPV6_LLA_PREFIX,
                 gateway_mac))
             # Create another router interface port
             interface_res = self._make_port(
@@ -823,7 +824,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
+                            ipv6_ra_mode=n_const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -845,7 +846,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                const.IPV6_LLA_PREFIX,
+                n_const.IPV6_LLA_PREFIX,
                 gateway_mac))
 
             ports_rest1 = self._make_port(
@@ -891,7 +892,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
+                            ipv6_ra_mode=n_const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -939,7 +940,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         with self.network() as n,\
                 self.subnet(n, gateway_ip=None, cidr=fake_prefix,
-                            ip_version=6, ipv6_ra_mode=const.IPV6_SLAAC
+                            ip_version=6, ipv6_ra_mode=n_const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']

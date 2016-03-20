@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 import webob.exc
 
@@ -34,14 +35,14 @@ class SegmentsContainDuplicateEntry(nexception.InvalidInput):
 
 def _convert_and_validate_segments(segments, valid_values=None):
     for segment in segments:
-        segment.setdefault(pnet.NETWORK_TYPE, attr.ATTR_NOT_SPECIFIED)
-        segment.setdefault(pnet.PHYSICAL_NETWORK, attr.ATTR_NOT_SPECIFIED)
+        segment.setdefault(pnet.NETWORK_TYPE, constants.ATTR_NOT_SPECIFIED)
+        segment.setdefault(pnet.PHYSICAL_NETWORK, constants.ATTR_NOT_SPECIFIED)
         segmentation_id = segment.get(pnet.SEGMENTATION_ID)
         if segmentation_id:
             segment[pnet.SEGMENTATION_ID] = attr.convert_to_int(
                 segmentation_id)
         else:
-            segment[pnet.SEGMENTATION_ID] = attr.ATTR_NOT_SPECIFIED
+            segment[pnet.SEGMENTATION_ID] = constants.ATTR_NOT_SPECIFIED
         if len(segment.keys()) != 3:
             msg = (_("Unrecognized attribute(s) '%s'") %
                    ', '.join(set(segment.keys()) -
@@ -75,7 +76,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
         SEGMENTS: {'allow_post': True, 'allow_put': True,
                    'validate': {'type:convert_segments': None},
                    'convert_list_to': attr.convert_kvp_list_to_dict,
-                   'default': attr.ATTR_NOT_SPECIFIED,
+                   'default': constants.ATTR_NOT_SPECIFIED,
                    'enforce_policy': True,
                    'is_visible': True},
     }

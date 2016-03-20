@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants
 from neutron.common import utils
+from neutron_lib import constants
+
 from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers

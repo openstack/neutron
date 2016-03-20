@@ -19,13 +19,14 @@ import datetime
 import uuid
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import timeutils
 from sqlalchemy import orm
 import testscenarios
 
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron import context as n_context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
@@ -286,18 +287,18 @@ class L3SchedulerBaseMixin(object):
 
     def _register_l3_agents(self, plugin=None):
         self.agent1 = helpers.register_l3_agent(
-            'host_1', constants.L3_AGENT_MODE_LEGACY)
+            'host_1', n_const.L3_AGENT_MODE_LEGACY)
         self.agent_id1 = self.agent1.id
         self.agent2 = helpers.register_l3_agent(
-            'host_2', constants.L3_AGENT_MODE_LEGACY)
+            'host_2', n_const.L3_AGENT_MODE_LEGACY)
         self.agent_id2 = self.agent2.id
 
     def _register_l3_dvr_agents(self):
         self.l3_dvr_agent = helpers.register_l3_agent(
-            HOST_DVR, constants.L3_AGENT_MODE_DVR)
+            HOST_DVR, n_const.L3_AGENT_MODE_DVR)
         self.l3_dvr_agent_id = self.l3_dvr_agent.id
         self.l3_dvr_snat_agent = helpers.register_l3_agent(
-            HOST_DVR_SNAT, constants.L3_AGENT_MODE_DVR_SNAT)
+            HOST_DVR_SNAT, n_const.L3_AGENT_MODE_DVR_SNAT)
         self.l3_dvr_snat_id = self.l3_dvr_snat_agent.id
 
     def _set_l3_agent_admin_state(self, context, agent_id, state=True):

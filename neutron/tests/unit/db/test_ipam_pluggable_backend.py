@@ -15,12 +15,13 @@
 
 import mock
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
@@ -294,12 +295,12 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def test_create_ipv6_pd_subnet_over_ipam(self, pool_mock):
         mocks = self._prepare_mocks_with_pool_mock(pool_mock)
         cfg.CONF.set_override('ipv6_pd_enabled', True)
-        cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
+        cidr = n_const.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
         with self.subnet(cidr=None, ip_version=6,
                          subnetpool_id=constants.IPV6_PD_POOL_ID,
-                         ipv6_ra_mode=constants.IPV6_SLAAC,
-                         ipv6_address_mode=constants.IPV6_SLAAC):
+                         ipv6_ra_mode=n_const.IPV6_SLAAC,
+                         ipv6_address_mode=n_const.IPV6_SLAAC):
             pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
             self.assertTrue(mocks['driver'].allocate_subnet.called)
             request = mocks['driver'].allocate_subnet.call_args[0][0]

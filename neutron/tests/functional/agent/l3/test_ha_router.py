@@ -16,13 +16,14 @@
 import copy
 
 import mock
+from neutron_lib import constants as l3_constants
 import six
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants as l3_constants
+from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
@@ -193,7 +194,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
                 self.assertIn(ip_addr, config)
 
         interface_id = router.router[l3_constants.INTERFACE_KEY][0]['id']
-        slaac = l3_constants.IPV6_SLAAC
+        slaac = constants.IPV6_SLAAC
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
 
         # Add a second IPv6 subnet to the router internal interface.

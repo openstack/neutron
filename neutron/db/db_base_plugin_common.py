@@ -15,13 +15,14 @@
 
 import functools
 
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import common_db_mixin
@@ -274,7 +275,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'name': network['name'],
                'tenant_id': network['tenant_id'],
                'admin_state_up': network['admin_state_up'],
-               'mtu': network.get('mtu', constants.DEFAULT_NETWORK_MTU),
+               'mtu': network.get('mtu', n_const.DEFAULT_NETWORK_MTU),
                'status': network['status'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}

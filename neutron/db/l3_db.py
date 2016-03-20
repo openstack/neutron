@@ -15,6 +15,7 @@
 import itertools
 
 import netaddr
+from neutron_lib import constants as l3_constants
 from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -31,7 +32,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
@@ -191,7 +192,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         query = (context.session.query(Router.id).
                  filter(
                      Router.id.in_(router_ids),
-                     Router.status != l3_constants.ROUTER_STATUS_ALLOCATING))
+                     Router.status != n_const.ROUTER_STATUS_ALLOCATING))
         valid_routers = set(r.id for r in query)
         if router_ids - valid_routers:
             LOG.debug("Removing routers that were either concurrently "
@@ -204,7 +205,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
-            status = router.get('status', l3_constants.ROUTER_STATUS_ACTIVE)
+            status = router.get('status', n_const.ROUTER_STATUS_ACTIVE)
             router_db = Router(id=(router.get('id') or
                                    uuidutils.generate_uuid()),
                                tenant_id=tenant_id,
@@ -240,12 +241,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def update_router(self, context, id, router):
         r = router['router']
-        gw_info = r.pop(EXTERNAL_GW_INFO, attributes.ATTR_NOT_SPECIFIED)
+        gw_info = r.pop(EXTERNAL_GW_INFO, l3_constants.ATTR_NOT_SPECIFIED)
         # check whether router needs and can be rescheduled to the proper
         # l3 agent (associated with given external network);
         # do check before update in DB as an exception will be raised
         # in case no proper l3 agent found
-        if gw_info != attributes.ATTR_NOT_SPECIFIED:
+        if gw_info != l3_constants.ATTR_NOT_SPECIFIED:
             candidates = self._check_router_needs_rescheduling(
                 context, id, gw_info)
             # Update the gateway outside of the DB update since it involves L2
@@ -330,7 +331,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # Port has no 'tenant-id', as it is hidden from user
         port_data = {'tenant_id': '',  # intentionally not set
                      'network_id': network_id,
-                     'fixed_ips': ext_ips or attributes.ATTR_NOT_SPECIFIED,
+                     'fixed_ips': ext_ips or l3_constants.ATTR_NOT_SPECIFIED,
                      'device_id': router['id'],
                      'device_owner': DEVICE_OWNER_ROUTER_GW,
                      'admin_state_up': True,
@@ -547,7 +548,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 router_subnets.append(ip['subnet_id'])
         # Ignore temporary Prefix Delegation CIDRs
         new_subnets = [s for s in new_subnets
-                       if s['cidr'] != l3_constants.PROVISIONAL_IPV6_PD_PREFIX]
+                       if s['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX]
         id_filter = {'id': router_subnets}
         subnets = self._core_plugin.get_subnets(context.elevated(),
                                                 filters=id_filter)
@@ -1742,7 +1743,7 @@ def _notify_subnetpool_address_scope_update(resource, event,
         models_v2.Subnet.network_id == models_v2.Port.network_id)
     query = query.filter(
         models_v2.Subnet.subnetpool_id == subnetpool_id,
-        RouterPort.port_type.in_(l3_constants.ROUTER_PORT_OWNERS))
+        RouterPort.port_type.in_(n_const.ROUTER_PORT_OWNERS))
     query = query.distinct()
 
     router_ids = [r[0] for r in query]

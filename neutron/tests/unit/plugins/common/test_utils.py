@@ -15,8 +15,8 @@
 import hashlib
 
 import mock
+from neutron_lib import constants
 
-from neutron.common import constants
 from neutron.plugins.common import utils
 from neutron.tests import base
 

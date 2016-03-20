@@ -15,10 +15,11 @@
 import copy
 
 import netaddr
+from neutron_lib import constants as l3_constants
 from oslo_utils import uuidutils
 from six import moves
 
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 
 _uuid = uuidutils.generate_uuid
 
@@ -268,9 +269,9 @@ def router_append_pd_enabled_subnet(router, count=1):
                                'subnet_id': subnet_id}],
                 'mac_address': str(mac_address),
                 'subnets': [{'id': subnet_id,
-                             'cidr': l3_constants.PROVISIONAL_IPV6_PD_PREFIX,
+                             'cidr': n_const.PROVISIONAL_IPV6_PD_PREFIX,
                              'gateway_ip': '::1',
-                             'ipv6_ra_mode': l3_constants.IPV6_SLAAC,
+                             'ipv6_ra_mode': n_const.IPV6_SLAAC,
                              'subnetpool_id': l3_constants.IPV6_PD_POOL_ID}]}
         interfaces.append(intf)
         pd_intfs.append(intf)

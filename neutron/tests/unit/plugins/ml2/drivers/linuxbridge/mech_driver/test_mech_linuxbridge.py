@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants
+from neutron_lib import constants
+
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.linuxbridge.mech_driver \
     import mech_linuxbridge

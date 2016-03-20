@@ -19,6 +19,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib import constants as l3_constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -32,7 +33,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
@@ -928,8 +929,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         self._create_subnet(self.fmt,
                             net_id=n['network']['id'],
                             ip_version=6, cidr='2001:db8:1::/64',
-                            ipv6_ra_mode=l3_constants.IPV6_SLAAC,
-                            ipv6_address_mode=l3_constants.IPV6_SLAAC))
+                            ipv6_ra_mode=n_const.IPV6_SLAAC,
+                            ipv6_address_mode=n_const.IPV6_SLAAC))
                 res3 = self._show('routers', r['router']['id'])
                 fips = (res3['router']['external_gateway_info']
                         ['external_fixed_ips'])
@@ -997,9 +998,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         Verify the valid use-cases of an IPv6 subnet where we
         are allowed to associate to the Neutron Router are successful.
         """
-        slaac = l3_constants.IPV6_SLAAC
-        stateful = l3_constants.DHCPV6_STATEFUL
-        stateless = l3_constants.DHCPV6_STATELESS
+        slaac = n_const.IPV6_SLAAC
+        stateful = n_const.DHCPV6_STATEFUL
+        stateless = n_const.DHCPV6_STATELESS
         use_cases = [{'msg': 'IPv6 Subnet Modes (slaac, none)',
                       'ra_mode': slaac, 'address_mode': None},
                      {'msg': 'IPv6 Subnet Modes (none, none)',
@@ -1118,13 +1119,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         """
         use_cases = [{'msg': 'IPv6 Subnet Modes (none, slaac)',
                       'ra_mode': None,
-                      'address_mode': l3_constants.IPV6_SLAAC},
+                      'address_mode': n_const.IPV6_SLAAC},
                      {'msg': 'IPv6 Subnet Modes (none, dhcpv6-stateful)',
                       'ra_mode': None,
-                      'address_mode': l3_constants.DHCPV6_STATEFUL},
+                      'address_mode': n_const.DHCPV6_STATEFUL},
                      {'msg': 'IPv6 Subnet Modes (none, dhcpv6-stateless)',
                       'ra_mode': None,
-                      'address_mode': l3_constants.DHCPV6_STATELESS}]
+                      'address_mode': n_const.DHCPV6_STATELESS}]
         for uc in use_cases:
             with self.router() as r, self.network() as n:
                 with self.subnet(network=n, cidr='fd00::1/64',
@@ -1466,18 +1467,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                  self.subnet(
                     cidr='2001:db8::/64', network=n,
                     ip_version=6,
-                    ipv6_ra_mode=l3_constants.IPV6_SLAAC,
-                    ipv6_address_mode=l3_constants.IPV6_SLAAC)) as s3, (
+                    ipv6_ra_mode=n_const.IPV6_SLAAC,
+                    ipv6_address_mode=n_const.IPV6_SLAAC)) as s3, (
                  self.subnet(
                     cidr='2001:db8:1::/64', network=n,
                     ip_version=6,
-                    ipv6_ra_mode=l3_constants.DHCPV6_STATEFUL,
-                    ipv6_address_mode=l3_constants.DHCPV6_STATEFUL)) as s4, (
+                    ipv6_ra_mode=n_const.DHCPV6_STATEFUL,
+                    ipv6_address_mode=n_const.DHCPV6_STATEFUL)) as s4, (
                  self.subnet(
                     cidr='2001:db8:2::/64', network=n,
                     ip_version=6,
-                    ipv6_ra_mode=l3_constants.DHCPV6_STATELESS,
-                    ipv6_address_mode=l3_constants.DHCPV6_STATELESS)) as s5:
+                    ipv6_ra_mode=n_const.DHCPV6_STATELESS,
+                    ipv6_address_mode=n_const.DHCPV6_STATELESS)) as s5:
                 self._set_net_external(n['network']['id'])
                 self._add_external_gateway_to_router(
                         r['router']['id'],
@@ -2573,12 +2574,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_delete_ipv6_slaac_subnet_inuse_returns_409(self):
         with self.router() as r:
-            with self._ipv6_subnet(l3_constants.IPV6_SLAAC) as s:
+            with self._ipv6_subnet(n_const.IPV6_SLAAC) as s:
                 self._test_router_delete_subnet_inuse_returns_409(r, s)
 
     def test_router_delete_dhcpv6_stateless_subnet_inuse_returns_409(self):
         with self.router() as r:
-            with self._ipv6_subnet(l3_constants.DHCPV6_STATELESS) as s:
+            with self._ipv6_subnet(n_const.DHCPV6_STATELESS) as s:
                 self._test_router_delete_subnet_inuse_returns_409(r, s)
 
     def test_delete_ext_net_with_disassociated_floating_ips(self):

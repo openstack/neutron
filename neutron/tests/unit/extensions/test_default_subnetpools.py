@@ -11,10 +11,10 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 import webob.exc
 
-from neutron.common import constants
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import default_subnetpools
 from neutron.tests.unit.db import test_db_base_plugin_v2

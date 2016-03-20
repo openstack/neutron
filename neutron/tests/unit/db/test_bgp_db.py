@@ -14,10 +14,10 @@
 
 import contextlib
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
-from neutron.api.v2 import attributes as attrs
 from neutron.extensions import bgp
 from neutron.extensions import external_net
 from neutron.extensions import portbindings
@@ -436,13 +436,14 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
             network1_id = network1['network']['id']
             network2_id = network2['network']['id']
             network3_id = network3['network']['id']
-            base_subnet_data = {'allocation_pools': attrs.ATTR_NOT_SPECIFIED,
-                                'cidr': attrs.ATTR_NOT_SPECIFIED,
-                                'prefixlen': attrs.ATTR_NOT_SPECIFIED,
-                                'ip_version': 4,
-                                'enable_dhcp': True,
-                                'dns_nameservers': attrs.ATTR_NOT_SPECIFIED,
-                                'host_routes': attrs.ATTR_NOT_SPECIFIED}
+            base_subnet_data = {
+                'allocation_pools': constants.ATTR_NOT_SPECIFIED,
+                'cidr': constants.ATTR_NOT_SPECIFIED,
+                'prefixlen': constants.ATTR_NOT_SPECIFIED,
+                'ip_version': 4,
+                'enable_dhcp': True,
+                'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
+                'host_routes': constants.ATTR_NOT_SPECIFIED}
             subnet1_data = {'network_id': network1_id,
                             'subnetpool_id': sp1['id'],
                             'name': 'subnet1',
@@ -701,8 +702,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED}}
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
             fip_data = {'floatingip': {'floating_network_id': gw_net_id,
@@ -753,8 +754,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED}}
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
             fip_data = {'floatingip': {'floating_network_id': gw_net_id,
@@ -807,8 +808,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED,
                                 portbindings.HOST_ID: 'test-host'}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
@@ -872,8 +873,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED,
                                 portbindings.HOST_ID: 'test-host'}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
@@ -928,8 +929,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED,
                                 portbindings.HOST_ID: 'test-host'}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
@@ -984,8 +985,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                 'admin_state_up': True,
                                 'device_id': _uuid(),
                                 'device_owner': 'compute:nova',
-                                'mac_address': attrs.ATTR_NOT_SPECIFIED,
-                                'fixed_ips': attrs.ATTR_NOT_SPECIFIED}}
+                                'mac_address': constants.ATTR_NOT_SPECIFIED,
+                                'fixed_ips': constants.ATTR_NOT_SPECIFIED}}
             fixed_port = self.plugin.create_port(self.context,
                                                  fixed_port_data)
             fip_data = {'floatingip': {'floating_network_id': gw_net_id,

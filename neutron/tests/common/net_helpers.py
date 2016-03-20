@@ -27,6 +27,7 @@ import subprocess
 
 import fixtures
 import netaddr
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
@@ -37,7 +38,6 @@ from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants as n_const
 from neutron.db import db_base_plugin_common
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent

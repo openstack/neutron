@@ -13,13 +13,14 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 from neutron.tests import base
@@ -377,7 +378,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             actions='ct(commit,zone=NXM_NX_REG6[0..15]),'
             'strip_vlan,output:{:d}'.format(self.port_ofport),
             dl_dst=self.port_mac,
-            dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
+            dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
             priority=70,
             reg5=self.port_ofport,
@@ -420,7 +421,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             actions='resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             dl_src=self.port_mac,
-            dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
+            dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_UDP,
             priority=70,
             ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,

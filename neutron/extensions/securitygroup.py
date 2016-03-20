@@ -16,6 +16,7 @@
 import abc
 
 import netaddr
+from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -25,7 +26,7 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron.common import constants as const
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron import manager
 from neutron.quota import resource_registry
@@ -217,7 +218,7 @@ attr.validators['type:name_not_default'] = _validate_name_not_default
 # in neutron.common.constants. IP_PROTOCOL_MAP in neutron-lib should
 # be updated and neutron should consume it once Mitaka backport is done.
 sg_supported_protocols = ([None] + list(const.IP_PROTOCOL_MAP.keys()) +
-                          list(const.IP_PROTOCOL_NAME_ALIASES.keys()))
+                          list(n_const.IP_PROTOCOL_NAME_ALIASES.keys()))
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 SECURITYGROUPS = 'security_groups'
 SECURITYGROUPRULES = 'security_group_rules'
@@ -283,7 +284,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                'allow_put': True,
                                'is_visible': True,
                                'convert_to': convert_to_uuid_list_or_none,
-                               'default': attr.ATTR_NOT_SPECIFIED}}}
+                               'default': const.ATTR_NOT_SPECIFIED}}}
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
                default=10,

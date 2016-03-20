@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as n_const
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
@@ -21,7 +22,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LE
-from neutron.common import constants as n_const
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db

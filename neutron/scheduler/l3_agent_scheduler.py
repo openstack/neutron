@@ -19,6 +19,7 @@ import functools
 import itertools
 import random
 
+from neutron_lib import constants as lib_const
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -135,7 +136,7 @@ class L3Scheduler(object):
         :returns: True if routers have been successfully assigned to host
         """
         l3_agent = plugin.get_enabled_agent_on_host(
-            context, constants.AGENT_TYPE_L3, host)
+            context, lib_const.AGENT_TYPE_L3, host)
         if not l3_agent:
             return False
 
@@ -143,7 +144,7 @@ class L3Scheduler(object):
             context, plugin, router_ids)
         if not unscheduled_routers:
             if utils.is_extension_supported(
-                    plugin, constants.L3_HA_MODE_EXT_ALIAS):
+                    plugin, lib_const.L3_HA_MODE_EXT_ALIAS):
                 return self._schedule_ha_routers_to_additional_agent(
                     plugin, context, l3_agent)
 

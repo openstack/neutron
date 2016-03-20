@@ -15,8 +15,10 @@
 
 import functools
 import re
+import sys
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -24,12 +26,12 @@ import six
 import webob.exc
 
 from neutron._i18n import _
-from neutron.common import constants
+from neutron.common import _deprecate
+from neutron.common import constants as n_const
 
 
 LOG = logging.getLogger(__name__)
 
-ATTR_NOT_SPECIFIED = object()
 # Defining a constant to avoid repeating string literal in several modules
 SHARED = 'shared'
 
@@ -75,7 +77,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
 
 
 def is_attr_set(attribute):
-    return not (attribute is None or attribute is ATTR_NOT_SPECIFIED)
+    return not (attribute is None or attribute is constants.ATTR_NOT_SPECIFIED)
 
 
 def _validate_list_of_items(item_validator, data, *args, **kwargs):
@@ -192,8 +194,8 @@ def _validate_mac_address(data, valid_values=None):
         valid_mac = False
 
     if valid_mac:
-        valid_mac = not netaddr.EUI(data) in map(netaddr.EUI,
-                    constants.INVALID_MAC_ADDRESSES)
+        valid_mac = not netaddr.EUI(data) in map(
+            netaddr.EUI, constants.INVALID_MAC_ADDRESSES)
     # TODO(arosen): The code in this file should be refactored
     # so it catches the correct exceptions. _validate_no_whitespace
     # raises AttributeError if data is None.
@@ -600,13 +602,10 @@ def convert_to_list(data):
         return [data]
 
 
-HEX_ELEM = '[0-9A-Fa-f]'
-UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
-                         HEX_ELEM + '{4}', HEX_ELEM + '{4}',
-                         HEX_ELEM + '{12}'])
 # Note: In order to ensure that the MAC address is unicast the first byte
 # must be even.
-MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
+MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (constants.HEX_ELEM,
+                                                constants.HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
 validators = {'type:dict': _validate_dict,
@@ -721,12 +720,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': convert_to_boolean,
                            'is_visible': True},
         'mac_address': {'allow_post': True, 'allow_put': True,
-                        'default': ATTR_NOT_SPECIFIED,
+                        'default': constants.ATTR_NOT_SPECIFIED,
                         'validate': {'type:mac_address': None},
                         'enforce_policy': True,
                         'is_visible': True},
         'fixed_ips': {'allow_post': True, 'allow_put': True,
-                      'default': ATTR_NOT_SPECIFIED,
+                      'default': constants.ATTR_NOT_SPECIFIED,
                       'convert_list_to': convert_kvp_list_to_dict,
                       'validate': {'type:fixed_ips': None},
                       'enforce_policy': True,
@@ -764,7 +763,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'is_visible': True},
         'subnetpool_id': {'allow_post': True,
                           'allow_put': False,
-                          'default': ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'required_by_policy': False,
                           'validate': {'type:subnetpool_id_or_none': None},
                           'is_visible': True},
@@ -772,31 +771,31 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'allow_put': False,
                       'validate': {'type:non_negative': None},
                       'convert_to': convert_to_int,
-                      'default': ATTR_NOT_SPECIFIED,
+                      'default': constants.ATTR_NOT_SPECIFIED,
                       'required_by_policy': False,
                       'is_visible': False},
         'cidr': {'allow_post': True,
                  'allow_put': False,
-                 'default': ATTR_NOT_SPECIFIED,
+                 'default': constants.ATTR_NOT_SPECIFIED,
                  'validate': {'type:subnet_or_none': None},
                  'required_by_policy': False,
                  'is_visible': True},
         'gateway_ip': {'allow_post': True, 'allow_put': True,
-                       'default': ATTR_NOT_SPECIFIED,
+                       'default': constants.ATTR_NOT_SPECIFIED,
                        'validate': {'type:ip_address_or_none': None},
                        'is_visible': True},
         'allocation_pools': {'allow_post': True, 'allow_put': True,
-                             'default': ATTR_NOT_SPECIFIED,
+                             'default': constants.ATTR_NOT_SPECIFIED,
                              'validate': {'type:ip_pools': None},
                              'is_visible': True},
         'dns_nameservers': {'allow_post': True, 'allow_put': True,
                             'convert_to': convert_none_to_empty_list,
-                            'default': ATTR_NOT_SPECIFIED,
+                            'default': constants.ATTR_NOT_SPECIFIED,
                             'validate': {'type:nameservers': None},
                             'is_visible': True},
         'host_routes': {'allow_post': True, 'allow_put': True,
                         'convert_to': convert_none_to_empty_list,
-                        'default': ATTR_NOT_SPECIFIED,
+                        'default': constants.ATTR_NOT_SPECIFIED,
                         'validate': {'type:hostroutes': None},
                         'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
@@ -808,13 +807,13 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'convert_to': convert_to_boolean,
                         'is_visible': True},
         'ipv6_ra_mode': {'allow_post': True, 'allow_put': False,
-                         'default': ATTR_NOT_SPECIFIED,
-                         'validate': {'type:values': constants.IPV6_MODES},
+                         'default': constants.ATTR_NOT_SPECIFIED,
+                         'validate': {'type:values': n_const.IPV6_MODES},
                          'is_visible': True},
         'ipv6_address_mode': {'allow_post': True, 'allow_put': False,
-                              'default': ATTR_NOT_SPECIFIED,
+                              'default': constants.ATTR_NOT_SPECIFIED,
                               'validate': {'type:values':
-                                           constants.IPV6_MODES},
+                                           n_const.IPV6_MODES},
                               'is_visible': True},
         SHARED: {'allow_post': False,
                  'allow_put': False,
@@ -847,7 +846,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                           'allow_put': True,
                           'validate': {'type:non_negative': None},
                           'convert_to': convert_to_int,
-                          'default': ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'is_visible': True},
         'ip_version': {'allow_post': False,
                        'allow_put': False,
@@ -856,17 +855,17 @@ RESOURCE_ATTRIBUTE_MAP = {
                               'allow_put': True,
                               'validate': {'type:non_negative': None},
                               'convert_to': convert_to_int,
-                              'default': ATTR_NOT_SPECIFIED,
+                              'default': constants.ATTR_NOT_SPECIFIED,
                               'is_visible': True},
         'min_prefixlen': {'allow_post': True,
                           'allow_put': True,
-                          'default': ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'validate': {'type:non_negative': None},
                           'convert_to': convert_to_int,
                           'is_visible': True},
         'max_prefixlen': {'allow_post': True,
                           'allow_put': True,
-                          'default': ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'validate': {'type:non_negative': None},
                           'convert_to': convert_to_int,
                           'is_visible': True},
@@ -951,7 +950,7 @@ def fill_default_value(attr_info, res_dict,
 def convert_value(attr_info, res_dict, exc_cls=ValueError):
     for attr, attr_vals in six.iteritems(attr_info):
         if (attr not in res_dict or
-            res_dict[attr] is ATTR_NOT_SPECIFIED):
+                res_dict[attr] is constants.ATTR_NOT_SPECIFIED):
             continue
         # Convert values if necessary
         if 'convert_to' in attr_vals:
@@ -990,3 +989,22 @@ def verify_attributes(res_dict, attr_info):
     if extra_keys:
         msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
         raise webob.exc.HTTPBadRequest(msg)
+
+
+# Shim added to move the following to neutron_lib.constants:
+# ATTR_NOT_SPECIFIED
+# HEX_ELEM
+# UUID_PATTERN
+
+# Neutron-lib migration shim. This will wrap any constants that are moved
+# to that library in a deprecation warning, until they can be updated to
+# import directly from their new location.
+# If you're wondering why we bother saving _OLD_REF, it is because if we
+# do not, then the original module we are overwriting gets garbage collected,
+# and then you will find some super strange behavior with inherited classes
+# and the like. Saving a ref keeps it around.
+
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_OLD_REF = sys.modules[__name__]
+sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), constants)
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE

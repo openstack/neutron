@@ -17,6 +17,7 @@ import datetime
 import random
 import time
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import loopingcall
@@ -26,7 +27,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context as ncontext
 from neutron.db import agents_db
@@ -392,7 +393,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         # DHCP agent per network so we don't have to worry about one
         # update_port passing and another failing
         for port in ports:
-            port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
+            port['device_id'] = n_const.DEVICE_ID_RESERVED_DHCP_PORT
             self.update_port(context, port['id'], dict(port=port))
         with context.session.begin():
             context.session.delete(binding)

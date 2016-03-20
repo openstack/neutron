@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
 import webob.exc
@@ -103,7 +104,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                         'validate': {'type:validate_allowed_address_pairs':
                                      None},
                         'enforce_policy': True,
-                        'default': attr.ATTR_NOT_SPECIFIED,
+                        'default': constants.ATTR_NOT_SPECIFIED,
                         'is_visible': True},
     }
 }

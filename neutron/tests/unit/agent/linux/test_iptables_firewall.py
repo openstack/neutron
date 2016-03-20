@@ -16,6 +16,7 @@
 import copy
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 import six
 import testtools
@@ -25,7 +26,6 @@ from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.tests import base

@@ -17,13 +17,12 @@ import math
 import operator
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as lib_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.ipam import driver
@@ -259,8 +258,8 @@ class SubnetPoolReader(object):
         return netaddr.IPNetwork(cidr).prefixlen
 
     def _read_id(self, subnetpool):
-        id = subnetpool.get('id', attributes.ATTR_NOT_SPECIFIED)
-        if id is attributes.ATTR_NOT_SPECIFIED:
+        id = subnetpool.get('id', constants.ATTR_NOT_SPECIFIED)
+        if id is constants.ATTR_NOT_SPECIFIED:
             id = uuidutils.generate_uuid()
         self.id = id
 
@@ -291,13 +290,13 @@ class SubnetPoolReader(object):
         prefixlen_attr = type + '_prefixlen'
         prefix_attr = type + '_prefix'
         prefixlen = subnetpool.get(prefixlen_attr,
-                                   attributes.ATTR_NOT_SPECIFIED)
+                                   constants.ATTR_NOT_SPECIFIED)
         wildcard = self._sp_helper.wildcard(self.ip_version)
 
-        if prefixlen is attributes.ATTR_NOT_SPECIFIED and default_bound:
+        if prefixlen is constants.ATTR_NOT_SPECIFIED and default_bound:
             prefixlen = default_bound
 
-        if prefixlen is not attributes.ATTR_NOT_SPECIFIED:
+        if prefixlen is not constants.ATTR_NOT_SPECIFIED:
             prefix_cidr = '/'.join((wildcard,
                                     str(prefixlen)))
             setattr(self, prefix_attr, prefix_cidr)
@@ -316,7 +315,7 @@ class SubnetPoolReader(object):
                 raise n_exc.PrefixVersionMismatch()
         self.default_quota = subnetpool.get('default_quota')
 
-        if self.default_quota is attributes.ATTR_NOT_SPECIFIED:
+        if self.default_quota is constants.ATTR_NOT_SPECIFIED:
             self.default_quota = None
 
         self.ip_version = ip_version
@@ -324,7 +323,7 @@ class SubnetPoolReader(object):
 
     def _read_address_scope(self, subnetpool):
         self.address_scope_id = subnetpool.get('address_scope_id',
-                                               attributes.ATTR_NOT_SPECIFIED)
+                                               constants.ATTR_NOT_SPECIFIED)
 
     def _compact_subnetpool_prefix_list(self, prefix_list):
         """Compact any overlapping prefixes in prefix_list and return the

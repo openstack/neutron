@@ -13,10 +13,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.api.v2 import attributes
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron import context
 from neutron.extensions import external_net
@@ -32,7 +32,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def setUp(self):
         super(L3DvrTestCase, self).setUp()
         self.l3_agent = helpers.register_l3_agent(
-            agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
+            agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, distributed=True, ha=False):
         return (super(L3DvrTestCase, self).
@@ -129,8 +129,8 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             self.context,
             {'port': {'tenant_id': '',
                       'network_id': network_id,
-                      'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                      'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                      'mac_address': constants.ATTR_NOT_SPECIFIED,
+                      'fixed_ips': constants.ATTR_NOT_SPECIFIED,
                       'device_id': self.l3_agent['id'],
                       'device_owner': constants.DEVICE_OWNER_AGENT_GW,
                       portbindings.HOST_ID: '',
@@ -283,9 +283,9 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 {'port': {portbindings.HOST_ID: 'host2'}})
             # and create l3 agents on corresponding hosts
             helpers.register_l3_agent(host='host1',
-                agent_mode=constants.L3_AGENT_MODE_DVR)
+                agent_mode=n_const.L3_AGENT_MODE_DVR)
             helpers.register_l3_agent(host='host2',
-                agent_mode=constants.L3_AGENT_MODE_DVR)
+                agent_mode=n_const.L3_AGENT_MODE_DVR)
 
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
@@ -456,7 +456,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def test_update_service_port_with_allowed_address_pairs(self):
         HOST1 = 'host1'
         helpers.register_l3_agent(
-            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+            host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR)
         router = self._create_router()
         private_net1 = self._make_network(self.fmt, 'net1', True)
         test_allocation_pools = [{'start': '10.1.0.2',
@@ -595,10 +595,10 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         # register l3 agents in dvr mode in addition to existing dvr_snat agent
         HOST1 = 'host1'
         helpers.register_l3_agent(
-            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+            host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR)
         HOST2 = 'host2'
         helpers.register_l3_agent(
-            host=HOST2, agent_mode=constants.L3_AGENT_MODE_DVR)
+            host=HOST2, agent_mode=n_const.L3_AGENT_MODE_DVR)
         router = self._create_router()
         with self.subnet() as subnet:
             self.l3_plugin.add_router_interface(
@@ -636,7 +636,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         HOST = 'host1'
         non_admin_tenant = 'tenant1'
         helpers.register_l3_agent(
-            host=HOST, agent_mode=constants.L3_AGENT_MODE_DVR)
+            host=HOST, agent_mode=n_const.L3_AGENT_MODE_DVR)
         router = self._create_router()
         with self.network(shared=True) as net,\
                 self.subnet(network=net) as subnet,\
@@ -682,7 +682,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         HOST1, HOST2 = 'host1', 'host2'
         for host in [HOST1, HOST2]:
             helpers.register_l3_agent(
-                host=host, agent_mode=constants.L3_AGENT_MODE_DVR)
+                host=host, agent_mode=n_const.L3_AGENT_MODE_DVR)
 
         router = self._create_router()
         arg_list = (portbindings.HOST_ID,)
@@ -753,7 +753,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         HOST1, HOST2, HOST3 = 'host1', 'host2', 'host3'
         for host in [HOST1, HOST2, HOST3]:
             helpers.register_l3_agent(
-                host=host, agent_mode=constants.L3_AGENT_MODE_DVR)
+                host=host, agent_mode=n_const.L3_AGENT_MODE_DVR)
 
         router = self._create_router()
         arg_list = (portbindings.HOST_ID,)
@@ -1094,7 +1094,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
     def test_remove_router_interface(self):
         HOST1 = 'host1'
         helpers.register_l3_agent(
-            host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
+            host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR)
         router = self._create_router()
         arg_list = (portbindings.HOST_ID,)
         with self.subnet() as subnet,\

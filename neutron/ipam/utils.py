@@ -14,7 +14,7 @@
 #    under the License.
 
 import netaddr
-from neutron.common import constants
+from neutron_lib import constants
 
 
 def check_subnet_ip(cidr, ip_address):

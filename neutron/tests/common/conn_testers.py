@@ -15,12 +15,12 @@
 import functools
 
 import fixtures
-from neutron_lib import constants as n_consts
+from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent import firewall
 from neutron.agent.linux import ip_lib
-from neutron.common import constants
+from neutron.common import constants as n_consts
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
@@ -29,8 +29,8 @@ from neutron.tests.common import net_helpers
 # sufficient for correct scenarios but not too high because of negative
 # tests.
 ICMP_VERSION_TIMEOUTS = {
-    n_consts.IP_VERSION_4: 1,
-    n_consts.IP_VERSION_6: 2,
+    constants.IP_VERSION_4: 1,
+    constants.IP_VERSION_6: 2,
 }
 
 
@@ -61,7 +61,7 @@ class ConnectionTester(fixtures.Fixture):
     UDP = net_helpers.NetcatTester.UDP
     TCP = net_helpers.NetcatTester.TCP
     ICMP = constants.PROTO_NAME_ICMP
-    ARP = constants.ETHERTYPE_NAME_ARP
+    ARP = n_consts.ETHERTYPE_NAME_ARP
     INGRESS = firewall.INGRESS_DIRECTION
     EGRESS = firewall.EGRESS_DIRECTION
 

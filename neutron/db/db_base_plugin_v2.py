@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -33,7 +34,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
@@ -326,7 +327,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
-                    'mtu': n.get('mtu', constants.DEFAULT_NETWORK_MTU),
+                    'mtu': n.get('mtu', n_const.DEFAULT_NETWORK_MTU),
                     'status': n.get('status', constants.NET_STATUS_ACTIVE),
                     'description': n.get('description')}
             network = models_v2.Network(**args)
@@ -532,8 +533,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                        "subnets.")
             raise exc.BadRequest(resource='subnets', msg=reason)
 
-        mode_list = [constants.IPV6_SLAAC,
-                     constants.DHCPV6_STATELESS]
+        mode_list = [n_const.IPV6_SLAAC,
+                     n_const.DHCPV6_STATELESS]
 
         ra_mode = subnet.get('ipv6_ra_mode')
         if ra_mode not in mode_list:
@@ -607,10 +608,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         :param subnet: The subnet dict from the request
         """
         use_default_subnetpool = subnet.get('use_default_subnetpool')
-        if use_default_subnetpool == attributes.ATTR_NOT_SPECIFIED:
+        if use_default_subnetpool == constants.ATTR_NOT_SPECIFIED:
             use_default_subnetpool = False
         subnetpool_id = subnet.get('subnetpool_id')
-        if subnetpool_id == attributes.ATTR_NOT_SPECIFIED:
+        if subnetpool_id == constants.ATTR_NOT_SPECIFIED:
             subnetpool_id = None
 
         if use_default_subnetpool and subnetpool_id:
@@ -655,8 +656,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_subnet(self, context, subnet):
 
         s = subnet['subnet']
-        cidr = s.get('cidr', attributes.ATTR_NOT_SPECIFIED)
-        prefixlen = s.get('prefixlen', attributes.ATTR_NOT_SPECIFIED)
+        cidr = s.get('cidr', constants.ATTR_NOT_SPECIFIED)
+        prefixlen = s.get('prefixlen', constants.ATTR_NOT_SPECIFIED)
         has_cidr = attributes.is_attr_set(cidr)
         has_prefixlen = attributes.is_attr_set(prefixlen)
 
@@ -684,7 +685,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     subnetpool_id = None
                     self._validate_subnet(context, s)
                 else:
-                    prefix = constants.PROVISIONAL_IPV6_PD_PREFIX
+                    prefix = n_const.PROVISIONAL_IPV6_PD_PREFIX
                     subnet['subnet']['cidr'] = prefix
                     self._validate_subnet_for_pd(s)
         else:
@@ -974,7 +975,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
-        if sp_reader.address_scope_id is attributes.ATTR_NOT_SPECIFIED:
+        if sp_reader.address_scope_id is constants.ATTR_NOT_SPECIFIED:
             sp_reader.address_scope_id = None
         if sp_reader.is_default:
             self._check_default_subnetpool_exists(context,
@@ -1016,9 +1017,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _updated_subnetpool_dict(self, model, new_pool):
         updated = {}
-        new_prefixes = new_pool.get('prefixes', attributes.ATTR_NOT_SPECIFIED)
+        new_prefixes = new_pool.get('prefixes', constants.ATTR_NOT_SPECIFIED)
         orig_prefixes = [str(x.cidr) for x in model['prefixes']]
-        if new_prefixes is not attributes.ATTR_NOT_SPECIFIED:
+        if new_prefixes is not constants.ATTR_NOT_SPECIFIED:
             orig_set = netaddr.IPSet(orig_prefixes)
             new_set = netaddr.IPSet(new_prefixes)
             if not orig_set.issubset(new_set):
@@ -1038,8 +1039,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return updated
 
     def _write_key(self, key, update, orig, new_dict):
-        new_val = new_dict.get(key, attributes.ATTR_NOT_SPECIFIED)
-        if new_val is not attributes.ATTR_NOT_SPECIFIED:
+        new_val = new_dict.get(key, constants.ATTR_NOT_SPECIFIED)
+        if new_val is not constants.ATTR_NOT_SPECIFIED:
             update[key] = new_dict[key]
         else:
             update[key] = orig[key]
@@ -1233,7 +1234,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._get_network(context, network_id)
 
             # Create the port
-            if p['mac_address'] is attributes.ATTR_NOT_SPECIFIED:
+            if p['mac_address'] is constants.ATTR_NOT_SPECIFIED:
                 db_port = self._create_port(context, network_id, port_data)
                 p['mac_address'] = db_port['mac_address']
             else:

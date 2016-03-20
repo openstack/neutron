@@ -15,8 +15,8 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as n_const
 
-from neutron.common import constants as n_const
 from neutron.tests.unit.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc_base
 

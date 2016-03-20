@@ -14,11 +14,11 @@
 #    under the License.
 import os.path
 
+from neutron_lib import constants
 import testtools
 
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
-from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers

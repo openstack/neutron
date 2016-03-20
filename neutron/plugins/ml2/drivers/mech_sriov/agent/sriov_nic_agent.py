@@ -20,6 +20,7 @@ import socket
 import sys
 import time
 
+from neutron_lib import constants as n_constants
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -32,7 +33,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.common import config as common_config
-from neutron.common import constants as n_constants
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context

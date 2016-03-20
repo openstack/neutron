@@ -35,6 +35,7 @@ import uuid
 
 from eventlet.green import subprocess
 import netaddr
+from neutron_lib import constants as n_const
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -46,7 +47,6 @@ import six
 from stevedore import driver
 
 from neutron._i18n import _, _LE
-from neutron.common import constants as n_const
 from neutron.db import api as db_api
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

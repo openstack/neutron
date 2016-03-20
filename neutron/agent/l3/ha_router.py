@@ -16,6 +16,7 @@ import os
 import shutil
 
 import netaddr
+from neutron_lib import constants as n_consts
 from oslo_log import log as logging
 
 from neutron._i18n import _LE
@@ -23,7 +24,6 @@ from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
-from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
 from neutron.extensions import portbindings
 

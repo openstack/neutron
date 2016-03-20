@@ -18,6 +18,7 @@ import fixtures
 import mock
 import testscenarios
 
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
@@ -26,7 +27,6 @@ from testtools.content import text_content
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
-from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt

@@ -14,6 +14,7 @@
 
 import abc
 
+from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 import six
 
@@ -62,7 +63,7 @@ RESOURCE_ATTRIBUTE_MAP = {
     attr.SUBNETPOOLS: {
         ADDRESS_SCOPE_ID: {'allow_post': True,
                            'allow_put': True,
-                           'default': attr.ATTR_NOT_SPECIFIED,
+                           'default': constants.ATTR_NOT_SPECIFIED,
                            'validate': {'type:uuid_or_none': None},
                            'is_visible': True}
     },

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -33,7 +34,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         VLANTRANSPARENT: {'allow_post': True, 'allow_put': False,
                           'convert_to': attributes.convert_to_boolean,
-                          'default': attributes.ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'is_visible': True},
     },
 }

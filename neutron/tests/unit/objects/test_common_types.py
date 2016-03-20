@@ -13,6 +13,8 @@
 
 import abc
 
+from neutron_lib import constants as const
+
 from neutron.common import constants
 from neutron.objects import common_types
 from neutron.tests import base as test_base
@@ -164,7 +166,7 @@ class IpProtocolEnumFieldTest(test_base.BaseTestCase, TestField):
         self.field = common_types.IpProtocolEnumField()
         self.coerce_good_values = [(val, val)
                                    for val in
-                                   list(constants.IP_PROTOCOL_MAP.keys())]
+                                   list(const.IP_PROTOCOL_MAP.keys())]
         self.coerce_bad_values = ['test', '8', 10, 'Udp']
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values

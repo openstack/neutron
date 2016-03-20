@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants as lib_const
 from neutron_lib import exceptions
 from oslo_log import log as logging
 
@@ -367,14 +368,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_ingress(port)
 
     def _initialize_egress_ipv6_icmp(self, port):
-        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
+        for icmp_type in lib_const.ICMPV6_ALLOWED_TYPES:
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=95,
                 in_port=port.ofport,
                 reg_port=port.ofport,
                 dl_type=constants.ETHERTYPE_IPV6,
-                nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
                 actions='normal'
             )
@@ -439,7 +440,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 reg_port=port.ofport,
                 in_port=port.ofport,
                 dl_type=dl_type,
-                nw_proto=constants.PROTO_NUM_UDP,
+                nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
                 actions='resubmit(,{:d})'.format(
@@ -455,7 +456,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 in_port=port.ofport,
                 reg_port=port.ofport,
                 dl_type=dl_type,
-                nw_proto=constants.PROTO_NUM_UDP,
+                nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
                 actions='drop'
@@ -546,14 +547,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         )
 
     def _initialize_ingress_ipv6_icmp(self, port):
-        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
+        for icmp_type in lib_const.ICMPV6_ALLOWED_TYPES:
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
                 reg_port=port.ofport,
                 dl_dst=port.mac,
                 dl_type=constants.ETHERTYPE_IPV6,
-                nw_proto=constants.PROTO_NUM_IPV6_ICMP,
+                nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
                 actions='strip_vlan,output:{:d}'.format(port.ofport),
             )
@@ -579,7 +580,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 priority=95,
                 reg_port=port.ofport,
                 dl_type=dl_type,
-                nw_proto=constants.PROTO_NUM_UDP,
+                nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
                 actions='strip_vlan,output:{:d}'.format(port.ofport),

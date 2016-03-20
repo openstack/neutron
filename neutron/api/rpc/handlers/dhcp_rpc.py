@@ -17,6 +17,7 @@ import copy
 import itertools
 import operator
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -25,8 +26,7 @@ import oslo_messaging
 from oslo_utils import excutils
 
 from neutron._i18n import _, _LW
-from neutron.api.v2 import attributes
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import api as db_api
@@ -65,7 +65,7 @@ class DhcpRpcCallback(object):
     #           DHCP agent since Juno, so similar rationale for not bumping the
     #           major version as above applies here too.
     target = oslo_messaging.Target(
-        namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
+        namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
         version='1.4')
 
     def _get_active_networks(self, context, **kwargs):
@@ -203,7 +203,7 @@ class DhcpRpcCallback(object):
         port['port']['device_owner'] = constants.DEVICE_OWNER_DHCP
         port['port'][portbindings.HOST_ID] = host
         if 'mac_address' not in port['port']:
-            port['port']['mac_address'] = attributes.ATTR_NOT_SPECIFIED
+            port['port']['mac_address'] = constants.ATTR_NOT_SPECIFIED
         plugin = manager.NeutronManager.get_plugin()
         return self._port_action(plugin, context, port, 'create_port')
 
@@ -216,7 +216,7 @@ class DhcpRpcCallback(object):
         port['port'][portbindings.HOST_ID] = host
         plugin = manager.NeutronManager.get_plugin()
         old_port = plugin.get_port(context, port['id'])
-        if (old_port['device_id'] != constants.DEVICE_ID_RESERVED_DHCP_PORT
+        if (old_port['device_id'] != n_const.DEVICE_ID_RESERVED_DHCP_PORT
             and old_port['device_id'] !=
             utils.get_dhcp_agent_device_id(port['port']['network_id'], host)):
             raise n_exc.DhcpPortInUse(port_id=port['id'])

@@ -16,12 +16,13 @@
 from datetime import datetime
 import itertools
 
+from neutron_lib import constants
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import uuidutils
 
 from neutron._i18n import _LW
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 
@@ -68,7 +69,7 @@ class PluginReportStateAPI(object):
     """
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.0',
-                                       namespace=constants.RPC_NAMESPACE_STATE)
+                                       namespace=n_const.RPC_NAMESPACE_STATE)
         self.client = n_rpc.get_client(target)
 
     def report_state(self, context, agent_state, use_call=False):

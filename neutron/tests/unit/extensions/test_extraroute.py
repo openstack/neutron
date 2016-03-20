@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron.common import constants
 from neutron.common import utils
 from neutron import context
 from neutron.db import extraroute_db

@@ -17,6 +17,7 @@ import collections
 import os
 
 import eventlet
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -29,7 +30,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -428,7 +429,7 @@ class DhcpPluginApi(object):
         self.host = host
         target = oslo_messaging.Target(
                 topic=topic,
-                namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
+                namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
                 version='1.0')
         self.client = n_rpc.get_client(target)
 
@@ -580,7 +581,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
             ctx = context.get_admin_context_without_session()
             agent_status = self.state_rpc.report_state(
                 ctx, self.agent_state, True)
-            if agent_status == constants.AGENT_REVIVED:
+            if agent_status == n_const.AGENT_REVIVED:
                 LOG.info(_LI("Agent has just been revived. "
                              "Scheduling full sync"))
                 self.schedule_resync("Agent has just been revived")

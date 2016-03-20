@@ -16,11 +16,11 @@
 import abc
 import sys
 
+from neutron_lib import constants
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import six
 
-from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model

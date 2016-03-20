@@ -13,6 +13,7 @@
 # under the License.
 
 from netaddr import IPAddress
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -22,7 +23,6 @@ from neutron.api.rpc.handlers import bgp_speaker_rpc as bs_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.db import bgp_db

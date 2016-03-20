@@ -14,7 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants as n_const
+from neutron_lib import constants as n_const
+
 from neutron.plugins.common import utils as p_utils
 
 MAX_VLAN_POSTFIX_LEN = 5

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -19,7 +20,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import tc_lib
 from neutron.agent.linux import utils
-from neutron.common import constants
 from neutron.services.qos import qos_consts
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment

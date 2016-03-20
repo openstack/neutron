@@ -15,12 +15,12 @@
 
 
 import mock
+from neutron_lib import constants as n_const
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
-from neutron.common import constants as n_const
 from neutron.db import models_v2
 from neutron.notifiers import nova
 from neutron.tests import base

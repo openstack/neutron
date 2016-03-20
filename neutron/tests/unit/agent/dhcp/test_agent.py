@@ -20,6 +20,7 @@ import uuid
 
 import eventlet
 import mock
+from neutron_lib import constants as const
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
@@ -32,7 +33,7 @@ from neutron.agent import dhcp_agent as entry
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import config as common_config
-from neutron.common import constants as const
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context
 from neutron.tests import base
@@ -428,11 +429,11 @@ class TestDhcpAgent(base.BaseTestCase):
         with mock.patch.object(dhcp.state_rpc,
                                'report_state') as report_state,\
             mock.patch.object(dhcp, "run"):
-            report_state.return_value = const.AGENT_ALIVE
+            report_state.return_value = n_const.AGENT_ALIVE
             dhcp._report_state()
             self.assertEqual({}, dhcp.needs_resync_reasons)
 
-            report_state.return_value = const.AGENT_REVIVED
+            report_state.return_value = n_const.AGENT_REVIVED
             dhcp._report_state()
             self.assertEqual(dhcp.needs_resync_reasons[None],
                              ['Agent has just been revived'])

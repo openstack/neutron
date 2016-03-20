@@ -16,10 +16,10 @@
 import collections
 from operator import attrgetter
 
+from neutron_lib import constants
 import six
 import testscenarios
 
-from neutron.api.v2 import attributes
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -600,10 +600,10 @@ class TestDHCPSchedulerWithNetworkAccessibility(
                  'ip_version': 4,
                  'network_id': net['id'],
                  'cidr': '10.0.0.0/24',
-                 'gateway_ip': attributes.ATTR_NOT_SPECIFIED,
-                 'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
-                 'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
-                 'host_routes': attributes.ATTR_NOT_SPECIFIED,
+                 'gateway_ip': constants.ATTR_NOT_SPECIFIED,
+                 'allocation_pools': constants.ATTR_NOT_SPECIFIED,
+                 'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
+                 'host_routes': constants.ATTR_NOT_SPECIFIED,
                  'tenant_id': 'tenant_one',
                  'enable_dhcp': True}})
 
