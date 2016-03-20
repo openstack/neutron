@@ -9,13 +9,13 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc2.dev3\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-17 15:42+0000\n"
+"POT-Creation-Date: 2016-03-19 23:47+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-18 12:36+0000\n"
+"PO-Revision-Date: 2016-03-18 12:34+0000\n"
 "Last-Translator: Jennifer <cristxu@tw.ibm.com>\n"
 "Language: zh-TW\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -3178,10 +3178,6 @@ msgstr "在同一網路上管理的子網路必須從同一子網路儲存區中
 
 msgid "Suffix to append to all namespace names."
 msgstr "要附加至所有名稱空間名稱的字尾。"
-
-#, python-format
-msgid "Synthetic fields %(fields)s shouldn't have more than one foreign key"
-msgstr "合成欄位 %(fields)s 不應具有多個外部索引鍵"
 
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "

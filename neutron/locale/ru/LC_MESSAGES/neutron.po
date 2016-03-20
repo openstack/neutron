@@ -9,13 +9,13 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:36+0000\n"
+"POT-Creation-Date: 2016-03-19 23:47+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-11 02:56+0000\n"
+"PO-Revision-Date: 2016-03-18 09:51+0000\n"
 "Last-Translator: Grigory Mokhin <mokhin@gmail.com>\n"
 "Language: ru\n"
 "Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -550,6 +550,11 @@ msgstr "Атрибут '%s' недопустим в POST"
 #, python-format
 msgid "Authentication type not supported. Requested type=%(auth_type)s."
 msgstr "Тип идентификации не поддерживается. Запрошенный тип: %(auth_type)s."
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr ""
+"URL авторизации для подключения к назначенному объекту в административном "
+"контексте"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Автоматически удалять сети из отключенных агентов DHCP."
@@ -2396,6 +2401,9 @@ msgstr ""
 "Правило метки измерения с remote_ip_prefix %(remote_ip_prefix)s "
 "перекрывается другим правилом"
 
+msgid "Method cannot be called within a transaction."
+msgstr "Метод нельзя вызывать внутри транзакции."
+
 msgid "Migration from distributed router to centralized is not supported"
 msgstr ""
 "Миграция с распределенных маршрутизаторов на централизованный не "
@@ -2881,6 +2889,10 @@ msgstr "Синтаксический анализ bridge_mappings не выпо�
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "Ошибка анализа поддерживаемых pci_vendor_devs"
 
+msgid "Password for connecting to designate in admin context"
+msgstr ""
+"Пароль для подключения к назначенному объекту в административном контексте"
+
 #, python-format
 msgid "Password not specified for authentication type=%(auth_type)s."
 msgstr "Пароль для идентификации типа %(auth_type)s не указан."
@@ -3069,6 +3081,28 @@ msgstr "Формат диапазонов: netaddr.IPRange"
 
 msgid "Ranges must not overlap"
 msgstr "Диапазоны не должны перекрываться"
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr.EUI."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
+"type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr."
+"IPAddress."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
+"type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr."
+"IPNetwork."
 
 #, python-format
 msgid ""
@@ -3489,6 +3523,16 @@ msgstr ""
 "Арендатору %(tenant_id)s не разрешено создание ресурса %(resource)s в этой "
 "сети"
 
+msgid "Tenant id for connecting to designate in admin context"
+msgstr ""
+"ИД арендатора для подключения к назначенному объекту в административном "
+"контексте"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr ""
+"Имя арендатора для подключения к назначенному объекту в административном "
+"контексте"
+
 msgid "Tenant network creation is not enabled."
 msgstr "Создание сети арендатора не разрешено."
 
@@ -3846,6 +3890,9 @@ msgstr ""
 "каталоге keystone, конечная точка может быть общедоступной, внутренней или "
 "административной."
 
+msgid "URL for connecting to designate"
+msgstr "URL для подключения к назначенному объекту"
+
 msgid "URL to database"
 msgstr "URL базы данных"
 
@@ -4128,6 +4175,11 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "Пользователь (uid или имя) запускает этот процесс после инициализации"
+
+msgid "Username for connecting to designate in admin context"
+msgstr ""
+"Имя пользователя для подключения к назначенному объекту в административном "
+"контексте"
 
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
