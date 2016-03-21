@@ -72,3 +72,16 @@ class DscpMark(IntegerEnum):
 
 class DscpMarkField(obj_fields.AutoTypedField):
     AUTO_TYPE = DscpMark()
+
+
+class FlowDirectionEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_DIRECTIONS)
+
+
+class EtherTypeEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_ETHERTYPES)
+
+
+class IpProtocolEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(
+        valid_values=list(constants.IP_PROTOCOL_MAP.keys()))
