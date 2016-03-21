@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import os
 
 from alembic import command as alembic_command
@@ -255,12 +256,27 @@ def do_revision(config, cmd):
         'autogenerate': CONF.command.autogenerate,
         'sql': CONF.command.sql,
     }
+    branches = []
     if CONF.command.expand:
         kwargs['head'] = 'expand@head'
+        branches.append(EXPAND_BRANCH)
     elif CONF.command.contract:
         kwargs['head'] = 'contract@head'
+        branches.append(CONTRACT_BRANCH)
+    else:
+        branches = MIGRATION_BRANCHES
 
-    do_alembic_command(config, cmd, **kwargs)
+    if not CONF.command.autogenerate:
+        for branch in branches:
+            args = copy.copy(kwargs)
+            version_path = _get_version_branch_path(
+                config, release=CURRENT_RELEASE, branch=branch)
+            _check_bootstrap_new_branch(branch, version_path, args)
+            do_alembic_command(config, cmd, **args)
+    else:
+        # autogeneration code will take care of enforcing proper directories
+        do_alembic_command(config, cmd, **kwargs)
+
     if _use_separate_migration_branches(config):
         update_head_files(config)
     else:
