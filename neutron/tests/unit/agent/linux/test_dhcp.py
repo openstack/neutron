@@ -1809,14 +1809,14 @@ class TestDnsmasq(TestBase):
         with mock.patch('os.listdir') as mock_listdir:
             with mock.patch.object(dhcp.Dnsmasq, 'active') as mock_active:
                 mock_active.__get__ = active_fake
-                mock_listdir.return_value = cases.keys()
+                mock_listdir.return_value = list(cases)
 
                 result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf)
 
                 mock_listdir.assert_called_once_with(path)
-                self.assertEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-                                  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
-                                 sorted(result))
+                self.assertItemsEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                                       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
+                                      result)
 
     def test__output_hosts_file_log_only_twice(self):
         dm = self._get_dnsmasq(FakeDualStackNetworkSingleDHCP())
