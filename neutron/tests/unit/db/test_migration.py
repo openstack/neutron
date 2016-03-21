@@ -155,8 +155,15 @@ class TestCli(base.BaseTestCase):
             mock.patch.object(cli, '_use_separate_migration_branches'):
 
             cli.main()
+
+            def _append_version_path(args):
+                args = copy.copy(args)
+                if 'autogenerate' in args and not args['autogenerate']:
+                    args['version_path'] = mock.ANY
+                return args
+
             self.do_alembic_cmd.assert_has_calls(
-                [mock.call(mock.ANY, func_name, **kwargs)
+                [mock.call(mock.ANY, func_name, **_append_version_path(kwargs))
                  for kwargs in exp_kwargs]
             )
 
@@ -218,6 +225,12 @@ class TestCli(base.BaseTestCase):
             self.assertEqual(len(self.projects), update.call_count)
             update.reset_mock()
 
+            expected_kwargs = [{
+                'message': 'message',
+                'sql': True,
+                'autogenerate': False,
+                'head': cli._get_branch_head(branch)
+            } for branch in cli.MIGRATION_BRANCHES]
             for kwarg in expected_kwargs:
                 kwarg['autogenerate'] = False
                 kwarg['sql'] = True
@@ -230,10 +243,12 @@ class TestCli(base.BaseTestCase):
             self.assertEqual(len(self.projects), update.call_count)
             update.reset_mock()
 
-            for kwarg in expected_kwargs:
-                kwarg['sql'] = False
-                kwarg['head'] = 'expand@head'
-
+            expected_kwargs = [{
+                'message': 'message',
+                'sql': False,
+                'autogenerate': False,
+                'head': 'expand@head'
+            }]
             self._main_test_helper(
                 ['prog', 'revision', '-m', 'message', '--expand'],
                 'revision',
