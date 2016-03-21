@@ -78,15 +78,20 @@ class NeutronObject(obj_base.VersionedObject,
         super(NeutronObject, self).__init__(context, **kwargs)
         self.obj_set_defaults()
 
+    def _synthetic_fields_items(self):
+        for field in self.synthetic_fields:
+            if field in self:
+                yield field, getattr(self, field)
+
     def to_dict(self):
         dict_ = dict(self.items())
-        for field in self.synthetic_fields:
-            if field in dict_:
-                if isinstance(dict_[field], obj_fields.ListOfObjectsField):
-                    dict_[field] = [obj.to_dict() for obj in dict_[field]]
-                elif isinstance(dict_[field], obj_fields.ObjectField):
-                    dict_[field] = (
-                        dict_[field].to_dict() if dict_[field] else None)
+        for field_name, value in self._synthetic_fields_items():
+            field = self.fields[field_name]
+            if isinstance(field, obj_fields.ListOfObjectsField):
+                dict_[field_name] = [obj.to_dict() for obj in value]
+            elif isinstance(field, obj_fields.ObjectField):
+                dict_[field_name] = (
+                    dict_[field_name].to_dict() if value else None)
         return dict_
 
     @classmethod

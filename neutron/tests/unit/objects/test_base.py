@@ -496,6 +496,39 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
         self.assertRaises(base.NeutronObjectUpdateForbidden, obj.update)
 
+    def test_to_dict_synthetic_fields(self):
+        cls_ = self._test_class
+        object_fields = [
+            field
+            for field in cls_.synthetic_fields
+            if cls_.is_object_field(field)
+        ]
+        if not object_fields:
+            self.skipTest(
+                'No object fields found in test class %r' % cls_)
+
+        for field in object_fields:
+            obj = cls_(self.context, **self.db_obj)
+            objclasses = obj_base.VersionedObjectRegistry.obj_classes(
+            ).get(cls_.fields[field].objname)
+            if not objclasses:
+                # NOTE(ihrachys): this test does not handle fields of types
+                # that are not registered (for example, QosRule)
+                continue
+            objclass = objclasses[0]
+            child = objclass(
+                self.context, **self.get_random_fields(obj_cls=objclass)
+            )
+            child_dict = child.to_dict()
+            if isinstance(cls_.fields[field], obj_fields.ListOfObjectsField):
+                setattr(obj, field, [child])
+                dict_ = obj.to_dict()
+                self.assertEqual([child_dict], dict_[field])
+            else:
+                setattr(obj, field, child)
+                dict_ = obj.to_dict()
+                self.assertEqual(child_dict, dict_[field])
+
 
 class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
 

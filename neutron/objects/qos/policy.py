@@ -63,12 +63,6 @@ class QosPolicy(base.NeutronDbObject):
     binding_models = {'network': network_binding_model,
                       'port': port_binding_model}
 
-    def to_dict(self):
-        dict_ = super(QosPolicy, self).to_dict()
-        if 'rules' in dict_:
-            dict_['rules'] = [rule.to_dict() for rule in dict_['rules']]
-        return dict_
-
     def obj_load_attr(self, attrname):
         if attrname != 'rules':
             raise exceptions.ObjectActionError(
