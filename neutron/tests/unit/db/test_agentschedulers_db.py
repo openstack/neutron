@@ -687,6 +687,16 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # Value error
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # Exception
 
+    def test_router_rescheduler_catches_exceptions_on_fetching_bindings(self):
+        with mock.patch('neutron.context.get_admin_context') as get_ctx:
+            mock_ctx = mock.Mock()
+            get_ctx.return_value = mock_ctx
+            mock_ctx.session.query.side_effect = db_exc.DBError()
+            plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            # check that no exception is raised
+            plugin.reschedule_routers_from_down_agents()
+
     def test_router_rescheduler_iterates_after_reschedule_failure(self):
         plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)

@@ -268,14 +268,13 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         cutoff = self.get_cutoff_time(agent_dead_limit)
 
         context = ncontext.get_admin_context()
-        down_bindings = (
-            context.session.query(NetworkDhcpAgentBinding).
-            join(agents_db.Agent).
-            filter(agents_db.Agent.heartbeat_timestamp < cutoff,
-                   agents_db.Agent.admin_state_up))
-        dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
-
         try:
+            down_bindings = (
+                context.session.query(NetworkDhcpAgentBinding).
+                join(agents_db.Agent).
+                filter(agents_db.Agent.heartbeat_timestamp < cutoff,
+                       agents_db.Agent.admin_state_up))
+            dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
             dead_bindings = [b for b in
                              self._filter_bindings(context, down_bindings)]
             agents = self.get_agents_db(
