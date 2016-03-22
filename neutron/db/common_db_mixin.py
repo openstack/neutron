@@ -16,7 +16,6 @@
 import contextlib
 import weakref
 
-from debtcollector import removals
 from oslo_log import log as logging
 from oslo_utils import excutils
 import six
@@ -25,8 +24,7 @@ from sqlalchemy.ext import associationproxy
 from sqlalchemy import or_
 from sqlalchemy import sql
 
-from neutron._i18n import _, _LE
-from neutron.common import exceptions as n_exc
+from neutron._i18n import _LE
 from neutron.db import sqlalchemyutils
 
 LOG = logging.getLogger(__name__)
@@ -193,18 +191,6 @@ class CommonDbMixin(object):
             return dict(((key, item) for key, item in resource.items()
                          if key in fields))
         return resource
-
-    @removals.remove(message='This method will be removed in N')
-    def _get_tenant_id_for_create(self, context, resource):
-        if context.is_admin and 'tenant_id' in resource:
-            tenant_id = resource['tenant_id']
-        elif ('tenant_id' in resource and
-              resource['tenant_id'] != context.tenant_id):
-            reason = _('Cannot create resource for another tenant')
-            raise n_exc.AdminRequired(reason=reason)
-        else:
-            tenant_id = context.tenant_id
-        return tenant_id
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
