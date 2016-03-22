@@ -11,17 +11,18 @@
 # Maxime Coquerel <max.coquerel@gmail.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
+# Martine Marin <mmarin@fr.ibm.com>, 2016. #zanata
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev12\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:36+0000\n"
+"POT-Creation-Date: 2016-03-21 18:25+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-02-02 09:52+0000\n"
-"Last-Translator: Tom Cocozzello <tjcocozz@us.ibm.com>\n"
+"PO-Revision-Date: 2016-03-21 09:34+0000\n"
+"Last-Translator: Martine Marin <mmarin@fr.ibm.com>\n"
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.0\n"
@@ -286,6 +287,16 @@ msgstr "L'accès a cette ressource était refusé"
 
 msgid "Action to be executed when a child process dies"
 msgstr "Action à exécuter quand un processus enfant meurt"
+
+msgid ""
+"Add comments to iptables rules. Set to false to disallow the addition of "
+"comments to generated iptables rules that describe each rule's purpose. "
+"System must support the iptables comments module for addition of comments."
+msgstr ""
+"Ajouter des commentaires aux règles  iptables. Définir avec la valeur false "
+"pour interdire l'ajout de commentaires aux règles iptables générées qui "
+"décrivent l'objectif de chaque règle. Le système doit prendre en charge le "
+"module de commentaires iptables pour l'ajout de commentaires."
 
 msgid "Address not present on interface"
 msgstr "Une adresse n'est pas présente sur l'interface"
@@ -804,6 +815,15 @@ msgstr ""
 
 msgid "Domain to use for building the hostnames"
 msgstr "Domaine à utiliser pour générer les noms d'hôte"
+
+msgid ""
+"Domain to use for building the hostnames. This option is deprecated. It has "
+"been moved to neutron.conf as dns_domain. It will be removed in a future "
+"release."
+msgstr ""
+"Domaine à utiliser pour générer les noms d'hôte. Cette option est obsolète. "
+"Elle a été transférée dans neutron.conf sous la forme dns_domain. Elle sera "
+"supprimée dans une édition ultérieure."
 
 msgid "Downgrade no longer supported"
 msgstr "La rétromigration n'est plus prise en charge"
@@ -1516,6 +1536,9 @@ msgstr "Emplacement du socket de domaine UNIX du proxy de métadonnées"
 msgid "Location of pid file of this process."
 msgstr "Emplacement du fichier pid de ce processus."
 
+msgid "Location to store DHCP server config files."
+msgstr "Emplacement de stockage des fichiers de configuration du serveur DHCP."
+
 msgid "Location to store IPv6 PD files."
 msgstr "Emplacement pour stocker les fichiers IPv6 PD"
 
@@ -1809,7 +1832,7 @@ msgid ""
 "default is equal to the number of CPUs available for best performance."
 msgstr ""
 "Nombre de processus de traitement d'API séparés pour le service. Si ce "
-"nombre n'est pas spécifié, lavaleur par défaut est égale au nombre d'UC "
+"nombre n'est pas spécifié, la valeur par défaut est égale au nombre d'UC "
 "disponibles pour optimiser les performances. "
 
 msgid ""
@@ -2848,6 +2871,14 @@ msgstr ""
 msgid "Use either --delta or relative revision, not both"
 msgstr ""
 "Utiliser soit un --delta, soit une révision relative, mais pas les deux"
+
+msgid ""
+"Use ipset to speed-up the iptables based security groups. Enabling ipset "
+"support requires that ipset is installed on L2 agent node."
+msgstr ""
+"Utiliser ipset pour accélérer les groupes de sécurité basés sur iptables. "
+"L'activation du support ipset nécessite l'installation d'ipset sur le noeud "
+"d'agent L2."
 
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr ""
