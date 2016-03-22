@@ -100,6 +100,17 @@ def bool_from_env(key, strict=False, default=False):
     return strutils.bool_from_string(value, strict=strict, default=default)
 
 
+def setup_test_logging(config_opts, log_dir, log_file_path_template):
+    # Have each test log into its own log file
+    config_opts.set_override('debug', True)
+    utils.ensure_dir(log_dir)
+    log_file = sanitize_log_path(
+        os.path.join(log_dir, log_file_path_template))
+    config_opts.set_override('log_file', log_file)
+    config_opts.set_override('use_stderr', False)
+    config.setup_logging()
+
+
 def sanitize_log_path(path):
     # Sanitize the string so that its log path is shell friendly
     return path.replace(' ', '-').replace('(', '_').replace(')', '_')
