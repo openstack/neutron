@@ -22,6 +22,13 @@ from neutron.common import _deprecate
 
 ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
+# TODO(anilvenkata) Below constants should be added to neutron-lib
+DEVICE_OWNER_HA_REPLICATED_INT = (lib_constants.DEVICE_OWNER_NETWORK_PREFIX +
+                                  "ha_router_replicated_interface")
+ROUTER_INTERFACE_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS + \
+    (DEVICE_OWNER_HA_REPLICATED_INT,)
+ROUTER_INTERFACE_OWNERS_SNAT = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
+    (DEVICE_OWNER_HA_REPLICATED_INT,)
 
 L3_AGENT_MODE_DVR = 'dvr'
 L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'

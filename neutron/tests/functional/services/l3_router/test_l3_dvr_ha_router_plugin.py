@@ -33,10 +33,6 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             host="standby",
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
-    def _create_router(self, distributed=True, ha=True):
-        return (super(L3DvrHATestCase, self).
-                _create_router(distributed=distributed, ha=ha))
-
     def test_update_router_db_cvr_to_dvrha(self):
         router = self._create_router(distributed=False, ha=False)
         self.assertRaises(
