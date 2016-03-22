@@ -18,14 +18,14 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev160\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-15 03:21+0000\n"
+"POT-Creation-Date: 2016-03-17 15:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-14 08:58+0000\n"
-"Last-Translator: Tsutomu Kimura <ebb0de2@jp.ibm.com>\n"
+"PO-Revision-Date: 2016-03-16 06:24+0000\n"
+"Last-Translator: 笹原 昌美 <ebb0de1@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -394,7 +394,7 @@ msgstr "インターフェース上に存在しないアドレス"
 
 #, python-format
 msgid "Address scope %(address_scope_id)s could not be found"
-msgstr "アドレスのスコープ %(address_scope_id)s が見つかりませんでした"
+msgstr "アドレススコープ %(address_scope_id)s が見つかりませんでした"
 
 #, fuzzy
 msgid ""
@@ -434,7 +434,8 @@ msgid ""
 msgstr ""
 "enable_new_agents=False の場合、エージェントは admin_state_up=False の状態で"
 "処理を開始します。この場合、 管理者が admin_state_up を True に変更するまで、"
-"ユーザーのリソースは自動的にエージェントに設定されません。"
+"ユーザーのリソースが自動的にエージェントにスケジュール設定されることはありま"
+"せん。"
 
 #, python-format
 msgid "Agent updated: %(payload)s"
@@ -467,7 +468,7 @@ msgid "Allow running metadata proxy."
 msgstr "メタデータプロキシーの実行を許可します。"
 
 msgid "Allow sending resource operation notification to DHCP agent"
-msgstr "DHCP エージェントへのリソース操作通知の送信を許可"
+msgstr "DHCP エージェントへのリソース操作通知の送信の許可"
 
 msgid "Allow the creation of PTR records"
 msgstr "PTR レコードを作成できます"
@@ -584,7 +585,7 @@ msgstr "このノードのアベイラビリティーゾーン"
 #, python-format
 msgid "AvailabilityZone %(availability_zone)s could not be found."
 msgstr ""
-"アベイラビリティーゾーン %(availability_zone)s を見つかりませんでした。"
+"アベイラビリティーゾーン %(availability_zone)s が見つかりませんでした。"
 
 msgid "Available commands"
 msgstr "使用可能なコマンド"
@@ -810,8 +811,8 @@ msgstr "flow の削除か設定の優先度が一致できません"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr ""
-"サブネットプールで IPv4 と IPv6 のプレフィックスの両方を使用することはできま"
-"せん。"
+"1 つのサブネットプールで IPv4 のプレフィックスと IPv6 のプレフィックスを混用"
+"することはできません。"
 
 msgid "Cannot specify both --service and --subproject."
 msgstr "--service と --subproject の両方を指定することはできません。"
@@ -839,58 +840,58 @@ msgstr "ssl の認証局公開鍵 (CA cert) ファイル"
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: %(unders)s."
-msgstr "変更によって、以下のリソースの使用量が 0 未満になります: %(unders)s."
+msgstr "変更によって、以下のリソースの使用量が 0 未満になります: %(unders)s。"
 
 msgid "Check ebtables installation"
-msgstr "ebtables のインストールをチェックします"
+msgstr "ebtables のインストールの検査"
 
 msgid "Check for ARP header match support"
-msgstr "ARP ヘッダーマッチのサポートを検査します"
+msgstr "ARP ヘッダーマッチのサポートの検査"
 
 msgid "Check for ARP responder support"
-msgstr "ARP 応答側サポートを検査します"
+msgstr "ARP 応答側サポートの検査"
 
 msgid "Check for ICMPv6 header match support"
-msgstr "ICMPv6 ヘッダーマッチのサポートを検査します"
+msgstr "ICMPv6 ヘッダーマッチのサポートの検査"
 
 msgid "Check for OVS Geneve support"
 msgstr "OVS Geneve サポートの検査"
 
 msgid "Check for OVS vxlan support"
-msgstr "OVS vxlan サポートを検査します"
+msgstr "OVS vxlan サポートの検査"
 
 msgid "Check for VF management support"
-msgstr "VF 管理サポートを検査します"
+msgstr "VF 管理サポートの検査"
 
 msgid "Check for iproute2 vxlan support"
-msgstr "iproute2 vxlan サポートを検査します"
+msgstr "iproute2 vxlan サポートの検査"
 
 msgid "Check for nova notification support"
-msgstr "Nova 通知サポートを検査します"
+msgstr "Nova 通知サポートの検査"
 
 msgid "Check for patch port support"
-msgstr "パッチポートのサポートを検査します"
+msgstr "パッチポートのサポートの検査"
 
 msgid "Check ip6tables installation"
-msgstr "ip6tables のインストールをチェックします"
+msgstr "ip6tables のインストールの検査"
 
 msgid "Check ipset installation"
-msgstr "ipset のインストールをチェックします"
+msgstr "ipset のインストールの検査"
 
 msgid "Check keepalived IPv6 support"
-msgstr "Keepalived の IPv6 サポートをチェックします"
+msgstr "Keepalived の IPv6 サポートの検査"
 
 msgid "Check minimal dibbler version"
-msgstr "Dibbler の最小バージョンをチェックします"
+msgstr "Dibbler の最小バージョンの検査"
 
 msgid "Check minimal dnsmasq version"
-msgstr "最小 dnsmasq バージョンを検査します"
+msgstr "最小 dnsmasq バージョンの検査"
 
 msgid "Check netns permission settings"
-msgstr "netns 許可設定を検査します"
+msgstr "netns 許可設定の検査"
 
 msgid "Check ovs conntrack support"
-msgstr "ovs の conntrack サポートをチェックします"
+msgstr "ovs の conntrack サポートの検査"
 
 msgid "Check ovsdb native interface support"
 msgstr "ovsdb ネイティブインターフェースのサポートの検査"
@@ -1077,8 +1078,8 @@ msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
 msgstr ""
-"DHCP リース期間 (秒)。dnsmasq で無制限のリース時間を使用するよう指示するに"
-"は、-1 を使用します。"
+"DHCP リース期間 (秒)。dnsmasq に無制限のリース時間の使用を指示するには、-1 を"
+"使用します。"
 
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be enabled, "
@@ -1101,13 +1102,14 @@ msgid ""
 "from any pool; it will be considered part of the tenant's private address "
 "space. This option is deprecated for removal in the N release."
 msgstr ""
-"自動的なサブネットのために使用されるデフォルトの IPv4 のサブネットプール。サ"
-"ブネットプールの ID なしにサブネットの作成が呼び出された場合に使用されるプー"
-"ルを、 UUID によって指定します。これを指定しないと、サブネットの作成のために"
-"プールを明示的に渡さない限り、プールは使用されません。プールを使用しないと、"
-"サブネットを作成するために CIDR を渡す必要があり、どのプールからもサブネット"
-"は割り当てられません。これはテナントのプライベートアドレスの一部と考えられま"
-"す。このオプションは N リリースでは削除されます。"
+"自動的に サブネットの CIDR を割り当てるために使用されるデフォルトの IPv4 のサ"
+"ブネットプール。サブネットプールの ID を指定せずにサブネットの作成が呼び出さ"
+"れた場合に使用されるプールを、 UUID によって指定します。指定されなかった場"
+"合、サブネットの作成にプールを明示的に渡さない限り、プールは使用されません。"
+"プールが使用されなかった場合、サブネットを作成するために CIDR を渡す必要があ"
+"り、いずれのプールからもこのサブネットの割り当ては行われません。これはテナン"
+"トのプライベートアドレススペースの一部と考えられます。このオプションは N リ"
+"リースでは削除されます。"
 
 msgid ""
 "Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
@@ -1117,10 +1119,10 @@ msgid ""
 "removal in the N release."
 msgstr ""
 "自動的に サブネットの CIDR を割り当てるために使用されるデフォルトの IPv6 のサ"
-"ブネットプール。サブネットプールの ID なしにサブネットの作成が呼び出された場"
-"合に使用されるプールを、UUID によって指定します。詳細情報については、"
-"default_ipv4_subnet_pool の説明を読んでください。このオプションは N リリース"
-"では削除されます。"
+"ブネットプール。サブネットプールの ID を指定せずにサブネットの作成が呼び出さ"
+"れた場合に使用されるプールを、UUID によって指定します。詳細情報については、"
+"default_ipv4_subnet_pool の説明を参照してください。このオプションは N リリー"
+"スでは削除されます。"
 
 msgid "Default driver to use for quota checks"
 msgstr "割り当て量の検査に使用するデフォルトのドライバー"
@@ -1458,12 +1460,12 @@ msgid ""
 "the default IPv6 subnetpool."
 msgstr ""
 "自動的にサブネットの CIDR を割り当てるために IPv6 のプレフィックスデリゲー"
-"ションを有効化します。これを True に設定すると、PD に対応した環境でサブネット"
-"の割り当てのために IPv6 のプレフィックスデリゲーションを有効化できます。CIDR "
-"やサブネットプール ID を提供することなく IPv6 のサブネットの作成をリクエスす"
-"るユーザーには、プレフィックスデリゲーションのメカニズム経由で CIDR が提供さ"
-"れます。PD を有効化するとデフォルトの IPv6 サブネットプールの挙動が置き換えら"
-"れることに注意してください。"
+"ションを有効化します。True に設定した場合、PD に対応した環境でのサブネットの"
+"割り当てのために、IPv6 のプレフィックスデリゲーションを有効化します。CIDR ま"
+"たはサブネットプールの ID を指定せずに IPv6 のサブネットの作成要求を行うユー"
+"ザーには、プレフィックスデリゲーションのメカニズム経由で CIDR が提供されま"
+"す。PD を有効化するとデフォルトの IPv6 サブネットプールの挙動がオーバーライド"
+"されることに注意してください。"
 
 msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
@@ -1493,10 +1495,10 @@ msgid ""
 "gateway is not a link local address. Deprecated, to be removed during the "
 "Newton release, at which point the gateway will not be forced on to subnet."
 msgstr ""
-"設定したゲートウェイがサブネット上に存在することを保証します。IPv6 の場合、"
-"ゲートウェイがリンクのローカルアドレスでない場合にのみこの保証を行います。本"
-"機能は Neutron のリリース時に提供を中止する予定です。リリース時点でゲートウェ"
-"イはサブネット上に必ず存在するようにはならなくなります。"
+"設定済みのゲートウェイが必ずサブネット上にあるようにします。IPｖ6 の場合、"
+"ゲートウェイがリンクローカルアドレスでない場合にのみ、検証を行います。この機"
+"能は Neutron のリリース時に提供を中止する予定です。リリース時点でゲートウェイ"
+"が必ずサブネット上に存在するようにはならなくなります。"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1563,7 +1565,7 @@ msgstr "使用する拡張機能リスト"
 
 #, python-format
 msgid "Extensions not found: %(extensions)s."
-msgstr "拡張が見つかりません: %(extensions)s"
+msgstr "拡張が見つかりません: %(extensions)s。"
 
 #, python-format
 msgid "External DNS driver %(driver)s could not be found."
@@ -1624,18 +1626,18 @@ msgstr ""
 
 #, python-format
 msgid "Failed to allocate subnet: %(reason)s."
-msgstr "サブネットの割り当てに失敗しました: %(reason)s."
+msgstr "サブネットの割り当てに失敗しました: %(reason)s。"
 
 msgid ""
 "Failed to associate address scope: subnetpools within an address scope must "
 "have unique prefixes."
 msgstr ""
-"アドレスのスコープの割り当てに失敗しました: アドレスのスコープ内のサブネット"
-"プールは独自のプレフィックスを持つ必要があります。"
+"アドレススコープの関連付けに失敗しました: アドレススコープ内のサブネットプー"
+"ルは固有のプレフィックスを持つ必要があります。"
 
 #, python-format
 msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "%(reason)s のため、ポリシー %(policy)s のチェックが失敗しました。"
+msgstr "%(reason)s のため、ポリシー %(policy)s の検査が失敗しました。"
 
 #, python-format
 msgid ""
@@ -1732,7 +1734,7 @@ msgstr "ip_lib 呼び出しでルートヘルパーを強制的に使用しま�
 
 #, python-format
 msgid "Found duplicate extension: %(alias)s."
-msgstr "重複する拡張が見つかりました: %(alias)s"
+msgstr "重複する拡張が見つかりました: %(alias)s。"
 
 #, python-format
 msgid ""
@@ -1797,8 +1799,8 @@ msgid ""
 "the same host value."
 msgstr ""
 "このマシン上で稼働する Neutron のサーバー、エージェント、サービスが使用するホ"
-"スト名。本マシン上で稼働するすべてのエージェントとサービスは同じホスト値を使"
-"用する必要があります。"
+"スト名。このマシン上で稼働するすべてのエージェントとサービスは同じホスト値を"
+"使用する必要があります。"
 
 msgid "How many times Neutron will retry MAC generation"
 msgstr "Neutron が MAC の生成を再試行する回数"
@@ -1862,8 +1864,8 @@ msgstr ""
 
 msgid "IPtables conntrack zones exhausted, iptables rules cannot be applied."
 msgstr ""
-"iptables のすべての conntrack ゾーンを使用したため、iptables ルールを適用でき"
-"ません。"
+"iptables のすべての conntrack ゾーンが使用されたため、iptables ルールを適用で"
+"きません。"
 
 msgid "IPv6 Address Mode must be SLAAC or Stateless for Prefix Delegation."
 msgstr ""
@@ -1911,8 +1913,8 @@ msgid ""
 "If True, then allow plugins that support it to create VLAN transparent "
 "networks."
 msgstr ""
-"True の場合、対応しているプラグインによって VLAN トランスペアレントネットワー"
-"クが作成されます。"
+"True の場合、IPAM ドライバーをサポートするプラグインに VLAN トランスペアレン"
+"トネットワークの作成を許可します。"
 
 msgid ""
 "If non-empty, the l3 agent can only configure a router that has the matching "
@@ -1930,7 +1932,7 @@ msgid ""
 "%(base_prefixlen)s."
 msgstr ""
 "正しくないプレフィックス境界: %(prefix_type)s="
-"%(prefixlen)s、%(base_prefix_type)s=%(base_prefixlen)s"
+"%(prefixlen)s、%(base_prefix_type)s=%(base_prefixlen)s。"
 
 #, python-format
 msgid ""
@@ -1938,8 +1940,8 @@ msgid ""
 "associate with address scope %(address_scope_id)s because subnetpool "
 "ip_version is not %(ip_version)s."
 msgstr ""
-"サブネットプールの不正な割り当て: サブネットプールの ip_version が "
-"%(ip_version)s でないため、サブネットプール %(subnetpool_id)s をアドレスのス"
+"サブネットプールの正しくない関連付け: サブネットプールの ip_version が "
+"%(ip_version)s でないため、サブネットプール %(subnetpool_id)s をアドレスス"
 "コープ %(address_scope_id)s と関連付けることはできません。"
 
 #, python-format
@@ -1947,16 +1949,16 @@ msgid ""
 "Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot be "
 "associated with address scope %(address_scope_id)s."
 msgstr ""
-"サブネットプールの不正な割り当て: サブネットプール %(subnetpool_id)sをアドレ"
-"スのスコープ %(address_scope_id)s と関連付けることはできません。"
+"サブネットプールの正しくない関連付け:  サブネットプール %(subnetpool_id)s を"
+"アドレススコープ %(address_scope_id)s と関連付けることはできません。"
 
 #, python-format
 msgid "Illegal subnetpool update : %(reason)s."
-msgstr "プレフィックスに対する正しくない更新: %(reason)s"
+msgstr "正しくないサブネットプールの更新: %(reason)s。"
 
 #, python-format
 msgid "Illegal update to prefixes: %(msg)s."
-msgstr "プレフィックスに対する正しくない更新: %(msg)s"
+msgstr "プレフィックスに対する正しくない更新: %(msg)s。"
 
 msgid ""
 "In some cases the Neutron router is not present to provide the metadata IP "
@@ -2060,7 +2062,7 @@ msgstr ""
 
 #, python-format
 msgid "Invalid content type %(content_type)s."
-msgstr "無効なコンテンツタイプ %(content_type)s"
+msgstr "無効なコンテンツタイプ %(content_type)s。"
 
 #, python-format
 msgid "Invalid data format for IP pool: '%s'"
@@ -2088,7 +2090,7 @@ msgstr "プロトコル %(protocol)s に関する無効なイーサタイプ %(e
 
 #, python-format
 msgid "Invalid extension environment: %(reason)s."
-msgstr "無効な拡張環境: %(reason)s"
+msgstr "無効な拡張環境: %(reason)s。"
 
 #, python-format
 msgid "Invalid format for routes: %(routes)s, %(reason)s"
@@ -2290,12 +2292,12 @@ msgid ""
 "neutron automatically subtracts the overlay protocol overhead from this "
 "value. Defaults to 1500, the standard value for Ethernet."
 msgstr ""
-"関連する物理ネットワークの MTU。Neutron はこの値を使用して、すべての仮想ネッ"
-"トワークのコンポーネントの MTU を計算します。フラットなネットワークと VLAN "
-"ネットワークの場合は、Neutron はこの値を変更することなく使用します。VXLAN の"
-"ようなオーバーレイネットワークの場合は、Neutron は自動的にこの値からオーバー"
-"プロトコルのオーバーヘッドを引きます。デフォルト値は Ethernet の標準値である "
-"1500 です。"
+"基盤となる物理ネットワークの MTU。Neutron はこの値を使用して、すべての仮想"
+"ネットワークのコンポーネントの MTU を計算します。フラットネットワークおよび "
+"VLAN ネットワークの場合は、Neutron はこの値を変更することなく使用します。"
+"VXLAN のようなオーバーレイネットワークの場合は、Neutron はこの値からオーバー"
+"レイプロトコルオーバーヘッドの値を自動的に減算します。デフォルト値は "
+"Ethernet の標準値である 1500 です。"
 
 msgid ""
 "MTU setting for device. This option will be removed in Newton. Please use "
@@ -2317,7 +2319,7 @@ msgstr "誤った形式のリクエスト本文"
 
 #, python-format
 msgid "Malformed request body: %(reason)s."
-msgstr "誤った形式の要求本体: %(reason)s."
+msgstr "誤った形式の要求本文: %(reason)s。"
 
 msgid "MaxRtrAdvInterval setting for radvd.conf"
 msgstr "radvd.conf の MaxRtrAdvInterval 設定"
@@ -2343,7 +2345,7 @@ msgstr ""
 "では削除されます。"
 
 msgid "Maximum number of host routes per subnet"
-msgstr "サブネットあたりのホスト経路の最大数"
+msgstr "サブネットごとのホスト経路の最大数"
 
 msgid "Maximum number of routes per router"
 msgstr "ルーターごとに設定可能な経路の最大数"
@@ -2526,7 +2528,8 @@ msgstr ""
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
-"使用する nova 領域の名前。keystone で複数の領域を管理する場合に役立ちます。"
+"使用する nova リージョンの名前。Keystone で複数のリージョンを管理する場合に役"
+"立ちます。"
 
 msgid "Name of the FWaaS Driver"
 msgstr "FWaaS ドライバーの名前"
@@ -2620,7 +2623,8 @@ msgid ""
 msgstr ""
 "使用する Netron の IPAM (IP アドレス管理) ドライバー。ipam_driver が設定され"
 "ない場合 (デフォルトの挙動)、IPAM ドライバーは使用されません。Neutron の "
-"IPAM ドライバーを参照のための実装する場合は、'internal' を使用してください。"
+"IPAM ドライバーのリファレンス実装を使用するには、 'internal' を使用してくださ"
+"い。"
 
 msgid "Neutron Service Type Management"
 msgstr "Neutron サービスタイプ管理"
@@ -2699,15 +2703,16 @@ msgid ""
 "greater than 1, the scheduler automatically assigns multiple DHCP agents for "
 "a given tenant network, providing high availability for DHCP service."
 msgstr ""
-"テナントネットワークをホストするよう設定された DHCP エージェントの数。この数"
-"が 1 より大きい場合、スケジューラーが自動的に特定のテナントネットワークに複数"
-"の DHCP エージェントを割り当てるため、DHCP サービスの高可用性が実現します。"
+"テナントネットワークをホストするようにスケジュール設定された DHCP エージェン"
+"トの数。この数が 1 より大きい場合、スケジューラーが自動的に特定のテナントネッ"
+"トワークに複数の DHCP エージェントを割り当てるため、DHCP サービスの高可用性が"
+"実現します。"
 
 msgid "Number of RPC worker processes dedicated to state reports queue"
 msgstr "レポートのキューを報告するためにのみ機能する RPC ワーカープロセスの数"
 
 msgid "Number of RPC worker processes for service"
-msgstr "RPC サービスのワーカプロセスの数"
+msgstr "RPC サービスのワーカープロセス数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "メタデータサーバーソケットの構成に使用されるバックログ要求の数"
@@ -2777,8 +2782,7 @@ msgid ""
 "default is equal to the number of CPUs available for best performance."
 msgstr ""
 "サービスに使用する個別の API のワーカープロセスの数。指定されなかった場合、デ"
-"フォルト値は最適なパフォーマンスを実現するために使用可能な CPU の数と一致しま"
-"す。"
+"フォルト値は性能を最大限得るために使用可能な CPU の数と一致します。"
 
 msgid ""
 "Number of separate worker processes for metadata server (defaults to half of "
@@ -2816,7 +2820,8 @@ msgstr "OVSDB エラー: %s"
 
 #, python-format
 msgid "Object action %(action)s failed because: %(reason)s."
-msgstr "オブジェクトのアクション %(action)s が失敗しました。原因: %(reason)s"
+msgstr ""
+"オブジェクトのアクション %(action)s は次の原因で失敗しました: %(reason)s。"
 
 msgid "Only admin can view or configure quota"
 msgstr "admin のみが割り当て量を表示または構成できます"
@@ -2865,7 +2870,8 @@ msgstr ""
 "接続は提供しません。"
 
 msgid "Override the default dnsmasq settings with this file."
-msgstr "このファイルを使用して、デフォルトの dnsmasq 設定を置き換えます。"
+msgstr ""
+"このファイルを使用して、デフォルトの dnsmasq 設定をオーバーライドします。"
 
 msgid "Owner type of the device: network/compute"
 msgstr "デバイスの所有者タイプ: network/compute"
@@ -2909,7 +2915,7 @@ msgstr "統合ブリッジのトンネルブリッジ内のピアパッチポー
 
 msgid "Per-tenant subnet pool prefix quota exceeded."
 msgstr ""
-"テナント当たりのサブネットプールのプレフィックスのクォータを超過しました。"
+"テナントごとのサブネットプールのプレフィックスのクォータを超過しました。"
 
 msgid "Phase upgrade options do not accept revision specification"
 msgstr ""
@@ -2938,7 +2944,7 @@ msgstr "ポート %(port)s は %(bridge)s に存在しません"
 
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
-msgstr "ポート %(port_id)s は既に別の DHCP エージェントが取得しています。"
+msgstr "ポート %(port_id)s は既に別の DHCP エージェントに取得されています。"
 
 #, python-format
 msgid ""
@@ -2999,8 +3005,7 @@ msgstr ""
 #, python-format
 msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
 msgstr ""
-"プレフィックス %(prefix)s は IPv%(version)s プールではサポートされていませ"
-"ん。"
+"プレフィックス '%(prefix)s' は IPv%(version)s プールではサポートされません。"
 
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr ""
@@ -3352,7 +3357,7 @@ msgstr ""
 "が変更されたときに通知を nova に送信します。"
 
 msgid "Send notification to nova when port status changes"
-msgstr "ポート状況の変更時に通知を nova に送信"
+msgstr "ポート状態の変更時の nova への通知送信"
 
 msgid ""
 "Send this many gratuitous ARPs for HA setup, if less than or equal to 0, the "
@@ -3432,7 +3437,7 @@ msgstr ""
 "チェックサムの設定または設定解除を行います。"
 
 msgid "Shared address scope can't be unshared"
-msgstr "共有アドレスのスコープは共有を解除できません"
+msgstr "共有アドレススコープは共有を解除できません"
 
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request requires "
@@ -3471,8 +3476,8 @@ msgid ""
 "Subnets hosted on the same network must be allocated from the same subnet "
 "pool."
 msgstr ""
-"同じサブネットプールから同じネットワーク上にホストされるサブネットを割り当て"
-"ることはできません。"
+"同じネットワーク上でホストされるサブネットは、同じサブネットプールから割り当"
+"てられる必要があります。"
 
 msgid "Suffix to append to all namespace names."
 msgstr "すべての名前空間の名前に追加するサフィックス。"
@@ -3527,7 +3532,7 @@ msgid "Tenant network creation is not enabled."
 msgstr "テナントネットワークの作成は使用できません。"
 
 msgid "Tenant-id was missing from quota request."
-msgstr "クオーター要求に テナント ID が含まれていませんでした。"
+msgstr "テナント ID がクォータ要求にありませんでした。"
 
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this agent "
@@ -3675,8 +3680,8 @@ msgid ""
 "The following device_id %(device_id)s is not owned by your tenant or matches "
 "another tenants router."
 msgstr ""
-"次の device_id %(device_id)s はテナントによって所有されていないか、または別の"
-"テナントルーターと一致します。"
+"次の device_id %(device_id)s はユーザーのテナントによって所有されていないか、"
+"または別のテナントルーターと一致します。"
 
 msgid "The host IP to bind to"
 msgstr "バインド先のホスト IP"
@@ -3885,8 +3890,9 @@ msgid ""
 "Type of the nova endpoint to use.  This endpoint will be looked up in the "
 "keystone catalog and should be one of public, internal or admin."
 msgstr ""
-"使用する nova のエンドポイントの名前。このエンドポイントは keystone のカタロ"
-"グで参照され、public、internal、または admin のいずれかである必要があります。"
+"使用する nova のエンドポイントのタイプ。このエンドポイントは Keystone のカタ"
+"ログで参照され、public、internal、または admin のいずれかである必要がありま"
+"す。"
 
 msgid "URL for connecting to designate"
 msgstr "指定すべき接続用 URL"
@@ -3904,7 +3910,7 @@ msgid ""
 "prefix is %(max_prefixlen)s."
 msgstr ""
 "長さが %(prefixlen)s のプレフィックスを持つサブネットを割り当てることはできま"
-"せん。プレフィックスに許可される最大長は %(max_prefixlen)s です。"
+"せん。許可されるプレフィックス長の最大値は %(max_prefixlen)s です。"
 
 #, python-format
 msgid ""
@@ -3912,7 +3918,7 @@ msgid ""
 "prefix is %(min_prefixlen)s."
 msgstr ""
 "長さが %(prefixlen)s のプレフィックスを持つサブネットを割り当てることはできま"
-"せん。プレフィックスに許可される最小長は %(min_prefixlen)s です。"
+"せん。許可されるプレフィックス長の最小値は %(min_prefixlen)s です。"
 
 #, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
@@ -3947,8 +3953,8 @@ msgid ""
 "Unable to complete operation on address scope %(address_scope_id)s. There "
 "are one or more subnet pools in use on the address scope"
 msgstr ""
-"アドレスのスコープ %(address_scope_id)s に関する操作を完了できません。アドレ"
-"スのスコープに関して 1 つ以上のサブネットプールが使用されています。"
+"アドレススコープ %(address_scope_id)s に関する操作を完了できません。アドレス"
+"スコープに関して 1 つ以上のサブネットプールが使用されています。"
 
 #, python-format
 msgid "Unable to convert value in %s"
@@ -3977,7 +3983,7 @@ msgstr ""
 
 #, python-format
 msgid "Unable to delete subnet pool: %(reason)s."
-msgstr "サブネットプールを削除できません: %(reason)s"
+msgstr "サブネットプールを削除できません: %(reason)s。"
 
 #, fuzzy, python-format
 msgid "Unable to determine mac address for %s"
@@ -4026,12 +4032,12 @@ msgid ""
 "Unable to reconfigure sharing settings for network %(network)s. Multiple "
 "tenants are using it."
 msgstr ""
-"ネットワーク %(network)s に関する共有設定を再設定できません。複数のテナントが"
-"この設定を使用しています。"
+"ネットワーク %(network)s の共有設定を再設定できません。複数のテナントがこの設"
+"定を使用しています。"
 
 #, python-format
 msgid "Unable to update address scope %(address_scope_id)s : %(reason)s"
-msgstr "アドレスのスコープ %(address_scope_id)s を更新できません: %(reason)s"
+msgstr "アドレススコープ %(address_scope_id)s を更新できません: %(reason)s"
 
 #, python-format
 msgid "Unable to update the following object fields: %(fields)s"
@@ -4086,7 +4092,7 @@ msgstr "不明なネットワークタイプ %(network_type)s。"
 
 #, python-format
 msgid "Unknown quota resources %(unknown)s."
-msgstr "不明な割り当て量リソース %(unknown)s。"
+msgstr "不明なクォータリソース %(unknown)s。"
 
 msgid "Unmapped error"
 msgstr "マップ解除エラー"
@@ -4113,7 +4119,7 @@ msgstr "サポートされないネットワークタイプ %(net_type)s"
 
 #, python-format
 msgid "Unsupported port state: %(port_state)s."
-msgstr "サポートされないポートの状態: %(port_state)s."
+msgstr "サポートされないポートの状態: %(port_state)s。"
 
 msgid "Unsupported request type"
 msgstr "サポートされない要求タイプです"
