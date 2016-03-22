@@ -42,14 +42,6 @@ def check_gateway_invalid_in_subnet(cidr, gateway):
              (net.version == constants.IP_VERSION_4 and ip == net[-1])))
 
 
-def check_gateway_in_subnet(cidr, gateway):
-    """Validate that the gateway is on the subnet."""
-    ip = netaddr.IPAddress(gateway)
-    if ip.version == 4 or (ip.version == 6 and not ip.is_link_local()):
-        return check_subnet_ip(cidr, gateway)
-    return True
-
-
 def generate_pools(cidr, gateway_ip):
     """Create IP allocation pools for a specified subnet
 

@@ -466,16 +466,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if attributes.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
-            if cfg.CONF.force_gateway_on_subnet:
-                # TODO(sreesiv) check_gateway_in_subnet() will be
-                # obsolete and should be removed when the option
-                # 'force_gateway_on_subnet' is removed.
-                is_gateway_not_valid = not ipam.utils.check_gateway_in_subnet(
-                                            s['cidr'], s['gateway_ip'])
-            else:
-                is_gateway_not_valid = (
-                    ipam.utils.check_gateway_invalid_in_subnet(
-                        s['cidr'], s['gateway_ip']))
+            is_gateway_not_valid = (
+                ipam.utils.check_gateway_invalid_in_subnet(
+                    s['cidr'], s['gateway_ip']))
             if is_gateway_not_valid:
                 error_message = _("Gateway is not valid on subnet")
                 raise n_exc.InvalidInput(error_message=error_message)
