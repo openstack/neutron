@@ -59,6 +59,7 @@ can be achieved by importing the Neutron Manager and getting a direct
 reference to the core plugin:
 
 .. code:: python
+
    from neutron import manager
 
    plugin = manager.NeutronManager.get_plugin()
