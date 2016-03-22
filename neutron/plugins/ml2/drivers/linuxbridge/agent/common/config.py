@@ -48,8 +48,9 @@ vxlan_opts = [
     cfg.BoolOpt('arp_responder', default=False,
                 help=_("Enable local ARP responder which provides local "
                        "responses instead of performing ARP broadcast into "
-                       "the overlay. Enabling local ARP responder is not fully"
-                       "compatible with the allowed-address-pairs extension.")
+                       "the overlay. Enabling local ARP responder is not "
+                       "fully compatible with the allowed-address-pairs "
+                       "extension.")
                 ),
 ]
 
