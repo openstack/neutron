@@ -63,7 +63,7 @@ class RootwrapDaemonHelper(object):
 
 
 def addl_env_args(addl_env):
-    """Build arugments for adding additional environment vars with env"""
+    """Build arguments for adding additional environment vars with env"""
 
     # NOTE (twilson) If using rootwrap, an EnvFilter should be set up for the
     # command instead of a CommandFilter.
