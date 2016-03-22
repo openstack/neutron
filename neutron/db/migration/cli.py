@@ -22,7 +22,6 @@ from alembic import environment
 from alembic import migration as alembic_migration
 from alembic import script as alembic_script
 from alembic import util as alembic_util
-import debtcollector
 from oslo_config import cfg
 from oslo_utils import fileutils
 from oslo_utils import importutils
@@ -56,9 +55,6 @@ migration_entrypoints = {
     entrypoint.name: entrypoint
     for entrypoint in pkg_resources.iter_entry_points(MIGRATION_ENTRYPOINTS)
 }
-
-
-BRANCHLESS_WARNING = 'Branchless migration chains are deprecated as of Mitaka.'
 
 
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
@@ -152,7 +148,7 @@ def do_generic_show(config, cmd):
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
     validate_revisions(config)
-    validate_head_file(config)
+    validate_head_files(config)
 
 
 def add_alembic_subparser(sub, cmd):
@@ -284,10 +280,7 @@ def do_revision(config, cmd):
         # autogeneration code will take care of enforcing proper directories
         do_alembic_command(config, cmd, **kwargs)
 
-    if _use_separate_migration_branches(config):
-        update_head_files(config)
-    else:
-        update_head_file(config)
+    update_head_files(config)
 
 
 def _get_release_labels(labels):
@@ -377,32 +370,6 @@ def _get_branch_points(script):
     return branchpoints
 
 
-def validate_head_file(config):
-    '''Check that HEAD file contains the latest head for the branch.'''
-    if _use_separate_migration_branches(config):
-        _validate_head_files(config)
-    else:
-        _validate_head_file(config)
-
-
-@debtcollector.removals.remove(message=BRANCHLESS_WARNING)
-def _validate_head_file(config):
-    '''Check that HEAD file contains the latest head for the branch.'''
-    script = alembic_script.ScriptDirectory.from_config(config)
-    expected_head = script.get_heads()
-    head_path = _get_head_file_path(config)
-    try:
-        with open(head_path) as file_:
-            observed_head = file_.read().split()
-            if observed_head == expected_head:
-                return
-    except IOError:
-        pass
-    alembic_util.err(
-        _('HEAD file does not match migration timeline head, expected: %s')
-        % expected_head)
-
-
 def _get_heads_map(config):
     script = alembic_script.ScriptDirectory.from_config(config)
     heads = script.get_heads()
@@ -429,7 +396,7 @@ def _check_head(branch_name, head_file, head):
                                                  'head': head})
 
 
-def _validate_head_files(config):
+def validate_head_files(config):
     '''Check that HEAD files contain the latest head for the branch.'''
     contract_head = _get_contract_head_file_path(config)
     expand_head = _get_expand_head_file_path(config)
@@ -456,14 +423,6 @@ def update_head_files(config):
     old_heads_file = _get_heads_file_path(config)
     for file_ in (old_head_file, old_heads_file):
         fileutils.delete_if_exists(file_)
-
-
-@debtcollector.removals.remove(message=BRANCHLESS_WARNING)
-def update_head_file(config):
-    script = alembic_script.ScriptDirectory.from_config(config)
-    head = script.get_heads()
-    with open(_get_head_file_path(config), 'w+') as f:
-        f.write('\n'.join(head))
 
 
 def _get_current_database_heads(config):

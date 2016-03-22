@@ -204,7 +204,7 @@ class TestCli(base.BaseTestCase):
         self._validate_cmd('heads')
 
     def test_check_migration(self):
-        with mock.patch.object(cli, 'validate_head_file') as validate:
+        with mock.patch.object(cli, 'validate_head_files') as validate:
             self._main_test_helper(['prog', 'check_migration'], 'branches')
             self.assertEqual(len(self.projects), validate.call_count)
 
@@ -394,31 +394,6 @@ class TestCli(base.BaseTestCase):
     def test_upgrade_rejects_delta_with_relative_revision(self, use_mock):
         self.assert_command_fails(['prog', 'upgrade', '+2', '--delta', '3'])
 
-    def _test_validate_head_file_helper(self, heads, file_heads=None):
-        if file_heads is None:
-            file_heads = []
-        fake_config = self.configs[0]
-        mock_open = self.useFixture(
-                    tools.OpenFixture(cli._get_head_file_path(fake_config),
-                                      '\n'.join(file_heads))).mock_open
-        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc,\
-                mock.patch.object(cli, '_use_separate_migration_branches',
-                                  return_value=False):
-            fc.return_value.get_heads.return_value = heads
-            if all(head in file_heads for head in heads):
-                cli.validate_head_file(fake_config)
-            else:
-                self.assertRaises(
-                    SystemExit,
-                    cli.validate_head_file,
-                    fake_config
-                )
-                self.assertTrue(self.mock_alembic_err.called)
-            mock_open.assert_called_with(
-                    cli._get_head_file_path(fake_config))
-
-            fc.assert_called_once_with(fake_config)
-
     def _test_validate_head_files_helper(self, heads, contract_head='',
                                          expand_head=''):
         fake_config = self.configs[0]
@@ -445,14 +420,14 @@ class TestCli(base.BaseTestCase):
                     fake_config), expand_head + '\n')).mock_open
 
             if contract_head in heads and expand_head in heads:
-                cli.validate_head_file(fake_config)
+                cli.validate_head_files(fake_config)
             elif head_files_not_exist:
-                cli.validate_head_file(fake_config)
+                cli.validate_head_files(fake_config)
                 self.assertTrue(self.mock_alembic_warn.called)
             else:
                 self.assertRaises(
                     SystemExit,
-                    cli.validate_head_file,
+                    cli.validate_head_files,
                     fake_config
                 )
                 self.assertTrue(self.mock_alembic_err.called)
@@ -476,26 +451,6 @@ class TestCli(base.BaseTestCase):
     def test_validate_head_files_wrong_contents(self):
         self._test_validate_head_files_helper(['a', 'b'], contract_head='c',
                                               expand_head='d')
-
-    def test_validate_head_file_branchless_wrong_contents(self):
-        self._test_validate_head_file_helper(['a'], ['b'])
-
-    def test_validate_head_file_branchless_success(self):
-        self._test_validate_head_file_helper(['a'], ['a'])
-
-    def test_validate_head_file_branchless_missing_file(self):
-        self._test_validate_head_file_helper(['a'])
-
-    def test_update_head_file_success(self):
-        head = ['b']
-        mock_open = self.useFixture(
-                    tools.OpenFixture(cli._get_head_file_path(
-                        self.configs[0]))).mock_open
-        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
-            fc.return_value.get_heads.return_value = head
-            cli.update_head_file(self.configs[0])
-            mock_open.return_value.write.assert_called_with(
-                '\n'.join(head))
 
     @mock.patch.object(cli, '_use_separate_migration_branches',
                        return_value=True)
