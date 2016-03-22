@@ -15,19 +15,15 @@
 
 import contextlib
 
-import debtcollector
-from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import enginefacade
 from oslo_utils import excutils
-from oslo_utils import uuidutils
 import osprofiler.sqlalchemy
 import sqlalchemy
 
 from neutron.common import profiler  # noqa
-from neutron.db import common_db_mixin
 
 context_manager = enginefacade.transaction_context()
 
@@ -98,62 +94,3 @@ def autonested_transaction(sess):
         session_context = sess.begin(subtransactions=True)
     with session_context as tx:
         yield tx
-
-
-# Common database operation implementations
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def get_object(context, model, **kwargs):
-    with context.session.begin(subtransactions=True):
-        return (common_db_mixin.model_query(context, model)
-                .filter_by(**kwargs)
-                .first())
-
-
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def get_objects(context, model, **kwargs):
-    with context.session.begin(subtransactions=True):
-        return (common_db_mixin.model_query(context, model)
-                .filter_by(**kwargs)
-                .all())
-
-
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def create_object(context, model, values):
-    with context.session.begin(subtransactions=True):
-        if 'id' not in values and hasattr(model, 'id'):
-            values['id'] = uuidutils.generate_uuid()
-        db_obj = model(**values)
-        context.session.add(db_obj)
-    return db_obj.__dict__
-
-
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def _safe_get_object(context, model, id, key='id'):
-    db_obj = get_object(context, model, **{key: id})
-    if db_obj is None:
-        raise n_exc.ObjectNotFound(id=id)
-    return db_obj
-
-
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def update_object(context, model, id, values, key=None):
-    with context.session.begin(subtransactions=True):
-        kwargs = {}
-        if key:
-            kwargs['key'] = key
-        db_obj = _safe_get_object(context, model, id,
-                                  **kwargs)
-        db_obj.update(values)
-        db_obj.save(session=context.session)
-    return db_obj.__dict__
-
-
-@debtcollector.removals.remove(message="This will be removed in the N cycle.")
-def delete_object(context, model, id, key=None):
-    with context.session.begin(subtransactions=True):
-        kwargs = {}
-        if key:
-            kwargs['key'] = key
-        db_obj = _safe_get_object(context, model, id,
-                                  **kwargs)
-        context.session.delete(db_obj)
