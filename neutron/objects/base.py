@@ -213,7 +213,8 @@ class NeutronDbObject(NeutronObject):
         :param db_obj: dict of object fetched from database
         :return: modified dict of DB values
         """
-        result = dict(db_obj)
+        result = {field: value for field, value in dict(db_obj).items()
+                  if value is not None}
         for field, field_db in cls.fields_need_translation.items():
             if field_db in result:
                 result[field] = result.pop(field_db)
