@@ -1,0 +1,11 @@
+---
+fixes:
+  - Fixes Bug 1548193, removing 'force_gateway_on_subnet'
+    configuration option. This will always allow adding
+    gateway outside the subnet, and gateway cannot be
+    forced onto the subnet range.
+other:
+  - The configuration option 'force_gateway_on_subnet'
+    is removed. This will always allow adding gateway
+    outside the subnet, and gateway cannot be forced
+    onto the subnet range.

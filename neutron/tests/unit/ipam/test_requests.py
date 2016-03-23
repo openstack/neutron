@@ -132,18 +132,7 @@ class TestIpamAnySubnetRequest(IpamSubnetRequestTestCase):
                           constants.IPv6,
                           129)
 
-    def test_subnet_request_bad_gateway(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
-        self.assertRaises(ipam_exc.IpamValueInvalid,
-                          ipam_req.AnySubnetRequest,
-                          self.tenant_id,
-                          self.subnet_id,
-                          constants.IPv6,
-                          64,
-                          gateway_ip='2000::1')
-
-    def test_subnet_request_good_gateway(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', False)
+    def test_subnet_request_gateway(self):
         request = ipam_req.AnySubnetRequest(self.tenant_id,
                                             self.subnet_id,
                                             constants.IPv6,
@@ -183,17 +172,7 @@ class TestIpamSpecificSubnetRequest(IpamSubnetRequestTestCase):
         self.assertEqual(netaddr.IPAddress('1.2.3.1'), request.gateway_ip)
         self.assertEqual(netaddr.IPNetwork('1.2.3.0/24'), request.subnet_cidr)
 
-    def test_subnet_request_bad_gateway(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
-        self.assertRaises(ipam_exc.IpamValueInvalid,
-                          ipam_req.SpecificSubnetRequest,
-                          self.tenant_id,
-                          self.subnet_id,
-                          '2001::1',
-                          gateway_ip='2000::1')
-
-    def test_subnet_request_good_gateway(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', False)
+    def test_subnet_request_gateway(self):
         request = ipam_req.SpecificSubnetRequest(self.tenant_id,
                                                  self.subnet_id,
                                                  '2001::1',

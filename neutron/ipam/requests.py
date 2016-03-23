@@ -13,7 +13,6 @@
 import abc
 
 import netaddr
-from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
 
@@ -105,15 +104,6 @@ class SubnetRequest(object):
         return self._allocation_pools
 
     def _validate_with_subnet(self, subnet_cidr):
-        if self.gateway_ip and cfg.CONF.force_gateway_on_subnet:
-            gw_ip = netaddr.IPAddress(self.gateway_ip)
-            if (gw_ip.version == 4 or (gw_ip.version == 6
-                                       and not gw_ip.is_link_local())):
-                if self.gateway_ip not in subnet_cidr:
-                    raise ipam_exc.IpamValueInvalid(_(
-                                        "gateway_ip %s is not in the subnet") %
-                                        self.gateway_ip)
-
         if self.allocation_pools:
             if subnet_cidr.version != self.allocation_pools[0].version:
                 raise ipam_exc.IpamValueInvalid(_(
