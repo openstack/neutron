@@ -13,6 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fixtures
+from multiprocessing import Process
+import time
+
 from oslo_config import cfg
 
 from neutron.agent.linux import external_process
@@ -71,3 +75,54 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
 
     def test_keepalived_respawn_with_unexpected_exit(self):
         self._test_keepalived_respawns(False)
+
+    def _test_keepalived_spawns_conflicting_pid(self, process, pid_file):
+        # Test the situation when keepalived PID file contains PID of an
+        # existing non-keepalived process. This situation can happen e.g.
+        # after hard node reset.
+
+        spawn_process = SleepyProcessFixture()
+        self.useFixture(spawn_process)
+
+        with open(pid_file, "w") as f_pid_file:
+            f_pid_file.write("%s" % spawn_process.pid)
+
+        self.manager.spawn()
+        utils.wait_until_true(
+            lambda: process.active,
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError(_("Keepalived didn't spawn")))
+
+    def test_keepalived_spawns_conflicting_pid_base_process(self):
+        process = self.manager.get_process()
+        pid_file = process.get_pid_file_name()
+        self._test_keepalived_spawns_conflicting_pid(process, pid_file)
+
+    def test_keepalived_spawns_conflicting_pid_vrrp_subprocess(self):
+        process = self.manager.get_process()
+        pid_file = process.get_pid_file_name()
+        self._test_keepalived_spawns_conflicting_pid(
+            process,
+            self.manager.get_vrrp_pid_file_name(pid_file))
+
+
+class SleepyProcessFixture(fixtures.Fixture):
+
+    def __init__(self):
+        super(SleepyProcessFixture, self).__init__()
+
+    @staticmethod
+    def yawn():
+        time.sleep(60)
+
+    def setUp(self):
+        super(SleepyProcessFixture, self).setUp()
+        self.process = Process(target=self.yawn)
+
+    def destroy(self):
+        self.process.terminate()
+
+    @property
+    def pid(self):
+        return self.process.pid
