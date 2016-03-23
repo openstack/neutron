@@ -216,8 +216,10 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
         if not self._is_this_snat_host():
             return
+        if not self.snat_iptables_manager:
+            LOG.debug("DVR router: no snat rules to be handled")
+            return
 
-        snat_iptables_manager = self.snat_iptables_manager
         # Prepare address scope iptables rule for dvr snat interfaces
         internal_ports = self.get_snat_interfaces()
         ports_scopemark = self._get_port_devicename_scopemark(
@@ -232,6 +234,6 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                 ports_scopemark[ip_version].update(
                     external_port_scopemark[ip_version])
 
-        with snat_iptables_manager.defer_apply():
+        with self.snat_iptables_manager.defer_apply():
             self._add_address_scope_mark(
-                snat_iptables_manager, ports_scopemark)
+                self.snat_iptables_manager, ports_scopemark)

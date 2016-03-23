@@ -41,6 +41,7 @@ from neutron.agent.l3 import router_processing_queue
 from neutron.agent.linux import dibbler
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
+from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import pd
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
@@ -2202,6 +2203,30 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # check 1 ext-gw-port is plugged
         self.assertEqual(3, self.mock_driver.plug.call_count)
         self.assertEqual(3, self.mock_driver.init_router_port.call_count)
+
+    def test_process_address_scope(self):
+        router = l3_test_common.prepare_router_data()
+        router['distributed'] = True
+        router['gw_port_host'] = HOSTNAME
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = dvr_router.DvrEdgeRouter(agent,
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+        ri.get_ex_gw_port = mock.Mock(return_value=None)
+
+        # Make sure the code doesn't crash if ri.snat_iptables_manager is None.
+        ri.process_address_scope()
+
+        with mock.patch.object(ri, '_add_address_scope_mark') as mocked_func:
+            ri.snat_iptables_manager = iptables_manager.IptablesManager(
+                namespace=mock.ANY, use_ipv6=False)
+            ri.snat_iptables_manager.defer_apply_off = mock.Mock()
+
+            ri.process_address_scope()
+            self.assertEqual(2, mocked_func.call_count)
 
     def test_get_service_plugin_list(self):
         service_plugins = [p_const.L3_ROUTER_NAT]
