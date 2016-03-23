@@ -21,10 +21,8 @@ import pwd
 import shlex
 import socket
 import struct
-import tempfile
 import threading
 
-import debtcollector
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
@@ -160,24 +158,6 @@ def get_interface_mac(interface):
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]
-
-
-@debtcollector.removals.remove(message="Redundant in Mitaka release.")
-def replace_file(file_name, data, file_mode=0o644):
-    """Replaces the contents of file_name with data in a safe manner.
-
-    First write to a temp file and then rename. Since POSIX renames are
-    atomic, the file is unlikely to be corrupted by competing writes.
-
-    We create the tempfile on the same device to ensure that it can be renamed.
-    """
-
-    base_dir = os.path.dirname(os.path.abspath(file_name))
-    tmp_file = tempfile.NamedTemporaryFile('w+', dir=base_dir, delete=False)
-    tmp_file.write(data)
-    tmp_file.close()
-    os.chmod(tmp_file.name, file_mode)
-    os.rename(tmp_file.name, file_name)
 
 
 def find_child_pids(pid):
