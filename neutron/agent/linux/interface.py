@@ -328,6 +328,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             root_dev, ns_dev = ip.add_veth(tap_name,
                                            device_name,
                                            namespace2=namespace)
+            root_dev.disable_ipv6()
         else:
             ns_dev = ip.device(device_name)
 
@@ -435,6 +436,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
         tap_name = self._get_tap_name(device_name, prefix)
 
         root_dev, ns_dev = ip.add_veth(tap_name, device_name)
+        root_dev.disable_ipv6()
 
         self._ivs_add_port(tap_name, port_id, mac_address)
 
@@ -482,6 +484,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         # Create ns_veth in a namespace if one is configured.
         root_veth, ns_veth = ip.add_veth(tap_name, device_name,
                                          namespace2=namespace)
+        root_veth.disable_ipv6()
         ns_veth.link.set_address(mac_address)
 
         if self.conf.network_device_mtu:
