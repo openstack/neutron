@@ -175,6 +175,28 @@ class TestWSGIServer(base.BaseTestCase):
 
         server.stop()
 
+    def test_disable_ssl(self):
+        CONF.set_default('use_ssl', True)
+
+        greetings = 'Hello, World!!!'
+
+        def hello_world(env, start_response):
+            if env['PATH_INFO'] != '/':
+                start_response('404 Not Found',
+                               [('Content-Type', 'text/plain')])
+                return ['Not Found\r\n']
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [greetings]
+
+        server = wsgi.Server("test_app", disable_ssl=True)
+        server.start(hello_world, 0, host="127.0.0.1")
+
+        response = open_no_proxy('http://127.0.0.1:%d/' % server.port)
+
+        self.assertEqual(greetings.encode('utf-8'), response.read())
+
+        server.stop()
+
     @mock.patch.object(wsgi, 'eventlet')
     def test__run(self, eventlet_mock):
         server = wsgi.Server('test')
