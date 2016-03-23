@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from logging import config as logging_config
-
 from alembic import context
 from oslo_config import cfg
 import sqlalchemy as sa
@@ -39,10 +37,6 @@ MYSQL_ENGINE = None
 # access to the values within the .ini file in use.
 config = context.config
 neutron_config = config.neutron_config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-logging_config.fileConfig(config.config_file_name)
 
 # set the target for 'autogenerate' support
 target_metadata = model_base.BASEV2.metadata

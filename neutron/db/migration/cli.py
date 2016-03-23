@@ -13,6 +13,7 @@
 #    under the License.
 
 import copy
+from logging import config as logging_config
 import os
 
 from alembic import command as alembic_command
@@ -61,6 +62,11 @@ BRANCHLESS_WARNING = 'Branchless migration chains are deprecated as of Mitaka.'
 
 
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+logging_config.fileConfig(neutron_alembic_ini)
+
 
 VALID_SERVICES = ['fwaas', 'lbaas', 'vpnaas']
 INSTALLED_SERVICES = [service_ for service_ in VALID_SERVICES
