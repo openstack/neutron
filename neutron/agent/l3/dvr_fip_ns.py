@@ -269,8 +269,6 @@ class FipNamespace(namespaces.Namespace):
         # add default route for the link local interface
         device = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
         device.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
-        #setup the NAT rules and chains
-        ri._handle_fip_nat_rules(rtr_2_fip_name)
 
     def scan_fip_ports(self, ri):
         # don't scan if not dvr or count is not None
