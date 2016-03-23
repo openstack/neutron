@@ -597,6 +597,20 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             updif_fn.assert_called_with("eth1", "br0", "ips", "gateway")
             delif_fn.assert_called_with("vxlan-1002")
 
+    def test_delete_bridge_not_exist(self):
+        self.lbm.interface_mappings.update({})
+        bridge_device = mock.Mock()
+        with mock.patch.object(bridge_lib, "BridgeDevice",
+                               return_value=bridge_device):
+            bridge_device.exists.side_effect = [True, False]
+            bridge_device.get_interfaces.return_value = []
+            bridge_device.link.set_down.side_effect = RuntimeError
+            self.lbm.delete_bridge("br0")
+            self.assertEqual(2, bridge_device.exists.call_count)
+
+            bridge_device.exists.side_effect = [True, True]
+            self.assertRaises(RuntimeError, self.lbm.delete_bridge, "br0")
+
     def test_delete_bridge_with_ip(self):
         bridge_device = mock.Mock()
         with mock.patch.object(ip_lib, "device_exists") as de_fn,\
