@@ -34,7 +34,6 @@ import sys
 import tempfile
 import uuid
 
-import debtcollector
 from eventlet.green import subprocess
 import netaddr
 from oslo_concurrency import lockutils
@@ -118,76 +117,6 @@ class cache_method_results(object):
 
     def __get__(self, obj, objtype):
         return functools.partial(self.__call__, obj)
-
-
-@debtcollector.removals.remove(message="This will removed in the N cycle.")
-def read_cached_file(filename, cache_info, reload_func=None):
-    """Read from a file if it has been modified.
-
-    :param cache_info: dictionary to hold opaque cache.
-    :param reload_func: optional function to be called with data when
-                        file is reloaded due to a modification.
-
-    :returns: data from file
-
-    """
-    mtime = os.path.getmtime(filename)
-    if not cache_info or mtime != cache_info.get('mtime'):
-        LOG.debug("Reloading cached file %s", filename)
-        with open(filename) as fap:
-            cache_info['data'] = fap.read()
-        cache_info['mtime'] = mtime
-        if reload_func:
-            reload_func(cache_info['data'])
-    return cache_info['data']
-
-
-@debtcollector.removals.remove(message="This will removed in the N cycle.")
-def find_config_file(options, config_file):
-    """Return the first config file found.
-
-    We search for the paste config file in the following order:
-    * If --config-file option is used, use that
-    * Search for the configuration files via common cfg directories
-    :retval Full path to config file, or None if no config file found
-    """
-    fix_path = lambda p: os.path.abspath(os.path.expanduser(p))
-    if options.get('config_file'):
-        if os.path.exists(options['config_file']):
-            return fix_path(options['config_file'])
-
-    dir_to_common = os.path.dirname(os.path.abspath(__file__))
-    root = os.path.join(dir_to_common, '..', '..', '..', '..')
-    # Handle standard directory search for the config file
-    config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'etc')),
-                        fix_path(os.path.join('~', '.neutron-venv', 'etc',
-                                              'neutron')),
-                        fix_path('~'),
-                        os.path.join(cfg.CONF.state_path, 'etc'),
-                        os.path.join(cfg.CONF.state_path, 'etc', 'neutron'),
-                        fix_path(os.path.join('~', '.local',
-                                              'etc', 'neutron')),
-                        '/usr/etc/neutron',
-                        '/usr/local/etc/neutron',
-                        '/etc/neutron/',
-                        '/etc']
-
-    if 'plugin' in options:
-        config_file_dirs = [
-            os.path.join(x, 'neutron', 'plugins', options['plugin'])
-            for x in config_file_dirs
-        ]
-
-    if os.path.exists(os.path.join(root, 'plugins')):
-        plugins = [fix_path(os.path.join(root, 'plugins', p, 'etc'))
-                   for p in os.listdir(os.path.join(root, 'plugins'))]
-        plugins = [p for p in plugins if os.path.isdir(p)]
-        config_file_dirs.extend(plugins)
-
-    for cfg_dir in config_file_dirs:
-        cfg_file = os.path.join(cfg_dir, config_file)
-        if os.path.exists(cfg_file):
-            return cfg_file
 
 
 def ensure_dir(dir_path):
@@ -397,19 +326,6 @@ def is_dvr_serviced(device_owner):
     """
     return (device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX) or
             device_owner in get_other_dvr_serviced_device_owners())
-
-
-@debtcollector.removals.remove(message="This will removed in the N cycle.")
-def get_keystone_url(conf):
-    if conf.auth_uri:
-        auth_uri = conf.auth_uri.rstrip('/')
-    else:
-        auth_uri = ('%(protocol)s://%(host)s:%(port)s' %
-            {'protocol': conf.auth_protocol,
-             'host': conf.auth_host,
-             'port': conf.auth_port})
-    # NOTE(ihrachys): all existing consumers assume version 2.0
-    return '%s/v2.0/' % auth_uri
 
 
 def ip_to_cidr(ip, prefix=None):
