@@ -42,9 +42,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 agent.fipnamespace_delete_on_ext_net(None, ext_net_id)
             except RuntimeError:
                 pass
-        self.addCleanup(
-            _safe_fipnamespace_delete_on_ext_net,
-            router['gw_port']['network_id'])
+        if router['gw_port']:
+            self.addCleanup(
+                _safe_fipnamespace_delete_on_ext_net,
+                router['gw_port']['network_id'])
 
         return super(TestDvrRouter, self).manage_router(agent, router)
 
@@ -207,6 +208,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     def generate_dvr_router_info(self,
                                  enable_ha=False,
                                  enable_snat=False,
+                                 enable_gw=True,
                                  agent=None,
                                  extra_routes=False,
                                  **kwargs):
@@ -218,24 +220,28 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             enable_ha=enable_ha,
             extra_routes=extra_routes,
             num_internal_ports=2,
+            enable_gw=enable_gw,
             **kwargs)
         internal_ports = router.get(l3_constants.INTERFACE_KEY, [])
         router['distributed'] = True
         router['gw_port_host'] = agent.conf.host
-        router['gw_port'][portbindings.HOST_ID] = agent.conf.host
-        floating_ip = router['_floatingips'][0]
-        floating_ip['floating_network_id'] = router['gw_port']['network_id']
-        floating_ip['host'] = agent.conf.host
-        floating_ip['port_id'] = internal_ports[0]['id']
-        floating_ip['status'] = 'ACTIVE'
 
-        self._add_snat_port_info_to_router(router, internal_ports)
-        # FIP has a dependency on external gateway. So we need to create
-        # the snat_port info and fip_agent_gw_port_info irrespective of
-        # the agent type the dvr supports. The namespace creation is
-        # dependent on the agent_type.
-        external_gw_port = router['gw_port']
-        self._add_fip_agent_gw_port_info_to_router(router, external_gw_port)
+        floating_ip = router['_floatingips'][0]
+        floating_ip['host'] = agent.conf.host
+        if enable_gw:
+            external_gw_port = router['gw_port']
+            router['gw_port'][portbindings.HOST_ID] = agent.conf.host
+            floating_ip['floating_network_id'] = external_gw_port['network_id']
+            floating_ip['port_id'] = internal_ports[0]['id']
+            floating_ip['status'] = 'ACTIVE'
+
+            self._add_snat_port_info_to_router(router, internal_ports)
+            # FIP has a dependency on external gateway. So we need to create
+            # the snat_port info and fip_agent_gw_port_info irrespective of
+            # the agent type the dvr supports. The namespace creation is
+            # dependent on the agent_type.
+            self._add_fip_agent_gw_port_info_to_router(router,
+                                                       external_gw_port)
         return router
 
     def _add_fip_agent_gw_port_info_to_router(self, router, external_gw_port):
@@ -599,10 +605,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(sg_device)
         self.assertTrue(qg_device)
 
-    def _mocked_dvr_ha_router(self, agent):
+    def _mocked_dvr_ha_router(self, agent, enable_gw=True):
         r_info = self.generate_dvr_router_info(enable_ha=True,
                                                enable_snat=True,
-                                               agent=agent)
+                                               agent=agent,
+                                               enable_gw=enable_gw)
 
         r_snat_ns_name = namespaces.build_ns_name(dvr_snat_ns.SNAT_NS_PREFIX,
                                                   r_info['id'])
@@ -631,14 +638,14 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
 
-    def _create_dvr_ha_router(self, agent):
+    def _create_dvr_ha_router(self, agent, enable_gw=True):
         get_ns_name = mock.patch.object(namespaces.RouterNamespace,
                                         '_get_ns_name').start()
         get_snat_ns_name = mock.patch.object(dvr_snat_ns.SnatNamespace,
                                              'get_snat_ns_name').start()
         (r_info,
          mocked_r_ns_name,
-         mocked_r_snat_ns_name) = self._mocked_dvr_ha_router(agent)
+         mocked_r_snat_ns_name) = self._mocked_dvr_ha_router(agent, enable_gw)
         get_ns_name.return_value = mocked_r_ns_name
         get_snat_ns_name.return_value = mocked_r_snat_ns_name
         router = self.manage_router(agent, r_info)
@@ -647,7 +654,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     def _assert_ip_addresses_in_dvr_ha_snat_namespace(self, router):
         namespace = router.ha_namespace
         ex_gw_port = router.get_ex_gw_port()
-        snat_port = router.get_snat_interfaces()[0]
+        snat_ports = router.get_snat_interfaces()
+        if not snat_ports:
+            return
+
+        snat_port = snat_ports[0]
         ex_gw_port_name = router.get_external_device_name(
             ex_gw_port['id'])
         snat_port_name = router._get_snat_int_device_name(
@@ -670,7 +681,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     def _assert_no_ip_addresses_in_dvr_ha_snat_namespace(self, router):
         namespace = router.ha_namespace
         ex_gw_port = router.get_ex_gw_port()
-        snat_port = router.get_snat_interfaces()[0]
+        snat_ports = router.get_snat_interfaces()
+        if not snat_ports:
+            return
+
+        snat_port = snat_ports[0]
         ex_gw_port_name = router.get_external_device_name(
             ex_gw_port['id'])
         snat_port_name = router._get_snat_int_device_name(
@@ -681,12 +696,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_no_ip_addresses_on_interface(namespace,
                                                   ex_gw_port_name)
 
-    def test_dvr_ha_router_failover(self):
+    def _test_dvr_ha_router_failover(self, enable_gw):
         self._setup_dvr_ha_agents()
         self._setup_dvr_ha_bridges()
 
-        router1 = self._create_dvr_ha_router(self.agent)
-        router2 = self._create_dvr_ha_router(self.failover_agent)
+        router1 = self._create_dvr_ha_router(self.agent, enable_gw=enable_gw)
+        router2 = self._create_dvr_ha_router(self.failover_agent, enable_gw)
 
         utils.wait_until_true(lambda: router1.ha_state == 'master')
         utils.wait_until_true(lambda: router2.ha_state == 'backup')
@@ -701,6 +716,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(router2)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(router1)
+
+    def test_dvr_ha_router_failover_with_gw(self):
+        self._test_dvr_ha_router_failover(enable_gw=True)
+
+    def test_dvr_ha_router_failover_without_gw(self):
+        self._test_dvr_ha_router_failover(enable_gw=False)
 
     def test_dvr_router_static_routes(self):
         """Test to validate the extra routes on dvr routers."""
