@@ -53,7 +53,7 @@ def get_ha_interface(ip='169.254.192.1', mac='12:34:56:78:2b:5d'):
 def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
                         enable_floating_ip=False, enable_ha=False,
                         extra_routes=False, dual_stack=False,
-                        v6_ext_gw_with_sub=True, **kwargs):
+                        enable_gw=True, v6_ext_gw_with_sub=True, **kwargs):
     fixed_ips = []
     subnets = []
     gateway_mac = kwargs.get('gateway_mac', 'ca:fe:de:ad:be:ee')
@@ -86,12 +86,14 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         raise ValueError("Invalid ip_version: %s" % ip_version)
 
     router_id = _uuid()
-    ex_gw_port = {'id': _uuid(),
-                  'mac_address': gateway_mac,
-                  'network_id': _uuid(),
-                  'fixed_ips': fixed_ips,
-                  'subnets': subnets,
-                  'extra_subnets': extra_subnets}
+    ex_gw_port = {}
+    if enable_gw:
+        ex_gw_port = {'id': _uuid(),
+                      'mac_address': gateway_mac,
+                      'network_id': _uuid(),
+                      'fixed_ips': fixed_ips,
+                      'subnets': subnets,
+                      'extra_subnets': extra_subnets}
 
     routes = []
     if extra_routes:
