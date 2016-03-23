@@ -451,9 +451,10 @@ class DnsExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self._create_port(self.fmt, net_id=network['network']['id'],
                                     dns_name=dns_name)
             self.assertEqual(400, res.status_code)
+            error_message = res.json['NeutronError']['message']
             is_expected_message = (
-                'cannot be converted to lowercase string' in res.text or
-                'not a valid PQDN or FQDN. Reason:' in res.text)
+                'cannot be converted to lowercase string' in error_message or
+                'not a valid PQDN or FQDN. Reason:' in error_message)
             self.assertTrue(is_expected_message)
 
     def test_api_extension_validation_with_good_dns_names(self):
