@@ -983,8 +983,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_br.set_secure_mode()
         self.int_br.setup_controllers(self.conf)
 
-        self.int_br.delete_port(self.conf.OVS.int_peer_patch_port)
         if self.conf.AGENT.drop_flows_on_start:
+            # Delete the patch port between br-int and br-tun if we're deleting
+            # the flows on br-int, so that traffic doesn't get flooded over
+            # while flows are missing.
+            self.int_br.delete_port(self.conf.OVS.int_peer_patch_port)
             self.int_br.delete_flows()
         self.int_br.setup_default_table()
 
