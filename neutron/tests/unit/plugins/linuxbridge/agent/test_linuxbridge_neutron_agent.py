@@ -153,11 +153,22 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
 
+    def test__get_devices_locally_modified(self):
+        new_ts = {1: 1000, 2: 2000, 3: 3000}
+        old_ts = {1: 10, 2: 2000, 4: 900}
+        # 3 and 4 are not returned because 3 is a new device and 4 is a
+        # removed device
+        self.assertEqual(
+            set([1]),
+            self.agent._get_devices_locally_modified(new_ts, old_ts))
+
     def _test_scan_devices(self, previous, updated,
-                           fake_current, expected, sync):
+                           fake_current, expected, sync,
+                           fake_ts_current=None):
         self.agent.br_mgr = mock.Mock()
         self.agent.br_mgr.get_tap_devices.return_value = fake_current
-
+        self.agent.br_mgr.get_devices_modified_timestamps.return_value = (
+            fake_ts_current or {})
         self.agent.updated_devices = updated
         results = self.agent.scan_devices(previous, sync)
         self.assertEqual(expected, results)
@@ -166,28 +177,49 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
         fake_current = set([1, 2])
         updated = set()
         expected = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
+
+    def test_scan_devices_timestamp_triggers_updated(self):
+        previous = {'current': set([1, 2]),
+                    'updated': set(),
+                    'added': set(),
+                    'removed': set(),
+                    'timestamps': {2: 600}}
+        fake_current = set([1, 2])
+        updated = set()
+        expected = {'current': set([1, 2]),
+                    'updated': set([2]),
+                    'added': set(),
+                    'removed': set(),
+                    'timestamps': {2: 1000}}
+
+        self._test_scan_devices(previous, updated, fake_current, expected,
+                                sync=False, fake_ts_current={2: 1000})
 
     def test_scan_devices_added_removed(self):
         previous = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
         fake_current = set([2, 3])
         updated = set()
         expected = {'current': set([2, 3]),
                     'updated': set(),
                     'added': set([3]),
-                    'removed': set([1])}
+                    'removed': set([1]),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
@@ -196,13 +228,15 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([2, 3]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set([1])}
+                    'removed': set([1]),
+                    'timestamps': {}}
         fake_current = set([2, 3])
         updated = set()
         expected = {'current': set([2, 3]),
                     'updated': set(),
                     'added': set([2, 3]),
-                    'removed': set([1])}
+                    'removed': set([1]),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=True)
@@ -211,7 +245,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([2, 3]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set([1])}
+                    'removed': set([1]),
+                    'timestamps': {}}
         # Device 2 disappeared.
         fake_current = set([3])
         updated = set()
@@ -219,7 +254,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         expected = {'current': set([3]),
                     'updated': set(),
                     'added': set([3]),
-                    'removed': set([1, 2])}
+                    'removed': set([1, 2]),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=True)
@@ -228,13 +264,15 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
         fake_current = set([1, 2])
         updated = set([1])
         expected = {'current': set([1, 2]),
                     'updated': set([1]),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
@@ -243,13 +281,15 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
         fake_current = set([1, 2])
         updated = set([3])
         expected = {'current': set([1, 2]),
                     'updated': set(),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=False)
@@ -258,13 +298,15 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         previous = {'current': set([1, 2]),
                     'updated': set([1]),
                     'added': set(),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
         fake_current = set([1, 2])
         updated = set([2])
         expected = {'current': set([1, 2]),
                     'updated': set([1, 2]),
                     'added': set([1, 2]),
-                    'removed': set()}
+                    'removed': set(),
+                    'timestamps': {}}
 
         self._test_scan_devices(previous, updated, fake_current, expected,
                                 sync=True)
