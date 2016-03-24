@@ -127,6 +127,8 @@ class TunnelTest(object):
         self.mock_int_bridge.add_port.return_value = self.MAP_TUN_INT_OFPORT
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
+        self.mock_int_bridge.get_port_ofport.return_value = (
+            ovs_lib.INVALID_OFPORT)
         self.mock_int_bridge.get_vif_ports.return_value = []
         self.mock_int_bridge.get_ports_attributes.return_value = []
         self.mock_int_bridge.db_get_val.return_value = {}
@@ -137,6 +139,8 @@ class TunnelTest(object):
             self.MAP_TUN_PHY_OFPORT)
         self.mock_map_tun_bridge.add_patch_port.return_value = (
             self.MAP_TUN_PHY_OFPORT)
+        self.mock_map_tun_bridge.get_port_ofport.return_value = (
+            ovs_lib.INVALID_OFPORT)
 
         self.mock_tun_bridge = self.ovs_bridges[self.TUN_BRIDGE]
         self.mock_tun_bridge.add_port.return_value = self.INT_OFPORT
@@ -187,11 +191,14 @@ class TunnelTest(object):
         self.mock_map_tun_bridge_expected = [
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
+            mock.call.get_port_ofport('phy-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('phy-%s' % self.MAP_TUN_BRIDGE,
-                                     constants.NONEXISTENT_PEER), ]
+                                     constants.NONEXISTENT_PEER),
+        ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
                                  'type'),
+            mock.call.get_port_ofport('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
                                      constants.NONEXISTENT_PEER),
         ]

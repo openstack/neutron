@@ -841,6 +841,8 @@ class TestOvsNeutronAgent(object):
             parent.attach_mock(int_br, 'int_br')
             phys_br.add_patch_port.return_value = "phy_ofport"
             int_br.add_patch_port.return_value = "int_ofport"
+            phys_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
+            int_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
@@ -851,8 +853,10 @@ class TestOvsNeutronAgent(object):
                 # Have to use __getattr__ here to avoid mock._Call.__eq__
                 # method being called
                 mock.call.int_br.db_get_val().__getattr__('__eq__')('veth'),
+                mock.call.int_br.get_port_ofport('int-br-eth'),
                 mock.call.int_br.add_patch_port('int-br-eth',
                                                 constants.NONEXISTENT_PEER),
+                mock.call.phys_br.get_port_ofport('phy-br-eth'),
                 mock.call.phys_br.add_patch_port('phy-br-eth',
                                                  constants.NONEXISTENT_PEER),
                 mock.call.int_br.drop_port(in_port='int_ofport'),
@@ -921,6 +925,8 @@ class TestOvsNeutronAgent(object):
             parent.attach_mock(int_br, 'int_br')
             phys_br.add_patch_port.return_value = "phy_ofport"
             int_br.add_patch_port.return_value = "int_ofport"
+            phys_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
+            int_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
@@ -928,8 +934,10 @@ class TestOvsNeutronAgent(object):
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.delete_port('int-br-eth'),
                 mock.call.phys_br.delete_port('phy-br-eth'),
+                mock.call.int_br.get_port_ofport('int-br-eth'),
                 mock.call.int_br.add_patch_port('int-br-eth',
                                                 constants.NONEXISTENT_PEER),
+                mock.call.phys_br.get_port_ofport('phy-br-eth'),
                 mock.call.phys_br.add_patch_port('phy-br-eth',
                                                  constants.NONEXISTENT_PEER),
                 mock.call.int_br.drop_port(in_port='int_ofport'),
