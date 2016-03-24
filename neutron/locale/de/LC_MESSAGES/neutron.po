@@ -11,13 +11,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc2.dev13\n"
+"Project-Id-Version: neutron 8.0.0.0rc2.dev15\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-22 12:05+0000\n"
+"POT-Creation-Date: 2016-03-24 00:54+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-22 09:45+0000\n"
+"PO-Revision-Date: 2016-03-23 09:24+0000\n"
 "Last-Translator: Monika Wolf <vcomas3@de.ibm.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -366,7 +366,7 @@ msgid ""
 "System must support the iptables comments module for addition of comments."
 msgstr ""
 "Fügen Sie Kommentare zu iptables-Regeln hinzu. Setzen Sie den Wert auf "
-"'false', um das Hinzufügen von Kommentaren zu generierten iptabels-Regeln, "
+"'false', um das Hinzufügen von Kommentaren zu generierten iptables-Regeln, "
 "die den Zweck der einzelnen Regeln beschreiben, zu unterbinden. Das System "
 "muss das Modul für iptables-Kommentare zum Hinzufügen von Kommentaren "
 "unterstützen. "
@@ -1924,7 +1924,7 @@ msgid ""
 "Interval between checks of child process liveness (seconds), use 0 to disable"
 msgstr ""
 "Intervall zwischen Überprüfungen der Aktivität von untergeordneten Prozessen "
-"(Sekunden), verwenden Sie zum Inaktivieren '0'"
+"(Sekunden), verwenden Sie zum Deaktivieren '0'"
 
 msgid "Interval between two metering measures"
 msgstr "Intervall zwischen zwei Messungsmaßnahmen"
@@ -3540,7 +3540,7 @@ msgstr ""
 "die native ovsdb_interface-Einstellung aktiviert ist."
 
 msgid "The core plugin Neutron will use"
-msgstr "Core-Plug-in, das Neutron verwenden wird"
+msgstr "Core-Plugin, das Neutron verwenden wird"
 
 #, python-format
 msgid ""
@@ -3591,7 +3591,7 @@ msgstr ""
 "entspricht sie dem Router eines anderen Nutzers."
 
 msgid "The host IP to bind to"
-msgstr "Das Host-IP, an das gebunden werden soll"
+msgstr "Die Host-IP an die gebunden werden soll"
 
 msgid "The interface for interacting with the OVSDB"
 msgstr "Die Schnittstelle zur Kommunikation mit OVSDB"
@@ -3672,7 +3672,7 @@ msgid "The port '%s' was deleted"
 msgstr "Port '%s' wurde gelöscht"
 
 msgid "The port to bind to"
-msgstr "Der Port, an den gebunden werden soll"
+msgstr "Der Port an den gebunden werden soll"
 
 #, python-format
 msgid "The requested content type %s is invalid."
@@ -3696,7 +3696,7 @@ msgstr ""
 "angeforderte Operation nicht ausführen."
 
 msgid "The service plugins Neutron will use"
-msgstr "Service-Plug-ins, die Neutron verwenden wird"
+msgstr "Service-Plugins, die Neutron verwenden wird"
 
 #, python-format
 msgid "The subnet request could not be satisfied because: %(reason)s"
