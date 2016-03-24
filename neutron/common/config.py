@@ -259,6 +259,9 @@ def setup_logging():
     """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
     logging.setup(cfg.CONF, product_name)
+    # We use the oslo.log default log levels and add only the extra levels
+    # that Neutron needs.
+    logging.set_defaults(default_log_levels=logging.get_default_log_levels())
     LOG.info(_LI("Logging enabled!"))
     LOG.info(_LI("%(prog)s version %(version)s"),
              {'prog': sys.argv[0],
