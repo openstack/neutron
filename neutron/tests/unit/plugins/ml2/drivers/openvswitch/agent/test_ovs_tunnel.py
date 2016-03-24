@@ -201,13 +201,13 @@ class TunnelTest(object):
             mock.call.drop_port(in_port=self.MAP_TUN_INT_OFPORT),
             mock.call.set_db_attribute(
                 'Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                'options:peer', 'phy-%s' % self.MAP_TUN_BRIDGE),
+                'options', {'peer': 'phy-%s' % self.MAP_TUN_BRIDGE}),
         ]
         self.mock_map_tun_bridge_expected += [
             mock.call.drop_port(in_port=self.MAP_TUN_PHY_OFPORT),
             mock.call.set_db_attribute(
                 'Interface', 'phy-%s' % self.MAP_TUN_BRIDGE,
-                'options:peer', 'int-%s' % self.MAP_TUN_BRIDGE),
+                'options', {'peer': 'int-%s' % self.MAP_TUN_BRIDGE}),
         ]
 
         self.mock_tun_bridge_expected = [
