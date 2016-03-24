@@ -227,7 +227,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
 
-    def test_assert_patch_port_ofports_dont_change(self):
+    def test_assert_br_int_patch_port_ofports_dont_change(self):
         # When the integration bridge is setup, it should reuse the existing
         # patch ports between br-int and br-tun.
         self.setup_agent_and_ports(port_dicts=[], create_tunnels=True)
@@ -237,6 +237,19 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.setup_agent_and_ports(port_dicts=[], create_tunnels=True)
         self.assertEqual(patch_int_ofport_before, self.agent.patch_int_ofport)
         self.assertEqual(patch_tun_ofport_before, self.agent.patch_tun_ofport)
+
+    def test_assert_br_phys_patch_port_ofports_dont_change(self):
+        # When the integration bridge is setup, it should reuse the existing
+        # patch ports between br-int and br-phys.
+        self.setup_agent_and_ports(port_dicts=[])
+        patch_int_ofport_before = self.agent.int_ofports['physnet']
+        patch_phys_ofport_before = self.agent.phys_ofports['physnet']
+
+        self.setup_agent_and_ports(port_dicts=[])
+        self.assertEqual(patch_int_ofport_before,
+                         self.agent.int_ofports['physnet'])
+        self.assertEqual(patch_phys_ofport_before,
+                         self.agent.phys_ofports['physnet'])
 
     def test_assert_pings_during_br_phys_setup_not_lost_in_vlan_to_flat(self):
         provider_net = self._create_test_network_dict()
