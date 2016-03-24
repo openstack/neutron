@@ -1091,11 +1091,11 @@ class TestOvsNeutronAgent(object):
                 mock.call.int_br.drop_port(in_port='int_ofport'),
                 mock.call.phys_br.drop_port(in_port='phy_ofport'),
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
-                                                  'options:peer',
-                                                  'phy-br-eth'),
+                                                  'options',
+                                                  {'peer': 'phy-br-eth'}),
                 mock.call.phys_br.set_db_attribute('Interface', 'phy-br-eth',
-                                                   'options:peer',
-                                                   'int-br-eth'),
+                                                   'options',
+                                                   {'peer': 'int-br-eth'}),
             ]
             parent.assert_has_calls(expected_calls)
             self.assertEqual("int_ofport",
@@ -1169,11 +1169,11 @@ class TestOvsNeutronAgent(object):
                 mock.call.int_br.drop_port(in_port='int_ofport'),
                 mock.call.phys_br.drop_port(in_port='phy_ofport'),
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
-                                                  'options:peer',
-                                                  'phy-br-eth'),
+                                                  'options',
+                                                  {'peer': 'phy-br-eth'}),
                 mock.call.phys_br.set_db_attribute('Interface', 'phy-br-eth',
-                                                   'options:peer',
-                                                   'int-br-eth'),
+                                                   'options',
+                                                   {'peer': 'int-br-eth'}),
             ]
             parent.assert_has_calls(expected_calls)
             self.assertEqual("int_ofport",
