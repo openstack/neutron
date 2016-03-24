@@ -227,6 +227,17 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
 
+    def test_assert_patch_port_ofports_dont_change(self):
+        # When the integration bridge is setup, it should reuse the existing
+        # patch ports between br-int and br-tun.
+        self.setup_agent_and_ports(port_dicts=[], create_tunnels=True)
+        patch_int_ofport_before = self.agent.patch_int_ofport
+        patch_tun_ofport_before = self.agent.patch_tun_ofport
+
+        self.setup_agent_and_ports(port_dicts=[], create_tunnels=True)
+        self.assertEqual(patch_int_ofport_before, self.agent.patch_int_ofport)
+        self.assertEqual(patch_tun_ofport_before, self.agent.patch_tun_ofport)
+
     def test_noresync_after_port_gone(self):
         '''This will test the scenario where a port is removed after listing
         it but before getting vif info about it.
