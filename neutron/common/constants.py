@@ -215,6 +215,11 @@ AGENT_ALIVE = 'alive'
 # agent has just returned to alive after being dead
 AGENT_REVIVED = 'revived'
 
+INGRESS_DIRECTION = 'ingress'
+EGRESS_DIRECTION = 'egress'
+
+VALID_DIRECTIONS = (INGRESS_DIRECTION, EGRESS_DIRECTION)
+VALID_ETHERTYPES = (lib_constants.IPv4, lib_constants.IPv6)
 
 # Neutron-lib migration shim. This will wrap any constants that are moved
 # to that library in a deprecation warning, until they can be updated to

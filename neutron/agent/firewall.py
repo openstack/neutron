@@ -18,11 +18,12 @@ import contextlib
 
 import six
 
+import neutron.common.constants as const
 from neutron.common import utils
 from neutron.extensions import portsecurity as psec
 
-INGRESS_DIRECTION = 'ingress'
-EGRESS_DIRECTION = 'egress'
+INGRESS_DIRECTION = const.INGRESS_DIRECTION
+EGRESS_DIRECTION = const.EGRESS_DIRECTION
 
 DIRECTION_IP_PREFIX = {INGRESS_DIRECTION: 'source_ip_prefix',
                        EGRESS_DIRECTION: 'dest_ip_prefix'}

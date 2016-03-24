@@ -79,3 +79,49 @@ class DscpMarkFieldTest(test_base.BaseTestCase, TestField):
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
             self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class FlowDirectionEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(FlowDirectionEnumFieldTest, self).setUp()
+        self.field = common_types.FlowDirectionEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.VALID_DIRECTIONS]
+        self.coerce_bad_values = ['test', '8', 10, []]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class EtherTypeEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(EtherTypeEnumFieldTest, self).setUp()
+        self.field = common_types.EtherTypeEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.VALID_ETHERTYPES]
+        self.coerce_bad_values = ['IpV4', 8, 'str', 'ipv6']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class IpProtocolEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IpProtocolEnumFieldTest, self).setUp()
+        self.field = common_types.IpProtocolEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in
+                                   list(constants.IP_PROTOCOL_MAP.keys())]
+        self.coerce_bad_values = ['test', '8', 10, 'Udp']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
