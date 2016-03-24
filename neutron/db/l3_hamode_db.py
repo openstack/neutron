@@ -21,6 +21,7 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 import sqlalchemy as sa
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
@@ -414,12 +415,21 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             ha = cfg.CONF.l3_ha
         return ha
 
+    def _get_device_owner(self, context, router=None):
+        """Get device_owner for the specified router."""
+        router_is_uuid = isinstance(router, six.string_types)
+        if router_is_uuid:
+            router = self._get_router(context, router)
+        if is_ha_router(router):
+            return constants.DEVICE_OWNER_HA_REPLICATED_INT
+        return super(L3_HA_NAT_db_mixin,
+                     self)._get_device_owner(context, router)
+
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
         router['router']['ha'] = is_ha
         router_dict = super(L3_HA_NAT_db_mixin,
                             self).create_router(context, router)
-
         if is_ha:
             try:
                 router_db = self._get_router(context, router_dict['id'])
@@ -694,7 +704,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
         device_filter = {'device_id': states.keys(),
                          'device_owner':
-                         [constants.DEVICE_OWNER_ROUTER_INTF,
+                         [constants.DEVICE_OWNER_HA_REPLICATED_INT,
                           constants.DEVICE_OWNER_ROUTER_SNAT]}
         ports = self._core_plugin.get_ports(admin_ctx, filters=device_filter)
         active_ports = (port for port in ports
@@ -709,3 +719,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     n_exc.PortNotFound):
                 # Take concurrently deleted interfaces in to account
                 pass
+
+
+def is_ha_router(router):
+    """Return True if router to be handled is ha."""
+    try:
+        # See if router is a DB object first
+        requested_router_type = router.extra_attributes.ha
+    except AttributeError:
+        # if not, try to see if it is a request body
+        requested_router_type = router.get('ha')
+    if attributes.is_attr_set(requested_router_type):
+        return requested_router_type
+    return cfg.CONF.l3_ha

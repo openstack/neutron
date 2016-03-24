@@ -871,7 +871,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
     def _get_first_interface(self, router_id):
         device_filter = {'device_id': [router_id],
                          'device_owner':
-                         [constants.DEVICE_OWNER_ROUTER_INTF]}
+                         [constants.DEVICE_OWNER_HA_REPLICATED_INT]}
         return self.core_plugin.get_ports(
             self.admin_ctx,
             filters=device_filter)[0]

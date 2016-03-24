@@ -777,7 +777,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 for ip in port['fixed_ips']:
                     if ip['subnet_id'] == s['id']:
                         fixed_ip = {'subnet_id': s['id']}
-                        if "router_interface" in port['device_owner']:
+                        if (port['device_owner'] in
+                            constants.ROUTER_INTERFACE_OWNERS):
                             routers.append(port['device_id'])
                             fixed_ip['ip_address'] = s['gateway_ip']
                         fixed_ips.append(fixed_ip)
