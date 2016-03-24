@@ -212,7 +212,7 @@ class Host(fixtures.Fixture):
             return self.get_random_ip('240.0.0.1', '240.255.255.254')
         return self.get_random_ip(
             str(self.env_desc.network_range[2]),
-            str(self.env_desc.network_range[-1])
+            str(self.env_desc.network_range[-2])
         )
 
     def get_bridge(self, network_id):
