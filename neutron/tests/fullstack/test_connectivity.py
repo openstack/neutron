@@ -26,6 +26,9 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
+    of_interface = None
+    ovsdb_interface = None
+
     def setUp(self):
         host_descriptions = [
             # There's value in enabling L3 agents registration when l2pop
@@ -34,6 +37,7 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
             environment.HostDescription(
                 l3_agent=self.l2_pop,
                 of_interface=self.of_interface,
+                ovsdb_interface=self.ovsdb_interface,
                 l2_agent_type=self.l2_agent_type) for _ in range(3)]
         env = environment.Environment(
             environment.EnvironmentDescription(
@@ -77,8 +81,12 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
     interface_scenarios = [
-        ('Ofctl', {'of_interface': 'ovs-ofctl'}),
-        ('Native', {'of_interface': 'native'})]
+        ('openflow-cli', {'of_interface': 'ovs-ofctl',
+                          'ovsdb_interface': 'vsctl'}),
+        ('openflow-native', {'of_interface': 'native',
+                             'ovsdb_interface': 'vsctl'}),
+        ('ovsdb-native', {'of_interface': 'ovs-ofctl',
+                          'ovsdb_interface': 'native'})]
     scenarios = testscenarios.multiply_scenarios(
         network_scenarios, interface_scenarios)
 
@@ -97,7 +105,6 @@ class TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         ('VXLAN and l2pop', {'network_type': 'vxlan',
                              'l2_pop': True})
     ]
-    of_interface = None
 
     def test_connectivity(self):
         self._test_connectivity()
