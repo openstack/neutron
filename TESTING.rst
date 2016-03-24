@@ -241,6 +241,16 @@ databases, so can a RabbitMQ server serve multiple messaging domains.
 Exchanges and queues in one 'vhost' are segmented from those in another
 'vhost'.
 
+Please note that if the change you would like to test using fullstack tests
+involves a change to python-neutronclient as well as neutron, then you should
+make sure your fullstack tests are in a separate third change that depends on
+the python-neutronclient change using the 'Depends-On' tag in the commit
+message.  You will need to wait for the next release of python-neutronclient,
+and a minimum version bump for python-neutronclient in the global requirements,
+before your fullstack tests will work in the gate.  This is because tox uses
+the version of python-neutronclient listed in the upper-constraints.txt file in
+the openstack/requirements repository.
+
 When?
 +++++
 
