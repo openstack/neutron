@@ -52,12 +52,6 @@ Launchpad, we can gauge interest in features. The drivers team will evaluate
 these on a weekly basis along with the specs. RFEs will be evaluated in the
 current cycle against existing project priorities and available resources.
 
-The process for moving work from RFEs into the code involves someone assigning
-themselves the RFE bug and filing a matching spec using the slimmed down
-template in the neutron-specs repository. The spec will then be reviewed by the
-community and approved by the drivers team before landing in a release. This is
-the same process as before RFEs existed in Neutron.
-
 The workflow for the life an RFE in Launchpad is as follows:
 
 * The bug is submitted and will by default land in the "New" state.
@@ -72,18 +66,19 @@ The workflow for the life an RFE in Launchpad is as follows:
   the RFE requires extra scrutiny, more design discussion, etc.
 * The PTL will work with the Lieutenant for the area being identified by the
   RFE to evaluate resources against the current workload.
-* If a spec is necessary, a member of the Neutron release team will register
-  a matching Launchpad blueprint to be used for milestone tracking purposes,
-  and as a landing page for the spec document, as available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_.
-  The blueprint will then be linked to the original RFE bug report. This
-  step will ensure higher visibility of the RFE over the other RFEs
-  and consistency across the various fields required during the blueprint
-  registration process (Approver, Drafter, etc.). More precisely, the
-  blueprint submitter will work with the RFE submitter to identify the
-  following:
+* A member of the Neutron release team (or the PTL) will register a matching
+  Launchpad blueprint to be used for milestone tracking purposes, and for
+  identifying the responsible assignee and approver. If the RFE has a spec
+  the blueprint will have a pointer to the spec document, which will become
+  available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_
+  once it is approved and merged. The blueprint will then be linked to the
+  original RFE bug report as a pointer to the discussion that led to the
+  appoval of the RFE.
+  The blueprint submitter will also need to identify the following:
 
   * Priority: there will be only two priorities to choose from, High and Low.
-    It is worth noting that priority is not to be confused with `importance <https://wiki.openstack.org/wiki/Bugs#Importance>`_,
+    It is worth noting that priority is not to be confused with
+    `importance <https://wiki.openstack.org/wiki/Bugs#Importance>`_,
     which is a property of Launchpad Bugs. Priority gives an indication of
     how promptly a work item should be tackled to allow it to complete. High
     priority is to be chosen for work items that must make substantial
@@ -124,27 +119,28 @@ The workflow for the life an RFE in Launchpad is as follows:
     reach out for help to get the job done; however he/she is the main
     point of contact with the following responsibilities:
 
-  * Pair up with the drafter/assignee in order to help skip development
-    blockers.
-  * Review patches associated with the blueprint: approver and assignee
-    should touch base regularly and ping each other when new code is
-    available for review, or if review feedback goes unaddressed.
-  * Reach out to other reviewers for feedback in areas that may step
-    out of the zone of her/his confidence.
-  * Escalate issues, and raise warnings to the release team/PTL if the
-    effort shows slow progress. Approver and assignee are key parts to land
-    a blueprint: should the approver and/or assignee be unable to continue
-    the commitment during the release cycle, it is the Approver's
-    responsibility to reach out the release team/PTL so that replacements
-    can be identified.
-  * Provide a status update during the Neutron IRC meeting, if required.
+    * Pair up with the drafter/assignee in order to help skip development
+      blockers.
+    * Review patches associated with the blueprint: approver and assignee
+      should touch base regularly and ping each other when new code is
+      available for review, or if review feedback goes unaddressed.
+    * Reach out to other reviewers for feedback in areas that may step
+      out of the zone of her/his confidence.
+    * Escalate issues, and raise warnings to the release team/PTL if the
+      effort shows slow progress. Approver and assignee are key parts to land
+      a blueprint: should the approver and/or assignee be unable to continue
+      the commitment during the release cycle, it is the Approver's
+      responsibility to reach out the release team/PTL so that replacements
+      can be identified.
+    * Provide a status update during the Neutron IRC meeting, if required.
 
-  Approver `assignments <https://blueprints.launchpad.net/neutron/+assignments>`_
-  must be carefully identified to ensure that no-one overcommits. A
-  Neutron contributor develops code himself/herself, and if he/she is an
-  approver of more than a couple of blueprints in a single cycle/milestone
-  (depending on the complexity of the spec), it may mean that he/she is
-  clearly oversubscribed.
+    Approver `assignments <https://blueprints.launchpad.net/neutron/+assignments>`_
+    must be carefully identified to ensure that no-one overcommits. A
+    Neutron contributor develops code himself/herself, and if he/she is an
+    approver of more than a couple of blueprints in a single cycle/milestone
+    (depending on the complexity of the spec), it may mean that he/she is
+    clearly oversubscribed.
+
   The Neutron team will review the status of blueprints targeted for the
   milestone during their weekly meeting to ensure a smooth progression of
   the work planned. Blueprints for which resources cannot be identified
