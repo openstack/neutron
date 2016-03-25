@@ -55,10 +55,12 @@ class HostDescription(object):
     under?
     """
     def __init__(self, l3_agent=False, of_interface='ovs-ofctl',
+                 ovsdb_interface='vsctl',
                  l2_agent_type=constants.AGENT_TYPE_OVS):
         self.l2_agent_type = l2_agent_type
         self.l3_agent = l3_agent
         self.of_interface = of_interface
+        self.ovsdb_interface = ovsdb_interface
 
 
 class Host(fixtures.Fixture):
