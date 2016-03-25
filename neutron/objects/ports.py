@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
-
 import netaddr
 from oslo_serialization import jsonutils
 from oslo_versionedobjects import base as obj_base
@@ -36,20 +34,6 @@ class PortBindingBase(base.NeutronDbObject):
     foreign_keys = {
         'Port': {'port_id': 'id'},
     }
-
-    @staticmethod
-    def filter_to_json_str(value):
-        def _dict_to_json(v):
-            return jsonutils.dumps(
-                collections.OrderedDict(
-                    sorted(v.items(), key=lambda t: t[0])
-                ) if v else {}
-            )
-
-        if isinstance(value, list):
-            return [_dict_to_json(val) for val in value]
-        v = _dict_to_json(value)
-        return v
 
     @classmethod
     def modify_fields_to_db(cls, fields):

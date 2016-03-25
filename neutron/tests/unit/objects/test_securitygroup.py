@@ -115,8 +115,7 @@ class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         sg_db_obj = self.get_random_fields(securitygroup.SecurityGroup)
         sg_fields = securitygroup.SecurityGroup.modify_fields_from_db(
             sg_db_obj)
-        self.sg_obj = securitygroup.SecurityGroup(
-            self.context, **test_base.remove_timestamps_from_fields(sg_fields))
+        self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
         for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['security_group_id'] = self.sg_obj['id']
@@ -137,8 +136,7 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
         sg_db_obj = self.get_random_fields(securitygroup.SecurityGroup)
         sg_fields = securitygroup.SecurityGroup.modify_fields_from_db(
             sg_db_obj)
-        self.sg_obj = securitygroup.SecurityGroup(
-            self.context, **test_base.remove_timestamps_from_fields(sg_fields))
+        self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
         for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['security_group_id'] = self.sg_obj['id']
