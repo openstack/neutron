@@ -161,6 +161,17 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self.dst_p.addr.add('%s/24' % self.dst_addr)
         net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
+    def test_mac_spoof_blocks_wrong_mac(self):
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
+        self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        # changing the allowed mac should stop the port from working
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr],
+                                       mac='00:11:22:33:44:55')
+        net_helpers.assert_no_ping(self.src_namespace, self.dst_addr, count=2)
+
     def test_arp_spoof_doesnt_block_ipv6(self):
         self.src_addr = '2000::1'
         self.dst_addr = '2000::2'
@@ -259,7 +270,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True,
-                                  device_owner='nobody'):
+                                  device_owner='nobody', mac=None):
         vif = next(
             vif for vif in self.br.get_vif_ports() if vif.port_name == port)
         ip_addr = addrs.pop()
@@ -268,6 +279,8 @@ class ARPSpoofTestCase(OVSAgentTestBase):
                    'device_owner': device_owner,
                    'allowed_address_pairs': [
                         dict(ip_address=ip) for ip in addrs]}
+        if mac:
+            vif.vif_mac = mac
         ovsagt.OVSNeutronAgent.setup_arp_spoofing_protection(
             self.br_int, vif, details)
 
