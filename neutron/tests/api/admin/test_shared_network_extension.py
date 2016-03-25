@@ -181,8 +181,8 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(RBACSharedNetworksTest, cls).resource_setup()
-        if not test.is_extension_enabled('rbac_policies', 'network'):
-            msg = "rbac extension not enabled."
+        if not test.is_extension_enabled('rbac-policies', 'network'):
+            msg = "rbac-policies extension not enabled."
             raise cls.skipException(msg)
         cls.client2 = cls.alt_manager.network_client
 
