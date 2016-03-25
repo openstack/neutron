@@ -31,7 +31,7 @@ VALID_AUTH_TYPES = ['AH', 'PASS']
 HA_DEFAULT_PRIORITY = 50
 PRIMARY_VIP_RANGE_SIZE = 24
 # TODO(amuller): Use L3 agent constant when new constants module is introduced.
-FIP_LL_SUBNET = '169.254.30.0/23'
+FIP_LL_SUBNET = '169.254.64.0/18'
 KEEPALIVED_SERVICE_NAME = 'keepalived'
 GARP_MASTER_DELAY = 60
 
