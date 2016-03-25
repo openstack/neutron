@@ -50,11 +50,9 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="network-ip-availability", service="network")
     def skip_checks(cls):
         super(NetworksIpAvailabilityTest, cls).skip_checks()
-        if not test.is_extension_enabled('network-ip-availability', 'network'):
-            msg = "network-ip-availability extension not enabled."
-            raise cls.skipException(msg)
 
     def _get_used_ips(self, network, net_availability):
         if network:

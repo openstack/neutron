@@ -22,11 +22,9 @@ from neutron.tests.api import base_routers as base
 class RoutersTestDVR(base.BaseRouterTest):
 
     @classmethod
+    @test.requires_ext(extension="router", service="network")
+    @test.requires_ext(extension="dvr", service="network")
     def resource_setup(cls):
-        for ext in ['router', 'dvr']:
-            if not test.is_extension_enabled(ext, 'network'):
-                msg = "%s extension not enabled." % ext
-                raise cls.skipException(msg)
         # The check above will pass if api_extensions=all, which does
         # not mean DVR extension itself is present.
         # Instead, we have to check whether DVR is actually present by using

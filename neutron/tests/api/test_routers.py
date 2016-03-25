@@ -27,11 +27,9 @@ CONF = config.CONF
 class RoutersTest(base.BaseRouterTest):
 
     @classmethod
+    @test.requires_ext(extension="router", service="network")
     def skip_checks(cls):
         super(RoutersTest, cls).skip_checks()
-        if not test.is_extension_enabled('router', 'network'):
-            msg = "router extension not enabled."
-            raise cls.skipException(msg)
 
     @classmethod
     def resource_setup(cls):
@@ -42,11 +40,9 @@ class RoutersTest(base.BaseRouterTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
+    @test.requires_ext(extension="standard-attr-description",
+                       service="network")
     def test_create_update_router_description(self):
-        if not test.is_extension_enabled('standard-attr-description',
-                                         'network'):
-            msg = "standard-attr-description not enabled."
-            raise self.skipException(msg)
         body = self.create_router(description='d1', router_name='test')
         self.assertEqual('d1', body['description'])
         body = self.client.show_router(body['id'])['router']
@@ -230,11 +226,9 @@ class RoutersIpV6Test(RoutersTest):
 class DvrRoutersTest(base.BaseRouterTest):
 
     @classmethod
+    @test.requires_ext(extension="dvr", service="network")
     def skip_checks(cls):
         super(DvrRoutersTest, cls).skip_checks()
-        if not test.is_extension_enabled('dvr', 'network'):
-            msg = "DVR extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('141297aa-3424-455d-aa8d-f2d95731e00a')

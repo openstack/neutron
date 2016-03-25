@@ -22,11 +22,9 @@ from neutron.tests.api import base_security_groups as base
 class SecGroupTest(base.BaseSecGroupTest):
 
     @classmethod
+    @test.requires_ext(extension="security-group", service="network")
     def resource_setup(cls):
         super(SecGroupTest, cls).resource_setup()
-        if not test.is_extension_enabled('security-group', 'network'):
-            msg = "security-group extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('bfd128e5-3c92-44b6-9d66-7fe29d22c802')

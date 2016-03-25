@@ -41,11 +41,9 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="allowed-address-pairs", service="network")
     def resource_setup(cls):
         super(AllowedAddressPairTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('allowed-address-pairs', 'network'):
-            msg = "Allowed Address Pairs extension not enabled."
-            raise cls.skipException(msg)
         cls.network = cls.create_network()
         cls.create_subnet(cls.network)
         port = cls.create_port(cls.network)

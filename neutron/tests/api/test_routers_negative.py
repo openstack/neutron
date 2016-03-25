@@ -24,11 +24,9 @@ from neutron.tests.api import base_routers as base
 class DvrRoutersNegativeTest(base.BaseRouterTest):
 
     @classmethod
+    @test.requires_ext(extension="dvr", service="network")
     def skip_checks(cls):
         super(DvrRoutersNegativeTest, cls).skip_checks()
-        if not test.is_extension_enabled('dvr', 'network'):
-            msg = "DVR extension not enabled."
-            raise cls.skipException(msg)
 
     @classmethod
     def resource_setup(cls):

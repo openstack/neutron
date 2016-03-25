@@ -25,11 +25,9 @@ CONF = config.CONF
 class FloatingIPTestJSON(base.BaseNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="router", service="network")
     def resource_setup(cls):
         super(FloatingIPTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('router', 'network'):
-            msg = "router extension not enabled."
-            raise cls.skipException(msg)
         cls.ext_net_id = CONF.network.public_network_id
 
         # Create network, subnet, router and add interface
@@ -45,11 +43,9 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442641ffff')
+    @test.requires_ext(extension="standard-attr-description",
+                       service="network")
     def test_create_update_floatingip_description(self):
-        if not test.is_extension_enabled('standard-attr-description',
-                                         'network'):
-            msg = "standard-attr-description not enabled."
-            raise self.skipException(msg)
         body = self.client.create_floatingip(
             floating_network_id=self.ext_net_id,
             port_id=self.ports[0]['id'],

@@ -145,11 +145,9 @@ class AllowedAddressPairSharedNetworkTest(base.BaseAdminNetworkTest):
     allowed_address_pairs = [{'ip_address': '1.1.1.1'}]
 
     @classmethod
+    @test.requires_ext(extension="allowed-address-pairs", service="network")
     def skip_checks(cls):
         super(AllowedAddressPairSharedNetworkTest, cls).skip_checks()
-        if not test.is_extension_enabled('allowed-address-pairs', 'network'):
-            msg = "Allowed Address Pairs extension not enabled."
-            raise cls.skipException(msg)
 
     @classmethod
     def resource_setup(cls):
@@ -179,11 +177,9 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
 
     @classmethod
+    @test.requires_ext(extension="rbac-policies", service="network")
     def resource_setup(cls):
         super(RBACSharedNetworksTest, cls).resource_setup()
-        if not test.is_extension_enabled('rbac-policies', 'network'):
-            msg = "rbac-policies extension not enabled."
-            raise cls.skipException(msg)
         cls.client2 = cls.alt_manager.network_client
 
     def _make_admin_net_and_subnet_shared_to_tenant_id(self, tenant_id):
@@ -362,10 +358,8 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
+    @test.requires_ext(extension="quotas", service="network")
     def test_rbac_policy_quota(self):
-        if not test.is_extension_enabled('quotas', 'network'):
-            msg = "quotas extension not enabled."
-            raise self.skipException(msg)
         quota = self.client.show_quotas(self.client.tenant_id)['quota']
         max_policies = quota['rbac_policy']
         self.assertGreater(max_policies, 0)

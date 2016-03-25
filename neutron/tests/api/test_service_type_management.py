@@ -18,11 +18,9 @@ from neutron.tests.api import base
 class ServiceTypeManagementTest(base.BaseNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="service-type", service="network")
     def resource_setup(cls):
         super(ServiceTypeManagementTest, cls).resource_setup()
-        if not test.is_extension_enabled('service-type', 'network'):
-            msg = "Neutron Service Type Management not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('2cbbeea9-f010-40f6-8df5-4eaa0c918ea6')

@@ -27,11 +27,9 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
     _tenant_network_cidr = CONF.network.tenant_network_cidr
 
     @classmethod
+    @test.requires_ext(extension="security-group", service="network")
     def resource_setup(cls):
         super(NegativeSecGroupTest, cls).resource_setup()
-        if not test.is_extension_enabled('security-group', 'network'):
-            msg = "security-group extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type=['negative', 'gate'])
     @test.idempotent_id('0d9c7791-f2ad-4e2f-ac73-abf2373b0d2d')

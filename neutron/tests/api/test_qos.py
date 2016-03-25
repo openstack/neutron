@@ -24,11 +24,9 @@ from neutron.tests.api import base
 
 class QosTestJSON(base.BaseAdminNetworkTest):
     @classmethod
+    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(QosTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('qos', 'network'):
-            msg = "qos extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
@@ -310,11 +308,9 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     @classmethod
+    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(QosBandwidthLimitRuleTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('qos', 'network'):
-            msg = "qos extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
@@ -458,11 +454,9 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
 
     @classmethod
+    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(RbacSharedQosPoliciesTest, cls).resource_setup()
-        if not test.is_extension_enabled('qos', 'network'):
-            msg = "qos extension not enabled."
-            raise cls.skipException(msg)
         cls.client2 = cls.alt_manager.network_client
 
     def _create_qos_policy(self, tenant_id=None):
@@ -711,11 +705,9 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     VALID_DSCP_MARK2 = 48
 
     @classmethod
+    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('qos', 'network'):
-            msg = "qos extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
