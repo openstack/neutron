@@ -572,6 +572,12 @@ class OVSDVRNeutronAgent(object):
                                              local_vlan_map.network_type))
             return
 
+        if (port.vif_id in self.local_ports and
+                self.local_ports[port.vif_id].ofport != port.ofport):
+            LOG.info(_LI("DVR: Port %(vif)s changed port number to "
+                         "%(ofport)s, rebinding."),
+                     {'vif': port.vif_id, 'ofport': port.ofport})
+            self.unbind_port_from_dvr(port, local_vlan_map)
         if device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE:
             self._bind_distributed_router_interface_port(port,
                                                          local_vlan_map,
