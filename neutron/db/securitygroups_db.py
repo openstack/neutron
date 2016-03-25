@@ -73,7 +73,7 @@ class SecurityGroupPortBinding(model_base.BASEV2):
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id"),
                                   primary_key=True)
-
+    revises_on_change = ('ports', )
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load security group bindings
     ports = orm.relationship(
@@ -95,7 +95,7 @@ class SecurityGroupRule(model_base.HasStandardAttributes, model_base.BASEV2,
                                 sa.ForeignKey("securitygroups.id",
                                               ondelete="CASCADE"),
                                 nullable=True)
-
+    revises_on_change = ('security_group', )
     direction = sa.Column(sa.Enum('ingress', 'egress',
                                   name='securitygrouprules_direction'))
     ethertype = sa.Column(sa.String(40))
