@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_db import exception as db_exc
 from sqlalchemy.orm import exc
 
 from neutron.callbacks import events
@@ -43,12 +44,15 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
             raise n_exc.InvalidInput(error_message=e)
         dbmodel = models.get_type_model_map()[e['object_type']]
         tenant_id = self._get_tenant_id_for_create(context, e)
-        with context.session.begin(subtransactions=True):
-            db_entry = dbmodel(object_id=e['object_id'],
-                               target_tenant=e['target_tenant'],
-                               action=e['action'],
-                               tenant_id=tenant_id)
-            context.session.add(db_entry)
+        try:
+            with context.session.begin(subtransactions=True):
+                db_entry = dbmodel(object_id=e['object_id'],
+                                   target_tenant=e['target_tenant'],
+                                   action=e['action'],
+                                   tenant_id=tenant_id)
+                context.session.add(db_entry)
+        except db_exc.DBDuplicateEntry:
+            raise ext_rbac.DuplicateRbacPolicy()
         return self._make_rbac_policy_dict(db_entry)
 
     def _make_rbac_policy_dict(self, db_entry, fields=None):
