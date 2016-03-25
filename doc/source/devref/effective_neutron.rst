@@ -164,7 +164,7 @@ Document common pitfalls as well as good practices done during database developm
 
   .. code:: python
 
-     _safe_creation(context, create_something, delete_someting,
+     _safe_creation(context, create_something, delete_something,
                     _do_other_thing_with_created_object)
 
   Where nested transaction is used in _do_other_thing_with_created_object

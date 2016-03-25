@@ -384,8 +384,8 @@ What kind of operation I can add into callback?
 
   For callback function of PRECOMMIT_XXX events, we can't use blocking functions or a function
   that would take a long time, like communicating to SDN controller over network.
-  Callbacks for PRECOMMIT events are meant to execute DB operations in a transaction context, the
-  errors occured will be taken care by the context manager.
+  Callbacks for PRECOMMIT events are meant to execute DB operations in a transaction context. The
+  errors that occur will be taken care by the context manager.
 
 What kind of function can be a callback?
 
