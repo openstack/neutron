@@ -32,8 +32,9 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
     def skip_checks(cls):
         super(TestAutoAllocatedTopology, cls).skip_checks()
 
-        if not test.is_extension_enabled('auto_allocate', 'network'):
-            raise cls.skipException("auto_allocate extension not enabled")
+        if not test.is_extension_enabled('auto-allocated-topology', 'network'):
+            raise cls.skipException("auto-allocated-topology extension not "
+                                    "enabled")
 
     @classmethod
     def resource_setup(cls):

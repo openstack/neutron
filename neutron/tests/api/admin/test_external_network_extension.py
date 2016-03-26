@@ -25,8 +25,8 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
 
     @classmethod
     def resource_setup(cls):
-        if not test.is_extension_enabled('rbac_policies', 'network'):
-            msg = "rbac extension not enabled."
+        if not test.is_extension_enabled('rbac-policies', 'network'):
+            msg = "rbac-policies extension not enabled."
             raise cls.skipException(msg)
         super(ExternalNetworksRBACTestJSON, cls).resource_setup()
         cls.client2 = cls.alt_manager.network_client
