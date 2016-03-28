@@ -280,6 +280,28 @@ Document common pitfalls as well as good practices done when extending the RPC I
 
 * Make yourself familiar with :ref:`Upgrade review guidelines <upgrade_review_guidelines>`.
 
+Deprecation
++++++++++++
+
+Sometimes we want to refactor things in a non-backward compatible way. In most
+cases you can use `debtcollector
+<http://docs.openstack.org/developer/debtcollector>`_ to mark things for
+deprecation. Config items have `deprecation options supported by oslo.config
+<http://docs.openstack.org/developer/oslo.config/opts.html>`_.
+
+The deprecation process must follow the `standard deprecation requirements
+<http://governance.openstack.org/reference/tags/assert_follows-standard-deprecation.html#requirements>`_.
+In terms of neutron development, this means:
+
+* A launchpad bug to track the deprecation.
+* A patch to mark the deprecated items. If the deprecation affects
+  users (config items, API changes) then a `release note
+  <http://docs.openstack.org/developer/reno/usage.html>`_ must be
+  included.
+* Wait at least one cycle and at least three months linear time.
+* A patch that removes the deprecated items. Make sure to refer to the
+  original launchpad bug in the commit message of this patch.
+
 
 Scalability issues
 ~~~~~~~~~~~~~~~~~~
