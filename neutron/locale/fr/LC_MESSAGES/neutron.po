@@ -16,13 +16,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc2.dev16\n"
+"Project-Id-Version: neutron 8.0.0.0rc3.dev2\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-24 09:29+0000\n"
+"POT-Creation-Date: 2016-03-25 15:59+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-24 06:09+0000\n"
+"PO-Revision-Date: 2016-03-25 05:16+0000\n"
 "Last-Translator: Angelique Pillal <pillal@fr.ibm.com>\n"
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -45,6 +45,14 @@ msgstr ""
 "Stdin : %(stdin)s\n"
 "Stdout : %(stdout)s\n"
 "Stderr : %(stderr)s"
+
+#, python-format
+msgid ""
+"%(branch)s HEAD file does not match migration timeline head, expected: "
+"%(head)s"
+msgstr ""
+"Le fichier HEAD %(branch)s ne correspond pas à l'élément Head de calendrier "
+"de migration, attendu : %(head)s"
 
 #, python-format
 msgid "%(driver)s: Internal driver error."
@@ -76,6 +84,22 @@ msgstr ""
 
 #, python-format
 msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) host %(host)s (original host %(original_host)s) vif type "
+"%(vif_type)s (original vif type %(original_vif_type)s) vif details "
+"%(vif_details)s (original vif details %(original_vif_details)s) binding "
+"levels %(levels)s (original binding levels %(original_levels)s) on network "
+"%(network)s with segments to bind %(segments_to_bind)s"
+msgstr ""
+"%(method)s appelée avec les paramètres de port %(current)s (paramètres "
+"d'origine %(original)s) hôte %(host)s (hôte d'origine %(original_host)s) "
+"type vif %(vif_type)s (type vif d'origine %(original_vif_type)s) détails vif "
+"%(vif_details)s (détails vif d'origine %(original_vif_details)s) niveaux de "
+"liaison %(levels)s (niveaux de liaison d'origine %(original_levels)s) sur le "
+"réseau %(network)s avec des segments de liaison  %(segments_to_bind)s"
+
+#, python-format
+msgid ""
 "%(method)s called with subnet settings %(current)s (original settings "
 "%(original)s)"
 msgstr ""
@@ -89,6 +113,10 @@ msgstr "%(method)s a échoué."
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' ne correspond pas à ip_version '%(ip_version)s'"
+
+#, python-format
+msgid "%(param)s must be in %(range)s range."
+msgstr "%(param)s doit figurer dans la plage %(range)s."
 
 #, python-format
 msgid "%s cannot be called while in offline mode"
@@ -107,6 +135,10 @@ msgid "%s is not a valid VLAN tag"
 msgstr "%s n'est pas une balise VLAN (réseau local virtuel) valide"
 
 #, python-format
+msgid "%s must be specified"
+msgstr "%s doit être spécifié"
+
+#, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
 msgstr "%s doit implémenter get_port_from_device ou get_ports_from_devices."
 
@@ -123,10 +155,28 @@ msgid "%s prohibited for local provider network"
 msgstr "%s interdit pour le réseau de fournisseurs local"
 
 #, python-format
+msgid ""
+"'%(data)s' contains '%(length)s' characters. Adding a domain name will cause "
+"it to exceed the maximum length of a FQDN of '%(max_len)s'"
+msgstr ""
+"'%(data)s' contient '%(length)s' caractères. L'ajout d'un nom de domaine va "
+"entraîner un dépassement de la longueur maximum de '%(max_len)s' pour un nom "
+"de domaine complet"
+
+#, python-format
+msgid ""
+"'%(data)s' contains '%(length)s' characters. Adding a sub-domain will cause "
+"it to exceed the maximum length of a FQDN of '%(max_len)s'"
+msgstr ""
+"'%(data)s' contient '%(length)s' caractères. L'ajout d'un sous-domaine va "
+"entraîner le dépassement de la longueur maximum de '%(max_len)s' pour un nom "
+"de domaine complet"
+
+#, python-format
 msgid "'%(data)s' exceeds maximum length of %(max_len)s"
 msgstr "'%(data)s' dépasse la longueur maximale de %(max_len)s."
 
-#, fuzzy, python-format
+#, python-format
 msgid "'%(data)s' is not an accepted IP address, '%(ip)s' is recommended"
 msgstr "'%(data)s' n'est pas une adresse IP acceptée, '%(ip)s' recommandée"
 
@@ -177,6 +227,16 @@ msgstr "'%s' contient des espaces blanc"
 #, python-format
 msgid "'%s' exceeds the 255 character FQDN limit"
 msgstr "'%s' dépasse la limite de nom de domaine complet (255 caractères)"
+
+#, python-format
+msgid "'%s' is a FQDN. It should be a relative domain name"
+msgstr ""
+"'%s' est un nom de domaine complet. Cela devrait être un nom de domaine "
+"relatif"
+
+#, python-format
+msgid "'%s' is not a FQDN"
+msgstr "'%s' n'est pas un nom de domaine complet"
 
 #, python-format
 msgid "'%s' is not a dictionary"
@@ -245,9 +305,12 @@ msgstr "'%s' ne doit pas être négatif."
 msgid "'.' searches are not implemented"
 msgstr "'.' recherches ne sont pas implémentées. "
 
-#, fuzzy, python-format
+#, python-format
 msgid "'module' object has no attribute '%s'"
 msgstr "L'objet 'module' n'a pas d'attribut '%s'"
+
+msgid "'port_max' is smaller than 'port_min'"
+msgstr "'port_max' est plus petit que 'port_min'"
 
 msgid ""
 "(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
@@ -258,6 +321,13 @@ msgstr ""
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "La longueur 0 n'est pas autorisée pour le préfixe CIDR"
+
+msgid ""
+"32-bit BGP identifier, typically an IPv4 address owned by the system running "
+"the BGP DrAgent."
+msgstr ""
+"Identificateur BGP sur 32 bits, généralement une adresse IPv4 appartenant au "
+"système qui exécute BGP DrAgent."
 
 msgid "A QoS driver must be specified"
 msgstr "Un pilote QoS doit être spécifié"
@@ -273,6 +343,17 @@ msgstr ""
 "Valeur décimale telle que Numéro d'entreprise privé enregistré du "
 "fournisseur comme requis par RFC3315 DUID-EN."
 
+#, python-format
+msgid "A default external network already exists: %(net_id)s."
+msgstr "Un réseau externe par défaut existe déjà : %(net_id)s."
+
+msgid ""
+"A default subnetpool for this IP family has already been set. Only one "
+"default may exist per IP family"
+msgstr ""
+"Un pool de sous-réseau par défaut pour cette famille IP est déjà défini. Il "
+"ne peut y avoir qu'un seul pool par défaut par famille IP."
+
 msgid ""
 "A list of mappings of physical networks to MTU values. The format of the "
 "mapping is <physnet>:<mtu val>. This mapping allows specifying a physical "
@@ -286,10 +367,17 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Un pilote de mesure doit être spécifié."
 
+msgid "A password must be supplied when using auth_type md5."
+msgstr ""
+"Un mot de passe doit être fourni lors de l'utilisation de auth_type md5."
+
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr ""
 "API d'extraction des fournisseurs de service pour les services avancés de "
 "Neutron"
+
+msgid "Aborting periodic_sync_routers_task due to an error."
+msgstr "Interruption de periodic_sync_routers_task en raison d'une erreur."
 
 msgid "Access to this resource was denied."
 msgstr "L'accès a cette ressource était refusé"
@@ -338,6 +426,9 @@ msgstr "L'agent %(id)s n'est pas un agent L3 ou a été désactivé"
 msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
 msgstr "L'agent %(id)s n'est pas un agent DHCP valide ou a été désactivé"
 
+msgid "Agent has just been revived"
+msgstr "L'agent vient d'être réactivé"
+
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
 "case, user's resources will not be scheduled automatically to the agent "
@@ -363,12 +454,24 @@ msgstr "Autorise la planification automatique des réseaux de l'agent DHCP."
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr "Autorise la planification automatique des routeurs vers l'agent L3."
 
+msgid ""
+"Allow overlapping IP support in Neutron. Attention: the following parameter "
+"MUST be set to False if Neutron is being used in conjunction with Nova "
+"security groups."
+msgstr ""
+"Autoriser la prise en charge IP du chevauchement dans Neutron. Attention :  "
+"le paramètre ci-après DOIT être défini sur False si Neutron est utilisé "
+"conjointement avec des groupes de sécurité Nova."
+
 msgid "Allow running metadata proxy."
 msgstr "Autorisez le proxy de métadonnées en cours d'exécution."
 
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr ""
 "Autoriser l'envoi de notifications d'opérations de ressources à l'agent DHCP"
+
+msgid "Allow the creation of PTR records"
+msgstr "Autoriser la création d'enregistrements PTR"
 
 msgid "Allow the usage of the bulk API"
 msgstr "Autoriser l'utilisation de l'API de traitement en bloc"
@@ -390,7 +493,6 @@ msgstr "Les paires d'adresses autorisées doivent figurer dans une liste. "
 msgid "AllowedAddressPair must contain ip_address"
 msgstr "AllowedAddressPair doit contenir ip_address"
 
-#, fuzzy
 msgid ""
 "Allows for serving metadata requests coming from a dedicated metadata access "
 "network whose CIDR is 169.254.169.254/16 (or larger prefix), and is "
@@ -401,14 +503,46 @@ msgid ""
 msgstr ""
 "Permet le traitement des demandes de métadonnées en provenance d'un réseau "
 "d'accès de métadonnées dédié dont le CIDR est 169.254.169.254/16 (ou un "
-"préfixe plus long), et qui est connecté à un routeur Neutron depuis lequels "
+"préfixe plus long), et qui est connecté à un routeur Neutron depuis lequel "
 "les machines virtuelles envoient une demande metadata:1. Dans ce cas, DHCP "
 "Option 121 n'est pas injecté dans les machines virtuelles, car celles-ci "
 "pourront accéder à l'adresse 169.254.169.254 via un routeur. Cette option "
 "requiert enable_isolated_metadata = True."
 
+#, python-format
+msgid ""
+"Already hosting BGP Speaker for local_as=%(current_as)d with router_id="
+"%(rtid)s."
+msgstr ""
+"Routeur BGP déjà hébergé pour local_as=%(current_as)d avec router_id="
+"%(rtid)s."
+
+#, python-format
+msgid ""
+"Already hosting maximum number of BGP Speakers. Allowed scheduled count="
+"%(count)d"
+msgstr ""
+"Un nombre maximum de routeurs BGP est déjà hébergé. Nombre planifié autorisé="
+"%(count)d"
+
+msgid "An RBAC policy already exists with those values."
+msgstr "Une stratégie RBAC existe déjà avec ces valeurs."
+
+msgid "An identifier must be specified when updating a subnet"
+msgstr ""
+"Un identificateur doit être spécifié lors de la mise à jour d'un sous-réseau"
+
 msgid "An interface driver must be specified"
 msgstr "Un pilote d'interface doit être spécifié."
+
+msgid ""
+"An ordered list of extension driver entrypoints to be loaded from the "
+"neutron.ml2.extension_drivers namespace. For example: extension_drivers = "
+"port_security,qos"
+msgstr ""
+"An ordered list of extension driver entrypoints to be loaded from the "
+"neutron.ml2.extension_drivers namespace. For example: extension_drivers = "
+"port_security,qos"
 
 msgid ""
 "An ordered list of networking mechanism driver entrypoints to be loaded from "
@@ -417,12 +551,27 @@ msgstr ""
 "Liste ordonnée de points d'entrée de pilote de mécanisme à charger à partir "
 "de l'espace de nom neutron.ml2.mechanism_drivers."
 
+msgid "An unexpected internal error occurred."
+msgstr "Une erreur inattendue s'est produite."
+
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "Une erreur inconnue s'est produite. Renouvelez votre demande."
+
+msgid "Async process didn't respawn"
+msgstr "Le processus Async n'a pas été relancé"
 
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "Attribut '%s non autorisé dans l'autotest à la mise sous tension"
+
+#, python-format
+msgid "Authentication type not supported. Requested type=%(auth_type)s."
+msgstr ""
+"Type d'authentification non pris en charge. Type demandé=%(auth_type)s."
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr ""
+"URL d'autorisation pour la connexion au réseau désigné dans un contexte admin"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Supprime automatiquement les réseaux des agents DHCP hors ligne."
@@ -436,8 +585,66 @@ msgstr ""
 msgid "Availability zone of this node"
 msgstr "Zone de disponibilité du noeud"
 
+#, python-format
+msgid "AvailabilityZone %(availability_zone)s could not be found."
+msgstr "AvailabilityZone %(availability_zone)s est introuvable."
+
 msgid "Available commands"
 msgstr "Commandes disponibles"
+
+#, python-format
+msgid ""
+"BGP Peer %(peer_ip)s for remote_as=%(remote_as)s, running for BGP Speaker "
+"%(speaker_as)d not added yet."
+msgstr ""
+"Homologue BGP %(peer_ip)s pour remote_as=%(remote_as)s, en cours d'exécution "
+"pour routeur BGP %(speaker_as)d non encore ajouté."
+
+#, python-format
+msgid ""
+"BGP Speaker %(bgp_speaker_id)s is already configured to peer with a BGP Peer "
+"at %(peer_ip)s, it cannot peer with BGP Peer %(bgp_peer_id)s."
+msgstr ""
+"Le routeur BGP %(bgp_speaker_id)s est déjà configuré pour communiquer avec "
+"un homologue BGP à l'adresse %(peer_ip)s, il ne peut pas communiquer avec "
+"l'homologue BGP %(bgp_peer_id)s."
+
+#, python-format
+msgid ""
+"BGP Speaker for local_as=%(local_as)s with router_id=%(rtid)s not added yet."
+msgstr ""
+"Routeur BGP pour local_as=%(local_as)s avec router_id=%(rtid)s non encore "
+"ajouté."
+
+#, python-format
+msgid ""
+"BGP peer %(bgp_peer_id)s is not associated with BGP speaker "
+"%(bgp_speaker_id)s."
+msgstr ""
+"L'homologue BGP %(bgp_peer_id)s n'est pas associé à un routeur BGP "
+"%(bgp_speaker_id)s."
+
+#, python-format
+msgid "BGP peer %(bgp_peer_id)s not authenticated."
+msgstr "Homologue BGP %(bgp_peer_id)s non authentifié."
+
+#, python-format
+msgid "BGP peer %(id)s could not be found."
+msgstr "L'homologue BGP %(id)s est introuvable."
+
+#, python-format
+msgid ""
+"BGP speaker %(bgp_speaker_id)s is not hosted by the BgpDrAgent %(agent_id)s."
+msgstr ""
+"Le routeur BGP %(bgp_speaker_id)s n'est pas hébergé par BgpDrAgent "
+"%(agent_id)s."
+
+#, python-format
+msgid "BGP speaker %(id)s could not be found."
+msgstr "Le routeur BGP %(id)s est introuvable."
+
+msgid "BGP speaker driver class to be instantiated."
+msgstr "Classe de pilote de routeur BGP à instancier."
 
 msgid "Backend does not support VLAN Transparency."
 msgstr "Le backend ne prend pas en charge la transparence VLAN."
@@ -469,8 +676,25 @@ msgstr ""
 "déboguer les problèmes liés à DHCP ou DNS. Si cette section est NULL, "
 "désactivez la consignation dnsmasq. "
 
+#, python-format
+msgid "BgpDrAgent %(agent_id)s is already associated to a BGP speaker."
+msgstr "BgpDrAgent %(agent_id)s est déjà associé à un routeur BGP."
+
+#, python-format
+msgid "BgpDrAgent %(id)s is invalid or has been disabled."
+msgstr "BgpDrAgent %(id)s n'est pas valide ou il a été désactivé."
+
+#, python-format
+msgid "BgpDrAgent updated: %s"
+msgstr "BgpDrAgent mis à jour : %s"
+
 msgid "Body contains invalid data"
 msgstr "Le corps contient des données non valides"
+
+msgid "Both network_id and router_id are None. One must be provided."
+msgstr ""
+"Les paramètres Both network_id et router_id sont définis sur None. L'un des "
+"deux doit obligatoirement être fourni."
 
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
@@ -533,6 +757,13 @@ msgstr ""
 "%(fixed_ip)s, car cette adresse IP fixe a déjà une adresse IP flottante sur "
 "le réseau externe %(net_id)s."
 
+msgid ""
+"Cannot change HA attribute of active routers. Please set router "
+"admin_state_up to False prior to upgrade."
+msgstr ""
+"Impossible de modifier l'attribut HA des routeurs actifs. Définissez le "
+"paramètre router admin_state_up sur False avant d'effectuer la mise à niveau."
+
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to %s, since that is not an IPv4 "
@@ -563,6 +794,9 @@ msgstr "Impossible de trouver %(table)s avec %(col)s=%(match)s"
 msgid "Cannot handle subnet of type %(subnet_type)s"
 msgstr "Impossible de traiter le sous-réseau de type %(subnet_type)s"
 
+msgid "Cannot have multiple IPv4 subnets on router port"
+msgstr "Impossible d'avoir plusieurs sous-réseaux IPv4 sur le port de routeur"
+
 #, python-format
 msgid ""
 "Cannot have multiple router ports with the same network id if both contain "
@@ -572,10 +806,21 @@ msgstr ""
 "contiennent tous des sous-réseaux IPv6. Le port %(p)s existant a un ou "
 "plusieurs sous-réseaux IPv6 et l'ID réseau %(nid)s"
 
+#, python-format
+msgid ""
+"Cannot host distributed router %(router_id)s on legacy L3 agent %(agent_id)s."
+msgstr ""
+"Impossible d'héberger un routeur distribué %(router_id)s sur l'agent L3 "
+"existant %(agent_id)s."
+
 msgid "Cannot match priority on flow deletion or modification"
 msgstr ""
 "Impossible de mettre en correspondance la priorité lors de la suppression ou "
 "de la modification de flux"
+
+msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
+msgstr ""
+"Impossible d'associer les préfixes IPv4 et IPv6 dans un pool de sous-réseau."
 
 msgid "Cannot specify both --service and --subproject."
 msgstr "Impossible de spécifier le service et le sous-projet. "
@@ -601,6 +846,13 @@ msgstr ""
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr ""
 "Fichier de clés publiques de l'autorité de certification (CA cert) pour SSL"
+
+#, python-format
+msgid ""
+"Change would make usage less than 0 for the following resources: %(unders)s."
+msgstr ""
+"Une modification entraînerait une utilisation inférieure à 0 pour les "
+"ressources suivantes : %(unders)s."
 
 msgid "Check ebtables installation"
 msgstr "Vérifier l'installation ebtables "
@@ -632,9 +884,8 @@ msgstr "Vérifier le support de notification de Nova"
 msgid "Check for patch port support"
 msgstr "Vérifier le support de port de correctif"
 
-#, fuzzy
 msgid "Check ip6tables installation"
-msgstr "Consulter l'installation ip6tables"
+msgstr "Consultez l'installation ip6tables"
 
 msgid "Check ipset installation"
 msgstr "Vérifier l'installation ipset"
@@ -651,9 +902,8 @@ msgstr "Vérifier la version minimale de dnsmasq"
 msgid "Check netns permission settings"
 msgstr "Vérifier les autorisations netns"
 
-#, fuzzy
 msgid "Check ovs conntrack support"
-msgstr "Consulter le support ovs conntrack"
+msgstr "Consultez le support ovs conntrack"
 
 msgid "Check ovsdb native interface support"
 msgstr "Consulter le support d'interface native ovsdb"
@@ -669,12 +919,76 @@ msgstr ""
 msgid "Class not found."
 msgstr "Classe non trouvé."
 
-#, fuzzy
 msgid "Cleanup resources of a specific agent type only."
 msgstr "Ressources de nettoyage d'un type d'agent spécifique uniquement."
 
 msgid "Client certificate for nova metadata api server."
 msgstr "Certificat client pour le serveur d'API des métadonnées nova."
+
+msgid ""
+"Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
+"network_device to the agent's node-specific list of virtual functions that "
+"should not be used for virtual networking. vfs_to_exclude is a semicolon-"
+"separated list of virtual functions to exclude from network_device. The "
+"network_device in the mapping should appear in the physical_device_mappings "
+"list."
+msgstr ""
+"Liste des uplets <network_device>:<vfs_to_exclude>, séparés par des "
+"virgules, qui mappent network_device à la liste de fonctions spécifique à un "
+"nœud d'agent des fonctions virtuelles qui ne doivent pas être utilisées pour "
+"une mise en réseau virtuelle. vfs_to_exclude est une liste de fonctions "
+"virtuelles, séparées par des virgules, à exclure de network_device. "
+"network_device dans le mappage doit figurer dans la liste "
+"physical_device_mappings."
+
+msgid ""
+"Comma-separated list of <physical_network>:<bridge> tuples mapping physical "
+"network names to the agent's node-specific Open vSwitch bridge names to be "
+"used for flat and VLAN networks. The length of bridge names should be no "
+"more than 11. Each bridge must exist, and should have a physical network "
+"interface configured as a port. All physical networks configured on the "
+"server should have mappings to appropriate bridges on each agent. Note: If "
+"you remove a bridge from this mapping, make sure to disconnect it from the "
+"integration bridge as it won't be managed by the agent anymore. Deprecated "
+"for ofagent."
+msgstr ""
+"Liste des uplets <physical_network>:<bridge>, séparés par des virgules, qui "
+"mappent les noms de réseau physique au noms de pont Open vSwitch spécifiques "
+"à un nœud d'agent à utiliser pour les réseaux centralisés et VLAN. La "
+"longueur des noms de pont ne doit pas dépasser 11. Chaque pont doit exister "
+"et doit comporter une interface réseau physique configurée en tant que port. "
+"Tous les réseaux physiques configurés sur le serveur doivent avoir des "
+"mappages aux ponts appropriés sur chaque agent. Remarque : Si vous retirez "
+"un pont de ces mappages, assurez-vous de le déconnecter du pont "
+"d'intégration car il ne sera plus géré par l'agent. Obsolète pour ofagent."
+
+msgid ""
+"Comma-separated list of <physical_network>:<network_device> tuples mapping "
+"physical network names to the agent's node-specific physical network device "
+"interfaces of SR-IOV physical function to be used for VLAN networks. All "
+"physical networks listed in network_vlan_ranges on the server should have "
+"mappings to appropriate interfaces on each agent."
+msgstr ""
+"Liste des uplets <physical_network>:<network_device> séparés par des "
+"virgules, qui mappent les noms de réseau physique aux interfaces d'unité "
+"réseau physiques spécifiques à un nœud d'agent de la fonction physique SR-"
+"IOV à utiliser pour les réseaux VLAN. Tous les réseaux physiques répertoriés "
+"dans network_vlan_ranges sur le serveur doivent avoir des mappages aux "
+"interfaces appropriées sur chaque agent."
+
+msgid ""
+"Comma-separated list of <physical_network>:<physical_interface> tuples "
+"mapping physical network names to the agent's node-specific physical network "
+"interfaces to be used for flat and VLAN networks. All physical networks "
+"listed in network_vlan_ranges on the server should have mappings to "
+"appropriate interfaces on each agent."
+msgstr ""
+"Liste des uplets  <physical_network>:<physical_interface> séparés par des "
+"virgules qui mappent les noms de réseau physique aux interfaces de réseau "
+"physique spécifiques à un nœud d'agent à utiliser pour les réseaux "
+"centralisés et VLAN. Tous les réseaux physiques répertoriés dans "
+"network_vlan_ranges sur le serveur doivent avoir des mappages aux interfaces "
+"appropriées sur chaque agent."
 
 msgid ""
 "Comma-separated list of <tun_min>:<tun_max> tuples enumerating ranges of GRE "
@@ -696,6 +1010,16 @@ msgid ""
 msgstr ""
 "Liste d'uplets <vni_min>:<vni_max> séparés par des virgules énumérant des "
 "plages d'ID VNI VXLAN disponibles pour l'allocation de réseau locataire"
+
+msgid ""
+"Comma-separated list of supported PCI vendor devices, as defined by "
+"vendor_id:product_id according to the PCI ID Repository. Default enables "
+"support for Intel and Mellanox SR-IOV capable NICs."
+msgstr ""
+"Liste d'unités fournisseurs PCI, séparées par des virgules, prises en "
+"charge, comme défini par vendor_id:product_id d'après le référentiel d'ID "
+"PCI. Permet par défaut la prise en charge des NIC compatibles Intel et "
+"Mellanox SR-IOV."
 
 msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
@@ -730,14 +1054,14 @@ msgstr ""
 "Echec lors de la liaison à %(host)s:%(port)s après attente de %(time)d "
 "secondes"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Could not connect to %s"
 msgstr "Impossible de se connecter à %s"
 
 msgid "Could not deserialize data"
 msgstr "Impossible de désérialiser des données"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Could not retrieve schema from %(conn)s: %(err)s"
 msgstr "Impossible d'extraire le schéma de %(conn)s : %(err)s"
 
@@ -748,6 +1072,38 @@ msgid ""
 msgstr ""
 "L'adresse IP de la passerelle en cours %(ip_address)s est déjà en cours "
 "d'utilisation par le port %(port_id)s. Impossible de mettre à jour"
+
+msgid "Currently update of HA mode for a DVR/HA router is not supported."
+msgstr ""
+"La mise à jour du mode HA pour un routeur DVR/HA n'est actuellement pas "
+"prise en charge."
+
+msgid "Currently update of HA mode for a distributed router is not supported."
+msgstr ""
+"La mise à jour du mode HA pour un routeur distribué n'est actuellement pas "
+"prise en charge."
+
+msgid ""
+"Currently update of distributed mode for a DVR/HA router is not supported"
+msgstr ""
+"La mise à jour du mode distribué pour un routeur DVR/HA n'est actuellement "
+"pas prise en charge."
+
+msgid "Currently update of distributed mode for an HA router is not supported."
+msgstr ""
+"La mise à jour du mode distribué pour un routeur HA n'est actuellement pas "
+"prise en charge."
+
+msgid ""
+"Currently updating a router from DVR/HA to non-DVR  non-HA is not supported."
+msgstr ""
+"La mise à jour d'un routeur DVR/HA vers un routeur non-DVR  non-HA n'est "
+"actuellement pas prise en charge. "
+
+msgid "Currently updating a router to DVR/HA is not supported."
+msgstr ""
+"La mise à jour d'un routeur vers DVR/HA n'est actuellement pas prise en "
+"charge."
 
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
@@ -763,7 +1119,13 @@ msgstr ""
 "Les déploiements DVR pour les sous-couches VXLAN/GRE/Geneve nécessitent que "
 "L2-pop soit activé, à la fois côté agent et côté serveur."
 
-#, fuzzy
+msgid ""
+"Database engine for which script will be generated when using offline "
+"migration."
+msgstr ""
+"Moteur de base de données pour lequel le script va être généré lors de "
+"l'utilisation d'une migration hors ligne."
+
 msgid ""
 "Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
 "Specifies by UUID the pool to be used in case where creation of a subnet is "
@@ -798,6 +1160,9 @@ msgstr ""
 
 msgid "Default driver to use for quota checks"
 msgstr "Pilote par défaut à utiliser pour les vérifications de quota"
+
+msgid "Default external networks must be shared to everyone."
+msgstr "Les réseaux externes par défaut doivent être partagés par tous."
 
 msgid ""
 "Default network type for external networks when no provider attributes are "
@@ -835,7 +1200,6 @@ msgstr "Groupe de sécurité par défaut"
 msgid "Default security group already exists."
 msgstr "Le groupe de sécurité par défaut existe déjà."
 
-#, fuzzy
 msgid ""
 "Default value of availability zone hints. The availability zone aware "
 "schedulers use this when the resources availability_zone_hints is empty. "
@@ -848,7 +1212,7 @@ msgstr ""
 "planificateurs de zone de disponibilité utilisent cette valeur lorsque le "
 "paramètre resources availability_zone_hints est à blanc. Plusieurs zones de "
 "disponibilité peuvent être indiquées en les séparant par une virgule. Cette "
-"valeur peut être à blanc. Dans ce cas, même si le paramètre "
+"valeur peut être vide. Dans ce cas, même si le paramètre "
 "availability_zone_hints d'une ressource est à blanc, la zone de "
 "disponibilité est prise en compte pour la haute disponibilité lors de la "
 "planification de la ressource."
@@ -881,6 +1245,10 @@ msgstr "Supprimez l'espace de nom en supprimant toutes les unités."
 msgid "Deleting port %s"
 msgstr "Suppression du port %s"
 
+#, python-format
+msgid "Deployment error: %(reason)s."
+msgstr "Erreur de déploiement : %(reason)s."
+
 msgid "Destroy IPsets even if there is an iptables reference."
 msgstr "Détruire les IPsets même s'il y a une référence iptables."
 
@@ -890,6 +1258,10 @@ msgstr "Destruction de tous les IPsets."
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "Périphérique %(dev_name)s non unique dans le mappage '%(mapping)s'"
+
+#, python-format
+msgid "Device '%(device_name)s' does not exist."
+msgstr "L'unité '%(device_name)s' n'existe pas."
 
 msgid "Device has no virtual functions"
 msgstr "L'unité n'a aucune fonction virtuelle"
@@ -910,6 +1282,10 @@ msgstr ""
 "L'adresse MAC DVR (routeur virtuel distribué) n'existe pas pour l'hôte "
 "%(host)s."
 
+#, python-format
+msgid "Domain %(dns_domain)s not found in the external DNS service"
+msgstr "Domaine %(dns_domain)s non trouvé dans le service DNS externe"
+
 msgid "Domain to use for building the hostnames"
 msgstr "Domaine à utiliser pour générer les noms d'hôte"
 
@@ -928,6 +1304,9 @@ msgstr "La rétromigration n'est plus prise en charge"
 #, python-format
 msgid "Driver %s is not unique across providers"
 msgstr "Le pilote %s n'est pas unique entre les fournisseurs"
+
+msgid "Driver for external DNS integration."
+msgstr "Pilote pour intégration DNS externe."
 
 msgid "Driver for security groups firewall in the L2 agent"
 msgstr ""
@@ -950,6 +1329,9 @@ msgstr ""
 "setup.cfg pour connaître les points d'entrée inclus avec la source de "
 "neutron. "
 
+msgid "Driver used for scheduling BGP speakers to BGP DrAgent"
+msgstr "Pilote utilisé pour la planification des routeurs BGP dans BGP DrAgent"
+
 msgid "Drivers list to use to send the update notification"
 msgstr ""
 "Liste de pilotes à utiliser pour envoyer la notification de mise à jour"
@@ -958,6 +1340,17 @@ msgstr ""
 msgid "Duplicate IP address '%s'"
 msgstr "Adresse IP en double '%s'"
 
+#, python-format
+msgid ""
+"Duplicate L3HARouterAgentPortBinding is created for router(s) %(router)s. "
+"Database cannot be upgraded. Please, remove all duplicates before upgrading "
+"the database."
+msgstr ""
+"Un élément L3HARouterAgentPortBinding en double est créé pour le ou les "
+"routeurs %(router)s. La base de données ne peut pas être mise à niveau. "
+"Retirez tous les éléments en double avant de mettre à niveau la base de "
+"données."
+
 msgid "Duplicate Metering Rule in POST."
 msgstr "Règle de mesure en double dans POST."
 
@@ -965,7 +1358,6 @@ msgid "Duplicate Security Group Rule in POST."
 msgstr ""
 "Règle de groupe de sécurité en double dans l'autotest à la mise sous tension."
 
-#, fuzzy
 msgid "Duplicate address detected"
 msgstr "Adresse en double détectée"
 
@@ -1009,6 +1401,9 @@ msgstr "L'ID sous-réseau ou l'ID port doit être spécifié."
 msgid "Empty physical network name."
 msgstr "Nom du Réseau Physique vide."
 
+msgid "Empty subnet pool prefix list."
+msgstr "Liste de préfixes de pool de sous-réseau vide."
+
 msgid "Enable FWaaS"
 msgstr "Activer FWaaS"
 
@@ -1037,6 +1432,16 @@ msgstr ""
 "effectuer de diffusion ARP coûteuse dans le réseau Overlay."
 
 msgid ""
+"Enable local ARP responder which provides local responses instead of "
+"performing ARP broadcast into the overlay. Enabling local ARP responder is "
+"not fullycompatible with the allowed-address-pairs extension."
+msgstr ""
+"Activez le canal répondeur ARP local qui fournit des réponses locales au "
+"lieu d'effectuer une multidiffusion ARP dans la superposition. L'activation "
+"du canal répondeur ARP local n'est pas pleinement compatible avec "
+"l'extension de paires d'adresses autorisées."
+
+msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -1050,6 +1455,29 @@ msgstr ""
 "False ne sont pas sélectionnés pour la planification automatique, quelle que "
 "soit la valeur de cette option. Toutefois, il est possible de procéder à une "
 "planification manuelle pour ces agents si cette option a pour valeur True."
+
+msgid ""
+"Enable suppression of ARP responses that don't match an IP address that "
+"belongs to the port from which they originate. Note: This prevents the VMs "
+"attached to this agent from spoofing, it doesn't protect them from other "
+"devices which have the capability to spoof (e.g. bare metal or VMs attached "
+"to agents without this flag set to True). Spoofing rules will not be added "
+"to any ports that have port security disabled. For LinuxBridge, this "
+"requires ebtables. For OVS, it requires a version that supports matching ARP "
+"headers. This option will be removed in Newton so the only way to disable "
+"protection will be via the port security extension."
+msgstr ""
+"Activez la suppression des réponses ARP qui ne correspondent pas à une "
+"adresse IP appartenant au port dont elles proviennent. Remarque : Cela "
+"permet d'éviter l'usurpation des machines virtuelles connectées à cet agent, "
+"cela ne les protège pas d'autres unités capables d'usurpation (par exemple, "
+"des unités virtualisées ou des machines virtuelles connectées à des agents "
+"sans cet indicateur défini sur True). Aucune règle d'usurpation ne sera "
+"ajoutée aux ports dont la sécurité est désactivée. Pour LinuxBridge, "
+"ebtables est requis. Pour OVS, il est nécessaire de disposer d'une version "
+"prenant en charge les en-têtes ARP correspondants. Cette option va être "
+"retirée dans Newton, l'unique façon de désactiver la protection sera donc "
+"via l'extension de port de sécurité."
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1068,7 +1496,23 @@ msgstr ""
 "metadata_proxy_user correspondà l'ID/au nom de l'utilisateur effectif de "
 "l'agent."
 
-#, fuzzy
+msgid ""
+"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
+"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
+"environment. Users making subnet creation requests for IPv6 subnets without "
+"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
+"Delegation mechanism. Note that enabling PD will override the behavior of "
+"the default IPv6 subnetpool."
+msgstr ""
+"Active la délégation de préfixe IPv6 pour l'allocation CIDR de sous-réseau "
+"automatique. Définissez ce paramètre sur True pour activer la délégation de "
+"préfixe IPv6 pour l'allocation de sous-réseau dans un environnement "
+"compatible PD. Les utilisateurs effectuant des demandes de création de sous-"
+"réseau pour des sous-réseaux IPv6 sans indiquer de CIDR ou d'ID de pool de "
+"sous-réseau se verront affecter un CIDR via le mécanisme de délégation de "
+"préfixe. Notez que l'activation de PD se substitue au comportement du pool "
+"de sous-réseau IPv6 par défaut."
+
 msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
@@ -1094,6 +1538,16 @@ msgid "Enforce using split branches file structure."
 msgstr ""
 "Imposer l'utilisation d'une structure de fichier de branches fractionnées. "
 
+msgid ""
+"Ensure that configured gateway is on subnet. For IPv6, validate only if "
+"gateway is not a link local address. Deprecated, to be removed during the "
+"Newton release, at which point the gateway will not be forced on to subnet."
+msgstr ""
+"Assurez-vous que la passerelle configurée est sur le sous-réseau. Pour IPv6, "
+"validez uniquement si la passerelle n'est pas une adresse locale de liaison. "
+"Paramètre obsolète, qui sera retiré dans la version Newton, auquel cas la "
+"passerelle ne sera pas forcée sur le sous-réseau."
+
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "Erreur %(reason)s lors de la tentative d'exécution de l'opération."
@@ -1110,12 +1564,15 @@ msgstr "Erreur lors de l'analyse syntaxique de l'adresse DNS %s"
 msgid "Error while reading %s"
 msgstr "Erreur lors de la lecture de %s"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Exceeded %s second limit waiting for address to leave the tentative state."
 msgstr ""
 "Limite dépassée de %s secondes, en attente adresse pour sortie de l'état de "
 "tentative."
+
+msgid "Exceeded maximum amount of fixed ips per port."
+msgstr "Nombre maximum d'IP fixes par port dépassé."
 
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr ""
@@ -1132,6 +1589,14 @@ msgstr ""
 #, python-format
 msgid "Extension %(driver)s failed."
 msgstr "Echec de l'extension %(driver)s. "
+
+#, python-format
+msgid ""
+"Extension driver %(driver)s required for service plugin %(service_plugin)s "
+"not found."
+msgstr ""
+"Le pilote d'extension %(driver)s requis pour le plugin de service "
+"%(service_plugin)s est introuvable."
 
 msgid ""
 "Extension to use alongside ml2 plugin's l2population mechanism driver. It "
@@ -1150,6 +1615,10 @@ msgstr "Liste d'extensions à utiliser."
 #, python-format
 msgid "Extensions not found: %(extensions)s."
 msgstr "Extensions non trouvé: %(extensions)s  "
+
+#, python-format
+msgid "External DNS driver %(driver)s could not be found."
+msgstr "Le pilote DNS externe %(driver)s est introuvable."
 
 #, python-format
 msgid "External IP %s is the same as the gateway IP"
@@ -1204,6 +1673,17 @@ msgstr ""
 "%(network_id)s pour le routeur %(router_id)s après %(max_tries)s tentatives."
 
 #, python-format
+msgid "Failed to allocate subnet: %(reason)s."
+msgstr "Échec d'allocation de sous-réseau : %(reason)s."
+
+msgid ""
+"Failed to associate address scope: subnetpools within an address scope must "
+"have unique prefixes."
+msgstr ""
+"Échec de l'association de la portée d'adresse : les pools de sous-réseau au "
+"sein d'une portée d'adresse doivent avoir des préfixes uniques."
+
+#, python-format
 msgid "Failed to check policy %(policy)s because %(reason)s."
 msgstr "Échec pour vérifier la politique %(policy)s car %(reason)s."
 
@@ -1222,6 +1702,10 @@ msgid ""
 msgstr ""
 "Echec de la création de port sur le réseau %(network_id)s car les adresses "
 "IP fixes incluent le sous-réseau non valide %(subnet_id)s "
+
+#, python-format
+msgid "Failed to init policy %(policy)s because %(reason)s."
+msgstr "Échec d'initialisation de la stratégie %(policy)s car %(reason)s."
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1260,6 +1744,21 @@ msgstr ""
 "Echec lors de l'attente du passage de l'adresse %(address)s à l'état prêt : "
 "%(reason)s"
 
+msgid "Flat provider networks are disabled"
+msgstr "Les réseaux de fournisseurs centralisés sont désactivés"
+
+#, python-format
+msgid "Flavor %(flavor_id)s could not be found."
+msgstr "La version %(flavor_id)s est introuvable."
+
+#, python-format
+msgid "Flavor %(flavor_id)s is used by some service instance."
+msgstr ""
+"La version %(flavor_id)s est utilisée par certaines instances de service."
+
+msgid "Flavor is not enabled."
+msgstr "La version n'est pas activée."
+
 #, python-format
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "L'adresse IP flottante %(floatingip_id)s est introuvable"
@@ -1275,6 +1774,12 @@ msgstr ""
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "Pour les protocole TCP/UDP, port_range_min doit être <= port_range_max"
 
+#, python-format
+msgid "For class %(object_type)s missing primary keys: %(missing_keys)s"
+msgstr ""
+"Pour les clés primaires manquantes de la classe %(object_type)s : "
+"%(missing_keys)s"
+
 msgid "Force ip_lib calls to use the root helper"
 msgstr "Forcez les appels ip_lib à utiliser Root Helper"
 
@@ -1289,6 +1794,10 @@ msgid ""
 msgstr ""
 "Chevauchement de pools d'allocation trouvé :%(pool_1)s %(pool_2)s pour le "
 "sous-réseau %(subnet_cidr)s."
+
+msgid "Gateway IP version inconsistent with allocation pool version"
+msgstr ""
+"Version IP de passerelle non cohérente avec la version de pool d'allocation"
 
 #, python-format
 msgid ""
@@ -1308,6 +1817,18 @@ msgstr ""
 msgid "Gateway is not valid on subnet"
 msgstr "La passerelle n'est pas valide sur le sous-réseau."
 
+msgid ""
+"Geneve encapsulation header size is dynamic, this value is used to calculate "
+"the maximum MTU for the driver. This is the sum of the sizes of the outer "
+"ETH + IP + UDP + GENEVE header sizes. The default size for this field is 50, "
+"which is the size of the Geneve header without any additional option headers."
+msgstr ""
+"La taille de l'en-tête d'encapsulation Geneve  est dynamique. Cette valeur "
+"est utilisée pour calculer la valeur MTU maximum du pilote. Il s'agit de la "
+"somme des tailles des en-têtes ETH + IP + UDP + GENEVE externes. La taille "
+"par défaut pour ce champ est de 50, taille de l'en-tête Geneve sans aucun en-"
+"tête d'option supplémentaire."
+
 msgid "Group (gid or name) running metadata proxy after its initialization"
 msgstr ""
 "Groupe (UID ou nom) exécutant le proxy de métadonnées après son "
@@ -1322,6 +1843,21 @@ msgstr ""
 
 msgid "Group (gid or name) running this process after its initialization"
 msgstr "Groupe (UID ou nom) exécutant ce processus après son initialisation"
+
+#, python-format
+msgid "HEAD file does not match migration timeline head, expected: %s"
+msgstr ""
+"Le fichier HEAD ne correspond pas à l'élément Head de calendrier de "
+"migration, attendu : %s"
+
+msgid ""
+"Hostname to be used by the Neutron server, agents and services running on "
+"this machine. All the agents and services running on this machine must use "
+"the same host value."
+msgstr ""
+"Nom d'hôte qui doit être utilisé par le serveur, les agents et les services "
+"Neutron qui s'exécutent sur cette machine. Tous les agents et services qui "
+"s'exécutent sur cette machine doivent utiliser la même valeur d'hôte."
 
 msgid "How many times Neutron will retry MAC generation"
 msgstr ""
@@ -1369,6 +1905,9 @@ msgstr ""
 
 msgid "IP address used by Nova metadata server."
 msgstr "Adresse IP utilisée par le serveur de métadonnées Nova"
+
+msgid "IP allocation failed. Try again later."
+msgstr "Échec de l'allocation IP. Réessayez ultérieurement."
 
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "L'allocation d'adresse IP requiert subnet_id ou ip_address"
@@ -1423,13 +1962,20 @@ msgstr ""
 "routeur externe ne peut pas être ajouté au routeur Neutron."
 
 msgid ""
+"If True, advertise network MTU values if core plugin calculates them. MTU is "
+"advertised to running instances via DHCP and RA MTU options."
+msgstr ""
+"Si ce paramètre est défini sur True, publiez les valeurs MTU réseau si le "
+"plugin principal les calcule. MTU est publié pour l'exécution d'instances "
+"via les options DHCP et RA MTU."
+
+msgid ""
 "If True, then allow plugins that support it to create VLAN transparent "
 "networks."
 msgstr ""
 "Si True, autorisez les plug-in qui les prennent en charge pour créer les "
 "réseaux VLAN transparents."
 
-#, fuzzy
 msgid ""
 "If non-empty, the l3 agent can only configure a router that has the matching "
 "router ID."
@@ -1440,7 +1986,42 @@ msgstr ""
 msgid "Illegal IP version number"
 msgstr "Numéro de version IP illégal"
 
-#, fuzzy
+#, python-format
+msgid ""
+"Illegal prefix bounds: %(prefix_type)s=%(prefixlen)s, %(base_prefix_type)s="
+"%(base_prefixlen)s."
+msgstr ""
+"Limites de préfixe non conformes : %(prefix_type)s=%(prefixlen)s, "
+"%(base_prefix_type)s=%(base_prefixlen)s."
+
+#, python-format
+msgid ""
+"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot "
+"associate with address scope %(address_scope_id)s because subnetpool "
+"ip_version is not %(ip_version)s."
+msgstr ""
+"Association de pool de sous-réseau non conforme : le pool de sous-réseau "
+"%(subnetpool_id)s ne peut pas s'associer à la portée d'adresse "
+"%(address_scope_id)s car ip_version du pool de sous-réseau n'est pas "
+"%(ip_version)s."
+
+#, python-format
+msgid ""
+"Illegal subnetpool association: subnetpool %(subnetpool_id)s cannot be "
+"associated with address scope %(address_scope_id)s."
+msgstr ""
+"Association de pool de sous-réseau non conforme : le sous-réseau "
+"%(subnetpool_id)s ne peut pas être associé à la portée d'adresse "
+"%(address_scope_id)s."
+
+#, python-format
+msgid "Illegal subnetpool update : %(reason)s."
+msgstr "Mise à jour de pool de sous-réseau non conforme : %(reason)s."
+
+#, python-format
+msgid "Illegal update to prefixes: %(msg)s."
+msgstr "Mise à jour de préfixes non conforme : %(msg)s."
+
 msgid ""
 "In some cases the Neutron router is not present to provide the metadata IP "
 "but the DHCP server can be used to provide this info. Setting this value "
@@ -1460,7 +2041,6 @@ msgstr ""
 "Infos pci_vendor_info incorrectes : \"%s\". Elles devraient être vendor_id:"
 "product_id"
 
-#, fuzzy
 msgid ""
 "Indicates that this L3 agent should also handle routers that do not have an "
 "external network gateway configured. This option should be True only for a "
@@ -1474,12 +2054,30 @@ msgstr ""
 "doivent avoir une passerelle de réseau externe."
 
 #, python-format
+msgid "Instance of class %(module)s.%(class)s must contain _cache attribute"
+msgstr ""
+"L'instance de la classe %(module)s.%(class)s doit contenir l'attribut _cache."
+
+#, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
 msgstr ""
 "Espace préfixe insuffisant pour l'allocation de la taille de sous-réseau /%s"
 
 msgid "Insufficient rights for removing default security group."
 msgstr "Droits insuffisants pour retirer le groupe de sécurité par défaut."
+
+msgid ""
+"Integration bridge to use. Do not change this parameter unless you have a "
+"good reason to. This is the name of the OVS integration bridge. There is one "
+"per hypervisor. The integration bridge acts as a virtual 'patch bay'. All VM "
+"VIFs are attached to this bridge and then 'patched' according to their "
+"network connectivity."
+msgstr ""
+"Pont d'intégration à utiliser. Ne modifiez pas ce paramètre à moins d'avoir "
+"une bonne raison pour cela. Il s'agit du nom du pont d'intégration OVS. Il y "
+"en a un par hyperviseur. Le pont d'intégration fait office de 'baie "
+"corrective' virtuelle. Tous les VIF de machine virtuelle sont connectés à ce "
+"pont puis 'corrigés' d'après leur connectivité réseau."
 
 msgid "Interface to monitor"
 msgstr "Interface à surveiller"
@@ -1495,6 +2093,10 @@ msgstr "Intervalle entre deux mesures"
 
 msgid "Interval between two metering reports"
 msgstr "Intervalle entre deux rapports de mesures"
+
+#, python-format
+msgid "Invalid CIDR %(input)s given as IP prefix."
+msgstr "CIDR non valide %(input)s fourni comme préfixe IP."
 
 #, python-format
 msgid ""
@@ -1549,6 +2151,10 @@ msgid "Invalid data format for nameserver: '%s'"
 msgstr "Format de données non valide pour le serveur de noms : '%s'"
 
 #, python-format
+msgid "Invalid ethertype %(ethertype)s for protocol %(protocol)s."
+msgstr "ethertype %(ethertype)s non valide pour le protocole %(protocol)s."
+
+#, python-format
 msgid "Invalid extension environment: %(reason)s."
 msgstr "Environnement d'extensions non valide : %(reason)s."
 
@@ -1583,6 +2189,10 @@ msgid "Invalid mapping: '%s'"
 msgstr "Mappage non valide : '%s'"
 
 #, python-format
+msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'."
+msgstr "Plage VLAN de réseau non valide : '%(vlan_range)s' - '%(error)s'."
+
+#, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'."
 msgstr "Réseau non valide pour le range port VXLAN: '%(vxlan_range)s'."
 
@@ -1606,6 +2216,10 @@ msgstr "Chemin non valide : %s"
 
 msgid "Invalid service provider format"
 msgstr "Format de fournisseur de service non valide"
+
+#, python-format
+msgid "Invalid service type %(service_type)s."
+msgstr "Type de service non valide %(service_type)s."
 
 #, python-format
 msgid ""
@@ -1645,7 +2259,10 @@ msgstr ""
 msgid "Keepalived didn't respawn"
 msgstr "Keepalived n'a pas été relancée"
 
-#, fuzzy, python-format
+msgid "Keepalived didn't spawn"
+msgstr "Keepalived n'a pas été lancé"
+
+#, python-format
 msgid ""
 "Kernel HZ value %(value)s is not valid. This value must be greater than 0."
 msgstr ""
@@ -1656,11 +2273,9 @@ msgstr ""
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "Clé %(key)s non unique dans le mappage '%(mapping)s'"
 
-#, fuzzy
 msgid "L3 agent failure to setup NAT for floating IPs"
 msgstr "L'agent L3 n'a pas pu configurer NAT pour les IP flottantes"
 
-#, fuzzy
 msgid "L3 agent failure to setup floating IPs"
 msgstr "L'agent L3 n'a pas pu configurer les IP flottantes"
 
@@ -1691,6 +2306,16 @@ msgid ""
 msgstr ""
 "Liste des points d'entrées du pilote de type de réseau à charger à partir de "
 "l'espace de nom neutron.ml2.type_drivers."
+
+msgid ""
+"List of physical_network names with which flat networks can be created. Use "
+"default '*' to allow flat networks with arbitrary physical_network names. "
+"Use an empty list to disable flat networks."
+msgstr ""
+"Liste de noms de réseau physique qui peuvent être utilisés pour créer des "
+"réseaux centralisés. Utilisez par défaut '*' pour autoriser les réseaux "
+"centralisés avec des noms de réseau physique arbitraires.  Utilisez une "
+"liste vide pour désactiver les réseaux centralisés."
 
 msgid "Local IP address of the VXLAN endpoints."
 msgstr "Adresse IP locale des points de terminaison VXLAN."
@@ -1726,15 +2351,33 @@ msgstr ""
 msgid "Log agent heartbeats"
 msgstr "Consigner les pulsations d'agent"
 
-#, fuzzy
+msgid "Loopback IP subnet is not supported if enable_dhcp is True."
+msgstr ""
+"Le sous-réseau d'IP de bouclage n'est pas pris en charge si le paramètre "
+"enable_dhcp est défini sur True."
+
+msgid ""
+"MTU of the underlying physical network. Neutron uses this value to calculate "
+"MTU for all virtual network components. For flat and VLAN networks, neutron "
+"uses this value without modification. For overlay networks such as VXLAN, "
+"neutron automatically subtracts the overlay protocol overhead from this "
+"value. Defaults to 1500, the standard value for Ethernet."
+msgstr ""
+"MTU du réseau physique sous-jacent. Neutron utilise cette valeur pour "
+"calculer la valeur MTU de tous les composants réseau virtuels. Pour les "
+"réseaux centralisés et VLAN, Neutron utilise cette valeur sans la modifier. "
+"Pour les réseaux superposés, tels que VXLAN, Neutron soustrait "
+"automatiquement la surcharge du protocole de superposition de cette valeur. "
+"La valeur par défaut est 1500, valeur standard pour Ethernet."
+
 msgid ""
 "MTU setting for device. This option will be removed in Newton. Please use "
 "the system-wide segment_mtu setting which the agents will take into account "
 "when wiring VIFs."
 msgstr ""
-"Paramètre MTU pour l'unité. Cette option va être retirée de Newton. Utilisez "
-"le paramètre segment_mtu de niveau système qui sera pris en compte par les "
-"agents lors de la connexion des VIF."
+"Paramètre MTU pour l'unité. Cette option va être retirée dans Newton. "
+"Utilisez le paramètre segment_mtu de niveau système qui sera pris en compte "
+"par les agents lors de la connexion des VIF."
 
 msgid "MTU size of veth interfaces"
 msgstr "Taille de MTU des interfaces veth"
@@ -1749,18 +2392,22 @@ msgstr "Format de corps de demande incorrect"
 msgid "Malformed request body: %(reason)s."
 msgstr "Format de corps de demande incorrect : %(reason)s"
 
-#, fuzzy
 msgid "MaxRtrAdvInterval setting for radvd.conf"
 msgstr "Paramètre MaxRtrAdvInterval pour radvd.conf"
 
-#, fuzzy
 msgid "Maximum number of DNS nameservers per subnet"
 msgstr "Nombre maximum de serveurs de noms DNS par sous-réseau"
+
+msgid ""
+"Maximum number of L3 agents which a HA router will be scheduled on. If it is "
+"set to 0 then the router will be scheduled on every agent."
+msgstr ""
+"Nombre maximum d'agents L3 sur lesquels un routeur HA sera planifié. Si ce "
+"paramètre est défini sur 0, le routeur sera planifié sur chaque agent."
 
 msgid "Maximum number of allowed address pairs"
 msgstr "Nombre maximal de paires d'adresses autorisé"
 
-#, fuzzy
 msgid ""
 "Maximum number of fixed ips per port. This option is deprecated and will be "
 "removed in the N release."
@@ -1770,6 +2417,31 @@ msgstr ""
 
 msgid "Maximum number of host routes per subnet"
 msgstr "Nombre maximal de routes hôte par sous-réseau"
+
+msgid "Maximum number of routes per router"
+msgstr "Nombre maximum de routes par routeur"
+
+msgid ""
+"Maximum size of an IP packet (MTU) that can traverse the underlying physical "
+"network infrastructure without fragmentation. For instances using a self-"
+"service/private network, neutron subtracts the overlay protocol overhead "
+"from this value and provides it to instances via DHCP option 26. For "
+"example, using a value of 9000, DHCP provides 8950 to instances using a "
+"VXLAN network that contains 50 bytes of overhead. Using a value of 0 "
+"disables this feature and instances typically default to a 1500 MTU. Only "
+"impacts instances, not neutron network components such as bridges and "
+"routers."
+msgstr ""
+"Taille maximum d'un paquet IP (MTU) qui peut traverser l'infrastructure de "
+"réseau physique sous-jacente sans fragmentation. Pour les instances "
+"utilisant un réseau en libre service/privé, Neutron soustrait la valeur de "
+"surcharge du protocole de superposition de cette valeur et la fournit aux "
+"instances via DHCP option 26. Par exemple, si la valeur 9000 est utilisée, "
+"DHCP fournit la valeur 8950 aux instances utilisant un réseau VXLAN qui "
+"contient 50 octets de surcharge. La valeur 0 désactive cette fonction et les "
+"instances utilisent généralement par défaut la valeur 1500 MTU. Seules les "
+"instances sont impactées et non les composants réseau Neutron comme les "
+"ponts et les routeurs."
 
 msgid ""
 "Metadata Proxy UNIX domain socket mode, 4 values allowed: 'deduce': deduce "
@@ -1808,7 +2480,14 @@ msgstr ""
 "La règle d'étiquette de mesure avec remote_ip_prefix %(remote_ip_prefix)s "
 "chevauche un(e) autre"
 
-#, fuzzy
+msgid "Method cannot be called within a transaction."
+msgstr "La méthode ne peut pas être appelée au sein d'une transaction."
+
+msgid "Migration from distributed router to centralized is not supported"
+msgstr ""
+"La migration du routeur distribué vers le routeur centralisé n'est pas prise "
+"en charge"
+
 msgid "MinRtrAdvInterval setting for radvd.conf"
 msgstr "Paramètre MinRtrAdvInterval pour radvd.conf"
 
@@ -1817,6 +2496,13 @@ msgstr ""
 "Réduire au minimum l'interrogation en surveillant les changements "
 "d'interface de l'ovsdb."
 
+msgid ""
+"Minimum number of L3 agents which a HA router will be scheduled on. If it is "
+"set to 0 then the router will be scheduled on every agent."
+msgstr ""
+"Nombre minimum d'agents L3 sur lesquels un routeur HA sera planifié. Si ce "
+"paramètre est défini sur 0, le routeur sera planifié sur chaque agent."
+
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr "Clé manquante dans le mappage : '%s'"
@@ -1824,6 +2510,37 @@ msgstr "Clé manquante dans le mappage : '%s'"
 #, python-format
 msgid "Missing value in mapping: '%s'"
 msgstr "Valeur manquante dans le mappage : '%s'"
+
+msgid "Multicast IP subnet is not supported if enable_dhcp is True."
+msgstr ""
+"Le sous-réseau IP de multidiffusion n'est pas pris en charge si le paramètre "
+"enable_dhcp est défini sur True."
+
+msgid ""
+"Multicast group for VXLAN. When configured, will enable sending all "
+"broadcast traffic to this multicast group. When left unconfigured, will "
+"disable multicast VXLAN mode."
+msgstr ""
+"Groupe de multidiffusion pour VXLAN. Lorsque ce paramètre est configuré, il "
+"permet l'envoi de tout le trafic de diffusion vers ce groupe de "
+"multidiffusion. Dans le cas contraire, il désactive le mode VXLAN de "
+"multidiffusion."
+
+msgid ""
+"Multicast group(s) for vxlan interface. A range of group addresses may be "
+"specified by using CIDR notation. Specifying a range allows different VNIs "
+"to use different group addresses, reducing or eliminating spurious broadcast "
+"traffic to the tunnel endpoints. To reserve a unique group for each possible "
+"(24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be the same on "
+"all the agents."
+msgstr ""
+"Groupe(s) de multidiffusion pour l'interface vxlan. Une plage d'adresses de "
+"groupe peut être spécifiée en utilisant la notation CIDR. Si une plage est "
+"indiquée, différents VNI peuvent utiliser différentes adresses de groupe, ce "
+"qui réduit ou élimine le trafic de multidiffusion fallacieux vers les nœuds "
+"finaux de tunnel. Pour réserver un groupe unique pour chaque VNI possible "
+"(24 bits), utilisez /8, par exemple 239.0.0.0/8. Ce paramètre doit être "
+"identique sur tous les agents."
 
 #, python-format
 msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
@@ -1847,9 +2564,17 @@ msgstr ""
 "L'existence de plusieurs ID titulaire n'est pas autorisée lors de la "
 "création du règle de groupe de sécurité en bloc."
 
+msgid "Must also specify protocol if port range is given."
+msgstr ""
+"Un protocole doit aussi être précisé si une plage de ports est fournie."
+
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 "Doit indiquer une ou plusieurs actions sur l'ajout ou la modification de flux"
+
+#, python-format
+msgid "Name %(dns_name)s is duplicated in the external DNS service"
+msgstr "Le nom %(dns_name)s est en double dans le service DNS externe"
 
 #, python-format
 msgid ""
@@ -1866,7 +2591,6 @@ msgstr "Le nom '%s' ne doit pas commencer ni se terminer par un trait d'union."
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Nom du pont Open vSwitch à utiliser"
 
-#, fuzzy
 msgid ""
 "Name of bridge used for external network traffic. This should be set to an "
 "empty value for the Linux Bridge. When this parameter is set, each L3 agent "
@@ -1892,11 +2616,43 @@ msgstr "Espace de nom du routeur"
 msgid "Native pagination depend on native sorting"
 msgstr "La mise en page native dépend du tri natif"
 
+#, python-format
+msgid ""
+"Need to apply migrations from %(project)s contract branch. This will require "
+"all Neutron server instances to be shutdown before proceeding with the "
+"upgrade."
+msgstr ""
+"La migrations doit être appliquée depuis la branche contract %(project)s. "
+"Cela va impliquer l'arrêt de toutes les instances de serveur Neutron avant "
+"la mise à niveau."
+
 msgid "Negative delta (downgrade) not supported"
 msgstr "Delta négatif (rétromigration) non pris en charge"
 
 msgid "Negative relative revision (downgrade) not supported"
 msgstr "Révision relative négative (rétromigration) non prise en charge"
+
+#, python-format
+msgid ""
+"Network %(network_id)s is already bound to BgpSpeaker %(bgp_speaker_id)s."
+msgstr ""
+"Le réseau %(network_id)s est déjà lié au routeur BgpSpeaker "
+"%(bgp_speaker_id)s."
+
+#, python-format
+msgid ""
+"Network %(network_id)s is not associated with BGP speaker %(bgp_speaker_id)s."
+msgstr ""
+"Le réseau %(network_id)s n'est pas associé au routeur BGP %(bgp_speaker_id)s."
+
+#, python-format
+msgid "Network %(network_id)s is not bound to a BgpSpeaker."
+msgstr "Le réseau %(network_id)s n'est pas lié à un routeur BGP."
+
+#, python-format
+msgid "Network %(network_id)s is not bound to a IPv%(ip_version)s BgpSpeaker."
+msgstr ""
+"Le réseau %(network_id)s n'est pas lié à un routeur BGP IPv%(ip_version)s."
 
 #, python-format
 msgid "Network %s does not contain any IPv4 subnet"
@@ -1931,17 +2687,40 @@ msgstr "Valeur de type de réseau requise par le plug-in ML2"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "Types de réseau pris en charge par l'agent (gre et/ou vxlan)."
 
+msgid ""
+"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
+"set (default behavior), no IPAM driver is used. In order to use the "
+"reference implementation of Neutron IPAM driver, use 'internal'."
+msgstr ""
+"Pilote IPAM de Neutron. Si le paramètre ipam_driver n'est pas défini "
+"(comportement par défaut), aucun pilote IPAM n'est utilisé. Pour pouvoir "
+"utiliser l'implémentation de référence du pilote IPAM de Neutron, indiquez "
+"'internal'."
+
 msgid "Neutron Service Type Management"
 msgstr "Gestion du type de service Neutron"
 
 msgid "Neutron core_plugin not configured!"
-msgstr "Neutron core_plugin n'est pas configuré!"
+msgstr "Neutron core_plugin n'est pas configuré ! "
 
 msgid "Neutron plugin provider module"
 msgstr "Module du fournisseur de plug-in Neutron"
 
 msgid "Neutron quota driver class"
 msgstr "Classe de pilote du quota Neutron"
+
+msgid "New value for first_ip or last_ip has to be specified."
+msgstr "Une nouvelle valeur doit être spécifiée pour first_ip ou last_ip."
+
+msgid "No default router:external network"
+msgstr "Aucun réseau router:external par défaut"
+
+#, python-format
+msgid "No default subnetpool found for IPv%s"
+msgstr "Aucun pool de sous-réseau par défaut trouvé pour IPv%s"
+
+msgid "No default subnetpools defined"
+msgstr "Aucun pool de sous-réseau défini"
 
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
@@ -1961,13 +2740,27 @@ msgstr ""
 "routeur %(router_id)s. Le nombre maximum de routeurs haute disponibilité par "
 "locataire est 254."
 
+msgid "No offline migrations pending."
+msgstr "Aucune migration hors ligne en attente."
+
 #, python-format
 msgid "No providers specified for '%s' service, exiting"
 msgstr "Aucun fournisseur indiqué pour le service de '%s', sortie"
 
-#, fuzzy
+#, python-format
+msgid "No shared key in %s fields"
+msgstr "Aucune clé partagée dans les champs %s"
+
 msgid "No versions callback provided in ResourceVersionsManager"
 msgstr "Aucun rappel de versions fourni dans ResourceVersionsManager"
+
+msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
+msgstr ""
+"Non autorisé à affecter manuellement un routeur à un agent en mode 'dvr'."
+
+msgid "Not allowed to manually remove a router from an agent in 'dvr' mode."
+msgstr ""
+"Non autorisé à retirer manuellement un routeur d'un agent en mode 'dvr'."
 
 #, python-format
 msgid ""
@@ -1987,7 +2780,6 @@ msgstr ""
 "agents DHCP pour un réseau titulaire donné, ce qui fournit de la haute "
 "disponibilité au service DHCP. "
 
-#, fuzzy
 msgid "Number of RPC worker processes dedicated to state reports queue"
 msgstr ""
 "Nombre de processus worker RPC dédiés à la file d'attente des rapports d'état"
@@ -2002,6 +2794,25 @@ msgstr ""
 
 msgid "Number of backlog requests to configure the socket with"
 msgstr "Nombre de demandes en attente avec lequel configurer le socket"
+
+msgid ""
+"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
+"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
+"As a consequence, range of values is 8, 16 and 24"
+msgstr ""
+"Nombre de bits dans une zone PTR ipv4 qui fera office de préfixe réseau. "
+"Doit s'aligner sur la frontière de bit. La valeur minimum est 8. La valeur "
+"maximum est 24. Par conséquent, la plage de valeurs est 8, 16 et 24"
+
+msgid ""
+"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
+"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
+"As a consequence, range of values is 4, 8, 12, 16,..., 124"
+msgstr ""
+"Nombre de bits dans une zone PTR ipv6 qui fera office de préfixe réseau. "
+"Doit s'aligner sur la frontière nyble. La valeur minimum est 4. La valeur "
+"maximum est 124. Par conséquent, la plage de valeurs est 4, 8, 12, 16,..., "
+"124"
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
@@ -2069,7 +2880,6 @@ msgstr ""
 "Nombre de sous-réseaux autorisés par le locataire. Une valeur négative "
 "signifie illimité"
 
-#, fuzzy
 msgid ""
 "Number of threads to use during sync process. Should not exceed connection "
 "pool size configured on server."
@@ -2080,6 +2890,17 @@ msgstr ""
 
 msgid "OK"
 msgstr "OK"
+
+msgid ""
+"OVS datapath to use. 'system' is the default value and corresponds to the "
+"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
+msgstr ""
+"Chemin de données OVS à utiliser. 'system' est la valeur par défaut et elle "
+"correspond au chemin de données du noyau. Pour activer le chemin de données "
+"de l'espace utilisateur, définissez cette valeur sur 'netdev'."
+
+msgid "OVS vhost-user socket directory."
+msgstr "Répertoire de socket OVS vhost-user."
 
 #, python-format
 msgid "OVSDB Error: %s"
@@ -2100,6 +2921,11 @@ msgid "Only admins can manipulate policies on networks they do not own."
 msgstr ""
 "Seuls les administrateurs peuvent manipuler des stratégies sur des réseaux "
 "qu'ils ne possèdent pas. "
+
+msgid "Only admins can manipulate policies on objects they do not own"
+msgstr ""
+"Seuls les administrateurs peuvent gérer des stratégies sur des objets qui ne "
+"leur appartiennent pas"
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr ""
@@ -2124,7 +2950,15 @@ msgstr ""
 msgid "Operation not supported on device %(dev_name)s"
 msgstr "Opération non prise en charge sur le périphérique %(dev_name)s"
 
-#, fuzzy
+msgid ""
+"Ordered list of network_types to allocate as tenant networks. The default "
+"value 'local' is useful for single-box testing but provides no connectivity "
+"between hosts."
+msgstr ""
+"Liste triée des éléments network_types à allouer en tant que réseaux "
+"locataires. La valeur par défaut 'local' est utile pour les tests single-box "
+"mais elle ne fournit aucune connectivité entre les hôtes."
+
 msgid "Override the default dnsmasq settings with this file."
 msgstr "Remplacez les paramètres dnsmasq par défaut par ce fichier."
 
@@ -2139,11 +2973,24 @@ msgid "Package %s not installed"
 msgstr "Le package %s n'est pas installé"
 
 #, python-format
+msgid "Parameter %(param)s must be of %(param_type)s type."
+msgstr "Le paramètre %(param)s doit être de type %(param_type)s."
+
+#, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "Echec de l'analyse syntaxique bridge_mappings : %s."
 
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "Echec de l'analyse syntaxique des pci_vendor_devs pris en charge"
+
+msgid "Password for connecting to designate in admin context"
+msgstr ""
+"Mot de passe pour la connexion au réseau désigné dans un contexte admin"
+
+#, python-format
+msgid "Password not specified for authentication type=%(auth_type)s."
+msgstr ""
+"Mot de passe non spécifié pour le type d'authentification=%(auth_type)s."
 
 msgid "Path to PID file for this process"
 msgstr "Chemin d'accès au fichier PID pour ce processus"
@@ -2159,6 +3006,9 @@ msgid "Peer patch port in tunnel bridge for integration bridge."
 msgstr ""
 "Port correctif homologue dans le pont d'intégration tunnel pour le pont "
 "d'intégration."
+
+msgid "Per-tenant subnet pool prefix quota exceeded."
+msgstr "Quota de préfixes de pool de sous réseau par locataire dépassé."
 
 msgid "Phase upgrade options do not accept revision specification"
 msgstr ""
@@ -2176,6 +3026,9 @@ msgid "Plugin does not support updating provider attributes"
 msgstr ""
 "Le plug-in ne prend pas en charge la mise à jour des attributs de fournisseur"
 
+msgid "Policy configuration policy.json could not be found."
+msgstr "La configuration de stratégie policy.json est introuvable."
+
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "Le port %(id)s ne dispose pas de l'adresse IP fixe %(address)s."
@@ -2185,6 +3038,10 @@ msgid "Port %(port)s does not exist on %(bridge)s!"
 msgstr "Le port %(port)s au sein du pont %(bridge)s"
 
 #, python-format
+msgid "Port %(port_id)s is already acquired by another DHCP agent"
+msgstr "Le port %(port_id)s est déjà acquis par un autre agent DHCP"
+
+#, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
@@ -2192,7 +3049,7 @@ msgstr ""
 "Le port %(port_id)s est associé à un titulaire différent de celui de "
 "l'adresse IP flottante %(floatingip_id)s et ne peut donc pas être lié. "
 
-#, fuzzy, python-format
+#, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
 msgstr "Le port %(port_id)s n'est pas géré par cet agent. "
 
@@ -2239,6 +3096,10 @@ msgstr ""
 "Port à utiliser pour l'écoute des connexions OpenFlow. Utilisé uniquement "
 "pour le pilote 'natif'."
 
+#, python-format
+msgid "Prefix '%(prefix)s' not supported in IPv%(version)s pool."
+msgstr "Préfixe '%(prefix)s' non pris en charge dans le pool IPv%(version)s."
+
 msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr ""
 "La délégation de préfixe peut uniquement être utilisée avec des sous-réseaux "
@@ -2265,9 +3126,28 @@ msgid "Protocol to access nova metadata, http or https"
 msgstr "Protocole d'accès aux métadonnées de nova, HTTP ou https"
 
 #, python-format
+msgid "Provider name %(name)s is limited by %(len)s characters"
+msgstr "Le nom de fournisseur %(name)s est limité à %(len)s caractères"
+
+#, python-format
 msgid "QoS Policy %(policy_id)s is used by %(object_type)s %(object_id)s."
 msgstr ""
 "Stratégie QoS %(policy_id)s est utilisée par %(object_type)s %(object_id)s."
+
+#, python-format
+msgid ""
+"QoS binding for network %(net_id)s and policy %(policy_id)s could not be "
+"found."
+msgstr ""
+"La liaison QoS du réseau %(net_id)s et de la stratégie %(policy_id)s est "
+"introuvable."
+
+#, python-format
+msgid ""
+"QoS binding for port %(port_id)s and policy %(policy_id)s could not be found."
+msgstr ""
+"La liaison QoS du port %(port_id)s et de la stratégie %(policy_id)s est "
+"introuvable."
 
 #, python-format
 msgid "QoS policy %(policy_id)s could not be found."
@@ -2301,6 +3181,34 @@ msgstr ""
 "planificateur de tâches périodiques de manière à réduire les encombrements "
 "(définissez ce chiffre sur 0 pour désactiver cette fonction)."
 
+msgid "Ranges must be in the same IP version"
+msgstr "Les plages doivent être dans la même version IP"
+
+msgid "Ranges must be netaddr.IPRange"
+msgstr "Les plages doivent être netaddr.IPRange"
+
+msgid "Ranges must not overlap"
+msgstr "Les plages ne doivent pas se chevaucher"
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
+msgstr "Type '%(type)s' et valeur '%(value)s' reçus. Type netaddr.EUI reçu."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
+"type."
+msgstr ""
+"Type '%(type)s' et valeur '%(value)s' reçus. Type netaddr.IPAddress attendu."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
+"type."
+msgstr ""
+"Type '%(type)s' et valeur '%(value)s' reçus. Type netaddr.IPNetwork attendu."
+
 #, python-format
 msgid ""
 "Release aware branch labels (%s) are deprecated. Please switch to expand@ "
@@ -2312,6 +3220,12 @@ msgstr ""
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 "Le serveur de métadonnées distant a subi une erreur de serveur interne."
+
+msgid ""
+"Repository does not contain HEAD files for contract and expand branches."
+msgstr ""
+"Le référentiel ne contient pas les fichiers HEAD pour les branches contract "
+"et expand."
 
 msgid ""
 "Representing the resource type whose load is being reported by the agent. "
@@ -2365,6 +3279,10 @@ msgstr ""
 "paramètre entraîne une courte interruption du trafic."
 
 #, python-format
+msgid "Resource %(resource)s %(resource_id)s could not be found."
+msgstr "La ressource %(resource)s %(resource_id)s est introuvable."
+
+#, python-format
 msgid "Resource %(resource_id)s of type %(resource_type)s not found"
 msgstr "Ressource %(resource_id)s de type %(resource_type)s non trouvée."
 
@@ -2392,7 +3310,6 @@ msgstr "Ressource non trouvé."
 msgid "Resources required"
 msgstr "Ressources obligatoires"
 
-#, fuzzy
 msgid ""
 "Root helper application. Use 'sudo neutron-rootwrap /etc/neutron/rootwrap."
 "conf' to use the real root filter facility. Change to 'sudo' to skip the "
@@ -2400,7 +3317,7 @@ msgid ""
 msgstr ""
 "Application d'assistant racine. Utilisez 'sudo neutron-rootwrap /etc/neutron/"
 "rootwrap.conf' pour utiliser la véritable fonction de filtre racine. "
-"Remplacez par 'sudo' pour ignorer le filtrage  et exécuer simplement la "
+"Remplacez par 'sudo' pour ignorer le filtrage  et exécuter simplement la "
 "commande directement."
 
 msgid "Root helper daemon application to use when possible."
@@ -2409,6 +3326,10 @@ msgstr ""
 
 msgid "Root permissions are required to drop privileges."
 msgstr "Les droits root sont obligatoires pour supprimer des privilèges."
+
+#, python-format
+msgid "Route %(cidr)s not advertised for BGP Speaker %(speaker_as)d."
+msgstr "Route %(cidr)s non publiée pour le routeur BGP %(speaker_as)d."
 
 #, python-format
 msgid "Router %(router_id)s %(reason)s"
@@ -2428,6 +3349,14 @@ msgid "Router %(router_id)s has no interface on subnet %(subnet_id)s"
 msgstr ""
 "Le routeur %(router_id)s ne comporte pas d'interface sur le sous-réseau "
 "%(subnet_id)s."
+
+#, python-format
+msgid "Router '%(router_id)s' cannot be both DVR and HA."
+msgstr "Le routeur '%(router_id)s' ne peut pas être à la fois DVR et HA."
+
+#, python-format
+msgid "Router '%(router_id)s' is not compatible with this agent."
+msgstr "Le routeur '%(router_id)s' n'est pas compatible avec cet agent."
 
 #, python-format
 msgid "Router already has a port on subnet %s"
@@ -2451,16 +3380,19 @@ msgstr ""
 "%(router_id)s être supprimée car elle est requise par une ou plusieurs "
 "routes."
 
+msgid "Router port must have at least one fixed IP"
+msgstr "Le port de routeur doit avoir au moins une IP fixe"
+
 msgid "Router that will have connected instances' metadata proxied."
 msgstr "Routeur dont les métadonnées d'instance connectées seront mandatées."
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Row doesn't exist in the DB. Request info: Table=%(table)s. Columns="
 "%(columns)s. Records=%(records)s."
 msgstr ""
 "La ligne n'existe pas dans la base de données. Info demande : Table="
-"%(table)s. Columns=%(columns)s. Records=%(records)s."
+"%(table)s. Colonnes=%(columns)s. Enregistrements=%(records)s."
 
 msgid "Run as daemon."
 msgstr "Exécuter en tant que démon."
@@ -2512,6 +3444,19 @@ msgid "Security group rule %(id)s does not exist"
 msgstr "La règle de groupe de sécurité %(id)s n'existe pas."
 
 #, python-format
+msgid "Security group rule already exists. Rule id is %(rule_id)s."
+msgstr ""
+"Une règle de groupe de sécurité existe déjà. L'ID règle est %(rule_id)s."
+
+#, python-format
+msgid ""
+"Security group rule for ethertype '%(ethertype)s' not supported. Allowed "
+"values are %(values)s."
+msgstr ""
+"Règle de groupe de sécurité pour ethertype '%(ethertype)s' non prise en "
+"charge. Les valeurs autorisées sont %(values)s."
+
+#, python-format
 msgid ""
 "Security group rule protocol %(protocol)s not supported. Only protocol "
 "values %(values)s and integer representations [0 to 255] are supported."
@@ -2546,6 +3491,36 @@ msgstr ""
 "Envoyez ces nombreux protocoles de résolution d'adresse gratuits pour la "
 "configuration haute disponibilité (HA), si la valeur est inférieure ou égale "
 "à 0, la fonction est désactivée"
+
+#, python-format
+msgid "Service Profile %(sp_id)s could not be found."
+msgstr "Le profil de service %(sp_id)s est introuvable."
+
+#, python-format
+msgid "Service Profile %(sp_id)s is already associated with flavor %(fl_id)s."
+msgstr ""
+"Le profil de service %(sp_id)s est déjà associé à la version %(fl_id)s."
+
+#, python-format
+msgid "Service Profile %(sp_id)s is not associated with flavor %(fl_id)s."
+msgstr ""
+"Le profil de service %(sp_id)s n'est pas associé à la version %(fl_id)s."
+
+#, python-format
+msgid "Service Profile %(sp_id)s is used by some service instance."
+msgstr ""
+"Le profil de service %(sp_id)s est utilisé par certaines instances de "
+"service."
+
+#, python-format
+msgid "Service Profile driver %(driver)s could not be found."
+msgstr "Le pilote de profil de service %(driver)s est introuvable."
+
+msgid "Service Profile is not enabled."
+msgstr "Le profil de service n'est pas activé."
+
+msgid "Service Profile needs either a driver or metainfo."
+msgstr "Le profil de service a besoin d'un pilote ou d'infos de métadonnées."
 
 #, python-format
 msgid ""
@@ -2626,6 +3601,16 @@ msgstr ""
 "Sous-réseau utilisé pour le réseau administrateur haute disponibilité L3."
 
 msgid ""
+"Subnets hosted on the same network must be allocated from the same subnet "
+"pool."
+msgstr ""
+"Les sous-réseaux hébergés sur le même réseau doivent être alloués à partir "
+"du même pool de sous-réseau."
+
+msgid "Suffix to append to all namespace names."
+msgstr "Suffixe à ajouter à tous les noms d'espace nom."
+
+msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
 msgstr ""
@@ -2656,9 +3641,21 @@ msgid "Table %s can only be queried by UUID"
 msgstr "La table %s ne peut être interrogée que par UUID"
 
 #, python-format
+msgid "Tag %(tag)s could not be found."
+msgstr "Tag %(tag)s introuvable."
+
+#, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Titulaire %(tenant_id)s non autorisé à créer %(resource)s sur ce réseau"
+
+msgid "Tenant id for connecting to designate in admin context"
+msgstr ""
+"ID locataire pour la connexion au réseau désigné dans un contexte admin"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr ""
+"Nom de locataire pour la connexion au réseau désigné dans un contexte admin"
 
 msgid "Tenant network creation is not enabled."
 msgstr "La création de réseau titulaire n'est pas activée."
@@ -2673,7 +3670,6 @@ msgstr ""
 "L'option 'gateway_external_network_id' doit être configuré pour cet agent "
 "car Neutron a plus d'un réseau externe."
 
-#, fuzzy
 msgid ""
 "The DHCP agent will resync its state with Neutron to recover from any "
 "transient notification or RPC errors. The interval is number of seconds "
@@ -2683,7 +3679,6 @@ msgstr ""
 "une notification transitoire ou des erreurs RPC. L'intervalle est le nombre "
 "de secondes entre les tentatives."
 
-#, fuzzy
 msgid ""
 "The DHCP server can assist with providing metadata support on isolated "
 "networks. Setting this value to True will cause the DHCP server to append "
@@ -2695,7 +3690,7 @@ msgstr ""
 "Le serveur DHCP peut contribuer à fournir un support de métadonnées sur des "
 "réseaux isolés. Si cette valeur est définie sur True, le serveur DHCP ajoute "
 "des routes hôtes spécifiques à la demande DHCP. Le service de métadonnées "
-"n'est activé que lorsque le sous-réseau ne contient aucun port routeur. "
+"n'est activé que lorsque le sous-réseau ne contient aucun port de routeur. "
 "L'instance invitée doit être configurée pour la demande de routes hôtes via "
 "DHCP (Option 121). Cette option n'a aucun effet lorsque force_metadata est "
 "défini sur True."
@@ -2740,7 +3735,6 @@ msgstr ""
 "L'attribut '%(attr)s' fait référence à une autre ressource, impossible de "
 "l'utiliser pour le type '%(resource)s'"
 
-#, fuzzy
 msgid ""
 "The base MAC address Neutron will use for VIFs. The first 3 octets will "
 "remain unchanged. If the 4th octet is not 00, it will also be used. The "
@@ -2765,7 +3759,6 @@ msgstr ""
 "éviter de les confondre avec les adresses MAC allouées pour les ports "
 "titulaires. 3 octets sont utilisés par défaut. "
 
-#, fuzzy
 msgid ""
 "The connection string for the native OVSDB backend. Requires the native "
 "ovsdb_interface to be enabled."
@@ -2807,6 +3800,13 @@ msgstr "Pilote utilisé pour gérer le serveur DHCP"
 
 msgid "The driver used to manage the virtual interface."
 msgstr "Pilote utilisé pour gérer l'interface virtuelle"
+
+msgid ""
+"The email address to be used when creating PTR zones. If not specified, the "
+"email address will be admin@<dns_domain>"
+msgstr ""
+"Adresse e-mail à utiliser lors de la création de zones PTR. Si elle n'est "
+"pas indiquée, il s'agira de l'adresse admin@<dns_domain>"
 
 #, python-format
 msgid ""
@@ -2877,7 +3877,6 @@ msgstr ""
 "Le nombre de clés de tri (sort_keys) et de répertoires de tri (sort_dirs) "
 "doit être identique"
 
-#, fuzzy
 msgid ""
 "The path for API extensions. Note that this can be a colon-separated list of "
 "paths. For example: api_extensions_path = extensions:/path/to/more/exts:/"
@@ -2885,7 +3884,7 @@ msgid ""
 "if your extensions are in there you don't need to specify them here."
 msgstr ""
 "Chemin des extensions API. Notez qu'il peut s'agir d'une liste de chemins "
-"séparés par une virgule. Par exemple : api_extensions_path = extensions:/"
+"séparés par des virgules. Par exemple : api_extensions_path = extensions:/"
 "path/to/more/exts:/even/more/exts. Le __chemin__ de neutron.extensions lui "
 "est ajouté, de sorte que si vos extensions figurent dans ce chemin, vous "
 "n'avez pas besoin de les indiquer ici."
@@ -2963,11 +3962,23 @@ msgstr ""
 "fonctionnant sur un noeud centralisé (ou dans des déploiements à un seul "
 "hôte, par ex. devstack)"
 
-#, fuzzy
+msgid ""
+"There are routers attached to this network that depend on this policy for "
+"access."
+msgstr ""
+"Certains routeurs connectés à ce réseau dépendent de cette stratégie pour "
+"l'accès."
+
+msgid ""
+"This will choose the web framework in which to run the Neutron API server. "
+"'pecan' is a new experiemental rewrite of the API server."
+msgstr ""
+"Permet de choisir l'infrastructure Web dans laquelle exécuter le serveur API "
+"de Neutron. 'pecan' est une nouvelle réécriture expérimentale du serveur API."
+
 msgid "Timeout"
 msgstr "Délai d'expiration"
 
-#, fuzzy
 msgid ""
 "Timeout in seconds for ovs-vsctl commands. If the timeout expires, ovs "
 "commands will fail with ALARMCLOCK error."
@@ -2990,6 +4001,16 @@ msgstr ""
 "contrôleur. Utilisé uniquement pour le pilote 'natif'. "
 
 msgid ""
+"Too long prefix provided. New name would exceed given length for an "
+"interface name."
+msgstr ""
+"Le préfixe fourni est trop long. Un nouveau nom dépasserait la longueur "
+"indiquée pour un nom d'interface."
+
+msgid "Too many availability_zone_hints specified"
+msgstr "Trop d'éléments availability_zone_hints spécifiés"
+
+msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
 "ports created by Neutron on integration and external network bridges."
 msgstr ""
@@ -3003,12 +4024,40 @@ msgstr "Valeur IP de tunnel requise par le plug-in ML2"
 msgid "Tunnel bridge to use."
 msgstr "Pont de tunnel à utiliser."
 
+msgid ""
+"Type of the nova endpoint to use.  This endpoint will be looked up in the "
+"keystone catalog and should be one of public, internal or admin."
+msgstr ""
+"Type de nœud final Nova à utiliser. Ce nœud final sera recherché dans le "
+"catalogue Keystone et il doit être de type public, interne ou admin."
+
+msgid "URL for connecting to designate"
+msgstr "URL pour la connexion au réseau désigné"
+
 msgid "URL to database"
 msgstr "URL de la base de données"
 
 #, python-format
 msgid "Unable to access %s"
 msgstr "Impossible d'accéder à %s"
+
+#, python-format
+msgid ""
+"Unable to allocate subnet with prefix length %(prefixlen)s, maximum allowed "
+"prefix is %(max_prefixlen)s."
+msgstr ""
+"Impossible d'allouer le sous-réseau avec la longueur de préfixe "
+"%(prefixlen)s, la longueur de préfixe maximum autorisée est de "
+"%(max_prefixlen)s."
+
+#, python-format
+msgid ""
+"Unable to allocate subnet with prefix length %(prefixlen)s, minimum allowed "
+"prefix is %(min_prefixlen)s."
+msgstr ""
+"Impossible d'allouer le sous-réseau avec la longueur de préfixe "
+"%(prefixlen)s, la longueur de préfixe minimum autorisée est de "
+"%(min_prefixlen)s."
 
 #, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
@@ -3113,6 +4162,20 @@ msgstr ""
 "Impossible d'identifier une zone cible à partir de : %s. La correspondance "
 "doit être au format %%(<field_name>)s"
 
+msgid "Unable to provide external connectivity"
+msgstr "Impossible de fournir une connectivité externe"
+
+msgid "Unable to provide tenant private network"
+msgstr "Impossible de fournir un réseau privé locataire"
+
+#, python-format
+msgid ""
+"Unable to reconfigure sharing settings for network %(network)s. Multiple "
+"tenants are using it."
+msgstr ""
+"Impossible de reconfigurer les paramètres de partage pour le réseau "
+"%(network)s. Plusieurs locataires l'utilisent."
+
 #, python-format
 msgid "Unable to update address scope %(address_scope_id)s : %(reason)s"
 msgstr ""
@@ -3136,6 +4199,10 @@ msgid "Unexpected label for script %(script_name)s: %(labels)s"
 msgstr "Libellé inattendu pour le script %(script_name)s : %(labels)s"
 
 #, python-format
+msgid "Unexpected number of alembic branch points: %(branchpoints)s"
+msgstr "Nombre de points de branche alembic inattendu : %(branchpoints)s"
+
+#, python-format
 msgid "Unexpected response code: %s"
 msgstr "Code de réponse inattendu : %s"
 
@@ -3143,7 +4210,7 @@ msgstr "Code de réponse inattendu : %s"
 msgid "Unexpected response: %s"
 msgstr "Réponse inattendue : %s"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Unit name '%(unit)s' is not valid."
 msgstr "Le nom d'unité '%(unit)s' n'est pas valide."
 
@@ -3163,6 +4230,10 @@ msgid "Unknown chain: %r"
 msgstr "Chaîne inconnue : %r"
 
 #, python-format
+msgid "Unknown network type %(network_type)s."
+msgstr "Type de réseau inconnu %(network_type)s."
+
+#, python-format
 msgid "Unknown quota resources %(unknown)s."
 msgstr "Ressources de quota inconnues %(unknown)s."
 
@@ -3175,6 +4246,12 @@ msgstr "Action inconnu"
 #, python-format
 msgid "Unrecognized attribute(s) '%s'"
 msgstr "Attribut(s) non reconnu(s) '%s'"
+
+msgid "Unrecognized field"
+msgstr "Champ non reconnu"
+
+msgid "Unspecified minimum subnet pool prefix."
+msgstr "Préfixe de pool de sous-réseau minimum non spécifié."
 
 msgid "Unsupported Content-Type"
 msgstr "Type de contenu non pris en charge"
@@ -3200,7 +4277,6 @@ msgstr ""
 "Utilisez le pilote de mécanisme l2population ML2 pour connaître les adresses "
 "MAC et IP et pour améliorer l'évolutivité du tunnel."
 
-#, fuzzy
 msgid "Use broadcast in DHCP replies."
 msgstr "Utilisez la diffusion dans les réponses DHCP."
 
@@ -3216,7 +4292,6 @@ msgstr ""
 "L'activation du support ipset nécessite l'installation d'ipset sur le noeud "
 "d'agent L2."
 
-#, fuzzy
 msgid ""
 "Use the root helper when listing the namespaces on a system. This may not be "
 "required depending on the security configuration. If the root helper is not "
@@ -3226,6 +4301,15 @@ msgstr ""
 "noms sur un système. Cette opération n'est peut-être pas obligatoire selon "
 "la configuration de sécurité. Si l'assistant racine n'est pas requis, "
 "définissez cette option sur False afin d'améliorer les performances."
+
+msgid ""
+"Use veths instead of patch ports to interconnect the integration bridge to "
+"physical networks. Support kernel without Open vSwitch patch port support so "
+"long as it is set to True."
+msgstr ""
+"Utilisez veths au lieu de ports de correctif pour interconnecter le pont "
+"d'intégration avec des réseaux physiques. Le noyau sans port de correctif "
+"Open vSwitch est pris en charge si le paramètre est défini sur True."
 
 msgid "User (uid or name) running metadata proxy after its initialization"
 msgstr ""
@@ -3242,7 +4326,10 @@ msgstr ""
 msgid "User (uid or name) running this process after its initialization"
 msgstr "Utilisateur (UID ou nom) exécutant ce process après son initialisation"
 
-#, fuzzy
+msgid "Username for connecting to designate in admin context"
+msgstr ""
+"Nom d'utilisateur pour la connexion au réseau désigné dans un contexte admin"
+
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
 "namespace support (e.g. RHEL 6.5) so long as ovs_use_veth is set to True."
@@ -3276,6 +4363,31 @@ msgstr "Le validateur '%s' n'existe pas."
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "Valeur %(value)s non unique dans le mappage '%(mapping)s'"
 
+#, python-format
+msgid ""
+"Value of %(parameter)s has to be multiple of %(number)s, with maximum value "
+"of %(maximum)s and minimum value of %(minimum)s"
+msgstr ""
+"La valeur de %(parameter)s doit être un multiple de %(number)s, avec la "
+"valeur maximum %(maximum)s et la valeur minimum %(minimum)s"
+
+msgid ""
+"Value of host kernel tick rate (hz) for calculating minimum burst value in "
+"bandwidth limit rules for a port with QoS. See kernel configuration file for "
+"HZ value and tc-tbf manual for more information."
+msgstr ""
+"Valeur du rythme de noyau hôte (hz) pour le calcul de la valeur de rafale "
+"minimum dans les règles de limite de bande passante pour un port avec QoS. "
+"Consultez le fichier de configuration du noyau pour la valeur HZ et le "
+"manuel tc-tbf pour plus d'informations."
+
+msgid ""
+"Value of latency (ms) for calculating size of queue for a port with QoS. See "
+"tc-tbf manual for more information."
+msgstr ""
+"Valeur de latence (ms) pour le calcul de la taille de file d'attente d'un "
+"port avec QoS. Consultez le manuel tc-tbf pour plus d'informations."
+
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
 "has no read/write permissions on metadata proxy log file."
@@ -3284,7 +4396,6 @@ msgstr ""
 "désactivée lorsque metadata_proxy_user/group ne dispose pas des droits de "
 "lecture/d'écriture sur le fichier journal du proxy de métadonnées."
 
-#, fuzzy
 msgid ""
 "When external_network_bridge is set, each L3 agent can be associated with no "
 "more than one external network. This value should be set to the UUID of that "
@@ -3298,7 +4409,6 @@ msgstr ""
 "par l'agent L3 de plusieurs réseaux externes, il est nécessaire de laisser à "
 "blanc les paramètres external_network_bridge et gateway_external_network_id."
 
-#, fuzzy
 msgid ""
 "When proxying metadata requests, Neutron signs the Instance-ID header with a "
 "shared secret to prevent spoofing. You may select any string for a secret, "
@@ -3359,23 +4469,54 @@ msgstr ""
 msgid "You must provide a revision or relative delta"
 msgstr "Vous devez fournir une révision ou un delta relatif."
 
+msgid "a subnetpool must be specified in the absence of a cidr"
+msgstr "Un pool de sous-réseau doit être spécifié en l'absence d'un cidr"
+
+msgid "add_ha_port cannot be called inside of a transaction."
+msgstr ""
+"Le paramètre add_ha_port ne peut pas être appelé à l'intérieur d'une "
+"transaction."
+
 msgid "allocation_pools allowed only for specific subnet requests."
 msgstr ""
 "allocation_pools autorisé uniquement pour les requêtes de sous-réseau "
 "spécifiques."
 
+msgid "allocation_pools are not in the subnet"
+msgstr "allocation_pools ne figurent pas dans le sous-réseau"
+
+msgid "allocation_pools use the wrong ip version"
+msgstr "allocation_pools utilise une version IP erronée"
+
+msgid "already a synthetic attribute"
+msgstr "déjà un attribut synthétique"
+
 msgid "binding:profile value too large"
 msgstr "Valeur de liaison:profil excessive"
+
+#, python-format
+msgid "cannot perform %(event)s due to %(reason)s"
+msgstr "Impossible d'exécuter %(event)s en raison de %(reason)s"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr et prefixlen ne doivent pas être fournis ensemble"
 
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."
-msgstr "dhcp_agents_per_network doit etre >= 1. '%s' n'est pas valide"
+msgstr "dhcp_agents_per_network doit être >= 1. '%s' n'est pas valide."
+
+msgid "dns_domain cannot be specified without a dns_name"
+msgstr "dns_domain ne peut pas être spécifié sans dns_name"
+
+msgid "dns_name cannot be specified without a dns_domain"
+msgstr "dns_name ne peut pas être spécifié sans dns_domain"
 
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "Impossible de spécifier une adresse IP fixe sans ID port"
+
+#, python-format
+msgid "gateway_ip %s is not in the subnet"
+msgstr "gateway_ip %s ne figure pas dans le sous-réseau"
 
 #, python-format
 msgid "has device owner %s"
@@ -3387,6 +4528,10 @@ msgstr "utilisé"
 #, python-format
 msgid "ip command failed on device %(dev_name)s: %(reason)s"
 msgstr "Echec de la commande sur le périphérique %(dev_name)s : %(reason)s"
+
+#, python-format
+msgid "ip command failed: %(reason)s"
+msgstr "Échec de commande IP : %(reason)s"
 
 #, python-format
 msgid "ip link capability %(capability)s is not supported"
@@ -3443,6 +4588,9 @@ msgstr ""
 "Le paramètre de configuration min_l3_agents_per_router n'est pas valide. Il "
 "doit être supérieur ou égal à %s pour la haute disponibilité."
 
+msgid "must provide exactly 2 arguments - cidr and MAC"
+msgstr "doit fournir exactement 2 arguments - cidr et MAC"
+
 msgid "network_type required"
 msgstr "network_type requis"
 
@@ -3472,6 +4620,10 @@ msgstr ""
 msgid "provider:physical_network specified for %s network"
 msgstr "provider:physical_network spécifié pour le réseau %s"
 
+#, python-format
+msgid "rbac_db_model not found in %s"
+msgstr "rbac_db_model non trouvé dans %s"
+
 msgid "record"
 msgstr "enregistrement "
 
@@ -3487,6 +4639,9 @@ msgstr ""
 "segmentation_id requiert physical_network pour le réseau de fournisseurs de "
 "réseau local virtuel"
 
+msgid "shared attribute switching to synthetic"
+msgstr "commutation d'attribut partagé vers attribut synthétique"
+
 #, python-format
 msgid ""
 "subnetpool %(subnetpool_id)s cannot be updated when associated with shared "
@@ -3495,11 +4650,20 @@ msgstr ""
 "Le pool de sous-réseau %(subnetpool_id)s ne peut pas être mis à jour s'il "
 "est associé avec la portée d'adresse partagée %(address_scope_id)s"
 
+msgid "subnetpool_id and use_default_subnetpool cannot both be specified"
+msgstr ""
+"Les paramètres subnetpool_id et use_default_subnetpool ne peuvent pas être "
+"tous deux spécifiés"
+
 msgid "the nexthop is not connected with router"
 msgstr "nexthop n'est pas connecté au routeur"
 
 msgid "the nexthop is used by router"
 msgstr "nexthop est utilisé par le routeur"
+
+#, python-format
+msgid "unable to load %s"
+msgstr "impossible de charger %s"
 
 msgid ""
 "uuid provided from the command line so external_process can track us via /"
