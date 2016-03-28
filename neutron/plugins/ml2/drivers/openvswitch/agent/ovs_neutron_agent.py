@@ -61,9 +61,6 @@ cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
-# A placeholder for dead vlans.
-DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1
-
 
 class _mac_mydialect(netaddr.mac_unix):
     word_fmt = '%.2x'
@@ -346,7 +343,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
             if (net_uuid and net_uuid not in self._local_vlan_hints
-                and local_vlan != DEAD_VLAN_TAG):
+                and local_vlan != constants.DEAD_VLAN_TAG):
                 self.available_local_vlans.remove(local_vlan)
                 self._local_vlan_hints[local_vlan_map['net_uuid']] = \
                     local_vlan
@@ -966,9 +963,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Don't kill a port if it's already dead
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag",
                                          log_errors=log_errors)
-        if cur_tag and cur_tag != DEAD_VLAN_TAG:
+        if cur_tag and cur_tag != constants.DEAD_VLAN_TAG:
             self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                         DEAD_VLAN_TAG, log_errors=log_errors)
+                                         constants.DEAD_VLAN_TAG,
+                                         log_errors=log_errors)
             self.int_br.drop_port(in_port=port.ofport)
 
     def setup_integration_br(self):
