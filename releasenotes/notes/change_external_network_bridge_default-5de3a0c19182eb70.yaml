@@ -1,0 +1,16 @@
+---
+prelude: >
+    The default value for 'external_network_bridge' in the L3 agent is now ''.
+upgrade:
+  - The default value for 'external_network_bridge' has been changed to ''
+    since that is the preferred way to configure the L3 agent and will be the
+    only way in future releases. If you have not explicitly set this value
+    and you use the L3 agent, you will need to set this value to 'br-ex' to
+    match the old default.
+    If you are using 'br-ex', you should switch to '', ensure your external
+    network has a flat segment and ensure your L2 agent has a bridge_mapping
+    entry between the external network's flat segment physnet and 'br-ex' to
+    get the same connectivity. If the external network did not already have
+    the flat segment, you will need to detach all routers from the external
+    networks, delete the incorrect segment type, add the flat segment, and
+    re-attach the routers.

@@ -332,7 +332,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             ext_net_id = agent['configurations'].get(
                 'gateway_external_network_id')
             ext_bridge = agent['configurations'].get(
-                'external_network_bridge', 'br-ex')
+                'external_network_bridge', '')
             if (ext_net_id == network_id or
                     (not ext_net_id and not ext_bridge)):
                 return
