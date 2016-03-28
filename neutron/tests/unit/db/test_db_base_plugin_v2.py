@@ -5295,6 +5295,23 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         res = self.deserialize(self.fmt, req.get_response(self.api))
         self.assertEqual(res['subnetpool']['default_quota'], 1)
 
+    def test_allocate_subnet_bad_gateway(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/8'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              default_prefixlen='24')
+
+            # Request a subnet allocation (no CIDR)
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'prefixlen': 32,
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            result = req.get_response(self.api)
+            self.assertEqual(409, result.status_int)
+
     def test_allocate_any_subnet_with_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],

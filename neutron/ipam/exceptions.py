@@ -60,3 +60,9 @@ class AllocationOnAutoAddressSubnet(exceptions.NeutronException):
 
 class IpAddressGenerationFailure(exceptions.Conflict):
     message = _("No more IP addresses available for subnet %(subnet_id)s.")
+
+
+class IpamValueInvalid(exceptions.Conflict):
+    def __init__(self, message=None):
+        self.message = message
+        super(IpamValueInvalid, self).__init__()
