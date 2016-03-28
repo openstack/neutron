@@ -1153,11 +1153,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                     'options', {'peer': int_if_name})
 
     def update_stale_ofport_rules(self):
-        # right now the ARP spoofing rules are the only thing that utilizes
-        # ofport-based rules, so make arp_spoofing protection a conditional
-        # until something else uses ofport
-        if not self.prevent_arp_spoofing:
-            return []
+        # ARP spoofing rules and drop-flow upon port-delete
+        # use ofport-based rules
         previous = self.vifname_to_ofport_map
         current = self.int_br.get_vif_port_to_ofport_map()
 
@@ -1168,8 +1165,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # delete any stale rules based on removed ofports
         ofports_deleted = set(previous.values()) - set(current.values())
         for ofport in ofports_deleted:
-            self.int_br.delete_arp_spoofing_protection(port=ofport)
-
+            if self.prevent_arp_spoofing:
+                self.int_br.delete_arp_spoofing_protection(port=ofport)
+            self.int_br.delete_flows(in_port=ofport)
         # store map for next iteration
         self.vifname_to_ofport_map = current
         return moved_ports
