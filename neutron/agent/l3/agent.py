@@ -263,6 +263,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             msg = _LE('An interface driver must be specified')
             LOG.error(msg)
             raise SystemExit(1)
+        if self.conf.external_network_bridge:
+            LOG.warning(_LW("Using an 'external_network_bridge' value other "
+                            "than '' is deprecated. Any other values may "
+                            "not be supported in the future. Note that the "
+                            "default value is 'br-ex' so it must be "
+                            "explicitly set to a blank value."))
 
         if self.conf.ipv6_gateway:
             # ipv6_gateway configured. Check for valid v6 link-local address.
