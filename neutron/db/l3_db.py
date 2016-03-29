@@ -1578,6 +1578,13 @@ class L3RpcNotifierMixin(object):
 class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
     """Mixin class to add rpc notifier methods to db_base_plugin_v2."""
 
+    def create_router(self, context, router):
+        router_dict = super(L3_NAT_db_mixin, self).create_router(context,
+                                                                 router)
+        if router_dict.get('external_gateway_info'):
+            self.notify_router_updated(context, router_dict['id'], None)
+        return router_dict
+
     def update_router(self, context, id, router):
         router_dict = super(L3_NAT_db_mixin, self).update_router(context,
                                                                  id, router)
