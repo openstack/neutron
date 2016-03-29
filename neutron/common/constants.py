@@ -138,6 +138,8 @@ IP_PROTOCOL_NAME_ALIASES = {PROTO_NAME_IPV6_ICMP_LEGACY: PROTO_NAME_IPV6_ICMP}
 VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
                     36, 38, 40, 46, 48, 56]
 
+IP_PROTOCOL_NUM_TO_NAME_MAP = {str(v): k for k, v in IP_PROTOCOL_MAP.items()}
+
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
