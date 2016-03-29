@@ -5,7 +5,7 @@ pbr!=0.7,<1.0,>=0.6
 
 Paste
 PasteDeploy>=1.5.0
-Routes!=2.0,>=1.12.3
+Routes!=2.0,<2.3.0,>=1.12.3
 eventlet!=0.17.0,>=0.16.1
 greenlet>=0.3.2
 httplib2>=0.7.5
