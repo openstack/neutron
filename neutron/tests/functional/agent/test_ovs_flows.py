@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
+
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent as ovsagt
@@ -47,6 +49,26 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
 
     def test_arp_spoof_doesnt_block_normal_traffic(self):
         self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
+        self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
+
+    def test_mac_spoof_blocks_wrong_mac(self):
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
+        self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
+        self.src_p.addr.add('%s/24' % self.src_addr)
+        self.dst_p.addr.add('%s/24' % self.dst_addr)
+        self.pinger.assert_ping(self.dst_addr)
+        # changing the allowed mac should stop the port from working
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr],
+                                       mac='00:11:22:33:44:55')
+        self.pinger.assert_no_ping(self.dst_addr)
+
+    def test_mac_spoof_disabled_allows_wrong_mac(self):
+        cfg.CONF.set_override('enable_mac_spoofing_protection', False, 'AGENT')
+        self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr],
+                                       mac='00:11:22:33:44:55')
         self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
@@ -122,18 +144,24 @@ class ARPSpoofTestCase(test_ovs_lib.OVSBridgeTestBase,
         self.pinger.assert_ping(self.dst_addr)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True,
-                                  device_owner='nobody'):
+                                  device_owner='nobody', mac=None):
         of_port_map = self.br.get_vif_port_to_ofport_map()
 
         class VifPort(object):
             ofport = of_port_map[port]
             port_name = port
+            # ugly hack to deal with the fact that we can't retrieve macs
+            # from OVSDB in kilo
+            vif_mac = mac or (
+                self.src_p.link.address if port == self.src_p.name
+                else self.dst_p.link.address)
 
         ip_addr = addrs.pop()
         details = {'port_security_enabled': psec,
                    'fixed_ips': [{'ip_address': ip_addr}],
                    'device_owner': device_owner,
                    'allowed_address_pairs': [
-                        dict(ip_address=ip) for ip in addrs]}
+                        dict(ip_address=ip, mac_address=VifPort.vif_mac)
+                        for ip in addrs]}
         ovsagt.OVSNeutronAgent.setup_arp_spoofing_protection(
             self.br, VifPort(), details)
