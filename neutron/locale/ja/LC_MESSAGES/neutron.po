@@ -18,14 +18,14 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev2\n"
+"Project-Id-Version: neutron 8.0.0.0rc3.dev3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-25 15:59+0000\n"
+"POT-Creation-Date: 2016-03-28 17:03+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-26 10:38+0000\n"
-"Last-Translator: Tsutomu Kimura <ebb0de2@jp.ibm.com>\n"
+"PO-Revision-Date: 2016-03-29 04:05+0000\n"
+"Last-Translator: 笹原 昌美 <ebb0de1@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -84,7 +84,7 @@ msgstr ""
 "%(method)s が、ネットワーク設定 %(current)s (元の設定 %(original)s) および"
 "ネットワークセグメント %(segments)s を使用して呼び出されました"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "%(method)s called with port settings %(current)s (original settings "
 "%(original)s) host %(host)s (original host %(original_host)s) vif type "
@@ -395,7 +395,6 @@ msgstr "インターフェース上に存在しないアドレス"
 msgid "Address scope %(address_scope_id)s could not be found"
 msgstr "アドレススコープ %(address_scope_id)s が見つかりませんでした"
 
-#, fuzzy
 msgid ""
 "Address to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
@@ -504,8 +503,8 @@ msgstr ""
 "metadata:1 要求を送信する Neuron ルーターに接続している、特定のメタデータアク"
 "セスネットワークから出されるメタデータ要求に対応します。この場合、DHCP オプ"
 "ション 121 はルーターを経由して 169.254.169.254 に到達できるため、VM に挿入さ"
-"れません。このオプションを設定するには「enable_isolated_metadata = True」と設"
-"定する必要があります。"
+"れません。このオプションを設定するには enable_isolated_metadata = True と設定"
+"する必要があります。"
 
 #, python-format
 msgid ""
@@ -1016,7 +1015,7 @@ msgstr ""
 "インターフェースドライバーの構成ファイル (l3_agent.ini を使用することもできま"
 "す)"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s とイーサネットタイプ値 %(ethertype)s が競合しています"
 
@@ -1254,8 +1253,8 @@ msgid ""
 "release."
 msgstr ""
 "ホスト名を作成するために使用するドメイン。このオプションは提供を終了していま"
-"す。本オプションは、「neutron.conf as dns_domain」で提供します。将来のリリー"
-"スには本オプションは含まれません。"
+"す。本オプションは、neutron.conf as dns_domain で提供します。将来のリリースに"
+"は本オプションは含まれません。"
 
 msgid "Downgrade no longer supported"
 msgstr "ダウングレードは現在ではサポートされていません"
@@ -1284,10 +1283,10 @@ msgid ""
 "defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg for "
 "entry points included with the neutron source."
 msgstr ""
-"ipv6 のプレフィックスデリゲーションを行うためのドライバー。「neutron.agent."
-"linux.pd_drivers」の名前空間で定義したエントリーポイントである必要がありま"
-"す。neutron のソースに含まれるエントリーポイントについては、setup.cfg を参照"
-"してください。"
+"ipv6 のプレフィックスデリゲーションを行うためのドライバー。neutron.agent."
+"linux.pd_drivers の名前空間で定義したエントリーポイントである必要があります。"
+"neutron のソースに含まれるエントリーポイントについては、setup.cfg を参照して"
+"ください。"
 
 msgid "Driver used for scheduling BGP speakers to BGP DrAgent"
 msgstr ""
@@ -1616,7 +1615,7 @@ msgstr ""
 "L3 エージェント %(agent_id)s に対するルーター %(router_id)s のスケジューリン"
 "グに失敗しました。"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
@@ -1682,7 +1681,7 @@ msgstr "gid %s の設定に失敗しました。"
 msgid "Failed to set uid %s"
 msgstr "uid %s の設定に失敗しました"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr "%(ip)s に対する %(type)s トンネルポートをセットアップできませんでした"
 
@@ -2180,7 +2179,6 @@ msgstr ""
 "Iptables はメタデータの適切な要求を示すために使用されるマークを分割します。こ"
 "のマークを 0xffff でマスキングすることで、後半の 16 ビットのみを使用します。"
 
-#, fuzzy
 msgid ""
 "Keep in track in the database of current resourcequota usage. Plugins which "
 "do not leverage the neutron database should set this flag to False"
@@ -2605,7 +2603,7 @@ msgstr "インスタンスメタデータがプロキシー処理されるネッ
 
 #, python-format
 msgid "Network type value '%s' not supported"
-msgstr "ネットワークタイプ値「%s」はサポートされていません"
+msgstr "ネットワークタイプ値 '%s' はサポートされていません"
 
 msgid "Network type value needed by the ML2 plugin"
 msgstr "ネットワークタイプ値が ML2 プラグインに必要です"
@@ -2660,7 +2658,7 @@ msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr ""
 "サブネット %(subnet_id)s ではこれ以上使用可能な IP アドレスがありません。"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "No more Virtual Router Identifier (VRID) available when creating router "
 "%(router_id)s. The limit of number of HA Routers per tenant is 254."
@@ -2809,7 +2807,7 @@ msgstr ""
 "'netdev' に設定します。"
 
 msgid "OVS vhost-user socket directory."
-msgstr "OVS の vhost-user ソケット・ディレクトリー。"
+msgstr "OVS の vhost-user ソケットディレクトリー。"
 
 #, python-format
 msgid "OVSDB Error: %s"
@@ -2992,7 +2990,6 @@ msgstr ""
 "セキュリティーグループを使用するには、ポートセキュリティーを使用可能にする必"
 "要があり、ポートには IP アドレスが必要です。"
 
-#, fuzzy
 msgid ""
 "Port to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
@@ -3093,7 +3090,7 @@ msgstr "範囲は netaddr.IPRange である必要があります"
 msgid "Ranges must not overlap"
 msgstr "範囲は重複することはできません"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
 msgstr ""
@@ -3171,7 +3168,6 @@ msgstr ""
 "ネットワーク %(network_id)s の CIDR %(cidr)s を持つ要求されたサブネットは、別"
 "のサブネットとオーバーラップしています"
 
-#, fuzzy
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
 "interruption."
@@ -3448,7 +3444,6 @@ msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
 
-#, fuzzy
 msgid ""
 "Set or un-set the tunnel header checksum  on outgoing IP packet carrying GRE/"
 "VXLAN tunnel."
@@ -3583,10 +3578,9 @@ msgstr ""
 "ホストへの経路を追加できます。このメタデータサービスが有効化されるのは、サブ"
 "ネットにルーターのポートが含まれない場合に限られます。ゲストインスタンスに"
 "は、DHCP (オプション 121) 経由でホストの経路を要求するよう設定を行う必要があ"
-"ります。「force_metadata」を True に設定する場合、このオプションは機能しませ"
-"ん。"
+"ります。force_metadata を True に設定する場合、このオプションは機能しません。"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "The HA Network CIDR specified in the configuration file isn't valid; "
 "%(cidr)s."
@@ -3770,9 +3764,9 @@ msgid ""
 msgstr ""
 "API 強化機能のパス。このパスはコロンで区切られたパスのリストであることに注意"
 "してください。例としては、api_extensions_path = extensions:/path/to/more/"
-"exts:/even/more/exts があります。このパスには neutron.extensions の"
-"「__path__」 が付いているため、強化機能がこのパスにある場合、ここで指定する必"
-"要はありません。"
+"exts:/even/more/exts があります。このパスには neutron.extensions の __path__ "
+"が付いているため、強化機能がこのパスにある場合、ここで指定する必要はありませ"
+"ん。"
 
 msgid "The physical network name with which the HA network can be created."
 msgstr "HA ネットワークを作成可能な物理ネットワーク名。"
@@ -3823,7 +3817,7 @@ msgstr "使用する認証のタイプ"
 
 #, python-format
 msgid "The value '%(value)s' for %(element)s is not valid."
-msgstr "%(element)s の値「%(value)s」は無効です。"
+msgstr "%(element)s の値 %(value)s は無効です。"
 
 msgid ""
 "The working mode for the agent. Allowed modes are: 'legacy' - this preserves "
@@ -3835,12 +3829,12 @@ msgid ""
 "must be used for an L3 agent running on a centralized node (or in single-"
 "host deployments, e.g. devstack)"
 msgstr ""
-"エージェントの処理モード。許可されるモードは次のとおりです。「既存」 - この"
+"エージェントの処理モード。許可されるモードは次のとおりです。'legacy' - この"
 "モードは、L3 エージェントを中央ネットワーキングノードにデプロイして L3 サービ"
 "ス (DNAT や SNAT など) を提供する、既存の動作を保持します。DVR を採用しない場"
-"合、このモードを使用します。「dvr」- このモードは、DVR 機能を有効にします。計"
+"合、このモードを使用します。'dvr' - このモードは、DVR 機能を有効にします。計"
 "算ホスト上で実行される L3 エージェントの場合、このモードを使用する必要があり"
-"ます。「dvr_snat」- このモードは、DVR とともに中央 SNAT サポートを有効にしま"
+"ます。'dvr_snat' - このモードは、DVR とともに中央 SNAT サポートを有効にしま"
 "す。中央ノード (または devstack などの単一ホストでのデプロイメント) 上で実行"
 "中の L3 の場合、このモードを使用する必要があります。"
 
@@ -4005,9 +3999,9 @@ msgstr ""
 msgid "Unable to delete subnet pool: %(reason)s."
 msgstr "サブネットプールを削除できません: %(reason)s。"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Unable to determine mac address for %s"
-msgstr "%s の MAC アドレスを識別できません"
+msgstr "%s の MAC アドレスを決定できません"
 
 #, python-format
 msgid "Unable to find '%s' in request body"
@@ -4274,11 +4268,11 @@ msgid ""
 "the external_network_bridge and gateway_external_network_id must be left "
 "empty."
 msgstr ""
-"「external_network_bridge」を設定すると、各 L3 エージェントには 1 つの外部"
-"ネットワークしか割り当てることができなくなります。この値として該当する外部"
-"ネットワークの UUID を設定する必要があります。L3 エージェントが複数の外部ネッ"
-"トワークをサポートできるようにするには、「external_network_bridge」と"
-"「gateway_external_network_id」の両方を空の値に設定する必要があります。"
+"external_network_bridge を設定すると、各 L3 エージェントには 1 つの外部ネット"
+"ワークしか割り当てることができなくなります。この値として該当する外部ネット"
+"ワークの UUID を設定する必要があります。L3 エージェントが複数の外部ネットワー"
+"クをサポートできるようにするには、external_network_bridge と "
+"gateway_external_network_id の両方を空の値に設定する必要があります。"
 
 msgid ""
 "When proxying metadata requests, Neutron signs the Instance-ID header with a "
