@@ -236,6 +236,12 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                 context, True, agent)
         ]
 
+        hostable_dhcp_hosts = plugin.filter_hosts_with_network_access(
+            context, network['id'],
+            [agent['host'] for agent in hostable_dhcp_agents])
+        hostable_dhcp_agents = [agent for agent in hostable_dhcp_agents
+                                if agent['host'] in hostable_dhcp_hosts]
+
         if not hostable_dhcp_agents:
             return {'n_agents': 0, 'hostable_agents': [],
                     'hosted_agents': hosted_agents}

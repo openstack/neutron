@@ -52,6 +52,12 @@ class L2populationMechanismDriver(api.MechanismDriver):
         self.L2populationAgentNotify.remove_fdb_entries(self.rpc_ctx,
             fdb_entries)
 
+    def filter_hosts_with_segment_access(
+            self, context, segments, candidate_hosts, agent_getter):
+        # NOTE(cbrandily): let other mechanisms (openvswitch, linuxbridge, ...)
+        # perform the filtering
+        return set()
+
     def _get_diff_ips(self, orig, port):
         orig_ips = set([ip['ip_address'] for ip in orig['fixed_ips']])
         port_ips = set([ip['ip_address'] for ip in port['fixed_ips']])

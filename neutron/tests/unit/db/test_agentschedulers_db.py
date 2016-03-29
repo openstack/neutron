@@ -236,6 +236,9 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         mock.patch('neutron.common.rpc.get_client').start()
         super(OvsAgentSchedulerTestCaseBase, self).setUp(
             self.plugin_str, service_plugins=service_plugins)
+        mock.patch.object(
+            self.plugin, 'filter_hosts_with_network_access',
+            side_effect=lambda context, network_id, hosts: hosts).start()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
@@ -1330,6 +1333,9 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
     def setUp(self):
         self.useFixture(tools.AttributeMapMemento())
         super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
+        mock.patch.object(
+            self.plugin, 'filter_hosts_with_network_access',
+            side_effect=lambda context, network_id, hosts: hosts).start()
         self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self.dhcp_notifier_cast = mock.patch(
             'neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
