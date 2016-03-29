@@ -1341,61 +1341,6 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             mock_get_port_binding_host.assert_called_once_with(
                 self.adminContext.session, vm_port_id)
 
-    def test_dvr_deletens_if_no_ports_no_removeable_routers(self):
-        # A VM port is deleted, but the router can't be unscheduled from the
-        # compute node because there is another VM port present.
-        vm_tenant_id = 'tenant-1'
-        my_context = n_context.Context('user-1', vm_tenant_id, is_admin=False)
-        shared_subnet_id = '80947d4a-fbc8-484b-9f92-623a6bfcf3e0',
-        vm_port_host = 'compute-node-1'
-
-        dvr_port = self._create_port(
-            'dvr-router', 'admin-tenant', vm_port_host,
-            shared_subnet_id, '10.10.10.1',
-            device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)
-
-        deleted_vm_port = self._create_port(
-            'deleted-vm', vm_tenant_id, vm_port_host,
-            shared_subnet_id, '10.10.10.3',
-            status='INACTIVE')
-        deleted_vm_port_id = deleted_vm_port['id']
-
-        running_vm_port = self._create_port(
-            'running-vn', 'tenant-2', vm_port_host,
-            shared_subnet_id, '10.10.10.33')
-
-        fakePortDB = FakePortDB([running_vm_port, deleted_vm_port, dvr_port])
-
-        vm_port_binding = {
-            'port_id': deleted_vm_port_id,
-            'host': vm_port_host
-        }
-
-        with mock.patch.object(my_context,
-                               'elevated',
-                               return_value=self.adminContext),\
-                mock.patch(
-                    'neutron.plugins.ml2.db.get_port_binding_host',
-                    return_value=vm_port_host) as mock_get_port_binding_host,\
-                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                           'get_port', side_effect=fakePortDB.get_port),\
-                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
-                           'get_ports', side_effect=fakePortDB.get_ports) as\
-                mock_get_ports,\
-                mock.patch('neutron.plugins.ml2.db.'
-                           'get_dvr_port_binding_by_host',
-                           return_value=vm_port_binding) as\
-                mock_get_dvr_port_binding_by_host:
-
-            routers = self.dut.dvr_deletens_if_no_port(
-                my_context, deleted_vm_port_id)
-            self.assertEqual([], routers)
-
-            mock_get_port_binding_host.assert_called_once_with(
-                self.adminContext.session, deleted_vm_port_id)
-            self.assertTrue(mock_get_ports.called)
-            self.assertFalse(mock_get_dvr_port_binding_by_host.called)
-
     def _test_dvr_deletens_if_no_ports_delete_routers(self,
                                                       vm_tenant,
                                                       router_tenant):

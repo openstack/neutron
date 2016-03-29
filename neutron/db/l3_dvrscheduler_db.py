@@ -183,8 +183,17 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                       'on host %(host)s', {'port': port_id,
                                            'host': port_host})
             return []
+        agent = self._get_agent_by_type_and_host(
+            context, n_const.AGENT_TYPE_L3, port_host)
         removed_router_info = []
         for router_id in router_ids:
+            snat_binding = context.session.query(
+                CentralizedSnatL3AgentBinding).filter_by(
+                    router_id=router_id).filter_by(
+                        l3_agent_id=agent.id).first()
+            if snat_binding:
+                # not removing from the agent hosting SNAT for the router
+                continue
             subnet_ids = self.get_subnet_ids_on_router(admin_context,
                                                        router_id)
             port_exists_on_subnet = False
@@ -212,9 +221,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     # unbind this port from router
                     dvr_binding['router_id'] = None
                     dvr_binding.update(dvr_binding)
-            agent = self._get_agent_by_type_and_host(context,
-                                                     n_const.AGENT_TYPE_L3,
-                                                     port_host)
+
             info = {'router_id': router_id, 'host': port_host,
                     'agent_id': str(agent.id)}
             removed_router_info.append(info)
