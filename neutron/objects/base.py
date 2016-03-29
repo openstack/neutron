@@ -55,7 +55,7 @@ class NeutronPrimaryKeyMissing(exceptions.BadRequest):
 
 
 class NeutronSyntheticFieldMultipleForeignKeys(exceptions.NeutronException):
-    message = _("Synthetic fields %(fields)s shouldn't have more than one "
+    message = _("Synthetic field %(field)s shouldn't have more than one "
                 "foreign key")
 
 
