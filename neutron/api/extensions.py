@@ -290,8 +290,9 @@ class ExtensionMiddleware(wsgi.Middleware):
                                       action=action,
                                       path_prefix=path_prefix,
                                       conditions=conditions) as submap:
-                    submap.connect(path)
-                    submap.connect("%s.:(format)" % path)
+                    submap.connect(path_prefix + path, path)
+                    submap.connect(path_prefix + path + "_format",
+                                   "%s.:(format)" % path)
 
             mapper.resource(resource.collection, resource.collection,
                             controller=resource.controller,
