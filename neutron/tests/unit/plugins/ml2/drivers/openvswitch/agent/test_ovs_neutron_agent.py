@@ -2937,12 +2937,11 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent,
                                   '_agent_has_updates',
                                   side_effect=TypeError('loop exit')),\
-                mock.patch.object(self.agent, 'tun_br', new=tun_br):
-            # block RPC calls and bridge calls
-            self.agent.setup_physical_bridges = mock.Mock()
-            self.agent.setup_integration_br = mock.Mock()
-            self.agent.setup_tunnel_br = mock.Mock()
-            self.agent.state_rpc = mock.Mock()
+                mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.object(self.agent, 'setup_physical_bridges'),\
+                mock.patch.object(self.agent, 'setup_integration_br'),\
+                mock.patch.object(self.agent, 'setup_tunnel_br'),\
+                mock.patch.object(self.agent, 'state_rpc'):
             try:
                 self.agent.rpc_loop(polling_manager=mock.Mock())
             except TypeError:
@@ -2958,12 +2957,11 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent, '_agent_has_updates',
                                   return_value=True),\
                 mock.patch.object(self.agent, '_check_and_handle_signal',
-                                  side_effect=[True, False]):
+                                  side_effect=[True, False]),\
+                mock.patch.object(self.agent, 'setup_physical_bridges'),\
+                mock.patch.object(self.agent, 'setup_integration_br'),\
+                mock.patch.object(self.agent, 'state_rpc'):
             # block RPC calls and bridge calls
-            self.agent.setup_physical_bridges = mock.Mock()
-            self.agent.setup_integration_br = mock.Mock()
-            self.agent.reset_tunnel_br = mock.Mock()
-            self.agent.state_rpc = mock.Mock()
             self.agent.rpc_loop(polling_manager=mock.Mock())
 
     def test_scan_ports_failure(self):
