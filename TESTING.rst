@@ -505,6 +505,8 @@ dependencies are met. Full-stack based Neutron daemons produce logs to a
 sub-folder in /tmp/dsvm-fullstack-logs (for example, a test named
 "test_example" will produce logs to /tmp/dsvm-fullstack-logs/test_example/),
 so that will be a good place to look if your test is failing.
+Logging from the test infrastructure itself is placed in:
+/tmp/dsvm-fullstack-logs/test_example.log.
 Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
 the test machine is available for its usage.
 
