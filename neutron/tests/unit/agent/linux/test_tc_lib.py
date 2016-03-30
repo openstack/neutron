@@ -24,9 +24,17 @@ BW_LIMIT = 2000  # [kbps]
 BURST = 100  # [kbit]
 LATENCY = 50  # [ms]
 
-TC_OUTPUT = (
+TC_QDISC_OUTPUT = (
     'qdisc tbf 8011: root refcnt 2 rate %(bw)skbit burst %(burst)skbit '
     'lat 50.0ms \n') % {'bw': BW_LIMIT, 'burst': BURST}
+
+TC_FILTERS_OUTPUT = (
+    'filter protocol all pref 49152 u32 \nfilter protocol all pref '
+    '49152 u32 fh 800: ht divisor 1 \nfilter protocol all pref 49152 u32 fh '
+    '800::800 order 2048 key ht 800 \n  match 00000000/00000000 at 0\n  '
+    'police 0x1e rate %(bw)skbit burst %(burst)skbit mtu 2Kb action \n'
+    'drop overhead 0b \n  ref 1 bind 1'
+) % {'bw': BW_LIMIT, 'burst': BURST}
 
 
 class BaseUnitConversionTest(object):
@@ -148,26 +156,48 @@ class TestTcCommand(base.BaseTestCase):
             tc_lib.TcCommand, DEVICE_NAME, -100
         )
 
-    def test_get_bw_limits(self):
-        self.execute.return_value = TC_OUTPUT
-        bw_limit, burst_limit = self.tc.get_bw_limits()
+    def test_get_filters_bw_limits(self):
+        self.execute.return_value = TC_FILTERS_OUTPUT
+        bw_limit, burst_limit = self.tc.get_filters_bw_limits()
         self.assertEqual(BW_LIMIT, bw_limit)
         self.assertEqual(BURST, burst_limit)
 
-    def test_get_bw_limits_when_wrong_qdisc(self):
-        output = TC_OUTPUT.replace("tbf", "different_qdisc")
+    def test_get_filters_bw_limits_when_output_not_match(self):
+        output = (
+            "Some different "
+            "output from command:"
+            "tc filters show dev XXX parent ffff:"
+        )
         self.execute.return_value = output
-        bw_limit, burst_limit = self.tc.get_bw_limits()
+        bw_limit, burst_limit = self.tc.get_filters_bw_limits()
         self.assertIsNone(bw_limit)
         self.assertIsNone(burst_limit)
 
-    def test_get_bw_limits_when_wrong_units(self):
-        output = TC_OUTPUT.replace("kbit", "Xbit")
+    def test_get_filters_bw_limits_when_wrong_units(self):
+        output = TC_FILTERS_OUTPUT.replace("kbit", "Xbit")
         self.execute.return_value = output
-        self.assertRaises(tc_lib.InvalidUnit, self.tc.get_bw_limits)
+        self.assertRaises(tc_lib.InvalidUnit, self.tc.get_filters_bw_limits)
 
-    def test_set_bw_limit(self):
-        self.tc.set_bw_limit(BW_LIMIT, BURST, LATENCY)
+    def test_get_tbf_bw_limits(self):
+        self.execute.return_value = TC_QDISC_OUTPUT
+        bw_limit, burst_limit = self.tc.get_tbf_bw_limits()
+        self.assertEqual(BW_LIMIT, bw_limit)
+        self.assertEqual(BURST, burst_limit)
+
+    def test_get_tbf_bw_limits_when_wrong_qdisc(self):
+        output = TC_QDISC_OUTPUT.replace("tbf", "different_qdisc")
+        self.execute.return_value = output
+        bw_limit, burst_limit = self.tc.get_tbf_bw_limits()
+        self.assertIsNone(bw_limit)
+        self.assertIsNone(burst_limit)
+
+    def test_get_tbf_bw_limits_when_wrong_units(self):
+        output = TC_QDISC_OUTPUT.replace("kbit", "Xbit")
+        self.execute.return_value = output
+        self.assertRaises(tc_lib.InvalidUnit, self.tc.get_tbf_bw_limits)
+
+    def test_set_tbf_bw_limit(self):
+        self.tc.set_tbf_bw_limit(BW_LIMIT, BURST, LATENCY)
         self.execute.assert_called_once_with(
             ["tc", "qdisc", "replace", "dev", DEVICE_NAME,
              "root", "tbf", "rate", self.bw_limit,
@@ -179,8 +209,41 @@ class TestTcCommand(base.BaseTestCase):
             extra_ok_codes=None
         )
 
-    def test_update_bw_limit(self):
-        self.tc.update_bw_limit(BW_LIMIT, BURST, LATENCY)
+    def test_update_filters_bw_limit(self):
+        self.tc.update_filters_bw_limit(BW_LIMIT, BURST)
+        self.execute.assert_has_calls([
+            mock.call(
+                ["tc", "qdisc", "del", "dev", DEVICE_NAME, "ingress"],
+                run_as_root=True,
+                check_exit_code=True,
+                log_fail_as_error=True,
+                extra_ok_codes=[2]
+            ),
+            mock.call(
+                ['tc', 'qdisc', 'add', 'dev', DEVICE_NAME, "ingress",
+                 "handle", tc_lib.INGRESS_QDISC_ID],
+                run_as_root=True,
+                check_exit_code=True,
+                log_fail_as_error=True,
+                extra_ok_codes=None
+            ),
+            mock.call(
+                ['tc', 'filter', 'add', 'dev', DEVICE_NAME,
+                 'parent', tc_lib.INGRESS_QDISC_ID, 'protocol', 'all',
+                 'prio', '49', 'basic', 'police',
+                 'rate', self.bw_limit,
+                 'burst', self.burst,
+                 'mtu', tc_lib.MAX_MTU_VALUE,
+                 'drop'],
+                run_as_root=True,
+                check_exit_code=True,
+                log_fail_as_error=True,
+                extra_ok_codes=None
+            )]
+        )
+
+    def test_update_tbf_bw_limit(self):
+        self.tc.update_tbf_bw_limit(BW_LIMIT, BURST, LATENCY)
         self.execute.assert_called_once_with(
             ["tc", "qdisc", "replace", "dev", DEVICE_NAME,
              "root", "tbf", "rate", self.bw_limit,
@@ -192,8 +255,18 @@ class TestTcCommand(base.BaseTestCase):
             extra_ok_codes=None
         )
 
-    def test_delete_bw_limit(self):
-        self.tc.delete_bw_limit()
+    def test_delete_filters_bw_limit(self):
+        self.tc.delete_filters_bw_limit()
+        self.execute.assert_called_once_with(
+            ["tc", "qdisc", "del", "dev", DEVICE_NAME, "ingress"],
+            run_as_root=True,
+            check_exit_code=True,
+            log_fail_as_error=True,
+            extra_ok_codes=[2]
+        )
+
+    def test_delete_tbf_bw_limit(self):
+        self.tc.delete_tbf_bw_limit()
         self.execute.assert_called_once_with(
             ["tc", "qdisc", "del", "dev", DEVICE_NAME, "root"],
             run_as_root=True,
@@ -202,16 +275,29 @@ class TestTcCommand(base.BaseTestCase):
             extra_ok_codes=[2]
         )
 
-    def test_burst_value_when_burst_bigger_then_minimal(self):
-        result = self.tc.get_burst_value(BW_LIMIT, BURST)
+    def test__get_filters_burst_value_burst_not_none(self):
+        self.assertEqual(
+            BURST, self.tc._get_filters_burst_value(BW_LIMIT, BURST)
+        )
+
+    def test__get_filters_burst_no_burst_value_given(self):
+        expected_burst = BW_LIMIT * 0.8
+        self.assertEqual(
+            expected_burst,
+            self.tc._get_filters_burst_value(BW_LIMIT, None)
+        )
+
+    def test__get_filters_burst_burst_value_zero(self):
+        expected_burst = BW_LIMIT * 0.8
+        self.assertEqual(
+            expected_burst,
+            self.tc._get_filters_burst_value(BW_LIMIT, 0)
+        )
+
+    def test__get_tbf_burst_value_when_burst_bigger_then_minimal(self):
+        result = self.tc._get_tbf_burst_value(BW_LIMIT, BURST)
         self.assertEqual(BURST, result)
 
-    def test_burst_value_when_burst_smaller_then_minimal(self):
-        result = self.tc.get_burst_value(BW_LIMIT, 0)
-        self.assertEqual(2, result)
-
-    def test__get_min_burst_value_in_bits(self):
-        result = self.tc._get_min_burst_value(BW_LIMIT)
-        #if input is 2000kbit and kernel_hz is configured to 1000 then
-        # min_burst should be 2 kbit
+    def test__get_tbf_burst_value_when_burst_smaller_then_minimal(self):
+        result = self.tc._get_tbf_burst_value(BW_LIMIT, 0)
         self.assertEqual(2, result)
