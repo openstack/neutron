@@ -12,7 +12,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import multiprocessing
 import os
+import time
 
 import fixtures
 
@@ -34,3 +36,30 @@ class RecursivePermDirFixture(fixtures.Fixture):
                 os.chmod(current_directory, perms | self.least_perms)
             previous_directory = current_directory
             current_directory = os.path.dirname(current_directory)
+
+
+class SleepyProcessFixture(fixtures.Fixture):
+    """
+    Process fixture that performs time.sleep for the given number of seconds.
+    """
+
+    def __init__(self, timeout=60):
+        super(SleepyProcessFixture, self).__init__()
+        self.timeout = timeout
+
+    @staticmethod
+    def yawn(seconds):
+        time.sleep(seconds)
+
+    def _setUp(self):
+        self.process = multiprocessing.Process(target=self.yawn,
+                                               args=[self.timeout])
+        self.process.start()
+        self.addCleanup(self.destroy)
+
+    def destroy(self):
+        self.process.terminate()
+
+    @property
+    def pid(self):
+        return self.process.pid
