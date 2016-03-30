@@ -31,7 +31,20 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
     dvr_process_next_table_id = ovs_const.PATCH_LV_TO_TUN
 
     def setUp(self):
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
         super(OVSTunnelBridgeTest, self).setUp()
+        # NOTE(ivasilevskaya) The behaviour of oslotest.base.addCleanup()
+        # according to https://review.openstack.org/#/c/119201/4 guarantees
+        # that all started mocks will be stopped even without direct call to
+        # patcher.stop().
+        # If any individual mocks should be stopped by other than default
+        # mechanism, their cleanup has to be added after
+        # oslotest.BaseTestCase.setUp() not to be included in the stopall set
+        # that will be cleaned up by mock.patch.stopall. This way the mock
+        # won't be attempted to be stopped twice.
+        self.addCleanup(conn_patcher.stop)
         self.setup_bridge_mock('br-tun', self.br_tun_cls)
         self.stamp = self.br.default_cookie
 

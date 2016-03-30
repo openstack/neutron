@@ -20,6 +20,12 @@ from neutron.tests import base
 
 
 class TestNetnsCleanup(base.BaseTestCase):
+    def setUp(self):
+        super(TestNetnsCleanup, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()

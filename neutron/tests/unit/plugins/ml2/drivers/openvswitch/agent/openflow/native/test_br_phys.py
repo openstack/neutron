@@ -32,6 +32,10 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
 
     def setUp(self):
         super(OVSPhysicalBridgeTest, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         self.setup_bridge_mock('br-phys', self.br_phys_cls)
         self.stamp = self.br.default_cookie
 
