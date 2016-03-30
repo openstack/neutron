@@ -1,0 +1,862 @@
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# SeYeon Lee <sy_lee@kr.ibm.com>, 2016. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-03-29 10:14+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-03-29 01:48+0000\n"
+"Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
+"Language: ko-KR\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
+"Language-Team: Korean (South Korea)\n"
+
+#, python-format
+msgid "%(action)s failed (client error): %(exc)s"
+msgstr "%(action)s 실패(클라이언트 오류): %(exc)s"
+
+#, python-format
+msgid "%(method)s %(url)s"
+msgstr "%(method)s %(url)s"
+
+#, python-format
+msgid "%(prog)s version %(version)s"
+msgstr "%(prog)s 버전 %(version)s"
+
+#, python-format
+msgid ""
+"%(rule_types)s rule types disabled for ml2 because %(driver)s does not "
+"support them"
+msgstr ""
+"%(driver)s에서 지원하지 않으므로 ml2의 %(rule_types)s 규칙 유형이 사용되지 않"
+"음"
+
+#, python-format
+msgid "%(type)s ID ranges: %(range)s"
+msgstr "%(type)s ID 범위: %(range)s"
+
+#, python-format
+msgid "%(url)s returned a fault: %(exception)s"
+msgstr "%(url)s이(가) 결함을 리턴함: %(exception)s"
+
+#, python-format
+msgid "%(url)s returned with HTTP %(status)d"
+msgstr "%(url)s이(가) HTTP %(status)d(으)로 리턴되었음"
+
+#, python-format
+msgid "%d probe(s) deleted"
+msgstr "%d 프로브가 발견됨"
+
+#, python-format
+msgid "%s Agent RPC Daemon Started!"
+msgstr "%s 에이전트 RPC 디먼이 시작되었습니다!"
+
+#, python-format
+msgid "%s Agent has just been revived. Doing a full sync."
+msgstr "%s 에이전트가 다시 활성화되었습니다. 전체 동기화를 수행합니다."
+
+#, python-format
+msgid "%s Agent out of sync with plugin!"
+msgstr "%s 이전트가 플러그인과 동기화되지 않았습니다!"
+
+#, python-format
+msgid ""
+"Added BGP Peer %(peer)s for remote_as=%(as)d to BGP Speaker running for "
+"local_as=%(local_as)d."
+msgstr ""
+"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에 remote_as=%(as)d의 BGP 피"
+"어  %(peer)s이(가) 추가되었습니다."
+
+#, python-format
+msgid "Added BGP Speaker for local_as=%(as)d with router_id= %(rtid)s."
+msgstr "router_id= %(rtid)s인 local_as=%(as)d의 BGP 스피커가 추가되었습니다."
+
+#, python-format
+msgid ""
+"Added controller for resource %(resource)s via URI path segment:"
+"%(collection)s"
+msgstr ""
+"URI 경로 세그먼트를 통해 자원 %(resource)s의 컨트롤러 추가: %(collection)s"
+
+#, python-format
+msgid ""
+"Added segment %(id)s of type %(network_type)s for network %(network_id)s"
+msgstr ""
+"네트워크 %(network_id)s에 대한 유형 %(network_type)s의 세그먼트 %(id)s이(가) "
+"추가됨"
+
+#, python-format
+msgid "Adding %s to list of bridges."
+msgstr "브릿지 목록에 %s 추가."
+
+#, python-format
+msgid "Adding network %(net)s to agent %(agent)s on host %(host)s"
+msgstr "호스트 %(host)s에서 네트워크 %(net)s을(를) 에이전트 %(agent)s 추가"
+
+#, python-format
+msgid "Agent %s already present"
+msgstr "%s 에이전트가 이미 있음"
+
+#, python-format
+msgid "Agent Gateway port does not exist, so create one: %s"
+msgstr "에이전트 게이트워이 포트가 없으므로 하나 작성: %s"
+
+msgid "Agent caught SIGHUP, resetting."
+msgstr "에이전트에서 SIGHUP을 발견하여, 재설정합니다."
+
+msgid "Agent caught SIGTERM, quitting daemon loop."
+msgstr "에이전트에서 SIGTERM을 발견하여 디먼 루프를 중단합니다."
+
+msgid "Agent has just been revived. Doing a full sync."
+msgstr "에이전트가 다시 활성화되었습니다. 전체 동기화를 수행합니다."
+
+msgid "Agent has just been revived. Scheduling full sync"
+msgstr "에이전트가 다시 활성화되었습니다. 전체 동기화를 스케줄링합니다."
+
+msgid "Agent initialized successfully, now running... "
+msgstr "에이전트가 초기화되었으며, 지금 실행 중... "
+
+msgid "Agent out of sync with plugin!"
+msgstr "에이전트가 플러그인과 동기화되지 않았습니다!"
+
+msgid "All active networks have been fetched through RPC."
+msgstr "RPC를 통해 활성 네트워크를 모두 가져왔습니다."
+
+msgid ""
+"Allow sorting is enabled because native pagination requires native sorting"
+msgstr ""
+"네이티브 페이지 번호 매기기에 네이티브 정렬이 필요하므로 정렬을 사용할 수 있"
+"음"
+
+#, python-format
+msgid "Allowable flat physical_network names: %s"
+msgstr "허용 가능한 플랫 physical_network 이름: %s"
+
+#, python-format
+msgid "Ancillary Ports %(added)s added, failed devices %(failed)s"
+msgstr "추가된 보조 포트 %(added)s, 실패한 장치 %(failed)s"
+
+#, python-format
+msgid "Ancillary ports %s removed"
+msgstr "보조 포트 %s이(가) 제거됨"
+
+msgid "Arbitrary flat physical_network names allowed"
+msgstr "임의의 플랫 physical_network 이름이 허용됨"
+
+#, python-format
+msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
+msgstr "%(vlan_id)s을(를) net-id=%(net_uuid)s에 대한 로컬 vlan으로 지정 중"
+
+#, python-format
+msgid "Attachment %s removed"
+msgstr "첨부 %s이(가) 제거됨"
+
+#, python-format
+msgid ""
+"Attempt %(count)s to allocate a VRID in the network %(network)s for the "
+"router %(router)s"
+msgstr ""
+"라우터 %(router)s의 네트워크 %(network)s에서 VRID를 할당하려고 %(count)s번 시"
+"도"
+
+#, python-format
+msgid "Attempt %(count)s to bind port %(port)s"
+msgstr "포트 %(port)s를 바인드하기 위해 %(count)s번 시도"
+
+#, python-format
+msgid "Attempted to remove port filter which is not filtered %r"
+msgstr "필터링된 %r이(가) 아닌 포트 필터를 제거하려고 시도함"
+
+#, python-format
+msgid "Attempted to update port filter which is not filtered %s"
+msgstr "필터링된 %s이(가) 아닌 포트 필터를 업데이트하려고 시도함"
+
+msgid "BGP Dynamic Routing agent started"
+msgstr "BGP 동적 라우팅 에이전트가 시작됨"
+
+#, python-format
+msgid "BGP Peer %(peer_ip)s for remote_as=%(peer_as)d is UP."
+msgstr "remote_as=%(peer_as)d의 BGP 피어 %(peer_ip)s이(가) 작동됩니다."
+
+#, python-format
+msgid "BGP Peer %(peer_ip)s for remote_as=%(peer_as)d went DOWN."
+msgstr ""
+"remote_as=%(peer_as)d의 BGP 피어 %(peer_ip)s이(가) 작동 중단되었습니다."
+
+msgid "BGP dynamic routing agent started"
+msgstr "BGP 동적 라우팅 에이전트가 시작됨"
+
+#, python-format
+msgid ""
+"Best path change observed. cidr=%(prefix)s, nexthop=%(nexthop)s, remote_as="
+"%(remote_as)d, is_withdraw=%(is_withdraw)s"
+msgstr ""
+"최적의 패치 변경사항이 관찰되었습니다. cidr=%(prefix)s, nexthop=%(nexthop)s, "
+"remote_as=%(remote_as)d, is_withdraw=%(is_withdraw)s"
+
+#, python-format
+msgid "BgpDrAgent %s already present"
+msgstr "BgpDrAgent %s이(가) 이미 있음"
+
+#, python-format
+msgid ""
+"Binding info for port %s was not found, it might have been deleted already."
+msgstr "포트 %s의 바인딩 정보를 찾을 수 없음, 이미 삭제되었을 수 있습니다."
+
+#, python-format
+msgid "Bridge %(br_name)s changed its datapath-ID from %(old)s to %(new)s"
+msgstr "브릿지 %(br_name)s의 datapath-ID가 %(old)s에서 %(new)s(으)로 변경됨"
+
+#, python-format
+msgid "Bridge %(br_name)s has datapath-ID %(dpid)s"
+msgstr "브릿지 %(br_name)s에 datapath-ID %(dpid)s이(가) 있음"
+
+#, python-format
+msgid "Bridge mappings: %s"
+msgstr "브릿지 맵핑: %s"
+
+#, python-format
+msgid "Bridge mappings: %s."
+msgstr "브릿지 맵핑: %s."
+
+#, python-format
+msgid ""
+"Cannot apply dhcp option %(opt)s because it's ip_version %(version)d is not "
+"in port's address IP versions"
+msgstr ""
+"ip_version %(version)d이(가) 포트의 주소 IP 버전이 아니므로 dhcp 옵션 %(opt)s"
+"을(를) 적용할 수 없음"
+
+#, python-format
+msgid "Centralizing distributed router %s is not supported"
+msgstr "분산 라우터 %s을(를) 중앙화하는 기능은  지원되지 않음"
+
+#, python-format
+msgid "Cleaning bridge: %s"
+msgstr "브릿지 정리: %s"
+
+#, python-format
+msgid "Cleaning stale %s flows"
+msgstr "시간이 경과된 %s 플로우 정리"
+
+#, python-format
+msgid "Clearing orphaned ARP spoofing entries for devices %s"
+msgstr "장치 %s의 orphan ARP 위조 항목 지우기"
+
+#, python-format
+msgid ""
+"Collecting BGP Peer statistics for peer_ip=%(peer)s, running in speaker_as="
+"%(speaker_as)d "
+msgstr ""
+"speaker_as=%(speaker_as)d에서 실행 중인 peer_ip=%(peer)s의 BGP 피어 통계 수집"
+
+#, python-format
+msgid "Collecting BGP Speaker statistics for local_as=%d."
+msgstr "local_as=%d의 BGP 스피커 통계를 수집합니다."
+
+msgid ""
+"ConfDriver is used as quota_driver because the loaded plugin does not "
+"support 'quotas' table."
+msgstr ""
+"로드된 플러그인에서 '할당량' 테이블을 지원하지 않으므로 ConfDriver를 "
+"quota_driver로 사용합니다."
+
+#, python-format
+msgid ""
+"Configuration for devices up %(up)s and devices down %(down)s completed."
+msgstr "장치 작동 %(up)s 및 장치 작동 해제 %(down)s 구성이 완료되었습니다."
+
+#, python-format
+msgid "Configured extension driver names: %s"
+msgstr "구성된 확장 드라이버 이름: %s"
+
+#, python-format
+msgid "Configured mechanism driver names: %s"
+msgstr "매커니즘 드라이버 이름을 설정했습니다: %s"
+
+#, python-format
+msgid "Configured type driver names: %s"
+msgstr "형식 드라이버 이름을 설정했습니다: %s"
+
+msgid "Configuring tunnel endpoints to other OVS agents"
+msgstr "다른 OVS 에이전트의 커널 엔드포인트 구성"
+
+#, python-format
+msgid "Creating instance of CountableResource for resource:%s"
+msgstr "자원의 CountableResource 인스턴스 작성:%s"
+
+#, python-format
+msgid "Creating instance of TrackedResource for resource:%s"
+msgstr "자원의 TrackedResource 인스턴스 작성:%s"
+
+msgid "DHCP agent started"
+msgstr "DHCP 에이전트가 시작됨"
+
+msgid "DNSExtensionDriverML2 initialization complete"
+msgstr "DNSExtensionDriverML2 초기화 완료"
+
+#, python-format
+msgid "Default provider is not specified for service type %s"
+msgstr "서비스 유형 %s의 기본 제공자가 지정되지 않음"
+
+#, python-format
+msgid "Deleting port: %s"
+msgstr "포트 삭제: %s"
+
+#, python-format
+msgid "Destroying IPset: %s"
+msgstr "IPset 영구 삭제: %s"
+
+#, python-format
+msgid "Destroying IPsets with prefix: %s"
+msgstr "접두어가 있는 IPset 영구 삭제: %s"
+
+#, python-format
+msgid "Device %(device)s spoofcheck %(spoofcheck)s"
+msgstr "장치 %(device)s 위조 확인 %(spoofcheck)s"
+
+#, python-format
+msgid "Device %s already exists"
+msgstr "%s 디바이스가 이미 존재함"
+
+#, python-format
+msgid "Device %s not defined on plugin"
+msgstr "%s 디바이스가 플러그인에서 정의되지 않음"
+
+#, python-format
+msgid "Device with MAC %s not defined on plugin"
+msgstr "MAC가 %s인 디바이스가 플러그인에서 정의되지 않음"
+
+#, python-format
+msgid "Devices down  %s "
+msgstr "장치 작동 중단 %s"
+
+msgid "Disabled allowed-address-pairs extension."
+msgstr "허용된 주소 쌍 확장을 사용하지 않습니다."
+
+msgid "Disabled security-group extension."
+msgstr "보안 그룹 확장을 사용하지 않습니다. "
+
+msgid "Disabled vlantransparent extension."
+msgstr "vlantransparent 확장을 사용하지 않습니다."
+
+msgid "Eventlet based AMQP RPC server starting..."
+msgstr "Eventlet 기반 AMQP RPC 서버를 시작 중..."
+
+#, python-format
+msgid "Exclude Devices: %s"
+msgstr "장치 제외: %s"
+
+#, python-format
+msgid "Extension %s is pecan-aware. Fetching resources and controllers"
+msgstr "확장 %s이(가) pecan을 인지합니다. 자원 및 컨트롤러를 가져오는 중"
+
+#, python-format
+msgid "Extension driver '%(name)s' failed in %(method)s"
+msgstr "확장 드라이버 '%(name)s'이(가) %(method)s에서 실패"
+
+#, python-format
+msgid ""
+"Failed to schedule network %s, no eligible agents or it might be already "
+"scheduled by another server"
+msgstr ""
+"네트워크 %s을(를) 스케줄링하는 데 실패하거나 적합한 에이전트가 없거나 다른 서"
+"버에서 이미 스케줄되었을 수 있음"
+
+#, python-format
+msgid "Finished network %s dhcp configuration"
+msgstr "네트워크 %s dhcp 구성이 완료됨"
+
+msgid "Flat networks are disabled"
+msgstr "플랫 네트워크가 사용되지 않음"
+
+#, python-format
+msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
+msgstr "풀에서 올바르지 않은 IP 주소 발견: %(start)s - %(end)s:"
+
+#, python-format
+msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
+msgstr "겹치는 범위 발견: %(l_range)s 및 %(r_range)s"
+
+#, python-format
+msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
+msgstr "서브넷 CIDR보다 큰 풀 발견: %(start)s - %(end)s"
+
+#, python-format
+msgid ""
+"Found port (%(port_id)s, %(ip)s) having IP allocation on subnet %(subnet)s, "
+"cannot delete"
+msgstr ""
+"서브넷  %(subnet)s에서 IP가 할당된 포트(%(port_id)s, %(ip)s)를 찾아, 삭제할 "
+"수 없음"
+
+#, python-format
+msgid "Got %(alias)s extension from driver '%(drv)s'"
+msgstr "드라이버 '%(drv)s'에서 %(alias)s 확장 가져오기"
+
+#, python-format
+msgid ""
+"HA network %(network)s was deleted as no HA routers are present in tenant "
+"%(tenant)s."
+msgstr ""
+"테넌트 %(tenant)s에 HA 라우터가 없으므로 HA 네트워크 %(network)s이(가) 삭제되"
+"었습니다."
+
+#, python-format
+msgid "HA network %s can not be deleted."
+msgstr "HA 네트워크 %s을(를) 삭제할 수 없습니다."
+
+#, python-format
+msgid "HTTP exception thrown: %s"
+msgstr "HTTP 예외 처리: %s"
+
+#, python-format
+msgid ""
+"Heartbeat received from %(type)s agent on host %(host)s, uuid %(uuid)s after "
+"%(delta)s"
+msgstr ""
+"%(delta)s 후에 호스트 %(host)s, uuid %(uuid)s의 %(type)s 에이전트에서 하트비"
+"트 수신"
+
+msgid "IPset cleanup completed successfully"
+msgstr "IPset 정리가 완료됨"
+
+msgid "IPv6 is not enabled on this system."
+msgstr "이 시스템에서 IPv6이 사용되지 않습니다."
+
+#, python-format
+msgid "Initialized Ryu BGP Speaker driver interface with bgp_router_id=%s"
+msgstr "bgp_router_id=%s인 Ryu BGP 스피커 드라이버 인터페이스가 초기화됨"
+
+msgid "Initializing Linux bridge QoS extension"
+msgstr "Linux 브릿지 QoS 확장 초기화"
+
+msgid "Initializing Ryu driver for BGP Speaker functionality."
+msgstr "BGP 스피커 기능의 Ryu 드라이버를 초기화합니다."
+
+#, python-format
+msgid "Initializing agent extension '%s'"
+msgstr "에이전트 확장 '%s' 초기화"
+
+#, python-format
+msgid "Initializing driver for type '%s'"
+msgstr "'%s' 형식 드라이버 초기화중"
+
+#, python-format
+msgid "Initializing extension driver '%s'"
+msgstr "확장 드라이버 '%s' 초기화"
+
+msgid "Initializing extension manager."
+msgstr "확장기능 관리자를 초기화 중입니다. "
+
+#, python-format
+msgid "Initializing mechanism driver '%s'"
+msgstr "메커니즘 드라이버 '%s' 초기화"
+
+#, python-format
+msgid "Interface mappings: %s"
+msgstr "인터페이스 맵핑: %s"
+
+#, python-format
+msgid "Interface mappings: %s."
+msgstr "인터페이스 맵핑: %s."
+
+#, python-format
+msgid "L2 Agent operating in DVR Mode with MAC %s"
+msgstr "MAC가 %s인 DVR 모드에서 작동하는 L2 에이전트 "
+
+msgid "L3 agent started"
+msgstr "L3 에이전트가 시작됨"
+
+#, python-format
+msgid "Linux bridge %s deleted"
+msgstr "Linux 브릿지 %s이(가) 삭제됨"
+
+msgid "Linux bridge cleanup completed successfully"
+msgstr "Linux 브릿지 정리가 완료됨"
+
+#, python-format
+msgid "Loaded agent extensions: %s"
+msgstr "에이전트 확장이 로드됨: %s"
+
+#, python-format
+msgid "Loaded extension driver names: %s"
+msgstr "로드된 확장 드라이버 이름: %s"
+
+#, python-format
+msgid "Loaded extension: %s"
+msgstr "로드된 확장: %s"
+
+#, python-format
+msgid "Loaded mechanism driver names: %s"
+msgstr "매커니즘 드라이버 이름을 불러왔습니다: %s"
+
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr "로드된 quota_driver: %s."
+
+#, python-format
+msgid "Loaded type driver names: %s"
+msgstr "형식 드라이버 이름을 불러왔습니다: %s"
+
+#, python-format
+msgid "Loading %(name)s (%(description)s) notification driver for QoS plugin"
+msgstr "QoS 플러그인의 %(name)s(%(description)s) 알림 드라이버 로드"
+
+#, python-format
+msgid "Loading Metering driver %s"
+msgstr "측정 드라이버 %s 로드"
+
+#, python-format
+msgid "Loading Plugin: %s"
+msgstr "로딩 플러그인: %s"
+
+#, python-format
+msgid "Loading core plugin: %s"
+msgstr "코어 플러그인 로드: %s"
+
+#, python-format
+msgid "Loading interface driver %s"
+msgstr "인터페이스 드라이버 %s 로드"
+
+msgid "Logging enabled!"
+msgstr "로깅 사용!"
+
+msgid "ML2 FlatTypeDriver initialization complete"
+msgstr "ML2 FlatTypeDriver 초기화 완료"
+
+msgid "ML2 LocalTypeDriver initialization complete"
+msgstr "ML2 LocalTypeDriver 초기화 완료"
+
+#, python-format
+msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
+msgstr "실제 네트워크 %(physical_network)s을(를) 브릿지 %(bridge)s에 맵핑 중"
+
+msgid "Modular L2 Plugin initialization complete"
+msgstr "모듈러 L2 플러그인 초기화를 완료했습니다"
+
+#, python-format
+msgid "Network VLAN ranges: %s"
+msgstr "네트워크 VLAN 범위: %s"
+
+#, python-format
+msgid "Neutron service started, listening on %(host)s:%(port)s"
+msgstr "Neutron 서비스가 시작되었으며 %(host)s:%(port)s에서 청취 중임"
+
+#, python-format
+msgid "No device with MAC %s defined on agent."
+msgstr "MAC가 %s인 장치가 에이전트에 정의되지 않았습니다."
+
+#, python-format
+msgid "No ports have port_id starting with %s"
+msgstr "포트에 %s(으)로 시작하는 port_id가 없음"
+
+msgid "No ports here to refresh firewall"
+msgstr "방화벽을 새로 고칠 포트가 여기에 없음"
+
+#, python-format
+msgid "Nova event response: %s"
+msgstr "Nova 이벤트 응답: %s"
+
+#, python-format
+msgid ""
+"Number of active agents lower than max_l3_agents_per_router. L3 agents "
+"available: %s"
+msgstr ""
+"max_l3_agents_per_router 이하의 활성 에이전트 수. L3 에이전트를 사용할 수 있"
+"음: %s"
+
+msgid "OVS cleanup completed successfully"
+msgstr "OVS 정리가 완료됨"
+
+msgid "Pecan WSGI server starting..."
+msgstr "Pecan WSGI 서버 시작 중..."
+
+#, python-format
+msgid "Physical Devices mappings: %s"
+msgstr "실제 장치 맵핑: %s"
+
+#, python-format
+msgid ""
+"Physical network %s is defined in bridge_mappings and cannot be deleted."
+msgstr ""
+"실제 네트워크 %s이(가) bridge_mappings에 정의되어 있으므로 삭제할 수 없습니"
+"다."
+
+#, python-format
+msgid "Port %(device)s updated. Details: %(details)s"
+msgstr "%(device)s 포트가 업데이트되었습니다. 세부사항: %(details)s"
+
+#, python-format
+msgid "Port %(port_id)s not present in bridge %(br_name)s"
+msgstr "브릿지 %(br_name)s에 포트 %(port_id)s이(가) 없음"
+
+#, python-format
+msgid "Port %s updated."
+msgstr "%s 포트가 업데이트되었습니다. "
+
+#, python-format
+msgid "Port %s was deleted concurrently"
+msgstr "포트 %s이(가) 동시에 삭제됨"
+
+#, python-format
+msgid ""
+"Port %s was not found on the integration bridge and will therefore not be "
+"processed"
+msgstr "%s 포트를 통합 브릿지에서 찾을 수 없으므로 처리되지 않음"
+
+#, python-format
+msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
+msgstr ""
+"포트 '%(port_name)s'에서 vlan 태그 '%(vlan_tag)d'이(가) 유실되었습니다!"
+
+#, python-format
+msgid "Port with MAC %(mac)s and PCI slot %(pci_slot)s updated."
+msgstr "MAC가 %(mac)s이고 PCI 슬롯이 %(pci_slot)s인 포트가 업데이트되었습니다."
+
+msgid "PortSecurityExtensionDriver initialization complete"
+msgstr "PortSecurityExtensionDriver 초기화 완료"
+
+#, python-format
+msgid "Ports %s removed"
+msgstr "제거된 포트 %s"
+
+#, python-format
+msgid "Preparing filters for devices %s"
+msgstr "%s 디바이스에 대한 필터 준비"
+
+#, python-format
+msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
+msgstr "uid/gid가 %(uid)s/%(gid)s인 프로세스 실행"
+
+msgid "Provider rule updated"
+msgstr "제공자 규칙이 업데이트됨"
+
+#, python-format
+msgid ""
+"QoS extension did have no information about the port %s that we were trying "
+"to reset"
+msgstr "QoS 확장에 재설정하려는 포트 %s에 대한 정보가 없습니다."
+
+#, python-format
+msgid ""
+"QoS policy %(qos_policy_id)s applied to port %(port_id)s is not available on "
+"server, it has been deleted. Skipping."
+msgstr ""
+"포트 %(port_id)s에 적용된 QoS 정책 %(qos_policy_id)s을(를) 서버에서 사용할 "
+"수 없어 삭제되었습니다. 건너뜁니다."
+
+#, python-format
+msgid "RPC agent_id: %s"
+msgstr "RPC agent_id: %s"
+
+msgid "RPC was already started in parent process by plugin."
+msgstr "플러그인에서 상위 프로세스의 RPC를 이미 시작했습니다."
+
+#, python-format
+msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
+msgstr "net-id = %(net_uuid)s에서 vlan = %(vlan_id)s 재확보 중"
+
+msgid "Refresh firewall rules"
+msgstr "방화벽 규칙 새로 고치기"
+
+#, python-format
+msgid "Registered extension drivers: %s"
+msgstr "등록된 확장 드라이버: %s"
+
+#, python-format
+msgid "Registered mechanism drivers: %s"
+msgstr "등록된 메커니즘 드라이버: %s"
+
+#, python-format
+msgid "Registered types: %s"
+msgstr "등록된 형식: %s"
+
+#, python-format
+msgid "Remove device filter for %r"
+msgstr "%r의 디바이스 필터 제거"
+
+#, python-format
+msgid ""
+"Removed BGP Peer %(peer)s from BGP Speaker running for local_as=%(local_as)d."
+msgstr ""
+"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에서 BGP 피어  %(peer)s을"
+"(를) 제거했습니다."
+
+#, python-format
+msgid "Removed BGP Speaker for local_as=%(as)d with router_id=%(rtid)s."
+msgstr "router_id=%(rtid)s인 local_as=%(as)d의 BGP 스피커가 제거되었습니다."
+
+#, python-format
+msgid "Removing device with MAC address %(mac)s and PCI slot %(pci_slot)s"
+msgstr "MAC 주소가 %(mac)s이고 PCI 슬롯이 %(pci_slot)s인 장치 제거"
+
+#, python-format
+msgid "Removing iptables rule for IPset: %s"
+msgstr "IPset의 iptables 규칙 제거: %s"
+
+#, python-format
+msgid ""
+"Route cidr=%(prefix)s is withdrawn from BGP Speaker running for local_as="
+"%(local_as)d."
+msgstr ""
+"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에서 경로 cidr=%(prefix)s이 "
+"취소되었습니다."
+
+#, python-format
+msgid ""
+"Route cidr=%(prefix)s, nexthop=%(nexthop)s is advertised for BGP Speaker "
+"running for local_as=%(local_as)d."
+msgstr ""
+"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커의 경로 cidr=%(prefix)s, "
+"nexthop=%(nexthop)s이(가) 광고됩니다."
+
+#, python-format
+msgid "Router %(router_id)s transitioned to %(state)s"
+msgstr "라우터 %(router_id)s이(가) %(state)s(으)로 전이됨"
+
+#, python-format
+msgid ""
+"Router %s is not managed by this agent. It was possibly deleted concurrently."
+msgstr ""
+"이 에이전트에서 라우터 %s을(를) 관리하지 않습니다. 동시에 삭제되었을 가능성"
+"이 있습니다."
+
+#, python-format
+msgid "SNAT interface port list does not exist, so create one: %s"
+msgstr "SNAT 인터페이스 포트 목록이 없으므로, 하나 작성: %s"
+
+msgid "SRIOV NIC Agent RPC Daemon Started!"
+msgstr "SRIOV NIC 에이전트 RPC 디먼이 시작되었습니다!"
+
+#, python-format
+msgid "Scheduling unhosted network %s"
+msgstr "호스트되지 않은 네트워크 %s 스케줄링"
+
+#, python-format
+msgid "Security group member updated %r"
+msgstr "보안 그룹 멤버가 %r을(를) 업데이트함"
+
+#, python-format
+msgid "Security group rule updated %r"
+msgstr "보안 그룹 규칙이 %r을(를) 업데이트함"
+
+#, python-format
+msgid "Service %s is supported by the core plugin"
+msgstr "서비스 %s은(는) 코어 플러그인에서 지원하지 않음"
+
+#, python-format
+msgid ""
+"Skipping ARP spoofing rules for port '%s' because it has port security "
+"disabled"
+msgstr "포트 보안을 사용하지 않으므로 포트 '%s'의 ARP 위조 규칙을 건너뜀"
+
+#, python-format
+msgid "Skipping DHCP port %s as it is already in use"
+msgstr "DHCP 포트 %s이(가) 이미 사용 중이므로 건너뛰기"
+
+#, python-format
+msgid ""
+"Skipping method %s as firewall is disabled or configured as "
+"NoopFirewallDriver."
+msgstr ""
+"방화벽이 사용되지 않거나 NoopFirewallDriver로 구성되었으므로 %s 메소드를 건너"
+"뜁니다."
+
+msgid ""
+"Skipping period L3 agent status check because automatic router rescheduling "
+"is disabled."
+msgstr ""
+"자동 라우터 재스케줄링을 사용하지 않으므로 주기적 L3 에이전트 상태 확인을 건"
+"너뜁니다."
+
+msgid ""
+"Skipping periodic DHCP agent status check because automatic network "
+"rescheduling is disabled."
+msgstr ""
+"자동 네트워크 재스케줄링을 사용하지 않으므로 주기적 DHCP 에이전트 상태 확인"
+"을 건너뜁니다."
+
+#, python-format
+msgid "Skipping port %s as no IP is configure on it"
+msgstr "구성된 IP가 없어서 포트 %s을(를) 건너뜀"
+
+msgid "Specified IP addresses do not match the subnet IP version"
+msgstr "지정된 IP 주소가 서브넷 IP 버전과 일치하지 않음"
+
+#, python-format
+msgid "Starting network %s dhcp configuration"
+msgstr "네트워크 %s dhcp 구성 시작"
+
+#, python-format
+msgid "Stopping %s agent."
+msgstr "%s 에이전트를 중지합니다."
+
+#, python-format
+msgid "Subnet %s was deleted concurrently"
+msgstr "서브넷 %s이(가) 동시에 삭제됨"
+
+msgid "Synchronizing state"
+msgstr "상태 동기화 중"
+
+msgid "Synchronizing state complete"
+msgstr "상태 동기화 완료"
+
+#, python-format
+msgid "Tenant network_types: %s"
+msgstr "network_types를 임대합니다: %s"
+
+#, python-format
+msgid ""
+"The requested interface name %(requested_name)s exceeds the %(limit)d "
+"character limitation. It was shortened to %(new_name)s to fit."
+msgstr ""
+"요청된 인터페이스 이름 %(requested_name)s이(가) %(limit)d자 한계를 초과합니"
+"다. 이 한계에 맞게 %(new_name)s(으)로 단축됩니다."
+
+#, python-format
+msgid "Trigger reload_allocations for port %s"
+msgstr "포트 %s의 reload_allocations 트리거"
+
+#, python-format
+msgid ""
+"Tunnel IP %(ip)s was used by host %(host)s and will be assigned to "
+"%(new_host)s"
+msgstr ""
+"호스트 %(host)s에서 터널 IP %(ip)s을(를) 사용했으며 %(new_host)s에 할당됨"
+
+#, python-format
+msgid "VIF port: %s admin state up disabled, putting on the dead VLAN"
+msgstr "VIF 포트: %s 관리 설정을 사용하지 않음, 작동하지 않는 VLAN에 둠"
+
+#, python-format
+msgid ""
+"Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
+"%(subnet_id)s (CIDR: %(cidr)s)"
+msgstr ""
+"CIDR %(new_cidr)s 유효성 검증 실패 - 서브넷 %(subnet_id)s(CIDR: %(cidr)s)과"
+"(와) 겹침"
+
+msgid "VlanTypeDriver initialization complete"
+msgstr "VlanTypeDriver 초기화 완료"
+
+#, python-format
+msgid "agent_updated by server side %s!"
+msgstr "서버측 %s!에 의한 agent_updated"
+
+#, python-format
+msgid "port_unbound(): net_uuid %s not in local_vlan_map"
+msgstr "port_unbound(): net_uuid %s이(가) local_vlan_map에 없음"
+
+msgid "rpc_loop doing a full sync."
+msgstr "전체 동기화를 수행하는 rpc_loop."

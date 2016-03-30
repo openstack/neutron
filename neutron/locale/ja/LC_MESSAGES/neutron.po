@@ -18,13 +18,13 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev3\n"
+"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-28 17:03+0000\n"
+"POT-Creation-Date: 2016-03-29 10:14+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 04:05+0000\n"
+"PO-Revision-Date: 2016-03-30 05:19+0000\n"
 "Last-Translator: 笹原 昌美 <ebb0de1@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -189,12 +189,11 @@ msgstr "'%(data)s が %(valid_values)s の中にありません"
 
 #, python-format
 msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
-msgstr "'%(data)s' は大きすぎます - '%(limit)d' を超えてはなりません"
+msgstr "'%(data)s' は大きすぎます。'%(limit)d' を超えてはなりません"
 
 #, python-format
 msgid "'%(data)s' is too small - must be at least '%(limit)d'"
-msgstr ""
-"'%(data)s' は小さすぎます - 少なくとも '%(limit)d' でなければなりません"
+msgstr "'%(data)s' は小さすぎます。少なくとも '%(limit)d' でなければなりません"
 
 #, python-format
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
@@ -212,7 +211,7 @@ msgstr "'%(host)s' は有効なネームサーバーではありません。%(ms
 
 #, python-format
 msgid "'%s' Blank strings are not permitted"
-msgstr "'%s' ブランクストリングは許可されていません"
+msgstr "'%s' のブランク文字列は許可されていません"
 
 #, python-format
 msgid "'%s' cannot be converted to boolean"
@@ -300,7 +299,7 @@ msgstr "'%s' は負の値ではない 10 進数値である必要があります
 
 #, python-format
 msgid "'%s' should be non-negative"
-msgstr "'%s' は負以外でなければなりません"
+msgstr "'%s' は負の値以外でなければなりません"
 
 msgid "'.' searches are not implemented"
 msgstr "'.' 検索は実装されていません"
@@ -320,7 +319,7 @@ msgstr ""
 "さい。) コマンドの実行の対象となる拡張サービス。"
 
 msgid "0 is not allowed as CIDR prefix length"
-msgstr "0 は、CIDR プレフィックス長として許可されていません"
+msgstr "0 は CIDR プレフィックス長として許可されていません"
 
 msgid ""
 "32-bit BGP identifier, typically an IPv4 address owned by the system running "
@@ -977,7 +976,7 @@ msgid ""
 "Comma-separated list of <tun_min>:<tun_max> tuples enumerating ranges of GRE "
 "tunnel IDs that are available for tenant network allocation"
 msgstr ""
-"テナントネットワークの割り振りに使用可能な GRE トンネル ID の範囲を列挙する "
+"テナントネットワークの割り当てに使用可能な GRE トンネル ID の範囲を列挙する "
 "<tun_min>:<tun_max> タプルのコンマ区切りリスト"
 
 msgid ""
@@ -991,7 +990,7 @@ msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
-"テナントネットワークの割り振りに使用可能な VXLAN VNI ID の範囲を列挙する "
+"テナントネットワークの割り当てに使用可能な VXLAN VNI ID の範囲を列挙する "
 "<vni_min>:<vni_max> タプルのコンマ区切りリスト"
 
 msgid ""
@@ -1518,7 +1517,8 @@ msgstr "%s の読み取り中にエラーが発生しました"
 #, python-format
 msgid ""
 "Exceeded %s second limit waiting for address to leave the tentative state."
-msgstr "アドレスが一時的な状態を終了するまでの待機時間の %s 秒が超過"
+msgstr ""
+"アドレスが一時的な状態を終了するまでの待機時間の上限の %s 秒を超過しました。"
 
 msgid "Exceeded maximum amount of fixed ips per port."
 msgstr "ポートごとの Fixed IP の最大数を超えました"
@@ -1740,7 +1740,7 @@ msgid ""
 "Found overlapping allocation pools: %(pool_1)s %(pool_2)s for subnet "
 "%(subnet_cidr)s."
 msgstr ""
-"サブネットの重なり合った割り振りプール %(pool_1)s %(pool_2)s が見つかりまし"
+"サブネットの重なり合った割り当てプール %(pool_1)s %(pool_2)s が見つかりまし"
 "た%(subnet_cidr)s。"
 
 msgid "Gateway IP version inconsistent with allocation pool version"
@@ -1851,7 +1851,7 @@ msgid "IP allocation failed. Try again later."
 msgstr "IP の割り当てが失敗しました。後で再び割り当ててください。"
 
 msgid "IP allocation requires subnet_id or ip_address"
-msgstr "IP 割り振りでは subnet_id または ip_address が必要です"
+msgstr "IP を割り当てるには subnet_id または ip_address が必要です"
 
 #, python-format
 msgid ""
@@ -2077,7 +2077,7 @@ msgstr "Fixed IP に無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid data format for hostroute: '%s'"
-msgstr "ホスト経路に無効なデータ形式: '%s'"
+msgstr "ホスト経路の無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
@@ -2252,7 +2252,7 @@ msgid "Local IP address of tunnel endpoint."
 msgstr "トンネルエンドポイントのローカル IP アドレス。"
 
 msgid "Location for Metadata Proxy UNIX domain socket."
-msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション"
+msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション。"
 
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr "メタデータプロキシーの UNIX ドメインソケットの場所"
@@ -2756,7 +2756,7 @@ msgid ""
 msgstr "送信するイベントがある場合の nova へのイベント送信間の秒数。"
 
 msgid "Number of seconds to keep retrying to listen"
-msgstr "listen を試行し続ける秒数"
+msgstr "リッスンを試行し続ける秒数"
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -3140,14 +3140,14 @@ msgid ""
 "for the resource being balanced. Example: dhcp_load_type=networks"
 msgstr ""
 "負荷がエージェントによって報告されているリソースタイプを表します。このタイプ"
-"には、「networks」、「subnets」、または「ports」があります。指定した場合 (デ"
-"フォルトは networks)、サーバーは、エージェントレポート状態 (report_interval "
-"ごとに消費されるリソース数) からそのエージェント構成オブジェクトの一部として"
-"送信された特定の負荷を抽出します。dhcp_load_type は network_scheduler_driver "
-"= neutron.scheduler.dhcp_agent_scheduler.WeightScheduler と組み合わせて使用で"
-"きます。network_scheduler_driver が WeightScheduler の場合、dhcp_load_type は"
-"平衡を取るリソースの選択肢を表すように構成することができます。例: "
-"dhcp_load_type=networks"
+"には、\"networks\"、\"subnets\"、または \"ports\" があります。指定した場合 "
+"(デフォルトは networks)、サーバーは、エージェントレポート状態 "
+"(report_interval ごとに消費されるリソース数) からそのエージェント構成オブジェ"
+"クトの一部として送信された特定の負荷を抽出します。dhcp_load_type は "
+"network_scheduler_driver = neutron.scheduler.dhcp_agent_scheduler."
+"WeightScheduler と組み合わせて使用できます。network_scheduler_driver が "
+"WeightScheduler の場合、dhcp_load_type は平衡を取るリソースの選択肢を表すよう"
+"に構成することができます。例: dhcp_load_type=networks"
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "要求が失敗しました。要求の処理中に内部サーバーエラーが発生しました。"
@@ -3286,7 +3286,7 @@ msgid ""
 "%(columns)s. Records=%(records)s."
 msgstr ""
 "行がデータベースに存在しません。要求情報: テーブル =%(table)s、列 ="
-"%(columns)s、レコード =%(records)s"
+"%(columns)s、レコード =%(records)s。"
 
 msgid "Run as daemon."
 msgstr "デーモンとして実行します。"
@@ -3482,7 +3482,7 @@ msgid "Subnet pool %(subnetpool_id)s could not be found."
 msgstr "サブネットプール %(subnetpool_id)s が見つかりませんでした。"
 
 msgid "Subnet pool has existing allocations"
-msgstr "サブネットプールに既存の割り振りがあります"
+msgstr "サブネットプールに既存の割り当てがあります"
 
 msgid "Subnet used for the l3 HA admin network."
 msgstr "l3 HA 管理ネットワークに使用されるサブネット。"
@@ -3505,7 +3505,7 @@ msgstr ""
 "理者のみがオーバーライドできます。"
 
 msgid "TCP Port to listen for metadata server requests."
-msgstr "メタデータサーバー要求を listen するための TCP ポート。"
+msgstr "メタデータサーバー要求をリッスンするための TCP ポート。"
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr "Neutron メタデータ名前空間プロキシーが使用する TCP Port"
@@ -3599,13 +3599,13 @@ msgstr "通知間隔 (秒)"
 
 #, python-format
 msgid "The allocation pool %(pool)s is not valid."
-msgstr "割り振りプール %(pool)s が無効です。"
+msgstr "割り当てプール %(pool)s が無効です。"
 
 #, python-format
 msgid ""
 "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
-"割り振りプール %(pool)s がサブネット CIDR %(subnet_cidr)s を越えています。"
+"割り当てプール %(pool)s がサブネット CIDR %(subnet_cidr)s を越えています。"
 
 #, python-format
 msgid ""
@@ -3780,7 +3780,7 @@ msgstr "バインド先のポート"
 
 #, python-format
 msgid "The requested content type %s is invalid."
-msgstr "要求されたコンテンツタイプ %s は無効です"
+msgstr "要求されたコンテンツタイプ %s は無効です。"
 
 msgid "The resource could not be found."
 msgstr "リソースが見つかりませんでした。"
@@ -4201,7 +4201,7 @@ msgid ""
 "namespace support (e.g. RHEL 6.5) so long as ovs_use_veth is set to True."
 msgstr ""
 "OVS インターフェースに  veth を使用するかどうか。ovs_use_veth が True に設定"
-"されている場合は、限定された名前空間のサポート機能を持つカーネル (RHEL 6.5な"
+"されている場合は、限定された名前空間のサポート機能を持つカーネル (RHEL 6.5 な"
 "ど) をサポートします。"
 
 msgid "VRRP authentication password"
@@ -4218,8 +4218,8 @@ msgid ""
 "Validation of dictionary's keys failed. Expected keys: %(expected_keys)s "
 "Provided keys: %(provided_keys)s"
 msgstr ""
-"ディクショナリーのキーの検証に失敗しました。予期されたキー: "
-"%(expected_keys)s、指定されたキー: %(provided_keys)s"
+"ディクショナリーのキーの検証に失敗しました。想定されたキー: "
+"%(expected_keys)s、提供されたキー: %(provided_keys)s"
 
 #, python-format
 msgid "Validator '%s' does not exist."

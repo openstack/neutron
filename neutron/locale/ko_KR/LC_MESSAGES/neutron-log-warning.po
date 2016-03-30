@@ -1,0 +1,616 @@
+# Translations template for neutron.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# SeYeon Lee <sy_lee@kr.ibm.com>, 2016. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-03-29 10:14+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-03-29 03:30+0000\n"
+"Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
+"Language: ko-KR\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.0\n"
+"X-Generator: Zanata 3.7.3\n"
+"Language-Team: Korean (South Korea)\n"
+
+#, python-format
+msgid "%(agent_type)s agent %(agent_id)s is not active"
+msgstr "%(agent_type)s 에이전트 %(agent_id)s이(가) 활성이 아님"
+
+#, python-format
+msgid ""
+"%(port_num)d router ports found on the metadata access network. Only the "
+"port %(port_id)s, for router %(router_id)s will be considered"
+msgstr ""
+"메타데이터 액세스 네트워크에서 %(port_num)d 라우터 포트를 찾았습니다. "
+"%(router_id)s 라우터의 %(port_id)s 포트만 고려됩니다. "
+
+#, python-format
+msgid "%(type)s tunnel %(id)s not found"
+msgstr "%(type)s 터널 %(id)s을(를) 찾을 수 없음"
+
+#, python-format
+msgid "%s does not support QoS; no rule types available"
+msgstr "%s에서 QoS를 지원하지 않습니다. 사용 가능한 규칙 유형이 없습니다."
+
+#, python-format
+msgid "%s is already registered"
+msgstr "%s이(가) 이미 등록됨"
+
+msgid "A concurrent port creation has occurred"
+msgstr "동시 포트 작성이 발생함"
+
+#, python-format
+msgid ""
+"Action %(action)s for network %(net_id)s could not complete successfully: "
+"%(reason)s"
+msgstr ""
+"네트워크 %(net_id)s의 작업 %(action)s을 성공적으로 완료할 수 없음: %(reason)s"
+
+#, python-format
+msgid "Action %s not supported"
+msgstr "작업 %s이(가) 지원되지 않음"
+
+#, python-format
+msgid ""
+"Agent healthcheck: found %(count)s dead agents out of %(total)s:\n"
+"%(data)s"
+msgstr ""
+"에이전트 상태 확인: %(total)s 중 %(count)s개의 에이전트가 작동하지 않음:\n"
+"%(data)s"
+
+#, python-format
+msgid "Attempted to get traffic counters of chain %s which does not exist"
+msgstr "존재하지 않는 %s 체인의 트래픽 카운터를 가져오려고 시도"
+
+#, python-format
+msgid "Attempting to bind with dead agent: %s"
+msgstr "작동하지 않는 에이전트와 바인드하려고 시도: %s"
+
+#, python-format
+msgid "BGP Peer %s has been deleted."
+msgstr "BGP 피어 %s이(가) 삭제되었습니다."
+
+#, python-format
+msgid "BGP Speaker %s has been deleted."
+msgstr "BGP 스피커 %s이(가) 삭제되었습니다."
+
+#, python-format
+msgid ""
+"BGP speaker %s may have been deleted and its resources may have already been "
+"disposed."
+msgstr "BGP 스피커 %s이(가) 삭제되었으며 해당 자원이 이미 삭제되었습니다."
+
+#, python-format
+msgid "BgpDrAgent %s is down"
+msgstr "BgpDrAgent %s이(가) 작동 중지됨"
+
+#, python-format
+msgid "Cannot find vf index for pci slot %s"
+msgstr "pci 슬롯 %s의 vf 인덱스를 찾을 수 없음"
+
+#, python-format
+msgid "Cannot find vfs %(vfs)s in device %(dev_name)s"
+msgstr "장치 %(dev_name)s에서 vfs %(vfs)s을(를) 찾을 수 없음"
+
+msgid "Cannot schedule BgpSpeaker to DrAgent. Reason: No scheduler registered."
+msgstr ""
+"DrAgent에 대해 BgpSpeaker를 스케줄링할 수 없습니다. 이유: 스케줄러가 등록되"
+"지 않았습니다."
+
+#, python-format
+msgid "Clearing cache of registered ports, retries to resync were > %s"
+msgstr "등록된 포트의 캐시 삭제, 재동기화 시도 수가 %s보다 큼"
+
+#, python-format
+msgid "Could not expand segment %s"
+msgstr "%s 세그먼트를 확장할 수 없음"
+
+#, python-format
+msgid "DHCP agent %s is not active"
+msgstr "DHCP 에이전트 %s이(가) 활성 상태가 아님"
+
+msgid "DVR functionality requires a server upgrade."
+msgstr "DVR 기능을 사용하려면 서버를 업그레이드해야 합니다."
+
+#, python-format
+msgid ""
+"DVR: Unable to retrieve subnet information for subnet_id %s. The subnet or "
+"the gateway may have already been deleted"
+msgstr ""
+"DVR: subnet_id %s의 서브넷 정보를 검색할 수 없습니다. 서브넷이나 게이트웨이"
+"가 이미 삭제되었을 수 있습니다."
+
+#, python-format
+msgid "Deleting flow %s"
+msgstr "플로우 %s 삭제"
+
+#, python-format
+msgid "Deleting flow with cookie 0x%(cookie)x"
+msgstr "쿠키가 0x%(cookie)x인 플로우 삭제"
+
+#, python-format
+msgid "Device %(dev)s failed for %(times)s times and won't be retried anymore"
+msgstr "%(dev)s 장치가 %(times)s번 실패했으므로 더 이상 재시도하지 않음"
+
+#, python-format
+msgid ""
+"Device %(device)s requested by agent %(agent_id)s on network %(network_id)s "
+"not bound, vif_type: %(vif_type)s"
+msgstr ""
+"네트워크 %(network_id)s에서 에이전트 %(agent_id)s이(가) 요청한 장치 "
+"%(device)s이(가) 바인드되지 않음, vif_type: %(vif_type)s"
+
+#, python-format
+msgid ""
+"Device %s does not exist so ARP entry cannot be updated, will cache "
+"information to be applied later when the device exists"
+msgstr ""
+"장치 %s이(가) 없으므로 ARP 항목을 업데이트할 수 없습니다. 장치가 있으면 나중"
+"에 적용될 정보를 캐시합니다."
+
+#, python-format
+msgid "Device %s does not support state change"
+msgstr "장치 %s에서 상태 변경을 지원하지 않음"
+
+#, python-format
+msgid "Device %s not defined on plugin or binding failed"
+msgstr "%s 장치가 플러그인에서 정의되지 않았거나 바인딩에 실패"
+
+#, python-format
+msgid ""
+"Dictionary %(dict_name)s for agent %(agent_type)s on host %(host)s is "
+"invalid."
+msgstr ""
+"호스트 %(host)s에 있는 에이전트 %(agent_type)s의 사전 %(dict_name)s이(가) 올"
+"바르지 않습니다."
+
+#, python-format
+msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
+msgstr "%(file)s에서 예상된 이름 \"%(ext_name)s\"을(를) 찾지 못했음"
+
+msgid "Driver configuration doesn't match with enable_security_group"
+msgstr "드라이버 구성이 enable_security_group과 일치하지 않음"
+
+#, python-format
+msgid ""
+"Duplicate iptables %(thing)s detected. This may indicate a bug in the the "
+"iptables %(thing)s generation code. Line: %(line)s"
+msgstr ""
+"중복 iptables %(thing)s이(가) 발견되었습니다. iptables %(thing)s 생성 코드에 "
+"버그가 있음을 나타낼 수 있습니다. 행: %(line)s"
+
+#, python-format
+msgid "Endpoint with ip %s already exists"
+msgstr "IP가 %s인 엔드포인트가 이미 있음"
+
+#, python-format
+msgid "Extension %s not supported by any of loaded plugins"
+msgstr "%s 확장이 로드된 어떤 플러그인에서도 지원되지 않음"
+
+#, python-format
+msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
+msgstr "%(exception)s(으)로 인해 %(f)s 확장 파일이 로드되지 않았음"
+
+#, python-format
+msgid "Failed to bind port %(port)s on host %(host)s at level %(lvl)s"
+msgstr ""
+"레벨 %(lvl)s에서 호스트  %(host)s의 포트 %(port)s을(를) 바인드하는 데 실패"
+
+#, python-format
+msgid "Failed to delete namespace %s"
+msgstr "%s 네임스페이스 삭제 실패"
+
+#, python-format
+msgid ""
+"Failed to notify L3 agent on host %(host)s about added router. Attempt "
+"%(attempt)d out of %(max_attempts)d"
+msgstr ""
+"호스트 %(host)s에서 L3 에이전트에 추가된 라우터에 대해 알리는 데 실패했습니"
+"다. %(max_attempts)d 중 %(attempt)d번 시도했습니다."
+
+#, python-format
+msgid "Failed to set device %s state"
+msgstr "장치 %s 상태를 설정하는 데 실패"
+
+#, python-format
+msgid "Failed to set spoofcheck for device %s"
+msgstr "장치 %s의 위조 검사를 설정하지 못함"
+
+#, python-format
+msgid "Failed trying to delete interface: %s"
+msgstr "인터페이스 삭제 실패: %s"
+
+#, python-format
+msgid "Failed trying to delete namespace: %s"
+msgstr "네임스페이스 삭제 실패: %s"
+
+#, python-format
+msgid ""
+"Firewall driver %(fw_driver)s doesn't accept integration_bridge parameter in "
+"__init__(): %(err)s"
+msgstr ""
+"방화벽 드라이버 %(fw_driver)s이(가) __init__()에서 integration_bridge 매개변"
+"수를 허용하지 않음: %(err)s"
+
+#, python-format
+msgid "Found failed openvswitch port: %s"
+msgstr "실패한 openvswitch 포트 발견: %s"
+
+#, python-format
+msgid "Found not yet ready openvswitch port: %s"
+msgstr "아직 준비되지 않은 openvswitch 포트 발견: %s"
+
+#, python-format
+msgid "Info for router %s was not found. Performing router cleanup"
+msgstr "라우터 %s의 정보를 찾지 못했습니다. 라우터 정리 수행"
+
+msgid "Invalid Interface ID, will lead to incorrect tap device name"
+msgstr ""
+"올바르지 않은 인터페이스 ID로 인해 올바르지 않은 테이프 디바이스 이름이 만들"
+"어짐"
+
+msgid "Invalid Network ID, will lead to incorrect bridge name"
+msgstr "올바르지 않은 네트워크 ID로 인해 올바르지 않은 브릿지 이름이 생성됨"
+
+#, python-format
+msgid "Invalid Segmentation ID: %s, will lead to incorrect vxlan device name"
+msgstr ""
+"올바르지 구분 ID %s(으)로 인해 올바르지 않은 vxlan 디바이스 이름이 생성됨"
+
+msgid "Invalid VLAN ID, will lead to incorrect subinterface name"
+msgstr ""
+"올바르지 않은 VLAN ID로 인해 올바르지 않은 하위 인터페이스 이름이 만들어짐"
+
+#, python-format
+msgid "Invalid remote IP: %s"
+msgstr "올바르지 않은 원격 IP: %s"
+
+#, python-format
+msgid ""
+"Invalid value for pagination_max_limit: %s. It should be an integer greater "
+"to 0"
+msgstr ""
+"pagination_max_limit의 올바르지 않은 값: %s. 이는 0보다 큰 정수여야 합니다. "
+
+#, python-format
+msgid ""
+"L2 agent could not get DVR MAC address from server. Retrying. Detailed "
+"message: %s"
+msgstr ""
+"L2 에이전트가 서버에서 DVR MAC 주소를 가져올 수 없습니다. 재시도 중입니다. 자"
+"세한 메시지: %s"
+
+#, python-format
+msgid "Loaded plugins do not implement extension %s interface"
+msgstr "로드된 플러그인이 확장 %s 인터페이스를 구현하지 않음"
+
+#, python-format
+msgid ""
+"Network %s may have been deleted and its resources may have already been "
+"disposed."
+msgstr "네트워크 %s이(가) 삭제되었으며 해당 자원이 이미 삭제되었습니다."
+
+msgid ""
+"Neutron server does not support state report. State report for this agent "
+"will be disabled."
+msgstr ""
+"Neutron 서버에서 상태 보고서를 지원하지 않습니다. 이 에이전트의 상태 보고서"
+"를 사용할 수 없습니다."
+
+msgid "No DHCP agents available, skipping rescheduling"
+msgstr "DHCP 에이전트를 사용할 수 없음, 재스케줄링 건너뛰기"
+
+#, python-format
+msgid "No L3 agents can host the router %s"
+msgstr "L3 에이전트가 라우터 %s을(를) 호스트할 수 없음"
+
+#, python-format
+msgid "No MTU configured for port %s"
+msgstr "포트 %s에 구성된 MTU가 없음"
+
+msgid "No active L3 agents"
+msgstr "활성 L3 에이전트가 없음"
+
+#, python-format
+msgid "No controller found for: %s - returning response code 404"
+msgstr "%s의 컨트롤러를 찾을 수 없음 - 응답 코드 404 리턴"
+
+#, python-format
+msgid "No flat network found on physical network %s"
+msgstr "실제 네트워크 %s에서 플랫 네트워크를 찾을 수 없음"
+
+msgid "No more DHCP agents"
+msgstr "추가 DHCP 에이전트가 없음"
+
+#, python-format
+msgid ""
+"No plugin found for resource:%s. API calls may not be correctly dispatched"
+msgstr ""
+"%s 자원의 플러그인을 찾을 수 없습니다. API 호출이 올바르게 디스패치되지 않을 "
+"수 있습니다."
+
+#, python-format
+msgid "No plugin found for: %s"
+msgstr "%s의 플러그인을 찾을 수 없음"
+
+#, python-format
+msgid "No routers compatible with L3 agent configuration on host %s"
+msgstr "호스트 %s에서 L3 에이전트 구성과 호환 가능한 라우터가 없음"
+
+#, python-format
+msgid "No sqlalchemy event for resource %s found"
+msgstr "자원 %s의 sqlalchemy 이벤트를 찾을 수 없음"
+
+#, python-format
+msgid "No valid gateway port on subnet %s is found for IPv6 RA"
+msgstr "서브넷 %s에 IPv6 RA의 올바른 게이트웨이 포트가 없음"
+
+#, python-format
+msgid "No vlan_id %(vlan_id)s found on physical network %(physical_network)s"
+msgstr ""
+"실제 네트워크 %(physical_network)s에서 vlan_id %(vlan_id)s을(를) 찾을 수 없음"
+
+#, python-format
+msgid "Nova event: %s returned with failed status"
+msgstr "Nova 이벤트: %s이(가) 실패한 상태로 반환됨"
+
+msgid ""
+"OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
+"periodically."
+msgstr ""
+"OVS가 작동하지 않습니다. OVSNeutronAgent가 계속 실행되며 정기적으로 OVS 상태"
+"를 확인합니다."
+
+msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
+msgstr ""
+"OVS가 다시 시작됩니다. OVSNeutronAgent가 브릿지를 재설정하고 포트를 복구합니"
+"다."
+
+#, python-format
+msgid ""
+"Only %(active)d of %(total)d DHCP agents associated with network "
+"'%(net_id)s' are marked as active, so notifications may be sent to inactive "
+"agents."
+msgstr ""
+"네트워크 '%(net_id)s'와 연관된 %(total)d DHCP 에이전트 중 %(active)d만 활성으"
+"로 표시되므로 비활성 에이전트에 알림이 전송될 수 있습니다."
+
+#, python-format
+msgid ""
+"Option \"%(option)s\" must be supported by command \"%(command)s\" to enable "
+"%(mode)s mode"
+msgstr ""
+"%(mode)s 모드를 사용하려면 명령 \"%(command)s\"에서 옵션 \"%(option)s\"을"
+"(를) 지원해야 함"
+
+#, python-format
+msgid ""
+"Port %(pid)s on network %(network)s not bound, no agent registered on host "
+"%(host)s"
+msgstr ""
+"네트워크 %(network)s의 포트 %(pid)s이(가) 바인드되지 않음, 호스트 %(host)s에 "
+"등록된 에이전트가 없음"
+
+#, python-format
+msgid "Port %s not found during update"
+msgstr "업데이트 중에 포트 %s을(를) 찾을 수 없음"
+
+msgid "Port ID not set! Nova will not be notified of port status change."
+msgstr ""
+"포트 ID를 설정하지 않았습니다! Nova에 포트 상태 변경을 알리지 않습니다."
+
+#, python-format
+msgid "Received %(resource)s %(policy_id)s without context"
+msgstr "컨텍스트 없이 %(resource)s %(policy_id)s을(를) 수신"
+
+#, python-format
+msgid "Refusing to bind port %(pid)s to dead agent: %(agent)s"
+msgstr "포트 %(pid)s을(를) 작동하지 않는 에이전트 %(agent)s에 바인드 거부"
+
+#, python-format
+msgid ""
+"Removing network %(network)s from agent %(agent)s because the agent did not "
+"report to the server in the last %(dead_time)s seconds."
+msgstr ""
+"마지막 %(dead_time)s초에 에이전트가 서버에 보고하지 않았으므로 에이전트 "
+"%(agent)s에서 네트워크 %(network)s 제거"
+
+#, python-format
+msgid ""
+"Rescheduling router %(router)s from agent %(agent)s because the agent did "
+"not report to the server in the last %(dead_time)s seconds."
+msgstr ""
+"마지막 %(dead_time)s초에 에이전트가 서버에 보고하지 않았으므로 에이전트 "
+"%(agent)s에서 라우터 %(router)s 재스케줄링."
+
+#, python-format
+msgid "Respawning %(service)s for uuid %(uuid)s"
+msgstr "uuid %(uuid)s의 %(service)s 다시 파생"
+
+#, python-format
+msgid "Router %s was not found. Skipping agent notification."
+msgstr "라우터 %s을(를) 찾을 수 없습니다. 에이전트 알림을 건너뜁니다."
+
+msgid ""
+"Security group agent binding currently not set. This should be set by the "
+"end of the init process."
+msgstr ""
+"보안 그룹 에이전트 바인딩이 현재 설정되지 않았습니다. init 프로세스 종료 시 "
+"설정해야 합니다."
+
+#, python-format
+msgid ""
+"The configured driver %(driver)s has been moved, automatically using "
+"%(new_driver)s instead. Please update your config files, as this automatic "
+"fixup will be removed in a future release."
+msgstr ""
+"구성된 드라이버 %(driver)s이(가) 이동되었습니다. 대신 %(new_driver)s을(를) 자"
+"동으로 사용합니다. 이 자동 수정은 향후 릴리스에서 제거되므로 구성 파일을 업데"
+"이트하십시오."
+
+msgid ""
+"The input changed_since must be in the following format: YYYY-MM-DDTHH:MM:SS"
+msgstr "input changed_since의 형식은 YYYY-MM-DDTHH:MM:SS이어야 함"
+
+msgid ""
+"The quota driver neutron.quota.ConfDriver is deprecated as of Liberty. "
+"neutron.db.quota.driver.DbQuotaDriver should be used in its place"
+msgstr ""
+"Liberty에서 quota driver neutron.quota.ConfDriver는 더 이상 사용되지 않습니"
+"다. 대신 neutron.db.quota.driver.DbQuotaDriver를 사용해야 합니다."
+
+msgid ""
+"The remote metadata server responded with Forbidden. This response usually "
+"occurs when shared secrets do not match."
+msgstr ""
+"원격 메타데이터 서버가 Forbidden으로 응답했습니다. 이 응답은 대개 공유 본인확"
+"인정보가 일치하지 않을 때 발생합니다. "
+
+msgid ""
+"The user that is executing neutron can read the namespaces without using the "
+"root_helper. Disable the use_helper_for_ns_read option to avoid a "
+"performance impact."
+msgstr ""
+"neutron을 실행하는 사용자가 root_helper를 사용하지 않고 네임스페이스를 읽을 "
+"수 있습니다. 성능에 영향을 미치지 않도록 use_helper_for_ns_read 옵션을 사용하"
+"지 않게 설정하십시오."
+
+#, python-format
+msgid ""
+"Time since last %s agent reschedule check has exceeded the interval between "
+"checks. Waiting before check to allow agents to send a heartbeat in case "
+"there was a clock adjustment."
+msgstr ""
+"마지막 %s 에이전트 재스케줄링을 확인한 이후 시간이 확인 사이의 간격을 초과했"
+"습니다. 확인 전에 대기하면 클럭 조정이 있는 경우 에이전트가 하트비트를 보낼 "
+"수 있습니다."
+
+#, python-format
+msgid ""
+"Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r %(top)r"
+msgstr "없는 규칙을 제거하려 했음: %(chain)r %(rule)r %(wrap)r %(top)r "
+
+msgid "Tunnel synchronization requires a server upgrade."
+msgstr "터널 동기화를 사용하려면 서버를 업그레이드해야 합니다."
+
+#, python-format
+msgid ""
+"Unable to %(action)s dhcp for %(net_id)s: there is a conflict with its "
+"current state; please check that the network and/or its subnet(s) still "
+"exist."
+msgstr ""
+"%(net_id)s의 dhcp에 대해 %(action)s을(를) 수행할 수 없음: 현재 상태와 충돌됩"
+"니다. 네트워크 및/또는 서브넷이 여전히 있는지 확인하십시오."
+
+#, python-format
+msgid "Unable to configure IP address for floating IP: %s"
+msgstr "Floating IP의 IP 주소를 구성할 수 없음: %s"
+
+#, python-format
+msgid "Unable to find data type descriptor for attribute %s"
+msgstr "속성 %s의 데이터 유형 설명자를 찾을 수 없음"
+
+#, python-format
+msgid "Unable to retrieve active L2 agent on host %s"
+msgstr "호스트 %s에서 활성 L2 에이전트를 검색할 수 없음"
+
+#, python-format
+msgid ""
+"Unable to schedule network %s: no agents available; will retry on subsequent "
+"port and subnet creation events."
+msgstr ""
+"네트워크 %s을(를) 스케줄링할 수 없음: 에이전트를 사용할 수 없으므로, 후속 포"
+"트와 서브넷 작성 이벤트에서 재시도합니다."
+
+#, python-format
+msgid "Unsupported QoS rule type for %(rule_id)s: %(rule_type)s; skipping"
+msgstr "%(rule_id)s의 지원되지 않는 QoS 규칙 유형: %(rule_type)s. 건너뜁니다."
+
+#, python-format
+msgid "Updating lease expiration is now deprecated. Issued  from host %s."
+msgstr ""
+"임대 만기 업데이트는 더 이상 사용되지 않습니다. 호스트 %s에서 실행됩니다."
+
+#, python-format
+msgid ""
+"VF with PCI slot %(pci_slot)s is already assigned; skipping reset maximum "
+"rate"
+msgstr ""
+"PCI 슬롯 %(pci_slot)s이(가) 있는 VF가 이미 할당되어 있습니다. 최대 속도 재설"
+"정 건너뛰기"
+
+#, python-format
+msgid ""
+"VIF port: %s has no ofport configured, and might not be able to transmit"
+msgstr "VIF 포트 %s에 ofport가 구성되지 않았으므로 전송할 수 없음"
+
+msgid ""
+"VXLAN muticast group(s) must be provided in vxlan_group option to enable "
+"VXLAN MCAST mode"
+msgstr ""
+"VXLAN MCAST 모드를 사용하려면 vxlan_group 옵션에 VXLAN 멀티캐스트 그룹을 제공"
+"해야 함"
+
+#, python-format
+msgid ""
+"You are using the deprecated firewall driver: %(deprecated)s.Use the "
+"recommended driver %(new)s instead."
+msgstr ""
+"더 이상 사용되지 않는 방화벽 드라이버를 사용 중임: %(deprecated)s. 권장 드라"
+"이버 %(new)s을(를) 대신 사용하십시오."
+
+#, python-format
+msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"
+msgstr "장치 pci 불일치: %(device_mac)s - %(pci_slot)s"
+
+#, python-format
+msgid "failed to parse vf link show line %(line)s: for %(device)s"
+msgstr "%(device)s의 vf 링크 표시 행 %(line)s 구문 분석 실패"
+
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled at the neutron server when "
+"startup due to RPC error. It happens when the server does not support this "
+"RPC API. If the error is UnsupportedVersion you can ignore this warning. "
+"Detail message: %s"
+msgstr ""
+"RPC 오류로 인해 시작 시 l3 에이전트가 neutron 서버에서 사용된 서비스 플러그인"
+"을 확인할 수 없습니다. 서버에서 이 RPC API를 지원하지 않을 때 이 문제가 발생"
+"합니다. 오류가 UnsupportedVersion인 경우 이 경고를 무시할 수 있습니다. 자세"
+"한 메시지: %s"
+
+#, python-format
+msgid ""
+"l3-agent cannot check service plugins enabled on the neutron server. "
+"Retrying. Detail message: %s"
+msgstr ""
+"l3 에이전트가 neutron 서버에서 사용된 서비스 플러그인을 확인할 수 없습니다. "
+"재시도 중입니다. 자세한 메시지: %s"
+
+#, python-format
+msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
+msgstr "VIF: %(vif)s의 fport: %(ofport)s이(가) 양수가 아님"
+
+#, python-format
+msgid "port_id to device with MAC %s not found"
+msgstr "MAC가 %s인 장치의 port_id를 찾을 수 없음"
+
+msgid ""
+"security_group_info_for_devices rpc call not supported by the server, "
+"falling back to old security_group_rules_for_devices which scales worse."
+msgstr ""
+"서버에서 security_group_info_for_devices rpc 호출을 지원하지 않으므로, 확장 "
+"기능이 더욱 취약한 이전 security_group_rules_for_devices로 장애 복구됩니다."
+
+#, python-format
+msgid "unable to modify mac_address of ACTIVE port %s"
+msgstr "활성 포트 %s의 mac_address를 수정할 수 없음"

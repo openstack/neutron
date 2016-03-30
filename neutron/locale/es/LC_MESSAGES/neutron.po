@@ -10,13 +10,13 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev3\n"
+"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-28 17:03+0000\n"
+"POT-Creation-Date: 2016-03-29 10:14+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-28 09:26+0000\n"
+"PO-Revision-Date: 2016-03-29 11:39+0000\n"
 "Last-Translator: Eugènia Torrella <tester03@es.ibm.com>\n"
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -552,6 +552,11 @@ msgstr "El atributo '%s' no está permitido en POST"
 #, python-format
 msgid "Authentication type not supported. Requested type=%(auth_type)s."
 msgstr "Tipo de autenticación no soportada. Tipo solicitado=%(auth_type)s."
+
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr ""
+"URL de autorización para establecer conexión con el designado en el contexto "
+"de administración"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Eliminar automáticamente las redes de los agentes DHCP fuera de línea."
@@ -2959,6 +2964,11 @@ msgstr "El análisis de bridge_mappings ha fallado: %s."
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "El análisis de los pci_vendor_devs soportados ha fallado"
 
+msgid "Password for connecting to designate in admin context"
+msgstr ""
+"Contraseña para establecer conexión con el designado en el contexto de "
+"administración"
+
 #, python-format
 msgid "Password not specified for authentication type=%(auth_type)s."
 msgstr ""
@@ -3622,6 +3632,16 @@ msgstr ""
 "El arrendatario %(tenant_id)s no está autorizado a crear %(resource)s en "
 "esta red"
 
+msgid "Tenant id for connecting to designate in admin context"
+msgstr ""
+"ID de inquilino para establecer conexión con el designado en el contexto de "
+"administración"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr ""
+"Nombre de inquilino para establecer conexión con el designado en el contexto "
+"de administración"
+
 msgid "Tenant network creation is not enabled."
 msgstr "La creación de red de arrendatario no se ha habilitado."
 
@@ -3991,6 +4011,9 @@ msgstr ""
 "catálogo de keystone y debe ser uno de los siguientes: público, interno o "
 "administrativo."
 
+msgid "URL for connecting to designate"
+msgstr "URL para establecer conexión con el designado"
+
 msgid "URL to database"
 msgstr "URL en base de datos"
 
@@ -4281,6 +4304,11 @@ msgstr ""
 msgid "User (uid or name) running this process after its initialization"
 msgstr ""
 "Usuario (uid o nombre) que ejecuta este proceso después de su inicialización"
+
+msgid "Username for connecting to designate in admin context"
+msgstr ""
+"Nombre de usuario para establecer conexión con el designado en el contexto "
+"de administración"
 
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
