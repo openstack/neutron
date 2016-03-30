@@ -21,5 +21,8 @@ ip_exec: IpNetnsExecFilter, ip, root
 
 # tc commands needed for QoS support
 tc_replace_tbf: RegExpFilter, tc, root, tc, qdisc, replace, dev, .+, root, tbf, rate, .+, latency, .+, burst, .+
-tc_delete: RegExpFilter, tc, root, tc, qdisc, del, dev, .+, root
-tc_show: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
+tc_add_ingress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, ingress, handle, .+
+tc_delete: RegExpFilter, tc, root, tc, qdisc, del, dev, .+, .+
+tc_show_qdisc: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
+tc_show_filters: RegExpFilter, tc, root, tc, filter, show, dev, .+, parent, .+
+tc_add_filter: RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, all, prio, .+, basic, police, rate, .+, burst, .+, mtu, .+, drop

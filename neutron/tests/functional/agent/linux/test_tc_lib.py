@@ -26,44 +26,64 @@ LATENCY = 50
 BW_LIMIT = 1024
 BURST = 512
 
-DEV_NAME = "test_tap"
-MAC_ADDRESS = "fa:16:3e:01:01:01"
+BASE_DEV_NAME = "test_tap"
 
 
 class TcLibTestCase(functional_base.BaseSudoTestCase):
 
-    def setUp(self):
-        super(TcLibTestCase, self).setUp()
-        self.create_device()
-        self.tc = tc_lib.TcCommand(DEV_NAME, TEST_HZ_VALUE)
-
-    def create_device(self):
-        """Create a tuntap with the specified attributes.
+    def create_device(self, name):
+        """Create a tuntap with the specified name.
 
         The device is cleaned up at the end of the test.
         """
 
         ip = ip_lib.IPWrapper()
-        tap_device = ip.add_tuntap(DEV_NAME)
+        tap_device = ip.add_tuntap(name)
         self.addCleanup(tap_device.link.delete)
-        tap_device.link.set_address(MAC_ADDRESS)
         tap_device.link.set_up()
 
-    def test_bandwidth_limit(self):
-        self.tc.set_bw_limit(BW_LIMIT, BURST, LATENCY)
-        bw_limit, burst = self.tc.get_bw_limits()
+    def test_filters_bandwidth_limit(self):
+        device_name = "%s_filters" % BASE_DEV_NAME
+        self.create_device(device_name)
+        tc = tc_lib.TcCommand(device_name, TEST_HZ_VALUE)
+
+        tc.set_filters_bw_limit(BW_LIMIT, BURST)
+        bw_limit, burst = tc.get_filters_bw_limits()
         self.assertEqual(BW_LIMIT, bw_limit)
         self.assertEqual(BURST, burst)
 
         new_bw_limit = BW_LIMIT + 500
         new_burst = BURST + 50
 
-        self.tc.update_bw_limit(new_bw_limit, new_burst, LATENCY)
-        bw_limit, burst = self.tc.get_bw_limits()
+        tc.update_filters_bw_limit(new_bw_limit, new_burst)
+        bw_limit, burst = tc.get_filters_bw_limits()
         self.assertEqual(new_bw_limit, bw_limit)
         self.assertEqual(new_burst, burst)
 
-        self.tc.delete_bw_limit()
-        bw_limit, burst = self.tc.get_bw_limits()
+        tc.delete_filters_bw_limit()
+        bw_limit, burst = tc.get_filters_bw_limits()
+        self.assertIsNone(bw_limit)
+        self.assertIsNone(burst)
+
+    def test_tbf_bandwidth_limit(self):
+        device_name = "%s_tbf" % BASE_DEV_NAME
+        self.create_device(device_name)
+        tc = tc_lib.TcCommand(device_name, TEST_HZ_VALUE)
+
+        tc.set_tbf_bw_limit(BW_LIMIT, BURST, LATENCY)
+        bw_limit, burst = tc.get_tbf_bw_limits()
+        self.assertEqual(BW_LIMIT, bw_limit)
+        self.assertEqual(BURST, burst)
+
+        new_bw_limit = BW_LIMIT + 500
+        new_burst = BURST + 50
+
+        tc.update_tbf_bw_limit(new_bw_limit, new_burst, LATENCY)
+        bw_limit, burst = tc.get_tbf_bw_limits()
+        self.assertEqual(new_bw_limit, bw_limit)
+        self.assertEqual(new_burst, burst)
+
+        tc.delete_tbf_bw_limit()
+        bw_limit, burst = tc.get_tbf_bw_limits()
         self.assertIsNone(bw_limit)
         self.assertIsNone(burst)

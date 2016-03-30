@@ -37,21 +37,21 @@ class QosLinuxbridgeAgentDriver(qos.QosAgentDriver):
     @log_helpers.log_method_call
     def create_bandwidth_limit(self, port, rule):
         tc_wrapper = self._get_tc_wrapper(port)
-        tc_wrapper.set_bw_limit(
-            rule.max_kbps, rule.max_burst_kbps, cfg.CONF.QOS.tbf_latency
+        tc_wrapper.set_filters_bw_limit(
+            rule.max_kbps, rule.max_burst_kbps
         )
 
     @log_helpers.log_method_call
     def update_bandwidth_limit(self, port, rule):
         tc_wrapper = self._get_tc_wrapper(port)
-        tc_wrapper.update_bw_limit(
-            rule.max_kbps, rule.max_burst_kbps, cfg.CONF.QOS.tbf_latency
+        tc_wrapper.update_filters_bw_limit(
+            rule.max_kbps, rule.max_burst_kbps
         )
 
     @log_helpers.log_method_call
     def delete_bandwidth_limit(self, port):
         tc_wrapper = self._get_tc_wrapper(port)
-        tc_wrapper.delete_bw_limit()
+        tc_wrapper.delete_filters_bw_limit()
 
     def _get_tc_wrapper(self, port):
         return tc_lib.TcCommand(
