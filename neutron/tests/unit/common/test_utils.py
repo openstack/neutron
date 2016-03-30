@@ -32,8 +32,8 @@ from neutron.tests.common import helpers
 
 
 class TestParseMappings(base.BaseTestCase):
-    def parse(self, mapping_list, unique_values=True):
-        return utils.parse_mappings(mapping_list, unique_values)
+    def parse(self, mapping_list, unique_values=True, unique_keys=True):
+        return utils.parse_mappings(mapping_list, unique_values, unique_keys)
 
     def test_parse_mappings_fails_for_missing_separator(self):
         with testtools.ExpectedException(ValueError):
@@ -72,6 +72,11 @@ class TestParseMappings(base.BaseTestCase):
 
     def test_parse_mappings_succeeds_for_no_mappings(self):
         self.assertEqual({}, self.parse(['']))
+
+    def test_parse_mappings_succeeds_for_nonuniq_key(self):
+        self.assertEqual({'key': ['val1', 'val2']},
+                         self.parse(['key:val1', 'key:val2', 'key:val2'],
+                                    unique_keys=False))
 
 
 class TestParseTunnelRangesMixin(object):
