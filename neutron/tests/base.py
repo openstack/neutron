@@ -102,7 +102,10 @@ def bool_from_env(key, strict=False, default=False):
 
 def sanitize_log_path(path):
     # Sanitize the string so that its log path is shell friendly
-    return path.replace(' ', '-').replace('(', '_').replace(')', '_')
+    replace_map = {' ': '-', '(': '_', ')': '_'}
+    for s, r in six.iteritems(replace_map):
+        path = path.replace(s, r)
+    return path
 
 
 class AttributeDict(dict):
