@@ -90,6 +90,7 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
         prefix_len = subnet_cidr.prefixlen
         subnet = self.create_subnet(network,
                                     cidr=subnet_cidr,
+                                    enable_dhcp=False,
                                     mask_bits=mask_bits,
                                     ip_version=ip_version)
         return subnet, prefix_len
