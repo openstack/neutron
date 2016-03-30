@@ -185,6 +185,37 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ObjectFieldsModel
+
+    foreign_keys = {'field1': 'id', 'field2': 'id'}
+
+    fields = {
+        'field1': obj_fields.UUIDField(),
+        'field2': obj_fields.UUIDField(),
+    }
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'obj_field': obj_fields.ListOfObjectsField(
+            'FakeNeutronObjectMultipleForeignKeys')
+    }
+
+    synthetic_fields = ['obj_field']
+
+
 def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
 
@@ -228,6 +259,7 @@ class _BaseObjectTestCase(object):
             fixture.VersionedObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)
         self.obj_registry.register(FakeWeirdKeySmallNeutronObject)
+        self.obj_registry.register(FakeNeutronObjectMultipleForeignKeys)
         synthetic_obj_fields = self.get_random_fields(FakeSmallNeutronObject)
         self.model_map = {
             self._test_class.db_model: self.db_objs,
@@ -548,6 +580,17 @@ class BaseDbObjectCompositePrimaryKeyWithIdTestCase(BaseObjectIfaceTestCase):
 class BaseDbObjectRenamedFieldTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectRenamedField
+
+
+class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
+                                              test_base.BaseTestCase):
+
+    _test_class = FakeNeutronObjectSyntheticField
+
+    def test_load_synthetic_db_fields_with_multiple_foreign_keys(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        self.assertRaises(base.NeutronSyntheticFieldMultipleForeignKeys,
+                          obj.load_synthetic_db_fields)
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
