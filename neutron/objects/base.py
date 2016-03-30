@@ -274,11 +274,11 @@ class NeutronDbObject(NeutronObject):
 
     def load_synthetic_db_fields(self):
         """
-        This method loads the synthetic fields that are stored in a different
-        table from the main object
+        Load the synthetic fields that are stored in a different table from the
+        main object.
 
         This method doesn't take care of loading synthetic fields that aren't
-        stored in the DB, e.g. 'shared' in rbac policy
+        stored in the DB, e.g. 'shared' in RBAC policy.
         """
 
         # TODO(rossella_s) Find a way to handle ObjectFields with
