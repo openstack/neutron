@@ -82,8 +82,8 @@ class ResourceAllocator(object):
                 return resource
 
         raise ValueError(
-            'Could not allocate a new resource in %s from pool %s' %
-            (self.__class__.__name__, allocations))
+            'Could not allocate a new resource of type %s from pool %s' %
+            (self._resource_name, allocations))
 
     @utils.synchronized('resource_allocator', external=True, lock_path='/tmp')
     def release(self, resource):
