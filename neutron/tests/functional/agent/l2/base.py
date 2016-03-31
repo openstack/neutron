@@ -184,18 +184,20 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         return {'id': uuidutils.generate_uuid(),
                 'tenant_id': uuidutils.generate_uuid()}
 
-    def _plug_ports(self, network, ports, agent, ip_len=24,
-                    bridge=None):
+    def _plug_ports(self, network, ports, agent,
+                    bridge=None, namespace=None):
+        if namespace is None:
+            namespace = self.namespace
         for port in ports:
             bridge = bridge or agent.int_br
             self.driver.plug(
                 network.get('id'), port.get('id'), port.get('vif_name'),
                 port.get('mac_address'),
-                bridge.br_name, namespace=self.namespace)
-            ip_cidrs = ["%s/%s" % (port.get('fixed_ips')[0][
-                'ip_address'], ip_len)]
+                bridge.br_name, namespace=namespace)
+            ip_cidrs = ["%s/8" % (port.get('fixed_ips')[0][
+                'ip_address'])]
             self.driver.init_l3(port.get('vif_name'), ip_cidrs,
-                                namespace=self.namespace)
+                                namespace=namespace)
 
     def _unplug_ports(self, ports, agent):
         for port in ports:
@@ -206,9 +208,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         dev = {'device': port['id'],
                'port_id': port['id'],
                'network_id': network['id'],
-               'network_type': 'vlan',
-               'physical_network': 'physnet',
-               'segmentation_id': 1,
+               'network_type': network.get('network_type', 'vlan'),
+               'physical_network': network.get('physical_network', 'physnet'),
+               'segmentation_id': network.get('segmentation_id', 1),
                'fixed_ips': port['fixed_ips'],
                'device_owner': 'compute',
                'port_security_enabled': True,
@@ -367,12 +369,13 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                               ancillary_bridge=None,
                               trigger_resync=False,
                               failed_dev_up=False,
-                              failed_dev_down=False):
+                              failed_dev_down=False,
+                              network=None):
         self.ports = port_dicts
         self.agent = self.create_agent(create_tunnels=create_tunnels,
                                        ancillary_bridge=ancillary_bridge)
         self.polling_manager = self.start_agent(self.agent, ports=self.ports)
-        self.network = self._create_test_network_dict()
+        self.network = network or self._create_test_network_dict()
         if trigger_resync:
             self._prepare_resync_trigger(self.agent)
         elif failed_dev_up:
@@ -382,3 +385,18 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
         self._plug_ports(self.network, self.ports, self.agent,
                          bridge=ancillary_bridge)
+
+    def plug_ports_to_phys_br(self, network, ports, namespace=None):
+        physical_network = network.get('physical_network', 'physnet')
+        phys_segmentation_id = network.get('segmentation_id', None)
+        network_type = network.get('network_type', 'flat')
+
+        phys_br = self.agent.phys_brs[physical_network]
+
+        self._plug_ports(network, ports, self.agent, bridge=phys_br,
+                         namespace=namespace)
+
+        if phys_segmentation_id and network_type == 'vlan':
+            for port in ports:
+                phys_br.set_db_attribute(
+                    "Port", port['vif_name'], "tag", phys_segmentation_id)
