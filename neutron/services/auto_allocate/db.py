@@ -42,7 +42,7 @@ IS_DEFAULT = 'is_default'
 CHECK_REQUIREMENTS = 'dry-run'
 
 
-def _extend_external_network_default(self, net_res, net_db):
+def _extend_external_network_default(core_plugin, net_res, net_db):
     """Add is_default field to 'show' response."""
     if net_db.external is not None:
         net_res[IS_DEFAULT] = net_db.external.is_default
