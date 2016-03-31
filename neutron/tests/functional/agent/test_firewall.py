@@ -355,6 +355,9 @@ class FirewallTestCase(BaseFirewallTestCase):
                                          direction=self.tester.INGRESS)
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         src_port=68, dst_port=67,
+                                         direction=self.tester.EGRESS)
 
     @skip_if_firewall('openvswitch')
     def test_ip_spoofing_works_without_port_security_enabled(self):
