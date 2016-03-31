@@ -15,10 +15,12 @@
 import os
 
 import fixtures
+from oslo_log import log as logging
 
 from neutron.common import utils
 
 
+LOG = logging.getLogger(__name__)
 MAX_ATTEMPTS = 100
 TMP_DIR = '/tmp/neutron_exclusive_resources/'
 
@@ -63,6 +65,7 @@ class ResourceAllocator(object):
         self._allocator_function = allocator_function
         self._state_file_path = os.path.join(TMP_DIR, resource_name)
         self._validator = validator if validator else is_valid
+        self._resource_name = resource_name
 
     @utils.synchronized('resource_allocator', external=True, lock_path='/tmp')
     def allocate(self):
@@ -73,6 +76,9 @@ class ResourceAllocator(object):
             if self._validator(resource, allocations):
                 allocations.add(resource)
                 self._write_allocations(allocations)
+                LOG.debug('Allocated exclusive resource %s of type %s. '
+                          'The allocations are now: %s',
+                          resource, self._resource_name, allocations)
                 return resource
 
         raise ValueError(
@@ -87,6 +93,9 @@ class ResourceAllocator(object):
             self._write_allocations(allocations)
         else:  # Clean up the file if we're releasing the last allocation
             os.remove(self._state_file_path)
+        LOG.debug('Released exclusive resource %s of type %s. The allocations '
+                  'are now: %s',
+                  resource, self._resource_name, allocations)
 
     def _get_allocations(self):
         utils.ensure_dir(TMP_DIR)
