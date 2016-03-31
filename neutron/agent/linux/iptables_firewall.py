@@ -43,6 +43,7 @@ CHAIN_NAME_PREFIX = {firewall.INGRESS_DIRECTION: 'i',
                      SPOOF_FILTER: 's'}
 DIRECTION_IP_PREFIX = {firewall.INGRESS_DIRECTION: 'source_ip_prefix',
                        firewall.EGRESS_DIRECTION: 'dest_ip_prefix'}
+ICMPV6_ALLOWED_UNSPEC_ADDR_TYPES = [131, 135, 143]
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
 # length of all device prefixes (e.g. qvo, tap, qvb)
@@ -384,21 +385,25 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv4_pairs.append((mac, ip_address))
         else:
             mac_ipv6_pairs.append((mac, ip_address))
+            lla = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+                    constants.IPV6_LLA_PREFIX, mac))
+            mac_ipv6_pairs.append((mac, lla))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
+        # Fixed rules for traffic sourced from unspecified addresses: 0.0.0.0
+        # and ::
         # Allow dhcp client discovery and request
         ipv4_rules += [comment_rule('-s 0.0.0.0/32 -d 255.255.255.255/32 '
                                     '-p udp -m udp --sport 68 --dport 67 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
-        # Drop Router Advts from the port.
-        ipv6_rules += [comment_rule('-p ipv6-icmp -m icmp6 --icmpv6-type %s '
-                                    '-j DROP' % constants.ICMPV6_TYPE_RA,
-                                    comment=ic.IPV6_RA_DROP)]
-        ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
-                                    comment=ic.IPV6_ICMP_ALLOW)]
-        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
-                                    '-m udp --dport 547 '
-                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+        # Allow neighbor solicitation and multicast listener discovery
+        # from the unspecified address for duplicate address detection
+        for icmp6_type in ICMPV6_ALLOWED_UNSPEC_ADDR_TYPES:
+            ipv6_rules += [comment_rule('-s ::/128 -d ff02::/16 '
+                                        '-p ipv6-icmp -m icmp6 '
+                                        '--icmpv6-type %s -j RETURN' %
+                                        icmp6_type,
+                                        comment=ic.IPV6_ICMP_ALLOW)]
         mac_ipv4_pairs = []
         mac_ipv6_pairs = []
 
@@ -420,8 +425,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                        mac_ipv4_pairs, ipv4_rules)
         self._setup_spoof_filter_chain(port, self.iptables.ipv6['filter'],
                                        mac_ipv6_pairs, ipv6_rules)
+        # Fixed rules for traffic after source address is verified
         # Allow dhcp client renewal and rebinding
         ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+        # Drop Router Advts from the port.
+        ipv6_rules += [comment_rule('-p ipv6-icmp -m icmp6 --icmpv6-type %s '
+                                    '-j DROP' % constants.ICMPV6_TYPE_RA,
+                                    comment=ic.IPV6_RA_DROP)]
+        ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
+                                    comment=ic.IPV6_ICMP_ALLOW)]
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
+                                    '-m udp --dport 547 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
