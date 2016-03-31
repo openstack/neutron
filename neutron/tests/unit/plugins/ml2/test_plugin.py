@@ -457,6 +457,12 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     req = self.new_delete_request('subnets', subnet_id)
                     res = req.get_response(self.api)
                     self.assertEqual(204, res.status_int)
+                    # Validate chat check is called twice, i.e. after the
+                    # first check transaction gets restarted.
+                    calls = [mock.call(mock.ANY, subnet_id),
+                             mock.call(mock.ANY, subnet_id)]
+                    plugin._subnet_check_ip_allocations.assert_has_calls = (
+                        calls)
 
 
 class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
