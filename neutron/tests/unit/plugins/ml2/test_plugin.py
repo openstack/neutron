@@ -1171,6 +1171,18 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                                  mech_context._binding.router_id)
                 self.assertEqual(host_id, mech_context._binding.host)
 
+    def test_update_dvr_port_binding_on_concurrent_port_delete(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port() as port:
+            port = {
+                'id': port['port']['id'],
+                portbindings.HOST_ID: 'foo_host',
+            }
+            with mock.patch.object(plugin, 'get_port', new=plugin.delete_port):
+                res = plugin.update_dvr_port_binding(
+                    self.context, 'foo_port_id', {'port': port})
+        self.assertIsNone(res)
+
     def test_update_dvr_port_binding_on_non_existent_port(self):
         plugin = manager.NeutronManager.get_plugin()
         port = {
