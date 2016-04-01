@@ -143,11 +143,11 @@ class RouterInfo(object):
         return self.router.get(l3_constants.FLOATINGIP_KEY, [])
 
     def floating_forward_rules(self, floating_ip, fixed_ip):
-        return [('PREROUTING', '-d %s -j DNAT --to %s' %
+        return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
-                ('OUTPUT', '-d %s -j DNAT --to %s' %
+                ('OUTPUT', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
-                ('float-snat', '-s %s -j SNAT --to %s' %
+                ('float-snat', '-s %s/32 -j SNAT --to-source %s' %
                  (fixed_ip, floating_ip))]
 
     def process_floating_ip_nat_rules(self):
