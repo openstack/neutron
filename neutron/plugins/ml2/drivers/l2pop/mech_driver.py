@@ -185,7 +185,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
     def _get_tunnels(self, tunnel_network_ports, exclude_host):
         agents = {}
-        for _, agent in tunnel_network_ports:
+        for __, agent in tunnel_network_ports:
             if agent.host == exclude_host:
                 continue
 
