@@ -13,12 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import functools
+import multiprocessing
 import os
 import random
 import re
 import select
 import shlex
 import subprocess
+import time
 
 import fixtures
 import netaddr
@@ -256,3 +258,31 @@ class NetcatTester(object):
                     proc.kill()
                     proc.wait()
                 setattr(self, proc_attr, None)
+
+
+class SleepyProcessFixture(fixtures.Fixture):
+    """
+    Process fixture that performs time.sleep for the given number of seconds.
+    """
+
+    def __init__(self, timeout=60):
+        super(SleepyProcessFixture, self).__init__()
+        self.timeout = timeout
+
+    @staticmethod
+    def yawn(seconds):
+        time.sleep(seconds)
+
+    def setUp(self):
+        super(SleepyProcessFixture, self).setUp()
+        self.process = multiprocessing.Process(target=self.yawn,
+                                               args=[self.timeout])
+        self.process.start()
+        self.addCleanup(self.destroy)
+
+    def destroy(self):
+        self.process.terminate()
+
+    @property
+    def pid(self):
+        return self.process.pid
