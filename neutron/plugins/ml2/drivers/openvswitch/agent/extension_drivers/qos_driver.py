@@ -86,8 +86,8 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
                 actions = "mod_nw_tos:" + mark + ","
                 actions += ','.join([act for act in acts
                                      if "mod_nw_tos:" not in act])
-                self.br_int.mod_flows(reg2=0, in_port=port, table=0,
-                                      actions=actions)
+                self.br_int.mod_flow(reg2=0, in_port=port, table=0,
+                                     actions=actions)
 
     def delete_dscp_marking(self, port):
         port_name = port['vif_port'].port_name
