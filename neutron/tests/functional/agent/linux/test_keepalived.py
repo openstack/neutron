@@ -13,10 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fixtures
-from multiprocessing import Process
-import time
-
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -24,6 +20,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
 from neutron.tests import base
+from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.unit.agent.linux import test_keepalived
 
 
@@ -89,7 +86,7 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
         # existing non-keepalived process. This situation can happen e.g.
         # after hard node reset.
 
-        spawn_process = SleepyProcessFixture()
+        spawn_process = helpers.SleepyProcessFixture()
         self.useFixture(spawn_process)
 
         with open(pid_file, "w") as f_pid_file:
@@ -113,23 +110,3 @@ class KeepalivedManagerTestCase(base.BaseTestCase,
         self._test_keepalived_spawns_conflicting_pid(
             process,
             self.manager.get_vrrp_pid_file_name(pid_file))
-
-
-class SleepyProcessFixture(fixtures.Fixture):
-
-    def __init__(self):
-        super(SleepyProcessFixture, self).__init__()
-
-    @staticmethod
-    def yawn():
-        time.sleep(60)
-
-    def _setUp(self):
-        self.process = Process(target=self.yawn)
-
-    def destroy(self):
-        self.process.terminate()
-
-    @property
-    def pid(self):
-        return self.process.pid
