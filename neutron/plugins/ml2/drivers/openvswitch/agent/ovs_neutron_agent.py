@@ -1102,7 +1102,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 bridge, prefix=constants.PEER_PHYSICAL_PREFIX)
             # Interface type of port for physical and integration bridges must
             # be same, so check only one of them.
-            int_type = self.int_br.db_get_val("Interface", int_if_name, "type")
+            # Not logging error here, as the interface may not exist yet.
+            # Type check is done to cleanup wrong interface if any.
+            int_type = self.int_br.db_get_val("Interface",
+                int_if_name, "type", log_errors=False)
             if self.use_veth_interconnection:
                 # Drop ports if the interface types doesn't match the
                 # configuration value.
