@@ -521,7 +521,7 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
         self.admin_client.delete_rbac_policy(wildcard_rbac['id'])
         self.client.list_rbac_policies(id=client_rbac['id'])
 
-    @test.idempotent_id('328b1f70-d424-11e5-a57f-54ee756c66df')
+    @test.idempotent_id('1997b00c-0c75-4e43-8ce2-999f9fa555ee')
     def test_net_bound_shared_policy_wildcard_and_tenant_id_wild_remains(self):
         client_rbac, wildcard_rbac = self._create_net_bound_qos_rbacs()
         # remove client_rbac policy the wildcard share should remain
@@ -683,7 +683,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     def resource_setup(cls):
         super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
 
-    @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
+    @test.idempotent_id('f5cbaceb-5829-497c-9c60-ad70969e9a08')
     def test_rule_create(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
@@ -712,7 +712,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(qos_consts.RULE_TYPE_DSCP_MARK,
                          policy_rules[0]['type'])
 
-    @test.idempotent_id('8a59b00b-ab01-4787-92f8-93a5cdf5e378')
+    @test.idempotent_id('08553ffe-030f-4037-b486-7e0b8fb9385a')
     def test_rule_create_fail_for_the_same_type(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
@@ -725,7 +725,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
                           policy_id=policy['id'],
                           dscp_mark=self.VALID_DSCP_MARK2)
 
-    @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
+    @test.idempotent_id('76f632e5-3175-4408-9a32-3625e599c8a2')
     def test_rule_update(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
@@ -741,7 +741,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         retrieved_policy = retrieved_policy['dscp_marking_rule']
         self.assertEqual(self.VALID_DSCP_MARK2, retrieved_policy['dscp_mark'])
 
-    @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
+    @test.idempotent_id('74f81904-c35f-48a3-adae-1f5424cb3c18')
     def test_rule_delete(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
@@ -759,14 +759,14 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
                           self.admin_client.show_dscp_marking_rule,
                           policy['id'], rule['id'])
 
-    @test.idempotent_id('f211222c-5808-46cb-a961-983bbab6b852')
+    @test.idempotent_id('9cb8ef5c-96fc-4978-9ee0-e3b02bab628a')
     def test_rule_create_rule_nonexistent_policy(self):
         self.assertRaises(
             exceptions.NotFound,
             self.admin_client.create_dscp_marking_rule,
             'policy', self.VALID_DSCP_MARK1)
 
-    @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
+    @test.idempotent_id('bf6002ea-29de-486f-b65d-08aea6d4c4e2')
     def test_rule_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
             exceptions.Forbidden,
@@ -783,7 +783,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
             self.admin_client.create_dscp_marking_rule,
             policy['id'], 58)
 
-    @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
+    @test.idempotent_id('c565131d-4c80-4231-b0f3-9ae2be4de129')
     def test_get_rules_by_policy(self):
         policy1 = self.create_qos_policy(name='test-policy1',
                                          description='test policy1',

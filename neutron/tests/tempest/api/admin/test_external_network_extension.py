@@ -53,7 +53,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
             external_gateway_info={'network_id': net['id']})['router']
         self.addCleanup(self.admin_client.delete_router, r['id'])
 
-    @test.idempotent_id('afd8f1b7-a81e-4629-bca8-a367b3a144bb')
+    @test.idempotent_id('eff9443a-2d04-48ee-840e-d955ac564bcd')
     def test_regular_client_blocked_from_creating_external_wild_policies(self):
         net = self.create_network()
         with testtools.ExpectedException(lib_exc.Forbidden):

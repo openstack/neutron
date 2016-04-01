@@ -53,7 +53,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertEqual(network['port_security_enabled'], port_sec_net)
         self.assertEqual(port['port_security_enabled'], expected)
 
-    @test.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
+    @test.idempotent_id('fe7c27b9-f320-4daf-b977-b1547c43daf6')
     @test.requires_ext(extension='port-security', service='network')
     def test_create_port_sec_with_security_group(self):
         network = self.create_network(port_security_enabled=True)
@@ -69,7 +69,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertEmpty(port['security_groups'])
 
     @test.attr(type='negative')
-    @test.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
+    @test.idempotent_id('ff11226c-a5ff-4ad4-8480-0840e36e47a9')
     @test.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_port_failed(self):
         network = self.create_network()

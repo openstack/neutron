@@ -14,6 +14,7 @@
 #    under the License.
 from oslo_log import log as logging
 from tempest.common import waiters
+from tempest import test
 
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
@@ -30,6 +31,8 @@ class NetworkBasicTest(base.BaseTempestTestCase):
     # Default to ipv4.
     _ip_version = 4
 
+
+    @test.idempotent_id('de07fe0a-e955-449e-b48b-8641c14cd52e')
     def test_basic_instance(self):
         network = self.create_network()
         subnet = self.create_subnet(network)

@@ -58,7 +58,7 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                  id=metering_label_rule_id))
         self.assertEqual(len(rules['metering_label_rules']), 0)
 
-    @test.idempotent_id('e2fb2f8c-45bf-429a-9f17-171c70444612')
+    @test.idempotent_id('05d7c750-6d26-44d6-82f3-c9dd1f81f358')
     def test_list_metering_labels(self):
         # Verify label filtering
         body = self.admin_client.list_metering_labels(id=33)
@@ -81,7 +81,7 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                   id=metering_label['id']))
         self.assertEqual(len(labels['metering_labels']), 1)
 
-    @test.idempotent_id('30abb445-0eea-472e-bd02-8649f54a5968')
+    @test.idempotent_id('cfc500d9-9de6-4847-8803-62889c097d45')
     def test_show_metering_label(self):
         # Verifies the details of a label
         body = self.admin_client.show_metering_label(self.metering_label['id'])
