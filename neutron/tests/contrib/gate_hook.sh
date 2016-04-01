@@ -54,6 +54,7 @@ case $VENV in
         start_new_ovs
     fi
 
+    load_conf_hook iptables_verify
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
     ;;
@@ -68,6 +69,9 @@ case $VENV in
     load_rc_hook qos
     load_rc_hook trunk
     load_conf_hook osprofiler
+    if [[ "$VENV" =~ "dsvm-scenario" ]]; then
+        load_conf_hook iptables_verify
+    fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
     fi
