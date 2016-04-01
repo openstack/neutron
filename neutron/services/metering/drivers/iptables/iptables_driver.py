@@ -73,6 +73,7 @@ class RouterWithMetering(object):
         self.iptables_manager = iptables_manager.IptablesManager(
             namespace=self.ns_name,
             binary_name=WRAP_NAME,
+            state_less=True,
             use_ipv6=ipv6_utils.is_enabled())
         self.metering_labels = {}
 
