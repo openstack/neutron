@@ -16,6 +16,7 @@ import testtools
 
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
+from neutron.common import constants
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
@@ -83,3 +84,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         with testtools.ExpectedException(
             securitygroup.SecurityGroupRuleNotFound):
             self.mixin.delete_security_group_rule(self.ctx, 'foo_rule')
+
+    def test_get_ip_proto_name_and_num(self):
+        protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),
+                     'blah', '111']
+        protocol_names_nums = (
+            [[constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_UDP)],
+             [constants.PROTO_NAME_TCP, str(constants.PROTO_NUM_TCP)],
+             ['blah', 'blah'], ['111', '111']])
+
+        for i, protocol in enumerate(protocols):
+            self.assertEqual(protocol_names_nums[i],
+                             self.mixin._get_ip_proto_name_and_num(protocol))

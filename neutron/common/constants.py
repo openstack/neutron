@@ -130,6 +130,13 @@ PROTO_NUM_ICMP = 1
 PROTO_NUM_ICMP_V6 = 58
 PROTO_NUM_UDP = 17
 
+IP_PROTOCOL_MAP = {PROTO_NAME_TCP: PROTO_NUM_TCP,
+                   PROTO_NAME_UDP: PROTO_NUM_UDP,
+                   PROTO_NAME_ICMP: PROTO_NUM_ICMP,
+                   PROTO_NAME_ICMP_V6: PROTO_NUM_ICMP_V6}
+
+IP_PROTOCOL_NUM_TO_NAME_MAP = {str(v): k for k, v in IP_PROTOCOL_MAP.items()}
+
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
