@@ -63,7 +63,7 @@ class MetadataDriver(object):
         return [('PREROUTING', '-d 169.254.169.254/32 '
                  '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
-                 '--to-port %(port)s' %
+                 '--to-ports %(port)s' %
                  {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
                   'port': port})]
 
