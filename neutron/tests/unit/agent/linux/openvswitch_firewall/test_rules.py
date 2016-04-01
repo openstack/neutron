@@ -185,7 +185,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         expected_flows = [{
             'table': ovs_consts.RULES_INGRESS_TABLE,
             'dl_dst': self.port.mac,
-            'actions': 'output:1',
+            'actions': 'strip_vlan,output:1',
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
         self._test_create_protocol_flows_helper(
