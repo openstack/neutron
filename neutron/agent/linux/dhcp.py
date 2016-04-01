@@ -1293,7 +1293,7 @@ class DeviceManager(object):
         """Ensure DHCP reply packets always have correct UDP checksums."""
         iptables_mgr = iptables_manager.IptablesManager(use_ipv6=False,
                                                         namespace=namespace)
-        ipv4_rule = ('-p udp --dport %d -j CHECKSUM --checksum-fill'
+        ipv4_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCP_RESPONSE_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
         iptables_mgr.apply()
