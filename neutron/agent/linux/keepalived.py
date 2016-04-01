@@ -24,6 +24,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
+from neutron.i18n import _, _LE
 
 VALID_STATES = ['MASTER', 'BACKUP']
 VALID_AUTH_TYPES = ['AH', 'PASS']
@@ -378,6 +379,18 @@ class KeepalivedManager(object):
 
         return config_path
 
+    @staticmethod
+    def _safe_remove_pid_file(pid_file):
+        try:
+            os.remove(pid_file)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                LOG.error(_LE("Could not delete file %s, keepalived can "
+                              "refuse to start."), pid_file)
+
+    def get_vrrp_pid_file_name(self, base_pid_file):
+        return '%s-vrrp' % base_pid_file
+
     def get_conf_on_disk(self):
         config_path = self.get_full_config_file_path('keepalived.conf')
         try:
@@ -392,7 +405,7 @@ class KeepalivedManager(object):
 
         keepalived_pm = self.get_process()
         vrrp_pm = self._get_vrrp_process(
-            '%s-vrrp' % keepalived_pm.get_pid_file_name())
+            self.get_vrrp_pid_file_name(keepalived_pm.get_pid_file_name()))
 
         keepalived_pm.default_cmd_callback = (
             self._get_keepalived_process_callback(vrrp_pm, config_path))
@@ -436,10 +449,14 @@ class KeepalivedManager(object):
             # and spawn keepalived successfully.
             if vrrp_pm.active:
                 vrrp_pm.disable()
+
+            self._safe_remove_pid_file(pid_file)
+            self._safe_remove_pid_file(self.get_vrrp_pid_file_name(pid_file))
+
             cmd = ['keepalived', '-P',
                    '-f', config_path,
                    '-p', pid_file,
-                   '-r', '%s-vrrp' % pid_file]
+                   '-r', self.get_vrrp_pid_file_name(pid_file)]
             return cmd
 
         return callback
