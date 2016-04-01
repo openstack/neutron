@@ -13,6 +13,8 @@
 # under the License.
 #
 
+import functools
+
 import netaddr
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -26,6 +28,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
+from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -236,7 +239,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
     def _create_ha_network_tenant_binding(self, context, tenant_id,
                                           network_id):
-        with context.session.begin(subtransactions=True):
+        with context.session.begin(nested=True):
             ha_network = L3HARouterNetwork(tenant_id=tenant_id,
                                            network_id=network_id)
             context.session.add(ha_network)
@@ -261,15 +264,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                  'status': constants.NET_STATUS_ACTIVE}}
         self._add_ha_network_settings(args['network'])
 
-        network = self._core_plugin.create_network(admin_ctx, args)
-        try:
-            ha_network = self._create_ha_network_tenant_binding(admin_ctx,
-                                                                tenant_id,
-                                                                network['id'])
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                self._core_plugin.delete_network(admin_ctx, network['id'])
+        creation = functools.partial(self._core_plugin.create_network,
+                                     admin_ctx, args)
+        content = functools.partial(self._create_ha_network_tenant_binding,
+                                    admin_ctx, tenant_id)
+        deletion = functools.partial(self._core_plugin.delete_network,
+                                     admin_ctx)
 
+        network, ha_network = common_db_mixin.safe_creation(
+            context, creation, deletion, content)
         try:
             self._create_ha_subnet(admin_ctx, network['id'], tenant_id)
         except Exception:
@@ -305,8 +308,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
         return num_agents
 
-    def _create_ha_port_binding(self, context, port_id, router_id):
-        with context.session.begin(subtransactions=True):
+    def _create_ha_port_binding(self, context, router_id, port_id):
+        with context.session.begin(nested=True):
             portbinding = L3HARouterAgentPortBinding(port_id=port_id,
                                                      router_id=router_id)
             context.session.add(portbinding)
@@ -314,23 +317,24 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         return portbinding
 
     def add_ha_port(self, context, router_id, network_id, tenant_id):
-        port = self._core_plugin.create_port(context, {
-            'port':
-            {'tenant_id': '',
-             'network_id': network_id,
-             'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-             'mac_address': attributes.ATTR_NOT_SPECIFIED,
-             'admin_state_up': True,
-             'device_id': router_id,
-             'device_owner': constants.DEVICE_OWNER_ROUTER_HA_INTF,
-             'name': constants.HA_PORT_NAME % tenant_id}})
+        args = {'tenant_id': '',
+                'network_id': network_id,
+                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                'admin_state_up': True,
+                'device_id': router_id,
+                'device_owner': constants.DEVICE_OWNER_ROUTER_HA_INTF,
+                'name': constants.HA_PORT_NAME % tenant_id}
 
-        try:
-            return self._create_ha_port_binding(context, port['id'], router_id)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                self._core_plugin.delete_port(context, port['id'],
-                                              l3_port_check=False)
+        creation = functools.partial(self._core_plugin.create_port,
+                                     context, {'port': args})
+        content = functools.partial(self._create_ha_port_binding, context,
+                                    router_id)
+        deletion = functools.partial(self._core_plugin.delete_port, context,
+                                     l3_port_check=False)
+        port, bindings = common_db_mixin.safe_creation(context, creation,
+                                                       deletion, content)
+        return bindings
 
     def _create_ha_interfaces(self, context, router, ha_network):
         admin_ctx = context.elevated()
