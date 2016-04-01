@@ -1,0 +1,10 @@
+---
+deprecations:
+  - The option ``[AGENT] prevent_arp_spoofing`` has been deprecated
+    and will be removed in Ocata release. ARP spoofing protection
+    should always be enabled unless its explicitly disabled via the
+    port security extension via the API. The primary reason it was
+    a config option was because it was merged at the end of Kilo
+    development cycle so it was not considered stable. It has been
+    enabled by default since Liberty and is considered stable
+    and there is no reason to keep this configurable.
