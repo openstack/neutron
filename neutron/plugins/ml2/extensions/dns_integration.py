@@ -23,10 +23,10 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import dns_db
 from neutron.db import models_v2
+from neutron.db import segments_db
 from neutron.extensions import dns
 from neutron import manager
 from neutron.plugins.common import utils as plugin_utils
-from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.services.externaldns import driver
 
@@ -187,7 +187,8 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
             return True
         if network['router:external']:
             return True
-        segments = db.get_network_segments(context.session, network['id'])
+        segments = segments_db.get_network_segments(context.session,
+                                                    network['id'])
         if len(segments) > 1:
             return False
         provider_net = segments[0]

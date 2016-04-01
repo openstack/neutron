@@ -18,8 +18,8 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 
 from neutron._i18n import _LW
+from neutron.db import segments_db
 from neutron.extensions import portbindings
-from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
@@ -42,8 +42,8 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
         super(NetworkContext, self).__init__(plugin, plugin_context)
         self._network = network
         self._original_network = original_network
-        self._segments = db.get_network_segments(plugin_context.session,
-                                                 network['id'])
+        self._segments = segments_db.get_network_segments(
+            plugin_context.session, network['id'])
 
     @property
     def current(self):
@@ -192,8 +192,8 @@ class PortContext(MechanismDriverContext, api.PortContext):
                 self._original_binding_levels[-1].segment_id)
 
     def _expand_segment(self, segment_id):
-        segment = db.get_segment_by_id(self._plugin_context.session,
-                                       segment_id)
+        segment = segments_db.get_segment_by_id(self._plugin_context.session,
+                                                segment_id)
         if not segment:
             LOG.warning(_LW("Could not expand segment %s"), segment_id)
         return segment

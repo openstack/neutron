@@ -63,6 +63,7 @@ from neutron.db import provisioning_blocks
 from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.db import segments_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
@@ -1682,7 +1683,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def filter_hosts_with_network_access(
             self, context, network_id, candidate_hosts):
-        segments = db.get_network_segments(context.session, network_id)
+        segments = segments_db.get_network_segments(context.session,
+                                                    network_id)
         return self.mechanism_manager.filter_hosts_with_segment_access(
             context, segments, candidate_hosts, self.get_agents)
 
