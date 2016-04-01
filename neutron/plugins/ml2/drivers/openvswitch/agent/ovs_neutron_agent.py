@@ -1169,9 +1169,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             else:
                 # associate patch ports to pass traffic
                 self.int_br.set_db_attribute('Interface', int_if_name,
-                                             'options:peer', phys_if_name)
+                                             'options', {'peer': phys_if_name})
                 br.set_db_attribute('Interface', phys_if_name,
-                                    'options:peer', int_if_name)
+                                    'options', {'peer': int_if_name})
 
     def update_stale_ofport_rules(self):
         # right now the ARP spoofing rules are the only thing that utilizes
