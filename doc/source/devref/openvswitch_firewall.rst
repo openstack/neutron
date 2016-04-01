@@ -246,27 +246,28 @@ remaining egress connections are sent to normal switching.
  table=73, priority=0 actions=drop
 
 ``table 81`` is similar to ``table 71``, allows basic ingress traffic for
-obtaining ip address and arp queries. Not tracked packets are sent to obtain
-conntrack information.
+obtaining ip address and arp queries. Note that vlan tag must be removed by
+adding ``strip_vlan`` to actions list, prior to injecting packet directly to
+port. Not tracked packets are sent to obtain conntrack information.
 
 ::
 
- table=81, priority=100,arp,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=output:1
- table=81, priority=100,arp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=output:2
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=130 actions=output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=131 actions=output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=132 actions=output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=135 actions=output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=136 actions=output:1
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=130 actions=output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=131 actions=output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=132 actions=output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=135 actions=output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=136 actions=output:2
- table=81, priority=95,udp,reg5=0x1,tp_src=67,tp_dst=68 actions=output:1
- table=81, priority=95,udp6,reg5=0x1,tp_src=547,tp_dst=546 actions=output:1
- table=81, priority=95,udp,reg5=0x2,tp_src=67,tp_dst=68 actions=output:2
- table=81, priority=95,udp6,reg5=0x2,tp_src=547,tp_dst=546 actions=output:2
+ table=81, priority=100,arp,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=81, priority=100,arp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=130 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=131 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=132 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=135 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=136 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=130 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=131 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=132 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=135 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=136 actions=strip_vlan,output:2
+ table=81, priority=95,udp,reg5=0x1,tp_src=67,tp_dst=68 actions=strip_vlan,output:1
+ table=81, priority=95,udp6,reg5=0x1,tp_src=547,tp_dst=546 actions=strip_vlan,output:1
+ table=81, priority=95,udp,reg5=0x2,tp_src=67,tp_dst=68 actions=strip_vlan,output:2
+ table=81, priority=95,udp6,reg5=0x2,tp_src=547,tp_dst=546 actions=strip_vlan,output:2
  table=81, priority=90,ct_state=-trk,ip,reg5=0x1 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
  table=81, priority=90,ct_state=-trk,ipv6,reg5=0x1 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
  table=81, priority=90,ct_state=-trk,ip,reg5=0x2 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
@@ -282,8 +283,8 @@ connections. In this case we allow all icmp traffic coming from
 
 ::
 
- table=82, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=output:2
- table=82, priority=70,ct_state=+new-est,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=output:2,ct(commit,zone=NXM_NX_REG6[0..15])
+ table=82, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=strip_vlan,output:2
+ table=82, priority=70,ct_state=+new-est,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),strip_vlan,output:2
  table=82, priority=50,ct_state=+inv+trk actions=drop
 
 The mechanism for dropping connections that are not allowed anymore is the
@@ -293,10 +294,10 @@ same as in ``table 72``.
 
  table=82, priority=50,ct_mark=0x1,reg5=0x1 actions=drop
  table=82, priority=50,ct_mark=0x1,reg5=0x2 actions=drop
- table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=output:1
- table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=output:2
- table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=output:1
- table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=output:2
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
  table=82, priority=40,ct_state=-est,reg5=0x1 actions=drop
  table=82, priority=40,ct_state=+est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
  table=82, priority=40,ct_state=-est,reg5=0x2 actions=drop
@@ -307,6 +308,7 @@ same as in ``table 72``.
 Future work
 -----------
 
+ - Create fullstack tests with tunneling enabled
  - Conjunctions in Openflow rules can be created to decrease the number of
    rules needed for remote security groups
  - Masking the port range can be used to avoid generating a single rule per
