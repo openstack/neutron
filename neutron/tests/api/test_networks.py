@@ -12,7 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import itertools
 
 import netaddr
 import six
@@ -392,29 +391,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self._create_verify_delete_subnet(
             enable_dhcp=True,
             **self.subnet_dict(['gateway', 'host_routes', 'dns_nameservers']))
-
-    @test.attr(type='smoke')
-    @test.idempotent_id('af774677-42a9-4e4b-bb58-16fe6a5bc1ec')
-    def test_external_network_visibility(self):
-        """Verifies user can see external networks but not subnets."""
-        body = self.client.list_networks(**{'router:external': True})
-        networks = [network['id'] for network in body['networks']]
-        self.assertNotEmpty(networks, "No external networks found")
-
-        nonexternal = [net for net in body['networks'] if
-                       not net['router:external']]
-        self.assertEmpty(nonexternal, "Found non-external networks"
-                                      " in filtered list (%s)." % nonexternal)
-        self.assertIn(CONF.network.public_network_id, networks)
-
-        subnets_iter = (network['subnets'] for network in body['networks'])
-        # subnets_iter is a list (iterator) of lists. This flattens it to a
-        # list of UUIDs
-        public_subnets_iter = itertools.chain(*subnets_iter)
-        body = self.client.list_subnets()
-        subnets = [sub['id'] for sub in body['subnets']
-                   if sub['id'] in public_subnets_iter]
-        self.assertEmpty(subnets, "Public subnets visible")
 
 
 class BulkNetworkOpsTestJSON(base.BaseNetworkTest):
