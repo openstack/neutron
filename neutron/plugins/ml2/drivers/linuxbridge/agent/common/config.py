@@ -41,6 +41,12 @@ vxlan_opts = [
                 help=_("Extension to use alongside ml2 plugin's l2population "
                        "mechanism driver. It enables the plugin to populate "
                        "VXLAN forwarding table.")),
+    cfg.BoolOpt('arp_responder', default=True,
+                help=_("Enable local ARP responder which provides local "
+                       "responses instead of performing ARP broadcast into "
+                       "the overlay. Enabling local ARP responder is not fully"
+                       "compatible with the allowed-address-pairs extension.")
+                ),
 ]
 
 bridge_opts = [

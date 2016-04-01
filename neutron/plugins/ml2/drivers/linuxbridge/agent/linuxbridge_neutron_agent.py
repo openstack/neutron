@@ -325,7 +325,7 @@ class LinuxBridgeManager(object):
             if cfg.CONF.VXLAN.tos:
                 args['tos'] = cfg.CONF.VXLAN.tos
             if cfg.CONF.VXLAN.l2_population:
-                args['proxy'] = True
+                args['proxy'] = cfg.CONF.VXLAN.arp_responder
             try:
                 int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
                                               **args)
