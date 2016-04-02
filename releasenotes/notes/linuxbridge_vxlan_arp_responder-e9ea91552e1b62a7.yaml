@@ -1,7 +1,7 @@
 ---
 fixes:
-    The Linuxbridge agent now supports the ability to toggle the local ARP
+  - The Linuxbridge agent now supports the ability to toggle the local ARP
     responder when L2Population is enabled. This ensures compatibility with
     the allowed-address-pairs extension.
-  - closes bug 1445089
+    Closes `bug 1445089 <https://bugs.launchpad.net/neutron/+bug/1445089>`__.
 
