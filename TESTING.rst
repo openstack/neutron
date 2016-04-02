@@ -311,8 +311,8 @@ API tests that belong to Tempest deal with a subset of Neutron's resources:
 * Router
 * Floating IP
 
-These resources were chosen for their ubiquitously. They are found in most
-Neutron depoloyments regardless of plugin, and are directly involved in the
+These resources were chosen for their ubiquity. They are found in most
+Neutron deployments regardless of plugin, and are directly involved in the
 networking and security of an instance. Together, they form the bare minimum
 needed by Neutron.
 
