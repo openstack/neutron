@@ -358,7 +358,7 @@ def _dvr_handle_unbound_allowed_addr_pair_del(
     if updated_port:
         LOG.debug("Allowed address pair port binding removed "
                   "from service port binding: %s", updated_port)
-    aa_fixed_ips = plugin._get_allowed_address_pair_fixed_ips(port)
+    aa_fixed_ips = plugin._get_allowed_address_pair_fixed_ips(context, port)
     if aa_fixed_ips:
         plugin.delete_arp_entry_for_dvr_service_port(
             context, port, fixed_ips_to_delete=aa_fixed_ips)
@@ -439,6 +439,10 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         new_port_profile = new_port.get(portbindings.PROFILE)
         if new_port_profile:
             dest_host = new_port_profile.get('migrating_to')
+            # This check is required to prevent an arp update
+            # of the allowed_address_pair port.
+            if new_port_profile.get('original_owner'):
+                return
         # If dest_host is set, then the port profile has changed
         # and this port is in migration. The call below will
         # pre-create the router on the new host
