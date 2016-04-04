@@ -254,7 +254,6 @@ class DbQuotaDriver(object):
 
         # Check the quotas and construct a list of the resources that
         # would be put over limit by the desired values
-        overs = [key for key, val in values.items()
-                 if quotas[key] >= 0 and quotas[key] < val]
+        overs = [key for key, val in values.items() if 0 <= quotas[key] < val]
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs))
