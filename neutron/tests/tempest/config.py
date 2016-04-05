@@ -12,6 +12,7 @@
 
 from oslo_config import cfg
 
+from neutron import api
 from tempest import config
 
 
@@ -22,7 +23,13 @@ NeutronPluginOptions = [
     cfg.BoolOpt('specify_floating_ip_address_available',
                 default=True,
                 help='Allow passing an IP Address of the floating ip when '
-                     'creating the floating ip')]
+                     'creating the floating ip'),
+    cfg.BoolOpt('validate_pagination',
+                default=api.DEFAULT_ALLOW_PAGINATION,
+                help='Validate pagination'),
+    cfg.BoolOpt('validate_sorting',
+                default=api.DEFAULT_ALLOW_SORTING,
+                help='Validate sorting')]
 
 # TODO(amuller): Redo configuration options registration as part of the planned
 # transition to the Tempest plugin architecture

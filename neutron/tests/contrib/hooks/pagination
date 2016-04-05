@@ -1,0 +1,9 @@
+[[post-extra|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+validate_pagination = True
+
+[[post-config|$NEUTRON_CONF]]
+
+[DEFAULT]
+allow_pagination=True
