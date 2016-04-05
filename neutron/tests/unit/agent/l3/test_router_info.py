@@ -143,6 +143,29 @@ class TestRouterInfo(base.BaseTestCase):
         ipv4_mangle.add_rule.assert_called_once_with(
             'scope', ri.address_scope_mangle_rule('fake_device', 'fake_mark'))
 
+    def test_address_scope_mark_ids_handling(self):
+        mark_ids = set(range(router_info.ADDRESS_SCOPE_MARK_ID_MIN,
+                             router_info.ADDRESS_SCOPE_MARK_ID_MAX))
+        ri = router_info.RouterInfo(_uuid(), {}, **self.ri_kwargs)
+        # first mark id is used for the default address scope
+        scope_to_mark_id = {router_info.DEFAULT_ADDRESS_SCOPE: mark_ids.pop()}
+        self.assertEqual(scope_to_mark_id, ri._address_scope_to_mark_id)
+        self.assertEqual(mark_ids, ri.available_mark_ids)
+
+        # new id should be used for new address scope
+        ri.get_address_scope_mark_mask('new_scope')
+        scope_to_mark_id['new_scope'] = mark_ids.pop()
+        self.assertEqual(scope_to_mark_id, ri._address_scope_to_mark_id)
+        self.assertEqual(mark_ids, ri.available_mark_ids)
+
+        # new router should have it's own mark ids set
+        new_mark_ids = set(range(router_info.ADDRESS_SCOPE_MARK_ID_MIN,
+                                 router_info.ADDRESS_SCOPE_MARK_ID_MAX))
+        new_ri = router_info.RouterInfo(_uuid(), {}, **self.ri_kwargs)
+        new_mark_ids.pop()
+        self.assertEqual(new_mark_ids, new_ri.available_mark_ids)
+        self.assertTrue(ri.available_mark_ids != new_ri.available_mark_ids)
+
 
 class BasicRouterTestCaseFramework(base.BaseTestCase):
     def _create_router(self, router=None, **kwargs):
