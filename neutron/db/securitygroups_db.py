@@ -562,23 +562,16 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # is changed which cannot be because other methods are already
         # relying on this behavior. Therefore, we do the filtering
         # below to check for these corner cases.
+        rule_dict = security_group_rule['security_group_rule'].copy()
+        sg_protocol = rule_dict.pop('protocol', None)
         for db_rule in db_rules:
             rule_id = db_rule.pop('id', None)
             # remove protocol and match separately for number and type
             db_protocol = db_rule.pop('protocol', None)
-            sg_protocol = (
-                security_group_rule['security_group_rule'].pop('protocol',
-                                                               None))
             is_protocol_matching = (
                 self._get_ip_proto_name_and_num(db_protocol) ==
                 self._get_ip_proto_name_and_num(sg_protocol))
-            are_rules_matching = (
-                security_group_rule['security_group_rule'] == db_rule)
-            # reinstate protocol field for further processing
-            if sg_protocol:
-                security_group_rule['security_group_rule']['protocol'] = (
-                    sg_protocol)
-            if (is_protocol_matching and are_rules_matching):
+            if (is_protocol_matching and rule_dict == db_rule):
                 raise ext_sg.SecurityGroupRuleExists(id=rule_id)
 
     def _validate_ip_prefix(self, rule):
