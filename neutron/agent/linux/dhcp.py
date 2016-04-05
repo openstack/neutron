@@ -441,18 +441,24 @@ class Dnsmasq(DhcpLocalProcess):
                                       service_name=DNSMASQ_SERVICE_NAME,
                                       monitored_process=pm)
 
-    def _release_lease(self, mac_address, ip, client_id):
+    def _release_lease(self, mac_address, ip, client_id=None,
+                       server_id=None, iaid=None):
         """Release a DHCP lease."""
         if netaddr.IPAddress(ip).version == constants.IP_VERSION_6:
-            # Note(SridharG) dhcp_release is only supported for IPv4
-            # addresses. For more details, please refer to man page.
-            return
-
-        cmd = ['dhcp_release', self.interface_name, ip, mac_address]
-        if client_id:
-            cmd.append(client_id)
+            cmd = ['dhcp_release6', '--iface', self.interface_name,
+                   '--ip', ip, '--client-id', client_id,
+                   '--server-id', server_id, '--iaid', iaid]
+        else:
+            cmd = ['dhcp_release', self.interface_name, ip, mac_address]
+            if client_id:
+                cmd.append(client_id)
         ip_wrapper = ip_lib.IPWrapper(namespace=self.network.namespace)
-        ip_wrapper.netns.execute(cmd, run_as_root=True)
+        try:
+            ip_wrapper.netns.execute(cmd, run_as_root=True)
+        except RuntimeError as e:
+            # when failed to release single lease there's
+            # no need to propagate error further
+            LOG.warning(e)
 
     def _output_config_files(self):
         self._output_hosts_file()
@@ -707,10 +713,77 @@ class Dnsmasq(DhcpLocalProcess):
             LOG.debug('Error while reading hosts file %s', filename)
         return leases
 
+    def _read_v6_leases_file_leases(self, filename):
+        """
+        reading information from leases file which is needed to pass to
+        dhcp_release6 command line utility if some of these leases are not
+        needed anymore
+
+        in this method  ipv4 entries in leases file are ignored, as info in
+        hosts file is enough
+
+        each line in dnsmasq leases file is one of the following
+          * duid entry: duid server_duid
+          There MUST be single duid entry per file
+          * ipv4 entry: space separated list
+            - The expiration time (seconds since unix epoch) or duration
+              (if dnsmasq is compiled with HAVE_BROKEN_RTC) of the lease.
+              0 means infinite.
+            - The link address, in format XX-YY:YY:YY[...], where XX is the ARP
+              hardware type.  "XX-" may be omitted for Ethernet.
+            - The IPv4 address
+            - The hostname (sent by the client or assigned by dnsmasq)
+              or '*' for none.
+            - The client identifier (colon-separated hex bytes)
+              or '*' for none.
+
+          *  ipv6 entry: space separated list
+            - The expiration time or duration
+            - The IAID as a Big Endian decimal number, prefixed by T for
+              IA_TAs (temporary addresses).
+            - The IPv6 address
+            - The hostname or '*'
+            - The client DUID (colon-separated hex bytes) or '*' if unknown
+
+        original discussion is in dnsmasq mailing list
+        http://lists.thekelleys.org.uk/pipermail/\
+        dnsmasq-discuss/2016q2/010595.html
+
+        :param filename: leases file
+        :return: dict, keys are IPv6 addresses, values are dicts containing
+                iaid, client_id and server_id
+        """
+        leases = {}
+        server_id = None
+        if os.path.exists(filename):
+            with open(filename) as f:
+                for l in f.readlines():
+                    if l.startswith('duid'):
+                        if not server_id:
+                            server_id = l.strip().split()[1]
+                            continue
+                        else:
+                            LOG.warning(_LW('Multiple DUID entries in %s '
+                                            'lease file, dnsmasq is possibly '
+                                            'not functioning properly'),
+                                        filename)
+                            continue
+                    parts = l.strip().split()
+                    (iaid, ip, client_id) = parts[1], parts[2], parts[4]
+                    if netaddr.IPAddress(ip).version == constants.IP_VERSION_4:
+                        continue
+                    leases[ip] = {'iaid': iaid,
+                                  'client_id': client_id,
+                                  'server_id': server_id
+                                  }
+        return leases
+
     def _release_unused_leases(self):
         filename = self.get_conf_file_name('host')
         old_leases = self._read_hosts_file_leases(filename)
-
+        leases_filename = self.get_conf_file_name('leases')
+        # here is dhcpv6 stuff needed to craft dhcpv6 packet
+        v6_leases = self._read_v6_leases_file_leases(leases_filename)
         new_leases = set()
         dhcp_port_exists = False
         dhcp_port_on_this_host = self.device_manager.get_device_id(
@@ -723,7 +796,17 @@ class Dnsmasq(DhcpLocalProcess):
                 dhcp_port_exists = True
 
         for ip, mac, client_id in old_leases - new_leases:
-            self._release_lease(mac, ip, client_id)
+            entry = v6_leases.get(ip, None)
+            version = netaddr.IPAddress(ip).version
+            if entry:
+                # must release IPv6 lease
+                self._release_lease(mac, ip, entry['client_id'],
+                                    entry['server_id'], entry['iaid'])
+            # must release only if v4 lease. If we have ipv6 address missing
+            # in old_leases, that means it's released already and nothing to do
+            # here
+            elif version == constants.IP_VERSION_4:
+                self._release_lease(mac, ip, client_id)
 
         if not dhcp_port_exists:
             self.device_manager.driver.unplug(

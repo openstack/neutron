@@ -20,6 +20,7 @@ ovs-vsctl: CommandFilter, ovs-vsctl, root
 ivs-ctl: CommandFilter, ivs-ctl, root
 mm-ctl: CommandFilter, mm-ctl, root
 dhcp_release: CommandFilter, dhcp_release, root
+dhcp_release6: CommandFilter, dhcp_release6, root
 
 # metadata proxy
 metadata_proxy: CommandFilter, neutron-ns-metadata-proxy, root
