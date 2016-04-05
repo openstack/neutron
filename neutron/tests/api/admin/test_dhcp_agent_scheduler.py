@@ -20,11 +20,9 @@ from neutron.tests.api import base
 class DHCPAgentSchedulersTestJSON(base.BaseAdminNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="dhcp_agent_scheduler", service="network")
     def resource_setup(cls):
         super(DHCPAgentSchedulersTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('dhcp_agent_scheduler', 'network'):
-            msg = "dhcp_agent_scheduler extension not enabled."
-            raise cls.skipException(msg)
         # Create a network and make sure it will be hosted by a
         # dhcp agent: this is done by creating a regular port
         cls.network = cls.create_network()

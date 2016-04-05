@@ -21,11 +21,9 @@ from neutron.tests.api import base
 class AgentManagementTestJSON(base.BaseAdminNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="agent", service="network")
     def resource_setup(cls):
         super(AgentManagementTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('agent', 'network'):
-            msg = "agent extension not enabled."
-            raise cls.skipException(msg)
         body = cls.admin_client.list_agents()
         agents = body['agents']
         cls.agent = agents[0]  # don't modify this agent

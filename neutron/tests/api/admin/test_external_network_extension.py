@@ -24,10 +24,8 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
 
     @classmethod
+    @test.requires_ext(extension="rbac-policies", service="network")
     def resource_setup(cls):
-        if not test.is_extension_enabled('rbac-policies', 'network'):
-            msg = "rbac-policies extension not enabled."
-            raise cls.skipException(msg)
         super(ExternalNetworksRBACTestJSON, cls).resource_setup()
         cls.client2 = cls.alt_manager.network_client
 

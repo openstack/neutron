@@ -37,11 +37,9 @@ class BgpSpeakerTestJSONBase(base.BaseAdminNetworkTest):
                              'auth_type': 'md5', 'password': 'my-secret'}
 
     @classmethod
+    @test.requires_ext(extension="bgp_speaker", service="network")
     def resource_setup(cls):
         super(BgpSpeakerTestJSONBase, cls).resource_setup()
-        if not test.is_extension_enabled('bgp_speaker', 'network'):
-            msg = "BGP Speaker extension is not enabled."
-            raise cls.skipException(msg)
 
         cls.admin_routerports = []
         cls.admin_floatingips = []

@@ -29,11 +29,9 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="metering", service="network")
     def resource_setup(cls):
         super(MeteringTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('metering', 'network'):
-            msg = "metering extension not enabled."
-            raise cls.skipException(msg)
         description = "metering label created by tempest"
         name = data_utils.rand_name("metering-label")
         cls.metering_label = cls.create_metering_label(name, description)

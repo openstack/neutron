@@ -29,11 +29,9 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="flavors", service="network")
     def resource_setup(cls):
         super(TestFlavorsJson, cls).resource_setup()
-        if not test.is_extension_enabled('flavors', 'network'):
-            msg = "flavors extension not enabled."
-            raise cls.skipException(msg)
 
         # Use flavors service type as know this is loaded
         service_type = "FLAVORS"
