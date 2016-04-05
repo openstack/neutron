@@ -47,10 +47,12 @@ from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
+from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as service_constants
+from neutron.plugins.ml2 import config
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
@@ -423,7 +425,7 @@ class L3NatTestCaseMixin(object):
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False,
                            floating_ip=None, subnet_id=False,
-                           tenant_id=None):
+                           tenant_id=None, **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'floatingip': {'floating_network_id': network_id,
                                'tenant_id': tenant_id}}
@@ -437,6 +439,9 @@ class L3NatTestCaseMixin(object):
 
         if subnet_id:
             data['floatingip']['subnet_id'] = subnet_id
+
+        data['floatingip'].update(kwargs)
+
         floatingip_req = self.new_create_request('floatingips', data, fmt)
         if set_context and tenant_id:
             # create a specific auth context for this request
@@ -446,10 +451,11 @@ class L3NatTestCaseMixin(object):
 
     def _make_floatingip(self, fmt, network_id, port_id=None,
                          fixed_ip=None, set_context=False, tenant_id=None,
-                         floating_ip=None, http_status=exc.HTTPCreated.code):
+                         floating_ip=None, http_status=exc.HTTPCreated.code,
+                         **kwargs):
         res = self._create_floatingip(fmt, network_id, port_id,
                                       fixed_ip, set_context, floating_ip,
-                                      tenant_id=tenant_id)
+                                      tenant_id=tenant_id, **kwargs)
         self.assertEqual(http_status, res.status_int)
         return self.deserialize(fmt, res)
 
@@ -466,7 +472,7 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
                               public_cidr='11.0.0.0/24', set_context=False,
-                              tenant_id=None):
+                              tenant_id=None, **kwargs):
         with self.subnet(cidr=public_cidr,
                          set_context=set_context,
                          tenant_id=tenant_id) as public_sub:
@@ -497,7 +503,8 @@ class L3NatTestCaseMixin(object):
                         port_id=private_port['port']['id'],
                         fixed_ip=fixed_ip,
                         tenant_id=tenant_id,
-                        set_context=set_context)
+                        set_context=set_context,
+                        **kwargs)
                     yield floatingip
 
                     if floatingip:
@@ -506,7 +513,8 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def floatingip_no_assoc_with_public_sub(
-        self, private_sub, fmt=None, set_context=False, public_sub=None):
+        self, private_sub, fmt=None, set_context=False,
+        public_sub=None, **kwargs):
         self._set_net_external(public_sub['subnet']['network_id'])
         with self.router() as r:
             floatingip = None
@@ -521,7 +529,8 @@ class L3NatTestCaseMixin(object):
             floatingip = self._make_floatingip(
                 fmt or self.fmt,
                 public_sub['subnet']['network_id'],
-                set_context=set_context)
+                set_context=set_context,
+                **kwargs)
             yield floatingip, r
 
             if floatingip:
@@ -529,10 +538,12 @@ class L3NatTestCaseMixin(object):
                              floatingip['floatingip']['id'])
 
     @contextlib.contextmanager
-    def floatingip_no_assoc(self, private_sub, fmt=None, set_context=False):
+    def floatingip_no_assoc(self, private_sub, fmt=None,
+                            set_context=False, **kwargs):
         with self.subnet(cidr='12.0.0.0/24') as public_sub:
             with self.floatingip_no_assoc_with_public_sub(
-                private_sub, fmt, set_context, public_sub) as (f, r):
+                private_sub, fmt, set_context, public_sub,
+                **kwargs) as (f, r):
                 # Yield only the floating ip object
                 yield f
 
@@ -3844,3 +3855,293 @@ class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase,
         self.assertIsNone(
             pl.prevent_l3_port_deletion(context.get_admin_context(), 'fakeid')
         )
+
+
+class L3TestExtensionManagerWithDNS(L3TestExtensionManager):
+
+    def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            l3.RESOURCE_ATTRIBUTE_MAP)
+        attributes.RESOURCE_ATTRIBUTE_MAP[l3.FLOATINGIPS].update(
+            dns.EXTENDED_ATTRIBUTES_2_0[l3.FLOATINGIPS])
+        return l3.L3.get_resources()
+
+
+class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
+    """Unit tests for floating ip with external DNS integration"""
+
+    fmt = 'json'
+    DNS_NAME = 'test'
+    DNS_DOMAIN = 'test-domain.org.'
+    PUBLIC_CIDR = '11.0.0.0/24'
+    PRIVATE_CIDR = '10.0.0.0/24'
+    mock_client = mock.MagicMock()
+    mock_admin_client = mock.MagicMock()
+    MOCK_PATH = ('neutron.services.externaldns.drivers.'
+                 'designate.driver.get_clients')
+    mock_config = {'return_value': (mock_client, mock_admin_client)}
+    _extension_drivers = ['dns']
+
+    def setUp(self):
+        ext_mgr = L3TestExtensionManagerWithDNS()
+        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+        config.cfg.CONF.set_override('extension_drivers',
+                                     self._extension_drivers,
+                                     group='ml2')
+        super(L3NatDBFloatingIpTestCaseWithDNS, self).setUp(plugin=plugin,
+                                                            ext_mgr=ext_mgr)
+        config.cfg.CONF.set_override('external_dns_driver', 'designate')
+        self.mock_client.reset_mock()
+        self.mock_admin_client.reset_mock()
+
+    def _create_network(self, fmt, name, admin_state_up,
+                        arg_list=None, set_context=False, tenant_id=None,
+                        **kwargs):
+        new_arg_list = ('dns_domain',)
+        if arg_list is not None:
+            new_arg_list = arg_list + new_arg_list
+        return super(L3NatDBFloatingIpTestCaseWithDNS,
+                     self)._create_network(fmt, name, admin_state_up,
+                                           arg_list=new_arg_list,
+                                           set_context=set_context,
+                                           tenant_id=tenant_id,
+                                           **kwargs)
+
+    def _create_port(self, fmt, name, admin_state_up,
+                     arg_list=None, set_context=False, tenant_id=None,
+                     **kwargs):
+        new_arg_list = ('dns_name',)
+        if arg_list is not None:
+            new_arg_list = arg_list + new_arg_list
+        return super(L3NatDBFloatingIpTestCaseWithDNS,
+                     self)._create_port(fmt, name, admin_state_up,
+                                        arg_list=new_arg_list,
+                                        set_context=set_context,
+                                        tenant_id=tenant_id,
+                                        **kwargs)
+
+    def _create_net_sub_port(self, dns_domain='', dns_name=''):
+        with self.network(dns_domain=dns_domain) as n:
+            with self.subnet(cidr=self.PRIVATE_CIDR, network=n) as private_sub:
+                with self.port(private_sub, dns_name=dns_name) as p:
+                    return n, private_sub, p
+
+    @contextlib.contextmanager
+    def _create_floatingip_with_dns(self, net_dns_domain='', port_dns_name='',
+                                    flip_dns_domain='', flip_dns_name='',
+                                    assoc_port=False, private_sub=None):
+
+        if private_sub is None:
+            n, private_sub, p = self._create_net_sub_port(
+                    dns_domain=net_dns_domain, dns_name=port_dns_name)
+
+        data = {'fmt': self.fmt}
+        data['dns_domain'] = flip_dns_domain
+        data['dns_name'] = flip_dns_name
+
+        # Set ourselves up to call the right function with
+        # the right arguments for the with block
+        if assoc_port:
+            data['tenant_id'] = n['network']['tenant_id']
+            data['port_id'] = p['port']['id']
+            create_floatingip = self.floatingip_with_assoc
+        else:
+            data['private_sub'] = private_sub
+            create_floatingip = self.floatingip_no_assoc
+
+        with create_floatingip(**data) as flip:
+            yield flip['floatingip']
+
+    @contextlib.contextmanager
+    def _create_floatingip_with_dns_on_update(self, net_dns_domain='',
+               port_dns_name='', flip_dns_domain='', flip_dns_name=''):
+        n, private_sub, p = self._create_net_sub_port(
+                dns_domain=net_dns_domain, dns_name=port_dns_name)
+        with self._create_floatingip_with_dns(flip_dns_domain=flip_dns_domain,
+                flip_dns_name=flip_dns_name, private_sub=private_sub) as flip:
+            flip_id = flip['id']
+            data = {'floatingip': {'port_id': p['port']['id']}}
+            req = self.new_update_request('floatingips', data, flip_id)
+            res = req.get_response(self._api_for_resource('floatingip'))
+            self.assertEqual(200, res.status_code)
+
+            floatingip = self.deserialize(self.fmt, res)['floatingip']
+            self.assertEqual(p['port']['id'], floatingip['port_id'])
+
+            yield flip
+
+    def _get_in_addr_zone_name(self, in_addr_name):
+        units = self._get_bytes_or_nybles_to_skip(in_addr_name)
+        return '.'.join(in_addr_name.split('.')[int(units):])
+
+    def _get_bytes_or_nybles_to_skip(self, in_addr_name):
+        if 'in-addr.arpa' in in_addr_name:
+            return ((
+                32 - config.cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+        return (128 - config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
+
+    def _get_in_addr(self, record):
+        in_addr_name = netaddr.IPAddress(record).reverse_dns
+        in_addr_zone_name = self._get_in_addr_zone_name(in_addr_name)
+        return in_addr_name, in_addr_zone_name
+
+    def _assert_recordset_created(self, floating_ip_address):
+        # The recordsets.create function should be called with:
+        # dns_domain, dns_name, 'A', ip_address ('A' for IPv4, 'AAAA' for IPv6)
+        self.mock_client.recordsets.create.assert_called_with(self.DNS_DOMAIN,
+                self.DNS_NAME, 'A', [floating_ip_address])
+        in_addr_name, in_addr_zone_name = self._get_in_addr(
+                floating_ip_address)
+        self.mock_admin_client.recordsets.create.assert_called_with(
+                in_addr_zone_name, in_addr_name, 'PTR',
+                ['%s.%s' % (self.DNS_NAME, self.DNS_DOMAIN)])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_create(self, mock_args):
+        with self._create_floatingip_with_dns():
+            pass
+        self.mock_client.recordsets.create.assert_not_called()
+        self.mock_admin_client.recordsets.create.assert_not_called()
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_create_with_flip_dns(self, mock_args):
+        with self._create_floatingip_with_dns(flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+        self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
+        self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_create_with_net_port_dns(self, mock_args):
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(net_dns_domain=self.DNS_DOMAIN,
+                port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
+            floatingip = flip
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_create_with_flip_and_net_port_dns(self, mock_args):
+        # If both network+port and the floating ip have dns domain and
+        # dns name, floating ip's information should take priority
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(net_dns_domain='junkdomain.org.',
+                port_dns_name='junk', flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME, assoc_port=True) as flip:
+            floatingip = flip
+        # External DNS service should have been called with floating ip's
+        # dns information, not the network+port's dns information
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+        self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
+        self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_associate_port(self, mock_args):
+        with self._create_floatingip_with_dns_on_update():
+            pass
+        self.mock_client.recordsets.create.assert_not_called()
+        self.mock_admin_client.recordsets.create.assert_not_called()
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_associate_port_with_flip_dns(self, mock_args):
+        with self._create_floatingip_with_dns_on_update(
+                flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+        self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
+        self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_associate_port_with_net_port_dns(self, mock_args):
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns_on_update(
+                net_dns_domain=self.DNS_DOMAIN,
+                port_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_associate_port_with_flip_and_net_port_dns(self,
+                                                                  mock_args):
+        # If both network+port and the floating ip have dns domain and
+        # dns name, floating ip's information should take priority
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns_on_update(
+                net_dns_domain='junkdomain.org.',
+                port_dns_name='junk',
+                flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+        self._assert_recordset_created(floatingip['floating_ip_address'])
+        self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
+        self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_disassociate_port(self, mock_args):
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(net_dns_domain=self.DNS_DOMAIN,
+                port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
+            fake_recordset = {'id': '',
+                    'records': [flip['floating_ip_address']]}
+            # This method is called during recordset deletion, which
+            # will fail unless the list function call returns something like
+            # this fake value
+            self.mock_client.recordsets.list.return_value = ([fake_recordset])
+            # Port gets disassociated if port_id is not in the request body
+            data = {'floatingip': {}}
+            req = self.new_update_request('floatingips', data, flip['id'])
+            res = req.get_response(self._api_for_resource('floatingip'))
+        floatingip = self.deserialize(self.fmt, res)['floatingip']
+        flip_port_id = floatingip['port_id']
+        self.assertEqual(200, res.status_code)
+        self.assertIsNone(flip_port_id)
+        in_addr_name, in_addr_zone_name = self._get_in_addr(
+                floatingip['floating_ip_address'])
+        self.mock_client.recordsets.delete.assert_called_with(
+                self.DNS_DOMAIN, '')
+        self.mock_admin_client.recordsets.delete.assert_called_with(
+                in_addr_zone_name, in_addr_name)
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_delete(self, mock_args):
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+            # This method is called during recordset deletion, which will
+            # fail unless the list function call returns something like
+            # this fake value
+            fake_recordset = {'id': '',
+                              'records': [floatingip['floating_ip_address']]}
+            self.mock_client.recordsets.list.return_value = [fake_recordset]
+        in_addr_name, in_addr_zone_name = self._get_in_addr(
+                floatingip['floating_ip_address'])
+        self.mock_client.recordsets.delete.assert_called_with(
+                self.DNS_DOMAIN, '')
+        self.mock_admin_client.recordsets.delete.assert_called_with(
+                in_addr_zone_name, in_addr_name)
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_no_PTR_record(self, mock_args):
+        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+
+        # Disabling this option should stop the admin client from creating
+        # PTR records. So set this option and make sure the admin client
+        # wasn't called to create any records
+        config.cfg.CONF.set_override('allow_reverse_dns_lookup', False,
+                                     group='designate')
+
+        with self._create_floatingip_with_dns(flip_dns_domain=self.DNS_DOMAIN,
+                flip_dns_name=self.DNS_NAME) as flip:
+            floatingip = flip
+
+        self.mock_client.recordsets.create.assert_called_with(self.DNS_DOMAIN,
+                self.DNS_NAME, 'A', [floatingip['floating_ip_address']])
+        self.mock_admin_client.recordsets.create.assert_not_called()
+        self.assertEqual(self.DNS_DOMAIN, floatingip['dns_domain'])
+        self.assertEqual(self.DNS_NAME, floatingip['dns_name'])
