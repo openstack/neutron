@@ -571,10 +571,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []
         self._allow_established(iptables_rules)
+        seen_sg_rules = set()
         for rule in security_group_rules:
             args = self._convert_sg_rule_to_iptables_args(rule)
             if args:
-                iptables_rules += [' '.join(args)]
+                rule_command = ' '.join(args)
+                if rule_command in seen_sg_rules:
+                    # since these rules are from multiple security groups,
+                    # there may be duplicates so we prune them out here
+                    continue
+                seen_sg_rules.add(rule_command)
+                iptables_rules.append(rule_command)
 
         self._drop_invalid_packets(iptables_rules)
         iptables_rules += [comment_rule('-j $sg-fallback',

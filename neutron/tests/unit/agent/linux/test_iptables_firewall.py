@@ -1127,6 +1127,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                       extra_ok_codes=[1])]
         self.utils_exec.assert_has_calls(calls)
 
+    def test_user_sg_rules_deduped_before_call_to_iptables_manager(self):
+        port = self._fake_port()
+        port['security_group_rules'] = [{'ethertype': 'IPv4',
+                                         'direction': 'ingress'}] * 2
+        self.firewall.prepare_port_filter(port)
+        rules = [''.join(c[1]) for c in self.v4filter_inst.add_rule.mock_calls]
+        self.assertEqual(len(set(rules)), len(rules))
+
     def test_update_delete_port_filter(self):
         port = self._fake_port()
         port['security_group_rules'] = [{'ethertype': 'IPv4',
