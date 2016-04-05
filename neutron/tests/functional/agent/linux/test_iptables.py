@@ -31,7 +31,8 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
     DIRECTION_CHAIN_MAPPER = {'ingress': 'INPUT',
                               'egress': 'OUTPUT'}
     PROTOCOL_BLOCK_RULE = '-p %s -j DROP'
-    PROTOCOL_PORT_BLOCK_RULE = '-p %s --dport %d -j DROP'
+    PROTOCOL_PORT_BLOCK_RULE = ('-p %(protocol)s -m %(protocol)s '
+                                '--dport %(port)d -j DROP')
 
     def setUp(self):
         super(IptablesManagerTestCase, self).setUp()
@@ -73,7 +74,8 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
     def _get_chain_and_rule(self, direction, protocol, port):
         chain = self.DIRECTION_CHAIN_MAPPER[direction]
         if port:
-            rule = self.PROTOCOL_PORT_BLOCK_RULE % (protocol, port)
+            rule = self.PROTOCOL_PORT_BLOCK_RULE % {'protocol': protocol,
+                                                    'port': port}
         else:
             rule = self.PROTOCOL_BLOCK_RULE % protocol
         return chain, rule

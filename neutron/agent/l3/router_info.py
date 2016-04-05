@@ -140,16 +140,16 @@ class RouterInfo(object):
         return self.router.get(l3_constants.FLOATINGIP_KEY, [])
 
     def floating_forward_rules(self, floating_ip, fixed_ip):
-        return [('PREROUTING', '-d %s -j DNAT --to %s' %
+        return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
-                ('OUTPUT', '-d %s -j DNAT --to %s' %
+                ('OUTPUT', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
-                ('float-snat', '-s %s -j SNAT --to %s' %
+                ('float-snat', '-s %s/32 -j SNAT --to-source %s' %
                  (fixed_ip, floating_ip))]
 
     def floating_mangle_rules(self, floating_ip, fixed_ip, internal_mark):
         mark_traffic_to_floating_ip = (
-            'floatingip', '-d %s -j MARK --set-mark %s' % (
+            'floatingip', '-d %s -j MARK --set-xmark %s' % (
                 floating_ip, internal_mark))
         mark_traffic_from_fixed_ip = (
             'FORWARD', '-s %s -j $float-snat' % fixed_ip)
@@ -452,7 +452,7 @@ class RouterInfo(object):
             namespace=self.ns_name)
 
     def address_scope_mangle_rule(self, device_name, mark_mask):
-        return '-i %s -j MARK --set-mark %s' % (device_name, mark_mask)
+        return '-i %s -j MARK --set-xmark %s' % (device_name, mark_mask)
 
     def address_scope_filter_rule(self, device_name, mark_mask):
         return '-o %s -m mark ! --mark %s -j DROP' % (
