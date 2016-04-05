@@ -32,10 +32,10 @@ from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import constants as n_consts
-from neutron.common import utils
 from neutron.plugins.common import constants as const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
+from neutron.tests import base
 
 LOG = logging.getLogger(__name__)
 
@@ -45,14 +45,14 @@ MINIMUM_DIBBLER_VERSION = '1.0.1'
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
-    name = "vxlantest-" + utils.get_random_string(6)
+    name = base.get_rand_device_name(prefix='vxlantest-')
     with ovs_lib.OVSBridge(name) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
         return port != ovs_lib.INVALID_OFPORT
 
 
 def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
-    name = "genevetest-" + utils.get_random_string(6)
+    name = base.get_rand_device_name(prefix='genevetest-')
     with ovs_lib.OVSBridge(name) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_GENEVE)
         return port != ovs_lib.INVALID_OFPORT
@@ -60,17 +60,15 @@ def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
 
 def iproute2_vxlan_supported():
     ip = ip_lib.IPWrapper()
-    name = "vxlantest-" + utils.get_random_string(4)
+    name = base.get_rand_device_name(prefix='vxlantest-')
     port = ip.add_vxlan(name, 3000)
     ip.del_veth(name)
     return name == port.name
 
 
 def patch_supported():
-    seed = utils.get_random_string(6)
-    name = "patchtest-" + seed
-    peer_name = "peertest0-" + seed
-    patch_name = "peertest1-" + seed
+    name, peer_name, patch_name = base.get_related_rand_device_names(
+        ['patchtest-', 'peertest0-', 'peertest1-'])
     with ovs_lib.OVSBridge(name) as br:
         port = br.add_patch_port(patch_name, peer_name)
         return port != ovs_lib.INVALID_OFPORT
@@ -91,7 +89,7 @@ def ofctl_arg_supported(cmd, **kwargs):
     :param **kwargs: arguments to test with the command.
     :returns: a boolean if the supplied arguments are supported.
     """
-    br_name = 'br-test-%s' % utils.get_random_string(6)
+    br_name = base.get_rand_device_name(prefix='br-test-')
     with ovs_lib.OVSBridge(br_name) as test_br:
         full_args = ["ovs-ofctl", cmd, test_br.br_name,
                      ovs_lib._build_flow_expr_str(kwargs, cmd.split('-')[0])]
@@ -281,10 +279,8 @@ def keepalived_ipv6_supported():
     6. Verify if IPv6 default route is configured by keepalived.
     """
 
-    random_str = utils.get_random_string(6)
-    br_name = "ka-test-" + random_str
-    ha_port = ha_router.HA_DEV_PREFIX + random_str
-    gw_port = namespaces.INTERNAL_DEV_PREFIX + random_str
+    br_name, ha_port, gw_port = base.get_related_rand_device_names(
+        ['ka-test-', ha_router.HA_DEV_PREFIX, namespaces.INTERNAL_DEV_PREFIX])
     gw_vip = 'fdf8:f53b:82e4::10/64'
     expected_default_gw = 'fe80:f816::1'
 
@@ -333,8 +329,7 @@ def ovsdb_native_supported():
 
 
 def ovs_conntrack_supported():
-    random_str = utils.get_random_string(6)
-    br_name = "ovs-test-" + random_str
+    br_name = base.get_rand_device_name(prefix="ovs-test-")
 
     with ovs_lib.OVSBridge(br_name) as br:
         try:
