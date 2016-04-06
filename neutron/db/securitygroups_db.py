@@ -556,11 +556,20 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             res['protocol'] = self._get_ip_proto_name_and_num(value)
         return res
 
+    def _rules_equal(self, rule1, rule2):
+        """Determines if two rules are equal ignoring id field."""
+        rule1_copy = rule1.copy()
+        rule2_copy = rule2.copy()
+        rule1_copy.pop('id', None)
+        rule2_copy.pop('id', None)
+        return rule1_copy == rule2_copy
+
     def _check_for_duplicate_rules(self, context, security_group_rules):
         for i in security_group_rules:
             found_self = False
             for j in security_group_rules:
-                if i['security_group_rule'] == j['security_group_rule']:
+                if self._rules_equal(i['security_group_rule'],
+                                     j['security_group_rule']):
                     if found_self:
                         raise ext_sg.DuplicateSecurityGroupRuleInPost(rule=i)
                     found_self = True
@@ -585,6 +594,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # relying on this behavior. Therefore, we do the filtering
         # below to check for these corner cases.
         rule_dict = security_group_rule['security_group_rule'].copy()
+        rule_dict.pop('id', None)
         sg_protocol = rule_dict.pop('protocol', None)
         for db_rule in db_rules:
             rule_id = db_rule.pop('id', None)
