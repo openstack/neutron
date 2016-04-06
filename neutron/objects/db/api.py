@@ -37,7 +37,7 @@ def create_object(context, model, values):
             values['id'] = uuidutils.generate_uuid()
         db_obj = model(**values)
         context.session.add(db_obj)
-    return db_obj.__dict__
+    return db_obj
 
 
 def _safe_get_object(context, model, **kwargs):
@@ -55,7 +55,7 @@ def update_object(context, model, values, **kwargs):
         db_obj = _safe_get_object(context, model, **kwargs)
         db_obj.update(values)
         db_obj.save(session=context.session)
-    return db_obj.__dict__
+    return db_obj
 
 
 def delete_object(context, model, **kwargs):
