@@ -271,6 +271,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             context, port['network_id'], changes.add,
             port['device_owner'], subnets)
 
+        if port['device_owner'] not in constants.ROUTER_INTERFACE_OWNERS:
+            to_add += self._update_ips_for_pd_subnet(
+                context, subnets, changes.add, mac)
+
         ipam_driver = driver.Pool.get_instance(None, context)
         if changes.remove:
             removed = self._ipam_deallocate_ips(context, ipam_driver, port,

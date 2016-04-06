@@ -324,6 +324,11 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         to_add = self._test_fixed_ips_for_port(context, network_id,
                                                changes.add, device_owner,
                                                subnets)
+
+        if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
+            to_add += self._update_ips_for_pd_subnet(
+                context, subnets, changes.add)
+
         for ip in changes.remove:
             LOG.debug("Port update. Hold %s", ip)
             IpamNonPluggableBackend._delete_ip_allocation(context,
