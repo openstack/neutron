@@ -71,12 +71,20 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         attributes.NETWORKS, [_extend_external_network_default])
-    registry.subscribe(_ensure_external_network_default_value_callback,
-        resources.EXTERNAL_NETWORK, events.BEFORE_CREATE)
-    registry.subscribe(_ensure_external_network_default_value_callback,
-        resources.EXTERNAL_NETWORK, events.AFTER_CREATE)
-    registry.subscribe(_ensure_external_network_default_value_callback,
-        resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE)
+
+    def __new__(cls, *args, **kwargs):
+        # NOTE(kevinbenton): we subscribe on object construction because
+        # the tests blow away the callback manager for each run
+        new = super(AutoAllocatedTopologyMixin, cls).__new__(cls, *args,
+                                                             **kwargs)
+        registry.subscribe(_ensure_external_network_default_value_callback,
+            resources.EXTERNAL_NETWORK, events.BEFORE_CREATE)
+        registry.subscribe(_ensure_external_network_default_value_callback,
+            resources.EXTERNAL_NETWORK, events.AFTER_CREATE)
+        registry.subscribe(_ensure_external_network_default_value_callback,
+            resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE)
+        return new
+
     # TODO(armax): if a tenant modifies auto allocated resources under
     # the hood the behavior of the get_auto_allocated_topology API is
     # undetermined. Consider adding callbacks to deal with the following
