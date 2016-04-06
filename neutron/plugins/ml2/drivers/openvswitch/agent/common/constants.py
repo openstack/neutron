@@ -50,6 +50,9 @@ CANARY_TABLE = 23
 # Table for ARP poison/spoofing prevention rules
 ARP_SPOOF_TABLE = 24
 
+# Table for MAC spoof filtering
+MAC_SPOOF_TABLE = 25
+
 # Tables used for ovs firewall
 BASE_EGRESS_TABLE = 71
 RULES_EGRESS_TABLE = 72

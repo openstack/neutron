@@ -885,12 +885,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                          "it has port security disabled"), vif.port_name)
             bridge.delete_arp_spoofing_protection(port=vif.ofport)
+            bridge.set_allowed_macs_for_port(port=vif.ofport, allow_all=True)
             return
         if port_details['device_owner'].startswith(
             n_const.DEVICE_OWNER_NETWORK_PREFIX):
             LOG.debug("Skipping ARP spoofing rules for network owned port "
                       "'%s'.", vif.port_name)
             bridge.delete_arp_spoofing_protection(port=vif.ofport)
+            bridge.set_allowed_macs_for_port(port=vif.ofport, allow_all=True)
             return
         # clear any previous flows related to this port in our ARP table
         bridge.delete_arp_spoofing_allow_rules(port=vif.ofport)
@@ -904,6 +906,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               for p in port_details['allowed_address_pairs']
                               if p.get('mac_address')}
 
+        bridge.set_allowed_macs_for_port(vif.ofport, mac_addresses)
         ipv6_addresses = {ip for ip in addresses
                           if netaddr.IPNetwork(ip).version == 6}
         # Allow neighbor advertisements for LLA address.
