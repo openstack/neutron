@@ -47,14 +47,14 @@ class ContextBase(oslo_context.RequestContext):
                                           user=user_id, tenant=tenant_id,
                                           is_admin=is_admin,
                                           request_id=request_id,
-                                          overwrite=overwrite)
+                                          overwrite=overwrite,
+                                          roles=roles)
         self.user_name = user_name
         self.tenant_name = tenant_name
 
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
         self.timestamp = timestamp
-        self.roles = roles or []
         self.is_advsvc = is_advsvc
         if self.is_advsvc is None:
             self.is_advsvc = self.is_admin or policy.check_is_advsvc(self)
@@ -87,7 +87,6 @@ class ContextBase(oslo_context.RequestContext):
             'user_id': self.user_id,
             'tenant_id': self.tenant_id,
             'project_id': self.project_id,
-            'roles': self.roles,
             'timestamp': str(self.timestamp),
             'tenant_name': self.tenant_name,
             'project_name': self.tenant_name,
