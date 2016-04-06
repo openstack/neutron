@@ -33,7 +33,7 @@ then
                 uninstall_package $package
             fi
         done
-        compile_ovs True /usr
+        compile_ovs True /usr /var
         start_new_ovs
     fi
 

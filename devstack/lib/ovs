@@ -35,14 +35,20 @@ function load_module {
 #                 Accepts two parameters:
 #                   - first one is True, modules are built and installed.
 #                   - second optional parameter defines prefix for ovs compilation
+#                   - third optional parameter defines localstatedir for ovs single machine runtime
 #                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
 function compile_ovs {
     local _pwd=$PWD
     local build_modules=${1:-True}
     local prefix=$2
+    local localstatedir=$3
 
     if [ -n "$prefix" ]; then
         prefix="--prefix=$prefix"
+    fi
+
+    if [ -n "$localstatedir" ]; then
+        localstatedir="--localstatedir=$localstatedir"
     fi
 
     cd $DEST
@@ -67,9 +73,9 @@ function compile_ovs {
     fi
     if [ ! -f config.status ] || [ configure -nt config.status ] ; then
         if [[ "$build_modules" == "True" ]]; then
-            ./configure $prefix --with-linux=/lib/modules/$(uname -r)/build
+            ./configure $prefix $localstatedir --with-linux=/lib/modules/$(uname -r)/build
         else
-            ./configure $prefix
+            ./configure $prefix $localstatedir
         fi
     fi
     make -j$[$(nproc) + 1]
