@@ -186,7 +186,13 @@ core_opts = [
                       'this value without modification. For overlay networks '
                       'such as VXLAN, neutron automatically subtracts the '
                       'overlay protocol overhead from this value. Defaults '
-                      'to 1500, the standard value for Ethernet.'))
+                      'to 1500, the standard value for Ethernet. Also '
+                      'consider setting the path_mtu ml2 configuration value '
+                      'to the global_physnet_mtu value when using the ml2 '
+                      'plug-in. Otherwise the global_physnet_mtu '
+                      'value might get overridden by a smaller path_mtu value '
+                      'and hence have no effect on overlay/tunnel networks '
+                      'but only flat and VLAN networks.'))
 ]
 
 core_cli_opts = [
