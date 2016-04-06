@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron._i18n import _LE
+from neutron.api.rpc.agentnotifiers import utils as ag_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -28,6 +29,10 @@ from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
+
+# default messaging timeout is 60 sec, so 2 here is chosen to not block API
+# call for more than 2 minutes
+AGENT_NOTIFY_MAX_ATTEMPTS = 2
 
 
 class L3AgentNotifyAPI(object):
@@ -44,7 +49,8 @@ class L3AgentNotifyAPI(object):
                   '%(method)s', {'host': host,
                                  'method': method})
         cctxt = self.client.prepare(server=host)
-        rpc_method = cctxt.call if use_call else cctxt.cast
+        rpc_method = (ag_utils.retry(cctxt.call, AGENT_NOTIFY_MAX_ATTEMPTS)
+                      if use_call else cctxt.cast)
         rpc_method(context, method, **kwargs)
 
     def _agent_notification(self, context, method, router_ids, operation,

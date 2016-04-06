@@ -57,10 +57,6 @@ L3_AGENTS_SCHEDULER_OPTS = [
 
 cfg.CONF.register_opts(L3_AGENTS_SCHEDULER_OPTS)
 
-# default messaging timeout is 60 sec, so 2 here is chosen to not block API
-# call for more than 2 minutes
-AGENT_NOTIFY_MAX_ATTEMPTS = 2
-
 
 class RouterL3AgentBinding(model_base.BASEV2):
     """Represents binding between neutron routers and L3 agents."""
@@ -314,19 +310,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 context, router_id, host)
 
         for agent in new_agents:
-            # Need to make sure agents are notified or unschedule otherwise
-            for attempt in range(AGENT_NOTIFY_MAX_ATTEMPTS):
-                try:
-                    l3_notifier.router_added_to_agent(
-                        context, [router_id], agent['host'])
-                    break
-                except oslo_messaging.MessagingException:
-                    LOG.warning(_LW('Failed to notify L3 agent on host '
-                                    '%(host)s about added router. Attempt '
-                                    '%(attempt)d out of %(max_attempts)d'),
-                                {'host': agent['host'], 'attempt': attempt + 1,
-                                 'max_attempts': AGENT_NOTIFY_MAX_ATTEMPTS})
-            else:
+            try:
+                l3_notifier.router_added_to_agent(
+                    context, [router_id], agent['host'])
+            except oslo_messaging.MessagingException:
                 self._unbind_router(context, router_id, agent['id'])
                 raise l3agentscheduler.RouterReschedulingFailed(
                     router_id=router_id)
