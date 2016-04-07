@@ -121,8 +121,6 @@ by destination mac address. ``register 6`` contains
  table=0,  priority=90,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
  table=0,  priority=0 actions=NORMAL
 
-::
-
 Following ``table 71`` implements arp spoofing protection, ip spoofing
 protection, allows traffic for obtaining ip addresses (dhcp, dhcpv6, slaac,
 ndp) for egress traffic and allows arp replies. Also identifies not tracked
@@ -305,18 +303,22 @@ same as in ``table 72``.
  table=82, priority=0 actions=drop
 
 
+Note: Conntrack zones on a single node are now based on network to which port is
+plugged in. That makes a difference between traffic on hypervisor only and
+east-west traffic. For example, if port has a VIP that was migrated to a port on
+different node, then new port won't contain conntrack information about previous
+traffic that happened with VIP.
+
+
 Future work
 -----------
 
  - Create fullstack tests with tunneling enabled
  - Conjunctions in Openflow rules can be created to decrease the number of
    rules needed for remote security groups
- - Masking the port range can be used to avoid generating a single rule per
-   port number being filtered. For example, if the port range is 1 to 5, one
-   rule can be generated instead of 5.
-   e.g. tcp,tcp_src=0x03e8/0xfff8
  - During the update of firewall rules, we can use bundles to make the changes
    atomic
+
 
 Upgrade path from iptables hybrid driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
