@@ -59,10 +59,6 @@ migration_entrypoints = {
 
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-logging_config.fileConfig(neutron_alembic_ini)
-
 
 VALID_SERVICES = ['fwaas', 'lbaas', 'vpnaas']
 INSTALLED_SERVICES = [service_ for service_ in VALID_SERVICES
@@ -724,6 +720,10 @@ def get_engine_config():
 
 
 def main():
+    # Interpret the config file for Python logging.
+    # This line sets up loggers basically.
+    logging_config.fileConfig(neutron_alembic_ini)
+
     CONF(project='neutron')
     validate_cli_options()
     return_val = False
