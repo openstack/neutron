@@ -174,6 +174,9 @@ class SriovNicSwitchAgent(object):
             self.agent_state.get('configurations')['devices'] = devices
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
+
+            # we only want to update resource versions on startup
+            self.agent_state.pop('resource_versions', None)
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))
