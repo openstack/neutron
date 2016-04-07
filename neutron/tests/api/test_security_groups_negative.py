@@ -24,8 +24,6 @@ CONF = config.CONF
 
 class NegativeSecGroupTest(base.BaseSecGroupTest):
 
-    _tenant_network_cidr = CONF.network.tenant_network_cidr
-
     @classmethod
     @test.requires_ext(extension="security-group", service="network")
     def resource_setup(cls):
@@ -74,4 +72,3 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
 
 class NegativeSecGroupIPv6Test(NegativeSecGroupTest):
     _ip_version = 6
-    _tenant_network_cidr = CONF.network.tenant_network_v6_cidr

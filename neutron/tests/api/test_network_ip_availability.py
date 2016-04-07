@@ -79,10 +79,12 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
     def _create_subnet(self, network, ip_version):
         if ip_version == lib_constants.IP_VERSION_4:
             cidr = netaddr.IPNetwork('20.0.0.0/24')
-            mask_bits = CONF.network.tenant_network_mask_bits
+            mask_bits = config.safe_get_config_value(
+                'network', 'project_network_mask_bits')
         elif ip_version == lib_constants.IP_VERSION_6:
             cidr = netaddr.IPNetwork('20:db8::/64')
-            mask_bits = CONF.network.tenant_network_v6_mask_bits
+            mask_bits = config.safe_get_config_value(
+                'network', 'project_network_v6_mask_bits')
 
         subnet_cidr = cidr.subnet(mask_bits).next()
         prefix_len = subnet_cidr.prefixlen
