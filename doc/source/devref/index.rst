@@ -73,7 +73,6 @@ Neutron Internals
    external_dns_integration
    upgrade
    i18n
-   instrumentation
    address_scopes
    openvswitch_firewall
    network_ip_availability
