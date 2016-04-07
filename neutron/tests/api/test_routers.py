@@ -36,9 +36,10 @@ class RoutersTest(base.BaseRouterTest):
     @classmethod
     def resource_setup(cls):
         super(RoutersTest, cls).resource_setup()
-        cls.tenant_cidr = (CONF.network.tenant_network_cidr
-                           if cls._ip_version == 4 else
-                           CONF.network.tenant_network_v6_cidr)
+        cls.tenant_cidr = (
+            config.safe_get_config_value('network', 'project_network_cidr')
+            if cls._ip_version == 4 else
+            config.safe_get_config_value('network', 'project_network_v6_cidr'))
 
     @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')

@@ -35,11 +35,11 @@ class BaseNetworkTest(test.BaseTestCase):
     Therefore, v2.x of the Neutron API is assumed. It is also assumed that the
     following options are defined in the [network] section of etc/tempest.conf:
 
-        tenant_network_cidr with a block of cidr's from which smaller blocks
+        project_network_cidr with a block of cidr's from which smaller blocks
         can be allocated for tenant networks
 
-        tenant_network_mask_bits with the mask bits to be used to partition the
-        block defined by tenant-network_cidr
+        project_network_mask_bits with the mask bits to be used to partition
+        the block defined by tenant-network_cidr
 
     Finally, it is assumed that the following option is defined in the
     [service_available] section of etc/tempest.conf
@@ -232,12 +232,20 @@ class BaseNetworkTest(test.BaseTestCase):
         ip_version = ip_version if ip_version is not None else cls._ip_version
         gateway_not_set = gateway == ''
         if ip_version == 4:
-            cidr = cidr or netaddr.IPNetwork(CONF.network.tenant_network_cidr)
-            mask_bits = mask_bits or CONF.network.tenant_network_mask_bits
+            cidr = cidr or netaddr.IPNetwork(
+                config.safe_get_config_value(
+                    'network', 'project_network_cidr'))
+            mask_bits = (
+                mask_bits or config.safe_get_config_value(
+                    'network', 'project_network_mask_bits'))
         elif ip_version == 6:
             cidr = (
-                cidr or netaddr.IPNetwork(CONF.network.tenant_network_v6_cidr))
-            mask_bits = mask_bits or CONF.network.tenant_network_v6_mask_bits
+                cidr or netaddr.IPNetwork(
+                    config.safe_get_config_value(
+                        'network', 'project_network_v6_cidr')))
+            mask_bits = (
+                mask_bits or config.safe_get_config_value(
+                    'network', 'project_network_v6_mask_bits'))
         # Find a cidr that is not in use yet and create a subnet with it
         for subnet_cidr in cidr.subnet(mask_bits):
             if gateway_not_set:

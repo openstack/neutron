@@ -101,7 +101,9 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
     @test.idempotent_id('4d6d178f-34f6-4bff-a01c-0a2f8fe909e4')
     def test_update_port_with_cidr_address_pair(self):
         # Update allowed address pair with cidr
-        cidr = str(netaddr.IPNetwork(CONF.network.tenant_network_cidr))
+        cidr = str(
+            netaddr.IPNetwork(config.safe_get_config_value(
+                'network', 'project_network_cidr')))
         self._update_port_with_address(cidr)
 
     @test.attr(type='smoke')
