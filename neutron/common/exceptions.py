@@ -44,10 +44,6 @@ class NetworkQosBindingNotFound(e.NotFound):
                 "could not be found.")
 
 
-class PolicyFileNotFound(e.NotFound):
-    message = _("Policy configuration policy.json could not be found.")
-
-
 class PolicyInitError(e.NeutronException):
     message = _("Failed to init policy %(policy)s because %(reason)s.")
 
