@@ -48,7 +48,7 @@ class TestIpWrapper(base.BaseTestCase):
 
     @mock.patch('netifaces.interfaces')
     def test_get_devices_error(self, mock_interfaces):
-        mock_interfaces.side_effects = OSError
+        mock_interfaces.side_effect = OSError
         ret = ip_lib.IPWrapper().get_devices()
 
         self.assertEqual([], ret)
@@ -77,7 +77,16 @@ class TestIpDevice(base.BaseTestCase):
 
     @mock.patch('netifaces.ifaddresses')
     def test_device_has_ip_error(self, mock_netifaces):
-        mock_netifaces.side_effects = OSError
+        mock_netifaces.side_effect = OSError
+
+        ret = ip_lib.IPDevice("fake_dev").device_has_ip(
+            mock.sentinel.fake_addr)
+
+        self.assertFalse(ret)
+
+    @mock.patch('netifaces.ifaddresses')
+    def test_device_not_found(self, mock_netifaces):
+        mock_netifaces.side_effect = ValueError
 
         ret = ip_lib.IPDevice("fake_dev").device_has_ip(
             mock.sentinel.fake_addr)
