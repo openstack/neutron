@@ -47,10 +47,6 @@ class TestField(object):
     def test_stringify(self):
         '''This test should validate stringify() format for new field types.'''
 
-    def test_stringify_invalid(self):
-        for in_val in self.coerce_bad_values:
-            self.assertRaises(ValueError, self.field.stringify, in_val)
-
 
 class IPV6ModeEnumFieldTest(test_base.BaseTestCase, TestField):
     def setUp(self):
