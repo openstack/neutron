@@ -70,7 +70,7 @@ class TimeStamp_db_mixin(object):
             obj = objs_list.pop()
             if (isinstance(obj, model_base.HasStandardAttributes)
                 and obj.standard_attr_id):
-                obj.standard_attr.updated_at = timeutils.utcnow()
+                obj.updated_at = timeutils.utcnow()
 
     def register_db_events(self):
         event.listen(model_base.StandardAttribute, 'before_insert',
@@ -91,15 +91,15 @@ class TimeStamp_db_mixin(object):
                         listen_obj)
 
     def _format_timestamp(self, resource_db, result):
-        result['created_at'] = (resource_db.standard_attr.created_at.
+        result['created_at'] = (resource_db.created_at.
                                 strftime(self.ISO8601_TIME_FORMAT))
-        result['updated_at'] = (resource_db.standard_attr.updated_at.
+        result['updated_at'] = (resource_db.updated_at.
                                 strftime(self.ISO8601_TIME_FORMAT))
 
     def extend_resource_dict_timestamp(self, plugin_obj,
                                        resource_res, resource_db):
-        if (resource_db and resource_db.standard_attr.created_at and
-                resource_db.standard_attr.updated_at):
+        if (resource_db and resource_db.created_at and
+                resource_db.updated_at):
             self._format_timestamp(resource_db, resource_res)
 
     def _add_timestamp(self, mapper, _conn, target):

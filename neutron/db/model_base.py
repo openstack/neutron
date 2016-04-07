@@ -141,3 +141,11 @@ class HasStandardAttributes(object):
     @declarative.declared_attr
     def description(cls):
         return association_proxy('standard_attr', 'description')
+
+    @declarative.declared_attr
+    def created_at(cls):
+        return association_proxy('standard_attr', 'created_at')
+
+    @declarative.declared_attr
+    def updated_at(cls):
+        return association_proxy('standard_attr', 'updated_at')
