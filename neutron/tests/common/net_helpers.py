@@ -53,7 +53,7 @@ VETH1_PREFIX = 'test-veth1'
 PATCH_PREFIX = 'patch'
 
 SS_SOURCE_PORT_PATTERN = re.compile(
-    r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
+    r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[^\s]+:.*')
 
 READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
 
