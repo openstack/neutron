@@ -142,6 +142,16 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         self.driver.physnet_mtus = {}
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
+    def test_parse_physical_network_mtus(self):
+        config.cfg.CONF.set_override(
+            'physical_network_mtus',
+            ['physnet1:1500', 'physnet2:1500', 'physnet3:9000'],
+            group='ml2')
+        driver = type_flat.FlatTypeDriver()
+        self.assertEqual('1500', driver.physnet_mtus['physnet1'])
+        self.assertEqual('1500', driver.physnet_mtus['physnet2'])
+        self.assertEqual('9000', driver.physnet_mtus['physnet3'])
+
 
 class FlatTypeDefaultTest(base.BaseTestCase):
 
