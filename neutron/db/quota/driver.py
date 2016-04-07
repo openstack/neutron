@@ -34,6 +34,22 @@ class DbQuotaDriver(object):
     """
 
     @staticmethod
+    def get_default_quotas(context, resources, tenant_id):
+        """Given a list of resources, retrieve the default quotas set for
+        a tenant.
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :param tenant_id: The ID of the tenant to return default quotas for.
+        :return dict: from resource name to dict of name and limit
+        """
+        # Currently the tenant_id parameter is unused, since all tenants
+        # share the same default values. This may change in the future so
+        # we include tenant-id to remain backwards compatible.
+        return dict((key, resource.default)
+                    for key, resource in resources.items())
+
+    @staticmethod
     def get_tenant_quotas(context, resources, tenant_id):
         """Given a list of resources, retrieve the quotas for the given
         tenant. If no limits are found for the specified tenant, the operation

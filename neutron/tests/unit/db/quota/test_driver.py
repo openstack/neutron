@@ -76,6 +76,13 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase):
         quotas = self.plugin.get_tenant_quotas(self.context, defaults, PROJECT)
         self.assertEqual(4, quotas[RESOURCE])
 
+    def test_get_default_quotas(self):
+        defaults = {RESOURCE: TestResource(RESOURCE, 4)}
+        user_ctx = context.Context(user_id=PROJECT, tenant_id=PROJECT)
+        self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
+        quotas = self.plugin.get_default_quotas(user_ctx, defaults, PROJECT)
+        self.assertEqual(4, quotas[RESOURCE])
+
     def test_get_tenant_quotas(self):
         user_ctx = context.Context(user_id=PROJECT, tenant_id=PROJECT)
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)

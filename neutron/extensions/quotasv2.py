@@ -31,6 +31,8 @@ from neutron import quota
 from neutron.quota import resource_registry
 from neutron import wsgi
 
+
+DEFAULT_QUOTAS_ACTION = 'default'
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
 QUOTAS = quota.QUOTAS
@@ -66,6 +68,16 @@ class QuotaSetsController(wsgi.Controller):
             request.context,
             resource_registry.get_all_resources(),
             tenant_id)
+
+    def default(self, request, id):
+        if id != request.context.tenant_id:
+            self._check_admin(request.context,
+                              reason=_("Only admin is authorized "
+                                       "to access quotas for another tenant"))
+        return {self._resource_name: self._driver.get_default_quotas(
+                   context=request.context,
+                   resources=resource_registry.get_all_resources(),
+                   tenant_id=id)}
 
     def create(self, request, body=None):
         msg = _('POST requests are not supported on this resource.')
@@ -144,6 +156,7 @@ class Quotasv2(extensions.ExtensionDescriptor):
         return [extensions.ResourceExtension(
             Quotasv2.get_alias(),
             controller,
+            member_actions={DEFAULT_QUOTAS_ACTION: 'GET'},
             collection_actions={'tenant': 'GET'})]
 
     @classmethod
