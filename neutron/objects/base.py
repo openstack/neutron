@@ -339,7 +339,7 @@ class NeutronDbObject(NeutronObject):
                     self._context, self.db_model,
                     self.modify_fields_to_db(updates),
                     **self._get_composite_keys())
-                self.from_db_object(self, db_obj)
+                self.from_db_object(db_obj)
 
     def delete(self):
         obj_db_api.delete_object(self._context, self.db_model,
