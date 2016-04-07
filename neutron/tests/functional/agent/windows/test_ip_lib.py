@@ -28,3 +28,7 @@ class IpLibTestCase(base.BaseTestCase):
     def test_ipwrapper_get_device_by_ip(self):
         ip_dev = ip_lib.IPWrapper().get_device_by_ip(TEST_IP)
         self.assertEqual('lo', ip_dev.device_name)
+
+    def test_device_has_ip(self):
+        not_a_device = ip_lib.IPDevice('#!#._not_a_device_bleargh!!@@@')
+        self.assertFalse(not_a_device.device_has_ip(TEST_IP))
