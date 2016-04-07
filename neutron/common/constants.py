@@ -235,6 +235,16 @@ IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
 IPV4_MAX_PREFIXLEN = 32
 IPV6_MAX_PREFIXLEN = 128
 
+# Some components communicate using private address ranges, define
+# them all here. These address ranges should not cause any issues
+# even if they overlap since they are used in disjoint namespaces,
+# but for now they are unique.
+# We define the metadata cidr since it falls in the range.
+PRIVATE_CIDR_RANGE = '169.254.0.0/16'
+DVR_FIP_LL_CIDR = '169.254.64.0/18'
+L3_HA_NET_CIDR = '169.254.192.0/18'
+METADATA_CIDR = '169.254.169.254/32'
+
 # Neutron-lib migration shim. This will wrap any constants that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.

@@ -79,7 +79,7 @@ class ItemAllocator(object):
             if not self.pool:
                 # The number of address pairs allocated from the
                 # pool depends upon the prefix length specified
-                # in FIP_LL_SUBNET
+                # in DVR_FIP_LL_CIDR
                 raise RuntimeError("Cannot allocate item of type:"
                                    " %s from pool using file %s"
                                    % (self.ItemClass, self.state_file))

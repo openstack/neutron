@@ -67,7 +67,7 @@ L3_HA_OPTS = [
                       "scheduled on. If it is set to 0 then the router will "
                       "be scheduled on every agent.")),
     cfg.StrOpt('l3_ha_net_cidr',
-               default='169.254.192.0/18',
+               default=constants.L3_HA_NET_CIDR,
                help=_('Subnet used for the l3 HA admin network.')),
     cfg.StrOpt('l3_ha_network_type', default='',
                help=_("The network type to use when creating the HA network "
