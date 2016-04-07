@@ -66,10 +66,6 @@ def fake_use_fatal_exceptions(*args):
     return True
 
 
-def fake_consume_in_threads(self):
-    return []
-
-
 def get_related_rand_names(prefixes, max_length=None):
     """Returns a list of the prefixes with the same random characters appended
 
@@ -343,9 +339,9 @@ class BaseTestCase(DietTestCase):
 
     def setup_rpc_mocks(self):
         # don't actually start RPC listeners when testing
-        self.useFixture(fixtures.MonkeyPatch(
+        mock.patch(
             'neutron.common.rpc.Connection.consume_in_threads',
-            fake_consume_in_threads))
+            return_value=[]).start()
 
         self.useFixture(fixtures.MonkeyPatch(
             'oslo_messaging.Notifier', fake_notifier.FakeNotifier))
