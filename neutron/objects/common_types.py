@@ -24,17 +24,8 @@ class NeutronRangeConstrainedIntegerInvalidLimit(exceptions.NeutronException):
                 "start = %(start)s, end = %(end)s")
 
 
-class IPV6ModeEnum(obj_fields.Enum):
-    """IPV6 Mode custom Enum"""
-    def __init__(self, **kwargs):
-        super(IPV6ModeEnum, self).__init__(valid_values=constants.IPV6_MODES,
-                                           **kwargs)
-
-
-class IPV6ModeEnumField(obj_fields.BaseEnumField):
-    def __init__(self, **kwargs):
-        self.AUTO_TYPE = IPV6ModeEnum()
-        super(IPV6ModeEnumField, self).__init__(**kwargs)
+class IPV6ModeEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.IPV6_MODES)
 
 
 class RangeConstrainedInteger(obj_fields.Integer):
