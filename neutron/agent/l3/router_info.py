@@ -33,7 +33,8 @@ EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 FLOATINGIP_STATUS_NOCHANGE = object()
 ADDRESS_SCOPE_MARK_MASK = "0xffff0000"
-ADDRESS_SCOPE_MARK_IDS = set(range(1024, 2048))
+ADDRESS_SCOPE_MARK_ID_MIN = 1024
+ADDRESS_SCOPE_MARK_ID_MAX = 2048
 DEFAULT_ADDRESS_SCOPE = "noscope"
 
 
@@ -57,8 +58,10 @@ class RouterInfo(object):
             router_id, agent_conf, interface_driver, use_ipv6)
         self.router_namespace = ns
         self.ns_name = ns.name
+        self.available_mark_ids = set(range(ADDRESS_SCOPE_MARK_ID_MIN,
+                                            ADDRESS_SCOPE_MARK_ID_MAX))
         self._address_scope_to_mark_id = {
-            DEFAULT_ADDRESS_SCOPE: ADDRESS_SCOPE_MARK_IDS.pop()}
+            DEFAULT_ADDRESS_SCOPE: self.available_mark_ids.pop()}
         self.iptables_manager = iptables_manager.IptablesManager(
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
@@ -160,10 +163,8 @@ class RouterInfo(object):
             address_scope = DEFAULT_ADDRESS_SCOPE
 
         if address_scope not in self._address_scope_to_mark_id:
-            mark_ids = set(self._address_scope_to_mark_id.values())
-            available_ids = ADDRESS_SCOPE_MARK_IDS - mark_ids
             self._address_scope_to_mark_id[address_scope] = (
-                available_ids.pop())
+                self.available_mark_ids.pop())
 
         mark_id = self._address_scope_to_mark_id[address_scope]
         # NOTE: Address scopes use only the upper 16 bits of the 32 fwmark
