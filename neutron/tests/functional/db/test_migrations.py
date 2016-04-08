@@ -11,7 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import abc
 from alembic import script as alembic_script
 from contextlib import contextmanager
@@ -22,6 +21,7 @@ from oslo_db.sqlalchemy import session
 from oslo_db.sqlalchemy import test_base
 from oslo_db.sqlalchemy import test_migrations
 from oslo_db.sqlalchemy import utils as oslo_utils
+from oslo_log import log as logging
 import six
 from six.moves import configparser
 from six.moves.urllib import parse
@@ -36,6 +36,8 @@ from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 from neutron.tests import base as base_tests
 from neutron.tests.common import base
+
+LOG = logging.getLogger(__name__)
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
@@ -359,22 +361,30 @@ def _is_backend_avail(backend,
                       user="openstack_citest",
                       passwd="openstack_citest",
                       database="openstack_citest"):
-        # is_backend_avail will be soon deprecated from oslo_db
-        # thats why its added here
-        try:
-            connect_uri = oslo_utils.get_connect_string(backend, user=user,
-                                                        passwd=passwd,
-                                                        database=database)
-            engine = session.create_engine(connect_uri)
-            connection = engine.connect()
-        except Exception:
-            # intentionally catch all to handle exceptions even if we don't
-            # have any backend code loaded.
-            return False
-        else:
-            connection.close()
-            engine.dispose()
-            return True
+    # is_backend_avail will be soon deprecated from oslo_db
+    # thats why its added here
+    try:
+        connect_uri = oslo_utils.get_connect_string(backend, user=user,
+                                                    passwd=passwd,
+                                                    database=database)
+        engine = session.create_engine(connect_uri)
+        connection = engine.connect()
+    except Exception as e:
+        # intentionally catch all to handle exceptions even if we don't
+        # have any backend code loaded.
+        LOG.critical('Backend %s failed: %s' % (backend, e))
+        return False
+    else:
+        connection.close()
+        engine.dispose()
+        return True
+
+
+def execute_cmd(cmd=None):
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, shell=True)
+    output = proc.communicate()[0]
+    assert(proc.returncode == 0), 'Command failed with output:\n%s' % output
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -421,8 +431,8 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
         for key, value in self.test_databases.items():
             self.engines[key] = sqlalchemy.create_engine(value)
 
-        # We start each test case with a completely blank slate.
-        self._reset_databases()
+            # We start each test case with a completely blank slate.
+            self._reset_databases(key)
 
     def assertColumnInTable(self, engine, table_name, column):
         table = oslo_utils.get_table(engine, table_name)
@@ -432,13 +442,6 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
         table = oslo_utils.get_table(engine, table_name)
         self.assertNotIn(column, table.columns)
 
-    def execute_cmd(self, cmd=None):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, shell=True)
-        output = proc.communicate()[0]
-        self.assertEqual(0, proc.returncode, 'Command failed with '
-                         'output:\n%s' % output)
-
     @abc.abstractproperty
     def BACKEND(self):
         pass
@@ -447,14 +450,21 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
     def _database_recreate(self, user, password, database, host):
         pass
 
-    def _reset_databases(self):
-        for key, engine in self.engines.items():
-            conn_string = self.test_databases[key]
-            conn_pieces = parse.urlparse(conn_string)
-            engine.dispose()
-            user, password, database, host = oslo_utils.get_db_connection_info(
-                conn_pieces)
-            self._database_recreate(user, password, database, host)
+    def _reset_databases(self, key):
+        # for key, engine in self.engines.items():
+        if key not in self.test_databases:
+            LOG.critical('%s not in self.test_databases' % key)
+            LOG.critical('self.test_databases keys: '
+                         '%s' % self.test_databases.keys())
+            key = "%s%s" % (key.split('+')[0], "citest")
+            LOG.critical('Trying %s instead' % key)
+
+        conn_string = self.test_databases[key]
+        conn_pieces = parse.urlparse(conn_string)
+        user, password, database, host = oslo_utils.get_db_connection_info(
+            conn_pieces)
+        self.engines[key].dispose()
+        self._database_recreate(user, password, database, host)
 
     def _get_alembic_config(self, uri):
         db_config = migration.get_neutron_config()
@@ -495,7 +505,6 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
         downgrade.
         :type snake_walk: Bool
         """
-
         revisions = self._revisions()
         for dest, curr in revisions:
             self._migrate_up(config, engine, dest, curr, with_data=True)
@@ -518,7 +527,6 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
                                        curr, with_data=True)
 
     def _migrate_down(self, config, engine, dest, curr, with_data=False):
-        # First upgrade it to current to do downgrade
         if dest:
             migration.do_alembic_command(config, 'downgrade', dest)
         else:
@@ -545,11 +553,9 @@ class _TestWalkMigrations(base_tests.BaseTestCase):
                 check(engine, data)
 
 
-class TestWalkMigrationsMysql(_TestWalkMigrations):
-
-    BACKEND = 'mysql+pymysql'
-
-    def _database_recreate(self, user, password, database, host):
+class DatabaseRecreator(object):
+    @classmethod
+    def mysql(self, user, password, database, host):
         # We can execute the MySQL client to destroy and re-create
         # the MYSQL database, which is easier and less error-prone
         # than using SQLAlchemy to do this via MetaData...trust me.
@@ -558,27 +564,10 @@ class TestWalkMigrationsMysql(_TestWalkMigrations):
         cmd = ("mysql -u \"%(user)s\" -p%(password)s -h %(host)s "
                "-e \"%(sql)s\"") % {'user': user, 'password': password,
                                     'host': host, 'sql': sql}
-        self.execute_cmd(cmd)
+        execute_cmd(cmd)
 
-    def test_mysql_opportunistically(self):
-        connect_string = oslo_utils.get_connect_string(self.BACKEND,
-            "openstack_citest", user="openstack_citest",
-            passwd="openstack_citest")
-        engine = session.create_engine(connect_string)
-        config = self._get_alembic_config(connect_string)
-        self.engines["mysqlcitest"] = engine
-        self.test_databases["mysqlcitest"] = connect_string
-
-        # build a fully populated mysql database with all the tables
-        self._reset_databases()
-        self._walk_versions(config, engine, False, False)
-
-
-class TestWalkMigrationsPsql(_TestWalkMigrations):
-
-    BACKEND = 'postgresql'
-
-    def _database_recreate(self, user, password, database, host):
+    @classmethod
+    def psql(self, user, password, database, host):
         os.environ['PGPASSWORD'] = password
         os.environ['PGUSER'] = user
         # note(boris-42): We must create and drop database, we can't
@@ -590,12 +579,89 @@ class TestWalkMigrationsPsql(_TestWalkMigrations):
         sql = sql % {'database': database}
         droptable = sqlcmd % {'user': user, 'host': host,
                               'sql': sql}
-        self.execute_cmd(droptable)
+        execute_cmd(droptable)
         sql = "create database %(database)s;"
         sql = sql % {'database': database}
         createtable = sqlcmd % {'user': user, 'host': host,
                                 'sql': sql}
-        self.execute_cmd(createtable)
+        execute_cmd(createtable)
+
+
+class TestWalkMigrationsMysql(_TestWalkMigrations):
+
+    BACKEND = 'mysql+pymysql'
+
+    def _database_recreate(self, user, password, database, host):
+        DatabaseRecreator.mysql(user, password, database, host)
+
+    def test_mysql_opportunistically(self):
+        connect_string = oslo_utils.get_connect_string(self.BACKEND,
+            "openstack_citest", user="openstack_citest",
+            passwd="openstack_citest")
+        engine = engine = session.create_engine(connect_string)
+        config = self._get_alembic_config(connect_string)
+        self.engines["mysqlcitest"] = engine
+        self.test_databases["mysqlcitest"] = connect_string
+
+        # build a fully populated mysql database with all the tables
+        self._reset_databases("mysqlcitest")
+        self._walk_versions(config, engine, False, False)
+
+    # def _test_mysql_revise(self, dest, curr):
+    #     connect_string = oslo_utils.get_connect_string(self.BACKEND,
+    #         "openstack_citest", user="openstack_citest",
+    #         passwd="openstack_citest")
+    #     engine = session.create_engine(connect_string)
+    #     config = self._get_alembic_config(connect_string)
+    #     self.engines["mysqlcitest"] = engine
+    #     self.test_databases["mysqlcitest"] = connect_string
+    #     self._reset_databases()
+    #     self._migrate_up(config, engine, dest=curr, curr=None)
+    #     self._migrate_up(config, engine, dest=dest, curr=curr,
+    #                      with_data=True)
+
+    def _test_mysql_revise(self, dest, curr, BACKENDS=['mysql+pymysql',
+                                                       'postgresql']):
+        for backend in BACKENDS:
+            connect_string = oslo_utils.get_connect_string(backend,
+                "openstack_citest", user="openstack_citest",
+                passwd="openstack_citest")
+            engine = session.create_engine(connect_string)
+            config = self._get_alembic_config(connect_string)
+            engine_name = "%s%s" % (backend.split('+')[0], 'citest')
+            LOG.critical('Resetting %s' % engine_name)
+            if engine_name not in self.engines:
+                self.engines.update({engine_name: engine})
+            else:
+                self.engines[engine_name] = engine
+            if engine_name not in self.test_databases:
+                self.test_databases.update({engine_name: connect_string})
+            else:
+                self.test_databases[engine_name] = connect_string
+            self._reset_databases(backend)
+            LOG.critical('Reset complete, migrating...')
+            self._migrate_up(config, engine, dest=curr, curr=None)
+            self._migrate_up(config, engine, dest=dest, curr=curr,
+                             with_data=True)
+
+    def _pre_upgrade_c3a73f615e4(self, engine):
+        address_scopes = oslo_utils.get_table(engine, 'address_scopes')
+        return address_scopes.columns
+
+    def _check_c3a73f615e4(self, engine, pre_upgrade_columns):
+        self.assertNotIn('ip_version', pre_upgrade_columns)
+        self.assertColumnInTable(engine, 'address_scopes', 'ip_version')
+
+    def test_revise_dce3ec7a25c9_to_c3a73f615e4(self):
+        self._test_mysql_revise(dest='c3a73f615e4', curr='dce3ec7a25c9')
+
+
+class TestWalkMigrationsPsql(_TestWalkMigrations):
+
+    BACKEND = 'postgresql'
+
+    def _database_recreate(self, user, password, database, host):
+        DatabaseRecreator.psql(user, password, database, host)
 
     def test_postgresql_opportunistically(self):
         # add this to the global lists to make reset work with it, it's removed
@@ -610,5 +676,5 @@ class TestWalkMigrationsPsql(_TestWalkMigrations):
         self.test_databases["postgresqlcitest"] = connect_string
 
         # build a fully populated postgresql database with all the tables
-        self._reset_databases()
+        self._reset_databases("postgresql")
         self._walk_versions(config, engine, False, False)
