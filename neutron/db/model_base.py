@@ -149,3 +149,10 @@ class HasStandardAttributes(object):
     @declarative.declared_attr
     def updated_at(cls):
         return association_proxy('standard_attr', 'updated_at')
+
+    def update(self, new_dict):
+        # ignore the timestamps if they were passed in. For example, this
+        # happens if code calls update_port with modified results of get_port
+        new_dict.pop('created_at', None)
+        new_dict.pop('updated_at', None)
+        super(HasStandardAttributes, self).update(new_dict)
