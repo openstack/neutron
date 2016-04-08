@@ -20,7 +20,6 @@ from neutron_lib import exceptions as n_exc
 
 from neutron.common import constants as n_const
 from neutron import context
-from neutron.db import api as ndb_api
 from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
@@ -281,75 +280,6 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                           self.ctx.session,
                           '10.0.0.0')
 
-    def test__allocate_specific_ip(self):
-        cidr = '10.0.0.0/24'
-        ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
-        with self.ctx.session.begin():
-            ranges = ipam_subnet._allocate_specific_ip(
-                self.ctx.session, '10.0.0.33')
-        self.assertEqual(2, len(ranges))
-        # 10.0.0.1 should be allocated for gateway ip
-        ranges.sort(key=convert_firstip_to_ipaddress)
-        self.assertEqual('10.0.0.2', ranges[0]['first_ip'])
-        self.assertEqual('10.0.0.32', ranges[0]['last_ip'])
-        self.assertEqual('10.0.0.34', ranges[1]['first_ip'])
-        self.assertEqual('10.0.0.254', ranges[1]['last_ip'])
-        # Limit test - first address in range
-        ranges = ipam_subnet._allocate_specific_ip(
-            self.ctx.session, '10.0.0.2')
-        self.assertEqual(2, len(ranges))
-        ranges.sort(key=convert_firstip_to_ipaddress)
-        self.assertEqual('10.0.0.3', ranges[0]['first_ip'])
-        self.assertEqual('10.0.0.32', ranges[0]['last_ip'])
-        self.assertEqual('10.0.0.34', ranges[1]['first_ip'])
-        self.assertEqual('10.0.0.254', ranges[1]['last_ip'])
-        # Limit test - last address in range
-        ranges = ipam_subnet._allocate_specific_ip(
-            self.ctx.session, '10.0.0.254')
-        self.assertEqual(2, len(ranges))
-        ranges.sort(key=convert_firstip_to_ipaddress)
-        self.assertEqual('10.0.0.3', ranges[0]['first_ip'])
-        self.assertEqual('10.0.0.32', ranges[0]['last_ip'])
-        self.assertEqual('10.0.0.34', ranges[1]['first_ip'])
-        self.assertEqual('10.0.0.253', ranges[1]['last_ip'])
-
-    def test__allocate_specific_ips_multiple_ranges(self):
-        cidr = '10.0.0.0/24'
-        ipam_subnet = self._create_and_allocate_ipam_subnet(
-            cidr,
-            allocation_pools=[{'start': '10.0.0.10', 'end': '10.0.0.19'},
-                              {'start': '10.0.0.30', 'end': '10.0.0.39'}])[0]
-        with self.ctx.session.begin():
-            ranges = ipam_subnet._allocate_specific_ip(
-                self.ctx.session, '10.0.0.33')
-        self.assertEqual(3, len(ranges))
-        # 10.0.0.1 should be allocated for gateway ip
-        ranges.sort(key=convert_firstip_to_ipaddress)
-        self.assertEqual('10.0.0.10', ranges[0]['first_ip'])
-        self.assertEqual('10.0.0.19', ranges[0]['last_ip'])
-        self.assertEqual('10.0.0.30', ranges[1]['first_ip'])
-        self.assertEqual('10.0.0.32', ranges[1]['last_ip'])
-        self.assertEqual('10.0.0.34', ranges[2]['first_ip'])
-        self.assertEqual('10.0.0.39', ranges[2]['last_ip'])
-
-    def test__allocate_specific_ip_out_of_range(self):
-        cidr = '10.0.0.0/24'
-        subnet = self._create_subnet(
-            self.plugin, self.ctx, self.net_id, cidr)
-        subnet_req = ipam_req.SpecificSubnetRequest(
-            'tenant_id', subnet['id'], cidr, gateway_ip=subnet['gateway_ip'])
-        ipam_subnet = self.ipam_pool.allocate_subnet(subnet_req)
-        with self.ctx.session.begin():
-            ranges = ipam_subnet._allocate_specific_ip(
-                self.ctx.session, '192.168.0.1')
-        # In this case _allocate_specific_ips does not fail, but
-        # simply does not update availability ranges at all
-        self.assertEqual(1, len(ranges))
-        # 10.0.0.1 should be allocated for gateway ip
-        ranges.sort(key=convert_firstip_to_ipaddress)
-        self.assertEqual('10.0.0.2', ranges[0]['first_ip'])
-        self.assertEqual('10.0.0.254', ranges[0]['last_ip'])
-
     def _allocate_address(self, cidr, ip_version, address_request):
         ipam_subnet = self._create_and_allocate_ipam_subnet(
             cidr, ip_version=ip_version)[0]
@@ -442,21 +372,6 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         subnet_req = ipam_req.SpecificSubnetRequest(
             'tenant_id', 'meh', '192.168.0.0/24')
         self.ipam_pool.allocate_subnet(subnet_req)
-
-    def test__allocate_specific_ip_raises_exception(self):
-        cidr = '10.0.0.0/24'
-        ip = '10.0.0.15'
-        ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
-        ipam_subnet.subnet_manager = mock.Mock()
-        ipam_subnet.subnet_manager.list_ranges_by_subnet_id.return_value = [{
-            'first_ip': '10.0.0.15', 'last_ip': '10.0.0.15'}]
-        ipam_subnet.subnet_manager.delete_range.return_value = 0
-
-        @ndb_api.retry_db_errors
-        def go():
-            ipam_subnet._allocate_specific_ip(self.ctx.session, ip)
-
-        self.assertRaises(ipam_exc.IPAllocationFailed, go)
 
     def test_update_allocation_pools_with_no_pool_change(self):
         cidr = '10.0.0.0/24'

@@ -147,75 +147,23 @@ class IpamTestCase(object):
                               'ip_address': fixed_ip[0].get('ip_address'),
                               'subnet_id': self.subnet_id,
                               'network_id': self.network_id}]
-        ip_avail_ranges_expected = [{'first_ip': '10.10.10.2',
-                                     'last_ip': '10.10.10.2'},
-                                    {'first_ip': '10.10.10.4',
-                                     'last_ip': '10.10.10.6'}]
         ip_alloc_pool_expected = [{'first_ip': '10.10.10.2',
                                    'last_ip': '10.10.10.6',
                                    'subnet_id': self.subnet_id}]
         self.assert_ip_alloc_matches(ip_alloc_expected)
         self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
-        self.assert_ip_avail_range_matches(
-            ip_avail_ranges_expected)
-
-    def test_allocate_first_available_ip(self):
-        self._create_port(self.port_id)
-        ip_alloc_expected = [{'port_id': self.port_id,
-                              'ip_address': '10.10.10.2',
-                              'subnet_id': self.subnet_id,
-                              'network_id': self.network_id}]
-        ip_avail_ranges_expected = [{'first_ip': '10.10.10.3',
-                                     'last_ip': '10.10.10.6'}]
-        ip_alloc_pool_expected = [{'first_ip': '10.10.10.2',
-                                   'last_ip': '10.10.10.6',
-                                   'subnet_id': self.subnet_id}]
-        self.assert_ip_alloc_matches(ip_alloc_expected)
-        self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
-        self.assert_ip_avail_range_matches(
-            ip_avail_ranges_expected)
 
     def test_allocate_ip_exausted_pool(self):
         # available from .2 up to .6 -> 5
         for i in range(1, 6):
             self._create_port(self.port_id + str(i))
 
-        ip_avail_ranges_expected = []
         ip_alloc_pool_expected = [{'first_ip': '10.10.10.2',
                                    'last_ip': '10.10.10.6',
                                    'subnet_id': self.subnet_id}]
         self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
-        self.assert_ip_avail_range_matches(
-            ip_avail_ranges_expected)
-        # Create another port
         with testtools.ExpectedException(n_exc.IpAddressGenerationFailure):
             self._create_port(self.port_id)
-
-    def test_rebuild_availability_range(self):
-        for i in range(1, 6):
-            self._create_port(self.port_id + str(i))
-
-        ip_avail_ranges_expected = []
-        ip_alloc_pool_expected = [{'first_ip': '10.10.10.2',
-                                   'last_ip': '10.10.10.6',
-                                   'subnet_id': self.subnet_id}]
-        self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
-        self.assert_ip_avail_range_matches(
-            ip_avail_ranges_expected)
-        # Delete some ports, this will free the first two IPs
-        for i in range(1, 3):
-            self.plugin.delete_port(self.cxt, self.port_id + str(i))
-        # Create another port, this will trigger the rebuilding of the
-        # availability ranges
-        self._create_port(self.port_id)
-        ip_avail_ranges_expected = [{'first_ip': '10.10.10.3',
-                                     'last_ip': '10.10.10.3'}]
-
-        ip_alloc = self.cxt.session.query(models_v2.IPAllocation).all()
-        self.assertEqual(4, len(ip_alloc))
-        self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
-        self.assert_ip_avail_range_matches(
-            ip_avail_ranges_expected)
 
 
 class TestIpamMySql(common_base.MySQLTestCase, base.BaseTestCase,

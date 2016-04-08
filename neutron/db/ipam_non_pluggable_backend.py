@@ -13,6 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+import itertools
+import random
+
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
@@ -36,51 +40,58 @@ LOG = logging.getLogger(__name__)
 class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     @staticmethod
-    def _generate_ip(context, subnets):
-        try:
-            return IpamNonPluggableBackend._try_generate_ip(context, subnets)
-        except n_exc.IpAddressGenerationFailure:
-            IpamNonPluggableBackend._rebuild_availability_ranges(context,
-                                                                 subnets)
-
-        return IpamNonPluggableBackend._try_generate_ip(context, subnets)
-
-    @staticmethod
-    def _try_generate_ip(context, subnets):
+    def _generate_ip(context, subnets, filtered_ips=None):
         """Generate an IP address.
 
         The IP address will be generated from one of the subnets defined on
         the network.
         """
-        range_qry = context.session.query(
-            models_v2.IPAvailabilityRange).join(
-                models_v2.IPAllocationPool).with_lockmode('update')
-        for subnet in subnets:
-            ip_range = range_qry.filter_by(subnet_id=subnet['id']).first()
-            if not ip_range:
-                LOG.debug("All IPs from subnet %(subnet_id)s (%(cidr)s) "
-                          "allocated",
-                          {'subnet_id': subnet['id'],
-                           'cidr': subnet['cidr']})
+        filtered_ips = filtered_ips or []
+        subnet_id_list = [subnet['id'] for subnet in subnets]
+        pool_qry = context.session.query(models_v2.IPAllocationPool)
+        pool_qry = pool_qry.filter(
+            models_v2.IPAllocationPool.subnet_id.in_(subnet_id_list))
+
+        allocation_qry = context.session.query(models_v2.IPAllocation)
+        allocation_qry = allocation_qry.filter(
+            models_v2.IPAllocation.subnet_id.in_(subnet_id_list))
+
+        ip_allocations = collections.defaultdict(netaddr.IPSet)
+        for ipallocation in allocation_qry:
+            subnet_ip_allocs = ip_allocations[ipallocation.subnet_id]
+            subnet_ip_allocs.add(netaddr.IPAddress(ipallocation.ip_address))
+
+        ip_pools = collections.defaultdict(netaddr.IPSet)
+        for ip_pool in pool_qry:
+            subnet_ip_pools = ip_pools[ip_pool.subnet_id]
+            subnet_ip_pools.add(netaddr.IPRange(ip_pool.first_ip,
+                                                ip_pool.last_ip))
+
+        for subnet_id in ip_pools:
+            subnet_ip_pools = ip_pools[subnet_id]
+            subnet_ip_allocs = ip_allocations[subnet_id]
+            filter_set = netaddr.IPSet()
+            for ip in filtered_ips:
+                filter_set.add(netaddr.IPAddress(ip))
+
+            av_set = subnet_ip_pools.difference(subnet_ip_allocs)
+            av_set = av_set.difference(filter_set)
+
+            av_set_size = av_set.size
+            if av_set_size == 0:
                 continue
-            ip_address = ip_range['first_ip']
-            if ip_range['first_ip'] == ip_range['last_ip']:
-                # No more free indices on subnet => delete
-                LOG.debug("No more free IP's in slice. Deleting "
-                          "allocation pool.")
-                context.session.delete(ip_range)
-            else:
-                # increment the first free
-                new_first_ip = str(netaddr.IPAddress(ip_address) + 1)
-                ip_range['first_ip'] = new_first_ip
-            LOG.debug("Allocated IP - %(ip_address)s from %(first_ip)s "
-                      "to %(last_ip)s",
-                      {'ip_address': ip_address,
-                       'first_ip': ip_range['first_ip'],
-                       'last_ip': ip_range['last_ip']})
-            return {'ip_address': ip_address,
-                    'subnet_id': subnet['id']}
-        raise n_exc.IpAddressGenerationFailure(net_id=subnets[0]['network_id'])
+
+            # Compute a window size, select an index inside the window, then
+            # select the IP address at the selected index within the window
+            window = min(av_set_size, 10)
+            ip_index = random.randint(1, window)
+            candidate_ips = list(itertools.islice(av_set, ip_index))
+            if candidate_ips:
+                allocated_ip = candidate_ips[-1]
+                return {'ip_address': str(allocated_ip),
+                        'subnet_id': subnet_id}
+        raise n_exc.IpAddressGenerationFailure(
+                  net_id=subnets[0]['network_id'])
 
     @staticmethod
     def _rebuild_availability_ranges(context, subnets):
@@ -285,6 +296,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # those IPs happen to be next in the line for allocation for ones that
         # didn't ask for a specific IP
         fixed_ips.sort(key=lambda x: 'ip_address' not in x)
+        allocated_ips = []
         for fixed in fixed_ips:
             subnet = self._get_subnet(context, fixed['subnet_id'])
             is_auto_addr = ipv6_utils.is_auto_address_subnet(subnet)
@@ -293,6 +305,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # Remove the IP address from the allocation pool
                     IpamNonPluggableBackend._allocate_specific_ip(
                         context, fixed['subnet_id'], fixed['ip_address'])
+                allocated_ips.append(fixed['ip_address'])
                 ips.append({'ip_address': fixed['ip_address'],
                             'subnet_id': fixed['subnet_id']})
             # Only subnet ID is specified => need to generate IP
@@ -307,7 +320,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 else:
                     subnets = [subnet]
                     # IP address allocation
-                    result = self._generate_ip(context, subnets)
+                    result = self._generate_ip(context, subnets, allocated_ips)
+                    allocated_ips.append(result['ip_address'])
                     ips.append({'ip_address': result['ip_address'],
                                 'subnet_id': result['subnet_id']})
         return ips
