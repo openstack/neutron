@@ -12,18 +12,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 from oslo_config import cfg
 from oslo_db.sqlalchemy import test_base
 
 from neutron.db.migration import cli as migration
 from neutron.tests import base as tests_base
 from neutron.tests.common import base
+from neutron.tests.common import helpers
 from neutron.tests.fullstack.resources import client as client_resource
 from neutron.tests import tools
 
 
 # This is the directory from which infra fetches log files for fullstack tests
-DEFAULT_LOG_DIR = '/tmp/dsvm-fullstack-logs/'
+DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
+                               'dsvm-fullstack-logs')
 
 
 class BaseFullStackTestCase(base.MySQLTestCase):
@@ -33,7 +37,7 @@ class BaseFullStackTestCase(base.MySQLTestCase):
         super(BaseFullStackTestCase, self).setUp()
 
         tests_base.setup_test_logging(
-            cfg.CONF, DEFAULT_LOG_DIR, '%s.log' % self.get_name())
+            cfg.CONF, DEFAULT_LOG_DIR, '%s.txt' % self.get_name())
 
         # NOTE(ihrachys): seed should be reset before environment fixture below
         # since the latter starts services that may rely on generated port
