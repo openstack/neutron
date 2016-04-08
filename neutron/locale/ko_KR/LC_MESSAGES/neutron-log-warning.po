@@ -3,17 +3,16 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# SeYeon Lee <sy_lee@kr.ibm.com>, 2016. #zanata
+# Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
+"Project-Id-Version: neutron 8.0.1.dev1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-29 10:14+0000\n"
+"POT-Creation-Date: 2016-04-07 10:58+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 03:30+0000\n"
+"PO-Revision-Date: 2016-04-07 07:06+0000\n"
 "Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -95,7 +94,7 @@ msgstr "BgpDrAgent %s이(가) 작동 중지됨"
 
 #, python-format
 msgid "Cannot find vf index for pci slot %s"
-msgstr "pci 슬롯 %s의 vf 인덱스를 찾을 수 없음"
+msgstr "PCI 슬롯 %s에대한 vf 인덱스를 찾을 수 없음"
 
 #, python-format
 msgid "Cannot find vfs %(vfs)s in device %(dev_name)s"
@@ -170,8 +169,8 @@ msgid ""
 "Dictionary %(dict_name)s for agent %(agent_type)s on host %(host)s is "
 "invalid."
 msgstr ""
-"호스트 %(host)s에 있는 에이전트 %(agent_type)s의 사전 %(dict_name)s이(가) 올"
-"바르지 않습니다."
+"호스트 %(host)s에 있는 에이전트 %(agent_type)s 사전 %(dict_name)s이(가) 올바"
+"르지 않습니다."
 
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
@@ -251,7 +250,7 @@ msgstr "아직 준비되지 않은 openvswitch 포트 발견: %s"
 
 #, python-format
 msgid "Info for router %s was not found. Performing router cleanup"
-msgstr "라우터 %s의 정보를 찾지 못했습니다. 라우터 정리 수행"
+msgstr "라우터 %s 정보를 찾지 못했습니다. 라우터 정리 수행"
 
 msgid "Invalid Interface ID, will lead to incorrect tap device name"
 msgstr ""
@@ -322,7 +321,7 @@ msgstr "활성 L3 에이전트가 없음"
 
 #, python-format
 msgid "No controller found for: %s - returning response code 404"
-msgstr "%s의 컨트롤러를 찾을 수 없음 - 응답 코드 404 리턴"
+msgstr "%s 컨트롤러를 찾을 수 없음 - 응답 코드 404 반환됨"
 
 #, python-format
 msgid "No flat network found on physical network %s"
@@ -335,12 +334,12 @@ msgstr "추가 DHCP 에이전트가 없음"
 msgid ""
 "No plugin found for resource:%s. API calls may not be correctly dispatched"
 msgstr ""
-"%s 자원의 플러그인을 찾을 수 없습니다. API 호출이 올바르게 디스패치되지 않을 "
+"%s 자원 플러그인을 찾을 수 없습니다. API 호출이 올바르게 디스패치되지 않을 "
 "수 있습니다."
 
 #, python-format
 msgid "No plugin found for: %s"
-msgstr "%s의 플러그인을 찾을 수 없음"
+msgstr "%s 플러그인을 찾을 수 없음"
 
 #, python-format
 msgid "No routers compatible with L3 agent configuration on host %s"
@@ -348,7 +347,7 @@ msgstr "호스트 %s에서 L3 에이전트 구성과 호환 가능한 라우터�
 
 #, python-format
 msgid "No sqlalchemy event for resource %s found"
-msgstr "자원 %s의 sqlalchemy 이벤트를 찾을 수 없음"
+msgstr "자원 %s sqlalchemy 이벤트를 찾을 수 없음"
 
 #, python-format
 msgid "No valid gateway port on subnet %s is found for IPv6 RA"
@@ -434,7 +433,7 @@ msgstr ""
 
 #, python-format
 msgid "Respawning %(service)s for uuid %(uuid)s"
-msgstr "uuid %(uuid)s의 %(service)s 다시 파생"
+msgstr "uuid %(uuid)s %(service)s 다시 파생"
 
 #, python-format
 msgid "Router %s was not found. Skipping agent notification."
@@ -459,7 +458,7 @@ msgstr ""
 
 msgid ""
 "The input changed_since must be in the following format: YYYY-MM-DDTHH:MM:SS"
-msgstr "input changed_since의 형식은 YYYY-MM-DDTHH:MM:SS이어야 함"
+msgstr "input changed_since 형식은 YYYY-MM-DDTHH:MM:SS이어야 함"
 
 msgid ""
 "The quota driver neutron.quota.ConfDriver is deprecated as of Liberty. "
@@ -480,7 +479,7 @@ msgid ""
 "root_helper. Disable the use_helper_for_ns_read option to avoid a "
 "performance impact."
 msgstr ""
-"neutron을 실행하는 사용자가 root_helper를 사용하지 않고 네임스페이스를 읽을 "
+"Neutron을 실행하는 사용자가 root_helper를 사용하지 않고 네임스페이스를 읽을 "
 "수 있습니다. 성능에 영향을 미치지 않도록 use_helper_for_ns_read 옵션을 사용하"
 "지 않게 설정하십시오."
 
@@ -508,16 +507,16 @@ msgid ""
 "current state; please check that the network and/or its subnet(s) still "
 "exist."
 msgstr ""
-"%(net_id)s의 dhcp에 대해 %(action)s을(를) 수행할 수 없음: 현재 상태와 충돌됩"
-"니다. 네트워크 및/또는 서브넷이 여전히 있는지 확인하십시오."
+"%(net_id)s dhcp에 대해 %(action)s을(를) 수행할 수 없음: 현재 상태와 충돌됩니"
+"다. 네트워크 및/또는 서브넷이 여전히 있는지 확인하십시오."
 
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
-msgstr "Floating IP의 IP 주소를 구성할 수 없음: %s"
+msgstr "Floating IP에대한 IP 주소를 구성할 수 없음: %s"
 
 #, python-format
 msgid "Unable to find data type descriptor for attribute %s"
-msgstr "속성 %s의 데이터 유형 설명자를 찾을 수 없음"
+msgstr "속성 %s 데이터 유형 descriptor를 찾을 수 없음"
 
 #, python-format
 msgid "Unable to retrieve active L2 agent on host %s"
@@ -533,7 +532,7 @@ msgstr ""
 
 #, python-format
 msgid "Unsupported QoS rule type for %(rule_id)s: %(rule_type)s; skipping"
-msgstr "%(rule_id)s의 지원되지 않는 QoS 규칙 유형: %(rule_type)s. 건너뜁니다."
+msgstr "%(rule_id)s 지원되지 않는 QoS 규칙 유형: %(rule_type)s. 건너뜁니다."
 
 #, python-format
 msgid "Updating lease expiration is now deprecated. Issued  from host %s."
@@ -570,7 +569,7 @@ msgstr ""
 
 #, python-format
 msgid "device pci mismatch: %(device_mac)s - %(pci_slot)s"
-msgstr "장치 pci 불일치: %(device_mac)s - %(pci_slot)s"
+msgstr "장치 PCI 불일치: %(device_mac)s - %(pci_slot)s"
 
 #, python-format
 msgid "failed to parse vf link show line %(line)s: for %(device)s"
@@ -598,7 +597,7 @@ msgstr ""
 
 #, python-format
 msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
-msgstr "VIF: %(vif)s의 fport: %(ofport)s이(가) 양수가 아님"
+msgstr "VIF: %(vif)s fport: %(ofport)s이(가) 양수가 아님"
 
 #, python-format
 msgid "port_id to device with MAC %s not found"
@@ -613,4 +612,4 @@ msgstr ""
 
 #, python-format
 msgid "unable to modify mac_address of ACTIVE port %s"
-msgstr "활성 포트 %s의 mac_address를 수정할 수 없음"
+msgstr "활성 포트 %s에대한 mac_address를 수정할 수 없음"
