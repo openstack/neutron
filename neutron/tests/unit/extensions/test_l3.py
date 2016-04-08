@@ -2478,11 +2478,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                ) as private_port:
 
                     fp1 = self._make_floatingip(self.fmt, network_ex_id1,
-                                            private_port['port']['id'],
-                                            floating_ip='10.0.0.3')
+                                            private_port['port']['id'])
                     fp2 = self._make_floatingip(self.fmt, network_ex_id2,
-                                            private_port['port']['id'],
-                                            floating_ip='11.0.0.3')
+                                            private_port['port']['id'])
                     self.assertEqual(fp1['floatingip']['router_id'],
                                      r1['router']['id'])
                     self.assertEqual(fp2['floatingip']['router_id'],
@@ -2519,8 +2517,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                ) as private_port:
 
                     fp = self._make_floatingip(self.fmt, network_ex_id,
-                                            private_port['port']['id'],
-                                            floating_ip='10.0.0.8')
+                                            private_port['port']['id'])
                     self.assertEqual(r1['router']['id'],
                                      fp['floatingip']['router_id'])
 
@@ -2681,8 +2678,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.subnet(cidr="192.168.1.0/24", ip_version=4, network=n):
             self._set_net_external(n['network']['id'])
             fip = self._make_floatingip(self.fmt, n['network']['id'])
-            self.assertEqual('192.168.1.2',
-                             fip['floatingip']['floating_ip_address'])
+            fip_set = netaddr.IPSet(netaddr.IPNetwork("192.168.1.0/24"))
+            fip_ip = fip['floatingip']['floating_ip_address']
+            self.assertTrue(netaddr.IPAddress(fip_ip) in fip_set)
 
     def test_create_floatingip_with_assoc_to_ipv6_subnet(self):
         with self.subnet() as public_sub:

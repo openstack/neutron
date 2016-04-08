@@ -355,20 +355,16 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         return ipam_subnet.allocate(address_request)
 
     def test_allocate_any_v4_address_succeeds(self):
-        ip_address = self._allocate_address(
-            '10.0.0.0/24', 4, ipam_req.AnyAddressRequest)
-        # As the DB IPAM driver allocation logic is strictly sequential, we can
-        # expect this test to allocate the .2 address as .1 is used by default
-        # as subnet gateway
-        self.assertEqual('10.0.0.2', ip_address)
+        self._test_allocate_any_address_succeeds('10.0.0.0/24', 4)
 
     def test_allocate_any_v6_address_succeeds(self):
+        self._test_allocate_any_address_succeeds('fde3:abcd:4321:1::/64', 6)
+
+    def _test_allocate_any_address_succeeds(self, subnet_cidr, ip_version):
         ip_address = self._allocate_address(
-            'fde3:abcd:4321:1::/64', 6, ipam_req.AnyAddressRequest)
-        # As the DB IPAM driver allocation logic is strictly sequential, we can
-        # expect this test to allocate the .2 address as .1 is used by default
-        # as subnet gateway
-        self.assertEqual('fde3:abcd:4321:1::2', ip_address)
+            subnet_cidr, ip_version, ipam_req.AnyAddressRequest)
+        self.assertIn(netaddr.IPAddress(ip_address),
+                      netaddr.IPSet(netaddr.IPNetwork(subnet_cidr)))
 
     def test_allocate_specific_v4_address_succeeds(self):
         ip_address = self._allocate_address(

@@ -463,6 +463,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 security_groups=[sg2_id])
             ports_rest2 = self.deserialize(self.fmt, res2)
             port_id2 = ports_rest2['port']['id']
+            port_fixed_ip2 = ports_rest2['port']['fixed_ips'][0]['ip_address']
             ctx = context.get_admin_context()
             ports_rpc = self.rpc.security_group_rules_for_devices(
                 ctx, devices=devices)
@@ -476,7 +477,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                         {'direction': 'egress', 'ethertype': const.IPv6,
                          'security_group_id': sg2_id},
                         {'direction': u'ingress',
-                         'source_ip_prefix': u'10.0.0.3/32',
+                         'source_ip_prefix': port_fixed_ip2 + '/32',
                          'protocol': const.PROTO_NAME_TCP,
                          'ethertype': const.IPv4,
                          'port_range_max': 25, 'port_range_min': 24,
@@ -519,6 +520,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 security_groups=[sg2_id])
             ports_rest2 = self.deserialize(self.fmt, res2)
             port_id2 = ports_rest2['port']['id']
+            port_ip2 = ports_rest2['port']['fixed_ips'][0]['ip_address']
             ctx = context.get_admin_context()
             ports_rpc = self.rpc.security_group_info_for_devices(
                 ctx, devices=devices)
@@ -533,7 +535,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                      'remote_group_id': sg2_id}
                 ]},
                 'sg_member_ips': {sg2_id: {
-                    'IPv4': set([u'10.0.0.3']),
+                    'IPv4': set([port_ip2]),
                     'IPv6': set(),
                 }}
             }
@@ -1077,6 +1079,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
                 security_groups=[sg2_id])
             port_id2 = ports_rest2['port']['id']
+            port_ip2 = ports_rest2['port']['fixed_ips'][0]['ip_address']
 
             ctx = context.get_admin_context()
             ports_rpc = self.rpc.security_group_rules_for_devices(
@@ -1091,7 +1094,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                         {'direction': 'egress', 'ethertype': const.IPv6,
                          'security_group_id': sg2_id},
                         {'direction': 'ingress',
-                         'source_ip_prefix': '2001:db8::2/128',
+                         'source_ip_prefix': port_ip2 + '/128',
                          'protocol': const.PROTO_NAME_TCP,
                          'ethertype': const.IPv6,
                          'port_range_max': 25, 'port_range_min': 24,

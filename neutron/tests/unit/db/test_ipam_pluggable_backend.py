@@ -559,9 +559,28 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
 
     def test_recreate_port_ipam(self):
-        ip = '10.0.0.2'
         with self.subnet() as subnet:
+            subnet_cidr = subnet['subnet']['cidr']
             with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(1, len(ips))
+                orig_ip = ips[0]['ip_address']
+                self.assertIn(netaddr.IPAddress(ips[0]['ip_address']),
+                              netaddr.IPSet(netaddr.IPNetwork(subnet_cidr)))
+                req = self.new_delete_request('ports', port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+                with self.port(subnet=subnet, fixed_ips=ips) as port:
+                    ips = port['port']['fixed_ips']
+                    self.assertEqual(1, len(ips))
+                    self.assertEqual(orig_ip, ips[0]['ip_address'])
+
+    def test_recreate_port_ipam_specific_ip(self):
+        with self.subnet() as subnet:
+            ip = '10.0.0.2'
+            fixed_ip_data = [{'subnet_id': subnet['subnet']['id'],
+                              'ip_address': ip}]
+            with self.port(subnet=subnet, fixed_ips=fixed_ip_data) as port:
                 ips = port['port']['fixed_ips']
                 self.assertEqual(1, len(ips))
                 self.assertEqual(ip, ips[0]['ip_address'])
