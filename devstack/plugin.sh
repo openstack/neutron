@@ -9,6 +9,10 @@ source $LIBDIR/ovs
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
+if [ -f $LIBDIR/${Q_AGENT}_agent ]; then
+    source $LIBDIR/${Q_AGENT}_agent
+fi
+
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
