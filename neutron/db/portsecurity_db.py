@@ -29,8 +29,8 @@ class PortSecurityDbMixin(portsecurity_db_common.PortSecurityDbCommon):
     def _extend_port_security_dict(self, response_data, db_data):
         if ('port-security' in
             getattr(self, 'supported_extension_aliases', [])):
-            psec_value = db_data['port_security'][psec.PORTSECURITY]
-            response_data[psec.PORTSECURITY] = psec_value
+            super(PortSecurityDbMixin, self)._extend_port_security_dict(
+                response_data, db_data)
 
     def _determine_port_security_and_has_ip(self, context, port):
         """Returns a tuple of booleans (port_security_enabled, has_ip).
