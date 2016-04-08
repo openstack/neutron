@@ -28,7 +28,14 @@ SUDO_CMD = 'sudo -n'
 DEFAULT_LOG_DIR = '/tmp/dsvm-functional-logs/'
 
 
-class BaseSudoTestCase(base.BaseTestCase):
+class BaseLoggingTestCase(base.BaseTestCase):
+    def setUp(self):
+        super(BaseLoggingTestCase, self).setUp()
+        base.setup_test_logging(
+            cfg.CONF, DEFAULT_LOG_DIR, "%s.log" % self.id())
+
+
+class BaseSudoTestCase(BaseLoggingTestCase):
     """
     Base class for tests requiring invocation of commands via a root helper.
 
@@ -53,9 +60,6 @@ class BaseSudoTestCase(base.BaseTestCase):
         super(BaseSudoTestCase, self).setUp()
         if not base.bool_from_env('OS_SUDO_TESTING'):
             self.skipTest('Testing with sudo is not enabled')
-
-        base.setup_test_logging(
-            cfg.CONF, DEFAULT_LOG_DIR, "%s.log" % self.id())
 
         config.register_root_helper(cfg.CONF)
         self.config(group='AGENT',

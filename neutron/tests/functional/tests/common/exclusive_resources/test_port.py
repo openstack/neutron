@@ -14,11 +14,11 @@
 
 from neutron_lib import constants
 
-from neutron.tests import base
 from neutron.tests.common.exclusive_resources import port
+from neutron.tests.functional import base
 
 
-class TestExclusivePort(base.DietTestCase):
+class TestExclusivePort(base.BaseLoggingTestCase):
     def test_port(self):
         port_1 = self.useFixture(port.ExclusivePort(
             constants.PROTO_NAME_TCP)).port
