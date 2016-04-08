@@ -366,6 +366,14 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             # just make sure that no exception is raised
             self.remove_networks_from_down_agents()
 
+    def test_reschedule_network_catches_exceptions_on_fetching_bindings(self):
+        with mock.patch('neutron.context.get_admin_context') as get_ctx:
+            mock_ctx = mock.Mock()
+            get_ctx.return_value = mock_ctx
+            mock_ctx.session.query.side_effect = Exception()
+            # just make sure that no exception is raised
+            self.remove_networks_from_down_agents()
+
     def test_reschedule_doesnt_occur_if_no_agents(self):
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 2)
         self._test_schedule_bind_network([agents[0]], self.network_id)
