@@ -473,7 +473,7 @@ class TunnelTest(object):
                                  log_errors=True),
             mock.call.set_db_attribute(
                 'Port', VIF_PORT.port_name,
-                'tag', self.mod_agent.DEAD_VLAN_TAG,
+                'tag', constants.DEAD_VLAN_TAG,
                 log_errors=True),
             mock.call.drop_port(in_port=VIF_PORT.ofport),
         ]
