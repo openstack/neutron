@@ -560,6 +560,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         subnets = [{'id': ip_dict['subnet_id'],
                     'network_id': network_id,
                     'cidr': '192.1.1.0/24',
+                    'ip_version': 4,
                     'ipv6_address_mode': None,
                     'ipv6_ra_mode': None}]
         get_subnets_mock = mock.Mock(return_value=subnets)

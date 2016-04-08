@@ -186,12 +186,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
-        ips = []
-        v6_stateless = []
-        net_id_filter = {'network_id': [p['network_id']]}
-        subnets = self._get_subnets(context, filters=net_id_filter)
-        is_router_port = (
-            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS_SNAT)
+
+        v4, v6_stateful, v6_stateless = self._classify_subnets(
+            context, p['network_id'])
 
         fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
         if fixed_configured:
@@ -199,38 +196,24 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                 p["network_id"],
                                                 p['fixed_ips'],
                                                 p['device_owner'])
-            # For ports that are not router ports, implicitly include all
-            # auto-address subnets for address association.
-            if not is_router_port:
-                v6_stateless += [subnet for subnet in subnets
-                                 if ipv6_utils.is_auto_address_subnet(subnet)]
         else:
-            # Split into v4, v6 stateless and v6 stateful subnets
-            v4 = []
-            v6_stateful = []
-            for subnet in subnets:
-                if subnet['ip_version'] == 4:
-                    v4.append(subnet)
-                else:
-                    if ipv6_utils.is_auto_address_subnet(subnet):
-                        if not is_router_port:
-                            v6_stateless.append(subnet)
-                    else:
-                        v6_stateful.append(subnet)
-
+            ips = []
             version_subnets = [v4, v6_stateful]
             for subnets in version_subnets:
                 if subnets:
                     ips.append([{'subnet_id': s['id']}
                                 for s in subnets])
 
-        for subnet in v6_stateless:
-            # IP addresses for IPv6 SLAAC and DHCPv6-stateless subnets
-            # are implicitly included.
-            ips.append({'subnet_id': subnet['id'],
-                        'subnet_cidr': subnet['cidr'],
-                        'eui64_address': True,
-                        'mac': p['mac_address']})
+        is_router_port = (
+            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS_SNAT)
+        if not is_router_port:
+            for subnet in v6_stateless:
+                # IP addresses for IPv6 SLAAC and DHCPv6-stateless subnets
+                # are implicitly included.
+                ips.append({'subnet_id': subnet['id'],
+                            'subnet_cidr': subnet['cidr'],
+                            'eui64_address': True,
+                            'mac': p['mac_address']})
         ipam_driver = driver.Pool.get_instance(None, context)
         return self._ipam_allocate_ips(context, ipam_driver, p, ips)
 

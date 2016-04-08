@@ -461,3 +461,18 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                    subnet_request.allocation_pools)
 
         return subnet
+
+    def _classify_subnets(self, context, network_id):
+        """Split into v4, v6 stateless and v6 stateful subnets"""
+        subnets = self._get_subnets(context,
+                                    filters={'network_id': [network_id]})
+
+        v4, v6_stateful, v6_stateless = [], [], []
+        for subnet in subnets:
+            if subnet['ip_version'] == 4:
+                v4.append(subnet)
+            elif not ipv6_utils.is_auto_address_subnet(subnet):
+                v6_stateful.append(subnet)
+            else:
+                v6_stateless.append(subnet)
+        return v4, v6_stateful, v6_stateless
