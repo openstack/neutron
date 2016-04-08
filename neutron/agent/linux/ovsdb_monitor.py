@@ -26,6 +26,7 @@ LOG = logging.getLogger(__name__)
 OVSDB_ACTION_INITIAL = 'initial'
 OVSDB_ACTION_INSERT = 'insert'
 OVSDB_ACTION_DELETE = 'delete'
+OVSDB_ACTION_NEW = 'new'
 
 
 class OvsdbMonitor(async_process.AsyncProcess):
@@ -85,6 +86,7 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
     def process_events(self):
         devices_added = []
         devices_removed = []
+        dev_to_ofport = {}
         for row in self.iter_stdout():
             json = jsonutils.loads(row).get('data')
             for ovs_id, action, name, ofport, external_ids in json:
@@ -99,8 +101,14 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
                     devices_added.append(device)
                 elif action == OVSDB_ACTION_DELETE:
                     devices_removed.append(device)
+                elif action == OVSDB_ACTION_NEW:
+                    dev_to_ofport[name] = ofport
+
         self.new_events['added'].extend(devices_added)
         self.new_events['removed'].extend(devices_removed)
+        # update any events with ofports received from 'new' action
+        for event in self.new_events['added']:
+            event['ofport'] = dev_to_ofport.get(event['name'], event['ofport'])
 
     def start(self, block=False, timeout=5):
         super(SimpleInterfaceMonitor, self).start()
