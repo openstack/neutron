@@ -18,9 +18,9 @@
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc2.dev4\n"
+"Project-Id-Version: neutron 8.0.1.dev88\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-17 15:44+0000\n"
+"POT-Creation-Date: 2016-04-08 04:35+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -711,9 +711,6 @@ msgid ""
 "by a different tenant."
 msgstr "无法创建浮动 IP 并将它绑定至端口 %s，因为该端口由另一租户拥有。"
 
-msgid "Cannot create resource for another tenant"
-msgstr "无法为另一租户创建资源"
-
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "在设置了 ipv6 属性的情况下，无法禁用 enable_dhcp"
 
@@ -1278,14 +1275,6 @@ msgstr ""
 "广播到 Overlay 中。"
 
 msgid ""
-"Enable local ARP responder which provides local responses instead of "
-"performing ARP broadcast into the overlay. Enabling local ARP responder is "
-"not fullycompatible with the allowed-address-pairs extension."
-msgstr ""
-"启用本地 ARP 响应程序，这将提供本地响应而不是对重叠部分执行 ARP 广播。启用本"
-"地 ARP 响应程序并未与 allowed-address-pairs 扩展完全兼容。"
-
-msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -1363,14 +1352,6 @@ msgstr "隧道范围的结束小于隧道范围的起始"
 
 msgid "Enforce using split branches file structure."
 msgstr "强制使用拆分分支文件结构。"
-
-msgid ""
-"Ensure that configured gateway is on subnet. For IPv6, validate only if "
-"gateway is not a link local address. Deprecated, to be removed during the "
-"Newton release, at which point the gateway will not be forced on to subnet."
-msgstr ""
-"确保所配置网关为子网。对于 IPv6，仅当网关并非链路本地地址时，才应进行验证。已"
-"不推荐使用，将在 Newton 发行版中移除，到时该网关不必强制位于子网。"
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1636,10 +1617,6 @@ msgstr ""
 
 msgid "Group (gid or name) running this process after its initialization"
 msgstr "在此进程的初始化之后，运行此进程的组（gid 或名称）"
-
-#, python-format
-msgid "HEAD file does not match migration timeline head, expected: %s"
-msgstr "HEAD 文件与迁移时间线头不匹配，需要：%s"
 
 msgid ""
 "Hostname to be used by the Neutron server, agents and services running on "
@@ -2671,9 +2648,6 @@ msgstr "找不到插件“%s”。"
 msgid "Plugin does not support updating provider attributes"
 msgstr "插件不支持更新提供程序属性"
 
-msgid "Policy configuration policy.json could not be found."
-msgstr "找不到策略配置 policy.json。"
-
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "端口 %(id)s 没有固定 ip %(address)s"
@@ -2713,9 +2687,6 @@ msgid ""
 "Port Security must be enabled in order to have allowed address pairs on a "
 "port."
 msgstr "必须启用端口安全性，以便在端口上具有所允许的地址对。"
-
-msgid "Port does not have port security binding."
-msgstr "端口没有端口安全性绑定。"
 
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
@@ -3964,10 +3935,6 @@ msgstr "不能在没有 dns_domain 的情况下指定 dns_name"
 
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "在没有 port_id 的情况下，无法指定 fixed_ip_address"
-
-#, python-format
-msgid "gateway_ip %s is not in the subnet"
-msgstr "gateway_ip %s 不在子网内"
 
 #, python-format
 msgid "has device owner %s"

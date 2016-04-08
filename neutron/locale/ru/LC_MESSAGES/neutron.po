@@ -5,17 +5,18 @@
 # Translators:
 # Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 # Grigory Mokhin <mokhin@gmail.com>, 2016. #zanata
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
+"Project-Id-Version: neutron 8.0.1.dev88\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:36+0000\n"
+"POT-Creation-Date: 2016-04-08 04:35+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-11 02:56+0000\n"
+"PO-Revision-Date: 2016-03-18 09:51+0000\n"
 "Last-Translator: Grigory Mokhin <mokhin@gmail.com>\n"
 "Language: ru\n"
 "Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -551,6 +552,11 @@ msgstr "Атрибут '%s' недопустим в POST"
 msgid "Authentication type not supported. Requested type=%(auth_type)s."
 msgstr "Тип идентификации не поддерживается. Запрошенный тип: %(auth_type)s."
 
+msgid "Authorization URL for connecting to designate in admin context"
+msgstr ""
+"URL авторизации для подключения к назначенному объекту в административном "
+"контексте"
+
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Автоматически удалять сети из отключенных агентов DHCP."
 
@@ -746,9 +752,6 @@ msgid ""
 msgstr ""
 "Невозможно создать нефиксированный IP-адрес и связать его с портом %s, так "
 "как этот порт принадлежит другому арендатору."
-
-msgid "Cannot create resource for another tenant"
-msgstr "Невозможно создать ресурс для другого арендатора"
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "Невозможно отключить enable_dhcp, если заданы атрибуты ipv6"
@@ -1378,16 +1381,6 @@ msgstr ""
 "дорогостоящего оповещения ARP в перекрытии."
 
 msgid ""
-"Enable local ARP responder which provides local responses instead of "
-"performing ARP broadcast into the overlay. Enabling local ARP responder is "
-"not fullycompatible with the allowed-address-pairs extension."
-msgstr ""
-"Включить локальный промежуточный клиент ARP, обеспечивающий локальные ответы "
-"вместо широковещательной рассылки ARP в перекрывающиеся сети. Локальный "
-"промежуточный клиент ARP не полностью совместим с расширением пар допустимых "
-"адресов."
-
-msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
 "False, when admin_state_up of an agent is turned False, services on it will "
 "be disabled. Agents with admin_state_up False are not selected for automatic "
@@ -1477,16 +1470,6 @@ msgstr "Конечное значение диапазона туннелей м
 msgid "Enforce using split branches file structure."
 msgstr ""
 "Выполнить принудительно с помощью разделения ветвей файловой структуры."
-
-msgid ""
-"Ensure that configured gateway is on subnet. For IPv6, validate only if "
-"gateway is not a link local address. Deprecated, to be removed during the "
-"Newton release, at which point the gateway will not be forced on to subnet."
-msgstr ""
-"Убедитесь, что в подсети настроен шлюз. Для IPv6 проверка выполняется "
-"успешно, только если шлюз не является локальным адресом линии связи. "
-"Устарело, будет удалено в выпуске Newton, в котором шлюз не будет "
-"обязательным в подсети."
 
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
@@ -1775,10 +1758,6 @@ msgstr ""
 
 msgid "Group (gid or name) running this process after its initialization"
 msgstr "Группа (gid или имя) запускает этот процесс после инициализации"
-
-#, python-format
-msgid "HEAD file does not match migration timeline head, expected: %s"
-msgstr "Файл HEAD отличается от ожидаемого для графика миграции: %s"
 
 msgid ""
 "Hostname to be used by the Neutron server, agents and services running on "
@@ -2396,6 +2375,9 @@ msgstr ""
 "Правило метки измерения с remote_ip_prefix %(remote_ip_prefix)s "
 "перекрывается другим правилом"
 
+msgid "Method cannot be called within a transaction."
+msgstr "Метод нельзя вызывать внутри транзакции."
+
 msgid "Migration from distributed router to centralized is not supported"
 msgstr ""
 "Миграция с распределенных маршрутизаторов на централизованный не "
@@ -2881,6 +2863,10 @@ msgstr "Синтаксический анализ bridge_mappings не выпо�
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "Ошибка анализа поддерживаемых pci_vendor_devs"
 
+msgid "Password for connecting to designate in admin context"
+msgstr ""
+"Пароль для подключения к назначенному объекту в административном контексте"
+
 #, python-format
 msgid "Password not specified for authentication type=%(auth_type)s."
 msgstr "Пароль для идентификации типа %(auth_type)s не указан."
@@ -2912,9 +2898,6 @@ msgstr "Модуль %s не найден."
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "Модуль не поддерживает обновление атрибутов поставщика"
-
-msgid "Policy configuration policy.json could not be found."
-msgstr "Не найдена конфигурация стратегии policy.json."
 
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
@@ -2958,9 +2941,6 @@ msgid ""
 msgstr ""
 "Необходимо включить защиту порта для получения разрешенных пар адресов на "
 "порту."
-
-msgid "Port does not have port security binding."
-msgstr "Для порта отсутствует привязка защиты порта."
 
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
@@ -3069,6 +3049,28 @@ msgstr "Формат диапазонов: netaddr.IPRange"
 
 msgid "Ranges must not overlap"
 msgstr "Диапазоны не должны перекрываться"
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.EUI type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr.EUI."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPAddress "
+"type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr."
+"IPAddress."
+
+#, python-format
+msgid ""
+"Received type '%(type)s' and value '%(value)s'. Expecting netaddr.IPNetwork "
+"type."
+msgstr ""
+"Получено: тип '%(type)s', значение '%(value)s'. Ожидался тип netaddr."
+"IPNetwork."
 
 #, python-format
 msgid ""
@@ -3489,6 +3491,16 @@ msgstr ""
 "Арендатору %(tenant_id)s не разрешено создание ресурса %(resource)s в этой "
 "сети"
 
+msgid "Tenant id for connecting to designate in admin context"
+msgstr ""
+"ИД арендатора для подключения к назначенному объекту в административном "
+"контексте"
+
+msgid "Tenant name for connecting to designate in admin context"
+msgstr ""
+"Имя арендатора для подключения к назначенному объекту в административном "
+"контексте"
+
 msgid "Tenant network creation is not enabled."
 msgstr "Создание сети арендатора не разрешено."
 
@@ -3846,6 +3858,9 @@ msgstr ""
 "каталоге keystone, конечная точка может быть общедоступной, внутренней или "
 "административной."
 
+msgid "URL for connecting to designate"
+msgstr "URL для подключения к назначенному объекту"
+
 msgid "URL to database"
 msgstr "URL базы данных"
 
@@ -4129,6 +4144,11 @@ msgstr ""
 msgid "User (uid or name) running this process after its initialization"
 msgstr "Пользователь (uid или имя) запускает этот процесс после инициализации"
 
+msgid "Username for connecting to designate in admin context"
+msgstr ""
+"Имя пользователя для подключения к назначенному объекту в административном "
+"контексте"
+
 msgid ""
 "Uses veth for an OVS interface or not. Support kernels with limited "
 "namespace support (e.g. RHEL 6.5) so long as ovs_use_veth is set to True."
@@ -4307,10 +4327,6 @@ msgstr "dns_name должен указываться вместе с dns_domain"
 
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "fixed_ip_address должен указываться вместе с port_id"
-
-#, python-format
-msgid "gateway_ip %s is not in the subnet"
-msgstr "IP шлюза %s не принадлежит подсети"
 
 #, python-format
 msgid "has device owner %s"
