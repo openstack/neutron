@@ -508,13 +508,23 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                     elif interface not in physical_interfaces:
                         self.delete_interface(interface)
 
-            LOG.debug("Deleting bridge %s", bridge_name)
-            if bridge_device.link.set_down():
-                return
-            if bridge_device.delbr():
-                return
-            LOG.debug("Done deleting bridge %s", bridge_name)
-
+            try:
+                LOG.debug("Deleting bridge %s", bridge_name)
+                if bridge_device.link.set_down():
+                    return
+                if bridge_device.delbr():
+                    return
+                LOG.debug("Done deleting bridge %s", bridge_name)
+            except RuntimeError:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if not bridge_device.exists():
+                        # the exception was likely a side effect of the bridge
+                        # being removed by nova during handling,
+                        # so we just return
+                        ctxt.reraise = False
+                        LOG.debug("Cannot delete bridge %s; it does not exist",
+                                  bridge_name)
+                        return
         else:
             LOG.debug("Cannot delete bridge %s; it does not exist",
                       bridge_name)
