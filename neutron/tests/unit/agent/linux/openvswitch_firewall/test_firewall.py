@@ -374,8 +374,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             priority=90,
             table=ovs_consts.LOCAL_SWITCHING)
         filter_rule = mock.call(
-            actions='output:{:d},ct(commit,zone=NXM_NX_REG6[0..15])'.format(
-                self.port_ofport),
+            actions='ct(commit,zone=NXM_NX_REG6[0..15]),'
+            'strip_vlan,output:{:d}'.format(self.port_ofport),
             dl_dst=self.port_mac,
             dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
