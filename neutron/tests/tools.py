@@ -260,6 +260,10 @@ def get_random_mac():
     return ':'.join(map(lambda x: "%02x" % x, mac))
 
 
+def get_random_EUI():
+    return netaddr.EUI(get_random_mac())
+
+
 def get_random_ip_network(version=4):
     return netaddr.IPNetwork(get_random_cidr(version=version))
 
