@@ -22,95 +22,11 @@ from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_non_pluggable_backend as non_ipam
-from neutron.db import models_v2
 from neutron.tests import base
 
 
 class TestIpamNonPluggableBackend(base.BaseTestCase):
     """Unit Tests for non pluggable IPAM Logic."""
-
-    def _validate_rebuild_availability_ranges(self, pools, allocations,
-                                              expected):
-        ip_qry = mock.Mock()
-        ip_qry.with_lockmode.return_value = ip_qry
-        ip_qry.filter_by.return_value = allocations
-
-        pool_qry = mock.Mock()
-        pool_qry.options.return_value = pool_qry
-        pool_qry.with_lockmode.return_value = pool_qry
-        pool_qry.filter_by.return_value = pools
-
-        def return_queries_side_effect(*args, **kwargs):
-            if args[0] == models_v2.IPAllocation:
-                return ip_qry
-            if args[0] == models_v2.IPAllocationPool:
-                return pool_qry
-
-        context = mock.Mock()
-        context.session.query.side_effect = return_queries_side_effect
-        subnets = [mock.MagicMock()]
-
-        non_ipam.IpamNonPluggableBackend._rebuild_availability_ranges(
-            context, subnets)
-
-        actual = [[args[0].allocation_pool_id,
-                   args[0].first_ip, args[0].last_ip]
-                  for _name, args, _kwargs in context.session.add.mock_calls]
-        self.assertEqual(expected, actual)
-
-    def test_rebuild_availability_ranges(self):
-        pools = [{'id': 'a',
-                  'first_ip': '192.168.1.3',
-                  'last_ip': '192.168.1.10'},
-                 {'id': 'b',
-                  'first_ip': '192.168.1.100',
-                  'last_ip': '192.168.1.120'}]
-
-        allocations = [{'ip_address': '192.168.1.3'},
-                       {'ip_address': '192.168.1.78'},
-                       {'ip_address': '192.168.1.7'},
-                       {'ip_address': '192.168.1.110'},
-                       {'ip_address': '192.168.1.11'},
-                       {'ip_address': '192.168.1.4'},
-                       {'ip_address': '192.168.1.111'}]
-
-        expected = [['a', '192.168.1.5', '192.168.1.6'],
-                    ['a', '192.168.1.8', '192.168.1.10'],
-                    ['b', '192.168.1.100', '192.168.1.109'],
-                    ['b', '192.168.1.112', '192.168.1.120']]
-
-        self._validate_rebuild_availability_ranges(pools, allocations,
-                                                   expected)
-
-    def test_rebuild_ipv6_availability_ranges(self):
-        pools = [{'id': 'a',
-                  'first_ip': '2001::1',
-                  'last_ip': '2001::50'},
-                 {'id': 'b',
-                  'first_ip': '2001::100',
-                  'last_ip': '2001::ffff:ffff:ffff:fffe'}]
-
-        allocations = [{'ip_address': '2001::10'},
-                       {'ip_address': '2001::45'},
-                       {'ip_address': '2001::60'},
-                       {'ip_address': '2001::111'},
-                       {'ip_address': '2001::200'},
-                       {'ip_address': '2001::ffff:ffff:ffff:ff10'},
-                       {'ip_address': '2001::ffff:ffff:ffff:f2f0'}]
-
-        expected = [['a', '2001::1', '2001::f'],
-                    ['a', '2001::11', '2001::44'],
-                    ['a', '2001::46', '2001::50'],
-                    ['b', '2001::100', '2001::110'],
-                    ['b', '2001::112', '2001::1ff'],
-                    ['b', '2001::201', '2001::ffff:ffff:ffff:f2ef'],
-                    ['b', '2001::ffff:ffff:ffff:f2f1',
-                     '2001::ffff:ffff:ffff:ff0f'],
-                    ['b', '2001::ffff:ffff:ffff:ff11',
-                     '2001::ffff:ffff:ffff:fffe']]
-
-        self._validate_rebuild_availability_ranges(pools, allocations,
-                                                   expected)
 
     def _test__allocate_ips_for_port(self, subnets, port, expected):
         # this test is incompatible with pluggable ipam, because subnets
