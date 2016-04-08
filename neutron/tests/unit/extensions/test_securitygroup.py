@@ -16,6 +16,7 @@
 import contextlib
 
 import mock
+from oslo_config import cfg
 import oslo_db.exception as exc
 import six
 import testtools
@@ -1504,6 +1505,36 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_security_groups_native_quotas(self):
+        quota = 1
+        cfg.CONF.set_override('quota_security_group', quota, group='QUOTAS')
+        name = 'quota_test'
+        description = 'quota_test'
+        res = self._create_security_group(self.fmt, name, description)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+        res = self._create_security_group(self.fmt, name, description)
+        self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_security_group_rules_native_quotas(self):
+        # avoid the number of default security group rules
+        quota = 7
+        cfg.CONF.set_override(
+            'quota_security_group_rule', quota, group='QUOTAS')
+        name = 'quota_test'
+        description = 'quota_test'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress',
+                const.PROTO_NAME_TCP, '22', '22')
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+            rule = self._build_security_group_rule(
+                security_group_id, 'egress',
+                const.PROTO_NAME_TCP, '22', '22')
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_create_security_group_rule_different_security_group_ids(self):
         if self._skip_native_bulk:

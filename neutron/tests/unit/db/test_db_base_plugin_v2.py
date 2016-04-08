@@ -1461,6 +1461,28 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(data['NeutronError']['message'], msg)
             self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
+    def test_create_ports_native_quotas(self):
+        quota = 1
+        cfg.CONF.set_override('quota_port', quota, group='QUOTAS')
+        with self.network() as network:
+            res = self._create_port(self.fmt, network['network']['id'])
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+            res = self._create_port(self.fmt, network['network']['id'])
+            self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_ports_bulk_native_quotas(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk port create")
+        quota = 4
+        cfg.CONF.set_override('quota_port', quota, group='QUOTAS')
+        with self.network() as network:
+            res = self._create_port_bulk(self.fmt, quota + 1,
+                                         network['network']['id'],
+                                         'test', True)
+            self._validate_behavior_on_bulk_failure(
+                res, 'ports',
+                errcode=webob.exc.HTTPConflict.code)
+
     def test_update_port_update_ip(self):
         """Test update of port IP.
 
@@ -2502,6 +2524,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         res = self._create_network_bulk(self.fmt, 2, 'test', True)
         self._validate_behavior_on_bulk_success(res, 'networks')
+
+    def test_create_networks_native_quotas(self):
+        quota = 1
+        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_create_networks_bulk_native_quotas(self):
         if self._skip_native_bulk:
@@ -4475,6 +4507,32 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_subnets_native_quotas(self):
+        quota = 1
+        cfg.CONF.set_override('quota_subnet', quota, group='QUOTAS')
+        with self.network() as network:
+            res = self._create_subnet(
+                self.fmt, network['network']['id'], '10.0.0.0/24',
+                tenant_id=network['network']['tenant_id'])
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+            res = self._create_subnet(
+                self.fmt, network['network']['id'], '10.1.0.0/24',
+                tenant_id=network['network']['tenant_id'])
+            self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_subnets_bulk_native_quotas(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk subnet create")
+        quota = 4
+        cfg.CONF.set_override('quota_subnet', quota, group='QUOTAS')
+        with self.network() as network:
+            res = self._create_subnet_bulk(self.fmt, quota + 1,
+                                           network['network']['id'],
+                                           'test')
+            self._validate_behavior_on_bulk_failure(
+                res, 'subnets',
+                errcode=webob.exc.HTTPConflict.code)
 
     def test_show_subnet(self):
         with self.network() as network:
