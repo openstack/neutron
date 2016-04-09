@@ -11,6 +11,7 @@
 #    under the License.
 
 # String literals representing core resources.
+AGENT = 'agent'
 PORT = 'port'
 PROCESS = 'process'
 ROUTER = 'router'
