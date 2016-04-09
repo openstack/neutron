@@ -16,11 +16,15 @@
 import mock
 from oslo_config import cfg
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron import context
 from neutron.db import dvr_mac_db
 from neutron.extensions import dvr
 from neutron.extensions import portbindings
+from neutron import manager
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -74,6 +78,34 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                               self.mixin._create_dvr_mac_address,
                               self.ctx, "foo_host_2")
         self.assertEqual(new_retries, f.call_count)
+
+    def test_mac_not_cleared_on_agent_delete_event_with_remaining_agents(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._create_dvr_mac_entry('host_1', 'mac_1')
+        self._create_dvr_mac_entry('host_2', 'mac_2')
+        agent1 = {'host': 'host_1', 'id': 'a1'}
+        agent2 = {'host': 'host_1', 'id': 'a2'}
+        with mock.patch.object(plugin, 'get_agents', return_value=[agent2]):
+            with mock.patch.object(plugin, 'notifier') as notifier:
+                registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
+                                context=self.ctx, agent=agent1)
+        mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+        self.assertEqual(2, len(mac_list))
+        self.assertFalse(notifier.dvr_mac_address_update.called)
+
+    def test_mac_cleared_on_agent_delete_event(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._create_dvr_mac_entry('host_1', 'mac_1')
+        self._create_dvr_mac_entry('host_2', 'mac_2')
+        agent = {'host': 'host_1', 'id': 'a1'}
+        with mock.patch.object(plugin, 'notifier') as notifier:
+            registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
+                            context=self.ctx, agent=agent)
+        mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+        self.assertEqual(1, len(mac_list))
+        self.assertEqual('host_2', mac_list[0]['host'])
+        notifier.dvr_mac_address_update.assert_called_once_with(
+            self.ctx, mac_list)
 
     def test_get_dvr_mac_address_list(self):
         self._create_dvr_mac_entry('host_1', 'mac_1')
