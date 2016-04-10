@@ -66,10 +66,6 @@ def fake_use_fatal_exceptions(*args):
     return True
 
 
-def fake_consume_in_threads(self):
-    return []
-
-
 def get_rand_name(max_length=None, prefix='test'):
     """Return a random string.
 
@@ -318,9 +314,9 @@ class BaseTestCase(DietTestCase):
 
     def setup_rpc_mocks(self):
         # don't actually start RPC listeners when testing
-        self.useFixture(fixtures.MonkeyPatch(
+        mock.patch(
             'neutron.common.rpc.Connection.consume_in_threads',
-            fake_consume_in_threads))
+            return_value=[]).start()
 
         self.useFixture(fixtures.MonkeyPatch(
             'oslo_messaging.Notifier', fake_notifier.FakeNotifier))
