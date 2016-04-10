@@ -222,7 +222,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self.conn.consume_in_threads()
 
     def start_rpc_state_reports_listener(self):
-        self.conn_reports = n_rpc.create_connection(new=True)
+        self.conn_reports = n_rpc.create_connection()
         self.conn_reports.create_consumer(topics.REPORTS,
                                           [agents_db.AgentExtRpcCallback()],
                                           fanout=False)
