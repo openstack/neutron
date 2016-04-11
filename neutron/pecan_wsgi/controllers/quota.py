@@ -58,7 +58,7 @@ class QuotasController(utils.NeutronPecanController):
     @utils.expose(generic=True)
     def index(self):
         neutron_context = request.context.get('neutron_context')
-        # FIXME(salv-orlando): There shouldn't be any need to to this eplicit
+        # FIXME(salv-orlando): There shouldn't be any need to do this explicit
         # check. However some behaviours from the "old" extension have
         # been temporarily carried over here
         self._check_admin(neutron_context)
