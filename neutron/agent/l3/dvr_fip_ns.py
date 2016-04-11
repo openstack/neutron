@@ -21,6 +21,7 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 
@@ -32,7 +33,6 @@ FIP_2_ROUTER_DEV_PREFIX = 'fpr-'
 ROUTER_2_FIP_DEV_PREFIX = namespaces.ROUTER_2_FIP_DEV_PREFIX
 # Route Table index for FIPs
 FIP_RT_TBL = 16
-FIP_LL_SUBNET = '169.254.64.0/18'
 # Rule priority range for FIPs
 FIP_PR_START = 32768
 FIP_PR_END = FIP_PR_START + 40000
@@ -59,7 +59,8 @@ class FipNamespace(namespaces.Namespace):
             namespace=self.get_name(),
             use_ipv6=self.use_ipv6)
         path = os.path.join(agent_conf.state_path, 'fip-linklocal-networks')
-        self.local_subnets = lla.LinkLocalAllocator(path, FIP_LL_SUBNET)
+        self.local_subnets = lla.LinkLocalAllocator(
+            path, constants.DVR_FIP_LL_CIDR)
         self.destroyed = False
 
     @classmethod
