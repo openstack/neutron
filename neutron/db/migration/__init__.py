@@ -114,22 +114,39 @@ def rename_table_if_exists(old_table_name, new_table_name):
         op.rename_table(old_table_name, new_table_name)
 
 
-def alter_enum(table, column, enum_type, nullable):
+def alter_enum(table, column, enum_type, nullable, do_drop=True,
+               do_rename=True, do_create=True):
+    """Alter a enum type column.
+
+    Set the do_xx parameters only when the modified enum type
+    is used by multiple columns. Else don't provide these
+    parameters.
+
+    :param do_drop: set to False when modified column is
+    not the last one use this enum
+    :param do_rename: set to False when modified column is
+    not the first one use this enum
+    :param do_create: set to False when modified column is
+    not the first one use this enum
+    """
     bind = op.get_bind()
     engine = bind.engine
     if engine.name == 'postgresql':
         values = {'table': table,
                   'column': column,
                   'name': enum_type.name}
-        op.execute("ALTER TYPE %(name)s RENAME TO old_%(name)s" % values)
-        enum_type.create(bind, checkfirst=False)
+        if do_rename:
+            op.execute("ALTER TYPE %(name)s RENAME TO old_%(name)s" % values)
+        if do_create:
+            enum_type.create(bind, checkfirst=False)
         op.execute("ALTER TABLE %(table)s RENAME COLUMN %(column)s TO "
                    "old_%(column)s" % values)
         op.add_column(table, sa.Column(column, enum_type, nullable=nullable))
         op.execute("UPDATE %(table)s SET %(column)s = "
                    "old_%(column)s::text::%(name)s" % values)
         op.execute("ALTER TABLE %(table)s DROP COLUMN old_%(column)s" % values)
-        op.execute("DROP TYPE old_%(name)s" % values)
+        if do_drop:
+            op.execute("DROP TYPE old_%(name)s" % values)
     else:
         op.alter_column(table, column, type_=enum_type,
                         existing_nullable=nullable)
