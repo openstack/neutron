@@ -18,8 +18,8 @@ from itertools import chain
 from oslo_log import log as logging
 
 from neutron.common import _deprecate
-from neutron.db import api as db_api
 from neutron.db.models import servicetype as st_model
+from neutron.objects import servicetype as servicetype_obj
 from neutron.services import provider_configuration as pconf
 
 LOG = logging.getLogger(__name__)
@@ -73,11 +73,9 @@ class ServiceTypeManager(object):
         return providers[0]
 
     def get_provider_names_by_resource_ids(self, context, resource_ids):
-        query = (
-            context.session.query(st_model.ProviderResourceAssociation).
-            filter(st_model.ProviderResourceAssociation.resource_id.in_(
-                resource_ids)))
-        return {rec.resource_id: rec.provider_name for rec in query}
+        objs = servicetype_obj.ProviderResourceAssociation.get_objects(
+            context, resource_id=resource_ids)
+        return {rec.resource_id: rec.provider_name for rec in objs}
 
     def add_resource_association(self, context, service_type, provider_name,
                                  resource_id):
@@ -87,13 +85,12 @@ class ServiceTypeManager(object):
             raise pconf.ServiceProviderNotFound(provider=provider_name,
                                                 service_type=service_type)
 
-        with db_api.context_manager.writer.using(context):
-            # we don't actually need service type for association.
-            # resource_id is unique and belongs to specific service
-            # which knows its type
-            assoc = st_model.ProviderResourceAssociation(
-                provider_name=provider_name, resource_id=resource_id)
-            context.session.add(assoc)
+        # we don't actually need service type for association.
+        # resource_id is unique and belongs to specific service
+        # which knows its type
+        servicetype_obj.ProviderResourceAssociation(
+            context, provider_name=provider_name,
+            resource_id=resource_id).create()
         # NOTE(blogan): the ProviderResourceAssociation relationship will not
         # be populated if a resource was created before this.  The expire_all
         # will force the session to go retrieve the new data when that
@@ -106,12 +103,10 @@ class ServiceTypeManager(object):
     def del_resource_associations(self, context, resource_ids):
         if not resource_ids:
             return
-        with db_api.context_manager.writer.using(context):
-            (context.session.query(st_model.ProviderResourceAssociation).
-             filter(
-                 st_model.ProviderResourceAssociation.resource_id.in_(
-                     resource_ids)).
-             delete(synchronize_session='fetch'))
+        objs = servicetype_obj.ProviderResourceAssociation.get_objects(
+            context, resource_id=resource_ids)
+        for obj in objs:
+            obj.delete()
 
 
 _deprecate._MovedGlobals()

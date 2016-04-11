@@ -27,10 +27,14 @@ from neutron.tests import base
 from neutron.tests.unit import testlib_api
 
 
+DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+
 class TestDriverController(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestDriverController, self).setUp()
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.fake_l3 = mock.Mock()
         self.dc = driver_controller.DriverController(self.fake_l3)
         self.ctx = context.get_admin_context()

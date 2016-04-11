@@ -46,6 +46,7 @@ object_data = {
     'PortBindingLevel': '1.0-de66a4c61a083b8f34319fa9dde5b060',
     'PortDNS': '1.0-201cf6d057fde75539c3d1f2bbf05902',
     'PortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
+    'ProviderResourceAssociation': '1.0-05ab2d5a3017e5ce9dd381328f285f34',
     'QosBandwidthLimitRule': '1.2-4e44a8f5c2895ab1278399f87b40a13d',
     'QosDscpMarkingRule': '1.2-0313c6554b34fd10c753cb63d638256c',
     'QosMinimumBandwidthRule': '1.2-314c3419f4799067cc31cc319080adff',
