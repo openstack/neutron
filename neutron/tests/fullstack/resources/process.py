@@ -20,18 +20,13 @@ import signal
 import fixtures
 from neutronclient.common import exceptions as nc_exc
 from neutronclient.v2_0 import client
-from oslo_log import log as logging
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
-
-LOG = logging.getLogger(__name__)
-
-# This is the directory from which infra fetches log files for fullstack tests
-DEFAULT_LOG_DIR = '/tmp/dsvm-fullstack-logs/'
+from neutron.tests.fullstack import base as fullstack_base
 
 
 class ProcessFixture(fixtures.Fixture):
@@ -53,7 +48,7 @@ class ProcessFixture(fixtures.Fixture):
     def start(self):
         test_name = base.sanitize_log_path(self.test_name)
 
-        log_dir = os.path.join(DEFAULT_LOG_DIR, test_name)
+        log_dir = os.path.join(fullstack_base.DEFAULT_LOG_DIR, test_name)
         common_utils.ensure_dir(log_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S-%f")

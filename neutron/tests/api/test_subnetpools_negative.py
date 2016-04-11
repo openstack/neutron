@@ -95,7 +95,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
         subnet = self.create_subnet(
             network, cidr=netaddr.IPNetwork('10.10.10.0/24'), ip_version=4,
             gateway=None, client=self.admin_client)
-        # add the subnet created by admin to the cleanUp because the
+        # add the subnet created by admin to the cleanUp because
         # the base.py doesn't delete it using the admin client
         self.addCleanup(self.admin_client.delete_subnet, subnet['id'])
         self.assertRaises(lib_exc.BadRequest, self.create_subnet, network,

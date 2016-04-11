@@ -46,7 +46,7 @@ def create_flows_from_rule_and_port(rule, port):
     flow_template = {
         'priority': 70,
         'dl_type': ovsfw_consts.ethertype_to_dl_type_map[ethertype],
-        'reg5': port.ofport,
+        'reg_port': port.ofport,
     }
 
     if is_valid_prefix(dst_ip_prefix):
@@ -71,8 +71,7 @@ def create_protocol_flows(direction, flow_template, port, rule):
     if direction == firewall.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
         flow_template['dl_dst'] = port.mac
-        flow_template['actions'] = ('ct(commit,zone=NXM_NX_REG5[0..15]),'
-                                    'output:{:d}'.format(port.ofport))
+        flow_template['actions'] = "strip_vlan,output:{:d}".format(port.ofport)
     elif direction == firewall.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
         flow_template['dl_src'] = port.mac

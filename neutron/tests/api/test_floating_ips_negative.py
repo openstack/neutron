@@ -27,11 +27,9 @@ CONF = config.CONF
 class FloatingIPNegativeTestJSON(base.BaseNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="router", service="network")
     def resource_setup(cls):
         super(FloatingIPNegativeTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('router', 'network'):
-            msg = "router extension not enabled."
-            raise cls.skipException(msg)
         cls.ext_net_id = CONF.network.public_network_id
         # Create a network with a subnet connected to a router.
         cls.network = cls.create_network()

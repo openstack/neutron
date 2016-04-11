@@ -66,8 +66,22 @@ def fake_use_fatal_exceptions(*args):
     return True
 
 
-def fake_consume_in_threads(self):
-    return []
+def get_related_rand_names(prefixes, max_length=None):
+    """Returns a list of the prefixes with the same random characters appended
+
+    :param prefixes: A list of prefix strings
+    :param max_length: The maximum length of each returned string
+    :returns: A list with each prefix appended with the same random characters
+    """
+
+    if max_length:
+        length = max_length - max(len(p) for p in prefixes)
+        if length <= 0:
+            raise ValueError("'max_length' must be longer than all prefixes")
+    else:
+        length = 8
+    rndchrs = utils.get_random_string(length)
+    return [p + rndchrs for p in prefixes]
 
 
 def get_rand_name(max_length=None, prefix='test'):
@@ -78,16 +92,7 @@ def get_rand_name(max_length=None, prefix='test'):
     hexadecimal, will be added. In case len(prefix) <= len(max_length),
     ValueError will be raised to indicate the problem.
     """
-
-    if max_length:
-        length = max_length - len(prefix)
-        if length <= 0:
-            raise ValueError("'max_length' must be bigger than 'len(prefix)'.")
-
-    else:
-        length = 8
-
-    return prefix + utils.get_random_string(length)
+    return get_related_rand_names([prefix], max_length)[0]
 
 
 def get_rand_device_name(prefix='test'):
@@ -95,9 +100,25 @@ def get_rand_device_name(prefix='test'):
         max_length=constants.DEVICE_NAME_MAX_LEN, prefix=prefix)
 
 
+def get_related_rand_device_names(prefixes):
+    return get_related_rand_names(prefixes,
+                                  max_length=constants.DEVICE_NAME_MAX_LEN)
+
+
 def bool_from_env(key, strict=False, default=False):
     value = os.environ.get(key)
     return strutils.bool_from_string(value, strict=strict, default=default)
+
+
+def setup_test_logging(config_opts, log_dir, log_file_path_template):
+    # Have each test log into its own log file
+    config_opts.set_override('debug', True)
+    utils.ensure_dir(log_dir)
+    log_file = sanitize_log_path(
+        os.path.join(log_dir, log_file_path_template))
+    config_opts.set_override('log_file', log_file)
+    config_opts.set_override('use_stderr', False)
+    config.setup_logging()
 
 
 def sanitize_log_path(path):
@@ -318,9 +339,9 @@ class BaseTestCase(DietTestCase):
 
     def setup_rpc_mocks(self):
         # don't actually start RPC listeners when testing
-        self.useFixture(fixtures.MonkeyPatch(
+        mock.patch(
             'neutron.common.rpc.Connection.consume_in_threads',
-            fake_consume_in_threads))
+            return_value=[]).start()
 
         self.useFixture(fixtures.MonkeyPatch(
             'oslo_messaging.Notifier', fake_notifier.FakeNotifier))

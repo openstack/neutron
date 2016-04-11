@@ -48,6 +48,7 @@ from neutron.plugins.common import utils as p_utils
 LOG = logging.getLogger(__name__)
 
 
+DEVICE_OWNER_HA_REPLICATED_INT = l3_constants.DEVICE_OWNER_HA_REPLICATED_INT
 DEVICE_OWNER_ROUTER_INTF = l3_constants.DEVICE_OWNER_ROUTER_INTF
 DEVICE_OWNER_ROUTER_GW = l3_constants.DEVICE_OWNER_ROUTER_GW
 DEVICE_OWNER_FLOATINGIP = l3_constants.DEVICE_OWNER_FLOATINGIP
@@ -137,6 +138,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
     router_device_owners = (
+        DEVICE_OWNER_HA_REPLICATED_INT,
         DEVICE_OWNER_ROUTER_INTF,
         DEVICE_OWNER_ROUTER_GW,
         DEVICE_OWNER_FLOATINGIP
@@ -1390,7 +1392,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _get_sync_interfaces(self, context, router_ids, device_owners=None):
         """Query router interfaces that relate to list of router_ids."""
-        device_owners = device_owners or [DEVICE_OWNER_ROUTER_INTF]
+        device_owners = device_owners or [DEVICE_OWNER_ROUTER_INTF,
+                                          DEVICE_OWNER_HA_REPLICATED_INT]
         if not router_ids:
             return []
         qry = context.session.query(RouterPort)
@@ -1574,6 +1577,13 @@ class L3RpcNotifierMixin(object):
 
 class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
     """Mixin class to add rpc notifier methods to db_base_plugin_v2."""
+
+    def create_router(self, context, router):
+        router_dict = super(L3_NAT_db_mixin, self).create_router(context,
+                                                                 router)
+        if router_dict.get('external_gateway_info'):
+            self.notify_router_updated(context, router_dict['id'], None)
+        return router_dict
 
     def update_router(self, context, id, router):
         router_dict = super(L3_NAT_db_mixin, self).update_router(context,

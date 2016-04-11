@@ -56,6 +56,7 @@ from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.qos import qos_consts
 from neutron.tests import base
+from neutron.tests.common import helpers
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.db import test_allowedaddresspairs_db as test_pair
@@ -1565,6 +1566,65 @@ class TestMl2AllowedAddressPairs(Ml2PluginV2TestCase,
                                      group='ml2')
         super(test_pair.TestAllowedAddressPairs, self).setUp(
             plugin=PLUGIN_NAME)
+
+
+class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
+    _mechanism_drivers = ['openvswitch', 'logger']
+
+    def setUp(self):
+        super(TestMl2HostsNetworkAccess, self).setUp()
+        helpers.register_ovs_agent(
+            host='host1', bridge_mappings={'physnet1': 'br-eth-1'})
+        helpers.register_ovs_agent(
+            host='host2', bridge_mappings={'physnet2': 'br-eth-2'})
+        helpers.register_ovs_agent(
+            host='host3', bridge_mappings={'physnet3': 'br-eth-3'})
+        self.dhcp_agent1 = helpers.register_dhcp_agent(
+            host='host1')
+        self.dhcp_agent2 = helpers.register_dhcp_agent(
+            host='host2')
+        self.dhcp_agent3 = helpers.register_dhcp_agent(
+            host='host3')
+        self.dhcp_hosts = {'host1', 'host2', 'host3'}
+
+    def test_filter_hosts_with_network_access(self):
+        net = self.driver.create_network(
+            self.context,
+            {'network': {'name': 'net1',
+                         pnet.NETWORK_TYPE: 'vlan',
+                         pnet.PHYSICAL_NETWORK: 'physnet1',
+                         pnet.SEGMENTATION_ID: 1,
+                         'tenant_id': 'tenant_one',
+                         'admin_state_up': True,
+                         'shared': True}})
+        observeds = self.driver.filter_hosts_with_network_access(
+            self.context, net['id'], self.dhcp_hosts)
+        self.assertEqual({self.dhcp_agent1.host}, observeds)
+
+    def test_filter_hosts_with_network_access_multi_segments(self):
+        net = self.driver.create_network(
+            self.context,
+            {'network': {'name': 'net1',
+                         mpnet.SEGMENTS: [
+                             {pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1},
+                             {pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet2',
+                              pnet.SEGMENTATION_ID: 2}],
+                         'tenant_id': 'tenant_one',
+                         'admin_state_up': True,
+                         'shared': True}})
+        expecteds = {self.dhcp_agent1.host, self.dhcp_agent2.host}
+        observeds = self.driver.filter_hosts_with_network_access(
+            self.context, net['id'], self.dhcp_hosts)
+        self.assertEqual(expecteds, observeds)
+
+    def test_filter_hosts_with_network_access_not_supported(self):
+        self.driver.mechanism_manager.host_filtering_supported = False
+        observeds = self.driver.filter_hosts_with_network_access(
+            self.context, 'fake_id', self.dhcp_hosts)
+        self.assertEqual(self.dhcp_hosts, observeds)
 
 
 class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):

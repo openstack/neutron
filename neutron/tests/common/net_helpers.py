@@ -63,7 +63,7 @@ MACVTAP_PREFIX = 'macvtap'
 LB_DEVICE_NAME_MAX_LEN = 10
 
 SS_SOURCE_PORT_PATTERN = re.compile(
-    r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[0-9:].*')
+    r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[^\s]+:.*')
 
 READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
 
@@ -250,7 +250,7 @@ class RootHelperProcess(subprocess.Popen):
                                 sleep=CHILD_PROCESS_SLEEP):
         def child_is_running():
             child_pid = utils.get_root_helper_child_pid(
-                self.pid, run_as_root=True)
+                self.pid, self.cmd, run_as_root=True)
             if utils.pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
@@ -260,7 +260,7 @@ class RootHelperProcess(subprocess.Popen):
             exception=RuntimeError("Process %s hasn't been spawned "
                                    "in %d seconds" % (self.cmd, timeout)))
         self.child_pid = utils.get_root_helper_child_pid(
-            self.pid, run_as_root=True)
+            self.pid, self.cmd, run_as_root=True)
 
     @property
     def is_running(self):
@@ -288,6 +288,8 @@ class Pinger(object):
 
     stats_pattern = re.compile(
         r'^(?P<trans>\d+) packets transmitted,.*(?P<recv>\d+) received.*$')
+    unreachable_pattern = re.compile(
+        r'.* Destination .* Unreachable')
     TIMEOUT = 15
 
     def __init__(self, namespace, address, count=None, timeout=1):
@@ -296,6 +298,7 @@ class Pinger(object):
         self.address = address
         self.count = count
         self.timeout = timeout
+        self.destination_unreachable = False
         self.sent = 0
         self.received = 0
 
@@ -307,6 +310,10 @@ class Pinger(object):
 
     def _parse_stats(self):
         for line in self.proc.stdout:
+            if (not self.destination_unreachable and
+                    self.unreachable_pattern.match(line)):
+                self.destination_unreachable = True
+                continue
             result = self.stats_pattern.match(line)
             if result:
                 self.sent = int(result.group('trans'))
@@ -330,6 +337,14 @@ class Pinger(object):
             self.proc.kill(signal.SIGINT)
             self._wait_for_death()
             self._parse_stats()
+
+    def wait(self):
+        if self.count:
+            self._wait_for_death()
+            self._parse_stats()
+        else:
+            raise RuntimeError("Pinger is running infinitelly, use stop() "
+                               "first")
 
 
 class NetcatTester(object):

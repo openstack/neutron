@@ -33,6 +33,7 @@ from neutron.api.rpc.callbacks import version_manager
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
+from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
@@ -312,6 +313,18 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         agent = self._get_agent(context, id)
         return self._make_agent_dict(agent, fields)
 
+    def filter_hosts_with_network_access(
+            self, context, network_id, candidate_hosts):
+        """Filter hosts with access to network_id.
+
+        This method returns a subset of candidate_hosts with the ones with
+        network access to network_id.
+
+        A plugin can overload this method to define its own host network_id
+        based filter.
+        """
+        return candidate_hosts
+
     def _log_heartbeat(self, state, agent_db, agent_conf):
         if agent_conf.get('log_agent_heartbeats'):
             delta = timeutils.utcnow() - agent_db.heartbeat_timestamp
@@ -434,6 +447,7 @@ class AgentExtRpcCallback(object):
         # Initialize RPC api directed to other neutron-servers
         self.server_versions_rpc = resources_rpc.ResourcesPushToServersRpcApi()
 
+    @db_api.retry_db_errors
     def report_state(self, context, **kwargs):
         """Report state from agent to server.
 

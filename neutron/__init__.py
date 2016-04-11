@@ -25,6 +25,7 @@ else:
     gettext.install('neutron')
 
 
+# flake8: noqa
 six.moves.builtins.__dict__['_'] = removals.remove(
     message='Builtin _ translation function is deprecated in OpenStack; '
             'use the function from _i18n module for your project.')(_)

@@ -130,3 +130,10 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def bind_port(self, context):
         self._log_port_call("bind_port", context)
+
+    def filter_hosts_with_segment_access(
+            self, context, segments, candidate_hosts, agent_getter):
+        LOG.info(_("filter_hosts_with_segment_access called with segments "
+                   "%(segments)s, candidate hosts %(hosts)s "),
+                 {'segments': segments, 'hosts': candidate_hosts})
+        return set()

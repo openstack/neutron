@@ -158,10 +158,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.PAIR_DROP),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+                     '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+                     '--sport 68 --dport 67 -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',
@@ -940,7 +945,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         filter_inst = self.v4filter_inst
         dhcp_rule = [mock.call.add_rule(
             'ofake_dev',
-            '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+            '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+            '--sport 68 --dport 67 -j RETURN',
             comment=None)]
 
         if ethertype == 'IPv6':
@@ -1027,6 +1033,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         calls.append(mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                         comment=None))
         if ethertype == 'IPv4':
+            calls.append(mock.call.add_rule(
+                'ofake_dev',
+                '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                comment=None))
             calls.append(mock.call.add_rule(
                 'ofake_dev',
                 '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',
@@ -1127,6 +1137,14 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                       extra_ok_codes=[1])]
         self.utils_exec.assert_has_calls(calls)
 
+    def test_user_sg_rules_deduped_before_call_to_iptables_manager(self):
+        port = self._fake_port()
+        port['security_group_rules'] = [{'ethertype': 'IPv4',
+                                         'direction': 'ingress'}] * 2
+        self.firewall.prepare_port_filter(port)
+        rules = [''.join(c[1]) for c in self.v4filter_inst.add_rule.mock_calls]
+        self.assertEqual(len(set(rules)), len(rules))
+
     def test_update_delete_port_filter(self):
         port = self._fake_port()
         port['security_group_rules'] = [{'ethertype': 'IPv4',
@@ -1195,10 +1213,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.PAIR_DROP),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+                     '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+                     '--sport 68 --dport 67 -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',
@@ -1267,10 +1290,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.PAIR_DROP),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+                     '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+                     '--sport 68 --dport 67 -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',
@@ -1442,10 +1470,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.PAIR_DROP),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+                     '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+                     '--sport 68 --dport 67 -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',
@@ -1516,10 +1549,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      comment=ic.PAIR_DROP),
                  mock.call.add_rule(
                      'ofake_dev',
-                     '-p udp -m udp --sport 68 -m udp --dport 67 -j RETURN',
+                     '-s 0.0.0.0/32 -d 255.255.255.255/32 -p udp -m udp '
+                     '--sport 68 --dport 67 -j RETURN',
                      comment=None),
                  mock.call.add_rule('ofake_dev', '-j $sfake_dev',
                                     comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     comment=None),
                  mock.call.add_rule(
                      'ofake_dev',
                      '-p udp -m udp --sport 67 -m udp --dport 68 -j DROP',

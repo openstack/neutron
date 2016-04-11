@@ -21,6 +21,7 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 import sqlalchemy as sa
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
@@ -257,6 +258,17 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             ha_network = L3HARouterNetwork(tenant_id=tenant_id,
                                            network_id=network_id)
             context.session.add(ha_network)
+        # we need to check if someone else just inserted at exactly the
+        # same time as us because there is no constrain in L3HARouterNetwork
+        # that prevents multiple networks per tenant
+        with context.session.begin(subtransactions=True):
+            items = (context.session.query(L3HARouterNetwork).
+                     filter_by(tenant_id=tenant_id).all())
+            if len(items) > 1:
+                # we need to throw an error so our network is deleted
+                # and the process is started over where the existing
+                # network will be selected.
+                raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
         return ha_network
 
     def _add_ha_network_settings(self, network):
@@ -414,23 +426,43 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             ha = cfg.CONF.l3_ha
         return ha
 
+    def _get_device_owner(self, context, router=None):
+        """Get device_owner for the specified router."""
+        router_is_uuid = isinstance(router, six.string_types)
+        if router_is_uuid:
+            router = self._get_router(context, router)
+        if is_ha_router(router):
+            return constants.DEVICE_OWNER_HA_REPLICATED_INT
+        return super(L3_HA_NAT_db_mixin,
+                     self)._get_device_owner(context, router)
+
+    @n_utils.transaction_guard
+    def _create_ha_interfaces_and_ensure_network(self, context, router_db):
+        """Attach interfaces to a network while tolerating network deletes."""
+        creator = functools.partial(self._create_ha_interfaces,
+                                    context, router_db)
+        dep_getter = functools.partial(self.get_ha_network,
+                                       context, router_db.tenant_id)
+        dep_creator = functools.partial(self._create_ha_network,
+                                        context, router_db.tenant_id)
+        dep_id_attr = 'network_id'
+        return n_utils.create_object_with_dependency(
+            creator, dep_getter, dep_creator, dep_id_attr)
+
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
         router['router']['ha'] = is_ha
         router_dict = super(L3_HA_NAT_db_mixin,
                             self).create_router(context, router)
-
         if is_ha:
             try:
                 router_db = self._get_router(context, router_dict['id'])
-                ha_network = self.get_ha_network(context,
-                                                 router_db.tenant_id)
-                if not ha_network:
-                    ha_network = self._create_ha_network(context,
-                                                         router_db.tenant_id)
+                # the following returns interfaces and the network we only
+                # care about the network
+                ha_network = self._create_ha_interfaces_and_ensure_network(
+                    context, router_db)[1]
 
                 self._set_vr_id(context, router_db, ha_network)
-                self._create_ha_interfaces(context, router_db, ha_network)
                 self._notify_ha_interfaces_updated(context, router_db.id)
             except Exception:
                 with excutils.save_and_reraise_exception():
@@ -499,12 +531,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self._unbind_ha_router(context, router_id)
 
         if requested_ha_state:
-            if not ha_network:
-                ha_network = self._create_ha_network(context,
-                                                     router_db.tenant_id)
-
+            ha_network = self._create_ha_interfaces_and_ensure_network(
+                context, router_db)[1]
             self._set_vr_id(context, router_db, ha_network)
-            self._create_ha_interfaces(context, router_db, ha_network)
             self._notify_ha_interfaces_updated(context, router_db.id)
         else:
             self._delete_ha_interfaces(context, router_db.id)
@@ -694,7 +723,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
         device_filter = {'device_id': states.keys(),
                          'device_owner':
-                         [constants.DEVICE_OWNER_ROUTER_INTF,
+                         [constants.DEVICE_OWNER_HA_REPLICATED_INT,
                           constants.DEVICE_OWNER_ROUTER_SNAT]}
         ports = self._core_plugin.get_ports(admin_ctx, filters=device_filter)
         active_ports = (port for port in ports
@@ -709,3 +738,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     n_exc.PortNotFound):
                 # Take concurrently deleted interfaces in to account
                 pass
+
+
+def is_ha_router(router):
+    """Return True if router to be handled is ha."""
+    try:
+        # See if router is a DB object first
+        requested_router_type = router.extra_attributes.ha
+    except AttributeError:
+        # if not, try to see if it is a request body
+        requested_router_type = router.get('ha')
+    if attributes.is_attr_set(requested_router_type):
+        return requested_router_type
+    return cfg.CONF.l3_ha

@@ -34,8 +34,6 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
     def test_create_net_port_security_default(self):
         _core_plugin = manager.NeutronManager.get_plugin()
         admin_ctx = context.get_admin_context()
-        _default_value = (psec.EXTENDED_ATTRIBUTES_2_0['networks']
-                          [psec.PORTSECURITY]['default'])
         args = {'network':
                 {'name': 'test',
                  'tenant_id': '',
@@ -48,7 +46,7 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
         finally:
             if network:
                 _core_plugin.delete_network(admin_ctx, network['id'])
-        self.assertEqual(_default_value, _value)
+        self.assertEqual(psec.DEFAULT_PORT_SECURITY, _value)
 
     def test_create_port_with_secgroup_none_and_port_security_false(self):
         if self._skip_security_group:

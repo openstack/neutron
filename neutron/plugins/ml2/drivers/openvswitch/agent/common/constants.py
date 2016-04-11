@@ -50,6 +50,9 @@ CANARY_TABLE = 23
 # Table for ARP poison/spoofing prevention rules
 ARP_SPOOF_TABLE = 24
 
+# Table for MAC spoof filtering
+MAC_SPOOF_TABLE = 25
+
 # Tables used for ovs firewall
 BASE_EGRESS_TABLE = 71
 RULES_EGRESS_TABLE = 72
@@ -136,3 +139,6 @@ OPENFLOW11 = "OpenFlow11"
 OPENFLOW12 = "OpenFlow12"
 OPENFLOW13 = "OpenFlow13"
 OPENFLOW14 = "OpenFlow14"
+
+# A placeholder for dead vlans.
+DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1

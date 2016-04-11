@@ -223,14 +223,19 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
             port_dicts=self.create_test_ports(amount=1,
                                               policy_id=TEST_POLICY_ID1))
         self.wait_until_ports_state(self.ports, up=True)
+        self._assert_dscp_marking_rule_is_set(self.ports[0],
+                                              TEST_DSCP_MARKING_RULE_1)
         policy_copy = copy.deepcopy(self.qos_policies[TEST_POLICY_ID1])
         policy_copy.rules[0].max_kbps = 500
         policy_copy.rules[0].max_burst_kbps = 5
+        policy_copy.rules[1].dscp_mark = TEST_DSCP_MARK_2
         consumer_reg.push(resources.QOS_POLICY, policy_copy, events.UPDATED)
         self.wait_until_bandwidth_limit_rule_applied(self.ports[0],
                                                      policy_copy.rules[0])
         self._assert_bandwidth_limit_rule_is_set(self.ports[0],
                                                  policy_copy.rules[0])
+        self._assert_dscp_marking_rule_is_set(self.ports[0],
+                                              TEST_DSCP_MARKING_RULE_2)
 
     def test_port_qos_disassociation(self):
         """Test that qos_policy_id set to None will remove all qos rules from

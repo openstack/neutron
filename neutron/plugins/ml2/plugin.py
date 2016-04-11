@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
-
 from eventlet import greenthread
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
@@ -91,28 +89,6 @@ MAX_BIND_TRIES = 10
 SERVICE_PLUGINS_REQUIRED_DRIVERS = {
     'qos': [qos_ext.QOS_EXT_DRIVER_ALIAS]
 }
-
-
-def transaction_guard(f):
-    """Ensures that the context passed in is not in a transaction.
-
-    Many of ML2's methods modifying resources have assumptions that they will
-    not be called inside of a transaction because they perform operations that
-    expect all data to be committed to the database (all postcommit calls).
-    Calling them in a transaction can lead to consistency errors on failures
-    since the ML2 drivers will not be notified of a DB rollback.
-
-    If you receive this error, you must alter your code to handle the fact that
-    ML2 calls have side effects so using transactions to undo on failures is
-    not possible.
-    """
-    @functools.wraps(f)
-    def inner(self, context, *args, **kwargs):
-        if context.session.is_active:
-            raise RuntimeError(_("Method cannot be called within a "
-                                 "transaction."))
-        return f(self, context, *args, **kwargs)
-    return inner
 
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -813,7 +789,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     LOG.exception(_LE("Exception auto-deleting subnet %s"),
                                   subnet_id)
 
-    @transaction_guard
+    @utils.transaction_guard
     def delete_network(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_network()
         # function is not used because it auto-deletes ports and
@@ -948,7 +924,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.update_subnet_postcommit(mech_context)
         return updated_subnet
 
-    @transaction_guard
+    @utils.transaction_guard
     def delete_subnet(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
         # function is not used because it deallocates the subnet's addresses
@@ -1643,3 +1619,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def get_workers(self):
         return self.mechanism_manager.get_workers()
+
+    def filter_hosts_with_network_access(
+            self, context, network_id, candidate_hosts):
+        segments = db.get_network_segments(context.session, network_id)
+        return self.mechanism_manager.filter_hosts_with_segment_access(
+            context, segments, candidate_hosts, self.get_agents)

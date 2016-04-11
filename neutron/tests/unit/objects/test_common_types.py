@@ -16,6 +16,7 @@ import abc
 from neutron.common import constants
 from neutron.objects import common_types
 from neutron.tests import base as test_base
+from neutron.tests import tools
 
 
 class TestField(object):
@@ -46,10 +47,6 @@ class TestField(object):
     def test_stringify(self):
         '''This test should validate stringify() format for new field types.'''
 
-    def test_stringify_invalid(self):
-        for in_val in self.coerce_bad_values:
-            self.assertRaises(ValueError, self.field.stringify, in_val)
-
 
 class IPV6ModeEnumFieldTest(test_base.BaseTestCase, TestField):
     def setUp(self):
@@ -79,3 +76,99 @@ class DscpMarkFieldTest(test_base.BaseTestCase, TestField):
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
             self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class IPNetworkPrefixLenFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IPNetworkPrefixLenFieldTest, self).setUp()
+        self.field = common_types.IPNetworkPrefixLenField()
+        self.coerce_good_values = [(x, x) for x in (0, 32, 128, 42)]
+        self.coerce_bad_values = ['len', '1', 129, -1]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class MACAddressFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(MACAddressFieldTest, self).setUp()
+        self.field = common_types.MACAddressField()
+        mac1 = tools.get_random_EUI()
+        mac2 = tools.get_random_EUI()
+        self.coerce_good_values = [(mac1, mac1), (mac2, mac2)]
+        self.coerce_bad_values = [
+            'XXXX', 'ypp', 'g3:vvv',
+            # the field type is strict and does not allow to pass strings, even
+            # if they represent a valid MAC address
+            tools.get_random_mac(),
+        ]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual('%s' % in_val, self.field.stringify(in_val))
+
+
+class IPVersionEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IPVersionEnumFieldTest, self).setUp()
+        self.field = common_types.IPVersionEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.IP_ALLOWED_VERSIONS]
+        self.coerce_bad_values = [5, 0, -1, 'str']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("%s" % in_val, self.field.stringify(in_val))
+
+
+class FlowDirectionEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(FlowDirectionEnumFieldTest, self).setUp()
+        self.field = common_types.FlowDirectionEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.VALID_DIRECTIONS]
+        self.coerce_bad_values = ['test', '8', 10, []]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class EtherTypeEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(EtherTypeEnumFieldTest, self).setUp()
+        self.field = common_types.EtherTypeEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in constants.VALID_ETHERTYPES]
+        self.coerce_bad_values = ['IpV4', 8, 'str', 'ipv6']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class IpProtocolEnumFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IpProtocolEnumFieldTest, self).setUp()
+        self.field = common_types.IpProtocolEnumField()
+        self.coerce_good_values = [(val, val)
+                                   for val in
+                                   list(constants.IP_PROTOCOL_MAP.keys())]
+        self.coerce_bad_values = ['test', '8', 10, 'Udp']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))

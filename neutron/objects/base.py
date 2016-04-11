@@ -55,7 +55,7 @@ class NeutronPrimaryKeyMissing(exceptions.BadRequest):
 
 
 class NeutronSyntheticFieldMultipleForeignKeys(exceptions.NeutronException):
-    message = _("Synthetic fields %(fields)s shouldn't have more than one "
+    message = _("Synthetic field %(field)s shouldn't have more than one "
                 "foreign key")
 
 
@@ -213,7 +213,8 @@ class NeutronDbObject(NeutronObject):
         :param db_obj: dict of object fetched from database
         :return: modified dict of DB values
         """
-        result = dict(db_obj)
+        result = {field: value for field, value in dict(db_obj).items()
+                  if value is not None}
         for field, field_db in cls.fields_need_translation.items():
             if field_db in result:
                 result[field] = result.pop(field_db)
@@ -274,11 +275,11 @@ class NeutronDbObject(NeutronObject):
 
     def load_synthetic_db_fields(self):
         """
-        This method loads the synthetic fields that are stored in a different
-        table from the main object
+        Load the synthetic fields that are stored in a different table from the
+        main object.
 
         This method doesn't take care of loading synthetic fields that aren't
-        stored in the DB, e.g. 'shared' in rbac policy
+        stored in the DB, e.g. 'shared' in RBAC policy.
         """
 
         # TODO(rossella_s) Find a way to handle ObjectFields with
@@ -338,7 +339,7 @@ class NeutronDbObject(NeutronObject):
                     self._context, self.db_model,
                     self.modify_fields_to_db(updates),
                     **self._get_composite_keys())
-                self.from_db_object(self, db_obj)
+                self.from_db_object(db_obj)
 
     def delete(self):
         obj_db_api.delete_object(self._context, self.db_model,

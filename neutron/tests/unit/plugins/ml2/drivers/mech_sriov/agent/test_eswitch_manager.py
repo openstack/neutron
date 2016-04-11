@@ -31,7 +31,7 @@ class TestCreateESwitchManager(base.BaseTestCase):
                        ('0000:06:00.3', 2)]
 
     def test_create_eswitch_mgr_fail(self):
-        device_mappings = {'physnet1': 'p6p1'}
+        device_mappings = {'physnet1': ['p6p1']}
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.PciOsWrapper.scan_vf_devices",
                         side_effect=exc.InvalidDeviceError(
@@ -45,7 +45,7 @@ class TestCreateESwitchManager(base.BaseTestCase):
                     device_mappings, None)
 
     def test_create_eswitch_mgr_ok(self):
-        device_mappings = {'physnet1': 'p6p1'}
+        device_mappings = {'physnet1': ['p6p1']}
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.PciOsWrapper.scan_vf_devices",
                         return_value=self.SCANNED_DEVICES),\
@@ -68,7 +68,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
 
     def setUp(self):
         super(TestESwitchManagerApi, self).setUp()
-        device_mappings = {'physnet1': 'p6p1'}
+        device_mappings = {'physnet1': ['p6p1']}
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.PciOsWrapper.scan_vf_devices",
                         return_value=self.SCANNED_DEVICES),\

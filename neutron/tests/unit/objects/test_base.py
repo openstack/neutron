@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 import random
 
@@ -185,8 +186,43 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ObjectFieldsModel
+
+    foreign_keys = {'field1': 'id', 'field2': 'id'}
+
+    fields = {
+        'field1': obj_fields.UUIDField(),
+        'field2': obj_fields.UUIDField(),
+    }
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'obj_field': obj_fields.ListOfObjectsField(
+            'FakeNeutronObjectMultipleForeignKeys')
+    }
+
+    synthetic_fields = ['obj_field']
+
+
 def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
+
+
+def get_list_of_random_networks(num=10):
+    return [tools.get_random_ip_network() for i in range(num)]
 
 
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
@@ -197,6 +233,10 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],
     common_types.DscpMarkField: get_random_dscp_mark,
+    obj_fields.IPNetworkField: tools.get_random_ip_network,
+    common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
+    common_types.ListOfIPNetworksField: get_list_of_random_networks,
+    common_types.IPVersionEnumField: tools.get_random_ip_version,
 }
 
 
@@ -228,6 +268,7 @@ class _BaseObjectTestCase(object):
             fixture.VersionedObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)
         self.obj_registry.register(FakeWeirdKeySmallNeutronObject)
+        self.obj_registry.register(FakeNeutronObjectMultipleForeignKeys)
         synthetic_obj_fields = self.get_random_fields(FakeSmallNeutronObject)
         self.model_map = {
             self._test_class.db_model: self.db_objs,
@@ -241,7 +282,8 @@ class _BaseObjectTestCase(object):
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = generator()
-        return obj_cls.modify_fields_to_db(fields)
+        obj = obj_cls(None, **fields)
+        return obj.modify_fields_to_db(fields)
 
     @classmethod
     def generate_object_keys(cls, obj_cls):
@@ -264,6 +306,11 @@ class _BaseObjectTestCase(object):
 
 
 class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
+
+    def setUp(self):
+        super(BaseObjectIfaceTestCase, self).setUp()
+        self.model_map = collections.defaultdict(list)
+        self.model_map[self._test_class.db_model] = self.db_objs
 
     def test_get_object(self):
         with mock.patch.object(obj_db_api, 'get_object',
@@ -303,8 +350,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         return mock_calls
 
     def test_get_objects(self):
-        with mock.patch.object(obj_db_api, 'get_objects',
-                               return_value=self.db_objs) as get_objects_mock:
+        with mock.patch.object(
+                obj_db_api, 'get_objects',
+                side_effect=self.fake_get_objects) as get_objects_mock:
             objs = self._test_class.get_objects(self.context)
             self._validate_objects(self.db_objs, objs)
         mock_calls = [mock.call(self.context, self._test_class.db_model)]
@@ -315,11 +363,11 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
     def test_get_objects_valid_fields(self):
         with mock.patch.object(
             obj_db_api, 'get_objects',
-            return_value=[self.db_obj]) as get_objects_mock:
+            side_effect=self.fake_get_objects) as get_objects_mock:
 
             objs = self._test_class.get_objects(self.context,
                                                 **self.valid_field_filter)
-            self._validate_objects([self.db_obj], objs)
+            self._validate_objects(self.db_objs, objs)
 
         mock_calls = [mock.call(self.context, self._test_class.db_model,
                       **self.valid_field_filter)]
@@ -548,6 +596,17 @@ class BaseDbObjectCompositePrimaryKeyWithIdTestCase(BaseObjectIfaceTestCase):
 class BaseDbObjectRenamedFieldTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectRenamedField
+
+
+class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
+                                              test_base.BaseTestCase):
+
+    _test_class = FakeNeutronObjectSyntheticField
+
+    def test_load_synthetic_db_fields_with_multiple_foreign_keys(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        self.assertRaises(base.NeutronSyntheticFieldMultipleForeignKeys,
+                          obj.load_synthetic_db_fields)
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):

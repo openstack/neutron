@@ -166,6 +166,17 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
         """Is the physical network part of the given mappings?"""
         return physnet in mappings
 
+    def filter_hosts_with_segment_access(
+            self, context, segments, candidate_hosts, agent_getter):
+
+        hosts = set()
+        filters = {'host': candidate_hosts, 'agent_type': [self.agent_type]}
+        for agent in agent_getter(context, filters=filters):
+            if any(self.check_segment_for_agent(s, agent) for s in segments):
+                hosts.add(agent['host'])
+
+        return hosts
+
     def check_segment_for_agent(self, segment, agent):
         """Check if segment can be bound for agent.
 

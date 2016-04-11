@@ -492,7 +492,7 @@ class Dnsmasq(DhcpLocalProcess):
            fa:16:3e:8f:9d:65,set:aabc7d33-4874-429e-9637-436e4232d2cd
         3) But dnsmasq doesn't have sufficient checks to skip this entry and
            pick next entry, to process dhcp IPv4 request.
-        4) So dnsmasq uses this this entry to process dhcp IPv4 request.
+        4) So dnsmasq uses this entry to process dhcp IPv4 request.
         5) As there is no ip in this entry, dnsmasq logs "no address available"
            and fails to send DHCPOFFER message.
 
@@ -501,7 +501,7 @@ class Dnsmasq(DhcpLocalProcess):
         http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2015q2/
         009650.html
 
-        So If we reverse the order of writing entries in host file,
+        So if we reverse the order of writing entries in host file,
         so that entry for stateless IPv6 comes first,
         then dnsmasq can correctly fetch the IPv4 address.
         """
@@ -1292,7 +1292,7 @@ class DeviceManager(object):
         """Ensure DHCP reply packets always have correct UDP checksums."""
         iptables_mgr = iptables_manager.IptablesManager(use_ipv6=False,
                                                         namespace=namespace)
-        ipv4_rule = ('-p udp --dport %d -j CHECKSUM --checksum-fill'
+        ipv4_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCP_RESPONSE_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
         iptables_mgr.apply()

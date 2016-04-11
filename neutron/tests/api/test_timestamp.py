@@ -29,11 +29,9 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
     larger_prefix = '10.11.0.0/16'
 
     @classmethod
+    @test.requires_ext(extension="timestamp_core", service="network")
     def skip_checks(cls):
         super(TestTimeStamp, cls).skip_checks()
-
-        if not test.is_extension_enabled('timestamp_core', 'network'):
-            raise cls.skipException("timestamp_core extension not enabled")
 
     @classmethod
     def resource_setup(cls):

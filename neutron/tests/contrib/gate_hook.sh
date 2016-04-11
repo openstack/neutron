@@ -27,13 +27,13 @@ then
         # The OVS_BRANCH variable is used by git checkout. In the case below
         # we use a commit on branch-2.5 that fixes compilation with the
         # latest ubuntu trusty kernel.
-        OVS_BRANCH="a35342879f1a7d8b1503d4945bd0791c58f5fc87"
+        OVS_BRANCH=8c0b419a0b9ac0141d6973dcc80306dfc6a83d31
         for package in openvswitch openvswitch-switch openvswitch-common; do
             if is_package_installed $package; then
                 uninstall_package $package
             fi
         done
-        compile_ovs True /usr
+        compile_ovs True /usr /var
         start_new_ovs
     fi
 

@@ -36,11 +36,9 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="extra_dhcp_opt", service="network")
     def resource_setup(cls):
         super(ExtraDHCPOptionsTestJSON, cls).resource_setup()
-        if not test.is_extension_enabled('extra_dhcp_opt', 'network'):
-            msg = "Extra DHCP Options extension not enabled."
-            raise cls.skipException(msg)
         cls.network = cls.create_network()
         cls.subnet = cls.create_subnet(cls.network)
         cls.port = cls.create_port(cls.network)

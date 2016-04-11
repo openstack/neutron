@@ -34,3 +34,10 @@ mkdir_filter: RegExpFilter, /bin/mkdir, root, mkdir, -p, /etc/netns/qdhcp-[0-9a-
 rm_filter: RegExpFilter, /bin/rm, root, rm, -r, /etc/netns/qdhcp-[0-9a-z./-]+
 touch_filter: RegExpFilter, /bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
 touch_filter2: RegExpFilter, /usr/bin/touch, root, touch, /etc/netns/qdhcp-[0-9a-z./-]+/resolv.conf
+
+# needed by test_ovs_flows which runs ovs-appctl ofproto/trace
+ovstrace_filter: RegExpFilter, ovs-appctl, root, ovs-appctl, ofproto/trace, .*, .*
+
+# needed for TestGetRootHelperChildPid
+bash_filter: RegExpFilter, /bin/bash, root, bash, -c, \(sleep 100\)
+sleep_kill: KillFilter, root, sleep, -9

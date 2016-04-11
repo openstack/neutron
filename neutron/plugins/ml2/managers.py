@@ -311,6 +311,10 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                                                name_order=True)
         LOG.info(_LI("Loaded mechanism driver names: %s"), self.names())
         self._register_mechanisms()
+        self.host_filtering_supported = self.is_host_filtering_supported()
+        if not self.host_filtering_supported:
+            LOG.warning(_LW("Host filtering is disabled because at least one "
+                            "mechanism doesn't support it."))
 
     def _register_mechanisms(self):
         """Register all mechanism drivers.
@@ -757,6 +761,33 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 LOG.exception(_LE("Mechanism driver %s failed in "
                                   "bind_port"),
                               driver.name)
+
+    def is_host_filtering_supported(self):
+        return all(driver.obj.is_host_filtering_supported()
+                   for driver in self.ordered_mech_drivers)
+
+    def filter_hosts_with_segment_access(
+            self, context, segments, candidate_hosts, agent_getter):
+        """Filter hosts with access to at least one segment.
+
+        :returns: a subset of candidate_hosts.
+
+        This method returns all hosts from candidate_hosts with access to a
+        segment according to at least one driver.
+        """
+        candidate_hosts = set(candidate_hosts)
+        if not self.host_filtering_supported:
+            return candidate_hosts
+
+        hosts_with_access = set()
+        for driver in self.ordered_mech_drivers:
+            hosts = driver.obj.filter_hosts_with_segment_access(
+                context, segments, candidate_hosts, agent_getter)
+            hosts_with_access |= hosts
+            candidate_hosts -= hosts
+            if not candidate_hosts:
+                break
+        return hosts_with_access
 
     def _check_driver_to_bind(self, driver, segments_to_bind, binding_levels):
         # To prevent a possible binding loop, don't try to bind with

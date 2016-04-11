@@ -103,12 +103,7 @@ class SecurityGroupAgentRpc(object):
         try:
             self.firewall = firewall_class(
                 integration_bridge=integration_bridge)
-        except TypeError as e:
-            LOG.warning(_LW("Firewall driver %(fw_driver)s doesn't accept "
-                            "integration_bridge parameter in __init__(): "
-                            "%(err)s"),
-                        {'fw_driver': firewall_driver,
-                         'err': e})
+        except TypeError:
             self.firewall = firewall_class()
         # The following flag will be set to true if port filter must not be
         # applied as soon as a rule or membership notification is received

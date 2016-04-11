@@ -35,21 +35,10 @@ are:
 * Consumed from the subnet's allocation pools (derives total IPs)
 
 This API tracks consumable IPs so network administrators know when their
-subnet's IP pools (and and ultimately a network's) IPs are about to run out.
+subnet's IP pools (and ultimately a network's) IPs are about to run out.
 This API does not account reserved IPs such as a subnet's gateway IP or other
 reserved or unused IPs of a subnet's cidr that are consumed as a result of
 the subnet creation itself.
-
-Enabling in Neutron
--------------------
-
-To enable this plugin within neutron, append this pluging class to the
-comma-delimited plugin list to the end of the **service_plugins** configuration
-property within your neutron.conf file.
-
-Example::
-
-    service_plugins=router, network_ip_availability
 
 
 API Specification

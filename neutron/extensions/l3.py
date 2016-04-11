@@ -82,7 +82,6 @@ ROUTERS = 'routers'
 FLOATINGIP = 'floatingip'
 FLOATINGIPS = '%ss' % FLOATINGIP
 EXTERNAL_GW_INFO = 'external_gateway_info'
-FLOATINGIPS = 'floatingips'
 
 RESOURCE_ATTRIBUTE_MAP = {
     ROUTERS: {

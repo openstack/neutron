@@ -42,11 +42,9 @@ class L3AgentSchedulerTestJSON(base.BaseAdminNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="l3_agent_scheduler", service="network")
     def skip_checks(cls):
         super(L3AgentSchedulerTestJSON, cls).skip_checks()
-        if not test.is_extension_enabled('l3_agent_scheduler', 'network'):
-            msg = "L3 Agent Scheduler Extension not enabled."
-            raise cls.skipException(msg)
 
     @classmethod
     def resource_setup(cls):

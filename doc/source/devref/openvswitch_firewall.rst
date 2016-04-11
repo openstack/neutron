@@ -30,6 +30,10 @@ Class ``SGPortMap`` was created to keep state consistent, and maps from ports
 to security groups and vice-versa. Every port and security group is represented
 by its own object encapsulating the necessary information.
 
+Note: Open vSwitch firewall driver uses register 5 for marking flow
+related to port and register 6 which defines network and is used for conntrack
+zones.
+
 
 Firewall API calls
 ------------------
@@ -86,67 +90,235 @@ then expanded into several OpenFlow rules by the method
 Rules example with explanation:
 -------------------------------
 
-TODO: Rules below will be awesomly explained
+The following example presents two ports on the same host. They have different
+security groups and there is icmp traffic allowed from first security group to
+the second security group. Ports have following attributes:
 
 ::
 
- table=0, priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],resubmit(,71)
- table=0, priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],resubmit(,71)
- table=0, priority=90,dl_dst=fa:16:3e:9b:67:b2 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
- table=0, priority=90,dl_dst=fa:16:3e:44:de:7a actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
- table=0, priority=0 actions=NORMAL
- table=0, priority=1 actions=NORMAL
- table=71, priority=95,arp,in_port=2,dl_src=fa:16:3e:9b:67:b2,arp_spa=192.168.0.2 actions=NORMAL
- table=71, priority=95,arp,in_port=1,dl_src=fa:16:3e:44:de:7a,arp_spa=192.168.0.1 actions=NORMAL
- table=71, priority=90,ct_state=-trk,in_port=2,dl_src=fa:16:3e:9b:67:b2 actions=ct(table=72,zone=NXM_NX_REG5[0..15])
- table=71, priority=90,ct_state=-trk,in_port=1,dl_src=fa:16:3e:44:de:7a actions=ct(table=72,zone=NXM_NX_REG5[0..15])
- table=71, priority=70,udp,in_port=2,tp_src=68,tp_dst=67 actions=NORMAL
- table=71, priority=70,udp6,in_port=2,tp_src=546,tp_dst=547 actions=NORMAL
- table=71, priority=60,udp,in_port=2,tp_src=67,tp_dst=68 actions=drop
- table=71, priority=60,udp6,in_port=2,tp_src=547,tp_dst=546 actions=drop
- table=71, priority=70,udp,in_port=1,tp_src=68,tp_dst=67 actions=NORMAL
- table=71, priority=70,udp6,in_port=1,tp_src=546,tp_dst=547 actions=NORMAL
- table=71, priority=60,udp,in_port=1,tp_src=67,tp_dst=68 actions=drop
- table=71, priority=60,udp6,in_port=1,tp_src=547,tp_dst=546 actions=drop
- table=71, priority=10,ct_state=-trk,in_port=2 actions=drop
- table=71, priority=10,ct_state=-trk,in_port=1 actions=drop
+ Port 1
+   - plugged to the port 1 in OVS bridge
+   - ip address: 192.168.0.1
+   - mac address: fa:16:3e:a4:22:10
+   - security group 1: can send icmp packets out
+
+ Port 2
+   - plugged to the port 2 in OVS bridge
+   - ip address: 192.168.0.2
+   - mac address: fa:16:3e:24:57:c7
+   - security group 2: can receive icmp packets from security group 1
+
+The first ``table 0`` distinguishes the traffic to ingress or egress and loads
+to ``register 5`` value identifying port traffic.
+Ingress flow is determined by switch port number and egress flow is determined
+by destination mac address. ``register 6`` contains
+
+::
+
+ table=0,  priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
+ table=0,  priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
+ table=0,  priority=90,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=0,  priority=90,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=0,  priority=0 actions=NORMAL
+
+Following ``table 71`` implements arp spoofing protection, ip spoofing
+protection, allows traffic for obtaining ip addresses (dhcp, dhcpv6, slaac,
+ndp) for egress traffic and allows arp replies. Also identifies not tracked
+connections which are processed later with information obtained from
+conntrack. Notice the ``zone=NXM_NX_REG6[0..15]`` in ``actions`` when obtaining
+information from conntrack. It says every port has its own conntrack zone
+defined by value in ``register 6``. It's there to avoid accepting established
+traffic that belongs to different port with same conntrack parameters.
+
+Rules below allow ICMPv6 traffic for multicast listeners, neighbour
+solicitation and neighbour advertisement.
+
+::
+
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=130 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=131 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=132 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=135 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x1,in_port=1,icmp_type=136 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=130 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=131 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=132 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=135 actions=NORMAL
+ table=71, priority=95,icmp6,reg5=0x2,in_port=2,icmp_type=136 actions=NORMAL
+
+Following rules implement arp spoofing protection
+
+::
+
+ table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,arp_spa=192.168.0.1 actions=NORMAL
+ table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,arp_spa=192.168.0.2 actions=NORMAL
+
+DHCP and DHCPv6 traffic is allowed to instance but DHCP servers are blocked on
+instances.
+
+::
+
+ table=71, priority=80,udp,reg5=0x1,in_port=1,tp_src=68,tp_dst=67 actions=resubmit(,73)
+ table=71, priority=80,udp6,reg5=0x1,in_port=1,tp_src=546,tp_dst=547 actions=resubmit(,73)
+ table=71, priority=70,udp,reg5=0x1,in_port=1,tp_src=67,tp_dst=68 actions=drop
+ table=71, priority=70,udp6,reg5=0x1,in_port=1,tp_src=547,tp_dst=546 actions=drop
+ table=71, priority=80,udp,reg5=0x2,in_port=2,tp_src=68,tp_dst=67 actions=resubmit(,73)
+ table=71, priority=80,udp6,reg5=0x2,in_port=2,tp_src=546,tp_dst=547 actions=resubmit(,73)
+ table=71, priority=70,udp,reg5=0x2,in_port=2,tp_src=67,tp_dst=68 actions=drop
+ table=71, priority=70,udp6,reg5=0x2,in_port=2,tp_src=547,tp_dst=546 actions=drop
+
+Flowing rules obtain conntrack information for valid ip and mac address
+combinations. All other packets are dropped.
+
+::
+
+ table=71, priority=65,ct_state=-trk,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,nw_src=192.168.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ct_state=-trk,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,nw_src=192.168.0.2 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ct_state=-trk,ipv6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,ipv6_src=fe80::f816:3eff:fea4:2210 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ct_state=-trk,ipv6,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,ipv6_src=fe80::f816:3eff:fe24:57c7 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=10,ct_state=-trk,reg5=0x1,in_port=1 actions=drop
+ table=71, priority=10,ct_state=-trk,reg5=0x2,in_port=2 actions=drop
  table=71, priority=0 actions=drop
- table=72, priority=90,ct_state=+inv+trk actions=drop
- table=72, priority=80,ct_state=+est-rel-inv+trk actions=NORMAL
- table=72, priority=80,ct_state=-est+rel-inv+trk actions=NORMAL
- table=72, priority=70,icmp,dl_src=fa:16:3e:44:de:7a,nw_src=192.168.0.1 actions=resubmit(,73)
+
+
+``table 72`` accepts only established or related connections, and implements
+rules defined by the security group. As this egress connection might also be an
+ingress connection for some other port, it's not switched yet but eventually
+processed by ingress pipeline.
+
+All established or new connections defined by security group rule are
+``accepted``, which will be explained later. All invalid packets are dropped.
+In case below we allow all icmp egress traffic.
+
+::
+
+ table=72, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x1,dl_src=fa:16:3e:a4:22:10 actions=resubmit(,73)
+ table=72, priority=70,ct_state=+new-est,icmp,reg5=0x1,dl_src=fa:16:3e:a4:22:10 actions=resubmit(,73)
+ table=72, priority=50,ct_state=+inv+trk actions=drop
+
+
+Important on the flows below is the ``ct_mark=0x1``. Such value have flows that
+were marked as not existing anymore by rule introduced later. Those are
+typically connections that were allowed by some security group rule and the
+rule was removed.
+
+::
+
+ table=72, priority=50,ct_mark=0x1,reg5=0x1 actions=drop
+ table=72, priority=50,ct_mark=0x1,reg5=0x2 actions=drop
+
+All other connections that are not marked and are established or related are
+allowed.
+
+::
+
+ table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1 actions=NORMAL
+ table=72, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2 actions=NORMAL
+ table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1 actions=NORMAL
+ table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2 actions=NORMAL
+
+In the following flows are marked established connections that weren't matched
+in the previous flows, which means they don't have accepting security group
+rule anymore.
+
+::
+
+ table=72, priority=40,ct_state=-est,reg5=0x1 actions=drop
+ table=72, priority=40,ct_state=+est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
+ table=72, priority=40,ct_state=-est,reg5=0x2 actions=drop
+ table=72, priority=40,ct_state=+est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
  table=72, priority=0 actions=drop
- table=73, priority=100,dl_dst=fa:16:3e:9b:67:b2 actions=resubmit(,81)
- table=73, priority=100,dl_dst=fa:16:3e:44:de:7a actions=resubmit(,81)
- table=73, priority=90,in_port=2 actions=ct(commit,zone=NXM_NX_REG5[0..15])
- table=73, priority=90,in_port=1 actions=ct(commit,zone=NXM_NX_REG5[0..15])
- table=81, priority=100,arp,dl_dst=fa:16:3e:9b:67:b2 actions=output:2
- table=81, priority=100,arp,dl_dst=fa:16:3e:44:de:7a actions=output:1
- table=81, priority=95,ct_state=-trk,ip actions=ct(table=82,zone=NXM_NX_REG5[0..15])
- table=81, priority=95,ct_state=-trk,ipv6 actions=ct(table=82,zone=NXM_NX_REG5[0..15])
- table=81, priority=80,dl_dst=fa:16:3e:9b:67:b2 actions=resubmit(,82)
- table=81, priority=80,dl_dst=fa:16:3e:44:de:7a actions=resubmit(,82)
+
+In following ``table 73`` are all detected ingress connections sent to ingress
+pipeline. Since the connection was already accepted by egress pipeline, all
+remaining egress connections are sent to normal switching.
+
+::
+
+ table=73, priority=100,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=100,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=90,ct_state=+new-est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
+ table=73, priority=90,ct_state=+new-est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
+ table=73, priority=80,reg5=0x1 actions=NORMAL
+ table=73, priority=80,reg5=0x2 actions=NORMAL
+ table=73, priority=0 actions=drop
+
+``table 81`` is similar to ``table 71``, allows basic ingress traffic for
+obtaining ip address and arp queries. Note that vlan tag must be removed by
+adding ``strip_vlan`` to actions list, prior to injecting packet directly to
+port. Not tracked packets are sent to obtain conntrack information.
+
+::
+
+ table=81, priority=100,arp,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=81, priority=100,arp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=130 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=131 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=132 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=135 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=136 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=130 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=131 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=132 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=135 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=136 actions=strip_vlan,output:2
+ table=81, priority=95,udp,reg5=0x1,tp_src=67,tp_dst=68 actions=strip_vlan,output:1
+ table=81, priority=95,udp6,reg5=0x1,tp_src=547,tp_dst=546 actions=strip_vlan,output:1
+ table=81, priority=95,udp,reg5=0x2,tp_src=67,tp_dst=68 actions=strip_vlan,output:2
+ table=81, priority=95,udp6,reg5=0x2,tp_src=547,tp_dst=546 actions=strip_vlan,output:2
+ table=81, priority=90,ct_state=-trk,ip,reg5=0x1 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
+ table=81, priority=90,ct_state=-trk,ipv6,reg5=0x1 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
+ table=81, priority=90,ct_state=-trk,ip,reg5=0x2 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
+ table=81, priority=90,ct_state=-trk,ipv6,reg5=0x2 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
+ table=81, priority=80,ct_state=+trk,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=resubmit(,82)
+ table=81, priority=80,ct_state=+trk,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=resubmit(,82)
  table=81, priority=0 actions=drop
- table=82, priority=100,ct_state=+inv+trk actions=drop
- table=82, priority=80,ct_state=+est-rel-inv+trk,dl_dst=fa:16:3e:44:de:7a actions=output:1
- table=82, priority=80,ct_state=-est+rel-inv+trk,dl_dst=fa:16:3e:44:de:7a actions=output:1
- table=82, priority=80,ct_state=+est-rel-inv+trk,dl_dst=fa:16:3e:9b:67:b2 actions=output:2
- table=82, priority=80,ct_state=-est+rel-inv+trk,dl_dst=fa:16:3e:9b:67:b2 actions=output:2
- table=82, priority=70,icmp,dl_dst=fa:16:3e:9b:67:b2,nw_src=192.168.0.1,nw_dst=192.168.0.2 actions=ct(commit,zone=NXM_NX_REG5[0..15]),output:2
+
+Similarly to ``table 72``, ``table 82`` accepts established and related
+connections. In this case we allow all icmp traffic coming from
+``security group 1`` which is in this case only ``port 1`` with ip address
+``192.168.0.1``.
+
+::
+
+ table=82, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=strip_vlan,output:2
+ table=82, priority=70,ct_state=+new-est,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,nw_src=192.168.0.1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),strip_vlan,output:2
+ table=82, priority=50,ct_state=+inv+trk actions=drop
+
+The mechanism for dropping connections that are not allowed anymore is the
+same as in ``table 72``.
+
+::
+
+ table=82, priority=50,ct_mark=0x1,reg5=0x1 actions=drop
+ table=82, priority=50,ct_mark=0x1,reg5=0x2 actions=drop
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=82, priority=40,ct_state=-est,reg5=0x1 actions=drop
+ table=82, priority=40,ct_state=+est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
+ table=82, priority=40,ct_state=-est,reg5=0x2 actions=drop
+ table=82, priority=40,ct_state=+est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
  table=82, priority=0 actions=drop
+
+
+Note: Conntrack zones on a single node are now based on network to which port is
+plugged in. That makes a difference between traffic on hypervisor only and
+east-west traffic. For example, if port has a VIP that was migrated to a port on
+different node, then new port won't contain conntrack information about previous
+traffic that happened with VIP.
 
 
 Future work
 -----------
 
+ - Create fullstack tests with tunneling enabled
  - Conjunctions in Openflow rules can be created to decrease the number of
    rules needed for remote security groups
- - Masking the port range can be used to avoid generating a single rule per
-   port number being filtered. For example, if the port range is 1 to 5, one
-   rule can be generated instead of 5.
-   e.g. tcp,tcp_src=0x03e8/0xfff8
  - During the update of firewall rules, we can use bundles to make the changes
    atomic
+
 
 Upgrade path from iptables hybrid driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

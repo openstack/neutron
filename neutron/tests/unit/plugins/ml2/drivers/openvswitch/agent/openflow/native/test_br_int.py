@@ -347,9 +347,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
-                    ]),
+                    ofpp.OFPInstructionGotoTable(table_id=25),
                 ],
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_ARP,
@@ -361,9 +359,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
-                    ]),
+                    ofpp.OFPInstructionGotoTable(table_id=25),
                 ],
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_ARP,

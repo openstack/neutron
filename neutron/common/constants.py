@@ -22,6 +22,13 @@ from neutron.common import _deprecate
 
 ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
+# TODO(anilvenkata) Below constants should be added to neutron-lib
+DEVICE_OWNER_HA_REPLICATED_INT = (lib_constants.DEVICE_OWNER_NETWORK_PREFIX +
+                                  "ha_router_replicated_interface")
+ROUTER_INTERFACE_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS + \
+    (DEVICE_OWNER_HA_REPLICATED_INT,)
+ROUTER_INTERFACE_OWNERS_SNAT = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
+    (DEVICE_OWNER_HA_REPLICATED_INT,)
 
 L3_AGENT_MODE_DVR = 'dvr'
 L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
@@ -131,6 +138,8 @@ IP_PROTOCOL_NAME_ALIASES = {PROTO_NAME_IPV6_ICMP_LEGACY: PROTO_NAME_IPV6_ICMP}
 VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
                     36, 38, 40, 46, 48, 56]
 
+IP_PROTOCOL_NUM_TO_NAME_MAP = {str(v): k for k, v in IP_PROTOCOL_MAP.items()}
+
 # List of ICMPv6 types that should be allowed by default:
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
@@ -215,6 +224,16 @@ AGENT_ALIVE = 'alive'
 # agent has just returned to alive after being dead
 AGENT_REVIVED = 'revived'
 
+INGRESS_DIRECTION = 'ingress'
+EGRESS_DIRECTION = 'egress'
+
+VALID_DIRECTIONS = (INGRESS_DIRECTION, EGRESS_DIRECTION)
+VALID_ETHERTYPES = (lib_constants.IPv4, lib_constants.IPv6)
+
+IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
+
+IPV4_MAX_PREFIXLEN = 32
+IPV6_MAX_PREFIXLEN = 128
 
 # Neutron-lib migration shim. This will wrap any constants that are moved
 # to that library in a deprecation warning, until they can be updated to

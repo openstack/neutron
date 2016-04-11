@@ -381,9 +381,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv6_pairs.append((mac, ip_address))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
-        # Allow dhcp client packets
-        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 '
-                                    '-m udp --dport 67 '
+        # Allow dhcp client discovery and request
+        ipv4_rules += [comment_rule('-s 0.0.0.0/32 -d 255.255.255.255/32 '
+                                    '-p udp -m udp --sport 68 --dport 67 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
         # Drop Router Advts from the port.
         ipv6_rules += [comment_rule('-p ipv6-icmp -m icmp6 --icmpv6-type %s '
@@ -415,6 +415,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                        mac_ipv4_pairs, ipv4_rules)
         self._setup_spoof_filter_chain(port, self.iptables.ipv6['filter'],
                                        mac_ipv6_pairs, ipv6_rules)
+        # Allow dhcp client renewal and rebinding
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
         #Note(nati) Drop dhcp packet from VM
@@ -571,10 +574,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []
         self._allow_established(iptables_rules)
+        seen_sg_rules = set()
         for rule in security_group_rules:
             args = self._convert_sg_rule_to_iptables_args(rule)
             if args:
-                iptables_rules += [' '.join(args)]
+                rule_command = ' '.join(args)
+                if rule_command in seen_sg_rules:
+                    # since these rules are from multiple security groups,
+                    # there may be duplicates so we prune them out here
+                    continue
+                seen_sg_rules.add(rule_command)
+                iptables_rules.append(rule_command)
 
         self._drop_invalid_packets(iptables_rules)
         iptables_rules += [comment_rule('-j $sg-fallback',

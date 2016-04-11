@@ -145,11 +145,9 @@ class AllowedAddressPairSharedNetworkTest(base.BaseAdminNetworkTest):
     allowed_address_pairs = [{'ip_address': '1.1.1.1'}]
 
     @classmethod
+    @test.requires_ext(extension="allowed-address-pairs", service="network")
     def skip_checks(cls):
         super(AllowedAddressPairSharedNetworkTest, cls).skip_checks()
-        if not test.is_extension_enabled('allowed-address-pairs', 'network'):
-            msg = "Allowed Address Pairs extension not enabled."
-            raise cls.skipException(msg)
 
     @classmethod
     def resource_setup(cls):
@@ -179,11 +177,9 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
 
     @classmethod
+    @test.requires_ext(extension="rbac-policies", service="network")
     def resource_setup(cls):
         super(RBACSharedNetworksTest, cls).resource_setup()
-        if not test.is_extension_enabled('rbac_policies', 'network'):
-            msg = "rbac extension not enabled."
-            raise cls.skipException(msg)
         cls.client2 = cls.alt_manager.network_client
 
     def _make_admin_net_and_subnet_shared_to_tenant_id(self, tenant_id):
@@ -283,6 +279,14 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         port = self.client2.create_port(network_id=net['id'])['port']
         self.client.delete_port(port['id'])
 
+    @test.idempotent_id('f7539232-389a-4e9c-9e37-e42a129eb541')
+    def test_tenant_cant_delete_other_tenants_ports(self):
+        net = self.create_network()
+        port = self.client.create_port(network_id=net['id'])['port']
+        self.addCleanup(self.client.delete_port, port['id'])
+        with testtools.ExpectedException(lib_exc.NotFound):
+            self.client2.delete_port(port['id'])
+
     @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff4fff')
     def test_regular_client_shares_to_another_regular_client(self):
@@ -362,10 +366,8 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
+    @test.requires_ext(extension="quotas", service="network")
     def test_rbac_policy_quota(self):
-        if not test.is_extension_enabled('quotas', 'network'):
-            msg = "quotas extension not enabled."
-            raise self.skipException(msg)
         quota = self.client.show_quotas(self.client.tenant_id)['quota']
         max_policies = quota['rbac_policy']
         self.assertGreater(max_policies, 0)

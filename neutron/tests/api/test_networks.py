@@ -67,11 +67,9 @@ class NetworksTestJSON(base.BaseNetworkTest):
 
     @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-ccc4-b1442640bbbb')
+    @test.requires_ext(extension="standard-attr-description",
+                       service="network")
     def test_create_update_network_description(self):
-        if not test.is_extension_enabled('standard-attr-description',
-                                         'network'):
-            msg = "standard-attr-description not enabled."
-            raise self.skipException(msg)
         body = self.create_network(description='d1')
         self.assertEqual('d1', body['description'])
         net_id = body['id']

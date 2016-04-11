@@ -29,6 +29,31 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
 LOG = logging.getLogger(__name__)
 
 
+def _replace_register(flow_params, register_number, register_value):
+    """Replace value from flows to given register number
+
+    'register_value' key in dictionary will be replaced by register number
+    given by 'register_number'
+
+    :param flow_params: Dictionary containing defined flows
+    :param register_number: The number of register where value will be stored
+    :param register_value: Key to be replaced by register number
+
+    """
+    try:
+        reg_port = flow_params[register_value]
+        del flow_params[register_value]
+        flow_params['reg{:d}'.format(register_number)] = reg_port
+    except KeyError:
+        pass
+
+
+def create_reg_numbers(flow_params):
+    """Replace reg_(port|net) values with defined register numbers"""
+    _replace_register(flow_params, ovsfw_consts.REG_PORT, 'reg_port')
+    _replace_register(flow_params, ovsfw_consts.REG_NET, 'reg_net')
+
+
 class OVSFWPortNotFound(exceptions.NeutronException):
     message = _("Port %(port_id)s is not managed by this agent. ")
 
@@ -56,8 +81,9 @@ class SecurityGroup(object):
 
 
 class OFPort(object):
-    def __init__(self, port_dict, ovs_port):
+    def __init__(self, port_dict, ovs_port, vlan_tag):
         self.id = port_dict['device']
+        self.vlan_tag = vlan_tag
         self.mac = ovs_port.vif_mac
         self.lla_address = str(ipv6_utils.get_ipv6_addr_by_EUI64(
             constants.IPV6_LLA_PREFIX, self.mac))
@@ -173,8 +199,19 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         agent. This method is never called from that place.
         """
 
+    def _accept_flow(self, **flow):
+        flow['ct_state'] = ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY
+        self._add_flow(**flow)
+        flow['ct_state'] = ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED
+        if flow['table'] == ovs_consts.RULES_INGRESS_TABLE:
+            flow['actions'] = (
+                'ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s}'.format(
+                    ovsfw_consts.REG_NET, flow['actions']))
+        self._add_flow(**flow)
+
     def _add_flow(self, **kwargs):
         dl_type = kwargs.get('dl_type')
+        create_reg_numbers(kwargs)
         if isinstance(dl_type, int):
             kwargs['dl_type'] = "0x{:04x}".format(dl_type)
         if self._deferred:
@@ -183,6 +220,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self.int_br.br.add_flow(**kwargs)
 
     def _delete_flows(self, **kwargs):
+        create_reg_numbers(kwargs)
         if self._deferred:
             self.int_br.delete_flows(**kwargs)
         else:
@@ -205,7 +243,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
             if not ovs_port:
                 raise OVSFWPortNotFound(port_id=port_id)
-            of_port = OFPort(port, ovs_port)
+
+            try:
+                port_vlan_id = int(self.int_br.br.db_get_val(
+                    'Port', ovs_port.port_name, 'tag'))
+            except TypeError:
+                port_vlan_id = ovs_consts.DEAD_VLAN_TAG
+            of_port = OFPort(port, ovs_port, port_vlan_id)
             self.sg_port_map.create_port(of_port, port)
         else:
             self.sg_port_map.update_port(of_port, port)
@@ -289,8 +333,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.LOCAL_SWITCHING,
             priority=100,
             in_port=port.ofport,
-            actions='set_field:{:d}->reg5,resubmit(,{:d})'.format(
-                port.ofport, ovs_consts.BASE_EGRESS_TABLE)
+            actions='set_field:{:d}->reg{:d},'
+                    'set_field:{:d}->reg{:d},'
+                    'resubmit(,{:d})'.format(
+                        port.ofport,
+                        ovsfw_consts.REG_PORT,
+                        port.vlan_tag,
+                        ovsfw_consts.REG_NET,
+                        ovs_consts.BASE_EGRESS_TABLE)
         )
 
         # Identify ingress flows after egress filtering
@@ -298,8 +348,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.LOCAL_SWITCHING,
             priority=90,
             dl_dst=port.mac,
-            actions='set_field:{:d}->reg5,resubmit(,{:d})'.format(
-                port.ofport, ovs_consts.BASE_INGRESS_TABLE),
+            actions='set_field:{:d}->reg{:d},'
+                    'set_field:{:d}->reg{:d},'
+                    'resubmit(,{:d})'.format(
+                        port.ofport,
+                        ovsfw_consts.REG_PORT,
+                        port.vlan_tag,
+                        ovsfw_consts.REG_NET,
+                        ovs_consts.BASE_INGRESS_TABLE),
         )
 
         self._initialize_egress(port)
@@ -311,7 +367,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=95,
                 in_port=port.ofport,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=constants.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
@@ -330,7 +386,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=95,
                 in_port=port.ofport,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_src=mac_addr,
                 dl_type=constants.ETHERTYPE_ARP,
                 arp_spa=ip_addr,
@@ -339,14 +395,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
                 dl_type=constants.ETHERTYPE_IP,
                 in_port=port.ofport,
                 dl_src=mac_addr,
                 nw_src=ip_addr,
-                actions='ct(table={:d},zone=NXM_NX_REG5[0..15])'.format(
-                    ovs_consts.RULES_EGRESS_TABLE)
+                actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
+                    ovs_consts.RULES_EGRESS_TABLE,
+                    ovsfw_consts.REG_NET)
             )
 
         # Apply mac/ip pairs for IPv6
@@ -356,14 +413,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 in_port=port.ofport,
                 ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
                 dl_type=constants.ETHERTYPE_IPV6,
                 dl_src=mac_addr,
                 ipv6_src=ip_addr,
-                actions='ct(table={:d},zone=NXM_NX_REG5[0..15])'.format(
-                    ovs_consts.RULES_EGRESS_TABLE)
+                actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
+                    ovs_consts.RULES_EGRESS_TABLE,
+                    ovsfw_consts.REG_NET)
             )
 
         # DHCP discovery
@@ -373,7 +431,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=80,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 in_port=port.ofport,
                 dl_type=dl_type,
                 nw_proto=constants.PROTO_NUM_UDP,
@@ -390,7 +448,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=70,
                 in_port=port.ofport,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_type=dl_type,
                 nw_proto=constants.PROTO_NUM_UDP,
                 tp_src=src_port,
@@ -404,7 +462,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=10,
             ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
             in_port=port.ofport,
-            reg5=port.ofport,
+            reg_port=port.ofport,
             actions='drop'
         )
 
@@ -414,48 +472,85 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=100,
             dl_dst=port.mac,
-            actions='set_field:{:d}->reg5,resubmit(,{:d})'.format(
-                port.ofport, ovs_consts.BASE_INGRESS_TABLE),
+            actions='set_field:{:d}->reg{:d},resubmit(,{:d})'.format(
+                port.ofport,
+                ovsfw_consts.REG_PORT,
+                ovs_consts.BASE_INGRESS_TABLE),
         )
         self._add_flow(
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=90,
-            reg5=port.ofport,
-            in_port=port.ofport,
-            actions='ct(commit,zone=NXM_NX_REG5[0..15]),normal'
+            reg_port=port.ofport,
+            ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
+            actions='ct(commit,zone=NXM_NX_REG{:d}[0..15]),normal'.format(
+                ovsfw_consts.REG_NET)
+        )
+        self._add_flow(
+            table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+            priority=80,
+            reg_port=port.ofport,
+            actions='normal'
         )
 
     def _initialize_tracked_egress(self, port):
+        # Drop invalid packets
         self._add_flow(
             table=ovs_consts.RULES_EGRESS_TABLE,
-            priority=90,
+            priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
-            actions='drop',
+            actions='drop'
         )
+        # Drop traffic for removed sg rules
+        self._add_flow(
+            table=ovs_consts.RULES_EGRESS_TABLE,
+            priority=50,
+            reg_port=port.ofport,
+            ct_mark=ovsfw_consts.CT_MARK_INVALID,
+            actions='drop'
+        )
+
         for state in (
-            ovsfw_consts.OF_STATE_ESTABLISHED,
+            ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
             ovsfw_consts.OF_STATE_RELATED,
         ):
             self._add_flow(
                 table=ovs_consts.RULES_EGRESS_TABLE,
-                priority=80,
+                priority=50,
                 ct_state=state,
-                reg5=port.ofport,
-                ct_zone=port.ofport,
+                ct_mark=ovsfw_consts.CT_MARK_NORMAL,
+                reg_port=port.ofport,
+                ct_zone=port.vlan_tag,
                 actions='normal'
             )
+        self._add_flow(
+            table=ovs_consts.RULES_EGRESS_TABLE,
+            priority=40,
+            reg_port=port.ofport,
+            ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
+            actions='drop'
+        )
+        self._add_flow(
+            table=ovs_consts.RULES_EGRESS_TABLE,
+            priority=40,
+            reg_port=port.ofport,
+            ct_state=ovsfw_consts.OF_STATE_ESTABLISHED,
+            actions="ct(commit,zone=NXM_NX_REG{:d}[0..15],"
+                    "exec(set_field:{:s}->ct_mark))".format(
+                        ovsfw_consts.REG_NET,
+                        ovsfw_consts.CT_MARK_INVALID)
+        )
 
     def _initialize_ingress_ipv6_icmp(self, port):
         for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_dst=port.mac,
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=constants.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='output:{:d}'.format(port.ofport),
+                actions='strip_vlan,output:{:d}'.format(port.ofport),
             )
 
     def _initialize_ingress(self, port):
@@ -464,9 +559,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.BASE_INGRESS_TABLE,
             priority=100,
             dl_type=constants.ETHERTYPE_ARP,
-            reg5=port.ofport,
+            reg_port=port.ofport,
             dl_dst=port.mac,
-            actions='output:{:d}'.format(port.ofport),
+            actions='strip_vlan,output:{:d}'.format(port.ofport),
         )
         self._initialize_ingress_ipv6_icmp(port)
 
@@ -477,12 +572,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=95,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_type=dl_type,
                 nw_proto=constants.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='output:{:d}'.format(port.ofport),
+                actions='strip_vlan,output:{:d}'.format(port.ofport),
             )
 
         # Track untracked
@@ -490,16 +585,18 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=90,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 dl_type=dl_type,
                 ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
-                actions='ct(table={:d},zone=NXM_NX_REG5[0..15])'.format(
-                    ovs_consts.RULES_INGRESS_TABLE)
+                actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
+                    ovs_consts.RULES_INGRESS_TABLE,
+                    ovsfw_consts.REG_NET)
             )
         self._add_flow(
             table=ovs_consts.BASE_INGRESS_TABLE,
+            ct_state=ovsfw_consts.OF_STATE_TRACKED,
             priority=80,
-            reg5=port.ofport,
+            reg_port=port.ofport,
             dl_dst=port.mac,
             actions='resubmit(,{:d})'.format(ovs_consts.RULES_INGRESS_TABLE)
         )
@@ -508,22 +605,49 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         # Drop invalid packets
         self._add_flow(
             table=ovs_consts.RULES_INGRESS_TABLE,
-            priority=100,
+            priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
             actions='drop'
         )
+        # Drop traffic for removed sg rules
+        self._add_flow(
+            table=ovs_consts.RULES_INGRESS_TABLE,
+            priority=50,
+            reg_port=port.ofport,
+            ct_mark=ovsfw_consts.CT_MARK_INVALID,
+            actions='drop'
+        )
+
         # Allow established and related connections
-        for state in (ovsfw_consts.OF_STATE_ESTABLISHED,
+        for state in (ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
                       ovsfw_consts.OF_STATE_RELATED):
             self._add_flow(
                 table=ovs_consts.RULES_INGRESS_TABLE,
-                priority=80,
+                priority=50,
                 dl_dst=port.mac,
-                reg5=port.ofport,
+                reg_port=port.ofport,
                 ct_state=state,
-                ct_zone=port.ofport,
-                actions='output:{:d}'.format(port.ofport)
+                ct_mark=ovsfw_consts.CT_MARK_NORMAL,
+                ct_zone=port.vlan_tag,
+                actions='strip_vlan,output:{:d}'.format(port.ofport)
             )
+        self._add_flow(
+            table=ovs_consts.RULES_INGRESS_TABLE,
+            priority=40,
+            reg_port=port.ofport,
+            ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
+            actions='drop'
+        )
+        self._add_flow(
+            table=ovs_consts.RULES_INGRESS_TABLE,
+            priority=40,
+            reg_port=port.ofport,
+            ct_state=ovsfw_consts.OF_STATE_ESTABLISHED,
+            actions="ct(commit,zone=NXM_NX_REG{:d}[0..15],"
+                    "exec(set_field:{:s}->ct_mark))".format(
+                        ovsfw_consts.REG_NET,
+                        ovsfw_consts.CT_MARK_INVALID)
+        )
 
     def add_flows_from_rules(self, port):
         self._initialize_tracked_ingress(port)
@@ -536,7 +660,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             LOG.debug("RULGEN: Rules generated for flow %s are %s",
                       rule, flows)
             for flow in flows:
-                self._add_flow(**flow)
+                self._accept_flow(**flow)
 
     def create_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:
@@ -554,6 +678,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._delete_flows(table=ovs_consts.LOCAL_SWITCHING, dl_dst=port.mac)
         self._delete_flows(table=ovs_consts.LOCAL_SWITCHING,
                            in_port=port.ofport)
-        self._delete_flows(reg5=port.ofport)
+        self._delete_flows(reg_port=port.ofport)
         self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                            dl_dst=port.mac)

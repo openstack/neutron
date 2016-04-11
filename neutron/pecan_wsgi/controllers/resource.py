@@ -16,8 +16,8 @@ from oslo_log import log as logging
 import pecan
 from pecan import request
 
+from neutron._i18n import _LW
 from neutron.api import api_common
-from neutron.i18n import _LW
 from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
 

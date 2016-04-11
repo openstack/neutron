@@ -39,11 +39,9 @@ class QuotasTest(base.BaseAdminNetworkTest):
     """
 
     @classmethod
+    @test.requires_ext(extension="quotas", service="network")
     def resource_setup(cls):
         super(QuotasTest, cls).resource_setup()
-        if not test.is_extension_enabled('quotas', 'network'):
-            msg = "quotas extension not enabled."
-            raise cls.skipException(msg)
 
     @test.attr(type='gate')
     @test.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')

@@ -20,13 +20,13 @@ import six
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LE, _LI
+from neutron._i18n import _LE
 from neutron.common import constants as n_const
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
+from neutron.db import segments_db
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 
 LOG = log.getLogger(__name__)
@@ -34,96 +34,18 @@ LOG = log.getLogger(__name__)
 # limit the number of port OR LIKE statements in one query
 MAX_PORTS_PER_QUERY = 500
 
+# The API methods from segments_db
+add_network_segment = segments_db.add_network_segment
 
-def _make_segment_dict(record):
-    """Make a segment dictionary out of a DB record."""
-    return {api.ID: record.id,
-            api.NETWORK_TYPE: record.network_type,
-            api.PHYSICAL_NETWORK: record.physical_network,
-            api.SEGMENTATION_ID: record.segmentation_id}
+get_network_segments = segments_db.get_network_segments
 
+get_networks_segments = segments_db.get_networks_segments
 
-def add_network_segment(session, network_id, segment, segment_index=0,
-                        is_dynamic=False):
-    with session.begin(subtransactions=True):
-        record = models.NetworkSegment(
-            id=uuidutils.generate_uuid(),
-            network_id=network_id,
-            network_type=segment.get(api.NETWORK_TYPE),
-            physical_network=segment.get(api.PHYSICAL_NETWORK),
-            segmentation_id=segment.get(api.SEGMENTATION_ID),
-            segment_index=segment_index,
-            is_dynamic=is_dynamic
-        )
-        session.add(record)
-        segment[api.ID] = record.id
-    LOG.info(_LI("Added segment %(id)s of type %(network_type)s for network"
-                 " %(network_id)s"),
-             {'id': record.id,
-              'network_type': record.network_type,
-              'network_id': record.network_id})
+get_segment_by_id = segments_db.get_segment_by_id
 
+get_dynamic_segment = segments_db.get_dynamic_segment
 
-def get_network_segments(session, network_id, filter_dynamic=False):
-    return get_networks_segments(
-        session, [network_id], filter_dynamic)[network_id]
-
-
-def get_networks_segments(session, network_ids, filter_dynamic=False):
-    with session.begin(subtransactions=True):
-        query = (session.query(models.NetworkSegment).
-                 filter(models.NetworkSegment.network_id.in_(network_ids)).
-                 order_by(models.NetworkSegment.segment_index))
-        if filter_dynamic is not None:
-            query = query.filter_by(is_dynamic=filter_dynamic)
-        records = query.all()
-        result = {net_id: [] for net_id in network_ids}
-        for record in records:
-            result[record.network_id].append(_make_segment_dict(record))
-        return result
-
-
-def get_segment_by_id(session, segment_id):
-    with session.begin(subtransactions=True):
-        try:
-            record = (session.query(models.NetworkSegment).
-                      filter_by(id=segment_id).
-                      one())
-            return _make_segment_dict(record)
-        except exc.NoResultFound:
-            return
-
-
-def get_dynamic_segment(session, network_id, physical_network=None,
-                        segmentation_id=None):
-        """Return a dynamic segment for the filters provided if one exists."""
-        with session.begin(subtransactions=True):
-            query = (session.query(models.NetworkSegment).
-                     filter_by(network_id=network_id, is_dynamic=True))
-            if physical_network:
-                query = query.filter_by(physical_network=physical_network)
-            if segmentation_id:
-                query = query.filter_by(segmentation_id=segmentation_id)
-            record = query.first()
-
-        if record:
-            return _make_segment_dict(record)
-        else:
-            LOG.debug("No dynamic segment found for "
-                      "Network:%(network_id)s, "
-                      "Physical network:%(physnet)s, "
-                      "segmentation_id:%(segmentation_id)s",
-                      {'network_id': network_id,
-                       'physnet': physical_network,
-                       'segmentation_id': segmentation_id})
-            return None
-
-
-def delete_network_segment(session, segment_id):
-    """Release a dynamic segment for the params provided if one exists."""
-    with session.begin(subtransactions=True):
-        (session.query(models.NetworkSegment).
-         filter_by(id=segment_id).delete())
+delete_network_segment = segments_db.delete_network_segment
 
 
 def add_port_binding(session, port_id):

@@ -241,6 +241,16 @@ databases, so can a RabbitMQ server serve multiple messaging domains.
 Exchanges and queues in one 'vhost' are segmented from those in another
 'vhost'.
 
+Please note that if the change you would like to test using fullstack tests
+involves a change to python-neutronclient as well as neutron, then you should
+make sure your fullstack tests are in a separate third change that depends on
+the python-neutronclient change using the 'Depends-On' tag in the commit
+message.  You will need to wait for the next release of python-neutronclient,
+and a minimum version bump for python-neutronclient in the global requirements,
+before your fullstack tests will work in the gate.  This is because tox uses
+the version of python-neutronclient listed in the upper-constraints.txt file in
+the openstack/requirements repository.
+
 When?
 +++++
 
@@ -301,8 +311,8 @@ API tests that belong to Tempest deal with a subset of Neutron's resources:
 * Router
 * Floating IP
 
-These resources were chosen for their ubiquitously. They are found in most
-Neutron depoloyments regardless of plugin, and are directly involved in the
+These resources were chosen for their ubiquity. They are found in most
+Neutron deployments regardless of plugin, and are directly involved in the
 networking and security of an instance. Together, they form the bare minimum
 needed by Neutron.
 
@@ -495,6 +505,8 @@ dependencies are met. Full-stack based Neutron daemons produce logs to a
 sub-folder in /tmp/dsvm-fullstack-logs (for example, a test named
 "test_example" will produce logs to /tmp/dsvm-fullstack-logs/test_example/),
 so that will be a good place to look if your test is failing.
+Logging from the test infrastructure itself is placed in:
+/tmp/dsvm-fullstack-logs/test_example.log.
 Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
 the test machine is available for its usage.
 

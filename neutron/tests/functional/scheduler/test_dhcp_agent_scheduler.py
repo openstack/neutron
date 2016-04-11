@@ -19,11 +19,15 @@ from operator import attrgetter
 import six
 import testscenarios
 
+from neutron.api.v2 import attributes
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
+from neutron.extensions import providernet
 from neutron.scheduler import dhcp_agent_scheduler
+from neutron.tests.common import helpers
+from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit.scheduler import (test_dhcp_agent_scheduler as
                                           test_dhcp_sch)
 
@@ -560,3 +564,51 @@ class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             self.assertEqual(self.scheduled_agent_count[i] +
                              scheduled_azs.get('az%s' % i, 0),
                              hosted_azs.get('az%s' % i, 0))
+
+
+class TestDHCPSchedulerWithNetworkAccessibility(
+    test_plugin.Ml2PluginV2TestCase):
+
+    _mechanism_drivers = ['openvswitch']
+
+    def test_dhcp_scheduler_filters_hosts_without_network_access(self):
+        dhcp_agent1 = helpers.register_dhcp_agent(host='host1')
+        dhcp_agent2 = helpers.register_dhcp_agent(host='host2')
+        dhcp_agent3 = helpers.register_dhcp_agent(host='host3')
+        dhcp_agents = [dhcp_agent1, dhcp_agent2, dhcp_agent3]
+        helpers.register_ovs_agent(
+            host='host1', bridge_mappings={'physnet1': 'br-eth-1'})
+        helpers.register_ovs_agent(
+            host='host2', bridge_mappings={'physnet2': 'br-eth-1'})
+        helpers.register_ovs_agent(
+            host='host3', bridge_mappings={'physnet2': 'br-eth-1'})
+        admin_context = context.get_admin_context()
+        net = self.driver.create_network(
+            admin_context,
+            {'network': {'name': 'net1',
+                         providernet.NETWORK_TYPE: 'vlan',
+                         providernet.PHYSICAL_NETWORK: 'physnet1',
+                         providernet.SEGMENTATION_ID: 1,
+                         'tenant_id': 'tenant_one',
+                         'admin_state_up': True,
+                         'shared': True}})
+
+        self.driver.create_subnet(
+            admin_context,
+            {'subnet':
+                {'name': 'name',
+                 'ip_version': 4,
+                 'network_id': net['id'],
+                 'cidr': '10.0.0.0/24',
+                 'gateway_ip': attributes.ATTR_NOT_SPECIFIED,
+                 'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
+                 'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
+                 'host_routes': attributes.ATTR_NOT_SPECIFIED,
+                 'tenant_id': 'tenant_one',
+                 'enable_dhcp': True}})
+
+        self.plugin.schedule_network(admin_context, net)
+        dhcp_agents = self.driver.get_dhcp_agents_hosting_networks(
+            admin_context, [net['id']])
+        self.assertEqual(1, len(dhcp_agents))
+        self.assertEqual('host1', dhcp_agents[0]['host'])

@@ -82,6 +82,7 @@ class TunnelTest(object):
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'
         self.MAP_TUN_BRIDGE = 'tun_br_map'
+        self.AUX_BRIDGE = 'ancillary_bridge'
         self.NET_MAPPING = ['net1:%s' % self.MAP_TUN_BRIDGE]
         self.INT_OFPORT = 11111
         self.TUN_OFPORT = 22222
@@ -109,6 +110,8 @@ class TunnelTest(object):
                 self.br_tun_cls('br-tun')),
             self.MAP_TUN_BRIDGE: mock.create_autospec(
                 self.br_phys_cls('br-phys')),
+            self.AUX_BRIDGE: mock.create_autospec(
+                ovs_lib.OVSBridge('br-aux')),
         }
         self.ovs_int_ofports = {
             'patch-tun': self.TUN_OFPORT,
@@ -127,11 +130,17 @@ class TunnelTest(object):
         self.mock_tun_bridge_cls = mock.patch(self._BR_TUN_CLASS,
                                               autospec=True).start()
         self.mock_tun_bridge_cls.side_effect = lookup_br
+        self.mock_aux_bridge_cls = mock.patch(
+            'neutron.agent.common.ovs_lib.OVSBridge',
+            autospec=True).start()
+        self.mock_aux_bridge_cls.side_effect = lookup_br
 
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
         self.mock_int_bridge.add_port.return_value = self.MAP_TUN_INT_OFPORT
         self.mock_int_bridge.add_patch_port.side_effect = (
             lambda tap, peer: self.ovs_int_ofports[tap])
+        self.mock_int_bridge.get_port_ofport.return_value = (
+            ovs_lib.INVALID_OFPORT)
         self.mock_int_bridge.get_vif_ports.return_value = []
         self.mock_int_bridge.get_ports_attributes.return_value = []
         self.mock_int_bridge.db_get_val.return_value = {}
@@ -142,6 +151,8 @@ class TunnelTest(object):
             self.MAP_TUN_PHY_OFPORT)
         self.mock_map_tun_bridge.add_patch_port.return_value = (
             self.MAP_TUN_PHY_OFPORT)
+        self.mock_map_tun_bridge.get_port_ofport.return_value = (
+            ovs_lib.INVALID_OFPORT)
 
         self.mock_tun_bridge = self.ovs_bridges[self.TUN_BRIDGE]
         self.mock_tun_bridge.add_port.return_value = self.INT_OFPORT
@@ -157,7 +168,13 @@ class TunnelTest(object):
                                              'get_bridges').start()
         self.get_bridges.return_value = [self.INT_BRIDGE,
                                          self.TUN_BRIDGE,
-                                         self.MAP_TUN_BRIDGE]
+                                         self.MAP_TUN_BRIDGE,
+                                         self.AUX_BRIDGE]
+        self.get_bridge_external_bridge_id = mock.patch.object(
+            ovs_lib.BaseOVS,
+            'get_bridge_external_bridge_id').start()
+        self.get_bridge_external_bridge_id.side_effect = (
+            lambda bridge: bridge if bridge in self.ovs_bridges else None)
 
         self.execute = mock.patch('neutron.agent.common.utils.execute').start()
 
@@ -182,7 +199,6 @@ class TunnelTest(object):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
-            mock.call.delete_port('patch-tun'),
             mock.call.setup_default_table(),
         ]
 
@@ -190,11 +206,14 @@ class TunnelTest(object):
             mock.call.create(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
+            mock.call.get_port_ofport('phy-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('phy-%s' % self.MAP_TUN_BRIDGE,
-                                     constants.NONEXISTENT_PEER), ]
+                                     constants.NONEXISTENT_PEER),
+        ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type'),
+                                 'type', log_errors=False),
+            mock.call.get_port_ofport('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
                                      constants.NONEXISTENT_PEER),
         ]
@@ -203,13 +222,17 @@ class TunnelTest(object):
             mock.call.drop_port(in_port=self.MAP_TUN_INT_OFPORT),
             mock.call.set_db_attribute(
                 'Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                'options:peer', 'phy-%s' % self.MAP_TUN_BRIDGE),
+                'options', {'peer': 'phy-%s' % self.MAP_TUN_BRIDGE}),
         ]
         self.mock_map_tun_bridge_expected += [
             mock.call.drop_port(in_port=self.MAP_TUN_PHY_OFPORT),
             mock.call.set_db_attribute(
                 'Interface', 'phy-%s' % self.MAP_TUN_BRIDGE,
-                'options:peer', 'int-%s' % self.MAP_TUN_BRIDGE),
+                'options', {'peer': 'int-%s' % self.MAP_TUN_BRIDGE}),
+        ]
+
+        self.mock_aux_bridge = self.ovs_bridges[self.AUX_BRIDGE]
+        self.mock_aux_bridge_expected = [
         ]
 
         self.mock_tun_bridge_expected = [
@@ -287,6 +310,8 @@ class TunnelTest(object):
                                self.mock_map_tun_bridge_expected)
         self._verify_mock_call(self.mock_tun_bridge,
                                self.mock_tun_bridge_expected)
+        self._verify_mock_call(self.mock_aux_bridge,
+                               self.mock_aux_bridge_expected)
         self._verify_mock_call(self.ipdevice, self.ipdevice_expected)
         self._verify_mock_call(self.ipwrapper, self.ipwrapper_expected)
         self._verify_mock_call(self.get_bridges, self.get_bridges_expected)
@@ -473,7 +498,7 @@ class TunnelTest(object):
                                  log_errors=True),
             mock.call.set_db_attribute(
                 'Port', VIF_PORT.port_name,
-                'tag', self.mod_agent.DEAD_VLAN_TAG,
+                'tag', constants.DEAD_VLAN_TAG,
                 log_errors=True),
             mock.call.drop_port(in_port=VIF_PORT.ofport),
         ]
@@ -531,8 +556,16 @@ class TunnelTest(object):
 
         self.mock_int_bridge_expected += [
             mock.call.check_canary_table(),
+            mock.call.cleanup_flows(),
             mock.call.check_canary_table()
         ]
+        self.mock_tun_bridge_expected += [
+            mock.call.cleanup_flows()
+        ]
+        self.mock_map_tun_bridge_expected += [
+            mock.call.cleanup_flows()
+        ]
+        # No cleanup is expected on ancillary bridge
 
         self.ovs_bridges[self.INT_BRIDGE].check_canary_table.return_value = \
             constants.OVS_NORMAL
@@ -548,10 +581,7 @@ class TunnelTest(object):
                 mock.patch.object(time, 'sleep'),\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
-                    'update_stale_ofport_rules') as update_stale,\
-                mock.patch.object(
-                    self.mod_agent.OVSNeutronAgent,
-                    'cleanup_stale_flows') as cleanup:
+                    'update_stale_ofport_rules') as update_stale:
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
             update_stale.return_value = []
@@ -594,7 +624,6 @@ class TunnelTest(object):
                            'added': set(['tap0'])}, False),
             ])
 
-            cleanup.assert_called_once_with()
             self.assertTrue(update_stale.called)
             self._verify_mock_calls()
 
@@ -628,7 +657,6 @@ class TunnelTestUseVethInterco(TunnelTest):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
-            mock.call.delete_port('patch-tun'),
             mock.call.setup_default_table(),
         ]
 
@@ -640,7 +668,7 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type'),
+                                 'type', log_errors=False),
             mock.call.add_port(self.inta)
         ]
 
@@ -649,6 +677,10 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
         self.mock_map_tun_bridge_expected += [
             mock.call.drop_port(in_port=self.MAP_TUN_PHY_OFPORT),
+        ]
+
+        self.mock_aux_bridge = self.ovs_bridges[self.AUX_BRIDGE]
+        self.mock_aux_bridge_expected = [
         ]
 
         self.mock_tun_bridge_expected = [

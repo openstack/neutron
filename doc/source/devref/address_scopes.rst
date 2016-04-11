@@ -138,7 +138,7 @@ Here is an example of how the json will look in the context of a router port::
 
 To implement floating IPs crossing scope boundaries, the L3 agent needs to know
 the target scope of the floating ip.  The fixed address is not enough to
-disambiguate because, theoritically, there could be overlapping addresses from
+disambiguate because, theoretically, there could be overlapping addresses from
 different scopes.  The scope is computed [#]_ from the floating ip fixed port
 and attached to the floating ip dict under the 'fixed_ip_address_scope'
 attribute.  Here's what the json looks like (trimmed)::

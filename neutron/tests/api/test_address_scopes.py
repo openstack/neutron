@@ -25,11 +25,9 @@ ADDRESS_SCOPE_NAME = 'smoke-address-scope'
 class AddressScopeTestBase(base.BaseAdminNetworkTest):
 
     @classmethod
+    @test.requires_ext(extension="address-scope", service="network")
     def resource_setup(cls):
         super(AddressScopeTestBase, cls).resource_setup()
-        if not test.is_extension_enabled('address-scope', 'network'):
-            msg = "address-scope extension not enabled."
-            raise cls.skipException(msg)
 
     def _create_address_scope(self, is_admin=False, **kwargs):
         name = data_utils.rand_name(ADDRESS_SCOPE_NAME)

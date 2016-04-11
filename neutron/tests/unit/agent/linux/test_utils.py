@@ -206,7 +206,8 @@ class TestFindChildPids(base.BaseTestCase):
 
 class TestGetRoothelperChildPid(base.BaseTestCase):
     def _test_get_root_helper_child_pid(self, expected=_marker,
-                                        run_as_root=False, pids=None):
+                                        run_as_root=False, pids=None,
+                                        cmds=None):
         def _find_child_pids(x):
             if not pids:
                 return []
@@ -214,9 +215,17 @@ class TestGetRoothelperChildPid(base.BaseTestCase):
             return pids
 
         mock_pid = object()
+        pid_invoked_with_cmdline = {}
+        if cmds:
+            pid_invoked_with_cmdline['side_effect'] = cmds
+        else:
+            pid_invoked_with_cmdline['return_value'] = False
         with mock.patch.object(utils, 'find_child_pids',
-                               side_effect=_find_child_pids):
-            actual = utils.get_root_helper_child_pid(mock_pid, run_as_root)
+                               side_effect=_find_child_pids), \
+            mock.patch.object(utils, 'pid_invoked_with_cmdline',
+                              **pid_invoked_with_cmdline):
+                actual = utils.get_root_helper_child_pid(
+                        mock_pid, mock.ANY, run_as_root)
         if expected is _marker:
             expected = str(mock_pid)
         self.assertEqual(expected, actual)
@@ -226,12 +235,21 @@ class TestGetRoothelperChildPid(base.BaseTestCase):
 
     def test_returns_child_pid_as_root(self):
         self._test_get_root_helper_child_pid(expected='2', pids=['1', '2'],
-                                             run_as_root=True)
+                                             run_as_root=True,
+                                             cmds=[True])
 
     def test_returns_last_child_pid_as_root(self):
         self._test_get_root_helper_child_pid(expected='3',
                                              pids=['1', '2', '3'],
-                                             run_as_root=True)
+                                             run_as_root=True,
+                                             cmds=[False, True])
+
+    def test_returns_first_non_root_helper_child(self):
+        self._test_get_root_helper_child_pid(
+                expected='2',
+                pids=['1', '2', '3'],
+                run_as_root=True,
+                cmds=[True, False])
 
     def test_returns_none_as_root(self):
         self._test_get_root_helper_child_pid(expected=None, run_as_root=True)

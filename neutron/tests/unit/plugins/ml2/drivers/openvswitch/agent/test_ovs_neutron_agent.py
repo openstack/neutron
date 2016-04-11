@@ -297,13 +297,13 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent, 'int_br') as int_br:
             int_br.db_get_val.return_value = cur_tag
             self.agent.port_dead(port)
-        if cur_tag is None or cur_tag == self.mod_agent.DEAD_VLAN_TAG:
+        if cur_tag is None or cur_tag == constants.DEAD_VLAN_TAG:
             self.assertFalse(int_br.set_db_attribute.called)
             self.assertFalse(int_br.drop_port.called)
         else:
             int_br.assert_has_calls([
                 mock.call.set_db_attribute("Port", mock.ANY, "tag",
-                                           self.mod_agent.DEAD_VLAN_TAG,
+                                           constants.DEAD_VLAN_TAG,
                                            log_errors=True),
                 mock.call.drop_port(in_port=port.ofport),
             ])
@@ -312,7 +312,7 @@ class TestOvsNeutronAgent(object):
         self._test_port_dead()
 
     def test_port_dead_with_port_already_dead(self):
-        self._test_port_dead(self.mod_agent.DEAD_VLAN_TAG)
+        self._test_port_dead(constants.DEAD_VLAN_TAG)
 
     def test_port_dead_with_valid_tag(self):
         self._test_port_dead(cur_tag=1)
@@ -1046,7 +1046,7 @@ class TestOvsNeutronAgent(object):
             # the main things we care about are that it gets put in the
             # dead vlan and gets blocked
             int_br.set_db_attribute.assert_any_call(
-                'Port', vif.port_name, 'tag', self.mod_agent.DEAD_VLAN_TAG,
+                'Port', vif.port_name, 'tag', constants.DEAD_VLAN_TAG,
                 log_errors=False)
             int_br.drop_port.assert_called_once_with(in_port=vif.ofport)
 
@@ -1073,6 +1073,8 @@ class TestOvsNeutronAgent(object):
             parent.attach_mock(int_br, 'int_br')
             phys_br.add_patch_port.return_value = "phy_ofport"
             int_br.add_patch_port.return_value = "int_ofport"
+            phys_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
+            int_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
@@ -1080,22 +1082,24 @@ class TestOvsNeutronAgent(object):
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.db_get_val('Interface', 'int-br-eth',
-                                            'type'),
+                                            'type', log_errors=False),
                 # Have to use __getattr__ here to avoid mock._Call.__eq__
                 # method being called
                 mock.call.int_br.db_get_val().__getattr__('__eq__')('veth'),
+                mock.call.int_br.get_port_ofport('int-br-eth'),
                 mock.call.int_br.add_patch_port('int-br-eth',
                                                 constants.NONEXISTENT_PEER),
+                mock.call.phys_br.get_port_ofport('phy-br-eth'),
                 mock.call.phys_br.add_patch_port('phy-br-eth',
                                                  constants.NONEXISTENT_PEER),
                 mock.call.int_br.drop_port(in_port='int_ofport'),
                 mock.call.phys_br.drop_port(in_port='phy_ofport'),
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
-                                                  'options:peer',
-                                                  'phy-br-eth'),
+                                                  'options',
+                                                  {'peer': 'phy-br-eth'}),
                 mock.call.phys_br.set_db_attribute('Interface', 'phy-br-eth',
-                                                   'options:peer',
-                                                   'int-br-eth'),
+                                                   'options',
+                                                   {'peer': 'int-br-eth'}),
             ]
             parent.assert_has_calls(expected_calls)
             self.assertEqual("int_ofport",
@@ -1154,6 +1158,8 @@ class TestOvsNeutronAgent(object):
             parent.attach_mock(int_br, 'int_br')
             phys_br.add_patch_port.return_value = "phy_ofport"
             int_br.add_patch_port.return_value = "int_ofport"
+            phys_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
+            int_br.get_port_ofport.return_value = ovs_lib.INVALID_OFPORT
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
@@ -1162,18 +1168,20 @@ class TestOvsNeutronAgent(object):
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.delete_port('int-br-eth'),
                 mock.call.phys_br.delete_port('phy-br-eth'),
+                mock.call.int_br.get_port_ofport('int-br-eth'),
                 mock.call.int_br.add_patch_port('int-br-eth',
                                                 constants.NONEXISTENT_PEER),
+                mock.call.phys_br.get_port_ofport('phy-br-eth'),
                 mock.call.phys_br.add_patch_port('phy-br-eth',
                                                  constants.NONEXISTENT_PEER),
                 mock.call.int_br.drop_port(in_port='int_ofport'),
                 mock.call.phys_br.drop_port(in_port='phy_ofport'),
                 mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
-                                                  'options:peer',
-                                                  'phy-br-eth'),
+                                                  'options',
+                                                  {'peer': 'phy-br-eth'}),
                 mock.call.phys_br.set_db_attribute('Interface', 'phy-br-eth',
-                                                   'options:peer',
-                                                   'int-br-eth'),
+                                                   'options',
+                                                   {'peer': 'int-br-eth'}),
             ]
             parent.assert_has_calls(expected_calls)
             self.assertEqual("int_ofport",
@@ -1818,6 +1826,25 @@ class TestOvsNeutronAgent(object):
         ofport_changed_ports = self.agent.update_stale_ofport_rules()
         self.assertEqual(['port1'], ofport_changed_ports)
 
+    def test_update_stale_ofport_rules_removes_drop_flow(self):
+        self.agent.prevent_arp_spoofing = False
+        self.agent.vifname_to_ofport_map = {'port1': 1, 'port2': 2}
+        self.agent.int_br = mock.Mock()
+        # simulate port1 was removed
+        newmap = {'port2': 2}
+        self.agent.int_br.get_vif_port_to_ofport_map.return_value = newmap
+        self.agent.update_stale_ofport_rules()
+        # drop flow rule matching port 1 should have been deleted
+        ofport_changed_ports = self.agent.update_stale_ofport_rules()
+        expected = [
+            mock.call(in_port=1)
+        ]
+        self.assertEqual(expected, self.agent.int_br.delete_flows.mock_calls)
+        self.assertEqual(newmap, self.agent.vifname_to_ofport_map)
+        self.assertFalse(
+            self.agent.int_br.delete_arp_spoofing_protection.called)
+        self.assertEqual([], ofport_changed_ports)
+
     def test__setup_tunnel_port_while_new_mapping_is_added(self):
         """
         Test that _setup_tunnel_port doesn't fail if new vlan mapping is
@@ -2336,6 +2363,58 @@ class TestOvsDvrNeutronAgent(object):
 
     def test_port_bound_for_dvr_with_csnat_ports(self):
         self._setup_for_dvr_test()
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        lvid = self.agent.local_vlan_map[self._net_uuid].vlan
+        expected_on_int_br = [
+            mock.call.install_dvr_to_src_mac(
+                network_type='vxlan',
+                gateway_mac='aa:bb:cc:11:22:33',
+                dst_mac=self._port.vif_mac,
+                dst_port=self._port.ofport,
+                vlan_tag=lvid,
+            ),
+        ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
+        self.assertEqual(expected_on_int_br, int_br.mock_calls)
+        expected_on_tun_br = [
+            mock.call.provision_local_vlan(
+                network_type='vxlan',
+                lvid=lvid,
+                segmentation_id=None,
+                distributed=True,
+            ),
+        ]
+        self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+
+    def test_port_bound_for_dvr_with_csnat_ports_ofport_change(self):
+        self._setup_for_dvr_test()
+        self._port_bound_for_dvr_with_csnat_ports()
+        # simulate a replug
+        self._port.ofport = 12
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        lvid = self.agent.local_vlan_map[self._net_uuid].vlan
+        expected_on_int_br = [
+            mock.call.delete_dvr_to_src_mac(
+                network_type='vxlan',
+                dst_mac=self._port.vif_mac,
+                vlan_tag=lvid,
+            ),
+            mock.call.install_dvr_to_src_mac(
+                network_type='vxlan',
+                gateway_mac='aa:bb:cc:11:22:33',
+                dst_mac=self._port.vif_mac,
+                dst_port=self._port.ofport,
+                vlan_tag=lvid,
+            ),
+        ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
+        self.assertEqual(expected_on_int_br, int_br.mock_calls)
+        # a local vlan was already provisioned so there should be no new
+        # calls to tunbr
+        self.assertEqual([], tun_br.mock_calls)
+        # make sure ofport was updated
+        self.assertEqual(12,
+            self.agent.dvr_agent.local_ports[self._port.vif_id].ofport)
+
+    def _port_bound_for_dvr_with_csnat_ports(self):
         int_br = mock.create_autospec(self.agent.int_br)
         tun_br = mock.create_autospec(self.agent.tun_br)
         int_br.set_db_attribute.return_value = True
@@ -2361,26 +2440,7 @@ class TestOvsDvrNeutronAgent(object):
                 None, None, self._fixed_ips,
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
-            lvid = self.agent.local_vlan_map[self._net_uuid].vlan
-            expected_on_int_br = [
-                mock.call.install_dvr_to_src_mac(
-                    network_type='vxlan',
-                    gateway_mac='aa:bb:cc:11:22:33',
-                    dst_mac=self._port.vif_mac,
-                    dst_port=self._port.ofport,
-                    vlan_tag=lvid,
-                ),
-            ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
-            self.assertEqual(expected_on_int_br, int_br.mock_calls)
-            expected_on_tun_br = [
-                mock.call.provision_local_vlan(
-                    network_type='vxlan',
-                    lvid=lvid,
-                    segmentation_id=None,
-                    distributed=True,
-                ),
-            ]
-            self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+        return int_br, tun_br
 
     def test_port_bound_for_dvr_with_csnat_ports_without_subnet(self):
         self._setup_for_dvr_test()
@@ -2896,12 +2956,11 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent,
                                   '_agent_has_updates',
                                   side_effect=TypeError('loop exit')),\
-                mock.patch.object(self.agent, 'tun_br', new=tun_br):
-            # block RPC calls and bridge calls
-            self.agent.setup_physical_bridges = mock.Mock()
-            self.agent.setup_integration_br = mock.Mock()
-            self.agent.setup_tunnel_br = mock.Mock()
-            self.agent.state_rpc = mock.Mock()
+                mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.object(self.agent, 'setup_physical_bridges'),\
+                mock.patch.object(self.agent, 'setup_integration_br'),\
+                mock.patch.object(self.agent, 'setup_tunnel_br'),\
+                mock.patch.object(self.agent, 'state_rpc'):
             try:
                 self.agent.rpc_loop(polling_manager=mock.Mock())
             except TypeError:
@@ -2917,12 +2976,11 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent, '_agent_has_updates',
                                   return_value=True),\
                 mock.patch.object(self.agent, '_check_and_handle_signal',
-                                  side_effect=[True, False]):
+                                  side_effect=[True, False]),\
+                mock.patch.object(self.agent, 'setup_physical_bridges'),\
+                mock.patch.object(self.agent, 'setup_integration_br'),\
+                mock.patch.object(self.agent, 'state_rpc'):
             # block RPC calls and bridge calls
-            self.agent.setup_physical_bridges = mock.Mock()
-            self.agent.setup_integration_br = mock.Mock()
-            self.agent.reset_tunnel_br = mock.Mock()
-            self.agent.state_rpc = mock.Mock()
             self.agent.rpc_loop(polling_manager=mock.Mock())
 
     def test_scan_ports_failure(self):
