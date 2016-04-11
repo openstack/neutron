@@ -39,6 +39,11 @@ class TestQosPlugin(base.BaseQosTestCase):
         mock.patch('neutron.objects.db.api.get_object').start()
         mock.patch(
             'neutron.objects.qos.policy.QosPolicy.obj_load_attr').start()
+        # We don't use real models as per mocks above. We also need to mock-out
+        # methods that work with real data types
+        mock.patch(
+            'neutron.objects.base.NeutronDbObject.modify_fields_from_db'
+        ).start()
 
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["qos"])

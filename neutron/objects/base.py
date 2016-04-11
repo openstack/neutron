@@ -23,7 +23,9 @@ import six
 
 from neutron._i18n import _
 from neutron.db import api as db_api
+from neutron.db import model_base
 from neutron.objects.db import api as obj_db_api
+from neutron.objects.extensions import standardattributes
 
 
 class NeutronObjectUpdateForbidden(exceptions.NeutronException):
@@ -146,6 +148,9 @@ class DeclarativeObject(abc.ABCMeta):
                 cls.fields_no_update += base.primary_keys
         # avoid duplicate entries
         cls.fields_no_update = list(set(cls.fields_no_update))
+        if (hasattr(cls, 'has_standard_attributes') and
+                cls.has_standard_attributes()):
+            standardattributes.add_standard_attributes(cls)
 
 
 @six.add_metaclass(DeclarativeObject)
@@ -180,6 +185,11 @@ class NeutronDbObject(NeutronObject):
         self.obj_reset_changes()
 
     @classmethod
+    def has_standard_attributes(cls):
+        return bool(cls.db_model and
+                    issubclass(cls.db_model, model_base.HasStandardAttributes))
+
+    @classmethod
     def modify_fields_to_db(cls, fields):
         """
         This method enables to modify the fields and its
@@ -201,20 +211,22 @@ class NeutronDbObject(NeutronObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        """
-        This method enables to modify the fields and its
-        content after data was fetched from DB.
+        """Modify the fields after data were fetched from DB.
 
         It uses the fields_need_translation dict with structure:
         {
             'field_name_in_object': 'field_name_in_db'
         }
 
-        :param db_obj: dict of object fetched from database
+        :param db_obj: model fetched from database
         :return: modified dict of DB values
         """
-        result = {field: value for field, value in dict(db_obj).items()
-                  if value is not None}
+        # db models can have declarative proxies that are not exposed into
+        # db.keys() so we must fetch data based on object fields definition
+        potential_fields = (list(cls.fields.keys()) +
+                            list(cls.fields_need_translation.values()))
+        result = {field: db_obj[field] for field in potential_fields
+                  if db_obj.get(field) is not None}
         for field, field_db in cls.fields_need_translation.items():
             if field_db in result:
                 result[field] = result.pop(field_db)
