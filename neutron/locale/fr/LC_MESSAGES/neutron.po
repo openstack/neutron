@@ -16,9 +16,9 @@
 # Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev2\n"
+"Project-Id-Version: neutron 8.0.1.dev29\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-25 15:59+0000\n"
+"POT-Creation-Date: 2016-04-10 14:30+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -3072,9 +3072,6 @@ msgid ""
 msgstr ""
 "La sécurité du port doit être activée pour avoir les paires d'adresse "
 "autorisées sur un port."
-
-msgid "Port does not have port security binding."
-msgstr "Le port ne comporte pas de liaison de sécurité."
 
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
