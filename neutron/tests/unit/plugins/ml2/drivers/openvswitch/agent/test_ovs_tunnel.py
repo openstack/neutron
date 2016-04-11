@@ -182,7 +182,6 @@ class TunnelTest(object):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
-            mock.call.delete_port('patch-tun'),
             mock.call.setup_default_table(),
         ]
 
@@ -628,7 +627,6 @@ class TunnelTestUseVethInterco(TunnelTest):
             mock.call.create(),
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
-            mock.call.delete_port('patch-tun'),
             mock.call.setup_default_table(),
         ]
 
