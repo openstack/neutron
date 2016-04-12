@@ -349,8 +349,10 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 res['availability_zone'] = agent_state['availability_zone']
             configurations_dict = agent_state.get('configurations', {})
             res['configurations'] = jsonutils.dumps(configurations_dict)
-            resource_versions_dict = agent_state.get('resource_versions', {})
-            res['resource_versions'] = jsonutils.dumps(resource_versions_dict)
+            resource_versions_dict = agent_state.get('resource_versions')
+            if resource_versions_dict:
+                res['resource_versions'] = jsonutils.dumps(
+                    resource_versions_dict)
             res['load'] = self._get_agent_load(agent_state)
             current_time = timeutils.utcnow()
             try:
@@ -358,6 +360,13 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                     context, agent_state['agent_type'], agent_state['host'])
                 if not agent_db.is_active:
                     status = constants.AGENT_REVIVED
+                    if 'resource_versions' not in agent_state:
+                        # updating agent_state with resource_versions taken
+                        # from db so that
+                        # _update_local_agent_resource_versions() will call
+                        # version_manager and bring it up to date
+                        agent_state['resource_versions'] = self._get_dict(
+                            agent_db, 'resource_versions')
                 res['heartbeat_timestamp'] = current_time
                 if agent_state.get('start_flag'):
                     res['started_at'] = current_time
@@ -472,7 +481,10 @@ class AgentExtRpcCallback(object):
         return agent_status
 
     def _update_local_agent_resource_versions(self, context, agent_state):
-        resource_versions_dict = agent_state.get('resource_versions', {})
+        resource_versions_dict = agent_state.get('resource_versions')
+        if not resource_versions_dict:
+            return
+
         version_manager.update_versions(
             version_manager.AgentConsumer(agent_type=agent_state['agent_type'],
                                           host=agent_state['host']),

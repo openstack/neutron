@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import datetime
 import mock
 
@@ -27,7 +28,6 @@ from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.tests import base
 from neutron.tests.unit import testlib_api
 
 # the below code is required for the following reason
@@ -271,14 +271,13 @@ class TestAgentsDbGetAgents(TestAgentsDbBase):
                     self.assertEqual(alive, agent['alive'])
 
 
-class TestAgentExtRpcCallback(base.BaseTestCase):
+class TestAgentExtRpcCallback(TestAgentsDbBase):
 
     def setUp(self):
         super(TestAgentExtRpcCallback, self).setUp()
-        self.plugin = mock.Mock()
-        self.context = mock.Mock()
         self.callback = agents_db.AgentExtRpcCallback(self.plugin)
         self.callback.server_versions_rpc = mock.Mock()
+        self.versions_rpc = self.callback.server_versions_rpc
         self.callback.START_TIME = datetime.datetime(datetime.MINYEAR, 1, 1)
         self.update_versions = mock.patch(
             'neutron.api.rpc.callbacks.version_manager.'
@@ -296,6 +295,50 @@ class TestAgentExtRpcCallback(base.BaseTestCase):
         callback.report_state(self.context, agent_state=self.agent_state,
                               time=TEST_TIME)
         report_agent_resource_versions = (
-                callback.server_versions_rpc.report_agent_resource_versions)
+                self.versions_rpc.report_agent_resource_versions)
         report_agent_resource_versions.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY, TEST_RESOURCE_VERSIONS)
+
+    def test_no_version_updates_on_further_state_reports(self):
+        self.test_create_or_update_agent_updates_version_manager()
+        # agents include resource_versions only in the first report after
+        # start so versions should not be updated on the second report
+        second_agent_state = copy.deepcopy(self.agent_state)
+        second_agent_state['agent_state'].pop('resource_versions')
+        self.update_versions.reset_mock()
+        report_agent_resource_versions = (
+                self.versions_rpc.report_agent_resource_versions)
+        report_agent_resource_versions.reset_mock()
+
+        self.callback.report_state(self.context,
+                                   agent_state=second_agent_state,
+                                   time=TEST_TIME)
+        self.assertFalse(self.update_versions.called)
+        self.assertFalse(report_agent_resource_versions.called)
+
+    def test_version_updates_on_agent_revival(self):
+        self.test_create_or_update_agent_updates_version_manager()
+        second_agent_state = copy.deepcopy(self.agent_state)
+        second_agent_state['agent_state'].pop('resource_versions')
+        self._take_down_agent()
+        self.update_versions.reset_mock()
+        report_agent_resource_versions = (
+                self.versions_rpc.report_agent_resource_versions)
+        report_agent_resource_versions.reset_mock()
+
+        # agent didn't include resource_versions in report but server will
+        # take them from db for the revived agent
+        self.callback.report_state(self.context,
+                                   agent_state=second_agent_state,
+                                   time=TEST_TIME)
+        self.update_versions.assert_called_once_with(
+                mock.ANY, TEST_RESOURCE_VERSIONS)
+        report_agent_resource_versions.assert_called_once_with(
+                mock.ANY, mock.ANY, mock.ANY, TEST_RESOURCE_VERSIONS)
+
+    def _take_down_agent(self):
+        with self.context.session.begin(subtransactions=True):
+            query = self.context.session.query(agents_db.Agent)
+            agt = query.first()
+            agt.heartbeat_timestamp = (
+                agt.heartbeat_timestamp - datetime.timedelta(hours=1))
