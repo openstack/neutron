@@ -103,6 +103,9 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertTrue(
             ip_lib.device_exists(device.name, namespace=attr.namespace))
 
+        self.assertFalse(
+            ip_lib.device_exists(attr.name, namespace='wrong_namespace'))
+
         device.link.delete()
 
         self.assertFalse(
