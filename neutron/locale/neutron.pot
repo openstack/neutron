@@ -6,16 +6,16 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc2.dev3\n"
+"Project-Id-Version: neutron 8.0.1.dev29\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-18 06:05+0000\n"
+"POT-Creation-Date: 2016-04-11 06:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
+"Generated-By: Babel 2.3.2\n"
 
 #: neutron/manager.py:73
 #, python-format
@@ -92,33 +92,33 @@ msgstr ""
 msgid "Enable SSL on the API server"
 msgstr ""
 
-#: neutron/wsgi.py:159
+#: neutron/wsgi.py:161
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:389
+#: neutron/wsgi.py:391
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:555
+#: neutron/wsgi.py:557
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:600
+#: neutron/wsgi.py:602
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:604
+#: neutron/wsgi.py:606
 msgid "Malformed request body"
 msgstr ""
 
-#: neutron/wsgi.py:741
+#: neutron/wsgi.py:743
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:794
+#: neutron/wsgi.py:796
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -650,7 +650,7 @@ msgid ""
 "%(stderr)s"
 msgstr ""
 
-#: neutron/agent/linux/openvswitch_firewall/firewall.py:33
+#: neutron/agent/linux/openvswitch_firewall/firewall.py:58
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
 msgstr ""
@@ -1900,48 +1900,52 @@ msgstr ""
 msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
 msgstr ""
 
-#: neutron/common/utils.py:103
+#: neutron/common/utils.py:106
 #, python-format
 msgid "Instance of class %(module)s.%(class)s must contain _cache attribute"
 msgstr ""
 
-#: neutron/common/utils.py:231
+#: neutron/common/utils.py:236
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:37
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:234
+#: neutron/common/utils.py:239
 #: neutron/plugins/ml2/drivers/mech_sriov/agent/common/config.py:40
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:237
+#: neutron/common/utils.py:242
 #, python-format
 msgid "Missing value in mapping: '%s'"
 msgstr ""
 
-#: neutron/common/utils.py:239
+#: neutron/common/utils.py:245
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/common/utils.py:242
+#: neutron/common/utils.py:249
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: neutron/common/utils.py:459
+#: neutron/common/utils.py:470
 msgid "Illegal IP version number"
 msgstr ""
 
-#: neutron/common/utils.py:527 neutron/common/utils.py:542
+#: neutron/common/utils.py:538 neutron/common/utils.py:553
 msgid "Class not found."
 msgstr ""
 
-#: neutron/common/utils.py:577
+#: neutron/common/utils.py:588
 msgid "'port_max' is smaller than 'port_min'"
+msgstr ""
+
+#: neutron/common/utils.py:740
+msgid "Method cannot be called within a transaction."
 msgstr ""
 
 #: neutron/db/address_scope_db.py:95
@@ -2442,11 +2446,11 @@ msgstr ""
 msgid "The physical network name with which the HA network can be created."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:349
+#: neutron/db/l3_hamode_db.py:360
 msgid "add_ha_port cannot be called inside of a transaction."
 msgstr ""
 
-#: neutron/db/l3_hamode_db.py:483
+#: neutron/db/l3_hamode_db.py:505
 msgid ""
 "Cannot change HA attribute of active routers. Please set router "
 "admin_state_up to False prior to upgrade."
@@ -2464,7 +2468,7 @@ msgstr ""
 msgid "cannot perform %(event)s due to %(reason)s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:691
+#: neutron/db/securitygroups_db.py:694
 msgid "Default security group"
 msgstr ""
 
@@ -3269,20 +3273,16 @@ msgstr ""
 msgid "Duplicate segment entry in request."
 msgstr ""
 
-#: neutron/extensions/portsecurity.py:22
+#: neutron/extensions/portsecurity.py:25
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
 "address until security group is removed"
 msgstr ""
 
-#: neutron/extensions/portsecurity.py:27
+#: neutron/extensions/portsecurity.py:30
 msgid ""
 "Port security must be enabled and port must have an IP address in order "
 "to use security groups."
-msgstr ""
-
-#: neutron/extensions/portsecurity.py:32
-msgid "Port does not have port security binding."
 msgstr ""
 
 #: neutron/extensions/providernet.py:60
@@ -3448,13 +3448,13 @@ msgstr ""
 msgid "'%s' is not an integer or uuid"
 msgstr ""
 
-#: neutron/extensions/securitygroup.py:284
+#: neutron/extensions/securitygroup.py:289
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
 "unlimited."
 msgstr ""
 
-#: neutron/extensions/securitygroup.py:288
+#: neutron/extensions/securitygroup.py:293
 msgid ""
 "Number of security rules allowed per tenant. A negative value means "
 "unlimited."
@@ -3739,11 +3739,7 @@ msgstr ""
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:112
-msgid "Method cannot be called within a transaction."
-msgstr ""
-
-#: neutron/plugins/ml2/plugin.py:306
+#: neutron/plugins/ml2/plugin.py:282
 msgid "binding:profile value too large"
 msgstr ""
 
@@ -3995,7 +3991,7 @@ msgstr ""
 msgid "Device has no virtual functions"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:425
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:427
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr ""
@@ -4070,12 +4066,12 @@ msgstr ""
 msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:304
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:301
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2057
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2055
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
@@ -4530,7 +4526,7 @@ msgstr ""
 msgid "A QoS driver must be specified"
 msgstr ""
 
-#: neutron/tests/base.py:118
+#: neutron/tests/base.py:114
 #, python-format
 msgid "Unknown attribute '%s'."
 msgstr ""

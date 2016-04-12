@@ -8,20 +8,20 @@
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Sungjin Kang <potopro@gmail.com>, 2013
-# ChungYoung Cho <openstack.cho@gmail.com>, 2015. #zanata
 # Lucas Palm <lapalm@us.ibm.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Lucas Palm <lapalm@us.ibm.com>, 2016. #zanata
 # SeYeon Lee <sy_lee@kr.ibm.com>, 2016. #zanata
+# Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0rc3.dev4\n"
+"Project-Id-Version: neutron 8.0.1.dev29\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-29 10:14+0000\n"
+"POT-Creation-Date: 2016-04-10 14:30+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 08:19+0000\n"
+"PO-Revision-Date: 2016-04-08 12:59+0000\n"
 "Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -380,9 +380,9 @@ msgid ""
 "comments to generated iptables rules that describe each rule's purpose. "
 "System must support the iptables comments module for addition of comments."
 msgstr ""
-"iptables 규칙에 주석을 추가하십시오. false로 설정하면 각 규칙의 용도를 설명하"
-"는 생성된 iptables 규칙에 주석을 추가할 수 없습니다. 시스템에서 주석을 추가하"
-"기 위한 iptables 주석 모듈을 지원해야 합니다."
+" Iptables 규칙에 주석을 추가하십시오. False로 설정하면 각 규칙의 용도를 설명"
+"하는 생성된 iptables 규칙에 주석을 추가할 수 없습니다. 시스템에서 주석을 추가"
+"하기 위한 iptables 주석 모듈을 지원해야 합니다."
 
 msgid "Address not present on interface"
 msgstr "인터페이스에 주소가 없음"
@@ -559,7 +559,7 @@ msgstr ""
 "합니다."
 
 msgid "Availability zone of this node"
-msgstr "이 노드의 가용 구역"
+msgstr "노드에대한 가용 구역"
 
 #, python-format
 msgid "AvailabilityZone %(availability_zone)s could not be found."
@@ -774,7 +774,7 @@ msgstr ""
 "할 수 업습니다."
 
 msgid "Cannot match priority on flow deletion or modification"
-msgstr "플로우 삭제 또는 수정 시 우선순위와 일치할 수 없음"
+msgstr "플로우 삭제나 수정시 우선순위와 일치할 수 없음"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr "서브넷 풀에서 IPv4 및 IPv6 접두부를 혼합하여 사용할 수 없습니다."
@@ -1457,7 +1457,7 @@ msgstr "%s을(를) 읽는 중에 오류 발생"
 msgid ""
 "Exceeded %s second limit waiting for address to leave the tentative state."
 msgstr ""
-"주소가 임시 상태를 벗어날 때까지 대기하는 동안 %s초 제한이 초과되어씃ㅂ니다."
+"주소가 임시 상태를 벗어날 때까지 대기하는 동안 %s초 제한이 초과되었습니다."
 
 msgid "Exceeded maximum amount of fixed ips per port."
 msgstr "포트당 최대 Fixed IP 수를 초과했습니다."
@@ -1610,7 +1610,7 @@ msgstr "보조 그룹을 제거하지 못함"
 
 #, python-format
 msgid "Failed to set gid %s"
-msgstr "gid %s을(를) 설정하지 못함"
+msgstr "GID %s을(를) 설정하지 못함"
 
 #, python-format
 msgid "Failed to set uid %s"
@@ -1713,7 +1713,7 @@ msgstr ""
 "에이전트 유효 그룹)."
 
 msgid "Group (gid or name) running this process after its initialization"
-msgstr "초기화 이후 이 프로세스를 실행하는 그룹(gid 또는 이름)"
+msgstr "초기화 이후 이 프로세스를 실행하는 그룹(gid 이름)"
 
 #, python-format
 msgid "HEAD file does not match migration timeline head, expected: %s"
@@ -2122,7 +2122,7 @@ msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr "'%(mapping)s' 맵핑의 %(key)s 키가 고유하지 않음"
 
 msgid "L3 agent failure to setup NAT for floating IPs"
-msgstr "L3 에이전트에서 Floating IP의 NAT 설정 실패"
+msgstr "L3 에이전트에서 Floating IP에대한 NAT 설정 실패"
 
 msgid "L3 agent failure to setup floating IPs"
 msgstr "L3 에이전트에서 Floating IP 설정 실패"
@@ -2174,7 +2174,7 @@ msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "메타데이터 프록시 UNIX 도메인 소켓의 위치입니다."
 
 msgid "Location of Metadata Proxy UNIX domain socket"
-msgstr "메타데이터 프록시 UNIX 도메인 소켓의 위치"
+msgstr "메타데이터 프록시 UNIX 도메인 소켓 위치"
 
 msgid "Location of pid file of this process."
 msgstr "이 프로세스의 pid 파일 위치입니다."
@@ -2391,7 +2391,7 @@ msgid "Must also specify protocol if port range is given."
 msgstr "포트 범위가 제공되는 경우 프로토콜도 지정해야 합니다. "
 
 msgid "Must specify one or more actions on flow addition or modification"
-msgstr "플로우 추가 또는 수정 시 하나 이상의 조치를 지정해야 함"
+msgstr "플로우 추가나 수정시 하나 이상의 조치를 지정해야 함"
 
 #, python-format
 msgid "Name %(dns_name)s is duplicated in the external DNS service"
@@ -2408,7 +2408,7 @@ msgid "Name '%s' must not start or end with a hyphen."
 msgstr "이름 '%s'은(는) 하이픈으로 시작하거나 끝날 수 없습니다."
 
 msgid "Name of Open vSwitch bridge to use"
-msgstr "사용할 열린 vSwitch 브릿지의 이름"
+msgstr "사용할 Open vSwitch 브릿지 이름"
 
 msgid ""
 "Name of bridge used for external network traffic. This should be set to an "
@@ -2416,7 +2416,7 @@ msgid ""
 "can be associated with no more than one external network. This option is "
 "deprecated and will be removed in the M release."
 msgstr ""
-"외부 네트워크 트래픽에 사용되는 브릿지 이름입니다. Linux Bridge의 빈 값으로 "
+"외부 네트워크 트래픽에 사용되는 브릿지 이름입니다. Linux Bridge는 빈 값으로 "
 "설정해야 합니다. 이 매개변수가 설정되면 각 L3 에이전트를 두 개 이상의 외부 네"
 "트워크에 연관시킬 수 있습니다. 이 옵션은 더 이상 사용되지 않으므로 M 릴리스에"
 "서 제거됩니다."
@@ -2431,7 +2431,7 @@ msgid "Name of the FWaaS Driver"
 msgstr "FWaaS 드라이버 이름"
 
 msgid "Namespace of the router"
-msgstr "라우터의 네임스페이스"
+msgstr "라우터에대한 네임스페이스"
 
 msgid "Native pagination depend on native sorting"
 msgstr "네이티브 페이지 번호 매기기는 네이티브 정렬에 따라 다름"
@@ -2645,7 +2645,7 @@ msgid ""
 msgstr "보낼 이벤트가 있는 경우 nova에 전송하는 이벤트 간의 시간(초)입니다."
 
 msgid "Number of seconds to keep retrying to listen"
-msgstr "감청 재시도 계속할 시간"
+msgstr "Listen 재시도 계속할 시간"
 
 msgid ""
 "Number of security groups allowed per tenant. A negative value means "
@@ -2778,7 +2778,7 @@ msgid "Path to PID file for this process"
 msgstr "이 프로세스에 대한 PID 파일의 경로"
 
 msgid "Path to the router directory"
-msgstr "라우터 디렉토리의 경로"
+msgstr "라우터 디렉토리 경로"
 
 msgid "Peer patch port in integration bridge for tunnel bridge."
 msgstr "터널 브릿지에 대한 통합 브릿지에 있는 피어 패치 포트입니다."
@@ -2845,9 +2845,6 @@ msgid ""
 "Port Security must be enabled in order to have allowed address pairs on a "
 "port."
 msgstr "포트에서 주소 쌍을 허용하려면 포트 보안을 사용 가능하게 해야 합니다."
-
-msgid "Port does not have port security binding."
-msgstr "포트에 포트 보안 바인딩이 없습니다. "
 
 msgid ""
 "Port has security group associated. Cannot disable port security or ip "
@@ -3081,7 +3078,7 @@ msgstr ""
 "고 명령을 직접 실행하기만 하면 됩니다."
 
 msgid "Root helper daemon application to use when possible."
-msgstr "가능한 경우 사용할 루트 헬퍼 디먼 애플리케이션."
+msgstr "가능한 경우 사용할 루트 헬퍼 데몬 애플리케이션."
 
 msgid "Root permissions are required to drop privileges."
 msgstr "권한을 삭제하려면 루트 권한이 필요합니다."
@@ -3412,8 +3409,8 @@ msgid ""
 "transient notification or RPC errors. The interval is number of seconds "
 "between attempts."
 msgstr ""
-"DHCP 에이전트가 임시 알림 또는 RPC 오류로부터 복구하기 위해 해당 상태를 "
-"Neutron과 다시 동기화합니다. 간격은 시도 사이의 초 수입니다."
+"DHCP 에이전트가 임시 알림이나 RPC 오류로부터 복구하기 위해 해당 상태를 "
+"Neutron과 다시 동기화합니다. 간격은 시도 사이 시간(초) 횟수입니다."
 
 msgid ""
 "The DHCP server can assist with providing metadata support on isolated "
@@ -3754,7 +3751,7 @@ msgstr "데이터베이스에 대한 URL"
 
 #, python-format
 msgid "Unable to access %s"
-msgstr "%s에 액세스할 수 없음"
+msgstr "%s에 접근할 수 없음"
 
 #, python-format
 msgid ""
@@ -3810,7 +3807,7 @@ msgstr ""
 
 #, python-format
 msgid "Unable to convert value in %s"
-msgstr "%s의 값을 변환할 수 없음"
+msgstr "%s 값을 변환할 수 없음"
 
 msgid "Unable to create the Agent Gateway Port"
 msgstr "에이전트 게이트웨이 포트를 작성할 수 없음"
@@ -3839,7 +3836,7 @@ msgstr "서브넷 풀을 삭제할 수 없음: %(reason)s."
 
 #, python-format
 msgid "Unable to determine mac address for %s"
-msgstr "%s의 맥 주소를 확인할 수 없습니다"
+msgstr "%s에대한 맥 주소를 확인할 수 없습니다"
 
 #, python-format
 msgid "Unable to find '%s' in request body"
@@ -3994,8 +3991,8 @@ msgid ""
 "Use ipset to speed-up the iptables based security groups. Enabling ipset "
 "support requires that ipset is installed on L2 agent node."
 msgstr ""
-"ipset을 사용하여 iptables 기반 보안 그룹의 속도를 높입니다. ipset 지원을 사용"
-"하려면 ipset이 L2 에이전트 노드에 설치되어야 합니다."
+"IPset을 사용하여 iptables 기반 보안 그룹의 속도를 높입니다. IPset 지원을 사용"
+"하려면 IPset이 L2 에이전트 노드에 설치되어야 합니다."
 
 msgid ""
 "Use the root helper when listing the namespaces on a system. This may not be "
@@ -4025,7 +4022,7 @@ msgstr ""
 "우: 에이전트 유효 사용자)."
 
 msgid "User (uid or name) running this process after its initialization"
-msgstr "초기화 이후 이 프로세스를 실행하는 사용자(uid 또는 이름)"
+msgstr "초기화 이후 이 프로세스를 실행하는 사용자(uid나 이름)"
 
 msgid "Username for connecting to designate in admin context"
 msgstr "관리 컨텍스트에서 지정하기 위해 연결할 사용자 이름"
