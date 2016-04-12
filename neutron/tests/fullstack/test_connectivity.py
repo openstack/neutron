@@ -81,12 +81,14 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
     interface_scenarios = [
-        ('openflow-cli', {'of_interface': 'ovs-ofctl',
-                          'ovsdb_interface': 'vsctl'}),
-        ('openflow-native', {'of_interface': 'native',
-                             'ovsdb_interface': 'vsctl'}),
-        ('ovsdb-native', {'of_interface': 'ovs-ofctl',
-                          'ovsdb_interface': 'native'})]
+        ('openflow-cli_ovsdb-cli', {'of_interface': 'ovs-ofctl',
+                                    'ovsdb_interface': 'vsctl'}),
+        ('openflow-native_ovsdb-cli', {'of_interface': 'native',
+                                       'ovsdb_interface': 'vsctl'}),
+        ('openflow-cli_ovsdb-native', {'of_interface': 'ovs-ofctl',
+                                       'ovsdb_interface': 'native'}),
+        ('openflow-native_ovsdb-native', {'of_interface': 'native',
+                                          'ovsdb_interface': 'native'})]
     scenarios = testscenarios.multiply_scenarios(
         network_scenarios, interface_scenarios)
 
