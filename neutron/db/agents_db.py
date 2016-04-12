@@ -33,6 +33,7 @@ from neutron.api.rpc.callbacks import version_manager
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
+from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
@@ -434,6 +435,7 @@ class AgentExtRpcCallback(object):
         # Initialize RPC api directed to other neutron-servers
         self.server_versions_rpc = resources_rpc.ResourcesPushToServersRpcApi()
 
+    @db_api.retry_db_errors
     def report_state(self, context, **kwargs):
         """Report state from agent to server.
 
