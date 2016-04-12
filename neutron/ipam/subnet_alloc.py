@@ -26,6 +26,7 @@ from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.ipam import driver
+from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import utils as ipam_utils
 
@@ -184,6 +185,9 @@ class SubnetAllocator(driver.Pool):
     def remove_subnet(self, subnet_id):
         raise NotImplementedError()
 
+    def get_allocator(self, subnet_ids):
+        return IpamSubnetGroup(self, subnet_ids)
+
 
 class IpamSubnet(driver.Subnet):
 
@@ -208,6 +212,27 @@ class IpamSubnet(driver.Subnet):
 
     def get_details(self):
         return self._req
+
+
+class IpamSubnetGroup(driver.SubnetGroup):
+    def __init__(self, driver, subnet_ids):
+        self._driver = driver
+        self._subnet_ids = subnet_ids
+
+    def allocate(self, address_request):
+        '''Originally, the Neutron pluggable IPAM backend would ask the driver
+           to try to allocate an IP from each subnet in turn, one by one.  This
+           implementation preserves that behavior so that existing drivers work
+           as they did before while giving them the opportunity to optimize it
+           by overridding the implementation.
+        '''
+        for subnet_id in self._subnet_ids:
+            try:
+                ipam_subnet = self._driver.get_subnet(subnet_id)
+                return ipam_subnet.allocate(address_request), subnet_id
+            except ipam_exc.IpAddressGenerationFailure:
+                continue
+        raise ipam_exc.IpAddressGenerationFailureAllSubnets()
 
 
 class SubnetPoolReader(object):
