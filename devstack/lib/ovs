@@ -65,7 +65,15 @@ function compile_ovs {
 
     if is_fedora ; then
         # is_fedora covers Fedora, RHEL, CentOS, etc...
-        install_package kernel-devel
+        echo NOTE: if kernel-devel-$(uname -r) or kernel-headers-$(uname -r) installation
+        echo failed, please, provide a repository with the package, or yum update / reboot
+        echo your machine to get the latest kernel.
+
+        install_package kernel-devel-$(uname -r)
+        install_package kernel-headers-$(uname -r)
+
+    elif is_ubuntu ; then
+        install_package linux-headers-$(uname -r)
     fi
 
     if [ ! -f configure ] ; then
@@ -94,6 +102,15 @@ function compile_ovs {
 
 # start_new_ovs() - removes old ovs database, creates a new one and starts ovs
 function start_new_ovs () {
-    rm -f /etc/openvswitch/conf.db /etc/openvswitch/.conf.db~lock~
+    sudo rm -f /etc/openvswitch/conf.db /etc/openvswitch/.conf.db~lock~
     sudo /usr/share/openvswitch/scripts/ovs-ctl start
+}
+
+# remove_ovs_packages() - removes old ovs packages from the system
+function remove_ovs_packages() {
+    for package in openvswitch openvswitch-switch openvswitch-common; do
+        if is_package_installed $package; then
+            uninstall_package $package
+        fi
+    done
 }
