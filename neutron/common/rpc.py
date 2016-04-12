@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from debtcollector import removals
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -227,8 +226,7 @@ class VoidConnection(object):
 
 
 # functions
-@removals.removed_kwarg('new')
-def create_connection(new=True):
+def create_connection():
     # NOTE(salv-orlando): This is a clever interpretation of the factory design
     # patter aimed at preventing plugins from initializing RPC servers upon
     # initialization when they are running in the REST over HTTP API server.
