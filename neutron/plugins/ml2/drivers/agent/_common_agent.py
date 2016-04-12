@@ -123,6 +123,8 @@ class CommonAgentLoop(service.Service):
                              'Doing a full sync.'),
                          self.agent_type)
                 self.fullsync = True
+            # we only want to update resource versions on startup
+            self.agent_state.pop('resource_versions', None)
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_LE("Failed reporting state!"))

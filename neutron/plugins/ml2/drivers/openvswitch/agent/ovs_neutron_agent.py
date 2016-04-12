@@ -316,6 +316,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                              'Doing a full sync.'))
                 self.fullsync = True
 
+            # we only want to update resource versions on startup
+            self.agent_state.pop('resource_versions', None)
             if self.agent_state.pop('start_flag', None):
                 # On initial start, we notify systemd after initialization
                 # is complete.
