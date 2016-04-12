@@ -62,6 +62,7 @@ ovs_opts = [
                        "integration bridge as it won't be managed by the "
                        "agent anymore. Deprecated for ofagent.")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
+                deprecated_for_removal=True,
                 help=_("Use veths instead of patch ports to interconnect the "
                        "integration bridge to physical networks. "
                        "Support kernel without Open vSwitch patch port "
@@ -110,7 +111,7 @@ agent_opts = [
                        "(gre and/or vxlan).")),
     cfg.PortOpt('vxlan_udp_port', default=p_const.VXLAN_UDP_PORT,
                 help=_("The UDP port to use for VXLAN tunnels.")),
-    cfg.IntOpt('veth_mtu', default=9000,
+    cfg.IntOpt('veth_mtu', default=9000, deprecated_for_removal=True,
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Use ML2 l2population mechanism driver to learn "
