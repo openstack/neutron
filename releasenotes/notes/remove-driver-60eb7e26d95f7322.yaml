@@ -1,0 +1,7 @@
+---
+prelude: >
+    OFAgent has been removed in the Newton cycle.
+other:
+  - The Openflow Agent(OFAgent) mechanism driver and its agent have been removed
+    in favor of OpenvSwitch mechanism driver with "native" of_interface in
+    the Newton cycle.
