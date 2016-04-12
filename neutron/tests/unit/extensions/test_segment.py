@@ -30,6 +30,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
 from neutron.extensions import ip_allocation
+from neutron.extensions import l2_adjacency
 from neutron.extensions import portbindings
 from neutron.extensions import segment as ext_segment
 from neutron.plugins.common import constants as p_constants
@@ -670,6 +671,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
                          segment_id=segment['segment']['id'],
                          ip_version=ip_version,
                          cidr=cidr) as subnet:
+            self._validate_l2_adjacency(network['network']['id'],
+                                        is_adjacent=False)
             return network, segment, subnet
 
     def _create_test_segments_with_subnets(self, num):
@@ -752,6 +755,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
                 segment = self._test_create_segment(
                     network_id=network['network']['id'],
                     physical_network='physnet')
+
+        self._validate_l2_adjacency(network['network']['id'], is_adjacent=True)
 
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
@@ -877,6 +882,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
         with self.subnet(network=network,
                          segment_id=segment['segment']['id']) as subnet:
             self._validate_deferred_ip_allocation(port['port']['id'])
+            self._validate_l2_adjacency(network['network']['id'],
+                                        is_adjacent=False)
             # Try requesting an IP (but the only subnet is on a segment)
             data = {'port': {
                 'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
@@ -887,6 +894,12 @@ class TestSegmentAwareIpam(SegmentTestCase):
         # Since port is bound and there is a mapping to segment, it succeeds.
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
         self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+
+    def _validate_l2_adjacency(self, network_id, is_adjacent):
+        request = self.new_show_request('networks', network_id)
+        response = self.deserialize(self.fmt, request.get_response(self.api))
+        self.assertEqual(is_adjacent,
+                         response['network'][l2_adjacency.L2_ADJACENCY])
 
     def _validate_deferred_ip_allocation(self, port_id):
         request = self.new_show_request('ports', port_id)
