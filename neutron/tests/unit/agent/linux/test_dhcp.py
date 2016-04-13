@@ -1995,8 +1995,6 @@ class TestDeviceManager(TestConfBase):
             # Create DeviceManager.
             self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                                default=False))
-            self.conf.register_opt(cfg.BoolOpt('force_metadata',
-                                               default=False))
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
@@ -2066,16 +2064,15 @@ class TestDeviceManager(TestConfBase):
         self._test_setup(self.mock_load_interface_driver,
                          self.mock_ip_lib, use_gateway_ips=True)
 
-    def _test_setup_reserved(self, enable_isolated_metadata=False,
-                             force_metadata=False):
+    def test_setup_reserved(self):
+        """Test reserved port case of DeviceManager's DHCP port setup
+        logic.
+        """
+
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             # Create DeviceManager.
-            self.conf.register_opt(
-                cfg.BoolOpt('enable_isolated_metadata',
-                            default=enable_isolated_metadata))
-            self.conf.register_opt(
-                cfg.BoolOpt('force_metadata',
-                            default=force_metadata))
+            self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                               default=False))
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
@@ -2090,8 +2087,8 @@ class TestDeviceManager(TestConfBase):
 
             def mock_update(port_id, dict):
                 port = reserved_port
-                port.network_id = dict['port'].get('network_id')
-                port.device_id = dict['port'].get('device_id')
+                port.network_id = dict['port']['network_id']
+                port.device_id = dict['port']['device_id']
                 return port
 
             plugin.update_dhcp_port.side_effect = mock_update
@@ -2102,48 +2099,19 @@ class TestDeviceManager(TestConfBase):
             plugin.update_dhcp_port.assert_called_with(reserved_port.id,
                                                        mock.ANY)
 
-            except_ips = ['192.168.0.6/24']
-            if enable_isolated_metadata or force_metadata:
-                except_ips.append(dhcp.METADATA_DEFAULT_CIDR)
             mgr.driver.init_l3.assert_called_with('ns-XXX',
-                                                  except_ips,
+                                                  ['192.168.0.6/24'],
                                                   namespace='qdhcp-ns')
-
-    def test_setup_reserved_and_disable_metadata(self):
-        """Test reserved port case of DeviceManager's DHCP port setup
-        logic which metadata disabled.
-        """
-        self._test_setup_reserved()
-
-    def test_setup_reserved_with_isolated_metadata_enable(self):
-        """Test reserved port case of DeviceManager's DHCP port setup
-        logic which isolated_ metadata enabled.
-        """
-        self._test_setup_reserved(enable_isolated_metadata=True)
-
-    def test_setup_reserved_with_force_metadata_enable(self):
-        """Test reserved port case of DeviceManager's DHCP port setup
-        logic which force_metadata enabled.
-        """
-        self._test_setup_reserved(force_metadata=True)
-
-    def test_setup_reserved_and_enable_metadata(self):
-        """Test reserved port case of DeviceManager's DHCP port setup
-        logic which both isolated_metadata and force_metadata enabled.
-        """
-        self._test_setup_reserved(enable_isolated_metadata=True,
-                                  force_metadata=True)
 
     def test_setup_reserved_2(self):
         """Test scenario where a network has two reserved ports, and
         update_dhcp_port fails for the first of those.
         """
+
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             # Create DeviceManager.
-            self.conf.register_opt(
-                cfg.BoolOpt('enable_isolated_metadata', default=False))
-            self.conf.register_opt(
-                cfg.BoolOpt('force_metadata', default=False))
+            self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                               default=False))
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
@@ -2162,8 +2130,8 @@ class TestDeviceManager(TestConfBase):
                     return None
 
                 port = reserved_port_2
-                port.network_id = dict['port'].get('network_id')
-                port.device_id = dict['port'].get('device_id')
+                port.network_id = dict['port']['network_id']
+                port.device_id = dict['port']['device_id']
                 return port
 
             plugin.update_dhcp_port.side_effect = mock_update
