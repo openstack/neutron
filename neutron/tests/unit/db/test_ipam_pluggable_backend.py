@@ -62,9 +62,11 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
 
-    def _prepare_mocks(self, address_factory=None):
+    def _prepare_mocks(self, address_factory=None, subnet_factory=None):
         if address_factory is None:
             address_factory = ipam_req.AddressRequestFactory
+        if subnet_factory is None:
+            subnet_factory = ipam_req.SubnetRequestFactory
 
         mocks = {
             'driver': mock.Mock(),
@@ -79,7 +81,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['driver'].get_subnet.return_value = mocks['subnet']
         mocks['driver'].allocate_subnet.return_value = mocks['subnet']
         mocks['driver'].get_subnet_request_factory.return_value = (
-            ipam_req.SubnetRequestFactory)
+            subnet_factory)
         mocks['driver'].get_address_request_factory.return_value = (
             address_factory)
         mocks['subnet'].get_details.return_value = mocks['subnet_request']
@@ -90,8 +92,10 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
         return mocks
 
-    def _prepare_mocks_with_pool_mock(self, pool_mock, address_factory=None):
-        mocks = self._prepare_mocks(address_factory=address_factory)
+    def _prepare_mocks_with_pool_mock(self, pool_mock, address_factory=None,
+                                      subnet_factory=None):
+        mocks = self._prepare_mocks(address_factory=address_factory,
+                                    subnet_factory=subnet_factory)
         pool_mock.get_instance.return_value = mocks['driver']
         return mocks
 
@@ -583,3 +587,52 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                                             ip_dict)
         # Verify incoming port dict is not changed ('id' is not added to it)
         self.assertIsNone(port_dict['port'].get('id'))
+
+    def _test_update_db_subnet(self, pool_mock, subnet, expected_subnet,
+                               old_pools):
+        subnet_factory = mock.Mock()
+        context = mock.Mock()
+
+        mocks = self._prepare_mocks_with_pool_mock(
+            pool_mock, subnet_factory=subnet_factory)
+
+        mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+        mocks['ipam'].update_db_subnet(context, id, subnet, old_pools)
+
+        mocks['driver'].get_subnet_request_factory.assert_called_once_with()
+        subnet_factory.get_request.assert_called_once_with(context,
+                                                           expected_subnet,
+                                                           None)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_db_subnet_unchanged_pools(self, pool_mock):
+        old_pools = [netaddr.IPRange('192.1.1.2', '192.1.1.254')]
+        subnet = {'id': uuidutils.generate_uuid(),
+                  'network_id': uuidutils.generate_uuid(),
+                  'cidr': '192.1.1.0/24',
+                  'ipv6_address_mode': None,
+                  'ipv6_ra_mode': None}
+        subnet_with_pools = subnet.copy()
+        subnet_with_pools['allocation_pools'] = old_pools
+        # if subnet has no allocation pools set, then old pools has to
+        # be added to subnet dict passed to request factory
+        self._test_update_db_subnet(pool_mock, subnet, subnet_with_pools,
+                                    old_pools)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_db_subnet_new_pools(self, pool_mock):
+        old_pools = [netaddr.IPRange('192.1.1.2', '192.1.1.254')]
+        subnet = {'id': uuidutils.generate_uuid(),
+                  'network_id': uuidutils.generate_uuid(),
+                  'cidr': '192.1.1.0/24',
+                  'allocation_pools': [
+                      netaddr.IPRange('192.1.1.10', '192.1.1.254')],
+                  'ipv6_address_mode': None,
+                  'ipv6_ra_mode': None}
+        # make a copy of subnet for validation, since update_subnet changes
+        # incoming subnet dict
+        expected_subnet = subnet.copy()
+        # validate that subnet passed to request factory is the same as
+        # incoming one, i.e. new pools in it are not overwritten by old pools
+        self._test_update_db_subnet(pool_mock, subnet, expected_subnet,
+                                    old_pools)
