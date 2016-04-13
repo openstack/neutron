@@ -27,7 +27,6 @@ from six.moves import configparser
 from six.moves.urllib import parse
 import sqlalchemy
 from sqlalchemy import event
-import sqlalchemy.types as types
 import subprocess
 
 import neutron.db.migration as migration_help
@@ -134,24 +133,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def filter_metadata_diff(self, diff):
         return list(filter(self.remove_unrelated_errors, diff))
-
-    # TODO(akamyshikova): remove this method as soon as comparison with Variant
-    # will be implemented in oslo.db or alembic
-    def compare_type(self, ctxt, insp_col, meta_col, insp_type, meta_type):
-        if isinstance(meta_type, types.Variant):
-            orig_type = meta_col.type
-            meta_col.type = meta_type.impl
-            try:
-                return self.compare_type(ctxt, insp_col, meta_col, insp_type,
-                                         meta_type.impl)
-            finally:
-                meta_col.type = orig_type
-        else:
-            ret = super(_TestModelsMigrations, self).compare_type(
-                ctxt, insp_col, meta_col, insp_type, meta_type)
-            if ret is not None:
-                return ret
-            return ctxt.impl.compare_type(insp_col, meta_col)
 
     # Remove some difference that are not mistakes just specific of
     # dialects, etc
