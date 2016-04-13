@@ -1268,6 +1268,29 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self._show('ports', port['port']['id'],
                                expected_code=webob.exc.HTTPNotFound.code)
 
+    def test_update_port_with_stale_subnet(self):
+        with self.network(shared=True) as network:
+            port = self._make_port(self.fmt, network['network']['id'])
+            subnet = self._make_subnet(self.fmt, network,
+                                       '10.0.0.1', '10.0.0.0/24')
+            data = {'port': {'fixed_ips': [{'subnet_id':
+                                            subnet['subnet']['id']}]}}
+            # mock _get_subnets, to return this subnet
+            mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
+                              '_get_subnets',
+                              return_value=[subnet['subnet']]).start()
+            # Delete subnet, to mock the subnet as stale.
+            self._delete('subnets', subnet['subnet']['id'])
+            self._show('subnets', subnet['subnet']['id'],
+                       expected_code=webob.exc.HTTPNotFound.code)
+
+            # Though _get_subnets returns the subnet, subnet was deleted later
+            # while ipam is updating the port. So port update should fail.
+            req = self.new_update_request('ports', data,
+                                          port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+
     def test_update_port(self):
         with self.port() as port:
             data = {'port': {'admin_state_up': False}}

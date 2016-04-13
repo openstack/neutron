@@ -530,6 +530,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         fixed_ips_mock = mock.Mock(return_value=changes.add)
         mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
         mocks['ipam']._get_changed_ips_for_port = changes_mock
+        mocks['ipam']._get_subnets = mock.Mock()
         mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
 
         port_dict = {'device_owner': uuidutils.generate_uuid(),
@@ -538,6 +539,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._update_ips_for_port(context, port_dict,
                                            original_ips, new_ips, mac)
         mocks['driver'].get_address_request_factory.assert_called_once_with()
+        net_id_filter = {'network_id': [port_dict['network_id']]}
+        mocks['ipam']._get_subnets.assert_called_once_with(
+            context, filters=net_id_filter)
         # Validate port_dict is passed into address_factory
         address_factory.get_request.assert_called_once_with(context,
                                                             port_dict,
