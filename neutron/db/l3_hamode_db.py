@@ -34,8 +34,6 @@ from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
-from neutron.db import l3_attrs_db
-from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -545,17 +543,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
         self._core_plugin.delete_network(admin_ctx, net.network_id)
 
-    def _ha_routers_present(self, context, tenant_id):
-        ha = True
-        routers = context.session.query(l3_db.Router).filter(
-            l3_db.Router.tenant_id == tenant_id).subquery()
-        ha_routers = context.session.query(
-            l3_attrs_db.RouterExtraAttributes).join(
-            routers,
-            l3_attrs_db.RouterExtraAttributes.router_id == routers.c.id
-        ).filter(l3_attrs_db.RouterExtraAttributes.ha == ha).first()
-        return ha_routers is not None
-
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
         super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
@@ -568,30 +555,28 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
                 self._delete_ha_interfaces(context, router_db.id)
 
-                # In case that create HA router failed because of the failure
-                # in HA network creation. So here put this deleting HA network
-                # procedure under 'if ha_network' block.
-                if not self._ha_routers_present(context,
-                                                router_db.tenant_id):
-                    try:
-                        self._delete_ha_network(context, ha_network)
-                    except (n_exc.NetworkNotFound,
-                            orm.exc.ObjectDeletedError):
-                        LOG.debug(
-                            "HA network for tenant %s was already deleted.",
-                            router_db.tenant_id)
-                    except sa.exc.InvalidRequestError:
-                        LOG.info(_LI("HA network %s can not be deleted."),
-                                 ha_network.network_id)
-                    except n_exc.NetworkInUse:
-                        LOG.debug("HA network %s is still in use.",
-                                  ha_network.network_id)
-                    else:
-                        LOG.info(_LI("HA network %(network)s was deleted as "
-                                     "no HA routers are present in tenant "
-                                     "%(tenant)s."),
-                                 {'network': ha_network.network_id,
-                                  'tenant': router_db.tenant_id})
+                # always attempt to cleanup the network as the router is
+                # deleted. the core plugin will stop us if its in use
+                try:
+                    self._delete_ha_network(context, ha_network)
+                except (n_exc.NetworkNotFound,
+                        orm.exc.ObjectDeletedError):
+                    LOG.debug(
+                        "HA network for tenant %s was already deleted.",
+                        router_db.tenant_id)
+                except sa.exc.InvalidRequestError:
+                    LOG.info(_LI("HA network %s can not be deleted."),
+                             ha_network.network_id)
+                except n_exc.NetworkInUse:
+                    # network is still in use, this is normal so we don't
+                    # log anything
+                    pass
+                else:
+                    LOG.info(_LI("HA network %(network)s was deleted as "
+                                 "no HA routers are present in tenant "
+                                 "%(tenant)s."),
+                             {'network': ha_network.network_id,
+                              'tenant': router_db.tenant_id})
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
