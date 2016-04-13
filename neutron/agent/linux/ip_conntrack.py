@@ -79,10 +79,12 @@ class IpConntrackManager(object):
 
     def delete_conntrack_state_by_remote_ips(self, device_info_list,
                                              ethertype, remote_ips):
-        rule = {'ethertype': str(ethertype).lower(), 'direction': 'ingress'}
-        if remote_ips:
-            for remote_ip in remote_ips:
-                self._delete_conntrack_state(
-                    device_info_list, rule, remote_ip)
-        else:
-            self._delete_conntrack_state(device_info_list, rule)
+        for direction in ['ingress', 'egress']:
+            rule = {'ethertype': str(ethertype).lower(),
+                    'direction': direction}
+            if remote_ips:
+                for remote_ip in remote_ips:
+                    self._delete_conntrack_state(
+                        device_info_list, rule, remote_ip)
+            else:
+                self._delete_conntrack_state(device_info_list, rule)
