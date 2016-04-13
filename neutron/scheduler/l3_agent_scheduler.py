@@ -87,6 +87,8 @@ class L3Scheduler(object):
             l3_db.Router.id ==
             l3_agentschedulers_db.RouterL3AgentBinding.router_id)
         query = context.session.query(l3_db.Router.id).filter(no_agent_binding)
+        query = query.filter(l3_db.Router.status ==
+                             constants.ROUTER_STATUS_ACTIVE)
         unscheduled_router_ids = [router_id_[0] for router_id_ in query]
         if unscheduled_router_ids:
             return plugin.get_routers(
@@ -102,7 +104,9 @@ class L3Scheduler(object):
         :returns: the list of routers to be scheduled
         """
         if router_ids is not None:
-            routers = plugin.get_routers(context, filters={'id': router_ids})
+            filters = {'id': router_ids,
+                       'status': [constants.ROUTER_STATUS_ACTIVE]}
+            routers = plugin.get_routers(context, filters=filters)
             return self._filter_unscheduled_routers(context, plugin, routers)
         else:
             return self._get_unscheduled_routers(context, plugin)
