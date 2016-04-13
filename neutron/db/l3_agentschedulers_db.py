@@ -116,6 +116,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if binding.l3_agent_id in agents_back_online:
                     continue
                 else:
+                    # we need new context to make sure we use different DB
+                    # transaction - otherwise we may fetch same agent record
+                    # each time due to REPEATABLE_READ isolation level
+                    context = n_ctx.get_admin_context()
                     agent = self._get_agent(context, binding.l3_agent_id)
                     if agent.is_active:
                         agents_back_online.add(binding.l3_agent_id)
