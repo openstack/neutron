@@ -27,15 +27,31 @@ from neutron.extensions import securitygroup
 from neutron.tests.unit import testlib_api
 
 
-FAKE_SECGROUP = {'security_group': {"tenant_id": 'fake', 'description':
-                 'fake', 'name': 'fake'}}
+FAKE_SECGROUP = {
+    'security_group': {
+        "tenant_id": 'fake',
+        'description': 'fake',
+        'name': 'fake'
+    }
+}
 
-FAKE_SECGROUP_RULE = {'security_group_rule': {"tenant_id": 'fake',
-    'description': 'fake', 'name': 'fake', 'port_range_min':
-    '21', 'protocol': 'tcp', 'port_range_max': '23',
-    'remote_ip_prefix': '10.0.0.1', 'ethertype': 'IPv4',
-    'remote_group_id': None, 'security_group_id': 'None',
-    'direction': 'ingress'}}
+FAKE_SECGROUP_RULE = {
+    'security_group_rule': {
+        "tenant_id": 'fake',
+        'description': 'fake',
+        'name': 'fake',
+        'port_range_min': '21',
+        'protocol': 'tcp',
+        'port_range_max': '23',
+        'remote_ip_prefix': '10.0.0.1',
+        'ethertype': 'IPv4',
+        'remote_group_id': None,
+        'security_group_id': 'None',
+        'direction': 'ingress'
+    }
+}
+
+DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
 def fake_callback(resource, event, *args, **kwargs):
@@ -51,6 +67,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(SecurityGroupDbMixinTestCase, self).setUp()
+        self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)
         self.ctx = context.get_admin_context()
         self.mixin = SecurityGroupDbMixinImpl()
 

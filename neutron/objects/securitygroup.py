@@ -51,7 +51,7 @@ class SecurityGroup(base.NeutronDbObject):
         with db_api.autonested_transaction(self.obj_context.session):
             super(SecurityGroup, self).create()
             if is_default:
-                default_group = _DefaultSecurityGroup(
+                default_group = DefaultSecurityGroup(
                     self.obj_context,
                     project_id=self.project_id,
                     security_group_id=self.id)
@@ -66,7 +66,7 @@ class SecurityGroup(base.NeutronDbObject):
 
 
 @obj_base.VersionedObjectRegistry.register
-class _DefaultSecurityGroup(base.NeutronDbObject):
+class DefaultSecurityGroup(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
