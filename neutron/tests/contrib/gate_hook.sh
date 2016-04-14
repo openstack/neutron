@@ -63,6 +63,7 @@ then
 
 elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
 then
+    load_rc_hook api_extensions
     if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
     then
         load_conf_hook pecan

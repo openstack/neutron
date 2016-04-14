@@ -1,0 +1,37 @@
+NETWORK_API_EXTENSIONS="
+    address-scope, \
+    agent, \
+    allowed-address-pairs, \
+    auto-allocated-topology, \
+    availability_zone, \
+    bgp, \
+    bgp_dragent_scheduler, \
+    binding, \
+    default-subnetpools, \
+    dhcp_agent_scheduler, \
+    dns-integration, \
+    dvr, \
+    ext-gw-mode, \
+    external-net, \
+    extra_dhcp_opt, \
+    extraroute, \
+    l3-ha, \
+    l3_agent_scheduler, \
+    metering, \
+    multi-provider, \
+    net-mtu, \
+    network-ip-availability, \
+    network_availability_zone, \
+    port-security, \
+    provider, \
+    qos, \
+    quotas, \
+    rbac-policies, \
+    router, \
+    router_availability_zone, \
+    security-group, \
+    standard-attr-description, \
+    subnet_allocation, \
+    tag, \
+    timestamp_core"
+NETWORK_API_EXTENSIONS="$(echo $NETWORK_API_EXTENSIONS | tr -d ' ')"
