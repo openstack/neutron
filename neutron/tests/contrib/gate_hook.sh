@@ -5,14 +5,35 @@ set -ex
 VENV=${1:-"dsvm-functional"}
 
 GATE_DEST=$BASE/new
+NEUTRON_PATH=$GATE_DEST/neutron
+GATE_HOOKS=$NEUTRON_PATH/neutron/tests/contrib/hooks
 DEVSTACK_PATH=$GATE_DEST/devstack
+LOCAL_CONF=$DEVSTACK_PATH/local.conf
+
+
+# Inject config from hook into localrc
+function load_rc_hook {
+    local hook="$1"
+    config=$(cat $GATE_HOOKS/$hook)
+    export DEVSTACK_LOCAL_CONFIG+="
+# generated from hook '$hook'
+${config}
+"
+}
+
+
+# Inject config from hook into local.conf
+function load_conf_hook {
+    local hook="$1"
+    cat $GATE_HOOKS/$hook >> $LOCAL_CONF
+}
+
 
 if [ "$VENV" == "dsvm-functional" ] || [ "$VENV" == "dsvm-fullstack" ]
 then
     # The following need to be set before sourcing
     # configure_for_func_testing.
     GATE_STACK_USER=stack
-    NEUTRON_PATH=$GATE_DEST/neutron
     PROJECT_NAME=neutron
     IS_GATE=True
 
@@ -44,32 +65,18 @@ elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
 then
     if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
     then
-        cat >> $DEVSTACK_PATH/local.conf <<EOF
-[[post-config|/etc/neutron/neutron.conf]]
-
-[DEFAULT]
-web_framework=pecan
-
-EOF
+        load_conf_hook pecan
     fi
-
-    export DEVSTACK_LOCAL_CONFIG+="
-enable_plugin neutron git://git.openstack.org/openstack/neutron
-enable_service q-qos
-enable_service q-bgp
-"
-# TODO(armax): figure out a cleaner way to maintain this
-# gate hook and expose API extensions.
+    load_rc_hook qos
+    load_rc_hook bgp
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
 elif [ "$VENV" == "dsvm-plus" ]
 then
-    # We need the qos service enabled to add corresponding scenario tests to tempest
-    export DEVSTACK_LOCAL_CONFIG+="
-enable_plugin neutron git://git.openstack.org/openstack/neutron
-enable_service q-qos
-enable_service q-bgp
-"
+    # TODO(armax): this branch needs to be revised, in light
+    # to the latest refactoring of the api job.
+    load_rc_hook qos
+    load_rc_hook bgp
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
 fi
