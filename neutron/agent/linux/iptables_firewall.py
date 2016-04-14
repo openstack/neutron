@@ -311,8 +311,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv6_pairs.append((mac, ip_address))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
-        #Note(nati) allow dhcp or RA packet
-        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+        # Allow dhcp client discovery and request
+        ipv4_rules += [comment_rule('-s 0.0.0.0/32 -d 255.255.255.255/32 '
+                                    '-p udp -m udp --sport 68 --dport 67 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
         ipv6_rules += [comment_rule('-p icmpv6 -j RETURN',
                                     comment=ic.IPV6_RA_ALLOW)]
@@ -339,6 +340,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                        mac_ipv4_pairs, ipv4_rules)
         self._setup_spoof_filter_chain(port, self.iptables.ipv6['filter'],
                                        mac_ipv6_pairs, ipv6_rules)
+        # Allow dhcp client renewal and rebinding
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
         #Note(nati) Drop dhcp packet from VM
