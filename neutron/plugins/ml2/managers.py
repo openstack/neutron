@@ -423,7 +423,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver create_network_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -451,7 +451,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver update_network_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -478,7 +478,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver delete_network_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -509,7 +509,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver create_subnet_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -536,7 +536,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver update_subnet_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -563,7 +563,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver delete_subnet_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -594,7 +594,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver create_port_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -621,7 +621,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver update_port_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
@@ -648,7 +648,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver delete_port_precommit call fails.
 
         Called within the database transaction. If a mechanism driver
-        raises an exception, then a MechanismDriverError is propogated
+        raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
         """
