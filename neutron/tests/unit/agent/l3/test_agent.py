@@ -609,6 +609,95 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_external_gateway_updated_dual_stack(self):
         self._test_external_gateway_updated(dual_stack=True)
 
+    def test_dvr_edge_router_init_for_snat_namespace_object(self):
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        ri = dvr_router.DvrEdgeRouter(mock.Mock(),
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+        # Makesure that ri.snat_namespace object is created when the
+        # router is initialized
+        self.assertIsNotNone(ri.snat_namespace)
+
+    @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
+    def test_ext_gw_updated_calling_snat_ns_delete_if_gw_port_host_none(
+        self, mock_snat_ns):
+        """Function to check the impact of snat_namespace object.
+
+        This function specifically checks the impact of the snat
+        namespace object value on external_gateway_removed for deleting
+        snat_namespace when the gw_port_host mismatches or none.
+        """
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        ri = dvr_router.DvrEdgeRouter(mock.Mock(),
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+        ri._create_snat_namespace()
+        interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(self,
+                                                                        ri)
+        router['gw_port_host'] = ''
+        ri.external_gateway_updated(ex_gw_port, interface_name)
+        if router['gw_port_host'] != ri.host:
+            if ri.snat_namespace:
+                self.assertEqual(1, mock_snat_ns.call_count)
+
+    @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
+    def test_ext_gw_updated_not_calling_snat_ns_delete_if_gw_port_host_none(
+        self, mock_snat_ns):
+        """Function to check the impact of snat_namespace object.
+
+        This function specifically checks the impact of the snat
+        namespace object value on external_gateway_removed for deleting
+        snat_namespace when gw_port_host mismatches and when the
+        self.snat_namespace is None.
+        """
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        ri = dvr_router.DvrEdgeRouter(mock.Mock(),
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+        ri._create_snat_namespace()
+        interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(self,
+                                                                        ri)
+        router['gw_port_host'] = ''
+        # Initialize the snat_namespace object to the None here to emulate
+        # an agent restart.
+        ri.snat_namespace = None
+        ri.external_gateway_updated(ex_gw_port, interface_name)
+        if router['gw_port_host'] != ri.host:
+            if ri.snat_namespace is None:
+                self.assertFalse(mock_snat_ns.called)
+
+    @mock.patch.object(namespaces.Namespace, 'delete')
+    def test_snat_ns_delete_not_called_when_snat_namespace_does_not_exist(
+        self, mock_ns_del):
+        """Function to check the impact of snat_namespace object.
+
+        This function specifically checks the impact of the snat
+        namespace object initialization without the actual creation
+        of snat_namespace. When deletes are issued to the snat
+        namespace based on the snat namespace object existence, it
+        should be checking for the valid namespace existence before
+        it tries to delete.
+        """
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        ri = dvr_router.DvrEdgeRouter(mock.Mock(),
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+        # Make sure we set a return value to emulate the non existence
+        # of the namespace.
+        self.mock_ip.netns.exists.return_value = False
+        self.assertTrue(ri.snat_namespace)
+        if ri.snat_namespace:
+            ri.snat_namespace.delete()
+            self.assertFalse(mock_ns_del.called)
+
     def _test_ext_gw_updated_dvr_edge_router(self, host_match,
                                              snat_hosted_before=True):
         """
@@ -628,7 +717,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri._create_snat_namespace()
             snat_ns_name = ri.snat_namespace.name
         else:
-            self.assertIsNone(ri.snat_namespace)
+            self.assertIsNotNone(ri.snat_namespace)
 
         interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(self,
                                                                         ri)
