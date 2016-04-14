@@ -767,6 +767,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                            device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
+                tunnel_ip = '20.0.0.1'
                 p1 = port1['port']
                 device1 = 'tap' + p1['id']
                 self.callbacks.update_device_up(
@@ -774,22 +775,21 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     agent_id=HOST,
                     device=device1)
                 if twice:
+                    tunnel_ip = '20.0.0.4'
                     self._update_and_check_portbinding(p1['id'], HOST_4)
-                self._update_and_check_portbinding(p1['id'], HOST_2)
+                    self.callbacks.update_device_up(self.adminContext,
+                                                    agent_id=HOST_4,
+                                                    device=device1)
+
                 self.mock_fanout.reset_mock()
-                # NOTE(yamamoto): see bug #1441488
-                self.adminContext.session.expire_all()
-                self.callbacks.get_device_details(
-                    self.adminContext,
-                    device=device1,
-                    agent_id=HOST_2)
+                self._update_and_check_portbinding(p1['id'], HOST_2)
                 p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
                 expected = {p1['network_id']:
                             {'ports':
-                             {'20.0.0.1': [constants.FLOODING_ENTRY,
-                                           l2pop_rpc.PortInfo(
-                                               p1['mac_address'],
-                                               p1_ips[0])]},
+                             {tunnel_ip: [constants.FLOODING_ENTRY,
+                                          l2pop_rpc.PortInfo(
+                                              p1['mac_address'],
+                                              p1_ips[0])]},
                              'network_type': 'vxlan',
                              'segment_id': 1}}
 
