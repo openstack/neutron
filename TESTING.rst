@@ -283,7 +283,7 @@ the hypervisor appropriately.
 API Tests
 ~~~~~~~~~
 
-API tests (neutron/tests/api/) are intended to ensure the function
+API tests (neutron/tests/tempest/api/) are intended to ensure the function
 and stability of the Neutron API. As much as possible, changes to
 this path should not be made at the same time as changes to the code
 to limit the potential for introducing backwards-incompatible changes,
@@ -297,7 +297,7 @@ be made about implementation. Only the contract defined by Neutron's REST API
 should be validated, and all interaction with the daemon should be via
 a REST client.
 
-neutron/tests/api was copied from the Tempest project. At the time, there was
+neutron/tests/tempest/api was copied from the Tempest project. At the time, there was
 an overlap of tests between the Tempest and Neutron repositories. This overlap
 was then eliminated by carving out a subset of resources that belong to
 Tempest, with the rest in Neutron.
@@ -524,6 +524,11 @@ TEMPEST_CONFIG_DIR before invoking tox: ::
 
     export TEMPEST_CONFIG_DIR=[path to dir containing tempest.conf]
     tox -e api
+
+You may also utilize Neutron's Tempest plugin by going to the Tempest directory
+and executing:
+
+tox -e all-plugin neutron
 
 
 Running Individual Tests
