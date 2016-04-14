@@ -295,7 +295,7 @@ def list_auth_opts():
     # the config options for a few common ones
     plugins = ['password', 'v2password', 'v3password']
     for name in plugins:
-        for plugin_option in ks_loading.get_plugin_loader(name).get_options():
+        for plugin_option in ks_loading.get_auth_plugin_conf_options(name):
             if all(option.name != plugin_option.name for option in opt_list):
                 opt_list.append(plugin_option)
     opt_list.sort(key=operator.attrgetter('name'))
