@@ -55,6 +55,23 @@ class FakePort(object):
     network_id = network.id
 
 
+class FakeInterfaceDriverNoMtu(interface.LinuxInterfaceDriver):
+    # NOTE(ihrachys) this method intentially omit mtu= parameter, since that
+    # was the method signature before Mitaka. We should make sure the old
+    # signature still works.
+
+    def __init__(self, *args, **kwargs):
+        super(FakeInterfaceDriverNoMtu, self).__init__(*args, **kwargs)
+        self.plug_called = False
+
+    def plug_new(self, network_id, port_id, device_name, mac_address,
+                 bridge=None, namespace=None, prefix=None):
+        self.plug_called = True
+
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
+        pass
+
+
 class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
@@ -66,6 +83,16 @@ class TestBase(base.BaseTestCase):
         self.ip = self.ip_p.start()
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
+
+
+class TestABCDriverNoMtu(TestBase):
+
+    def test_plug_with_no_mtu_works(self):
+        driver = FakeInterfaceDriverNoMtu(self.conf)
+        self.device_exists.return_value = False
+        driver.plug(
+            mock.Mock(), mock.Mock(), mock.Mock(), mock.Mock(), mtu=9000)
+        self.assertTrue(driver.plug_called)
 
 
 class TestABCDriver(TestBase):
