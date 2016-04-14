@@ -178,9 +178,9 @@ class PolicyHook(hooks.PecanHook):
         return self._filter_attributes(request, data, to_exclude)
 
     def _filter_attributes(self, request, data, fields_to_strip):
-        # TODO(kevinbenton): this works but we didn't allow the plugin to
-        # only fetch the fields we are interested in. consider moving this
-        # to the call
+        # This routine will remove the fields that were requested to the
+        # plugin for policy evaluation but were not specified in the
+        # API request
         user_fields = request.params.getall('fields')
         return dict(item for item in data.items()
                     if (item[0] not in fields_to_strip and

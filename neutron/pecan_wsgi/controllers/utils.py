@@ -94,6 +94,17 @@ class NeutronPecanController(object):
         self._resource_info = api_attributes.get_collection_info(
             self.collection)
         self._plugin = plugin
+        # Controllers for some resources that are not mapped to anything in
+        # RESOURCE_ATTRIBUTE_MAP will not have anything in _resource_info
+        if self._resource_info:
+            self._mandatory_fields = set([field for (field, data) in
+                                          self._resource_info.items() if
+                                          data.get('required_by_policy')])
+        else:
+            self._mandatory_fields = set()
+
+    def _build_field_list(self, request_fields):
+        return set(request_fields) | self._mandatory_fields
 
     @property
     def plugin(self):
