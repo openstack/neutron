@@ -23,7 +23,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy import and_
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _, _LE, _LW
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
@@ -41,6 +41,17 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ips_list = (ip_dict['ip_address'] for ip_dict in success_ips)
         return (ip_dict['ip_address'] for ip_dict in all_ips
                 if ip_dict['ip_address'] not in ips_list)
+
+    def _safe_rollback(self, func, *args, **kwargs):
+        """Calls rollback actions and catch all exceptions.
+
+        All exceptions are catched and logged here to prevent rewriting
+        original exception that triggered rollback action.
+        """
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            LOG.warning(_LW("Revert failed with: %s"), e)
 
     def _ipam_deallocate_ips(self, context, ipam_driver, port, ips,
                              revert_on_fail=True):
@@ -65,8 +76,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 LOG.debug("An exception occurred during IP deallocation.")
                 if revert_on_fail and deallocated:
                     LOG.debug("Reverting deallocation")
-                    self._ipam_allocate_ips(context, ipam_driver, port,
-                                            deallocated, revert_on_fail=False)
+                    # In case of deadlock allocate fails with db error
+                    # and rewrites original exception preventing db_retry
+                    # wrappers from restarting entire api request.
+                    self._safe_rollback(self._ipam_allocate_ips, context,
+                                        ipam_driver, port, deallocated,
+                                        revert_on_fail=False)
                 elif not revert_on_fail and ips:
                     addresses = ', '.join(self._get_failed_ips(ips,
                                                                deallocated))
@@ -127,8 +142,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
                 if revert_on_fail and allocated:
                     LOG.debug("Reverting allocation")
-                    self._ipam_deallocate_ips(context, ipam_driver, port,
-                                              allocated, revert_on_fail=False)
+                    # In case of deadlock deallocation fails with db error
+                    # and rewrites original exception preventing db_retry
+                    # wrappers from restarting entire api request.
+                    self._safe_rollback(self._ipam_deallocate_ips, context,
+                                        ipam_driver, port, allocated,
+                                        revert_on_fail=False)
                 elif not revert_on_fail and ips:
                     addresses = ', '.join(self._get_failed_ips(ips,
                                                                allocated))
@@ -172,9 +191,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     LOG.debug("An exception occurred during port creation. "
                               "Reverting IP allocation")
                     ipam_driver = driver.Pool.get_instance(None, context)
-                    self._ipam_deallocate_ips(context, ipam_driver,
-                                              port_copy['port'], ips,
-                                              revert_on_fail=False)
+                    self._safe_rollback(self._ipam_deallocate_ips, context,
+                                        ipam_driver, port_copy['port'], ips,
+                                        revert_on_fail=False)
 
     def _allocate_ips_for_port(self, context, port):
         """Allocate IP addresses for the port. IPAM version.
@@ -321,14 +340,20 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     ipam_driver = driver.Pool.get_instance(None, context)
                     if changes.add:
                         LOG.debug("Reverting IP allocation.")
-                        self._ipam_deallocate_ips(context, ipam_driver,
-                                                  db_port, changes.add,
-                                                  revert_on_fail=False)
+                        self._safe_rollback(self._ipam_deallocate_ips,
+                                            context,
+                                            ipam_driver,
+                                            db_port,
+                                            changes.add,
+                                            revert_on_fail=False)
                     if changes.remove:
                         LOG.debug("Reverting IP deallocation.")
-                        self._ipam_allocate_ips(context, ipam_driver,
-                                                db_port, changes.remove,
-                                                revert_on_fail=False)
+                        self._safe_rollback(self._ipam_allocate_ips,
+                                            context,
+                                            ipam_driver,
+                                            db_port,
+                                            changes.remove,
+                                            revert_on_fail=False)
         return changes
 
     def delete_port(self, context, id):
