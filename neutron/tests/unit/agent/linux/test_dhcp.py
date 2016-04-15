@@ -67,122 +67,121 @@ class Dictable(object):
 
 
 class FakeDhcpPort(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_DHCP
-    fixed_ips = [FakeIPAllocation('192.168.0.1',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    mac_address = '00:00:80:aa:bb:ee'
-    device_id = 'fake_dhcp_port'
-
     def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_DHCP
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.1',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.mac_address = '00:00:80:aa:bb:ee'
+        self.device_id = 'fake_dhcp_port'
         self.extra_dhcp_opts = []
 
 
 class FakeReservedPort(object):
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_DHCP
-    fixed_ips = [FakeIPAllocation('192.168.0.6',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    mac_address = '00:00:80:aa:bb:ee'
-    device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
-
     def __init__(self, id='reserved-aaaa-aaaa-aaaa-aaaaaaaaaaa'):
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_DHCP
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.6',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.mac_address = '00:00:80:aa:bb:ee'
+        self.device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
         self.extra_dhcp_opts = []
         self.id = id
 
 
 class FakePort1(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    admin_state_up = True
-    device_owner = 'foo1'
-    fixed_ips = [FakeIPAllocation('192.168.0.2',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    mac_address = '00:00:80:aa:bb:cc'
-    device_id = 'fake_port1'
-
     def __init__(self, domain='openstacklocal'):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.admin_state_up = True
+        self.device_owner = 'foo1'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.2',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.mac_address = '00:00:80:aa:bb:cc'
+        self.device_id = 'fake_port1'
         self.extra_dhcp_opts = []
         self.dns_assignment = [FakeDNSAssignment('192.168.0.2', domain=domain)]
 
 
 class FakePort2(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    admin_state_up = False
-    device_owner = 'foo2'
-    fixed_ips = [FakeIPAllocation('192.168.0.3',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    mac_address = '00:00:f3:aa:bb:cc'
-    device_id = 'fake_port2'
-    dns_assignment = [FakeDNSAssignment('192.168.0.3')]
-
     def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.admin_state_up = False
+        self.device_owner = 'foo2'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.3',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.mac_address = '00:00:f3:aa:bb:cc'
+        self.device_id = 'fake_port2'
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.3')]
         self.extra_dhcp_opts = []
 
 
 class FakePort3(object):
-    id = '44444444-4444-4444-4444-444444444444'
-    admin_state_up = True
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('192.168.0.4',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd'),
-                 FakeIPAllocation('192.168.1.2',
-                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.4'),
-                      FakeDNSAssignment('192.168.1.2')]
-    mac_address = '00:00:0f:aa:bb:cc'
-    device_id = 'fake_port3'
-
     def __init__(self):
+        self.id = '44444444-4444-4444-4444-444444444444'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.4',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+            FakeIPAllocation('192.168.1.2',
+                             'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.4'),
+                               FakeDNSAssignment('192.168.1.2')]
+        self.mac_address = '00:00:0f:aa:bb:cc'
+        self.device_id = 'fake_port3'
         self.extra_dhcp_opts = []
 
 
 class FakePort4(object):
-
-    id = 'gggggggg-gggg-gggg-gggg-gggggggggggg'
-    admin_state_up = False
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('192.168.0.4',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd'),
-                 FakeIPAllocation('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
-                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [
-        FakeDNSAssignment('192.168.0.4'),
-        FakeDNSAssignment('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
-    mac_address = '00:16:3E:C2:77:1D'
-    device_id = 'fake_port4'
-
     def __init__(self):
+        self.id = 'gggggggg-gggg-gggg-gggg-gggggggggggg'
+        self.admin_state_up = False
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.4',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+            FakeIPAllocation('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
+                             'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+        self.dns_assignment = [
+            FakeDNSAssignment('192.168.0.4'),
+            FakeDNSAssignment('ffda:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
+        self.mac_address = '00:16:3E:C2:77:1D'
+        self.device_id = 'fake_port4'
         self.extra_dhcp_opts = []
 
 
 class FakePort5(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee'
-    admin_state_up = True
-    device_owner = 'foo5'
-    fixed_ips = [FakeIPAllocation('192.168.0.5',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.5')]
-    mac_address = '00:00:0f:aa:bb:55'
-    device_id = 'fake_port5'
-
     def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee'
+        self.admin_state_up = True
+        self.device_owner = 'foo5'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.5',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.5')]
+        self.mac_address = '00:00:0f:aa:bb:55'
+        self.device_id = 'fake_port5'
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name=edo_ext.CLIENT_ID,
                     opt_value='test5')]
 
 
 class FakePort6(object):
-    id = 'ccccccccc-cccc-cccc-cccc-ccccccccc'
-    admin_state_up = True
-    device_owner = 'foo6'
-    fixed_ips = [FakeIPAllocation('192.168.0.6',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.6')]
-    mac_address = '00:00:0f:aa:bb:66'
-    device_id = 'fake_port6'
-
     def __init__(self):
+        self.id = 'ccccccccc-cccc-cccc-cccc-ccccccccc'
+        self.admin_state_up = True
+        self.device_owner = 'foo6'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.6',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.6')]
+        self.mac_address = '00:00:0f:aa:bb:66'
+        self.device_id = 'fake_port6'
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name=edo_ext.CLIENT_ID,
                     opt_value='test6',
@@ -193,32 +192,32 @@ class FakePort6(object):
 
 
 class FakeV6Port(object):
-    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
-    admin_state_up = True
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('fdca:3ba5:a17a:4ba3::2',
-                                  'ffffffff-ffff-ffff-ffff-ffffffffffff')]
-    mac_address = '00:00:f3:aa:bb:cc'
-    device_id = 'fake_port6'
-
     def __init__(self, domain='openstacklocal'):
+        self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('fdca:3ba5:a17a:4ba3::2',
+                             'ffffffff-ffff-ffff-ffff-ffffffffffff')]
+        self.mac_address = '00:00:f3:aa:bb:cc'
+        self.device_id = 'fake_port6'
         self.extra_dhcp_opts = []
         self.dns_assignment = [FakeDNSAssignment('fdca:3ba5:a17a:4ba3::2',
                                domain=domain)]
 
 
 class FakeV6PortExtraOpt(object):
-    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
-    admin_state_up = True
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
-                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [
-        FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
-    mac_address = '00:16:3e:c2:77:1d'
-    device_id = 'fake_port6'
-
     def __init__(self):
+        self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
+                             'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+        self.dns_assignment = [
+            FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
+        self.mac_address = '00:16:3e:c2:77:1d'
+        self.device_id = 'fake_port6'
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
@@ -226,20 +225,20 @@ class FakeV6PortExtraOpt(object):
 
 
 class FakeDualPortWithV6ExtraOpt(object):
-    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
-    admin_state_up = True
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('192.168.0.3',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd'),
-                 FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
-                                  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
-    dns_assignment = [
-        FakeDNSAssignment('192.168.0.3'),
-        FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
-    mac_address = '00:16:3e:c2:77:1d'
-    device_id = 'fake_port6'
-
     def __init__(self):
+        self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.3',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+            FakeIPAllocation('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d',
+                             'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+        self.dns_assignment = [
+            FakeDNSAssignment('192.168.0.3'),
+            FakeDNSAssignment('ffea:3ba5:a17a:4ba3:0216:3eff:fec2:771d')]
+        self.mac_address = '00:16:3e:c2:77:1d'
+        self.device_id = 'fake_port6'
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
@@ -247,17 +246,17 @@ class FakeDualPortWithV6ExtraOpt(object):
 
 
 class FakeDualPort(object):
-    id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
-    admin_state_up = True
-    device_owner = 'foo3'
-    fixed_ips = [FakeIPAllocation('192.168.0.3',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd'),
-                 FakeIPAllocation('fdca:3ba5:a17a:4ba3::3',
-                                  'ffffffff-ffff-ffff-ffff-ffffffffffff')]
-    mac_address = '00:00:0f:aa:bb:cc'
-    device_id = 'fake_dual_port'
-
     def __init__(self, domain='openstacklocal'):
+        self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
+        self.admin_state_up = True
+        self.device_owner = 'foo3'
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.3',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+            FakeIPAllocation('fdca:3ba5:a17a:4ba3::3',
+                             'ffffffff-ffff-ffff-ffff-ffffffffffff')]
+        self.mac_address = '00:00:0f:aa:bb:cc'
+        self.device_id = 'fake_dual_port'
         self.extra_dhcp_opts = []
         self.dns_assignment = [FakeDNSAssignment('192.168.0.3', domain=domain),
                                FakeDNSAssignment('fdca:3ba5:a17a:4ba3::3',
@@ -265,15 +264,14 @@ class FakeDualPort(object):
 
 
 class FakeRouterPort(object):
-    id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_ROUTER_INTF
-    mac_address = '00:00:0f:rr:rr:rr'
-    device_id = 'fake_router_port'
-    dns_assignment = []
-
     def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
                  ip_address='192.168.0.1', domain='openstacklocal'):
+        self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+        self.mac_address = '00:00:0f:rr:rr:rr'
+        self.device_id = 'fake_router_port'
+        self.dns_assignment = []
         self.extra_dhcp_opts = []
         self.device_owner = dev_owner
         self.fixed_ips = [FakeIPAllocation(
@@ -283,247 +281,273 @@ class FakeRouterPort(object):
 
 
 class FakeRouterPort2(object):
-    id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_ROUTER_INTF
-    fixed_ips = [FakeIPAllocation('192.168.1.1',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    dns_assignment = [FakeDNSAssignment('192.168.1.1')]
-    mac_address = '00:00:0f:rr:rr:r2'
-    device_id = 'fake_router_port2'
-
     def __init__(self):
+        self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.1.1',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.1.1')]
+        self.mac_address = '00:00:0f:rr:rr:r2'
+        self.device_id = 'fake_router_port2'
         self.extra_dhcp_opts = []
 
 
 class FakePortMultipleAgents1(object):
-    id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_DHCP
-    fixed_ips = [FakeIPAllocation('192.168.0.5',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.5')]
-    mac_address = '00:00:0f:dd:dd:dd'
-    device_id = 'fake_multiple_agents_port'
-
     def __init__(self):
+        self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_DHCP
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.5',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.5')]
+        self.mac_address = '00:00:0f:dd:dd:dd'
+        self.device_id = 'fake_multiple_agents_port'
         self.extra_dhcp_opts = []
 
 
 class FakePortMultipleAgents2(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    admin_state_up = True
-    device_owner = constants.DEVICE_OWNER_DHCP
-    fixed_ips = [FakeIPAllocation('192.168.0.6',
-                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
-    dns_assignment = [FakeDNSAssignment('192.168.0.6')]
-    mac_address = '00:00:0f:ee:ee:ee'
-    device_id = 'fake_multiple_agents_port2'
-
     def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_DHCP
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.6',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.dns_assignment = [FakeDNSAssignment('192.168.0.6')]
+        self.mac_address = '00:00:0f:ee:ee:ee'
+        self.device_id = 'fake_multiple_agents_port2'
         self.extra_dhcp_opts = []
 
 
 class FakeV4HostRoute(object):
-    destination = '20.0.0.1/24'
-    nexthop = '20.0.0.1'
+    def __init__(self):
+        self.destination = '20.0.0.1/24'
+        self.nexthop = '20.0.0.1'
 
 
 class FakeV4HostRouteGateway(object):
-    destination = constants.IPv4_ANY
-    nexthop = '10.0.0.1'
+    def __init__(self):
+        self.destination = constants.IPv4_ANY
+        self.nexthop = '10.0.0.1'
 
 
 class FakeV6HostRoute(object):
-    destination = '2001:0200:feed:7ac0::/64'
-    nexthop = '2001:0200:feed:7ac0::1'
+    def __init__(self):
+        self.destination = '2001:0200:feed:7ac0::/64'
+        self.nexthop = '2001:0200:feed:7ac0::1'
 
 
 class FakeV4Subnet(Dictable):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
-    host_routes = [FakeV4HostRoute]
-    dns_nameservers = ['8.8.8.8']
+    def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.ip_version = 4
+        self.cidr = '192.168.0.0/24'
+        self.gateway_ip = '192.168.0.1'
+        self.enable_dhcp = True
+        self.host_routes = [FakeV4HostRoute()]
+        self.dns_nameservers = ['8.8.8.8']
 
 
 class FakeV4Subnet2(FakeV4Subnet):
-    cidr = '192.168.1.0/24'
-    gateway_ip = '192.168.1.1'
-    host_routes = []
+    def __init__(self):
+        super(FakeV4Subnet2, self).__init__()
+        self.cidr = '192.168.1.0/24'
+        self.gateway_ip = '192.168.1.1'
+        self.host_routes = []
 
 
 class FakeV4MetadataSubnet(FakeV4Subnet):
-    cidr = '169.254.169.254/30'
-    gateway_ip = '169.254.169.253'
-    host_routes = []
-    dns_nameservers = []
+    def __init__(self):
+        super(FakeV4MetadataSubnet, self).__init__()
+        self.cidr = '169.254.169.254/30'
+        self.gateway_ip = '169.254.169.253'
+        self.host_routes = []
+        self.dns_nameservers = []
 
 
 class FakeV4SubnetGatewayRoute(FakeV4Subnet):
-    host_routes = [FakeV4HostRouteGateway]
+    def __init__(self):
+        super(FakeV4SubnetGatewayRoute, self).__init__()
+        self.host_routes = [FakeV4HostRouteGateway()]
 
 
 class FakeV4SubnetMultipleAgentsWithoutDnsProvided(FakeV4Subnet):
-    dns_nameservers = []
-    host_routes = []
+    def __init__(self):
+        super(FakeV4SubnetMultipleAgentsWithoutDnsProvided, self).__init__()
+        self.dns_nameservers = []
+        self.host_routes = []
 
 
 class FakeV4SubnetAgentWithManyDnsProvided(FakeV4Subnet):
-    dns_nameservers = ['2.2.2.2', '9.9.9.9', '1.1.1.1',
-                       '3.3.3.3']
-    host_routes = []
+    def __init__(self):
+        super(FakeV4SubnetAgentWithManyDnsProvided, self).__init__()
+        self.dns_nameservers = ['2.2.2.2', '9.9.9.9', '1.1.1.1', '3.3.3.3']
+        self.host_routes = []
 
 
 class FakeV4MultipleAgentsWithoutDnsProvided(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
-             FakePortMultipleAgents1(), FakePortMultipleAgents2()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+                      FakePortMultipleAgents1(), FakePortMultipleAgents2()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV4AgentWithoutDnsProvided(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
-             FakePortMultipleAgents1()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+                      FakePortMultipleAgents1()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV4AgentWithManyDnsProvided(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    subnets = [FakeV4SubnetAgentWithManyDnsProvided()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
-             FakePortMultipleAgents1()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.subnets = [FakeV4SubnetAgentWithManyDnsProvided()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+                      FakePortMultipleAgents1()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV4SubnetMultipleAgentsWithDnsProvided(FakeV4Subnet):
-    host_routes = []
+    def __init__(self):
+        super(FakeV4SubnetMultipleAgentsWithDnsProvided, self).__init__()
+        self.host_routes = []
 
 
 class FakeV4MultipleAgentsWithDnsProvided(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    subnets = [FakeV4SubnetMultipleAgentsWithDnsProvided()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
-             FakePortMultipleAgents1(), FakePortMultipleAgents2()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.subnets = [FakeV4SubnetMultipleAgentsWithDnsProvided()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+                      FakePortMultipleAgents1(), FakePortMultipleAgents2()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV6Subnet(object):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    ip_version = 6
-    cidr = 'fdca:3ba5:a17a:4ba3::/64'
-    gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
-    enable_dhcp = True
-    host_routes = [FakeV6HostRoute]
-    dns_nameservers = ['2001:0200:feed:7ac0::1']
-    ipv6_ra_mode = None
-    ipv6_address_mode = None
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.ip_version = 6
+        self.cidr = 'fdca:3ba5:a17a:4ba3::/64'
+        self.gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.host_routes = [FakeV6HostRoute()]
+        self.dns_nameservers = ['2001:0200:feed:7ac0::1']
+        self.ipv6_ra_mode = None
+        self.ipv6_address_mode = None
 
 
 class FakeV4SubnetNoDHCP(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
-    cidr = '192.168.1.0/24'
-    gateway_ip = '192.168.1.1'
-    enable_dhcp = False
-    host_routes = []
-    dns_nameservers = []
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 4
+        self.cidr = '192.168.1.0/24'
+        self.gateway_ip = '192.168.1.1'
+        self.enable_dhcp = False
+        self.host_routes = []
+        self.dns_nameservers = []
 
 
 class FakeV6SubnetDHCPStateful(Dictable):
-    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    ip_version = 6
-    cidr = 'fdca:3ba5:a17a:4ba3::/64'
-    gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
-    enable_dhcp = True
-    host_routes = [FakeV6HostRoute]
-    dns_nameservers = ['2001:0200:feed:7ac0::1']
-    ipv6_ra_mode = None
-    ipv6_address_mode = constants.DHCPV6_STATEFUL
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.ip_version = 6
+        self.cidr = 'fdca:3ba5:a17a:4ba3::/64'
+        self.gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.host_routes = [FakeV6HostRoute()]
+        self.dns_nameservers = ['2001:0200:feed:7ac0::1']
+        self.ipv6_ra_mode = None
+        self.ipv6_address_mode = constants.DHCPV6_STATEFUL
 
 
 class FakeV6SubnetSlaac(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 6
-    cidr = 'ffda:3ba5:a17a:4ba3::/64'
-    gateway_ip = 'ffda:3ba5:a17a:4ba3::1'
-    enable_dhcp = True
-    host_routes = [FakeV6HostRoute]
-    ipv6_address_mode = constants.IPV6_SLAAC
-    ipv6_ra_mode = None
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 6
+        self.cidr = 'ffda:3ba5:a17a:4ba3::/64'
+        self.gateway_ip = 'ffda:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.host_routes = [FakeV6HostRoute()]
+        self.ipv6_address_mode = constants.IPV6_SLAAC
+        self.ipv6_ra_mode = None
 
 
 class FakeV6SubnetStateless(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 6
-    cidr = 'ffea:3ba5:a17a:4ba3::/64'
-    gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
-    enable_dhcp = True
-    dns_nameservers = []
-    host_routes = []
-    ipv6_address_mode = constants.DHCPV6_STATELESS
-    ipv6_ra_mode = None
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 6
+        self.cidr = 'ffea:3ba5:a17a:4ba3::/64'
+        self.gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.dns_nameservers = []
+        self.host_routes = []
+        self.ipv6_address_mode = constants.DHCPV6_STATELESS
+        self.ipv6_ra_mode = None
 
 
 class FakeV4SubnetNoGateway(FakeV4Subnet):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    cidr = '192.168.1.0/24'
-    gateway_ip = None
-    enable_dhcp = True
-    host_routes = []
-    dns_nameservers = []
+    def __init__(self):
+        super(FakeV4SubnetNoGateway, self).__init__()
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.cidr = '192.168.1.0/24'
+        self.gateway_ip = None
+        self.enable_dhcp = True
+        self.host_routes = []
+        self.dns_nameservers = []
 
 
 class FakeV4SubnetNoRouter(FakeV4Subnet):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    cidr = '192.168.1.0/24'
-    gateway_ip = '192.168.1.1'
-    host_routes = []
-    dns_nameservers = []
+    def __init__(self):
+        super(FakeV4SubnetNoRouter, self).__init__()
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.cidr = '192.168.1.0/24'
+        self.gateway_ip = '192.168.1.1'
+        self.host_routes = []
+        self.dns_nameservers = []
 
 
 class FakeV4Network(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV4NetworkClientId(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(), FakePort5(), FakePort6()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakePort5(), FakePort6()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV6Network(object):
-    id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-    subnets = [FakeV6Subnet()]
-    ports = [FakePort2()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6Subnet()]
+        self.ports = [FakePort2()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetwork(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
-    # ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self, domain='openstacklocal'):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+        self.namespace = 'qdhcp-ns'
         self.ports = [FakePort1(domain=domain), FakeV6Port(domain=domain),
                       FakeDualPort(domain=domain),
                       FakeRouterPort(domain=domain)]
 
 
 class FakeDeviceManagerNetwork(object):
-    # Use instance rather than class attributes here, so that we get
-    # an independent set of ports each time FakeDeviceManagerNetwork()
-    # is used.
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
@@ -535,81 +559,92 @@ class FakeDeviceManagerNetwork(object):
 
 
 class FakeDualNetworkReserved(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
-    ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort(),
-             FakeReservedPort()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+        self.ports = [FakePort1(), FakeV6Port(), FakeDualPort(),
+                      FakeRouterPort(), FakeReservedPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetworkReserved2(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
-    ports = [FakePort1(), FakeV6Port(), FakeDualPort(), FakeRouterPort(),
-             FakeReservedPort(), FakeReservedPort(id='reserved-2')]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+        self.ports = [FakePort1(), FakeV6Port(), FakeDualPort(),
+                      FakeRouterPort(), FakeReservedPort(),
+                      FakeReservedPort(id='reserved-2')]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeNetworkDhcpPort(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(), FakeDhcpPort()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakeDhcpPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetworkGatewayRoute(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4SubnetGatewayRoute(), FakeV6SubnetDHCPStateful()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4SubnetGatewayRoute(), FakeV6SubnetDHCPStateful()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetworkSingleDHCP(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeDualNetworkDualDHCP(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV4Subnet2()]
-    ports = [FakePort1(), FakeRouterPort(), FakeRouterPort2()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV4Subnet2()]
+        self.ports = [FakePort1(), FakeRouterPort(), FakeRouterPort2()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeV4NoGatewayNetwork(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4SubnetNoGateway()]
-    ports = [FakePort1()]
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4SubnetNoGateway()]
+        self.ports = [FakePort1()]
 
 
 class FakeV4NetworkNoRouter(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4SubnetNoRouter()]
-    ports = [FakePort1()]
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4SubnetNoRouter()]
+        self.ports = [FakePort1()]
 
 
 class FakeV4MetadataNetwork(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4MetadataSubnet()]
-    ports = [FakeRouterPort(ip_address='169.254.169.253')]
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4MetadataSubnet()]
+        self.ports = [FakeRouterPort(ip_address='169.254.169.253')]
 
 
 class FakeV4NetworkDistRouter(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(),
-             FakeRouterPort(dev_owner=constants.DEVICE_OWNER_DVR_INTERFACE)]
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(),
+                      FakeRouterPort(
+                          dev_owner=constants.DEVICE_OWNER_DVR_INTERFACE)]
 
 
 class FakeDualV4Pxe3Ports(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self, port_detail="portsSame"):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
         if port_detail == "portsSame":
             self.ports[0].extra_dhcp_opts = [
                 DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.3'),
@@ -639,12 +674,11 @@ class FakeDualV4Pxe3Ports(object):
 
 
 class FakeV4NetworkPxe2Ports(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(), FakePort2(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self, port_detail="portsSame"):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakePort2(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
         if port_detail == "portsSame":
             self.ports[0].extra_dhcp_opts = [
                 DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.3'),
@@ -666,12 +700,11 @@ class FakeV4NetworkPxe2Ports(object):
 
 
 class FakeV4NetworkPxe3Ports(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self, port_detail="portsSame"):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
         if port_detail == "portsSame":
             self.ports[0].extra_dhcp_opts = [
                 DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.3'),
@@ -701,12 +734,11 @@ class FakeV4NetworkPxe3Ports(object):
 
 
 class FakeV6NetworkPxePort(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    subnets = [FakeV6SubnetDHCPStateful()]
-    ports = [FakeV6Port()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV6SubnetDHCPStateful()]
+        self.ports = [FakeV6Port()]
+        self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tftp-server', opt_value='2001:192:168::1',
                     ip_version=6),
@@ -715,12 +747,11 @@ class FakeV6NetworkPxePort(object):
 
 
 class FakeV6NetworkPxePortWrongOptVersion(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    subnets = [FakeV6SubnetDHCPStateful()]
-    ports = [FakeV6Port()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV6SubnetDHCPStateful()]
+        self.ports = [FakeV6Port()]
+        self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.7',
                     ip_version=4),
@@ -729,19 +760,17 @@ class FakeV6NetworkPxePortWrongOptVersion(object):
 
 
 class FakeDualStackNetworkSingleDHCP(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-
-    subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
-    ports = [FakePort1(), FakePort4(), FakeRouterPort()]
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
+        self.ports = [FakePort1(), FakePort4(), FakeRouterPort()]
 
 
 class FakeDualStackNetworkingSingleDHCPTags(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-
-    subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
-    ports = [FakePort1(), FakePort4(), FakeRouterPort()]
-
     def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetSlaac()]
+        self.ports = [FakePort1(), FakePort4(), FakeRouterPort()]
         for port in self.ports:
             port.extra_dhcp_opts = [
                 DhcpOpt(opt_name='tag:ipxe,bootfile-name',
@@ -749,30 +778,29 @@ class FakeDualStackNetworkingSingleDHCPTags(object):
 
 
 class FakeV4NetworkMultipleTags(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
-
     def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tag:ipxe,bootfile-name', opt_value='pxelinux.0')]
 
 
 class FakeV6NetworkStatelessDHCP(object):
-    id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-
-    subnets = [FakeV6SubnetStateless()]
-    ports = [FakeV6PortExtraOpt()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6SubnetStateless()]
+        self.ports = [FakeV6PortExtraOpt()]
+        self.namespace = 'qdhcp-ns'
 
 
 class FakeNetworkWithV6SatelessAndV4DHCPSubnets(object):
-    id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-
-    subnets = [FakeV6SubnetStateless(), FakeV4Subnet()]
-    ports = [FakeDualPortWithV6ExtraOpt(), FakeRouterPort()]
-    namespace = 'qdhcp-ns'
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6SubnetStateless(), FakeV4Subnet()]
+        self.ports = [FakeDualPortWithV6ExtraOpt(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
 
 
 class LocalChild(dhcp.DhcpLocalProcess):
@@ -1333,7 +1361,7 @@ class TestDnsmasq(TestBase):
             'tag:tag0,249,169.254.169.254/32,192.168.1.1\n'
             'tag:tag0,option:router').lstrip()
 
-        ipm_retval = {FakeV4SubnetNoGateway.id: '192.168.1.1'}
+        ipm_retval = {FakeV4SubnetNoGateway().id: '192.168.1.1'}
         self._test_output_opts_file(expected, FakeV4NoGatewayNetwork(),
                                     ipm_retval=ipm_retval)
 
@@ -1345,7 +1373,7 @@ class TestDnsmasq(TestBase):
             '0.0.0.0/0,192.168.1.1\n'
             'tag:tag0,option:router,192.168.1.1').lstrip()
 
-        ipm_retval = {FakeV4SubnetNoRouter.id: '192.168.1.2'}
+        ipm_retval = {FakeV4SubnetNoRouter().id: '192.168.1.2'}
         self._test_output_opts_file(expected, FakeV4NetworkNoRouter(),
                                     ipm_retval=ipm_retval)
 
@@ -1358,7 +1386,7 @@ class TestDnsmasq(TestBase):
             '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
             'tag:tag0,option:router,192.168.0.1').lstrip()
 
-        ipm_retval = {FakeV4Subnet.id: '192.168.0.1'}
+        ipm_retval = {FakeV4Subnet().id: '192.168.0.1'}
         self._test_output_opts_file(expected, FakeV4NetworkDistRouter(),
                                     ipm_retval=ipm_retval)
 
@@ -1780,7 +1808,7 @@ class TestDnsmasq(TestBase):
 
             self.assertEqual(
                 dm._make_subnet_interface_ip_map(),
-                {FakeV4Subnet.id: '192.168.0.1'}
+                {FakeV4Subnet().id: '192.168.0.1'}
             )
 
     def test_remove_config_files(self):
@@ -1852,7 +1880,7 @@ class TestDnsmasq(TestBase):
                          'host-192-168-0-6.openstacklocal.,192.168.0.6,'
                          'set:ccccccccc-cccc-cccc-cccc-ccccccccc\n').lstrip()
 
-        dm = self._get_dnsmasq(FakeV4NetworkClientId)
+        dm = self._get_dnsmasq(FakeV4NetworkClientId())
         dm._output_hosts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name,
                                               exp_host_data)])
@@ -1953,11 +1981,11 @@ class TestDnsmasq(TestBase):
                                                expected_mdt_ip):
         for key, value in config_opts.items():
             self.conf.set_override(key, value)
-        dm = self._get_dnsmasq(FakeNetworkDhcpPort)
+        dm = self._get_dnsmasq(FakeNetworkDhcpPort())
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ipdev_mock:
             list_addr = ipdev_mock.return_value.addr.list
             list_addr.return_value = [{'cidr': alloc.ip_address + '/24'}
-                                      for alloc in FakeDhcpPort.fixed_ips]
+                                      for alloc in FakeDhcpPort().fixed_ips]
             options, idx_map = dm._generate_opts_per_subnet()
 
         contains_metadata_ip = any(['%s/32' % dhcp.METADATA_DEFAULT_IP in line
