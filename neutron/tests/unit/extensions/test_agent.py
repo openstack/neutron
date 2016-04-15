@@ -126,9 +126,6 @@ class AgentDBTestMixIn(object):
     def _register_l3_agent(self, host):
         helpers.register_l3_agent(host)
 
-    def _register_bgp_dragent(self, host):
-        helpers.register_bgp_dragent(host)
-
 
 class AgentDBTestCase(AgentDBTestMixIn,
                       test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
