@@ -22,6 +22,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
@@ -60,8 +63,35 @@ class DistributedVirtualRouterMacAddress(model_base.BASEV2):
     mac_address = sa.Column(sa.String(32), nullable=False, unique=True)
 
 
+def _delete_mac_associated_with_agent(resource, event, trigger, context, agent,
+                                      **kwargs):
+    host = agent['host']
+    plugin = manager.NeutronManager.get_plugin()
+    if [a for a in plugin.get_agents(context, filters={'host': [host]})
+            if a['id'] != agent['id']]:
+        # there are still agents on this host, don't mess with the mac entry
+        # until they are all deleted.
+        return
+    try:
+        with context.session.begin(subtransactions=True):
+            entry = (context.session.query(DistributedVirtualRouterMacAddress).
+                     filter(DistributedVirtualRouterMacAddress.host == host).
+                     one())
+            context.session.delete(entry)
+    except exc.NoResultFound:
+        return
+    # notify remaining agents so they cleanup flows
+    dvr_macs = plugin.get_dvr_mac_address_list(context)
+    plugin.notifier.dvr_mac_address_update(context, dvr_macs)
+
+
 class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     """Mixin class to add dvr mac address to db_plugin_base_v2."""
+
+    def __new__(cls, *args, **kwargs):
+        registry.subscribe(_delete_mac_associated_with_agent,
+                           resources.AGENT, events.BEFORE_DELETE)
+        return super(DVRDbMixin, cls).__new__(cls)
 
     @property
     def plugin(self):
