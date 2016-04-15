@@ -678,6 +678,15 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             )
             self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
+    def test_create_routers_native_quotas(self):
+        tenant_id = _uuid()
+        quota = 1
+        cfg.CONF.set_override('quota_router', quota, group='QUOTAS')
+        res = self._create_router(self.fmt, tenant_id)
+        self.assertEqual(exc.HTTPCreated.code, res.status_int)
+        res = self._create_router(self.fmt, tenant_id)
+        self.assertEqual(exc.HTTPConflict.code, res.status_int)
+
     def test_router_list(self):
         with self.router() as v1, self.router() as v2, self.router() as v3:
             routers = (v1, v2, v3)
@@ -2622,6 +2631,22 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._make_floatingip(self.fmt, network_id,
                                   floating_ip='10.0.0.10',
                                   http_status=exc.HTTPConflict.code)
+
+    def test_create_floatingips_native_quotas(self):
+        quota = 1
+        cfg.CONF.set_override('quota_floatingip', quota, group='QUOTAS')
+        with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            res = self._create_floatingip(
+                self.fmt,
+                public_sub['subnet']['network_id'],
+                subnet_id=public_sub['subnet']['id'])
+            self.assertEqual(exc.HTTPCreated.code, res.status_int)
+            res = self._create_floatingip(
+                self.fmt,
+                public_sub['subnet']['network_id'],
+                subnet_id=public_sub['subnet']['id'])
+            self.assertEqual(exc.HTTPConflict.code, res.status_int)
 
     def test_router_specify_id_backend(self):
         plugin = manager.NeutronManager.get_service_plugins()[
