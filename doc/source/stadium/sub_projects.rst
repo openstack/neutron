@@ -566,6 +566,9 @@ OpenFlow Agent (ofagent)
 * Launchpad: https://launchpad.net/networking-ofagent
 * PyPI: https://pypi.python.org/pypi/networking-ofagent
 
+Note: The networking-ofagent project has been removed in the Newton cycle
+      and the only stable branch is maintained until its EOL.
+
 .. _networking-onos:
 
 Open Network Operating System (onos)

@@ -60,7 +60,7 @@ ovs_opts = [
                        "Note: If you remove a bridge from this "
                        "mapping, make sure to disconnect it from the "
                        "integration bridge as it won't be managed by the "
-                       "agent anymore. Deprecated for ofagent.")),
+                       "agent anymore.")),
     cfg.BoolOpt('use_veth_interconnection', default=False,
                 deprecated_for_removal=True,
                 help=_("Use veths instead of patch ports to interconnect the "
