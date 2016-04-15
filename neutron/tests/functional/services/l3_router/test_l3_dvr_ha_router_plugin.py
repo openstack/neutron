@@ -34,6 +34,10 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             host="standby",
             agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
 
+    def _create_router(self, distributed=True, ha=True):
+        return (super(L3DvrHATestCase, self).
+                _create_router(distributed=distributed, ha=ha))
+
     def test_update_router_db_cvr_to_dvrha(self):
         router = self._create_router(distributed=False, ha=False)
         self.assertRaises(
@@ -290,6 +294,122 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
                 # gateway and should still be scheduled to the snat agent
                 remove_mock.assert_not_called()
                 self._assert_router_is_hosted_on_both_dvr_snat_agents(router)
+
+    def _get_ha_interface_list_for_router(self, router):
+        return self.l3_plugin.get_ha_router_port_bindings(self.context,
+                                                          [router['id']])
+
+    def _delete_router(self, router):
+        self.l3_plugin.delete_router(self.context, router['id'])
+
+    def _check_dvr_ha_interfaces_presence(self, rtr, int_cnt):
+        self.assertEqual(int_cnt,
+                         len(self._get_ha_interface_list_for_router(rtr)))
+
+    def _create_external_network(self):
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        self._make_subnet(
+            self.fmt, ext_net, '2001:db8::1', '2001:db8::/64',
+            ip_version=6, enable_dhcp=True)
+        return ext_net
+
+    def _set_external_gateway(self, router, ext_net):
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'],
+            {'network_id': ext_net['network']['id']})
+
+    def _clear_external_gateway(self, router):
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'], {})
+
+    def _remove_interface_from_router(self, router, subnet):
+        self.l3_plugin.remove_router_interface(
+            self.context, router['id'],
+            {'subnet_id': subnet['subnet']['id']})
+
+    def _check_snat_external_gateway_presence(self, ext_net, router, gw_count):
+        ext_net_id = ext_net['network']['id']
+        gw_port = (self.l3_plugin._core_plugin.
+                   _get_router_gw_ports_by_network(self.context, ext_net_id))
+        self.assertEqual(gw_count, len(gw_port))
+        if gw_count > 1:
+            self.assertEqual(router['id'], gw_port[0]['device_id'])
+
+    def _check_snat_internal_gateways_presence(self, router, subnet, int_cnt):
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router['id']])
+        self.assertEqual(int_cnt, len(snat_router_intfs))
+        if int_cnt > 1:
+            self.assertEqual(subnet['subnet']['id'],
+                             snat_router_intfs.values()[0][0]['fixed_ips'][0][
+                                 'subnet_id'])
+
+    def _check_internal_subnet_interface_presence(self, router, subnet,
+                                                  int_cnt):
+        router_ints = self.l3_plugin._get_sync_interfaces(
+            self.context, [router['id']],
+            device_owners=constants.ROUTER_INTERFACE_OWNERS)
+        self.assertEqual(int_cnt, len(router_ints))
+        if int_cnt > 1:
+            self.assertEqual(subnet['subnet']['id'],
+                             router_ints[0]['fixed_ips'][0]['subnet_id'])
+
+    def _add_internal_subnet_to_router(self, router):
+        int_net = self._make_network(self.fmt, 'int_net', True)
+        int_subnet = self._make_subnet(
+            self.fmt, int_net, '10.1.0.1', '10.1.0.0/24', enable_dhcp=True)
+        self.l3_plugin.add_router_interface(
+            self.context, router['id'],
+            {'subnet_id': int_subnet['subnet']['id']})
+        return int_subnet
+
+    def _create_dvrha_router(self):
+        router = self._create_router(distributed=True, ha=True)
+        self.assertTrue(router['distributed'])
+        self.assertTrue(router['ha'])
+        return router
+
+    def test_dvr_ha_router_create_attach_internal_external_detach_delete(self):
+        """DVRHA Attach internal subnet followed by attach external"""
+
+        # create router
+        router = self._create_dvrha_router()
+        self._check_dvr_ha_interfaces_presence(router, 2)
+
+        # add subnet interface to router
+        int_subnet = self._add_internal_subnet_to_router(router)
+        self._check_internal_subnet_interface_presence(router, int_subnet, 1)
+
+        # set router external gateway
+        ext_net = self._create_external_network()
+        self._set_external_gateway(router, ext_net)
+        self._check_dvr_ha_interfaces_presence(router, 2)
+        self._check_snat_external_gateway_presence(ext_net, router, 1)
+        self._check_internal_subnet_interface_presence(router, int_subnet, 1)
+        self._check_snat_internal_gateways_presence(router, int_subnet, 1)
+
+        # clear router external gateway
+        self._clear_external_gateway(router)
+        self._check_dvr_ha_interfaces_presence(router, 2)
+        self._check_snat_external_gateway_presence(ext_net, router, 0)
+        self._check_internal_subnet_interface_presence(router, int_subnet, 1)
+        self._check_snat_internal_gateways_presence(router, int_subnet, 0)
+
+        # remove subnet interface from router
+        self._remove_interface_from_router(router, int_subnet)
+        self._check_internal_subnet_interface_presence(router, int_subnet, 0)
+
+        # delete router
+        self._delete_router(router)
+        self._check_dvr_ha_interfaces_presence(router, 0)
+
+    def test_get_device_owner_centralized(self):
+        self.skipTest('Valid for DVR-only routers')
 
     def test_update_router_db_centralized_to_distributed(self):
         self.skipTest('Valid for DVR-only routers')

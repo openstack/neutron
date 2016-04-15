@@ -37,6 +37,7 @@ from neutron.db import agents_db
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
+from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3
@@ -432,7 +433,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         router_is_uuid = isinstance(router, six.string_types)
         if router_is_uuid:
             router = self._get_router(context, router)
-        if is_ha_router(router):
+        if is_ha_router(router) and not is_distributed_router(router):
             return constants.DEVICE_OWNER_HA_REPLICATED_INT
         return super(L3_HA_NAT_db_mixin,
                      self)._get_device_owner(context, router)
