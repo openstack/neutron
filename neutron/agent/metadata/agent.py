@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
+from oslo_utils import encodeutils
 import six
 import six.moves.urllib.parse as urlparse
 import webob
@@ -223,10 +224,8 @@ class MetadataProxyHandler(object):
 
     def _sign_instance_id(self, instance_id):
         secret = self.conf.metadata_proxy_shared_secret
-        if isinstance(secret, six.text_type):
-            secret = secret.encode('utf-8')
-        if isinstance(instance_id, six.text_type):
-            instance_id = instance_id.encode('utf-8')
+        secret = encodeutils.to_utf8(secret)
+        instance_id = encodeutils.to_utf8(instance_id)
         return hmac.new(secret, instance_id, hashlib.sha256).hexdigest()
 
 

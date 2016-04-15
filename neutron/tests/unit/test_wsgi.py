@@ -156,7 +156,7 @@ class TestWSGIServer(base.BaseTestCase):
                     ])
 
     def test_app(self):
-        greetings = 'Hello, World!!!'
+        greetings = b'Hello, World!!!'
 
         def hello_world(env, start_response):
             if env['PATH_INFO'] != '/':
@@ -171,7 +171,7 @@ class TestWSGIServer(base.BaseTestCase):
 
         response = open_no_proxy('http://127.0.0.1:%d/' % server.port)
 
-        self.assertEqual(greetings.encode('utf-8'), response.read())
+        self.assertEqual(greetings, response.read())
 
         server.stop()
 

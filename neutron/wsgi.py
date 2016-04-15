@@ -32,6 +32,7 @@ from oslo_service import service as common_service
 from oslo_service import sslutils
 from oslo_service import systemd
 from oslo_service import wsgi
+from oslo_utils import encodeutils
 from oslo_utils import excutils
 import six
 import webob.dec
@@ -69,9 +70,7 @@ def encode_body(body):
 
     WebOb requires to encode unicode body used to update response body.
     """
-    if isinstance(body, six.text_type):
-        return body.encode('utf-8')
-    return body
+    return encodeutils.to_utf8(body)
 
 
 class WorkerService(worker.NeutronWorker):
