@@ -283,3 +283,11 @@ def get_dvr_port_bindings(session, port_id):
     if not bindings:
         LOG.debug("No bindings for DVR port %s", port_id)
     return bindings
+
+
+def is_dhcp_active_on_any_subnet(context, subnet_ids):
+    if not subnet_ids:
+        return False
+    return bool(context.session.query(models_v2.Subnet).
+                enable_eagerloads(False).filter_by(enable_dhcp=True).
+                filter(models_v2.Subnet.id.in_(subnet_ids)).count())

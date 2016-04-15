@@ -77,6 +77,7 @@ Neutron Internals
    openvswitch_firewall
    network_ip_availability
    tag
+   provisioning_blocks
 
 Testing
 -------

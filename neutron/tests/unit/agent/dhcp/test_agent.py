@@ -245,6 +245,9 @@ class TestDhcpAgent(base.BaseTestCase):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
         cfg.CONF.set_override('report_interval', 1, 'AGENT')
+        mock_start_ready = mock.patch.object(
+            dhcp_agent.DhcpAgentWithStateReport, 'start_ready_ports_loop',
+            autospec=True).start()
         with mock.patch.object(dhcp_agent.DhcpAgentWithStateReport,
                                'sync_state',
                                autospec=True) as mock_sync_state:
@@ -267,6 +270,7 @@ class TestDhcpAgent(base.BaseTestCase):
                         agent_mgr.after_start()
                         mock_sync_state.assert_called_once_with(agent_mgr)
                         mock_periodic_resync.assert_called_once_with(agent_mgr)
+                        mock_start_ready.assert_called_once_with(agent_mgr)
                         state_rpc.assert_has_calls(
                             [mock.call(mock.ANY),
                              mock.call().report_state(mock.ANY, mock.ANY,
@@ -291,11 +295,13 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             attrs_to_mock = dict(
                 [(a, mock.DEFAULT) for a in
-                 ['sync_state', 'periodic_resync']])
+                 ['sync_state', 'periodic_resync',
+                  'start_ready_ports_loop']])
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
                 dhcp.run()
                 mocks['sync_state'].assert_called_once_with()
                 mocks['periodic_resync'].assert_called_once_with()
+                mocks['start_ready_ports_loop'].assert_called_once_with()
 
     def test_call_driver(self):
         network = mock.Mock()
@@ -364,12 +370,14 @@ class TestDhcpAgent(base.BaseTestCase):
 
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
                 mocks['cache'].get_network_ids.return_value = known_net_ids
+                mocks['cache'].get_port_ids.return_value = range(4)
                 dhcp.sync_state()
 
                 diff = set(known_net_ids) - set(active_net_ids)
                 exp_disable = [mock.call(net_id) for net_id in diff]
                 mocks['cache'].assert_has_calls([mock.call.get_network_ids()])
                 mocks['disable_dhcp_helper'].assert_has_calls(exp_disable)
+                self.assertEqual(set(range(4)), dhcp.dhcp_ready_ports)
 
     def test_sync_state_initial(self):
         self._test_sync_state_helper([], ['a'])
@@ -423,6 +431,55 @@ class TestDhcpAgent(base.BaseTestCase):
         with mock.patch.object(dhcp_agent.eventlet, 'spawn') as spawn:
             dhcp.periodic_resync()
             spawn.assert_called_once_with(dhcp._periodic_resync_helper)
+
+    def test_start_ready_ports_loop(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp_agent.eventlet, 'spawn') as spawn:
+            dhcp.start_ready_ports_loop()
+            spawn.assert_called_once_with(dhcp._dhcp_ready_ports_loop)
+
+    def test__dhcp_ready_ports_doesnt_log_exception_on_timeout(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        dhcp.dhcp_ready_ports = set(range(4))
+
+        with mock.patch.object(dhcp.plugin_rpc, 'dhcp_ready_on_ports',
+                               side_effect=oslo_messaging.MessagingTimeout):
+            # exit after 2 iterations
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[0, 0, RuntimeError]):
+                with mock.patch.object(dhcp_agent.LOG, 'exception') as lex:
+                    with testtools.ExpectedException(RuntimeError):
+                        dhcp._dhcp_ready_ports_loop()
+        self.assertFalse(lex.called)
+
+    def test__dhcp_ready_ports_disables_on_incompatible_server(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        dhcp.agent_state = dict(configurations=dict(notifies_port_ready=True))
+        dhcp.dhcp_ready_ports = set(range(4))
+
+        side_effect = oslo_messaging.RemoteError(exc_type='NoSuchMethod')
+        with mock.patch.object(dhcp.plugin_rpc, 'dhcp_ready_on_ports',
+                               side_effect=side_effect):
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[None, RuntimeError]) as sleep:
+                with testtools.ExpectedException(RuntimeError):
+                    dhcp._dhcp_ready_ports_loop()
+                # should have slept for 5 minutes
+                sleep.assert_called_with(300)
+
+    def test__dhcp_ready_ports_loop(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        dhcp.dhcp_ready_ports = set(range(4))
+
+        with mock.patch.object(dhcp.plugin_rpc, 'dhcp_ready_on_ports',
+                               side_effect=[RuntimeError, 0]) as ready:
+            # exit after 2 iterations
+            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
+                                   side_effect=[0, 0, RuntimeError]):
+                with testtools.ExpectedException(RuntimeError):
+                    dhcp._dhcp_ready_ports_loop()
+        # should have been called with all ports again after the failure
+        ready.assert_has_calls([mock.call(set(range(4)))] * 2)
 
     def test_report_state_revival_logic(self):
         dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
@@ -1136,6 +1193,18 @@ class TestNetworkCache(base.BaseTestCase):
 
         self.assertEqual(nc.get_network_by_port_id(fake_port1.id),
                          fake_network)
+
+    def test_get_port_ids(self):
+        fake_net = dhcp.NetModel(
+            dict(id='12345678-1234-5678-1234567890ab',
+                 tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 subnets=[fake_subnet1],
+                 ports=[fake_port1]))
+        nc = dhcp_agent.NetworkCache()
+        nc.put(fake_net)
+        nc.put_port(fake_port2)
+        self.assertEqual(set([fake_port1['id'], fake_port2['id']]),
+                         set(nc.get_port_ids()))
 
     def test_put_port(self):
         fake_net = dhcp.NetModel(

@@ -19,6 +19,9 @@ from oslo_log import log
 import six
 
 from neutron._i18n import _LW
+from neutron.callbacks import resources
+from neutron.common import constants
+from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
@@ -52,6 +55,32 @@ class AgentMechanismDriverBase(api.MechanismDriver):
 
     def initialize(self):
         pass
+
+    def create_port_precommit(self, context):
+        self._insert_provisioning_block(context)
+
+    def update_port_precommit(self, context):
+        if context.host == context.original_host:
+            return
+        self._insert_provisioning_block(context)
+
+    def _insert_provisioning_block(self, context):
+        # we insert a status barrier to prevent the port from transitioning
+        # to active until the agent reports back that the wiring is done
+        port = context.current
+        if not context.host or port['status'] == constants.PORT_STATUS_ACTIVE:
+            # no point in putting in a block if the status is already ACTIVE
+            return
+        vnic_type = context.current.get(portbindings.VNIC_TYPE,
+                                        portbindings.VNIC_NORMAL)
+        if vnic_type not in self.supported_vnic_types:
+            # we check the VNIC type because there could be multiple agents
+            # on a single host with different VNIC types
+            return
+        if context.host_agents(self.agent_type):
+            provisioning_blocks.add_provisioning_component(
+                context._plugin_context, port['id'], resources.PORT,
+                provisioning_blocks.L2_AGENT_ENTITY)
 
     def bind_port(self, context):
         LOG.debug("Attempting to bind port %(port)s on "
