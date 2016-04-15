@@ -3,7 +3,6 @@
 set -xe
 
 NEUTRON_DIR="$BASE/new/neutron"
-TEMPEST_DIR="$BASE/new/tempest"
 SCRIPTS_DIR="/usr/os-testr-env/bin/"
 
 venv=${1:-"dsvm-functional"}
@@ -39,34 +38,24 @@ function generate_testr_results {
     fi
 }
 
-if [ "$venv" == "api-pecan" ]; then
-    # api-pecan is the same as the regular api job
-    venv='api'
-fi
-
 if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
 then
     owner=stack
     sudo_env=
     log_dir="/tmp/${venv}-logs"
-elif [ "$venv" == "api" ]
-then
-    owner=tempest
-    # Configure the api tests to use the tempest.conf set by devstack.
-    sudo_env="TEMPEST_CONFIG_DIR=$TEMPEST_DIR/etc"
+
+    # Set owner permissions according to job's requirements.
+    cd $NEUTRON_DIR
+    sudo chown -R $owner:stack $NEUTRON_DIR
+
+    # Run tests
+    echo "Running neutron $venv test suite"
+    set +e
+    sudo -H -u $owner $sudo_env tox -e $venv
+    testr_exit_code=$?
+    set -e
+
+    # Collect and parse results
+    generate_testr_results
+    exit $testr_exit_code
 fi
-
-# Set owner permissions according to job's requirements.
-cd $NEUTRON_DIR
-sudo chown -R $owner:stack $NEUTRON_DIR
-
-# Run tests
-echo "Running neutron $venv test suite"
-set +e
-sudo -H -u $owner $sudo_env tox -e $venv
-testr_exit_code=$?
-set -e
-
-# Collect and parse results
-generate_testr_results
-exit $testr_exit_code

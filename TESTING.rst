@@ -297,10 +297,10 @@ be made about implementation. Only the contract defined by Neutron's REST API
 should be validated, and all interaction with the daemon should be via
 a REST client.
 
-neutron/tests/tempest/api was copied from the Tempest project. At the time, there was
-an overlap of tests between the Tempest and Neutron repositories. This overlap
-was then eliminated by carving out a subset of resources that belong to
-Tempest, with the rest in Neutron.
+The neutron/tests/tempest/api directory was copied from the Tempest project around
+the Kilo timeframe. At the time, there was an overlap of tests between the Tempest
+and Neutron repositories. This overlap was then eliminated by carving out a subset
+of resources that belong to Tempest, with the rest in Neutron.
 
 API tests that belong to Tempest deal with a subset of Neutron's resources:
 
@@ -514,22 +514,15 @@ API Tests
 +++++++++
 
 To run the api tests, deploy Tempest and Neutron with DevStack and
-then run the following command: ::
+then run the following command, from the tempest directory: ::
 
-    tox -e api
+    tox -e all-plugin
 
-If tempest.conf cannot be found at the default location used by
-DevStack (/opt/stack/tempest/etc) it may be necessary to set
-TEMPEST_CONFIG_DIR before invoking tox: ::
+If you want to limit the amount of tests that you would like to run, you
+can do, for instance: ::
 
-    export TEMPEST_CONFIG_DIR=[path to dir containing tempest.conf]
-    tox -e api
-
-You may also utilize Neutron's Tempest plugin by going to the Tempest directory
-and executing:
-
-tox -e all-plugin neutron
-
+    export DEVSTACK_GATE_TEMPEST_REGEX="<you-regex>" # e.g. "neutron"
+    tox -e all-plugin $DEVSTACK_GATE_TEMPEST_REGEX
 
 Running Individual Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~
