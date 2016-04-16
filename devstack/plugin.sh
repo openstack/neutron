@@ -6,6 +6,9 @@ source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/ml2
 source $LIBDIR/qos
+source $LIBDIR/ovs
+
+Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
 if [[ "$1" == "stack" ]]; then
     case "$2" in
@@ -18,6 +21,12 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled q-bgp; then
                 configure_bgp
+            fi
+            if [[ "$Q_AGENT" == "openvswitch" ]] && \
+               [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
+                remove_ovs_packages
+                compile_ovs True /usr /var
+                start_new_ovs
             fi
             ;;
         post-config)
