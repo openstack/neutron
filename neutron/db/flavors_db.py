@@ -14,8 +14,6 @@
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_utils import uuidutils
-from sqlalchemy.orm import exc as sa_exc
 
 from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
@@ -24,6 +22,8 @@ from neutron.db import common_db_mixin
 from neutron.db.models import flavor as flavor_models
 from neutron.db import servicetype_db as sdb
 from neutron.extensions import flavors as ext_flavors
+from neutron.objects import base as base_obj
+from neutron.objects import flavor as obj_flavor
 
 _deprecate._moved_global('Flavor', new_module=flavor_models)
 _deprecate._moved_global('ServiceProfile', new_module=flavor_models)
@@ -39,41 +39,37 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     """Class to support flavors and service profiles."""
 
     def _get_flavor(self, context, flavor_id):
-        try:
-            return self._get_by_id(context, flavor_models.Flavor, flavor_id)
-        except sa_exc.NoResultFound:
+        flavor = obj_flavor.Flavor.get_object(context, id=flavor_id)
+        if not flavor:
             raise ext_flavors.FlavorNotFound(flavor_id=flavor_id)
+        return flavor
 
     def _get_service_profile(self, context, sp_id):
-        try:
-            return self._get_by_id(
-                context, flavor_models.ServiceProfile, sp_id)
-        except sa_exc.NoResultFound:
+        service_profile = obj_flavor.ServiceProfile.get_object(
+            context, id=sp_id)
+        if not service_profile:
             raise ext_flavors.ServiceProfileNotFound(sp_id=sp_id)
+        return service_profile
 
     @staticmethod
-    def _make_flavor_dict(flavor_db, fields=None):
-        res = {'id': flavor_db['id'],
-               'name': flavor_db['name'],
-               'description': flavor_db['description'],
-               'service_type': flavor_db['service_type'],
-               'enabled': flavor_db['enabled'],
-               'service_profiles': []}
-        if flavor_db.service_profiles:
-            res['service_profiles'] = [sp['service_profile_id']
-                                       for sp in flavor_db.service_profiles]
+    def _make_flavor_dict(flavor_obj, fields=None):
+        res = {'id': flavor_obj['id'],
+               'name': flavor_obj['name'],
+               'description': flavor_obj['description'],
+               'service_type': flavor_obj['service_type'],
+               'enabled': flavor_obj['enabled'],
+               'service_profiles': list(flavor_obj['service_profile_ids'])}
+
         return db_utils.resource_fields(res, fields)
 
     @staticmethod
-    def _make_service_profile_dict(sp_db, fields=None):
-        res = {'id': sp_db['id'],
-               'description': sp_db['description'],
-               'driver': sp_db['driver'],
-               'enabled': sp_db['enabled'],
-               'metainfo': sp_db['metainfo']}
-        if sp_db.flavors:
-            res['flavors'] = [fl['flavor_id']
-                              for fl in sp_db.flavors]
+    def _make_service_profile_dict(sp_obj, fields=None):
+        res = {'id': sp_obj['id'],
+               'description': sp_obj['description'],
+               'driver': sp_obj['driver'],
+               'enabled': sp_obj['enabled'],
+               'metainfo': sp_obj['metainfo'],
+               'flavors': list(sp_obj['flavor_ids'])}
         return db_utils.resource_fields(res, fields)
 
     def _ensure_flavor_not_in_use(self, context, flavor_id):
@@ -89,9 +85,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def _ensure_service_profile_not_in_use(self, context, sp_id):
         """Ensures no current bindings to flavors exist."""
-        fl = (context.session.query(flavor_models.FlavorServiceProfileBinding).
-              filter_by(service_profile_id=sp_id).first())
-        if fl:
+        if obj_flavor.FlavorServiceProfileBinding.objects_exist(
+                context, service_profile_id=sp_id):
             raise ext_flavors.ServiceProfileInUse(sp_id=sp_id)
 
     def _validate_driver(self, context, driver):
@@ -106,22 +101,19 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def create_flavor(self, context, flavor):
         fl = flavor['flavor']
-        with db_api.context_manager.writer.using(context):
-            fl_db = flavor_models.Flavor(id=uuidutils.generate_uuid(),
-                                         name=fl['name'],
-                                         description=fl['description'],
-                                         service_type=fl['service_type'],
-                                         enabled=fl['enabled'])
-            context.session.add(fl_db)
-            return self._make_flavor_dict(fl_db)
+        obj = obj_flavor.Flavor(
+            context, name=fl['name'], description=fl['description'],
+            service_type=fl['service_type'], enabled=fl['enabled'])
+        obj.create()
+        return self._make_flavor_dict(obj)
 
     def update_flavor(self, context, flavor_id, flavor):
-        fl = flavor['flavor']
         with db_api.context_manager.writer.using(context):
             self._ensure_flavor_not_in_use(context, flavor_id)
-            fl_db = self._get_flavor(context, flavor_id)
-            fl_db.update(fl)
-            return self._make_flavor_dict(fl_db)
+            fl_obj = self._get_flavor(context, flavor_id)
+            fl_obj.update_fields(flavor['flavor'])
+            fl_obj.update()
+            return self._make_flavor_dict(fl_obj)
 
     def get_flavor(self, context, flavor_id, fields=None):
         fl = self._get_flavor(context, flavor_id)
@@ -135,65 +127,49 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         try:
             with db_api.context_manager.writer.using(context):
                 self._ensure_flavor_not_in_use(context, flavor_id)
-                fl_db = self._get_flavor(context, flavor_id)
-                context.session.delete(fl_db)
+                self._get_flavor(context, flavor_id).delete()
         except db_exc.DBReferenceError:
             raise ext_flavors.FlavorInUse(flavor_id=flavor_id)
 
     def get_flavors(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
-        return self._get_collection(context, flavor_models.Flavor,
-                                    self._make_flavor_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts, limit=limit,
-                                    marker_obj=marker,
-                                    page_reverse=page_reverse)
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        filters = filters or {}
+        flavor_objs = obj_flavor.Flavor.get_objects(context, _pager=pager,
+                                                    **filters)
+        return [self._make_flavor_dict(flavor_object, fields)
+                for flavor_object in flavor_objs]
 
     def create_flavor_service_profile(self, context,
                                       service_profile, flavor_id):
         sp = service_profile['service_profile']
         with db_api.context_manager.writer.using(context):
-            bind_qry = context.session.query(
-                flavor_models.FlavorServiceProfileBinding)
-            binding = bind_qry.filter_by(service_profile_id=sp['id'],
-                                         flavor_id=flavor_id).first()
-            if binding:
+            if obj_flavor.FlavorServiceProfileBinding.objects_exist(
+                    context, service_profile_id=sp['id'], flavor_id=flavor_id):
                 raise ext_flavors.FlavorServiceProfileBindingExists(
                     sp_id=sp['id'], fl_id=flavor_id)
-            binding = flavor_models.FlavorServiceProfileBinding(
-                service_profile_id=sp['id'],
-                flavor_id=flavor_id)
-            context.session.add(binding)
-        fl_db = self._get_flavor(context, flavor_id)
-        return self._make_flavor_dict(fl_db)
+            obj_flavor.FlavorServiceProfileBinding(
+                context, service_profile_id=sp['id'],
+                flavor_id=flavor_id).create()
+        fl_obj = self._get_flavor(context, flavor_id)
+        return self._make_flavor_dict(fl_obj)
 
     def delete_flavor_service_profile(self, context,
                                       service_profile_id, flavor_id):
-        with db_api.context_manager.writer.using(context):
-            binding = (
-                context.session.query(
-                    flavor_models.FlavorServiceProfileBinding).
-                filter_by(service_profile_id=service_profile_id,
-                          flavor_id=flavor_id).
-                first())
-            if not binding:
-                raise ext_flavors.FlavorServiceProfileBindingNotFound(
-                    sp_id=service_profile_id, fl_id=flavor_id)
-            context.session.delete(binding)
+        if (obj_flavor.FlavorServiceProfileBinding.delete_objects(
+                context, service_profile_id=service_profile_id,
+                flavor_id=flavor_id) == 0):
+            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+                sp_id=service_profile_id, fl_id=flavor_id)
 
     @staticmethod
     def get_flavor_service_profile(context,
                                    service_profile_id, flavor_id, fields=None):
-        with db_api.context_manager.reader.using(context):
-            binding = (
-                context.session.query(
-                    flavor_models.FlavorServiceProfileBinding).
-                filter_by(service_profile_id=service_profile_id,
-                          flavor_id=flavor_id).
-                first())
-            if not binding:
-                raise ext_flavors.FlavorServiceProfileBindingNotFound(
-                    sp_id=service_profile_id, fl_id=flavor_id)
+        if not obj_flavor.FlavorServiceProfileBinding.objects_exist(
+                context, service_profile_id=service_profile_id,
+                flavor_id=flavor_id):
+            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+                sp_id=service_profile_id, fl_id=flavor_id)
         res = {'service_profile_id': service_profile_id,
                'flavor_id': flavor_id}
         return db_utils.resource_fields(res, fields)
@@ -207,14 +183,11 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             if not sp['metainfo']:
                 raise ext_flavors.ServiceProfileEmpty()
 
-        with db_api.context_manager.writer.using(context):
-            sp_db = flavor_models.ServiceProfile(id=uuidutils.generate_uuid(),
-                                                 description=sp['description'],
-                                                 driver=sp['driver'],
-                                                 enabled=sp['enabled'],
-                                                 metainfo=sp['metainfo'])
-            context.session.add(sp_db)
-            return self._make_service_profile_dict(sp_db)
+        obj = obj_flavor.ServiceProfile(
+            context, description=sp['description'], driver=sp['driver'],
+            enabled=sp['enabled'], metainfo=sp['metainfo'])
+        obj.create()
+        return self._make_service_profile_dict(obj)
 
     def update_service_profile(self, context,
                                service_profile_id, service_profile):
@@ -226,9 +199,10 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         with db_api.context_manager.writer.using(context):
             self._ensure_service_profile_not_in_use(context,
                                                     service_profile_id)
-            sp_db = self._get_service_profile(context, service_profile_id)
-            sp_db.update(sp)
-            return self._make_service_profile_dict(sp_db)
+            sp_obj = self._get_service_profile(context, service_profile_id)
+            sp_obj.update_fields(sp)
+            sp_obj.update()
+            return self._make_service_profile_dict(sp_obj)
 
     def get_service_profile(self, context, sp_id, fields=None):
         sp_db = self._get_service_profile(context, sp_id)
@@ -237,18 +211,17 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def delete_service_profile(self, context, sp_id):
         with db_api.context_manager.writer.using(context):
             self._ensure_service_profile_not_in_use(context, sp_id)
-            sp_db = self._get_service_profile(context, sp_id)
-            context.session.delete(sp_db)
+            self._get_service_profile(context, sp_id).delete()
 
     def get_service_profiles(self, context, filters=None, fields=None,
                              sorts=None, limit=None, marker=None,
                              page_reverse=False):
-        return self._get_collection(context, flavor_models.ServiceProfile,
-                                    self._make_service_profile_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts, limit=limit,
-                                    marker_obj=marker,
-                                    page_reverse=page_reverse)
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        filters = filters or {}
+        sp_objs = obj_flavor.ServiceProfile.get_objects(context, _pager=pager,
+                                                        **filters)
+        return [self._make_service_profile_dict(sp_obj, fields)
+                for sp_obj in sp_objs]
 
     def get_flavor_next_provider(self, context, flavor_id,
                                  filters=None, fields=None,
@@ -256,35 +229,32 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                                  marker=None, page_reverse=False):
         """From flavor, choose service profile and find provider for driver."""
 
-        with db_api.context_manager.reader.using(context):
-            bind_qry = context.session.query(
-                flavor_models.FlavorServiceProfileBinding)
-            binding = bind_qry.filter_by(flavor_id=flavor_id).first()
-            if not binding:
-                raise ext_flavors.FlavorServiceProfileBindingNotFound(
-                    sp_id='', fl_id=flavor_id)
-
+        objs = obj_flavor.FlavorServiceProfileBinding.get_objects(context,
+            flavor_id=flavor_id)
+        if not objs:
+            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+                sp_id='', fl_id=flavor_id)
         # Get the service profile from the first binding
         # TODO(jwarendt) Should become a scheduling framework instead
-        sp_db = self._get_service_profile(context,
-                                          binding['service_profile_id'])
+        sp_obj = self._get_service_profile(context, objs[0].service_profile_id)
 
-        if not sp_db.enabled:
+        if not sp_obj.enabled:
             raise ext_flavors.ServiceProfileDisabled()
 
-        LOG.debug("Found driver %s.", sp_db.driver)
+        LOG.debug("Found driver %s.", sp_obj.driver)
 
         service_type_manager = sdb.ServiceTypeManager.get_instance()
         providers = service_type_manager.get_service_providers(
             context,
-            filters={'driver': sp_db.driver})
+            filters={'driver': sp_obj.driver})
 
         if not providers:
-            raise ext_flavors.ServiceProfileDriverNotFound(driver=sp_db.driver)
+            raise ext_flavors.ServiceProfileDriverNotFound(
+                driver=sp_obj.driver)
 
         LOG.debug("Found providers %s.", providers)
 
-        res = {'driver': sp_db.driver,
+        res = {'driver': sp_obj.driver,
                'provider': providers[0].get('name')}
 
         return [db_utils.resource_fields(res, fields)]

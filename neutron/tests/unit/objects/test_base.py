@@ -40,6 +40,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import exceptions as o_exc
+from neutron.objects import flavor
 from neutron.objects import network as net_obj
 from neutron.objects import ports
 from neutron.objects import rbac_db
@@ -1334,6 +1335,18 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self.assertIsNotNone(retrieved_obj.standard_attr_id)
         self.assertEqual(
             model.standard_attr_id, retrieved_obj.standard_attr_id)
+
+    def _create_test_flavor(self):
+        attrs = self.get_random_object_fields(obj_cls=flavor.Flavor)
+        self._flavor = flavor.Flavor(self.context, **attrs)
+        self._flavor.create()
+        return self._flavor
+
+    def _create_test_service_profile(self):
+        attrs = self.get_random_object_fields(obj_cls=flavor.ServiceProfile)
+        self._service_profile = flavor.ServiceProfile(self.context, **attrs)
+        self._service_profile.create()
+        return self._service_profile
 
     def _make_object(self, fields):
         fields = get_non_synthetic_fields(self._test_class, fields)
