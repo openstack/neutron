@@ -357,6 +357,11 @@ class OVSConnectionTester(ConnectionTester):
 
     def set_tag(self, port_name, tag):
         self.bridge.set_db_attribute('Port', port_name, 'tag', tag)
+        other_config = self.bridge.db_get_val(
+            'Port', port_name, 'other_config')
+        other_config['tag'] = tag
+        self.bridge.set_db_attribute(
+            'Port', port_name, 'other_config', other_config)
 
     def set_vm_tag(self, tag):
         self.set_tag(self._vm.port.name, tag)

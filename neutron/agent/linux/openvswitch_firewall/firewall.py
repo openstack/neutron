@@ -16,7 +16,7 @@
 import netaddr
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _, _LE, _LW
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import rules
@@ -245,9 +245,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 raise OVSFWPortNotFound(port_id=port_id)
 
             try:
-                port_vlan_id = int(self.int_br.br.db_get_val(
-                    'Port', ovs_port.port_name, 'tag'))
-            except TypeError:
+                other_config = self.int_br.br.db_get_val(
+                    'Port', ovs_port.port_name, 'other_config')
+                port_vlan_id = int(other_config['tag'])
+            except (KeyError, TypeError):
+                LOG.warning(_LW("Can't get tag for port %(port_id)s from its "
+                                "other_config: %(other_config)s"),
+                            port_id=port_id,
+                            other_config=other_config)
                 port_vlan_id = ovs_consts.DEAD_VLAN_TAG
             of_port = OFPort(port, ovs_port, port_vlan_id)
             self.sg_port_map.create_port(of_port, port)
