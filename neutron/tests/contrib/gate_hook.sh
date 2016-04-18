@@ -57,21 +57,13 @@ then
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
 
-elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
+elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" -o "$VENV" == "dsvm-scenario" ]
 then
     load_rc_hook api_extensions
     if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
     then
         load_conf_hook pecan
     fi
-    load_rc_hook qos
-    load_rc_hook bgp
-
-    $BASE/new/devstack-gate/devstack-vm-gate.sh
-elif [ "$VENV" == "dsvm-plus" ]
-then
-    # TODO(armax): this branch needs to be revised, in light
-    # to the latest refactoring of the api job.
     load_rc_hook qos
     load_rc_hook bgp
 
