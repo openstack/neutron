@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
@@ -1088,7 +1089,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     def create_port(self, context, port):
-        result, mech_context = self._create_port_db(context, port)
+        # TODO(kevinbenton): remove when bug/1543094 is fixed.
+        with lockutils.lock(port['port']['network_id'],
+                            lock_file_prefix='neutron-create-port',
+                            external=True):
+            result, mech_context = self._create_port_db(context, port)
         # notify any plugin that is interested in port create events
         kwargs = {'context': context, 'port': result}
         registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
