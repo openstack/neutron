@@ -135,7 +135,11 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _process_metering_label_rules(self, rm, rules, label_chain,
                                       rules_chain):
         im = rm.iptables_manager
-        ext_dev = self.get_external_device_name(rm.router['gw_port_id'])
+        ex_gw_port = rm.router.get('gw_port_id')
+        if not ex_gw_port:
+            return
+
+        ext_dev = self.get_external_device_name(ex_gw_port)
         if not ext_dev:
             return
 
