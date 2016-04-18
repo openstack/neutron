@@ -1181,50 +1181,60 @@ class TestNetworkCache(base.BaseTestCase):
 
 
 class FakePort1(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
 
 
 class FakeV4Subnet(object):
-    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-    ip_version = 4
-    cidr = '192.168.0.0/24'
-    gateway_ip = '192.168.0.1'
-    enable_dhcp = True
+    def __init__(self):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.ip_version = 4
+        self.cidr = '192.168.0.0/24'
+        self.gateway_ip = '192.168.0.1'
+        self.enable_dhcp = True
 
 
 class FakeV4SubnetOutsideGateway(FakeV4Subnet):
-    gateway_ip = '192.168.1.1'
+    def __init__(self):
+        super(FakeV4SubnetOutsideGateway, self).__init__()
+        self.gateway_ip = '192.168.1.1'
 
 
 class FakeV4SubnetNoGateway(object):
-    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    ip_version = 4
-    cidr = '192.168.1.0/24'
-    gateway_ip = None
-    enable_dhcp = True
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 4
+        self.cidr = '192.168.1.0/24'
+        self.gateway_ip = None
+        self.enable_dhcp = True
 
 
 class FakeV4Network(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    subnets = [FakeV4Subnet()]
-    ports = [FakePort1()]
-    namespace = 'qdhcp-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1()]
+        self.namespace = 'qdhcp-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 
 
 class FakeV4NetworkOutsideGateway(FakeV4Network):
-    subnets = [FakeV4SubnetOutsideGateway()]
+    def __init__(self):
+        super(FakeV4NetworkOutsideGateway, self).__init__()
+        self.subnets = [FakeV4SubnetOutsideGateway()]
 
 
 class FakeV4NetworkNoSubnet(object):
-    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-    subnets = []
-    ports = []
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = []
+        self.ports = []
 
 
 class FakeV4NetworkNoGateway(object):
-    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    subnets = [FakeV4SubnetNoGateway()]
-    ports = [FakePort1()]
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4SubnetNoGateway()]
+        self.ports = [FakePort1()]
 
 
 class TestDeviceManager(base.BaseTestCase):
