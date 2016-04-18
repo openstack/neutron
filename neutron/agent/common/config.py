@@ -84,7 +84,6 @@ AVAILABILITY_ZONE_OPTS = [
 
 EXT_NET_BRIDGE_OPTS = [
     cfg.StrOpt('external_network_bridge', default='br-ex',
-               deprecated_for_removal=True,
                help=_("Name of bridge used for external network "
                       "traffic. This should be set to an empty value for the "
                       "Linux Bridge. When this parameter is set, each L3 "
