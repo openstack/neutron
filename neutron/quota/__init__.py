@@ -64,7 +64,7 @@ quota_opts = [
                help=_('Default driver to use for quota checks')),
     cfg.BoolOpt('track_quota_usage',
                 default=True,
-                help=_('Keep in track in the database of current resource'
+                help=_('Keep in track in the database of current resource '
                        'quota usage. Plugins which do not leverage the '
                        'neutron database should set this flag to False')),
 ]
