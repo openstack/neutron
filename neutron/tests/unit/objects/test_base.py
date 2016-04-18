@@ -350,11 +350,14 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         for db_obj in db_objs:
             for field in self._test_class.synthetic_fields:
                 if self._test_class.is_object_field(field):
+                    obj_class = obj_base.VersionedObjectRegistry.obj_classes(
+                                    ).get(self._test_class.fields[
+                                        field].objname)[0]
                     mock_calls.append(
                         mock.call(
-                            self.context, FakeSmallNeutronObject.db_model,
-                            **{FakeSmallNeutronObject.primary_keys[0]: db_obj[
-                                self._test_class.primary_keys[0]]}))
+                            self.context, obj_class.db_model,
+                            **{k: db_obj[v]
+                            for k, v in obj_class.foreign_keys.items()}))
         return mock_calls
 
     def test_get_objects(self):
@@ -481,7 +484,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                return_value=fields_to_update):
             with mock.patch.object(obj_db_api, 'get_objects',
                 side_effect=self.fake_get_objects):
-                obj = self._test_class(self.context, **self.db_obj)
+                obj = self._test_class(self.context, **self.obj_fields[0])
                 # get new values and fix keys
                 update_mock.return_value = self.db_objs[1].copy()
                 for key, value in obj._get_composite_keys().items():
@@ -501,7 +504,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             'fields_no_update',
             new_callable=mock.PropertyMock(return_value=['a', 'c']),
             create=True):
-            obj = self._test_class(self.context, **self.db_obj)
+            obj = self._test_class(self.context, **self.obj_fields[0])
             self.assertRaises(base.NeutronObjectUpdateForbidden, obj.update)
 
     def test_update_updates_from_db_object(self):
@@ -542,7 +545,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self.assertTrue(observed_obj.obj_reset_changes.called)
 
     def test_update_primary_key_forbidden_fail(self):
-        obj = self._test_class(self.context, **self.db_obj)
+        obj = self._test_class(self.context, **self.obj_fields[0])
         obj.obj_reset_changes()
 
         if not self._test_class.primary_keys:
@@ -550,7 +553,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 'All non-updatable fields found in test class %r '
                 'are primary keys' % self._test_class)
 
-        for key, val in self.db_obj.items():
+        for key, val in self.obj_fields[0].items():
             if key in self._test_class.primary_keys:
                 setattr(obj, key, val)
 
@@ -568,7 +571,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 'No object fields found in test class %r' % cls_)
 
         for field in object_fields:
-            obj = cls_(self.context, **self.db_obj)
+            obj = cls_(self.context, **self.obj_fields[0])
             objclasses = obj_base.VersionedObjectRegistry.obj_classes(
             ).get(cls_.fields[field].objname)
             if not objclasses:
