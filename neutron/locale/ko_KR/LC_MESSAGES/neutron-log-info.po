@@ -1,25 +1,18 @@
-# Translations template for neutron.
-# Copyright (C) 2015 ORGANIZATION
-# This file is distributed under the same license as the neutron project.
-#
-# Translators:
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
+# Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:07+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 01:48+0000\n"
+"PO-Revision-Date: 2016-04-08 12:21+0000\n"
 "Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
-"Language: ko-KR\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.3\n"
 "Language-Team: Korean (South Korea)\n"
+"Language: ko-KR\n"
+"X-Generator: Zanata 3.7.3\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 
 #, python-format
 msgid "%(action)s failed (client error): %(exc)s"
@@ -59,7 +52,7 @@ msgstr "%d 프로브가 발견됨"
 
 #, python-format
 msgid "%s Agent RPC Daemon Started!"
-msgstr "%s 에이전트 RPC 디먼이 시작되었습니다!"
+msgstr "%s 에이전트 RPC 데몬이 시작되었습니다!"
 
 #, python-format
 msgid "%s Agent has just been revived. Doing a full sync."
@@ -67,7 +60,7 @@ msgstr "%s 에이전트가 다시 활성화되었습니다. 전체 동기화를 
 
 #, python-format
 msgid "%s Agent out of sync with plugin!"
-msgstr "%s 이전트가 플러그인과 동기화되지 않았습니다!"
+msgstr "%s 에이전트가 플러그인과 동기화되지 않았습니다!"
 
 #, python-format
 msgid ""
@@ -115,7 +108,7 @@ msgid "Agent caught SIGHUP, resetting."
 msgstr "에이전트에서 SIGHUP을 발견하여, 재설정합니다."
 
 msgid "Agent caught SIGTERM, quitting daemon loop."
-msgstr "에이전트에서 SIGTERM을 발견하여 디먼 루프를 중단합니다."
+msgstr "에이전트에서 SIGTERM을 발견하여 데몬 루프를 중단합니다."
 
 msgid "Agent has just been revived. Doing a full sync."
 msgstr "에이전트가 다시 활성화되었습니다. 전체 동기화를 수행합니다."
@@ -247,7 +240,7 @@ msgstr "브릿지 정리: %s"
 
 #, python-format
 msgid "Cleaning stale %s flows"
-msgstr "시간이 경과된 %s 플로우 정리"
+msgstr "시간 경과된 %s 플로우 정리"
 
 #, python-format
 msgid "Clearing orphaned ARP spoofing entries for devices %s"
@@ -289,15 +282,15 @@ msgid "Configured type driver names: %s"
 msgstr "형식 드라이버 이름을 설정했습니다: %s"
 
 msgid "Configuring tunnel endpoints to other OVS agents"
-msgstr "다른 OVS 에이전트의 커널 엔드포인트 구성"
+msgstr "다른 OVS 에이전트에대한 커널 엔드포인트 구성"
 
 #, python-format
 msgid "Creating instance of CountableResource for resource:%s"
-msgstr "자원의 CountableResource 인스턴스 작성:%s"
+msgstr "자원에대한 CountableResource 인스턴스 작성:%s"
 
 #, python-format
 msgid "Creating instance of TrackedResource for resource:%s"
-msgstr "자원의 TrackedResource 인스턴스 작성:%s"
+msgstr "자원에대한 TrackedResource 인스턴스 작성:%s"
 
 msgid "DHCP agent started"
 msgstr "DHCP 에이전트가 시작됨"
@@ -342,7 +335,7 @@ msgid "Devices down  %s "
 msgstr "장치 작동 중단 %s"
 
 msgid "Disabled allowed-address-pairs extension."
-msgstr "허용된 주소 쌍 확장을 사용하지 않습니다."
+msgstr "allowed-address-pairs 확장을 사용하지 않습니다."
 
 msgid "Disabled security-group extension."
 msgstr "보안 그룹 확장을 사용하지 않습니다. "
@@ -409,7 +402,7 @@ msgid ""
 "HA network %(network)s was deleted as no HA routers are present in tenant "
 "%(tenant)s."
 msgstr ""
-"테넌트 %(tenant)s에 HA 라우터가 없으므로 HA 네트워크 %(network)s이(가) 삭제되"
+"Tenant %(tenant)s에 HA 라우터가 없으므로 HA 네트워크 %(network)s이(가) 삭제되"
 "었습니다."
 
 #, python-format
@@ -442,7 +435,7 @@ msgid "Initializing Linux bridge QoS extension"
 msgstr "Linux 브릿지 QoS 확장 초기화"
 
 msgid "Initializing Ryu driver for BGP Speaker functionality."
-msgstr "BGP 스피커 기능의 Ryu 드라이버를 초기화합니다."
+msgstr "BGP 스피커 기능에서 Ryu 드라이버를 초기화합니다."
 
 #, python-format
 msgid "Initializing agent extension '%s'"
@@ -637,7 +630,7 @@ msgstr "%s 디바이스에 대한 필터 준비"
 
 #, python-format
 msgid "Process runs with uid/gid: %(uid)s/%(gid)s"
-msgstr "uid/gid가 %(uid)s/%(gid)s인 프로세스 실행"
+msgstr "UID/GID가 %(uid)s/%(gid)s인 프로세스 실행"
 
 msgid "Provider rule updated"
 msgstr "제공자 규칙이 업데이트됨"
@@ -684,7 +677,7 @@ msgstr "등록된 형식: %s"
 
 #, python-format
 msgid "Remove device filter for %r"
-msgstr "%r의 디바이스 필터 제거"
+msgstr "%r 에대한 디바이스 필터 제거"
 
 #, python-format
 msgid ""
@@ -737,7 +730,7 @@ msgid "SNAT interface port list does not exist, so create one: %s"
 msgstr "SNAT 인터페이스 포트 목록이 없으므로, 하나 작성: %s"
 
 msgid "SRIOV NIC Agent RPC Daemon Started!"
-msgstr "SRIOV NIC 에이전트 RPC 디먼이 시작되었습니다!"
+msgstr "SRIOV NIC 에이전트 RPC 데몬이 시작되었습니다!"
 
 #, python-format
 msgid "Scheduling unhosted network %s"
@@ -814,19 +807,19 @@ msgstr "상태 동기화 완료"
 
 #, python-format
 msgid "Tenant network_types: %s"
-msgstr "network_types를 임대합니다: %s"
+msgstr "Tenant network_types: %s"
 
 #, python-format
 msgid ""
 "The requested interface name %(requested_name)s exceeds the %(limit)d "
 "character limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
-"요청된 인터페이스 이름 %(requested_name)s이(가) %(limit)d자 한계를 초과합니"
-"다. 이 한계에 맞게 %(new_name)s(으)로 단축됩니다."
+"요청된 인터페이스 이름 %(requested_name)s이(가) 최대치인 %(limit)d자 이상입니"
+"다. 이 제한에 맞게 %(new_name)s(으)로 단축됩니다."
 
 #, python-format
 msgid "Trigger reload_allocations for port %s"
-msgstr "포트 %s의 reload_allocations 트리거"
+msgstr "포트 %s 에대한 reload_allocations 트리거"
 
 #, python-format
 msgid ""

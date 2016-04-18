@@ -10,22 +10,18 @@
 # NachiUeno <nati.ueno@gmail.com>, 2013
 # Sasuke(Kyohei MORIYAMA) <>, 2015
 # Tomoyuki KATO <tomo@dream.daynight.jp>, 2013
-# Akihiro Motoki <amotoki@gmail.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 # Akihiro Motoki <amotoki@gmail.com>, 2016. #zanata
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
-# Tsutomu Kimura <ebb0de2@jp.ibm.com>, 2016. #zanata
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:07+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-04-04 06:35+0000\n"
+"PO-Revision-Date: 2016-04-16 09:21+0000\n"
 "Last-Translator: 笹原 昌美 <ebb0de1@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -85,7 +81,7 @@ msgstr ""
 "%(method)s が、ネットワーク設定 %(current)s (元の設定 %(original)s) および"
 "ネットワークセグメント %(segments)s を使用して呼び出されました"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "%(method)s called with port settings %(current)s (original settings "
 "%(original)s) host %(host)s (original host %(original_host)s) vif type "
@@ -395,7 +391,6 @@ msgstr "インターフェース上に存在しないアドレス"
 msgid "Address scope %(address_scope_id)s could not be found"
 msgstr "アドレススコープ %(address_scope_id)s が見つかりませんでした"
 
-#, fuzzy
 msgid ""
 "Address to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
@@ -1660,7 +1655,7 @@ msgstr "gid %s の設定に失敗しました。"
 msgid "Failed to set uid %s"
 msgstr "uid %s の設定に失敗しました"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr "%(ip)s に対する %(type)s トンネルポートをセットアップできませんでした"
 
@@ -2154,7 +2149,6 @@ msgstr ""
 "Iptables はメタデータの適切な要求を示すために使用されるマークを分割します。こ"
 "のマークを 0xffff でマスキングすることで、後半の 16 ビットのみを使用します。"
 
-#, fuzzy
 msgid ""
 "Keep in track in the database of current resourcequota usage. Plugins which "
 "do not leverage the neutron database should set this flag to False"
@@ -2960,7 +2954,6 @@ msgstr ""
 "セキュリティーグループを使用するには、ポートセキュリティーを使用可能にする必"
 "要があり、ポートには IP アドレスが必要です。"
 
-#, fuzzy
 msgid ""
 "Port to listen on for OpenFlow connections. Used only for 'native' driver."
 msgstr ""
@@ -3139,7 +3132,6 @@ msgstr ""
 "ネットワーク %(network_id)s の CIDR %(cidr)s を持つ要求されたサブネットは、別"
 "のサブネットとオーバーラップしています"
 
-#, fuzzy
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
 "interruption."
@@ -3418,7 +3410,6 @@ msgstr ""
 "GRE/VXLAN トンネルを構成した発信 IP パケットで、フラグメント禁止 (DF) ビット"
 "を設定または設定解除します。"
 
-#, fuzzy
 msgid ""
 "Set or un-set the tunnel header checksum  on outgoing IP packet carrying GRE/"
 "VXLAN tunnel."
@@ -3974,9 +3965,9 @@ msgstr ""
 msgid "Unable to delete subnet pool: %(reason)s."
 msgstr "サブネットプールを削除できません: %(reason)s。"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Unable to determine mac address for %s"
-msgstr "%s の MAC アドレスを識別できません"
+msgstr "%s の MAC アドレスを決定できません"
 
 #, python-format
 msgid "Unable to find '%s' in request body"

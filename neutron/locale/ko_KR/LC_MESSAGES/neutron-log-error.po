@@ -3,17 +3,17 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
+# Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:08+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 11:43+0000\n"
+"PO-Revision-Date: 2016-04-08 12:52+0000\n"
 "Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -26,7 +26,7 @@ msgid ""
 "%(service)s for %(resource_type)s with uuid %(uuid)s not found. The process "
 "should not have died"
 msgstr ""
-"uuid가 %(uuid)s인 %(resource_type)s의 %(service)s를 찾을 수 없습니다. 프로세"
+"UUID가 %(uuid)s인 %(resource_type)s의 %(service)s를 찾을 수 없습니다. 프로세"
 "스가 종료되지 않았어야 합니다."
 
 #, python-format
@@ -67,7 +67,7 @@ msgid "Agent Initialization Failed"
 msgstr "에이전트 초기화 실패"
 
 msgid "Alias or class name is not set"
-msgstr "별명 또는 클래스 이름이 설정되지 않음"
+msgstr "별명이나 클래스 이름이 설정되지 않음"
 
 #, python-format
 msgid "An error occurred while communicating with async process [%s]."
@@ -76,11 +76,6 @@ msgstr "비동기 프로세스 [%s]과(와) 통신하는 중에 오류가 발생
 #, python-format
 msgid "An error occurred while killing [%s]."
 msgstr "[%s]을(를) 강제 종료하는 중에 오류가 발생했습니다."
-
-msgid ""
-"An exception occurred during subnet update. Reverting allocation pool changes"
-msgstr ""
-"서브넷 업데이트 중에 예외가 발생했습니다. 할당 풀 변경사항을 되돌립니다."
 
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
@@ -102,11 +97,11 @@ msgid "BGP peer %(bgp_peer)s info call failed with reason=%(e)s."
 msgstr "BGP 피어 %(bgp_peer)s 정보 호출에 실패했으며, 이유=%(e)s입니다."
 
 msgid "BGP router-id MUST be specified for the correct functional working."
-msgstr "기능적으로 올바르게 작동하도록 BGP 라우터-id를 지정해야 합니다."
+msgstr "기능적으로 올바르게 작동하도록 BGP router-id를 지정해야 합니다."
 
 #, python-format
 msgid "Binding info for DVR port %s not found"
-msgstr "DVR 포트 %s의 바인딩 정보를 찾을 수 없음"
+msgstr "DVR 포트 %s에대한 바인딩 정보를 찾을 수 없음"
 
 #, python-format
 msgid ""
@@ -120,7 +115,7 @@ msgstr ""
 msgid ""
 "Bridge %(brq)s for physical network %(net)s does not exist. Agent terminated!"
 msgstr ""
-"실제 네트워크 %(net)s의 브릿지 %(brq)s이(가) 없습니다. 에이전트가 종료되었습"
+"실제 네트워크 %(net)s에 브릿지 %(brq)s이(가) 없습니다. 에이전트가 종료되었습"
 "니다!"
 
 #, python-format
@@ -128,7 +123,7 @@ msgid ""
 "Call to driver for BGP Speaker %(bgp_speaker)s %(method)s has failed with "
 "exception %(driver_exec)s."
 msgstr ""
-"BGP 스피커 %(bgp_speaker)s %(method)s의 드라이버를 호출했지만 예외 "
+"BGP 스피커 %(bgp_speaker)s %(method)s 드라이버를 호출했지만 예외 "
 "%(driver_exec)s이(가) 발생하며 실패했습니다."
 
 #, python-format
@@ -175,20 +170,20 @@ msgstr ""
 "확보할 수 없음"
 
 msgid "Cannot run ebtables. Please ensure that it is installed."
-msgstr "ebtables를 실행할 수 없습니다. 설치되었는지 확인하십시오."
+msgstr "Ebtables를 실행할 수 없습니다. 설치되었는지 확인하십시오."
 
 msgid "Cannot run ip6tables. Please ensure that it is installed."
-msgstr "ip6tables를 실행할 수 없습니다. 설치되었는지 확인하십시오."
+msgstr "IP6tables를 실행할 수 없습니다. 설치되었는지 확인하십시오."
 
 msgid "Cannot run ipset. Please ensure that it is installed."
-msgstr "ipset을 실행할 수 없습니다. 설치되었는지 확인하십시오."
+msgstr "IPset을 실행할 수 없습니다. 설치되었는지 확인하십시오."
 
 #, python-format
 msgid ""
 "Centralized-SNAT port %(port)s on subnet %(port_subnet)s already seen on a "
 "different subnet %(orig_subnet)s"
 msgstr ""
-"서브넷 %(port_subnet)s의 중앙 집중식 SNAT 포트 %(port)s이(가) 다른 서브넷 "
+"서브넷 %(port_subnet)s 중앙 집중식 SNAT 포트 %(port)s이(가) 다른 서브넷 "
 "%(orig_subnet)s에 이미 표시됨"
 
 msgid ""
@@ -252,14 +247,14 @@ msgid ""
 "Check for VF management support failed. Please ensure that the version of ip "
 "link being used has VF support."
 msgstr ""
-"VF 관리 지원을 확인하는 데 실패했습니다. 사용 중인 ip 링크의 버전에 VF 지원"
-"이 있는지 확인하십시오."
+"VF 관리 지원을 확인하는 데 실패했습니다. 사용 중인 ip 링크 버전에 VF 지원이 "
+"있는지 확인하십시오."
 
 msgid ""
 "Check for iproute2 VXLAN support failed. Please ensure that the iproute2 has "
 "VXLAN support."
 msgstr ""
-"iproute2 VXLAN 지원을 확인하는 데 실패했습니다. iproute2에서 VXLAN을 지원하는"
+"Iproute2 VXLAN 지원을 확인하는 데 실패했습니다. Iproute2에서 VXLAN을 지원하는"
 "지 확인하십시오."
 
 msgid "Check for native OVSDB support failed."
@@ -267,7 +262,7 @@ msgstr "네이티브 OVSDB 지원을 확인하는 데 실패했습니다."
 
 #, python-format
 msgid "Configuration for devices %s failed!"
-msgstr "장치 %s의 구성에 실패했습니다!"
+msgstr "장치 %s 에대한 구성을 실패했습니다!"
 
 #, python-format
 msgid "Could not delete %(res)s %(id)s."
@@ -283,7 +278,7 @@ msgstr "구문 분석할 수 없음: %(raw_result)s. 예외: %(exception)s"
 
 #, python-format
 msgid "Could not retrieve gateway port for subnet %s"
-msgstr "서브넷 %s의 게이트웨이 포트를 검색할 수 없음"
+msgstr "서브넷 %s에서 게이트웨이 포트를 검색할 수 없음"
 
 #, python-format
 msgid "DVR: Duplicate DVR router interface detected for subnet %s"
@@ -300,8 +295,8 @@ msgid ""
 "DVR: SNAT port not found in the list %(snat_list)s for the given router  "
 "internal port %(int_p)s"
 msgstr ""
-"DVR: 지정된 라우터 내부 포트 %(int_p)s의 목록 %(snat_list)s에서 SNAT 포트를 "
-"찾을 수 없음"
+"DVR: 지정된 라우터 내부 포트 %(int_p)s 목록 %(snat_list)s에서 SNAT 포트를 찾"
+"을 수 없음"
 
 msgid "DVR: error adding redirection logic"
 msgstr "DVR: 리디렉션 로직을 추가하는 중 오류 발생"
@@ -346,7 +341,7 @@ msgstr "명령 실행 오류"
 
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
-msgstr "에이전트 루프에 오류 발생. 디바이스 정보: %s"
+msgstr "에이전트 루프에서 오류 발생. 디바이스 정보: %s"
 
 msgid "Error loading class by alias"
 msgstr "별명으로 클래스를 로드하는 중 오류 발생"
@@ -389,7 +384,7 @@ msgstr "[%(cmd)s]에서 오류 수신: %(err)s"
 
 #, python-format
 msgid "Error response returned from nova: %s"
-msgstr "nova에서 오류 응답을 리턴함: %s"
+msgstr "Nova에서 오류 응답을 반환함: %s"
 
 #, python-format
 msgid "Error unable to destroy namespace: %s"
@@ -400,7 +395,7 @@ msgstr "터널 엔드포인트를 구성하는 중에 오류 발생"
 
 #, python-format
 msgid "Error while create dnsmasq log dir: %s"
-msgstr "dnsmasq 로그 디렉토리를 작성하는 중에 오류 발생: %s"
+msgstr "Dnsmasq 로그 디렉토리를 작성하는 중에 오류 발생: %s"
 
 #, python-format
 msgid "Error while deleting router %s"
@@ -408,7 +403,7 @@ msgstr "라우터 %s을(를) 삭제하는 중에 오류 발생"
 
 #, python-format
 msgid "Error while handling pidfile: %s"
-msgstr "pidfile을 처리하는 중에 오류 발생: %s"
+msgstr "Pidfile을 처리하는 중에 오류 발생: %s"
 
 #, python-format
 msgid "Error while importing BGP speaker driver %s"
@@ -419,7 +414,7 @@ msgstr "VIF 포트를 처리하는 중에 오류 발생"
 
 #, python-format
 msgid "Error while writing HA state for %s"
-msgstr "%s의 HA 상태를 쓰는 중 오류 발생"
+msgstr "%s에대해 HA 상태를 쓰는 중 오류 발생"
 
 #, python-format
 msgid "Error, unable to destroy IPset: %s"
@@ -427,7 +422,7 @@ msgstr "오류, IPSet을 영구 삭제할 수 없음: %s"
 
 #, python-format
 msgid "Error, unable to remove iptables rule for IPset: %s"
-msgstr "오류,  IPset의 iptables 규칙을 제거할 수 없음: %s"
+msgstr "오류,  IPset에서 iptables 규칙을 제거할 수 없음: %s"
 
 #, python-format
 msgid ""
@@ -465,7 +460,7 @@ msgid "Exception occurs when timer stops"
 msgstr "타이머가 중지할 때 예외가 발생합니다. "
 
 msgid "Exception occurs when waiting for timer"
-msgstr "타이머를 대기 중일 때 예외가 발생합니다. "
+msgstr "타이머가 대기 중일 때 예외가 발생합니다. "
 
 msgid "Exiting agent as programmed in check_child_processes_actions"
 msgstr "check_child_processes_actions에 프로그래밍된 에이전트 종료"
@@ -475,8 +470,7 @@ msgid ""
 "Exiting agent because of a malfunction with the %(service)s process "
 "identified by uuid %(uuid)s"
 msgstr ""
-"uuid %(uuid)s(으)로 식별된 %(service)s 프로세스의 오동작으로 인해 에이전트 종"
-"료"
+"UUID %(uuid)s(으)로 식별된 %(service)s 프로세스 오동작으로 인해 에이전트 종료"
 
 #, python-format
 msgid "Expected port %s not found"
@@ -492,37 +486,37 @@ msgstr "확장 경로 '%s'이(가) 존재하지 않습니다!"
 
 #, python-format
 msgid "FWaaS RPC failure in %(func_name)s for fw: %(fwid)s"
-msgstr "fw %(fwid)s의 %(func_name)s에서 FWaaS RPC 실패"
+msgstr "FW %(fwid)s의 %(func_name)s에서 FWaaS RPC 실패"
 
 #, python-format
 msgid "FWaaS RPC info call failed for '%s'."
-msgstr "'%s'의 FWaaS RPC 정보 호출에 실패했습니다."
+msgstr "'%s' FWaaS RPC 정보 호출에 실패했습니다."
 
 #, python-format
 msgid "Failed creating vxlan interface for %(segmentation_id)s"
-msgstr "%(segmentation_id)s의 vxlan 인터페이스를 작성하는 데 실패"
+msgstr "%(segmentation_id)s에서 vxlan 인터페이스를 작성하는 데 실패"
 
 #, python-format
 msgid "Failed deleting egress connection state of floatingip %s"
-msgstr "floatingip %s의 출구 연결 상태를 삭제하는 데 실패"
+msgstr "Floatingip %s의 출구 연결 상태를 삭제하는 데 실패"
 
 #, python-format
 msgid "Failed deleting ingress connection state of floatingip %s"
-msgstr "floatingip %s의 진입 연결 상태를 삭제하는 데 실패"
+msgstr "Floatingip %s의 진입 연결 상태를 삭제하는 데 실패"
 
 #, python-format
 msgid "Failed execute conntrack command %s"
-msgstr "conntrack 명령 %s(으)로 인해 실행 실패"
+msgstr "Conntrack 명령 %s(으)로 인해 실행 실패"
 
 msgid "Failed executing ip command"
 msgstr "IP 명령 실행 실패"
 
 #, python-format
 msgid "Failed executing ip command: %s"
-msgstr "ip 명령 실행 실패: %s"
+msgstr "IP 명령 실행 실패: %s"
 
 msgid "Failed fwaas process services sync"
-msgstr "fwaas 프로세스 서비스 동기화에 실패"
+msgstr "FWaaS 프로세스 서비스 동기화에 실패"
 
 msgid "Failed on Agent configuration parse. Agent terminated!"
 msgstr "에이전트 구성 구문 분석에 실패했습니다. 에이전트가 종료되었습니다!"
@@ -566,9 +560,9 @@ msgid ""
 "agent, since this version of OVS does not support tunnels or patch ports. "
 "Agent terminated!"
 msgstr ""
-"OVS 패치 포트를 작성하지 못했습니다. 이 버전의 OVS가 터널 또는 패치 포트를 지"
-"원하지 않으므로 이 에이전트에서 터널링을 사용할 수 없습니다. 에이전트가 종료"
-"되었습니다! "
+"OVS 패치 포트를 작성하지 못했습니다. 이 버전 OVS가 터널이나 패치 포트를 지원"
+"하지 않으므로 이 에이전트에서 터널링을 사용할 수 없습니다. 에이전트가 종료되"
+"었습니다! "
 
 #, python-format
 msgid "Failed to destroy stale namespace %s"
@@ -576,15 +570,22 @@ msgstr "시간이 경과된 네임스페이스 %s 영구 삭제 실패"
 
 #, python-format
 msgid "Failed to fetch router information for '%s'"
-msgstr "'%s'의 라우터 정보를 가져오는 데 실패"
+msgstr "'%s'에대한 라우터 정보를 가져오는 데 실패"
 
 #, python-format
 msgid "Failed to get details for device %s"
-msgstr "장치 %s의 세부 사항을 가져오는 데 실패"
+msgstr "장치 %s에대한 세부 사항을 가져오는 데 실패"
 
 #, python-format
 msgid "Failed to get devices for %s"
-msgstr "%s의 장치를 가져오는 데 실패"
+msgstr "%s 장치를 가져오는 데 실패"
+
+#, python-format
+msgid "Failed to get ip addresses for interface: %s."
+msgstr "인터페이스에대한 ip 주소를 가져오는 데 실패: %s."
+
+msgid "Failed to get network interfaces."
+msgstr "네트워크 인터페이스를 가져오는 데 실패했습니다."
 
 #, python-format
 msgid "Failed to get traffic counters, router: %s"
@@ -600,7 +601,7 @@ msgstr ""
 
 #, python-format
 msgid "Failed to notify nova on events: %s"
-msgstr "nova에 이벤트에 대해 알리는 데 실패: %s"
+msgstr "Nova에 이벤트에 대해 알리는 데 실패: %s"
 
 msgid "Failed to parse network_vlan_ranges. Service terminated!"
 msgstr ""
@@ -665,22 +666,22 @@ msgstr "'%s' 인터페이스 연결 해제 실패"
 
 #, python-format
 msgid "Firewall Driver Error for %(func_name)s for fw: %(fwid)s"
-msgstr "fw %(fwid)s의 %(func_name)s에서 방화벽 드라이버 오류 발생"
+msgstr "FW %(fwid)s의 %(func_name)s에서 방화벽 드라이버 오류 발생"
 
 #, python-format
 msgid "Firewall Driver Error on fw state %(fwmsg)s for fw: %(fwid)s"
-msgstr "fw %(fwid)s의 fw 상태 %(fwmsg)s에서 방화벽 드라이버 오류 발생"
+msgstr "FW %(fwid)s의 fw 상태 %(fwmsg)s에서 방화벽 드라이버 오류 발생"
 
 msgid "Fork failed"
 msgstr "포크 실패"
 
 #, python-format
 msgid "IP allocation failed on external system for %s"
-msgstr "%s의 외부 시스템에서 IP 할당 실패"
+msgstr "%s 외부 시스템에서 IP 할당 실패"
 
 #, python-format
 msgid "IP deallocation failed on external system for %s"
-msgstr "%s의 외부 시스템에서 IP 할당 해제 실패"
+msgstr "%s 외부 시스템에서 IP 할당 해제 실패"
 
 #, python-format
 msgid "IPAM subnet referenced to Neutron subnet %s does not exist"
@@ -699,7 +700,7 @@ msgid ""
 "IPv6 protocol requires a minimum MTU of %(min_mtu)s, while the configured "
 "value is %(current_mtu)s"
 msgstr ""
-"IPv6 프로토콜에는 최소 %(min_mtu)s의 MTU가 필요한 반면 구성된 값은 "
+"IPv6 프로토콜에는 최소 %(min_mtu)s MTU가 필요한 반면 구성된 값은 "
 "%(current_mtu)s입니다."
 
 msgid ""
@@ -715,7 +716,7 @@ msgid ""
 "Interface %(intf)s for physical network %(net)s does not exist. Agent "
 "terminated!"
 msgstr ""
-"실제 네트워크 %(net)s의 인터페이스 %(intf)s이(가) 없습니다. 에이전트가 종료되"
+"실제 네트워크 %(net)s에 인터페이스 %(intf)s이(가) 없습니다. 에이전트가 종료되"
 "었습니다!"
 
 msgid "Interface monitor is not active"
@@ -782,8 +783,8 @@ msgid ""
 "current server timestamp: %(serv_time)s by %(diff)s seconds, which is more "
 "than the threshold agent downtime: %(threshold)s."
 msgstr ""
-"%(agent_name)s 등록 중에 호스트: %(host)s에서 받은 메시지에 시간소인: "
-"%(agent_time)s이(가) 있습니다. 이 시간소인은 현재 서버 시간소인: "
+"%(agent_name)s 등록 중에 호스트: %(host)s에서 받은 메시지에 timestamp: "
+"%(agent_time)s이(가) 있습니다. 이 timestamp는 현재 서버 timestamp: "
 "%(serv_time)s과(와) %(diff)s초만큼 차이가 납니다. 이 시간은 임계값 에이전트 "
 "작동 중단 시간: %(threshold)s보다 큽니다."
 
@@ -799,8 +800,8 @@ msgid ""
 "Multiple auto-allocated networks detected for tenant %(tenant)s. Attempting "
 "clean up for network %(network)s and router %(router)s"
 msgstr ""
-"테넌트 %(tenant)s에 대해 자동으로 할당된 여러 네트워크를 발견했습니다. 네트워"
-"크 %(network)s 및 라우터 %(router)s을(를) 정리합니다."
+"Tenant %(tenant)s에 대해 자동으로 할당된 여러 네트워크를 발견했습니다. 네트워"
+"크 %(network)s 나 라우터 %(router)s을(를) 정리합니다."
 
 #, python-format
 msgid ""
@@ -838,7 +839,7 @@ msgstr "DVR 포트 %s을(를) 바인드하기 위해 제공된 호스트가 없�
 
 #, python-format
 msgid "No bridge or interface mappings for physical network %s"
-msgstr "실제 네트워크 %s의 브릿지 또는 인터페이스 맵핑이 없음"
+msgstr "실제 네트워크 %s에서 브릿지나 인터페이스 맵핑이 없음"
 
 msgid "No default pools available"
 msgstr "기본 풀을 사용할 수 없음"
@@ -851,7 +852,7 @@ msgid "No local VLAN available for net-id=%s"
 msgstr "net-id=%s에 대해 사용 가능한 로컬 VLAN이 없음"
 
 msgid "No plugin for BGP routing registered"
-msgstr "BGP 라우팅의 플러그인이 등록되지 않음"
+msgstr "BGP 라우팅에 플러그인이 등록되지 않음"
 
 msgid "No plugin for L3 routing registered to handle router scheduling"
 msgstr ""
@@ -861,8 +862,8 @@ msgstr ""
 msgid ""
 "No plugin for L3 routing registered. Cannot notify agents with the message %s"
 msgstr ""
-"L3 라우팅의 플러그인이 등록되지 않았습니다. %s 메시지를 에이전트에 알릴 수 없"
-"음"
+"L3 라우팅에 대한 플러그인이 등록되지 않았습니다. %s 메시지를 에이전트에 알릴 "
+"수 없음"
 
 msgid "No tunnel_ip specified, cannot delete tunnels"
 msgstr "tunnel_ip가 지정되지 않음, 터널을 삭제할 수 없음"
@@ -894,7 +895,7 @@ msgid ""
 "Nova notifications are enabled, but novaclient is not installed. Either "
 "disable nova notifications or install python-novaclient."
 msgstr ""
-"Nova 알림이 사용되지만 novaclient가 설치되지 않았습니다. nova 알림을 사용하"
+"Nova 알림이 사용되지만 novaclient가 설치되지 않았습니다. Nova 알림을 사용하"
 "지 않거나 python-novaclient를 설치하십시오."
 
 #, python-format
@@ -981,7 +982,7 @@ msgstr "스위치 연결 제한시간 초과"
 
 #, python-format
 msgid "The SNAT namespace %s does not exist for the router."
-msgstr "라우터의 SNAT 네임스페이스 %s이(가) 없습니다."
+msgstr "라우터에서 SNAT 네임스페이스 %s이(가) 없습니다."
 
 #, python-format
 msgid "The external network bridge '%s' does not exist"
@@ -1016,7 +1017,7 @@ msgid ""
 "The user that is executing neutron does not have permissions to read the "
 "namespaces. Enable the use_helper_for_ns_read configuration option."
 msgstr ""
-"neutron을 실행하는 사용자는 네임스페이스를 읽을 권한이 없습니다. "
+"eutron을 실행하는 사용자는 네임스페이스를 읽을 권한이 없습니다. "
 "use_helper_for_ns_read 구성 옵션을 사용하십시오."
 
 #, python-format
@@ -1028,8 +1029,8 @@ msgid ""
 "Tunneling can't be enabled with invalid local_ip '%s'. IP couldn't be found "
 "on this host's interfaces."
 msgstr ""
-"올바르지 않은 local_ip '%s'(으)로 터널링을 사용할 수 없습니다. 이 호스트의 인"
-"터페이스에서 IP를 찾을 수 없습니다."
+"올바르지 않은 local_ip '%s'(으)로 터널링을 사용할 수 없습니다. 이 호스트 인터"
+"페이스에서 IP를 찾을 수 없습니다."
 
 #, python-format
 msgid ""
@@ -1051,7 +1052,7 @@ msgstr ""
 
 #, python-format
 msgid "Unable to %(action)s dhcp for %(net_id)s."
-msgstr "%(net_id)s의 %(action)s dhp을(를) 사용할 수 없습니다."
+msgstr "%(net_id)s의 %(action)s dhcp를 사용할 수 없습니다."
 
 #, python-format
 msgid "Unable to add %(interface)s to %(bridge_name)s! Exception: %(e)s"
@@ -1059,20 +1060,20 @@ msgstr "%(interface)s을(를) %(bridge_name)s에 추가할 수 없습니다! 예
 
 #, python-format
 msgid "Unable to add vxlan interface for network %s"
-msgstr "네트워크 %s의 vxlan 인터페이스를 추가할 수 없음"
+msgstr "네트워크 %s에서 vxlan 인터페이스를 추가할 수 없음"
 
 #, python-format
 msgid ""
 "Unable to auto allocate topology for tenant %s because of router errors."
-msgstr "라우터 오류로 인해 테넌트 %s의 토폴로지를 자동으로 할당할 수 없습니다."
+msgstr "라우터 오류로 인해 tenant %s의 토폴로지를 자동으로 할당할 수 없습니다."
 
 #, python-format
 msgid ""
 "Unable to auto allocate topology for tenant %s due to missing requirements, "
 "e.g. default or shared subnetpools"
 msgstr ""
-"요구 사항이 누락되어 테넌트 %s의 토폴로지를 자동으로 할당할 수 없습니다(예: "
-"기본 또는 공유 subnetpool)"
+"요구 사항이 누락되어 tenant %s 토폴로지를 자동으로 할당할 수 없습니다(예: 기"
+"본 또는 공유 subnetpool)"
 
 #, python-format
 msgid "Unable to convert value in %s"
@@ -1083,16 +1084,16 @@ msgid ""
 "Unable to create VLAN interface for VLAN ID %s because it is in use by "
 "another interface."
 msgstr ""
-"다른 인터페이스에서 사용 중이므로 VLAN ID %s의 VLAN인터페이스를 작성할 수 없"
-"습니다."
+"다른 인터페이스에서 사용 중이므로 VLAN ID %s에대한 VLAN인터페이스를 작성할 "
+"수 없습니다."
 
 #, python-format
 msgid ""
 "Unable to create VXLAN interface for VNI %s because it is in use by another "
 "interface."
 msgstr ""
-"다른 인터페이스에서 사용 중이므로 VNI %s의 VXLAN인터페이스를 작성할 수 없습니"
-"다."
+"다른 인터페이스에서 사용 중이므로 VNI %s에대하한 VXLAN인터페이스를 작성할 수 "
+"없습니다."
 
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
@@ -1115,11 +1116,11 @@ msgstr "%s 시도 후 MAC 주소를 생성할 수 없음"
 
 #, python-format
 msgid "Unable to get port details for %s"
-msgstr "%s의 포트 세부 사항을 가져올 수 없음"
+msgstr "%s에대한 포트 세부 사항을 가져올 수 없음"
 
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
-msgstr "%(host)s:%(port)s에서 청취할 수 없음"
+msgstr "%(host)s:%(port)s에서 listen 할 수 없음"
 
 msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr "고유 ID에 대한 MAC 주소를 얻을 수 없습니다. 에이전트가 종료됩니다!"
@@ -1181,7 +1182,7 @@ msgstr "지원되는 ip 링크 명령을 확인하는 중에 예상치 못한 �
 
 #, python-format
 msgid "Unknown network_type %(network_type)s for network %(network_id)s."
-msgstr "네트워크 %(network_id)s의 알 수 없는 network_type %(network_type)s."
+msgstr "네트워크 %(network_id)s에서 알 수 없는 network_type %(network_type)s."
 
 msgid "Unrecoverable error: please check log for details."
 msgstr "복구할 수 없는 오류: 세부 사항은 로그를 확인하십시오."
@@ -1201,8 +1202,8 @@ msgid ""
 "Will not send event %(method)s for network %(net_id)s: no agent available. "
 "Payload: %(payload)s"
 msgstr ""
-"네트워크 %(net_id)s의 이벤트 %(method)s을(를) 보내지 않음: 사용할 수 있는 에"
-"이전트가 없습니다. 페이로드: %(payload)s"
+"네트워크 %(net_id)s 이벤트 %(method)s을(를) 보내지 않음: 사용할 수 있는 에이"
+"전트가 없습니다. 페이로드: %(payload)s"
 
 #, python-format
 msgid "_bind_port_if_needed failed, deleting port '%s'"
@@ -1252,11 +1253,11 @@ msgstr "포트  %s의 mechanism_manager.update_port_postcommit 실패"
 
 #, python-format
 msgid "ofctl request %(request)s error %(error)s"
-msgstr "ofctl 요청 %(request)s 오류 %(error)s"
+msgstr "Ofctl 요청 %(request)s 오류 %(error)s"
 
 #, python-format
 msgid "ofctl request %(request)s timed out"
-msgstr "ofctl 요청 %(request)s 제한시간 초과"
+msgstr "Ofctl 요청 %(request)s 제한시간 초과"
 
 #, python-format
 msgid "tunnel_type %s not supported by agent"

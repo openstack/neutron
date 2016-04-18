@@ -5,13 +5,13 @@
 # Translators:
 # ADİL REŞİT DURSUN <ardursun@deltanoc.com>, 2015
 # Alper Çiftçi <alprciftci@gmail.com>, 2015
-# Andreas Jaeger <jaegerandi@gmail.com>, 2015. #zanata
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:07+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -253,6 +253,9 @@ msgstr "Bu kaynağa erişime izin verilmiyor."
 msgid "Action to be executed when a child process dies"
 msgstr "Alt süreç öldüğünde çalıştırılacak eylem"
 
+msgid "Address not present on interface"
+msgstr "Adres arayüzde mevcut değil"
+
 #, python-format
 msgid "Address scope %(address_scope_id)s could not be found"
 msgstr "Adres kapsamı %(address_scope_id)s bulunamadı"
@@ -366,6 +369,10 @@ msgstr "Gövde geçersiz veri içeriyor"
 msgid "Bridge %(bridge)s does not exist."
 msgstr "Köprü %(bridge)s mevcut değil."
 
+#, python-format
+msgid "Bridge %s does not exist"
+msgstr "Köprü %s mevcut değil"
+
 msgid "Bulk operation not supported"
 msgstr "Toplu işlem desteklenmiyor"
 
@@ -413,6 +420,9 @@ msgstr "%(col)s=%(match)s olan %(table)s bulunamadı"
 #, python-format
 msgid "Cannot handle subnet of type %(subnet_type)s"
 msgstr "%(subnet_type)s türünde alt ağ işlenemiyor"
+
+msgid "Cannot have multiple IPv4 subnets on router port"
+msgstr "Yönlendirici bağlantı noktasında birden fazla IPv4 alt ağı olamaz"
 
 #, python-format
 msgid ""
@@ -774,6 +784,12 @@ msgstr "%s dns adresinin ayrıştırılmasında hata"
 msgid "Error while reading %s"
 msgstr "%s okunurken hata"
 
+#, python-format
+msgid ""
+"Exceeded %s second limit waiting for address to leave the tentative state."
+msgstr ""
+"Adresin belirsiz durumdan çıkması için %s saniye bekleme sınırı aşıldı."
+
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Mevcut önekler yeni öneklerin alt kümesi olmalıdır"
 
@@ -872,9 +888,16 @@ msgstr "Uid %s ayarlanamadı"
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr "%(ip)s'ye %(type)s tünel bağlantı noktası kurulumu başarısız"
 
+msgid "Failure applying iptables rules"
+msgstr "Iptables kuralları uygulanırken başarısız olundu"
+
 #, python-format
 msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
 msgstr "%(address)s adresinin hazır olmasını bekleme başarısız: %(reason)s"
+
+#, python-format
+msgid "Flavor %(flavor_id)s could not be found."
+msgstr "%(flavor_id)s örnek türü bulunamadı."
 
 #, python-format
 msgid "Floating IP %(floatingip_id)s could not be found"
@@ -1053,6 +1076,10 @@ msgid ""
 msgstr ""
 "Geçersiz kimlik doğrulama türü: %(auth_type)s, geçerli türler: "
 "%(valid_auth_types)s"
+
+#, python-format
+msgid "Invalid content type %(content_type)s."
+msgstr "Geçersiz içerik türü %(content_type)s."
 
 #, python-format
 msgid "Invalid data format for IP pool: '%s'"
@@ -1437,6 +1464,10 @@ msgstr ""
 msgid "OK"
 msgstr "Tamam"
 
+#, python-format
+msgid "OVSDB Error: %s"
+msgstr "OVSDB Hatası: %s"
+
 msgid "Only admin can view or configure quota"
 msgstr "Yalnızca yönetici kotaları görüntüleyebilir ya da yapılandırabilir"
 
@@ -1497,12 +1528,20 @@ msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "%(id)s bağlantı noktası %(address)s sabit ip'sine sahip değil"
 
 #, python-format
+msgid "Port %(port)s does not exist on %(bridge)s!"
+msgstr "Bağlantı noktası %(port)s %(bridge)s köprüsü üzerinde mevcut değil!"
+
+#, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 "%(port_id)s bağlantı noktası %(floatingip_id)s değişken IP'sinden başka bir "
 "kiracı ile ilişkilendirilmiş bu yüzden bağlanamaz."
+
+#, python-format
+msgid "Port %s does not exist"
+msgstr "Bağlantı noktası %s mevcut değil"
 
 msgid ""
 "Port Security must be enabled in order to have allowed address pairs on a "
@@ -1990,6 +2029,9 @@ msgstr ""
 "ajanı için kullanılmalıdır. 'dvr_snat' - bu DVR ile beraber merkezi SNAT "
 "desteğini etkinleştirir.  Bu kip merkezi bir düğümde çalışan L3 ajanı için "
 "kullanılmalıdır (veya tek-istemcili kurulumlarda, örn. devstack)"
+
+msgid "Timeout"
+msgstr "Zaman aşımı"
 
 msgid ""
 "True to delete all ports on all the OpenvSwitch bridges. False to delete "
