@@ -21,7 +21,6 @@ from oslo_utils import uuidutils
 
 from neutron._i18n import _, _LE
 from neutron.common import ipv6_utils
-from neutron.db import api as db_api
 from neutron.ipam import driver as ipam_base
 from neutron.ipam.drivers.neutrondb_ipam import db_api as ipam_db_api
 from neutron.ipam import exceptions as ipam_exc
@@ -326,34 +325,31 @@ class NeutronDbSubnet(ipam_base.Subnet):
         return ip_address, ip_range['allocation_pool_id']
 
     def allocate(self, address_request):
-        # NOTE(salv-orlando): Creating a new db session might be a rather
-        # dangerous thing to do, if executed from within another database
-        # transaction. Therefore  the IPAM driver should never be
-        # called from within a database transaction, which is also good
-        # practice since in the general case these drivers may interact
-        # with remote backends
+        # NOTE(pbondar): Ipam driver is always called in context of already
+        # running transaction, which is started on create_port or upper level.
+        # To be able to do rollback/retry actions correctly ipam driver
+        # should not create new nested transaction blocks.
         session = self._context.session
         all_pool_id = None
         auto_generated = False
-        with db_api.autonested_transaction(session):
-            # NOTE(salv-orlando): It would probably better to have a simpler
-            # model for address requests and just check whether there is a
-            # specific IP address specified in address_request
-            if isinstance(address_request, ipam_req.SpecificAddressRequest):
-                # This handles both specific and automatic address requests
-                # Check availability of requested IP
-                ip_address = str(address_request.address)
-                self._verify_ip(session, ip_address)
-            else:
-                ip_address, all_pool_id = self._generate_ip(session)
-                auto_generated = True
-            self._allocate_specific_ip(session, ip_address, all_pool_id,
-                                       auto_generated)
-            # Create IP allocation request object
-            # The only defined status at this stage is 'ALLOCATED'.
-            # More states will be available in the future - e.g.: RECYCLABLE
-            self.subnet_manager.create_allocation(session, ip_address)
-            return ip_address
+        # NOTE(salv-orlando): It would probably better to have a simpler
+        # model for address requests and just check whether there is a
+        # specific IP address specified in address_request
+        if isinstance(address_request, ipam_req.SpecificAddressRequest):
+            # This handles both specific and automatic address requests
+            # Check availability of requested IP
+            ip_address = str(address_request.address)
+            self._verify_ip(session, ip_address)
+        else:
+            ip_address, all_pool_id = self._generate_ip(session)
+            auto_generated = True
+        self._allocate_specific_ip(session, ip_address, all_pool_id,
+                                   auto_generated)
+        # Create IP allocation request object
+        # The only defined status at this stage is 'ALLOCATED'.
+        # More states will be available in the future - e.g.: RECYCLABLE
+        self.subnet_manager.create_allocation(session, ip_address)
+        return ip_address
 
     def deallocate(self, address):
         # This is almost a no-op because the Neutron DB IPAM driver does not
