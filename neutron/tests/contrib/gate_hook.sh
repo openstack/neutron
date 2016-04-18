@@ -29,8 +29,8 @@ function load_conf_hook {
 }
 
 
-if [ "$VENV" == "dsvm-functional" ] || [ "$VENV" == "dsvm-fullstack" ]
-then
+case $VENV in
+"dsvm-functional"|"dsvm-fullstack")
     # The following need to be set before sourcing
     # configure_for_func_testing.
     GATE_STACK_USER=stack
@@ -56,16 +56,20 @@ then
 
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
+    ;;
 
-elif [ "$VENV" == "api" -o "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" -o "$VENV" == "dsvm-scenario" ]
-then
+"api"|"api-pecan"|"full-pecan"|"dsvm-scenario")
     load_rc_hook api_extensions
-    if [ "$VENV" == "api-pecan" -o "$VENV" == "full-pecan" ]
-    then
-        load_conf_hook pecan
-    fi
     load_rc_hook qos
     load_rc_hook bgp
+    if [[ "$VENV" =~ "pecan" ]]; then
+        load_conf_hook pecan
+    fi
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
-fi
+    ;;
+
+*)
+    echo "Unrecognized environment $VENV".
+    exit 1
+esac
