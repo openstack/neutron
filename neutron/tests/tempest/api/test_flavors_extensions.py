@@ -63,7 +63,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         labels = self.admin_client.list_service_profiles(id=service_profile_id)
         self.assertEqual(len(labels['service_profiles']), 0)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ec8e15ff-95d0-433b-b8a6-b466bddb1e50')
     def test_create_update_delete_service_profile(self):
         # Creates a service profile
@@ -87,7 +86,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
                   id=service_profile['id']))
         self.assertEqual(len(labels['service_profiles']), 1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ec8e15ff-95d0-433b-b8a6-b466bddb1e50')
     def test_create_update_delete_flavor(self):
         # Creates a flavor
@@ -107,7 +105,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         labels = (self.admin_client.list_flavors(id=flavor['id']))
         self.assertEqual(len(labels['flavors']), 1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('30abb445-0eea-472e-bd02-8649f54a5968')
     def test_show_service_profile(self):
         # Verifies the details of a service profile
@@ -121,7 +118,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
                          service_profile['metainfo'])
         self.assertTrue(service_profile['enabled'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('30abb445-0eea-472e-bd02-8649f54a5968')
     def test_show_flavor(self):
         # Verifies the details of a flavor
@@ -132,7 +128,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         self.assertEqual(self.flavor['name'], flavor['name'])
         self.assertTrue(flavor['enabled'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('e2fb2f8c-45bf-429a-9f17-171c70444612')
     def test_list_flavors(self):
         # Verify flavor lists
@@ -140,7 +135,6 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         flavors = body['flavors']
         self.assertEqual(0, len(flavors))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('e2fb2f8c-45bf-429a-9f17-171c70444612')
     def test_list_service_profiles(self):
         # Verify service profiles lists

@@ -39,7 +39,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         super(NetworksTestJSON, cls).resource_setup()
         cls.network = cls.create_network()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('2bf13842-c93f-4a69-83ed-717d2ec3b44e')
     def test_show_network(self):
         # Verify the details of a network
@@ -51,7 +50,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         for key in fields:
             self.assertEqual(network[key], self.network[key])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('867819bb-c4b6-45f7-acf9-90edcf70aa5e')
     def test_show_network_fields(self):
         # Verify specific fields of a network
@@ -65,7 +63,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         for field_name in fields:
             self.assertEqual(network[field_name], self.network[field_name])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-ccc4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
@@ -81,7 +78,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         body = self.client.list_networks(id=net_id)['networks'][0]
         self.assertEqual('d2', body['description'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('6ae6d24f-9194-4869-9c85-c313cb20e080')
     def test_list_networks_fields(self):
         # Verify specific fields of the networks

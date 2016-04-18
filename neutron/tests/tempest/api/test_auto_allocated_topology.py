@@ -75,7 +75,6 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         body = client.list_networks(name='auto_allocated_network')
         self.networks.extend(body['networks'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('64bc0b02-cee4-11e5-9f3c-080027605a2b')
     def test_get_allocated_net_topology_as_tenant(self):
         resources_before = self._count_topology_resources()

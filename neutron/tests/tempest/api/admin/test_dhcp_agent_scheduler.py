@@ -30,13 +30,11 @@ class DHCPAgentSchedulersTestJSON(base.BaseAdminNetworkTest):
         cls.cidr = cls.subnet['cidr']
         cls.port = cls.create_port(cls.network)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('5032b1fe-eb42-4a64-8f3b-6e189d8b5c7d')
     def test_list_dhcp_agent_hosting_network(self):
         self.admin_client.list_dhcp_agent_hosting_network(
             self.network['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('30c48f98-e45d-4ffb-841c-b8aad57c7587')
     def test_list_networks_hosted_by_one_dhcp(self):
         body = self.admin_client.list_dhcp_agent_hosting_network(
@@ -56,7 +54,6 @@ class DHCPAgentSchedulersTestJSON(base.BaseAdminNetworkTest):
             network_ids.append(network['id'])
         return network_id in network_ids
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a0856713-6549-470c-a656-e97c8df9a14d')
     def test_add_remove_network_from_dhcp_agent(self):
         # The agent is now bound to the network, we can free the port

@@ -61,7 +61,7 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
                 direction='ingress', ethertype=self.ethertype)
             self.assertIn(msg, str(ex))
 
-    @test.attr(type=['negative', 'smoke'])
+    @test.attr(type='negative')
     @test.idempotent_id('55100aa8-b24f-333c-0bef-64eefd85f15c')
     def test_update_default_security_group_name(self):
         sg_list = self.client.list_security_groups(name='default')

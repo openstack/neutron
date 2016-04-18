@@ -29,7 +29,6 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
         cls.agent = agents[0]  # don't modify this agent
         cls.dyn_agent = agents[1]
 
-    @test.attr(type='smoke')
     @test.idempotent_id('9c80f04d-11f3-44a4-8738-ed2f879b0ff4')
     def test_list_agent(self):
         body = self.admin_client.list_agents()
@@ -42,20 +41,17 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
             agent.pop('configurations', None)
         self.assertIn(self.agent, agents)
 
-    @test.attr(type=['smoke'])
     @test.idempotent_id('e335be47-b9a1-46fd-be30-0874c0b751e6')
     def test_list_agents_non_admin(self):
         body = self.client.list_agents()
         self.assertEqual(len(body["agents"]), 0)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('869bc8e8-0fda-4a30-9b71-f8a7cf58ca9f')
     def test_show_agent(self):
         body = self.admin_client.show_agent(self.agent['id'])
         agent = body['agent']
         self.assertEqual(agent['id'], self.agent['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('371dfc5b-55b9-4cb5-ac82-c40eadaac941')
     def test_update_agent_status(self):
         origin_status = self.agent['admin_state_up']
@@ -67,7 +63,6 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
         updated_status = body['agent']['admin_state_up']
         self.assertEqual(origin_status, updated_status)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('68a94a14-1243-46e6-83bf-157627e31556')
     def test_update_agent_description(self):
         self.useFixture(tempest_fixtures.LockFixture('agent_description'))
