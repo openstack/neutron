@@ -4,20 +4,17 @@
 #
 # Translators:
 # Ettore Atalan <atalanttore@googlemail.com>, 2014
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
-# Monika Wolf <vcomas3@de.ibm.com>, 2016. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
+# Frank Kloeker <eumel@arcor.de>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:07+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-24 05:41+0000\n"
+"PO-Revision-Date: 2016-04-16 09:19+0000\n"
 "Last-Translator: Monika Wolf <vcomas3@de.ibm.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -2963,7 +2960,6 @@ msgstr "Analysieren von 'bridge_mappings' fehlgeschlagen: %s."
 msgid "Parsing supported pci_vendor_devs failed"
 msgstr "Die Analyse von unterstützten pci_vendor_devs ist fehlgeschlagen"
 
-#, fuzzy
 msgid "Password for connecting to designate in admin context"
 msgstr ""
 "Kennwort zum Herstellen einer Verbindung zu Designate im "
@@ -3194,7 +3190,6 @@ msgstr ""
 msgid "Remote metadata server experienced an internal server error."
 msgstr "Interner Serverfehler bei fernem Metadatenserver."
 
-#, fuzzy
 msgid ""
 "Repository does not contain HEAD files for contract and expand branches."
 msgstr ""
@@ -3621,13 +3616,11 @@ msgstr "Schlagwort %(tag)s konnte nicht gefunden werden."
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "Nutzer %(tenant_id)s darf %(resource)s auf diesem Netz nicht erstellen"
 
-#, fuzzy
 msgid "Tenant id for connecting to designate in admin context"
 msgstr ""
 "Mandanten-ID zum Herstellen einer Verbindung zu Designate im "
 "Administratorkontext."
 
-#, fuzzy
 msgid "Tenant name for connecting to designate in admin context"
 msgstr ""
 "Mandantenname zum Herstellen einer Verbindung zu Designate im "
@@ -4311,7 +4304,6 @@ msgstr ""
 "Benutzer (Benutzer-ID oder Name), der diesen Prozess nach der "
 "Initialisierung ausführt"
 
-#, fuzzy
 msgid "Username for connecting to designate in admin context"
 msgstr ""
 "Benutzername zum Herstellen einer Verbindung zu Designate im "

@@ -7,17 +7,12 @@
 # Maxime COQUEREL <max.coquerel@gmail.com>, 2014-2015
 # Patrice LACHANCE <patlachance@gmail.com>, 2013
 # Patrice LACHANCE <patlachance@gmail.com>, 2013
-# Cedric Savignan <liced@liced.fr>, 2015. #zanata
-# Maxime Coquerel <max.coquerel@gmail.com>, 2015. #zanata
-# OpenStack Infra <zanata@openstack.org>, 2015. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2015. #zanata
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
-# Tom Cocozzello <tjcocozz@us.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev88\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 04:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:07+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1719,6 +1714,10 @@ msgid "Failure waiting for address %(address)s to become ready: %(reason)s"
 msgstr ""
 "Echec lors de l'attente du passage de l'adresse %(address)s à l'état prêt : "
 "%(reason)s"
+
+#, python-format
+msgid "Field value %s is invalid"
+msgstr "La valeur du champs %s est non valide."
 
 msgid "Flat provider networks are disabled"
 msgstr "Les réseaux de fournisseurs centralisés sont désactivés"

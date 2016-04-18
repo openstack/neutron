@@ -7,11 +7,12 @@
 # Alper Çiftçi <alprciftci@gmail.com>, 2015
 # Zana iLHAN <zanailhan@gmail.com>, 2015
 # OpenStack Infra <zanata@openstack.org>, 2015. #zanata
+# Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.0.0b4.dev134\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-12 03:37+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 05:08+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -283,6 +284,9 @@ msgstr "Ağ yeniden zamanlama sırasında istisna oluştu"
 msgid "Exception encountered during router rescheduling."
 msgstr "Yönlendirici yeniden zamanlama sırasında istisna oluştu."
 
+msgid "Exception loading extension"
+msgstr "Eklenti yüklenirken istisna"
+
 msgid "Exception occurs when timer stops"
 msgstr "Zamanlayıcı durmaya çalışırken hata oluşur."
 
@@ -472,6 +476,10 @@ msgid "Internal error"
 msgstr "İçsel hata"
 
 #, python-format
+msgid "Invalid tunnel type specified: %s"
+msgstr "Geçersiz tünel türü belirtildi: %s"
+
+#, python-format
 msgid "InvalidContentType: %s"
 msgstr "UyumsuzİçerikTipi: %s"
 
@@ -584,6 +592,10 @@ msgid "OVS flows could not be applied on bridge %s"
 msgstr "OVS akışları  %s köprüsüne uygulanamıyor."
 
 #, python-format
+msgid "Parsing bridge_mappings failed: %s."
+msgstr "bridge_mappins ayrıştırma başarısız: %s."
+
+#, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 "physical_interface_mappings ayrıştırma başarısız: %s. Ajan sonlandırıldı!"
@@ -626,6 +638,9 @@ msgid ""
 "The installed version of dnsmasq is too old. Please update to at least "
 "version %s."
 msgstr "Yüklü dnsmasq sürümü çok eski. Lütfen en az %s sürümüne güncelleyin."
+
+msgid "The resource could not be found."
+msgstr "Kaynak bulunamadı."
 
 msgid ""
 "The user that is executing neutron does not have permissions to read the "

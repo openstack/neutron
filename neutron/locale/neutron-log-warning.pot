@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev89\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-08 06:35+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 06:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,7 +79,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp/agent.py:589 neutron/agent/l3/agent.py:686
-#: neutron/agent/metadata/agent.py:270
+#: neutron/agent/metadata/agent.py:269
 #: neutron/services/bgp/agent/bgp_dragent.py:689
 #: neutron/services/metering/agents/metering_agent.py:279
 msgid ""
@@ -120,7 +120,7 @@ msgid ""
 "information to be applied later when the device exists"
 msgstr ""
 
-#: neutron/agent/l3/router_info.py:268
+#: neutron/agent/l3/router_info.py:269
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
@@ -140,8 +140,8 @@ msgstr ""
 msgid "Respawning %(service)s for uuid %(uuid)s"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:342 neutron/agent/linux/interface.py:409
-#: neutron/agent/linux/interface.py:456
+#: neutron/agent/linux/interface.py:343 neutron/agent/linux/interface.py:410
+#: neutron/agent/linux/interface.py:457
 #, python-format
 msgid "No MTU configured for port %s"
 msgstr ""
@@ -165,7 +165,12 @@ msgstr ""
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:203
+#: neutron/agent/linux/openvswitch_firewall/firewall.py:252
+#, python-format
+msgid "Can't get tag for port %(port_id)s from its other_config: %(other_config)s"
+msgstr ""
+
+#: neutron/agent/metadata/agent.py:204
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
@@ -238,19 +243,19 @@ msgid ""
 "performance impact."
 msgstr ""
 
-#: neutron/db/agents_db.py:202
+#: neutron/db/agents_db.py:205
 #, python-format
 msgid "%(agent_type)s agent %(agent_id)s is not active"
 msgstr ""
 
-#: neutron/db/agents_db.py:224
+#: neutron/db/agents_db.py:227
 #, python-format
 msgid ""
 "Dictionary %(dict_name)s for agent %(agent_type)s on host %(host)s is "
 "invalid."
 msgstr ""
 
-#: neutron/db/agents_db.py:290
+#: neutron/db/agents_db.py:295
 #, python-format
 msgid ""
 "Agent healthcheck: found %(count)s dead agents out of %(total)s:\n"
@@ -281,14 +286,14 @@ msgstr ""
 msgid "Cannot schedule BgpSpeaker to DrAgent. Reason: No scheduler registered."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:124
+#: neutron/db/l3_agentschedulers_db.py:128
 #, python-format
 msgid ""
 "Rescheduling router %(router)s from agent %(agent)s because the agent did"
 " not report to the server in the last %(dead_time)s seconds."
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:319
+#: neutron/db/l3_agentschedulers_db.py:323
 #, python-format
 msgid ""
 "Failed to notify L3 agent on host %(host)s about added router. Attempt "
@@ -479,22 +484,22 @@ msgstr ""
 msgid "failed to parse vf link show line %(line)s: for %(device)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:236
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:239
 #, python-format
 msgid "Failed to set spoofcheck for device %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:245
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:248
 #, python-format
 msgid "Device %s does not support state change"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:248
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:251
 #, python-format
 msgid "Failed to set device %s state"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:329
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:332
 #, python-format
 msgid "port_id to device with MAC %s not found"
 msgstr ""
@@ -519,42 +524,42 @@ msgid ""
 "or the gateway may have already been deleted"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:589
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:591
 #, python-format
 msgid "Action %s not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1384
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1386
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1509
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1511
 #, python-format
 msgid "Device %s not defined on plugin or binding failed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1665
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1667
 #, python-format
 msgid "Invalid remote IP: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1718
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1720
 msgid "OVS is restarted. OVSNeutronAgent will reset bridges and recover ports."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1721
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1723
 msgid ""
 "OVS is dead. OVSNeutronAgent will keep running and checking OVS status "
 "periodically."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1778
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1780
 #, python-format
 msgid "Clearing cache of registered ports, retries to resync were > %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1852
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:1854
 #, python-format
 msgid "Device %(dev)s failed for %(times)s times and won't be retried anymore"
 msgstr ""
@@ -594,16 +599,16 @@ msgstr ""
 msgid "No more DHCP agents"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:149
+#: neutron/scheduler/l3_agent_scheduler.py:153
 #, python-format
 msgid "No routers compatible with L3 agent configuration on host %s"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:174
+#: neutron/scheduler/l3_agent_scheduler.py:178
 msgid "No active L3 agents"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:180
+#: neutron/scheduler/l3_agent_scheduler.py:184
 #, python-format
 msgid "No L3 agents can host the router %s"
 msgstr ""
