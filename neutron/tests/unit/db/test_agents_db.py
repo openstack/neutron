@@ -196,11 +196,32 @@ class TestAgentsDbMixin(TestAgentsDbBase):
                  "          DHCP Agent 2015-05-06 22:40:40.432295 some.node"}
             )
 
-    def test_get_dict(self):
+    def test__get_dict(self):
         db_obj = mock.Mock(conf1='{"test": "1234"}')
         conf1 = self.plugin._get_dict(db_obj, 'conf1')
         self.assertIn('test', conf1)
         self.assertEqual("1234", conf1['test'])
+
+    def test__get_dict_missing(self):
+        with mock.patch.object(agents_db.LOG, 'warning') as warn:
+            db_obj = mock.Mock(spec=['agent_type', 'host'])
+            self.plugin._get_dict(db_obj, 'missing_conf')
+            self.assertTrue(warn.called)
+
+    def test__get_dict_ignore_missing(self):
+        with mock.patch.object(agents_db.LOG, 'warning') as warn:
+            db_obj = mock.Mock(spec=['agent_type', 'host'])
+            missing_conf = self.plugin._get_dict(db_obj, 'missing_conf',
+                                                 ignore_missing=True)
+            self.assertEqual({}, missing_conf)
+            warn.assert_not_called()
+
+    def test__get_dict_broken(self):
+        with mock.patch.object(agents_db.LOG, 'warning') as warn:
+            db_obj = mock.Mock(conf1='{"test": BROKEN')
+            conf1 = self.plugin._get_dict(db_obj, 'conf1', ignore_missing=True)
+            self.assertEqual({}, conf1)
+            self.assertTrue(warn.called)
 
     def get_configurations_dict(self):
         db_obj = mock.Mock(configurations='{"cfg1": "val1"}')
