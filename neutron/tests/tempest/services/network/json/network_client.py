@@ -12,7 +12,7 @@
 
 import time
 
-from oslo_serialization import jsonutils as json
+from oslo_serialization import jsonutils
 from six.moves.urllib import parse as urlparse
 from tempest.lib.common import rest_client as service_client
 from tempest.lib import exceptions as lib_exc
@@ -164,7 +164,7 @@ class NetworkClientJSON(service_client.RestClient):
     def create_subnetpool(self, name, **kwargs):
         subnetpool_data = {'name': name}
         for arg in kwargs:
-           subnetpool_data[arg] = kwargs[arg]
+            subnetpool_data[arg] = kwargs[arg]
 
         post_data = {'subnetpool': subnetpool_data}
         body = self.serialize_list(post_data, "subnetpools", "subnetpool")
@@ -201,7 +201,7 @@ class NetworkClientJSON(service_client.RestClient):
     def update_subnetpool(self, id, **kwargs):
         subnetpool_data = {}
         for arg in kwargs:
-           subnetpool_data[arg] = kwargs[arg]
+            subnetpool_data[arg] = kwargs[arg]
 
         post_data = {'subnetpool': subnetpool_data}
         body = self.serialize_list(post_data, "subnetpools", "subnetpool")
@@ -279,40 +279,40 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/bgp-speakers/%s/add_bgp_peer' % (self.uri_prefix,
                                                    bgp_speaker_id)
         update_body = {"bgp_peer_id": bgp_peer_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_bgp_peer_with_id(self, bgp_speaker_id, bgp_peer_id):
         uri = '%s/bgp-speakers/%s/remove_bgp_peer' % (self.uri_prefix,
                                                       bgp_speaker_id)
         update_body = {"bgp_peer_id": bgp_peer_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def add_bgp_gateway_network(self, bgp_speaker_id, network_id):
         uri = '%s/bgp-speakers/%s/add_gateway_network' % (self.uri_prefix,
                                                         bgp_speaker_id)
         update_body = {"network_id": network_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_bgp_gateway_network(self, bgp_speaker_id, network_id):
         uri = '%s/bgp-speakers/%s/remove_gateway_network'
         uri = uri % (self.uri_prefix, bgp_speaker_id)
         update_body = {"network_id": network_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def get_bgp_advertised_routes(self, bgp_speaker_id):
@@ -381,10 +381,10 @@ class NetworkClientJSON(service_client.RestClient):
         return False
 
     def deserialize_single(self, body):
-        return json.loads(body)
+        return jsonutils.loads(body)
 
     def deserialize_list(self, body):
-        res = json.loads(body)
+        res = jsonutils.loads(body)
         # expecting response in form
         # {'resources': [ res1, res2] } => when pagination disabled
         # {'resources': [..], 'resources_links': {}} => if pagination enabled
@@ -394,18 +394,18 @@ class NetworkClientJSON(service_client.RestClient):
             return res[k]
 
     def serialize(self, data):
-        return json.dumps(data)
+        return jsonutils.dumps(data)
 
     def serialize_list(self, data, root=None, item=None):
         return self.serialize(data)
 
     def update_quotas(self, tenant_id, **kwargs):
         put_body = {'quota': kwargs}
-        body = json.dumps(put_body)
+        body = jsonutils.dumps(put_body)
         uri = '%s/quotas/%s' % (self.uri_prefix, tenant_id)
         resp, body = self.put(uri, body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body['quota'])
 
     def reset_quotas(self, tenant_id):
@@ -418,18 +418,18 @@ class NetworkClientJSON(service_client.RestClient):
         post_body = {'router': kwargs}
         post_body['router']['name'] = name
         post_body['router']['admin_state_up'] = admin_state_up
-        body = json.dumps(post_body)
+        body = jsonutils.dumps(post_body)
         uri = '%s/routers' % (self.uri_prefix)
         resp, body = self.post(uri, body)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def _update_router(self, router_id, set_enable_snat, **kwargs):
         uri = '%s/routers/%s' % (self.uri_prefix, router_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         update_body = {}
         update_body['name'] = kwargs.get('name', body['router']['name'])
         update_body['admin_state_up'] = kwargs.get(
@@ -450,10 +450,10 @@ class NetworkClientJSON(service_client.RestClient):
         if 'distributed' in kwargs:
             update_body['distributed'] = kwargs['distributed']
         update_body = dict(router=update_body)
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def update_router(self, router_id, **kwargs):
@@ -477,47 +477,47 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/routers/%s/add_router_interface' % (self.uri_prefix,
                                                       router_id)
         update_body = {"subnet_id": subnet_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def add_router_interface_with_port_id(self, router_id, port_id):
         uri = '%s/routers/%s/add_router_interface' % (self.uri_prefix,
                                                       router_id)
         update_body = {"port_id": port_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_router_interface_with_subnet_id(self, router_id, subnet_id):
         uri = '%s/routers/%s/remove_router_interface' % (self.uri_prefix,
                                                          router_id)
         update_body = {"subnet_id": subnet_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_router_interface_with_port_id(self, router_id, port_id):
         uri = '%s/routers/%s/remove_router_interface' % (self.uri_prefix,
                                                          router_id)
         update_body = {"port_id": port_id}
-        update_body = json.dumps(update_body)
+        update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_router_interfaces(self, uuid):
         uri = '%s/ports?device_id=%s' % (self.uri_prefix, uuid)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def update_agent(self, agent_id, agent_info):
@@ -527,33 +527,33 @@ class NetworkClientJSON(service_client.RestClient):
         """
         uri = '%s/agents/%s' % (self.uri_prefix, agent_id)
         agent = {"agent": agent_info}
-        body = json.dumps(agent)
+        body = jsonutils.dumps(agent)
         resp, body = self.put(uri, body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_routers_on_l3_agent(self, agent_id):
         uri = '%s/agents/%s/l3-routers' % (self.uri_prefix, agent_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_l3_agents_hosting_router(self, router_id):
         uri = '%s/routers/%s/l3-agents' % (self.uri_prefix, router_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def add_router_to_l3_agent(self, agent_id, router_id):
         uri = '%s/agents/%s/l3-routers' % (self.uri_prefix, agent_id)
         post_body = {"router_id": router_id}
-        body = json.dumps(post_body)
+        body = jsonutils.dumps(post_body)
         resp, body = self.post(uri, body)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_router_from_l3_agent(self, agent_id, router_id):
@@ -567,14 +567,14 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/networks/%s/dhcp-agents' % (self.uri_prefix, network_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_networks_hosted_by_one_dhcp_agent(self, agent_id):
         uri = '%s/agents/%s/dhcp-networks' % (self.uri_prefix, agent_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def remove_network_from_dhcp_agent(self, agent_id, network_id):
@@ -592,10 +592,10 @@ class NetworkClientJSON(service_client.RestClient):
                             "destination": destination}]
             }
         }
-        body = json.dumps(put_body)
+        body = jsonutils.dumps(put_body)
         resp, body = self.put(uri, body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def delete_extra_routes(self, router_id):
@@ -606,19 +606,19 @@ class NetworkClientJSON(service_client.RestClient):
                 'routes': null_routes
             }
         }
-        body = json.dumps(put_body)
+        body = jsonutils.dumps(put_body)
         resp, body = self.put(uri, body)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def add_dhcp_agent_to_network(self, agent_id, network_id):
         post_body = {'network_id': network_id}
-        body = json.dumps(post_body)
+        body = jsonutils.dumps(post_body)
         uri = '%s/agents/%s/dhcp-networks' % (self.uri_prefix, agent_id)
         resp, body = self.post(uri, body)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_qos_policies(self, **filters):
@@ -629,16 +629,18 @@ class NetworkClientJSON(service_client.RestClient):
             uri = '%s/qos/policies' % self.uri_prefix
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def create_qos_policy(self, name, description, shared, tenant_id=None):
         uri = '%s/qos/policies' % self.uri_prefix
-        post_data = {'policy': {
+        post_data = {
+            'policy': {
                 'name': name,
                 'description': description,
                 'shared': shared
-            }}
+            }
+        }
         if tenant_id is not None:
             post_data['policy']['tenant_id'] = tenant_id
         resp, body = self.post(uri, self.serialize(post_data))
@@ -657,14 +659,15 @@ class NetworkClientJSON(service_client.RestClient):
     def create_bandwidth_limit_rule(self, policy_id, max_kbps, max_burst_kbps):
         uri = '%s/qos/policies/%s/bandwidth_limit_rules' % (
             self.uri_prefix, policy_id)
-        post_data = self.serialize(
-            {'bandwidth_limit_rule': {
+        post_data = self.serialize({
+            'bandwidth_limit_rule': {
                 'max_kbps': max_kbps,
-                'max_burst_kbps': max_burst_kbps}
-            })
+                'max_burst_kbps': max_burst_kbps
+            }
+        })
         resp, body = self.post(uri, post_data)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_bandwidth_limit_rules(self, policy_id):
@@ -687,7 +690,7 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/qos/policies/%s/bandwidth_limit_rules/%s' % (
             self.uri_prefix, policy_id, rule_id)
         post_data = {'bandwidth_limit_rule': kwargs}
-        resp, body = self.put(uri, json.dumps(post_data))
+        resp, body = self.put(uri, jsonutils.dumps(post_data))
         body = self.deserialize_single(body)
         self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)
@@ -702,13 +705,14 @@ class NetworkClientJSON(service_client.RestClient):
     def create_dscp_marking_rule(self, policy_id, dscp_mark):
         uri = '%s/qos/policies/%s/dscp_marking_rules' % (
             self.uri_prefix, policy_id)
-        post_data = self.serialize(
-            {'dscp_marking_rule': {
-                'dscp_mark': dscp_mark}
-            })
+        post_data = self.serialize({
+            'dscp_marking_rule': {
+                'dscp_mark': dscp_mark
+            }
+        })
         resp, body = self.post(uri, post_data)
         self.expected_success(201, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def list_dscp_marking_rules(self, policy_id):
@@ -731,7 +735,7 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/qos/policies/%s/dscp_marking_rules/%s' % (
             self.uri_prefix, policy_id, rule_id)
         post_data = {'dscp_marking_rule': kwargs}
-        resp, body = self.put(uri, json.dumps(post_data))
+        resp, body = self.put(uri, jsonutils.dumps(post_data))
         body = self.deserialize_single(body)
         self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)
@@ -747,12 +751,12 @@ class NetworkClientJSON(service_client.RestClient):
         uri = '%s/qos/rule-types' % self.uri_prefix
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
     def get_auto_allocated_topology(self, tenant_id=None):
         uri = '%s/auto-allocated-topology/%s' % (self.uri_prefix, tenant_id)
         resp, body = self.get(uri)
         self.expected_success(200, resp.status)
-        body = json.loads(body)
+        body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
