@@ -1,0 +1,12 @@
+---
+prelude: >
+    Support configuration of greenthreads pool for WSGI.
+other:
+  - Operators may want to tune the ``max_overflow`` and
+    ``wsgi_default_pool_size`` configuration options according
+    to the investigations outlined in this `mailing list post
+    <http://lists.openstack.org/pipermail/openstack-dev/2015-December/082717.html>`_.
+    The default value of ``wsgi_default_pool_size`` inherits from
+    that of oslo.config, which is currently 100.  This is
+    a change in default from the previous Neutron-specific
+    value of 1000.
