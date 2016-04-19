@@ -86,13 +86,6 @@ _core_opts = [
                 help=_("Enforce using split branches file structure."))
 ]
 
-_quota_opts = [
-    cfg.StrOpt('quota_driver',
-               default='',
-               help=_('Neutron quota driver class'),
-               deprecated_for_removal=True),
-]
-
 _db_opts = [
     cfg.StrOpt('connection',
                deprecated_name='sql_connection',
@@ -108,7 +101,6 @@ _db_opts = [
 CONF = cfg.ConfigOpts()
 CONF.register_cli_opts(_core_opts)
 CONF.register_cli_opts(_db_opts, 'database')
-CONF.register_opts(_quota_opts, 'QUOTAS')
 
 
 def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
