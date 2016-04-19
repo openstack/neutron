@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import exceptions
 
 from neutron._i18n import _
@@ -61,21 +62,21 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'required_by_policy': False,
                      'enforce_policy': True},
         'advertise_floating_ip_host_routes': {
-                                      'allow_post': True,
-                                      'allow_put': True,
-                                      'convert_to': attr.convert_to_boolean,
-                                      'validate': {'type:boolean': None},
-                                      'is_visible': True, 'default': True,
-                                      'required_by_policy': False,
-                                      'enforce_policy': True},
+            'allow_post': True,
+            'allow_put': True,
+            'convert_to': converters.convert_to_boolean,
+            'validate': {'type:boolean': None},
+            'is_visible': True, 'default': True,
+            'required_by_policy': False,
+            'enforce_policy': True},
         'advertise_tenant_networks': {
-                                      'allow_post': True,
-                                      'allow_put': True,
-                                      'convert_to': attr.convert_to_boolean,
-                                      'validate': {'type:boolean': None},
-                                      'is_visible': True, 'default': True,
-                                      'required_by_policy': False,
-                                      'enforce_policy': True},
+            'allow_post': True,
+            'allow_put': True,
+            'convert_to': converters.convert_to_boolean,
+            'validate': {'type:boolean': None},
+            'is_visible': True, 'default': True,
+            'required_by_policy': False,
+            'enforce_policy': True},
     },
     'bgp-peers': {
         'id': {'allow_post': False, 'allow_put': False,

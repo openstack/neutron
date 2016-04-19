@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
+
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attrs
 from neutron.extensions import l3
 
 
@@ -29,9 +30,10 @@ EXTENDED_ATTRIBUTES_2_0 = {
                  {'type:dict_or_nodata':
                   {'network_id': {'type:uuid': None, 'required': True},
                    'enable_snat': {'type:boolean': None, 'required': False,
-                                   'convert_to': attrs.convert_to_boolean},
+                                   'convert_to':
+                                       converters.convert_to_boolean},
                    'external_fixed_ips': {
-                       'convert_list_to': attrs.convert_kvp_list_to_dict,
+                       'convert_list_to': converters.convert_kvp_list_to_dict,
                        'type:fixed_ips': None,
                        'default': None,
                        'required': False}

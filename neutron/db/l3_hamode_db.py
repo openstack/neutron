@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -423,7 +424,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     @classmethod
     def _is_ha(cls, router):
         ha = router.get('ha')
-        if not attributes.is_attr_set(ha):
+        if not validators.is_attr_set(ha):
             ha = cfg.CONF.l3_ha
         return ha
 
@@ -756,6 +757,6 @@ def is_ha_router(router):
     except AttributeError:
         # if not, try to see if it is a request body
         requested_router_type = router.get('ha')
-    if attributes.is_attr_set(requested_router_type):
+    if validators.is_attr_set(requested_router_type):
         return requested_router_type
     return cfg.CONF.l3_ha

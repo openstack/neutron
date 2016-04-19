@@ -16,6 +16,7 @@
 import datetime
 
 from eventlet import greenthread
+from neutron_lib.api import converters
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -282,7 +283,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                       filters=filters, fields=fields)
         alive = filters and filters.get('alive', None)
         if alive:
-            alive = attributes.convert_to_boolean(alive[0])
+            alive = converters.convert_to_boolean(alive[0])
             agents = [agent for agent in agents if agent['alive'] == alive]
         return agents
 

@@ -20,6 +20,7 @@ Routines for configuring Neutron
 import sys
 
 from keystoneauth1 import loading as ks_loading
+from neutron_lib.api import validators
 from oslo_config import cfg
 from oslo_db import options as db_options
 from oslo_log import log as logging
@@ -28,7 +29,6 @@ from oslo_middleware import cors
 from oslo_service import wsgi
 
 from neutron._i18n import _, _LI
-from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import utils
 from neutron import policy
@@ -241,8 +241,7 @@ def init(args, **kwargs):
     n_rpc.init(cfg.CONF)
 
     # Validate that the base_mac is of the correct format
-    msg = attributes._validate_regex(cfg.CONF.base_mac,
-                                     attributes.MAC_PATTERN)
+    msg = validators.validate_regex(cfg.CONF.base_mac, validators.MAC_PATTERN)
     if msg:
         msg = _("Base MAC: %s") % msg
         raise Exception(msg)

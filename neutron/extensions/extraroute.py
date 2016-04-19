@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 
@@ -41,7 +42,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {
         'routes': {'allow_post': False, 'allow_put': True,
                    'validate': {'type:hostroutes': None},
-                   'convert_to': attr.convert_none_to_empty_list,
+                   'convert_to': converters.convert_none_to_empty_list,
                    'is_visible': True,
                    'default': constants.ATTR_NOT_SPECIFIED},
     }

@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
@@ -62,7 +64,7 @@ def _validate_allowed_address_pairs(address_pairs, valid_values=None):
     for address_pair in address_pairs:
         # mac_address is optional, if not set we use the mac on the port
         if 'mac_address' in address_pair:
-            msg = attr._validate_mac_address(address_pair['mac_address'])
+            msg = validators.validate_mac_address(address_pair['mac_address'])
             if msg:
                 raise webob.exc.HTTPBadRequest(msg)
         if 'ip_address' not in address_pair:
@@ -85,22 +87,22 @@ def _validate_allowed_address_pairs(address_pairs, valid_values=None):
             raise webob.exc.HTTPBadRequest(msg)
 
         if '/' in ip_address:
-            msg = attr._validate_subnet(ip_address)
+            msg = validators.validate_subnet(ip_address)
         else:
-            msg = attr._validate_ip_address(ip_address)
+            msg = validators.validate_ip_address(ip_address)
         if msg:
             raise webob.exc.HTTPBadRequest(msg)
 
-attr.validators['type:validate_allowed_address_pairs'] = (
+validators.validators['type:validate_allowed_address_pairs'] = (
     _validate_allowed_address_pairs)
 
 ADDRESS_PAIRS = 'allowed_address_pairs'
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         ADDRESS_PAIRS: {'allow_post': True, 'allow_put': True,
-                        'convert_to': attr.convert_none_to_empty_list,
+                        'convert_to': converters.convert_none_to_empty_list,
                         'convert_list_to':
-                        attr.convert_kvp_list_to_dict,
+                        converters.convert_kvp_list_to_dict,
                         'validate': {'type:validate_allowed_address_pairs':
                                      None},
                         'enforce_policy': True,

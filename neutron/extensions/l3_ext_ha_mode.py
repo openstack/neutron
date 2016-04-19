@@ -12,12 +12,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 
 HA_INFO = 'ha'
@@ -26,7 +26,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
         HA_INFO: {'allow_post': True, 'allow_put': True,
                   'default': constants.ATTR_NOT_SPECIFIED, 'is_visible': True,
                   'enforce_policy': True,
-                  'convert_to': attributes.convert_to_boolean_if_not_none}
+                  'convert_to': converters.convert_to_boolean_if_not_none}
     }
 }
 

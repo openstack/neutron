@@ -13,6 +13,7 @@
 #    under the License.
 import collections
 
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -22,7 +23,6 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _, _LI, _LW
-from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
@@ -952,6 +952,6 @@ def is_distributed_router(router):
     except AttributeError:
         # if not, try to see if it is a request body
         requested_router_type = router.get('distributed')
-    if attributes.is_attr_set(requested_router_type):
+    if validators.is_attr_set(requested_router_type):
         return requested_router_type
     return cfg.CONF.router_distributed

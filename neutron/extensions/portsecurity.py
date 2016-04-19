@@ -12,12 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 
 
 DEFAULT_PORT_SECURITY = True
@@ -37,14 +37,14 @@ PORTSECURITY = 'port_security_enabled'
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         PORTSECURITY: {'allow_post': True, 'allow_put': True,
-                       'convert_to': attributes.convert_to_boolean,
+                       'convert_to': converters.convert_to_boolean,
                        'enforce_policy': True,
                        'default': DEFAULT_PORT_SECURITY,
                        'is_visible': True},
     },
     'ports': {
         PORTSECURITY: {'allow_post': True, 'allow_put': True,
-                       'convert_to': attributes.convert_to_boolean,
+                       'convert_to': converters.convert_to_boolean,
                        'default': constants.ATTR_NOT_SPECIFIED,
                        'enforce_policy': True,
                        'is_visible': True},

@@ -14,6 +14,7 @@
 
 import abc
 
+from neutron_lib.api import converters
 from neutron_lib import exceptions as nexception
 import six
 
@@ -57,7 +58,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True},
         'shared': {'allow_post': True, 'allow_put': False,
                    'is_visible': True, 'default': False,
-                   'convert_to': attr.convert_to_boolean}
+                   'convert_to': converters.convert_to_boolean}
     },
     'metering_label_rules': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -71,7 +72,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:values': ['ingress', 'egress']}},
         'excluded': {'allow_post': True, 'allow_put': False,
                      'is_visible': True, 'default': False,
-                     'convert_to': attr.convert_to_boolean},
+                     'convert_to': converters.convert_to_boolean},
         'remote_ip_prefix': {'allow_post': True, 'allow_put': False,
                              'is_visible': True, 'required_by_policy': True,
                              'validate': {'type:subnet': None}},

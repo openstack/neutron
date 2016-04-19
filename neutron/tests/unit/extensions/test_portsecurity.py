@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import validators
 from webob import exc
 
-from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
@@ -99,7 +99,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             p[psec.PORTSECURITY] = port_security
             self._process_port_port_security_create(context, p, neutron_db)
 
-            if (attr.is_attr_set(p.get(ext_sg.SECURITYGROUPS)) and
+            if (validators.is_attr_set(p.get(ext_sg.SECURITYGROUPS)) and
                 not (port_security and has_ip)):
                 raise psec.PortSecurityAndIPRequiredForSecurityGroups()
 

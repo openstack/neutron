@@ -19,23 +19,33 @@ from neutron._i18n import _
 
 
 class _DeprecateSubset(object):
+    additional = {}
+
     def __init__(self, my_globals, other_mod):
         self.other_mod = other_mod
         self.my_globals = copy.copy(my_globals)
 
+    @classmethod
+    def and_also(cls, name, other_mod):
+        cls.additional[name] = other_mod
+
     def __getattr__(self, name):
         a = self.my_globals.get(name)
-        if (not name.startswith("__") and not inspect.ismodule(a) and
-            name in vars(self.other_mod)):
+        if not name.startswith("__") and not inspect.ismodule(a):
+            other_mod = self.additional.get(name) or self.other_mod
+            if name in vars(other_mod):
 
-            debtcollector.deprecate(
-                name,
-                message='moved to neutron_lib',
-                version='mitaka',
-                removal_version='newton',
-                stacklevel=4)
+                # These should be enabled after most have been cleaned up
+                # in neutron proper, which may not happen during the busy M-3.
 
-            return vars(self.other_mod)[name]
+                debtcollector.deprecate(
+                    name,
+                    message='moved to %s' % other_mod.__name__,
+                    version='mitaka',
+                    removal_version='newton',
+                    stacklevel=4)
+
+                return vars(other_mod)[name]
 
         try:
             return self.my_globals[name]

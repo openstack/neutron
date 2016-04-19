@@ -16,6 +16,7 @@
 import abc
 import itertools
 
+from neutron_lib.api import converters
 import six
 
 from neutron.api import extensions
@@ -54,7 +55,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:string': None}},
         'shared': {'allow_post': True, 'allow_put': True,
                    'is_visible': True, 'default': False,
-                   'convert_to': attr.convert_to_boolean},
+                   'convert_to': converters.convert_to_boolean},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'is_visible': True},
@@ -86,7 +87,7 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
         'parameters': dict(QOS_RULE_COMMON_FIELDS,
                            **{'dscp_mark': {
                                   'allow_post': True, 'allow_put': True,
-                                  'convert_to': attr.convert_to_int,
+                                  'convert_to': converters.convert_to_int,
                                   'is_visible': True, 'default': None,
                                   'validate': {'type:values': common_constants.
                                               VALID_DSCP_MARKS}}})

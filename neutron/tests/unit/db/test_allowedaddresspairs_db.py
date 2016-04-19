@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import validators
 from oslo_config import cfg
 from webob import exc as web_exc
 
-from neutron.api.v2 import attributes as attr
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
@@ -58,7 +58,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
             neutron_db = super(AllowedAddressPairTestPlugin, self).create_port(
                 context, port)
             p.update(neutron_db)
-            if attr.is_attr_set(p.get(addr_pair.ADDRESS_PAIRS)):
+            if validators.is_attr_set(p.get(addr_pair.ADDRESS_PAIRS)):
                 self._process_create_allowed_address_pairs(
                     context, p,
                     p[addr_pair.ADDRESS_PAIRS])

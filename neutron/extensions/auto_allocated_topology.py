@@ -14,8 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
+
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.services.auto_allocate import plugin
 
@@ -37,7 +38,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                               'allow_put': True,
                               'default': False,
                               'is_visible': True,
-                              'convert_to': attr.convert_to_boolean,
+                              'convert_to': converters.convert_to_boolean,
                               'enforce_policy': True,
                               'required_by_policy': True}},
 }

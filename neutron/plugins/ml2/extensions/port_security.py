@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import validators
 from oslo_log import log as logging
 
 from neutron._i18n import _LI
-from neutron.api.v2 import attributes as attrs
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
@@ -75,7 +75,7 @@ class PortSecurityExtensionDriver(api.ExtensionDriver,
         if port.get('device_owner') and utils.is_port_trusted(port):
             return False
 
-        if attrs.is_attr_set(port.get(psec.PORTSECURITY)):
+        if validators.is_attr_set(port.get(psec.PORTSECURITY)):
             port_security_enabled = port[psec.PORTSECURITY]
         else:
             port_security_enabled = self._get_network_security_binding(

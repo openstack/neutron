@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import exceptions as nexception
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 
 
 class ExternalNetworkInUse(nexception.InUse):
@@ -32,7 +32,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                             'allow_put': True,
                             'default': False,
                             'is_visible': True,
-                            'convert_to': attr.convert_to_boolean,
+                            'convert_to': converters.convert_to_boolean,
                             'enforce_policy': True,
                             'required_by_policy': True}}}
 

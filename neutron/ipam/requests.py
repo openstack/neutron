@@ -13,12 +13,12 @@
 import abc
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants
 from oslo_utils import uuidutils
 import six
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc
@@ -276,11 +276,11 @@ class SubnetRequestFactory(object):
     def get_request(cls, context, subnet, subnetpool):
         cidr = subnet.get('cidr')
         subnet_id = subnet.get('id', uuidutils.generate_uuid())
-        is_any_subnetpool_request = not attributes.is_attr_set(cidr)
+        is_any_subnetpool_request = not validators.is_attr_set(cidr)
 
         if is_any_subnetpool_request:
             prefixlen = subnet['prefixlen']
-            if not attributes.is_attr_set(prefixlen):
+            if not validators.is_attr_set(prefixlen):
                 prefixlen = int(subnetpool['default_prefixlen'])
 
             return AnySubnetRequest(

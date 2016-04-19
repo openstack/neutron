@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 
 from neutron.api import extensions
@@ -22,7 +23,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
         'use_default_subnetpool': {'allow_post': True,
                                    'allow_put': False,
                                    'default': False,
-                                   'convert_to': attributes.convert_to_boolean,
+                                   'convert_to': converters.convert_to_boolean,
                                    'is_visible': False, },
     },
 }

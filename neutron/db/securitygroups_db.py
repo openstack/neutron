@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -698,7 +699,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _process_port_create_security_group(self, context, port,
                                             security_group_ids):
-        if attributes.is_attr_set(security_group_ids):
+        if validators.is_attr_set(security_group_ids):
             for security_group_id in security_group_ids:
                 self._create_port_security_group_binding(context, port['id'],
                                                          security_group_id)
@@ -745,7 +746,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         :returns: all security groups IDs on port belonging to tenant.
         """
         port = port['port']
-        if not attributes.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
+        if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             return
         if port.get('device_owner') and utils.is_port_trusted(port):
             return
@@ -773,7 +774,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             return
         default_sg = self._ensure_default_security_group(context,
                                                          port['tenant_id'])
-        if not attributes.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
+        if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             port[ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
@@ -781,7 +782,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         is either [] or not is_attr_set, otherwise return False
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
-            not (attributes.is_attr_set(port['port'][ext_sg.SECURITYGROUPS])
+            not (validators.is_attr_set(port['port'][ext_sg.SECURITYGROUPS])
                  and port['port'][ext_sg.SECURITYGROUPS] != [])):
             return True
         return False
@@ -792,7 +793,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         This method is called both for port create and port update.
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
-            (attributes.is_attr_set(port['port'][ext_sg.SECURITYGROUPS]) and
+            (validators.is_attr_set(port['port'][ext_sg.SECURITYGROUPS]) and
              port['port'][ext_sg.SECURITYGROUPS] != [])):
             return True
         return False

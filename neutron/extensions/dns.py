@@ -15,6 +15,7 @@
 
 import re
 
+from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 import six
@@ -82,7 +83,7 @@ def _validate_fip_dns_name(data, max_len=FQDN_MAX_LEN):
 
 
 def _validate_dns_domain(data, max_len=FQDN_MAX_LEN):
-    msg = attr._validate_string(data)
+    msg = validators.validate_string(data)
     if msg:
         return msg
     if not data:
@@ -196,9 +197,9 @@ def convert_to_lowercase(data):
     raise n_exc.InvalidInput(error_message=msg)
 
 
-attr.validators['type:dns_name'] = (_validate_dns_name)
-attr.validators['type:fip_dns_name'] = (_validate_fip_dns_name)
-attr.validators['type:dns_domain'] = (_validate_dns_domain)
+validators.validators['type:dns_name'] = _validate_dns_name
+validators.validators['type:fip_dns_name'] = _validate_fip_dns_name
+validators.validators['type:dns_domain'] = _validate_dns_domain
 
 
 DNSNAME = 'dns_name'

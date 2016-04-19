@@ -14,6 +14,7 @@
 
 import abc
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 import six
@@ -51,12 +52,12 @@ RESOURCE_ATTRIBUTE_MAP = {
         attr.SHARED: {'allow_post': True,
                       'allow_put': True,
                       'default': False,
-                      'convert_to': attr.convert_to_boolean,
+                      'convert_to': converters.convert_to_boolean,
                       'is_visible': True,
                       'required_by_policy': True,
                       'enforce_policy': True},
         'ip_version': {'allow_post': True, 'allow_put': False,
-                       'convert_to': attr.convert_to_int,
+                       'convert_to': converters.convert_to_int,
                        'validate': {'type:values': [4, 6]},
                        'is_visible': True},
     },

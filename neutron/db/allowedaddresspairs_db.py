@@ -13,9 +13,9 @@
 #    under the License.
 #
 
-import sqlalchemy as sa
-
+from neutron_lib.api import validators
 from oslo_db import exception as db_exc
+import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
@@ -43,7 +43,7 @@ class AllowedAddressPairsMixin(object):
 
     def _process_create_allowed_address_pairs(self, context, port,
                                               allowed_address_pairs):
-        if not attr.is_attr_set(allowed_address_pairs):
+        if not validators.is_attr_set(allowed_address_pairs):
             return []
         try:
             with context.session.begin(subtransactions=True):
@@ -95,7 +95,7 @@ class AllowedAddressPairsMixin(object):
         return self._fields(res, fields)
 
     def _has_address_pairs(self, port):
-        return (attr.is_attr_set(port['port'][addr_pair.ADDRESS_PAIRS])
+        return (validators.is_attr_set(port['port'][addr_pair.ADDRESS_PAIRS])
                 and port['port'][addr_pair.ADDRESS_PAIRS] != [])
 
     def _check_update_has_allowed_address_pairs(self, port):

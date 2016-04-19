@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import validators
+
 from neutron.api.v2 import attributes as attrs
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
@@ -44,14 +46,14 @@ class PortSecurityDbMixin(portsecurity_db_common.PortSecurityDbCommon):
         if port.get('device_owner') and utils.is_port_trusted(port):
             return (False, has_ip)
 
-        if attrs.is_attr_set(port.get(psec.PORTSECURITY)):
+        if validators.is_attr_set(port.get(psec.PORTSECURITY)):
             port_security_enabled = port[psec.PORTSECURITY]
 
         # If port has an ip and security_groups are passed in
         # conveniently set port_security_enabled to true this way
         # user doesn't also have to pass in port_security_enabled=True
         # when creating ports.
-        elif (has_ip and attrs.is_attr_set(port.get('security_groups'))):
+        elif has_ip and validators.is_attr_set(port.get('security_groups')):
             port_security_enabled = True
         else:
             port_security_enabled = self._get_network_security_binding(

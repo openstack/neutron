@@ -15,6 +15,7 @@
 
 import functools
 
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -309,9 +310,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 'gateway_ip': gateway_ip,
                 'description': subnet.get('description')}
         if subnet['ip_version'] == 6 and subnet['enable_dhcp']:
-            if attributes.is_attr_set(subnet['ipv6_ra_mode']):
+            if validators.is_attr_set(subnet['ipv6_ra_mode']):
                 args['ipv6_ra_mode'] = subnet['ipv6_ra_mode']
-            if attributes.is_attr_set(subnet['ipv6_address_mode']):
+            if validators.is_attr_set(subnet['ipv6_address_mode']):
                 args['ipv6_address_mode'] = subnet['ipv6_address_mode']
         return args
 

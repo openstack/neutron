@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -90,7 +91,7 @@ class QuotaController(utils.NeutronPecanController):
             attr_dict[quota_resource] = {
                 'allow_post': False,
                 'allow_put': True,
-                'convert_to': attributes.convert_to_int,
+                'convert_to': converters.convert_to_int,
                 'validate': {
                     'type:range': [-1, constants.DB_INTEGER_MAX_VALUE]},
                 'is_visible': True}
