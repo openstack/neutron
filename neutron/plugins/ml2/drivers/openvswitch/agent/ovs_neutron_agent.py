@@ -1668,7 +1668,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
 
     def tunnel_sync(self):
-        LOG.info(_LI("Configuring tunnel endpoints to other OVS agents"))
+        LOG.debug("Configuring tunnel endpoints to other OVS agents")
 
         try:
             for tunnel_type in self.tunnel_types:
