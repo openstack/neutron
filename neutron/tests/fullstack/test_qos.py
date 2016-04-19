@@ -55,7 +55,7 @@ def _wait_for_rule_applied_linuxbridge_agent(vm, limit, burst):
         namespace=vm.host.host_namespace
     )
     utils.wait_until_true(
-        lambda: tc.get_bw_limits() == (limit, burst))
+        lambda: tc.get_filters_bw_limits() == (limit, burst))
 
 
 def _wait_for_rule_applied(vm, limit, burst):

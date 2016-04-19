@@ -53,27 +53,25 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
 
     def test_create_rule(self):
         with mock.patch.object(
-            tc_lib.TcCommand, "set_bw_limit"
+            tc_lib.TcCommand, "set_filters_bw_limit"
         ) as set_bw_limit:
             self.qos_driver.create_bandwidth_limit(self.port, self.rule)
             set_bw_limit.assert_called_once_with(
                 self.rule.max_kbps, self.rule.max_burst_kbps,
-                TEST_LATENCY_VALUE
             )
 
     def test_update_rule(self):
         with mock.patch.object(
-            tc_lib.TcCommand, "update_bw_limit"
+            tc_lib.TcCommand, "update_filters_bw_limit"
         ) as update_bw_limit:
             self.qos_driver.update_bandwidth_limit(self.port, self.rule)
             update_bw_limit.assert_called_once_with(
                 self.rule.max_kbps, self.rule.max_burst_kbps,
-                TEST_LATENCY_VALUE
             )
 
     def test_delete_rule(self):
         with mock.patch.object(
-            tc_lib.TcCommand, "delete_bw_limit"
+            tc_lib.TcCommand, "delete_filters_bw_limit"
         ) as delete_bw_limit:
             self.qos_driver.delete_bandwidth_limit(self.port)
             delete_bw_limit.assert_called_once_with()
