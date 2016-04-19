@@ -220,15 +220,18 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     def get_configuration_dict(self, agent_db):
         return self._get_dict(agent_db, 'configurations')
 
-    def _get_dict(self, agent_db, dict_name):
+    def _get_dict(self, agent_db, dict_name, ignore_missing=False):
+        json_value = None
         try:
-            conf = jsonutils.loads(getattr(agent_db, dict_name))
+            json_value = getattr(agent_db, dict_name)
+            conf = jsonutils.loads(json_value)
         except Exception:
-            msg = _LW('Dictionary %(dict_name)s for agent %(agent_type)s on '
-                      'host %(host)s is invalid.')
-            LOG.warning(msg, {'dict_name': dict_name,
-                              'agent_type': agent_db.agent_type,
-                              'host': agent_db.host})
+            if json_value or not ignore_missing:
+                msg = _LW('Dictionary %(dict_name)s for agent %(agent_type)s '
+                          'on host %(host)s is invalid.')
+                LOG.warning(msg, {'dict_name': dict_name,
+                                  'agent_type': agent_db.agent_type,
+                                  'host': agent_db.host})
             conf = {}
         return conf
 
@@ -249,7 +252,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                    if k not in ['alive', 'configurations'])
         res['alive'] = not self.is_agent_down(res['heartbeat_timestamp'])
         res['configurations'] = self._get_dict(agent, 'configurations')
-        res['resource_versions'] = self._get_dict(agent, 'resource_versions')
+        res['resource_versions'] = self._get_dict(agent, 'resource_versions',
+                                                  ignore_missing=True)
         res['availability_zone'] = agent['availability_zone']
         return self._fields(res, fields)
 
@@ -371,7 +375,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                         # _update_local_agent_resource_versions() will call
                         # version_manager and bring it up to date
                         agent_state['resource_versions'] = self._get_dict(
-                            agent_db, 'resource_versions')
+                            agent_db, 'resource_versions', ignore_missing=True)
                 res['heartbeat_timestamp'] = current_time
                 if agent_state.get('start_flag'):
                     res['started_at'] = current_time
