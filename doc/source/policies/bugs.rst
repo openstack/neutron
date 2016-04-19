@@ -425,7 +425,7 @@ more will be added over time if needed.
 +-------------------------------+---------------------------------------+----------------------+
 | released-neutronclient_       | A bug affecting released clients      | Kyle Mestery         |
 +-------------------------------+---------------------------------------+----------------------+
-| release-subproject_           | A request to release a subproject     | Kyle Mestery         |
+| release-subproject_           | A request to release a subproject     | Ihar Hrachyshka      |
 +-------------------------------+---------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened   | Drivers Team         |
 +-------------------------------+---------------------------------------+----------------------+
