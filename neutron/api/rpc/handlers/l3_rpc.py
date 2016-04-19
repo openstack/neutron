@@ -219,6 +219,7 @@ class L3RpcCallback(object):
         plugins = manager.NeutronManager.get_service_plugins()
         return plugins.keys()
 
+    @db_api.retry_db_errors
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
         with context.session.begin(subtransactions=True):
@@ -273,6 +274,7 @@ class L3RpcCallback(object):
                   'host': host})
         return agent_port
 
+    @db_api.retry_db_errors
     def update_ha_routers_states(self, context, **kwargs):
         """Update states for HA routers.
 
@@ -296,6 +298,7 @@ class L3RpcCallback(object):
                                         {'subnet': {'cidr': prefix}}))
         return updated_subnets
 
+    @db_api.retry_db_errors
     def delete_agent_gateway_port(self, context, **kwargs):
         """Delete Floatingip agent gateway port."""
         network_id = kwargs.get('network_id')
