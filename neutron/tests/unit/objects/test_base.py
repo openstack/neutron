@@ -250,6 +250,12 @@ def get_obj_db_fields(obj):
             if field not in obj.synthetic_fields}
 
 
+def get_value(generator, version):
+    if 'version' in generator.__code__.co_varnames:
+        return generator(version=version)
+    return generator()
+
+
 def remove_timestamps_from_fields(obj_fields):
     return {field: value for field, value in obj_fields.items()
             if field not in TIMESTAMP_FIELDS}
@@ -288,10 +294,11 @@ class _BaseObjectTestCase(object):
     def get_random_fields(cls, obj_cls=None):
         obj_cls = obj_cls or cls._test_class
         fields = {}
+        ip_version = tools.get_random_ip_version()
         for field, field_obj in obj_cls.fields.items():
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
-                fields[field] = generator()
+                fields[field] = get_value(generator, ip_version)
         obj = obj_cls(None, **fields)
         return obj.modify_fields_to_db(fields)
 
