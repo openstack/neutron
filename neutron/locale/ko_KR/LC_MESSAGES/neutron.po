@@ -15,13 +15,13 @@
 # Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev29\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-10 14:30+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev68\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 20:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-04-08 12:59+0000\n"
+"PO-Revision-Date: 2016-04-11 01:53+0000\n"
 "Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -468,7 +468,7 @@ msgid "Allow the usage of the sorting"
 msgstr "정렬 사용 허용"
 
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
-msgstr "nova 메타데이터에 대한 비보안 SSL(https) 요청 수행 허용"
+msgstr "Nova 메타데이터에 대한 비보안 SSL(https) 요청 수행 허용"
 
 msgid "Allowed address pairs must be a list."
 msgstr "허용되는 주소 쌍은 목록이어야 합니다. "
@@ -645,9 +645,9 @@ msgid ""
 "information and is useful for debugging issues with either DHCP or DNS. If "
 "this section is null, disable dnsmasq log."
 msgstr ""
-"dnsmasq 로깅을 위한 기본 로그 디렉토리입니다. 이 로그는 DHCP 및 DNS 로그 정보"
-"를 포함하고 있으며 DHCP 또는 DNS에 대한 문제를 디버깅하는 데 유용합니다. 이 "
-"섹션이 널인 경우에는 dnsmasq 로그를 사용 안함으로 설정하십시오. "
+"dnsmasq 로깅을 위한 기본 로그 디렉토리입니다. 이 로그는 DHCP와 DNS 로그 정보"
+"를 포함하고 있으며 DHCP이나 DNS에 대한 문제를 디버깅하는 데 유용합니다. 이 섹"
+"션이 널인 경우에는 dnsmasq 로그를 사용 안함으로 설정하십시오. "
 
 #, python-format
 msgid "BgpDrAgent %(agent_id)s is already associated to a BGP speaker."
@@ -876,7 +876,7 @@ msgid "Cleanup resources of a specific agent type only."
 msgstr "특정 에이전트 유형의 자원만 정리합니다."
 
 msgid "Client certificate for nova metadata api server."
-msgstr "nova 메타데이터 api 서버에 대한 클라이언트 인증서입니다."
+msgstr "Nova 메타데이터 api 서버에 대한 클라이언트 인증서입니다."
 
 msgid ""
 "Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
@@ -1232,7 +1232,7 @@ msgid ""
 "defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg for "
 "entry points included with the neutron source."
 msgstr ""
-"ipv6 접두부 위임에 사용되는 드라이버입니다. 이는 neutron.agent.linux."
+"IPv6 prefix 위임에 사용되는 드라이버입니다. 이는 neutron.agent.linux."
 "pd_drivers 네임스페이스에서 정의된 시작점이어야 합니다. neutron 소스와 함께 "
 "포함된 시작점은 setup.cfg를 참조하십시오. "
 
@@ -1752,7 +1752,7 @@ msgid "ID of probe port to execute command"
 msgstr "명령을 실행할 프로브 포트의 ID"
 
 msgid "ID of the router"
-msgstr "라우터의 ID"
+msgstr "라우터 ID"
 
 #, python-format
 msgid "IP address %(ip)s already allocated in subnet %(subnet_id)s"
@@ -2177,7 +2177,7 @@ msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr "메타데이터 프록시 UNIX 도메인 소켓 위치"
 
 msgid "Location of pid file of this process."
-msgstr "이 프로세스의 pid 파일 위치입니다."
+msgstr "이 프로세스 pid 파일 위치입니다."
 
 msgid "Location to store DHCP server config files."
 msgstr "DHCP 서버 구성 파일을 저장할 위치."
@@ -2873,7 +2873,7 @@ msgid "Prefix Delegation can only be used with IPv6 subnets."
 msgstr "접두부 위임은 IPv6 서브넷에만 사용할 수 있습니다. "
 
 msgid "Private key of client certificate."
-msgstr "클라이언트 인증서의 개인 키입니다."
+msgstr "클라이언트 인증서 개인 키입니다."
 
 #, python-format
 msgid "Probe %s deleted"
@@ -2890,7 +2890,7 @@ msgid "Process is not running."
 msgstr "프로세스가 실행 중이지 않습니다."
 
 msgid "Protocol to access nova metadata, http or https"
-msgstr "nova 메타데이터에 액세스하기 위한 프로토콜, http 또는 https"
+msgstr "Nova 메타데이터에 접근하기 위한 프로토콜, http 또는 https"
 
 #, python-format
 msgid "Provider name %(name)s is limited by %(len)s characters"
@@ -3147,7 +3147,7 @@ msgstr ""
 "%(records)s."
 
 msgid "Run as daemon."
-msgstr "디먼으로 실행됩니다."
+msgstr "데몬으로 실행됩니다."
 
 #, python-format
 msgid "Running %(cmd)s (%(desc)s) for %(project)s ..."
@@ -3353,7 +3353,7 @@ msgstr ""
 "자만 대체할 수 있습니다."
 
 msgid "TCP Port to listen for metadata server requests."
-msgstr "메타데이터 서버 요청을 청취할 TCP 포트입니다. "
+msgstr "메타데이터 서버 요청을 listen TCP 포트입니다. "
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr "Neutron 메타데이터 네임스페이스 프록시가 사용하는 TCP 포트입니다. "
@@ -3444,7 +3444,7 @@ msgid ""
 msgstr "다음 원인으로 인해 주소 할당 요청을 충족할 수 없음: %(reason)s"
 
 msgid "The advertisement interval in seconds"
-msgstr "광고 간격(초)"
+msgstr "Advertisement 간격(초)"
 
 #, python-format
 msgid "The allocation pool %(pool)s is not valid."
@@ -4109,10 +4109,10 @@ msgid ""
 "Server. NOTE: Nova uses the same config key, but in [neutron] section."
 msgstr ""
 "메타데이터 요청의 프록시 역할을 수행할 때 Neutron이 위조를 방지하기 위해 공"
-"유 시크릿으로 Instance-ID 헤더에 서명합니다. 시크릿으로 임의의 문자열을 선택"
-"할 수 있지만 여기에 있는 문자열 및 Nova Metadata Server에서 사용하는 구성과 "
-"일치해야 합니다. 참고: Nova에서는 [neutron] 섹션에 있는 동일한 구성 키를 사용"
-"합니다."
+"유 시크릿으로 Instance-ID 헤더에 서명합니다. Secret으로 임의의 문자열을 선택"
+"할 수 있지만 여기에 있는 문자열와 Nova Metadata Server에서 사용하는 구성과 일"
+"치해야 합니다. 참고: Nova에서는 [neutron] 섹션에 있는 동일한 구성 키를 사용합"
+"니다."
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "
