@@ -1,7 +1,0 @@
----
-prelude: >
-    The 'ovs_use_veth', 'use_veth_interconnection', and 'veth_mtu'
-    options have been deprecated and will be removed in Ocata.
-deprecations:
-  - The 'ovs_use_veth', 'use_veth_interconnection', and 'veth_mtu'
-    options have been deprecated and will be removed in Ocata.
