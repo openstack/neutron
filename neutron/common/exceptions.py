@@ -334,6 +334,10 @@ class CTZoneExhaustedError(e.NeutronException):
                 "be applied.")
 
 
+class TenantQuotaNotFound(e.NotFound):
+    message = _("Quota for tenant %(tenant_id)s could not be found.")
+
+
 # Neutron-lib migration shim. This will wrap any exceptionss that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.
