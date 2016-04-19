@@ -6,16 +6,16 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev29\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-11 06:27+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev68\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-19 06:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.2\n"
+"Generated-By: Babel 2.2.0\n"
 
 #: neutron/manager.py:73
 #, python-format
@@ -193,7 +193,7 @@ msgstr ""
 msgid "Availability zone of this node"
 msgstr ""
 
-#: neutron/agent/common/config.py:88
+#: neutron/agent/common/config.py:87
 msgid ""
 "Name of bridge used for external network traffic. This should be set to "
 "an empty value for the Linux Bridge. When this parameter is set, each L3 "
@@ -201,7 +201,7 @@ msgid ""
 "option is deprecated and will be removed in the M release."
 msgstr ""
 
-#: neutron/agent/common/config.py:158 neutron/common/config.py:195
+#: neutron/agent/common/config.py:157 neutron/common/config.py:195
 msgid ""
 "Where to store Neutron state files. This directory must be writable by "
 "the agent."
@@ -324,7 +324,7 @@ msgstr ""
 msgid "Extensions list to use"
 msgstr ""
 
-#: neutron/agent/l3/agent.py:302
+#: neutron/agent/l3/agent.py:308
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
@@ -1952,13 +1952,13 @@ msgstr ""
 msgid "Shared address scope can't be unshared"
 msgstr ""
 
-#: neutron/db/agents_db.py:45
+#: neutron/db/agents_db.py:46
 msgid ""
 "Seconds to regard the agent is down; should be at least twice "
 "report_interval, to be sure the agent is down for good."
 msgstr ""
 
-#: neutron/db/agents_db.py:50
+#: neutron/db/agents_db.py:51
 msgid ""
 "Representing the resource type whose load is being reported by the agent."
 " This can be \"networks\", \"subnets\" or \"ports\". When specified "
@@ -1973,7 +1973,7 @@ msgid ""
 "Example: dhcp_load_type=networks"
 msgstr ""
 
-#: neutron/db/agents_db.py:66
+#: neutron/db/agents_db.py:67
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In "
 "the case, user's resources will not be scheduled automatically to the "
@@ -2468,7 +2468,7 @@ msgstr ""
 msgid "cannot perform %(event)s due to %(reason)s"
 msgstr ""
 
-#: neutron/db/securitygroups_db.py:694
+#: neutron/db/securitygroups_db.py:716
 msgid "Default security group"
 msgstr ""
 
@@ -3991,7 +3991,7 @@ msgstr ""
 msgid "Device has no virtual functions"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:427
+#: neutron/plugins/ml2/drivers/mech_sriov/agent/sriov_nic_agent.py:430
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr ""
@@ -4071,7 +4071,7 @@ msgstr ""
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2055
+#: neutron/plugins/ml2/drivers/openvswitch/agent/ovs_neutron_agent.py:2060
 msgid ""
 "DVR deployments for VXLAN/GRE/Geneve underlays require L2-pop to be "
 "enabled, in both the Agent and Server side."
@@ -4514,7 +4514,7 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr ""
 
-#: neutron/services/metering/drivers/iptables/iptables_driver.py:88
+#: neutron/services/metering/drivers/iptables/iptables_driver.py:89
 msgid "An interface driver must be specified"
 msgstr ""
 
@@ -4545,11 +4545,12 @@ msgstr ""
 msgid "Async process didn't respawn"
 msgstr ""
 
-#: neutron/tests/functional/agent/linux/test_keepalived.py:61
+#: neutron/tests/functional/agent/linux/test_keepalived.py:62
+#: neutron/tests/functional/agent/linux/test_keepalived.py:97
 msgid "Keepalived didn't spawn"
 msgstr ""
 
-#: neutron/tests/functional/agent/linux/test_keepalived.py:72
+#: neutron/tests/functional/agent/linux/test_keepalived.py:73
 msgid "Keepalived didn't respawn"
 msgstr ""
 

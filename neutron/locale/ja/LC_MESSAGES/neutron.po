@@ -18,14 +18,14 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev29\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-04-10 14:30+0000\n"
+"Project-Id-Version: neutron 8.0.1.dev68\n"
+"Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
+"POT-Creation-Date: 2016-04-18 20:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-04-04 06:35+0000\n"
-"Last-Translator: 笹原 昌美 <ebb0de1@jp.ibm.com>\n"
+"PO-Revision-Date: 2016-04-16 09:56+0000\n"
+"Last-Translator: Tsutomu Kimura <ebb0de2@jp.ibm.com>\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -1246,15 +1246,14 @@ msgstr "ドメイン %(dns_domain)s が外部の DNS サービス内で見つか
 msgid "Domain to use for building the hostnames"
 msgstr "ホスト名の作成に使用するドメイン"
 
-#, fuzzy
 msgid ""
 "Domain to use for building the hostnames. This option is deprecated. It has "
 "been moved to neutron.conf as dns_domain. It will be removed in a future "
 "release."
 msgstr ""
 "ホスト名を作成するために使用するドメイン。このオプションは提供を終了していま"
-"す。本オプションは、neutron.conf as dns_domain で提供します。将来のリリースに"
-"は本オプションは含まれません。"
+"す。本オプションは、「neutron.conf as dns_domain」で提供します。将来のリリー"
+"スには本オプションは含まれません。"
 
 msgid "Downgrade no longer supported"
 msgstr "ダウングレードは現在ではサポートされていません"
@@ -2706,9 +2705,8 @@ msgstr ""
 "トワークに複数の DHCP エージェントを割り当てるため、DHCP サービスの高可用性が"
 "実現します。"
 
-#, fuzzy
 msgid "Number of RPC worker processes dedicated to state reports queue"
-msgstr "レポート報告キュー専用の RPC ワーカープロセスの数"
+msgstr "レポートのキューを報告するためにのみ機能する RPC ワーカープロセスの数"
 
 msgid "Number of RPC worker processes for service"
 msgstr "RPC サービスのワーカープロセス数"
