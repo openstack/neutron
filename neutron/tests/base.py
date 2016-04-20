@@ -289,7 +289,7 @@ class BaseTestCase(DietTestCase):
         self.useFixture(ProcessMonitorFixture())
 
         self.useFixture(fixtures.MonkeyPatch(
-            'neutron.common.exceptions.NeutronException.use_fatal_exceptions',
+            'neutron_lib.exceptions.NeutronException.use_fatal_exceptions',
             fake_use_fatal_exceptions))
 
         self.useFixture(fixtures.MonkeyPatch(

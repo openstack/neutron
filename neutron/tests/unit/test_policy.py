@@ -16,6 +16,7 @@
 """Test of Policy Engine For Neutron"""
 
 import mock
+from neutron_lib import exceptions
 from oslo_db import exception as db_exc
 from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
@@ -25,7 +26,7 @@ from oslo_utils import importutils
 import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
-from neutron.common import exceptions
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
 from neutron import policy
@@ -568,7 +569,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_tenant_id_check_no_target_field_raises(self):
         # Try and add a bad rule
         self.assertRaises(
-            exceptions.PolicyInitError,
+            n_exc.PolicyInitError,
             oslo_policy.Rules.from_dict,
             {'test_policy': 'tenant_id:(wrong_stuff)'})
 
@@ -578,7 +579,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = "create_network"
         target = {'tenant_id': 'fake'}
         self.fakepolicyinit()
-        self.assertRaises(exceptions.PolicyCheckError,
+        self.assertRaises(n_exc.PolicyCheckError,
                           policy.enforce,
                           self.context, action, target)
 

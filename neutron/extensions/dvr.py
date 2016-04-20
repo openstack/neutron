@@ -14,13 +14,13 @@
 
 import abc
 
+from neutron_lib import exceptions
 import six
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions
 
 DISTRIBUTED = 'distributed'
 EXTENDED_ATTRIBUTES_2_0 = {

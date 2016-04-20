@@ -13,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions
 from oslo_db import api as oslo_db_api
 from oslo_log import log
 
-from neutron.common import exceptions
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin as common_db
 from neutron.db.quota import api as quota_api
@@ -69,7 +70,7 @@ class DbQuotaDriver(object):
             tenant_quotas = tenant_quotas.filter_by(tenant_id=tenant_id)
             if not tenant_quotas.delete():
                 # No record deleted means the quota was not found
-                raise exceptions.TenantQuotaNotFound(tenant_id=tenant_id)
+                raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
     def get_all_quotas(context, resources):
@@ -251,7 +252,7 @@ class DbQuotaDriver(object):
         # Ensure no value is less than zero
         unders = [key for key, val in values.items() if val < 0]
         if unders:
-            raise exceptions.InvalidQuotaValue(unders=sorted(unders))
+            raise n_exc.InvalidQuotaValue(unders=sorted(unders))
 
         # Get the applicable quotas
         quotas = self._get_quotas(context, tenant_id, resources)

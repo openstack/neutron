@@ -12,18 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LI
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as nexception
 
 LOG = logging.getLogger(__name__)
 
 
-class VlanTransparencyDriverError(nexception.NeutronException):
+class VlanTransparencyDriverError(exceptions.NeutronException):
     """Vlan Transparency not supported by all mechanism drivers."""
     message = _("Backend does not support VLAN Transparency.")
 

@@ -14,10 +14,10 @@
 
 import contextlib
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes as attrs
-from neutron.common import exceptions as n_exc
 from neutron.extensions import bgp
 from neutron.extensions import external_net
 from neutron.extensions import portbindings

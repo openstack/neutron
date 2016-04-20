@@ -14,13 +14,13 @@
 
 import abc
 
+from neutron_lib import exceptions as nexception
 import six
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
-from neutron.common import exceptions as nexception
 from neutron.plugins.common import constants
 from neutron.services import service_base
 

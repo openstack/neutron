@@ -16,6 +16,7 @@
 import contextlib
 
 import debtcollector
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -23,7 +24,6 @@ from oslo_db.sqlalchemy import session
 from oslo_utils import excutils
 from oslo_utils import uuidutils
 
-from neutron.common import exceptions as n_exc
 from neutron.db import common_db_mixin
 
 

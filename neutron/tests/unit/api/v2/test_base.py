@@ -16,6 +16,7 @@
 import os
 
 import mock
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
@@ -33,7 +34,6 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
 from neutron import policy

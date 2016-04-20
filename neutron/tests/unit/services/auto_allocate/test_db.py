@@ -12,8 +12,8 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import exceptions as n_exc
 
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions

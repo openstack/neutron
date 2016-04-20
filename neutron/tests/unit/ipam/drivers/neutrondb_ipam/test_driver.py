@@ -15,10 +15,10 @@
 
 import mock
 import netaddr
+from neutron_lib import exceptions as n_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as ndb_api
 from neutron.ipam.drivers.neutrondb_ipam import driver

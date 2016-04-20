@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as lib_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -33,6 +34,7 @@ NOTIFIER = None
 
 ALLOWED_EXMODS = [
     exceptions.__name__,
+    lib_exceptions.__name__,
 ]
 EXTRA_EXMODS = []
 

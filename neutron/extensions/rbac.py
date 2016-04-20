@@ -12,13 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron.common import exceptions as n_exc
 from neutron.db import rbac_db_models
 from neutron import manager
 from neutron.quota import resource_registry

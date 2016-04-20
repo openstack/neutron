@@ -11,13 +11,14 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-#
+
+from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions
+
 
 HA_INFO = 'ha'
 EXTENDED_ATTRIBUTES_2_0 = {

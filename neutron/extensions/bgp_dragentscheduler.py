@@ -17,12 +17,12 @@ import abc
 import six
 import webob
 
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import exceptions
 from neutron.extensions import agent
 from neutron.extensions import bgp as bgp_ext
 from neutron._i18n import _, _LE

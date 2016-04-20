@@ -17,6 +17,7 @@ import copy
 import itertools
 import operator
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -91,18 +92,20 @@ class DhcpRpcCallback(object):
                 return plugin.update_port(context, port['id'], port)
             else:
                 msg = _('Unrecognized action')
-                raise n_exc.Invalid(message=msg)
-        except (db_exc.DBError, n_exc.NetworkNotFound,
-                n_exc.SubnetNotFound, n_exc.IpAddressGenerationFailure) as e:
+                raise exceptions.Invalid(message=msg)
+        except (db_exc.DBError,
+                exceptions.NetworkNotFound,
+                exceptions.SubnetNotFound,
+                exceptions.IpAddressGenerationFailure) as e:
             with excutils.save_and_reraise_exception(reraise=False) as ctxt:
-                if isinstance(e, n_exc.IpAddressGenerationFailure):
+                if isinstance(e, exceptions.IpAddressGenerationFailure):
                     # Check if the subnet still exists and if it does not,
                     # this is the reason why the ip address generation failed.
                     # In any other unlikely event re-raise
                     try:
                         subnet_id = port['port']['fixed_ips'][0]['subnet_id']
                         plugin.get_subnet(context, subnet_id)
-                    except n_exc.SubnetNotFound:
+                    except exceptions.SubnetNotFound:
                         pass
                     else:
                         ctxt.reraise = True
@@ -158,7 +161,7 @@ class DhcpRpcCallback(object):
         plugin = manager.NeutronManager.get_plugin()
         try:
             network = plugin.get_network(context, network_id)
-        except n_exc.NetworkNotFound:
+        except exceptions.NetworkNotFound:
             LOG.debug("Network %s could not be found, it might have "
                       "been deleted concurrently.", network_id)
             return

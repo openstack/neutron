@@ -14,6 +14,7 @@
 import abc
 import six
 
+from neutron_lib import exceptions
 from oslo_log import log as logging
 import webob.exc
 
@@ -22,7 +23,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
-from neutron.common import exceptions
 from neutron import manager
 from neutron.services import service_base
 

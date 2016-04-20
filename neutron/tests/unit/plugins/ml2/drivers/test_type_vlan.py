@@ -14,9 +14,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import exceptions as exc
 from testtools import matchers
 
-from neutron.common import exceptions as exc
 import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils

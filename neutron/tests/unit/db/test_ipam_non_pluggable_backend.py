@@ -14,11 +14,11 @@
 #    under the License.
 
 import mock
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import db_base_plugin_v2

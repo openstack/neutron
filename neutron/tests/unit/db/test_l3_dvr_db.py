@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.common import constants as l3_const
-from neutron.common import exceptions
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin

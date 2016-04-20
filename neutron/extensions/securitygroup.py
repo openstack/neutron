@@ -16,6 +16,7 @@
 import abc
 
 import netaddr
+from neutron_lib import exceptions as nexception
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
@@ -25,7 +26,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants as const
-from neutron.common import exceptions as nexception
+from neutron.common import exceptions
 from neutron import manager
 from neutron.quota import resource_registry
 
@@ -201,7 +202,7 @@ def convert_ip_prefix_to_cidr(ip_prefix):
         cidr = netaddr.IPNetwork(ip_prefix)
         return str(cidr)
     except (ValueError, TypeError, netaddr.AddrFormatError):
-        raise nexception.InvalidCIDR(input=ip_prefix)
+        raise exceptions.InvalidCIDR(input=ip_prefix)
 
 
 def _validate_name_not_default(data, valid_values=None):

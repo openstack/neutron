@@ -17,6 +17,7 @@ import math
 import operator
 
 import netaddr
+from neutron_lib import exceptions as lib_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
@@ -64,7 +65,7 @@ class SubnetAllocator(driver.Pool):
             id=self._subnetpool['id'], hash=current_hash)
         count = query.update({'hash': new_hash})
         if not count:
-            raise db_exc.RetryRequest(n_exc.SubnetPoolInUse(
+            raise db_exc.RetryRequest(lib_exc.SubnetPoolInUse(
                                       subnet_pool_id=self._subnetpool['id']))
 
     def _get_allocated_cidrs(self):

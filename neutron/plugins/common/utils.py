@@ -18,6 +18,7 @@ Common utilities and helper functions for OpenStack Networking Plugins.
 
 import hashlib
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
@@ -68,12 +69,12 @@ def verify_tunnel_range(tunnel_range, tunnel_type):
     if tunnel_type in mappings:
         for ident in tunnel_range:
             if not mappings[tunnel_type](ident):
-                raise n_exc.NetworkTunnelRangeError(
+                raise exceptions.NetworkTunnelRangeError(
                     tunnel_range=tunnel_range,
                     error=_("%(id)s is not a valid %(type)s identifier") %
                     {'id': ident, 'type': tunnel_type})
     if tunnel_range[1] < tunnel_range[0]:
-        raise n_exc.NetworkTunnelRangeError(
+        raise exceptions.NetworkTunnelRangeError(
             tunnel_range=tunnel_range,
             error=_("End of tunnel range is less "
                     "than start of tunnel range"))

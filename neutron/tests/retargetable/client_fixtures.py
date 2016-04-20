@@ -18,9 +18,9 @@ Neutron API via different methods.
 import abc
 
 import fixtures
+from neutron_lib import exceptions as n_exc
 import six
 
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
 from neutron.tests import base

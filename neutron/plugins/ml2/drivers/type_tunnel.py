@@ -16,6 +16,7 @@ import abc
 import itertools
 import operator
 
+from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -24,7 +25,6 @@ from six import moves
 from sqlalchemy import or_
 
 from neutron._i18n import _, _LI, _LW
-from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.db import api as db_api
 from neutron.plugins.common import utils as plugin_utils

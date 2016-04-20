@@ -15,12 +15,12 @@
 
 import mock
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend

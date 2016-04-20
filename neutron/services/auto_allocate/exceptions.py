@@ -14,8 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as n_exc
+
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 
 
 class AutoAllocationFailure(n_exc.Conflict):

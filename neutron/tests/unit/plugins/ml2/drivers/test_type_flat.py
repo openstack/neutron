@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import exceptions as exc
+from neutron_lib import exceptions as exc
+
+from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
@@ -113,7 +115,7 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}
         self.driver.reserve_provider_segment(self.session, segment)
-        self.assertRaises(exc.FlatNetworkInUse,
+        self.assertRaises(n_exc.FlatNetworkInUse,
                           self.driver.reserve_provider_segment,
                           self.session, segment)
 

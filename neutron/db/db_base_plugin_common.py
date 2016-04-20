@@ -15,13 +15,14 @@
 
 import functools
 
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
+from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
@@ -207,7 +208,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         try:
             return self._get_by_id(context, models_v2.SubnetPool, id)
         except exc.NoResultFound:
-            raise n_exc.SubnetPoolNotFound(subnetpool_id=id)
+            raise exceptions.SubnetPoolNotFound(subnetpool_id=id)
 
     def _get_all_subnetpools(self, context):
         # NOTE(tidwellr): see note in _get_all_subnets()

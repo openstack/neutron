@@ -15,6 +15,7 @@ import copy
 import random
 
 import mock
+from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
@@ -23,7 +24,6 @@ from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
 
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron import context
 from neutron.db import models_v2

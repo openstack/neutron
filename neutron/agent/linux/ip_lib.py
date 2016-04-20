@@ -18,6 +18,7 @@ import re
 
 import eventlet
 import netaddr
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -26,7 +27,7 @@ import six
 from neutron._i18n import _, _LE
 from neutron.agent.common import utils
 from neutron.common import constants
-from neutron.common import exceptions
+from neutron.common import exceptions as n_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -239,7 +240,7 @@ class IPWrapper(SubProcessBase):
         if port and len(port) == 2:
             cmd.extend(['port', port[0], port[1]])
         elif port:
-            raise exceptions.NetworkVxlanPortRangeError(vxlan_range=port)
+            raise n_exc.NetworkVxlanPortRangeError(vxlan_range=port)
         self._as_root([], 'link', cmd)
         return (IPDevice(name, namespace=self.namespace))
 
@@ -699,7 +700,7 @@ class IpRouteCommand(IpDeviceCommandBase):
             with excutils.save_and_reraise_exception() as ctx:
                 if "Cannot find device" in str(rte):
                     ctx.reraise = False
-                    raise exceptions.DeviceNotFoundError(device_name=self.name)
+                    raise n_exc.DeviceNotFoundError(device_name=self.name)
 
     def delete_gateway(self, gateway, table=None):
         ip_version = get_ip_version(gateway)

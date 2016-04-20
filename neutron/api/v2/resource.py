@@ -20,6 +20,7 @@ Utility methods for working with WSGI servers redux
 import sys
 
 import netaddr
+from neutron_lib import exceptions
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
@@ -28,7 +29,6 @@ import webob.dec
 import webob.exc
 
 from neutron._i18n import _, _LE, _LI
-from neutron.common import exceptions
 from neutron import wsgi
 
 

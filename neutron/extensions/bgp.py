@@ -12,13 +12,13 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
+from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper as rh
-from neutron.common import exceptions
 from neutron.services.bgp.common import constants as bgp_consts
 
 BGP_EXT_ALIAS = 'bgp'

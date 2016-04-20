@@ -15,13 +15,13 @@
 
 import sys
 
+from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
 from six import moves
 import sqlalchemy as sa
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.plugins.common import constants as p_const

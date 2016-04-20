@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as nexception
 from oslo_config import cfg
 import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as nexception
 
 allowed_address_pair_opts = [
     #TODO(limao): use quota framework when it support quota for attributes

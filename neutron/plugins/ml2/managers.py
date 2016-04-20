@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
@@ -21,7 +22,6 @@ import stevedore
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as exc
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings

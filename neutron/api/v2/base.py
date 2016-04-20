@@ -17,6 +17,7 @@ import collections
 import copy
 
 import netaddr
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
@@ -30,7 +31,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
-from neutron.common import exceptions
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
 from neutron import policy
@@ -453,7 +454,7 @@ class Controller(object):
                     {self._resource: delta},
                     self._plugin)
                 reservations.append(reservation)
-        except exceptions.QuotaResourceUnknown as e:
+        except n_exc.QuotaResourceUnknown as e:
                 # We don't want to quota this resource
                 LOG.debug(e)
 

@@ -17,6 +17,7 @@ import collections
 import itertools
 
 import netaddr
+from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -82,7 +83,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if is_any_subnetpool_request and has_allocpool:
             reason = _("allocation_pools allowed only "
                        "for specific subnet requests.")
-            raise n_exc.BadRequest(resource='subnets', msg=reason)
+            raise exc.BadRequest(resource='subnets', msg=reason)
 
     def _validate_ip_version_with_subnetpool(self, subnet, subnetpool):
         """Validates ip version for subnet_pool and requested subnet"""
@@ -93,7 +94,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     'pool_ver': str(subnetpool.ip_version)}
             reason = _("Cannot allocate IPv%(req_ver)s subnet from "
                        "IPv%(pool_ver)s subnet pool") % args
-            raise n_exc.BadRequest(resource='subnets', msg=reason)
+            raise exc.BadRequest(resource='subnets', msg=reason)
 
     def _update_db_port(self, context, db_port, new_port, network_id, new_mac):
         # Remove all attributes in new_port which are not in the port DB model
@@ -103,7 +104,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                                           models_v2.Port))
             context.session.flush()
         except db_exc.DBDuplicateEntry:
-            raise n_exc.MacAddressInUse(net_id=network_id, mac=new_mac)
+            raise exc.MacAddressInUse(net_id=network_id, mac=new_mac)
 
     def _update_subnet_host_routes(self, context, id, s):
 
@@ -212,7 +213,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         for cidr in new_subnet_ipset.iter_cidrs():
             if cidr.prefixlen == 0:
                 err_msg = _("0 is not allowed as CIDR prefix length")
-                raise n_exc.InvalidInput(error_message=err_msg)
+                raise exc.InvalidInput(error_message=err_msg)
 
         if cfg.CONF.allow_overlapping_ips:
             subnet_list = network.subnets
@@ -233,7 +234,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                          {'new_cidr': new_subnet_cidr,
                           'subnet_id': subnet.id,
                           'cidr': subnet.cidr})
-                raise n_exc.InvalidInput(error_message=err_msg)
+                raise exc.InvalidInput(error_message=err_msg)
 
     def _validate_network_subnetpools(self, network,
                                       new_subnetpool_id, ip_version):
@@ -304,7 +305,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         if len(fixed_ip_list) > cfg.CONF.max_fixed_ips_per_port:
             msg = _('Exceeded maximum amount of fixed ips per port.')
-            raise n_exc.InvalidInput(error_message=msg)
+            raise exc.InvalidInput(error_message=msg)
 
     def _get_subnet_for_fixed_ip(self, context, fixed, subnets):
         # Subnets are all the subnets belonging to the same network.
@@ -325,23 +326,23 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                          "%(subnet_id)s") %
                        {'network_id': subnet['network_id'],
                         'subnet_id': fixed['subnet_id']})
-                raise n_exc.InvalidInput(error_message=msg)
+                raise exc.InvalidInput(error_message=msg)
             # Ensure that the IP is valid on the subnet
             if ('ip_address' in fixed and
                 not ipam_utils.check_subnet_ip(subnet['cidr'],
                                                fixed['ip_address'])):
-                raise n_exc.InvalidIpForSubnet(ip_address=fixed['ip_address'])
+                raise exc.InvalidIpForSubnet(ip_address=fixed['ip_address'])
             return subnet
 
         if 'ip_address' not in fixed:
             msg = _('IP allocation requires subnet_id or ip_address')
-            raise n_exc.InvalidInput(error_message=msg)
+            raise exc.InvalidInput(error_message=msg)
 
         for subnet in subnets:
             if ipam_utils.check_subnet_ip(subnet['cidr'],
                                           fixed['ip_address']):
                 return subnet
-        raise n_exc.InvalidIpForNetwork(ip_address=fixed['ip_address'])
+        raise exc.InvalidIpForNetwork(ip_address=fixed['ip_address'])
 
     def generate_pools(self, cidr, gateway_ip):
         return ipam_utils.generate_pools(cidr, gateway_ip)

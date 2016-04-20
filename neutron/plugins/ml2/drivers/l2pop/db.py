@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as const
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 
-from neutron.common import constants as const
 from neutron.db import agents_db
 from neutron.db import models_v2
 from neutron.plugins.ml2 import models as ml2_models

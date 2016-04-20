@@ -16,6 +16,7 @@
 
 import sys
 
+from neutron_lib import exceptions as lib_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_log import versionutils
@@ -128,8 +129,8 @@ class ConfDriver(object):
         overs = [key for key, val in values.items()
                  if quotas[key] >= 0 and quotas[key] < val]
         if overs:
-            raise exceptions.OverQuota(overs=sorted(overs), quotas=quotas,
-                                       usages={})
+            raise lib_exc.OverQuota(overs=sorted(overs), quotas=quotas,
+                                    usages={})
 
     @staticmethod
     def get_tenant_quotas(context, resources, tenant_id):

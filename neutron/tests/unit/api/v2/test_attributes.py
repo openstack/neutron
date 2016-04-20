@@ -17,6 +17,7 @@ import string
 
 import mock
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 import testtools
 import webob.exc
@@ -24,7 +25,6 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.tests import base
 from neutron.tests import tools

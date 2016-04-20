@@ -14,12 +14,12 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 
 from neutron._i18n import _, _LE
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import api as db_api
 from neutron.ipam import driver as ipam_base

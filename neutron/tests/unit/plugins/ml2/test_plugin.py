@@ -22,6 +22,7 @@ import six
 import testtools
 import webob
 
+from neutron_lib import exceptions as exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as sqla_exc
@@ -31,7 +32,6 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants
-from neutron.common import exceptions as exc
 from neutron.common import utils
 from neutron import context
 from neutron.db import agents_db

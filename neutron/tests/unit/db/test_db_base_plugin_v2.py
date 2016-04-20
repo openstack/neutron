@@ -19,6 +19,7 @@ import itertools
 
 import mock
 import netaddr
+from neutron_lib import exceptions as lib_exc
 from oslo_config import cfg
 from oslo_utils import importutils
 import six
@@ -546,7 +547,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _fail_second_call(self, patched_plugin, orig, *args, **kwargs):
         """Invoked by test cases for injecting failures in plugin."""
         def second_call(*args, **kwargs):
-            raise n_exc.NeutronException()
+            raise lib_exc.NeutronException()
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
@@ -955,7 +956,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                         fixed_ips=ips,
                                         set_context=True)
                 data = self.deserialize(self.fmt, res)
-                msg = str(n_exc.InvalidIpForNetwork(ip_address='1.1.1.1'))
+                msg = str(lib_exc.InvalidIpForNetwork(ip_address='1.1.1.1'))
                 self.assertEqual(expected_error, data['NeutronError']['type'])
                 self.assertEqual(msg, data['NeutronError']['message'])
 
@@ -971,7 +972,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                         fixed_ips=ips,
                                         set_context=True)
                 data = self.deserialize(self.fmt, res)
-                msg = str(n_exc.InvalidIpForSubnet(ip_address='1.1.1.1'))
+                msg = str(lib_exc.InvalidIpForSubnet(ip_address='1.1.1.1'))
                 self.assertEqual(expected_error, data['NeutronError']['type'])
                 self.assertEqual(msg, data['NeutronError']['message'])
 
@@ -1480,7 +1481,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
-            msg = str(n_exc.IpAddressGenerationFailure(net_id=id))
+            msg = str(lib_exc.IpAddressGenerationFailure(net_id=id))
             self.assertEqual(data['NeutronError']['message'], msg)
             self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
@@ -1661,7 +1662,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         network = self.deserialize(self.fmt, res)
         net_id = network['network']['id']
 
-        error = n_exc.MacAddressInUse(net_id=net_id, mac='00:11:22:33:44:55')
+        error = lib_exc.MacAddressInUse(net_id=net_id, mac='00:11:22:33:44:55')
         with mock.patch.object(
                 neutron.db.db_base_plugin_v2.NeutronDbPluginV2,
                 '_create_port_with_mac', side_effect=error) as create_mock:
@@ -2337,7 +2338,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
                     del_port.side_effect = side_effect
                     network_id = subnet['subnet']['network_id']
-                    self.assertRaises(n_exc.NeutronException,
+                    self.assertRaises(lib_exc.NeutronException,
                                       plugin.delete_ports_by_device_id,
                                       ctx, 'owner1', network_id)
                 statuses = {
@@ -2357,14 +2358,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         with self.subnet() as subnet:
             with self.port(subnet=subnet, device_id='owner1') as p,\
                     mock.patch.object(plugin, 'delete_port') as del_port:
-                del_port.side_effect = n_exc.PortNotFound(
+                del_port.side_effect = lib_exc.PortNotFound(
                     port_id=p['port']['id']
                 )
                 network_id = subnet['subnet']['network_id']
                 try:
                     plugin.delete_ports_by_device_id(ctx, 'owner1',
                                                      network_id)
-                except n_exc.PortNotFound:
+                except lib_exc.PortNotFound:
                     self.fail("delete_ports_by_device_id unexpectedly raised "
                               "a PortNotFound exception. It should ignore "
                               "this exception because it is often called at "
@@ -3225,7 +3226,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 res = req.get_response(self.api)
                 data = self.deserialize(self.fmt, res)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
-                msg = str(n_exc.SubnetInUse(subnet_id=id))
+                msg = str(lib_exc.SubnetInUse(subnet_id=id))
                 self.assertEqual(data['NeutronError']['message'], msg)
 
     def test_delete_subnet_with_other_subnet_on_network_still_in_use(self):
@@ -3919,7 +3920,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         if expect_success:
             plugin._validate_subnet(ctx, new_subnet, cur_subnet)
         else:
-            self.assertRaises(n_exc.InvalidInput, plugin._validate_subnet,
+            self.assertRaises(lib_exc.InvalidInput, plugin._validate_subnet,
                               ctx, new_subnet, cur_subnet)
 
     def _test_validate_subnet_ipv6_pd_modes(self, cur_subnet=None,
@@ -3936,7 +3937,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         if expect_success:
             plugin._validate_subnet(ctx, new_subnet, cur_subnet)
         else:
-            self.assertRaises(n_exc.InvalidInput, plugin._validate_subnet,
+            self.assertRaises(lib_exc.InvalidInput, plugin._validate_subnet,
                               ctx, new_subnet, cur_subnet)
 
     def test_create_subnet_ipv6_ra_modes(self):
@@ -4723,7 +4724,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                       'tenant_id': network['network']['tenant_id']}
             plugin = manager.NeutronManager.get_plugin()
             if hasattr(plugin, '_validate_subnet'):
-                self.assertRaises(n_exc.InvalidInput,
+                self.assertRaises(lib_exc.InvalidInput,
                                   plugin._validate_subnet,
                                   context.get_admin_context(),
                                   subnet)
@@ -5017,7 +5018,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             errors = [
                 exceptions.NotificationError(
-                    'fake_id', n_exc.NeutronException()),
+                    'fake_id', lib_exc.NeutronException()),
             ]
             notify.side_effect = [
                 exceptions.CallbackFailure(errors=errors), None

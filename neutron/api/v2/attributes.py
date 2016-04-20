@@ -17,6 +17,7 @@ import functools
 import re
 
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
@@ -24,7 +25,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 
 
 LOG = logging.getLogger(__name__)

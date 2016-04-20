@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import importutils
 import webob
@@ -23,7 +24,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants as const
-from neutron.common import exceptions as n_exc
+from neutron.common import exceptions
 from neutron import manager
 from neutron.pecan_wsgi import controllers
 from neutron import quota
@@ -81,7 +82,7 @@ class QuotaSetsController(wsgi.Controller):
         """Retrieve the tenant info in context."""
         context = request.context
         if not context.tenant_id:
-            raise n_exc.QuotaMissingTenant()
+            raise exceptions.QuotaMissingTenant()
         return {'tenant': {'tenant_id': context.tenant_id}}
 
     def show(self, request, id):

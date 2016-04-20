@@ -15,11 +15,11 @@
 
 import re
 
+from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE
 from neutron.agent.linux import utils
-from neutron.common import exceptions as n_exc
 
 
 LOG = logging.getLogger(__name__)

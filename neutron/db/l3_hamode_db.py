@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -29,7 +30,6 @@ from sqlalchemy import orm
 from neutron._i18n import _, _LI
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db.availability_zone import router as router_az_db

@@ -19,6 +19,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import uuidutils
@@ -32,7 +33,6 @@ from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2

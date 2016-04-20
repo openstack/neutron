@@ -16,6 +16,7 @@
 import copy
 
 import netaddr
+from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -24,7 +25,6 @@ from sqlalchemy import and_
 from neutron._i18n import _, _LE
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2

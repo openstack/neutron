@@ -20,6 +20,7 @@ from itertools import combinations as iter_combinations
 import eventlet
 import mock
 import netaddr
+from neutron_lib import exceptions as exc
 from oslo_log import log
 import oslo_messaging
 from oslo_utils import timeutils
@@ -2051,8 +2052,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         agent.router_info = {}
         self.plugin_api.get_external_network_id.side_effect = (
-            n_exc.TooManyExternalNetworks())
-        self.assertRaises(n_exc.TooManyExternalNetworks,
+            exc.TooManyExternalNetworks())
+        self.assertRaises(exc.TooManyExternalNetworks,
                           agent._process_router_if_compatible,
                           router)
         self.assertNotIn(router['id'], agent.router_info)

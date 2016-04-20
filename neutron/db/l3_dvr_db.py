@@ -13,6 +13,7 @@
 #    under the License.
 import collections
 
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
@@ -26,7 +27,6 @@ from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_const
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import l3_agentschedulers_db as l3_sched_db
 from neutron.db import l3_attrs_db

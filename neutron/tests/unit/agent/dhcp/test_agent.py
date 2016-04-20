@@ -20,6 +20,7 @@ import uuid
 
 import eventlet
 import mock
+from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
 import testtools
@@ -32,7 +33,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import config as common_config
 from neutron.common import constants as const
-from neutron.common import exceptions
 from neutron.common import utils
 from neutron import context
 from neutron.tests import base

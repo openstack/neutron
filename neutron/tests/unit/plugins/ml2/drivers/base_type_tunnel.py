@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import exceptions as exc
 from six import moves
 import testtools
 from testtools import matchers
 
-from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel

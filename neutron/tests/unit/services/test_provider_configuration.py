@@ -13,9 +13,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 
-from neutron.common import exceptions as n_exc
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services import provider_configuration as provconf

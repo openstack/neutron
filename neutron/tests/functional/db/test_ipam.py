@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session
 import testtools
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import model_base

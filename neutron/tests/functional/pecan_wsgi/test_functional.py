@@ -16,6 +16,7 @@
 import os
 
 import mock
+from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from pecan import set_config
@@ -23,7 +24,6 @@ from pecan.testing import load_test_app
 import testtools
 
 from neutron.api import extensions
-from neutron.common import exceptions as n_exc
 from neutron.tests.unit import testlib_api
 
 

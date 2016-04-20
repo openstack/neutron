@@ -15,9 +15,10 @@
 
 import re
 
+from neutron_lib import exceptions
+
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions
 
 
 INGRESS_QDISC_ID = "ffff:"

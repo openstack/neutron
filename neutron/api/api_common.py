@@ -15,6 +15,7 @@
 
 import functools
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from six.moves.urllib import parse
@@ -22,7 +23,6 @@ from webob import exc
 
 from neutron._i18n import _, _LW
 from neutron.common import constants
-from neutron.common import exceptions
 
 
 LOG = logging.getLogger(__name__)

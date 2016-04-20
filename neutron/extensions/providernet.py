@@ -13,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as n_exc
+
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as n_exc
 
 
 NETWORK_TYPE = 'provider:network_type'

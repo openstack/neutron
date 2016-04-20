@@ -17,13 +17,13 @@ import os
 import time
 import uuid
 
+from neutron_lib import exceptions
 from ovs.db import idl
 from ovs import jsonrpc
 from ovs import poller
 from ovs import stream
 
 from neutron._i18n import _
-from neutron.common import exceptions
 
 
 RowLookup = collections.namedtuple('RowLookup',

@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import exceptions as n_exc
 import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import exceptions as n_exc
 from neutron.db import l3_db
 from neutron.extensions import l3
 from neutron import manager

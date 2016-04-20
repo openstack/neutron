@@ -15,6 +15,7 @@
 import datetime
 import time
 
+from neutron_lib import exceptions as n_exc
 from oslo_log import log
 from oslo_utils import timeutils
 from sqlalchemy import event
@@ -22,7 +23,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LW
-from neutron.common import exceptions as n_exc
 from neutron.db import model_base
 
 LOG = log.getLogger(__name__)

@@ -15,6 +15,7 @@
 import abc
 import itertools
 
+from neutron_lib import exceptions as lib_exc
 from six import add_metaclass
 from sqlalchemy import and_
 
@@ -167,7 +168,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                     db_obj['tenant_id'] != context.tenant_id):
                 msg = _("Only admins can manipulate policies on objects "
                         "they do not own")
-                raise n_exc.InvalidInput(error_message=msg)
+                raise lib_exc.InvalidInput(error_message=msg)
         callback_map = {events.BEFORE_UPDATE: cls.validate_rbac_policy_update,
                         events.BEFORE_DELETE: cls.validate_rbac_policy_delete}
         if event in callback_map:
