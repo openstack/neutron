@@ -185,16 +185,19 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
+        net_id_filter = {'network_id': [p['network_id']]}
+        subnets = self._get_subnets(context, filters=net_id_filter)
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
-            context, p['network_id'])
+            context, subnets)
 
         fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
         if fixed_configured:
             ips = self._test_fixed_ips_for_port(context,
                                                 p["network_id"],
                                                 p['fixed_ips'],
-                                                p['device_owner'])
+                                                p['device_owner'],
+                                                subnets)
         else:
             ips = []
             version_subnets = [v4, v6_stateful]
@@ -217,7 +220,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         return self._ipam_allocate_ips(context, ipam_driver, p, ips)
 
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
-                                 device_owner):
+                                 device_owner, subnets):
         """Test fixed IPs for port.
 
         Check that configured subnets are valid prior to allocating any
@@ -229,7 +232,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         """
         fixed_ip_list = []
         for fixed in fixed_ips:
-            subnet = self._get_subnet_for_fixed_ip(context, fixed, network_id)
+            subnet = self._get_subnet_for_fixed_ip(context, fixed, subnets)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             if 'ip_address' in fixed:
@@ -262,10 +265,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         removed = []
         changes = self._get_changed_ips_for_port(
             context, original_ips, new_ips, port['device_owner'])
+        net_id_filter = {'network_id': [port['network_id']]}
+        subnets = self._get_subnets(context, filters=net_id_filter)
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
             context, port['network_id'], changes.add,
-            port['device_owner'])
+            port['device_owner'], subnets)
 
         ipam_driver = driver.Pool.get_instance(None, context)
         if changes.remove:

@@ -230,7 +230,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         return changes
 
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
-                                 device_owner):
+                                 device_owner, subnets):
         """Test fixed IPs for port.
 
         Check that configured subnets are valid prior to allocating any
@@ -242,7 +242,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         """
         fixed_ip_set = []
         for fixed in fixed_ips:
-            subnet = self._get_subnet_for_fixed_ip(context, fixed, network_id)
+            subnet = self._get_subnet_for_fixed_ip(context, fixed, subnets)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
             if ('ip_address' in fixed and
@@ -318,9 +318,12 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         added = []
         changes = self._get_changed_ips_for_port(context, original_ips,
                                                  new_ips, device_owner)
+        net_id_filter = {'network_id': [network_id]}
+        subnets = self._get_subnets(context, filters=net_id_filter)
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id,
-                                               changes.add, device_owner)
+                                               changes.add, device_owner,
+                                               subnets)
         for ip in changes.remove:
             LOG.debug("Port update. Hold %s", ip)
             IpamNonPluggableBackend._delete_ip_allocation(context,
@@ -343,16 +346,19 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
+        net_id_filter = {'network_id': [p['network_id']]}
+        subnets = self._get_subnets(context, filters=net_id_filter)
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
-            context, p['network_id'])
+            context, subnets)
 
         fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
         if fixed_configured:
             configured_ips = self._test_fixed_ips_for_port(context,
                                                            p["network_id"],
                                                            p['fixed_ips'],
-                                                           p['device_owner'])
+                                                           p['device_owner'],
+                                                           subnets)
             ips = self._allocate_fixed_ips(context,
                                            configured_ips,
                                            p['mac_address'])

@@ -306,14 +306,24 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             msg = _('Exceeded maximum amount of fixed ips per port.')
             raise n_exc.InvalidInput(error_message=msg)
 
-    def _get_subnet_for_fixed_ip(self, context, fixed, network_id):
+    def _get_subnet_for_fixed_ip(self, context, fixed, subnets):
+        # Subnets are all the subnets belonging to the same network.
+        if not subnets:
+            msg = _('IP allocation requires subnets for network')
+            raise n_exc.InvalidInput(error_message=msg)
+
         if 'subnet_id' in fixed:
-            subnet = self._get_subnet(context, fixed['subnet_id'])
-            if subnet['network_id'] != network_id:
+            def get_matching_subnet():
+                for subnet in subnets:
+                    if subnet['id'] == fixed['subnet_id']:
+                        return subnet
+            subnet = get_matching_subnet()
+            if not subnet:
+                subnet = self._get_subnet(context, fixed['subnet_id'])
                 msg = (_("Failed to create port on network %(network_id)s"
                          ", because fixed_ips included invalid subnet "
                          "%(subnet_id)s") %
-                       {'network_id': network_id,
+                       {'network_id': subnet['network_id'],
                         'subnet_id': fixed['subnet_id']})
                 raise n_exc.InvalidInput(error_message=msg)
             # Ensure that the IP is valid on the subnet
@@ -326,9 +336,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if 'ip_address' not in fixed:
             msg = _('IP allocation requires subnet_id or ip_address')
             raise n_exc.InvalidInput(error_message=msg)
-
-        filter = {'network_id': [network_id]}
-        subnets = self._get_subnets(context, filters=filter)
 
         for subnet in subnets:
             if ipam_utils.check_subnet_ip(subnet['cidr'],
@@ -462,10 +469,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         return subnet
 
-    def _classify_subnets(self, context, network_id):
+    def _classify_subnets(self, context, subnets):
         """Split into v4, v6 stateless and v6 stateful subnets"""
-        subnets = self._get_subnets(context,
-                                    filters={'network_id': [network_id]})
 
         v4, v6_stateful, v6_stateless = [], [], []
         for subnet in subnets:
