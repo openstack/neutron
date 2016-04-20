@@ -1128,12 +1128,19 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if int_type == 'veth':
                     self.int_br.delete_port(int_if_name)
                     br.delete_port(phys_if_name)
-                # Create patch ports without associating them in order to block
-                # untranslated traffic before association
-                int_ofport = self.int_br.add_patch_port(
-                    int_if_name, constants.NONEXISTENT_PEER)
-                phys_ofport = br.add_patch_port(
-                    phys_if_name, constants.NONEXISTENT_PEER)
+
+                # Setup int_br to physical bridge patches.  If they already
+                # exist we leave them alone, otherwise we create them but don't
+                # connect them until after the drop rules are in place.
+                int_ofport = self.int_br.get_port_ofport(int_if_name)
+                if int_ofport == ovs_lib.INVALID_OFPORT:
+                    int_ofport = self.int_br.add_patch_port(
+                        int_if_name, constants.NONEXISTENT_PEER)
+
+                phys_ofport = br.get_port_ofport(phys_if_name)
+                if phys_ofport == ovs_lib.INVALID_OFPORT:
+                    phys_ofport = br.add_patch_port(
+                        phys_if_name, constants.NONEXISTENT_PEER)
 
             self.int_ofports[physical_network] = int_ofport
             self.phys_ofports[physical_network] = phys_ofport
