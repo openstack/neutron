@@ -77,11 +77,6 @@ class DNSNameServersExhausted(e.BadRequest):
                 "The number of DNS nameservers exceeds the limit %(quota)s.")
 
 
-class InvalidIpForNetwork(e.BadRequest):
-    message = _("IP address %(ip_address)s is not a valid IP "
-                "for any of the subnets on the specified network.")
-
-
 class FlatNetworkInUse(e.InUse):
     message = _("Unable to create the flat network. "
                 "Physical network %(physical_network)s is in use.")
@@ -151,10 +146,6 @@ class InvalidExtensionEnv(e.BadRequest):
 
 class ExtensionsNotFound(e.NotFound):
     message = _("Extensions not found: %(extensions)s.")
-
-
-class InvalidContentType(e.NeutronException):
-    message = _("Invalid content type %(content_type)s.")
 
 
 class GatewayConflictWithAllocationPools(e.InUse):
