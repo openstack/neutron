@@ -171,6 +171,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
         self.assertRaises(lib_exc.BadRequest, self._create_subnetpool,
                           address_scope_id=address_scope['id'])
 
+    @test.attr(type='negative')
     @test.idempotent_id('6d3d9ad5-32d4-4d63-aa00-8c62f73e2881')
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope_of_other_owner(self):
@@ -255,6 +256,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
         self.assertEqual(update_prefixes,
                          body['subnetpool']['prefixes'])
 
+    @test.attr(type='negative')
     @test.idempotent_id('648fee7d-a909-4ced-bad3-3a169444c0a8')
     def test_update_subnetpool_associate_address_scope_wrong_ip_version(self):
         address_scope = self.create_address_scope(
