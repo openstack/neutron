@@ -180,6 +180,52 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                 self.agent.setup_integration_br()
                 time.sleep(0.25)
 
+    def test_assert_pings_during_br_phys_setup_not_lost_in_vlan_to_flat(self):
+        provider_net = self._create_test_network_dict()
+        provider_net['network_type'] = 'flat'
+
+        self._test_assert_pings_during_br_phys_setup_not_lost(provider_net)
+
+    def test_assert_pings_during_br_phys_setup_not_lost_in_vlan_to_vlan(self):
+        provider_net = self._create_test_network_dict()
+        provider_net['network_type'] = 'vlan'
+        provider_net['segmentation_id'] = 876
+
+        self._test_assert_pings_during_br_phys_setup_not_lost(provider_net)
+
+    def _test_assert_pings_during_br_phys_setup_not_lost(self, provider_net):
+        # Separate namespace is needed when pinging from one port to another,
+        # otherwise Linux ping uses loopback instead for sending and receiving
+        # ping, hence ignoring flow setup.
+        ns_phys = self.useFixture(net_helpers.NamespaceFixture()).name
+
+        ports = self.create_test_ports(amount=2)
+        port_int = ports[0]
+        port_phys = ports[1]
+        ip_int = port_int['fixed_ips'][0]['ip_address']
+        ip_phys = port_phys['fixed_ips'][0]['ip_address']
+
+        self.setup_agent_and_ports(port_dicts=[port_int], create_tunnels=False,
+                                   network=provider_net)
+
+        self.plug_ports_to_phys_br(provider_net, [port_phys],
+                                   namespace=ns_phys)
+
+        # The OVS agent doesn't monitor the physical bridges, no notification
+        # is sent when a port is up on a physical bridge, hence waiting only
+        # for the ports connected to br-int
+        self.wait_until_ports_state([port_int], up=True)
+
+        with net_helpers.async_ping(ns_phys, [ip_int]) as done:
+            while not done():
+                self.agent.setup_physical_bridges(self.agent.bridge_mappings)
+                time.sleep(0.25)
+
+        with net_helpers.async_ping(self.namespace, [ip_phys]) as done:
+            while not done():
+                self.agent.setup_physical_bridges(self.agent.bridge_mappings)
+                time.sleep(0.25)
+
     def test_assert_patch_port_ofports_dont_change(self):
         # When the integration bridge is setup, it should reuse the existing
         # patch ports between br-int and br-tun.

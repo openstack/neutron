@@ -1092,6 +1092,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # handle things like changing the datapath_type
             br.create()
             br.setup_controllers(self.conf)
+            if cfg.CONF.AGENT.drop_flows_on_start:
+                br.delete_flows()
             br.setup_default_table()
             self.phys_brs[physical_network] = br
 
@@ -1743,6 +1745,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def cleanup_stale_flows(self):
         bridges = [self.int_br]
+        bridges.extend(self.phys_brs.values())
         if self.enable_tunneling:
             bridges.append(self.tun_br)
         for bridge in bridges:
