@@ -60,9 +60,12 @@ class DhcpRpcCallback(object):
     #     1.3 - Removed release_port_fixed_ip. It's not used by reference DHCP
     #           agent since Juno, so similar rationale for not bumping the
     #           major version as above applies here too.
+    #     1.4 - Removed update_lease_expiration. It's not used by reference
+    #           DHCP agent since Juno, so similar rationale for not bumping the
+    #           major version as above applies here too.
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.3')
+        version='1.4')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -176,16 +179,6 @@ class DhcpRpcCallback(object):
                   {'network_id': network_id, 'host': host})
         plugin = manager.NeutronManager.get_plugin()
         plugin.delete_ports_by_device_id(context, device_id, network_id)
-
-    def update_lease_expiration(self, context, **kwargs):
-        """Release the fixed_ip associated the subnet on a port."""
-        # NOTE(arosen): This method is no longer used by the DHCP agent but is
-        # left so that neutron-dhcp-agents will still continue to work if
-        # neutron-server is upgraded and not the agent.
-        host = kwargs.get('host')
-
-        LOG.warning(_LW('Updating lease expiration is now deprecated. Issued  '
-                        'from host %s.'), host)
 
     @db_api.retry_db_errors
     @resource_registry.mark_resources_dirty
