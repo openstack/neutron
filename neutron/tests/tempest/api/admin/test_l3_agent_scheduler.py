@@ -79,12 +79,10 @@ class L3AgentSchedulerTestJSON(base.BaseAdminNetworkTest):
                 cls.client.add_router_interface_with_port_id(
                     cls.router['id'], cls.port['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('b7ce6e89-e837-4ded-9b78-9ed3c9c6a45a')
     def test_list_routers_on_l3_agent(self):
         self.admin_client.list_routers_on_l3_agent(self.agent['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('9464e5e7-8625-49c3-8fd1-89c52be59d66')
     def test_add_list_remove_router_on_l3_agent(self):
         l3_agent_ids = list()

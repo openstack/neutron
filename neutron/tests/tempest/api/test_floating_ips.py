@@ -41,7 +41,6 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         for i in range(2):
             cls.create_port(cls.network)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442641ffff')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")

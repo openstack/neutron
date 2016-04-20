@@ -90,7 +90,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
             self.assertEqual(expected_values['prefixes'],
                              updated_pool['prefixes'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('6e1781ec-b45b-4042-aebe-f485c022996e')
     def test_create_list_subnetpool(self):
         created_subnetpool = self._create_subnetpool()
@@ -103,7 +102,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
                       [sp['name'] for sp in subnetpools],
                       "Created subnetpool name should be in the list")
 
-    @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-ddd4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
@@ -120,7 +118,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
                       self.client.list_subnetpools()['subnetpools'])[0]
         self.assertEqual('d2', body['description'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('741d08c2-1e3f-42be-99c7-0ea93c5b728c')
     def test_get_subnetpool(self):
         created_subnetpool = self._create_subnetpool()
@@ -133,7 +130,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(prefixlen, subnetpool['default_prefixlen'])
         self.assertFalse(subnetpool['shared'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('764f1b93-1c4a-4513-9e7b-6c2fc5e9270c')
     def test_tenant_update_subnetpool(self):
         created_subnetpool = self._create_subnetpool()
@@ -148,7 +144,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
                                                 subnetpool)
         self.assertFalse(subnetpool['shared'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('4b496082-c992-4319-90be-d4a7ce646290')
     def test_update_subnetpool_prefixes_append(self):
         # We can append new prefixes to subnetpool
@@ -164,7 +159,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertIn(self.new_prefix, prefixes)
         self.assertIn(old_prefixes[0], prefixes)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('2cae5d6a-9d32-42d8-8067-f13970ae13bb')
     def test_update_subnetpool_prefixes_extend(self):
         # We can extend current subnetpool prefixes
@@ -178,7 +172,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertIn(self.larger_prefix, prefixes)
         self.assertNotIn(old_prefixes[0], prefixes)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('d70c6c35-913b-4f24-909f-14cd0d29b2d2')
     def test_admin_create_shared_subnetpool(self):
         created_subnetpool = self._create_subnetpool(is_admin=True,
@@ -212,7 +205,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         subnet = body['subnet']
         return pool_id, subnet
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1362ed7d-3089-42eb-b3a5-d6cb8398ee77')
     def test_create_subnet_from_pool_with_prefixlen(self):
         subnet_values = {"prefixlen": self.max_prefixlen}
@@ -222,7 +214,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(pool_id, subnet['subnetpool_id'])
         self.assertTrue(cidr.endswith(str(self.max_prefixlen)))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('86b86189-9789-4582-9c3b-7e2bfe5735ee')
     def test_create_subnet_from_pool_with_subnet_cidr(self):
         subnet_values = {"cidr": self.subnet_cidr}
@@ -232,7 +223,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(pool_id, subnet['subnetpool_id'])
         self.assertEqual(cidr, self.subnet_cidr)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('83f76e3a-9c40-40c2-a015-b7c5242178d8')
     def test_create_subnet_from_pool_with_default_prefixlen(self):
         # If neither cidr nor prefixlen is specified,
@@ -243,7 +233,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         prefixlen = self._subnetpool_data['min_prefixlen']
         self.assertTrue(cidr.endswith(str(prefixlen)))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a64af292-ec52-4bde-b654-a6984acaf477')
     def test_create_subnet_from_pool_with_quota(self):
         pool_values = {'default_quota': 4}
@@ -254,7 +243,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(pool_id, subnet['subnetpool_id'])
         self.assertTrue(cidr.endswith(str(self.max_prefixlen)))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('49b44c64-1619-4b29-b527-ffc3c3115dc4')
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope(self):
@@ -267,7 +255,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(address_scope['id'],
                          body['subnetpool']['address_scope_id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('910b6393-db24-4f6f-87dc-b36892ad6c8c')
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope(self):
@@ -284,7 +271,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(address_scope['id'],
                          body['subnetpool']['address_scope_id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('18302e80-46a3-4563-82ac-ccd1dd57f652')
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_another_address_scope(self):
@@ -306,7 +292,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(another_address_scope['id'],
                          body['subnetpool']['address_scope_id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f8970048-e41b-42d6-934b-a1297b07706a')
     @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_disassociate_address_scope(self):
@@ -342,7 +327,6 @@ class SubnetPoolsTestV6(SubnetPoolsTest):
         cls._subnetpool_data = {'min_prefixlen': min_prefixlen,
                                 'prefixes': prefixes}
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f62d73dc-cf6f-4879-b94b-dab53982bf3b')
     def test_create_dual_stack_subnets_from_subnetpools(self):
         pool_id_v6, subnet_v6 = self._create_subnet_from_pool()

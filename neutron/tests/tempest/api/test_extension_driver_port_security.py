@@ -28,7 +28,6 @@ FAKE_MAC = '00:25:64:e8:19:dd'
 class PortSecTest(base_security.BaseSecGroupTest,
                   base.BaseNetworkTest):
 
-    @test.attr(type='smoke')
     @test.idempotent_id('7c338ddf-e64e-4118-bd33-e49a1f2f1495')
     @test.requires_ext(extension='port-security', service='network')
     def test_port_sec_default_value(self):
@@ -40,7 +39,6 @@ class PortSecTest(base_security.BaseSecGroupTest,
         port = self.create_port(network)
         self.assertTrue(port['port_security_enabled'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('e60eafd2-31de-4c38-8106-55447d033b57')
     @test.requires_ext(extension='port-security', service='network')
     @ddt.unpack
@@ -55,7 +53,6 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertEqual(network['port_security_enabled'], port_sec_net)
         self.assertEqual(port['port_security_enabled'], expected)
 
-    @test.attr(type=['smoke'])
     @test.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
     @test.requires_ext(extension='port-security', service='network')
     def test_create_port_sec_with_security_group(self):
@@ -71,7 +68,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertFalse(port['port_security_enabled'])
         self.assertEmpty(port['security_groups'])
 
-    @test.attr(type=['negative', 'smoke'])
+    @test.attr(type='negative')
     @test.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
     @test.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_port_failed(self):
@@ -99,7 +96,6 @@ class PortSecTest(base_security.BaseSecGroupTest,
         # Remove security group from port before deletion on resource_cleanup
         self.update_port(port, security_groups=[])
 
-    @test.attr(type=['smoke'])
     @test.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
     @test.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_pass(self):
@@ -124,7 +120,6 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertEmpty(port['security_groups'])
         self.assertFalse(port['port_security_enabled'])
 
-    @test.attr(type=['smoke'])
     @test.idempotent_id('2df6114b-b8c3-48a1-96e8-47f08159d35c')
     @test.requires_ext(extension='port-security', service='network')
     def test_delete_with_port_sec(self):
@@ -137,7 +132,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertTrue(
             self.client.is_resource_deleted('network', network['id']))
 
-    @test.attr(type=['negative', 'smoke'])
+    @test.attr(type='negative')
     @test.idempotent_id('ed93e453-3f8d-495e-8e7e-b0e268c2ebd9')
     @test.requires_ext(extension='port-security', service='network')
     @test.requires_ext(extension='allowed-address-pairs', service='network')

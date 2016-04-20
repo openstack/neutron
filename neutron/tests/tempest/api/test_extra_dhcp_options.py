@@ -52,7 +52,6 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
             {'opt_value': cls.ip_server, 'opt_name': 'server-ip-address'}
         ]
 
-    @test.attr(type='smoke')
     @test.idempotent_id('d2c17063-3767-4a24-be4f-a23dbfa133c9')
     def test_create_list_port_with_extra_dhcp_options(self):
         # Create a port with Extra DHCP Options
@@ -69,7 +68,6 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
         self.assertTrue(port)
         self._confirm_extra_dhcp_options(port[0], self.extra_dhcp_opts)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('9a6aebf4-86ee-4f47-b07a-7f7232c55607')
     def test_update_show_port_with_extra_dhcp_options(self):
         # Update port with extra dhcp options

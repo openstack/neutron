@@ -58,7 +58,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                  id=metering_label_rule_id))
         self.assertEqual(len(rules['metering_label_rules']), 0)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('e2fb2f8c-45bf-429a-9f17-171c70444612')
     def test_list_metering_labels(self):
         # Verify label filtering
@@ -66,7 +65,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
         metering_labels = body['metering_labels']
         self.assertEqual(0, len(metering_labels))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ec8e15ff-95d0-433b-b8a6-b466bddb1e50')
     def test_create_delete_metering_label_with_filters(self):
         # Creates a label
@@ -83,7 +81,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                   id=metering_label['id']))
         self.assertEqual(len(labels['metering_labels']), 1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('30abb445-0eea-472e-bd02-8649f54a5968')
     def test_show_metering_label(self):
         # Verifies the details of a label
@@ -96,7 +93,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(self.metering_label['description'],
                          metering_label['description'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('cc832399-6681-493b-9d79-0202831a1281')
     def test_list_metering_label_rules(self):
         # Verify rule filtering
@@ -104,7 +100,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
         metering_label_rules = body['metering_label_rules']
         self.assertEqual(0, len(metering_label_rules))
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f4d547cd-3aee-408f-bf36-454f8825e045')
     def test_create_delete_metering_label_rule_with_filters(self):
         # Creates a rule
@@ -123,7 +118,6 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                  id=metering_label_rule['id']))
         self.assertEqual(len(rules['metering_label_rules']), 1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('b7354489-96ea-41f3-9452-bace120fb4a7')
     def test_show_metering_label_rule(self):
         # Verifies the details of a rule

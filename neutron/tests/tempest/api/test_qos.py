@@ -28,7 +28,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
     def resource_setup(cls):
         super(QosTestJSON, cls).resource_setup()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -47,7 +46,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         policies_ids = [p['id'] for p in policies]
         self.assertIn(policy['id'], policies_ids)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f8d20e92-f06d-4805-b54f-230f77715815')
     def test_list_policy_filter_by_name(self):
         self.create_qos_policy(name='test', description='test policy',
@@ -62,7 +60,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         retrieved_policy = policies[0]
         self.assertEqual('test', retrieved_policy['name'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('8e88a54b-f0b2-4b7d-b061-a15d93c2c7d6')
     def test_policy_update(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -78,7 +75,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertTrue(retrieved_policy['shared'])
         self.assertEqual([], retrieved_policy['rules'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1cb42653-54bd-4a9a-b888-c55e18199201')
     def test_delete_policy(self):
         policy = self.admin_client.create_qos_policy(
@@ -92,12 +88,10 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(exceptions.NotFound,
                           self.admin_client.show_qos_policy, policy['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('cf776f77-8d3d-49f2-8572-12d6a1557224')
     def test_list_admin_rule_types(self):
         self._test_list_rule_types(self.admin_client)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('49c8ea35-83a9-453a-bd23-239cf3b13929')
     def test_list_regular_rule_types(self):
         self._test_list_rule_types(self.client)
@@ -133,7 +127,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         updated_network = self.admin_client.show_network(network_id)
         self.assertIsNone(updated_network['network']['qos_policy_id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('65b9ef75-1911-406a-bbdb-ca1d68d528b0')
     def test_policy_association_with_admin_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -148,7 +141,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_network(self.admin_client, network['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1738de5d-0476-4163-9022-5e1b548c208e')
     def test_policy_association_with_tenant_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -163,7 +155,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_network(self.client, network['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('9efe63d0-836f-4cc2-b00c-468e63aa614e')
     def test_policy_association_with_network_nonexistent_policy(self):
         self.assertRaises(
@@ -172,7 +163,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             'test network',
             qos_policy_id='9efe63d0-836f-4cc2-b00c-468e63aa614e')
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1aa55a79-324f-47d9-a076-894a8fc2448b')
     def test_policy_association_with_network_non_shared_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -183,7 +173,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             self.create_network,
             'test network', qos_policy_id=policy['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('09a9392c-1359-4cbb-989f-fb768e5834a8')
     def test_policy_update_association_with_admin_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -206,7 +195,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         updated_port = self.admin_client.show_port(port_id)
         self.assertIsNone(updated_port['port']['qos_policy_id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('98fcd95e-84cf-4746-860e-44692e674f2e')
     def test_policy_association_with_port_shared_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -221,7 +209,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_port(port['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('49e02f5a-e1dd-41d5-9855-cfa37f2d195e')
     def test_policy_association_with_port_nonexistent_policy(self):
         network = self.create_shared_network('test network')
@@ -231,7 +218,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             network,
             qos_policy_id='49e02f5a-e1dd-41d5-9855-cfa37f2d195e')
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f53d961c-9fe5-4422-8b66-7add972c6031')
     def test_policy_association_with_port_non_shared_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -243,7 +229,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             self.create_port,
             network, qos_policy_id=policy['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f8163237-fba9-4db5-9526-bad6d2343c76')
     def test_policy_update_association_with_port_shared_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -261,7 +246,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
         self._disassociate_port(port['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('18163237-8ba9-4db5-9525-bad6d2343c75')
     def test_delete_not_allowed_if_policy_in_use_by_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -276,7 +260,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self._disassociate_network(self.admin_client, network['id'])
         self.admin_client.delete_qos_policy(policy['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('24153230-84a9-4dd5-9525-bad6d2343c75')
     def test_delete_not_allowed_if_policy_in_use_by_port(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -291,7 +274,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self._disassociate_port(port['id'])
         self.admin_client.delete_qos_policy(policy['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a2a5849b-dd06-4b18-9664-0b6828a1fc27')
     def test_qos_policy_delete_with_rules(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -312,7 +294,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     def resource_setup(cls):
         super(QosBandwidthLimitRuleTestJSON, cls).resource_setup()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
     def test_rule_create(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -344,7 +325,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                          policy_rules[0]['type'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-ab01-4787-92f8-93a5cdf5e378')
     def test_rule_create_fail_for_the_same_type(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -359,7 +339,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                           policy_id=policy['id'],
                           max_kbps=201, max_burst_kbps=1338)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
     def test_rule_update(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -380,7 +359,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(200, retrieved_policy['max_kbps'])
         self.assertEqual(1337, retrieved_policy['max_burst_kbps'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
     def test_rule_delete(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -399,7 +377,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                           self.admin_client.show_bandwidth_limit_rule,
                           policy['id'], rule['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f211222c-5808-46cb-a961-983bbab6b852')
     def test_rule_create_rule_nonexistent_policy(self):
         self.assertRaises(
@@ -407,7 +384,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             self.create_qos_bandwidth_limit_rule,
             'policy', 200, 1337)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('eed8e2a6-22da-421b-89b9-935a2c1a1b50')
     def test_policy_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
@@ -415,7 +391,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             self.client.create_qos_policy,
             'test-policy', 'test policy', False)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
     def test_rule_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
@@ -423,7 +398,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             self.client.create_bandwidth_limit_rule,
             'policy', 1, 2)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
     def test_get_rules_by_policy(self):
         policy1 = self.create_qos_policy(name='test-policy1',
@@ -709,7 +683,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     def resource_setup(cls):
         super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
     def test_rule_create(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -739,7 +712,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(qos_consts.RULE_TYPE_DSCP_MARK,
                          policy_rules[0]['type'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('8a59b00b-ab01-4787-92f8-93a5cdf5e378')
     def test_rule_create_fail_for_the_same_type(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -753,7 +725,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
                           policy_id=policy['id'],
                           dscp_mark=self.VALID_DSCP_MARK2)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
     def test_rule_update(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -770,7 +741,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         retrieved_policy = retrieved_policy['dscp_marking_rule']
         self.assertEqual(self.VALID_DSCP_MARK2, retrieved_policy['dscp_mark'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
     def test_rule_delete(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -789,7 +759,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
                           self.admin_client.show_dscp_marking_rule,
                           policy['id'], rule['id'])
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f211222c-5808-46cb-a961-983bbab6b852')
     def test_rule_create_rule_nonexistent_policy(self):
         self.assertRaises(
@@ -797,7 +766,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
             self.admin_client.create_dscp_marking_rule,
             'policy', self.VALID_DSCP_MARK1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
     def test_rule_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
@@ -805,7 +773,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
             self.client.create_dscp_marking_rule,
             'policy', self.VALID_DSCP_MARK1)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('33646b08-4f05-4493-a48a-bde768a18533')
     def test_invalid_rule_create(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -816,7 +783,6 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
             self.admin_client.create_dscp_marking_rule,
             policy['id'], 58)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
     def test_get_rules_by_policy(self):
         policy1 = self.create_qos_policy(name='test-policy1',

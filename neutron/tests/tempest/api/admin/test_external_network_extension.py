@@ -38,7 +38,6 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
         self.addCleanup(self.admin_client.delete_network, network['id'])
         return network
 
-    @test.attr(type='smoke')
     @test.idempotent_id('afd8f1b7-a81e-4629-bca8-a367b3a144bb')
     def test_regular_client_shares_with_another(self):
         net = self.create_network()
@@ -63,7 +62,6 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
                 action='access_as_external',
                 target_tenant='*')
 
-    @test.attr(type='smoke')
     @test.idempotent_id('a2e19f06-48a9-4e4c-b717-08cb2008707d')
     def test_wildcard_policy_created_from_external_network_api(self):
         # create external makes wildcard

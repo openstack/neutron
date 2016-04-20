@@ -25,7 +25,6 @@ class PortsTestJSON(base.BaseNetworkTest):
         super(PortsTestJSON, cls).resource_setup()
         cls.network = cls.create_network()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")

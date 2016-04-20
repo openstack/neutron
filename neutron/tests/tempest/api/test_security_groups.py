@@ -26,7 +26,6 @@ class SecGroupTest(base.BaseSecGroupTest):
     def resource_setup(cls):
         super(SecGroupTest, cls).resource_setup()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('bfd128e5-3c92-44b6-9d66-7fe29d22c802')
     def test_create_list_update_show_delete_security_group(self):
         group_create_body, name = self._create_security_group()

@@ -41,7 +41,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
         cls.create_router_interface(cls.router['id'], cls.subnet['id'])
         cls.port = cls.create_port(cls.network)
 
-    @test.attr(type=['negative', 'smoke'])
+    @test.attr(type='negative')
     @test.idempotent_id('11116ee9-4e99-5b15-b8e1-aa7df92ca589')
     def test_associate_floating_ip_with_port_from_another_tenant(self):
         body = self.admin_client.create_floatingip(
@@ -64,7 +64,6 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
     @testtools.skipUnless(
         CONF.neutron_plugin_options.specify_floating_ip_address_available,
         "Feature for specifying floating IP address is disabled")
-    @test.attr(type='smoke')
     @test.idempotent_id('332a8ae4-402e-4b98-bb6f-532e5a87b8e0')
     def test_create_floatingip_with_specified_ip_address(self):
         # other tests may end up stealing the IP before we can use it
