@@ -283,6 +283,24 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
 
     @mock.patch('neutron.agent.common.utils.execute')
+    def test_get_devices_namespaces_ns_not_exists(self, mocked_execute):
+        mocked_execute.side_effect = RuntimeError(
+            "Cannot open network namespace")
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
+                               return_value=False):
+            retval = ip_lib.IPWrapper(namespace='foo').get_devices()
+            self.assertEqual([], retval)
+
+    @mock.patch('neutron.agent.common.utils.execute')
+    def test_get_devices_namespaces_ns_exists(self, mocked_execute):
+        mocked_execute.side_effect = RuntimeError(
+            "Cannot open network namespace")
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
+                               return_value=True):
+            self.assertRaises(RuntimeError,
+                              ip_lib.IPWrapper(namespace='foo').get_devices)
+
+    @mock.patch('neutron.agent.common.utils.execute')
     def test_get_devices_exclude_loopback_and_gre(self, mocked_execute):
         device_name = 'somedevice'
         mocked_execute.return_value = 'lo gre0 gretap0 ' + device_name
