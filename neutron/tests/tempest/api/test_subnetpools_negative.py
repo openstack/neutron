@@ -258,6 +258,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @test.attr(type='negative')
     @test.idempotent_id('648fee7d-a909-4ced-bad3-3a169444c0a8')
+    @test.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope_wrong_ip_version(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'),
