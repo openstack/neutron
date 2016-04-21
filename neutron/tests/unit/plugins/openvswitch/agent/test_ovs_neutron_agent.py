@@ -1677,6 +1677,25 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
 
     def test_port_bound_for_dvr_with_csnat_ports(self, ofport=10):
         self._setup_for_dvr_test()
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        self.assertTrue(int_br.called)
+        self.assertTrue(tun_br.called)
+
+    def test_port_bound_for_dvr_with_csnat_ports_ofport_change(self):
+        self._setup_for_dvr_test()
+        self._port_bound_for_dvr_with_csnat_ports()
+        # simulate a replug
+        self._port.ofport = 12
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        self.assertTrue(int_br.called)
+        # a local vlan was already provisioned so there should be no new
+        # calls to tunbr
+        self.assertFalse(tun_br.called)
+        # make sure ofport was updated
+        self.assertEqual(12,
+            self.agent.dvr_agent.local_ports[self._port.vif_id].ofport)
+
+    def _port_bound_for_dvr_with_csnat_ports(self):
         with mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                         'set_db_attribute',
                         return_value=True):
@@ -1710,6 +1729,7 @@ class TestOvsDvrNeutronAgent(base.BaseTestCase):
                     False)
                 self.assertTrue(add_flow_int_fn.called)
                 self.assertTrue(delete_flows_int_fn.called)
+                return add_flow_int_fn, add_flow_tun_fn
 
     def test_treat_devices_removed_for_dvr_interface(self, ofport=10):
         self._test_treat_devices_removed_for_dvr_interface(ofport)
