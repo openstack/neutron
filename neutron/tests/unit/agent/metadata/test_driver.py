@@ -34,7 +34,7 @@ class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_nat_rules(self):
         rules = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
-                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-port 8775')
+                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 8775')
         self.assertEqual(
             [rules],
             metadata_driver.MetadataDriver.metadata_nat_rules(8775))

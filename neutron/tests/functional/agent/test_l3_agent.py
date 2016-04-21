@@ -270,6 +270,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                        'INPUT',
                                        metadata_port_filter))
 
+    def _assert_iptables_rules_converged(self, router):
+        # if your code is failing on this line, it means you are not generating
+        # your iptables rules in the same format that iptables-save returns
+        # them. run iptables-save to see the format they should be in
+        self.assertFalse(router.iptables_manager.apply())
+
     def _assert_internal_devices(self, router):
         internal_devices = router.router[l3_constants.INTERFACE_KEY]
         self.assertTrue(len(internal_devices))
@@ -680,6 +686,7 @@ class L3AgentTestCase(L3AgentTestFramework):
             self.assertTrue(self.floating_ips_configured(router))
             self._assert_snat_chains(router)
             self._assert_floating_ip_chains(router)
+            self._assert_iptables_rules_converged(router)
             self._assert_extra_routes(router)
             ip_versions = [4, 6] if (ip_version == 6 or dual_stack) else [4]
             self._assert_onlink_subnet_routes(router, ip_versions)
