@@ -607,8 +607,7 @@ class Dnsmasq(DhcpLocalProcess):
                           (port.mac_address, name, ip_address))
 
         utils.replace_file(filename, buf.getvalue())
-        LOG.debug('Done building host file %s with contents:\n%s', filename,
-                  buf.getvalue())
+        LOG.debug('Done building host file %s', filename)
         return filename
 
     def _read_hosts_file_leases(self, filename):
