@@ -245,6 +245,12 @@ class DhcpAgent(manager.Manager):
                 if subnet.ip_version == 4 and subnet.enable_dhcp:
                     self.enable_isolated_metadata_proxy(network)
                     break
+        elif (self.conf.use_namespaces and not self.conf.force_metadata and
+              not self.conf.enable_isolated_metadata):
+            # In the case that the dhcp agent ran with metadata enabled,
+            # and dhcp agent now starts with metadata disabled, check and
+            # delete any metadata_proxy.
+            self.disable_isolated_metadata_proxy(network)
 
     def disable_dhcp_helper(self, network_id):
         """Disable DHCP for a network known to the agent."""
