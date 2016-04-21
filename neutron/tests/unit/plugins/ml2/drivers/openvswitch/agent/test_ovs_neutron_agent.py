@@ -2092,6 +2092,58 @@ class TestOvsDvrNeutronAgent(object):
 
     def test_port_bound_for_dvr_with_csnat_ports(self):
         self._setup_for_dvr_test()
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        lvid = self.agent.local_vlan_map[self._net_uuid].vlan
+        expected_on_int_br = [
+            mock.call.install_dvr_to_src_mac(
+                network_type='vxlan',
+                gateway_mac='aa:bb:cc:11:22:33',
+                dst_mac=self._port.vif_mac,
+                dst_port=self._port.ofport,
+                vlan_tag=lvid,
+            ),
+        ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
+        self.assertEqual(expected_on_int_br, int_br.mock_calls)
+        expected_on_tun_br = [
+            mock.call.provision_local_vlan(
+                network_type='vxlan',
+                lvid=lvid,
+                segmentation_id=None,
+                distributed=True,
+            ),
+        ]
+        self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+
+    def test_port_bound_for_dvr_with_csnat_ports_ofport_change(self):
+        self._setup_for_dvr_test()
+        self._port_bound_for_dvr_with_csnat_ports()
+        # simulate a replug
+        self._port.ofport = 12
+        int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
+        lvid = self.agent.local_vlan_map[self._net_uuid].vlan
+        expected_on_int_br = [
+            mock.call.delete_dvr_to_src_mac(
+                network_type='vxlan',
+                dst_mac=self._port.vif_mac,
+                vlan_tag=lvid,
+            ),
+            mock.call.install_dvr_to_src_mac(
+                network_type='vxlan',
+                gateway_mac='aa:bb:cc:11:22:33',
+                dst_mac=self._port.vif_mac,
+                dst_port=self._port.ofport,
+                vlan_tag=lvid,
+            ),
+        ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
+        self.assertEqual(expected_on_int_br, int_br.mock_calls)
+        # a local vlan was already provisioned so there should be no new
+        # calls to tunbr
+        self.assertEqual([], tun_br.mock_calls)
+        # make sure ofport was updated
+        self.assertEqual(12,
+            self.agent.dvr_agent.local_ports[self._port.vif_id].ofport)
+
+    def _port_bound_for_dvr_with_csnat_ports(self):
         int_br = mock.create_autospec(self.agent.int_br)
         tun_br = mock.create_autospec(self.agent.tun_br)
         int_br.set_db_attribute.return_value = True
@@ -2117,26 +2169,7 @@ class TestOvsDvrNeutronAgent(object):
                 None, None, self._fixed_ips,
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
-            lvid = self.agent.local_vlan_map[self._net_uuid].vlan
-            expected_on_int_br = [
-                mock.call.install_dvr_to_src_mac(
-                    network_type='vxlan',
-                    gateway_mac='aa:bb:cc:11:22:33',
-                    dst_mac=self._port.vif_mac,
-                    dst_port=self._port.ofport,
-                    vlan_tag=lvid,
-                ),
-            ] + self._expected_port_bound(self._port, lvid, is_dvr=False)
-            self.assertEqual(expected_on_int_br, int_br.mock_calls)
-            expected_on_tun_br = [
-                mock.call.provision_local_vlan(
-                    network_type='vxlan',
-                    lvid=lvid,
-                    segmentation_id=None,
-                    distributed=True,
-                ),
-            ]
-            self.assertEqual(expected_on_tun_br, tun_br.mock_calls)
+        return int_br, tun_br
 
     def test_treat_devices_removed_for_dvr_interface(self):
         self._test_treat_devices_removed_for_dvr_interface()
