@@ -281,6 +281,24 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertTrue(fake_str.split.called)
         self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
 
+    @mock.patch('neutron.agent.common.utils.execute')
+    def test_get_devices_namespaces_ns_not_exists(self, mocked_execute):
+        mocked_execute.side_effect = RuntimeError(
+            "Cannot open network namespace")
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
+                               return_value=False):
+            retval = ip_lib.IPWrapper(namespace='foo').get_devices()
+            self.assertEqual([], retval)
+
+    @mock.patch('neutron.agent.common.utils.execute')
+    def test_get_devices_namespaces_ns_exists(self, mocked_execute):
+        mocked_execute.side_effect = RuntimeError(
+            "Cannot open network namespace")
+        with mock.patch.object(ip_lib.IpNetnsCommand, 'exists',
+                               return_value=True):
+            self.assertRaises(RuntimeError,
+                              ip_lib.IPWrapper(namespace='foo').get_devices)
+
     def test_get_namespaces(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
         retval = ip_lib.IPWrapper.get_namespaces()
