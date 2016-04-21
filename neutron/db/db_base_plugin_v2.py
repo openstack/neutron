@@ -769,11 +769,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if update_ports_needed:
             # Find ports that have not yet been updated
             # with an IP address by Prefix Delegation, and update them
-            ports = self.get_ports(context)
+            filters = {'fixed_ips': {'subnet_id': [s['id']]}}
+            ports = self.get_ports(context, filters=filters)
             routers = []
             for port in ports:
                 fixed_ips = []
-                new_port = {'port': port}
                 for ip in port['fixed_ips']:
                     if ip['subnet_id'] == s['id']:
                         fixed_ip = {'subnet_id': s['id']}
@@ -782,9 +782,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             routers.append(port['device_id'])
                             fixed_ip['ip_address'] = s['gateway_ip']
                         fixed_ips.append(fixed_ip)
-                if fixed_ips:
-                    new_port['port']['fixed_ips'] = fixed_ips
-                    self.update_port(context, port['id'], new_port)
+                new_port = {'port': port}
+                new_port['port']['fixed_ips'] = fixed_ips
+                self.update_port(context, port['id'], new_port)
 
             # Send router_update to l3_agent
             if routers:
