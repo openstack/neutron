@@ -26,6 +26,7 @@ from neutron.tests import tools
 # NOTE: The hashes in this list should only be changed if they come with a
 # corresponding version bump in the affected objects.
 object_data = {
+    'AddressScope': '1.0-681cb915f973c92350fe2c797dec2ea4',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'PortSecurity': '1.0-cf5b382a0112080ec4e0f23f697c7ab2',
     'AllowedAddressPair': '1.0-0d7380d7d4a32f72e6ae509af1476297',
