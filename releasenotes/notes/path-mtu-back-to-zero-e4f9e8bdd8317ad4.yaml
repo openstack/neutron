@@ -1,0 +1,9 @@
+---
+upgrade:
+  - In case you rely on the default ML2 path_mtu value of 1500 to cap MTU used
+    for new network resources, please set it explicitly in your ml2_conf.ini
+    file.
+fixes:
+  - The default value for ML2 path_mtu option is changed from 1500 to 0,
+    effectively disabling its participation in network MTU calculation unless
+    it's overridden in the ml2_conf.ini configuration file.
