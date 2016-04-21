@@ -351,6 +351,14 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
             # just make sure that no exception is raised
             self.remove_networks_from_down_agents()
 
+    def test_reschedule_network_catches_exceptions_on_fetching_bindings(self):
+        with mock.patch('neutron.context.get_admin_context') as get_ctx:
+            mock_ctx = mock.Mock()
+            get_ctx.return_value = mock_ctx
+            mock_ctx.session.query.side_effect = Exception()
+            # just make sure that no exception is raised
+            self.remove_networks_from_down_agents()
+
 
 class DHCPAgentWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for WeightScheduler.schedule."""
