@@ -148,9 +148,6 @@ the following release related tasks:
 
 Make sure you talk to a member of neutron-release to perform these tasks.
 
-Follow the process found `here <http://docs.openstack.org/developer/neutron/policies/bugs.html#plugin-and-driver-repositories>`_
-for creating a bug for your request.
-
 To release a sub-project, follow the following steps:
 
 * For projects which have not moved to post-versioning, we need to push an
@@ -160,9 +157,23 @@ To release a sub-project, follow the following steps:
   have one), which moves your project to post-versioning, similar to all the
   other Neutron projects. You can skip this step if you don't have a version in
   setup.cfg.
-* A member of neutron-release will then `tag the release
-  <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_,
-  which will release the code to PyPI.
+* A sub-project owner `proposes
+  <https://git.openstack.org/cgit/openstack/releases/tree/README.rst>`_ a patch
+  to openstack/releases repository with the intended git hash. `The Neutron
+  release liaison <https://wiki.openstack.org/wiki/CrossProjectLiaisons#Release_management>`_
+  should be added in Gerrit to the list of reviewers for the patch.
+* If the subproject is not `managed
+  <https://governance.openstack.org/reference/tags/release_managed.html>`_ by
+  OpenStack Release Team, a member of `neutron-release
+  <https://review.openstack.org/#/admin/groups/150,members>`_ `tags the release
+  <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_ and
+  creates the needed stable branches, if needed.  Note: tagging will release
+  the code to PyPI. Note: new major tag versions should conform to SemVer
+  requirements, meaning no year numbers should be used as a major version. The
+  switch to SemVer is advised at earliest convenience for all new major
+  releases.
+* The Neutron release liaison votes with +1 for the openstack/releases patch
+  that gives indication to release team the patch is ready to merge.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
   `this <https://pypi.python.org/pypi/networking-odl>`_.
@@ -178,6 +189,21 @@ To release a sub-project, follow the following steps:
   if a new series is required, create the new series and a new milestone.
 * Finally a sub-project owner should send an email to the openstack-announce
   mailing list announcing the new release.
+
+.. note::
+
+    You need to be careful when picking a git commit to base new releases on.
+    In most cases, you'll want to tag the *merge* commit that merges your last
+    commit in to the branch.  `This bug`__ shows an instance where this mistake
+    was caught.  Notice the difference between the `incorrect commit`__ and the
+    `correct one`__ which is the merge commit.  ``git log 6191994..22dd683
+    --oneline`` shows that the first one misses a handful of important commits
+    that the second one catches.  This is the nature of merging to master.
+
+.. __: https://bugs.launchpad.net/neutron/+bug/1540633
+.. __: https://github.com/openstack/networking-infoblox/commit/6191994515
+.. __: https://github.com/openstack/networking-infoblox/commit/22dd683e1a
+
 
 To make a branch end of life, follow the following steps:
 
