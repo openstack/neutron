@@ -171,45 +171,6 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
             event.remove(engine, 'before_execute',
                          listener_func)
 
-    # There is no use to run this against both dialects, so add this test just
-    # for MySQL tests
-    def test_external_tables_not_changed(self):
-
-        def block_external_tables(conn, clauseelement, multiparams, params):
-            if isinstance(clauseelement, sqlalchemy.sql.selectable.Select):
-                return
-
-            if (isinstance(clauseelement, six.string_types) and
-                    any(name in clauseelement for name in external.TABLES)):
-                self.fail("External table referenced by neutron core "
-                          "migration.")
-
-            if hasattr(clauseelement, 'element'):
-                element = clauseelement.element
-                if (element.name in external.TABLES or
-                        (hasattr(clauseelement, 'table') and
-                            element.table.name in external.TABLES)):
-                    # Table 'nsxv_vdr_dhcp_bindings' was created in liberty,
-                    # before NSXV has moved to separate repo.
-                    if ((isinstance(clauseelement,
-                                    sqlalchemy.sql.ddl.CreateTable) and
-                            element.name == 'nsxv_vdr_dhcp_bindings')):
-                        return
-                    self.fail("External table referenced by neutron core "
-                              "migration.")
-
-        engine = self.get_engine()
-        cfg.CONF.set_override('connection', engine.url, group='database')
-        with engine.begin() as connection:
-            self.alembic_config.attributes['connection'] = connection
-            migration.do_alembic_command(self.alembic_config, 'upgrade',
-                                         'kilo')
-
-            with self._listener(engine,
-                                block_external_tables):
-                migration.do_alembic_command(self.alembic_config, 'upgrade',
-                                             'heads')
-
     def test_branches(self):
 
         def check_expand_branch(conn, clauseelement, multiparams, params):
