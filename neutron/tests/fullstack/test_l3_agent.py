@@ -15,6 +15,7 @@
 import functools
 
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
@@ -72,6 +73,7 @@ class TestHAL3Agent(base.BaseFullStackTestCase):
         return (
             agents['agents'][0]['ha_state'] != agents['agents'][1]['ha_state'])
 
+    @testtools.skip('bug/1550886')
     def test_ha_router(self):
         # TODO(amuller): Test external connectivity before and after a
         # failover, see: https://review.openstack.org/#/c/196393/
