@@ -303,6 +303,8 @@ class AddPortCommand(BaseCommand):
         br.ports = ports
 
         iface = txn.insert(self.api._tables['Interface'])
+        # NOTE(twilson) The OVS lib's __getattr__ breaks iface.uuid here
+        txn.expected_ifaces.add(iface.__dict__['uuid'])
         iface.name = self.port
         port.verify('interfaces')
         ifaces = getattr(port, 'interfaces', [])

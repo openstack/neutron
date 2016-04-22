@@ -14,13 +14,14 @@
 
 import time
 
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from ovs.db import idl
 from six.moves import queue as Queue
 
-from neutron._i18n import _
+from neutron._i18n import _, _LE
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection
@@ -32,9 +33,13 @@ cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 LOG = logging.getLogger(__name__)
 
 
+class VswitchdInterfaceAddException(exceptions.NeutronException):
+    message = _("Failed to add interfaces: %(ifaces)s")
+
+
 class Transaction(api.Transaction):
     def __init__(self, api, ovsdb_connection, timeout,
-                 check_error=False, log_errors=False):
+                 check_error=False, log_errors=True):
         self.api = api
         self.check_error = check_error
         self.log_errors = log_errors
@@ -42,6 +47,10 @@ class Transaction(api.Transaction):
         self.results = Queue.Queue(1)
         self.ovsdb_connection = ovsdb_connection
         self.timeout = timeout
+        self.expected_ifaces = set()
+
+    def __str__(self):
+        return ", ".join(str(cmd) for cmd in self.commands)
 
     def add(self, command):
         """Add a command to the transaction
@@ -61,23 +70,29 @@ class Transaction(api.Transaction):
                 _("Commands %(commands)s exceeded timeout %(timeout)d "
                   "seconds") % {'commands': self.commands,
                                 'timeout': self.timeout})
-        if self.check_error:
-            if isinstance(result, idlutils.ExceptionResult):
-                if self.log_errors:
-                    LOG.error(result.tb)
+        if isinstance(result, idlutils.ExceptionResult):
+            if self.log_errors:
+                LOG.error(result.tb)
+            if self.check_error:
                 raise result.ex
         return result
 
+    def pre_commit(self, txn):
+        pass
+
+    def post_commit(self, txn):
+        pass
+
     def do_commit(self):
-        start_time = time.time()
+        self.start_time = time.time()
         attempts = 0
         while True:
-            elapsed_time = time.time() - start_time
-            if attempts > 0 and elapsed_time > self.timeout:
+            if attempts > 0 and self.timeout_exceeded():
                 raise RuntimeError("OVS transaction timed out")
             attempts += 1
             # TODO(twilson) Make sure we don't loop longer than vsctl_timeout
             txn = idl.Transaction(self.api.idl)
+            self.pre_commit(txn)
             for i, command in enumerate(self.commands):
                 LOG.debug("Running txn command(idx=%(idx)s): %(cmd)s",
                           {'idx': i, 'cmd': command})
@@ -92,9 +107,8 @@ class Transaction(api.Transaction):
             status = txn.commit_block()
             if status == txn.TRY_AGAIN:
                 LOG.debug("OVSDB transaction returned TRY_AGAIN, retrying")
-                idlutils.wait_for_change(
-                    self.api.idl, self.timeout - elapsed_time,
-                    seqno)
+                idlutils.wait_for_change(self.api.idl, self.time_remaining(),
+                                         seqno)
                 continue
             elif status == txn.ERROR:
                 msg = _("OVSDB Error: %s") % txn.get_error()
@@ -109,8 +123,66 @@ class Transaction(api.Transaction):
                 return
             elif status == txn.UNCHANGED:
                 LOG.debug("Transaction caused no change")
+            elif status == txn.SUCCESS:
+                self.post_commit(txn)
 
             return [cmd.result for cmd in self.commands]
+
+    def elapsed_time(self):
+        return time.time() - self.start_time
+
+    def time_remaining(self):
+        return self.timeout - self.elapsed_time()
+
+    def timeout_exceeded(self):
+        return self.elapsed_time() > self.timeout
+
+
+class NeutronOVSDBTransaction(Transaction):
+    def pre_commit(self, txn):
+        self.api._ovs.increment('next_cfg')
+        txn.expected_ifaces = set()
+
+    def post_commit(self, txn):
+        # ovs-vsctl only logs these failures and does not return nonzero
+        try:
+            self.do_post_commit(txn)
+        except Exception:
+            LOG.exception(_LE("Post-commit checks failed"))
+
+    def do_post_commit(self, txn):
+        next_cfg = txn.get_increment_new_value()
+        while not self.timeout_exceeded():
+            self.api.idl.run()
+            if self.vswitchd_has_completed(next_cfg):
+                failed = self.post_commit_failed_interfaces(txn)
+                if failed:
+                    raise VswitchdInterfaceAddException(
+                        ifaces=", ".join(failed))
+                break
+            self.ovsdb_connection.poller.timer_wait(
+                self.time_remaining() * 1000)
+            self.api.idl.wait(self.ovsdb_connection.poller)
+            self.ovsdb_connection.poller.block()
+        else:
+            raise api.TimeoutException(
+                _("Commands %(commands)s exceeded timeout %(timeout)d "
+                  "seconds post-commit") % {'commands': self.commands,
+                                            'timeout': self.timeout})
+
+    def post_commit_failed_interfaces(self, txn):
+        failed = []
+        for iface_uuid in txn.expected_ifaces:
+            uuid = txn.get_insert_uuid(iface_uuid)
+            if uuid:
+                ifaces = self.api.idl.tables['Interface']
+                iface = ifaces.rows.get(uuid)
+                if iface and (not iface.ofport or iface.ofport == -1):
+                    failed.append(iface.name)
+        return failed
+
+    def vswitchd_has_completed(self, next_cfg):
+        return self.api._ovs.cur_cfg >= next_cfg
 
 
 class OvsdbIdl(api.API):
@@ -133,9 +205,9 @@ class OvsdbIdl(api.API):
         return list(self._tables['Open_vSwitch'].rows.values())[0]
 
     def transaction(self, check_error=False, log_errors=True, **kwargs):
-        return Transaction(self, OvsdbIdl.ovsdb_connection,
-                           self.context.vsctl_timeout,
-                           check_error, log_errors)
+        return NeutronOVSDBTransaction(self, OvsdbIdl.ovsdb_connection,
+                                       self.context.vsctl_timeout,
+                                       check_error, log_errors)
 
     def add_br(self, name, may_exist=True, datapath_type=None):
         return cmd.AddBridgeCommand(self, name, may_exist, datapath_type)
