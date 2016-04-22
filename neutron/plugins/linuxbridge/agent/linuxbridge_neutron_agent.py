@@ -29,6 +29,7 @@ eventlet.monkey_patch()
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_utils import excutils
 from six import moves
 
 from neutron.agent import l2population_rpc as l2pop_rpc
@@ -220,14 +221,19 @@ class LinuxBridgeManager(object):
                       "%(physical_interface)s",
                       {'interface': interface, 'vlan_id': vlan_id,
                        'physical_interface': physical_interface})
-            if utils.execute(['ip', 'link', 'add', 'link',
-                              physical_interface,
-                              'name', interface, 'type', 'vlan', 'id',
-                              vlan_id], run_as_root=True):
-                return
-            if utils.execute(['ip', 'link', 'set',
-                              interface, 'up'], run_as_root=True):
-                return
+            try:
+                int_vlan = self.ip.add_vlan(interface, physical_interface,
+                                            vlan_id)
+            except RuntimeError:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if ip_lib.vlan_in_use(vlan_id):
+                        ctxt.reraise = False
+                        LOG.error(_LE("Unable to create VLAN interface for "
+                                      "VLAN ID %s because it is in use by "
+                                      "another interface."), vlan_id)
+                        return
+            int_vlan.disable_ipv6()
+            int_vlan.link.set_up()
             LOG.debug("Done creating subinterface %s", interface)
         return interface
 
@@ -249,6 +255,7 @@ class LinuxBridgeManager(object):
             if cfg.CONF.VXLAN.l2_population:
                 args['proxy'] = True
             int_vxlan = self.ip.add_vxlan(interface, segmentation_id, **args)
+            int_vxlan.disable_ipv6()
             int_vxlan.link.set_up()
             LOG.debug("Done creating vxlan interface %s", interface)
         return interface

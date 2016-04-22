@@ -40,6 +40,9 @@ class FakeIpDevice(object):
     def __init__(self):
         self.link = FakeIpLinkCommand()
 
+    def disable_ipv6(self):
+        pass
+
 
 class TestLinuxBridge(base.BaseTestCase):
 
@@ -572,14 +575,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             de_fn.return_value = True
             self.assertEqual(self.lbm.ensure_vlan("eth0", "1"), "eth0.1")
             de_fn.return_value = False
-            with mock.patch.object(utils, 'execute') as exec_fn:
-                exec_fn.return_value = False
-                self.assertEqual(self.lbm.ensure_vlan("eth0", "1"), "eth0.1")
-                # FIXME(kevinbenton): validate the params to the exec_fn calls
-                self.assertEqual(exec_fn.call_count, 2)
-                exec_fn.return_value = True
-                self.assertIsNone(self.lbm.ensure_vlan("eth0", "1"))
-                self.assertEqual(exec_fn.call_count, 3)
+            vlan_dev = FakeIpDevice()
+            with mock.patch.object(vlan_dev, 'disable_ipv6') as dv6_fn,\
+                    mock.patch.object(self.lbm.ip, 'add_vlan',
+                            return_value=vlan_dev) as add_vlan_fn:
+                retval = self.lbm.ensure_vlan("eth0", "1")
+                self.assertEqual("eth0.1", retval)
+                add_vlan_fn.assert_called_with('eth0.1', 'eth0', '1')
+                dv6_fn.assert_called_once_with()
 
     def test_ensure_vxlan(self):
         seg_id = "12345678"
@@ -589,14 +592,16 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             de_fn.return_value = True
             self.assertEqual(self.lbm.ensure_vxlan(seg_id), "vxlan-" + seg_id)
             de_fn.return_value = False
-            with mock.patch.object(self.lbm.ip,
-                                   'add_vxlan') as add_vxlan_fn:
-                add_vxlan_fn.return_value = FakeIpDevice()
-                self.assertEqual(self.lbm.ensure_vxlan(seg_id),
-                                 "vxlan-" + seg_id)
+            vxlan_dev = FakeIpDevice()
+            with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
+                    mock.patch.object(self.lbm.ip, 'add_vxlan',
+                            return_value=vxlan_dev) as add_vxlan_fn:
+                retval = self.lbm.ensure_vxlan(seg_id)
+                self.assertEqual("vxlan-" + seg_id, retval)
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
                                                 dev=self.lbm.local_int)
+                dv6_fn.assert_called_once_with()
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
                 self.assertEqual(self.lbm.ensure_vxlan(seg_id),
                                  "vxlan-" + seg_id)
