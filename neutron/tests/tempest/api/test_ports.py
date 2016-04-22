@@ -39,3 +39,10 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.assertEqual('d2', body['port']['description'])
         body = self.client.list_ports(id=body['port']['id'])['ports'][0]
         self.assertEqual('d2', body['description'])
+
+    @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640c123')
+    def test_change_dhcp_flag_then_create_port(self):
+        s = self.create_subnet(self.network, enable_dhcp=False)
+        self.create_port(self.network)
+        self.client.update_subnet(s['id'], enable_dhcp=True)
+        self.create_port(self.network)
