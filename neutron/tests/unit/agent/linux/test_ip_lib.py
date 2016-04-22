@@ -813,6 +813,13 @@ class TestIpAddrCommand(TestIPCmdBase):
                            'dev', 'tap0',
                            'brd', '192.168.45.255'))
 
+    def test_add_address_no_broadcast(self):
+        self.addr_cmd.add('192.168.45.100/24', add_broadcast=False)
+        self._assert_sudo([4],
+                          ('add', '192.168.45.100/24',
+                           'scope', 'global',
+                           'dev', 'tap0'))
+
     def test_del_address(self):
         self.addr_cmd.delete('192.168.45.100/24')
         self._assert_sudo([4],
