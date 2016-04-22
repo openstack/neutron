@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
+
 import mock
 from oslo_utils import uuidutils
 from sqlalchemy.orm import query
 
+from neutron.common import constants
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
@@ -385,3 +388,34 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             network_id, port_id_1, router.id, 'foo_host_id_2')
         ports = ml2_db.get_dvr_port_bindings(self.ctx.session, 'foo_port_id')
         self.assertEqual(2, len(ports))
+
+    def test_dvr_port_binding_deleted_by_port_deletion(self):
+        with self.ctx.session.begin(subtransactions=True):
+            self.ctx.session.add(models_v2.Network(id='network_id'))
+            device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
+            port = models_v2.Port(
+                id='port_id',
+                network_id='network_id',
+                mac_address='00:11:22:33:44:55',
+                admin_state_up=True,
+                status=constants.PORT_STATUS_ACTIVE,
+                device_id='device_id',
+                device_owner=device_owner)
+            self.ctx.session.add(port)
+            binding_kwarg = {
+                'port_id': 'port_id',
+                'host': 'host',
+                'vif_type': portbindings.VIF_TYPE_UNBOUND,
+                'vnic_type': portbindings.VNIC_NORMAL,
+                'router_id': 'router_id',
+                'status': constants.PORT_STATUS_DOWN
+            }
+            self.ctx.session.add(models.DVRPortBinding(**binding_kwarg))
+            binding_kwarg['host'] = 'another-host'
+            self.ctx.session.add(models.DVRPortBinding(**binding_kwarg))
+        with warnings.catch_warnings(record=True) as warning_list:
+            with self.ctx.session.begin(subtransactions=True):
+                self.ctx.session.delete(port)
+            self.assertEqual([], warning_list)
+        ports = ml2_db.get_dvr_port_bindings(self.ctx.session, 'port_id')
+        self.assertEqual(0, len(ports))
