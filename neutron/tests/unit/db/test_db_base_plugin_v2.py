@@ -4155,6 +4155,16 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertIsNone(data['subnet']['gateway_ip'])
 
+    def test_subnet_usable_after_update(self):
+        with self.subnet() as subnet:
+            data = {'subnet': {'name': 'newname'}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(data['subnet']['name'], res['subnet']['name'])
+            with self.port(subnet=subnet):
+                pass
+
     def test_update_subnet(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '10.0.0.1'}}
