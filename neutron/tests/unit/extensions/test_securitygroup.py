@@ -1592,3 +1592,11 @@ class TestConvertProtocol(base.BaseTestCase):
 
     def test_convert_numeric_protocol_to_string(self):
         self.assertIsInstance(ext_sg.convert_protocol(2), str)
+
+
+class TestConvertEtherType(base.BaseTestCase):
+    def test_convert_unsupported_ethertype(self):
+        for val in ['ip', 'ip4', 'ip6', '']:
+            self.assertRaises(ext_sg.SecurityGroupRuleInvalidEtherType,
+                              ext_sg.convert_ethertype_to_case_insensitive,
+                              val)
