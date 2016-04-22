@@ -218,8 +218,7 @@ class TestDvrFipNs(base.BaseTestCase):
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_create_rtr_2_fip_link(self, device_exists, IPDevice, IPWrapper):
+    def _test_create_rtr_2_fip_link(self, dev_exists, IPDevice, IPWrapper):
         ri = mock.Mock()
         ri.router_id = _uuid()
         ri.rtr_fip_subnet = None
@@ -232,42 +231,31 @@ class TestDvrFipNs(base.BaseTestCase):
         self.fip_ns.local_subnets = allocator = mock.Mock()
         pair = lla.LinkLocalAddressPair('169.254.31.28/31')
         allocator.allocate.return_value = pair
-        device_exists.return_value = False
         ip_wrapper = IPWrapper()
         self.conf.network_device_mtu = 2000
         ip_wrapper.add_veth.return_value = (IPDevice(), IPDevice())
+        device = IPDevice()
+        device.exists.return_value = dev_exists
 
         self.fip_ns.create_rtr_2_fip_link(ri)
 
-        ip_wrapper.add_veth.assert_called_with(rtr_2_fip_name,
-                                               fip_2_rtr_name,
-                                               fip_ns_name)
+        if not dev_exists:
+            ip_wrapper.add_veth.assert_called_with(rtr_2_fip_name,
+                                                   fip_2_rtr_name,
+                                                   fip_ns_name)
 
-        device = IPDevice()
-        device.link.set_mtu.assert_called_with(2000)
-        self.assertEqual(2, device.link.set_mtu.call_count)
+            device.link.set_mtu.assert_called_with(2000)
+            self.assertEqual(2, device.link.set_mtu.call_count)
+            self.assertEqual(2, device.link.set_up.call_count)
+
         device.route.add_gateway.assert_called_once_with(
             '169.254.31.29', table=16)
 
-    @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch.object(ip_lib, 'IPDevice')
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_create_rtr_2_fip_link_already_exists(self,
-                                                  device_exists,
-                                                  IPDevice,
-                                                  IPWrapper):
-        ri = mock.Mock()
-        ri.router_id = _uuid()
-        ri.rtr_fip_subnet = None
-        device_exists.return_value = True
+    def test_create_rtr_2_fip_link(self):
+        self._test_create_rtr_2_fip_link(False)
 
-        self.fip_ns.local_subnets = allocator = mock.Mock()
-        pair = lla.LinkLocalAddressPair('169.254.31.28/31')
-        allocator.allocate.return_value = pair
-        self.fip_ns.create_rtr_2_fip_link(ri)
-
-        ip_wrapper = IPWrapper()
-        self.assertFalse(ip_wrapper.add_veth.called)
+    def test_create_rtr_2_fip_link_already_exists(self):
+        self._test_create_rtr_2_fip_link(True)
 
     @mock.patch.object(ip_lib, 'IPDevice')
     def _test_scan_fip_ports(self, ri, ip_list, IPDevice):
