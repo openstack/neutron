@@ -374,29 +374,28 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     def remove_network_from_dhcp_agent(self, context, id, network_id,
                                        notify=True):
         agent = self._get_agent(context, id)
-        with context.session.begin(subtransactions=True):
-            try:
-                query = context.session.query(NetworkDhcpAgentBinding)
-                query = query.filter(
-                    NetworkDhcpAgentBinding.network_id == network_id,
-                    NetworkDhcpAgentBinding.dhcp_agent_id == id)
-                # just ensure the binding exists
-                query.one()
-            except exc.NoResultFound:
-                raise dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
-                    network_id=network_id, agent_id=id)
+        try:
+            query = context.session.query(NetworkDhcpAgentBinding)
+            binding = query.filter(
+                NetworkDhcpAgentBinding.network_id == network_id,
+                NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
+        except exc.NoResultFound:
+            raise dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
+                network_id=network_id, agent_id=id)
 
-            # reserve the port, so the ip is reused on a subsequent add
-            device_id = utils.get_dhcp_agent_device_id(network_id,
-                                                       agent['host'])
-            filters = dict(device_id=[device_id])
-            ports = self.get_ports(context, filters=filters)
-            for port in ports:
-                port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
-                self.update_port(context, port['id'], dict(port=port))
-            # avoid issues with query.one() object that was
-            # loaded into the session
-            query.delete(synchronize_session=False)
+        # reserve the port, so the ip is reused on a subsequent add
+        device_id = utils.get_dhcp_agent_device_id(network_id,
+                                                   agent['host'])
+        filters = dict(device_id=[device_id])
+        ports = self.get_ports(context, filters=filters)
+        # NOTE(kevinbenton): there should only ever be one port per
+        # DHCP agent per network so we don't have to worry about one
+        # update_port passing and another failing
+        for port in ports:
+            port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
+            self.update_port(context, port['id'], dict(port=port))
+        with context.session.begin():
+            context.session.delete(binding)
 
         if not notify:
             return
