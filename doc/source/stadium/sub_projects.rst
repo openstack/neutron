@@ -253,6 +253,8 @@ capabilities of Neutron, the Neutron API, or a combination of both.
 +-------------------------------+-----------------------+
 | networking-edge-vpn_          | vpn                   |
 +-------------------------------+-----------------------+
+| networking-fortinet_          | ml2,l3,fw             |
++-------------------------------+-----------------------+
 | networking-fujitsu_           | ml2                   |
 +-------------------------------+-----------------------+
 | networking-hyperv_            | ml2                   |
@@ -408,6 +410,15 @@ Edge VPN
 
 * Git: https://git.openstack.org/cgit/openstack/networking-edge-vpn
 * Launchpad: https://launchpad.net/edge-vpn
+
+.. _networking-fortinet:
+
+Fortinet
+++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/networking-fortinet
+* Launchpad: https://launchpad.net/networking-fortinet
+* PyPI: https://pypi.python.org/pypi/networking-fortinet
 
 .. _networking-fujitsu:
 
