@@ -16,6 +16,7 @@ import abc
 
 from neutron_lib import exceptions
 from oslo_serialization import jsonutils
+import six
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -122,6 +123,7 @@ class Availability_zone(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(abc.ABCMeta)
 class AvailabilityZonePluginBase(object):
     """REST API to operate the Availability Zone."""
 
