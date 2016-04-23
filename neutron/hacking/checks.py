@@ -15,6 +15,7 @@
 import os
 import re
 
+import neutron_lib.hacking.checks
 import pep8
 import six
 
@@ -52,7 +53,6 @@ _all_log_levels = {
     'exception': '_LE',
 }
 _all_hints = set(_all_log_levels.values())
-mutable_default_args = re.compile(r"^\s*def .+\((.+=\{\}|.+=\[\])")
 
 
 def _regex_for_level(level, hint):
@@ -68,7 +68,6 @@ log_translation_hint = re.compile(
 
 log_warn = re.compile(
     r"(.)*LOG\.(warn)\(\s*('|\"|_)")
-contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
 
 
 @flake8ext
@@ -82,29 +81,6 @@ def validate_log_translations(logical_line, physical_line, filename):
     msg = "N320: Log messages require translation hints!"
     if log_translation_hint.match(logical_line):
         yield (0, msg)
-
-
-@flake8ext
-def use_jsonutils(logical_line, filename):
-    msg = "N321: jsonutils.%(fun)s must be used instead of json.%(fun)s"
-
-    # Some files in the tree are not meant to be run from inside Neutron
-    # itself, so we should not complain about them not using jsonutils
-    json_check_skipped_patterns = [
-        "neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/etc/xapi.d/"
-        "plugins/netwrap",
-    ]
-
-    for pattern in json_check_skipped_patterns:
-        if pattern in filename:
-            return
-
-    if "json." in logical_line:
-        json_funcs = ['dumps(', 'dump(', 'loads(', 'load(']
-        for f in json_funcs:
-            pos = logical_line.find('json.%s' % f)
-            if pos != -1:
-                yield (pos, msg % {'fun': f[:-1]})
 
 
 @flake8ext
@@ -148,39 +124,6 @@ def check_assert_called_once_with(logical_line, filename):
 
 
 @flake8ext
-def check_no_contextlib_nested(logical_line, filename):
-    msg = ("N324: contextlib.nested is deprecated. With Python 2.7 and later "
-           "the with-statement supports multiple nested objects. See https://"
-           "docs.python.org/2/library/contextlib.html#contextlib.nested for "
-           "more information.")
-
-    if contextlib_nested.match(logical_line):
-        yield(0, msg)
-
-
-@flake8ext
-def check_python3_xrange(logical_line):
-    if re.search(r"\bxrange\s*\(", logical_line):
-        yield(0, "N325: Do not use xrange. Use range, or six.moves.range for "
-                 "large loops.")
-
-
-@flake8ext
-def check_no_basestring(logical_line):
-    if re.search(r"\bbasestring\b", logical_line):
-        msg = ("N326: basestring is not Python3-compatible, use "
-               "six.string_types instead.")
-        yield(0, msg)
-
-
-@flake8ext
-def check_python3_no_iteritems(logical_line):
-    if re.search(r".*\.iteritems\(\)", logical_line):
-        msg = ("N327: Use six.iteritems() instead of dict.iteritems().")
-        yield(0, msg)
-
-
-@flake8ext
 def check_asserttrue(logical_line, filename):
     if 'neutron/tests/' in filename:
         if re.search(r"assertEqual\(\s*True,[^,]*(,[^,]*)?\)", logical_line):
@@ -191,13 +134,6 @@ def check_asserttrue(logical_line, filename):
             msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
-
-
-@flake8ext
-def no_mutable_default_args(logical_line):
-    msg = "N329: Method's default argument shouldn't be mutable!"
-    if mutable_default_args.match(logical_line):
-        yield (0, msg)
 
 
 @flake8ext
@@ -322,16 +258,11 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
 
 
 def factory(register):
+    neutron_lib.hacking.checks.factory(register)
     register(validate_log_translations)
-    register(use_jsonutils)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
-    register(check_no_contextlib_nested)
-    register(check_python3_xrange)
-    register(check_no_basestring)
-    register(check_python3_no_iteritems)
     register(check_asserttrue)
-    register(no_mutable_default_args)
     register(check_assertfalse)
     register(check_assertempty)
     register(check_assertisinstance)
