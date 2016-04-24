@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import debtcollector
 import inspect
 
@@ -23,7 +22,7 @@ class _DeprecateSubset(object):
 
     def __init__(self, my_globals, other_mod):
         self.other_mod = other_mod
-        self.my_globals = copy.copy(my_globals)
+        self.my_globals = my_globals
 
     @classmethod
     def and_also(cls, name, other_mod):
@@ -52,3 +51,14 @@ class _DeprecateSubset(object):
         except KeyError:
             raise AttributeError(
                 _("'module' object has no attribute '%s'") % name)
+
+    def __setattr__(self, name, val):
+        if name in ('other_mod', 'my_globals'):
+            return super(_DeprecateSubset, self).__setattr__(name, val)
+        self.my_globals[name] = val
+
+    def __delattr__(self, name):
+        if name not in self.my_globals:
+            raise AttributeError(
+                _("'module' object has no attribute '%s'") % name)
+        self.my_globals.pop(name)
