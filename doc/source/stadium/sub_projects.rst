@@ -217,6 +217,8 @@ functionality.
 | neutron-lbaas-dashboard_      |                       |
 | octavia_                      |                       |
 +-------------------------------+-----------------------+
+| neutron-dynamic-routing_      | bgp                   |
++-------------------------------+-----------------------+
 | neutron-fwaas_                | fw                    |
 +-------------------------------+-----------------------+
 | neutron-lib_                  | base                  |
@@ -501,6 +503,14 @@ Neutron Prefix Delegation
 +++++++++++++++++++++++++
 
 * Git: https://git.openstack.org/cgit/openstack/python-neutron-pd-driver
+
+.. _neutron-dynamic-routing:
+
+Neutron Dynamic Routing
++++++++++++++++++++++++
+
+* Git: https://git.openstack.org/cgit/openstack/neutron-dynamic-routing
+* Launchpad: https://launchpad.net/neutron
 
 .. _neutron-fwaas:
 

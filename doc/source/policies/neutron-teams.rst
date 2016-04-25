@@ -89,7 +89,7 @@ Some notes on the above:
 * "Built-In Control Plane" means the L2 agents, DHCP agents, SGs, metadata
   agents and ML2.
 * The client includes commands installed server side.
-* L3 includes the L3 agent, DVR, and IPAM.
+* L3 includes the L3 agent, DVR, Dynamic routing and IPAM.
 * Services includes FWaaS, LBaaS, and VPNaaS.
 * Note these areas may change as the project evolves due to code refactoring,
   new feature areas, and libification of certain pieces of code.
@@ -182,6 +182,13 @@ merge rights to the following git repositories:
 Please note that as we adopt to the system above with core specialty in
 particular areas, we expect this broad core team to shrink as people naturally
 evolve into an area of specialization.
+
+Neutron Dynamic Routing Core Reviewer Team
+------------------------------------------
+Neutron `Dynamic Routing core reviewers <https://review.openstack.org/#/admin/groups/1366,members>`_
+have merge rights to the following git repositories:
+
+* `openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing/>`_
 
 Neutron FWaaS Core Reviewer Team
 --------------------------------
