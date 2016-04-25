@@ -260,3 +260,17 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         for i, protocol in enumerate(protocols):
             self.assertEqual(protocol_names_nums[i],
                              self.mixin._get_ip_proto_name_and_num(protocol))
+
+    def test__validate_port_range_for_icmp_exception(self):
+        states = [(1, 256, securitygroup.SecurityGroupInvalidIcmpValue),
+                  (None, 6, securitygroup.SecurityGroupMissingIcmpType),
+                  (300, 1, securitygroup.SecurityGroupInvalidIcmpValue)]
+        for protocol in (constants.PROTO_NAME_ICMP,
+                         constants.PROTO_NAME_IPV6_ICMP,
+                         constants.PROTO_NAME_IPV6_ICMP_LEGACY):
+            for pmin, pmax, exception in states:
+                self.assertRaises(exception,
+                    self.mixin._validate_port_range,
+                    {'port_range_min': pmin,
+                     'port_range_max': pmax,
+                     'protocol': protocol})
