@@ -20,6 +20,11 @@ discovery.
 
 import os.path
 
+from neutron.common import eventlet_utils
+
+
+eventlet_utils.monkey_patch()
+
 
 def load_tests(loader, tests, pattern):
     this_dir = os.path.dirname(__file__)
