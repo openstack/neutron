@@ -18,6 +18,7 @@ from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 
+from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr
@@ -51,6 +52,26 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
     revises_on_change = ('network', )
     network = sa.orm.relationship(
         models_v2.Network, load_on_pending=True,
+        backref=sa.orm.backref("qos_policy_binding", uselist=False,
+                               cascade='delete', lazy='joined'))
+
+
+class QosFIPPolicyBinding(model_base.BASEV2):
+    __tablename__ = 'qos_fip_policy_bindings'
+    policy_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
+                          sa.ForeignKey('qos_policies.id',
+                                        ondelete='CASCADE'),
+                          nullable=False,
+                          primary_key=True)
+    fip_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
+                       sa.ForeignKey('floatingips.id',
+                                     ondelete='CASCADE'),
+                       nullable=False,
+                       unique=True,
+                       primary_key=True)
+    revises_on_change = ('floatingip', )
+    floatingip = sa.orm.relationship(
+        l3.FloatingIP, load_on_pending=True,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
 

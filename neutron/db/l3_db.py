@@ -49,6 +49,7 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
+from neutron.extensions import qos_fip
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.common import utils as p_utils
@@ -85,6 +86,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     _dns_integration = None
 
+    _fip_qos = None
+
     def __new__(cls):
         inst = super(L3_NAT_dbonly_mixin, cls).__new__(cls)
         inst._start_janitor()
@@ -109,6 +112,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 utils.is_extension_supported(self._core_plugin,
                     'dns-domain-ports'))
         return self._dns_integration
+
+    @property
+    def _is_fip_qos_supported(self):
+        if self._fip_qos is None:
+            # Check L3 service plugin
+            self._fip_qos = utils.is_extension_supported(
+                self, qos_fip.FIP_QOS_ALIAS)
+        return self._fip_qos
 
     @property
     def _core_plugin(self):
@@ -1308,6 +1319,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
+            if self._is_fip_qos_supported:
+                self._process_extra_fip_qos_create(context, fip_id, fip)
 
         self._core_plugin.update_port(context.elevated(), external_port['id'],
                                       {'port': {'device_id': fip_id}})
@@ -1342,6 +1355,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
                     context, floatingip_dict)
+            if self._is_fip_qos_supported:
+                self._process_extra_fip_qos_update(context,
+                                                   floatingip_db,
+                                                   fip,
+                                                   old_floatingip)
         registry.notify(resources.FLOATING_IP,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,
