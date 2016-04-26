@@ -16,6 +16,7 @@
 import os
 
 import mock
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -1593,7 +1594,7 @@ class FiltersTestCase(base.BaseTestCase):
         request = webob.Request.blank(path)
         attr_info = {
             'foo': {
-                'convert_list_to': attributes.convert_kvp_list_to_dict,
+                'convert_list_to': converters.convert_kvp_list_to_dict,
             }
         }
         expect_val = {'foo': {'key': ['2', '4']}, 'bar': ['3'], 'qux': ['1']}
@@ -1603,7 +1604,7 @@ class FiltersTestCase(base.BaseTestCase):
     def test_attr_info_with_convert_to(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
-        attr_info = {'foo': {'convert_to': attributes.convert_to_int}}
+        attr_info = {'foo': {'convert_to': converters.convert_to_int}}
         expect_val = {'foo': [4], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
         actual_val = api_common.get_filters(request, attr_info)
         self.assertEqual(expect_val, actual_val)

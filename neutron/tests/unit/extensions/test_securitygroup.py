@@ -16,6 +16,7 @@
 import contextlib
 
 import mock
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 from oslo_config import cfg
 import oslo_db.exception as exc
@@ -181,7 +182,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port(self, context, port):
         tenant_id = port['port']['tenant_id']
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if not attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
+        if not validators.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
         session = context.session
         with session.begin(subtransactions=True):

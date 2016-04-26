@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -19,7 +21,6 @@ from oslo_log import log as logging
 
 from neutron._i18n import _, _LI
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 
 LOG = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ VLANTRANSPARENT = 'vlan_transparent'
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         VLANTRANSPARENT: {'allow_post': True, 'allow_put': False,
-                          'convert_to': attributes.convert_to_boolean,
+                          'convert_to': converters.convert_to_boolean,
                           'default': constants.ATTR_NOT_SPECIFIED,
                           'is_visible': True},
     },
@@ -50,7 +51,7 @@ def disable_extension_by_config(aliases):
 def get_vlan_transparent(network):
     return (network['vlan_transparent']
             if ('vlan_transparent' in network and
-                attributes.is_attr_set(network['vlan_transparent']))
+                validators.is_attr_set(network['vlan_transparent']))
             else False)
 
 

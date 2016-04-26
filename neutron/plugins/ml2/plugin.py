@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from oslo_concurrency import lockutils
@@ -261,13 +262,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             host = attrs.get(portbindings.HOST_ID) or ''
 
         original_host = binding.host
-        if (attributes.is_attr_set(host) and
+        if (validators.is_attr_set(host) and
             original_host != host):
             binding.host = host
             changes = True
 
         vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
-        if (attributes.is_attr_set(vnic_type) and
+        if (validators.is_attr_set(vnic_type) and
             binding.vnic_type != vnic_type):
             binding.vnic_type = vnic_type
             changes = True
@@ -1335,7 +1336,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = port[attributes.PORT]
 
         host = attrs and attrs.get(portbindings.HOST_ID)
-        host_set = attributes.is_attr_set(host)
+        host_set = validators.is_attr_set(host)
 
         if not host_set:
             LOG.error(_LE("No Host supplied to bind DVR Port %s"), id)

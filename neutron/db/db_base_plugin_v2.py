@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
@@ -231,8 +232,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if cur_subnet:
             self._validate_ipv6_update_dhcp(subnet, cur_subnet)
             return
-        ra_mode_set = attributes.is_attr_set(subnet.get('ipv6_ra_mode'))
-        address_mode_set = attributes.is_attr_set(
+        ra_mode_set = validators.is_attr_set(subnet.get('ipv6_ra_mode'))
+        address_mode_set = validators.is_attr_set(
             subnet.get('ipv6_address_mode'))
         self._validate_ipv6_dhcp(ra_mode_set, address_mode_set,
                                  subnet['enable_dhcp'])
@@ -274,16 +275,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             msg = _("Cannot disable enable_dhcp with "
                     "ipv6 attributes set")
 
-            ra_mode_set = attributes.is_attr_set(subnet.get('ipv6_ra_mode'))
-            address_mode_set = attributes.is_attr_set(
+            ra_mode_set = validators.is_attr_set(subnet.get('ipv6_ra_mode'))
+            address_mode_set = validators.is_attr_set(
                 subnet.get('ipv6_address_mode'))
 
             if ra_mode_set or address_mode_set:
                 raise exc.InvalidInput(error_message=msg)
 
-            old_ra_mode_set = attributes.is_attr_set(
+            old_ra_mode_set = validators.is_attr_set(
                 cur_subnet.get('ipv6_ra_mode'))
-            old_address_mode_set = attributes.is_attr_set(
+            old_address_mode_set = validators.is_attr_set(
                 cur_subnet.get('ipv6_address_mode'))
 
             if old_ra_mode_set or old_address_mode_set:
@@ -439,7 +440,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         ip_ver = s['ip_version']
 
-        if attributes.is_attr_set(s.get('cidr')):
+        if validators.is_attr_set(s.get('cidr')):
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
 
         # TODO(watanabe.isao): After we found a way to avoid the re-sync
@@ -466,7 +467,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                   "if enable_dhcp is True.")
                 raise exc.InvalidInput(error_message=error_message)
 
-        if attributes.is_attr_set(s.get('gateway_ip')):
+        if validators.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
             is_gateway_not_valid = (
                 ipam.utils.check_gateway_invalid_in_subnet(
@@ -491,7 +492,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         ip_address=cur_subnet['gateway_ip'],
                         port_id=allocated['port_id'])
 
-        if attributes.is_attr_set(s.get('dns_nameservers')):
+        if validators.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
                 raise n_exc.DNSNameServersExhausted(
                     subnet_id=s.get('id', _('new subnet')),
@@ -505,7 +506,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                        dns))
                 self._validate_ip_version(ip_ver, dns, 'dns_nameserver')
 
-        if attributes.is_attr_set(s.get('host_routes')):
+        if validators.is_attr_set(s.get('host_routes')):
             if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
                 raise n_exc.HostRoutesExhausted(
                     subnet_id=s.get('id', _('new subnet')),
@@ -515,11 +516,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 self._validate_host_route(rt, ip_ver)
 
         if ip_ver == 4:
-            if attributes.is_attr_set(s.get('ipv6_ra_mode')):
+            if validators.is_attr_set(s.get('ipv6_ra_mode')):
                 raise exc.InvalidInput(
                     error_message=(_("ipv6_ra_mode is not valid when "
                                      "ip_version is 4")))
-            if attributes.is_attr_set(s.get('ipv6_address_mode')):
+            if validators.is_attr_set(s.get('ipv6_address_mode')):
                 raise exc.InvalidInput(
                     error_message=(_("ipv6_address_mode is not valid when "
                                      "ip_version is 4")))
@@ -626,11 +627,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             return
 
         cidr = subnet.get('cidr')
-        if attributes.is_attr_set(cidr):
+        if validators.is_attr_set(cidr):
             ip_version = netaddr.IPNetwork(cidr).version
         else:
             ip_version = subnet.get('ip_version')
-            if not attributes.is_attr_set(ip_version):
+            if not validators.is_attr_set(ip_version):
                 msg = _('ip_version must be specified in the absence of '
                         'cidr and subnetpool_id')
                 raise exc.BadRequest(resource='subnets', msg=msg)
@@ -658,8 +659,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         s = subnet['subnet']
         cidr = s.get('cidr', constants.ATTR_NOT_SPECIFIED)
         prefixlen = s.get('prefixlen', constants.ATTR_NOT_SPECIFIED)
-        has_cidr = attributes.is_attr_set(cidr)
-        has_prefixlen = attributes.is_attr_set(prefixlen)
+        has_cidr = validators.is_attr_set(cidr)
+        has_prefixlen = validators.is_attr_set(prefixlen)
 
         if has_cidr and has_prefixlen:
             msg = _('cidr and prefixlen must not be supplied together')
@@ -915,7 +916,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
           - the address family of the subnetpool and address scope
             are the same
         """
-        if not attributes.is_attr_set(address_scope_id):
+        if not validators.is_attr_set(address_scope_id):
             return
 
         if not self.is_address_scope_owned_by_tenant(context,

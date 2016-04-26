@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import converters
+from neutron_lib.api import validators
 from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 
 
 # ExtraDHcpOpts Exceptions
@@ -42,7 +43,7 @@ EXTRA_DHCP_OPT_KEY_SPECS = {
                  'required': True},
     'opt_value': {'type:not_empty_string_or_none': DHCP_OPT_VALUE_MAX_LEN,
                   'required': True},
-    'ip_version': {'convert_to': attr.convert_to_int,
+    'ip_version': {'convert_to': converters.convert_to_int,
                    'type:values': [4, 6],
                    'required': False}
 }
@@ -54,15 +55,16 @@ def _validate_extra_dhcp_opt(data, key_specs=None):
             raise ExtraDhcpOptBadData(data=data)
         for d in data:
             if d['opt_name'] in VALID_BLANK_EXTRA_DHCP_OPTS:
-                msg = attr._validate_string_or_none(d['opt_value'],
-                                                    DHCP_OPT_VALUE_MAX_LEN)
+                msg = validators.validate_string_or_none(
+                    d['opt_value'], DHCP_OPT_VALUE_MAX_LEN)
             else:
-                msg = attr._validate_dict(d, key_specs)
+                msg = validators.validate_dict(d, key_specs)
             if msg:
                 raise ExtraDhcpOptBadData(data=msg)
 
 
-attr.validators['type:list_of_extra_dhcp_opts'] = _validate_extra_dhcp_opt
+validators.validators['type:list_of_extra_dhcp_opts'] = (
+    _validate_extra_dhcp_opt)
 
 # Attribute Map
 EXTRADHCPOPTS = 'extra_dhcp_opts'

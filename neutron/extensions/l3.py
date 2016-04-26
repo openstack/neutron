@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api import converters
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
 
@@ -94,7 +95,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True, 'default': ''},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
-                           'convert_to': attr.convert_to_boolean,
+                           'convert_to': converters.convert_to_boolean,
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
@@ -111,7 +112,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                                                   'required': True},
                                    'external_fixed_ips': {
                                        'convert_list_to':
-                                       attr.convert_kvp_list_to_dict,
+                                       converters.convert_kvp_list_to_dict,
                                        'type:fixed_ips': None,
                                        'default': None,
                                        'required': False,

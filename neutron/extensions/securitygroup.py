@@ -16,6 +16,7 @@
 import abc
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
@@ -211,7 +212,7 @@ def _validate_name_not_default(data, valid_values=None):
         raise SecurityGroupDefaultAlreadyExists()
 
 
-attr.validators['type:name_not_default'] = _validate_name_not_default
+validators.validators['type:name_not_default'] = _validate_name_not_default
 
 # TODO(amotoki): const.IP_PROTOCOL_MAP now comes from neutron-lib,
 # so we cannot add PROTO_NAME_IPV6_ICMP_LEGACY to const.IP_PROTOCOL_MAP

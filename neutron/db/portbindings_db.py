@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import validators
 import sqlalchemy as sa
 from sqlalchemy import orm
 
@@ -62,12 +63,12 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
     def _process_portbindings_create_and_update(self, context, port_data,
                                                 port):
         binding_profile = port.get(portbindings.PROFILE)
-        binding_profile_set = attributes.is_attr_set(binding_profile)
+        binding_profile_set = validators.is_attr_set(binding_profile)
         if not binding_profile_set and binding_profile is not None:
             del port[portbindings.PROFILE]
 
         binding_vnic = port.get(portbindings.VNIC_TYPE)
-        binding_vnic_set = attributes.is_attr_set(binding_vnic)
+        binding_vnic_set = validators.is_attr_set(binding_vnic)
         if not binding_vnic_set and binding_vnic is not None:
             del port[portbindings.VNIC_TYPE]
         # REVISIT(irenab) Add support for vnic_type for plugins that
@@ -76,7 +77,7 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         # PortBindingMixin.
 
         host = port_data.get(portbindings.HOST_ID)
-        host_set = attributes.is_attr_set(host)
+        host_set = validators.is_attr_set(host)
         with context.session.begin(subtransactions=True):
             bind_port = context.session.query(
                 PortBindingPort).filter_by(port_id=port['id']).first()

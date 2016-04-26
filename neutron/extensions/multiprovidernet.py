@@ -13,13 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.extensions import providernet as pnet
 
 SEGMENTS = 'segments'
@@ -39,7 +40,7 @@ def _convert_and_validate_segments(segments, valid_values=None):
         segment.setdefault(pnet.PHYSICAL_NETWORK, constants.ATTR_NOT_SPECIFIED)
         segmentation_id = segment.get(pnet.SEGMENTATION_ID)
         if segmentation_id:
-            segment[pnet.SEGMENTATION_ID] = attr.convert_to_int(
+            segment[pnet.SEGMENTATION_ID] = converters.convert_to_int(
                 segmentation_id)
         else:
             segment[pnet.SEGMENTATION_ID] = constants.ATTR_NOT_SPECIFIED
@@ -67,7 +68,7 @@ def check_duplicate_segments(segments, is_partial_func=None):
         raise SegmentsContainDuplicateEntry()
 
 
-attr.validators['type:convert_segments'] = (
+validators.validators['type:convert_segments'] = (
     _convert_and_validate_segments)
 
 
@@ -75,7 +76,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         SEGMENTS: {'allow_post': True, 'allow_put': True,
                    'validate': {'type:convert_segments': None},
-                   'convert_list_to': attr.convert_kvp_list_to_dict,
+                   'convert_list_to': converters.convert_kvp_list_to_dict,
                    'default': constants.ATTR_NOT_SPECIFIED,
                    'enforce_policy': True,
                    'is_visible': True},

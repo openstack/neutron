@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import validators
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LI
-from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -42,7 +42,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def process_create_network(self, plugin_context, request_data, db_data):
         dns_domain = request_data.get(dns.DNSDOMAIN)
-        if not attributes.is_attr_set(dns_domain):
+        if not validators.is_attr_set(dns_domain):
             return
 
         if dns_domain:
@@ -52,7 +52,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def process_update_network(self, plugin_context, request_data, db_data):
         new_value = request_data.get(dns.DNSDOMAIN)
-        if not attributes.is_attr_set(new_value):
+        if not validators.is_attr_set(new_value):
             return
 
         current_dns_domain = db_data.get(dns.DNSDOMAIN)

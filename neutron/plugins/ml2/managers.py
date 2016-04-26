@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
@@ -22,7 +23,6 @@ import six
 import stevedore
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.api.v2 import attributes
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
@@ -92,7 +92,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
          segmentation_id) = (self._get_attribute(segment, attr)
                              for attr in provider.ATTRIBUTES)
 
-        if attributes.is_attr_set(network_type):
+        if validators.is_attr_set(network_type):
             segment = {api.NETWORK_TYPE: network_type,
                        api.PHYSICAL_NETWORK: physical_network,
                        api.SEGMENTATION_ID: segmentation_id}
@@ -103,15 +103,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         raise exc.InvalidInput(error_message=msg)
 
     def _process_provider_create(self, network):
-        if any(attributes.is_attr_set(network.get(attr))
+        if any(validators.is_attr_set(network.get(attr))
                for attr in provider.ATTRIBUTES):
             # Verify that multiprovider and provider attributes are not set
             # at the same time.
-            if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+            if validators.is_attr_set(network.get(mpnet.SEGMENTS)):
                 raise mpnet.SegmentsSetInConjunctionWithProviders()
             segment = self._get_provider_segment(network)
             return [self._process_provider_segment(segment)]
-        elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+        elif validators.is_attr_set(network.get(mpnet.SEGMENTS)):
             segments = [self._process_provider_segment(s)
                         for s in network[mpnet.SEGMENTS]]
             mpnet.check_duplicate_segments(segments, self.is_partial_segment)
@@ -133,10 +133,10 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def network_matches_filters(self, network, filters):
         if not filters:
             return True
-        if any(attributes.is_attr_set(network.get(attr))
+        if any(validators.is_attr_set(network.get(attr))
                for attr in provider.ATTRIBUTES):
             segments = [self._get_provider_segment(network)]
-        elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+        elif validators.is_attr_set(network.get(mpnet.SEGMENTS)):
             segments = self._get_attribute(network, mpnet.SEGMENTS)
         else:
             return True
