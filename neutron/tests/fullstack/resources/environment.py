@@ -13,12 +13,12 @@
 #    under the License.
 
 import fixtures
+from neutron_lib import constants
 from neutronclient.common import exceptions as nc_exc
 from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent

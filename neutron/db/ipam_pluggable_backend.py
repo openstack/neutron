@@ -16,6 +16,7 @@
 import copy
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -23,8 +24,6 @@ from oslo_utils import excutils
 from sqlalchemy import and_
 
 from neutron._i18n import _, _LE
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
@@ -191,7 +190,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)
 
-        fixed_configured = p['fixed_ips'] is not attributes.ATTR_NOT_SPECIFIED
+        fixed_configured = p['fixed_ips'] is not constants.ATTR_NOT_SPECIFIED
         if fixed_configured:
             ips = self._test_fixed_ips_for_port(context,
                                                 p["network_id"],
@@ -411,7 +410,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         # gateway_ip and allocation pools should be validated or generated
         # only for specific request
-        if subnet['cidr'] is not attributes.ATTR_NOT_SPECIFIED:
+        if subnet['cidr'] is not constants.ATTR_NOT_SPECIFIED:
             subnet['gateway_ip'] = self._gateway_ip_str(subnet,
                                                         subnet['cidr'])
             subnet['allocation_pools'] = self._prepare_allocation_pools(

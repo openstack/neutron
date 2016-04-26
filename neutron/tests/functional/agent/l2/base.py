@@ -18,6 +18,7 @@ import random
 
 import eventlet
 import mock
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -28,7 +29,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import polling
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config as common_config
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import config \

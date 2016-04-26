@@ -14,10 +14,11 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import constants as l3_const
 from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
-from neutron.common import constants as l3_const
+from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
@@ -404,7 +405,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router, fip = self._floatingip_on_port_test_setup(None)
 
         self.assertNotIn(l3_const.FLOATINGIP_KEY, router)
-        self.assertNotIn(l3_const.FLOATINGIP_AGENT_INTF_KEY, router)
+        self.assertNotIn(n_const.FLOATINGIP_AGENT_INTF_KEY, router)
 
     def test_floatingip_on_port_with_host(self):
         router, fip = self._floatingip_on_port_test_setup(_uuid())
@@ -412,10 +413,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertTrue(self.mixin._get_fip_sync_interfaces.called)
 
         self.assertIn(l3_const.FLOATINGIP_KEY, router)
-        self.assertIn(l3_const.FLOATINGIP_AGENT_INTF_KEY, router)
+        self.assertIn(n_const.FLOATINGIP_AGENT_INTF_KEY, router)
         self.assertIn(fip, router[l3_const.FLOATINGIP_KEY])
         self.assertIn('fip_interface',
-            router[l3_const.FLOATINGIP_AGENT_INTF_KEY])
+            router[n_const.FLOATINGIP_AGENT_INTF_KEY])
 
     def _setup_test_create_floatingip(
         self, fip, floatingip_db, router_db):

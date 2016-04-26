@@ -16,6 +16,7 @@
 import os
 
 import mock
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -920,8 +921,8 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                                   'device_id': device_id,
                                   'admin_state_up': True}}
         full_input = {'port': {'admin_state_up': True,
-                               'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                               'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                               'mac_address': constants.ATTR_NOT_SPECIFIED,
+                               'fixed_ips': constants.ATTR_NOT_SPECIFIED,
                                'device_owner': ''}}
         full_input['port'].update(initial_input['port'])
         return_value = {'id': _uuid(), 'status': 'ACTIVE',

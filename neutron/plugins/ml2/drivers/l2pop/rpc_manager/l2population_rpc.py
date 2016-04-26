@@ -16,11 +16,11 @@
 import abc
 import itertools
 
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 import six
 
-from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
 

@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_log import log
 from oslo_serialization import jsonutils
 
 from neutron._i18n import _LW
-from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api

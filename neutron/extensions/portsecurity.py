@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 
 from neutron._i18n import _
@@ -44,7 +45,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         PORTSECURITY: {'allow_post': True, 'allow_put': True,
                        'convert_to': attributes.convert_to_boolean,
-                       'default': attributes.ATTR_NOT_SPECIFIED,
+                       'default': constants.ATTR_NOT_SPECIFIED,
                        'enforce_policy': True,
                        'is_visible': True},
     }

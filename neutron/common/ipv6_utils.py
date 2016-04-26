@@ -19,6 +19,7 @@ IPv6-related utilities and helper functions.
 import os
 
 import netaddr
+from neutron_lib import constants as const
 from oslo_log import log
 
 from neutron._i18n import _, _LI
@@ -83,4 +84,4 @@ def is_ipv6_pd_enabled(subnet):
     """Returns True if the subnetpool_id of the given subnet is equal to
        constants.IPV6_PD_POOL_ID
     """
-    return subnet.get('subnetpool_id') == constants.IPV6_PD_POOL_ID
+    return subnet.get('subnetpool_id') == const.IPV6_PD_POOL_ID

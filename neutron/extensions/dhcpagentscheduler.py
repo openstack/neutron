@@ -15,13 +15,13 @@
 
 import abc
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
 from neutron import manager

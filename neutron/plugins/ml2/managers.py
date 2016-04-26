@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
@@ -143,7 +144,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def _get_attribute(self, attrs, key):
         value = attrs.get(key)
-        if value is attributes.ATTR_NOT_SPECIFIED:
+        if value is constants.ATTR_NOT_SPECIFIED:
             value = None
         return value
 

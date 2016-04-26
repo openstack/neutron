@@ -14,6 +14,7 @@
 
 import itertools
 
+from neutron_lib import constants as lib_consts
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as oslo_db_exc
 from oslo_log import log as logging
@@ -23,8 +24,6 @@ from sqlalchemy import and_
 from sqlalchemy import orm
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import exc as sa_exc
-
-from neutron_lib import constants as lib_consts
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr

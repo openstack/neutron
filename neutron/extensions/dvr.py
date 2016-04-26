@@ -14,13 +14,13 @@
 
 import abc
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 import six
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import constants
 
 DISTRIBUTED = 'distributed'
 EXTENDED_ATTRIBUTES_2_0 = {
@@ -28,7 +28,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
         DISTRIBUTED: {'allow_post': True,
                       'allow_put': True,
                       'is_visible': True,
-                      'default': attributes.ATTR_NOT_SPECIFIED,
+                      'default': constants.ATTR_NOT_SPECIFIED,
                       'convert_to': attributes.convert_to_boolean_if_not_none,
                       'enforce_policy': True},
     }

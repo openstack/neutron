@@ -25,6 +25,7 @@ import weakref
 import eventlet.timeout
 import fixtures
 import mock
+from neutron_lib import constants
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
@@ -40,7 +41,6 @@ from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.callbacks import manager as registry_manager
 from neutron.callbacks import registry
 from neutron.common import config
-from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import agentschedulers_db

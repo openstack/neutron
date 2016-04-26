@@ -16,6 +16,7 @@ import sys
 import time
 
 import mock
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
@@ -26,7 +27,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as n_const
+from neutron.common import constants as c_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -968,7 +969,7 @@ class TestOvsNeutronAgent(object):
     def test_report_state_revived(self):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
-            report_st.return_value = n_const.AGENT_REVIVED
+            report_st.return_value = c_const.AGENT_REVIVED
             self.agent._report_state()
             self.assertTrue(self.agent.fullsync)
 

@@ -17,8 +17,8 @@
 import math
 
 import mock
+from neutron_lib import constants as const
 
-from neutron.common import constants as const
 from neutron import context
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager

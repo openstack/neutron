@@ -17,6 +17,7 @@ import itertools
 import re
 import time
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -32,7 +33,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.api.v2 import attributes
 from neutron.common import config
 
 
@@ -111,7 +111,7 @@ def eligible_for_deletion(conf, namespace, force=False):
     else:
         prefixes = itertools.chain(*NS_PREFIXES.values())
     ns_mangling_pattern = '(%s%s)' % ('|'.join(prefixes),
-                                      attributes.UUID_PATTERN)
+                                      constants.UUID_PATTERN)
 
     # filter out namespaces without UUID as the name
     if not re.match(ns_mangling_pattern, namespace):

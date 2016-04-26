@@ -22,6 +22,7 @@ import functools
 import random
 
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 import testscenarios
@@ -31,7 +32,6 @@ from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import openvswitch_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.cmd.sanity import checks
-from neutron.common import constants
 from neutron.tests.common import conn_testers
 from neutron.tests.functional import base
 

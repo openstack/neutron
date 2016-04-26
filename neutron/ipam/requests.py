@@ -13,12 +13,12 @@
 import abc
 
 import netaddr
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import six
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc

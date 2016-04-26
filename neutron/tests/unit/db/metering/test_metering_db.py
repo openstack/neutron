@@ -14,11 +14,11 @@
 
 import contextlib
 
+from neutron_lib import constants as n_consts
 import webob.exc
 
 from neutron.api import extensions
 from neutron.common import config
-from neutron.common import constants as n_consts
 from neutron import context
 import neutron.extensions
 from neutron.extensions import metering

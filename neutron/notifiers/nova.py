@@ -14,6 +14,7 @@
 #    under the License.
 
 from keystoneauth1 import loading as ks_loading
+from neutron_lib import constants
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -22,7 +23,6 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron._i18n import _LE, _LI, _LW
-from neutron.common import constants
 from neutron import context
 from neutron import manager
 from neutron.notifiers import batch_notifier

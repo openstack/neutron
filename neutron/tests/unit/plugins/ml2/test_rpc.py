@@ -20,6 +20,7 @@ Unit Tests for ml2 rpc
 import collections
 
 import mock
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_context import context as oslo_context
@@ -27,7 +28,6 @@ import oslo_messaging
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants
 from neutron.common import topics
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers

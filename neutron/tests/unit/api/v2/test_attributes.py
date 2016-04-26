@@ -17,6 +17,7 @@ import string
 
 import mock
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 import testtools
@@ -24,7 +25,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron import context
 from neutron.tests import base
 from neutron.tests import tools
@@ -51,7 +51,7 @@ class TestAttributes(base.BaseTestCase):
         return dictionary, constraints
 
     def test_is_attr_set(self):
-        data = attributes.ATTR_NOT_SPECIFIED
+        data = constants.ATTR_NOT_SPECIFIED
         self.assertIs(attributes.is_attr_set(data), False)
 
         data = None
@@ -444,11 +444,11 @@ class TestAttributes(base.BaseTestCase):
 
     def test_uuid_pattern(self):
         data = 'garbage'
-        msg = attributes._validate_regex(data, attributes.UUID_PATTERN)
+        msg = attributes._validate_regex(data, constants.UUID_PATTERN)
         self.assertIsNotNone(msg)
 
         data = '00000000-ffff-ffff-ffff-000000000000'
-        msg = attributes._validate_regex(data, attributes.UUID_PATTERN)
+        msg = attributes._validate_regex(data, constants.UUID_PATTERN)
         self.assertIsNone(msg)
 
     def test_mac_pattern(self):
@@ -940,12 +940,12 @@ class TestResDict(base.BaseTestCase):
         attr_info = {
             'key': {
                 'allow_post': True,
-                'default': attributes.ATTR_NOT_SPECIFIED,
+                'default': constants.ATTR_NOT_SPECIFIED,
             },
         }
         self._test_fill_default_value(attr_info, {'key': 'X'}, {'key': 'X'})
         self._test_fill_default_value(
-            attr_info, {'key': attributes.ATTR_NOT_SPECIFIED}, {})
+            attr_info, {'key': constants.ATTR_NOT_SPECIFIED}, {})
 
         attr_info = {
             'key': {
@@ -978,8 +978,8 @@ class TestResDict(base.BaseTestCase):
             },
         }
         self._test_convert_value(attr_info,
-                                 {'key': attributes.ATTR_NOT_SPECIFIED},
-                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+                                 {'key': constants.ATTR_NOT_SPECIFIED},
+                                 {'key': constants.ATTR_NOT_SPECIFIED})
         self._test_convert_value(attr_info, {'key': 'X'}, {'key': 'X'})
         self._test_convert_value(attr_info,
                                  {'other_key': 'X'}, {'other_key': 'X'})
@@ -990,8 +990,8 @@ class TestResDict(base.BaseTestCase):
             },
         }
         self._test_convert_value(attr_info,
-                                 {'key': attributes.ATTR_NOT_SPECIFIED},
-                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+                                 {'key': constants.ATTR_NOT_SPECIFIED},
+                                 {'key': constants.ATTR_NOT_SPECIFIED})
         self._test_convert_value(attr_info, {'key': 1}, {'key': '1'})
         self._test_convert_value(attr_info, {'key': 1}, {'key': 1})
         self.assertRaises(n_exc.InvalidInput, self._test_convert_value,
@@ -1003,8 +1003,8 @@ class TestResDict(base.BaseTestCase):
             },
         }
         self._test_convert_value(attr_info,
-                                 {'key': attributes.ATTR_NOT_SPECIFIED},
-                                 {'key': attributes.ATTR_NOT_SPECIFIED})
+                                 {'key': constants.ATTR_NOT_SPECIFIED},
+                                 {'key': constants.ATTR_NOT_SPECIFIED})
         uuid_str = '01234567-1234-1234-1234-1234567890ab'
         self._test_convert_value(attr_info,
                                  {'key': uuid_str}, {'key': uuid_str})

@@ -15,6 +15,7 @@
 
 
 import mock
+from neutron_lib import constants as l3_constants
 
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
@@ -22,7 +23,6 @@ from neutron.agent.linux import ip_lib
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as l3_constants
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework

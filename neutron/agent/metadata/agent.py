@@ -16,6 +16,7 @@ import hashlib
 import hmac
 
 import httplib2
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -112,7 +113,7 @@ class MetadataProxyHandler(object):
         filters = {}
         if router_id:
             filters['device_id'] = [router_id]
-            filters['device_owner'] = n_const.ROUTER_INTERFACE_OWNERS
+            filters['device_owner'] = constants.ROUTER_INTERFACE_OWNERS
         if ip_address:
             filters['fixed_ips'] = {'ip_address': [ip_address]}
         if networks:
@@ -251,7 +252,7 @@ class UnixDomainMetadataProxy(object):
                 'log_agent_heartbeats': cfg.CONF.AGENT.log_agent_heartbeats,
             },
             'start_flag': True,
-            'agent_type': n_const.AGENT_TYPE_METADATA}
+            'agent_type': constants.AGENT_TYPE_METADATA}
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(

@@ -17,6 +17,7 @@ import os
 
 import mock
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent.common import config
@@ -24,7 +25,7 @@ from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.common import config as base_config
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests import base
@@ -87,7 +88,7 @@ class FakeReservedPort(object):
             FakeIPAllocation('192.168.0.6',
                              'dddddddd-dddd-dddd-dddd-dddddddddddd')]
         self.mac_address = '00:00:80:aa:bb:ee'
-        self.device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
+        self.device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT
         self.extra_dhcp_opts = []
         self.id = id
 
@@ -464,7 +465,7 @@ class FakeV6SubnetDHCPStateful(Dictable):
         self.host_routes = [FakeV6HostRoute()]
         self.dns_nameservers = ['2001:0200:feed:7ac0::1']
         self.ipv6_ra_mode = None
-        self.ipv6_address_mode = constants.DHCPV6_STATEFUL
+        self.ipv6_address_mode = n_const.DHCPV6_STATEFUL
 
 
 class FakeV6SubnetSlaac(object):
@@ -475,7 +476,7 @@ class FakeV6SubnetSlaac(object):
         self.gateway_ip = 'ffda:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
         self.host_routes = [FakeV6HostRoute()]
-        self.ipv6_address_mode = constants.IPV6_SLAAC
+        self.ipv6_address_mode = n_const.IPV6_SLAAC
         self.ipv6_ra_mode = None
 
 
@@ -488,7 +489,7 @@ class FakeV6SubnetStateless(object):
         self.enable_dhcp = True
         self.dns_nameservers = []
         self.host_routes = []
-        self.ipv6_address_mode = constants.DHCPV6_STATELESS
+        self.ipv6_address_mode = n_const.DHCPV6_STATELESS
         self.ipv6_ra_mode = None
 
 
@@ -1063,7 +1064,7 @@ class TestDnsmasq(TestBase):
         possible_leases = 0
         for i, s in enumerate(network.subnets):
             if (s.ip_version != 6
-                or s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
+                or s.ipv6_address_mode == n_const.DHCPV6_STATEFUL):
                 if s.ip_version == 4:
                     expected.extend([prefix % (
                         i, s.cidr.split('/')[0], lease_duration, seconds)])

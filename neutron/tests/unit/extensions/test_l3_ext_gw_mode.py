@@ -15,13 +15,13 @@
 #
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
 
-from neutron.common import constants
 from neutron.db import api as db_api
 from neutron.db import external_net_db
 from neutron.db import l3_db

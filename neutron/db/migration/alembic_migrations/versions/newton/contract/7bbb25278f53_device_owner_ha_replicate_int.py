@@ -26,9 +26,8 @@ revision = '7bbb25278f53'
 down_revision = '4ffceebfcdc'
 
 from alembic import op
+from neutron_lib import constants
 import sqlalchemy as sa
-
-from neutron.common import constants
 
 
 ROUTER_ATTR_TABLE = 'router_extra_attributes'

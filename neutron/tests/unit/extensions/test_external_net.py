@@ -14,11 +14,11 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import testtools
 from webob import exc
 
-from neutron.common import constants
 from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net

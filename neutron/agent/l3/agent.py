@@ -15,6 +15,7 @@
 
 import eventlet
 import netaddr
+from neutron_lib import constants as lib_const
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -646,7 +647,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'interface_driver': self.conf.interface_driver,
                 'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
             'start_flag': True,
-            'agent_type': l3_constants.AGENT_TYPE_L3}
+            'agent_type': lib_const.AGENT_TYPE_L3}
         report_interval = self.conf.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
@@ -663,9 +664,9 @@ class L3NATAgentWithStateReport(L3NATAgent):
             ex_gw_port = ri.get_ex_gw_port()
             if ex_gw_port:
                 num_ex_gw_ports += 1
-            num_interfaces += len(ri.router.get(l3_constants.INTERFACE_KEY,
+            num_interfaces += len(ri.router.get(lib_const.INTERFACE_KEY,
                                                 []))
-            num_floating_ips += len(ri.router.get(l3_constants.FLOATINGIP_KEY,
+            num_floating_ips += len(ri.router.get(lib_const.FLOATINGIP_KEY,
                                                   []))
         configurations = self.agent_state['configurations']
         configurations['routers'] = num_routers

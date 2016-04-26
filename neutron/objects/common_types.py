@@ -12,6 +12,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants as n_const
 from oslo_versionedobjects import fields as obj_fields
 import six
 
@@ -122,7 +123,7 @@ class EtherTypeEnumField(obj_fields.AutoTypedField):
 
 class IpProtocolEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(
-        valid_values=list(constants.IP_PROTOCOL_MAP.keys()))
+        valid_values=list(n_const.IP_PROTOCOL_MAP.keys()))
 
 
 class MACAddress(obj_fields.FieldType):

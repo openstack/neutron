@@ -12,10 +12,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib import constants as n_consts
 import testtools
 
 from neutron.agent.linux import keepalived
-from neutron.common import constants as n_consts
 from neutron.tests import base
 
 # Keepalived user guide:

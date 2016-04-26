@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import importutils
 import testscenarios
 
-from neutron.common import constants
 from neutron import context
 from neutron.db import agentschedulers_db as sched_db
 from neutron.db import common_db_mixin

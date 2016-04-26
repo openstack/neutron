@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
+
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 
 # The type of vnic that this port should be attached to
 VNIC_TYPE = 'binding:vnic_type'
@@ -102,11 +103,11 @@ VNIC_TYPES = [VNIC_NORMAL, VNIC_DIRECT, VNIC_MACVTAP, VNIC_BAREMETAL,
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         VIF_TYPE: {'allow_post': False, 'allow_put': False,
-                   'default': attributes.ATTR_NOT_SPECIFIED,
+                   'default': constants.ATTR_NOT_SPECIFIED,
                    'enforce_policy': True,
                    'is_visible': True},
         VIF_DETAILS: {'allow_post': False, 'allow_put': False,
-                      'default': attributes.ATTR_NOT_SPECIFIED,
+                      'default': constants.ATTR_NOT_SPECIFIED,
                       'enforce_policy': True,
                       'is_visible': True},
         VNIC_TYPE: {'allow_post': True, 'allow_put': True,
@@ -115,11 +116,11 @@ EXTENDED_ATTRIBUTES_2_0 = {
                     'validate': {'type:values': VNIC_TYPES},
                     'enforce_policy': True},
         HOST_ID: {'allow_post': True, 'allow_put': True,
-                  'default': attributes.ATTR_NOT_SPECIFIED,
+                  'default': constants.ATTR_NOT_SPECIFIED,
                   'is_visible': True,
                   'enforce_policy': True},
         PROFILE: {'allow_post': True, 'allow_put': True,
-                  'default': attributes.ATTR_NOT_SPECIFIED,
+                  'default': constants.ATTR_NOT_SPECIFIED,
                   'enforce_policy': True,
                   'validate': {'type:dict_or_none': None},
                   'is_visible': True},

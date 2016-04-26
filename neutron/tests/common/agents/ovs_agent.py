@@ -15,10 +15,10 @@
 import hashlib
 import sys
 
+from neutron_lib import constants as n_const
 from oslo_utils import encodeutils
 
 from neutron.cmd.eventlet.plugins.ovs_neutron_agent import main as _main
-from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.ovs_neutron_agent \
     import OVSNeutronAgent
 

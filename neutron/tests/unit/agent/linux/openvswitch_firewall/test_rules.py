@@ -13,11 +13,12 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.agent.linux.openvswitch_firewall import rules
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 from neutron.tests import base
@@ -76,7 +77,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IP,
+            'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
         }
         self._test_create_flows_from_rule_and_port_helper(rule,
@@ -91,7 +92,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IP,
+            'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
             'nw_src': '192.168.0.0/24',
             'nw_dst': '10.0.0.1/32',
@@ -108,7 +109,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IP,
+            'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
             'nw_src': '192.168.0.0/24',
         }
@@ -122,7 +123,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IPV6,
+            'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
         }
         self._test_create_flows_from_rule_and_port_helper(rule,
@@ -137,7 +138,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IPV6,
+            'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
             'ipv6_src': '2001:db8:bbbb::1/64',
             'ipv6_dst': '2001:db8:aaaa::1/64',
@@ -154,7 +155,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
         }
         expected_template = {
             'priority': 70,
-            'dl_type': constants.ETHERTYPE_IPV6,
+            'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
             'ipv6_src': '2001:db8:bbbb::1/64',
         }

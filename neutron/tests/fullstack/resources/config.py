@@ -15,8 +15,8 @@
 import tempfile
 
 import fixtures
+from neutron_lib import constants
 
-from neutron.common import constants
 from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.tests import base
 from neutron.tests.common import config_fixtures

@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as const
 
-from neutron.common import constants as const
 from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager

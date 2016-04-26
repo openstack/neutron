@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import constants
+from neutron_lib import constants
+
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.macvtap.mech_driver import mech_macvtap
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base

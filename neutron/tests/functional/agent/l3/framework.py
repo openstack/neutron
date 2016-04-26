@@ -17,6 +17,7 @@ import functools
 
 import mock
 import netaddr
+from neutron_lib import constants as l3_constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -30,7 +31,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import config as common_config
-from neutron.common import constants as l3_constants
+from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
@@ -218,7 +219,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router = self.manage_router(self.agent, router_info)
 
         # Add multiple-IPv6-prefix internal router port
-        slaac = l3_constants.IPV6_SLAAC
+        slaac = n_const.IPV6_SLAAC
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
         subnet_modes = [slaac_mode] * 2
         self._add_internal_interface_by_subnet(router.router,

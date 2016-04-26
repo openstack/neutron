@@ -17,6 +17,7 @@ import collections
 import itertools
 
 import netaddr
+from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -51,7 +52,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     @staticmethod
     def _gateway_ip_str(subnet, cidr_net):
-        if subnet.get('gateway_ip') is attributes.ATTR_NOT_SPECIFIED:
+        if subnet.get('gateway_ip') is const.ATTR_NOT_SPECIFIED:
             return str(netaddr.IPNetwork(cidr_net).network + 1)
         return subnet.get('gateway_ip')
 
@@ -311,7 +312,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # Subnets are all the subnets belonging to the same network.
         if not subnets:
             msg = _('IP allocation requires subnets for network')
-            raise n_exc.InvalidInput(error_message=msg)
+            raise exc.InvalidInput(error_message=msg)
 
         if 'subnet_id' in fixed:
             def get_matching_subnet():
@@ -370,7 +371,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # (non-optional, e.g. IPv6 SLAAC) addresses.
         # NOTE: Need to check the SNAT ports for DVR routers here since
         # they consume an IP.
-        if device_owner in constants.ROUTER_INTERFACE_OWNERS_SNAT:
+        if device_owner in const.ROUTER_INTERFACE_OWNERS_SNAT:
             return True
 
         subnet = self._get_subnet(context, subnet_id)

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -21,7 +22,7 @@ from neutron._i18n import _LE, _LW
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -118,7 +119,7 @@ class DhcpAgentNotifyAPI(object):
         return enabled_agents
 
     def _is_reserved_dhcp_port(self, port):
-        return port.get('device_id') == constants.DEVICE_ID_RESERVED_DHCP_PORT
+        return port.get('device_id') == n_const.DEVICE_ID_RESERVED_DHCP_PORT
 
     def _notify_agents(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network."""

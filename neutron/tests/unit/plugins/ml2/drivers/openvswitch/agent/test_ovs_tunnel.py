@@ -17,13 +17,13 @@
 import time
 
 import mock
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log
 import six
 
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
-from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \

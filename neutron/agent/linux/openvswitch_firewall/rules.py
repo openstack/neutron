@@ -20,7 +20,6 @@ from oslo_log import log as logging
 from neutron.agent import firewall
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
-from neutron.common import constants
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
@@ -83,7 +82,7 @@ def create_protocol_flows(direction, flow_template, port, rule):
     try:
         flow_template['nw_proto'] = ovsfw_consts.protocol_to_nw_proto[protocol]
         if rule['ethertype'] == n_consts.IPv6 and protocol == 'icmp':
-            flow_template['nw_proto'] = constants.PROTO_NUM_IPV6_ICMP
+            flow_template['nw_proto'] = n_consts.PROTO_NUM_IPV6_ICMP
     except KeyError:
         pass
 

@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import constants
 from oslo_config import cfg
 import testtools
 
-from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config  # noqa

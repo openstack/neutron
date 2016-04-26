@@ -14,10 +14,10 @@
 import functools
 import unittest.case
 
+from neutron_lib import constants as n_const
 from oslo_db.sqlalchemy import test_base
 import testtools.testcase
 
-from neutron.common import constants as n_const
 from neutron.tests import base
 from neutron.tests import tools
 

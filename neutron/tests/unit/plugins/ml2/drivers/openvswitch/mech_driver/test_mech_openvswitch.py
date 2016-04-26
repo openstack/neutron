@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
 
-from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver \
     import mech_openvswitch

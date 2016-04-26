@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
@@ -33,19 +34,19 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         NETWORK_TYPE: {'allow_post': True, 'allow_put': True,
                        'validate': {'type:string': NETWORK_TYPE_MAX_LEN},
-                       'default': attributes.ATTR_NOT_SPECIFIED,
+                       'default': constants.ATTR_NOT_SPECIFIED,
                        'enforce_policy': True,
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
                            'validate': {'type:string':
                                         PHYSICAL_NETWORK_MAX_LEN},
-                           'default': attributes.ATTR_NOT_SPECIFIED,
+                           'default': constants.ATTR_NOT_SPECIFIED,
                            'enforce_policy': True,
                            'is_visible': True},
         SEGMENTATION_ID: {'allow_post': True, 'allow_put': True,
                           'convert_to': attributes.convert_to_int,
                           'enforce_policy': True,
-                          'default': attributes.ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'is_visible': True},
     }
 }

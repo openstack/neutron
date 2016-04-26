@@ -17,6 +17,7 @@ import collections
 import copy
 
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -30,7 +31,7 @@ from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
-from neutron.common import constants as const
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
@@ -80,7 +81,7 @@ class Controller(object):
         # use plugin's dhcp notifier, if this is already instantiated
         agent_notifiers = getattr(plugin, 'agent_notifiers', {})
         self._dhcp_agent_notifier = (
-            agent_notifiers.get(const.AGENT_TYPE_DHCP) or
+            agent_notifiers.get(constants.AGENT_TYPE_DHCP) or
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
         if cfg.CONF.notify_nova_on_port_data_changes:
@@ -602,7 +603,7 @@ class Controller(object):
         # Make a list of attributes to be updated to inform the policy engine
         # which attributes are set explicitly so that it can distinguish them
         # from the ones that are set to their default values.
-        orig_obj[const.ATTRIBUTES_TO_UPDATE] = body[self._resource].keys()
+        orig_obj[n_const.ATTRIBUTES_TO_UPDATE] = body[self._resource].keys()
         try:
             policy.enforce(request.context,
                            action,

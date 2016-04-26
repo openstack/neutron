@@ -15,10 +15,10 @@
 
 import os
 
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent import securitygroups_rpc
-from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api

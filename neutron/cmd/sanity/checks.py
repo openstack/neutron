@@ -18,6 +18,7 @@ import shutil
 import tempfile
 
 import netaddr
+from neutron_lib import constants as n_consts
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -31,7 +32,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
-from neutron.common import constants as n_consts
+from neutron.common import constants
 from neutron.plugins.common import constants as const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
@@ -135,7 +136,7 @@ def icmpv6_header_match_supported():
     return ofctl_arg_supported(cmd='add-flow',
                                table=ovs_const.ARP_SPOOF_TABLE,
                                priority=1,
-                               dl_type=n_consts.ETHERTYPE_IPV6,
+                               dl_type=constants.ETHERTYPE_IPV6,
                                nw_proto=n_consts.PROTO_NUM_IPV6_ICMP,
                                icmp_type=n_consts.ICMPV6_TYPE_NA,
                                nd_target='fdf8:f53b:82e4::10',

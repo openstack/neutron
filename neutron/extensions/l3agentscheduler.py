@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 import webob.exc
@@ -23,7 +24,6 @@ from neutron._i18n import _, _LE
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
 from neutron import manager

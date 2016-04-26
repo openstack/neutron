@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -27,7 +28,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -420,8 +421,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # problems with comparing int and string in PostgreSQL. Here this
         # string is converted to int to give an opportunity to use it as
         # before.
-        if protocol in constants.IP_PROTOCOL_NAME_ALIASES:
-            protocol = constants.IP_PROTOCOL_NAME_ALIASES[protocol]
+        if protocol in n_const.IP_PROTOCOL_NAME_ALIASES:
+            protocol = n_const.IP_PROTOCOL_NAME_ALIASES[protocol]
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
     def _get_ip_proto_name_and_num(self, protocol):
@@ -430,8 +431,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         protocol = str(protocol)
         if protocol in constants.IP_PROTOCOL_MAP:
             return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
-        elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
-            return [constants.IP_PROTOCOL_NUM_TO_NAME_MAP.get(protocol),
+        elif protocol in n_const.IP_PROTOCOL_NUM_TO_NAME_MAP:
+            return [n_const.IP_PROTOCOL_NUM_TO_NAME_MAP.get(protocol),
                     protocol]
         return [protocol, protocol]
 
@@ -468,7 +469,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if rule['protocol'] in [constants.PROTO_NAME_IPV6_ENCAP,
                                 constants.PROTO_NAME_IPV6_FRAG,
                                 constants.PROTO_NAME_IPV6_ICMP,
-                                constants.PROTO_NAME_IPV6_ICMP_LEGACY,
+                                n_const.PROTO_NAME_IPV6_ICMP_LEGACY,
                                 constants.PROTO_NAME_IPV6_NONXT,
                                 constants.PROTO_NAME_IPV6_OPTS,
                                 constants.PROTO_NAME_IPV6_ROUTE]:

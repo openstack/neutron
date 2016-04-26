@@ -14,10 +14,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 
-from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_common
@@ -175,7 +175,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
                 'ipv6_ra_mode': u'slaac'}]
         port = {'port': {
             'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
-            'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
             'mac_address': '12:34:56:78:44:ab',
             'device_owner': 'compute'}}
         expected = []
@@ -208,7 +208,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
                 'ipv6_ra_mode': 'slaac'}]
         port = {'port': {
             'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
-            'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
             'mac_address': '12:34:56:78:44:ab',
             'device_owner': 'compute'}}
         expected = []

@@ -14,8 +14,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.db import ipam_backend_mixin
 from neutron.tests import base
 
@@ -38,8 +39,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
                  'subnet_id': ip[0]} for ip in ips]
 
     def _mock_slaac_subnet_on(self):
-        slaac_subnet = {'ipv6_address_mode': constants.IPV6_SLAAC,
-                        'ipv6_ra_mode': constants.IPV6_SLAAC}
+        slaac_subnet = {'ipv6_address_mode': n_const.IPV6_SLAAC,
+                        'ipv6_ra_mode': n_const.IPV6_SLAAC}
         self.mixin._get_subnet = mock.Mock(return_value=slaac_subnet)
 
     def _mock_slaac_subnet_off(self):
@@ -90,8 +91,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
 
         # mock to test auto address part
         pd_subnet = {'subnetpool_id': constants.IPV6_PD_POOL_ID,
-                     'ipv6_address_mode': constants.IPV6_SLAAC,
-                     'ipv6_ra_mode': constants.IPV6_SLAAC}
+                     'ipv6_address_mode': n_const.IPV6_SLAAC,
+                     'ipv6_ra_mode': n_const.IPV6_SLAAC}
         self.mixin._get_subnet = mock.Mock(return_value=pd_subnet)
 
         # make a copy of original_ips
