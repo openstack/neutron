@@ -279,6 +279,17 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         # anchor is gone, delete should pass
         self.admin_client.delete_rbac_policy(wild['id'])
 
+    @decorators.idempotent_id('34d627da-a732-68c0-2e1a-bc4a19246698')
+    def test_delete_self_share_rule(self):
+        net = self.create_network()
+        self_share = self.client.create_rbac_policy(
+                         object_type='network', object_id=net['id'],
+                         action='access_as_shared',
+                         target_tenant=net['tenant_id'])['rbac_policy']
+        port = self.client.create_port(network_id=net['id'])['port']
+        self.client.delete_rbac_policy(self_share['id'])
+        self.client.delete_port(port['id'])
+
     @decorators.idempotent_id('86c3529b-1231-40de-803c-beefbeefbeef')
     def test_tenant_can_delete_port_on_own_network(self):
         net = self.create_network()  # owned by self.client
@@ -398,6 +409,18 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         with testtools.ExpectedException(lib_exc.Forbidden):
             self.client.update_rbac_policy(pol['rbac_policy']['id'],
                                            target_tenant='*')
+
+    @decorators.idempotent_id('34d627da-869f-68c0-2e1a-bc4a19246698')
+    def test_update_self_share_rule(self):
+        net = self.create_network()
+        self_share = self.client.create_rbac_policy(
+                         object_type='network', object_id=net['id'],
+                         action='access_as_shared',
+                         target_tenant=net['tenant_id'])['rbac_policy']
+        port = self.client.create_port(network_id=net['id'])['port']
+        self.client.update_rbac_policy(self_share['id'],
+                                       target_tenant=self.client2.tenant_id)
+        self.client.delete_port(port['id'])
 
     @decorators.idempotent_id('86c3529b-1231-40de-803c-aeeeeeee7fff')
     def test_filtering_works_with_rbac_records_present(self):
