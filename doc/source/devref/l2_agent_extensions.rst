@@ -89,11 +89,11 @@ cleaning up stale flows from the previous agent session::
                                          +--+ Extension +--+
                                             +-----------+
 
-Interactions with the agent API object are in the following order::
+Interactions with the agent API object are in the following order:
 
-#1 the agent initializes the agent API object (bridges, other internal state)
-#2 the agent passes the agent API object into the extension manager
-#3 the manager passes the agent API object into each extension
-#4 an extension calls the new agent API object method to receive bridge wrappers with cookies allocated.
+#. The agent initializes the agent API object (bridges, other internal state).
+#. The agent passes the agent API object into the extension manager.
+#. The manager passes the agent API object into each extension.
+#. An extension calls the new agent API object method to receive bridge wrappers with cookies allocated.
 
 Call #4 also registers allocated cookies with the agent bridge objects.
