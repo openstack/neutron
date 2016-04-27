@@ -4,8 +4,6 @@ NETWORK_API_EXTENSIONS="
     allowed-address-pairs, \
     auto-allocated-topology, \
     availability_zone, \
-    bgp, \
-    bgp_dragent_scheduler, \
     binding, \
     default-subnetpools, \
     dhcp_agent_scheduler, \

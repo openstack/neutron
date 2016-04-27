@@ -26,7 +26,6 @@ from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
-from neutron.services.bgp.common import constants as bgp_const
 
 HOST = 'localhost'
 DEFAULT_AZ = 'nova'
@@ -99,30 +98,6 @@ def register_dhcp_agent(host=HOST, networks=0, admin_state_up=True,
                         alive=True, az=DEFAULT_AZ):
     agent = _register_agent(
         _get_dhcp_agent_dict(host, networks, az=az))
-
-    if not admin_state_up:
-        set_agent_admin_state(agent['id'])
-    if not alive:
-        kill_agent(agent['id'])
-
-    return FakePlugin()._get_agent_by_type_and_host(
-        context.get_admin_context(), agent['agent_type'], agent['host'])
-
-
-def _get_bgp_dragent_dict(host):
-    agent = {
-        'binary': 'neutron-bgp-dragent',
-        'host': host,
-        'topic': 'q-bgp_dragent',
-        'agent_type': bgp_const.AGENT_TYPE_BGP_ROUTING,
-        'configurations': {'bgp_speakers': 1}}
-    return agent
-
-
-def register_bgp_dragent(host=HOST, admin_state_up=True,
-                        alive=True):
-    agent = _register_agent(
-        _get_bgp_dragent_dict(host))
 
     if not admin_state_up:
         set_agent_admin_state(agent['id'])

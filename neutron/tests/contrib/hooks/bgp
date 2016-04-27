@@ -1,2 +1,0 @@
-enable_plugin neutron git://git.openstack.org/openstack/neutron
-enable_service q-bgp

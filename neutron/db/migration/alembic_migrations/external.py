@@ -31,6 +31,15 @@ REPO_ARISTA_TABLES = [
     'arista_provisioned_tenants',
 ]
 
+# BGP models in openstack/neutron-dynamic-routing
+REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
+    'bgp_speakers',
+    'bgp_peers',
+    'bgp_speaker_network_bindings',
+    'bgp_speaker_peer_bindings',
+    'bgp_speaker_dragent_bindings',
+]
+
 # Models moved to openstack/networking-cisco
 REPO_CISCO_TABLES = [
     'cisco_ml2_apic_contracts',
@@ -113,6 +122,7 @@ REPO_NUAGE_TABLES = [
 
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
+          REPO_NEUTRON_DYNAMIC_ROUTING_TABLES +
           REPO_CISCO_TABLES +
           REPO_VMWARE_TABLES +
           REPO_BROCADE_TABLES +

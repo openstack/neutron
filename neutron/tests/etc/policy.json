@@ -213,26 +213,8 @@
     "get_flavor_service_profile": "rule:regular_user",
     "get_auto_allocated_topology": "rule:admin_or_owner",
 
-    "get_bgp_speaker": "rule:admin_only",
-    "create_bgp_speaker": "rule:admin_only",
-    "update_bgp_speaker": "rule:admin_only",
-    "delete_bgp_speaker": "rule:admin_only",
-
-    "get_bgp_peer": "rule:admin_only",
-    "create_bgp_peer": "rule:admin_only",
-    "update_bgp_peer": "rule:admin_only",
-    "delete_bgp_peer": "rule:admin_only",
-
-    "add_bgp_peer": "rule:admin_only",
-    "remove_bgp_peer": "rule:admin_only",
-
     "add_gateway_network": "rule:admin_only",
     "remove_gateway_network": "rule:admin_only",
 
-    "get_advertised_routes":"rule:admin_only",
-
-    "add_bgp_speaker_to_dragent": "rule:admin_only",
-    "remove_bgp_speaker_from_dragent": "rule:admin_only",
-    "list_bgp_speaker_on_dragent": "rule:admin_only",
-    "list_dragent_hosting_bgp_speaker": "rule:admin_only"
+    "get_advertised_routes":"rule:admin_only"
 }
