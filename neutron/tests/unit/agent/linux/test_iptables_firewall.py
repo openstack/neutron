@@ -22,11 +22,11 @@ import six
 import testtools
 
 from neutron.agent.common import config as a_cfg
+from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
-from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.tests import base
@@ -956,19 +956,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             dhcp_rule = [mock.call.add_rule('ofake_dev',
                                             '-s ::/128 -d ff02::/16 '
                                             '-p ipv6-icmp -m icmp6 '
-                                            '--icmpv6-type 131 -j RETURN',
-                                            comment=None),
-                         mock.call.add_rule('ofake_dev',
-                                            '-s ::/128 -d ff02::/16 '
-                                            '-p ipv6-icmp -m icmp6 '
                                             '--icmpv6-type %s -j RETURN' %
-                                            n_const.ICMPV6_TYPE_NC,
-                                            comment=None),
-                         mock.call.add_rule('ofake_dev',
-                                            '-s ::/128 -d ff02::/16 '
-                                            '-p ipv6-icmp -m icmp6 '
-                                            '--icmpv6-type 143 -j RETURN',
-                                            comment=None)]
+                                            icmp6_type,
+                                            comment=None) for icmp6_type
+                         in constants.ICMPV6_ALLOWED_UNSPEC_ADDR_TYPES]
         sg = [rule]
         port['security_group_rules'] = sg
         self.firewall.prepare_port_filter(port)
@@ -991,7 +982,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.SG_TO_VM_SG)
                  ]
         if ethertype == 'IPv6':
-            for icmp6_type in n_const.ICMPV6_ALLOWED_TYPES:
+            for icmp6_type in firewall.ICMPV6_ALLOWED_TYPES:
                 calls.append(
                     mock.call.add_rule('ifake_dev',
                                        '-p ipv6-icmp -m icmp6 --icmpv6-type '
