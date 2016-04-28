@@ -379,7 +379,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | functional-tests_             | A bug in the functional tests subtree   | Assaf Muller         |
 +-------------------------------+-----------------------------------------+----------------------+
-| fwaas_                        | A bug affecting neutron-fwass           | Sean Collins         |
+| fwaas_                        | A bug affecting neutron-fwass           | Sridar K.            |
 +-------------------------------+-----------------------------------------+----------------------+
 | gate-failure_                 | A bug affecting gate stability          | Armando Migliaccio   |
 +-------------------------------+-----------------------------------------+----------------------+
