@@ -122,9 +122,7 @@ updating the core review team for the sub-project's repositories.
 |                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
-| networking-odl         | Flavio Fernandes          | flaviof              |
-|                        +---------------------------+----------------------+
-|                        | Kyle Mestery              | mestery              |
+| networking-odl         | Isaku Yamahata            | yamahata             |
 +------------------------+---------------------------+----------------------+
 | networking-ofagent     | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
