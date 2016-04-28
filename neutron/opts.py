@@ -280,7 +280,7 @@ def list_ovs_opts():
 
 def list_sriov_agent_opts():
     return [
-        ('ml2_sriov',
+        ('sriov_nic',
          neutron.plugins.ml2.drivers.mech_sriov.agent.common.config.
          sriov_nic_opts),
         ('agent',
