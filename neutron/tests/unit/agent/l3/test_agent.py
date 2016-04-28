@@ -964,7 +964,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertTrue(fip_gw_port.called)
             self.assertTrue(fips.called)
             create_fip.assert_called_once_with()
-            self.assertEqual(2, agent.process_router_add.call_count)
             self.assertEqual(2, ri.fip_ns.create_rtr_2_fip_link.call_count)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
@@ -1063,7 +1062,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(agent_gateway_port[0],
                              ri.fip_ns.agent_gateway_port)
             self.assertTrue(ri.rtr_fip_subnet)
-            self.assertEqual(1, agent.process_router_add.call_count)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_create_dvr_fip_interfaces_for_restart_l3agent_case(self,
