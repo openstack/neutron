@@ -105,6 +105,8 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
                       'subnets': subnets,
                       'extra_subnets': extra_subnets}
 
+    external_gateway_info = {"qos_policy_id": kwargs.get('qos_policy_id')}
+
     routes = []
     if extra_routes:
         routes = [{'destination': '8.8.8.0/24', 'nexthop': '19.4.4.4'}]
@@ -114,7 +116,8 @@ def prepare_router_data(ip_version=lib_constants.IP_VERSION_4,
         'distributed': False,
         lib_constants.INTERFACE_KEY: [],
         'routes': routes,
-        'gw_port': ex_gw_port}
+        'gw_port': ex_gw_port,
+        'external_gateway_info': external_gateway_info}
 
     router_fips = router.get(lib_constants.FLOATINGIP_KEY, [])
     if enable_floating_ip:

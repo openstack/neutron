@@ -1542,10 +1542,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         segment.create()
         return segment.id
 
-    def _create_test_router_id(self):
+    def _create_test_router_id(self, router_id=None):
         attrs = {
             'name': 'test_router',
         }
+        if router_id:
+            attrs['id'] = router_id
         self._router = router.Router(self.context, **attrs)
         self._router.create()
         return self._router['id']

@@ -35,7 +35,7 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_fip_pools_db
 from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
-from neutron.db import l3_gwmode_db
+from neutron.db import l3_gateway_ip_qos
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3 as l3_models
@@ -54,11 +54,11 @@ def disable_dvr_extension_by_config(aliases):
             aliases.remove('dvr')
 
 
-def disable_qos_fip_extension_by_plugins(aliases):
+def disable_l3_qos_extension_by_plugins(ext, aliases):
     qos_class = 'neutron.services.qos.qos_plugin.QoSPlugin'
     if all(p not in cfg.CONF.service_plugins for p in ['qos', qos_class]):
-        if 'qos-fip' in aliases:
-            aliases.remove('qos-fip')
+        if ext in aliases:
+            aliases.remove(ext)
 
 
 @resource_extend.has_resource_extenders
@@ -66,7 +66,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                      common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
                      l3_hamode_db.L3_HA_NAT_db_mixin,
-                     l3_gwmode_db.L3_NAT_db_mixin,
+                     l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin,
                      l3_dvr_ha_scheduler_db.L3_DVR_HA_scheduler_db_mixin,
                      dns_db.DNSDbMixin,
                      l3_fip_qos.FloatingQoSDbMixin,
@@ -86,7 +86,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                     "extraroute", "l3_agent_scheduler",
                                     "l3-ha", "router_availability_zone",
                                     "l3-flavors", "qos-fip",
-                                    "fip-port-details", "floatingip-pools"]
+                                    "fip-port-details", "floatingip-pools",
+                                    "qos-gateway-ip"]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -116,7 +117,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         if not hasattr(self, '_aliases'):
             aliases = self._supported_extension_aliases[:]
             disable_dvr_extension_by_config(aliases)
-            disable_qos_fip_extension_by_plugins(aliases)
+            disable_l3_qos_extension_by_plugins('qos-fip', aliases)
+            disable_l3_qos_extension_by_plugins('qos-gateway-ip', aliases)
             self._aliases = aliases
         return self._aliases
 

@@ -1,0 +1,15 @@
+---
+features:
+- |
+   A new attribute ``qos_policy_id`` is added to the L3 router
+   gateway.
+
+   * It enables users to associate QoS policies to L3 router gateways
+     to control the rate of transmission of the associated SNAT traffic.
+   * At the moment, only bandwidth limit rules are supported in the
+     QoS polices.
+   * To enable this feature, the ``qos`` service plugin has to be
+     configured in the Neutron server and the ``gateway_ip_qos``
+     extension has to be configured in the L3 agents. Please refer to
+     the ``QoS`` section of the ``OpenStack Networking Guide`` for more
+     specific details.

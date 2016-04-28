@@ -76,6 +76,26 @@ class QosFIPPolicyBinding(model_base.BASEV2):
                                cascade='delete', lazy='joined'))
 
 
+class QosRouterGatewayIPPolicyBinding(model_base.BASEV2):
+    __tablename__ = 'qos_router_gw_policy_bindings'
+    policy_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
+                          sa.ForeignKey('qos_policies.id',
+                                        ondelete='CASCADE'),
+                          nullable=False,
+                          primary_key=True)
+    router_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
+                          sa.ForeignKey('routers.id',
+                                        ondelete='CASCADE'),
+                          nullable=False,
+                          unique=True,
+                          primary_key=True)
+    revises_on_change = ('router', )
+    router = sa.orm.relationship(
+        l3.Router, load_on_pending=True,
+        backref=sa.orm.backref("qos_policy_binding", uselist=False,
+                               cascade='delete', lazy='joined'))
+
+
 class QosPortPolicyBinding(model_base.BASEV2):
     __tablename__ = 'qos_port_policy_bindings'
     policy_id = sa.Column(sa.String(36),
