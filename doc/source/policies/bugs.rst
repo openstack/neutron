@@ -389,7 +389,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | l3-bgp_                       | A bug affecting neutron-dynamic-routing | Vikram Choudhary     |
 +-------------------------------+-----------------------------------------+----------------------+
-| l3-dvr-backlog_               | A bug affecting distributed routing     | Ryan Moats           |
+| l3-dvr-backlog_               | A bug affecting distributed routing     | Oleg Bondarev/       |
+|                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | l3-ha_                        | A bug affecting L3 HA (vrrp)            | Assaf Muller         |
 +-------------------------------+-----------------------------------------+----------------------+
