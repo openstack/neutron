@@ -23,6 +23,7 @@ import six
 
 from neutron._i18n import _LW, _LI
 from neutron.agent.l2 import agent_extension
+from neutron.agent.linux import tc_lib
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
@@ -120,6 +121,15 @@ class QosAgentDriver(object):
             else:
                 LOG.debug("Port %(port)s excluded from QoS rule %(rule)s",
                           {'port': port, 'rule': rule.id})
+
+    def _get_egress_burst_value(self, rule):
+        """Return burst value used for egress bandwidth limitation.
+
+        Because Egress bw_limit is done on ingress qdisc by LB and ovs drivers
+        so it will return burst_value used by tc on as ingress_qdisc.
+        """
+        return tc_lib.TcCommand.get_ingress_qdisc_burst_value(
+                rule.max_kbps, rule.max_burst_kbps)
 
 
 class PortPolicyMap(object):

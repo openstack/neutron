@@ -124,6 +124,14 @@ class QosAgentDriverTestCase(base.BaseTestCase):
         self.driver.create(self.port, self.policy)
         self.assertTrue(self.driver.create_bandwidth_limit.called)
 
+    def test__get_max_burst_value(self):
+        rule = self.rule
+        rule.max_burst_kbps = 0
+        expected_burst = rule.max_kbps * qos_consts.DEFAULT_BURST_RATE
+        self.assertEqual(
+            expected_burst, self.driver._get_egress_burst_value(rule)
+        )
+
 
 class QosExtensionBaseTestCase(base.BaseTestCase):
 
