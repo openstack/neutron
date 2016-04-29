@@ -118,7 +118,6 @@ class TestQoSWithL2Agent(base.BaseFullStackTestCase):
 
     def test_qos_policy_rule_lifecycle(self):
         new_limit = BANDWIDTH_LIMIT + 100
-        new_burst = BANDWIDTH_BURST + 50
 
         self.tenant_id = uuidutils.generate_uuid()
         self.network = self.safe_client.create_network(self.tenant_id,
@@ -141,10 +140,15 @@ class TestQoSWithL2Agent(base.BaseFullStackTestCase):
         self.client.delete_bandwidth_limit_rule(rule['id'], qos_policy_id)
         _wait_for_rule_removed(vm)
 
-        # Create new rule
+        # Create new rule with no given burst value, in such case ovs and lb
+        # agent should apply burst value as
+        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
+        new_expected_burst = int(
+            new_limit * qos_consts.DEFAULT_BURST_RATE
+        )
         new_rule = self.safe_client.create_bandwidth_limit_rule(
-            self.tenant_id, qos_policy_id, new_limit, new_burst)
-        _wait_for_rule_applied(vm, new_limit, new_burst)
+            self.tenant_id, qos_policy_id, new_limit)
+        _wait_for_rule_applied(vm, new_limit, new_expected_burst)
 
         # Update qos policy rule id
         self.client.update_bandwidth_limit_rule(

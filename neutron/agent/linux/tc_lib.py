@@ -18,6 +18,7 @@ import re
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
+from neutron.services.qos import qos_consts
 
 
 INGRESS_QDISC_ID = "ffff:"
@@ -100,6 +101,17 @@ class TcCommand(ip_lib.IPDevice):
         cmd = ['tc'] + cmd
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         return ip_wrapper.netns.execute(cmd, run_as_root=True, **kwargs)
+
+    @staticmethod
+    def get_ingress_qdisc_burst_value(bw_limit, burst_limit):
+        """Return burst value used in ingress qdisc.
+
+        If burst value is not specified given than it will be set to default
+        rate to ensure that limit for TCP traffic will work well
+        """
+        if not burst_limit:
+            return float(bw_limit) * qos_consts.DEFAULT_BURST_RATE
+        return burst_limit
 
     def get_filters_bw_limits(self, qdisc_id=INGRESS_QDISC_ID):
         cmd = ['filter', 'show', 'dev', self.name, 'parent', qdisc_id]
@@ -189,14 +201,6 @@ class TcCommand(ip_lib.IPDevice):
         # are trying to delete qdisc
         return self._execute_tc_cmd(cmd, extra_ok_codes=[2])
 
-    def _get_filters_burst_value(self, bw_limit, burst_limit):
-        if not burst_limit:
-            # NOTE(slaweq): If burst value was not specified by user than it
-            # will be set as 80% of bw_limit to ensure that limit for TCP
-            # traffic will work well:
-            return float(bw_limit) * 0.8
-        return burst_limit
-
     def _get_tbf_burst_value(self, bw_limit, burst_limit):
         min_burst_value = float(bw_limit) / float(self.kernel_hz)
         return max(min_burst_value, burst_limit)
@@ -219,7 +223,9 @@ class TcCommand(ip_lib.IPDevice):
                            qdisc_id=INGRESS_QDISC_ID):
         rate_limit = "%s%s" % (bw_limit, BW_LIMIT_UNIT)
         burst = "%s%s" % (
-            self._get_filters_burst_value(bw_limit, burst_limit), BURST_UNIT)
+            self.get_ingress_qdisc_burst_value(bw_limit, burst_limit),
+            BURST_UNIT
+        )
         #NOTE(slaweq): it is made in exactly same way how openvswitch is doing
         # it when configuing ingress traffic limit on port. It can be found in
         # lib/netdev-linux.c#L4698 in openvswitch sources:
