@@ -45,8 +45,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
-        hybrid_plug_required = (cfg.CONF.SECURITYGROUP.firewall_driver in (
-            IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')) and sg_enabled
+        hybrid_plug_required = (not cfg.CONF.SECURITYGROUP.firewall_driver or
+            cfg.CONF.SECURITYGROUP.firewall_driver in (
+                IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')) and sg_enabled
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.OVS_HYBRID_PLUG: hybrid_plug_required}
         super(OpenvswitchMechanismDriver, self).__init__(
