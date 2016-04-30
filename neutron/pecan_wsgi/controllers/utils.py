@@ -74,6 +74,7 @@ class ShimItemController(NeutronPecanController):
     def delete(self):
         if not self.controller_delete:
             pecan.abort(405)
+        pecan.response.status = 204
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
         return self.controller_delete(shim_request, self.item,
@@ -100,6 +101,7 @@ class ShimCollectionsController(NeutronPecanController):
     def create(self):
         if not self.controller_create:
             pecan.abort(405)
+        pecan.response.status = 201
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
         return self.controller_create(shim_request, request.json,

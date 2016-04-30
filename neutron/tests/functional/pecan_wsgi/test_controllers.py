@@ -551,16 +551,19 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
 
     def test_add_remove_l3_agent(self):
         headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
-        self.app.post_json(
+        response = self.app.post_json(
             '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
             headers=headers, params={'router_id': self.router['id']})
+        self.assertEqual(201, response.status_int)
         response = self.app.get(
             '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
             headers=headers)
         self.assertIn(self.agent.id,
                       [a['id'] for a in response.json['agents']])
-        self.app.delete('/v2.0/agents/%(a)s/l3-routers/%(n)s.json' % {
-            'a': self.agent.id, 'n': self.router['id']}, headers=headers)
+        response = self.app.delete(
+            '/v2.0/agents/%(a)s/l3-routers/%(n)s.json' % {
+                'a': self.agent.id, 'n': self.router['id']}, headers=headers)
+        self.assertEqual(204, response.status_int)
         response = self.app.get(
             '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
             headers=headers)
