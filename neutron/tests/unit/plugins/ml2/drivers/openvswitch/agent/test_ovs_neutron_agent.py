@@ -115,6 +115,10 @@ class TestOvsNeutronAgent(object):
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
                    return_value={}).start()
+        self.agent = self._make_agent()
+        self.agent.sg_agent = mock.Mock()
+
+    def _make_agent(self):
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
@@ -129,10 +133,10 @@ class TestOvsNeutronAgent(object):
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
-            self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
-            self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
-        self.agent.sg_agent = mock.Mock()
+            agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
+                                                   cfg.CONF)
+            agent.tun_br = self.br_tun_cls(br_name='br-tun')
+            return agent
 
     def _mock_port_bound(self, ofport=None, new_local_vlan=None,
                          old_local_vlan=None, db_get_val=None):
@@ -932,6 +936,31 @@ class TestOvsNeutronAgent(object):
                 set(['eth1', 'tap1']), False)
             setup_port_filters.assert_called_once_with(
                 set(), port_info.get('updated', set()))
+
+    def test_hybrid_plug_flag_based_on_firewall(self):
+        cfg.CONF.set_default(
+            'firewall_driver',
+            'neutron.agent.firewall.NoopFirewallDriver',
+            group='SECURITYGROUP')
+        agt = self._make_agent()
+        self.assertFalse(agt.agent_state['configurations']['ovs_hybrid_plug'])
+        cfg.CONF.set_default(
+            'firewall_driver',
+            'neutron.agent.linux.openvswitch_firewall.OVSFirewallDriver',
+            group='SECURITYGROUP')
+        with mock.patch('neutron.agent.linux.openvswitch_firewall.'
+                        'OVSFirewallDriver.initialize_bridge'):
+            agt = self._make_agent()
+        self.assertFalse(agt.agent_state['configurations']['ovs_hybrid_plug'])
+        cfg.CONF.set_default(
+            'firewall_driver',
+            'neutron.agent.linux.iptables_firewall.'
+            'OVSHybridIptablesFirewallDriver',
+            group='SECURITYGROUP')
+        with mock.patch('neutron.agent.linux.iptables_firewall.'
+                        'IptablesFirewallDriver._populate_initial_zone_map'):
+            agt = self._make_agent()
+        self.assertTrue(agt.agent_state['configurations']['ovs_hybrid_plug'])
 
     def test_report_state(self):
         with mock.patch.object(self.agent.state_rpc,
@@ -2077,7 +2106,7 @@ class TestOvsDvrNeutronAgent(object):
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
+                                                       cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
