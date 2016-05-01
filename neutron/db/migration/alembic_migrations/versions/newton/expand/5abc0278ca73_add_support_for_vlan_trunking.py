@@ -11,6 +11,8 @@
 #    under the License.
 #
 
+"""Add support for VLAN trunking"""
+
 revision = '5abc0278ca73'
 down_revision = '45f8dd33480b'
 
