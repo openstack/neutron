@@ -22,6 +22,12 @@ class ML2TestFramework(test_plugin.Ml2PluginV2TestCase):
                  'L3RouterPlugin')
     _mechanism_drivers = ['openvswitch']
 
+    def get_additional_service_plugins(self):
+        p = super(ML2TestFramework, self).get_additional_service_plugins()
+        p.update({'flavors_plugin_name': 'neutron.services.flavors.'
+                                         'flavors_plugin.FlavorsPlugin'})
+        return p
+
     def setUp(self):
         super(ML2TestFramework, self).setUp()
         self.core_plugin = manager.NeutronManager.get_instance().get_plugin()

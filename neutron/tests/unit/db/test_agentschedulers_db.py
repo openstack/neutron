@@ -232,7 +232,11 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
     def setUp(self):
         self.useFixture(tools.AttributeMapMemento())
         if self.l3_plugin:
-            service_plugins = {'l3_plugin_name': self.l3_plugin}
+            service_plugins = {
+                'l3_plugin_name': self.l3_plugin,
+                'flavors_plugin_name': 'neutron.services.flavors.'
+                                       'flavors_plugin.FlavorsPlugin'
+            }
         else:
             service_plugins = None
         # NOTE(ivasilevskaya) mocking this way allows some control over mocked
@@ -1452,7 +1456,11 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         self.useFixture(tools.AttributeMapMemento())
 
         if self.l3_plugin:
-            service_plugins = {'l3_plugin_name': self.l3_plugin}
+            service_plugins = {
+                'l3_plugin_name': self.l3_plugin,
+                'flavors_plugin_name': 'neutron.services.flavors.'
+                                       'flavors_plugin.FlavorsPlugin'
+            }
         else:
             service_plugins = None
         super(OvsL3AgentNotifierTestCase, self).setUp(
