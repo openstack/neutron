@@ -60,22 +60,9 @@ migration_entrypoints = {
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 
 
-VALID_SERVICES = ['fwaas', 'lbaas', 'vpnaas']
-INSTALLED_SERVICES = [service_ for service_ in VALID_SERVICES
-                      if 'neutron-%s' % service_ in migration_entrypoints]
 INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints]
 
 _core_opts = [
-    cfg.StrOpt('core_plugin',
-               default='',
-               help=_('Neutron plugin provider module'),
-               deprecated_for_removal=True),
-    cfg.StrOpt('service',
-               choices=INSTALLED_SERVICES,
-               help=(_("(Deprecated. Use '--subproject neutron-SERVICE' "
-                       "instead.) The advanced service to execute the "
-                       "command against.")),
-               deprecated_for_removal=True),
     cfg.StrOpt('subproject',
                choices=INSTALLED_SUBPROJECTS,
                help=(_("The subproject to execute the command against. "
@@ -88,7 +75,6 @@ _core_opts = [
 
 _db_opts = [
     cfg.StrOpt('connection',
-               deprecated_name='sql_connection',
                default='',
                secret=True,
                help=_('URL to database')),
@@ -610,11 +596,6 @@ def _get_subproject_script_location(subproject):
     return ':'.join([entrypoint.module_name, entrypoint.attrs[0]])
 
 
-def _get_service_script_location(service):
-    '''Get the script location for the service, which must be installed.'''
-    return _get_subproject_script_location('neutron-%s' % service)
-
-
 def _get_subproject_base(subproject):
     '''Get the import base name for the installed subproject.'''
     entrypoint = _get_installed_entrypoint(subproject)
@@ -643,14 +624,10 @@ def get_alembic_configs():
     # Get the script locations for the specified or installed projects.
     # Which projects to get script locations for is determined by the CLI
     # options as follows:
-    #     --service X       # only subproject neutron-X (deprecated)
-    #     --subproject Y    # only subproject Y (where Y can be neutron)
+    #     --subproject P    # only subproject P (where P can be neutron)
     #     (none specified)  # neutron and all installed subprojects
     script_locations = {}
-    if CONF.service:
-        script_location = _get_service_script_location(CONF.service)
-        script_locations['neutron-%s' % CONF.service] = script_location
-    elif CONF.subproject:
+    if CONF.subproject:
         script_location = _get_subproject_script_location(CONF.subproject)
         script_locations[CONF.subproject] = script_location
     else:
@@ -702,11 +679,6 @@ def run_sanity_checks(config, revision):
         script_dir.run_env()
 
 
-def validate_cli_options():
-    if CONF.subproject and CONF.service:
-        alembic_util.err(_("Cannot specify both --service and --subproject."))
-
-
 def get_engine_config():
     return [obj for obj in _db_opts if obj.name == 'engine']
 
@@ -717,7 +689,6 @@ def main():
     logging_config.fileConfig(neutron_alembic_ini)
 
     CONF(project='neutron')
-    validate_cli_options()
     return_val = False
     for config in get_alembic_configs():
         #TODO(gongysh) enable logging
