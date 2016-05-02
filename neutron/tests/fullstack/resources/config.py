@@ -201,8 +201,7 @@ class OVSConfigFixture(ConfigFixture):
                 'integration_bridge': self._generate_integration_bridge(),
             },
             'securitygroup': {
-                'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
-                                    'OVSHybridIptablesFirewallDriver'),
+                'firewall_driver': 'noop',
             },
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
