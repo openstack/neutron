@@ -383,7 +383,9 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | gate-failure_                 | A bug affecting gate stability          | Armando Migliaccio   |
 +-------------------------------+-----------------------------------------+----------------------+
-| ipv6_                         | A bug affecting IPv6 support            | Henry Gessau         |
+| ipv6_                         | A bug affecting IPv6 support            | Henry Gessau/        |
+|                               |                                         | Sean Collins/        |
+|                               |                                         | Dustin Lundquist     |
 +-------------------------------+-----------------------------------------+----------------------+
 | l2-pop_                       | A bug in L2 Population mech driver      | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
