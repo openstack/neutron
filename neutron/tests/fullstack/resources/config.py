@@ -151,8 +151,7 @@ class OVSConfigFixture(ConfigFixture):
                 'ovsdb_interface': host_desc.ovsdb_interface,
             },
             'securitygroup': {
-                'firewall_driver': ('neutron.agent.linux.iptables_firewall.'
-                                    'OVSHybridIptablesFirewallDriver'),
+                'firewall_driver': 'noop',
             },
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
