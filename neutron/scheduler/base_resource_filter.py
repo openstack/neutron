@@ -15,7 +15,10 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class BaseResourceFilter(object):
     """Encapsulate logic that is specific to the resource type."""
     @abc.abstractmethod

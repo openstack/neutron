@@ -16,6 +16,7 @@
 import abc
 
 from oslo_serialization import jsonutils
+import six
 
 from neutron.api import extensions
 from neutron import wsgi
@@ -27,6 +28,7 @@ class FoxInSocksController(wsgi.Controller):
         return "Try to say this Mr. Knox, sir..."
 
 
+@six.add_metaclass(abc.ABCMeta)
 class FoxInSocksPluginInterface(extensions.PluginInterface):
 
     @abc.abstractmethod

@@ -17,7 +17,10 @@ import abc
 from operator import attrgetter
 import random
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class BaseScheduler(object):
     """The base scheduler (agnostic to resource type).
        Child classes of BaseScheduler must define the
