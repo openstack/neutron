@@ -385,6 +385,21 @@ class OVS_Lib_Test(base.BaseTestCase):
                           self.br.mod_flow,
                           **params)
 
+    def test_run_ofctl_retry_on_socket_error(self):
+        err = RuntimeError('failed to connect to socket')
+        self.execute.side_effect = [err] * 5
+        with mock.patch('time.sleep') as sleep:
+            self.br.run_ofctl('add-flows', [])
+        self.assertEqual(5, sleep.call_count)
+        self.assertEqual(6, self.execute.call_count)
+        # a regular exception fails right away
+        self.execute.side_effect = RuntimeError('garbage')
+        self.execute.reset_mock()
+        with mock.patch('time.sleep') as sleep:
+            self.br.run_ofctl('add-flows', [])
+        self.assertEqual(0, sleep.call_count)
+        self.assertEqual(1, self.execute.call_count)
+
     def test_add_tunnel_port(self):
         pname = "tap99"
         local_ip = "1.1.1.1"
