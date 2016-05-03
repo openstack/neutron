@@ -18,9 +18,11 @@ import functools
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_db.sqlalchemy import utils as sa_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
@@ -47,7 +49,6 @@ from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
-from neutron.db import sqlalchemyutils
 from neutron.db import standardattrdescription_db as stattr_db
 from neutron.extensions import l3
 from neutron import ipam
@@ -1366,10 +1367,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
 
         query = self._apply_filters_to_query(query, Port, filters, context)
-        if limit and page_reverse and sorts:
-            sorts = [(s[0], not s[1]) for s in sorts]
-        query = sqlalchemyutils.paginate_query(query, Port, limit,
-                                               sorts, marker_obj)
+        if sorts:
+            sort_keys = db_utils.get_and_validate_sort_keys(sorts, Port)
+            sort_dirs = db_utils.get_sort_dirs(sorts, page_reverse)
+            query = sa_utils.paginate_query(query, Port, limit,
+                                            marker=marker_obj,
+                                            sort_keys=sort_keys,
+                                            sort_dirs=sort_dirs)
         return query
 
     def get_ports(self, context, filters=None, fields=None,
