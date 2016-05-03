@@ -193,6 +193,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             plugin = mock.Mock()
             gp.return_value = plugin
             plugin.get_port.return_value = port
+            self.mixin._router_exists = mock.Mock(return_value=True)
             self.assertRaises(exceptions.ServicePortInUse,
                               self.mixin.prevent_l3_port_deletion,
                               self.ctx,
@@ -202,6 +203,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         port = {
             'id': 'my_port_id',
             'fixed_ips': mock.ANY,
+            'device_id': 'r_id',
             'device_owner': l3_const.DEVICE_OWNER_AGENT_GW
         }
         self._test_prepare_direct_delete_dvr_internal_ports(port)
@@ -210,6 +212,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         port = {
             'id': 'my_port_id',
             'fixed_ips': mock.ANY,
+            'device_id': 'r_id',
             'device_owner': l3_const.DEVICE_OWNER_ROUTER_SNAT
         }
         self._test_prepare_direct_delete_dvr_internal_ports(port)
