@@ -244,8 +244,12 @@ class LinuxInterfaceDriver(object):
              bridge=None, namespace=None, prefix=None, mtu=None):
         if not ip_lib.device_exists(device_name,
                                     namespace=namespace):
-            self.plug_new(network_id, port_id, device_name, mac_address,
-                          bridge, namespace, prefix, mtu)
+            try:
+                self.plug_new(network_id, port_id, device_name, mac_address,
+                              bridge, namespace, prefix, mtu)
+            except TypeError:
+                self.plug_new(network_id, port_id, device_name, mac_address,
+                              bridge, namespace, prefix)
         else:
             LOG.info(_LI("Device %s already exists"), device_name)
 
