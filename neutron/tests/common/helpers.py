@@ -45,6 +45,10 @@ def find_sample_file(filename):
         path=os.path.join(neutron.__path__[0], '..', 'etc'))
 
 
+def get_test_log_path():
+    return os.environ.get('OS_LOG_PATH', '/tmp')
+
+
 class FakePlugin(common_db_mixin.CommonDbMixin,
                  agents_db.AgentDbMixin):
     pass
