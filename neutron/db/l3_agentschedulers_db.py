@@ -83,6 +83,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
     router_scheduler = None
 
     def start_periodic_l3_agent_status_check(self):
+        LOG.warning(
+            _LW("DEPRECATED method 'start_periodic_l3_agent_status_check'. "
+                "Please use 'add_periodic_l3_agent_status_check' instead")
+        )
+        self.add_periodic_l3_agent_status_check()
+
+    def add_periodic_l3_agent_status_check(self):
         if not cfg.CONF.allow_automatic_l3agent_failover:
             LOG.info(_LI("Skipping period L3 agent status check because "
                          "automatic router rescheduling is disabled."))
