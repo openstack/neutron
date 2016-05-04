@@ -33,6 +33,7 @@ from neutron.agent.linux import openvswitch_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.cmd.sanity import checks
 from neutron.tests.common import conn_testers
+from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base
 
 LOG = logging.getLogger(__name__)
@@ -76,17 +77,19 @@ def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
 class BaseFirewallTestCase(base.BaseSudoTestCase):
     FAKE_SECURITY_GROUP_ID = 'fake_sg_id'
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
-    scenarios = [('IptablesFirewallDriver without ipset',
-                  {'enable_ipset': False,
-                   'initialize': 'initialize_iptables',
-                   'firewall_name': 'iptables'}),
-                 ('IptablesFirewallDriver with ipset',
-                  {'enable_ipset': True,
-                   'initialize': 'initialize_iptables',
-                   'firewall_name': 'iptables'}),
-                 ('OVS Firewall Driver',
-                  {'initialize': 'initialize_ovs',
-                   'firewall_name': 'openvswitch'})]
+    scenarios_iptables = testscenarios.multiply_scenarios(
+        [('IptablesFirewallDriver', {'initialize': 'initialize_iptables',
+                                     'firewall_name': 'iptables'})],
+        [('with ipset', {'enable_ipset': True}),
+         ('without ipset', {'enable_ipset': False})])
+
+    scenarios_ovs_fw_interfaces = testscenarios.multiply_scenarios(
+        [('OVS Firewall Driver', {'initialize': 'initialize_ovs',
+                                  'firewall_name': 'openvswitch'})],
+        linux_base.BaseOVSLinuxTestCase.scenarios)
+
+    scenarios = scenarios_iptables + scenarios_ovs_fw_interfaces
+
     ip_cidr = None
     vlan_range = set(range(VLAN_COUNT))
 
@@ -115,6 +118,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         return tester, firewall_drv
 
     def initialize_ovs(self):
+        self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
         # Tests for ovs requires kernel >= 4.3 and OVS >= 2.5
         if not checks.ovs_conntrack_supported():
             self.skipTest("Open vSwitch with conntrack is not installed "
@@ -137,7 +141,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
     def get_not_used_vlan(self):
         port_vlans = self.firewall.int_br.br.ovsdb.db_find(
                 'Port', ('tag', '!=', '[]'), columns=['tag']).execute()
-        used_vlan_tags = {val['tag'] for val in port_vlans}
+        # TODO(jlibosva): Remove 'if val' once bug/1578233 is solved
+        used_vlan_tags = {val['tag'] for val in port_vlans if val['tag']}
         available_vlans = self.vlan_range - used_vlan_tags
         return random.choice(list(available_vlans))
 
@@ -569,9 +574,7 @@ class FirewallTestCase(BaseFirewallTestCase):
 
 
 class FirewallTestCaseIPv6(BaseFirewallTestCase):
-    scenarios = [('OVS Firewall Driver',
-                  {'initialize': 'initialize_ovs',
-                   'firewall_name': 'openvswitch'})]
+    scenarios = BaseFirewallTestCase.scenarios_ovs_fw_interfaces
     ip_cidr = '2001:db8:aaaa::1/64'
 
     def test_icmp_from_specific_address(self):
