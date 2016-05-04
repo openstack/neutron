@@ -91,15 +91,15 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
         """Validate the check_segment call."""
         segment = {'api.NETWORK_TYPE': ""}
         segment[api.NETWORK_TYPE] = p_const.TYPE_VLAN
-        self.assertTrue(self.driver.check_segment(segment))
+        self.assertTrue(self.driver.check_segment_for_agent(segment))
         # Validate a network type not currently supported
         segment[api.NETWORK_TYPE] = p_const.TYPE_GRE
-        self.assertFalse(self.driver.check_segment(segment))
+        self.assertFalse(self.driver.check_segment_for_agent(segment))
 
     def test_check_segment_allows_supported_network_types(self):
-        for network_type in self.driver.supported_network_types:
+        for network_type in self.driver.get_allowed_network_types(agent=None):
             segment = {api.NETWORK_TYPE: network_type}
-            self.assertTrue(self.driver.check_segment(segment))
+            self.assertTrue(self.driver.check_segment_for_agent(segment))
 
 
 class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,

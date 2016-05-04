@@ -21,6 +21,7 @@ from neutron._i18n import _, _LE, _LW
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
 from neutron.services.qos import qos_consts
@@ -43,7 +44,7 @@ sriov_opts = [
 cfg.CONF.register_opts(sriov_opts, "ml2_sriov")
 
 
-class SriovNicSwitchMechanismDriver(api.MechanismDriver):
+class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """Mechanism Driver for SR-IOV capable NIC based switching.
 
     The SriovNicSwitchMechanismDriver integrates the ml2 plugin with the
@@ -81,7 +82,12 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
                 else VIF_TYPE_HW_VEB
              for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
-        self.supported_network_types = (p_const.TYPE_VLAN, p_const.TYPE_FLAT)
+
+    def get_allowed_network_types(self, agent):
+        return (p_const.TYPE_FLAT, p_const.TYPE_VLAN)
+
+    def get_mappings(self, agent):
+        return agent['configurations'].get('device_mappings', {})
 
     def initialize(self):
         try:
@@ -103,9 +109,6 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
                       vnic_type)
             return
 
-        vif_type = self.vnic_type_for_vif_type.get(vnic_type,
-                                                   VIF_TYPE_HW_VEB)
-
         if not self._check_supported_pci_vendor_device(context):
             LOG.debug("Refusing to bind due to unsupported pci_vendor device")
             return
@@ -118,43 +121,40 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             # either. This should be changed in the future so physical
             # functions can use device mapping checks and the plugin can
             # get port status updates.
-            self.try_to_bind(context, None, vif_type)
+            for segment in context.segments_to_bind:
+                if self.try_to_bind_segment_for_agent(context, segment,
+                                                      agent=None):
+                    break
             return
 
         for agent in context.host_agents(self.agent_type):
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
-                if self.try_to_bind(context, agent, vif_type):
-                    return
+                for segment in context.segments_to_bind:
+                    if self.try_to_bind_segment_for_agent(context, segment,
+                                                          agent):
+                        return
             else:
                 LOG.warning(_LW("Attempting to bind with dead agent: %s"),
                             agent)
 
-    def try_to_bind(self, context, agent, vif_type):
-        for segment in context.segments_to_bind:
-            if self.check_segment(segment, agent):
-                port_status = (constants.PORT_STATUS_ACTIVE if agent is None
-                               else constants.PORT_STATUS_DOWN)
-                context.set_binding(segment[api.ID],
-                                    vif_type,
-                                    self._get_vif_details(segment),
-                                    port_status)
-                LOG.debug("Bound using segment: %s", segment)
-                return True
-        return False
+    def try_to_bind_segment_for_agent(self, context, segment, agent):
+        vnic_type = context.current.get(portbindings.VNIC_TYPE,
+                                        portbindings.VNIC_DIRECT)
+        vif_type = self.vnic_type_for_vif_type.get(vnic_type,
+                                                   VIF_TYPE_HW_VEB)
+        if not self.check_segment_for_agent(segment, agent):
+            return False
+        port_status = (constants.PORT_STATUS_ACTIVE if agent is None
+                       else constants.PORT_STATUS_DOWN)
+        context.set_binding(segment[api.ID],
+                            vif_type,
+                            self._get_vif_details(segment),
+                            port_status)
+        LOG.debug("Bound using segment: %s", segment)
+        return True
 
-    def filter_hosts_with_segment_access(
-            self, context, segments, candidate_hosts, agent_getter):
-
-        hosts = set()
-        filters = {'host': candidate_hosts, 'agent_type': [self.agent_type]}
-        for agent in agent_getter(context, filters=filters):
-            if any(self.check_segment(s, agent) for s in segments):
-                hosts.add(agent['host'])
-
-        return hosts
-
-    def check_segment(self, segment, agent=None):
+    def check_segment_for_agent(self, segment, agent=None):
         """Check if segment can be bound.
 
         :param segment: segment dictionary describing segment to bind
@@ -162,9 +162,9 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
         :returns: True if segment can be bound for agent
         """
         network_type = segment[api.NETWORK_TYPE]
-        if network_type in self.supported_network_types:
+        if network_type in self.get_allowed_network_types(agent):
             if agent:
-                mappings = agent['configurations'].get('device_mappings', {})
+                mappings = self.get_mappings(agent)
                 LOG.debug("Checking segment: %(segment)s "
                           "for mappings: %(mappings)s ",
                           {'segment': segment, 'mappings': mappings})
