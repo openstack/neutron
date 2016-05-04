@@ -30,9 +30,9 @@ from neutron.common import exceptions
 from neutron.common import profiler  # noqa
 
 context_manager = enginefacade.transaction_context()
+context_manager.configure(sqlite_fk=True)
 
-
-_FACADE = None
+_PROFILER_INITIALIZED = False
 
 MAX_RETRIES = 10
 
@@ -77,6 +77,16 @@ def _is_nested_instance(e, etypes):
             any(_is_nested_instance(i, etypes) for i in e.inner_exceptions))
 
 
+# TODO(akamyshnikova) this code should be in oslo.db
+def _set_profiler():
+    global _PROFILER_INITIALIZED
+    if (not _PROFILER_INITIALIZED and cfg.CONF.profiler.enabled and
+            cfg.CONF.profiler.trace_sqlalchemy):
+        _PROFILER_INITIALIZED = True
+        osprofiler.sqlalchemy.add_tracing(
+            sqlalchemy, context_manager.get_legacy_facade().get_engine(), "db")
+
+
 @contextlib.contextmanager
 def exc_to_retry(exceptions):
     try:
@@ -88,39 +98,26 @@ def exc_to_retry(exceptions):
                 raise db_exc.RetryRequest(e)
 
 
-def _create_facade_lazily():
-    global _FACADE
-
-    if _FACADE is None:
-        context_manager.configure(sqlite_fk=True, **cfg.CONF.database)
-        _FACADE = context_manager._factory.get_legacy_facade()
-
-        if cfg.CONF.profiler.enabled and cfg.CONF.profiler.trace_sqlalchemy:
-            osprofiler.sqlalchemy.add_tracing(sqlalchemy,
-                                              _FACADE.get_engine(),
-                                              "db")
-
-    return _FACADE
-
-
+#TODO(akamyshnikova): when all places in the code, which use sessions/
+# connections will be updated, this won't be needed
 def get_engine():
     """Helper method to grab engine."""
-    facade = _create_facade_lazily()
-    return facade.get_engine()
+    _set_profiler()
+    return context_manager.get_legacy_facade().get_engine()
 
 
 def dispose():
-    # Don't need to do anything if an enginefacade hasn't been created
-    if _FACADE is not None:
-        get_engine().pool.dispose()
+    get_engine().pool.dispose()
 
 
+#TODO(akamyshnikova): when all places in the code, which use sessions/
+# connections will be updated, this won't be needed
 def get_session(autocommit=True, expire_on_commit=False, use_slave=False):
     """Helper method to grab session."""
-    facade = _create_facade_lazily()
-    return facade.get_session(autocommit=autocommit,
-                              expire_on_commit=expire_on_commit,
-                              use_slave=use_slave)
+    _set_profiler()
+    return context_manager.get_legacy_facade().get_session(
+        autocommit=autocommit, expire_on_commit=expire_on_commit,
+        use_slave=use_slave)
 
 
 @contextlib.contextmanager
