@@ -17,8 +17,8 @@ import os
 import testtools
 
 from neutron.common import utils
-from neutron.tests import base
 from neutron.tests.common.exclusive_resources import resource_allocator
+from neutron.tests.functional import base
 
 
 def safe_remove_file(file_path):
@@ -28,7 +28,7 @@ def safe_remove_file(file_path):
         pass
 
 
-class TestResourceAllocator(base.DietTestCase):
+class TestResourceAllocator(base.BaseLoggingTestCase):
     def setUp(self):
         super(TestResourceAllocator, self).setUp()
         self.ra = resource_allocator.ResourceAllocator(

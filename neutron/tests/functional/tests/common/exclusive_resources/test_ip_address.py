@@ -14,11 +14,11 @@
 
 import netaddr
 
-from neutron.tests import base
 from neutron.tests.common.exclusive_resources import ip_address
+from neutron.tests.functional import base
 
 
-class TestExclusiveIPAddress(base.DietTestCase):
+class TestExclusiveIPAddress(base.BaseLoggingTestCase):
     def test_ip_address(self):
         address_1 = self.useFixture(
             ip_address.ExclusiveIPAddress('10.0.0.1', '10.0.0.2')).address

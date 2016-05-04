@@ -14,11 +14,11 @@
 
 import netaddr
 
-from neutron.tests import base
 from neutron.tests.common.exclusive_resources import ip_network
+from neutron.tests.functional import base
 
 
-class TestExclusiveIPNetwork(base.DietTestCase):
+class TestExclusiveIPNetwork(base.BaseLoggingTestCase):
     def test_ip_network(self):
         network_1 = self.useFixture(
             ip_network.ExclusiveIPNetwork(

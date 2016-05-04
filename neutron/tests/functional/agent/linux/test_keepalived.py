@@ -19,12 +19,12 @@ from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
-from neutron.tests import base
 from neutron.tests.functional.agent.linux import helpers
+from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
 
 
-class KeepalivedManagerTestCase(base.BaseTestCase,
+class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
                                 test_keepalived.KeepalivedConfBaseMixin):
 
     def setUp(self):
