@@ -350,6 +350,21 @@ tc. Details about how it is calculated can be found in
 `here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
 vSwitch implementation.
 
+Notification driver design
+--------------------------
+
+QoS framework is flexible enough to support any third-party vendor. To integrate a
+third party driver (that just wants to be aware of the QoS create/update/delete API
+calls), one needs to implement 'neutron.services.qos.notification_drivers.qos_base',
+register its specific driver information to the 'notification_drivers' stevedore
+namespace in the setup.cfg and finally set the 'notification_drivers' parameter in
+the [qos] section of the neutron config file.
+
+.. note::
+ All the functionality MUST be implemented by the vendor, neutron's QoS framework
+ will just act as an interface to bypass the received QoS API request and help with
+ database persistence for the API operations.
+
 Configuration
 -------------
 
