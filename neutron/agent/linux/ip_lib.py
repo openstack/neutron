@@ -1023,7 +1023,10 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                   '-w', 1.5 * count, address]
     try:
         ip_wrapper = IPWrapper(namespace=ns_name)
-        ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
+        # Since arping is used to send gratuitous ARP, a response is not
+        # expected. In some cases (no response) and with some platforms
+        # (>=Ubuntu 14.04), arping exit code can be 1.
+        ip_wrapper.netns.execute(arping_cmd, extra_ok_codes=[1])
     except Exception as exc:
         msg = _("Failed sending gratuitous ARP "
                 "to %(addr)s on %(iface)s in namespace %(ns)s: %(err)s")

@@ -1357,7 +1357,7 @@ class TestArpPing(TestIPCmdBase):
                       '-w', mock.ANY,
                       address]
         ip_wrapper.netns.execute.assert_any_call(arping_cmd,
-                                                 check_exit_code=True)
+                                                 extra_ok_codes=[1])
 
     @mock.patch('eventlet.spawn_n')
     def test_no_ipv6_addr_notif(self, spawn_n):
