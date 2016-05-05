@@ -229,7 +229,8 @@ class FipNamespace(namespaces.Namespace):
                 ipd.route.add_gateway(gw_ip)
 
     def _add_cidr_to_device(self, device, ip_cidr):
-        device.addr.add(ip_cidr, add_broadcast=False)
+        if not device.addr.list(to=ip_cidr):
+            device.addr.add(ip_cidr, add_broadcast=False)
 
     def create_rtr_2_fip_link(self, ri):
         """Create interface between router and Floating IP namespace."""
@@ -243,14 +244,13 @@ class FipNamespace(namespaces.Namespace):
             ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
         rtr_2_fip_dev = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
+        fip_2_rtr_dev = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
 
         if not rtr_2_fip_dev.exists():
             ip_wrapper = ip_lib.IPWrapper(namespace=ri.ns_name)
             rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(rtr_2_fip_name,
                                                                fip_2_rtr_name,
                                                                fip_ns_name)
-            self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
-            self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
             mtu = (self.agent_conf.network_device_mtu or
                    ri.get_ex_gw_port().get('mtu'))
             if mtu:
@@ -258,6 +258,9 @@ class FipNamespace(namespaces.Namespace):
                 fip_2_rtr_dev.link.set_mtu(mtu)
             rtr_2_fip_dev.link.set_up()
             fip_2_rtr_dev.link.set_up()
+
+        self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
+        self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
 
         # add default route for the link local interface
         rtr_2_fip_dev.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
