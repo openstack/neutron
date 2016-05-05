@@ -453,6 +453,207 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.assertEqual(1, len(snat_router_intfs[router1['id']]))
         self.assertEqual(1, len(fixed_ips))
 
+    def test_allowed_addr_pairs_arp_update_for_port_with_original_owner(self):
+        HOST1 = 'host1'
+        helpers.register_l3_agent(
+            host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        private_net1 = self._make_network(self.fmt, 'net1', True)
+        test_allocation_pools = [{'start': '10.1.0.2',
+                                  'end': '10.1.0.20'}]
+        fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, '', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        # Set gateway to router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'],
+            {'network_id': ext_net['network']['id']})
+        private_subnet1 = self._make_subnet(
+            self.fmt,
+            private_net1,
+            '10.1.0.1',
+            cidr='10.1.0.0/24',
+            ip_version=4,
+            allocation_pools=test_allocation_pools,
+            enable_dhcp=True)
+        vrrp_port = self._make_port(
+            self.fmt,
+            private_net1['network']['id'],
+            device_owner=constants.DEVICE_OWNER_LOADBALANCER,
+            fixed_ips=fixed_vrrp_ip)
+        allowed_address_pairs = [
+            {'ip_address': '10.1.0.201',
+             'mac_address': vrrp_port['port']['mac_address']}]
+        with self.port(
+                subnet=private_subnet1,
+                device_owner=DEVICE_OWNER_COMPUTE) as int_port:
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': private_subnet1['subnet']['id']})
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier:
+                vm_port = self.core_plugin.update_port(
+                    self.context, int_port['port']['id'],
+                    {'port': {portbindings.HOST_ID: HOST1}})
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST1)
+                self.assertEqual(1, l3_notifier.add_arp_entry.call_count)
+                l3_notifier.reset_mock()
+                floating_ip = {'floating_network_id': ext_net['network']['id'],
+                               'router_id': router['id'],
+                               'port_id': vrrp_port['port']['id'],
+                               'tenant_id': vrrp_port['port']['tenant_id']}
+                floating_ip = self.l3_plugin.create_floatingip(
+                    self.context, {'floatingip': floating_ip})
+                vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                self.assertNotEqual(vrrp_port_db[portbindings.HOST_ID], HOST1)
+                # Now update the VM port with the allowed_address_pair
+                l3_notifier.reset_mock()
+                self.core_plugin.update_port(
+                     self.context, vm_port['id'],
+                     {'port': {
+                         'allowed_address_pairs': allowed_address_pairs}})
+                updated_vm_port = self.core_plugin.get_port(
+                    self.context, vm_port['id'])
+                expected_allowed_address_pairs = updated_vm_port.get(
+                    'allowed_address_pairs')
+                self.assertEqual(expected_allowed_address_pairs,
+                                 allowed_address_pairs)
+                cur_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                self.assertEqual(cur_vrrp_port_db[portbindings.HOST_ID], HOST1)
+                self.assertTrue(cur_vrrp_port_db.get(portbindings.PROFILE))
+                port_profile = cur_vrrp_port_db.get(portbindings.PROFILE)
+                self.assertTrue(port_profile)
+                self.assertEqual(port_profile['original_owner'],
+                                 constants.DEVICE_OWNER_LOADBALANCER)
+                l3_notifier.reset_mock()
+                port_profile['new_owner'] = 'test_owner'
+                self.core_plugin.update_port(
+                    self.context, cur_vrrp_port_db['id'],
+                    {'port': {portbindings.PROFILE: port_profile}})
+                # Now the vrrp port should have an 'original_owner'
+                # and gets updated with a new profile. In this case
+                # the update triggers a notification to the neutron
+                # server, but this should not trigger another arp
+                # update of this port or router_updated event to the
+                # agent, otherwise this will mess up with the arp
+                # table in the router namespace.
+                self.assertEqual(0, l3_notifier.add_arp_entry.call_count)
+                self.assertEqual(
+                    0, l3_notifier.routers_updated_on_host.call_count)
+
+    def test_allowed_address_pairs_update_arp_entry(self):
+        HOST1 = 'host1'
+        helpers.register_l3_agent(
+            host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        private_net1 = self._make_network(self.fmt, 'net1', True)
+        test_allocation_pools = [{'start': '10.1.0.2',
+                                  'end': '10.1.0.20'}]
+        fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, '', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        # Set gateway to router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'],
+            {'network_id': ext_net['network']['id']})
+        private_subnet1 = self._make_subnet(
+            self.fmt,
+            private_net1,
+            '10.1.0.1',
+            cidr='10.1.0.0/24',
+            ip_version=4,
+            allocation_pools=test_allocation_pools,
+            enable_dhcp=True)
+        vrrp_port = self._make_port(
+            self.fmt,
+            private_net1['network']['id'],
+            fixed_ips=fixed_vrrp_ip)
+        allowed_address_pairs = [
+            {'ip_address': '10.1.0.201',
+             'mac_address': vrrp_port['port']['mac_address']}]
+        with self.port(
+                subnet=private_subnet1,
+                device_owner=DEVICE_OWNER_COMPUTE) as int_port:
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': private_subnet1['subnet']['id']})
+            with mock.patch.object(self.l3_plugin,
+                                   '_l3_rpc_notifier') as l3_notifier:
+                vm_port = self.core_plugin.update_port(
+                    self.context, int_port['port']['id'],
+                    {'port': {portbindings.HOST_ID: HOST1}})
+                vm_port_mac = vm_port['mac_address']
+                vm_port_fixed_ips = vm_port['fixed_ips']
+                vm_port_subnet_id = vm_port_fixed_ips[0]['subnet_id']
+                vm_arp_table = {
+                    'ip_address': vm_port_fixed_ips[0]['ip_address'],
+                    'mac_address': vm_port_mac,
+                    'subnet_id': vm_port_subnet_id}
+
+                l3_notifier.routers_updated_on_host.assert_called_once_with(
+                    self.context, {router['id']}, HOST1)
+
+                self.assertEqual(1, l3_notifier.add_arp_entry.call_count)
+                l3_notifier.reset_mock()
+                floating_ip = {'floating_network_id': ext_net['network']['id'],
+                               'router_id': router['id'],
+                               'port_id': vrrp_port['port']['id'],
+                               'tenant_id': vrrp_port['port']['tenant_id']}
+                floating_ip = self.l3_plugin.create_floatingip(
+                    self.context, {'floatingip': floating_ip})
+                vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                self.assertNotEqual(vrrp_port_db[portbindings.HOST_ID], HOST1)
+                # Now update the VM port with the allowed_address_pair
+                l3_notifier.reset_mock()
+                self.core_plugin.update_port(
+                     self.context, vm_port['id'],
+                     {'port': {
+                         'allowed_address_pairs': allowed_address_pairs}})
+                self.assertEqual(
+                    2, l3_notifier.routers_updated_on_host.call_count)
+                updated_vm_port = self.core_plugin.get_port(
+                    self.context, vm_port['id'])
+                self.assertEqual(3, l3_notifier.add_arp_entry.call_count)
+                expected_allowed_address_pairs = updated_vm_port.get(
+                    'allowed_address_pairs')
+                self.assertEqual(expected_allowed_address_pairs,
+                                 allowed_address_pairs)
+                cur_vrrp_port_db = self.core_plugin.get_port(
+                    self.context, vrrp_port['port']['id'])
+                vrrp_port_fixed_ips = cur_vrrp_port_db['fixed_ips']
+                vrrp_port_subnet_id = vrrp_port_fixed_ips[0]['subnet_id']
+                vrrp_arp_table = {
+                    'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
+                    'mac_address': vm_port_mac,
+                    'subnet_id': vrrp_port_subnet_id}
+                vrrp_arp_table1 = {
+                    'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
+                    'mac_address': vrrp_port['port']['mac_address'],
+                    'subnet_id': vrrp_port_subnet_id}
+
+                self.assertEqual(cur_vrrp_port_db[portbindings.HOST_ID], HOST1)
+                expected_calls = [
+                        mock.call(self.context,
+                                  router['id'], vrrp_arp_table1),
+                        mock.call(self.context,
+                                  router['id'], vm_arp_table),
+                        mock.call(self.context,
+                                  router['id'], vrrp_arp_table)]
+                l3_notifier.add_arp_entry.assert_has_calls(
+                        expected_calls)
+
     def test_update_service_port_with_allowed_address_pairs(self):
         HOST1 = 'host1'
         helpers.register_l3_agent(
