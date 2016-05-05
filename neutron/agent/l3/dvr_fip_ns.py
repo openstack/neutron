@@ -229,11 +229,8 @@ class FipNamespace(namespaces.Namespace):
                     ipd.route.add_route(gw_ip, scope='link')
                 ipd.route.add_gateway(gw_ip)
 
-    def _internal_ns_interface_added(self, ip_cidr,
-                                    interface_name, ns_name):
-        ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
-        ip_wrapper.netns.execute(['ip', 'addr', 'add',
-                                  ip_cidr, 'dev', interface_name])
+    def _add_cidr_to_device(self, device, ip_cidr):
+        device.addr.add(ip_cidr, add_broadcast=False)
 
     def create_rtr_2_fip_link(self, ri):
         """Create interface between router and Floating IP namespace."""
@@ -253,12 +250,8 @@ class FipNamespace(namespaces.Namespace):
             rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(rtr_2_fip_name,
                                                                fip_2_rtr_name,
                                                                fip_ns_name)
-            self._internal_ns_interface_added(str(rtr_2_fip),
-                                              rtr_2_fip_name,
-                                              ri.ns_name)
-            self._internal_ns_interface_added(str(fip_2_rtr),
-                                              fip_2_rtr_name,
-                                              fip_ns_name)
+            self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
+            self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
             mtu = (self.agent_conf.network_device_mtu or
                    ri.get_ex_gw_port().get('mtu'))
             if mtu:

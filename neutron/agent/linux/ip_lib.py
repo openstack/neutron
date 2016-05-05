@@ -564,12 +564,12 @@ class IpLinkCommand(IpDeviceCommandBase):
 class IpAddrCommand(IpDeviceCommandBase):
     COMMAND = 'addr'
 
-    def add(self, cidr, scope='global'):
+    def add(self, cidr, scope='global', add_broadcast=True):
         net = netaddr.IPNetwork(cidr)
         args = ['add', cidr,
                 'scope', scope,
                 'dev', self.name]
-        if net.version == 4:
+        if add_broadcast and net.version == 4:
             args += ['brd', str(net[-1])]
         self._as_root([net.version], tuple(args))
 
