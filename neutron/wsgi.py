@@ -44,7 +44,7 @@ from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api
-from neutron import worker as neutron_worker
+from neutron import worker
 
 socket_opts = [
     cfg.IntOpt('backlog',
@@ -74,12 +74,9 @@ def encode_body(body):
     return encodeutils.to_utf8(body)
 
 
-class WorkerService(neutron_worker.NeutronWorker):
+class WorkerService(worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
-    def __init__(self, service, application, disable_ssl=False,
-                 worker_process_count=0):
-        super(WorkerService, self).__init__(worker_process_count)
-
+    def __init__(self, service, application, disable_ssl=False):
         self._service = service
         self._application = application
         self._disable_ssl = disable_ssl
@@ -191,7 +188,7 @@ class Server(object):
         self._launch(application, workers)
 
     def _launch(self, application, workers=0):
-        service = WorkerService(self, application, self.disable_ssl, workers)
+        service = WorkerService(self, application, self.disable_ssl)
         if workers < 1:
             # The API service should run in the current process.
             self._server = service
@@ -209,8 +206,7 @@ class Server(object):
             # wait interval past the default of 0.01s.
             self._server = common_service.ProcessLauncher(cfg.CONF,
                                                           wait_interval=1.0)
-            self._server.launch_service(service,
-                                        workers=service.worker_process_count)
+            self._server.launch_service(service, workers=workers)
 
     @property
     def host(self):
