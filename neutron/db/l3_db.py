@@ -1158,6 +1158,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     net_id=floatingip_db['floating_network_id'])
             except exc.NoResultFound:
                 pass
+
+        if fip and 'port_id' not in fip and floatingip_db.fixed_port_id:
+            # NOTE(liuyulong): without the fix of bug #1610045 here could
+            # also let floating IP can be dissociated with an empty
+            # updating dict.
+            fip['port_id'] = floatingip_db.fixed_port_id
+            port_id, internal_ip_address, router_id = self._get_assoc_data(
+                context, fip, floatingip_db)
+
+        # After all upper conditions, if updating API dict is submitted with
+        # {'port_id': null}, then the floating IP cloud also be dissociated.
         return port_id, internal_ip_address, router_id
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
