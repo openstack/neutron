@@ -17,6 +17,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db.metering import metering_db
 from neutron.db.metering import metering_rpc
+from neutron import service
 
 
 class MeteringPlugin(metering_db.MeteringDbMixin):
@@ -28,7 +29,9 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         super(MeteringPlugin, self).__init__()
 
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
-        self.start_rpc_listeners()
+        rpc_worker = service.RpcWorker([self], worker_process_count=0)
+
+        self.add_worker(rpc_worker)
 
     def start_rpc_listeners(self):
         self.endpoints = [metering_rpc.MeteringRpcCallbacks(self)]

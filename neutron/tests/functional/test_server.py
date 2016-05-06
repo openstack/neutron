@@ -27,7 +27,7 @@ import psutil
 from neutron.agent.linux import utils
 from neutron import service
 from neutron.tests import base
-from neutron import worker
+from neutron import worker as neutron_worker
 from neutron import wsgi
 
 
@@ -244,8 +244,8 @@ class TestRPCServer(TestNeutronServer):
                 # not interested in state report workers specifically
                 CONF.set_override("rpc_state_report_workers", 0)
 
-                launcher = service.serve_rpc()
-                launcher.wait()
+                rpc_workers_launcher = service.start_rpc_workers()
+                rpc_workers_launcher.wait()
 
     def test_restart_rpc_on_sighup_multiple_workers(self):
         self._test_restart_service_on_sighup(service=self._serve_rpc,
@@ -264,12 +264,11 @@ class TestPluginWorker(TestNeutronServer):
     def _start_plugin(self, workers=1):
         with mock.patch('neutron.manager.NeutronManager.get_plugin') as gp:
             gp.return_value = self.plugin
-            launchers = service.start_plugin_workers()
-            for launcher in launchers:
-                launcher.wait()
+            plugin_workers_launcher = service.start_plugins_workers()
+            plugin_workers_launcher.wait()
 
     def test_start(self):
-        class FakeWorker(worker.NeutronWorker):
+        class FakeWorker(neutron_worker.NeutronWorker):
             def start(self):
                 pass
 

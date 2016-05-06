@@ -34,7 +34,7 @@ from neutron.conf import service
 from neutron import context
 from neutron.db import api as session
 from neutron import manager
-from neutron import worker
+from neutron import worker as neutron_worker
 from neutron import wsgi
 
 
@@ -90,25 +90,15 @@ def serve_wsgi(cls):
     return service
 
 
-def start_plugin_workers():
-    launchers = []
-    # NOTE(twilson) get_service_plugins also returns the core plugin
-    for plugin in manager.NeutronManager.get_unique_service_plugins():
-        # TODO(twilson) Instead of defaulting here, come up with a good way to
-        # share a common get_workers default between NeutronPluginBaseV2 and
-        # ServicePluginBase
-        for plugin_worker in getattr(plugin, 'get_workers', tuple)():
-            launcher = common_service.ProcessLauncher(cfg.CONF)
-            launcher.launch_service(plugin_worker)
-            launchers.append(launcher)
-    return launchers
-
-
-class RpcWorker(worker.NeutronWorker):
+class RpcWorker(neutron_worker.NeutronWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     start_listeners_method = 'start_rpc_listeners'
 
-    def __init__(self, plugins):
+    def __init__(self, plugins, worker_process_count=1):
+        super(RpcWorker, self).__init__(
+            worker_process_count=worker_process_count
+        )
+
         self._plugins = plugins
         self._servers = []
 
@@ -155,7 +145,7 @@ class RpcReportsWorker(RpcWorker):
     start_listeners_method = 'start_rpc_state_reports_listener'
 
 
-def serve_rpc():
+def _get_rpc_workers():
     plugin = manager.NeutronManager.get_plugin()
     service_plugins = (
         manager.NeutronManager.get_service_plugins().values())
@@ -175,29 +165,113 @@ def serve_rpc():
                       cfg.CONF.rpc_workers)
         raise NotImplementedError()
 
-    try:
-        # passing service plugins only, because core plugin is among them
-        rpc = RpcWorker(service_plugins)
-        # dispose the whole pool before os.fork, otherwise there will
-        # be shared DB connections in child processes which may cause
-        # DB errors.
-        LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
-        session.dispose()
-        launcher = common_service.ProcessLauncher(cfg.CONF, wait_interval=1.0)
-        launcher.launch_service(rpc, workers=cfg.CONF.rpc_workers)
-        if (cfg.CONF.rpc_state_report_workers > 0 and
-            plugin.rpc_state_report_workers_supported()):
-            rpc_state_rep = RpcReportsWorker([plugin])
-            LOG.debug('using launcher for state reports rpc, workers=%s',
-                      cfg.CONF.rpc_state_report_workers)
-            launcher.launch_service(
-                rpc_state_rep, workers=cfg.CONF.rpc_state_report_workers)
+    # passing service plugins only, because core plugin is among them
+    rpc_workers = [RpcWorker(service_plugins,
+                             worker_process_count=cfg.CONF.rpc_workers)]
 
-        return launcher
+    if (cfg.CONF.rpc_state_report_workers > 0 and
+            plugin.rpc_state_report_workers_supported()):
+        rpc_workers.append(
+            RpcReportsWorker(
+                [plugin],
+                worker_process_count=cfg.CONF.rpc_state_report_workers
+            )
+        )
+    return rpc_workers
+
+
+def _get_plugins_workers():
+    # NOTE(twilson) get_service_plugins also returns the core plugin
+    plugins = manager.NeutronManager.get_unique_service_plugins()
+
+    # TODO(twilson) Instead of defaulting here, come up with a good way to
+    # share a common get_workers default between NeutronPluginBaseV2 and
+    # ServicePluginBase
+    return [
+        plugin_worker
+        for plugin in plugins if hasattr(plugin, 'get_workers')
+        for plugin_worker in plugin.get_workers()
+    ]
+
+
+class AllServicesNeutronWorker(neutron_worker.NeutronWorker):
+    def __init__(self, services, worker_process_count=1):
+        super(AllServicesNeutronWorker, self).__init__(worker_process_count)
+        self._services = services
+        self._launcher = common_service.Launcher(cfg.CONF)
+
+    def start(self):
+        for srv in self._services:
+            self._launcher.launch_service(srv)
+        super(AllServicesNeutronWorker, self).start()
+
+    def stop(self):
+        self._launcher.stop()
+
+    def wait(self):
+        self._launcher.wait()
+
+    def reset(self):
+        self._launcher.restart()
+
+
+def _start_workers(workers):
+    process_workers = [
+        plugin_worker for plugin_worker in workers
+        if plugin_worker.worker_process_count > 0
+    ]
+
+    try:
+        if process_workers:
+            worker_launcher = common_service.ProcessLauncher(
+                cfg.CONF, wait_interval=1.0
+            )
+
+            # add extra process worker and spawn there all workers with
+            # worker_process_count == 0
+            thread_workers = [
+                plugin_worker for plugin_worker in workers
+                if plugin_worker.worker_process_count < 1
+            ]
+            if thread_workers:
+                process_workers.append(
+                    AllServicesNeutronWorker(thread_workers)
+                )
+
+            # dispose the whole pool before os.fork, otherwise there will
+            # be shared DB connections in child processes which may cause
+            # DB errors.
+            session.dispose()
+
+            for worker in process_workers:
+                worker_launcher.launch_service(worker,
+                                               worker.worker_process_count)
+        else:
+            worker_launcher = common_service.ServiceLauncher(cfg.CONF)
+            for worker in workers:
+                worker_launcher.launch_service(worker)
+        return worker_launcher
     except Exception:
         with excutils.save_and_reraise_exception():
             LOG.exception(_LE('Unrecoverable error: please check log for '
                               'details.'))
+
+
+def start_all_workers():
+    workers = _get_rpc_workers() + _get_plugins_workers()
+    return _start_workers(workers)
+
+
+def start_rpc_workers():
+    rpc_workers = _get_rpc_workers()
+
+    LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
+    return _start_workers(rpc_workers)
+
+
+def start_plugins_workers():
+    plugins_workers = _get_plugins_workers()
+    return _start_workers(plugins_workers)
 
 
 def _get_api_workers():

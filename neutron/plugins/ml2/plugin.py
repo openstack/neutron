@@ -164,7 +164,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                            provisioning_blocks.PROVISIONING_COMPLETE)
         self._setup_dhcp()
         self._start_rpc_notifiers()
-        self.add_agent_status_check(self.agent_health_check)
+        self.add_agent_status_check_worker(self.agent_health_check)
+        self.add_workers(self.mechanism_manager.get_workers())
         self._verify_service_plugins_requirements()
         LOG.info(_LI("Modular L2 Plugin initialization complete"))
 
@@ -185,7 +186,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
-        self.start_periodic_dhcp_agent_status_check()
+        self.add_periodic_dhcp_agent_status_check()
 
     def _verify_service_plugins_requirements(self):
         for service_plugin in cfg.CONF.service_plugins:
@@ -1676,9 +1677,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if port:
                 return port.id
         return device
-
-    def get_workers(self):
-        return self.mechanism_manager.get_workers()
 
     def filter_hosts_with_network_access(
             self, context, network_id, candidate_hosts):

@@ -24,12 +24,14 @@ from neutron._i18n import _, _LE, _LI
 from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
 from neutron.services import provider_configuration as pconf
+from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
-class ServicePluginBase(extensions.PluginInterface):
+class ServicePluginBase(extensions.PluginInterface,
+                        neutron_worker.WorkerSupportServiceMixin):
     """Define base interface for any Advanced Service plugin."""
     supported_extension_aliases = []
 
@@ -45,10 +47,6 @@ class ServicePluginBase(extensions.PluginInterface):
     def get_plugin_description(self):
         """Return string description of the plugin."""
         pass
-
-    def get_workers(self):
-        """Returns a collection of NeutronWorkers"""
-        return ()
 
 
 def load_drivers(service_type, plugin):

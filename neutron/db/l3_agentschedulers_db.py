@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import debtcollector
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -78,6 +79,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     router_scheduler = None
 
+    @debtcollector.removals.remove(
+        message="This will be removed in the N cycle. "
+                "Please use 'add_periodic_l3_agent_status_check' instead."
+    )
     def start_periodic_l3_agent_status_check(self):
         if not cfg.CONF.allow_automatic_l3agent_failover:
             LOG.info(_LI("Skipping period L3 agent status check because "
@@ -85,6 +90,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             return
 
         self.add_agent_status_check(
+            self.reschedule_routers_from_down_agents)
+
+    def add_periodic_l3_agent_status_check(self):
+        if not cfg.CONF.allow_automatic_l3agent_failover:
+            LOG.info(_LI("Skipping period L3 agent status check because "
+                         "automatic router rescheduling is disabled."))
+            return
+
+        self.add_agent_status_check_worker(
             self.reschedule_routers_from_down_agents)
 
     def reschedule_routers_from_down_agents(self):
