@@ -104,6 +104,7 @@ class L2populationRpcCallBackMixin(object):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
     '''Mixin class of L2-population call back for Tunnel.
 

@@ -172,6 +172,7 @@ class DhcpBase(object):
         raise NotImplementedError()
 
 
+@six.add_metaclass(abc.ABCMeta)
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
 

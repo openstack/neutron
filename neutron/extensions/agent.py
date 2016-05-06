@@ -17,6 +17,7 @@ import abc
 
 from neutron_lib.api import converters
 from neutron_lib import exceptions
+import six
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -122,6 +123,7 @@ class Agent(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(abc.ABCMeta)
 class AgentPluginBase(object):
     """REST API to operate the Agent.
 

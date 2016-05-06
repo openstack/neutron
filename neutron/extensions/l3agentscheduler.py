@@ -18,6 +18,7 @@ import abc
 from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
+import six
 import webob.exc
 
 from neutron._i18n import _, _LE
@@ -183,6 +184,7 @@ class DVRL3CannotRemoveFromDvrAgent(exceptions.Conflict):
                 "an agent in 'dvr' mode.")
 
 
+@six.add_metaclass(abc.ABCMeta)
 class L3AgentSchedulerPluginBase(object):
     """REST API to operate the l3 agent scheduler.
 

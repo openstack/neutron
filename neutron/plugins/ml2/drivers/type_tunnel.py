@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log
+import six
 from six import moves
 from sqlalchemy import or_
 
@@ -45,6 +46,7 @@ def chunks(iterable, chunk_size):
         chunk = list(itertools.islice(iterator, 0, chunk_size))
 
 
+@six.add_metaclass(abc.ABCMeta)
 class TunnelTypeDriver(helpers.SegmentTypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 

@@ -18,6 +18,7 @@ import abc
 from neutron_lib.api import converters
 from neutron_lib import exceptions as nexception
 from oslo_config import cfg
+import six
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -220,6 +221,7 @@ class L3(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(abc.ABCMeta)
 class RouterPluginBase(object):
 
     @abc.abstractmethod
