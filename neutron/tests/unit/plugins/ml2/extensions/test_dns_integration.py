@@ -34,7 +34,6 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 mock_client = mock.Mock()
 mock_admin_client = mock.Mock()
 mock_config = {'return_value': (mock_client, mock_admin_client)}
-DNSDOMAIN = 'domain.com.'
 DNSNAME = 'port-dns-name'
 NEWDNSNAME = 'new-port-dns-name'
 V4UUID = 'v4_uuid'
@@ -46,6 +45,7 @@ V6UUID = 'v6_uuid'
     **mock_config)
 class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['dns']
+    _domain = 'domain.com.'
 
     def setUp(self):
         config.cfg.CONF.set_override('extension_drivers',
@@ -58,6 +58,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         dns_integration.DNS_DRIVER = None
         dns_integration.subscribe()
         self.plugin = manager.NeutronManager.get_plugin()
+        config.cfg.CONF.set_override('dns_domain', self._domain)
 
     def _create_port_for_test(self, provider_net=True, dns_domain=True,
                               dns_name=True, ipv4=True, ipv6=True):
@@ -69,7 +70,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 pnet.SEGMENTATION_ID: '2016',
             }
         if dns_domain:
-            net_kwargs[dns.DNSDOMAIN] = DNSDOMAIN
+            net_kwargs[dns.DNSDOMAIN] = self._domain
             net_kwargs['arg_list'] = \
                 net_kwargs.get('arg_list', ()) + (dns.DNSDOMAIN,)
         res = self._create_network(self.fmt, 'test_network', True,
@@ -225,7 +226,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 len(mock_admin_client.recordsets.delete.call_args_list) ==
                 len(expected_delete))
         else:
-            self.assertTrue(dns_data_db is None)
+            if not dns_name:
+                self.assertEqual('', port[dns.DNSNAME])
+                self.assertTrue(dns_data_db is None)
             self.assertFalse(mock_client.recordsets.create.call_args_list)
             self.assertFalse(
                 mock_admin_client.recordsets.create.call_args_list)
@@ -246,43 +249,35 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
 
     def test_create_port(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(net, port, dns_data_db)
 
     def test_create_port_tenant_network(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(provider_net=False)
         self._verify_port_dns(net, port, dns_data_db, provider_net=False)
 
     def test_create_port_no_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(dns_name=False)
         self._verify_port_dns(net, port, dns_data_db, dns_name=False)
 
     def test_create_port_no_dns_domain(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(dns_domain=False)
         self._verify_port_dns(net, port, dns_data_db, dns_domain=False)
 
     def test_create_port_no_dns_driver(self, *mocks):
         config.cfg.CONF.set_override('external_dns_driver', '')
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(net, port, dns_data_db, dns_driver=False)
 
     def test_create_port_no_ipv6(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(ipv6=False)
         self._verify_port_dns(net, port, dns_data_db)
 
     def test_create_port_no_ipv4(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(ipv4=False)
         self._verify_port_dns(net, port, dns_data_db)
 
     def test_create_port_no_ptr_zones(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         config.cfg.CONF.set_override('allow_reverse_dns_lookup', False,
                                      group='designate')
         net, port, dns_data_db = self._create_port_for_test()
@@ -291,7 +286,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                                      group='designate')
 
     def test_update_port(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         port, dns_data_db = self._update_port_for_test(port)
         self._verify_port_dns(net, port, dns_data_db, delete_records=True,
@@ -299,12 +293,11 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               previous_dns_name=DNSNAME)
 
     def test_update_port_with_current_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         port, dns_data_db = self._update_port_for_test(port,
                                                        new_dns_name=DNSNAME)
         self.assertEqual(DNSNAME, dns_data_db['current_dns_name'])
-        self.assertEqual(DNSDOMAIN, dns_data_db['current_dns_domain'])
+        self.assertEqual(self._domain, dns_data_db['current_dns_domain'])
         self.assertEqual('', dns_data_db['previous_dns_name'])
         self.assertEqual('', dns_data_db['previous_dns_domain'])
         self.assertFalse(mock_client.recordsets.create.call_args_list)
@@ -315,7 +308,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             mock_admin_client.recordsets.delete.call_args_list)
 
     def test_update_port_tenant_network(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(provider_net=False)
         port, dns_data_db = self._update_port_for_test(port)
         self._verify_port_dns(net, port, dns_data_db, delete_records=True,
@@ -323,7 +315,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               previous_dns_name=DNSNAME, provider_net=False)
 
     def test_update_port_no_dns_domain(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(dns_domain=False)
         port, dns_data_db = self._update_port_for_test(port)
         self._verify_port_dns(net, port, dns_data_db, delete_records=True,
@@ -331,7 +322,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               previous_dns_name=DNSNAME, dns_domain=False)
 
     def test_update_port_add_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test(dns_name=False)
         port, dns_data_db = self._update_port_for_test(port)
         self._verify_port_dns(net, port, dns_data_db, delete_records=False,
@@ -339,14 +329,12 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               previous_dns_name='')
 
     def test_update_port_clear_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         port, dns_data_db = self._update_port_for_test(port, new_dns_name='')
         self._verify_port_dns(net, port, dns_data_db, delete_records=True,
                               current_dns_name='', previous_dns_name=DNSNAME)
 
     def test_update_port_non_dns_name_attribute(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         port_name = 'port_name'
         kwargs = {'name': port_name}
@@ -354,7 +342,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                                                        new_dns_name=None,
                                                        **kwargs)
         self.assertEqual(DNSNAME, dns_data_db['current_dns_name'])
-        self.assertEqual(DNSDOMAIN, dns_data_db['current_dns_domain'])
+        self.assertEqual(self._domain, dns_data_db['current_dns_domain'])
         self.assertEqual('', dns_data_db['previous_dns_name'])
         self.assertEqual('', dns_data_db['previous_dns_domain'])
         self.assertFalse(mock_client.recordsets.create.call_args_list)
@@ -366,7 +354,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(port_name, port['name'])
 
     def test_update_port_fixed_ips(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
         kwargs = {'fixed_ips': []}
@@ -383,7 +370,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def test_update_port_fixed_ips_with_subnet_ids(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
         ctx = context.get_admin_context()
@@ -415,7 +401,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def test_update_port_fixed_ips_with_new_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
         kwargs = {'fixed_ips': []}
@@ -432,7 +417,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def test_update_port_fixed_ips_with_current_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
         kwargs = {'fixed_ips': []}
@@ -449,7 +433,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def test_update_port_fixed_ips_clearing_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
         kwargs = {'fixed_ips': []}
@@ -465,7 +448,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               original_ips=original_ips)
 
     def test_update_fixed_ips_no_effect_after_clearing_dns_name(self, *mocks):
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         port, dns_data_db_1 = self._update_port_for_test(port,
                                                          new_dns_name='')
@@ -498,8 +480,67 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_dns_driver_loaded_after_server_restart(self, *mocks):
         dns_integration.DNS_DRIVER = None
-        config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
+        self._verify_port_dns(net, port, dns_data_db)
+
+
+class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
+    _domain = 'openstacklocal.'
+
+    def _generate_dns_assignment(self, port):
+        fqdn = []
+        for ip in port['fixed_ips']:
+            hostname = 'host-%s' % ip['ip_address'].replace(
+                '.', '-').replace(':', '-')
+            fqdn.append('%s.%s' % (hostname, self._domain))
+        return set(fqdn)
+
+    def _verify_port_dns(self, net, port, dns_data_db, dns_name=True,
+                         dns_domain=True, ptr_zones=True, delete_records=False,
+                         provider_net=True, dns_driver=True, original_ips=None,
+                         current_dns_name=DNSNAME, previous_dns_name=''):
+        self.assertEqual('', port[dns.DNSNAME])
+        fqdn_set = self._generate_dns_assignment(port)
+        port_fqdn_set = set([each['fqdn'] for each in port['dns_assignment']])
+        self.assertEqual(fqdn_set, port_fqdn_set)
+        self.assertIsNone(dns_data_db, "dns data should be none")
+        self.assertFalse(mock_client.recordsets.create.call_args_list)
+        self.assertFalse(
+            mock_admin_client.recordsets.create.call_args_list)
+        self.assertFalse(mock_client.recordsets.delete.call_args_list)
+        self.assertFalse(
+            mock_admin_client.recordsets.delete.call_args_list)
+
+    def test_update_fixed_ips_no_effect_after_clearing_dns_name(self, *mocks):
+        net, port, dns_data_db = self._create_port_for_test()
+        port, dns_data_db_1 = self._update_port_for_test(port,
+                                                         new_dns_name='')
+        kwargs = {'fixed_ips': []}
+        for ip in port['fixed_ips']:
+            kwargs['fixed_ips'].append(
+                {'subnet_id': ip['subnet_id'],
+                 'ip_address':
+                     str(netaddr.IPAddress(ip['ip_address']) + 1)})
+        mock_client.reset_mock()
+        mock_admin_client.reset_mock()
+        port, dns_data_db_2 = self._update_port_for_test(port,
+                                                         new_dns_name='',
+                                                         **kwargs)
+        self._verify_port_dns(net, port, dns_data_db_2)
+
+    def test_update_port_non_dns_name_attribute(self, *mocks):
+        net, port, dns_data_db = self._create_port_for_test()
+        port_name = 'port_name'
+        kwargs = {'name': port_name}
+        port, dns_data_db = self._update_port_for_test(port,
+                                                       new_dns_name=None,
+                                                       **kwargs)
+        self._verify_port_dns(net, port, dns_data_db)
+
+    def test_update_port_with_current_dns_name(self, *mocks):
+        net, port, dns_data_db = self._create_port_for_test()
+        port, dns_data_db = self._update_port_for_test(port,
+                                                       new_dns_name=DNSNAME)
         self._verify_port_dns(net, port, dns_data_db)
 
 
