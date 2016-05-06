@@ -14,12 +14,13 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import fixture as utils_fixture
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
 from neutron.tests import fake_notifier
-
 
 _uuid = uuidutils.generate_uuid
 
@@ -121,6 +122,48 @@ class TestMeteringOperations(base.BaseTestCase):
         self.assertEqual(LABEL_ID, payload['label_id'])
         self.assertEqual(88, payload['pkts'])
         self.assertEqual(444, payload['bytes'])
+
+    def test_notification_report_interval(self):
+        measure_interval = 30
+        report_interval = 600
+
+        now = timeutils.utcnow()
+        time_fixture = self.useFixture(utils_fixture.TimeFixture(now))
+        self.addCleanup(timeutils.clear_time_override)
+
+        self.agent.routers_updated(None, ROUTERS)
+
+        self.driver.get_traffic_counters.return_value = {LABEL_ID:
+                                                         {'pkts': 889,
+                                                          'bytes': 4440}}
+
+        cfg.CONF.set_override('measure_interval', measure_interval)
+        cfg.CONF.set_override('report_interval', report_interval)
+
+        for i in range(report_interval):
+            self.agent._metering_loop()
+            count = 0
+
+            if len(fake_notifier.NOTIFICATIONS) > 1:
+                for n in fake_notifier.NOTIFICATIONS:
+                    if n['event_type'] == 'l3.meter':
+                        #skip the first notification because the time is 0
+                        count += 1
+                        if count > 1:
+                            break
+
+            time_fixture.advance_time_seconds(measure_interval)
+
+        self.assertEqual('l3.meter', n['event_type'])
+
+        payload = n['payload']
+        self.assertEqual(TENANT_ID, payload['tenant_id'])
+        self.assertEqual(LABEL_ID, payload['label_id'])
+        self.assertTrue((payload['time'] - report_interval)
+                        < measure_interval, payload)
+        interval = (payload['last_update'] - payload['first_update']) \
+            - report_interval
+        self.assertTrue(interval < measure_interval, payload)
 
     def test_router_deleted(self):
         label_id = _uuid()
