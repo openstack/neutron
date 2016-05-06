@@ -15,6 +15,7 @@
 
 import mock
 import netaddr
+from neutron_lib import constants
 
 from neutron import context
 from neutron.db import dns_db
@@ -235,8 +236,10 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
     def _get_bytes_or_nybles_to_skip(self, in_addr_name):
         if 'in-addr.arpa' in in_addr_name:
             return ((
-                32 - config.cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
-        return (128 - config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
+                constants.IPv4_BITS -
+                config.cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+        return (constants.IPv6_BITS -
+                config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
 
     def test_create_port(self, *mocks):
         config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)

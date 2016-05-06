@@ -54,7 +54,7 @@ class IPNetworkPrefixLen(RangeConstrainedInteger):
     """IP network (CIDR) prefix length custom Enum"""
     def __init__(self, **kwargs):
         super(IPNetworkPrefixLen, self).__init__(
-              start=0, end=constants.IPV6_MAX_PREFIXLEN,
+              start=0, end=n_const.IPv6_BITS,
               **kwargs)
 
 

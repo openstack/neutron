@@ -20,6 +20,7 @@ from designateclient.v2 import client as d_client
 from keystoneclient.auth.identity.generic import password
 from keystoneclient.auth import token_endpoint
 from keystoneclient import session
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log
 
@@ -175,8 +176,10 @@ class Designate(driver.ExternalDNSService):
 
     def _get_bytes_or_nybles_to_skip(self, in_addr_name):
         if 'in-addr.arpa' in in_addr_name:
-            return int((32 - CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
-        return int((128 - CONF.designate.ipv6_ptr_zone_prefix_size) / 4)
+            return int((constants.IPv4_BITS -
+                        CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+        return int((constants.IPv6_BITS -
+                    CONF.designate.ipv6_ptr_zone_prefix_size) / 4)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
         designate, designate_admin = get_clients(context)

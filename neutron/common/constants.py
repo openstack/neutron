@@ -131,9 +131,6 @@ VALID_ETHERTYPES = (lib_constants.IPv4, lib_constants.IPv6)
 
 IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
 
-IPV4_MAX_PREFIXLEN = 32
-IPV6_MAX_PREFIXLEN = 128
-
 # Some components communicate using private address ranges, define
 # them all here. These address ranges should not cause any issues
 # even if they overlap since they are used in disjoint namespaces,
