@@ -18,6 +18,7 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 import webob.exc
 
@@ -25,6 +26,7 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
+from neutron.db import models_v2
 from neutron.ipam import requests as ipam_req
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_base
 
@@ -102,17 +104,30 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
     def _get_allocate_mock(self, auto_ip='10.0.0.2',
                            fail_ip='127.0.0.1',
-                           error_message='SomeError'):
+                           exception=None):
+        if exception is None:
+            exception = n_exc.InvalidInput(error_message='SomeError')
+
         def allocate_mock(request):
             if type(request) == ipam_req.SpecificAddressRequest:
                 if request.address == netaddr.IPAddress(fail_ip):
-                    raise n_exc.InvalidInput(error_message=error_message)
+                    raise exception
                 else:
                     return str(request.address)
             else:
                 return auto_ip
 
         return allocate_mock
+
+    def _get_deallocate_mock(self, fail_ip='127.0.0.1', exception=None):
+            if exception is None:
+                exception = n_exc.InvalidInput(error_message='SomeError')
+
+            def deallocate_mock(ip):
+                if str(ip) == fail_ip:
+                    raise exception
+
+            return deallocate_mock
 
     def _validate_allocate_calls(self, expected_calls, mocks):
         self.assertTrue(mocks['subnet'].allocate.called)
@@ -246,23 +261,26 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
         self._validate_allocate_calls(ips, mocks)
 
-    def test_allocate_multiple_ips_with_exception(self):
+    def _test_allocate_multiple_ips_with_exception(self,
+                                                   exc_on_deallocate=False):
         mocks = self._prepare_ipam()
-
-        auto_ip = '172.23.128.94'
         fail_ip = '192.168.43.15'
+        auto_ip = '172.23.128.94'
         data = {'': ['172.23.128.0/17', self._gen_subnet_id()],
                 fail_ip: ['192.168.43.0/24', self._gen_subnet_id()],
                 '8.8.8.8': ['8.0.0.0/8', self._gen_subnet_id()]}
         ips = self._convert_to_ips(data)
+
         mocks['subnet'].allocate.side_effect = self._get_allocate_mock(
-            auto_ip=auto_ip, fail_ip=fail_ip)
+            auto_ip=auto_ip, fail_ip=fail_ip, exception=db_exc.DBDeadlock())
+        if exc_on_deallocate:
+            mocks['subnet'].deallocate.side_effect = ValueError('Invalid IP')
 
         # Exception should be raised on attempt to allocate second ip.
         # Revert action should be performed for the already allocated ips,
         # In this test case only one ip should be deallocated
         # and original error should be reraised
-        self.assertRaises(n_exc.InvalidInput,
+        self.assertRaises(db_exc.DBDeadlock,
                           mocks['ipam']._ipam_allocate_ips,
                           mock.ANY,
                           mocks['driver'],
@@ -277,6 +295,35 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self._validate_allocate_calls(ips[:-1], mocks)
         # Deallocate should be called for the first ip only
         mocks['subnet'].deallocate.assert_called_once_with(auto_ip)
+
+    def test_allocate_multiple_ips_with_exception(self):
+        self._test_allocate_multiple_ips_with_exception()
+
+    def test_allocate_multiple_ips_with_exception_on_rollback(self):
+        # Validate that original exception is not replaced with one raised on
+        # rollback (during deallocate)
+        self._test_allocate_multiple_ips_with_exception(exc_on_deallocate=True)
+
+    def test_deallocate_multiple_ips_with_exception(self):
+        mocks = self._prepare_ipam()
+        fail_ip = '192.168.43.15'
+        data = {fail_ip: ['192.168.43.0/24', self._gen_subnet_id()],
+                '0.10.8.8': ['0.10.0.0/8', self._gen_subnet_id()]}
+        ips = self._convert_to_ips(data)
+
+        mocks['subnet'].deallocate.side_effect = self._get_deallocate_mock(
+            fail_ip=fail_ip, exception=db_exc.DBDeadlock())
+        mocks['subnet'].allocate.side_effect = ValueError('Some-error')
+        # Validate that exception from deallocate (DBDeadlock) is not replaced
+        # by exception from allocate (ValueError) in rollback block,
+        # so original exception is not changed
+        self.assertRaises(db_exc.DBDeadlock,
+                          mocks['ipam']._ipam_deallocate_ips,
+                          mock.ANY,
+                          mocks['driver'],
+                          mock.ANY,
+                          ips)
+        mocks['subnet'].allocate.assert_called_once_with(mock.ANY)
 
     @mock.patch('neutron.ipam.driver.Pool')
     def test_create_subnet_over_ipam(self, pool_mock):
@@ -641,3 +688,48 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         # incoming one, i.e. new pools in it are not overwritten by old pools
         self._test_update_db_subnet(pool_mock, subnet, expected_subnet,
                                     old_pools)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_update_db_subnet_new_pools_exception(self, pool_mock):
+        context = mock.Mock()
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
+
+        new_port = {'fixed_ips': [{'ip_address': '192.168.1.20',
+                                   'subnet_id': 'some-id'},
+                                  {'ip_address': '192.168.1.50',
+                                   'subnet_id': 'some-id'}]}
+        db_port = models_v2.Port(id='id', network_id='some-net-id')
+        old_port = {'fixed_ips': [{'ip_address': '192.168.1.10',
+                                   'subnet_id': 'some-id'},
+                                  {'ip_address': '192.168.1.50',
+                                   'subnet_id': 'some-id'}]}
+        changes = mocks['ipam'].Changes(
+            add=[{'ip_address': '192.168.1.20',
+                  'subnet_id': 'some-id'}],
+            original=[{'ip_address': '192.168.1.50',
+                       'subnet_id': 'some-id'}],
+            remove=[{'ip_address': '192.168.1.10',
+                     'subnet_id': 'some-id'}])
+        mocks['ipam']._make_port_dict = mock.Mock(return_value=old_port)
+        mocks['ipam']._update_ips_for_port = mock.Mock(return_value=changes)
+        mocks['ipam']._update_db_port = mock.Mock(
+            side_effect=db_exc.DBDeadlock)
+        # emulate raising exception on rollback actions
+        mocks['ipam']._ipam_deallocate_ips = mock.Mock(side_effect=ValueError)
+        mocks['ipam']._ipam_allocate_ips = mock.Mock(side_effect=ValueError)
+
+        # Validate original exception (DBDeadlock) is not overriden by
+        # exception raised on rollback (ValueError)
+        self.assertRaises(db_exc.DBDeadlock,
+                          mocks['ipam'].update_port_with_ips,
+                          context,
+                          db_port,
+                          new_port,
+                          mock.Mock())
+        mocks['ipam']._ipam_deallocate_ips.assert_called_once_with(
+            context, mocks['driver'], db_port,
+            changes.add, revert_on_fail=False)
+        mocks['ipam']._ipam_allocate_ips.assert_called_once_with(
+            context, mocks['driver'], db_port,
+            changes.remove, revert_on_fail=False)
