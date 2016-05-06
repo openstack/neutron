@@ -24,11 +24,9 @@ import abc
 
 import six
 
-from neutron import worker as neutron_worker
-
 
 @six.add_metaclass(abc.ABCMeta)
-class NeutronPluginBaseV2(neutron_worker.WorkerSupportServiceMixin):
+class NeutronPluginBaseV2(object):
 
     @abc.abstractmethod
     def create_subnet(self, context, subnet):
@@ -411,3 +409,12 @@ class NeutronPluginBaseV2(neutron_worker.WorkerSupportServiceMixin):
         """
         return (self.__class__.start_rpc_state_reports_listener !=
                 NeutronPluginBaseV2.start_rpc_state_reports_listener)
+
+    def get_workers(self):
+        """Returns a collection NeutronWorker instances
+
+        If a plugin needs to define worker processes outside of API/RPC workers
+        then it will override this and return a collection of NeutronWorker
+        instances
+        """
+        return ()

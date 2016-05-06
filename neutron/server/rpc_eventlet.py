@@ -18,9 +18,8 @@
 # If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
-from oslo_config import cfg
+import eventlet
 from oslo_log import log
-from oslo_service import service as common_service
 
 from neutron._i18n import _LI
 from neutron import service
@@ -29,14 +28,13 @@ LOG = log.getLogger(__name__)
 
 
 def eventlet_rpc_server():
+    pool = eventlet.GreenPool()
     LOG.info(_LI("Eventlet based AMQP RPC server starting..."))
-    rpc_workers_launcher = common_service.ProcessLauncher(
-        cfg.CONF, wait_interval=1.0
-    )
     try:
-        service.start_rpc_workers(rpc_workers_launcher)
+        neutron_rpc = service.serve_rpc()
     except NotImplementedError:
         LOG.info(_LI("RPC was already started in parent process by "
                      "plugin."))
     else:
-        rpc_workers_launcher.wait()
+        pool.spawn(neutron_rpc.wait)
+    pool.waitall()
