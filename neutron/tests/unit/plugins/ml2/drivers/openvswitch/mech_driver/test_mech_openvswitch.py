@@ -100,3 +100,19 @@ class OpenvswitchMechanismSGDisabledLocalTestCase(
     OpenvswitchMechanismSGDisabledBaseTestCase,
     base.AgentMechanismLocalTestCase):
     pass
+
+
+class OpenvswitchMechanismFirewallUndefinedTestCase(
+    OpenvswitchMechanismBaseTestCase, base.AgentMechanismLocalTestCase):
+
+    VIF_DETAILS = {portbindings.CAP_PORT_FILTER: True,
+                   portbindings.OVS_HYBRID_PLUG: True}
+
+    def setUp(self):
+        # this simple test case just ensures backward compatibility where
+        # the server has no firewall driver configured, which should result
+        # in hybrid plugging.
+        super(OpenvswitchMechanismFirewallUndefinedTestCase, self).setUp()
+        cfg.CONF.set_override('firewall_driver', '', 'SECURITYGROUP')
+        self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
+        self.driver.initialize()
