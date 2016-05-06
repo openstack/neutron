@@ -66,6 +66,7 @@ class RouterInfo(object):
         self.iptables_manager = iptables_manager.IptablesManager(
             use_ipv6=use_ipv6,
             namespace=self.ns_name)
+        self.initialize_address_scope_iptables()
         self.routes = []
         self.agent_conf = agent_conf
         self.driver = interface_driver
@@ -830,6 +831,53 @@ class RouterInfo(object):
         # Update floating IP status on the neutron server
         agent.plugin_rpc.update_floatingip_statuses(
             agent.context, self.router_id, fip_statuses)
+
+    def initialize_address_scope_iptables(self):
+        self._initialize_address_scope_iptables(self.iptables_manager)
+
+    def _initialize_address_scope_iptables(self, iptables_manager):
+        # Add address scope related chains
+        iptables_manager.ipv4['mangle'].add_chain('scope')
+        iptables_manager.ipv6['mangle'].add_chain('scope')
+
+        iptables_manager.ipv4['mangle'].add_chain('floatingip')
+        iptables_manager.ipv4['mangle'].add_chain('float-snat')
+
+        iptables_manager.ipv4['filter'].add_chain('scope')
+        iptables_manager.ipv6['filter'].add_chain('scope')
+        iptables_manager.ipv4['filter'].add_rule('FORWARD', '-j $scope')
+        iptables_manager.ipv6['filter'].add_rule('FORWARD', '-j $scope')
+
+        # Add rules for marking traffic for address scopes
+        mark_new_ingress_address_scope_by_interface = (
+            '-j $scope')
+        copy_address_scope_for_existing = (
+            '-m connmark ! --mark 0x0/0xffff0000 '
+            '-j CONNMARK --restore-mark '
+            '--nfmask 0xffff0000 --ctmask 0xffff0000')
+        mark_new_ingress_address_scope_by_floatingip = (
+            '-j $floatingip')
+        save_mark_to_connmark = (
+            '-m connmark --mark 0x0/0xffff0000 '
+            '-j CONNMARK --save-mark '
+            '--nfmask 0xffff0000 --ctmask 0xffff0000')
+
+        iptables_manager.ipv4['mangle'].add_rule(
+            'PREROUTING', mark_new_ingress_address_scope_by_interface)
+        iptables_manager.ipv4['mangle'].add_rule(
+            'PREROUTING', copy_address_scope_for_existing)
+        # The floating ip scope rules must come after the CONNTRACK rules
+        # because the (CONN)MARK targets are non-terminating (this is true
+        # despite them not being documented as such) and the floating ip
+        # rules need to override the mark from CONNMARK to cross scopes.
+        iptables_manager.ipv4['mangle'].add_rule(
+            'PREROUTING', mark_new_ingress_address_scope_by_floatingip)
+        iptables_manager.ipv4['mangle'].add_rule(
+            'float-snat', save_mark_to_connmark)
+        iptables_manager.ipv6['mangle'].add_rule(
+            'PREROUTING', mark_new_ingress_address_scope_by_interface)
+        iptables_manager.ipv6['mangle'].add_rule(
+            'PREROUTING', copy_address_scope_for_existing)
 
     def _get_port_devicename_scopemark(self, ports, name_generator):
         devicename_scopemark = {l3_constants.IP_VERSION_4: dict(),

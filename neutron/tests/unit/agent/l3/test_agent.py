@@ -2858,3 +2858,54 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._pd_remove_gw_interface(intfs + intfs1, agent, router, ri)
 
         ri.process(agent)
+
+    def _verify_address_scopes_iptables_rule(self, mock_iptables_manager):
+        filter_calls = [mock.call.add_chain('scope'),
+                        mock.call.add_rule('FORWARD', '-j $scope')]
+        v6_mangle_calls = [mock.call.add_chain('scope'),
+                           mock.call.add_rule('PREROUTING', '-j $scope'),
+                           mock.call.add_rule(
+                               'PREROUTING',
+                               '-m connmark ! --mark 0x0/0xffff0000 '
+                               '-j CONNMARK --restore-mark '
+                               '--nfmask 0xffff0000 --ctmask 0xffff0000')]
+        v4_mangle_calls = (v6_mangle_calls +
+                           [mock.call.add_chain('floatingip'),
+                            mock.call.add_chain('float-snat'),
+                            mock.call.add_rule('PREROUTING', '-j $floatingip'),
+                            mock.call.add_rule(
+                                'float-snat',
+                                '-m connmark --mark 0x0/0xffff0000 '
+                                '-j CONNMARK --save-mark '
+                                '--nfmask 0xffff0000 --ctmask 0xffff0000')])
+        mock_iptables_manager.ipv4['filter'].assert_has_calls(filter_calls)
+        mock_iptables_manager.ipv6['filter'].assert_has_calls(filter_calls)
+        mock_iptables_manager.ipv4['mangle'].assert_has_calls(v4_mangle_calls,
+                                                              any_order=True)
+        mock_iptables_manager.ipv6['mangle'].assert_has_calls(v6_mangle_calls,
+                                                              any_order=True)
+
+    def test_initialize_address_scope_iptables_rules(self):
+        id = _uuid()
+        with mock.patch('neutron.agent.linux.iptables_manager.'
+                        'IptablesManager'):
+            ri = l3router.RouterInfo(id, {}, **self.ri_kwargs)
+            self._verify_address_scopes_iptables_rule(ri.iptables_manager)
+
+    def test_initialize_address_scope_iptables_rules_dvr(self):
+        router = l3_test_common.prepare_router_data()
+        with mock.patch('neutron.agent.linux.iptables_manager.'
+                        'IptablesManager'):
+            ri = dvr_router.DvrEdgeRouter(mock.Mock(),
+                                          HOSTNAME,
+                                          router['id'],
+                                          router,
+                                          **self.ri_kwargs)
+            self._verify_address_scopes_iptables_rule(ri.iptables_manager)
+            interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(
+                self, ri)
+            router['gw_port_host'] = ri.host
+            ri._external_gateway_added = mock.Mock()
+            ri._create_dvr_gateway(ex_gw_port, interface_name)
+            self._verify_address_scopes_iptables_rule(
+                ri.snat_iptables_manager)
