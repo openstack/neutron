@@ -991,7 +991,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                     comment=ic.SG_TO_VM_SG)
                  ]
         if ethertype == 'IPv6':
-            for icmp6_type in constants.ICMPV6_ALLOWED_TYPES:
+            for icmp6_type in n_const.ICMPV6_ALLOWED_TYPES:
                 calls.append(
                     mock.call.add_rule('ifake_dev',
                                        '-p ipv6-icmp -m icmp6 --icmpv6-type '

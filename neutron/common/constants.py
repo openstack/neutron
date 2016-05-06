@@ -76,6 +76,16 @@ IP_PROTOCOL_NUM_TO_NAME_MAP = {
 # Neighbor Solicitation (135),
 ICMPV6_TYPE_NC = 135
 
+# List of ICMPv6 types that should be permitted (ingress) by default. This list
+# depends on iptables conntrack behavior of recognizing ICMP errors (types 1-4)
+# as related traffic.
+#   Multicast Listener Query (130),
+#   Router Advertisement (134),
+#   Neighbor Solicitation (135),
+#   Neighbor Advertisement (136)
+# TODO(dlundquist): use ICMPV6_TYPE_* constants from neutron-lib
+ICMPV6_ALLOWED_TYPES = [130, 134, 135, 136]
+
 DHCPV6_STATEFUL = 'dhcpv6-stateful'
 DHCPV6_STATELESS = 'dhcpv6-stateless'
 IPV6_SLAAC = 'slaac'

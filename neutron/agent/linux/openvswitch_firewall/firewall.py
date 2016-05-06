@@ -368,7 +368,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_ingress(port)
 
     def _initialize_egress_ipv6_icmp(self, port):
-        for icmp_type in lib_const.ICMPV6_ALLOWED_TYPES:
+        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=95,
@@ -547,7 +547,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         )
 
     def _initialize_ingress_ipv6_icmp(self, port):
-        for icmp_type in lib_const.ICMPV6_ALLOWED_TYPES:
+        for icmp_type in constants.ICMPV6_ALLOWED_TYPES:
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
