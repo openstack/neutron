@@ -32,6 +32,3 @@ Neutron Stadium i18n
 * It is recommended that you create a {package_name}/_i18n.py file
   in your repo, and use that. Your localization strings will also live
   in your repo.
-
-* The neutron.i18n module will be around for a release or two, with
-  shared localization strings, but migration is encouraged.
