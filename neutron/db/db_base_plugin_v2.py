@@ -777,19 +777,20 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             ports = self.get_ports(context, filters=filters)
             routers = []
             for port in ports:
-                fixed_ips = []
                 for ip in port['fixed_ips']:
                     if ip['subnet_id'] == s['id']:
-                        fixed_ip = {'subnet_id': s['id']}
                         if (port['device_owner'] in
                             constants.ROUTER_INTERFACE_OWNERS):
                             routers.append(port['device_id'])
-                            fixed_ip['ip_address'] = s['gateway_ip']
-                        fixed_ips.append(fixed_ip)
-                new_port = {'port': port}
-                new_port['port']['fixed_ips'] = fixed_ips
-                self.update_port(context, port['id'], new_port)
-
+                            ip['ip_address'] = s['gateway_ip']
+                        else:
+                            # We remove ip_address and pass only PD subnet_id
+                            # in port's fixed_ip for port_update. Later, IPAM
+                            # drivers will allocate eui64 address with new
+                            # prefix when they find PD subnet_id in port's
+                            # fixed_ip.
+                            ip.pop('ip_address', None)
+                self.update_port(context, port['id'], {'port': port})
             # Send router_update to l3_agent
             if routers:
                 l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()

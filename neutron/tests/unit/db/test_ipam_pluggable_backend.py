@@ -584,6 +584,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._get_changed_ips_for_port = changes_mock
         mocks['ipam']._get_subnets = mock.Mock()
         mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
+        mocks['ipam']._update_ips_for_pd_subnet = mock.Mock(return_value=[])
 
         port_dict = {'device_owner': uuidutils.generate_uuid(),
                      'network_id': uuidutils.generate_uuid()}

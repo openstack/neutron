@@ -483,3 +483,22 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             else:
                 v6_stateless.append(subnet)
         return v4, v6_stateful, v6_stateless
+
+    def _update_ips_for_pd_subnet(self, context, subnets,
+                                  fixed_ips, mac_address=None):
+        fixed_ip_list = []
+        subnet_set = {fixed['subnet_id'] for fixed in fixed_ips
+                      if 'subnet_id' in fixed}
+        pd_subnets = [s for s in subnets
+                      if (s['id'] in subnet_set and
+                          ipv6_utils.is_ipv6_pd_enabled(s))]
+        for subnet in pd_subnets:
+            # Already checked subnet validity in _get_subnet_for_fixed_ip
+            if mac_address:
+                fixed_ip_list.append({'subnet_id': subnet['id'],
+                                      'subnet_cidr': subnet['cidr'],
+                                      'eui64_address': True,
+                                      'mac': mac_address})
+            else:
+                fixed_ip_list.append({'subnet_id': subnet['id']})
+        return fixed_ip_list

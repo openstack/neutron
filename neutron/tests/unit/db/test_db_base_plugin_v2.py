@@ -472,6 +472,21 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
+    def _make_v6_subnet(self, network, ra_addr_mode, ipv6_pd=False):
+        cidr = 'fe80::/64'
+        gateway = 'fe80::1'
+        subnetpool_id = None
+        if ipv6_pd:
+            cidr = None
+            gateway = None
+            subnetpool_id = constants.IPV6_PD_POOL_ID
+            cfg.CONF.set_override('ipv6_pd_enabled', True)
+        return (self._make_subnet(self.fmt, network, gateway=gateway,
+                                  subnetpool_id=subnetpool_id,
+                                  cidr=cidr, ip_version=6,
+                                  ipv6_ra_mode=ra_addr_mode,
+                                  ipv6_address_mode=ra_addr_mode))
+
     def _make_subnetpool(self, fmt, prefixes, admin=False, **kwargs):
         res = self._create_subnetpool(fmt,
                                       prefixes,
@@ -1769,6 +1784,79 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self._delete('ports', port3['port']['id'])
                 self._delete('ports', port4['port']['id'])
 
+    def test_create_port_invalid_fixed_ip_address_v6_pd_slaac(self):
+        with self.network(name='net') as network:
+            subnet = self._make_v6_subnet(
+                network, n_const.IPV6_SLAAC, ipv6_pd=True)
+            net_id = subnet['subnet']['network_id']
+            subnet_id = subnet['subnet']['id']
+            # update subnet with new prefix
+            prefix = '2001::/64'
+            data = {'subnet': {'cidr': prefix}}
+            self.plugin.update_subnet(context.get_admin_context(),
+                                      subnet_id, data)
+            kwargs = {"fixed_ips": [{'subnet_id': subnet_id,
+                                     'ip_address': '2001::2'}]}
+            # pd is a auto address subnet, so can't have 2001::2
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(webob.exc.HTTPClientError.code,
+                             res.status_int)
+
+    def test_update_port_invalid_fixed_ip_address_v6_pd_slaac(self):
+        with self.network(name='net') as network:
+            subnet = self._make_v6_subnet(
+                network, n_const.IPV6_SLAAC, ipv6_pd=True)
+            net_id = subnet['subnet']['network_id']
+            subnet_id = subnet['subnet']['id']
+            # update subnet with new prefix
+            prefix = '2001::/64'
+            data = {'subnet': {'cidr': prefix}}
+            self.plugin.update_subnet(context.get_admin_context(),
+                                      subnet_id, data)
+            # create port and check for eui addr with 2001::/64 prefix.
+            res = self._create_port(self.fmt, net_id=net_id)
+            port = self.deserialize(self.fmt, res)
+            port_mac = port['port']['mac_address']
+            eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+                            prefix, port_mac))
+            fixedips = [{'subnet_id': subnet_id, 'ip_address': eui_addr}]
+            self.assertEqual(fixedips, port['port']['fixed_ips'])
+            # try update port with 2001::2. update should fail as
+            # pd is a auto address subnet, so can't have 2001::2
+            data = {'port': {"fixed_ips": [{'subnet_id': subnet_id,
+                                     'ip_address': '2001::2'}]}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code,
+                             res.status_int)
+
+    def test_update_port_invalid_subnet_v6_pd_slaac(self):
+        with self.network(name='net') as network:
+            subnet = self._make_v6_subnet(
+                network, n_const.IPV6_SLAAC, ipv6_pd=True)
+            subnet_id = subnet['subnet']['id']
+            # update subnet with new prefix
+            prefix = '2001::/64'
+            data = {'subnet': {'cidr': prefix}}
+            self.plugin.update_subnet(context.get_admin_context(),
+                                      subnet_id, data)
+
+            # Create port on network2
+            res = self._create_network(fmt=self.fmt, name='net2',
+                                       admin_state_up=True)
+            network2 = self.deserialize(self.fmt, res)
+            self._make_subnet(self.fmt, network2, "1.1.1.1",
+                              "1.1.1.0/24", ip_version=4)
+            res = self._create_port(self.fmt, net_id=network2['network']['id'])
+            port = self.deserialize(self.fmt, res)
+
+            # try update port with 1st network's PD subnet
+            data = {'port': {"fixed_ips": [{'subnet_id': subnet_id}]}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPClientError.code,
+                             res.status_int)
+
     def test_requested_invalid_fixed_ip_address_v6_slaac(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
@@ -1858,21 +1946,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 fixed_ips = port['port']['fixed_ips']
                 self.assertEqual(1, len(fixed_ips))
                 self.assertEqual('10.0.0.2', fixed_ips[0]['ip_address'])
-
-    def _make_v6_subnet(self, network, ra_addr_mode, ipv6_pd=False):
-        cidr = 'fe80::/64'
-        gateway = 'fe80::1'
-        subnetpool_id = None
-        if ipv6_pd:
-            cidr = None
-            gateway = None
-            subnetpool_id = constants.IPV6_PD_POOL_ID
-            cfg.CONF.set_override('ipv6_pd_enabled', True)
-        return (self._make_subnet(self.fmt, network, gateway=gateway,
-                                  subnetpool_id=subnetpool_id,
-                                  cidr=cidr, ip_version=6,
-                                  ipv6_ra_mode=ra_addr_mode,
-                                  ipv6_address_mode=ra_addr_mode))
 
     @staticmethod
     def _calc_ipv6_addr_by_EUI64(port, subnet):
@@ -4228,6 +4301,79 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 sorted(res['subnet']['host_routes'], key=utils.safe_sort_key),
                 sorted(host_routes, key=utils.safe_sort_key))
             self.assertEqual(dns_nameservers, res['subnet']['dns_nameservers'])
+
+    def _test_subnet_update_ipv4_and_ipv6_pd_subnets(self, ra_addr_mode):
+        # Test prefix update for IPv6 PD subnet
+        # when the network has both IPv4 and IPv6 PD subnets.
+        # Created two networks. First network has IPv4 and IPv6 PD subnets.
+        # Second network has IPv4 subnet. A port is created on each network.
+        # When update_subnet called for PD subnet with new prefix, port on
+        # network with PD subnet should get new IPV6 address, but IPv4
+        # addresses should remain same.
+        # And update_port should be called only for this port and with
+        # v4 subnet along with v4 address and v6 pd subnet as fixed_ips.
+        orig_update_port = self.plugin.update_port
+
+        with self.network() as network:
+            with self.subnet(network=network), (
+                mock.patch.object(self.plugin, 'update_port')) as update_port:
+
+                # Create port on second network
+                network2 = self._make_network(self.fmt, 'net2', True)
+                self._make_subnet(self.fmt, network2, "1.1.1.1",
+                                  "1.1.1.0/24", ip_version=4)
+                self._make_port(self.fmt, net_id=network2['network']['id'])
+
+                subnet = self._make_v6_subnet(
+                    network, ra_addr_mode, ipv6_pd=True)
+                port = self._make_port(self.fmt,
+                    subnet['subnet']['network_id'])
+                port_dict = port['port']
+
+                # When update_port called, port should have below fips
+                fips = port_dict['fixed_ips']
+                for fip in fips:
+                    if fip['subnet_id'] == subnet['subnet']['id']:
+                        fip.pop('ip_address')
+
+                def mock_update_port(context, id, port):
+                    self.assertEqual(port_dict['id'], id)
+                    self.assertEqual(fips, port['port']['fixed_ips'])
+                    orig_update_port(context, id, port)
+
+                update_port.side_effect = mock_update_port
+
+                # update subnet with new prefix
+                prefix = '2001::/64'
+                data = {'subnet': {'cidr': prefix}}
+                self.plugin.update_subnet(context.get_admin_context(),
+                    subnet['subnet']['id'], data)
+
+                # create expected fixed_ips
+                port_mac = port_dict['mac_address']
+                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(prefix,
+                                                             port_mac))
+                ips = port_dict['fixed_ips']
+                for fip in ips:
+                    if fip['subnet_id'] == subnet['subnet']['id']:
+                        fip['ip_address'] = eui_addr
+
+                # check if port got IPv6 address with new prefix
+                req = self.new_show_request('ports',
+                    port['port']['id'], self.fmt)
+                updated_port = self.deserialize(self.fmt,
+                    req.get_response(self.api))
+                new_ips = updated_port['port']['fixed_ips']
+                self.assertEqual(2, len(ips))
+                self.assertEqual(ips, new_ips)
+
+    def test_subnet_update_ipv4_and_ipv6_pd_slaac_subnets(self):
+        self._test_subnet_update_ipv4_and_ipv6_pd_subnets(
+            ra_addr_mode=n_const.IPV6_SLAAC)
+
+    def test_subnet_update_ipv4_and_ipv6_pd_v6stateless_subnets(self):
+        self._test_subnet_update_ipv4_and_ipv6_pd_subnets(
+            ra_addr_mode=n_const.DHCPV6_STATELESS)
 
     def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
