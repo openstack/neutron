@@ -1519,13 +1519,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_create_security_group_rules_native_quotas(self):
-        # avoid the number of default security group rules
-        quota = 7
-        cfg.CONF.set_override(
-            'quota_security_group_rule', quota, group='QUOTAS')
         name = 'quota_test'
         description = 'quota_test'
         with self.security_group(name, description) as sg:
+            # avoid the number of default security group rules
+            sgr = self._list('security-group-rules').get(
+                'security_group_rules')
+            quota = len(sgr) + 1
+            cfg.CONF.set_override(
+                'quota_security_group_rule', quota, group='QUOTAS')
+
             security_group_id = sg['security_group']['id']
             rule = self._build_security_group_rule(
                 security_group_id, 'ingress',
