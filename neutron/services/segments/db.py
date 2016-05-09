@@ -17,11 +17,11 @@
 
 import functools
 
+from neutron_lib import constants
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import segments_db as db
 from neutron.services.segments import exceptions
@@ -54,11 +54,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             network_id = segment['network_id']
             # FIXME couldn't use constants because of a circular import problem
             physical_network = segment['physical_network']
-            if physical_network == attributes.ATTR_NOT_SPECIFIED:
+            if physical_network == constants.ATTR_NOT_SPECIFIED:
                 physical_network = None
             network_type = segment['network_type']
             segmentation_id = segment['segmentation_id']
-            if segmentation_id == attributes.ATTR_NOT_SPECIFIED:
+            if segmentation_id == constants.ATTR_NOT_SPECIFIED:
                 segmentation_id = None
             args = {'id': segment_id,
                     'network_id': network_id,
