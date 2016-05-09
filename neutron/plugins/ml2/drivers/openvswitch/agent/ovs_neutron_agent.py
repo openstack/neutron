@@ -1135,13 +1135,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # Setup int_br to physical bridge patches.  If they already
                 # exist we leave them alone, otherwise we create them but don't
                 # connect them until after the drop rules are in place.
-                int_ofport = self.int_br.get_port_ofport(int_if_name)
-                if int_ofport == ovs_lib.INVALID_OFPORT:
+                if self.int_br.port_exists(int_if_name):
+                    int_ofport = self.int_br.get_port_ofport(int_if_name)
+                else:
                     int_ofport = self.int_br.add_patch_port(
                         int_if_name, constants.NONEXISTENT_PEER)
-
-                phys_ofport = br.get_port_ofport(phys_if_name)
-                if phys_ofport == ovs_lib.INVALID_OFPORT:
+                if br.port_exists(phys_if_name):
+                    phys_ofport = br.get_port_ofport(phys_if_name)
+                else:
                     phys_ofport = br.add_patch_port(
                         phys_if_name, constants.NONEXISTENT_PEER)
 
