@@ -46,6 +46,7 @@ FAKE_IP2 = '10.0.0.2'
 class FakeVif(object):
     ofport = 99
     port_name = 'name'
+    vif_mac = '00:22:44:66:88:AA'
 
 
 class CreateAgentConfigMap(base.BaseTestCase):
@@ -1185,6 +1186,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         fake_details = {'fixed_ips': [], 'device_owner': 'nobody'}
         self.agent.prevent_arp_spoofing = True
         int_br = mock.Mock()
+        int_br.dump_flows_for_table.return_value = ''
         self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
         int_br.delete_flows.assert_has_calls(
             [mock.call(table=mock.ANY, in_port=vif.ofport)])
@@ -1203,18 +1205,21 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             'device_owner': 'nobody',
             'fixed_ips': [{'ip_address': '192.168.44.100'},
                           {'ip_address': '192.168.44.101'}],
-            'allowed_address_pairs': [{'ip_address': '192.168.44.102/32'},
-                                      {'ip_address': '192.168.44.103/32'}]
+            'allowed_address_pairs': [{'ip_address': '192.168.44.102/32',
+                                       'mac_address': FAKE_MAC},
+                                      {'ip_address': '192.168.44.103/32',
+                                       'mac_address': FAKE_MAC}]
         }
         self.agent.prevent_arp_spoofing = True
         int_br = mock.Mock()
+        int_br.dump_flows_for_table.return_value = ''
         self.agent.setup_arp_spoofing_protection(int_br, vif, fake_details)
         # make sure all addresses are allowed
         for addr in ('192.168.44.100', '192.168.44.101', '192.168.44.102/32',
                      '192.168.44.103/32'):
             int_br.add_flow.assert_any_call(
                 table=constants.ARP_SPOOF_TABLE, in_port=vif.ofport,
-                proto='arp', actions='NORMAL', arp_spa=addr, priority=mock.ANY)
+                proto='arp', actions=mock.ANY, arp_spa=addr, priority=mock.ANY)
 
     def test__get_ofport_moves(self):
         previous = {'port1': 1, 'port2': 2}
