@@ -23,6 +23,7 @@ from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 SPOOF_CHAIN_PREFIX = 'neutronARP-'
+MAC_CHAIN_PREFIX = 'neutronMAC-'
 
 
 def setup_arp_spoofing_protection(vif, port_details):
@@ -39,6 +40,7 @@ def setup_arp_spoofing_protection(vif, port_details):
         LOG.debug("Skipping ARP spoofing rules for network owned port "
                   "'%s'.", vif)
         return
+    _install_mac_spoofing_protection(vif, port_details, current_rules)
     # collect all of the addresses and cidrs that belong to the port
     addresses = {f['ip_address'] for f in port_details['fixed_ips']}
     if port_details.get('allowed_address_pairs'):
@@ -72,6 +74,7 @@ def delete_arp_spoofing_protection(vifs, current_rules=None):
     for vif in vifs:
         if chain_exists(chain_name(vif), current_rules):
             ebtables(['-X', chain_name(vif)])
+    _delete_mac_spoofing_protection(vifs, current_rules)
 
 
 def delete_unreferenced_arp_protection(current_vifs):
@@ -124,6 +127,62 @@ def vif_jump_present(vif, current_rules):
         if all(s in line for s in searches):
             return True
     return False
+
+
+@lockutils.synchronized('ebtables')
+def _install_mac_spoofing_protection(vif, port_details, current_rules):
+    mac_addresses = {port_details['mac_address']}
+    if port_details.get('allowed_address_pairs'):
+        mac_addresses |= {p['mac_address']
+                          for p in port_details['allowed_address_pairs']}
+    mac_addresses = list(mac_addresses)
+    vif_chain = _mac_chain_name(vif)
+    # mac filter chain for each vif which has a default deny
+    if not chain_exists(vif_chain, current_rules):
+        ebtables(['-N', vif_chain, '-P', 'DROP'])
+    # check if jump rule already exists, if not, install it
+    if not _mac_vif_jump_present(vif, current_rules):
+        ebtables(['-A', 'FORWARD', '-i', vif, '-j', vif_chain])
+    # we can't just feed all allowed macs at once because we can exceed
+    # the maximum argument size. limit to 500 per rule.
+    for chunk in (mac_addresses[i:i + 500]
+                  for i in range(0, len(mac_addresses), 500)):
+        new_rule = ['-A', vif_chain, '-i', vif,
+                    '--among-src', ','.join(chunk), '-j', 'RETURN']
+        ebtables(new_rule)
+    _delete_vif_mac_rules(vif, current_rules)
+
+
+def _mac_vif_jump_present(vif, current_rules):
+    searches = (('-i %s' % vif), ('-j %s' % _mac_chain_name(vif)))
+    for line in current_rules:
+        if all(s in line for s in searches):
+            return True
+    return False
+
+
+def _mac_chain_name(vif):
+    return '%s%s' % (MAC_CHAIN_PREFIX, vif)
+
+
+def _delete_vif_mac_rules(vif, current_rules):
+    chain = _mac_chain_name(vif)
+    for rule in current_rules:
+        if '-i %s' % vif in rule and '--among-src' in rule:
+            ebtables(['-D', chain] + rule.split())
+
+
+def _delete_mac_spoofing_protection(vifs, current_rules):
+    # delete the jump rule and then delete the whole chain
+    jumps = [vif for vif in vifs
+             if _mac_vif_jump_present(vif, current_rules)]
+    for vif in jumps:
+        ebtables(['-D', 'FORWARD', '-i', vif, '-j',
+                  _mac_chain_name(vif)])
+    for vif in vifs:
+        chain = _mac_chain_name(vif)
+        if chain_exists(chain, current_rules):
+            ebtables(['-X', chain])
 
 
 # Used to scope ebtables commands in testing
