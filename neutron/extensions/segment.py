@@ -15,6 +15,8 @@
 import abc
 import six
 
+from neutron_lib import constants
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
@@ -48,7 +50,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True,
                            'allow_put': False,
-                           'default': attributes.ATTR_NOT_SPECIFIED,
+                           'default': constants.ATTR_NOT_SPECIFIED,
                            'validate': {'type:string':
                                         providernet.PHYSICAL_NETWORK_MAX_LEN},
                            'is_visible': True},
@@ -59,7 +61,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'is_visible': True},
         SEGMENTATION_ID: {'allow_post': True,
                           'allow_put': False,
-                          'default': attributes.ATTR_NOT_SPECIFIED,
+                          'default': constants.ATTR_NOT_SPECIFIED,
                           'convert_to': attributes.convert_to_int,
                           'is_visible': True},
     },
