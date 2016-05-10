@@ -57,3 +57,8 @@ class TestOVSNativeConnection(base.BaseTestCase):
     @helpers.requires_py2
     def test_start_with_table_name_list(self):
         self._test_start(table_name_list=['fake-table1', 'fake-table2'])
+
+    def test_transaction_queue_init(self):
+        # a test to cover py34 failure during initialization (LP Bug #1580270)
+        # make sure no ValueError: can't have unbuffered text I/O is raised
+        connection.TransactionQueue()
