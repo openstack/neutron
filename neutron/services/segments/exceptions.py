@@ -36,3 +36,15 @@ class SubnetCantAssociateToDynamicSegment(exceptions.BadRequest):
 class NetworkIdsDontMatch(exceptions.BadRequest):
     message = _("The subnet's network id, '%(subnet_network)s', doesn't match "
                 "the network_id of segment '%(segment_id)s'")
+
+
+class HostConnectedToMultipleSegments(exceptions.Conflict):
+    message = _("Host %(host)s is connected to multiple segments on routed "
+                "provider network '%(network_id)s'.  It should be connected "
+                "to one.")
+
+
+class HostNotConnectedToAnySegment(exceptions.Conflict):
+    message = _("Host %(host)s is not connected to any segments on routed "
+                "provider network '%(network_id)s'.  It should be connected "
+                "to one.")
