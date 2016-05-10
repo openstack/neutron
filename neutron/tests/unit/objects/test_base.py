@@ -271,10 +271,8 @@ class _BaseObjectTestCase(object):
         self.db_objs = list(self.get_random_fields() for _ in range(3))
         self.db_obj = self.db_objs[0]
 
-        self.obj_fields = []
-        for db_obj in self.db_objs:
-            self.obj_fields.append(
-                self._test_class.modify_fields_from_db(db_obj))
+        self.obj_fields = [self._test_class.modify_fields_from_db(db_obj)
+                           for db_obj in self.db_objs]
 
         valid_field = [f for f in self._test_class.fields
                        if f not in self._test_class.synthetic_fields][0]
@@ -666,7 +664,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         obj.create()
 
         new = self._test_class.get_object(self.context,
-            **obj._get_composite_keys())
+                                          **obj._get_composite_keys())
         self.assertEqual(obj, new)
 
         obj = new
@@ -676,7 +674,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         obj.update()
 
         new = self._test_class.get_object(self.context,
-            **obj._get_composite_keys())
+                                          **obj._get_composite_keys())
         self.assertEqual(obj, new)
 
         obj = new
