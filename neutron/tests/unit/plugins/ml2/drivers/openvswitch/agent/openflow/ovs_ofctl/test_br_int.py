@@ -215,10 +215,10 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ip_addresses = ['192.0.2.1', '192.0.2.2/32']
         self.br.install_arp_spoofing_protection(port, ip_addresses)
         expected = [
-            call.add_flow(proto='arp', actions='normal',
+            call.add_flow(proto='arp', actions='resubmit(,25)',
                           arp_spa='192.0.2.1',
                           priority=2, table=24, in_port=8888),
-            call.add_flow(proto='arp', actions='normal',
+            call.add_flow(proto='arp', actions='resubmit(,25)',
                           arp_spa='192.0.2.2/32',
                           priority=2, table=24, in_port=8888),
             call.add_flow(priority=10, table=0, in_port=8888,

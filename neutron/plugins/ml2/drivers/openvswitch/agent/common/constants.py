@@ -66,6 +66,9 @@ CANARY_TABLE = 23
 # Table for ARP poison/spoofing prevention rules
 ARP_SPOOF_TABLE = 24
 
+# Table for MAC spoof filtering
+MAC_SPOOF_TABLE = 25
+
 # type for ARP reply in ARP header
 ARP_REPLY = '0x2'
 
