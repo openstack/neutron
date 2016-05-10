@@ -19,6 +19,7 @@ import copy
 import datetime
 
 from oslo_context import context as oslo_context
+from oslo_db.sqlalchemy import enginefacade
 
 from neutron.db import api as db_api
 from neutron import policy
@@ -109,13 +110,22 @@ class ContextBase(oslo_context.RequestContext):
         return context
 
 
-class Context(ContextBase):
+@enginefacade.transaction_context_provider
+class ContextBaseWithSession(ContextBase):
+    pass
+
+
+class Context(ContextBaseWithSession):
     def __init__(self, *args, **kwargs):
         super(Context, self).__init__(*args, **kwargs)
         self._session = None
 
     @property
     def session(self):
+        # TODO(akamyshnikova): checking for session attribute won't be needed
+        # when reader and writer will be used
+        if hasattr(super(Context, self), 'session'):
+            return super(Context, self).session
         if self._session is None:
             self._session = db_api.get_session()
         return self._session

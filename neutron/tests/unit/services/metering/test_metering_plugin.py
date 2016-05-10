@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import agents_db
+from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db
 from neutron.db.metering import metering_rpc
 from neutron.extensions import l3 as ext_l3
@@ -57,6 +58,20 @@ class MeteringTestExtensionManager(object):
         return []
 
 
+# TODO(akamyshnikova):we need this temporary FakeContext class while Context
+# checking for existence of session attribute.
+class FakeContext(context.ContextBaseWithSession):
+    def __init__(self, *args, **kwargs):
+        super(FakeContext, self).__init__(*args, **kwargs)
+        self._session = None
+
+    @property
+    def session(self):
+        if self._session is None:
+            self._session = db_api.get_session()
+        return self._session
+
+
 class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          test_l3.L3NatTestCaseMixin,
                          test_metering_db.MeteringPluginDbTestCaseMixin):
@@ -81,7 +96,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.mock_uuid = self.uuid_patch.start()
 
         self.tenant_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
-        self.ctx = context.Context('', self.tenant_id, is_admin=True)
+        self.ctx = FakeContext('', self.tenant_id, is_admin=True)
         self.context_patch = mock.patch('neutron.context.Context',
                                         return_value=self.ctx)
         self.mock_context = self.context_patch.start()
@@ -309,7 +324,7 @@ class TestMeteringPluginL3AgentScheduler(
         self.mock_uuid = self.uuid_patch.start()
 
         self.tenant_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
-        self.ctx = context.Context('', self.tenant_id, is_admin=True)
+        self.ctx = FakeContext('', self.tenant_id, is_admin=True)
         self.context_patch = mock.patch('neutron.context.Context',
                                         return_value=self.ctx)
         self.mock_context = self.context_patch.start()
