@@ -18,6 +18,9 @@
 * references
 ** OVS agent https://wiki.openstack.org/wiki/Ovs-flow-logic
 """
+
+import netaddr
+
 from neutron.common import constants as const
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -128,13 +131,40 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                       icmp_type=const.ICMPV6_TYPE_NA, in_port=port,
                       actions=("resubmit(,%s)" % constants.ARP_SPOOF_TABLE))
 
+    def set_allowed_macs_for_port(self, port, mac_addresses=None,
+                                  allow_all=False):
+        if allow_all:
+            self.delete_flows(table_id=constants.LOCAL_SWITCHING, in_port=port)
+            self.delete_flows(table_id=constants.MAC_SPOOF_TABLE, in_port=port)
+            return
+        mac_addresses = mac_addresses or []
+        for address in mac_addresses:
+            self.install_normal(
+                table_id=constants.MAC_SPOOF_TABLE, priority=2,
+                eth_src=address, in_port=port)
+        # normalize so we can see if macs are the same
+        mac_addresses = {netaddr.EUI(mac) for mac in mac_addresses}
+        flows = self.dump_flows_for(table=constants.MAC_SPOOF_TABLE,
+                                    in_port=port).splitlines()
+        for flow in flows:
+            if 'dl_src' not in flow:
+                continue
+            flow_mac = flow.split('dl_src=')[1].split(' ')[0].split(',')[0]
+            if netaddr.EUI(flow_mac) not in mac_addresses:
+                self.delete_flows(table_id=constants.MAC_SPOOF_TABLE,
+                                  in_port=port, eth_src=flow_mac)
+        self.add_flow(table=constants.LOCAL_SWITCHING,
+                      priority=9, in_port=port,
+                      actions=("resubmit(,%s)" % constants.MAC_SPOOF_TABLE))
+
     def install_arp_spoofing_protection(self, port, ip_addresses):
         # allow ARPs as long as they match addresses that actually
         # belong to the port.
         for ip in ip_addresses:
-            self.install_normal(
-                table_id=constants.ARP_SPOOF_TABLE, priority=2,
-                proto='arp', arp_spa=ip, in_port=port)
+            self.add_flow(
+                table=constants.ARP_SPOOF_TABLE, priority=2,
+                proto='arp', arp_spa=ip, in_port=port,
+                actions=("resubmit(,%s)" % constants.MAC_SPOOF_TABLE))
 
         # Now that the rules are ready, direct ARP traffic from the port into
         # the anti-spoof table.

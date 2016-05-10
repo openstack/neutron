@@ -19,6 +19,8 @@
 ** OVS agent https://wiki.openstack.org/wiki/Ovs-flow-logic
 """
 
+import netaddr
+
 from oslo_log import log as logging
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import icmpv6
@@ -174,16 +176,45 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
                           match=match,
                           dest_table_id=constants.ARP_SPOOF_TABLE)
 
+    def set_allowed_macs_for_port(self, port, mac_addresses=None,
+                                  allow_all=False):
+        if allow_all:
+            self.delete_flows(table_id=constants.LOCAL_SWITCHING, in_port=port)
+            self.delete_flows(table_id=constants.MAC_SPOOF_TABLE, in_port=port)
+            return
+        mac_addresses = mac_addresses or []
+        for address in mac_addresses:
+            self.install_normal(
+                table_id=constants.MAC_SPOOF_TABLE, priority=2,
+                eth_src=address, in_port=port)
+        # normalize so we can see if macs are the same
+        mac_addresses = {netaddr.EUI(mac) for mac in mac_addresses}
+        flows = self.dump_flows(constants.MAC_SPOOF_TABLE)
+        for flow in flows:
+            matches = dict(flow.match.items())
+            if matches.get('in_port') != port:
+                continue
+            if not matches.get('eth_src'):
+                continue
+            flow_mac = matches['eth_src']
+            if netaddr.EUI(flow_mac) not in mac_addresses:
+                self.delete_flows(table_id=constants.MAC_SPOOF_TABLE,
+                                  in_port=port, eth_src=flow_mac)
+        self.install_goto(table_id=constants.LOCAL_SWITCHING,
+                          priority=9, in_port=port,
+                          dest_table_id=constants.MAC_SPOOF_TABLE)
+
     def install_arp_spoofing_protection(self, port, ip_addresses):
         # allow ARP replies as long as they match addresses that actually
         # belong to the port.
         for ip in ip_addresses:
             masked_ip = self._cidr_to_ryu(ip)
-            self.install_normal(table_id=constants.ARP_SPOOF_TABLE,
-                                priority=2,
-                                eth_type=ether_types.ETH_TYPE_ARP,
-                                arp_spa=masked_ip,
-                                in_port=port)
+            self.install_goto(table_id=constants.ARP_SPOOF_TABLE,
+                              priority=2,
+                              eth_type=ether_types.ETH_TYPE_ARP,
+                              arp_spa=masked_ip,
+                              in_port=port,
+                              dest_table_id=constants.MAC_SPOOF_TABLE)
 
         # Now that the rules are ready, direct ARP traffic from the port into
         # the anti-spoof table.
