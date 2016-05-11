@@ -88,7 +88,7 @@ class V2Controller(object):
         # needs to be remapped.
         # Example: https://neutron.endpoint/v2.0/lbaas/loadbalancers
         if (remainder and
-                manager.NeutronManager.get_service_plugin_by_path_prefix(
+                manager.NeutronManager.get_resources_for_path_prefix(
                     collection)):
             collection = remainder[0]
             remainder = remainder[1:]

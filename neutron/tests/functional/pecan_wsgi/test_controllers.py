@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from collections import namedtuple
-
 import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
@@ -425,10 +423,9 @@ class TestRequestProcessing(TestResourceController):
             self.req_stash['plugin'])
 
     def test_service_plugin_uri(self):
-        service_plugin = namedtuple('DummyServicePlugin', 'path_prefix')
-        service_plugin.path_prefix = 'dummy'
         nm = manager.NeutronManager.get_instance()
-        nm.service_plugins['dummy_sp'] = service_plugin
+        nm.path_prefix_resource_mappings['dummy'] = [
+            _SERVICE_PLUGIN_COLLECTION]
         response = self.do_request('/v2.0/dummy/serviceplugins.json')
         self.assertEqual(200, response.status_int)
         self.assertEqual(_SERVICE_PLUGIN_INDEX_BODY, response.json_body)
@@ -610,7 +607,8 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         self.addCleanup(policy.reset)
 
     def test_hyphenated_resource_controller_not_shimmed(self):
-        collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION.replace(
+            '_', '-')
         resource = pecan_utils.FakeExtension.HYPHENATED_RESOURCE
         url = '/v2.0/{}/something.json'.format(collection)
         resp = self.app.get(url)
@@ -618,8 +616,9 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         self.assertEqual({resource: {'fake': 'something'}}, resp.json)
 
     def test_hyphenated_collection_controller_not_shimmed(self):
-        collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
-        url = '/v2.0/{}.json'.format(collection)
+        body_collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        uri_collection = body_collection.replace('_', '-')
+        url = '/v2.0/{}.json'.format(uri_collection)
         resp = self.app.get(url)
         self.assertEqual(200, resp.status_int)
-        self.assertEqual({collection: [{'fake': 'fake'}]}, resp.json)
+        self.assertEqual({body_collection: [{'fake': 'fake'}]}, resp.json)

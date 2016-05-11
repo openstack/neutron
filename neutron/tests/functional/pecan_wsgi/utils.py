@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron.api import extensions
+from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.pecan_wsgi import controllers
 from neutron.pecan_wsgi.controllers import utils as pecan_utils
@@ -134,6 +135,8 @@ class FakeExtension(extensions.ExtensionDescriptor):
     def get_resources(self):
         collection = self.HYPHENATED_COLLECTION.replace('_', '-')
         params = self.RAM.get(self.HYPHENATED_COLLECTION, {})
+        attributes.PLURALS.update({self.HYPHENATED_COLLECTION:
+                                   self.HYPHENATED_RESOURCE})
         controller = base.create_resource(
             collection, self.HYPHENATED_RESOURCE, FakePlugin(),
             params, allow_bulk=True, allow_pagination=True,
