@@ -25,6 +25,7 @@ from webob import exc
 
 from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
@@ -234,7 +235,11 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
             service_plugins = {'l3_plugin_name': self.l3_plugin}
         else:
             service_plugins = None
-        mock.patch('neutron.common.rpc.get_client').start()
+        # NOTE(ivasilevskaya) mocking this way allows some control over mocked
+        # client like further method mocking with asserting calls
+        self.client_mock = mock.MagicMock(name="mocked client")
+        mock.patch('neutron.common.rpc.get_client'
+                   ).start().return_value = self.client_mock
         super(OvsAgentSchedulerTestCaseBase, self).setUp(
             self.plugin_str, service_plugins=service_plugins)
         mock.patch.object(
@@ -789,47 +794,45 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertFalse(ret_b)
 
     def test_router_reschedule_succeeded_after_failed_notification(self):
-        l3_plugin = (manager.NeutronManager.get_service_plugins()
-                     [service_constants.L3_ROUTER_NAT])
-        l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
         l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
         with self.router() as router:
             # schedule the router to host A
             l3_rpc_cb.get_router_ids(self.adminContext, host=L3_HOSTA)
-            with mock.patch.object(
-                    l3_notifier, 'router_added_to_agent') as notification_mock:
-                notification_mock.side_effect = [
-                    oslo_messaging.MessagingTimeout, None]
-                self._take_down_agent_and_run_reschedule(L3_HOSTA)
-                self.assertEqual(
-                    2, l3_notifier.router_added_to_agent.call_count)
-                # make sure router was rescheduled even when first attempt
-                # failed to notify l3 agent
-                l3_agents = self._list_l3_agents_hosting_router(
-                    router['router']['id'])['agents']
-                self.assertEqual(1, len(l3_agents))
-                self.assertEqual(L3_HOSTB, l3_agents[0]['host'])
+            ctxt_mock = mock.MagicMock()
+            call_mock = mock.MagicMock(
+                side_effect=[oslo_messaging.MessagingTimeout, None])
+            ctxt_mock.call = call_mock
+            self.client_mock.prepare = mock.MagicMock(return_value=ctxt_mock)
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)
+            self.assertEqual(2, call_mock.call_count)
+            # make sure router was rescheduled even when first attempt
+            # failed to notify l3 agent
+            l3_agents = self._list_l3_agents_hosting_router(
+                router['router']['id'])['agents']
+            self.assertEqual(1, len(l3_agents))
+            self.assertEqual(L3_HOSTB, l3_agents[0]['host'])
 
     def test_router_reschedule_failed_notification_all_attempts(self):
-        l3_plugin = (manager.NeutronManager.get_service_plugins()
-                     [service_constants.L3_ROUTER_NAT])
-        l3_notifier = l3_plugin.agent_notifiers[constants.AGENT_TYPE_L3]
         l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
         with self.router() as router:
             # schedule the router to host A
             l3_rpc_cb.get_router_ids(self.adminContext, host=L3_HOSTA)
-            with mock.patch.object(
-                    l3_notifier, 'router_added_to_agent') as notification_mock:
-                notification_mock.side_effect = oslo_messaging.MessagingTimeout
-                self._take_down_agent_and_run_reschedule(L3_HOSTA)
-                self.assertEqual(
-                    l3_agentschedulers_db.AGENT_NOTIFY_MAX_ATTEMPTS,
-                    l3_notifier.router_added_to_agent.call_count)
-                l3_agents = self._list_l3_agents_hosting_router(
-                    router['router']['id'])['agents']
-                self.assertEqual(0, len(l3_agents))
+            # mock client.prepare and context.call
+            ctxt_mock = mock.MagicMock()
+            call_mock = mock.MagicMock(
+                side_effect=oslo_messaging.MessagingTimeout)
+            ctxt_mock.call = call_mock
+            self.client_mock.prepare = mock.MagicMock(return_value=ctxt_mock)
+            # perform operations
+            self._take_down_agent_and_run_reschedule(L3_HOSTA)
+            self.assertEqual(
+                l3_rpc_agent_api.AGENT_NOTIFY_MAX_ATTEMPTS,
+                call_mock.call_count)
+            l3_agents = self._list_l3_agents_hosting_router(
+                router['router']['id'])['agents']
+            self.assertEqual(0, len(l3_agents))
 
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
