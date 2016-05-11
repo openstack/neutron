@@ -32,7 +32,10 @@ from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
+from neutron.db import segments_db
+from neutron.extensions import segment
 from neutron.ipam import utils as ipam_utils
+from neutron.services.segments import exceptions as segment_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -308,6 +311,25 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             msg = _('Exceeded maximum amount of fixed ips per port.')
             raise exc.InvalidInput(error_message=msg)
 
+    def _validate_segment(self, context, network_id, segment_id):
+        query = context.session.query(models_v2.Subnet.segment_id)
+        query = query.filter(models_v2.Subnet.network_id == network_id)
+        associated_segments = set(row.segment_id for row in query)
+        if None in associated_segments and len(associated_segments) > 1:
+            raise segment_exc.SubnetsNotAllAssociatedWithSegments(
+                network_id=network_id)
+
+        if segment_id:
+            query = context.session.query(segments_db.NetworkSegment)
+            query = query.filter(segments_db.NetworkSegment.id == segment_id)
+            segment = query.one()
+            if segment.network_id != network_id:
+                raise segment_exc.NetworkIdsDontMatch(
+                    subnet_network=network_id,
+                    segment_id=segment_id)
+            if segment.is_dynamic:
+                raise segment_exc.SubnetCantAssociateToDynamicSegment()
+
     def _get_subnet_for_fixed_ip(self, context, fixed, subnets):
         # Subnets are all the subnets belonging to the same network.
         if not subnets:
@@ -447,7 +469,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                            subnet_args['ip_version'])
 
         subnet = models_v2.Subnet(**subnet_args)
-        context.session.add(subnet)
+        segment_id = subnet_args.get('segment_id')
+        try:
+            context.session.add(subnet)
+            context.session.flush()
+        except db_exc.DBReferenceError:
+            raise segment_exc.SegmentNotFound(segment_id=segment_id)
+        self._validate_segment(context, network['id'], segment_id)
+
         # NOTE(changzhi) Store DNS nameservers with order into DB one
         # by one when create subnet with DNS nameservers
         if validators.is_attr_set(dns_nameservers):
@@ -502,3 +531,17 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             else:
                 fixed_ip_list.append({'subnet_id': subnet['id']})
         return fixed_ip_list
+
+    def _ipam_get_subnets(self, context, network_id, segment_id):
+        query = self._get_collection_query(context, models_v2.Subnet)
+        query = query.filter(models_v2.Subnet.network_id == network_id)
+        query = query.filter(models_v2.Subnet.segment_id == segment_id)
+        subnets = [self._make_subnet_dict(c, context=context) for c in query]
+        return subnets
+
+    def _make_subnet_args(self, detail, subnet, subnetpool_id):
+        args = super(IpamBackendMixin, self)._make_subnet_args(
+            detail, subnet, subnetpool_id)
+        if validators.is_attr_set(subnet.get(segment.SEGMENT_ID)):
+            args['segment_id'] = subnet[segment.SEGMENT_ID]
+        return args

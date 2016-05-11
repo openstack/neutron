@@ -22,9 +22,19 @@ from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 
+from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import segments_db as db
 from neutron.services.segments import exceptions
+
+
+def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
+    subnet_res['segment_id'] = subnet_db.get('segment_id')
+
+
+# Register dict extend functions for subnets
+common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+    attributes.SUBNETS, [_extend_subnet_dict_binding])
 
 
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
