@@ -300,3 +300,7 @@ def reset_random_seed():
     # at the same time get the same values from RNG
     seed = time.time() + os.getpid()
     random.seed(seed)
+
+
+def get_random_ipv6_mode():
+    return random.choice(constants.IPV6_MODES)
