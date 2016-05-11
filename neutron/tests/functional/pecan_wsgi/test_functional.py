@@ -23,18 +23,24 @@ from pecan import set_config
 from pecan.testing import load_test_app
 import testtools
 
-from neutron.api import extensions
+from neutron.api import extensions as exts
 from neutron.tests.unit import testlib_api
 
 
 class PecanFunctionalTest(testlib_api.SqlTestCase):
 
-    def setUp(self):
+    def setUp(self, service_plugins=None, extensions=None):
         self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
         super(PecanFunctionalTest, self).setUp()
-        self.addCleanup(extensions.PluginAwareExtensionManager.clear_instance)
+        self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.addCleanup(set_config, {}, overwrite=True)
         self.set_config_overrides()
+        ext_mgr = exts.PluginAwareExtensionManager.get_instance()
+        if extensions:
+            ext_mgr.extensions = extensions
+        if service_plugins:
+            service_plugins['CORE'] = ext_mgr.plugins.get('CORE')
+            ext_mgr.plugins = service_plugins
         self.setup_app()
 
     def setup_app(self):
