@@ -20,6 +20,7 @@ import time
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import timeutils
 import sqlalchemy as sa
@@ -156,6 +157,63 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         cutoff = timeutils.utcnow() - datetime.timedelta(
             seconds=agent_dead_limit)
         return cutoff
+
+    def reschedule_resources_from_down_agents(self, agent_type,
+                                              get_down_bindings,
+                                              agent_id_attr,
+                                              resource_id_attr,
+                                              resource_name,
+                                              reschedule_resource,
+                                              rescheduling_failed):
+        """Reschedule resources from down neutron agents
+        if admin state is up.
+        """
+        agent_dead_limit = self.agent_dead_limit_seconds()
+        self.wait_down_agents(agent_type, agent_dead_limit)
+
+        context = ncontext.get_admin_context()
+        try:
+            down_bindings = get_down_bindings(context, agent_dead_limit)
+
+            agents_back_online = set()
+            for binding in down_bindings:
+                binding_agent_id = getattr(binding, agent_id_attr)
+                binding_resource_id = getattr(binding, resource_id_attr)
+                if binding_agent_id in agents_back_online:
+                    continue
+                else:
+                    # we need new context to make sure we use different DB
+                    # transaction - otherwise we may fetch same agent record
+                    # each time due to REPEATABLE_READ isolation level
+                    context = ncontext.get_admin_context()
+                    agent = self._get_agent(context, binding_agent_id)
+                    if agent.is_active:
+                        agents_back_online.add(binding_agent_id)
+                        continue
+
+                LOG.warning(_LW(
+                    "Rescheduling %(resource_name)s %(resource)s from agent "
+                    "%(agent)s because the agent did not report to the server "
+                    "in the last %(dead_time)s seconds."),
+                    {'resource_name': resource_name,
+                     'resource': binding_resource_id,
+                     'agent': binding_agent_id,
+                     'dead_time': agent_dead_limit})
+                try:
+                    reschedule_resource(context, binding_resource_id)
+                except (rescheduling_failed, oslo_messaging.RemoteError):
+                    # Catch individual rescheduling errors here
+                    # so one broken one doesn't stop the iteration.
+                    LOG.exception(_LE("Failed to reschedule %(resource_name)s "
+                                      "%(resource)s"),
+                                  {'resource_name': resource_name,
+                                   'resource': binding_resource_id})
+        except Exception:
+            # we want to be thorough and catch whatever is raised
+            # to avoid loop abortion
+            LOG.exception(_LE("Exception encountered during %(resource_name)s "
+                              "rescheduling."),
+                          {'resource_name': resource_name})
 
 
 class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
