@@ -2334,20 +2334,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Raise a timeout the first 2 times it calls
         # get_service_plugin_list then return a empty tuple
         self.plugin_api.get_service_plugin_list.side_effect = (
-            raise_timeout, raise_timeout, tuple()
+            raise_timeout, tuple()
         )
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         self.assertEqual(tuple(), agent.neutron_service_plugins)
-
-    def test_get_service_plugin_list_retried_max(self):
-        raise_timeout = oslo_messaging.MessagingTimeout()
-        # Raise a timeout 5 times
-        self.plugin_api.get_service_plugin_list.side_effect = (
-            (raise_timeout, ) * 5
-        )
-        self.assertRaises(oslo_messaging.MessagingTimeout, l3_agent.L3NATAgent,
-                          HOSTNAME, self.conf)
 
     def test_external_gateway_removed_ext_gw_port_no_fip_ns(self):
         self.conf.set_override('state_path', '/tmp')
