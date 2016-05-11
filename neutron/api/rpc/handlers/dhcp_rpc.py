@@ -135,7 +135,11 @@ class DhcpRpcCallback(object):
         filters = {'network_id': [network['id'] for network in networks]}
         ports = plugin.get_ports(context, filters=filters)
         filters['enable_dhcp'] = [True]
-        subnets = plugin.get_subnets(context, filters=filters)
+        # NOTE(kevinbenton): we sort these because the agent builds tags
+        # based on position in the list and has to restart the process if
+        # the order changes.
+        subnets = sorted(plugin.get_subnets(context, filters=filters),
+                         key=operator.itemgetter('id'))
 
         grouped_subnets = self._group_by_network_id(subnets)
         grouped_ports = self._group_by_network_id(ports)
@@ -160,7 +164,12 @@ class DhcpRpcCallback(object):
                       "been deleted concurrently.", network_id)
             return
         filters = dict(network_id=[network_id])
-        network['subnets'] = plugin.get_subnets(context, filters=filters)
+        # NOTE(kevinbenton): we sort these because the agent builds tags
+        # based on position in the list and has to restart the process if
+        # the order changes.
+        network['subnets'] = sorted(
+            plugin.get_subnets(context, filters=filters),
+            key=operator.itemgetter('id'))
         network['ports'] = plugin.get_ports(context, filters=filters)
         return network
 

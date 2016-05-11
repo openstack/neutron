@@ -67,7 +67,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         plugin_retval = [{'id': 'a'}, {'id': 'b'}]
         self.plugin.get_networks.return_value = plugin_retval
         port = {'network_id': 'a'}
-        subnet = {'network_id': 'b'}
+        subnet = {'network_id': 'b', 'id': 'c'}
         self.plugin.get_ports.return_value = [port]
         self.plugin.get_subnets.return_value = [subnet]
         networks = self.callbacks.get_active_networks_info(mock.Mock(),
@@ -151,7 +151,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def test_get_network_info(self):
         network_retval = dict(id='a')
 
-        subnet_retval = mock.Mock()
+        subnet_retval = [dict(id='a'), dict(id='c'), dict(id='b')]
         port_retval = mock.Mock()
 
         self.plugin.get_network.return_value = network_retval
@@ -160,7 +160,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
         self.assertEqual(retval, network_retval)
-        self.assertEqual(retval['subnets'], subnet_retval)
+        sorted_subnet_retval = [dict(id='a'), dict(id='b'), dict(id='c')]
+        self.assertEqual(retval['subnets'], sorted_subnet_retval)
         self.assertEqual(retval['ports'], port_retval)
 
     def test_update_dhcp_port_verify_port_action_port_dict(self):
