@@ -13,6 +13,7 @@ NETWORK_API_EXTENSIONS="
     external-net, \
     extra_dhcp_opt, \
     extraroute, \
+    flavors, \
     l3-ha, \
     l3_agent_scheduler, \
     metering, \
