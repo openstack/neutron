@@ -37,10 +37,11 @@ class MeteringRpcCallbacks(object):
         if not l3_plugin:
             return
 
+        metering_data = self.meter_plugin.get_sync_data_metering(context)
         host = kwargs.get('host')
         if not utils.is_extension_supported(
             l3_plugin, consts.L3_AGENT_SCHEDULER_EXT_ALIAS) or not host:
-            return self.meter_plugin.get_sync_data_metering(context)
+            return metering_data
         else:
             agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})
             if not agents:
@@ -51,6 +52,8 @@ class MeteringRpcCallbacks(object):
             router_ids = [router['id'] for router in routers['routers']]
             if not router_ids:
                 return
-
-        return self.meter_plugin.get_sync_data_metering(context,
-                                                        router_ids=router_ids)
+            else:
+                return [
+                    router for router in metering_data
+                    if router['id'] in router_ids
+                ]
