@@ -413,6 +413,15 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self.assertTrue(ip_lib.device_exists(
                 device_name, namespace=router.ns_name))
 
+        # In the router namespace, check the iptables rules are set correctly
+        for fip in floating_ips:
+            floatingip = fip['floating_ip_address']
+            fixedip = fip['fixed_ip_address']
+            expected_rules = router.floating_forward_rules(floatingip,
+                                                           fixedip)
+            self._assert_iptables_rules_exist(
+                router.iptables_manager, 'nat', expected_rules)
+
     def test_dvr_router_rem_fips_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info()
@@ -443,6 +452,13 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             router_ns, floating_ips[0]['fixed_ip_address'])
         self.assertNotEqual(fip_rule_prio_1, fip_rule_prio_2)
 
+    def _assert_iptables_rules_exist(
+        self, router_iptables_manager, table_name, expected_rules):
+        rules = router_iptables_manager.get_rules_for_table(table_name)
+        for rule in expected_rules:
+            self.assertIn(
+                str(iptables_manager.IptablesRule(rule[0], rule[1])), rules)
+
     def test_prevent_snat_rule_exist_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info()
@@ -452,19 +468,15 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         prevent_snat_rule = router._prevent_snat_for_internal_traffic_rule(
             rfp_devicename)
 
-        def is_prevent_snat_rule_exist(router_iptables_manager):
-            rules = router_iptables_manager.get_rules_for_table('nat')
-            return (str(iptables_manager.IptablesRule(
-                prevent_snat_rule[0], prevent_snat_rule[1])) in rules)
-
-        self.assertTrue(is_prevent_snat_rule_exist(router.iptables_manager))
+        self._assert_iptables_rules_exist(
+            router.iptables_manager, 'nat', [prevent_snat_rule])
 
         restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
             self.agent.host, self.agent.conf)
         restarted_router = self.manage_router(restarted_agent, router_info)
 
-        self.assertTrue(is_prevent_snat_rule_exist(
-            restarted_router.iptables_manager))
+        self._assert_iptables_rules_exist(
+            restarted_router.iptables_manager, 'nat', [prevent_snat_rule])
 
     def _get_fixed_ip_rule_priority(self, namespace, fip):
         iprule = ip_lib.IPRule(namespace)
@@ -883,21 +895,3 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # external networks. SNAT will be used. Direct route will not work
         # here.
         src_machine.assert_no_ping(machine_diff_scope.ip)
-
-    def test_connection_from_diff_address_scope_with_fip(self):
-        (machine_same_scope, machine_diff_scope,
-            router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
-        fip = '19.4.4.11'
-        self._add_fip(router, fip,
-                      fixed_address=machine_diff_scope.ip,
-                      host=self.agent.conf.host,
-                      fixed_ip_address_scope='scope2')
-        router.process(self.agent)
-
-        # For the internal networks that are in the same address scope as
-        # external network, they should be able to reach the floating ip
-        net_helpers.assert_ping(machine_same_scope.namespace, fip, 5)
-        # For the port with fip, it should be able to reach the internal
-        # networks that are in the same address scope as external network
-        net_helpers.assert_ping(machine_diff_scope.namespace,
-                                machine_same_scope.ip, 5)
