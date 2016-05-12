@@ -110,6 +110,15 @@ class Pool(object):
         """
         return ipam_req.AddressRequestFactory
 
+    @abc.abstractmethod
+    def get_allocator(self, subnet_ids):
+        """Gets an allocator for subnets passed in
+
+        :param subnet_ids: ids for subnets from which the IP can be allocated
+        :returns: An instance of IPAM SubnetGroup
+        :raises: TODO(Carl) What sort of errors do we need to plan for?
+        """
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Subnet(object):
@@ -147,4 +156,26 @@ class Subnet(object):
         """Returns the details of the subnet
 
         :returns: An instance of SpecificSubnetRequest with the subnet detail.
+        """
+
+
+@six.add_metaclass(abc.ABCMeta)
+class SubnetGroup(object):
+    """Interface definition for a filtered group of IPAM Subnets
+
+    Allocates from a group of semantically equivalent subnets.  The list of
+    candidate subnets *may* be ordered by preference but all of the subnets
+    must be suitable for fulfilling the request.  For example, all of them must
+    be associated with the network we're trying to allocate an address for.
+    """
+
+    @abc.abstractmethod
+    def allocate(self, address_request):
+        """Allocates an IP address based on the request passed in
+
+        :param address_request: Specifies what to allocate.
+        :type address_request: An instance of a subclass of AddressRequest
+        :returns: A netaddr.IPAddress, subnet_id tuple
+        :raises: AddressNotAvailable, AddressOutsideAllocationPool,
+            AddressOutsideSubnet, IpAddressGenerationFailureAllSubnets
         """

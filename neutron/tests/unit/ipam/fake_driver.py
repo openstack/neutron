@@ -28,6 +28,9 @@ class FakeDriver(driver.Pool):
     def get_subnet(self, cidr):
         return driver.Subnet()
 
+    def get_allocator(self, subnet_ids):
+        return driver.SubnetGroup()
+
     def update_subnet(self, request):
         return driver.Subnet()
 

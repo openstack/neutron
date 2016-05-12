@@ -64,6 +64,10 @@ class IpAddressGenerationFailure(exceptions.Conflict):
     message = _("No more IP addresses available for subnet %(subnet_id)s.")
 
 
+class IpAddressGenerationFailureAllSubnets(IpAddressGenerationFailure):
+    message = _("No more IP addresses available.")
+
+
 class IPAllocationFailed(exceptions.NeutronException):
     message = _("IP allocation failed. Try again later.")
 
