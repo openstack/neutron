@@ -284,24 +284,21 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(ip_lib, 'IPDevice')
     def _test_scan_fip_ports(self, ri, ip_list, IPDevice):
         IPDevice.return_value = device = mock.Mock()
-        device.addr.list.return_value = ip_list
+        device.exists.return_value = True
+        ri.get_router_cidrs.return_value = ip_list
         self.fip_ns.get_rtr_ext_device_name = mock.Mock(
             return_value=mock.sentinel.rtr_ext_device_name)
         self.fip_ns.scan_fip_ports(ri)
 
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_scan_fip_ports_restart_fips(self, device_exists):
-        device_exists.return_value = True
+    def test_scan_fip_ports_restart_fips(self):
         ri = mock.Mock()
         ri.dist_fip_count = None
         ri.floating_ips_dict = {}
-        ip_list = [{'cidr': '111.2.3.4/32'}, {'cidr': '111.2.3.5/32'}]
+        ip_list = [{'cidr': '111.2.3.4'}, {'cidr': '111.2.3.5'}]
         self._test_scan_fip_ports(ri, ip_list)
         self.assertEqual(2, ri.dist_fip_count)
 
-    @mock.patch.object(ip_lib, 'device_exists')
-    def test_scan_fip_ports_restart_none(self, device_exists):
-        device_exists.return_value = True
+    def test_scan_fip_ports_restart_none(self):
         ri = mock.Mock()
         ri.dist_fip_count = None
         ri.floating_ips_dict = {}
