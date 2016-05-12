@@ -244,6 +244,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     # for the same host. Until we find a good solution for
                     # augmenting multiple server requests we should use the
                     # existing flow.
+                    # FIXME(kevinbenton): refactor so this happens outside
+                    # of floating IP transaction since it creates a port
+                    # via ML2.
+                    setattr(admin_ctx, 'GUARD_TRANSACTION', False)
                     fip_agent_port = (
                         self.create_fip_agent_gw_port_if_not_exists(
                             admin_ctx, external_port['network_id'],

@@ -1226,6 +1226,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
             # 'status' in port dict could not be updated by default, use
             # check_allow_post to stop the verification of system
+            # TODO(kevinbenton): move this out of transaction
+            setattr(context, 'GUARD_TRANSACTION', False)
             external_port = p_utils.create_port(self._core_plugin,
                                                 context.elevated(),
                                                 {'port': port},

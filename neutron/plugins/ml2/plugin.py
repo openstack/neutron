@@ -958,6 +958,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _create_subnet_db(self, context, subnet):
         session = context.session
+        # FIXME(kevinbenton): this is a mess because create_subnet ends up
+        # calling _update_router_gw_ports which ends up calling update_port
+        # on a router port inside this transaction. Need to find a way to
+        # separate router updates from the subnet update operation.
+        setattr(context, 'GUARD_TRANSACTION', False)
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).create_subnet(context, subnet)
             self.extension_manager.process_create_subnet(
@@ -1223,6 +1228,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._apply_dict_extend_functions('ports', result, port_db)
         return result, mech_context
 
+    @utils.transaction_guard
     def create_port(self, context, port):
         # TODO(kevinbenton): remove when bug/1543094 is fixed.
         with lockutils.lock(port['port']['network_id'],
@@ -1332,6 +1338,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if security_groups:
                 raise psec.PortSecurityPortHasSecurityGroup()
 
+    @utils.transaction_guard
     def update_port(self, context, id, port):
         attrs = port[attributes.PORT]
         need_port_update_notify = False

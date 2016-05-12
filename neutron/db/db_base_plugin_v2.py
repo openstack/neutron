@@ -813,6 +813,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             # prefix when they find PD subnet_id in port's
                             # fixed_ip.
                             ip.pop('ip_address', None)
+                # FIXME(kevinbenton): this should not be calling update_port
+                # inside of a transaction.
+                setattr(context, 'GUARD_TRANSACTION', False)
                 self.update_port(context, port['id'], {'port': port})
             # Send router_update to l3_agent
             if routers:

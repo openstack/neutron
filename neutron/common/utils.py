@@ -607,9 +607,11 @@ def transaction_guard(f):
     """
     @functools.wraps(f)
     def inner(self, context, *args, **kwargs):
-        if context.session.is_active:
-            raise RuntimeError(_("Method cannot be called within a "
-                                 "transaction."))
+        # FIXME(kevinbenton): get rid of all uses of this flag
+        if (context.session.is_active and
+                getattr(context, 'GUARD_TRANSACTION', True)):
+            raise RuntimeError(_("Method %s cannot be called within a "
+                                 "transaction.") % f)
         return f(self, context, *args, **kwargs)
     return inner
 
