@@ -281,10 +281,21 @@ class TestDhcpAgent(base.BaseTestCase):
                     sys_argv.return_value = ['dhcp', '--config-file',
                                              base.etcdir('neutron.conf')]
                     entry.main()
-                    launcher.assert_has_calls(
-                        [mock.call(cfg.CONF),
-                         mock.call().launch_service(mock.ANY),
-                         mock.call().wait()])
+                    # The signature of ServiceLauncher has changed with
+                    # oslo.service===1.10.0, so we allow for this variant
+                    # here, too.
+                    # TODO(frickler): Fix this test case to not depend on
+                    # oslo.service internals.
+                    if launcher.mock_calls[0][2]:
+                        launcher.assert_has_calls(
+                            [mock.call(cfg.CONF, restart_method='reload'),
+                             mock.call().launch_service(mock.ANY, workers=1),
+                             mock.call().wait()])
+                    else:
+                        launcher.assert_has_calls(
+                            [mock.call(cfg.CONF),
+                             mock.call().launch_service(mock.ANY),
+                             mock.call().wait()])
 
     def test_run_completes_single_pass(self):
         with mock.patch(DEVICE_MANAGER):
