@@ -109,6 +109,22 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
             None, constants.DUMMY
         )
 
+    def test_get_provider_names_by_resource_ids(self):
+        self._set_override([constants.DUMMY + ':dummy1:driver_path',
+                            constants.DUMMY + ':dummy2:driver_path2'])
+        ctx = context.get_admin_context()
+        self.manager.add_resource_association(ctx, constants.DUMMY,
+                                              'dummy1', '1')
+        self.manager.add_resource_association(ctx, constants.DUMMY,
+                                              'dummy1', '2')
+        self.manager.add_resource_association(ctx, constants.DUMMY,
+                                              'dummy2', '3')
+        names_by_id = self.manager.get_provider_names_by_resource_ids(
+            ctx, ['1', '2', '3', '4'])
+        # unmatched IDs will be excluded from the result
+        self.assertEqual({'1': 'dummy1', '2': 'dummy1', '3': 'dummy2'},
+                         names_by_id)
+
     def test_add_resource_association(self):
         self._set_override([constants.LOADBALANCER +
                             ':lbaas1:driver_path:default',
