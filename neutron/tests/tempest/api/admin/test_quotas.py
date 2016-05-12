@@ -21,9 +21,44 @@ from tempest import test
 from neutron.tests.tempest.api import base
 
 
-class QuotasTest(base.BaseAdminNetworkTest):
+class QuotasTestBase(base.BaseAdminNetworkTest):
 
-    """
+    @classmethod
+    @test.requires_ext(extension="quotas", service="network")
+    def resource_setup(cls):
+        super(QuotasTestBase, cls).resource_setup()
+
+    def _create_tenant(self):
+        # Add a tenant to conduct the test
+        test_tenant = data_utils.rand_name('test_tenant_')
+        test_description = data_utils.rand_name('desc_')
+        tenant = self.identity_admin_client.create_tenant(
+            name=test_tenant,
+            description=test_description)['tenant']
+        self.addCleanup(
+            self.identity_admin_client.create_tenant, tenant['id'])
+        return tenant
+
+    def _setup_quotas(self, project_id, **new_quotas):
+        # Change quotas for tenant
+        quota_set = self.admin_client.update_quotas(project_id,
+                                                    **new_quotas)
+        self.addCleanup(self._cleanup_quotas, project_id)
+        return quota_set
+
+    def _cleanup_quotas(self, project_id):
+        # Try to clean up the resources. If it fails, then
+        # assume that everything was already deleted, so
+        # it is OK to continue.
+        try:
+            self.admin_client.reset_quotas(project_id)
+        except lib_exc.NotFound:
+            pass
+
+
+class QuotasTest(QuotasTestBase):
+    """Test the Neutron API of Quotas.
+
     Tests the following operations in the Neutron API using the REST client for
     Neutron:
 
@@ -39,29 +74,14 @@ class QuotasTest(base.BaseAdminNetworkTest):
         quota_driver = neutron.db.driver.DbQuotaDriver
     """
 
-    @classmethod
-    @test.requires_ext(extension="quotas", service="network")
-    def resource_setup(cls):
-        super(QuotasTest, cls).resource_setup()
-
     @test.attr(type='gate')
     @test.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')
     def test_quotas(self):
-        # Add a tenant to conduct the test
-        test_tenant = data_utils.rand_name('test_tenant_')
-        test_description = data_utils.rand_name('desc_')
-        tenant = self.identity_admin_client.create_tenant(
-            name=test_tenant,
-            description=test_description)['tenant']
-        tenant_id = tenant['id']
-        self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
-
+        tenant_id = self._create_tenant()['id']
         new_quotas = {'network': 0, 'security_group': 0}
 
         # Change quotas for tenant
-        quota_set = self.admin_client.update_quotas(tenant_id,
-                                                    **new_quotas)
-        self.addCleanup(self._cleanup_quotas, tenant_id)
+        quota_set = self._setup_quotas(tenant_id, **new_quotas)
         for key, value in six.iteritems(new_quotas):
             self.assertEqual(value, quota_set[key])
 
@@ -84,12 +104,3 @@ class QuotasTest(base.BaseAdminNetworkTest):
         non_default_quotas = self.admin_client.list_quotas()
         for q in non_default_quotas['quotas']:
             self.assertNotEqual(tenant_id, q['tenant_id'])
-
-    def _cleanup_quotas(self, project_id):
-        # Try to clean up the resources. If it fails, then
-        # assume that everything was already deleted, so
-        # it is OK to continue.
-        try:
-            self.admin_client.reset_quotas(project_id)
-        except lib_exc.NotFound:
-            pass
