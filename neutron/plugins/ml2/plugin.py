@@ -757,6 +757,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
 
+    @utils.transaction_guard
     def create_network(self, context, network):
         result, mech_context = self._create_network_db(context, network)
         kwargs = {'context': context, 'network': result}
@@ -771,10 +772,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return result
 
+    @utils.transaction_guard
     def create_network_bulk(self, context, networks):
         objects = self._create_bulk_ml2(attributes.NETWORK, context, networks)
         return [obj['result'] for obj in objects]
 
+    @utils.transaction_guard
     def update_network(self, context, id, network):
         net_data = network[attributes.NETWORK]
         provider._raise_if_updates_provider_attributes(net_data)
@@ -966,6 +969,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return result, mech_context
 
+    @utils.transaction_guard
     def create_subnet(self, context, subnet):
         result, mech_context = self._create_subnet_db(context, subnet)
         kwargs = {'context': context, 'subnet': result}
@@ -979,10 +983,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.delete_subnet(context, result['id'])
         return result
 
+    @utils.transaction_guard
     def create_subnet_bulk(self, context, subnets):
         objects = self._create_bulk_ml2(attributes.SUBNET, context, subnets)
         return [obj['result'] for obj in objects]
 
+    @utils.transaction_guard
     def update_subnet(self, context, id, subnet):
         session = context.session
         with session.begin(subtransactions=True):
@@ -1256,6 +1262,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return bound_context.current
 
+    @utils.transaction_guard
     def create_port_bulk(self, context, ports):
         objects = self._create_bulk_ml2(attributes.PORT, context, ports)
 
@@ -1462,6 +1469,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding.host = attrs and attrs.get(portbindings.HOST_ID)
         binding.router_id = attrs and attrs.get('device_id')
 
+    @utils.transaction_guard
     def update_distributed_port_binding(self, context, id, port):
         attrs = port[attributes.PORT]
 
@@ -1518,6 +1526,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 raise e.errors[0].error
             raise exc.ServicePortInUse(port_id=port_id, reason=e)
 
+    @utils.transaction_guard
     def delete_port(self, context, id, l3_port_check=True):
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
@@ -1587,6 +1596,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier.port_delete(context, port['id'])
         self.notify_security_groups_member_updated(context, port)
 
+    @utils.transaction_guard
     def get_bound_port_context(self, plugin_context, port_id, host=None,
                                cached_networks=None):
         session = plugin_context.session
@@ -1643,6 +1653,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         exception_checker=lambda e: isinstance(e, (sa_exc.StaleDataError,
                                                    os_db_exception.DBDeadlock))
     )
+    @utils.transaction_guard
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
         """

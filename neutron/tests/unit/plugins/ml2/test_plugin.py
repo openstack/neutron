@@ -1565,20 +1565,16 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
     def test_update_distributed_port_binding_on_concurrent_port_delete(self):
         plugin = manager.NeutronManager.get_plugin()
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            p_const.L3_ROUTER_NAT)
         with self.port() as port:
             port = {
                 'id': port['port']['id'],
                 portbindings.HOST_ID: 'foo_host',
             }
-            # NOTE(rtheis): Mock L3 service prevent_l3_port_deletion() to
-            # prevent recursive loop introduced by the plugin get_port mock.
-            with mock.patch.object(plugin, 'get_port',
-                                   new=plugin.delete_port), \
-                mock.patch.object(l3plugin, 'prevent_l3_port_deletion'):
+            exc = db_exc.DBReferenceError('', '', '', '')
+            with mock.patch.object(ml2_db, 'ensure_distributed_port_binding',
+                                   side_effect=exc):
                 res = plugin.update_distributed_port_binding(
-                    self.context, 'foo_port_id', {'port': port})
+                    self.context, port['id'], {'port': port})
         self.assertIsNone(res)
 
     def test_update_distributed_port_binding_on_non_existent_port(self):
@@ -2316,6 +2312,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         # neutron.objects.db.api from core plugin instance
         self.setup_coreplugin(PLUGIN_NAME)
         self.context = mock.MagicMock()
+        self.context.session.is_active = False
         self.notify_p = mock.patch('neutron.callbacks.registry.notify')
         self.notify = self.notify_p.start()
 
