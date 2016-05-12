@@ -15,10 +15,11 @@
 #    under the License.
 
 
+from neutron.extensions import segment
 from neutron.services.segments import db
 
 
-class Plugin(db.SegmentDbMixin):
+class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     _instance = None
 
@@ -29,9 +30,3 @@ class Plugin(db.SegmentDbMixin):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
-
-    def get_plugin_description(self):
-        return "Network Segments"
-
-    def get_plugin_type(self):
-        return "segments"

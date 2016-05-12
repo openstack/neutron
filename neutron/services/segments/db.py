@@ -30,6 +30,7 @@ from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import segments_db as db
+from neutron.extensions import segment as extension
 from neutron.services.segments import exceptions
 
 
@@ -91,12 +92,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         segment_id = segment.get('id') or uuidutils.generate_uuid()
         with context.session.begin(subtransactions=True):
             network_id = segment['network_id']
-            # FIXME couldn't use constants because of a circular import problem
-            physical_network = segment['physical_network']
+            physical_network = segment[extension.PHYSICAL_NETWORK]
             if physical_network == constants.ATTR_NOT_SPECIFIED:
                 physical_network = None
-            network_type = segment['network_type']
-            segmentation_id = segment['segmentation_id']
+            network_type = segment[extension.NETWORK_TYPE]
+            segmentation_id = segment[extension.SEGMENTATION_ID]
             if segmentation_id == constants.ATTR_NOT_SPECIFIED:
                 segmentation_id = None
             args = {'id': segment_id,
