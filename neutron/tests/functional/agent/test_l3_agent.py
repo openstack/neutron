@@ -433,6 +433,27 @@ class L3AgentTestCase(L3AgentTestFramework):
         self._router_lifecycle(enable_ha=False, dual_stack=True,
                                v6_ext_gw_with_sub=False)
 
+    def test_legacy_router_ns_rebuild(self):
+        router_info = self.generate_router_info(False)
+        router = self.manage_router(self.agent, router_info)
+        gw_port = router.router['gw_port']
+        gw_inf_name = router.get_external_device_name(gw_port['id'])
+        router_ports = [gw_inf_name]
+        for i_port in router_info.get(l3_constants.INTERFACE_KEY, []):
+            interface_name = router.get_internal_device_name(i_port['id'])
+            router_ports.append(interface_name)
+
+        namespaces.Namespace.delete(router.router_namespace)
+
+        # l3 agent should be able to rebuild the ns when it is deleted
+        self.manage_router(self.agent, router_info)
+        # Assert the router ports are there in namespace
+        self.assertTrue(
+            all([ip_lib.device_exists(port, namespace=router.ns_name)
+                for port in router_ports]))
+
+        self._delete_router(self.agent, router.router_id)
+
     def test_ha_router_lifecycle(self):
         self._router_lifecycle(enable_ha=True)
 
