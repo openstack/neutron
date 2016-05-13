@@ -140,6 +140,8 @@ class PolicyHook(hooks.PecanHook):
             data = state.response.json
         except ValueError:
             return
+        if state.request.method not in pecan_constants.ACTION_MAP:
+            return
         action = '%s_%s' % (pecan_constants.ACTION_MAP[state.request.method],
                             resource)
         if not data or (resource not in data and collection not in data):
