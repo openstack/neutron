@@ -15,6 +15,7 @@
 
 import functools
 
+from debtcollector import removals
 import netaddr
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -313,6 +314,9 @@ class NoSortingHelper(SortingHelper):
     pass
 
 
+@removals.removed_class('NeutronController',
+                        version='newton',
+                        removal_version='ocata')
 class NeutronController(object):
     """Base controller class for Neutron API."""
     # _resource_name will be redefined in sub concrete controller
