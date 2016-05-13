@@ -29,6 +29,7 @@ NETWORK_API_EXTENSIONS="
     router, \
     router_availability_zone, \
     security-group, \
+    service-type, \
     standard-attr-description, \
     subnet_allocation, \
     tag, \
