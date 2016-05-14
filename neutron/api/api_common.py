@@ -22,11 +22,13 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
+from oslo_serialization import jsonutils
 from six.moves.urllib import parse
 from webob import exc
 
 from neutron._i18n import _, _LW
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron import wsgi
 
 
@@ -356,6 +358,38 @@ class NeutronController(object):
 
 def convert_exception_to_http_exc(e, faults, language):
     serializer = wsgi.JSONDictSerializer()
+    if isinstance(e, n_exc.MultipleExceptions):
+        converted_exceptions = [
+            convert_exception_to_http_exc(inner, faults, language)
+            for inner in e.inner_exceptions]
+        # if no internal exceptions, will be handled as single exception
+        if converted_exceptions:
+            codes = {c.code for c in converted_exceptions}
+            if len(codes) == 1:
+                # all error codes are the same so we can maintain the code
+                # and just concatenate the bodies
+                joined_msg = "\n".join(
+                    (jsonutils.loads(c.body)['NeutronError']['message']
+                     for c in converted_exceptions))
+                new_body = jsonutils.loads(converted_exceptions[0].body)
+                new_body['NeutronError']['message'] = joined_msg
+                converted_exceptions[0].body = serializer.serialize(new_body)
+                return converted_exceptions[0]
+            else:
+                # multiple error types so we turn it into a Conflict with the
+                # inner codes and bodies packed in
+                new_exception = exceptions.Conflict()
+                inner_error_strings = []
+                for c in converted_exceptions:
+                    c_body = jsonutils.loads(c.body)
+                    err = ('HTTP %s %s: %s' % (
+                           c.code, c_body['NeutronError']['type'],
+                           c_body['NeutronError']['message']))
+                    inner_error_strings.append(err)
+                new_exception.msg = "\n".join(inner_error_strings)
+                return convert_exception_to_http_exc(
+                    new_exception, faults, language)
+
     e = translate(e, language)
     body = serializer.serialize(
         {'NeutronError': get_exception_data(e)})
