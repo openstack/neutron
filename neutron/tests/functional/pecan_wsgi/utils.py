@@ -10,6 +10,60 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api import extensions
+from neutron.pecan_wsgi import controllers
+from neutron.pecan_wsgi.controllers import utils as pecan_utils
+
+
+class FakeSingularCollectionExtension(extensions.ExtensionDescriptor):
+
+    COLLECTION = 'topologies'
+    RESOURCE = 'topology'
+
+    RAM = {
+        COLLECTION: {
+            'fake': {'is_visible': True}
+        }
+    }
+
+    @classmethod
+    def get_name(cls):
+        return ""
+
+    @classmethod
+    def get_alias(cls):
+        return "fake-sc"
+
+    @classmethod
+    def get_description(cls):
+        return ""
+
+    @classmethod
+    def get_updated(cls):
+        return "2099-07-23T10:00:00-00:00"
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return self.RAM
+        else:
+            return {}
+
+    def get_pecan_controllers(self):
+        ctrllr = controllers.CollectionsController(
+            self.RESOURCE, self.RESOURCE)
+        return [pecan_utils.PecanResourceExtension(self.RESOURCE, ctrllr)]
+
+
+class FakeSingularCollectionPlugin(object):
+
+    supported_extension_aliases = ['fake-sc']
+
+    def get_topology(self, context, id_, fields=None):
+        return {'fake': id_}
+
+    def get_topologies(self, context, filters=None, fields=None):
+        return [{'fake': 'fake'}]
+
 
 def create_network(context, plugin):
     return plugin.create_network(

@@ -114,10 +114,9 @@ def initialize_all():
         LOG.info(_LI("Extension %s is pecan-aware. Fetching resources "
                      "and controllers"), ext.get_name())
         controllers = ext.get_pecan_controllers()
-        # controllers is actually a list of pairs where the first element is
-        # the collection name and the second the actual controller
-        for (collection, coll_controller) in controllers:
-            pecan_controllers[collection] = coll_controller
+        # controllers should be a list of PecanResourceExtensions
+        for res_ext in controllers:
+            pecan_controllers[res_ext.collection] = res_ext.controller
 
     for collection in attributes.RESOURCE_ATTRIBUTE_MAP:
         resource = _handle_plurals(collection)

@@ -113,3 +113,10 @@ class ShimCollectionsController(NeutronPecanController):
         request.context['resource_id'] = item
         return ShimItemController(self.collection, self.resource, item,
                                   self.controller), remainder
+
+
+class PecanResourceExtension(object):
+
+    def __init__(self, collection, controller):
+        self.collection = collection
+        self.controller = controller
