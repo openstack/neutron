@@ -18,7 +18,7 @@ class Invalid(exceptions.NeutronException):
     message = _("The value '%(value)s' for %(element)s is not valid.")
 
 
-class CallbackFailure(Exception):
+class CallbackFailure(exceptions.MultipleExceptions):
 
     def __init__(self, errors):
         self.errors = errors
@@ -28,6 +28,18 @@ class CallbackFailure(Exception):
             return ','.join(str(error) for error in self.errors)
         else:
             return str(self.errors)
+
+    @property
+    def inner_exceptions(self):
+        if isinstance(self.errors, list):
+            return [self._unpack_if_notification_error(e) for e in self.errors]
+        return [self._unpack_if_notification_error(self.errors)]
+
+    @staticmethod
+    def _unpack_if_notification_error(exc):
+        if isinstance(exc, NotificationError):
+            return exc.error
+        return exc
 
 
 class NotificationError(object):
