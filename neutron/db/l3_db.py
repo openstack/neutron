@@ -15,6 +15,7 @@
 import itertools
 
 import netaddr
+from neutron_lib.api import validators
 from neutron_lib import constants as l3_constants
 from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
@@ -581,6 +582,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if not (port_id_specified or subnet_id_specified):
             msg = _("Either subnet_id or port_id must be specified")
             raise n_exc.BadRequest(resource='router', msg=msg)
+        for key in ('port_id', 'subnet_id'):
+            if key not in interface_info:
+                continue
+            err = validators.validate_uuid(interface_info[key])
+            if err:
+                raise n_exc.BadRequest(resource='router', msg=err)
         if not for_removal:
             if port_id_specified and subnet_id_specified:
                 msg = _("Cannot specify both subnet-id and port-id")
