@@ -384,9 +384,9 @@ class L3NatTestCaseMixin(object):
                                  tenant_id=None,
                                  msg=None):
         interface_data = {}
-        if subnet_id:
+        if subnet_id is not None:
             interface_data.update({'subnet_id': subnet_id})
-        if port_id:
+        if port_id is not None:
             interface_data.update({'port_id': port_id})
 
         req = self.new_action_request('routers', interface_data, router_id,
@@ -974,6 +974,20 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 # tolerate subnet tenant deliberately set to '' in the
                 # nsx metadata access case
                 self.assertIn(payload['tenant_id'], [stid, ''], msg)
+
+    def test_router_add_interface_bad_values(self):
+        with self.router() as r:
+            exp_code = exc.HTTPBadRequest.code
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          False,
+                                          None,
+                                          expected_code=exp_code)
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          None,
+                                          False,
+                                          expected_code=exp_code)
 
     def test_router_add_interface_subnet(self):
         fake_notifier.reset()
