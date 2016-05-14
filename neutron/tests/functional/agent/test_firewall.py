@@ -660,3 +660,23 @@ class FirewallTestCaseIPv6(BaseFirewallTestCase):
                                          direction=self.tester.EGRESS)
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.EGRESS)
+
+    @skip_if_firewall('openvswitch')
+    def test_ip_spoofing(self):
+        sg_rules = [{'ethertype': constants.IPv6,
+                     'direction': firewall.INGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_ICMP}]
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        not_allowed_ip = "%s/64" % (
+            netaddr.IPAddress(self.tester.vm_ip_address) + 1)
+
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.INGRESS)
+        self.tester.vm_ip_cidr = not_allowed_ip
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.UDP,
+                                         src_port=546, dst_port=547,
+                                         direction=self.tester.EGRESS)
