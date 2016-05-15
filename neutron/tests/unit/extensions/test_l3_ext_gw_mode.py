@@ -16,6 +16,7 @@
 
 import mock
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import testscenarios
@@ -388,6 +389,19 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                         ext_gw_info}},
                             expected_code=expected_code,
                             neutron_context=neutron_context)
+
+    def test_router_gateway_set_retry(self):
+        with self.router() as r, self.subnet() as s:
+            ext_net_id = s['subnet']['network_id']
+            self._set_net_external(ext_net_id)
+            with mock.patch.object(
+                l3_db.L3_NAT_dbonly_mixin, '_validate_gw_info',
+                side_effect=[db_exc.RetryRequest(None), ext_net_id]):
+                    self._set_router_external_gateway(r['router']['id'],
+                                                      ext_net_id)
+            res = self._show('routers', r['router']['id'])['router']
+            self.assertEqual(ext_net_id,
+                             res['external_gateway_info']['network_id'])
 
     def test_router_create_with_gwinfo_invalid_ext_ip(self):
         with self.subnet() as s:

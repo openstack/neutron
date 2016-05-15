@@ -580,7 +580,8 @@ class Controller(object):
 
     @db_api.retry_db_errors
     def _update(self, request, id, body, **kwargs):
-        body = Controller.prepare_request_body(request.context, body, False,
+        body = Controller.prepare_request_body(request.context,
+                                               copy.deepcopy(body), False,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         action = self._plugin_handlers[self.UPDATE]
