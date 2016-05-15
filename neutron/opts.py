@@ -29,6 +29,7 @@ import neutron.agent.linux.ra
 import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
+import neutron.conf.quota
 import neutron.db.agents_db
 import neutron.db.agentschedulers_db
 import neutron.db.dvr_mac_db
@@ -54,7 +55,6 @@ import neutron.plugins.ml2.drivers.type_geneve
 import neutron.plugins.ml2.drivers.type_gre
 import neutron.plugins.ml2.drivers.type_vlan
 import neutron.plugins.ml2.drivers.type_vxlan
-import neutron.quota
 import neutron.service
 import neutron.services.metering.agents.metering_agent
 import neutron.services.qos.notification_drivers.manager
@@ -101,8 +101,8 @@ def list_extension_opts():
          neutron.extensions.allowedaddresspairs.allowed_address_pair_opts),
         ('quotas',
          itertools.chain(
-             neutron.extensions.l3.l3_quota_opts,
-             neutron.extensions.securitygroup.security_group_quota_opts)
+             neutron.conf.quota.l3_quota_opts,
+             neutron.conf.quota.security_group_quota_opts)
          )
     ]
 
@@ -138,7 +138,7 @@ def list_opts():
          itertools.chain(
               neutron.common.config.nova_opts)
          ),
-        ('quotas', neutron.quota.quota_opts)
+        ('quotas', neutron.conf.quota.core_quota_opts)
     ]
 
 

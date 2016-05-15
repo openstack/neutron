@@ -19,7 +19,6 @@ import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
-from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
 
@@ -29,6 +28,7 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants as n_const
 from neutron.common import exceptions
+from neutron.conf import quota
 from neutron import manager
 from neutron.quota import resource_registry
 
@@ -286,17 +286,9 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                'is_visible': True,
                                'convert_to': convert_to_uuid_list_or_none,
                                'default': const.ATTR_NOT_SPECIFIED}}}
-security_group_quota_opts = [
-    cfg.IntOpt('quota_security_group',
-               default=10,
-               help=_('Number of security groups allowed per tenant. '
-                      'A negative value means unlimited.')),
-    cfg.IntOpt('quota_security_group_rule',
-               default=100,
-               help=_('Number of security rules allowed per tenant. '
-                      'A negative value means unlimited.')),
-]
-cfg.CONF.register_opts(security_group_quota_opts, 'QUOTAS')
+
+# Register the configuration options
+quota.register_quota_opts(quota.security_group_quota_opts)
 
 
 class Securitygroup(extensions.ExtensionDescriptor):
