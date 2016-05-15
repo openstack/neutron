@@ -13,24 +13,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib.services.compute import keypairs_client
+from tempest.lib.services.compute import servers_client
 from tempest import manager
-from tempest.services.identity.v2.json.tenants_client import \
-    TenantsClient
+from tempest.services.identity.v2.json import tenants_client
 
 from neutron.tests.tempest import config
-from neutron.tests.tempest.services.network.json.network_client import \
-     NetworkClientJSON
-
+from neutron.tests.tempest.services.network.json import network_client
 
 CONF = config.CONF
 
 
 class Manager(manager.Manager):
-
     """
     Top level manager for OpenStack tempest clients
     """
-
     default_params = {
         'disable_ssl_certificate_validation':
             CONF.identity.disable_ssl_certificate_validation,
@@ -51,7 +48,7 @@ class Manager(manager.Manager):
 
         self._set_identity_clients()
 
-        self.network_client = NetworkClientJSON(
+        self.network_client = network_client.NetworkClientJSON(
             self.auth_provider,
             CONF.network.catalog_type,
             CONF.network.region or CONF.identity.region,
@@ -59,6 +56,23 @@ class Manager(manager.Manager):
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
             **self.default_params)
+
+        params = {
+            'service': CONF.compute.catalog_type,
+            'region': CONF.compute.region or CONF.identity.region,
+            'endpoint_type': CONF.compute.endpoint_type,
+            'build_interval': CONF.compute.build_interval,
+            'build_timeout': CONF.compute.build_timeout
+        }
+        params.update(self.default_params)
+
+        self.servers_client = servers_client.ServersClient(
+            self.auth_provider,
+            enable_instance_password=CONF.compute_feature_enabled
+                .enable_instance_password,
+            **params)
+        self.keypairs_client = keypairs_client.KeyPairsClient(
+            self.auth_provider, **params)
 
     def _set_identity_clients(self):
         params = {
@@ -69,5 +83,5 @@ class Manager(manager.Manager):
         params_v2_admin = params.copy()
         params_v2_admin['endpoint_type'] = CONF.identity.v2_admin_endpoint_type
         # Client uses admin endpoint type of Keystone API v2
-        self.tenants_client = TenantsClient(self.auth_provider,
-                                            **params_v2_admin)
+        self.tenants_client = tenants_client.TenantsClient(self.auth_provider,
+                                                           **params_v2_admin)
