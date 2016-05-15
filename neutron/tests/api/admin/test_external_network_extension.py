@@ -89,6 +89,21 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
             object_id=net_id, action='access_as_external',
             target_tenant='*')['rbac_policies']))
 
+    @test.idempotent_id('a5539002-5bdb-48b5-b124-abcd12347865')
+    def test_external_update_policy_from_wildcard_to_specific_tenant(self):
+        net_id = self._create_network(external=True)['id']
+        rbac_pol = self.admin_client.list_rbac_policies(
+            object_id=net_id, action='access_as_external',
+            target_tenant='*')['rbac_policies'][0]
+        r = self.client2.create_router(
+            data_utils.rand_name('router-'),
+            external_gateway_info={'network_id': net_id})['router']
+        self.addCleanup(self.admin_client.delete_router, r['id'])
+        # changing wildcard to specific tenant should be okay since its the
+        # only one using the network
+        self.admin_client.update_rbac_policy(
+            rbac_pol['id'], target_tenant=self.client2.tenant_id)
+
     @test.idempotent_id('a5539002-5bdb-48b5-b124-e9eedd5975e6')
     def test_external_conversion_on_policy_create(self):
         net_id = self._create_network(external=False)['id']

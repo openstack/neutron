@@ -220,8 +220,9 @@ class External_net_db_mixin(object):
         if (object_type != 'network' or
                 policy['action'] != 'access_as_external'):
             return
+        new_tenant = None
         if event == events.BEFORE_UPDATE:
-            new_tenant = kwargs['policy_tenant']['target_tenant']
+            new_tenant = kwargs['policy_update']['target_tenant']
             if new_tenant == policy['target_tenant']:
                 # nothing to validate if the tenant didn't change
                 return
@@ -259,6 +260,10 @@ class External_net_db_mixin(object):
                        rbac.target_tenant != '*'))
             router = router.filter(
                 ~l3_db.Router.tenant_id.in_(tenants_with_entries))
+            if new_tenant:
+                # if this is an update we also need to ignore any router
+                # interfaces that belong to the new target.
+                router = router.filter(l3_db.Router.tenant_id != new_tenant)
         if router.count():
             msg = _("There are routers attached to this network that "
                     "depend on this policy for access.")
