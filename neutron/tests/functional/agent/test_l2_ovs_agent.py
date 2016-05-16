@@ -24,14 +24,6 @@ from neutron.tests.functional.agent.l2 import base
 
 
 class TestOVSAgent(base.OVSAgentTestFramework):
-    def setUp(self):
-        # NOTE(jlibosva): Tests are getting stuck when running with native
-        # ovsdb interface in this test suite.  We skip until the root cause is
-        # found to unblock CI jobs.
-        if self.ovsdb_interface == 'native':
-            self.skipTest('bug/1567668')
-        super(TestOVSAgent, self).setUp()
-
     def test_port_creation_and_deletion(self):
         self.setup_agent_and_ports(
             port_dicts=self.create_test_ports())

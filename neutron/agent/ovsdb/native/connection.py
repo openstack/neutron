@@ -104,6 +104,9 @@ class Connection(object):
         while True:
             self.idl.wait(self.poller)
             self.poller.fd_wait(self.txns.alert_fileno, poller.POLLIN)
+            #TODO(jlibosva): Remove next line once losing connection to ovsdb
+            #                is solved.
+            self.poller.timer_wait(self.timeout)
             self.poller.block()
             self.idl.run()
             txn = self.txns.get_nowait()
