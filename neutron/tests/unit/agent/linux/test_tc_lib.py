@@ -16,6 +16,7 @@
 import mock
 
 from neutron.agent.linux import tc_lib
+from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 DEVICE_NAME = "tap_device"
@@ -275,23 +276,23 @@ class TestTcCommand(base.BaseTestCase):
             extra_ok_codes=[2]
         )
 
-    def test__get_filters_burst_value_burst_not_none(self):
+    def test_get_ingress_qdisc_burst_value_burst_not_none(self):
         self.assertEqual(
-            BURST, self.tc._get_filters_burst_value(BW_LIMIT, BURST)
+            BURST, self.tc.get_ingress_qdisc_burst_value(BW_LIMIT, BURST)
         )
 
-    def test__get_filters_burst_no_burst_value_given(self):
-        expected_burst = BW_LIMIT * 0.8
+    def test_get_ingress_qdisc_burst_no_burst_value_given(self):
+        expected_burst = BW_LIMIT * qos_consts.DEFAULT_BURST_RATE
         self.assertEqual(
             expected_burst,
-            self.tc._get_filters_burst_value(BW_LIMIT, None)
+            self.tc.get_ingress_qdisc_burst_value(BW_LIMIT, None)
         )
 
-    def test__get_filters_burst_burst_value_zero(self):
-        expected_burst = BW_LIMIT * 0.8
+    def test_get_ingress_qdisc_burst_burst_value_zero(self):
+        expected_burst = BW_LIMIT * qos_consts.DEFAULT_BURST_RATE
         self.assertEqual(
             expected_burst,
-            self.tc._get_filters_burst_value(BW_LIMIT, 0)
+            self.tc.get_ingress_qdisc_burst_value(BW_LIMIT, 0)
         )
 
     def test__get_tbf_burst_value_when_burst_bigger_then_minimal(self):

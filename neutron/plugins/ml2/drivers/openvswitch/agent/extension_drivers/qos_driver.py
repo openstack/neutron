@@ -53,7 +53,10 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
                       "deleted", port_id)
             return
         max_kbps = rule.max_kbps
-        max_burst_kbps = rule.max_burst_kbps
+        # NOTE(slaweq): According to ovs docs:
+        # http://openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html
+        # ovs accepts only integer values of burst:
+        max_burst_kbps = int(self._get_egress_burst_value(rule))
 
         self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
                                                     max_kbps,
