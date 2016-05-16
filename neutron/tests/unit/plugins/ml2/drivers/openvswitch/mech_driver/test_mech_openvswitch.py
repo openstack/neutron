@@ -17,6 +17,7 @@ from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.extensions import portbindings
+from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver \
     import mech_openvswitch
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
@@ -69,6 +70,49 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
                               False,
                               group='SECURITYGROUP')
         super(OpenvswitchMechanismSGDisabledBaseTestCase, self).setUp()
+
+
+class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
+
+    def _make_port_ctx(self, agents):
+        segments = [{api.ID: 'local_segment_id', api.NETWORK_TYPE: 'local'}]
+        return base.FakePortContext(self.AGENT_TYPE, agents, segments,
+                                    vnic_type=self.VNIC_TYPE)
+
+    def test_backward_compat_with_unreporting_agent(self):
+        hybrid = portbindings.OVS_HYBRID_PLUG
+        # agent didn't report so it should be hybrid based on server config
+        context = self._make_port_ctx(self.AGENTS)
+        self.driver.bind_port(context)
+        self.assertTrue(context._bound_vif_details[hybrid])
+        self.driver.vif_details[hybrid] = False
+        context = self._make_port_ctx(self.AGENTS)
+        self.driver.bind_port(context)
+        self.assertFalse(context._bound_vif_details[hybrid])
+
+    def test_hybrid_plug_true_if_agent_requests(self):
+        hybrid = portbindings.OVS_HYBRID_PLUG
+        # set server side default to false and ensure that hybrid becomes
+        # true if requested by the agent
+        self.driver.vif_details[hybrid] = False
+        agents = [{'alive': True,
+                   'configurations': {hybrid: True},
+                   'host': 'host'}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertTrue(context._bound_vif_details[hybrid])
+
+    def test_hybrid_plug_false_if_agent_requests(self):
+        hybrid = portbindings.OVS_HYBRID_PLUG
+        # set server side default to true and ensure that hybrid becomes
+        # false if requested by the agent
+        self.driver.vif_details[hybrid] = True
+        agents = [{'alive': True,
+                   'configurations': {hybrid: False},
+                   'host': 'host'}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertFalse(context._bound_vif_details[hybrid])
 
 
 class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,

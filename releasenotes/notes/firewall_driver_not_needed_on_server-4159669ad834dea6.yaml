@@ -1,0 +1,12 @@
+---
+prelude: >
+    The Neutron server no longer needs to be configured
+    with a firewall driver and it can support mixed
+    environments of hybrid iptables firewalls and the
+    pure OVS firewall.
+features:
+  - The Neutron server now learns the appropriate firewall
+    wiring behavior from each OVS agent so it no longer needs
+    to be configured with the firewall_driver. This means
+    it also supports multiple agents with different types
+    of firewalls.
