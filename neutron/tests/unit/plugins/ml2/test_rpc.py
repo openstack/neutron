@@ -21,14 +21,15 @@ import collections
 
 import mock
 from neutron_lib import constants
-from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_context import context as oslo_context
 import oslo_messaging
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
+from neutron.callbacks import resources
 from neutron.common import topics
+from neutron.db import provisioning_blocks
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
@@ -51,29 +52,27 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             plugin_rpc.manager, 'NeutronManager').start()
         self.plugin = self.manager.get_plugin()
 
-    def _test_update_device_up(self):
+    def _test_update_device_up(self, host=None):
         kwargs = {
             'agent_id': 'foo_agent',
-            'device': 'foo_device'
+            'device': 'foo_device',
+            'host': host
         }
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
                         '._device_to_port_id'):
-            with mock.patch('neutron.callbacks.registry.notify') as notify:
+            with mock.patch('neutron.db.provisioning_blocks.'
+                            'provisioning_complete') as pc:
                 self.callbacks.update_device_up(mock.Mock(), **kwargs)
-                return notify
+                return pc
 
     def test_update_device_up_notify(self):
         notify = self._test_update_device_up()
-        kwargs = {
-            'context': mock.ANY, 'port': mock.ANY, 'update_device_up': True
-        }
-        notify.assert_called_once_with(
-            'port', 'after_update', self.plugin, **kwargs)
+        notify.assert_called_once_with(mock.ANY, mock.ANY, resources.PORT,
+                                       provisioning_blocks.L2_AGENT_ENTITY)
 
     def test_update_device_up_notify_not_sent_with_port_not_found(self):
-        self.plugin._get_port.side_effect = (
-            exceptions.PortNotFound(port_id='foo_port_id'))
-        notify = self._test_update_device_up()
+        self.plugin.port_bound_to_host.return_value = False
+        notify = self._test_update_device_up('host')
         self.assertFalse(notify.call_count)
 
     def test_get_device_details_without_port_context(self):
@@ -93,7 +92,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
     def test_get_device_details_port_status_equal_new_status(self):
         port = collections.defaultdict(lambda: 'fake')
         self.plugin.get_bound_port_context().current = port
-        self.plugin.port_bound_to_host = mock.MagicMock(return_value=True)
+        self.plugin.port_bound_to_host = port
         for admin_state_up in (True, False):
             new_status = (constants.PORT_STATUS_BUILD if admin_state_up
                           else constants.PORT_STATUS_DOWN)

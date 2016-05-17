@@ -54,6 +54,7 @@ class DhcpAgent(manager.Manager):
     def __init__(self, host=None, conf=None):
         super(DhcpAgent, self).__init__(host=host)
         self.needs_resync_reasons = collections.defaultdict(list)
+        self.dhcp_ready_ports = set()
         self.conf = conf or cfg.CONF
         self.cache = NetworkCache()
         self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
@@ -97,6 +98,7 @@ class DhcpAgent(manager.Manager):
         """Activate the DHCP agent."""
         self.sync_state()
         self.periodic_resync()
+        self.start_ready_ports_loop()
 
     def call_driver(self, action, network, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
@@ -169,6 +171,9 @@ class DhcpAgent(manager.Manager):
                         network.id in only_nets):  # specific network to sync
                     pool.spawn(self.safe_configure_dhcp_for_network, network)
             pool.waitall()
+            # we notify all ports in case some were created while the agent
+            # was down
+            self.dhcp_ready_ports |= set(self.cache.get_port_ids())
             LOG.info(_LI('Synchronizing state complete'))
 
         except Exception as e:
@@ -178,6 +183,37 @@ class DhcpAgent(manager.Manager):
             else:
                 self.schedule_resync(e)
             LOG.exception(_LE('Unable to sync network state.'))
+
+    def _dhcp_ready_ports_loop(self):
+        """Notifies the server of any ports that had reservations setup."""
+        while True:
+            # this is just watching a set so we can do it really frequently
+            eventlet.sleep(0.1)
+            if self.dhcp_ready_ports:
+                ports_to_send = self.dhcp_ready_ports
+                self.dhcp_ready_ports = set()
+                try:
+                    self.plugin_rpc.dhcp_ready_on_ports(ports_to_send)
+                    continue
+                except oslo_messaging.MessagingTimeout:
+                    LOG.error(_LE("Timeout notifying server of ports ready. "
+                                  "Retrying..."))
+                except Exception as e:
+                    if (isinstance(e, oslo_messaging.RemoteError)
+                            and e.exc_type == 'NoSuchMethod'):
+                        LOG.info(_LI("Server does not support port ready "
+                                     "notifications. Waiting for 5 minutes "
+                                     "before retrying."))
+                        eventlet.sleep(300)
+                        continue
+                    LOG.exception(_LE("Failure notifying DHCP server of "
+                                      "ready DHCP ports. Will retry on next "
+                                      "iteration."))
+                self.dhcp_ready_ports |= ports_to_send
+
+    def start_ready_ports_loop(self):
+        """Spawn a thread to push changed ports to server."""
+        eventlet.spawn(self._dhcp_ready_ports_loop)
 
     @utils.exception_logger()
     def _periodic_resync_helper(self):
@@ -348,6 +384,7 @@ class DhcpAgent(manager.Manager):
                     driver_action = 'restart'
             self.cache.put_port(updated_port)
             self.call_driver(driver_action, network)
+            self.dhcp_ready_ports.add(updated_port.id)
 
     def _is_port_on_this_agent(self, port):
         thishost = utils.get_dhcp_agent_device_id(
@@ -421,6 +458,7 @@ class DhcpPluginApi(object):
         1.0 - Initial version.
         1.1 - Added get_active_networks_info, create_dhcp_port,
               and update_dhcp_port methods.
+        1.5 - Added dhcp_ready_on_ports
 
     """
 
@@ -471,6 +509,12 @@ class DhcpPluginApi(object):
                           network_id=network_id, device_id=device_id,
                           host=self.host)
 
+    def dhcp_ready_on_ports(self, port_ids):
+        """Notify the server that DHCP is configured for the port."""
+        cctxt = self.client.prepare(version='1.5')
+        return cctxt.call(self.context, 'dhcp_ready_on_ports',
+                          port_ids=port_ids)
+
 
 class NetworkCache(object):
     """Agent cache of the current network state."""
@@ -478,6 +522,9 @@ class NetworkCache(object):
         self.cache = {}
         self.subnet_lookup = {}
         self.port_lookup = {}
+
+    def get_port_ids(self):
+        return self.port_lookup.keys()
 
     def get_network_ids(self):
         return self.cache.keys()
@@ -563,6 +610,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.DHCP_AGENT,
             'configurations': {
+                'notifies_port_ready': True,
                 'dhcp_driver': self.conf.dhcp_driver,
                 'dhcp_lease_duration': self.conf.dhcp_lease_duration,
                 'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},

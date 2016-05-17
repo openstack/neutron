@@ -26,10 +26,12 @@ import oslo_messaging
 from oslo_utils import excutils
 
 from neutron._i18n import _, _LW
+from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import api as db_api
+from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import utils as p_utils
@@ -64,9 +66,10 @@ class DhcpRpcCallback(object):
     #     1.4 - Removed update_lease_expiration. It's not used by reference
     #           DHCP agent since Juno, so similar rationale for not bumping the
     #           major version as above applies here too.
+    #     1.5 - Added dhcp_ready_on_ports.
     target = oslo_messaging.Target(
         namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.4')
+        version='1.5')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -225,3 +228,9 @@ class DhcpRpcCallback(object):
                   {'port': port,
                    'host': host})
         return self._port_action(plugin, context, port, 'update_port')
+
+    def dhcp_ready_on_ports(self, context, port_ids):
+        for port_id in port_ids:
+            provisioning_blocks.provisioning_complete(
+                context, port_id, resources.PORT,
+                provisioning_blocks.DHCP_ENTITY)

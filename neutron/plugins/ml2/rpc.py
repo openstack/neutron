@@ -14,7 +14,6 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
-from neutron_lib import exceptions
 from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
@@ -22,14 +21,14 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _LE, _LW
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron import manager
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.services.qos import qos_consts
@@ -205,31 +204,30 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
         port_id = plugin._device_to_port_id(rpc_context, device)
-        if (host and not plugin.port_bound_to_host(rpc_context,
-                                                   port_id, host)):
+        port = plugin.port_bound_to_host(rpc_context, port_id, host)
+        if host and not port:
             LOG.debug("Device %(device)s not bound to the"
                       " agent host %(host)s",
                       {'device': device, 'host': host})
             return
-
-        port_id = plugin.update_port_status(rpc_context, port_id,
-                                            n_const.PORT_STATUS_ACTIVE,
-                                            host)
-        try:
-            # NOTE(armax): it's best to remove all objects from the
-            # session, before we try to retrieve the new port object
-            rpc_context.session.expunge_all()
-            port = plugin._get_port(rpc_context, port_id)
-        except exceptions.PortNotFound:
-            LOG.debug('Port %s not found during update', port_id)
+        if port and port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
+            # NOTE(kevinbenton): we have to special case DVR ports because of
+            # the special multi-binding status update logic they have that
+            # depends on the host
+            plugin.update_port_status(rpc_context, port_id,
+                                      n_const.PORT_STATUS_ACTIVE, host)
         else:
-            kwargs = {
-                'context': rpc_context,
-                'port': port,
-                'update_device_up': True
-            }
-            registry.notify(
-                resources.PORT, events.AFTER_UPDATE, plugin, **kwargs)
+            # _device_to_port_id may have returned a truncated UUID if the
+            # agent did not provide a full one (e.g. Linux Bridge case). We
+            # need to look up the full one before calling provisioning_complete
+            if not port:
+                port = ml2_db.get_port(rpc_context.session, port_id)
+            if not port:
+                # port doesn't exist, no need to add a provisioning block
+                return
+            provisioning_blocks.provisioning_complete(
+                rpc_context, port['id'], resources.PORT,
+                provisioning_blocks.L2_AGENT_ENTITY)
 
     def update_device_list(self, rpc_context, **kwargs):
         devices_up = []
