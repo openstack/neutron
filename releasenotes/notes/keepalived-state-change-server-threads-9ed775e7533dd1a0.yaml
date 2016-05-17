@@ -1,0 +1,10 @@
+---
+upgrade:
+  - A new option ``ha_keepalived_state_change_server_threads`` has been
+    added to configure the number of concurrent threads spawned for
+    keepalived server connection requests. Higher values increase the
+    CPU load on the agent nodes. The default value is half of the number
+    of CPUs present on the node. This allows operators to tune the
+    number of threads to suit their environment. With more threads,
+    simultaneous requests for multiple HA routers state change can be
+    handled faster.
