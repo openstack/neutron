@@ -26,9 +26,10 @@ from oslo_service import service as common_service
 from oslo_utils import excutils
 from oslo_utils import importutils
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _LE, _LI
 from neutron.common import config
 from neutron.common import rpc as n_rpc
+from neutron.conf import service
 from neutron import context
 from neutron.db import api as session
 from neutron import manager
@@ -36,29 +37,7 @@ from neutron import worker
 from neutron import wsgi
 
 
-service_opts = [
-    cfg.IntOpt('periodic_interval',
-               default=40,
-               help=_('Seconds between running periodic tasks')),
-    cfg.IntOpt('api_workers',
-               help=_('Number of separate API worker processes for service. '
-                      'If not specified, the default is equal to the number '
-                      'of CPUs available for best performance.')),
-    cfg.IntOpt('rpc_workers',
-               default=1,
-               help=_('Number of RPC worker processes for service')),
-    cfg.IntOpt('rpc_state_report_workers',
-               default=1,
-               help=_('Number of RPC worker processes dedicated to state '
-                      'reports queue')),
-    cfg.IntOpt('periodic_fuzzy_delay',
-               default=5,
-               help=_('Range of seconds to randomly delay when starting the '
-                      'periodic task scheduler to reduce stampeding. '
-                      '(Disable by setting to 0)')),
-]
-CONF = cfg.CONF
-CONF.register_opts(service_opts)
+service.register_service_opts(service.service_opts)
 
 LOG = logging.getLogger(__name__)
 
@@ -301,30 +280,30 @@ class Service(n_rpc.Service):
                periodic_fuzzy_delay=None):
         """Instantiates class and passes back application object.
 
-        :param host: defaults to CONF.host
+        :param host: defaults to cfg.CONF.host
         :param binary: defaults to basename of executable
         :param topic: defaults to bin_name - 'neutron-' part
-        :param manager: defaults to CONF.<topic>_manager
-        :param report_interval: defaults to CONF.report_interval
-        :param periodic_interval: defaults to CONF.periodic_interval
-        :param periodic_fuzzy_delay: defaults to CONF.periodic_fuzzy_delay
+        :param manager: defaults to cfg.CONF.<topic>_manager
+        :param report_interval: defaults to cfg.CONF.report_interval
+        :param periodic_interval: defaults to cfg.CONF.periodic_interval
+        :param periodic_fuzzy_delay: defaults to cfg.CONF.periodic_fuzzy_delay
 
         """
         if not host:
-            host = CONF.host
+            host = cfg.CONF.host
         if not binary:
             binary = os.path.basename(inspect.stack()[-1][1])
         if not topic:
             topic = binary.rpartition('neutron-')[2]
             topic = topic.replace("-", "_")
         if not manager:
-            manager = CONF.get('%s_manager' % topic, None)
+            manager = cfg.CONF.get('%s_manager' % topic, None)
         if report_interval is None:
-            report_interval = CONF.report_interval
+            report_interval = cfg.CONF.report_interval
         if periodic_interval is None:
-            periodic_interval = CONF.periodic_interval
+            periodic_interval = cfg.CONF.periodic_interval
         if periodic_fuzzy_delay is None:
-            periodic_fuzzy_delay = CONF.periodic_fuzzy_delay
+            periodic_fuzzy_delay = cfg.CONF.periodic_fuzzy_delay
         service_obj = cls(host, binary, topic, manager,
                           report_interval=report_interval,
                           periodic_interval=periodic_interval,
