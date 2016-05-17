@@ -14,13 +14,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 from debtcollector import removals
+import random
+import time
+
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_messaging import serializer as om_serializer
 from oslo_service import service
+from oslo_utils import excutils
 
+from neutron._i18n import _LE, _LW
 from neutron.common import exceptions
 from neutron import context
 
@@ -76,6 +82,7 @@ def cleanup():
     assert NOTIFIER is not None
     TRANSPORT.cleanup()
     NOTIFICATION_TRANSPORT.cleanup()
+    _ContextWrapper.reset_timeouts()
     TRANSPORT = NOTIFICATION_TRANSPORT = NOTIFIER = None
 
 
@@ -91,13 +98,84 @@ def get_allowed_exmods():
     return ALLOWED_EXMODS + EXTRA_EXMODS
 
 
+class _ContextWrapper(object):
+    """Wraps oslo messaging contexts to set the timeout for calls.
+
+    This intercepts RPC calls and sets the timeout value to the globally
+    adapting value for each method. An oslo messaging timeout results in
+    a doubling of the timeout value for the method on which it timed out.
+    There currently is no logic to reduce the timeout since busy Neutron
+    servers are more frequently the cause of timeouts rather than lost
+    messages.
+    """
+    _METHOD_TIMEOUTS = collections.defaultdict(
+        lambda: TRANSPORT.conf.rpc_response_timeout)
+
+    @classmethod
+    def reset_timeouts(cls):
+        cls._METHOD_TIMEOUTS.clear()
+
+    def __init__(self, original_context):
+        self._original_context = original_context
+
+    def __getattr__(self, name):
+        return getattr(self._original_context, name)
+
+    def call(self, ctxt, method, **kwargs):
+        # two methods with the same name in different namespaces should
+        # be tracked independently
+        if self._original_context.target.namespace:
+            scoped_method = '%s.%s' % (self._original_context.target.namespace,
+                                       method)
+        else:
+            scoped_method = method
+        # set the timeout from the global method timeout tracker for this
+        # method
+        self._original_context.timeout = self._METHOD_TIMEOUTS[scoped_method]
+        try:
+            return self._original_context.call(ctxt, method, **kwargs)
+        except oslo_messaging.MessagingTimeout:
+            with excutils.save_and_reraise_exception():
+                wait = random.uniform(0, TRANSPORT.conf.rpc_response_timeout)
+                LOG.error(_LE("Timeout in RPC method %(method)s. Waiting for "
+                              "%(wait)s seconds before next attempt. If the "
+                              "server is not down, consider increasing the "
+                              "rpc_response_timeout option as Neutron "
+                              "server(s) may be overloaded and unable to "
+                              "respond quickly enough."),
+                          {'wait': int(round(wait)), 'method': scoped_method})
+                ceiling = TRANSPORT.conf.rpc_response_timeout * 10
+                new_timeout = min(self._original_context.timeout * 2, ceiling)
+                if new_timeout > self._METHOD_TIMEOUTS[scoped_method]:
+                    LOG.warning(_LW("Increasing timeout for %(method)s calls "
+                                    "to %(new)s seconds. Restart the agent to "
+                                    "restore it to the default value."),
+                                {'method': scoped_method, 'new': new_timeout})
+                    self._METHOD_TIMEOUTS[scoped_method] = new_timeout
+                time.sleep(wait)
+
+
+class BackingOffClient(oslo_messaging.RPCClient):
+    """An oslo messaging RPC Client that implements a timeout backoff.
+
+    This has all of the same interfaces as oslo_messaging.RPCClient but
+    if the timeout parameter is not specified, the _ContextWrapper returned
+    will track when call timeout exceptions occur and exponentially increase
+    the timeout for the given call method.
+    """
+    def prepare(self, *args, **kwargs):
+        ctx = super(BackingOffClient, self).prepare(*args, **kwargs)
+        # don't enclose Contexts that explicitly set a timeout
+        return _ContextWrapper(ctx) if 'timeout' not in kwargs else ctx
+
+
 def get_client(target, version_cap=None, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    return oslo_messaging.RPCClient(TRANSPORT,
-                                    target,
-                                    version_cap=version_cap,
-                                    serializer=serializer)
+    return BackingOffClient(TRANSPORT,
+                            target,
+                            version_cap=version_cap,
+                            serializer=serializer)
 
 
 def get_server(target, endpoints, serializer=None):
