@@ -374,7 +374,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # Pools have already been validated in the subnet request object which
         # was sent to the subnet pool driver. Further validation should not be
         # required.
-        session = db_api.get_session()
+        session = self._context.session
         self.subnet_manager.delete_allocation_pools(session)
         self.create_allocation_pools(self.subnet_manager, session, pools, cidr)
         self._pools = pools
