@@ -1264,8 +1264,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = self._process_router_ipv6_interface_added(router)
         self._assert_ri_process_enabled(ri)
         # Expect radvd configured without prefix
-        self.assertNotIn('prefix',
-                         self.utils_replace_file.call_args[0][1].split())
+        self.assertNotIn('prefix', self.utils_replace_file.call_args[0][1])
 
     def test_process_router_ipv6_slaac_interface_added(self):
         router = l3_test_common.prepare_router_data()
@@ -1273,8 +1272,19 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             router, ra_mode=l3_constants.IPV6_SLAAC)
         self._assert_ri_process_enabled(ri)
         # Expect radvd configured with prefix
-        self.assertIn('prefix',
-                      self.utils_replace_file.call_args[0][1].split())
+        radvd_config_str = self.utils_replace_file.call_args[0][1]
+        self.assertIn('prefix', radvd_config_str)
+        self.assertIn('AdvAutonomous on', radvd_config_str)
+
+    def test_process_router_ipv6_dhcpv6_stateful_interface_added(self):
+        router = l3_test_common.prepare_router_data()
+        ri = self._process_router_ipv6_interface_added(
+            router, ra_mode=l3_constants.DHCPV6_STATEFUL)
+        self._assert_ri_process_enabled(ri)
+        # Expect radvd configured with prefix
+        radvd_config_str = self.utils_replace_file.call_args[0][1]
+        self.assertIn('prefix', radvd_config_str)
+        self.assertIn('AdvAutonomous off', radvd_config_str)
 
     def test_process_router_ipv6_subnets_added(self):
         router = l3_test_common.prepare_router_data()
@@ -1286,11 +1296,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             {'ra_mode': l3_constants.DHCPV6_STATEFUL,
              'address_mode': l3_constants.DHCPV6_STATEFUL}])
         self._assert_ri_process_enabled(ri)
-        radvd_config = self.utils_replace_file.call_args[0][1].split()
+        radvd_config_str = self.utils_replace_file.call_args[0][1]
         # Assert we have a prefix from IPV6_SLAAC and a prefix from
         # DHCPV6_STATELESS on one interface
-        self.assertEqual(2, radvd_config.count("prefix"))
-        self.assertEqual(1, radvd_config.count("interface"))
+        self.assertEqual(3, radvd_config_str.count("prefix"))
+        self.assertEqual(1, radvd_config_str.count("interface"))
+        self.assertEqual(2, radvd_config_str.count("AdvAutonomous on"))
+        self.assertEqual(1, radvd_config_str.count("AdvAutonomous off"))
 
     def test_process_router_ipv6_subnets_added_to_existing_port(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
