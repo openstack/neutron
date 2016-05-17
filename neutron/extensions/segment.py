@@ -15,6 +15,7 @@
 import abc
 import six
 
+from neutron_lib.api import converters
 from neutron_lib import constants
 
 from neutron.api import extensions
@@ -62,7 +63,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         SEGMENTATION_ID: {'allow_post': True,
                           'allow_put': False,
                           'default': constants.ATTR_NOT_SPECIFIED,
-                          'convert_to': attributes.convert_to_int,
+                          'convert_to': converters.convert_to_int,
                           'is_visible': True},
     },
     attributes.SUBNETS: {
