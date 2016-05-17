@@ -99,7 +99,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             sn_port['fixed_ips'],
             sn_port['mac_address'],
             interface_name,
-            dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+            dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+            mtu=sn_port.get('mtu'))
 
     def _dvr_internal_network_removed(self, port):
         super(DvrEdgeRouter, self)._dvr_internal_network_removed(port)
@@ -132,7 +133,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                 snat_ns.name, port['network_id'],
                 port['id'], port['fixed_ips'],
                 port['mac_address'], interface_name,
-                dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+                dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+                mtu=port.get('mtu'))
         self._external_gateway_added(ex_gw_port, gw_interface_name,
                                      snat_ns.name, preserve_ips=[])
         self.snat_iptables_manager = iptables_manager.IptablesManager(

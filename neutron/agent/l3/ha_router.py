@@ -144,7 +144,8 @@ class HaRouter(router.RouterInfo):
                          interface_name,
                          self.ha_port['mac_address'],
                          namespace=self.ns_name,
-                         prefix=HA_DEV_PREFIX)
+                         prefix=HA_DEV_PREFIX,
+                         mtu=self.ha_port.get('mtu'))
         ip_cidrs = common_utils.fixed_ip_cidrs(self.ha_port['fixed_ips'])
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=self.ns_name,
@@ -263,13 +264,13 @@ class HaRouter(router.RouterInfo):
     def internal_network_added(self, port):
         port_id = port['id']
         interface_name = self.get_internal_device_name(port_id)
-
         self.driver.plug(port['network_id'],
                          port_id,
                          interface_name,
                          port['mac_address'],
                          namespace=self.ns_name,
-                         prefix=router.INTERNAL_DEV_PREFIX)
+                         prefix=router.INTERNAL_DEV_PREFIX,
+                         mtu=port.get('mtu'))
 
         self._disable_ipv6_addressing_on_interface(interface_name)
         for ip_cidr in common_utils.fixed_ip_cidrs(port['fixed_ips']):
