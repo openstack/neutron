@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 import abc
 from alembic import script as alembic_script
 from contextlib import contextmanager
@@ -173,26 +175,75 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
 
     def test_branches(self):
 
+        drop_exceptions = collections.defaultdict(list)
+        creation_exceptions = collections.defaultdict(list)
+
+        def find_migration_exceptions():
+            # Due to some misunderstandings and some conscious decisions,
+            # there may be some expand migrations which drop elements and
+            # some contract migrations which create elements. These excepted
+            # elements must be returned by a method in the script itself.
+            # The names of the method must be 'contract_creation_exceptions'
+            # or 'expand_drop_exceptions'. The methods must have a docstring
+            # explaining the reason for the exception.
+            #
+            # Here we build lists of the excepted elements and verify that
+            # they are documented.
+            script = alembic_script.ScriptDirectory.from_config(
+                self.alembic_config)
+            for m in list(script.walk_revisions(base='base', head='heads')):
+                branches = m.branch_labels or [None]
+                if migration.CONTRACT_BRANCH in branches:
+                    method_name = 'contract_creation_exceptions'
+                    exceptions_dict = creation_exceptions
+                elif migration.EXPAND_BRANCH in branches:
+                    method_name = 'expand_drop_exceptions'
+                    exceptions_dict = drop_exceptions
+                else:
+                    continue
+                get_excepted_elements = getattr(m.module, method_name, None)
+                if not get_excepted_elements:
+                    continue
+                explanation = getattr(get_excepted_elements, '__doc__', "")
+                if len(explanation) < 1:
+                    self.fail("%s() requires docstring with explanation" %
+                              '.'.join([m.module.__name__,
+                                        get_excepted_elements.__name__]))
+                for sa_type, elements in get_excepted_elements().items():
+                    exceptions_dict[sa_type].extend(elements)
+
+        def is_excepted(clauseelement, exceptions):
+            # Identify elements that are an exception for the branch
+            element = clauseelement.element
+            element_name = element.name
+            if isinstance(element, sqlalchemy.Index):
+                element_name = element.table.name
+            for sa_type_, excepted_names in exceptions.items():
+                if isinstance(element, sa_type_):
+                    if element_name in excepted_names:
+                        return True
+
         def check_expand_branch(conn, clauseelement, multiparams, params):
-            if isinstance(clauseelement, migration_help.DROP_OPERATIONS):
-                self.fail("Migration from expand branch contains drop command")
+            if not (isinstance(clauseelement,
+                               migration_help.DROP_OPERATIONS) and
+                    hasattr(clauseelement, 'element')):
+                return
+            # Skip drops that have been explicitly excepted
+            if is_excepted(clauseelement, drop_exceptions):
+                return
+            self.fail("Migration in expand branch contains drop command")
 
         def check_contract_branch(conn, clauseelement, multiparams, params):
-            if isinstance(clauseelement, migration_help.CREATION_OPERATIONS):
-                # Skip tables that were created by mistake in contract branch
-                if hasattr(clauseelement, 'element'):
-                    element = clauseelement.element
-                    if any([
-                        isinstance(element, sqlalchemy.Table) and
-                        element.name in ['ml2_geneve_allocations',
-                                         'ml2_geneve_endpoints'],
-                        isinstance(element, sqlalchemy.Index) and
-                        element.table.name == 'ml2_geneve_allocations'
-                    ]):
-                        return
-                self.fail("Migration from contract branch contains create "
-                          "command")
+            if not (isinstance(clauseelement,
+                               migration_help.CREATION_OPERATIONS) and
+                    hasattr(clauseelement, 'element')):
+                return
+            # Skip creations that have been explicitly excepted
+            if is_excepted(clauseelement, creation_exceptions):
+                return
+            self.fail("Migration in contract branch contains create command")
 
+        find_migration_exceptions()
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
         with engine.begin() as connection:
