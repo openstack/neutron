@@ -17,6 +17,7 @@ import mock
 from oslo_config import cfg
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
+from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
 from neutron import context
@@ -300,6 +301,16 @@ class TestNovaNotifierHook(test_functional.PecanFunctionalTest):
                              '_nova_notify')
         self.mock_notifier = patcher.start()
         super(TestNovaNotifierHook, self).setUp()
+
+    def test_nova_notification_skips_on_failure(self):
+        req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
+        response = self.app.put_json(
+            '/v2.0/networks/%s.json' % uuidutils.generate_uuid(),
+            params={'network': {'name': 'meh-2'}},
+            headers=req_headers,
+            expect_errors=True)
+        self.assertEqual(404, response.status_int)
+        self.assertFalse(self.mock_notifier.called)
 
     def test_nova_notifications_disabled(self):
         cfg.CONF.set_override('notify_nova_on_port_data_changes', False)
