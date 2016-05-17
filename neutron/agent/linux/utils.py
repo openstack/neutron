@@ -350,11 +350,12 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
 
 
 class UnixDomainWSGIServer(wsgi.Server):
-    def __init__(self, name):
+    def __init__(self, name, num_threads=None):
         self._socket = None
         self._launcher = None
         self._server = None
-        super(UnixDomainWSGIServer, self).__init__(name, disable_ssl=True)
+        super(UnixDomainWSGIServer, self).__init__(name, disable_ssl=True,
+                                                   num_threads=num_threads)
 
     def start(self, application, file_socket, workers, backlog, mode=None):
         self._socket = eventlet.listen(file_socket,
