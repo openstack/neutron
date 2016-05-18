@@ -17,7 +17,6 @@
 import os
 
 import mock
-import testtools
 
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -30,6 +29,11 @@ class TestCreateESwitchManager(base.BaseTestCase):
                        ('0000:06:00.2', 1),
                        ('0000:06:00.3', 2)]
 
+    @staticmethod
+    def cleanup():
+        if hasattr(esm.ESwitchManager, '_instance'):
+            del esm.ESwitchManager._instance
+
     def test_create_eswitch_mgr_fail(self):
         device_mappings = {'physnet1': ['p6p1']}
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -39,10 +43,11 @@ class TestCreateESwitchManager(base.BaseTestCase):
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.PciOsWrapper.is_assigned_vf",
                            return_value=True):
-
-            with testtools.ExpectedException(exc.InvalidDeviceError):
-                esm.ESwitchManager().discover_devices(
-                    device_mappings, None)
+            eswitch_mgr = esm.ESwitchManager()
+            self.addCleanup(self.cleanup)
+            self.assertRaises(exc.InvalidDeviceError,
+                              eswitch_mgr.discover_devices,
+                              device_mappings, None)
 
     def test_create_eswitch_mgr_ok(self):
         device_mappings = {'physnet1': ['p6p1']}
@@ -52,8 +57,9 @@ class TestCreateESwitchManager(base.BaseTestCase):
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.PciOsWrapper.is_assigned_vf",
                            return_value=True):
-
-            esm.ESwitchManager().discover_devices(device_mappings, None)
+            eswitch_mgr = esm.ESwitchManager()
+            self.addCleanup(self.cleanup)
+            eswitch_mgr.discover_devices(device_mappings, None)
 
 
 class TestESwitchManagerApi(base.BaseTestCase):
@@ -69,14 +75,23 @@ class TestESwitchManagerApi(base.BaseTestCase):
     def setUp(self):
         super(TestESwitchManagerApi, self).setUp()
         device_mappings = {'physnet1': ['p6p1']}
+        self.eswitch_mgr = esm.ESwitchManager()
+        self.addCleanup(self.cleanup)
+        self._set_eswitch_manager(self.eswitch_mgr, device_mappings)
+
+    @staticmethod
+    def cleanup():
+        if hasattr(esm.ESwitchManager, '_instance'):
+            del esm.ESwitchManager._instance
+
+    def _set_eswitch_manager(self, eswitch_mgr, device_mappings):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.PciOsWrapper.scan_vf_devices",
-                        return_value=self.SCANNED_DEVICES),\
-                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                           "eswitch_manager.PciOsWrapper.is_assigned_vf",
-                           return_value=True):
-            self.eswitch_mgr = esm.ESwitchManager()
-            self.eswitch_mgr.discover_devices(device_mappings, None)
+                        return_value=self.SCANNED_DEVICES), \
+                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                            "eswitch_manager.PciOsWrapper.is_assigned_vf",
+                            return_value=True):
+            eswitch_mgr.discover_devices(device_mappings, None)
 
     def test_get_assigned_devices_info(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -85,6 +100,26 @@ class TestESwitchManagerApi(base.BaseTestCase):
             result = self.eswitch_mgr.get_assigned_devices_info()
             self.assertIn(self.ASSIGNED_MAC, list(result)[0])
             self.assertIn(self.PCI_SLOT, list(result)[0])
+
+    def test_get_assigned_devices_info_multiple_nics_for_physnet(self):
+        device_mappings = {'physnet1': ['p6p1', 'p6p2']}
+        devices_info = {
+            'p6p1': [(self.ASSIGNED_MAC, self.PCI_SLOT)],
+            'p6p2': [(self.WRONG_MAC, self.WRONG_PCI)],
+        }
+
+        def get_assigned_devices_info(self):
+            return devices_info[self.dev_name]
+
+        self._set_eswitch_manager(self.eswitch_mgr, device_mappings)
+
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                        "eswitch_manager.EmbSwitch.get_assigned_devices_info",
+                        side_effect=get_assigned_devices_info,
+                        autospec=True):
+            result = self.eswitch_mgr.get_assigned_devices_info()
+            self.assertIn(devices_info['p6p1'][0], list(result))
+            self.assertIn(devices_info['p6p2'][0], list(result))
 
     def test_get_device_status_true(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
