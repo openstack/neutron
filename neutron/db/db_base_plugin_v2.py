@@ -1335,3 +1335,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             device_id=device_id)
                 if tenant_id != router['tenant_id']:
                     raise n_exc.DeviceIDNotOwnedByTenant(device_id=device_id)
+
+    db_base_plugin_common.DbBasePluginCommon.register_model_query_hook(
+        models_v2.Port,
+        "port",
+        None,
+        '_port_filter_hook',
+        None)

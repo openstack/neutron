@@ -707,12 +707,10 @@ class Controller(object):
         network_owner = network['tenant_id']
 
         if network_owner != resource_item['tenant_id']:
-            msg = _("Tenant %(tenant_id)s not allowed to "
-                    "create %(resource)s on this network")
-            raise webob.exc.HTTPForbidden(msg % {
-                "tenant_id": resource_item['tenant_id'],
-                "resource": self._resource,
-            })
+            # NOTE(kevinbenton): we raise a 404 to hide the existence of the
+            # network from the tenant since they don't have access to it.
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
 
 
 def create_resource(collection, resource, plugin, params, allow_bulk=False,
