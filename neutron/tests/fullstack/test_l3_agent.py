@@ -22,12 +22,39 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
+from neutron.tests.fullstack.resources import machine
 
 
-class TestLegacyL3Agent(base.BaseFullStackTestCase):
+class TestL3Agent(base.BaseFullStackTestCase):
+
+    def block_until_port_status_active(self, port_id):
+        def is_port_status_active():
+            port = self.client.show_port(port_id)
+            return port['port']['status'] == 'ACTIVE'
+        utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
+
+    def _create_net_subnet_and_vm(self, tenant_id, cidr, host, router):
+        network = self.safe_client.create_network(tenant_id)
+        subnet = self.safe_client.create_subnet(
+            tenant_id, network['id'], cidr, enable_dhcp=False)
+
+        vm = self.useFixture(
+            machine.FakeFullstackMachine(
+                host, network['id'], tenant_id, self.safe_client))
+        vm.block_until_boot()
+
+        router_interface_info = self.safe_client.add_router_interface(
+            router['id'], subnet['id'])
+        self.block_until_port_status_active(router_interface_info['port_id'])
+        return vm
+
+
+class TestLegacyL3Agent(TestL3Agent):
 
     def setUp(self):
-        host_descriptions = [environment.HostDescription(l3_agent=True)]
+        host_descriptions = [
+            environment.HostDescription(l3_agent=True),
+            environment.HostDescription()]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type='vlan', l2_pop=False),
@@ -54,6 +81,20 @@ class TestLegacyL3Agent(base.BaseFullStackTestCase):
             self._get_namespace(router['id']),
             self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
         self._assert_namespace_exists(namespace)
+
+    def test_east_west_traffic(self):
+        tenant_id = uuidutils.generate_uuid()
+        router = self.safe_client.create_router(tenant_id)
+
+        vm1 = self._create_net_subnet_and_vm(
+            tenant_id, '20.0.0.0/24',
+            self.environment.hosts[0], router)
+        vm2 = self._create_net_subnet_and_vm(
+            tenant_id, '21.0.0.0/24',
+            self.environment.hosts[1], router)
+
+        # wait until qr-xx port up in qrouter-xx namespace
+        vm1.block_until_ping(vm2.ip)
 
 
 class TestHAL3Agent(base.BaseFullStackTestCase):
