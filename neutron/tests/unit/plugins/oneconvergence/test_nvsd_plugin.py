@@ -35,7 +35,7 @@ class OneConvergencePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self):
-        if 'v6' in self._testMethodName:
+        if 'v6' in self._testMethodName.lower():
             self.skipTest("NVSD Plugin does not support IPV6.")
 
         def mocked_oneconvergence_init(self):

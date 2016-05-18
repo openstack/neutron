@@ -2903,6 +2903,39 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
+    def _test_create_subnet_V6_pd_modes(self, ra_addr_mode, expect_fail=False):
+        cfg.CONF.set_override('default_ipv6_subnet_pool',
+                              constants.IPV6_PD_POOL_ID)
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'ip_version': '6',
+                    'tenant_id': network['network']['tenant_id']}}
+            if ra_addr_mode:
+                data['subnet']['ipv6_ra_mode'] = ra_addr_mode
+                data['subnet']['ipv6_address_mode'] = ra_addr_mode
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            if expect_fail:
+                self.assertEqual(webob.exc.HTTPClientError.code,
+                                 res.status_int)
+            else:
+                subnet = self.deserialize(self.fmt, res)['subnet']
+                self.assertEqual(constants.IPV6_PD_POOL_ID,
+                                 subnet['subnetpool_id'])
+
+    def test_create_subnet_V6_pd_slaac(self):
+        self._test_create_subnet_V6_pd_modes('slaac')
+
+    def test_create_subnet_V6_pd_stateless(self):
+        self._test_create_subnet_V6_pd_modes('dhcpv6-stateless')
+
+    def test_create_subnet_V6_pd_statefull(self):
+        self._test_create_subnet_V6_pd_modes('dhcpv6-statefull',
+                                             expect_fail=True)
+
+    def test_create_subnet_V6_pd_no_mode(self):
+        self._test_create_subnet_V6_pd_modes(None, expect_fail=True)
+
     def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
         cidr_1 = '10.0.0.0/23'
         cidr_2 = '10.0.0.0/24'
