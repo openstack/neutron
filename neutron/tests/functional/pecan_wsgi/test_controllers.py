@@ -590,3 +590,36 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
             headers=headers)
         self.assertNotIn(self.agent.id,
                          [a['id'] for a in response.json['agents']])
+
+
+class TestShimControllers(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        fake_ext = pecan_utils.FakeExtension()
+        fake_plugin = pecan_utils.FakePlugin()
+        plugins = {pecan_utils.FakePlugin.PLUGIN_TYPE: fake_plugin}
+        new_extensions = {fake_ext.get_alias(): fake_ext}
+        super(TestShimControllers, self).setUp(
+            service_plugins=plugins, extensions=new_extensions)
+        policy.init()
+        policy._ENFORCER.set_rules(
+            oslo_policy.Rules.from_dict(
+                {'get_meh_meh': '',
+                 'get_meh_mehs': ''}),
+            overwrite=False)
+        self.addCleanup(policy.reset)
+
+    def test_hyphenated_resource_controller_not_shimmed(self):
+        collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        resource = pecan_utils.FakeExtension.HYPHENATED_RESOURCE
+        url = '/v2.0/{}/something.json'.format(collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({resource: {'fake': 'something'}}, resp.json)
+
+    def test_hyphenated_collection_controller_not_shimmed(self):
+        collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        url = '/v2.0/{}.json'.format(collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({collection: [{'fake': 'fake'}]}, resp.json)

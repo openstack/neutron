@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron.api import extensions
+from neutron.api.v2 import base
 from neutron.pecan_wsgi import controllers
 from neutron.pecan_wsgi.controllers import utils as pecan_utils
 
@@ -101,3 +102,62 @@ def create_router(context, l3_plugin):
          {'name': 'pecanrtr',
           'tenant_id': 'tenid',
           'admin_state_up': True}})
+
+
+class FakeExtension(extensions.ExtensionDescriptor):
+
+    HYPHENATED_RESOURCE = 'meh_meh'
+    HYPHENATED_COLLECTION = HYPHENATED_RESOURCE + 's'
+
+    RAM = {
+        HYPHENATED_COLLECTION: {
+            'fake': {'is_visible': True}
+        }
+    }
+
+    @classmethod
+    def get_name(cls):
+        return "fake-ext"
+
+    @classmethod
+    def get_alias(cls):
+        return "fake-ext"
+
+    @classmethod
+    def get_description(cls):
+        return ""
+
+    @classmethod
+    def get_updated(cls):
+        return "meh"
+
+    def get_resources(self):
+        collection = self.HYPHENATED_COLLECTION.replace('_', '-')
+        params = self.RAM.get(self.HYPHENATED_COLLECTION, {})
+        controller = base.create_resource(
+            collection, self.HYPHENATED_RESOURCE, FakePlugin(),
+            params, allow_bulk=True, allow_pagination=True,
+            allow_sorting=True)
+        return [extensions.ResourceExtension(collection, controller,
+                                             attr_map=params)]
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return self.RAM
+        else:
+            return {}
+
+
+class FakePlugin(object):
+
+    PLUGIN_TYPE = 'fake-ext-plugin'
+    supported_extension_aliases = ['fake-ext']
+
+    def get_plugin_type(self):
+        return self.PLUGIN_TYPE
+
+    def get_meh_meh(self, context, id_, fields=None):
+        return {'fake': id_}
+
+    def get_meh_mehs(self, context, filters=None, fields=None):
+        return [{'fake': 'fake'}]

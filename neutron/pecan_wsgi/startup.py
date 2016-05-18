@@ -73,6 +73,7 @@ def initialize_legacy_extensions(legacy_extensions):
         for ext_resource in ext_resources:
             controller = ext_resource.controller.controller
             collection = ext_resource.collection
+            collection = collection.replace("-", "_")
             resource = _handle_plurals(collection)
             if manager.NeutronManager.get_plugin_for_resource(resource):
                 continue
