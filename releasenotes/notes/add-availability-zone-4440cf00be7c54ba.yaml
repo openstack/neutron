@@ -10,4 +10,4 @@ features:
     because L3HA and DVR integration isn't finished.
 other:
   - Please read the `OpenStack Networking Guide
-    <http://docs.openstack.org/networking-guide/adv_config_availability_zone.html>`_.
+    <http://docs.openstack.org/mitaka/networking-guide/adv-config-availability-zone.html>`_.
