@@ -370,11 +370,20 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 subnet_id=self.subnet_manager.neutron_id,
                 ip_address=address)
 
+    def _no_pool_changes(self, session, pools):
+        """Check if pool updates in db are required."""
+        db_pools = self.subnet_manager.list_pools(session)
+        iprange_pools = [netaddr.IPRange(pool.first_ip, pool.last_ip)
+                         for pool in db_pools]
+        return pools == iprange_pools
+
     def update_allocation_pools(self, pools, cidr):
         # Pools have already been validated in the subnet request object which
         # was sent to the subnet pool driver. Further validation should not be
         # required.
         session = self._context.session
+        if self._no_pool_changes(session, pools):
+            return
         self.subnet_manager.delete_allocation_pools(session)
         self.create_allocation_pools(self.subnet_manager, session, pools, cidr)
         self._pools = pools
