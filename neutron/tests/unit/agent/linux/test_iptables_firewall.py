@@ -367,7 +367,17 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
-    def test_filter_ipv4_egress_prefix(self):
+    def test_filter_ipv4_egress_dest_prefix(self):
+        prefix = FAKE_PREFIX['IPv4']
+        rule = {'ethertype': 'IPv4',
+                'direction': 'egress',
+                'dest_ip_prefix': prefix}
+        egress = mock.call.add_rule(
+            'ofake_dev', '-d %s -j RETURN' % prefix, comment=None)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_egress_source_prefix(self):
         prefix = FAKE_PREFIX['IPv4']
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
@@ -391,9 +401,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'tcp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
-                                    '-s %s -p tcp -j RETURN' % prefix,
+                                    '-d %s -p tcp -j RETURN' % prefix,
                                     comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -412,9 +422,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-s %s -p icmp -j RETURN' % prefix,
+            'ofake_dev', '-d %s -p icmp -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -424,11 +434,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 8,
-                'source_ip_prefix': prefix}
+                'port_range_min': 8,
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p icmp -m icmp --icmp-type 8 -j RETURN' % prefix,
+            '-d %s -p icmp -m icmp --icmp-type 8 -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -438,11 +448,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 'echo-request',
-                'source_ip_prefix': prefix}
+                'port_range_min': 'echo-request',
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p icmp -m icmp --icmp-type echo-request '
+            '-d %s -p icmp -m icmp --icmp-type echo-request '
             '-j RETURN' % prefix,
             comment=None)
         ingress = None
@@ -453,12 +463,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 8,
-                'source_port_range_max': 0,
-                'source_ip_prefix': prefix}
+                'port_range_min': 8,
+                'port_range_max': 0,
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p icmp -m icmp --icmp-type 8/0 -j RETURN' % prefix,
+            '-d %s -p icmp -m icmp --icmp-type 8/0 -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -495,10 +505,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': 'tcp',
                 'port_range_min': 10,
                 'port_range_max': 100,
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p tcp -m tcp -m multiport --dports 10:100 '
+            '-d %s -p tcp -m tcp -m multiport --dports 10:100 '
             '-j RETURN' % prefix, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -517,9 +527,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
                 'protocol': 'udp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
-                                    '-s %s -p udp -j RETURN' % prefix,
+                                    '-d %s -p udp -j RETURN' % prefix,
                                     comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -556,10 +566,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': 'udp',
                 'port_range_min': 10,
                 'port_range_max': 100,
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p udp -m udp -m multiport --dports 10:100 '
+            '-d %s -p udp -m udp -m multiport --dports 10:100 '
             '-j RETURN' % prefix, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -755,9 +765,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         prefix = FAKE_PREFIX['IPv6']
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-s %s -j RETURN' % prefix, comment=None)
+            'ofake_dev', '-d %s -j RETURN' % prefix, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
@@ -775,9 +785,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'tcp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
-                                    '-s %s -p tcp -j RETURN' % prefix,
+                                    '-d %s -p tcp -j RETURN' % prefix,
                                     comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -796,9 +806,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
-            'ofake_dev', '-s %s -p ipv6-icmp -j RETURN' % prefix,
+            'ofake_dev', '-d %s -p ipv6-icmp -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -808,11 +818,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 8,
-                'source_ip_prefix': prefix}
+                'port_range_min': 8,
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p ipv6-icmp -m icmp6 --icmpv6-type 8 -j RETURN' % prefix,
+            '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8 -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -822,11 +832,11 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 'echo-request',
-                'source_ip_prefix': prefix}
+                'port_range_min': 'echo-request',
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p ipv6-icmp -m icmp6 --icmpv6-type echo-request '
+            '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type echo-request '
             '-j RETURN' % prefix,
             comment=None)
         ingress = None
@@ -837,12 +847,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'icmp',
-                'source_port_range_min': 8,
-                'source_port_range_max': 0,
-                'source_ip_prefix': prefix}
+                'port_range_min': 8,
+                'port_range_max': 0,
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
+            '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
             comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -879,10 +889,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': 'tcp',
                 'port_range_min': 10,
                 'port_range_max': 100,
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p tcp -m tcp -m multiport --dports 10:100 '
+            '-d %s -p tcp -m tcp -m multiport --dports 10:100 '
             '-j RETURN' % prefix, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -901,9 +911,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'udp',
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule('ofake_dev',
-                                    '-s %s -p udp -j RETURN' % prefix,
+                                    '-d %s -p udp -j RETURN' % prefix,
                                     comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
@@ -940,10 +950,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'protocol': 'udp',
                 'port_range_min': 10,
                 'port_range_max': 100,
-                'source_ip_prefix': prefix}
+                'dest_ip_prefix': prefix}
         egress = mock.call.add_rule(
             'ofake_dev',
-            '-s %s -p udp -m udp -m multiport --dports 10:100 '
+            '-d %s -p udp -m udp -m multiport --dports 10:100 '
             '-j RETURN' % prefix, comment=None)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
