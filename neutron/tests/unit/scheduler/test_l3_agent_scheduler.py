@@ -1016,7 +1016,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', mock.ANY, **kwargs)
             l3plugin.remove_router_from_l3_agent.assert_called_once_with(
-                self.adminContext, 'foo_agent', 'foo_id')
+                mock.ANY, 'foo_agent', 'foo_id')
             self.assertEqual(2, l3plugin.dvr_vmarp_table_update.call_count)
             l3plugin.dvr_update_router_addvm.assert_called_once_with(
                 self.adminContext, kwargs.get('port'))
@@ -1061,7 +1061,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
             self.assertFalse(l3plugin.dvr_update_router_addvm.called)
             l3plugin.remove_router_from_l3_agent.assert_called_once_with(
-                self.adminContext, 'foo_agent', 'foo_id')
+                mock.ANY, 'foo_agent', 'foo_id')
 
     def test__notify_port_delete(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -1085,7 +1085,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             l3plugin.dvr_vmarp_table_update.assert_called_once_with(
                 self.adminContext, mock.ANY, 'del')
             l3plugin.remove_router_from_l3_agent.assert_called_once_with(
-                self.adminContext, 'foo_agent', 'foo_id')
+                mock.ANY, 'foo_agent', 'foo_id')
 
     def test_dvr_update_router_addvm(self):
         port = {

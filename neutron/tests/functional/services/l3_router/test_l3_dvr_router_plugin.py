@@ -16,9 +16,13 @@ import mock
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_const
+from neutron import context
 from neutron.extensions import external_net
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
+
+
+DEVICE_OWNER_COMPUTE = l3_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
 class L3DvrTestCase(ml2_test_base.ML2TestFramework):
@@ -276,7 +280,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 l3_notifier.routers_updated_on_host.assert_called_once_with(
                     self.context, {router['id']}, HOST2)
                 l3_notifier.router_removed_from_agent.assert_called_once_with(
-                    self.context, router['id'], HOST1)
+                    mock.ANY, router['id'], HOST1)
 
     def _test_create_floating_ip_agent_notification(self, dvr=True):
         with self.subnet() as ext_subnet,\
@@ -446,6 +450,55 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
 
     def test_delete_floating_ip_agent_notification_non_dvr(self):
         self._test_delete_floating_ip_agent_notification(dvr=False)
+
+    def _test_router_remove_from_agent_on_vm_port_deletion(
+                self, non_admin_port=False):
+
+        # register l3 agent in dvr mode in addition to existing dvr_snat agent
+        HOST = 'host1'
+        non_admin_tenant = 'tenant1'
+        dvr_agent = helpers.register_l3_agent(
+            host=HOST, agent_mode=l3_const.L3_AGENT_MODE_DVR)
+        router = self._create_router()
+        with self.network(shared=True) as net, \
+                self.subnet(network=net) as subnet, \
+                self.port(subnet=subnet,
+                          device_owner=DEVICE_OWNER_COMPUTE,
+                          tenant_id=non_admin_tenant,
+                          set_context=non_admin_port) as port:
+            self.core_plugin.update_port(
+                self.context, port['port']['id'],
+                {'port': {'binding:host_id': HOST}})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            # router should be scheduled to agent on HOST
+            agents = self.l3_plugin.list_l3_agents_hosting_router(
+                self.context, router['id'])
+            self.assertEqual(1, len(agents['agents']))
+            self.assertEqual(dvr_agent['id'], agents['agents'][0]['id'])
+
+            notifier = self.l3_plugin.agent_notifiers[
+                l3_const.AGENT_TYPE_L3]
+            with mock.patch.object(
+                    notifier, 'router_removed_from_agent') as remove_mock:
+                ctx = context.Context(
+                    '', non_admin_tenant) if non_admin_port else self.context
+                self._delete('ports', port['port']['id'], neutron_context=ctx)
+                # now when port is deleted the router should be unscheduled
+                agents = self.l3_plugin.list_l3_agents_hosting_router(
+                    self.context, router['id'])
+                self.assertEqual(0, len(agents['agents']))
+                remove_mock.assert_called_once_with(
+                    mock.ANY, router['id'], HOST)
+
+    def test_router_remove_from_agent_on_vm_port_deletion(self):
+        self._test_router_remove_from_agent_on_vm_port_deletion()
+
+    def test_admin_router_remove_from_agent_on_vm_port_deletion(self):
+        self._test_router_remove_from_agent_on_vm_port_deletion(
+            non_admin_port=True)
 
     def test_router_is_not_removed_from_snat_agent_on_interface_removal(self):
         """Check that dvr router is not removed from l3 agent hosting
