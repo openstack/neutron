@@ -119,9 +119,29 @@ class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
         self._test_list_pagination()
 
     @test.attr(type='smoke')
-    @test.idempotent_id('71389852-f57b-49f2-b109-77b705e9e8af')
+    @test.idempotent_id('b7e153d2-37c3-48d4-8390-ec13498fee3d')
     def test_list_pagination_with_marker(self):
         self._test_list_pagination_with_marker()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('8a9c89df-0ee7-4c0d-8f1d-ec8f27cf362f')
+    def test_list_pagination_with_href_links(self):
+        self._test_list_pagination_with_href_links()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('79a52810-2156-4ab6-b577-9e46e58d4b58')
+    def test_list_pagination_page_reverse_asc(self):
+        self._test_list_pagination_page_reverse_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('36a4671f-a542-442f-bc44-a8873ee778d1')
+    def test_list_pagination_page_reverse_desc(self):
+        self._test_list_pagination_page_reverse_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('13eb066c-aa90-406d-b4c3-39595bf8f910')
+    def test_list_pagination_page_reverse_with_href_links(self):
+        self._test_list_pagination_page_reverse_with_href_links()
 
     @test.attr(type='smoke')
     @test.idempotent_id('f1867fc5-e1d6-431f-bc9f-8b882e43a7f9')

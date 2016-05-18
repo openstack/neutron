@@ -80,6 +80,26 @@ class PortsSearchCriteriaTest(base.BaseSearchCriteriaTest):
         self._test_list_pagination_with_marker()
 
     @test.attr(type='smoke')
+    @test.idempotent_id('fcd02a7a-f07e-4d5e-b0ca-b58e48927a9b')
+    def test_list_pagination_with_href_links(self):
+        self._test_list_pagination_with_href_links()
+
+    @test.attr(type='smoke')
     @test.idempotent_id('3afe7024-77ab-4cfe-824b-0b2bf4217727')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('b8857391-dc44-40cc-89b7-2800402e03ce')
+    def test_list_pagination_page_reverse_asc(self):
+        self._test_list_pagination_page_reverse_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('4e51e9c9-ceae-4ec0-afd4-147569247699')
+    def test_list_pagination_page_reverse_desc(self):
+        self._test_list_pagination_page_reverse_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('74293e59-d794-4a93-be09-38667199ef68')
+    def test_list_pagination_page_reverse_with_href_links(self):
+        self._test_list_pagination_page_reverse_with_href_links()
