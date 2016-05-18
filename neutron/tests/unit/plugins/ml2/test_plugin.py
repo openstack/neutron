@@ -2031,8 +2031,12 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
 
 
 class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
+
     def setUp(self):
         super(TestMl2PluginCreateUpdateDeletePort, self).setUp()
+        # TODO(ihrachys): revisit plugin setup once we decouple
+        # neutron.objects.db.api from core plugin instance
+        self.setup_coreplugin(PLUGIN_NAME)
         self.context = mock.MagicMock()
         self.notify_p = mock.patch('neutron.callbacks.registry.notify')
         self.notify = self.notify_p.start()
