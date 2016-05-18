@@ -636,7 +636,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                            arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port1:
                 p1 = port1['port']
-
+                p1_ip = p1['fixed_ips'][0]['ip_address']
                 self.mock_fanout.reset_mock()
                 device = 'tap' + p1['id']
 
@@ -667,7 +667,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                             '20.0.0.1': [
                                 l2pop_rpc.PortInfo('00:00:00:00:00:00',
                                                    '0.0.0.0'),
-                                l2pop_rpc.PortInfo(new_mac, '10.0.0.2')
+                                l2pop_rpc.PortInfo(new_mac, p1_ip)
                             ]
                         }
                     }
@@ -680,9 +680,12 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
         with self.subnet(network=self._network) as subnet:
             host_arg = {portbindings.HOST_ID: HOST}
+            fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                          'ip_address': '10.0.0.2'}]
             with self.port(subnet=subnet, cidr='10.0.0.0/24',
                            device_owner=DEVICE_OWNER_COMPUTE,
                            arg_list=(portbindings.HOST_ID,),
+                           fixed_ips=fixed_ips,
                            **host_arg) as port1:
                 p1 = port1['port']
 

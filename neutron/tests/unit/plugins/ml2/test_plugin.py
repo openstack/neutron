@@ -599,7 +599,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_update_port_fixed_ip_changed(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
-        with self.port() as port, mock.patch.object(
+        fixed_ip_data = [{'ip_address': '10.0.0.4'}]
+        with self.port(fixed_ips=fixed_ip_data) as port,\
+            mock.patch.object(
                 plugin.notifier,
                 'security_groups_member_updated') as sg_member_update:
             port['port']['fixed_ips'][0]['ip_address'] = '10.0.0.3'
@@ -869,14 +871,20 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self._test_operation_resillient_to_ipallocation_failure(make_port)
 
     def test_port_update_resillient_to_duplicate_records(self):
-        with self.port() as p:
-            data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.9'}]}}
-            req = self.new_update_request('ports', data, p['port']['id'])
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.8'}]
+        with self.subnet(cidr=cidr,
+                         allocation_pools=allocation_pools) as subnet:
+            with self.port(subnet=subnet) as p:
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.9'}]}}
+                req = self.new_update_request('ports', data, p['port']['id'])
 
-            def do_request():
-                self.assertEqual(200, req.get_response(self.api).status_int)
+                def do_request():
+                    self.assertEqual(200,
+                                     req.get_response(self.api).status_int)
 
-            self._test_operation_resillient_to_ipallocation_failure(do_request)
+                self._test_operation_resillient_to_ipallocation_failure(
+                    do_request)
 
     def _test_operation_resillient_to_ipallocation_failure(self, func):
         from sqlalchemy import event
