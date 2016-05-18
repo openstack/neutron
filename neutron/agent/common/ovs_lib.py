@@ -16,6 +16,7 @@
 import collections
 import itertools
 import operator
+import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -224,13 +225,24 @@ class OVSBridge(BaseOVS):
 
     def run_ofctl(self, cmd, args, process_input=None):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
-        try:
-            return utils.execute(full_args, run_as_root=True,
-                                 process_input=process_input)
-        except Exception as e:
-            LOG.error(_LE("Unable to execute %(cmd)s. Exception: "
-                          "%(exception)s"),
-                      {'cmd': full_args, 'exception': e})
+        # TODO(kevinbenton): This error handling is really brittle and only
+        # detects one specific type of failure. The callers of this need to
+        # be refactored to expect errors so we can re-raise and they can
+        # take appropriate action based on the type of error.
+        for i in range(1, 11):
+            try:
+                return utils.execute(full_args, run_as_root=True,
+                                     process_input=process_input)
+            except Exception as e:
+                if "failed to connect to socket" in str(e):
+                    LOG.debug("Failed to connect to OVS. Retrying "
+                              "in 1 second. Attempt: %s/10", i)
+                    time.sleep(1)
+                    continue
+                LOG.error(_LE("Unable to execute %(cmd)s. Exception: "
+                              "%(exception)s"),
+                          {'cmd': full_args, 'exception': e})
+                break
 
     def count_flows(self):
         flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
