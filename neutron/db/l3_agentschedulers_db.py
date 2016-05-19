@@ -371,8 +371,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         agent = self._get_agent_by_type_and_host(
             context, constants.AGENT_TYPE_L3, host)
         if not agentschedulers_db.services_available(agent.admin_state_up):
-            LOG.debug("Agent has its services disabled. Returning "
-                      "no active routers. Agent: %s", agent)
+            LOG.info(_LI("Agent has its services disabled. Returning "
+                         "no active routers. Agent: %s"), agent)
             return []
         scheduled_router_ids = self._get_router_ids_for_agent(
             context, agent, router_ids)
