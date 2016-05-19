@@ -12,11 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import eventlet
 import mock
 import unittest2
 
 try:
     from ovs.db import idl
+    from ovs import poller
 except ImportError:
     raise unittest2.SkipTest(
         "Skip test since ovs requirement for PY3 doesn't support yet.")
@@ -40,7 +42,9 @@ class TestOVSNativeConnection(base.BaseTestCase):
         gsh.return_value = helper = mock.Mock()
         self.connection = connection.Connection(
             mock.Mock(), mock.Mock(), mock.Mock())
-        self.connection.start(table_name_list=table_name_list)
+        with mock.patch.object(poller, 'Poller') as poller_mock:
+            poller_mock.return_value.block.side_effect = eventlet.sleep
+            self.connection.start(table_name_list=table_name_list)
         reg_all_called = table_name_list is None
         reg_table_called = table_name_list is not None
         self.assertEqual(reg_all_called, helper.register_all.called)
