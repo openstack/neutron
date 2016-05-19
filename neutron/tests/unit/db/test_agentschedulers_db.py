@@ -292,9 +292,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
             self._disable_agent(hosta_id)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
             # second agent will host all the networks since first is disabled.
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -312,8 +314,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
             self._disable_agent(hosta_id)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -331,8 +335,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           DHCP_HOSTA)
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTC)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTC)
             networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
             num_hostc_nets = len(networks['networks'])
             networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
@@ -345,8 +351,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         with self.subnet() as sub1:
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 sub1['subnet']['network_id'])
         self.assertEqual(1, len(dhcp_agents['agents']))
@@ -357,9 +365,11 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         with self.subnet() as sub1, self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
             # second agent will not host the network since first has got it.
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTC)
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 sub1['subnet']['network_id'])
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -382,14 +392,15 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet() as sub1:
             helpers.register_dhcp_agent(DHCP_HOSTA)
-            dhcp_rpc_cb.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc_cb.get_active_networks_info(
+                self.adminContext, host=DHCP_HOSTA)
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
             with self.subnet() as sub2:
                 helpers.register_dhcp_agent(DHCP_HOSTC)
-                dhcp_rpc_cb.get_active_networks(self.adminContext,
-                                                host=DHCP_HOSTC)
+                dhcp_rpc_cb.get_active_networks_info(self.adminContext,
+                                                     host=DHCP_HOSTC)
                 dhcp_agents_1 = self._list_dhcp_agents_hosting_network(
                     sub1['subnet']['network_id'])
                 dhcp_agents_2 = self._list_dhcp_agents_hosting_network(
@@ -634,12 +645,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         helpers.register_dhcp_agent(DHCP_HOSTA)
         dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
         with self.port():
-            nets = dhcp_rpc_cb.get_active_networks(self.adminContext,
-                                                   host=DHCP_HOSTA)
+            nets = dhcp_rpc_cb.get_active_networks_info(self.adminContext,
+                                                        host=DHCP_HOSTA)
             self.assertEqual(1, len(nets))
             self._set_agent_admin_state_up(DHCP_HOSTA, False)
-            nets = dhcp_rpc_cb.get_active_networks(self.adminContext,
-                                                   host=DHCP_HOSTA)
+            nets = dhcp_rpc_cb.get_active_networks_info(self.adminContext,
+                                                        host=DHCP_HOSTA)
             if keep_services:
                 self.assertEqual(1, len(nets))
             else:
