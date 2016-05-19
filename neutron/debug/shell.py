@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_utils import importutils
 
 from neutron._i18n import _
+from neutron._i18n import _LW
 from neutron.agent.common import config
 from neutron.agent.common import utils
 from neutron.agent.linux import interface
@@ -80,6 +81,9 @@ class NeutronDebugShell(shell.NeutronShell):
         self.debug_agent = debug_agent.NeutronDebugAgent(cfg.CONF,
                                                          client,
                                                          driver)
+        self.log.warning(_LW('This tool is deprecated and will be removed '
+                             'in the future to be replaced with a more '
+                             'powerful troubleshooting toolkit.'))
 
 
 def main(argv=None):
