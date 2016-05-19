@@ -67,9 +67,13 @@ class DhcpRpcCallback(object):
     #           DHCP agent since Juno, so similar rationale for not bumping the
     #           major version as above applies here too.
     #     1.5 - Added dhcp_ready_on_ports.
+    #     1.6 - Removed get_active_networks. It's not used by reference
+    #           DHCP agent since Havana, so similar rationale for not bumping
+    #           the major version as above applies here too.
+
     target = oslo_messaging.Target(
         namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.5')
+        version='1.6')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -116,16 +120,6 @@ class DhcpRpcCallback(object):
                 LOG.warning(_LW("Action %(action)s for network %(net_id)s "
                                 "could not complete successfully: %(reason)s"),
                             {"action": action, "net_id": net_id, 'reason': e})
-
-    def get_active_networks(self, context, **kwargs):
-        """Retrieve and return a list of the active network ids."""
-        # NOTE(arosen): This method is no longer used by the DHCP agent but is
-        # left so that neutron-dhcp-agents will still continue to work if
-        # neutron-server is upgraded and not the agent.
-        host = kwargs.get('host')
-        LOG.debug('get_active_networks requested from %s', host)
-        nets = self._get_active_networks(context, **kwargs)
-        return [net['id'] for net in nets]
 
     def _group_by_network_id(self, res):
         grouped = {}
