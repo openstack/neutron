@@ -548,7 +548,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         include_if_present = ['protocol', 'port_range_max', 'port_range_min',
                               'ethertype', 'remote_ip_prefix',
-                              'remote_group_id', 'description']
+                              'remote_group_id']
         for key in include_if_present:
             value = sgr.get(key)
             if value:
@@ -583,7 +583,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # Check in database if rule exists
         filters = self._make_security_group_rule_filter_dict(
             security_group_rule)
-        keys = security_group_rule['security_group_rule'].keys()
+        rule_dict = security_group_rule['security_group_rule'].copy()
+        rule_dict.pop('description', None)
+        keys = rule_dict.keys()
         fields = list(keys) + ['id']
         db_rules = self.get_security_group_rules(context, filters,
                                                  fields=fields)
@@ -596,7 +598,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # is changed which cannot be because other methods are already
         # relying on this behavior. Therefore, we do the filtering
         # below to check for these corner cases.
-        rule_dict = security_group_rule['security_group_rule'].copy()
         rule_dict.pop('id', None)
         sg_protocol = rule_dict.pop('protocol', None)
         for db_rule in db_rules:

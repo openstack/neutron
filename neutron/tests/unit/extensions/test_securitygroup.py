@@ -31,6 +31,7 @@ from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron.extensions import standardattrdescription
 from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -42,6 +43,17 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_securitygroup.'
 class SecurityGroupTestExtensionManager(object):
 
     def get_resources(self):
+        # The description of security_group_rules will be added by extending
+        # standardattrdescription. But as API router will not be initialized
+        # in test code, manually add it.
+        if (ext_sg.SECURITYGROUPRULES in
+                standardattrdescription.EXTENDED_ATTRIBUTES_2_0):
+            existing_sg_rule_attr_map = (
+                ext_sg.RESOURCE_ATTRIBUTE_MAP[ext_sg.SECURITYGROUPRULES])
+            sg_rule_attr_desc = (
+                standardattrdescription.
+                EXTENDED_ATTRIBUTES_2_0[ext_sg.SECURITYGROUPRULES])
+            existing_sg_rule_attr_map.update(sg_rule_attr_desc)
         # Add the resources to the global attribute map
         # This is done here as the setup process won't
         # initialize the main API router which extends
@@ -975,6 +987,22 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_TCP, '22', '22')
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+                self.assertIn(sgr['security_group_rule']['id'],
+                              res.json['NeutronError']['message'])
+
+    def test_create_security_group_rule_duplicate_rules_diff_desc(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id) as sgr:
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress',
+                    const.PROTO_NAME_TCP, '22', '22')
+                rule['security_group_rule']['description'] = "description"
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
