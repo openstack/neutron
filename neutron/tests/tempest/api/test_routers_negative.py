@@ -21,19 +21,40 @@ import testtools
 from neutron.tests.tempest.api import base_routers as base
 
 
-class DvrRoutersNegativeTest(base.BaseRouterTest):
+class RoutersNegativeTestBase(base.BaseRouterTest):
+
+    @classmethod
+    def resource_setup(cls):
+        super(RoutersNegativeTestBase, cls).resource_setup()
+        cls.router = cls.create_router(data_utils.rand_name('router'))
+        cls.network = cls.create_network()
+        cls.subnet = cls.create_subnet(cls.network)
+
+
+class RoutersNegativeTest(RoutersNegativeTestBase):
+
+    @classmethod
+    @test.requires_ext(extension="router", service="network")
+    def skip_checks(cls):
+        super(RoutersNegativeTest, cls).skip_checks()
+
+    @test.attr(type='negative')
+    @test.idempotent_id('e3e751af-15a2-49cc-b214-a7154579e94f')
+    def test_delete_router_in_use(self):
+        # This port is deleted after a test by remove_router_interface.
+        port = self.client.create_port(network_id=self.network['id'])
+        self.client.add_router_interface_with_port_id(
+            self.router['id'], port['port']['id'])
+        with testtools.ExpectedException(lib_exc.Conflict):
+            self.client.delete_router(self.router['id'])
+
+
+class DvrRoutersNegativeTest(RoutersNegativeTestBase):
 
     @classmethod
     @test.requires_ext(extension="dvr", service="network")
     def skip_checks(cls):
         super(DvrRoutersNegativeTest, cls).skip_checks()
-
-    @classmethod
-    def resource_setup(cls):
-        super(DvrRoutersNegativeTest, cls).resource_setup()
-        cls.router = cls.create_router(data_utils.rand_name('router'))
-        cls.network = cls.create_network()
-        cls.subnet = cls.create_subnet(cls.network)
 
     @test.attr(type='negative')
     @test.idempotent_id('4990b055-8fc7-48ab-bba7-aa28beaad0b9')
