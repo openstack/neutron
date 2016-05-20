@@ -78,6 +78,12 @@ class ServiceTypeManager(object):
             )
         return providers[0]
 
+    def get_provider_names_by_resource_ids(self, context, resource_ids):
+        query = (
+            context.session.query(ProviderResourceAssociation).
+            filter(ProviderResourceAssociation.resource_id.in_(resource_ids)))
+        return {rec.resource_id: rec.provider_name for rec in query}
+
     def add_resource_association(self, context, service_type, provider_name,
                                  resource_id):
         r = self.get_service_providers(context,
