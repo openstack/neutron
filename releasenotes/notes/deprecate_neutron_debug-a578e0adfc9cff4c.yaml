@@ -1,0 +1,8 @@
+---
+deprecations:
+
+  - The tool neutron-debug is now deprecated, to be replaced with a new
+    set of troubleshooting and diagnostic tools. There is no plan for
+    removal in the immediate term, and not until comparable tools will be
+    adequate enough to supplant neutron-debug altogether. For more information,
+    please see https://blueprints.launchpad.net/neutron/+spec/troubleshooting
