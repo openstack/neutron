@@ -29,6 +29,14 @@ from alembic import op
 import sqlalchemy as sa
 
 
+def contract_creation_exceptions():
+    """These elements were created by mistake in the contract branch."""
+    return {
+        sa.Table: ['ml2_geneve_allocations', 'ml2_geneve_endpoints'],
+        sa.Index: ['ml2_geneve_allocations']
+    }
+
+
 def upgrade():
     op.create_table(
         'ml2_geneve_allocations',
