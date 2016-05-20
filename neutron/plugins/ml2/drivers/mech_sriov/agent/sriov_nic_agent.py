@@ -14,6 +14,7 @@
 # limitations under the License.
 
 
+import collections
 import socket
 import sys
 import time
@@ -25,6 +26,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
+import six
 
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent import rpc as agent_rpc
@@ -48,8 +50,13 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
     # history
-    #   1.1 Support Security Group RPC
-    target = oslo_messaging.Target(version='1.1')
+    #   1.1 Support Security Group RPC (works with NoopFirewallDriver)
+    #   1.2 Support DVR (Distributed Virtual Router) RPC (not supported)
+    #   1.3 Added param devices_to_update to security_groups_provider_updated
+    #       (works with NoopFirewallDriver)
+    #   1.4 Added support for network_update
+
+    target = oslo_messaging.Target(version='1.4')
 
     def __init__(self, context, agent, sg_agent):
         super(SriovNicSwitchRpcCallbacks, self).__init__()
@@ -79,12 +86,22 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                       "skipping", {'id': port['id'], 'mac': mac,
                                    'pci_slot': pci_slot})
 
+    def network_update(self, context, **kwargs):
+        network_id = kwargs['network']['id']
+        LOG.debug("network_update message received for network "
+                  "%(network_id)s, with ports: %(ports)s",
+                  {'network_id': network_id,
+                   'ports': self.agent.network_ports[network_id]})
+        for port_data in self.agent.network_ports[network_id]:
+            self.agent.updated_devices.add(port_data['device'])
+
 
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
                  polling_interval):
 
         self.polling_interval = polling_interval
+        self.network_ports = collections.defaultdict(list)
         self.conf = cfg.CONF
         self.setup_eswitch_mgr(physical_devices_mappings,
                                exclude_devices)
@@ -99,7 +116,6 @@ class SriovNicSwitchAgent(object):
 
         # Stores port update notifications for processing in the main loop
         self.updated_devices = set()
-        self.mac_to_port_id_mapping = {}
 
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -127,6 +143,7 @@ class SriovNicSwitchAgent(object):
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
+                     [topics.NETWORK, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
@@ -164,10 +181,11 @@ class SriovNicSwitchAgent(object):
         device_info = {}
         device_info['current'] = curr_devices
         device_info['added'] = curr_devices - registered_devices
-        # we don't want to process updates for devices that don't exist
-        device_info['updated'] = updated_devices & curr_devices
         # we need to clean up after devices are removed
         device_info['removed'] = registered_devices - curr_devices
+        # we don't want to process updates for devices that don't exist
+        device_info['updated'] = (updated_devices & curr_devices -
+                                  device_info['removed'])
         return device_info
 
     def _device_info_has_changes(self, device_info):
@@ -230,6 +248,21 @@ class SriovNicSwitchAgent(object):
         else:
             LOG.info(_LI("No device with MAC %s defined on agent."), device)
 
+    def _update_network_ports(self, network_id, port_id, mac_pci_slot):
+        self._clean_network_ports(mac_pci_slot)
+        self.network_ports[network_id].append({
+            "port_id": port_id,
+            "device": mac_pci_slot})
+
+    def _clean_network_ports(self, mac_pci_slot):
+        for netid, ports_list in six.iteritems(self.network_ports):
+            for port_data in ports_list:
+                if mac_pci_slot == port_data['device']:
+                    ports_list.remove(port_data)
+                    if ports_list == []:
+                        self.network_ports.pop(netid)
+                    return port_data['port_id']
+
     def treat_devices_added_updated(self, devices_info):
         try:
             macs_list = set([device_info[0] for device_info in devices_info])
@@ -250,13 +283,15 @@ class SriovNicSwitchAgent(object):
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
                 port_id = device_details['port_id']
-                self.mac_to_port_id_mapping[device] = port_id
                 profile = device_details['profile']
                 spoofcheck = device_details.get('port_security_enabled', True)
                 self.treat_device(device,
                                   profile.get('pci_slot'),
                                   device_details['admin_state_up'],
                                   spoofcheck)
+                self._update_network_ports(device_details['network_id'],
+                                           port_id,
+                                           (device, profile.get('pci_slot')))
                 self.ext_manager.handle_port(self.context, device_details)
             else:
                 LOG.info(_LI("Device with MAC %s not defined on plugin"),
@@ -271,14 +306,12 @@ class SriovNicSwitchAgent(object):
                          "PCI slot %(pci_slot)s"),
                      {'mac': mac, 'pci_slot': pci_slot})
             try:
-                port_id = self.mac_to_port_id_mapping.get(mac)
+                port_id = self._clean_network_ports(device)
                 if port_id:
-                    profile = {'pci_slot': pci_slot}
                     port = {'port_id': port_id,
                             'device': mac,
-                            'profile': profile}
+                            'profile': {'pci_slot': pci_slot}}
                     self.ext_manager.delete_port(self.context, port)
-                    del self.mac_to_port_id_mapping[mac]
                 else:
                     LOG.warning(_LW("port_id to device with MAC "
                                  "%s not found"), mac)
