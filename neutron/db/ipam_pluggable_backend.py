@@ -263,7 +263,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         self._validate_max_ips_per_port(fixed_ip_list, device_owner)
         return fixed_ip_list
 
-    def _update_ips_for_port(self, context, port,
+    def _update_ips_for_port(self, context, port, host,
                              original_ips, new_ips, mac):
         """Add or remove IPs from the port. IPAM version"""
         added = []
@@ -271,7 +271,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         changes = self._get_changed_ips_for_port(
             context, original_ips, new_ips, port['device_owner'])
         subnets = self._ipam_get_subnets(
-            context, network_id=port['network_id'], host=None)
+            context, network_id=port['network_id'], host=host)
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
             context, port['network_id'], changes.add,
@@ -301,7 +301,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                  last_ip=last_ip)
             context.session.add(ip_pool)
 
-    def update_port_with_ips(self, context, db_port, new_port, new_mac):
+    def update_port_with_ips(self, context, host, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
 
         if 'fixed_ips' in new_port:
@@ -309,6 +309,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                             process_extensions=False)
             changes = self._update_ips_for_port(context,
                                                 db_port,
+                                                host,
                                                 original["fixed_ips"],
                                                 new_port['fixed_ips'],
                                                 new_mac)

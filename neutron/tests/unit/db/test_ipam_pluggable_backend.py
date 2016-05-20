@@ -617,7 +617,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         port_dict = {'device_owner': uuidutils.generate_uuid(),
                      'network_id': uuidutils.generate_uuid()}
 
-        mocks['ipam']._update_ips_for_port(context, port_dict,
+        mocks['ipam']._update_ips_for_port(context, port_dict, None,
                                            original_ips, new_ips, mac)
         mocks['driver'].get_address_request_factory.assert_called_once_with()
         mocks['ipam']._ipam_get_subnets.assert_called_once_with(
@@ -752,6 +752,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         self.assertRaises(db_exc.DBDeadlock,
                           mocks['ipam'].update_port_with_ips,
                           context,
+                          None,
                           db_port,
                           new_port,
                           mock.Mock())

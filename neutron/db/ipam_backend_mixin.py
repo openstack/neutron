@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import copy
 import itertools
 
 import netaddr
@@ -34,6 +35,7 @@ from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.db import segments_db
+from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import utils as ipam_utils
 from neutron.services.segments import db as segment_svc_db
@@ -594,3 +596,41 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if validators.is_attr_set(subnet.get(segment.SEGMENT_ID)):
             args['segment_id'] = subnet[segment.SEGMENT_ID]
         return args
+
+    def update_port(self, context, old_port_db, old_port, new_port):
+        """Update the port IPs
+
+        Updates the port's IPs based on any new fixed_ips passed in or if
+        deferred IP allocation is in effect because allocation requires host
+        binding information that wasn't provided until port update.
+
+        :param old_port_db: The port database record
+        :param old_port: A port dict created by calling _make_port_dict.  This
+                         must be called before calling this method in order to
+                         load data from extensions, specifically host binding.
+        :param new_port: The new port data passed through the API.
+        """
+        old_host = old_port.get(portbindings.HOST_ID)
+        new_host = new_port.get(portbindings.HOST_ID)
+        host = new_host if validators.is_attr_set(new_host) else old_host
+
+        changes = self.update_port_with_ips(context,
+                                            host,
+                                            old_port_db,
+                                            new_port,
+                                            new_port.get('mac_address'))
+
+        fixed_ips_requested = validators.is_attr_set(new_port.get('fixed_ips'))
+        deferred_ip_allocation = (host and not old_host
+                                  and not old_port.get('fixed_ips')
+                                  and not fixed_ips_requested)
+        if not deferred_ip_allocation:
+            return changes
+
+        # Allocate as if this were the port create.
+        port_copy = copy.deepcopy(old_port)
+        port_copy['fixed_ips'] = const.ATTR_NOT_SPECIFIED
+        port_copy.update(new_port)
+        ips = self.allocate_ips_for_port_and_store(
+            context, {'port': port_copy}, port_copy['id'])
+        return self.Changes(add=ips, original=[], remove=[])

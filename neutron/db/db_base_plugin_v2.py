@@ -1297,8 +1297,23 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     new_port['dns_name'] = ''
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, db_port, new_port, new_mac)
-            changes = self.ipam.update_port_with_ips(context, db_port,
-                                                     new_port, new_mac)
+            # Note: _make_port_dict is called here to load extension data
+            # (specifically host binding).  The IPAM plugin is separate from
+            # the core plugin, so extensions are not loaded.
+            #
+            # The IPAM code could cheat and get it directly from db_port but it
+            # would have to know about the implementation (remember ml2 has its
+            # own port binding schema that differs from the generic one)
+            #
+            # This code could extract just the port binding host here and pass
+            # that in.  The problem is that db_base_plugin_common shouldn't
+            # know anything about port binding.  This compromise sends IPAM a
+            # port_dict with all of the extension data loaded.
+            changes = self.ipam.update_port(
+                context,
+                old_port_db=db_port,
+                old_port=self._make_port_dict(db_port),
+                new_port=new_port)
             if 'dns-integration' in self.supported_extension_aliases:
                 dns_assignment = self._get_dns_names_for_updated_port(
                     context, original_ips, original_dns_name,
