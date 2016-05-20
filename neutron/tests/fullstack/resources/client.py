@@ -48,20 +48,23 @@ class ClientFixture(fixtures.Fixture):
         self.addCleanup(_safe_method(delete), data['id'])
         return data
 
-    def create_router(self, tenant_id, name=None, ha=False):
+    def create_router(self, tenant_id, name=None, ha=False,
+                      external_network=None):
         resource_type = 'router'
 
         name = name or base.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name, 'ha': ha}
+        if external_network:
+            spec['external_gateway_info'] = {"network_id": external_network}
 
         return self._create_resource(resource_type, spec)
 
-    def create_network(self, tenant_id, name=None):
+    def create_network(self, tenant_id, name=None, external=False):
         resource_type = 'network'
 
         name = name or base.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name}
-
+        spec['router:external'] = external
         return self._create_resource(resource_type, spec)
 
     def create_subnet(self, tenant_id, network_id,
@@ -87,6 +90,17 @@ class ClientFixture(fixtures.Fixture):
         if qos_policy_id:
             spec['qos_policy_id'] = qos_policy_id
         return self._create_resource('port', spec)
+
+    def create_floatingip(self, tenant_id, floating_network_id,
+                          fixed_ip_address, port_id):
+        spec = {
+            'floating_network_id': floating_network_id,
+            'tenant_id': tenant_id,
+            'fixed_ip_address': fixed_ip_address,
+            'port_id': port_id
+        }
+
+        return self._create_resource('floatingip', spec)
 
     def add_router_interface(self, router_id, subnet_id):
         body = {'subnet_id': subnet_id}

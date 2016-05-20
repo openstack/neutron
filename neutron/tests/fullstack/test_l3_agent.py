@@ -20,12 +20,26 @@ from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
+from neutron.tests.common.exclusive_resources import ip_network
+from neutron.tests.common import machine_fixtures
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 
 
 class TestL3Agent(base.BaseFullStackTestCase):
+
+    def _create_external_network_and_subnet(self, tenant_id):
+        network = self.safe_client.create_network(
+            tenant_id, name='public', external=True)
+        cidr = self.useFixture(
+            ip_network.ExclusiveIPNetwork(
+                "240.0.0.0", "240.255.255.255", "24")).network
+        subnet = self.safe_client.create_subnet(
+            tenant_id, network['id'], cidr,
+            enable_dhcp=False)
+        return network, subnet
 
     def block_until_port_status_active(self, port_id):
         def is_port_status_active():
@@ -93,8 +107,35 @@ class TestLegacyL3Agent(TestL3Agent):
             tenant_id, '21.0.0.0/24',
             self.environment.hosts[1], router)
 
-        # wait until qr-xx port up in qrouter-xx namespace
         vm1.block_until_ping(vm2.ip)
+
+    def test_snat_and_floatingip(self):
+        # This function creates external network and boots an extrenal vm
+        # on it with gateway ip and connected to central_external_bridge.
+        # Later it creates a tenant vm on tenant network, with tenant router
+        # connected to tenant network and external network.
+        # To test snat and floatingip, try ping between tenant and external vms
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        external_vm = self.useFixture(
+            machine_fixtures.FakeMachine(
+                self.environment.central_external_bridge,
+                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+
+        router = self.safe_client.create_router(tenant_id,
+                                                external_network=ext_net['id'])
+        vm = self._create_net_subnet_and_vm(
+            tenant_id, '20.0.0.0/24',
+            self.environment.hosts[1], router)
+
+        # ping external vm to test snat
+        vm.block_until_ping(external_vm.ip)
+
+        fip = self.safe_client.create_floatingip(
+            tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'])
+
+        # ping floating ip from external vm
+        external_vm.block_until_ping(fip['floating_ip_address'])
 
 
 class TestHAL3Agent(base.BaseFullStackTestCase):
