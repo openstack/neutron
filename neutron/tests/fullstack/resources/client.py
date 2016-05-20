@@ -90,9 +90,11 @@ class ClientFixture(fixtures.Fixture):
 
     def add_router_interface(self, router_id, subnet_id):
         body = {'subnet_id': subnet_id}
-        self.client.add_interface_router(router=router_id, body=body)
+        router_interface_info = self.client.add_interface_router(
+            router=router_id, body=body)
         self.addCleanup(_safe_method(self.client.remove_interface_router),
                         router=router_id, body=body)
+        return router_interface_info
 
     def create_qos_policy(self, tenant_id, name, description, shared):
         policy = self.client.create_qos_policy(
