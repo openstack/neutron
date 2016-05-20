@@ -270,7 +270,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                         not is_auto_addr_subnet):
                     fixed_ip_list.append({'subnet_id': subnet['id']})
 
-        self._validate_max_ips_per_port(fixed_ip_list)
+        self._validate_max_ips_per_port(fixed_ip_list, device_owner)
         return fixed_ip_list
 
     def _update_ips_for_port(self, context, port,
