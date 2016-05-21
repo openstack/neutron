@@ -13,11 +13,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import oslo_i18n
 from oslo_log import log as logging
 from pecan import hooks
-import webob.exc
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _LE, _LI
+from neutron.api import api_common
 from neutron.api.v2 import base as v2base
 
 
@@ -26,15 +27,15 @@ LOG = logging.getLogger(__name__)
 
 class ExceptionTranslationHook(hooks.PecanHook):
     def on_error(self, state, e):
-        # TODO(kevinbenton): language translation in api.resource.v2
-        # if it's already an http error, just return to let it go through
-        if isinstance(e, webob.exc.WSGIHTTPException):
-            return
-        for exc_class, to_class in v2base.FAULT_MAP.items():
-            if isinstance(e, exc_class):
-                return to_class(getattr(e, 'msg', str(e)))
-        # leaked unexpected exception, convert to boring old 500 error and
-        # hide message from user in case it contained sensitive details
-        LOG.exception(_LE("An unexpected exception was caught: %s"), e)
-        return webob.exc.HTTPInternalServerError(
-            _("An unexpected internal error occurred."))
+        language = None
+        if state.request.accept_language:
+            language = state.request.accept_language.best_match(
+                oslo_i18n.get_available_languages('neutron'))
+        exc = api_common.convert_exception_to_http_exc(e, v2base.FAULT_MAP,
+                                                       language)
+        if hasattr(exc, 'code') and 400 <= exc.code < 500:
+            LOG.info(_LI('%(action)s failed (client error): %(exc)s'),
+                     {'action': state.request.method, 'exc': exc})
+        else:
+            LOG.exception(_LE('%s failed.'), state.request.method)
+        return exc
