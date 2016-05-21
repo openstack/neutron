@@ -218,10 +218,5 @@
     "create_flavor_service_profile": "rule:admin_only",
     "delete_flavor_service_profile": "rule:admin_only",
     "get_flavor_service_profile": "rule:regular_user",
-    "get_auto_allocated_topology": "rule:admin_or_owner",
-
-    "add_gateway_network": "rule:admin_only",
-    "remove_gateway_network": "rule:admin_only",
-
-    "get_advertised_routes":"rule:admin_only"
+    "get_auto_allocated_topology": "rule:admin_or_owner"
 }
