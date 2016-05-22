@@ -18,7 +18,7 @@ from neutron import manager
 QOS_DRIVER_NAMESPACE = 'neutron.qos.notification_drivers'
 QOS_PLUGIN_OPTS = [
     cfg.ListOpt('notification_drivers',
-                default='message_queue',
+                default=['message_queue'],
                 help=_('Drivers list to use to send the update notification')),
 ]
 
