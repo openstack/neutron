@@ -25,6 +25,9 @@ from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -165,8 +168,10 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         return self._fields(res, fields)
 
     def delete_agent(self, context, id):
+        agent = self._get_agent(context, id)
+        registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
+                        context=context, agent=agent)
         with context.session.begin(subtransactions=True):
-            agent = self._get_agent(context, id)
             context.session.delete(agent)
 
     def update_agent(self, context, id, agent):
