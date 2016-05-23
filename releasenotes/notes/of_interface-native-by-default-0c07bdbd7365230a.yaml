@@ -1,0 +1,10 @@
+---
+prelude: >
+    Prior to Newton, the neutron-openvswitch-agent used 'ovs-ofctl'
+    of_interface driver by default.  In Newton, 'of_interface'
+    defaults to 'native'.  This mostly eliminates spawning ovs-ofctl
+    and improves performance a little.
+upgrade:
+  - To retain the old default for neutron-openvswitch-agent, use
+    'of_interface = ovs-ofctl' in the '[ovs]' section of your
+    openvswitch agent configuration file.
