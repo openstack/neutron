@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import periodic_task
+from osprofiler import profiler
 import six
 
 from neutron._i18n import _, _LI
@@ -32,7 +33,13 @@ LOG = logging.getLogger(__name__)
 CORE_PLUGINS_NAMESPACE = 'neutron.core_plugins'
 
 
+class ManagerMeta(profiler.TracedMeta, type(periodic_task.PeriodicTasks)):
+    pass
+
+
+@six.add_metaclass(ManagerMeta)
 class Manager(periodic_task.PeriodicTasks):
+    __trace_args__ = {"name": "rpc"}
 
     # Set RPC API version to 1.0 by default.
     target = oslo_messaging.Target(version='1.0')
@@ -87,6 +94,7 @@ def validate_pre_plugin_load():
         return msg
 
 
+@six.add_metaclass(profiler.TracedMeta)
 class NeutronManager(object):
     """Neutron's Manager class.
 
@@ -96,6 +104,7 @@ class NeutronManager(object):
     The caller should make sure that NeutronManager is a singleton.
     """
     _instance = None
+    __trace_args__ = {"name": "rpc"}
 
     def __init__(self, options=None, config_file=None):
         # If no options have been provided, create an empty dict

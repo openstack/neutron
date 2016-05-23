@@ -25,6 +25,7 @@ import oslo_messaging
 from oslo_messaging import serializer as om_serializer
 from oslo_service import service
 from oslo_utils import excutils
+from osprofiler import profiler
 
 from neutron._i18n import _LE, _LW
 from neutron.common import exceptions
@@ -212,10 +213,22 @@ class RequestContextSerializer(om_serializer.Serializer):
         return self._base.deserialize_entity(ctxt, entity)
 
     def serialize_context(self, ctxt):
-        return ctxt.to_dict()
+        _context = ctxt.to_dict()
+        prof = profiler.get()
+        if prof:
+            trace_info = {
+                "hmac_key": prof.hmac_key,
+                "base_id": prof.get_base_id(),
+                "parent_id": prof.get_id()
+            }
+            _context['trace_info'] = trace_info
+        return _context
 
     def deserialize_context(self, ctxt):
         rpc_ctxt_dict = ctxt.copy()
+        trace_info = rpc_ctxt_dict.pop("trace_info", None)
+        if trace_info:
+            profiler.init(**trace_info)
         user_id = rpc_ctxt_dict.pop('user_id', None)
         if not user_id:
             user_id = rpc_ctxt_dict.pop('user', None)
@@ -225,6 +238,7 @@ class RequestContextSerializer(om_serializer.Serializer):
         return context.Context(user_id, tenant_id, **rpc_ctxt_dict)
 
 
+@profiler.trace_cls("rpc")
 class Service(service.Service):
     """Service object for binaries running on hosts.
 

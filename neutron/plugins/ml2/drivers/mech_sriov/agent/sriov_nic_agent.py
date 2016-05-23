@@ -25,6 +25,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
+from osprofiler import profiler
 import six
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -33,6 +34,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.common import config as common_config
+from neutron.common import profiler as setup_profiler
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -103,6 +105,7 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             self.agent.updated_devices.add(port_data['device'])
 
 
+@profiler.trace_cls("rpc")
 class SriovNicSwitchAgent(object):
     def __init__(self, physical_devices_mappings, exclude_devices,
                  polling_interval):
@@ -458,5 +461,6 @@ def main():
         LOG.exception(_LE("Agent Initialization Failed"))
         raise SystemExit(1)
     # Start everything.
+    setup_profiler.setup("neutron-sriov-nic-agent", cfg.CONF.host)
     LOG.info(_LI("Agent initialized successfully, now running... "))
     agent.daemon_loop()

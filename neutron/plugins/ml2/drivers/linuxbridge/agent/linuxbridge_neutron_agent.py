@@ -37,6 +37,7 @@ from neutron.agent.linux import utils
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import exceptions
+from neutron.common import profiler as setup_profiler
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron.plugins.common import constants as p_const
@@ -928,6 +929,7 @@ def main():
     agent = ca.CommonAgentLoop(manager, polling_interval, quitting_rpc_timeout,
                                constants.AGENT_TYPE_LINUXBRIDGE,
                                LB_AGENT_BINARY)
+    setup_profiler.setup("neutron-linuxbridge-agent", cfg.CONF.host)
     LOG.info(_LI("Agent initialized successfully, now running... "))
     launcher = service.launch(cfg.CONF, agent)
     launcher.wait()
