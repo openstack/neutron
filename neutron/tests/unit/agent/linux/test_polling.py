@@ -45,7 +45,7 @@ class TestInterfacePollingMinimizer(base.BaseTestCase):
     def test_start_calls_monitor_start(self):
         with mock.patch.object(self.pm._monitor, 'start') as mock_start:
             self.pm.start()
-        mock_start.assert_called_with()
+        mock_start.assert_called_with(block=True)
 
     def test_stop_calls_monitor_stop(self):
         with mock.patch.object(self.pm._monitor, 'stop') as mock_stop:

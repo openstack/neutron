@@ -1795,6 +1795,8 @@ class TestOvsNeutronAgent(object):
 
         with mock.patch.object(async_process.AsyncProcess, "_spawn"),\
                 mock.patch.object(async_process.AsyncProcess, "start"),\
+                mock.patch.object(async_process.AsyncProcess,
+                                  "is_active", return_value=True),\
                 mock.patch.object(async_process.AsyncProcess, "stop"),\
                 mock.patch.object(log.KeywordArgumentAdapter,
                                   'exception') as log_exception,\
@@ -1877,6 +1879,8 @@ class TestOvsNeutronAgent(object):
     def test_rpc_loop_fail_to_process_network_ports_keep_flows(self):
         with mock.patch.object(async_process.AsyncProcess, "_spawn"),\
                 mock.patch.object(async_process.AsyncProcess, "start"),\
+                mock.patch.object(async_process.AsyncProcess,
+                                  "is_active", return_value=True),\
                 mock.patch.object(async_process.AsyncProcess, "stop"),\
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,

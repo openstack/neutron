@@ -54,7 +54,7 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
             respawn_interval=ovsdb_monitor_respawn_interval)
 
     def start(self):
-        self._monitor.start()
+        self._monitor.start(block=True)
 
     def stop(self):
         try:
