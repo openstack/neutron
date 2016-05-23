@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import defaultdict
 import weakref
 
 from oslo_config import cfg
@@ -128,6 +129,7 @@ class NeutronManager(object):
         # Used by pecan WSGI
         self.resource_plugin_mappings = {}
         self.resource_controller_mappings = {}
+        self.path_prefix_resource_mappings = defaultdict(list)
 
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
@@ -265,6 +267,8 @@ class NeutronManager(object):
             resource,
             res_ctrl_mappings.get(resource.replace('-', '_')))
 
+    # TODO(blogan): This isn't used by anything else other than tests and
+    # probably should be removed
     @classmethod
     def get_service_plugin_by_path_prefix(cls, path_prefix):
         service_plugins = cls.get_unique_service_plugins()
@@ -272,3 +276,13 @@ class NeutronManager(object):
             plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
             if plugin_path_prefix and plugin_path_prefix == path_prefix:
                 return service_plugin
+
+    @classmethod
+    def add_resource_for_path_prefix(cls, resource, path_prefix):
+        resources = cls.get_instance().path_prefix_resource_mappings[
+            path_prefix].append(resource)
+        return resources
+
+    @classmethod
+    def get_resources_for_path_prefix(cls, path_prefix):
+        return cls.get_instance().path_prefix_resource_mappings[path_prefix]

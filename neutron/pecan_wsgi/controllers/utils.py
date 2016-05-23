@@ -87,12 +87,13 @@ def when(index, *args, **kwargs):
 
 class NeutronPecanController(object):
 
-    def __init__(self, collection, resource):
+    def __init__(self, collection, resource, plugin=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
-        self._resource_info = api_attributes.get_collection_info(collection)
-        self._plugin = None
+        self._resource_info = api_attributes.get_collection_info(
+            self.collection)
+        self._plugin = plugin
 
     @property
     def plugin(self):
@@ -166,6 +167,7 @@ class ShimCollectionsController(NeutronPecanController):
 
 class PecanResourceExtension(object):
 
-    def __init__(self, collection, controller):
+    def __init__(self, collection, controller, plugin):
         self.collection = collection
         self.controller = controller
+        self.plugin = plugin

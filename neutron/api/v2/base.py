@@ -60,6 +60,14 @@ class Controller(object):
     UPDATE = 'update'
     DELETE = 'delete'
 
+    @property
+    def plugin(self):
+        return self._plugin
+
+    @property
+    def resource(self):
+        return self._resource
+
     def __init__(self, plugin, collection, resource, attr_info,
                  allow_bulk=False, member_actions=None, parent=None,
                  allow_pagination=False, allow_sorting=False):

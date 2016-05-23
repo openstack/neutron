@@ -180,6 +180,19 @@ class ExtensionDescriptor(object):
             if extended_attrs:
                 attrs.update(extended_attrs)
 
+    def get_pecan_resources(self):
+        """List of PecanResourceExtension extension objects.
+
+        Resources define new nouns, and are accessible through URLs.
+        The controllers associated with each instance of
+        extensions.ResourceExtension should be a subclass of
+        neutron.pecan_wsgi.controllers.utils.NeutronPecanController.
+
+        If a resource is defined in both get_resources and get_pecan_resources,
+        the resource defined in get_pecan_resources will take precedence.
+        """
+        return []
+
 
 class ActionExtensionController(wsgi.Controller):
 
@@ -418,6 +431,19 @@ class ExtensionManager(object):
                                            ExtensionController(self)))
         for ext in self.extensions.values():
             resources.extend(ext.get_resources())
+        return resources
+
+    def get_pecan_resources(self):
+        """Returns a list of PecanResourceExtension objects."""
+        resources = []
+        for ext in self.extensions.values():
+            # TODO(blogan): this is being called because there are side effects
+            # that the get_resources method does, like registering plural
+            # mappings and quotas. The side effects that get_resources does
+            # should probably be moved to another extension method, but that
+            # should be done some other time.
+            ext.get_resources()
+            resources.extend(ext.get_pecan_resources())
         return resources
 
     def get_actions(self):

@@ -24,6 +24,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
 from neutron.conf import quota
+from neutron import manager
 from neutron.pecan_wsgi import controllers
 from neutron.pecan_wsgi.controllers import utils as pecan_utils
 from neutron.plugins.common import constants
@@ -201,14 +202,16 @@ class L3(extensions.ExtensionDescriptor):
             attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
 
     @classmethod
-    def get_pecan_controllers(cls):
-        return [
-            pecan_utils.PecanResourceExtension(
-                ROUTERS, controllers.RoutersController()),
-            pecan_utils.PecanResourceExtension(
-                FLOATINGIPS, controllers.CollectionsController(
-                    FLOATINGIPS, FLOATINGIP))
-        ]
+    def get_pecan_resources(cls):
+        plugin = manager.NeutronManager.get_service_plugins()[
+            constants.L3_ROUTER_NAT]
+        router_controller = controllers.RoutersController()
+        fip_controller = controllers.CollectionsController(
+            FLOATINGIPS, FLOATINGIP)
+        return [pecan_utils.PecanResourceExtension(
+                    ROUTERS, router_controller, plugin),
+                pecan_utils.PecanResourceExtension(
+                    FLOATINGIPS, fip_controller, plugin)]
 
     def get_extended_resources(self, version):
         if version == "2.0":

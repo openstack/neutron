@@ -21,6 +21,7 @@ import webob
 
 from neutron._i18n import _
 from neutron.api import extensions
+from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants as const
@@ -161,9 +162,12 @@ class Quotasv2(extensions.ExtensionDescriptor):
             collection_actions={'tenant': 'GET'})]
 
     @classmethod
-    def get_pecan_controllers(cls):
+    def get_pecan_resources(cls):
+        # NOTE: quotas in PLURALS is needed because get_resources never sets it
+        attributes.PLURALS[RESOURCE_COLLECTION] = RESOURCE_NAME
+        # NOTE: plugin is not needed for quotas
         return [pecan_utils.PecanResourceExtension(
-            RESOURCE_COLLECTION, controllers.QuotasController())]
+            RESOURCE_COLLECTION, controllers.QuotasController(), None)]
 
     def get_extended_resources(self, version):
         if version == "2.0":
