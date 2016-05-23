@@ -1,0 +1,17 @@
+---
+prelude: >
+    Properly calculate overlay (tunnel) protocol overhead for
+    environments using IPv4 or IPv6 endpoints. The ML2 plug-in
+    configuration file contains a new configuration option,
+    'overlay_ip_version', in the '[ml2]' section that indicates
+    the IP version of all overlay network endpoints. Use '4' for
+    IPv4 and '6' for IPv6. Defaults to '4'. Additionally, all
+    layer-2 agents must use the same IP version for endpoints.
+upgrade:
+  - Define the 'overlay_ip_version' option and value
+    appropriate for the environment. Only required if not
+    using the Default of '4'.
+other:
+  - The value of the 'overlay_ip_version' option adds either
+    20 bytes for IPv4 or 40 bytes for IPv6 to determine the total
+    tunnel overhead amount.

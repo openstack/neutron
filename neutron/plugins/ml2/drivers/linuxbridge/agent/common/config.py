@@ -40,7 +40,13 @@ vxlan_opts = [
                       "To reserve a unique group for each possible "
                       "(24-bit) VNI, use a /8 such as 239.0.0.0/8. This "
                       "setting must be the same on all the agents.")),
-    cfg.IPOpt('local_ip', help=_("Local IP address of the VXLAN endpoints.")),
+    cfg.IPOpt('local_ip',
+              help=_("IP address of local overlay (tunnel) network endpoint. "
+                     "Use either an IPv4 or IPv6 address that resides on one "
+                     "of the host network interfaces. The IP version of this "
+                     "value must match the value of the 'overlay_ip_version' "
+                     "option in the ML2 plug-in configuration file on the "
+                     "neutron server node(s).")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Extension to use alongside ml2 plugin's l2population "
                        "mechanism driver. It enables the plugin to populate "

@@ -20,11 +20,14 @@ import testtools
 from testtools import matchers
 
 from neutron.db import api as db
+from neutron.plugins.common import constants as p_const
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
 
 TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
+TUNNEL_IPV6_ONE = "2001:db8:1::10"
 HOST_ONE = 'fake_host_one'
 HOST_TWO = 'fake_host_two'
 TUN_MIN = 100
@@ -355,6 +358,12 @@ class TunnelRpcCallbackTestMixin(object):
                   'host': HOST_ONE}
         self._test_tunnel_sync(kwargs)
 
+    def test_tunnel_sync_called_with_host_passed_ipv6(self):
+        config.cfg.CONF.set_override('overlay_ip_version', 6, group='ml2')
+        kwargs = {'tunnel_ip': TUNNEL_IPV6_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync(kwargs)
+
     def test_tunnel_sync_called_for_existing_endpoint(self):
         self.driver.add_endpoint(TUNNEL_IP_ONE, HOST_ONE)
 
@@ -391,3 +400,60 @@ class TunnelRpcCallbackTestMixin(object):
     def test_tunnel_sync_called_without_tunnel_type(self):
         kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'host': None}
         self._test_tunnel_sync_raises(kwargs)
+
+    def test_tunnel_sync_called_with_tunnel_overlay_mismatch(self):
+        config.cfg.CONF.set_override('overlay_ip_version', 6, group='ml2')
+        kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync_raises(kwargs)
+
+    def test_tunnel_sync_called_with_tunnel_overlay_mismatch_ipv6(self):
+        config.cfg.CONF.set_override('overlay_ip_version', 4, group='ml2')
+        kwargs = {'tunnel_ip': TUNNEL_IPV6_ONE, 'tunnel_type': self.TYPE,
+                  'host': HOST_ONE}
+        self._test_tunnel_sync_raises(kwargs)
+
+
+class TunnelTypeMTUTestMixin(object):
+
+    DRIVER_CLASS = None
+    TYPE = None
+    ENCAP_OVERHEAD = 0
+
+    def setUp(self):
+        super(TunnelTypeMTUTestMixin, self).setUp()
+        self.driver = self.DRIVER_CLASS()
+
+    def _test_get_mtu(self, ip_version):
+        config.cfg.CONF.set_override('overlay_ip_version', ip_version,
+                                     group='ml2')
+        ip_header_length = p_const.IP_HEADER_LENGTH[ip_version]
+
+        config.cfg.CONF.set_override('global_physnet_mtu', 1500)
+        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
+        self.assertEqual(1475 - self.ENCAP_OVERHEAD - ip_header_length,
+                         self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('global_physnet_mtu', 1450)
+        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1400, 'physnet2': 1425}
+        self.assertEqual(1450 - self.ENCAP_OVERHEAD - ip_header_length,
+                         self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
+        config.cfg.CONF.set_override('path_mtu', 1450, group='ml2')
+        self.driver.physnet_mtus = {'physnet1': 1425, 'physnet2': 1400}
+        self.assertEqual(1450 - self.ENCAP_OVERHEAD - ip_header_length,
+                         self.driver.get_mtu('physnet1'))
+
+        config.cfg.CONF.set_override('global_physnet_mtu', 0)
+        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        self.driver.physnet_mtus = {}
+        self.assertEqual(0, self.driver.get_mtu('physnet1'))
+
+    def test_get_mtu_ipv4(self):
+        self._test_get_mtu(4)
+
+    def test_get_mtu_ipv6(self):
+        self._test_get_mtu(6)
