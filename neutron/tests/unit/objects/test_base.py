@@ -30,6 +30,7 @@ from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import subnet
 from neutron.tests import base as test_base
 from neutron.tests import tools
 
@@ -242,6 +243,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.DateTimeField: timeutils.utcnow,
     obj_fields.IPAddressField: tools.get_random_ip_address,
     common_types.MACAddressField: tools.get_random_EUI,
+    common_types.IPV6ModeEnumField: tools.get_random_ipv6_mode,
 }
 
 
@@ -639,6 +641,21 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self._network = obj_db_api.create_object(self.context,
                                                  models_v2.Network,
                                                  {'name': 'test-network1'})
+
+    def _create_test_subnet(self, network):
+        test_subnet = {
+            'tenant_id': uuidutils.generate_uuid(),
+            'name': 'test-subnet1',
+            'network_id': network['id'],
+            'ip_version': 4,
+            'cidr': '10.0.0.0/24',
+            'gateway_ip': '10.0.0.1',
+            'enable_dhcp': 1,
+            'ipv6_ra_mode': None,
+            'ipv6_address_mode': None
+        }
+        self._subnet = subnet.Subnet(self.context, **test_subnet)
+        self._subnet.create()
 
     def _create_test_port(self, network):
         # TODO(ihrachys): replace with port.create() once we get an object
