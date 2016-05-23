@@ -79,3 +79,29 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         self.db.get_floatingip = mock.Mock()
         with testtools.ExpectedException(n_exc.ServicePortInUse):
             self.db.prevent_l3_port_deletion(mock.Mock(), None)
+
+    def test__populate_ports_for_subnets_none(self):
+        """Basic test that the method runs correctly with no ports"""
+        ports = []
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = []
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
+        self.assertEqual([], ports)
+
+    def test__populate_ports_for_subnets(self):
+        ports = [{'network_id': 'net_id',
+                  'id': 'port_id',
+                  'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id}]}]
+        with mock.patch.object(manager.NeutronManager, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = [{'id': 'net_id', 'mtu': 1446}]
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
+            self.assertEqual([{'extra_subnets': [],
+                               'fixed_ips': [{'subnet_id':
+                                              mock.sentinel.subnet_id}],
+                               'id': 'port_id',
+                               'mtu': 1446,
+                               'network_id': 'net_id',
+                               'subnets': []}],
+                             ports)
