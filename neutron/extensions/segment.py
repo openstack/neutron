@@ -58,7 +58,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         NETWORK_TYPE: {'allow_post': True,
                        'allow_put': False,
                        'validate': {'type:string':
-                                    providernet.PHYSICAL_NETWORK_MAX_LEN},
+                                    providernet.NETWORK_TYPE_MAX_LEN},
                        'is_visible': True},
         SEGMENTATION_ID: {'allow_post': True,
                           'allow_put': False,
