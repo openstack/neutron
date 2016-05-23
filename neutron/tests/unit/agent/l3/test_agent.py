@@ -74,11 +74,15 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         agent_config.register_process_monitor_opts(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.register_opts(external_process.OPTS)
+        self.conf.register_opts(pd.OPTS)
+        self.conf.register_opts(ra.OPTS)
         self.conf.set_override('router_id', 'fake_id')
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
         self.conf.set_override('state_path', '')
+        self.conf.set_override('ra_confs', '/tmp')
+        self.conf.set_override('pd_dhcp_driver', '')
 
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
@@ -169,7 +173,8 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             ri.radvd = ra.DaemonMonitor(router['id'],
                                         ri.ns_name,
                                         agent.process_monitor,
-                                        ri.get_internal_device_name)
+                                        ri.get_internal_device_name,
+                                        self.conf)
         ri.process(agent)
 
 
@@ -2313,7 +2318,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             router['id'],
             namespaces.RouterNamespace._get_ns_name(router['id']),
             agent.process_monitor,
-            l3_test_common.FakeDev)
+            l3_test_common.FakeDev,
+            self.conf)
         radvd.enable(router['_interfaces'])
 
         cmd = execute.call_args[0][0]
@@ -2391,7 +2397,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.radvd = ra.DaemonMonitor(router['id'],
                                         ri.ns_name,
                                         agent.process_monitor,
-                                        ri.get_internal_device_name)
+                                        ri.get_internal_device_name,
+                                        self.conf)
         return agent, router, ri
 
     def _pd_remove_gw_interface(self, intfs, agent, router, ri):

@@ -35,8 +35,6 @@ OPTS = [
                help=_('Location to store IPv6 RA config files')),
 ]
 
-cfg.CONF.register_opts(OPTS)
-
 CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 {
    AdvSendAdvert on;
@@ -73,14 +71,16 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 class DaemonMonitor(object):
     """Manage the data and state of an radvd process."""
 
-    def __init__(self, router_id, router_ns, process_monitor, dev_name_helper):
+    def __init__(self, router_id, router_ns, process_monitor, dev_name_helper,
+                 agent_conf):
         self._router_id = router_id
         self._router_ns = router_ns
         self._process_monitor = process_monitor
         self._dev_name_helper = dev_name_helper
+        self._agent_conf = agent_conf
 
     def _generate_radvd_conf(self, router_ports):
-        radvd_conf = utils.get_conf_file_name(cfg.CONF.ra_confs,
+        radvd_conf = utils.get_conf_file_name(self._agent_conf.ra_confs,
                                               self._router_id,
                                               'radvd.conf',
                                               True)
@@ -114,7 +114,7 @@ class DaemonMonitor(object):
             default_cmd_callback=callback,
             namespace=self._router_ns,
             service=RADVD_SERVICE_NAME,
-            conf=cfg.CONF,
+            conf=self._agent_conf,
             run_as_root=True)
 
     def _spawn_radvd(self, radvd_conf):
@@ -154,7 +154,7 @@ class DaemonMonitor(object):
                                          service_name=RADVD_SERVICE_NAME)
         pm = self._get_radvd_process_manager()
         pm.disable()
-        utils.remove_conf_files(cfg.CONF.ra_confs, self._router_id)
+        utils.remove_conf_files(self._agent_conf.ra_confs, self._router_id)
         LOG.debug("radvd disabled for router %s", self._router_id)
 
     @property
