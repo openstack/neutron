@@ -146,6 +146,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         DEVICE_OWNER_FLOATINGIP
     )
 
+    _dns_integration = None
+
+    @property
+    def _is_dns_integration_supported(self):
+        if self._dns_integration is None:
+            self._dns_integration = utils.is_extension_supported(
+                self._core_plugin, 'dns-integration')
+        return self._dns_integration
+
     @property
     def _core_plugin(self):
         return manager.NeutronManager.get_plugin()
@@ -1123,8 +1132,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        dns_integration = utils.is_extension_supported(self._core_plugin,
-                                                       'dns-integration')
         with context.session.begin(subtransactions=True):
             # This external port is never exposed to the tenant.
             # it is used purely for internal system and admin use when
@@ -1173,11 +1180,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context.session.add(floatingip_db)
             floatingip_dict = self._make_floatingip_dict(
                 floatingip_db, process_extensions=False)
-            if dns_integration:
+            if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
 
-        if dns_integration:
+        if self._is_dns_integration_supported:
             self._process_dns_floatingip_create_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
@@ -1191,8 +1198,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _update_floatingip(self, context, id, floatingip):
         fip = floatingip['floatingip']
-        dns_integration = utils.is_extension_supported(self._core_plugin,
-                                                       'dns-integration')
         with context.session.begin(subtransactions=True):
             floatingip_db = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_db)
@@ -1203,10 +1208,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                    self._core_plugin.get_port(
                                        context.elevated(), fip_port_id))
             floatingip_dict = self._make_floatingip_dict(floatingip_db)
-            if dns_integration:
+            if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
                     context, floatingip_dict)
-        if dns_integration:
+        if self._is_dns_integration_supported:
             self._process_dns_floatingip_update_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
