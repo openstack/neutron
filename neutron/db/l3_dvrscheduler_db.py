@@ -343,22 +343,11 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
 def _dvr_handle_unbound_allowed_addr_pair_add(
         plugin, context, port, allowed_address_pair):
-    updated_port = plugin.update_unbound_allowed_address_pair_port_binding(
-        context, port, allowed_address_pair)
-    if updated_port:
-        LOG.debug("Allowed address pair port binding updated "
-                  "based on service port binding: %s", updated_port)
-        plugin.dvr_handle_new_service_port(context, updated_port)
     plugin.update_arp_entry_for_dvr_service_port(context, port)
 
 
 def _dvr_handle_unbound_allowed_addr_pair_del(
         plugin, context, port, allowed_address_pair):
-    updated_port = plugin.remove_unbound_allowed_address_pair_port_binding(
-        context, port, allowed_address_pair)
-    if updated_port:
-        LOG.debug("Allowed address pair port binding removed "
-                  "from service port binding: %s", updated_port)
     aa_fixed_ips = plugin._get_allowed_address_pair_fixed_ips(context, port)
     if aa_fixed_ips:
         plugin.delete_arp_entry_for_dvr_service_port(

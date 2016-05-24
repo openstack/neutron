@@ -382,8 +382,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             return_value=fipagent)
         self.mixin._get_fip_agent_gw_ports = mock.Mock(
             return_value='fip_interface')
+        agent = mock.Mock()
+        agent.id = fipagent['id']
         self.mixin._process_floating_ips_dvr(self.ctx, routers, [floatingip],
-                                             hostid)
+                                             hostid, agent)
         return (router, floatingip)
 
     def test_floatingip_on_port_not_host(self):

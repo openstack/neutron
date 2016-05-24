@@ -350,10 +350,6 @@ class DVRResourceOperationHandler(object):
                                 fixed_ip_address))
                         if not addr_pair_active_service_port_list:
                             return
-                        if len(addr_pair_active_service_port_list) > 1:
-                            LOG.warning(_LW("Multiple active ports associated "
-                                            "with the allowed_address_pairs."))
-                            return
                         self._inherit_service_port_and_arp_update(
                             context, addr_pair_active_service_port_list[0],
                             port)
@@ -365,16 +361,8 @@ class DVRResourceOperationHandler(object):
             service_port)
         address_pair_list = service_port_dict.get('allowed_address_pairs')
         for address_pair in address_pair_list:
-            updated_port = (
-                self.l3plugin.update_unbound_allowed_address_pair_port_binding(
-                    context, service_port_dict,
-                    address_pair,
-                    address_pair_port=allowed_address_port))
-            if not updated_port:
-                LOG.warning(_LW("Allowed_address_pair port update failed: %s"),
-                            updated_port)
-            self.l3plugin.update_arp_entry_for_dvr_service_port(
-                context, service_port_dict)
+            self.update_arp_entry_for_dvr_service_port(context,
+                                                       service_port_dict)
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
@@ -638,18 +626,56 @@ class _DVRAgentInterfaceMixin(object):
         return routers_dict
 
     def _process_floating_ips_dvr(self, context, routers_dict,
-                                  floating_ips, host):
+                                  floating_ips, host, agent):
+        LOG.debug("FIP Agent : %s ", agent.id)
         for floating_ip in floating_ips:
             router = routers_dict.get(floating_ip['router_id'])
             if router:
                 router_floatingips = router.get(const.FLOATINGIP_KEY, [])
                 if router['distributed']:
-                    if (floating_ip.get('host', None) != host and
-                        floating_ip.get('dest_host') is None):
+                    fip_host = floating_ip.get('host')
+                    fip_dest_host = floating_ip.get('dest_host')
+                    # Skip if floatingip need not be processed for the
+                    # given agent.
+                    if self._should_skip_floating_ip_processed_for_given_agent(
+                        floating_ip, fip_host, fip_dest_host, agent):
                         continue
-                    LOG.debug("Floating IP host: %s", floating_ip['host'])
+                    # Also skip floatingip if the fip port have a host defined
+                    # and if the host does not match.
+                    if self._check_floating_ip_not_valid_for_given_host(
+                        fip_host, fip_dest_host, host):
+                        continue
+                    LOG.debug("Floating IP host: %s", fip_host)
                 router_floatingips.append(floating_ip)
                 router[const.FLOATINGIP_KEY] = router_floatingips
+
+    def _check_floating_ip_not_valid_for_given_host(
+        self, fip_host, fip_dest_host, host):
+        """Function to check if floatingip host match for the given agent.
+
+        Check if the given floatingip host matches with the requesting
+        host when floatingip dest_host is None.
+        If floatingip dest_host is not None it means that the floatingip
+        is migrating to a new compute host and the original host will not
+        match.
+        """
+        host_mismatch = (
+            fip_host != host and fip_dest_host is None)
+        return (fip_host is not None and host_mismatch)
+
+    def _should_skip_floating_ip_processed_for_given_agent(
+        self, floating_ip, fip_host, fip_dest_host, agent):
+        """Function to check if floatingip need to be processed or skipped.
+
+        Skip if host and dest_host is none and the agent
+        requesting is not dvr_snat agent, and the fip has
+        not already been assigned 'dvr_snat_bound' state.
+        """
+        agent_mode = self._get_agent_mode(agent)
+        return (fip_host is None and (fip_dest_host is None) and
+                agent_mode in [const.L3_AGENT_MODE_LEGACY,
+                               const.L3_AGENT_MODE_DVR] and
+                not floating_ip.get(l3_const.DVR_SNAT_BOUND))
 
     def _get_fip_agent_gw_ports(self, context, fip_agent_id):
         """Return list of floating agent gateway ports for the agent."""
@@ -684,7 +710,11 @@ class _DVRAgentInterfaceMixin(object):
                 port_in_migration = (
                     port_profile and
                     port_profile.get('migrating_to') == host)
-                if (port[portbindings.HOST_ID] == host or port_in_migration):
+                # All unbound ports with floatingip irrespective of
+                # the device owner should be included as valid ports
+                # and updated.
+                if (port[portbindings.HOST_ID] == host or port_in_migration or
+                    self._is_unbound_port(port)):
                     port_dict.update({port['id']: port})
             # Add the port binding host to the floatingip dictionary
             for fip in floating_ips:
@@ -695,9 +725,14 @@ class _DVRAgentInterfaceMixin(object):
                     fip['dest_host'] = (
                         self._get_dvr_migrating_service_port_hostid(
                             context, fip['port_id'], port=vm_port))
+                    # Handle the case were there is no host binding
+                    # for the private ports that are associated with
+                    # floating ip.
+                    if not fip['host']:
+                        fip[l3_const.DVR_SNAT_BOUND] = True
         routers_dict = self._process_routers(context, routers, agent)
         self._process_floating_ips_dvr(context, routers_dict,
-                                       floating_ips, host)
+                                       floating_ips, host, agent)
         ports_to_populate = []
         for router in routers_dict.values():
             if router.get('gw_port'):
@@ -711,12 +746,14 @@ class _DVRAgentInterfaceMixin(object):
         self._process_interfaces(routers_dict, interfaces)
         return list(routers_dict.values())
 
+    def _is_unbound_port(self, port):
+        """Check for port-bindings irrespective of device_owner."""
+        return not port[portbindings.HOST_ID]
+
     def _get_dvr_service_port_hostid(self, context, port_id, port=None):
         """Returns the portbinding host_id for dvr service port."""
         port_db = port or self._core_plugin.get_port(context, port_id)
-        device_owner = port_db['device_owner'] if port_db else ""
-        if n_utils.is_dvr_serviced(device_owner):
-            return port_db[portbindings.HOST_ID]
+        return port_db[portbindings.HOST_ID] or None
 
     def _get_dvr_migrating_service_port_hostid(
         self, context, port_id, port=None):
@@ -726,8 +763,6 @@ class _DVRAgentInterfaceMixin(object):
         port_dest_host = None
         if port_profile:
             port_dest_host = port_profile.get('migrating_to')
-        device_owner = port_db['device_owner'] if port_db else ""
-        if n_utils.is_dvr_serviced(device_owner):
             return port_dest_host
 
     def _get_agent_gw_ports_exist_for_network(
@@ -814,11 +849,6 @@ class _DVRAgentInterfaceMixin(object):
                      'subnet_id': subnet}
         notifier(context, router_id, arp_table)
 
-    def _should_update_arp_entry_for_dvr_service_port(self, port_dict):
-        # Check this is a valid VM or service port
-        return (n_utils.is_dvr_serviced(port_dict['device_owner']) and
-                port_dict['fixed_ips'])
-
     def _get_subnet_id_for_given_fixed_ip(
         self, context, fixed_ip, port_dict):
         """Returns the subnet_id that matches the fixedip on a network."""
@@ -855,9 +885,9 @@ class _DVRAgentInterfaceMixin(object):
         If there are any allowed_address_pairs associated with the port
         those fixed_ips should also be updated in the ARP table.
         """
-        if not self._should_update_arp_entry_for_dvr_service_port(port_dict):
-            return
         fixed_ips = port_dict['fixed_ips']
+        if not fixed_ips:
+            return
         allowed_address_pair_fixed_ips = (
             self._get_allowed_address_pair_fixed_ips(context, port_dict))
         changed_fixed_ips = fixed_ips + allowed_address_pair_fixed_ips
@@ -876,10 +906,10 @@ class _DVRAgentInterfaceMixin(object):
         If there are any allowed_address_pairs associated with the
         port, those fixed_ips should be removed from the ARP table.
         """
-        if not self._should_update_arp_entry_for_dvr_service_port(port_dict):
+        fixed_ips = port_dict['fixed_ips']
+        if not fixed_ips:
             return
         if not fixed_ips_to_delete:
-            fixed_ips = port_dict['fixed_ips']
             allowed_address_pair_fixed_ips = (
                 self._get_allowed_address_pair_fixed_ips(context, port_dict))
             fixed_ips_to_delete = fixed_ips + allowed_address_pair_fixed_ips
@@ -899,65 +929,6 @@ class _DVRAgentInterfaceMixin(object):
         fip = query.first()
         return self._core_plugin.get_port(
             context, fip.fixed_port_id) if fip else None
-
-    def update_unbound_allowed_address_pair_port_binding(
-            self, context, service_port_dict,
-            port_address_pairs, address_pair_port=None):
-        """Update allowed address pair port with host and device_owner
-
-        This function sets the host and device_owner to the port
-        associated with the port_addr_pair_ip with the port_dict's
-        host and device_owner.
-        """
-        port_addr_pair_ip = port_address_pairs['ip_address']
-        if not address_pair_port:
-            address_pair_port = self._get_address_pair_active_port_with_fip(
-                context, service_port_dict, port_addr_pair_ip)
-        if address_pair_port:
-            host = service_port_dict[portbindings.HOST_ID]
-            dev_owner = service_port_dict['device_owner']
-            address_pair_dev_owner = address_pair_port.get('device_owner')
-            # If the allowed_address_pair port already has an associated
-            # device owner, and if the device_owner is a dvr serviceable
-            # port, then don't update the device_owner.
-            port_profile = address_pair_port.get(portbindings.PROFILE, {})
-            if n_utils.is_dvr_serviced(address_pair_dev_owner):
-                port_profile['original_owner'] = address_pair_dev_owner
-                port_data = {portbindings.HOST_ID: host,
-                             portbindings.PROFILE: port_profile}
-            else:
-                port_data = {portbindings.HOST_ID: host,
-                             'device_owner': dev_owner}
-            update_port = self._core_plugin.update_port(
-                context, address_pair_port['id'], {'port': port_data})
-            return update_port
-
-    def remove_unbound_allowed_address_pair_port_binding(
-            self, context, service_port_dict,
-            port_address_pairs, address_pair_port=None):
-        """Remove allowed address pair port binding and device_owner
-
-        This function clears the host and device_owner associated with
-        the port_addr_pair_ip.
-        """
-        port_addr_pair_ip = port_address_pairs['ip_address']
-        if not address_pair_port:
-            address_pair_port = self._get_address_pair_active_port_with_fip(
-                context, service_port_dict, port_addr_pair_ip)
-        if address_pair_port:
-            # Before reverting the changes, fetch the original
-            # device owner saved in profile and update the port
-            port_profile = address_pair_port.get(portbindings.PROFILE)
-            orig_device_owner = ""
-            if port_profile:
-                orig_device_owner = port_profile.get('original_owner')
-                del port_profile['original_owner']
-            port_data = {portbindings.HOST_ID: "",
-                         'device_owner': orig_device_owner,
-                         portbindings.PROFILE: port_profile}
-            update_port = self._core_plugin.update_port(
-                context, address_pair_port['id'], {'port': port_data})
-            return update_port
 
 
 class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
@@ -1009,11 +980,14 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             host = self._get_dvr_service_port_hostid(context, fixed_port_id)
             dest_host = self._get_dvr_migrating_service_port_hostid(
                 context, fixed_port_id)
-            self.l3_rpc_notifier.routers_updated_on_host(
-                context, [router_id], host)
-            if dest_host and dest_host != host:
+            if host is not None:
                 self.l3_rpc_notifier.routers_updated_on_host(
-                    context, [router_id], dest_host)
+                    context, [router_id], host)
+                if dest_host and dest_host != host:
+                    self.l3_rpc_notifier.routers_updated_on_host(
+                        context, [router_id], dest_host)
+            else:
+                self.notify_router_updated(context, router_id)
         else:
             self.notify_router_updated(context, router_id)
 
