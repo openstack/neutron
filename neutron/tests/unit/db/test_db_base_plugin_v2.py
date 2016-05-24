@@ -218,11 +218,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                          params=params, subresource=subresource)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
-                           sub_id=None):
+                           sub_id=None, data=None):
         return self._req(
             'DELETE',
             resource,
-            None,
+            data,
             fmt,
             id=id,
             subresource=subresource,
@@ -865,6 +865,15 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
         req = self.new_delete_request('networks', net['network']['id'])
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+
+    def test_delete_with_req_body_returns_400(self):
+        res = self._create_network(self.fmt, 'net1', True)
+        net = self.deserialize(self.fmt, res)
+        data = {"network": {"id": net['network']['id']}}
+        req = self.new_delete_request('networks', net['network']['id'],
+                                      data=data)
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_update_returns_200(self):
         with self.network() as net:
