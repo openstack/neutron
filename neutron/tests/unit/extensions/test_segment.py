@@ -843,3 +843,30 @@ class TestSegmentAwareIpam(SegmentTestCase):
         self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
         self.assertEqual(segment_exc.HostConnectedToMultipleSegments.__name__,
                          res['NeutronError']['type'])
+
+    def test_port_update_allocate_no_segments(self):
+        """Binding information is provided, subnet created after port"""
+        with self.network() as network:
+            pass
+
+        # Create a bound port with no IP address (since there is not subnet)
+        port = self._create_deferred_ip_port(network)
+
+        # Create the subnet and try to update the port to get an IP
+        with self.subnet(network=network) as subnet:
+            # Try requesting an IP (but the only subnet is on a segment)
+            data = {'port': {
+                'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
+            port_id = port['port']['id']
+            port_req = self.new_update_request('ports', data, port_id)
+            response = port_req.get_response(self.api)
+
+        # Since port is bound and there is a mapping to segment, it succeeds.
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+        self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+
+
+class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
+    def setUp(self):
+        super(TestSegmentAwareIpamML2, self).setUp(
+            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
