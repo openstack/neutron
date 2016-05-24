@@ -354,19 +354,21 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                 self.assertTrue(network['id'] in speaker['networks'])
 
     def test_remove_gateway_network(self):
-        with self.network() as network,\
+        with self.network() as network1,\
+            self.network() as network2,\
             self.subnetpool_with_address_scope(4,
                                                prefixes=['8.0.0.0/8']) as sp:
-            network_id = network['network']['id']
+            network1_id = network1['network']['id']
+            network2_id = network2['network']['id']
             with self.bgp_speaker(sp['ip_version'], 1234,
-                                  networks=[network_id]) as speaker:
+                              networks=[network1_id, network2_id]) as speaker:
                 self.bgp_plugin.remove_gateway_network(
                                                 self.context,
                                                 speaker['id'],
-                                                {'network_id': network_id})
+                                                {'network_id': network1_id})
                 new_speaker = self.bgp_plugin.get_bgp_speaker(self.context,
                                                               speaker['id'])
-                self.assertEqual(0, len(new_speaker['networks']))
+                self.assertEqual(1, len(new_speaker['networks']))
 
     def test_add_non_existent_gateway_network(self):
         network_id = "imaginary"

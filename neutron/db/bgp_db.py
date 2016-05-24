@@ -434,8 +434,9 @@ class BgpDbMixin(common_db.CommonDbMixin):
     def _get_bgp_speaker_network_binding(self, context,
                                          bgp_speaker_id, network_id):
         query = self._model_query(context, BgpSpeakerNetworkBinding)
-        return query.filter(bgp_speaker_id == bgp_speaker_id,
-                            network_id == network_id).one()
+        return query.filter(
+                    BgpSpeakerNetworkBinding.bgp_speaker_id == bgp_speaker_id,
+                    BgpSpeakerNetworkBinding.network_id == network_id).one()
 
     def _make_bgp_peer_dict(self, bgp_peer, fields=None):
         attrs = ['tenant_id', 'id', 'name', 'peer_ip', 'remote_as',
