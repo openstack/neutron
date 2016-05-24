@@ -20,7 +20,6 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
@@ -149,7 +148,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_validate_ethertype_and_protocol(self):
         fake_ipv4_rules = [{'protocol': constants.PROTO_NAME_IPV6_ICMP,
                             'ethertype': constants.IPv4},
-                           {'protocol': n_const.PROTO_NAME_IPV6_ICMP_LEGACY,
+                           {'protocol': constants.PROTO_NAME_IPV6_ICMP_LEGACY,
                             'ethertype': constants.IPv4},
                            {'protocol': constants.PROTO_NAME_IPV6_ENCAP,
                             'ethertype': constants.IPv4},
@@ -297,7 +296,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                   (300, 1, securitygroup.SecurityGroupInvalidIcmpValue)]
         for protocol in (constants.PROTO_NAME_ICMP,
                          constants.PROTO_NAME_IPV6_ICMP,
-                         n_const.PROTO_NAME_IPV6_ICMP_LEGACY):
+                         constants.PROTO_NAME_IPV6_ICMP_LEGACY):
             for pmin, pmax, exception in states:
                 self.assertRaises(exception,
                     self.mixin._validate_port_range,

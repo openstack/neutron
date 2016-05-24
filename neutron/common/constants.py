@@ -58,14 +58,8 @@ ETHERTYPE_ARP = 0x0806
 ETHERTYPE_IP = 0x0800
 ETHERTYPE_IPV6 = 0x86DD
 
-# TODO(amotoki): It should be moved to neutron-lib.
-# For backward-compatibility of security group rule API,
-# we keep the old value for IPv6 ICMP.
-# It should be clean up in the future.
-PROTO_NAME_IPV6_ICMP_LEGACY = 'icmpv6'
-
-IP_PROTOCOL_NAME_ALIASES = {
-    PROTO_NAME_IPV6_ICMP_LEGACY: lib_constants.PROTO_NAME_IPV6_ICMP}
+IP_PROTOCOL_NAME_ALIASES = {lib_constants.PROTO_NAME_IPV6_ICMP_LEGACY:
+                            lib_constants.PROTO_NAME_IPV6_ICMP}
 
 VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
                     36, 38, 40, 46, 48, 56]
