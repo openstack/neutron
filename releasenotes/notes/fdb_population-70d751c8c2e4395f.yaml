@@ -1,0 +1,17 @@
+---
+fixes:
+  - In order to fix the communication issues between
+    SR-IOV instances and regular instances
+    the FDB population extension is added to the
+    OVS or linuxbridge agent.
+    the cause was that messages from SR-IOV direct port
+    instance to normal port instances located on
+    the same hypervisor were sent directly to the wire
+    because the FDB table was not yet updated.
+    FDB population extension tracks instances
+    boot/delete operations using the handle_port
+    delete_port extension interface messages
+    and update the hypervisor's FDB table accordingly.
+
+    Please note this L2 agent extension doesn't support
+    allowed address pairs extension.
