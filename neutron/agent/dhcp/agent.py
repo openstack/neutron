@@ -280,17 +280,18 @@ class DhcpAgent(manager.Manager):
         if not network:
             return
 
-        old_cidrs = set(s.cidr for s in old_network.subnets if s.enable_dhcp)
-        new_cidrs = set(s.cidr for s in network.subnets if s.enable_dhcp)
-
-        if new_cidrs and old_cidrs == new_cidrs:
+        if not any(s for s in network.subnets if s.enable_dhcp):
+            self.disable_dhcp_helper(network.id)
+            return
+        # NOTE(kevinbenton): we don't exclude dhcp disabled subnets because
+        # they still change the indexes used for tags
+        old_cidrs = [s.cidr for s in network.subnets]
+        new_cidrs = [s.cidr for s in old_network.subnets]
+        if old_cidrs == new_cidrs:
             self.call_driver('reload_allocations', network)
             self.cache.put(network)
-        elif new_cidrs:
-            if self.call_driver('restart', network):
-                self.cache.put(network)
-        else:
-            self.disable_dhcp_helper(network.id)
+        elif self.call_driver('restart', network):
+            self.cache.put(network)
 
     @utils.synchronized('dhcp-agent')
     def network_create_end(self, context, payload):
