@@ -784,3 +784,27 @@ class TestPortRuleMasking(base.BaseTestCase):
         port_max = 5
         with testtools.ExpectedException(ValueError):
             utils.port_rule_masking(port_min, port_max)
+
+
+class TestAuthenticEUI(base.BaseTestCase):
+
+    def test_retains_original_format(self):
+        for mac_str in ('FA-16-3E-73-A2-E9', 'fa:16:3e:73:a2:e9'):
+            self.assertEqual(mac_str, str(utils.AuthenticEUI(mac_str)))
+
+    def test_invalid_values(self):
+        for mac in ('XXXX', 'ypp', 'g3:vvv'):
+            with testtools.ExpectedException(netaddr.core.AddrFormatError):
+                utils.AuthenticEUI(mac)
+
+
+class TestAuthenticIPNetwork(base.BaseTestCase):
+
+    def test_retains_original_format(self):
+        for addr_str in ('10.0.0.0/24', '10.0.0.10/32', '100.0.0.1'):
+            self.assertEqual(addr_str, str(utils.AuthenticIPNetwork(addr_str)))
+
+    def test_invalid_values(self):
+        for addr in ('XXXX', 'ypp', 'g3:vvv'):
+            with testtools.ExpectedException(netaddr.core.AddrFormatError):
+                utils.AuthenticIPNetwork(addr)

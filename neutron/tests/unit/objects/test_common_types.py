@@ -115,6 +115,29 @@ class MACAddressFieldTest(test_base.BaseTestCase, TestField):
             self.assertEqual('%s' % in_val, self.field.stringify(in_val))
 
 
+class IPNetworkFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(IPNetworkFieldTest, self).setUp()
+        self.field = common_types.IPNetworkField()
+        addrs = [
+            tools.get_random_ip_network(version=ip_version)
+            for ip_version in constants.IP_ALLOWED_VERSIONS
+        ]
+        self.coerce_good_values = [(addr, addr) for addr in addrs]
+        self.coerce_bad_values = [
+            'ypp', 'g3:vvv',
+            # the field type is strict and does not allow to pass strings, even
+            # if they represent a valid IP network
+            '10.0.0.0/24',
+        ]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual('%s' % in_val, self.field.stringify(in_val))
+
+
 class IPVersionEnumFieldTest(test_base.BaseTestCase, TestField):
     def setUp(self):
         super(IPVersionEnumFieldTest, self).setUp()

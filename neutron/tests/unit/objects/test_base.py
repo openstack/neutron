@@ -237,6 +237,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.ListOfObjectsField: lambda: [],
     common_types.DscpMarkField: get_random_dscp_mark,
     obj_fields.IPNetworkField: tools.get_random_ip_network,
+    common_types.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
     common_types.IPVersionEnumField: tools.get_random_ip_version,
