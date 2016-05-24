@@ -64,8 +64,7 @@ L3_HA_OPTS = [
     cfg.IntOpt('min_l3_agents_per_router',
                default=n_const.MINIMUM_AGENTS_FOR_HA,
                help=_("Minimum number of L3 agents which a HA router will be "
-                      "scheduled on. If it is set to 0 then the router will "
-                      "be scheduled on every agent.")),
+                      "scheduled on.")),
     cfg.StrOpt('l3_ha_net_cidr',
                default=n_const.L3_HA_NET_CIDR,
                help=_('Subnet used for the l3 HA admin network.')),
