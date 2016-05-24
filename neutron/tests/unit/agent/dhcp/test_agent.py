@@ -889,6 +889,20 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.assertTrue(log.called)
             self.assertTrue(self.dhcp.schedule_resync.called)
 
+    def test_subnet_create_restarts_with_dhcp_disabled(self):
+        payload = dict(subnet=dhcp.DictModel(
+              dict(network_id=fake_network.id, enable_dhcp=False,
+                   cidr='99.99.99.0/24')))
+        self.cache.get_network_by_id.return_value = fake_network
+        new_net = copy.deepcopy(fake_network)
+        new_net.subnets.append(payload['subnet'])
+        self.plugin.get_network_info.return_value = new_net
+
+        self.dhcp.subnet_create_end(None, payload)
+
+        self.cache.assert_has_calls([mock.call.put(new_net)])
+        self.call_driver.assert_called_once_with('restart', new_net)
+
     def test_subnet_update_end(self):
         payload = dict(subnet=dict(network_id=fake_network.id))
         self.cache.get_network_by_id.return_value = fake_network
