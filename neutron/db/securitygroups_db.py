@@ -471,7 +471,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if rule['protocol'] in [constants.PROTO_NAME_IPV6_ENCAP,
                                 constants.PROTO_NAME_IPV6_FRAG,
                                 constants.PROTO_NAME_IPV6_ICMP,
-                                n_const.PROTO_NAME_IPV6_ICMP_LEGACY,
+                                constants.PROTO_NAME_IPV6_ICMP_LEGACY,
                                 constants.PROTO_NAME_IPV6_NONXT,
                                 constants.PROTO_NAME_IPV6_OPTS,
                                 constants.PROTO_NAME_IPV6_ROUTE]:

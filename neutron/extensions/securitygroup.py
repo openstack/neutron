@@ -26,7 +26,6 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.conf import quota
 from neutron import manager
@@ -214,12 +213,7 @@ def _validate_name_not_default(data, valid_values=None):
 
 validators.validators['type:name_not_default'] = _validate_name_not_default
 
-# TODO(amotoki): const.IP_PROTOCOL_MAP now comes from neutron-lib,
-# so we cannot add PROTO_NAME_IPV6_ICMP_LEGACY to const.IP_PROTOCOL_MAP
-# in neutron.common.constants. IP_PROTOCOL_MAP in neutron-lib should
-# be updated and neutron should consume it once Mitaka backport is done.
-sg_supported_protocols = ([None] + list(const.IP_PROTOCOL_MAP.keys()) +
-                          list(n_const.IP_PROTOCOL_NAME_ALIASES.keys()))
+sg_supported_protocols = ([None] + list(const.IP_PROTOCOL_MAP.keys()))
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 SECURITYGROUPS = 'security_groups'
 SECURITYGROUPRULES = 'security_group_rules'
