@@ -48,7 +48,6 @@ def upgrade():
                                             ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('target_tenant',
-                                        'object_id', 'action'),
-                    mysql_engine='InnoDB')
+                                        'object_id', 'action'))
     op.create_index(op.f('ix_qospolicyrbacs_tenant_id'), 'qospolicyrbacs',
                     ['tenant_id'], unique=False)
