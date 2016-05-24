@@ -26,6 +26,7 @@ from oslo_utils import uuidutils
 import osprofiler.sqlalchemy
 import sqlalchemy
 
+from neutron.common import profiler  # noqa
 from neutron.db import common_db_mixin
 
 context_manager = enginefacade.transaction_context()
