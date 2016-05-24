@@ -89,3 +89,33 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertNotEmpty(networks, "Network list returned is empty")
         for network in networks:
             self.assertEqual(sorted(network.keys()), sorted(fields))
+
+
+class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
+
+    resource = 'network'
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('de27d34a-bd9d-4516-83d6-81ef723f7d0d')
+    def test_list_sorts_asc(self):
+        self._test_list_sorts_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('e767a160-59f9-4c4b-8dc1-72124a68640a')
+    def test_list_sorts_desc(self):
+        self._test_list_sorts_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('71389852-f57b-49f2-b109-77b705e9e8af')
+    def test_list_pagination(self):
+        self._test_list_pagination()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('71389852-f57b-49f2-b109-77b705e9e8af')
+    def test_list_pagination_with_marker(self):
+        self._test_list_pagination_with_marker()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f1867fc5-e1d6-431f-bc9f-8b882e43a7f9')
+    def test_list_no_pagination_limit_0(self):
+        self._test_list_no_pagination_limit_0()

@@ -13,11 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 import netaddr
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
+from neutron.common import constants
 from neutron.tests.tempest.api import clients
 from neutron.tests.tempest import config
 from neutron.tests.tempest import exceptions
@@ -460,3 +463,129 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         message = (
             "net(%s) has no usable IP address in allocation pools" % net_id)
         raise exceptions.InvalidConfiguration(message)
+
+
+def _require_sorting(f):
+    @functools.wraps(f)
+    def inner(self, *args, **kwargs):
+        if not CONF.neutron_plugin_options.validate_sorting:
+            self.skipTest('Sorting feature is required')
+        return f(self, *args, **kwargs)
+    return inner
+
+
+def _require_pagination(f):
+    @functools.wraps(f)
+    def inner(self, *args, **kwargs):
+        if not CONF.neutron_plugin_options.validate_pagination:
+            self.skipTest('Pagination feature is required')
+        return f(self, *args, **kwargs)
+    return inner
+
+
+class BaseSearchCriteriaTest(BaseNetworkTest):
+
+    # This should be defined by subclasses to reflect resource name to test
+    resource = None
+
+    # also test a case when there are multiple resources with the same name
+    resource_names = ('test1', 'abc1', 'test10', '123test') + ('test1',)
+
+    list_kwargs = {'shared': False}
+
+    force_tenant_isolation = True
+
+    @classmethod
+    def resource_setup(cls):
+        super(BaseSearchCriteriaTest, cls).resource_setup()
+
+        cls.create_method = getattr(cls, 'create_%s' % cls.resource)
+
+        # NOTE(ihrachys): some names, like those starting with an underscore
+        # (_) are sorted differently depending on whether the plugin implements
+        # native sorting support, or not. So we avoid any such cases here,
+        # sticking to alphanumeric.
+        for name in cls.resource_names:
+            args = {'%s_name' % cls.resource: name}
+            cls.create_method(**args)
+
+    def list_method(self, *args, **kwargs):
+        method = getattr(self.client, 'list_%ss' % self.resource)
+        kwargs.update(self.list_kwargs)
+        return method(*args, **kwargs)
+
+    @classmethod
+    def _extract_resources(cls, body):
+        return body['%ss' % cls.resource]
+
+    def _test_list_sorts(self, direction):
+        sort_args = {
+            'sort_dir': direction,
+            'sort_key': 'name'
+        }
+        body = self.list_method(**sort_args)
+        resources = self._extract_resources(body)
+        self.assertNotEmpty(
+            resources, "%s list returned is empty" % self.resource)
+        retrieved_names = [res['name'] for res in resources]
+        expected = sorted(retrieved_names)
+        if direction == constants.SORT_DIRECTION_DESC:
+            expected = list(reversed(expected))
+        self.assertEqual(expected, retrieved_names)
+
+    @_require_sorting
+    def _test_list_sorts_asc(self):
+        self._test_list_sorts(constants.SORT_DIRECTION_ASC)
+
+    @_require_sorting
+    def _test_list_sorts_desc(self):
+        self._test_list_sorts(constants.SORT_DIRECTION_DESC)
+
+    @_require_pagination
+    def _test_list_pagination(self):
+        for limit in range(1, len(self.resource_names) + 1):
+            pagination_args = {
+                'limit': limit,
+            }
+            body = self.list_method(**pagination_args)
+            resources = self._extract_resources(body)
+            self.assertEqual(limit, len(resources))
+
+    @_require_pagination
+    def _test_list_no_pagination_limit_0(self):
+        pagination_args = {
+            'limit': 0,
+        }
+        body = self.list_method(**pagination_args)
+        resources = self._extract_resources(body)
+        self.assertTrue(len(resources) >= len(self.resource_names))
+
+    @_require_pagination
+    @_require_sorting
+    def _test_list_pagination_with_marker(self):
+        # first, collect all resources for later comparison
+        sort_args = {
+            'sort_dir': constants.SORT_DIRECTION_ASC,
+            'sort_key': 'name'
+        }
+        body = self.list_method(**sort_args)
+        expected_resources = self._extract_resources(body)
+        self.assertNotEmpty(expected_resources)
+
+        # paginate resources one by one, using last fetched resource as a
+        # marker
+        resources = []
+        for i in range(len(expected_resources)):
+            pagination_args = sort_args.copy()
+            pagination_args['limit'] = 1
+            if resources:
+                pagination_args['marker'] = resources[-1]['id']
+            body = self.list_method(**pagination_args)
+            resources_ = self._extract_resources(body)
+            self.assertEqual(1, len(resources_))
+            resources.extend(resources_)
+
+        # finally, compare that the list retrieved in one go is identical to
+        # the one containing pagination results
+        for expected, res in zip(expected_resources, resources):
+            self.assertEqual(expected['name'], res['name'])

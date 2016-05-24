@@ -29,6 +29,7 @@ from oslo_middleware import cors
 from oslo_service import wsgi
 
 from neutron._i18n import _, _LI
+from neutron import api
 from neutron.common import constants
 from neutron.common import utils
 from neutron import policy
@@ -65,9 +66,9 @@ core_opts = [
                help=_("How many times Neutron will retry MAC generation")),
     cfg.BoolOpt('allow_bulk', default=True,
                 help=_("Allow the usage of the bulk API")),
-    cfg.BoolOpt('allow_pagination', default=False,
+    cfg.BoolOpt('allow_pagination', default=api.DEFAULT_ALLOW_PAGINATION,
                 help=_("Allow the usage of the pagination")),
-    cfg.BoolOpt('allow_sorting', default=False,
+    cfg.BoolOpt('allow_sorting', default=api.DEFAULT_ALLOW_SORTING,
                 help=_("Allow the usage of the sorting")),
     cfg.StrOpt('pagination_max_limit', default="-1",
                help=_("The maximum number of items returned in a single "
