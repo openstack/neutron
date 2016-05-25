@@ -400,6 +400,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | lbaas_                        | A bug affecting neutron-lbaas           | Brandon Logan        |
 +-------------------------------+-----------------------------------------+----------------------+
+| lib_                          | An issue affecting neutron-lib          | Henry Gessau         |
++-------------------------------+-----------------------------------------+----------------------+
 | linuxbridge_                  | A bug affecting ML2/linuxbridge         | Sean Collins         |
 +-------------------------------+-----------------------------------------+----------------------+
 | loadimpact_                   | Performance penalty/improvements        | Ryan Moats           |
@@ -602,6 +604,13 @@ LBAAS
 
 * `LBaaS - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=lbaas>`_
 * `LBaaS - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=lbaas>`_
+
+.. _lib:
+
+Lib
++++
+
+* `Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=lib>`_
 
 .. _linuxbridge:
 
