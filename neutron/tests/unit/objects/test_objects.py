@@ -40,6 +40,8 @@ object_data = {
     'Subnet': '1.0-12618b7d5dc7a69e2a05e9d6b15e9382',
     'SubnetPool': '1.0-320598830183ee739cbc9f32ebc26bba',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',
+    'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
+    'Trunk': '1.0-758286a52466d7a52b74331f43b07a84',
 }
 
 
