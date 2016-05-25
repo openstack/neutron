@@ -36,7 +36,7 @@ class FipRulePriorityAllocator(ItemAllocator):
     """Manages allocation of floating ips rule priorities.
         IP rule priorities assigned to DVR floating IPs need
         to be preserved over L3 agent restarts.
-        This class provides an allocator which saves the prirorities
+        This class provides an allocator which saves the priorities
         to a datastore which will survive L3 agent restarts.
     """
     def __init__(self, data_store_path, priority_rule_start,

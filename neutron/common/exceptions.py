@@ -317,7 +317,7 @@ class TenantQuotaNotFound(e.NotFound):
     message = _("Quota for tenant %(tenant_id)s could not be found.")
 
 
-# Neutron-lib migration shim. This will wrap any exceptionss that are moved
+# Neutron-lib migration shim. This will wrap any exceptions that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.
 # If you're wondering why we bother saving _OLD_REF, it is because if we
