@@ -412,6 +412,43 @@ class TestOvsNeutronAgent(object):
                 (expected_ports, expected_ancillary, devices_not_ready_yet),
                 actual)
 
+    def test_process_ports_events_port_removed_and_added(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        events = {
+            'removed':
+                [{'ofport': 1,
+                  'external_ids': {'iface-id': port_id,
+                                   'attached-mac': 'fa:16:3e:f6:1b:fb'},
+                  'name': 'qvof6f104bd-37'}],
+            'added':
+                [{'ofport': 2,
+                  'external_ids': {'iface-id': port_id,
+                                   'attached-mac': 'fa:16:3e:f6:1b:fb'},
+                  'name': 'qvof6f104bd-37'}]
+        }
+        registered_ports = {port_id}
+        expected_ancillary = dict(current=set(), added=set(), removed=set())
+
+        # port was removed and then added
+        expected_ports = dict(current={port_id},
+                              added={port_id},
+                              removed=set())
+        with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
+                               return_value=True):
+            self._test_process_ports_events(events.copy(), registered_ports,
+                                            set(), expected_ports,
+                                            expected_ancillary)
+
+        # port was added and then removed
+        expected_ports = dict(current=set(),
+                              added=set(),
+                              removed={port_id})
+        with mock.patch.object(ovs_lib.BaseOVS, "port_exists",
+                               return_value=False):
+            self._test_process_ports_events(events.copy(), registered_ports,
+                                            set(), expected_ports,
+                                            expected_ancillary)
+
     def test_process_ports_events_returns_current_for_unchanged_ports(self):
         events = {'added': [], 'removed': []}
         registered_ports = {1, 3}
