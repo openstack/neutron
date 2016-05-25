@@ -1,0 +1,10 @@
+---
+deprecations:
+  - The 'advertise_mtu' option is deprecated and will be removed in Ocata.
+    There should be no use case to disable the feature, hence the option is
+    considered redundant. DHCP and L3 agents will continue advertising MTU
+    values to instances. Other plugins not using those agents are also
+    encouraged to advertise MTU to instances. The actual implementation of MTU
+    advertisement depends on the plugin in use, but it's assumed that at least
+    DHCP option for IPv4 clients and Router Advertisements for IPv6 clients is
+    supported.

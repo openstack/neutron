@@ -155,6 +155,7 @@ core_opts = [
                help=_('Number of seconds between sending events to nova if '
                       'there are any events to send.')),
     cfg.BoolOpt('advertise_mtu', default=True,
+                deprecated_for_removal=True,
                 help=_('If True, advertise network MTU values if core plugin '
                        'calculates them. MTU is advertised to running '
                        'instances via DHCP and RA MTU options.')),
