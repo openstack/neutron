@@ -209,6 +209,15 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             external_port, router.get_external_device_name,
             router.ns_name))
 
+    def _assert_ipv6_accept_ra(self, router):
+        external_port = router.get_ex_gw_port()
+        external_device_name = router.get_external_device_name(
+            external_port['id'])
+        ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
+        ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
+            'net.ipv6.conf.%s.accept_ra' % external_device_name])
+        self.assertEqual('2', ra_state)
+
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True):
         router_info = self.generate_router_info(enable_ha, ip_version,
@@ -270,13 +279,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         # when IPv6 is enabled and no IPv6 gateway is configured.
         if router.use_ipv6 and not v6_ext_gw_with_sub:
             if not self.agent.conf.ipv6_gateway:
-                external_port = router.get_ex_gw_port()
-                external_device_name = router.get_external_device_name(
-                    external_port['id'])
-                ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
-                ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
-                    'net.ipv6.conf.%s.accept_ra' % external_device_name])
-                self.assertEqual('2', ra_state)
+                self._assert_ipv6_accept_ra(router)
 
         if enable_ha:
             self._assert_ha_device(router)
