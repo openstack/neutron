@@ -19,13 +19,42 @@ import functools
 
 from neutron_lib import constants
 from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
 from oslo_utils import uuidutils
+import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
+from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
+from neutron.db import model_base
 from neutron.db import segments_db as db
 from neutron.services.segments import exceptions
+
+
+LOG = logging.getLogger(__name__)
+
+
+class SegmentHostMapping(model_base.BASEV2):
+
+    segment_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networksegments.id',
+                                         ondelete="CASCADE"),
+                           primary_key=True,
+                           index=True,
+                           nullable=False)
+    host = sa.Column(sa.String(255),
+                     primary_key=True,
+                     index=True,
+                     nullable=False)
+
+    # Add a relationship to the NetworkSegment model in order to instruct
+    # SQLAlchemy to eagerly load this association
+    network_segment = orm.relationship(
+        db.NetworkSegment, backref=orm.backref("segment_host_mapping",
+                                               lazy='joined',
+                                               cascade='delete'))
 
 
 def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
@@ -124,3 +153,53 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             query = query.filter(db.NetworkSegment.id == uuid)
             if 0 == query.delete():
                 raise exceptions.SegmentNotFound(segment_id=uuid)
+
+
+def update_segment_host_mapping(context, host, current_segment_ids):
+    with context.session.begin(subtransactions=True):
+        segments_host_query = context.session.query(
+            SegmentHostMapping).filter_by(host=host)
+        previous_segment_ids = {
+            seg_host['segment_id'] for seg_host in segments_host_query}
+        for segment_id in current_segment_ids - previous_segment_ids:
+            context.session.add(SegmentHostMapping(segment_id=segment_id,
+                                                   host=host))
+        stale_segment_ids = previous_segment_ids - current_segment_ids
+        if stale_segment_ids:
+            context.session.query(SegmentHostMapping).filter(
+                SegmentHostMapping.segment_id.in_(
+                    stale_segment_ids)).delete(synchronize_session=False)
+
+
+def _get_phys_nets(agent):
+    configurations_dict = agent.get('configurations', {})
+    mappings = configurations_dict.get('bridge_mappings', {})
+    mappings.update(configurations_dict.get('interface_mappings', {}))
+    mappings.update(configurations_dict.get('device_mappings', {}))
+    return mappings.keys()
+
+
+reported_hosts = set()
+
+
+def update_segment_host_mapping_for_agent(context, host, plugin, agent):
+    check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
+    if not check_segment_for_agent:
+        LOG.info(_LI("Core plug-in does not implement "
+                     "'check_segment_for_agent'. It is not possible to "
+                     "build a hosts segments mapping"))
+        return
+    phys_nets = _get_phys_nets(agent)
+    if not phys_nets:
+        return
+    start_flag = agent.get('start_flag', None)
+    if host in reported_hosts and not start_flag:
+        return
+    reported_hosts.add(host)
+    with context.session.begin(subtransactions=True):
+        segments = context.session.query(db.NetworkSegment).filter(
+            db.NetworkSegment.physical_network.in_(phys_nets))
+        current_segment_ids = {
+            segment['id'] for segment in segments
+            if check_segment_for_agent(segment, agent)}
+        update_segment_host_mapping(context, host, current_segment_ids)

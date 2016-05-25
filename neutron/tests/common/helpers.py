@@ -70,8 +70,9 @@ def _get_l3_agent_dict(host, agent_mode, internal_only=True,
                            'router_id': router_id}}
 
 
-def _register_agent(agent):
-    plugin = FakePlugin()
+def _register_agent(agent, plugin=None):
+    if not plugin:
+        plugin = FakePlugin()
     admin_context = context.get_admin_context()
     plugin.create_or_update_agent(admin_context, agent)
     return plugin._get_agent_by_type_and_host(
@@ -136,25 +137,30 @@ def set_agent_admin_state(agent_id, admin_state_up=False):
         {'agent': {'admin_state_up': admin_state_up}})
 
 
-def _get_ovs_agent_dict(host, agent_type, binary, tunnel_types,
-                        tunneling_ip='20.0.0.1', interface_mappings=None,
-                        bridge_mappings=None, l2pop_network_types=None):
+def _get_l2_agent_dict(host, agent_type, binary, tunnel_types=None,
+                       tunneling_ip='20.0.0.1', interface_mappings=None,
+                       bridge_mappings=None, l2pop_network_types=None,
+                       device_mappings=None, start_flag=True):
     agent = {
         'binary': binary,
         'host': host,
         'topic': constants.L2_AGENT_TOPIC,
-        'configurations': {'tunneling_ip': tunneling_ip,
-                           'tunnel_types': tunnel_types},
+        'configurations': {},
         'agent_type': agent_type,
         'tunnel_type': [],
-        'start_flag': True}
+        'start_flag': start_flag}
 
+    if tunnel_types is not None:
+        agent['configurations']['tunneling_ip'] = tunneling_ip
+        agent['configurations']['tunnel_types'] = tunnel_types
     if bridge_mappings is not None:
         agent['configurations']['bridge_mappings'] = bridge_mappings
     if interface_mappings is not None:
         agent['configurations']['interface_mappings'] = interface_mappings
     if l2pop_network_types is not None:
         agent['configurations']['l2pop_network_types'] = l2pop_network_types
+    if device_mappings is not None:
+        agent['configurations']['device_mappings'] = device_mappings
     return agent
 
 
@@ -162,11 +168,43 @@ def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
                        binary='neutron-openvswitch-agent',
                        tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
                        interface_mappings=None, bridge_mappings=None,
-                       l2pop_network_types=None):
-    agent = _get_ovs_agent_dict(host, agent_type, binary, tunnel_types,
-                                tunneling_ip, interface_mappings,
-                                bridge_mappings, l2pop_network_types)
-    return _register_agent(agent)
+                       l2pop_network_types=None, plugin=None, start_flag=True):
+    agent = _get_l2_agent_dict(host, agent_type, binary, tunnel_types,
+                               tunneling_ip, interface_mappings,
+                               bridge_mappings, l2pop_network_types,
+                               start_flag=start_flag)
+    return _register_agent(agent, plugin)
+
+
+def register_linuxbridge_agent(host=HOST,
+                               agent_type=constants.AGENT_TYPE_LINUXBRIDGE,
+                               binary='neutron-linuxbridge-agent',
+                               tunnel_types=['vxlan'], tunneling_ip='20.0.0.1',
+                               interface_mappings=None, bridge_mappings=None,
+                               plugin=None):
+    agent = _get_l2_agent_dict(host, agent_type, binary, tunnel_types,
+                               tunneling_ip=tunneling_ip,
+                               interface_mappings=interface_mappings,
+                               bridge_mappings=bridge_mappings)
+    return _register_agent(agent, plugin)
+
+
+def register_macvtap_agent(host=HOST,
+                           agent_type=constants.AGENT_TYPE_MACVTAP,
+                           binary='neutron-macvtap-agent',
+                           interface_mappings=None, plugin=None):
+    agent = _get_l2_agent_dict(host, agent_type, binary,
+                               interface_mappings=interface_mappings)
+    return _register_agent(agent, plugin)
+
+
+def register_sriovnicswitch_agent(host=HOST,
+                                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,
+                                  binary='neutron-sriov-nic-agent',
+                                  device_mappings=None, plugin=None):
+    agent = _get_l2_agent_dict(host, agent_type, binary,
+                               device_mappings=device_mappings)
+    return _register_agent(agent, plugin)
 
 
 def requires_py2(testcase):
