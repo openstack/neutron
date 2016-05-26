@@ -29,8 +29,10 @@ class TransactionQueue(Queue.Queue, object):
     def __init__(self, *args, **kwargs):
         super(TransactionQueue, self).__init__(*args, **kwargs)
         alertpipe = os.pipe()
-        self.alertin = os.fdopen(alertpipe[0], 'r', 0)
-        self.alertout = os.fdopen(alertpipe[1], 'w', 0)
+        # NOTE(ivasilevskaya) python 3 doesn't allow unbuffered I/O. Will get
+        # around this constraint by using binary mode.
+        self.alertin = os.fdopen(alertpipe[0], 'rb', 0)
+        self.alertout = os.fdopen(alertpipe[1], 'wb', 0)
 
     def get_nowait(self, *args, **kwargs):
         try:
