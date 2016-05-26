@@ -1288,22 +1288,22 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         new_port = port['port']
 
         with context.session.begin(subtransactions=True):
-            port = self._get_port(context, id)
+            db_port = self._get_port(context, id)
             if 'dns-integration' in self.supported_extension_aliases:
-                original_ips = self._make_fixed_ip_dict(port['fixed_ips'])
-                original_dns_name = port.get('dns_name', '')
+                original_ips = self._make_fixed_ip_dict(db_port['fixed_ips'])
+                original_dns_name = db_port.get('dns_name', '')
                 request_dns_name = self._get_request_dns_name(new_port)
                 if 'dns_name' in new_port and not request_dns_name:
                     new_port['dns_name'] = ''
             new_mac = new_port.get('mac_address')
-            self._validate_port_for_update(context, port, new_port, new_mac)
-            changes = self.ipam.update_port_with_ips(context, port,
+            self._validate_port_for_update(context, db_port, new_port, new_mac)
+            changes = self.ipam.update_port_with_ips(context, db_port,
                                                      new_port, new_mac)
             if 'dns-integration' in self.supported_extension_aliases:
                 dns_assignment = self._get_dns_names_for_updated_port(
                     context, original_ips, original_dns_name,
                     request_dns_name, changes)
-        result = self._make_port_dict(port)
+        result = self._make_port_dict(db_port)
         # Keep up with fields that changed
         if changes.original or changes.add or changes.remove:
             result['fixed_ips'] = self._make_fixed_ip_dict(
