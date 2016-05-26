@@ -225,7 +225,12 @@ def get_random_dscp_mark():
 
 
 def get_list_of_random_networks(num=10):
-    return [tools.get_random_ip_network() for i in range(num)]
+    for i in range(5):
+        res = [tools.get_random_ip_network() for i in range(num)]
+        # make sure there are no duplicates
+        if len(set(res)) == num:
+            return res
+    raise Exception('Failed to generate unique networks')
 
 
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
