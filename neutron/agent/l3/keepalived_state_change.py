@@ -127,7 +127,6 @@ def configure(conf):
     config.init(sys.argv[1:])
     conf.set_override('log_dir', cfg.CONF.conf_dir)
     conf.set_override('debug', True)
-    conf.set_override('verbose', True)
     config.setup_logging()
 
 

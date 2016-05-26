@@ -540,7 +540,6 @@ class TestLogArgs(base.BaseTestCase):
 
     def test_log_args_without_log_dir_and_file(self):
         conf_dict = {'debug': True,
-                     'verbose': False,
                      'log_dir': None,
                      'log_file': None,
                      'use_syslog': True,
@@ -554,14 +553,12 @@ class TestLogArgs(base.BaseTestCase):
 
     def test_log_args_without_log_file(self):
         conf_dict = {'debug': True,
-                     'verbose': True,
                      'log_dir': '/etc/tests',
                      'log_file': None,
                      'use_syslog': False,
                      'syslog_log_facility': 'LOG_USER'}
         conf = dhcp.DictModel(conf_dict)
         expected_args = ['--debug',
-                         '--verbose',
                          '--log-file=log_file_name',
                          '--log-dir=/etc/tests']
         args = config.get_log_args(conf, 'log_file_name')
@@ -569,7 +566,6 @@ class TestLogArgs(base.BaseTestCase):
 
     def test_log_args_with_log_dir_and_file(self):
         conf_dict = {'debug': True,
-                     'verbose': False,
                      'log_dir': '/etc/tests',
                      'log_file': 'tests/filelog',
                      'use_syslog': False,
@@ -583,7 +579,6 @@ class TestLogArgs(base.BaseTestCase):
 
     def test_log_args_without_log_dir(self):
         conf_dict = {'debug': True,
-                     'verbose': False,
                      'log_file': 'tests/filelog',
                      'log_dir': None,
                      'use_syslog': False,
@@ -597,14 +592,12 @@ class TestLogArgs(base.BaseTestCase):
 
     def test_log_args_with_filelog_and_syslog(self):
         conf_dict = {'debug': True,
-                     'verbose': True,
                      'log_file': 'tests/filelog',
                      'log_dir': '/etc/tests',
                      'use_syslog': True,
                      'syslog_log_facility': 'LOG_USER'}
         conf = dhcp.DictModel(conf_dict)
         expected_args = ['--debug',
-                         '--verbose',
                          '--log-file=log_file_name',
                          '--log-dir=/etc/tests/tests']
         args = config.get_log_args(conf, 'log_file_name')
@@ -852,7 +845,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def _test_enable_isolated_metadata_proxy(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
         cfg.CONF.set_override('debug', True)
-        cfg.CONF.set_override('verbose', False)
         cfg.CONF.set_override('log_file', 'test.log')
         method_path = ('neutron.agent.metadata.driver.MetadataDriver'
                        '.spawn_monitored_metadata_proxy')
