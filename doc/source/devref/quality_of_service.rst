@@ -76,6 +76,23 @@ Service side design
   integrated into other plugins with ease.
 
 
+QoS plugin implementation guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The neutron.extensions.qos.QoSPluginBase class uses method proxies for methods
+relating to QoS policy rules. Each of these such methods is generic in the sense
+that it is intended to handle any rule type. For example, QoSPluginBase has a
+create_policy_rule method instead of both create_policy_dscp_marking_rule and
+create_policy_bandwidth_limit_rule methods. The logic behind the proxies allows
+a call to a plugin's create_policy_dscp_marking_rule to be handled by the
+create_policy_rule method, which will receive a QosDscpMarkingRule object as an
+argument in order to execute behavior specific to the DSCP marking rule type.
+This approach allows new rule types to be introduced without requiring a plugin
+to modify code as a result. As would be expected, any subclass of QoSPluginBase
+must override the base class's abc.abstractmethod methods, even if to raise
+NotImplemented.
+
+
 Supported QoS rule types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

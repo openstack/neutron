@@ -341,6 +341,24 @@ class NeutronDbObject(NeutronObject):
             keys[key] = getattr(self, key)
         return self.modify_fields_to_db(keys)
 
+    def update_nonidentifying_fields(self, obj_data, reset_changes=False):
+        """Updates non-identifying fields of an object.
+
+        :param obj_data: the full set of object data
+        :type obj_data: dict
+        :param reset_changes: indicates whether the object's current set of
+                              changed fields should be cleared
+        :type reset_changes: boolean
+
+        :returns: None
+        """
+
+        if reset_changes:
+            self.obj_reset_changes()
+        for k, v in obj_data.items():
+            if k not in self.primary_keys:
+                setattr(self, k, v)
+
     def update(self):
         updates = self._get_changed_persistent_fields()
         updates = self._validate_changed_fields(updates)
