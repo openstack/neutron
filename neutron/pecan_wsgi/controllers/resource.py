@@ -38,7 +38,9 @@ class ItemController(utils.NeutronPecanController):
     def get(self, *args, **kwargs):
         getter = getattr(self.plugin, 'get_%s' % self.resource)
         neutron_context = request.context['neutron_context']
-        return {self.resource: getter(neutron_context, self.item)}
+        fields = self._build_field_list(kwargs.pop('fields', []))
+        return {self.resource: getter(neutron_context, self.item,
+                                      fields=fields)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
@@ -95,9 +97,7 @@ class CollectionsController(utils.NeutronPecanController):
 
     def get(self, *args, **kwargs):
         # list request
-        # TODO(kevinbenton): use user-provided fields in call to plugin
-        # after making sure policy enforced fields remain
-        kwargs.pop('fields', None)
+        fields = self._build_field_list(kwargs.pop('fields', []))
         _listify = lambda x: x if isinstance(x, list) else [x]
         filters = api_common.get_filters_from_dict(
             {k: _listify(v) for k, v in kwargs.items()},
@@ -106,7 +106,8 @@ class CollectionsController(utils.NeutronPecanController):
                    'limit', 'marker', 'page_reverse'])
         lister = getattr(self.plugin, 'get_%s' % self.collection)
         neutron_context = request.context['neutron_context']
-        return {self.collection: lister(neutron_context, filters=filters)}
+        return {self.collection: lister(neutron_context,
+                fields=fields, filters=filters)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')

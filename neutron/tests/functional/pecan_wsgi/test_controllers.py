@@ -258,6 +258,36 @@ class TestResourceController(TestRootController):
         response = self.app.get('/v2.0/ports.json')
         self.assertEqual(response.status_int, 200)
 
+    def _check_item(self, expected, item):
+        for attribute in expected:
+            self.assertIn(attribute, item)
+        self.assertEqual(len(expected), len(item))
+
+    def test_get_collection_with_fields_selector(self):
+        list_resp = self.app.get('/v2.0/ports.json?fields=id&fields=name',
+                                 headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, list_resp.status_int)
+        for item in jsonutils.loads(list_resp.body).get('ports', []):
+            self.assertIn('id', item)
+            self.assertIn('name', item)
+            self.assertEqual(2, len(item))
+
+    def test_get_item_with_fields_selector(self):
+        item_resp = self.app.get(
+            '/v2.0/ports/%s.json?fields=id&fields=name' % self.port['id'],
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, item_resp.status_int)
+        self._check_item(['id', 'name'],
+                         jsonutils.loads(item_resp.body)['port'])
+        # Explicitly require an attribute which is also 'required_by_policy'.
+        # The attribute should not be stripped while generating the response
+        item_resp = self.app.get(
+            '/v2.0/ports/%s.json?fields=id&fields=tenant_id' % self.port['id'],
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, item_resp.status_int)
+        self._check_item(['id', 'tenant_id'],
+                         jsonutils.loads(item_resp.body)['port'])
+
     def test_post(self):
         response = self.app.post_json(
             '/v2.0/ports.json',
@@ -315,7 +345,7 @@ class TestResourceController(TestRootController):
         self._test_method_returns_code('delete', 405)
 
 
-class TestRequestProcessing(TestResourceController):
+class TestRequestProcessing(TestRootController):
 
     def setUp(self):
         super(TestRequestProcessing, self).setUp()
@@ -326,6 +356,7 @@ class TestRequestProcessing(TestResourceController):
 
         def capture_request_details(*args, **kwargs):
             self.captured_context = request.context
+            self.request_params = kwargs
 
         mock.patch('neutron.pecan_wsgi.controllers.resource.'
                    'CollectionsController.get',
@@ -359,55 +390,47 @@ class TestRequestProcessing(TestResourceController):
 
     def test_resource_processing_post(self):
         self.app.post_json(
-            '/v2.0/ports.json',
-            params={'port': {'network_id': self.port['network_id'],
-                             'name': 'the_port',
-                             'admin_state_up': True}},
+            '/v2.0/networks.json',
+            params={'network': {'name': 'the_net',
+                                'admin_state_up': True}},
             headers={'X-Project-Id': 'tenid'})
-        self.assertEqual('port', self.captured_context['resource'])
-        self.assertEqual('ports', self.captured_context['collection'])
+        self.assertEqual('network', self.captured_context['resource'])
+        self.assertEqual('networks', self.captured_context['collection'])
         resources = self.captured_context['resources']
         self.assertEqual(1, len(resources))
-        self.assertEqual(self.port['network_id'],
-                         resources[0]['network_id'])
-        self.assertEqual('the_port', resources[0]['name'])
+        self.assertEqual('the_net', resources[0]['name'])
+        self.assertTrue(resources[0]['admin_state_up'])
 
     def test_resource_processing_post_bulk(self):
         self.app.post_json(
-            '/v2.0/ports.json',
-            params={'ports': [{'network_id': self.port['network_id'],
-                               'name': 'the_port_1',
-                               'admin_state_up': True},
-                              {'network_id': self.port['network_id'],
-                               'name': 'the_port_2',
-                               'admin_state_up': True}]},
+            '/v2.0/networks.json',
+            params={'networks': [{'name': 'the_net_1',
+                                  'admin_state_up': True},
+                                 {'name': 'the_net_2',
+                                  'admin_state_up': False}]},
             headers={'X-Project-Id': 'tenid'})
         resources = self.captured_context['resources']
         self.assertEqual(2, len(resources))
-        self.assertEqual(self.port['network_id'],
-                         resources[0]['network_id'])
-        self.assertEqual('the_port_1', resources[0]['name'])
-        self.assertEqual(self.port['network_id'],
-                         resources[1]['network_id'])
-        self.assertEqual('the_port_2', resources[1]['name'])
+        self.assertTrue(resources[0]['admin_state_up'])
+        self.assertEqual('the_net_1', resources[0]['name'])
+        self.assertFalse(resources[1]['admin_state_up'])
+        self.assertEqual('the_net_2', resources[1]['name'])
 
     def test_resource_processing_post_unknown_attribute_returns_400(self):
         response = self.app.post_json(
-            '/v2.0/ports.json',
-            params={'port': {'network_id': self.port['network_id'],
-                             'name': 'the_port',
-                             'alien': 'E.T.',
-                             'admin_state_up': True}},
+            '/v2.0/networks.json',
+            params={'network': {'name': 'the_net',
+                                'alien': 'E.T.',
+                                'admin_state_up': True}},
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
         self.assertEqual(400, response.status_int)
 
-    def test_resource_processing_post_validation_errori_returns_400(self):
+    def test_resource_processing_post_validation_error_returns_400(self):
         response = self.app.post_json(
-            '/v2.0/ports.json',
-            params={'port': {'network_id': self.port['network_id'],
-                             'name': 'the_port',
-                             'admin_state_up': 'invalid_value'}},
+            '/v2.0/networks.json',
+            params={'network': {'name': 'the_net',
+                                'admin_state_up': 'invalid_value'}},
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
         self.assertEqual(400, response.status_int)
