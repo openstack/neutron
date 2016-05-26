@@ -3119,8 +3119,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_create_subnet_no_ip_version(self):
         with self.network() as network:
-            cfg.CONF.set_override('default_ipv4_subnet_pool', None)
-            cfg.CONF.set_override('default_ipv6_subnet_pool', None)
             data = {'subnet': {'network_id': network['network']['id'],
                     'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3131,7 +3129,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             tenant_id = network['network']['tenant_id']
             cfg.CONF.set_override('ipv6_pd_enabled', False)
-            cfg.CONF.set_override('default_ipv6_subnet_pool', None)
             data = {'subnet': {'network_id': network['network']['id'],
                     'ip_version': '6',
                     'tenant_id': tenant_id}}

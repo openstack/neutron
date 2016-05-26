@@ -81,26 +81,6 @@ core_opts = [
                help=_("Maximum number of fixed ips per port. This option "
                       "is deprecated and will be removed in the N "
                       "release.")),
-    cfg.StrOpt('default_ipv4_subnet_pool', deprecated_for_removal=True,
-               help=_("Default IPv4 subnet pool to be used for automatic "
-                      "subnet CIDR allocation. "
-                      "Specifies by UUID the pool to be used in case where "
-                      "creation of a subnet is being called without a "
-                      "subnet pool ID. If not set then no pool "
-                      "will be used unless passed explicitly to the subnet "
-                      "create. If no pool is used, then a CIDR must be passed "
-                      "to create a subnet and that subnet will not be "
-                      "allocated from any pool; it will be considered part of "
-                      "the tenant's private address space. This option is "
-                      "deprecated for removal in the N release.")),
-    cfg.StrOpt('default_ipv6_subnet_pool', deprecated_for_removal=True,
-               help=_("Default IPv6 subnet pool to be used for automatic "
-                      "subnet CIDR allocation. "
-                      "Specifies by UUID the pool to be used in case where "
-                      "creation of a subnet is being called without a "
-                      "subnet pool ID. See the description for "
-                      "default_ipv4_subnet_pool for more information. This "
-                      "option is deprecated for removal in the N release.")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation. "
