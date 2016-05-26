@@ -831,6 +831,64 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 l3_notifier.router_removed_from_agent.assert_called_once_with(
                     mock.ANY, router['id'], HOST1)
 
+    def test_dvr_router_manual_rescheduling_removes_router(self):
+        router = self._create_router()
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        with self.network(**kwargs) as ext_net,\
+                self.subnet(network=ext_net),\
+                self.subnet(cidr='20.0.0.0/24') as subnet,\
+                self.port(subnet=subnet):
+            self.l3_plugin._update_router_gw_info(
+                self.context, router['id'],
+                {'network_id': ext_net['network']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+            self.l3_plugin.schedule_router(self.context,
+                                           router['id'],
+                                           candidates=[self.l3_agent])
+            # Now the VM should be also scheduled on the node
+            notifier = self.l3_plugin.agent_notifiers[
+                constants.AGENT_TYPE_L3]
+            with mock.patch.object(
+                    notifier, 'router_removed_from_agent') as rtr_remove_mock:
+                self.l3_plugin.remove_router_from_l3_agent(
+                    self.context, self.l3_agent['id'], router['id'])
+                rtr_remove_mock.assert_called_once_with(
+                    self.context, router['id'], self.l3_agent['host'])
+
+    def test_dvr_router_manual_rescheduling_updates_router(self):
+        router = self._create_router()
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        with self.network(**kwargs) as ext_net,\
+                self.subnet(network=ext_net),\
+                self.subnet(cidr='20.0.0.0/24') as subnet,\
+                self.port(subnet=subnet,
+                          device_owner=DEVICE_OWNER_COMPUTE) as port:
+            self.core_plugin.update_port(
+                self.context, port['port']['id'],
+                {'port': {'binding:host_id': self.l3_agent['host']}})
+            self.l3_plugin._update_router_gw_info(
+                self.context, router['id'],
+                {'network_id': ext_net['network']['id']})
+            self.l3_plugin.add_router_interface(
+                self.context, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+            self.l3_plugin.schedule_router(self.context,
+                                           router['id'],
+                                           candidates=[self.l3_agent])
+            # Now the VM should be also scheduled on the node
+            notifier = self.l3_plugin.agent_notifiers[
+                constants.AGENT_TYPE_L3]
+            with mock.patch.object(
+                    notifier, 'routers_updated_on_host') as rtr_update_mock:
+                self.l3_plugin.remove_router_from_l3_agent(
+                    self.context, self.l3_agent['id'], router['id'])
+                rtr_update_mock.assert_called_once_with(
+                    self.context, [router['id']], self.l3_agent['host'])
+
     def _test_router_remove_from_agent_on_vm_port_deletion(
             self, non_admin_port=False):
         # register l3 agent in dvr mode in addition to existing dvr_snat agent
