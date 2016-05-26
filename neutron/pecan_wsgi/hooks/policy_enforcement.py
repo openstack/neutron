@@ -21,7 +21,6 @@ from pecan import hooks
 import webob
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes as v2_attributes
 from neutron.common import constants as const
 from neutron.extensions import quotasv2
 from neutron import manager
@@ -36,8 +35,10 @@ def _custom_getter(resource, resource_id):
         return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
-def fetch_resource(neutron_context, resource, resource_id):
-    attrs = v2_attributes.get_resource_info(resource)
+def fetch_resource(neutron_context, collection, resource, resource_id):
+    controller = manager.NeutronManager.get_controller_for_resource(
+        collection)
+    attrs = controller.resource_info
     if not attrs:
         # this isn't a request for a normal resource. it could be
         # an action like removing a network from a dhcp agent.
@@ -96,7 +97,7 @@ class PolicyHook(hooks.PecanHook):
                 # Ops... this was a delete after all!
                 item = {}
             resource_id = state.request.context.get('resource_id')
-            resource_obj = fetch_resource(neutron_context,
+            resource_obj = fetch_resource(neutron_context, collection,
                                           resource, resource_id)
             if resource_obj:
                 original_resources.append(resource_obj)
@@ -196,8 +197,9 @@ class PolicyHook(hooks.PecanHook):
         """
         attributes_to_exclude = []
         for attr_name in data.keys():
-            attr_data = v2_attributes.get_resource_info(
-                resource).get(attr_name)
+            controller = manager.NeutronManager.get_controller_for_resource(
+                collection)
+            attr_data = controller.resource_info.get(attr_name)
             if attr_data and attr_data['is_visible']:
                 if policy.check(
                     context,

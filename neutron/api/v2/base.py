@@ -68,6 +68,10 @@ class Controller(object):
     def resource(self):
         return self._resource
 
+    @property
+    def attr_info(self):
+        return self._attr_info
+
     def __init__(self, plugin, collection, resource, attr_info,
                  allow_bulk=False, member_actions=None, parent=None,
                  allow_pagination=False, allow_sorting=False):

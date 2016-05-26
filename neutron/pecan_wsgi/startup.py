@@ -68,8 +68,9 @@ def initialize_all():
         if isinstance(legacy_controller, base.Controller):
             resource = legacy_controller.resource
             plugin = legacy_controller.plugin
+            attr_info = legacy_controller.attr_info
             new_controller = res_ctrl.CollectionsController(
-                collection, resource)
+                collection, resource, resource_info=attr_info)
             manager.NeutronManager.set_plugin_for_resource(resource, plugin)
             if path_prefix:
                 manager.NeutronManager.add_resource_for_path_prefix(
