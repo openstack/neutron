@@ -15,13 +15,6 @@
 import mock
 from six.moves import queue
 import testtools
-import unittest2
-
-try:
-    from ovs.db import idl  # noqa
-except ImportError:
-    raise unittest2.SkipTest(
-        "Skip test since ovs requirement for PY3 doesn't support yet.")
 
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb import impl_idl
