@@ -17,9 +17,9 @@ import netaddr
 
 from designateclient import exceptions as d_exc
 from designateclient.v2 import client as d_client
-from keystoneclient.auth.identity.generic import password
-from keystoneclient.auth import token_endpoint
-from keystoneclient import session
+from keystoneauth1.identity.generic import password
+from keystoneauth1 import session
+from keystoneauth1 import token_endpoint
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log
