@@ -19,7 +19,6 @@ from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import api as db_api
-from neutron.db import l3_agentschedulers_db
 from neutron.db.metering import metering_rpc
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
@@ -290,7 +289,6 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
 
 class TestMeteringPluginL3AgentScheduler(
-        l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         test_l3.L3NatTestCaseMixin,
         test_metering_db.MeteringPluginDbTestCaseMixin):
