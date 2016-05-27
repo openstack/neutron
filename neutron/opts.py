@@ -144,7 +144,7 @@ def list_opts():
 
 def list_qos_opts():
     return [
-        ('DEFAULT',
+        ('qos',
          neutron.services.qos.notification_drivers.manager.QOS_PLUGIN_OPTS)
     ]
 
