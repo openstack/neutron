@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+import shutil
+
 import mock
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -211,3 +214,58 @@ class NeutronModuleTestCase(base.BaseTestCase):
         mod.ini(base.ETCDIR)
         self.assertEqual(['foo', 'bar'], mod.service_providers(),
                          'Expected two providers, only one read')
+
+
+class NeutronModuleConfigDirTestCase(base.BaseTestCase):
+
+    def setup_config(self):
+        self.config_parse(args=['--config-dir', base.ETCDIR])
+
+    def test_can_parse_multi_opt_service_provider_from_conf_dir(self):
+        mod = provconf.NeutronModule('neutron_test')
+        mod.ini()
+        self.assertEqual(['foo', 'bar'], mod.service_providers())
+
+
+class NeutronModuleMultiConfigDirTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        self.tmpdir = self.get_default_temp_dir().path
+        shutil.copyfile(
+            os.path.join(base.ETCDIR, 'neutron_test2.conf.example'),
+            os.path.join(self.tmpdir, 'neutron_test.conf'))
+        super(NeutronModuleMultiConfigDirTestCase, self).setUp()
+
+    def setup_config(self):
+        self.config_parse(args=[
+            # NOTE(ihrachys): we expect the second directory to be checked
+            '--config-dir', self.tmpdir, '--config-dir', base.ETCDIR
+        ])
+
+    def test_read_configuration_from_all_matching_files(self):
+        mod = provconf.NeutronModule('neutron_test')
+        mod.ini()
+        self.assertEqual(['zzz', 'foo', 'bar'], mod.service_providers())
+
+
+class NeutronModuleMultiConfigFileTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        self.tmpdir = self.get_default_temp_dir().path
+        self.filepath1 = os.path.join(self.tmpdir, 'neutron_test.conf')
+        self.filepath2 = os.path.join(base.ETCDIR, 'neutron_test.conf')
+        shutil.copyfile(
+            os.path.join(base.ETCDIR, 'neutron_test2.conf.example'),
+            self.filepath1)
+        super(NeutronModuleMultiConfigFileTestCase, self).setUp()
+
+    def setup_config(self):
+        self.config_parse(args=[
+            # NOTE(ihrachys): we expect both directories to be checked
+            '--config-file', self.filepath1, '--config-file', self.filepath2
+        ])
+
+    def test_read_configuration_from_all_matching_files(self):
+        mod = provconf.NeutronModule('neutron_test')
+        mod.ini()
+        self.assertEqual(['zzz', 'foo', 'bar'], mod.service_providers())

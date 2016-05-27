@@ -14,6 +14,7 @@
 #    under the License.
 
 import importlib
+import itertools
 import os
 
 from neutron_lib import exceptions as n_exc
@@ -64,18 +65,32 @@ class NeutronModule(object):
     # Return an INI parser for the child module
     def ini(self, neutron_dir=None):
         if self.repo['ini'] is None:
-            try:
-                neutron_dir = neutron_dir or cfg.CONF.config_dir
-            except cfg.NoSuchOptError:
-                pass
-            if neutron_dir is None:
-                neutron_dir = '/etc/neutron'
-
             ini_file = cfg.ConfigOpts()
             ini_file.register_opts(serviceprovider_opts, 'service_providers')
-            ini_path = os.path.join(neutron_dir, '%s.conf' % self.module_name)
-            if os.path.exists(ini_path):
-                ini_file(['--config-file', ini_path])
+
+            if neutron_dir is not None:
+                neutron_dirs = [neutron_dir]
+            else:
+                neutron_dirs = cfg.CONF.config_dirs or ['/etc/neutron']
+
+            # load configuration from all matching files to reflect oslo.config
+            # behaviour
+            config_files = []
+            for neutron_dir in neutron_dirs:
+                ini_path = os.path.join(neutron_dir,
+                                        '%s.conf' % self.module_name)
+                if os.path.exists(ini_path):
+                    config_files.append(ini_path)
+
+            # NOTE(ihrachys): we could pass project=self.module_name instead to
+            # rely on oslo.config to find configuration files for us, but:
+            # 1. that would render neutron_dir argument ineffective;
+            # 2. that would break loading configuration file from under
+            # /etc/neutron in case no --config-dir is passed.
+            # That's why we need to explicitly construct CLI here.
+            ini_file(args=list(itertools.chain.from_iterable(
+                ['--config-file', file_] for file_ in config_files
+            )))
             self.repo['ini'] = ini_file
 
         return self.repo['ini']
