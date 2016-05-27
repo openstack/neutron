@@ -212,6 +212,21 @@ class DeclarativeObject(abc.ABCMeta):
                 cls.fields_no_update += base.primary_keys
         # avoid duplicate entries
         cls.fields_no_update = list(set(cls.fields_no_update))
+
+        # generate unique_keys from the model
+        model = getattr(cls, 'db_model', None)
+        if model and not getattr(cls, 'unique_keys', None):
+            cls.unique_keys = []
+            obj_field_names = set(cls.fields.keys())
+            model_to_obj_translation = {
+                v: k for (k, v) in cls.fields_need_translation.items()}
+
+            for model_unique_key in model_base.get_unique_keys(model):
+                obj_unique_key = [model_to_obj_translation.get(key, key)
+                                  for key in model_unique_key]
+                if obj_field_names.issuperset(obj_unique_key):
+                    cls.unique_keys.append(obj_unique_key)
+
         if (hasattr(cls, 'has_standard_attributes') and
                 cls.has_standard_attributes()):
             standardattributes.add_standard_attributes(cls)
@@ -226,6 +241,11 @@ class NeutronDbObject(NeutronObject):
     db_model = None
 
     primary_keys = ['id']
+
+    # 'unique_keys' is a list of unique keys that can be used with get_object
+    # instead of 'primary_keys' (e.g. [['key1'], ['key2a', 'key2b']]).
+    # By default 'unique_keys' will be inherited from the 'db_model'
+    unique_keys = []
 
     # this is a dict to store the association between the foreign key and the
     # corresponding key in the main table, e.g. port extension have 'port_id'
@@ -327,8 +347,10 @@ class NeutronDbObject(NeutronObject):
         :param kwargs: multiple keys defined by key=value pairs
         :return: single object of NeutronDbObject class
         """
-        missing_keys = set(cls.primary_keys).difference(kwargs.keys())
-        if missing_keys:
+        lookup_keys = set(kwargs.keys())
+        all_keys = itertools.chain([cls.primary_keys], cls.unique_keys)
+        if not any(lookup_keys.issuperset(keys) for keys in all_keys):
+            missing_keys = set(cls.primary_keys).difference(lookup_keys)
             raise NeutronPrimaryKeyMissing(object_class=cls.__class__,
                                            missing_keys=missing_keys)
 
