@@ -29,8 +29,9 @@ from neutron.services.segments import db
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
-DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_segment.'
-                   'SegmentTestPlugin')
+SERVICE_PLUGIN_KLASS = 'neutron.services.segments.plugin.Plugin'
+TEST_PLUGIN_KLASS = (
+    'neutron.tests.unit.extensions.test_segment.SegmentTestPlugin')
 
 
 class SegmentTestExtensionManager(object):
@@ -53,9 +54,10 @@ class SegmentTestExtensionManager(object):
 
 class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
-    def setUp(self, plugin=None, service_plugins=None):
+    def setUp(self, plugin=None):
         if not plugin:
-            plugin = DB_PLUGIN_KLASS
+            plugin = TEST_PLUGIN_KLASS
+        service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
         ext_mgr = SegmentTestExtensionManager()
         super(SegmentTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                            service_plugins=service_plugins)
@@ -285,11 +287,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
                                      group='ml2')
         if not plugin:
             plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        segments_plugin = ('neutron.tests.unit.extensions.test_segment.'
-                           'SegmentTestPlugin')
-        service_plugins = {'segments_plugin_name': segments_plugin}
-        super(HostSegmentMappingTestCase, self).setUp(
-              plugin=plugin, service_plugins=service_plugins)
+        super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
 
     def _get_segments_for_host(self, host):
         ctx = context.get_admin_context()

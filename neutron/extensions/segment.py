@@ -22,7 +22,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.extensions import providernet
-from neutron.services.segments import plugin
+from neutron import manager
 
 SEGMENT = 'segment'
 SEGMENTS = '%ss' % SEGMENT
@@ -103,7 +103,7 @@ class Segment(extensions.ExtensionDescriptor):
         controller = base.create_resource(
             SEGMENTS,
             SEGMENT,
-            plugin.Plugin.get_instance(),
+            manager.NeutronManager.get_service_plugins()[SEGMENTS],
             resource_attributes)
         return [extensions.ResourceExtension(SEGMENTS,
                                              controller,
@@ -210,3 +210,9 @@ class SegmentPluginBase(object):
                         value.  Each result returned by this function will have
                         matched one of the values for each key in filters.
         """
+
+    def get_plugin_description(self):
+        return "Network Segments"
+
+    def get_plugin_type(self):
+        return SEGMENTS
