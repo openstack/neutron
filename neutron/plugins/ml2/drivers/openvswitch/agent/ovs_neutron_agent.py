@@ -1268,13 +1268,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # if a port was added and then removed or viceversa since the agent
         # can't know the order of the operations, check the status of the port
         # to determine if the port was added or deleted
-        ports_removed_and_added = [
-            p for p in events['added'] if p in events['removed']]
+        added_ports = {p['name'] for p in events['added']}
+        removed_ports = {p['name'] for p in events['removed']}
+        ports_removed_and_added = added_ports & removed_ports
         for p in ports_removed_and_added:
-            if ovs_lib.BaseOVS().port_exists(p['name']):
-                events['removed'].remove(p)
+            if ovs_lib.BaseOVS().port_exists(p):
+                events['removed'] = [e for e in events['removed']
+                                     if e['name'] != p]
             else:
-                events['added'].remove(p)
+                events['added'] = [e for e in events['added']
+                                   if e['name'] != p]
 
         #TODO(rossella_s): scanning the ancillary bridge won't be needed
         # anymore when https://review.openstack.org/#/c/203381 since the bridge
