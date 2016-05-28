@@ -245,13 +245,13 @@ class FipNamespace(namespaces.Namespace):
         if ri.rtr_fip_subnet is None:
             ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
-        ip_wrapper = ip_lib.IPWrapper(namespace=ri.ns_name)
-        device_exists = ip_lib.device_exists(rtr_2_fip_name,
-                                             namespace=ri.ns_name)
-        if not device_exists:
-            int_dev = ip_wrapper.add_veth(rtr_2_fip_name,
-                                          fip_2_rtr_name,
-                                          fip_ns_name)
+        rtr_2_fip_dev = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
+
+        if not rtr_2_fip_dev.exists():
+            ip_wrapper = ip_lib.IPWrapper(namespace=ri.ns_name)
+            rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(rtr_2_fip_name,
+                                                               fip_2_rtr_name,
+                                                               fip_ns_name)
             self._internal_ns_interface_added(str(rtr_2_fip),
                                               rtr_2_fip_name,
                                               ri.ns_name)
@@ -261,14 +261,13 @@ class FipNamespace(namespaces.Namespace):
             mtu = (self.agent_conf.network_device_mtu or
                    ri.get_ex_gw_port().get('mtu'))
             if mtu:
-                int_dev[0].link.set_mtu(mtu)
-                int_dev[1].link.set_mtu(mtu)
-            int_dev[0].link.set_up()
-            int_dev[1].link.set_up()
+                rtr_2_fip_dev.link.set_mtu(mtu)
+                fip_2_rtr_dev.link.set_mtu(mtu)
+            rtr_2_fip_dev.link.set_up()
+            fip_2_rtr_dev.link.set_up()
 
         # add default route for the link local interface
-        device = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
-        device.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
+        rtr_2_fip_dev.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
         #setup the NAT rules and chains
         ri._handle_fip_nat_rules(rtr_2_fip_name)
 
