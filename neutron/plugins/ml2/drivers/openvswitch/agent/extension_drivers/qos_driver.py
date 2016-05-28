@@ -13,11 +13,15 @@
 #    under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l2.extensions import qos
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
     mech_openvswitch)
+
+
+LOG = logging.getLogger(__name__)
 
 
 class QosOVSAgentDriver(qos.QosAgentDriver):
@@ -37,14 +41,26 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
         self.update_bandwidth_limit(port, rule)
 
     def update_bandwidth_limit(self, port, rule):
-        port_name = port['vif_port'].port_name
+        vif_port = port.get('vif_port')
+        if not vif_port:
+            port_id = port.get('port_id', None)
+            LOG.debug("update_bandwidth_limit was received for port %s but "
+                      "vif_port was not found. It seems that port is already "
+                      "deleted", port_id)
+            return
         max_kbps = rule.max_kbps
         max_burst_kbps = rule.max_burst_kbps
 
-        self.br_int.create_egress_bw_limit_for_port(port_name,
+        self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
                                                     max_kbps,
                                                     max_burst_kbps)
 
     def delete_bandwidth_limit(self, port):
-        port_name = port['vif_port'].port_name
-        self.br_int.delete_egress_bw_limit_for_port(port_name)
+        vif_port = port.get('vif_port')
+        if not vif_port:
+            port_id = port.get('port_id', None)
+            LOG.debug("delete_bandwidth_limit was received for port %s but "
+                      "vif_port was not found. It seems that port is already "
+                      "deleted", port_id)
+            return
+        self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)

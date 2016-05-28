@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import mock
 from oslo_utils import uuidutils
 
@@ -95,9 +97,21 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.update(self.port, self.qos_policy)
         self._assert_rule_create_updated()
 
+    def test_update_rules_no_vif_port(self):
+        port = copy.copy(self.port)
+        port.pop("vif_port")
+        self.qos_driver.update(port, self.qos_policy)
+        self.create.assert_not_called()
+
     def test_delete_rules(self):
         self.qos_driver.delete(self.port, self.qos_policy)
         self.delete.assert_called_once_with(self.port_name)
+
+    def test_delete_rules_no_vif_port(self):
+        port = copy.copy(self.port)
+        port.pop("vif_port")
+        self.qos_driver.delete(port, self.qos_policy)
+        self.delete.assert_not_called()
 
     def _assert_rule_create_updated(self):
         # Assert create is the last call
