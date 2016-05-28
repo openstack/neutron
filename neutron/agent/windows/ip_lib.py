@@ -49,9 +49,13 @@ class IPDevice(object):
 
     def device_has_ip(self, ip):
         try:
+            device_addresses = netifaces.ifaddresses(self.device_name)
+        except ValueError:  # The device does not exist on the system
+            return False
+
+        try:
             addresses = [ip_addr['addr'] for ip_addr in
-                netifaces.ifaddresses(self.device_name).get(
-                    netifaces.AF_INET, [])]
+                         device_addresses.get(netifaces.AF_INET, [])]
             return ip in addresses
         except OSError:
             LOG.error(_LE("Failed to get ip addresses for interface: %s."),
