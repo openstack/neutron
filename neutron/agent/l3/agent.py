@@ -204,9 +204,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         # Get the list of service plugins from Neutron Server
         # This is the first place where we contact neutron-server on startup
         # so retry in case its not ready to respond.
-        retry_count = 5
         while True:
-            retry_count = retry_count - 1
             try:
                 self.neutron_service_plugins = (
                     self.plugin_rpc.get_service_plugin_list(self.context))
@@ -223,13 +221,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self.neutron_service_plugins = None
             except oslo_messaging.MessagingTimeout as e:
                 with excutils.save_and_reraise_exception() as ctx:
-                    if retry_count > 0:
-                        ctx.reraise = False
-                        LOG.warning(_LW('l3-agent cannot check service '
-                                        'plugins enabled on the neutron '
-                                        'server. Retrying. '
-                                        'Detail message: %s'), e)
-                        continue
+                    ctx.reraise = False
+                    LOG.warning(_LW('l3-agent cannot contact neutron server '
+                                    'to retrieve service plugins enabled. '
+                                    'Check connectivity to neutron server. '
+                                    'Retrying... '
+                                    'Detailed message: %(msg)s.') % {'msg': e})
+                    continue
             break
 
         self.metadata_driver = None
