@@ -1555,6 +1555,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         failed_devices = set(devices_down.get('failed_devices_down'))
         LOG.debug("Port removal failed for %s", failed_devices)
         for device in devices:
+            self.ext_manager.delete_port(self.context, {'port_id': device})
             self.port_unbound(device)
         return failed_devices
 
