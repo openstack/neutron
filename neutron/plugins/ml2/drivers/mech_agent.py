@@ -15,12 +15,12 @@
 
 import abc
 
+from neutron_lib import constants as const
 from oslo_log import log
 import six
 
 from neutron._i18n import _LW
 from neutron.callbacks import resources
-from neutron.common import constants
 from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
@@ -68,7 +68,7 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         # we insert a status barrier to prevent the port from transitioning
         # to active until the agent reports back that the wiring is done
         port = context.current
-        if not context.host or port['status'] == constants.PORT_STATUS_ACTIVE:
+        if not context.host or port['status'] == const.PORT_STATUS_ACTIVE:
             # no point in putting in a block if the status is already ACTIVE
             return
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
