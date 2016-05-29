@@ -19,7 +19,6 @@ from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LW
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
 from neutron.db.allowed_address_pairs import models as addr_pair
@@ -319,7 +318,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         for mac_address, network_id, ip in query:
             if (netaddr.IPAddress(ip).version == 6
                 and not netaddr.IPAddress(ip).is_link_local()):
-                ip = str(ipv6.get_ipv6_addr_by_EUI64(n_const.IPV6_LLA_PREFIX,
+                ip = str(ipv6.get_ipv6_addr_by_EUI64(const.IPv6_LLA_PREFIX,
                     mac_address))
             if ip not in ips[network_id]:
                 ips[network_id].append(ip)
@@ -380,7 +379,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                             'found for IPv6 RA'), subnet['id'])
             return
         lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-            n_const.IPV6_LLA_PREFIX,
+            const.IPv6_LLA_PREFIX,
             mac_address))
         return lla_ip
 

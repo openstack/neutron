@@ -29,7 +29,6 @@ from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
-from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
@@ -381,7 +380,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         else:
             mac_ipv6_pairs.append((mac, ip_address))
             lla = str(ipv6_utils.get_ipv6_addr_by_EUI64(
-                    n_const.IPV6_LLA_PREFIX, mac))
+                    constants.IPv6_LLA_PREFIX, mac))
             mac_ipv6_pairs.append((mac, lla))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):

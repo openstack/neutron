@@ -87,7 +87,7 @@ class OFPort(object):
         self.vlan_tag = vlan_tag
         self.mac = ovs_port.vif_mac
         self.lla_address = str(ipv6_utils.get_ipv6_addr_by_EUI64(
-            constants.IPV6_LLA_PREFIX, self.mac))
+            lib_const.IPv6_LLA_PREFIX, self.mac))
         self.ofport = ovs_port.ofport
         self.sec_groups = list()
         self.fixed_ips = port_dict.get('fixed_ips', [])

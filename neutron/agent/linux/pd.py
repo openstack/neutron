@@ -17,6 +17,7 @@ import functools
 import signal
 
 import eventlet
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log as logging
 import six
@@ -175,7 +176,7 @@ class PrefixDelegation(object):
 
     @staticmethod
     def _get_lla(mac):
-        lla = ipv6_utils.get_ipv6_addr_by_EUI64(l3_constants.IPV6_LLA_PREFIX,
+        lla = ipv6_utils.get_ipv6_addr_by_EUI64(n_const.IPv6_LLA_PREFIX,
                                                 mac)
         return lla
 
