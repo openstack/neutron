@@ -232,8 +232,9 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.delete_arp_spoofing_protection(port)
         expected = [
             call.delete_flows(table_id=0, in_port=8888, proto='arp'),
-            call.delete_flows(table_id=0, in_port=8888, icmp_type=136,
-                              nw_proto=58),
+            call.delete_flows(table_id=0, in_port=8888,
+                              icmp_type=const.ICMPV6_TYPE_NA,
+                              nw_proto=const.PROTO_NUM_IPV6_ICMP),
             call.delete_flows(table_id=24, in_port=8888),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
