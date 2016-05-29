@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from oslo_utils import uuidutils
 from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
 import testtools
@@ -27,8 +28,8 @@ from neutron.objects import base as objects_base
 from neutron.tests import base
 
 
-def _create_test_dict():
-    return {'id': 'uuid',
+def _create_test_dict(uuid=None):
+    return {'id': uuid or uuidutils.generate_uuid(),
             'field': 'foo'}
 
 
@@ -155,7 +156,7 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         self.resource_obj = _create_test_resource(self.context)
 
     def test_pull(self):
-        resource_dict = _create_test_dict()
+        resource_dict = _create_test_dict(uuid=self.resource_obj.id)
         with mock.patch.object(
                 resources_rpc.prod_registry, 'pull',
                 return_value=self.resource_obj) as registry_mock:
