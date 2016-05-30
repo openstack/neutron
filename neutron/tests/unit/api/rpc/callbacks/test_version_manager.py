@@ -16,6 +16,7 @@ import mock
 from neutron.api.rpc.callbacks import exceptions
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.callbacks import version_manager
+from neutron.db import agents_db
 from neutron.tests import base
 
 
@@ -118,22 +119,32 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
 
 class CachedResourceConsumerTrackerTest(base.BaseTestCase):
 
-    def test_exception_with_no_callback(self):
+    def setUp(self):
+        super(CachedResourceConsumerTrackerTest, self).setUp()
+
+        self.refreshed = False
+
+        class _FakePlugin(agents_db.AgentDbMixin):
+            @staticmethod
+            def get_agents_resource_versions(tracker):
+                self.refreshed = True
+                tracker.set_versions(CONSUMER_1,
+                                     {TEST_RESOURCE_TYPE: TEST_VERSION_A})
+
+        self.get_plugin = mock.patch('neutron.manager.NeutronManager'
+                                     '.get_plugin').start()
+
+        self.get_plugin.return_value = _FakePlugin()
+
+    def test_plugin_does_not_implement_agentsdb_exception(self):
+        self.get_plugin.return_value = object()
         cached_tracker = version_manager.CachedResourceConsumerTracker()
-        self.assertRaises(
-            exceptions.VersionsCallbackNotFound,
-            cached_tracker.get_resource_versions, [mock.ANY])
-
-    def _set_consumer_versions_callback(self, cached_tracker):
-        def consumer_versions(rct):
-            rct.set_versions(CONSUMER_1,
-                             {TEST_RESOURCE_TYPE: TEST_VERSION_A})
-
-        cached_tracker.set_consumer_versions_callback(consumer_versions)
+        self.assertRaises(exceptions.NoAgentDbMixinImplemented,
+                          cached_tracker.get_resource_versions,
+                          resources.QOS_POLICY)
 
     def test_consumer_versions_callback(self):
         cached_tracker = version_manager.CachedResourceConsumerTracker()
-        self._set_consumer_versions_callback(cached_tracker)
 
         self.assertIn(TEST_VERSION_A,
                       cached_tracker.get_resource_versions(
@@ -141,7 +152,6 @@ class CachedResourceConsumerTrackerTest(base.BaseTestCase):
 
     def test_update_versions(self):
         cached_tracker = version_manager.CachedResourceConsumerTracker()
-        self._set_consumer_versions_callback(cached_tracker)
 
         initial_versions = cached_tracker.get_resource_versions(
             TEST_RESOURCE_TYPE)
@@ -162,16 +172,8 @@ class CachedResourceConsumerTrackerTest(base.BaseTestCase):
         self.assertNotEqual(initial_versions_2, final_versions_2)
 
     def test_versions_ttl(self):
-        self.refreshed = False
-
-        def consumer_versions_callback(consumer_tracker):
-            consumer_tracker.set_versions(
-                CONSUMER_1, {TEST_RESOURCE_TYPE: TEST_VERSION_A})
-            self.refreshed = True
 
         cached_tracker = version_manager.CachedResourceConsumerTracker()
-        cached_tracker.set_consumer_versions_callback(
-            consumer_versions_callback)
         with mock.patch('time.time') as time_patch:
             time_patch.return_value = 1
             cached_tracker.get_resource_versions(TEST_RESOURCE_TYPE)
