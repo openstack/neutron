@@ -87,6 +87,9 @@ def get_network_segments(session, network_id, filter_dynamic=False):
 
 
 def get_networks_segments(session, network_ids, filter_dynamic=False):
+    if not network_ids:
+        return {}
+
     with session.begin(subtransactions=True):
         query = (session.query(NetworkSegment).
                  filter(NetworkSegment.network_id.in_(network_ids)).
