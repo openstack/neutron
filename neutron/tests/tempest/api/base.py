@@ -488,26 +488,16 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
     # This should be defined by subclasses to reflect resource name to test
     resource = None
 
-    # also test a case when there are multiple resources with the same name
+    # NOTE(ihrachys): some names, like those starting with an underscore (_)
+    # are sorted differently depending on whether the plugin implements native
+    # sorting support, or not. So we avoid any such cases here, sticking to
+    # alphanumeric. Also test a case when there are multiple resources with the
+    # same name
     resource_names = ('test1', 'abc1', 'test10', '123test') + ('test1',)
-
-    list_kwargs = {'shared': False}
 
     force_tenant_isolation = True
 
-    @classmethod
-    def resource_setup(cls):
-        super(BaseSearchCriteriaTest, cls).resource_setup()
-
-        cls.create_method = getattr(cls, 'create_%s' % cls.resource)
-
-        # NOTE(ihrachys): some names, like those starting with an underscore
-        # (_) are sorted differently depending on whether the plugin implements
-        # native sorting support, or not. So we avoid any such cases here,
-        # sticking to alphanumeric.
-        for name in cls.resource_names:
-            args = {'%s_name' % cls.resource: name}
-            cls.create_method(**args)
+    list_kwargs = {}
 
     def list_method(self, *args, **kwargs):
         method = getattr(self.client, 'list_%ss' % self.resource)

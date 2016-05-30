@@ -95,6 +95,14 @@ class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
 
     resource = 'network'
 
+    list_kwargs = {'shared': False}
+
+    @classmethod
+    def resource_setup(cls):
+        super(NetworksSearchCriteriaTest, cls).resource_setup()
+        for name in cls.resource_names:
+            cls.create_network(network_name=name)
+
     @test.attr(type='smoke')
     @test.idempotent_id('de27d34a-bd9d-4516-83d6-81ef723f7d0d')
     def test_list_sorts_asc(self):

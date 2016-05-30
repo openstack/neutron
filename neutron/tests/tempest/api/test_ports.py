@@ -46,3 +46,40 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.create_port(self.network)
         self.client.update_subnet(s['id'], enable_dhcp=True)
         self.create_port(self.network)
+
+
+class PortsSearchCriteriaTest(base.BaseSearchCriteriaTest):
+
+    resource = 'port'
+
+    @classmethod
+    def resource_setup(cls):
+        super(PortsSearchCriteriaTest, cls).resource_setup()
+        net = cls.create_network(network_name='port-search-test-net')
+        for name in cls.resource_names:
+            cls.create_port(net, name=name)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('9ab73df4-960a-4ae3-87d3-60992b8d3e2d')
+    def test_list_sorts_asc(self):
+        self._test_list_sorts_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('b426671d-7270-430f-82ff-8f33eec93010')
+    def test_list_sorts_desc(self):
+        self._test_list_sorts_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a202fdc8-6616-45df-b6a0-463932de6f94')
+    def test_list_pagination(self):
+        self._test_list_pagination()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('f4723b8e-8186-4b9a-bf9e-57519967e048')
+    def test_list_pagination_with_marker(self):
+        self._test_list_pagination_with_marker()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('3afe7024-77ab-4cfe-824b-0b2bf4217727')
+    def test_list_no_pagination_limit_0(self):
+        self._test_list_no_pagination_limit_0()
