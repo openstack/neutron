@@ -27,5 +27,7 @@ class CallbacksMaxLimitReached(exceptions.NeutronException):
     message = _("Cannot add multiple callbacks for %(resource_type)s")
 
 
-class VersionsCallbackNotFound(exceptions.NeutronException):
-    message = _("No versions callback provided in ResourceVersionsManager")
+class NoAgentDbMixinImplemented(exceptions.NeutronException):
+    message = _("RPC callbacks mechanism needs the implementation of "
+                "AgentDbMixin in the plugin, as so far it's only designed "
+                "to work with agents")
