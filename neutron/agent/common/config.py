@@ -98,8 +98,6 @@ def get_log_args(conf, log_file_name, **kwargs):
     cmd_args = []
     if conf.debug:
         cmd_args.append('--debug')
-    if conf.verbose:
-        cmd_args.append('--verbose')
     if (conf.log_dir or conf.log_file):
         cmd_args.append('--log-file=%s' % log_file_name)
         log_dir = None

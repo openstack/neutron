@@ -71,13 +71,7 @@ class NeutronApiService(WsgiService):
 
     @classmethod
     def create(cls, app_name='neutron'):
-
-        # Setup logging early, supplying both the CLI options and the
-        # configuration mapping from the config file
-        # We only update the conf dict for the verbose and debug
-        # flags. Everything else must be set up in the conf file...
-        # Log the options used when starting if we're in debug mode...
-
+        # Setup logging early
         config.setup_logging()
         service = cls(app_name)
         return service

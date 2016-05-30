@@ -68,7 +68,6 @@ class NeutronConfigFixture(ConfigFixture):
                 'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
                 'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
-                'verbose': 'True',
                 'debug': 'True',
             },
             'database': {
@@ -259,7 +258,6 @@ class L3ConfigFixture(ConfigFixture):
             self._prepare_config_with_linuxbridge_agent()
         self.config['DEFAULT'].update({
             'debug': 'True',
-            'verbose': 'True',
             'test_namespace_suffix': self._generate_namespace_suffix(),
         })
 
