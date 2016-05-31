@@ -15,7 +15,6 @@ import copy
 import pprint
 import time
 
-from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import importutils
 
@@ -25,14 +24,6 @@ from neutron import manager
 LOG = logging.getLogger(__name__)
 
 VERSIONS_TTL = 60
-
-# This is the list of agents that started using this rpc push/pull mechanism
-# for versioned objects, but at that time stable/liberty, they were not
-# reporting versions, so we need to assume they need QosPolicy 1.0
-#TODO(mangelajo): Remove this logic in Newton, since those agents will be
-#                 already reporting From N to O
-NON_REPORTING_AGENT_TYPES = [constants.AGENT_TYPE_OVS,
-                             constants.AGENT_TYPE_NIC_SWITCH]
 
 
 # NOTE(mangelajo): if we import this globally we end up with a (very
@@ -157,14 +148,6 @@ class ResourceConsumerTracker(object):
 
     def _handle_no_set_versions(self, consumer):
         """Handle consumers reporting no versions."""
-        if isinstance(consumer, AgentConsumer):
-            if consumer.agent_type in NON_REPORTING_AGENT_TYPES:
-                resources = _import_resources()
-                self._versions_by_consumer[consumer] = {
-                    resources.QOS_POLICY: '1.0'}
-                self._versions[resources.QOS_POLICY].add('1.0')
-                return
-
         if self._versions_by_consumer[consumer]:
             self._needs_recalculation = True
         self._versions_by_consumer[consumer] = {}

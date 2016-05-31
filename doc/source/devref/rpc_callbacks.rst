@@ -86,8 +86,8 @@ upgrade the server first and then upgrade the agents:
 
 :doc:`More information about the upgrade strategy <upgrade>`.
 
-The plan is to provide a semi-automatic method which avoids manual pinning and
-unpinning of versions by the administrator which could be prone to error.
+We provide an automatic method which avoids manual pinning and unpinning
+of versions by the administrator which could be prone to error.
 
 Resource pull requests
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -120,33 +120,35 @@ want the queues cleaned up.
 
 Leveraging agent state reports for object version discovery
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-We would add a row to the agent db for tracking agent known objects and version
-numbers. This would resemble the implementation of the configuration column.
+We add a row to the agent db for tracking agent known objects and version
+numbers. This resembles the implementation of the configuration column.
 
-Agents would report at start not only their configuration now, but also
-their subscribed object type / version pairs, that would be stored in the
-database and would be available to any neutron-server requesting it::
+Agents report at start not only their configuration now, but also
+their subscribed object type / version pairs, that are stored in the
+database and made available to any neutron-server requesting it::
 
-    'subscribed_versions': {'QoSPolicy': '1.1',
-                            'SecurityGroup': '1.0',
-                            'Port': '1.0'}
+    'resource_versions': {'QosPolicy': '1.1',
+                          'SecurityGroup': '1.0',
+                          'Port': '1.0'}
 
-There's a subset of Liberty agents depending on QoSPolicy that will
-require 'QoSPolicy': '1.0' if the qos plugin is installed. We will be able
-to identify those by the binary name (included in the report):
+There was a subset of Liberty agents depending on QosPolicy that required
+'QosPolicy': '1.0' if the qos plugin is installed. We were able to identify
+those by the binary name (included in the report):
 
 * 'neutron-openvswitch-agent'
 * 'neutron-sriov-nic-agent'
+
+This transition was handled in the Mitaka version, but it's not handled
+anymore in Newton, since only one major version step upgrades are supported.
 
 Version discovery
 +++++++++++++++++
 With the above mechanism in place and considering the exception of
 neutron-openvswitch-agent and neutron-sriov-agent requiring QoSpolicy 1.0,
-we could discover the subset of versions to be sent on every push
-notification.
+we discover the subset of versions to be sent on every push notification.
 
-Agents that are in down state would be excluded from this calculation.
-We would use an extended timeout for agents in this calculation to make sure
+Agents that are in down state are excluded from this calculation.
+We use an extended timeout for agents in this calculation to make sure
 we're on the safe side, specially if deployer marked agents with low
 timeouts.
 
@@ -165,16 +167,16 @@ The AgentDbMixin provides::
 
 Caching mechanism
 '''''''''''''''''
-The version subset per object will be cached to avoid DB requests on every push
+The version subset per object is cached to avoid DB requests on every push
 given that we assume that all old agents are already registered at the time of
 upgrade.
 
-Cached subset will be re-evaluated (to cut down the version sets as agents
-upgrade) after configured TTL.
+Cached subset is re-evaluated (to cut down the version sets as agents
+upgrade) after neutron.api.rpc.callbacks.version_manager.VERSIONS_TTL.
 
 As a fast path to update this cache on all neutron-servers when upgraded agents
 come up (or old agents revive after a long timeout or even a downgrade) the
-server registering the new status update will notify the other servers about
+server registering the new status update notifies the other servers about
 the new consumer resource versions via cast.
 
 All notifications for all calculated version sets must be sent, as non-upgraded

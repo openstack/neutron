@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
 import mock
 
 from neutron.api.rpc.callbacks import exceptions
@@ -84,26 +83,6 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
         for resource_type in [TEST_RESOURCE_TYPE, TEST_RESOURCE_TYPE_2]:
             self.assertEqual(set(),
                              cv.get_resource_versions(resource_type))
-
-    def test_compatibility_liberty_sriov_and_ovs_agents(self):
-
-        def _fake_local_versions(self):
-            local_versions = collections.defaultdict(set)
-            local_versions[resources.QOS_POLICY].add('1.11')
-            return local_versions
-
-        for agent_type in version_manager.NON_REPORTING_AGENT_TYPES:
-            consumer_id = version_manager.AgentConsumer(agent_type,
-                                                        AGENT_HOST_1)
-
-            cv = version_manager.ResourceConsumerTracker()
-            cv._get_local_resource_versions = _fake_local_versions
-            cv._versions = _fake_local_versions(mock.ANY)
-
-            cv.set_versions(consumer_id, {})
-
-            self.assertEqual(set(['1.0', '1.11']),
-                             cv.get_resource_versions(resources.QOS_POLICY))
 
     def test_different_adds_triggers_recalculation(self):
         cv = version_manager.ResourceConsumerTracker()
