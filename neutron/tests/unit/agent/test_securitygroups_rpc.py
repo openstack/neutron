@@ -581,7 +581,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             dhcp_rest = self.deserialize(self.fmt, dhcp_port)
             dhcp_mac = dhcp_rest['port']['mac_address']
             dhcp_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                n_const.IPV6_LLA_PREFIX,
+                const.IPv6_LLA_PREFIX,
                 dhcp_mac))
 
             res1 = self._create_port(
@@ -705,7 +705,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                n_const.IPV6_LLA_PREFIX,
+                const.IPv6_LLA_PREFIX,
                 gateway_mac))
 
             ports_rest1 = self._make_port(
@@ -773,7 +773,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                n_const.IPV6_LLA_PREFIX,
+                const.IPv6_LLA_PREFIX,
                 gateway_mac))
             # Create another router interface port
             interface_res = self._make_port(
@@ -848,7 +848,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
             gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
-                n_const.IPV6_LLA_PREFIX,
+                const.IPv6_LLA_PREFIX,
                 gateway_mac))
 
             ports_rest1 = self._make_port(

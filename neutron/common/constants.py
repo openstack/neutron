@@ -72,8 +72,6 @@ DHCPV6_STATELESS = 'dhcpv6-stateless'
 IPV6_SLAAC = 'slaac'
 IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
 
-IPV6_LLA_PREFIX = 'fe80::/64'
-
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
 

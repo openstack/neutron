@@ -925,7 +925,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                           if netaddr.IPNetwork(ip).version == 6}
         # Allow neighbor advertisements for LLA address.
         ipv6_addresses |= {str(ipv6.get_ipv6_addr_by_EUI64(
-                               c_const.IPV6_LLA_PREFIX, mac))
+                               n_const.IPv6_LLA_PREFIX, mac))
                            for mac in mac_addresses}
         if not has_zero_prefixlen_address(ipv6_addresses):
             # Install protection only when prefix is not zero because a /0
