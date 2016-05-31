@@ -161,7 +161,9 @@ class RouterInfo(object):
         """Filter Floating IPs to be hosted on this agent."""
         return self.router.get(lib_constants.FLOATINGIP_KEY, [])
 
-    def floating_forward_rules(self, floating_ip, fixed_ip):
+    def floating_forward_rules(self, fip):
+        fixed_ip = fip['fixed_ip_address']
+        floating_ip = fip['floating_ip_address']
         return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
                  (floating_ip, fixed_ip)),
                 ('OUTPUT', '-d %s/32 -j DNAT --to-destination %s' %
@@ -215,9 +217,7 @@ class RouterInfo(object):
         # Loop once to ensure that floating ips are configured.
         for fip in floating_ips:
             # Rebuild iptables rules for the floating ip.
-            fixed = fip['fixed_ip_address']
-            fip_ip = fip['floating_ip_address']
-            for chain, rule in self.floating_forward_rules(fip_ip, fixed):
+            for chain, rule in self.floating_forward_rules(fip):
                 self.iptables_manager.ipv4['nat'].add_rule(chain, rule,
                                                            tag='floating_ip')
 
