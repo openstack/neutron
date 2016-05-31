@@ -173,6 +173,11 @@ class MacvtapManager(amb.CommonAgentManagerBase):
 
 
 def parse_interface_mappings():
+    if not cfg.CONF.macvtap.physical_interface_mappings:
+        LOG.error(_LE("No physical_interface_mappings provided, but at least "
+                      "one mapping is required. Agent terminated!"))
+        sys.exit(1)
+
     try:
         interface_mappings = n_utils.parse_mappings(
             cfg.CONF.macvtap.physical_interface_mappings)
