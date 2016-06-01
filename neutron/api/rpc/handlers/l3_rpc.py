@@ -121,9 +121,10 @@ class L3RpcCallback(object):
                                               router.get('gw_port'),
                                               router['id'])
                 for p in router.get(n_const.SNAT_ROUTER_INTF_KEY, []):
-                    self._ensure_host_set_on_port(context,
-                                                  gw_port_host,
-                                                  p, router['id'])
+                    self._ensure_host_set_on_port(
+                        context, gw_port_host, p, router['id'],
+                        ha_router_port=router.get('ha'))
+
             else:
                 self._ensure_host_set_on_port(
                     context, host,
