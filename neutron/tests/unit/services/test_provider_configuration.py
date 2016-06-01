@@ -269,3 +269,13 @@ class NeutronModuleMultiConfigFileTestCase(base.BaseTestCase):
         mod = provconf.NeutronModule('neutron_test')
         mod.ini()
         self.assertEqual(['zzz', 'foo', 'bar'], mod.service_providers())
+
+
+class NeutronModuleConfigNotParsedTestCase(base.DietTestCase):
+
+    def setup_config(self):
+        pass
+
+    def test_ini_no_crash_if_config_files_not_parsed(self):
+        mod = provconf.NeutronModule('neutron_test')
+        mod.ini()
