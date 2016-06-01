@@ -642,8 +642,8 @@ class Resource(Application):
             #NOTE(salvatore-orlando): the controller method must have
             # an argument whose name is 'request'
             return controller_method(request=request, **action_args)
-        except TypeError as exc:
-            LOG.exception(exc)
+        except TypeError:
+            LOG.exception(_LE('Invalid request'))
             return Fault(webob.exc.HTTPBadRequest())
 
 
