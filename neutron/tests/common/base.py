@@ -12,11 +12,11 @@
 #
 
 import functools
-import unittest.case
 
 from neutron_lib import constants as n_const
 from oslo_db.sqlalchemy import test_base
 import testtools.testcase
+import unittest2.case
 
 from neutron.tests import base
 from neutron.tests import tools
@@ -61,7 +61,8 @@ def no_skip_on_missing_deps(wrapped):
     def wrapper(*args, **kwargs):
         try:
             return wrapped(*args, **kwargs)
-        except (testtools.TestCase.skipException, unittest.case.SkipTest) as e:
+        except (testtools.TestCase.skipException,
+                unittest2.case.SkipTest) as e:
             if base.bool_from_env('OS_FAIL_ON_MISSING_DEPS'):
                 tools.fail(
                     '%s cannot be skipped because OS_FAIL_ON_MISSING_DEPS '

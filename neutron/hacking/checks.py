@@ -18,6 +18,8 @@ import re
 import pep8
 import six
 
+from hacking import core
+
 
 def flake8ext(f):
     """Decorator to indicate flake8 extension.
@@ -69,6 +71,8 @@ log_translation_hint = re.compile(
 log_warn = re.compile(
     r"(.)*LOG\.(warn)\(\s*('|\"|_)")
 contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
+unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
+unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
 
 
 @flake8ext
@@ -321,6 +325,16 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
             yield (0, msg)
 
 
+@core.flake8ext
+@core.off_by_default
+def check_unittest_imports(logical_line):
+    if (re.match(unittest_imports_from, logical_line) or
+            re.match(unittest_imports_dot, logical_line)):
+        msg = "N334: '%s' must be used instead of '%s'." % (
+            logical_line.replace('unittest', 'unittest2'), logical_line)
+        yield (0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -339,3 +353,4 @@ def factory(register):
     register(check_log_warn_deprecated)
     register(check_oslo_i18n_wrapper)
     register(check_builtins_gettext)
+    register(check_unittest_imports)
