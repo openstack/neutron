@@ -42,33 +42,31 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         A convenient method for openflow message composers.
         """
         while True:
-            dpid_int = self._cached_dpid
-            if dpid_int is None:
+            if self._cached_dpid is None:
                 dpid_str = self.get_datapath_id()
                 LOG.info(_LI("Bridge %(br_name)s has datapath-ID %(dpid)s"),
                          {"br_name": self.br_name, "dpid": dpid_str})
-                dpid_int = int(dpid_str, 16)
+                self._cached_dpid = int(dpid_str, 16)
             try:
-                dp = self._get_dp_by_dpid(dpid_int)
+                dp = self._get_dp_by_dpid(self._cached_dpid)
+                return dp, dp.ofproto, dp.ofproto_parser
             except RuntimeError:
                 with excutils.save_and_reraise_exception() as ctx:
-                    self._cached_dpid = None
                     # Retry if dpid has been changed.
                     # NOTE(yamamoto): Open vSwitch change its dpid on
                     # some events.
                     # REVISIT(yamamoto): Consider to set dpid statically.
+                    old_dpid_str = format(self._cached_dpid, '0x')
                     new_dpid_str = self.get_datapath_id()
-                    if new_dpid_str != dpid_str:
+                    if new_dpid_str != old_dpid_str:
                         LOG.info(_LI("Bridge %(br_name)s changed its "
                                      "datapath-ID from %(old)s to %(new)s"), {
                             "br_name": self.br_name,
-                            "old": dpid_str,
+                            "old": old_dpid_str,
                             "new": new_dpid_str,
                         })
                         ctx.reraise = False
-            else:
-                self._cached_dpid = dpid_int
-                return dp, dp.ofproto, dp.ofproto_parser
+                    self._cached_dpid = int(new_dpid_str, 16)
 
     def setup_controllers(self, conf):
         controllers = [
