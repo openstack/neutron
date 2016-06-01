@@ -448,15 +448,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # ml2_port_bindings table, returned as cur_binding
                 # from db.get_locked_port_and_binding() above, is
                 # currently not used for DVR distributed ports, and is
-                # replaced here with the DVRPortBinding instance from
-                # the ml2_dvr_port_bindings table specific to the host
+                # replaced here with the DistributedPortBinding instance from
+                # the ml2_distributed_port_bindings table specific to the host
                 # on which the distributed port is being bound. It
                 # would be possible to optimize this code to avoid
                 # fetching the PortBinding instance in the DVR case,
                 # and even to avoid creating the unused entry in the
                 # ml2_port_bindings table. But the upcoming resolution
                 # for bug 1367391 will eliminate the
-                # ml2_dvr_port_bindings table, use the
+                # ml2_distributed_port_bindings table, use the
                 # ml2_port_bindings table to store non-host-specific
                 # fields for both distributed and non-distributed
                 # ports, and introduce a new ml2_port_binding_hosts

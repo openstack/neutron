@@ -78,13 +78,16 @@ class PortBindingLevel(model_base.BASEV2):
                                          ondelete="SET NULL"))
 
 
-class DVRPortBinding(model_base.BASEV2):
-    """Represent binding-related state of a DVR port.
+class DistributedPortBinding(model_base.BASEV2):
+    """Represent binding-related state of a Distributed Router(DVR, HA) port.
 
-    Port binding for all the ports associated to a DVR identified by router_id.
+    Port binding for all the ports associated to a Distributed router(DVR, HA)
+    identified by router_id. Currently DEVICE_OWNER_ROUTER_SNAT(DVR+HA router),
+    DEVICE_OWNER_DVR_INTERFACE, DEVICE_OWNER_HA_REPLICATED_INT are distributed
+    router ports.
     """
 
-    __tablename__ = 'ml2_dvr_port_bindings'
+    __tablename__ = 'ml2_distributed_port_bindings'
 
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id', ondelete="CASCADE"),
@@ -105,6 +108,6 @@ class DVRPortBinding(model_base.BASEV2):
     # eagerly load port bindings
     port = orm.relationship(
         models_v2.Port,
-        backref=orm.backref("dvr_port_binding",
+        backref=orm.backref("distributed_port_binding",
                             lazy='joined',
                             cascade='delete'))

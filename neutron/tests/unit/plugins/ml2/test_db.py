@@ -288,7 +288,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_dvr_binding(self, network_id, port_id, router_id, host_id):
         with self.ctx.session.begin(subtransactions=True):
-            record = models.DVRPortBinding(
+            record = models.DistributedPortBinding(
                 port_id=port_id,
                 host=host_id,
                 router_id=router_id,
@@ -321,7 +321,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         router = self._setup_neutron_router()
         ml2_db.ensure_dvr_port_binding(
             self.ctx.session, port_id, 'foo_host', router.id)
-        expected = (self.ctx.session.query(models.DVRPortBinding).
+        expected = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).one())
         self.assertEqual(port_id, expected.port_id)
 
@@ -334,7 +334,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session, port_id, 'foo_host_1', router.id)
         ml2_db.ensure_dvr_port_binding(
             self.ctx.session, port_id, 'foo_host_2', router.id)
-        bindings = (self.ctx.session.query(models.DVRPortBinding).
+        bindings = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).all())
         self.assertEqual(2, len(bindings))
 
@@ -346,7 +346,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             network_id, port_id, None, 'foo_host_id')
 
         ml2_db.delete_dvr_port_binding_if_stale(self.ctx.session, binding)
-        count = (self.ctx.session.query(models.DVRPortBinding).
+        count = (self.ctx.session.query(models.DistributedPortBinding).
             filter_by(port_id=binding.port_id).count())
         self.assertFalse(count)
 
@@ -393,9 +393,11 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
                 'router_id': 'router_id',
                 'status': constants.PORT_STATUS_DOWN
             }
-            self.ctx.session.add(models.DVRPortBinding(**binding_kwarg))
+            self.ctx.session.add(models.DistributedPortBinding(
+                **binding_kwarg))
             binding_kwarg['host'] = 'another-host'
-            self.ctx.session.add(models.DVRPortBinding(**binding_kwarg))
+            self.ctx.session.add(models.DistributedPortBinding(
+                **binding_kwarg))
         with warnings.catch_warnings(record=True) as warning_list:
             with self.ctx.session.begin(subtransactions=True):
                 self.ctx.session.delete(port)

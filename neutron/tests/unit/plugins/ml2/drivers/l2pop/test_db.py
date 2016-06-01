@@ -57,7 +57,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
                 status=constants.PORT_STATUS_ACTIVE,
                 device_id='',
                 device_owner=device_owner))
-            port_binding_cls = (models.DVRPortBinding if dvr
+            port_binding_cls = (models.DistributedPortBinding if dvr
                                 else models.PortBinding)
             binding_kwarg = {
                 'port_id': 'port_id',
