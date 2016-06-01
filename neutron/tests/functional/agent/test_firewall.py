@@ -140,9 +140,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
 
     def get_not_used_vlan(self):
         port_vlans = self.firewall.int_br.br.ovsdb.db_find(
-                'Port', ('tag', '!=', '[]'), columns=['tag']).execute()
-        # TODO(jlibosva): Remove 'if val' once bug/1578233 is solved
-        used_vlan_tags = {val['tag'] for val in port_vlans if val['tag']}
+            'Port', ('tag', '!=', []), columns=['tag']).execute()
+        used_vlan_tags = {val['tag'] for val in port_vlans}
         available_vlans = self.vlan_range - used_vlan_tags
         return random.choice(list(available_vlans))
 

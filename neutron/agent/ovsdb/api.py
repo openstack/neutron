@@ -258,6 +258,8 @@ class API(object):
         :type table:      string
         :param conditions:The conditions to satisfy the query
         :type conditions: 3-tuples containing (column, operation, match)
+                          Type of 'match' parameter MUST be identical to column
+                          type
                           Examples:
                               atomic: ('tag', '=', 7)
                               map: ('external_ids' '=', {'iface-id': 'xxx'})

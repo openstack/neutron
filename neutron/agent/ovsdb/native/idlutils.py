@@ -126,6 +126,11 @@ def wait_for_change(_idl, timeout, seqno=None):
 
 
 def get_column_value(row, col):
+    """Retrieve column value from the given row.
+
+    If column's type is optional, the value will be returned as a single
+    element instead of a list of length 1.
+    """
     if col == '_uuid':
         val = row.uuid
     else:
@@ -135,8 +140,9 @@ def get_column_value(row, col):
     if isinstance(val, list) and len(val):
         if isinstance(val[0], idl.Row):
             val = [v.uuid for v in val]
+        col_type = row._table.columns[col].type
         # ovs-vsctl treats lists of 1 as single results
-        if len(val) == 1:
+        if col_type.is_optional():
             val = val[0]
     return val
 
@@ -147,9 +153,28 @@ def condition_match(row, condition):
     :param row:       An OVSDB Row
     :param condition: A 3-tuple containing (column, operation, match)
     """
-
     col, op, match = condition
     val = get_column_value(row, col)
+
+    # both match and val are primitive types, so type can be used for type
+    # equality here.
+    if type(match) is not type(val):
+        # Types of 'val' and 'match' arguments MUST match in all cases with 2
+        # exceptions:
+        # - 'match' is an empty list and column's type is optional;
+        # - 'value' is an empty and  column's type is optional
+        if (not all([match, val]) and
+                row._table.columns[col].type.is_optional()):
+            # utilize the single elements comparison logic
+            if match == []:
+                match = None
+            elif val == []:
+                val = None
+        else:
+            # no need to process any further
+            raise ValueError(
+                _("Column type and condition operand do not match"))
+
     matched = True
 
     # TODO(twilson) Implement other operators and type comparisons
@@ -167,7 +192,25 @@ def condition_match(row, condition):
             else:
                 raise NotImplementedError()
     elif isinstance(match, list):
-        raise NotImplementedError()
+        # According to rfc7047, lists support '=' and '!='
+        # (both strict and relaxed). Will follow twilson's dict comparison
+        # and implement relaxed version (excludes/includes as per standart)
+        if op == "=":
+            if not all([val, match]):
+                return val == match
+            for elem in set(match):
+                if elem not in val:
+                    matched = False
+                    break
+        elif op == '!=':
+            if not all([val, match]):
+                return val != match
+            for elem in set(match):
+                if elem in val:
+                    matched = False
+                    break
+        else:
+            raise NotImplementedError()
     else:
         if op == '=':
             if val != match:
