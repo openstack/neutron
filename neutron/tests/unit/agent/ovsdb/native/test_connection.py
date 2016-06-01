@@ -50,6 +50,22 @@ class TestOVSNativeConnection(base.BaseTestCase):
     def test_start_with_table_name_list(self):
         self._test_start(table_name_list=['fake-table1', 'fake-table2'])
 
+    @mock.patch.object(connection, 'TransactionQueue')
+    @mock.patch.object(idl, 'Idl')
+    @mock.patch.object(idlutils, 'wait_for_change')
+    def test_start_call_graph(self, wait_for_change, idl, transaction_queue):
+        self.connection = connection.Connection(
+            mock.sentinel, mock.sentinel, mock.sentinel)
+        self.connection.get_schema_helper = mock.Mock()
+        helper = self.connection.get_schema_helper.return_value
+        self.connection.update_schema_helper = mock.Mock()
+        with mock.patch.object(poller, 'Poller') as poller_mock,\
+                mock.patch('threading.Thread'):
+            poller_mock.return_value.block.side_effect = eventlet.sleep
+            self.connection.start()
+        self.connection.get_schema_helper.assert_called_once_with()
+        self.connection.update_schema_helper.assert_called_once_with(helper)
+
     def test_transaction_queue_init(self):
         # a test to cover py34 failure during initialization (LP Bug #1580270)
         # make sure no ValueError: can't have unbuffered text I/O is raised

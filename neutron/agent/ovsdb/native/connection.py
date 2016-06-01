@@ -61,6 +61,7 @@ class Connection(object):
         self.lock = threading.Lock()
         self.schema_name = schema_name
         self.idl_class = idl_class or idl.Idl
+        self._schema_filter = None
 
     def start(self, table_name_list=None):
         """
@@ -70,36 +71,46 @@ class Connection(object):
                 schema_helper will register all tables for given schema_name as
                 default.
         """
+        self._schema_filter = table_name_list
         with self.lock:
             if self.idl is not None:
                 return
 
-            try:
-                helper = idlutils.get_schema_helper(self.connection,
-                                                    self.schema_name)
-            except Exception:
-                # We may have failed do to set-manager not being called
-                helpers.enable_connection_uri(self.connection)
+            helper = self.get_schema_helper()
+            self.update_schema_helper(helper)
 
-                # There is a small window for a race, so retry up to a second
-                @retrying.retry(wait_exponential_multiplier=10,
-                                stop_max_delay=1000)
-                def do_get_schema_helper():
-                    return idlutils.get_schema_helper(self.connection,
-                                                      self.schema_name)
-                helper = do_get_schema_helper()
-
-            if table_name_list is None:
-                helper.register_all()
-            else:
-                for table_name in table_name_list:
-                    helper.register_table(table_name)
             self.idl = self.idl_class(self.connection, helper)
             idlutils.wait_for_change(self.idl, self.timeout)
             self.poller = poller.Poller()
             self.thread = threading.Thread(target=self.run)
             self.thread.setDaemon(True)
             self.thread.start()
+
+    def get_schema_helper(self):
+        """Retrieve the schema helper object from OVSDB"""
+        try:
+            helper = idlutils.get_schema_helper(self.connection,
+                                                self.schema_name)
+        except Exception:
+            # We may have failed do to set-manager not being called
+            helpers.enable_connection_uri(self.connection)
+
+            # There is a small window for a race, so retry up to a second
+            @retrying.retry(wait_exponential_multiplier=10,
+                            stop_max_delay=1000)
+            def do_get_schema_helper():
+                return idlutils.get_schema_helper(self.connection,
+                                                  self.schema_name)
+            helper = do_get_schema_helper()
+
+        return helper
+
+    def update_schema_helper(self, helper):
+        if self._schema_filter:
+            for table_name in self._schema_filter:
+                helper.register_table(table_name)
+        else:
+            helper.register_all()
 
     def run(self):
         while True:
