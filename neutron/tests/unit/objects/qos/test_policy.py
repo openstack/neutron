@@ -65,7 +65,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             objs = self._test_class.get_objects(self.context)
         context_mock.assert_called_once_with()
         self.get_objects.assert_any_call(
-            admin_context, self._test_class.db_model)
+            admin_context, self._test_class.db_model, _pager=None)
         self._validate_objects(self.db_objs, objs)
 
     def test_get_objects_valid_fields(self):
@@ -85,7 +85,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                     **self.valid_field_filter)
                 context_mock.assert_called_once_with()
             get_objects_mock.assert_any_call(
-                admin_context, self._test_class.db_model,
+                admin_context, self._test_class.db_model, _pager=None,
                 **self.valid_field_filter)
         self._validate_objects([self.db_obj], objs)
 

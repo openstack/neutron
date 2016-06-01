@@ -370,7 +370,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                         field].objname)[0]
                     mock_calls.append(
                         mock.call(
-                            self.context, obj_class.db_model,
+                            self.context, obj_class.db_model, _pager=None,
                             **{k: db_obj[v]
                             for k, v in obj_class.foreign_keys.items()}))
         return mock_calls
@@ -381,7 +381,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 side_effect=self.fake_get_objects) as get_objects_mock:
             objs = self._test_class.get_objects(self.context)
             self._validate_objects(self.db_objs, objs)
-        mock_calls = [mock.call(self.context, self._test_class.db_model)]
+        mock_calls = [
+            mock.call(self.context, self._test_class.db_model, _pager=None)
+        ]
         mock_calls.extend(self._get_synthetic_fields_get_objects_calls(
             self.db_objs))
         get_objects_mock.assert_has_calls(mock_calls)
@@ -395,8 +397,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                                 **self.valid_field_filter)
             self._validate_objects(self.db_objs, objs)
 
-        mock_calls = [mock.call(self.context, self._test_class.db_model,
-                      **self.valid_field_filter)]
+        mock_calls = [
+            mock.call(self.context, self._test_class.db_model, _pager=None,
+                      **self.valid_field_filter)
+        ]
         mock_calls.extend(self._get_synthetic_fields_get_objects_calls(
             [self.db_obj]))
         get_objects_mock.assert_has_calls(mock_calls)
@@ -628,6 +632,13 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 dict_ = obj.to_dict()
                 self.assertEqual(child_dict, dict_[field])
 
+    def test_get_objects_pager_is_passed_through(self):
+        with mock.patch.object(obj_db_api, 'get_objects') as get_objects:
+            pager = base.Pager()
+            self._test_class.get_objects(self.context, _pager=pager)
+            get_objects.assert_called_once_with(
+                mock.ANY, self._test_class.db_model, _pager=pager)
+
 
 class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
 
@@ -661,6 +672,14 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
+
+    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+    def setUp(self):
+        super(BaseDbObjectTestCase, self).setUp()
+        # TODO(ihrachys): revisit plugin setup once we decouple
+        # neutron.objects.db.api from core plugin instance
+        self.setup_coreplugin(self.CORE_PLUGIN)
 
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
