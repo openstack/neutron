@@ -27,6 +27,7 @@ from neutron._i18n import _, _LE, _LW
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
+from neutron.extensions import portbindings
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
@@ -188,8 +189,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
-        subnets = self._ipam_get_subnets(
-            context, network_id=p['network_id'], segment_id=None)
+        subnets = self._ipam_get_subnets(context,
+                                         network_id=p['network_id'],
+                                         host=p.get(portbindings.HOST_ID))
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)
@@ -269,7 +271,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         changes = self._get_changed_ips_for_port(
             context, original_ips, new_ips, port['device_owner'])
         subnets = self._ipam_get_subnets(
-            context, network_id=port['network_id'], segment_id=None)
+            context, network_id=port['network_id'], host=None)
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
             context, port['network_id'], changes.add,

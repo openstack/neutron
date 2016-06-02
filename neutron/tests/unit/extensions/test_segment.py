@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
 import webob.exc
@@ -22,10 +23,12 @@ from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import segments_db
+from neutron.extensions import portbindings
 from neutron.extensions import segment as ext_segment
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import config
 from neutron.services.segments import db
+from neutron.services.segments import exceptions as segment_exc
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -101,7 +104,7 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["segment"]
+    supported_extension_aliases = ["segment", "binding"]
 
     def get_plugin_description(self):
         return "Network Segments"
@@ -259,23 +262,6 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
                                   cidr='10.0.0.0/24',
                                   segment_id=segment['id'])
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
-
-    def test_port_create_with_segment_subnets(self):
-        with self.network() as network:
-            net = network['network']
-
-        segment = self._test_create_segment(network_id=net['id'])
-        segment_id = segment['segment']['id']
-
-        with self.subnet(network=network, segment_id=segment_id) as subnet:
-            subnet = subnet['subnet']
-
-        response = self._create_port(self.fmt,
-                                     net_id=net['id'],
-                                     tenant_id=net['tenant_id'])
-        res = self.deserialize(self.fmt, response)
-        # Don't allocate IPs in this case because it doesn't have binding info
-        self.assertEqual(0, len(res['port']['fixed_ips']))
 
 
 class HostSegmentMappingTestCase(SegmentTestCase):
@@ -493,3 +479,170 @@ class TestMl2HostSegmentMappingAgentServerSynch(HostSegmentMappingTestCase):
                              plugin=self.plugin, start_flag=False)
         self.assertTrue(host in db.reported_hosts)
         mock_function.assert_not_called()
+
+
+class TestSegmentAwareIpam(SegmentTestCase):
+    def _setup_host_mappings(self, mappings=()):
+        ctx = context.get_admin_context()
+        with ctx.session.begin(subtransactions=True):
+            for segment_id, host in mappings:
+                record = db.SegmentHostMapping(
+                    segment_id=segment_id,
+                    host=host)
+                ctx.session.add(record)
+
+    def _create_test_segment_with_subnet(self,
+                                         network=None,
+                                         cidr='2001:db8:0:0::/64',
+                                         physnet='physnet'):
+        """Creates one network with one segment and one subnet"""
+        if not network:
+            with self.network() as network:
+                pass
+
+        segment = self._test_create_segment(
+            network_id=network['network']['id'],
+            physical_network=physnet)
+
+        ip_version = netaddr.IPNetwork(cidr).version if cidr else None
+        with self.subnet(network=network,
+                         segment_id=segment['segment']['id'],
+                         ip_version=ip_version,
+                         cidr=cidr) as subnet:
+            return network, segment, subnet
+
+    def _create_test_segments_with_subnets(self, num):
+        """Creates one network with num segments and num subnets"""
+        with self.network() as network:
+            segments, subnets = [], []
+            for i in range(num):
+                cidr = '2001:db8:0:%s::/64' % i
+                physnet = 'physnet%s' % i
+                _net, segment, subnet = self._create_test_segment_with_subnet(
+                    network=network, cidr=cidr, physnet=physnet)
+                segments.append(segment)
+                subnets.append(subnet)
+            return network, segments, subnets
+
+    def test_port_create_with_segment_subnets(self):
+        """No binding information is provided, defer IP allocation"""
+        network, segment, subnet = self._create_test_segment_with_subnet()
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'])
+        res = self.deserialize(self.fmt, response)
+        # Don't allocate IPs in this case because we didn't give binding info
+        self.assertEqual(0, len(res['port']['fixed_ips']))
+
+    def test_port_create_with_binding_information(self):
+        """Binding information is provided, subnets are on segments"""
+        network, segments, subnets = self._create_test_segments_with_subnets(3)
+
+        # Map the host to the middle segment (by mocking host/segment mapping)
+        self._setup_host_mappings([
+            (segments[1]['segment']['id'], 'fakehost'),
+            (segments[1]['segment']['id'], 'otherhost'),
+            (segments[0]['segment']['id'], 'thirdhost')])
+
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        # Since host mapped to middle segment, IP must come from middle subnet
+        ip = res['port']['fixed_ips'][0]['ip_address']
+        ip_net = netaddr.IPNetwork(subnets[1]['subnet']['cidr'])
+        self.assertIn(ip, ip_net)
+
+    def test_port_create_with_binding_and_no_subnets(self):
+        """Binding information is provided, no subnets."""
+        with self.network() as network:
+            segment = self._test_create_segment(
+                network_id=network['network']['id'],
+                physical_network='physnet')
+
+        # Map the host to the segment
+        self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
+
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        # No subnets, so no allocation.  But, it shouldn't be an error.
+        self.assertEqual(0, len(res['port']['fixed_ips']))
+
+    def test_port_create_with_binding_information_fallback(self):
+        """Binding information is provided, subnets not on segments"""
+        with self.network() as network:
+            with self.subnet(network=network,
+                             ip_version=6,
+                             cidr='2001:db8:0:0::/64') as subnet:
+                segment = self._test_create_segment(
+                    network_id=network['network']['id'],
+                    physical_network='physnet')
+
+        # Map the host to the segment
+        self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
+
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        # Since the subnet is not on a segment, fall back to it
+        ip = res['port']['fixed_ips'][0]['ip_address']
+        ip_net = netaddr.IPNetwork(subnet['subnet']['cidr'])
+        self.assertIn(ip, ip_net)
+
+    def test_port_create_on_unconnected_host(self):
+        """Binding information provided, host not connected to any segment"""
+        network, segment, _subnet = self._create_test_segment_with_subnet()
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+        self.assertEqual(segment_exc.HostNotConnectedToAnySegment.__name__,
+                         res['NeutronError']['type'])
+
+        # Ensure that mapping the segment to other hosts doesn't trip it up
+        self._setup_host_mappings([(segment['segment']['id'], 'otherhost')])
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+        self.assertEqual(segment_exc.HostNotConnectedToAnySegment.__name__,
+                         res['NeutronError']['type'])
+
+    def test_port_create_on_multiconnected_host(self):
+        """Binding information provided, host connected to multiple segments"""
+        network, segments, subnets = self._create_test_segments_with_subnets(2)
+
+        # This host is bound to multiple hosts
+        self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost'),
+                                   (segments[1]['segment']['id'], 'fakehost')])
+
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+        self.assertEqual(segment_exc.HostConnectedToMultipleSegments.__name__,
+                         res['NeutronError']['type'])
