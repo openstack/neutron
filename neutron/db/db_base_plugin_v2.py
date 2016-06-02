@@ -830,7 +830,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if allocs:
             LOG.debug("Subnet %s still has internal router ports, "
                       "cannot delete", subnet_id)
-            raise exc.SubnetInUse(subnet_id=id)
+            raise exc.SubnetInUse(subnet_id=subnet_id)
 
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
