@@ -25,12 +25,13 @@ import warnings
 import fixtures
 import mock
 import netaddr
+from neutron_lib import constants
 import six
 import unittest2
 
 import neutron
 from neutron.api.v2 import attributes
-from neutron.common import constants
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 
 
@@ -233,14 +234,14 @@ def get_random_integer(range_begin=0, range_end=1000):
 
 
 def get_random_prefixlen(version=4):
-    maxlen = constants.IPV4_MAX_PREFIXLEN
+    maxlen = constants.IPv4_BITS
     if version == 6:
-        maxlen = constants.IPV6_MAX_PREFIXLEN
+        maxlen = constants.IPv6_BITS
     return random.randint(0, maxlen)
 
 
 def get_random_ip_version():
-    return random.choice(constants.IP_ALLOWED_VERSIONS)
+    return random.choice(n_const.IP_ALLOWED_VERSIONS)
 
 
 def get_random_cidr(version=4):
@@ -302,4 +303,4 @@ def reset_random_seed():
 
 
 def get_random_ipv6_mode():
-    return random.choice(constants.IPV6_MODES)
+    return random.choice(n_const.IPV6_MODES)

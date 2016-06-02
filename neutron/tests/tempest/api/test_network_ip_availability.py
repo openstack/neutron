@@ -99,9 +99,11 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
 def calc_total_ips(prefix, ip_version):
     # will calculate total ips after removing reserved.
     if ip_version == lib_constants.IP_VERSION_4:
-        total_ips = 2 ** (32 - prefix) - DEFAULT_IP4_RESERVED
+        total_ips = 2 ** (lib_constants.IPv4_BITS
+                          - prefix) - DEFAULT_IP4_RESERVED
     elif ip_version == lib_constants.IP_VERSION_6:
-        total_ips = 2 ** (128 - prefix) - DEFAULT_IP6_RESERVED
+        total_ips = 2 ** (lib_constants.IPv6_BITS
+                          - prefix) - DEFAULT_IP6_RESERVED
     return total_ips
 
 
