@@ -20,9 +20,9 @@ from oslo_log import log as logging
 from neutron.agent.common import config as agent_conf
 from neutron.agent.metadata import agent
 from neutron.agent.metadata import config as metadata_conf
+from neutron.common import cache_utils as cache
 from neutron.common import config
 from neutron.common import utils
-from neutron.openstack.common.cache import cache
 
 LOG = logging.getLogger(__name__)
 

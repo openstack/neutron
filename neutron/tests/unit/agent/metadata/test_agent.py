@@ -17,35 +17,47 @@ from neutron_lib import constants as n_const
 import testtools
 import webob
 
+from oslo_config import cfg
+from oslo_config import fixture as config_fixture
+
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
 from neutron.agent.metadata import config
 from neutron.agent import metadata_agent
+from neutron.common import cache_utils as cache
 from neutron.common import utils
 from neutron.tests import base
 
 
-class FakeConf(object):
-    auth_ca_cert = None
-    nova_metadata_ip = '9.9.9.9'
-    nova_metadata_port = 8775
-    metadata_proxy_shared_secret = 'secret'
-    nova_metadata_protocol = 'http'
-    nova_metadata_insecure = True
-    nova_client_cert = 'nova_cert'
-    nova_client_priv_key = 'nova_priv_key'
-    cache_url = ''
+class ConfFixture(config_fixture.Config):
+    def setUp(self):
+        super(ConfFixture, self).setUp()
+        self.conf.register_opts(config.METADATA_PROXY_HANDLER_OPTS)
+        self.config(auth_ca_cert=None,
+                    nova_metadata_ip='9.9.9.9',
+                    nova_metadata_port=8775,
+                    metadata_proxy_shared_secret='secret',
+                    nova_metadata_protocol='http',
+                    nova_metadata_insecure=True,
+                    nova_client_cert='nova_cert',
+                    nova_client_priv_key='nova_priv_key')
+        cache.register_oslo_configs(self.conf)
+        self.config(cache_url='')
 
 
-class FakeConfCache(FakeConf):
-    cache_url = 'memory://?default_ttl=5'
+class CacheConfFixture(ConfFixture):
+    def setUp(self):
+        super(CacheConfFixture, self).setUp()
+        self.config(cache_url='memory://?default_ttl=5')
 
 
 class TestMetadataProxyHandlerBase(base.BaseTestCase):
-    fake_conf = FakeConf
+    fake_conf = cfg.CONF
+    fake_conf_fixture = ConfFixture(fake_conf)
 
     def setUp(self):
         super(TestMetadataProxyHandlerBase, self).setUp()
+        self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
         self.handler = agent.MetadataProxyHandler(self.fake_conf)
@@ -85,7 +97,8 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
 
 
 class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
-    fake_conf = FakeConfCache
+    fake_conf = cfg.CONF
+    fake_conf_fixture = CacheConfFixture(fake_conf)
 
     def test_call(self):
         req = mock.Mock()
@@ -337,10 +350,10 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
                     ca_certs=None, disable_ssl_certificate_validation=True)
                 mock_http.assert_has_calls([
                     mock.call().add_certificate(
-                        FakeConf.nova_client_priv_key,
-                        FakeConf.nova_client_cert,
-                        "%s:%s" % (FakeConf.nova_metadata_ip,
-                                   FakeConf.nova_metadata_port)
+                        self.fake_conf.nova_client_priv_key,
+                        self.fake_conf.nova_client_cert,
+                        "%s:%s" % (self.fake_conf.nova_metadata_ip,
+                                   self.fake_conf.nova_metadata_port)
                     ),
                     mock.call().request(
                         'http://9.9.9.9:8775/the_path',
@@ -399,7 +412,8 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
 
 
 class TestMetadataProxyHandlerNoCache(TestMetadataProxyHandlerCache):
-    fake_conf = FakeConf
+    fake_conf = cfg.CONF
+    fake_conf_fixture = ConfFixture(fake_conf)
 
     def test_get_router_networks_twice(self):
         self._test_get_router_networks_twice_helper()
