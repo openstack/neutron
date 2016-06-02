@@ -14,6 +14,8 @@
 
 import netaddr
 
+from neutron_lib import constants
+
 from neutron.agent.linux import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
@@ -47,18 +49,31 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
                 self.bridge, self.namespace, mac_address,
                 self.neutron_port['id'])).port
 
-        self._ip = self.neutron_port['fixed_ips'][0]['ip_address']
-        subnet_id = self.neutron_port['fixed_ips'][0]['subnet_id']
-        subnet = self.safe_client.client.show_subnet(subnet_id)
-        prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
-        self._ip_cidr = '%s/%s' % (self._ip, prefixlen)
+        for fixed_ip in self.neutron_port['fixed_ips']:
+            self._configure_ipaddress(fixed_ip)
 
-        # TODO(amuller): Support DHCP
-        self.port.addr.add(self.ip_cidr)
+    def _configure_ipaddress(self, fixed_ip):
+        if (netaddr.IPAddress(fixed_ip['ip_address']).version ==
+            constants.IP_VERSION_6):
+            # v6Address/default_route is auto-configured.
+            self._ipv6 = fixed_ip['ip_address']
+        else:
+            self._ip = fixed_ip['ip_address']
+            subnet_id = fixed_ip['subnet_id']
+            subnet = self.safe_client.client.show_subnet(subnet_id)
+            prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
+            self._ip_cidr = '%s/%s' % (self._ip, prefixlen)
 
-        self.gateway_ip = subnet['subnet']['gateway_ip']
-        if self.gateway_ip:
-            net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+            # TODO(amuller): Support DHCP
+            self.port.addr.add(self.ip_cidr)
+
+            self.gateway_ip = subnet['subnet']['gateway_ip']
+            if self.gateway_ip:
+                net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+
+    @property
+    def ipv6(self):
+        return self._ipv6
 
     @property
     def ip(self):
