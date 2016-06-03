@@ -85,8 +85,8 @@ Database upgrades are implemented with alembic migration chains.
 
 Database upgrade is split into two parts:
 
-#. neutron-db-manage upgrade --expand
-#. neutron-db-manage upgrade --contract
+#. ``neutron-db-manage upgrade --expand``
+#. ``neutron-db-manage upgrade --contract``
 
 Each part represents a separate alembic branch.
 
