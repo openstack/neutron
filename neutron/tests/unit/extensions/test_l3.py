@@ -24,6 +24,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import uuidutils
+from sqlalchemy import orm
 from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
@@ -44,6 +45,7 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -2534,6 +2536,76 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                             private_port['port']['id'])
                     self.assertEqual(r1['router']['id'],
                                      fp['floatingip']['router_id'])
+
+    def _test_floatingip_via_router_interface(self, http_status):
+        # NOTE(yamamoto): "exs" subnet is just to provide a gateway port
+        # for the router.  Otherwise the test would fail earlier without
+        # reaching the code we want to test. (bug 1556884)
+        with self.subnet(cidr="10.0.0.0/24") as exs, \
+            self.subnet(cidr="10.0.1.0/24") as ins1, \
+            self.subnet(cidr="10.0.2.0/24") as ins2:
+            network_ex_id = exs['subnet']['network_id']
+            self._set_net_external(network_ex_id)
+            network_in2_id = ins2['subnet']['network_id']
+            self._set_net_external(network_in2_id)
+            with self.router() as r1, self.port(subnet=ins1) as private_port:
+                self._add_external_gateway_to_router(r1['router']['id'],
+                                                     network_ex_id)
+                self._router_interface_action('add', r1['router']['id'],
+                                              ins1['subnet']['id'], None)
+                self._router_interface_action('add', r1['router']['id'],
+                                              ins2['subnet']['id'], None)
+                self._make_floatingip(self.fmt,
+                                      network_id=network_in2_id,
+                                      port_id=private_port['port']['id'],
+                                      http_status=http_status)
+
+    def _get_router_for_floatingip_without_device_owner_check(
+            self, context, internal_port,
+            internal_subnet, external_network_id):
+        gw_port = orm.aliased(models_v2.Port, name="gw_port")
+        routerport_qry = context.session.query(
+            l3_db.RouterPort.router_id,
+            models_v2.IPAllocation.ip_address
+        ).join(
+            models_v2.Port, models_v2.IPAllocation
+        ).filter(
+            models_v2.Port.network_id == internal_port['network_id'],
+            l3_db.RouterPort.port_type.in_(
+                l3_constants.ROUTER_INTERFACE_OWNERS
+            ),
+            models_v2.IPAllocation.subnet_id == internal_subnet['id']
+        ).join(
+            gw_port, gw_port.device_id == l3_db.RouterPort.router_id
+        ).filter(
+            gw_port.network_id == external_network_id,
+        ).distinct()
+
+        first_router_id = None
+        for router_id, interface_ip in routerport_qry:
+            if interface_ip == internal_subnet['gateway_ip']:
+                return router_id
+            if not first_router_id:
+                first_router_id = router_id
+        if first_router_id:
+            return first_router_id
+
+        raise l3.ExternalGatewayForFloatingIPNotFound(
+            subnet_id=internal_subnet['id'],
+            external_network_id=external_network_id,
+            port_id=internal_port['id'])
+
+    def test_floatingip_via_router_interface_returns_404(self):
+        self._test_floatingip_via_router_interface(exc.HTTPNotFound.code)
+
+    def test_floatingip_via_router_interface_returns_201(self):
+        # Override get_router_for_floatingip, as
+        # networking-midonet's L3 service plugin would do.
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        with mock.patch.object(plugin, "get_router_for_floatingip",
+            self._get_router_for_floatingip_without_device_owner_check):
+            self._test_floatingip_via_router_interface(exc.HTTPCreated.code)
 
     def test_floatingip_delete_router_intf_with_subnet_id_returns_409(self):
         found = False

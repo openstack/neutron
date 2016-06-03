@@ -914,6 +914,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                      'which has no gateway_ip') % internal_subnet_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
+        return self.get_router_for_floatingip(context,
+            internal_port, subnet, external_network_id)
+
+    # NOTE(yamamoto): This method is an override point for plugins
+    # inheriting this class.  Do not optimize this out.
+    def get_router_for_floatingip(self, context, internal_port,
+                                  internal_subnet, external_network_id):
+        """Find a router to handle the floating-ip association.
+
+        :param internal_port: The port for the fixed-ip.
+        :param internal_subnet: The subnet for the fixed-ip.
+        :param external_network_id: The external network for floating-ip.
+
+        :raises: ExternalGatewayForFloatingIPNotFound if no suitable router
+        is found.
+        """
+
         # Find routers(with router_id and interface address) that
         # connect given internal subnet and the external network.
         # Among them, if the router's interface address matches
@@ -925,13 +942,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             models_v2.Port, models_v2.IPAllocation).filter(
             models_v2.Port.network_id == internal_port['network_id'],
             RouterPort.port_type.in_(l3_constants.ROUTER_INTERFACE_OWNERS),
-            models_v2.IPAllocation.subnet_id == internal_subnet_id
+            models_v2.IPAllocation.subnet_id == internal_subnet['id']
         ).join(gw_port, gw_port.device_id == RouterPort.router_id).filter(
-            gw_port.network_id == external_network_id).distinct()
+            gw_port.network_id == external_network_id,
+            gw_port.device_owner == l3_constants.DEVICE_OWNER_ROUTER_GW
+        ).distinct()
 
         first_router_id = None
         for router_id, interface_ip in routerport_qry:
-            if interface_ip == subnet['gateway_ip']:
+            if interface_ip == internal_subnet['gateway_ip']:
                 return router_id
             if not first_router_id:
                 first_router_id = router_id
@@ -939,7 +958,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             return first_router_id
 
         raise l3.ExternalGatewayForFloatingIPNotFound(
-            subnet_id=internal_subnet_id,
+            subnet_id=internal_subnet['id'],
             external_network_id=external_network_id,
             port_id=internal_port['id'])
 
