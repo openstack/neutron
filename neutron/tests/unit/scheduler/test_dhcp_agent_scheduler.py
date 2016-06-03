@@ -472,9 +472,11 @@ class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
         agents = self._create_and_set_agents_down(['host-a', 'host-b'], 1)
         agents += self._create_and_set_agents_down(['host-c', 'host-d'], 1,
                                                    admin_state_up=False)
-        self._test_schedule_bind_network(agents, self.network_id)
+        networks = kwargs.pop('networks', [self.network_id])
+        for network in networks:
+            self._test_schedule_bind_network(agents, network)
         agents = self.get_dhcp_agents_hosting_networks(self.ctx,
-                                                       [self.network_id],
+                                                       networks,
                                                        **kwargs)
         host_ids = set(a['host'] for a in agents)
         self.assertEqual(expected, host_ids)
@@ -504,6 +506,14 @@ class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
         self._test_get_dhcp_agents_hosting_networks({'host-d'},
                                                     active=True,
                                                     admin_state_up=False)
+
+    def test_get_dhcp_agents_hosting_many_networks(self):
+        net_id = 'another-net-id'
+        self._save_networks([net_id])
+        networks = [net_id, self.network_id]
+        self._test_get_dhcp_agents_hosting_networks({'host-a', 'host-b',
+                                                     'host-c', 'host-d'},
+                                                    networks=networks)
 
 
 class DHCPAgentAZAwareWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
