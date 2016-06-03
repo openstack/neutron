@@ -130,6 +130,20 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
         self.assertEqual('192.168.0.1', f('192.168.0.1/32'))
         self.assertEqual(('192.168.0.0', '255.255.255.0'), f('192.168.0.0/24'))
 
+    def test__setup_controllers__out_of_band(self):
+        cfg = mock.MagicMock()
+        cfg.OVS.of_listen_address = ""
+        cfg.OVS.of_listen_port = ""
+
+        m_set_protocols = mock.patch.object(self.br, 'set_protocols')
+        m_set_controller = mock.patch.object(self.br, 'set_controller')
+        m_set_ccm = mock.patch.object(self.br,
+                                      'set_controllers_connection_mode')
+
+        with m_set_ccm as set_ccm, m_set_controller, m_set_protocols:
+            self.br.setup_controllers(cfg)
+            set_ccm.assert_called_once_with("out-of-band")
+
 
 class OVSDVRProcessTestMixin(object):
     def test_install_dvr_process_ipv4(self):

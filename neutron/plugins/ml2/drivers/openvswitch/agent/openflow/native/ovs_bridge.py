@@ -80,5 +80,21 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         self.set_protocols(ovs_consts.OPENFLOW13)
         self.set_controller(controllers)
 
+        # NOTE(ivc): Force "out-of-band" controller connection mode (see
+        # "In-Band Control" [1]).
+        #
+        # By default openvswitch uses "in-band" controller connection mode
+        # which adds hidden OpenFlow rules (only visible by issuing ovs-appctl
+        # bridge/dump-flows <br>) and leads to a network loop on br-tun. As of
+        # now the OF controller is hosted locally with OVS which fits the
+        # "out-of-band" mode. If the remote OF controller is ever to be
+        # supported by openvswitch agent in the future, "In-Band Control" [1]
+        # should be taken into consideration for physical bridge only, but
+        # br-int and br-tun must be configured with the "out-of-band"
+        # controller connection mode.
+        #
+        # [1] https://github.com/openvswitch/ovs/blob/master/DESIGN.md
+        self.set_controllers_connection_mode("out-of-band")
+
     def drop_port(self, in_port):
         self.install_drop(priority=2, in_port=in_port)
