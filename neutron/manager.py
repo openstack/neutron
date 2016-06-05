@@ -269,6 +269,7 @@ class NeutronManager(object):
 
     @classmethod
     def get_controller_for_resource(cls, resource):
+        resource = resource.replace('_', '-')
         res_ctrl_mappings = cls.get_instance().resource_controller_mappings
         # If no controller is found for resource, try replacing dashes with
         # underscores
