@@ -75,6 +75,24 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertTrue(retrieved_policy['shared'])
         self.assertEqual([], retrieved_policy['rules'])
 
+    @test.idempotent_id('ee263db4-009a-4641-83e5-d0e83506ba4c')
+    def test_shared_policy_update(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='',
+                                        shared=True)
+
+        self.admin_client.update_qos_policy(policy['id'],
+                                            description='test policy desc2')
+        retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
+        retrieved_policy = retrieved_policy['policy']
+        self.assertTrue(retrieved_policy['shared'])
+
+        self.admin_client.update_qos_policy(policy['id'],
+                                            shared=False)
+        retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
+        retrieved_policy = retrieved_policy['policy']
+        self.assertFalse(retrieved_policy['shared'])
+
     @test.idempotent_id('1cb42653-54bd-4a9a-b888-c55e18199201')
     def test_delete_policy(self):
         policy = self.admin_client.create_qos_policy(
