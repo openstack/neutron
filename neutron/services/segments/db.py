@@ -25,7 +25,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LI
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import model_base
@@ -185,9 +184,6 @@ reported_hosts = set()
 def update_segment_host_mapping_for_agent(context, host, plugin, agent):
     check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
     if not check_segment_for_agent:
-        LOG.info(_LI("Core plug-in does not implement "
-                     "'check_segment_for_agent'. It is not possible to "
-                     "build a hosts segments mapping"))
         return
     phys_nets = _get_phys_nets(agent)
     if not phys_nets:
