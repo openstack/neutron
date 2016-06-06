@@ -334,6 +334,11 @@ class HackingTestCase(base.BaseTestCase):
             0, len(list(checks.check_delayed_string_interpolation(fail_code1,
                                         "neutron/common/rpc.py", dummy_noqa))))
 
+    def test_check_log_warn_deprecated(self):
+        bad = "LOG.warn(_LW('i am zlatan!'))"
+        self.assertEqual(
+            1, len(list(checks.check_log_warn_deprecated(bad, 'f'))))
+
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand
 # in some cases, for example, hacking rules which take tokens as argument.
