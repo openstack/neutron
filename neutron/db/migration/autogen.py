@@ -22,10 +22,9 @@ _ec_dispatcher = Dispatcher()
 
 
 def process_revision_directives(context, revision, directives):
-    if cli._use_separate_migration_branches(context.config):
-        directives[:] = [
-            directive for directive in _assign_directives(context, directives)
-        ]
+    directives[:] = [
+        directive for directive in _assign_directives(context, directives)
+    ]
 
 
 def _assign_directives(context, directives, phase=None):
