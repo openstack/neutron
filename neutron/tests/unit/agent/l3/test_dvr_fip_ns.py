@@ -165,10 +165,10 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(ip_lib.IpNetnsCommand, 'exists')
     def _test_create(self, old_kernel, exists, execute, IPTables):
         exists.return_value = True
-        # There are up to four sysctl calls - two for ip_nonlocal_bind,
-        # and two to enable forwarding
-        execute.side_effect = [RuntimeError if old_kernel else None,
-                               None, None, None]
+        # There are up to four sysctl calls - two to enable forwarding,
+        # and two for ip_nonlocal_bind
+        execute.side_effect = [None, None,
+                               RuntimeError if old_kernel else None, None]
 
         self.fip_ns._iptables_manager = IPTables()
         self.fip_ns.create()
