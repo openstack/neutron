@@ -273,8 +273,13 @@ class _BaseObjectTestCase(object):
 
     _test_class = FakeNeutronObject
 
+    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
     def setUp(self):
         super(_BaseObjectTestCase, self).setUp()
+        # TODO(ihrachys): revisit plugin setup once we decouple
+        # neutron.objects.db.api from core plugin instance
+        self.setup_coreplugin(self.CORE_PLUGIN)
         self.context = context.get_admin_context()
         self.db_objs = list(self.get_random_fields() for _ in range(3))
         self.db_obj = self.db_objs[0]
@@ -672,15 +677,6 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
-
-    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-
-    def setUp(self):
-        super(BaseDbObjectTestCase, self).setUp()
-        # TODO(ihrachys): revisit plugin setup once we decouple
-        # neutron.objects.db.api from core plugin instance
-        self.setup_coreplugin(self.CORE_PLUGIN)
-
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
         # implementation for networks
