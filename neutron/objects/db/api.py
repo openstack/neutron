@@ -13,16 +13,16 @@
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
-from neutron.db import common_db_mixin
 from neutron import manager
 
 
 # Common database operation implementations
 def get_object(context, model, **kwargs):
+    # TODO(jlibosva): decompose _model_query from plugin instance
+    plugin = manager.NeutronManager.get_plugin()
     with context.session.begin(subtransactions=True):
-        return (common_db_mixin.model_query(context, model)
-                .filter_by(**kwargs)
-                .first())
+        return plugin._model_query(context, model).filter_by(
+            **kwargs).first()
 
 
 def _kwargs_to_filters(**kwargs):
