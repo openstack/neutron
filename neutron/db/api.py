@@ -22,6 +22,7 @@ from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import enginefacade
 from oslo_utils import excutils
 import osprofiler.sqlalchemy
+import six
 import sqlalchemy
 from sqlalchemy.orm import exc
 
@@ -52,6 +53,21 @@ retry_db_errors = oslo_db_api.wrap_db_retry(
     retry_on_request=True,
     exception_checker=is_retriable
 )
+
+
+def reraise_as_retryrequest(f):
+    """Packs retriable exceptions into a RetryRequest."""
+
+    @six.wraps(f)
+    def wrapped(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            with excutils.save_and_reraise_exception() as ctx:
+                if is_retriable(e):
+                    ctx.reraise = False
+                    raise db_exc.RetryRequest(e)
+    return wrapped
 
 
 def _is_nested_instance(e, etypes):

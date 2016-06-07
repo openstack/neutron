@@ -18,6 +18,7 @@ from oslo_utils import reflection
 from neutron._i18n import _LE
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
+from neutron.db import api as db_api
 
 LOG = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ class CallbacksManager(object):
                     del self._callbacks[resource][event][callback_id]
             del self._index[callback_id]
 
+    @db_api.reraise_as_retryrequest
     def notify(self, resource, event, trigger, **kwargs):
         """Notify all subscribed callback(s).
 
