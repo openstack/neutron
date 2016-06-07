@@ -287,6 +287,16 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         with testtools.ExpectedException(exceptions.NotFound):
             self.admin_client.show_qos_policy(policy['id'])
 
+    @test.idempotent_id('fb384bde-a973-41c3-a542-6f77a092155f')
+    def test_get_policy_that_is_shared(self):
+        policy = self.create_qos_policy(
+            name='test-policy-shared',
+            description='shared policy',
+            shared=True,
+            tenant_id=self.admin_client.tenant_id)
+        obtained_policy = self.client.show_qos_policy(policy['id'])['policy']
+        self.assertEqual(obtained_policy, policy)
+
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     @classmethod
