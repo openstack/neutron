@@ -24,7 +24,8 @@ class FlavorsPlugin(service_base.ServicePluginBase,
 
     supported_extension_aliases = ['flavors', 'service-type']
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return constants.FLAVORS
 
     def get_plugin_description(self):

@@ -280,7 +280,8 @@ class QoSPluginBase(service_base.ServicePluginBase):
     def get_plugin_description(self):
         return "QoS Service Plugin for ports and networks"
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return constants.QOS
 
     @abc.abstractmethod

@@ -214,5 +214,6 @@ class SegmentPluginBase(object):
     def get_plugin_description(self):
         return "Network Segments"
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return SEGMENTS

@@ -301,7 +301,8 @@ class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
 
     supported_extension_aliases = ["router", "dns-integration"]
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return service_constants.L3_ROUTER_NAT
 
     def get_plugin_description(self):

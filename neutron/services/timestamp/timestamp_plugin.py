@@ -42,7 +42,8 @@ class TimeStampPlugin(service_base.ServicePluginBase,
                 None,
                 self._change_since_result_filter_hook)
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return 'timestamp_core'
 
     def get_plugin_description(self):

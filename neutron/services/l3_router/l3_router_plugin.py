@@ -80,7 +80,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                   fanout=False)
         return self.conn.consume_in_threads()
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return constants.L3_ROUTER_NAT
 
     def get_plugin_description(self):

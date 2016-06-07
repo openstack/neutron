@@ -414,7 +414,8 @@ class DummyServicePlugin(object):
     def driver_loaded(self, driver, service_profile):
         pass
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return constants.DUMMY
 
     def get_plugin_description(self):
