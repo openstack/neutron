@@ -82,3 +82,8 @@ class TestDeadLockDecorator(base.BaseTestCase):
         e = exceptions.MultipleExceptions([ValueError(), db_exc.DBDeadlock()])
         with testtools.ExpectedException(exceptions.MultipleExceptions):
             self._decorated_function(db_api.MAX_RETRIES + 1, e)
+
+    def test_mysql_savepoint_error(self):
+        e = db_exc.DBError("(pymysql.err.InternalError) (1305, u'SAVEPOINT "
+                           "sa_savepoint_1 does not exist')")
+        self.assertIsNone(self._decorated_function(1, e))
