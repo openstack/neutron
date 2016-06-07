@@ -53,6 +53,7 @@ from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
+from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.qos import qos_consts
@@ -506,7 +507,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_create_router_port_and_fail_create_postcommit(self):
 
-        with mock.patch.object(mech_test.TestMechanismDriver,
+        with mock.patch.object(managers.MechanismManager,
                                'create_port_postcommit',
                                side_effect=ml2_exc.MechanismDriverError(
                                    method='create_port_postcommit')):
