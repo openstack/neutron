@@ -620,3 +620,11 @@ class AuthenticIPNetwork(_AuthenticBase, netaddr.IPNetwork):
     This is useful when we want to make sure that we retain the format passed
     by a user through API.
     '''
+
+
+class classproperty(object):
+    def __init__(self, f):
+        self.func = f
+
+    def __get__(self, obj, owner):
+        return self.func(owner)

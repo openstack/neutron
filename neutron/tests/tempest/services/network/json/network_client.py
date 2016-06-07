@@ -69,6 +69,12 @@ class NetworkClientJSON(service_client.RestClient):
             uri = '%s/%s' % (self.uri_prefix, plural_name)
         return uri
 
+    def build_uri(self, plural_name, **kwargs):
+        uri = self.get_uri(plural_name)
+        if kwargs:
+            uri += '?' + urlparse.urlencode(kwargs, doseq=1)
+        return uri
+
     def pluralize(self, resource_name):
         # get plural from map or just add 's'
 
@@ -83,11 +89,16 @@ class NetworkClientJSON(service_client.RestClient):
         }
         return resource_plural_map.get(resource_name, resource_name + 's')
 
+    def get_uri_with_links(self, plural_name, uri):
+        resp, body = self.get(uri)
+        result = {plural_name: self.deserialize_list(body)}
+        links = self.deserialize_links(body)
+        self.expected_success(200, resp.status)
+        return links, service_client.ResponseBody(resp, result)
+
     def _lister(self, plural_name):
         def _list(**filters):
-            uri = self.get_uri(plural_name)
-            if filters:
-                uri += '?' + urlparse.urlencode(filters, doseq=1)
+            uri = self.build_uri(plural_name, **filters)
             resp, body = self.get(uri)
             result = {plural_name: self.deserialize_list(body)}
             self.expected_success(200, resp.status)
@@ -271,6 +282,19 @@ class NetworkClientJSON(service_client.RestClient):
             if k.endswith("_links"):
                 continue
             return res[k]
+
+    def deserialize_links(self, body):
+        res = jsonutils.loads(body)
+        # expecting response in form
+        # {'resources': [ res1, res2] } => when pagination disabled
+        # {'resources': [..], 'resources_links': {}} => if pagination enabled
+        for k in res.keys():
+            if k.endswith("_links"):
+                return {
+                    link['rel']: link['href']
+                    for link in res[k]
+                }
+        return {}
 
     def serialize(self, data):
         return jsonutils.dumps(data)
