@@ -65,6 +65,8 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def _make_segment_dict(self, segment_db, fields=None):
         res = {'id': segment_db['id'],
                'network_id': segment_db['network_id'],
+               'name': segment_db['name'],
+               'description': segment_db['description'],
                db.PHYSICAL_NETWORK: segment_db[db.PHYSICAL_NETWORK],
                db.NETWORK_TYPE: segment_db[db.NETWORK_TYPE],
                db.SEGMENTATION_ID: segment_db[db.SEGMENTATION_ID],
@@ -103,8 +105,16 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             segmentation_id = segment[extension.SEGMENTATION_ID]
             if segmentation_id == constants.ATTR_NOT_SPECIFIED:
                 segmentation_id = None
+            name = segment['name']
+            if name == constants.ATTR_NOT_SPECIFIED:
+                name = None
+            description = segment['description']
+            if description == constants.ATTR_NOT_SPECIFIED:
+                description = None
             args = {'id': segment_id,
                     'network_id': network_id,
+                    'name': name,
+                    'description': description,
                     db.PHYSICAL_NETWORK: physical_network,
                     db.NETWORK_TYPE: network_type,
                     db.SEGMENTATION_ID: segmentation_id}

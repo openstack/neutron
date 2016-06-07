@@ -80,7 +80,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _create_segment(self, fmt, expected_res_status=None, **kwargs):
         segment = {'segment': {}}
         for k, v in kwargs.items():
-            segment['segment'][k] = str(v)
+            segment['segment'][k] = None if v is None else str(v)
 
         segment_req = self.new_create_request(
             'segments', segment, fmt)
@@ -139,6 +139,73 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._process_portbindings_create_and_update(
             context, port['port'], port_dict)
         return port_dict
+
+
+class TestSegmentNameDescription(SegmentTestCase):
+    def setUp(self):
+        super(TestSegmentNameDescription, self).setUp()
+        with self.network() as network:
+            self.network = network['network']
+
+    def _test_create_segment(self, expected=None, **kwargs):
+        for d in (kwargs, expected):
+            if d is None:
+                continue
+            d.setdefault('network_id', self.network['id'])
+            d.setdefault('name', None)
+            d.setdefault('description', None)
+            d.setdefault('physical_network', 'phys_net')
+            d.setdefault('network_type', 'net_type')
+            d.setdefault('segmentation_id', 200)
+        return super(TestSegmentNameDescription, self)._test_create_segment(
+            expected, **kwargs)
+
+    def test_create_segment_no_name_description(self):
+        self._test_create_segment(expected={})
+
+    def test_create_segment_with_name(self):
+        expected_segment = {'name': 'segment_name'}
+        self._test_create_segment(name='segment_name',
+                                  expected=expected_segment)
+
+    def test_create_segment_with_description(self):
+        expected_segment = {'description': 'A segment'}
+        self._test_create_segment(description='A segment',
+                                  expected=expected_segment)
+
+    def test_update_segment_set_name(self):
+        segment = self._test_create_segment()
+        result = self._update('segments',
+                              segment['segment']['id'],
+                              {'segment': {'name': 'Segment name'}},
+                              expected_code=webob.exc.HTTPOk.code)
+        self.assertEqual('Segment name', result['segment']['name'])
+
+    def test_update_segment_set_description(self):
+        segment = self._test_create_segment()
+        result = self._update('segments',
+                              segment['segment']['id'],
+                              {'segment': {'description': 'Segment desc'}},
+                              expected_code=webob.exc.HTTPOk.code)
+        self.assertEqual('Segment desc', result['segment']['description'])
+
+    def test_update_segment_set_name_to_none(self):
+        segment = self._test_create_segment(
+            description='A segment', name='segment')
+        result = self._update('segments',
+                              segment['segment']['id'],
+                              {'segment': {'name': None}},
+                              expected_code=webob.exc.HTTPOk.code)
+        self.assertEqual(None, result['segment']['name'])
+
+    def test_update_segment_set_description_to_none(self):
+        segment = self._test_create_segment(
+            description='A segment', name='segment')
+        result = self._update('segments',
+                              segment['segment']['id'],
+                              {'segment': {'description': None}},
+                              expected_code=webob.exc.HTTPOk.code)
+        self.assertEqual(None, result['segment']['description'])
 
 
 class TestSegment(SegmentTestCase):

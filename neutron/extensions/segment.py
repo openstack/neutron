@@ -31,6 +31,8 @@ SEGMENT_ID = 'segment_id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
+NAME_LEN = attributes.NAME_MAX_LEN
+DESC_LEN = attributes.DESCRIPTION_MAX_LEN
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
@@ -65,6 +67,16 @@ RESOURCE_ATTRIBUTE_MAP = {
                           'default': constants.ATTR_NOT_SPECIFIED,
                           'convert_to': converters.convert_to_int,
                           'is_visible': True},
+        'name': {'allow_post': True,
+                 'allow_put': True,
+                 'default': constants.ATTR_NOT_SPECIFIED,
+                 'validate': {'type:string_or_none': NAME_LEN},
+                 'is_visible': True},
+        'description': {'allow_post': True,
+                        'allow_put': True,
+                        'default': constants.ATTR_NOT_SPECIFIED,
+                        'validate': {'type:string_or_none': DESC_LEN},
+                        'is_visible': True},
     },
     attributes.SUBNETS: {
         SEGMENT_ID: {'allow_post': True,

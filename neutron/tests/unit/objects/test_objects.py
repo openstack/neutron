@@ -32,7 +32,7 @@ object_data = {
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'IPAllocationPool': '1.0-371016a6480ed0b4299319cb46d9215d',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
-    'NetworkSegment': '1.0-865567a6f70eb85cf33fb7a5575a4eab',
+    'NetworkSegment': '1.0-40707ef6bd9a0bf095038158d995cc7d',
     'PortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'QosBandwidthLimitRule': '1.2-4e44a8f5c2895ab1278399f87b40a13d',

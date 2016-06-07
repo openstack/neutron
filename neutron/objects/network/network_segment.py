@@ -27,6 +27,7 @@ class NetworkSegment(base.NeutronDbObject):
     fields = {
         'id': obj_fields.UUIDField(),
         'network_id': obj_fields.UUIDField(),
+        'name': obj_fields.StringField(),
         'network_type': obj_fields.StringField(),
         'physical_network': obj_fields.StringField(nullable=True),
         'segmentation_id': obj_fields.IntegerField(nullable=True),

@@ -61,6 +61,10 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                                                     vif_type=vif_type,
                                                     host=host))
 
+    @staticmethod
+    def _sort_segments(segments):
+        return sorted(segments, key=lambda d: d['segmentation_id'])
+
     def _create_segments(self, segments, is_seg_dynamic=False,
                          network_id='foo-network-id'):
         self._setup_neutron_network(network_id)
@@ -72,6 +76,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net_segments = segments_db.get_network_segments(
                            self.ctx.session, network_id,
                            filter_dynamic=is_seg_dynamic)
+        net_segments = self._sort_segments(net_segments)
 
         for segment_index, segment in enumerate(segments):
             self.assertEqual(segment, net_segments[segment_index])
@@ -116,8 +121,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net2segs = self._create_segments(segments2, network_id='net2')
         segs = segments_db.get_networks_segments(
             self.ctx.session, ['net1', 'net2'])
-        self.assertEqual(net1segs, segs['net1'])
-        self.assertEqual(net2segs, segs['net2'])
+        self.assertEqual(net1segs, self._sort_segments(segs['net1']))
+        self.assertEqual(net2segs, self._sort_segments(segs['net2']))
 
     def test_get_networks_segments_no_segments(self):
         self._create_segments([], network_id='net1')
