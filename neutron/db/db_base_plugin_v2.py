@@ -1319,10 +1319,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     context, original_ips, original_dns_name,
                     request_dns_name, changes)
         result = self._make_port_dict(db_port)
-        # Keep up with fields that changed
-        if changes.original or changes.add or changes.remove:
-            result['fixed_ips'] = self._make_fixed_ip_dict(
-                changes.original + changes.add)
         if 'dns-integration' in self.supported_extension_aliases:
             result['dns_assignment'] = dns_assignment
         return result

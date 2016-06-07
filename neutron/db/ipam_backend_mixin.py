@@ -631,6 +631,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         port_copy = copy.deepcopy(old_port)
         port_copy['fixed_ips'] = const.ATTR_NOT_SPECIFIED
         port_copy.update(new_port)
+        context.session.expire(old_port_db, ['fixed_ips'])
         ips = self.allocate_ips_for_port_and_store(
             context, {'port': port_copy}, port_copy['id'])
         return self.Changes(add=ips, original=[], remove=[])
