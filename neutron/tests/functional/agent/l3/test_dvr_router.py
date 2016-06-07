@@ -146,6 +146,23 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._delete_router(self.agent, router.router_id)
         self._assert_fip_namespace_deleted(ext_gateway_port)
 
+    def test_dvr_unused_snat_ns_deleted_when_agent_restarts_after_move(self):
+        """Test to validate the stale snat namespace delete with snat move.
+
+        This test validates the stale snat namespace cleanup when
+        the agent restarts after the gateway port has been moved
+        from the agent.
+        """
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info()
+        router1 = self.manage_router(self.agent, router_info)
+        self._assert_snat_namespace_exists(router1)
+        restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            self.agent.host, self.agent.conf)
+        router1.router['gw_port_host'] = "my-new-host"
+        restarted_router = self.manage_router(restarted_agent, router1.router)
+        self._assert_snat_namespace_does_not_exist(restarted_router)
+
     def test_dvr_router_fips_for_multiple_ext_networks(self):
         agent_mode = 'dvr'
         # Create the first router fip with external net1

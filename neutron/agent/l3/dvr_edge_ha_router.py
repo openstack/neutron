@@ -29,7 +29,6 @@ class DvrEdgeHaRouter(DvrEdgeRouter, HaRouter):
         super(DvrEdgeHaRouter, self).__init__(agent, host,
                                               *args, **kwargs)
         self.enable_snat = None
-        self.snat_ports = None
 
     @property
     def ha_namespace(self):
