@@ -29,6 +29,8 @@ from six.moves import configparser
 from six.moves.urllib import parse
 import sqlalchemy
 from sqlalchemy import event
+import sqlalchemy.sql.expression as expr
+import sqlalchemy.types as types
 import subprocess
 
 import neutron.db.migration as migration_help
@@ -135,6 +137,30 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def filter_metadata_diff(self, diff):
         return list(filter(self.remove_unrelated_errors, diff))
+
+    # TODO(akamyshnikova):when bug 1569262 fixed in oslo.db this won't be
+    # needed
+    @oslo_utils.DialectFunctionDispatcher.dispatch_for_dialect("*")
+    def _compare_server_default(bind, meta_col, insp_def, meta_def):
+        pass
+
+    @_compare_server_default.dispatch_for('mysql')
+    def _compare_server_default(bind, meta_col, insp_def, meta_def):
+        if isinstance(meta_col.type, sqlalchemy.Boolean):
+            if meta_def is None or insp_def is None:
+                return meta_def != insp_def
+            return not (
+                isinstance(meta_def.arg, expr.True_) and insp_def == "'1'" or
+                isinstance(meta_def.arg, expr.False_) and insp_def == "'0'"
+            )
+
+        impl_type = meta_col.type
+        if isinstance(impl_type, types.Variant):
+            impl_type = impl_type.load_dialect_impl(bind.dialect)
+        if isinstance(impl_type, (sqlalchemy.Integer, sqlalchemy.BigInteger)):
+            if meta_def is None or insp_def is None:
+                return meta_def != insp_def
+            return meta_def.arg != insp_def.split("'")[1]
 
     # Remove some difference that are not mistakes just specific of
     # dialects, etc
