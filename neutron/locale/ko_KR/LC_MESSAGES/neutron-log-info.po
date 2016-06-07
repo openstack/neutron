@@ -1,9 +1,9 @@
 # Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-04-18 05:07+0000\n"
+"POT-Creation-Date: 2016-06-06 07:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -61,25 +61,6 @@ msgstr "%s 에이전트가 다시 활성화되었습니다. 전체 동기화를 
 #, python-format
 msgid "%s Agent out of sync with plugin!"
 msgstr "%s 에이전트가 플러그인과 동기화되지 않았습니다!"
-
-#, python-format
-msgid ""
-"Added BGP Peer %(peer)s for remote_as=%(as)d to BGP Speaker running for "
-"local_as=%(local_as)d."
-msgstr ""
-"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에 remote_as=%(as)d의 BGP 피"
-"어  %(peer)s이(가) 추가되었습니다."
-
-#, python-format
-msgid "Added BGP Speaker for local_as=%(as)d with router_id= %(rtid)s."
-msgstr "router_id= %(rtid)s인 local_as=%(as)d의 BGP 스피커가 추가되었습니다."
-
-#, python-format
-msgid ""
-"Added controller for resource %(resource)s via URI path segment:"
-"%(collection)s"
-msgstr ""
-"URI 경로 세그먼트를 통해 자원 %(resource)s의 컨트롤러 추가: %(collection)s"
 
 #, python-format
 msgid ""
@@ -174,33 +155,6 @@ msgstr "필터링된 %r이(가) 아닌 포트 필터를 제거하려고 시도�
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr "필터링된 %s이(가) 아닌 포트 필터를 업데이트하려고 시도함"
 
-msgid "BGP Dynamic Routing agent started"
-msgstr "BGP 동적 라우팅 에이전트가 시작됨"
-
-#, python-format
-msgid "BGP Peer %(peer_ip)s for remote_as=%(peer_as)d is UP."
-msgstr "remote_as=%(peer_as)d의 BGP 피어 %(peer_ip)s이(가) 작동됩니다."
-
-#, python-format
-msgid "BGP Peer %(peer_ip)s for remote_as=%(peer_as)d went DOWN."
-msgstr ""
-"remote_as=%(peer_as)d의 BGP 피어 %(peer_ip)s이(가) 작동 중단되었습니다."
-
-msgid "BGP dynamic routing agent started"
-msgstr "BGP 동적 라우팅 에이전트가 시작됨"
-
-#, python-format
-msgid ""
-"Best path change observed. cidr=%(prefix)s, nexthop=%(nexthop)s, remote_as="
-"%(remote_as)d, is_withdraw=%(is_withdraw)s"
-msgstr ""
-"최적의 패치 변경사항이 관찰되었습니다. cidr=%(prefix)s, nexthop=%(nexthop)s, "
-"remote_as=%(remote_as)d, is_withdraw=%(is_withdraw)s"
-
-#, python-format
-msgid "BgpDrAgent %s already present"
-msgstr "BgpDrAgent %s이(가) 이미 있음"
-
 #, python-format
 msgid ""
 "Binding info for port %s was not found, it might have been deleted already."
@@ -246,17 +200,6 @@ msgstr "시간 경과된 %s 플로우 정리"
 msgid "Clearing orphaned ARP spoofing entries for devices %s"
 msgstr "장치 %s의 orphan ARP 위조 항목 지우기"
 
-#, python-format
-msgid ""
-"Collecting BGP Peer statistics for peer_ip=%(peer)s, running in speaker_as="
-"%(speaker_as)d "
-msgstr ""
-"speaker_as=%(speaker_as)d에서 실행 중인 peer_ip=%(peer)s의 BGP 피어 통계 수집"
-
-#, python-format
-msgid "Collecting BGP Speaker statistics for local_as=%d."
-msgstr "local_as=%d의 BGP 스피커 통계를 수집합니다."
-
 msgid ""
 "ConfDriver is used as quota_driver because the loaded plugin does not "
 "support 'quotas' table."
@@ -280,9 +223,6 @@ msgstr "매커니즘 드라이버 이름을 설정했습니다: %s"
 #, python-format
 msgid "Configured type driver names: %s"
 msgstr "형식 드라이버 이름을 설정했습니다: %s"
-
-msgid "Configuring tunnel endpoints to other OVS agents"
-msgstr "다른 OVS 에이전트에대한 커널 엔드포인트 구성"
 
 #, python-format
 msgid "Creating instance of CountableResource for resource:%s"
@@ -349,10 +289,6 @@ msgstr "Eventlet 기반 AMQP RPC 서버를 시작 중..."
 #, python-format
 msgid "Exclude Devices: %s"
 msgstr "장치 제외: %s"
-
-#, python-format
-msgid "Extension %s is pecan-aware. Fetching resources and controllers"
-msgstr "확장 %s이(가) pecan을 인지합니다. 자원 및 컨트롤러를 가져오는 중"
 
 #, python-format
 msgid "Extension driver '%(name)s' failed in %(method)s"
@@ -427,15 +363,8 @@ msgstr "IPset 정리가 완료됨"
 msgid "IPv6 is not enabled on this system."
 msgstr "이 시스템에서 IPv6이 사용되지 않습니다."
 
-#, python-format
-msgid "Initialized Ryu BGP Speaker driver interface with bgp_router_id=%s"
-msgstr "bgp_router_id=%s인 Ryu BGP 스피커 드라이버 인터페이스가 초기화됨"
-
 msgid "Initializing Linux bridge QoS extension"
 msgstr "Linux 브릿지 QoS 확장 초기화"
-
-msgid "Initializing Ryu driver for BGP Speaker functionality."
-msgstr "BGP 스피커 기능에서 Ryu 드라이버를 초기화합니다."
 
 #, python-format
 msgid "Initializing agent extension '%s'"
@@ -680,39 +609,12 @@ msgid "Remove device filter for %r"
 msgstr "%r 에대한 디바이스 필터 제거"
 
 #, python-format
-msgid ""
-"Removed BGP Peer %(peer)s from BGP Speaker running for local_as=%(local_as)d."
-msgstr ""
-"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에서 BGP 피어  %(peer)s을"
-"(를) 제거했습니다."
-
-#, python-format
-msgid "Removed BGP Speaker for local_as=%(as)d with router_id=%(rtid)s."
-msgstr "router_id=%(rtid)s인 local_as=%(as)d의 BGP 스피커가 제거되었습니다."
-
-#, python-format
 msgid "Removing device with MAC address %(mac)s and PCI slot %(pci_slot)s"
 msgstr "MAC 주소가 %(mac)s이고 PCI 슬롯이 %(pci_slot)s인 장치 제거"
 
 #, python-format
 msgid "Removing iptables rule for IPset: %s"
 msgstr "IPset의 iptables 규칙 제거: %s"
-
-#, python-format
-msgid ""
-"Route cidr=%(prefix)s is withdrawn from BGP Speaker running for local_as="
-"%(local_as)d."
-msgstr ""
-"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커에서 경로 cidr=%(prefix)s이 "
-"취소되었습니다."
-
-#, python-format
-msgid ""
-"Route cidr=%(prefix)s, nexthop=%(nexthop)s is advertised for BGP Speaker "
-"running for local_as=%(local_as)d."
-msgstr ""
-"local_as=%(local_as)d에 대해 실행 중인 BGP 스피커의 경로 cidr=%(prefix)s, "
-"nexthop=%(nexthop)s이(가) 광고됩니다."
 
 #, python-format
 msgid "Router %(router_id)s transitioned to %(state)s"

@@ -7,9 +7,9 @@
 # Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-04-18 05:08+0000\n"
+"POT-Creation-Date: 2016-06-06 07:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -85,21 +85,6 @@ msgid "An interface driver must be specified"
 msgstr "인터페이스 드라이버가 지정되어야 함"
 
 #, python-format
-msgid "An unexpected exception was caught: %s"
-msgstr "예상치 못한 예외가 발생함: %s"
-
-#, python-format
-msgid "BGP Speaker %(bgp_speaker)s info call failed with reason=%(e)s."
-msgstr "BGP스피커 %(bgp_speaker)s 정보 호출에 실패했으며, 이유=%(e)s입니다."
-
-#, python-format
-msgid "BGP peer %(bgp_peer)s info call failed with reason=%(e)s."
-msgstr "BGP 피어 %(bgp_peer)s 정보 호출에 실패했으며, 이유=%(e)s입니다."
-
-msgid "BGP router-id MUST be specified for the correct functional working."
-msgstr "기능적으로 올바르게 작동하도록 BGP router-id를 지정해야 합니다."
-
-#, python-format
 msgid "Binding info for DVR port %s not found"
 msgstr "DVR 포트 %s에대한 바인딩 정보를 찾을 수 없음"
 
@@ -117,14 +102,6 @@ msgid ""
 msgstr ""
 "실제 네트워크 %(net)s에 브릿지 %(brq)s이(가) 없습니다. 에이전트가 종료되었습"
 "니다!"
-
-#, python-format
-msgid ""
-"Call to driver for BGP Speaker %(bgp_speaker)s %(method)s has failed with "
-"exception %(driver_exec)s."
-msgstr ""
-"BGP 스피커 %(bgp_speaker)s %(method)s 드라이버를 호출했지만 예외 "
-"%(driver_exec)s이(가) 발생하며 실패했습니다."
 
 #, python-format
 msgid "Cannot clean up created object %(obj)s. Exception: %(exc)s"
@@ -405,10 +382,6 @@ msgstr "라우터 %s을(를) 삭제하는 중에 오류 발생"
 msgid "Error while handling pidfile: %s"
 msgstr "Pidfile을 처리하는 중에 오류 발생: %s"
 
-#, python-format
-msgid "Error while importing BGP speaker driver %s"
-msgstr "BGP 스피커 드라이버 %s을(를) 가져오는 중 오류 발생"
-
 msgid "Error while processing VIF ports"
 msgstr "VIF 포트를 처리하는 중에 오류 발생"
 
@@ -485,14 +458,6 @@ msgid "Extension path '%s' doesn't exist!"
 msgstr "확장 경로 '%s'이(가) 존재하지 않습니다!"
 
 #, python-format
-msgid "FWaaS RPC failure in %(func_name)s for fw: %(fwid)s"
-msgstr "FW %(fwid)s의 %(func_name)s에서 FWaaS RPC 실패"
-
-#, python-format
-msgid "FWaaS RPC info call failed for '%s'."
-msgstr "'%s' FWaaS RPC 정보 호출에 실패했습니다."
-
-#, python-format
 msgid "Failed creating vxlan interface for %(segmentation_id)s"
 msgstr "%(segmentation_id)s에서 vxlan 인터페이스를 작성하는 데 실패"
 
@@ -514,9 +479,6 @@ msgstr "IP 명령 실행 실패"
 #, python-format
 msgid "Failed executing ip command: %s"
 msgstr "IP 명령 실행 실패: %s"
-
-msgid "Failed fwaas process services sync"
-msgstr "FWaaS 프로세스 서비스 동기화에 실패"
 
 msgid "Failed on Agent configuration parse. Agent terminated!"
 msgstr "에이전트 구성 구문 분석에 실패했습니다. 에이전트가 종료되었습니다!"
@@ -663,14 +625,6 @@ msgstr "네임스페이스 삭제 실패: %s"
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr "'%s' 인터페이스 연결 해제 실패"
-
-#, python-format
-msgid "Firewall Driver Error for %(func_name)s for fw: %(fwid)s"
-msgstr "FW %(fwid)s의 %(func_name)s에서 방화벽 드라이버 오류 발생"
-
-#, python-format
-msgid "Firewall Driver Error on fw state %(fwmsg)s for fw: %(fwid)s"
-msgstr "FW %(fwid)s의 fw 상태 %(fwmsg)s에서 방화벽 드라이버 오류 발생"
 
 msgid "Fork failed"
 msgstr "포크 실패"
@@ -851,9 +805,6 @@ msgstr "알려진 API 애플리케이션이 구성되지 않았습니다. "
 msgid "No local VLAN available for net-id=%s"
 msgstr "net-id=%s에 대해 사용 가능한 로컬 VLAN이 없음"
 
-msgid "No plugin for BGP routing registered"
-msgstr "BGP 라우팅에 플러그인이 등록되지 않음"
-
 msgid "No plugin for L3 routing registered to handle router scheduling"
 msgstr ""
 "라우터 재스케줄링을 처리하기 위한 L3 라우팅의 플러그인이 등록되지 않았습니다."
@@ -1010,9 +961,6 @@ msgstr ""
 "활성 유지된(keepalived) 설치 버전에서 IPv6을 지원하지 않습니다. IPv6 지원을 "
 "위해 최소 1.2.10 버전으로 업데이트하십시오."
 
-msgid "The resource could not be found."
-msgstr "자원을 찾을 수 없습니다. "
-
 msgid ""
 "The user that is executing neutron does not have permissions to read the "
 "namespaces. Enable the use_helper_for_ns_read configuration option."
@@ -1145,9 +1093,6 @@ msgstr ""
 "구성된 플러그인이 요구 사항을 만족하지 않으므로 확장(%s)을 처리할 수 없습니"
 "다. 일부 기능이 제대로 작동하지 않습니다."
 
-msgid "Unable to sync BGP speaker state."
-msgstr "BGP 스피커 상태를 동기화할 수 없습니다."
-
 #, python-format
 msgid "Unable to sync network state on deleted network %s"
 msgstr "삭제된 네트워크 %s에서 네트워크 상태를 동기화할 수 없음"
@@ -1186,16 +1131,6 @@ msgstr "네트워크 %(network_id)s에서 알 수 없는 network_type %(network_
 
 msgid "Unrecoverable error: please check log for details."
 msgstr "복구할 수 없는 오류: 세부 사항은 로그를 확인하십시오."
-
-#, python-format
-msgid ""
-"Unsupported configuration option for \"SECURITYGROUP.firewall_driver\"! Only "
-"\"neutron.agent.firewall.NoopFirewallDriver\" is supported by macvtap agent, "
-"but\"%s\" is configured. Agent terminated!"
-msgstr ""
-"\"SECURITYGROUP.firewall_driver\"에 지원되지 않는 구성 옵션입니다! macvtap 에"
-"이전트에서는 \"neutron.agent.firewall.NoopFirewallDriver\"만 지원되지만 \"%s"
-"\"이(가) 구성되었습니다. 에이전트가 종료되었습니다!"
 
 #, python-format
 msgid ""
