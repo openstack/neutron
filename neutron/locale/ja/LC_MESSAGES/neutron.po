@@ -15,9 +15,9 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-04-18 05:07+0000\n"
+"POT-Creation-Date: 2016-06-06 07:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -52,10 +52,6 @@ msgid ""
 msgstr ""
 "%(branch)s の HEAD ファイルが予期される移行のタイムラインヘッドと合致しませ"
 "ん: %(head)s"
-
-#, python-format
-msgid "%(driver)s: Internal driver error."
-msgstr "%(driver)s: 内部ドライバーエラー。"
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -114,16 +110,8 @@ msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' が ip_version '%(ip_version)s' と一致しません"
 
 #, python-format
-msgid "%(param)s must be in %(range)s range."
-msgstr "%(param)s は %(range)s の範囲内である必要があります。"
-
-#, python-format
 msgid "%s cannot be called while in offline mode"
 msgstr "オフラインモードでは、%s を呼び出せません"
-
-#, python-format
-msgid "%s is invalid attribute for sort_key"
-msgstr "%s は、sort_key には無効な属性です"
 
 #, python-format
 msgid "%s is invalid attribute for sort_keys"
@@ -132,10 +120,6 @@ msgstr "%sは、sort_keys には無効な属性です"
 #, python-format
 msgid "%s is not a valid VLAN tag"
 msgstr "%s は有効な VLAN タグではありません"
-
-#, python-format
-msgid "%s must be specified"
-msgstr "%s を指定する必要があります"
 
 #, python-format
 msgid "%s must implement get_port_from_device or get_ports_from_devices."
@@ -172,55 +156,12 @@ msgstr ""
 "FQDN の最大長である '%(max_len)s' を超えます"
 
 #, python-format
-msgid "'%(data)s' exceeds maximum length of %(max_len)s"
-msgstr "'%(data)s が最大長 %(max_len)s を超えています"
-
-#, python-format
-msgid "'%(data)s' is not an accepted IP address, '%(ip)s' is recommended"
-msgstr ""
-"'%(data)s' は許容可能な IP アドレスではありません。'%(ip)s' を推奨します。"
-
-#, python-format
-msgid "'%(data)s' is not in %(valid_values)s"
-msgstr "'%(data)s が %(valid_values)s の中にありません"
-
-#, python-format
-msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
-msgstr "'%(data)s' は大きすぎます。'%(limit)d' を超えてはなりません"
-
-#, python-format
-msgid "'%(data)s' is too small - must be at least '%(limit)d'"
-msgstr "'%(data)s' は小さすぎます。少なくとも '%(limit)d' でなければなりません"
-
-#, python-format
-msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
-msgstr ""
-"'%(data)s' は認識される IP サブネット cidr ではありません。'%(cidr)s' が推奨"
-"されます"
-
-#, python-format
 msgid "'%(data)s' not a valid PQDN or FQDN. Reason: %(reason)s"
 msgstr "'%(data)s' は有効な PQDN でも FQDN でもありません。理由: %(reason)s"
 
 #, python-format
-msgid "'%(host)s' is not a valid nameserver. %(msg)s"
-msgstr "'%(host)s' は有効なネームサーバーではありません。%(msg)s"
-
-#, python-format
-msgid "'%s' Blank strings are not permitted"
-msgstr "'%s' のブランク文字列は許可されていません"
-
-#, python-format
-msgid "'%s' cannot be converted to boolean"
-msgstr "'%s' はブール値に変換できません"
-
-#, python-format
 msgid "'%s' cannot be converted to lowercase string"
 msgstr "'%s' は小文字の文字列に変換することはできません"
-
-#, python-format
-msgid "'%s' contains whitespace"
-msgstr "'%s' に空白が含まれています"
 
 #, python-format
 msgid "'%s' exceeds the 255 character FQDN limit"
@@ -235,68 +176,16 @@ msgid "'%s' is not a FQDN"
 msgstr "'%s' は FQDN ではありません"
 
 #, python-format
-msgid "'%s' is not a dictionary"
-msgstr "'%s' はディクショナリーではありません"
-
-#, python-format
-msgid "'%s' is not a list"
-msgstr "'%s' はリストではありません"
-
-#, python-format
-msgid "'%s' is not a valid IP address"
-msgstr "'%s' が有効な IP アドレスではありません"
-
-#, python-format
-msgid "'%s' is not a valid IP subnet"
-msgstr "'%s' は有効な IP サブネットではありません"
-
-#, python-format
-msgid "'%s' is not a valid MAC address"
-msgstr "'%s' が有効な MAC アドレスではありません"
-
-#, python-format
 msgid "'%s' is not a valid RBAC object type"
 msgstr "'%s' は RBAC の有効なオブジェクトタイプではありません"
-
-#, python-format
-msgid "'%s' is not a valid UUID"
-msgstr "'%s' は有効な UUID ではありません"
-
-#, python-format
-msgid "'%s' is not a valid boolean value"
-msgstr "'%s' は有効なブール値ではありません"
-
-#, python-format
-msgid "'%s' is not a valid input"
-msgstr "'%s' は有効な入力ではありません"
-
-#, python-format
-msgid "'%s' is not a valid string"
-msgstr "'%s' が有効な文字列ではありません"
-
-#, python-format
-msgid "'%s' is not an integer"
-msgstr "'%s' は整数ではありません"
 
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr "'%s' は整数または UUID ではありません"
 
 #, python-format
-msgid "'%s' is not of the form <key>=[value]"
-msgstr "'%s' は <key>=[value] 形式ではありません"
-
-#, python-format
 msgid "'%s' is not supported for filtering"
 msgstr "'%s' はフィルタリングではサポートされません"
-
-#, python-format
-msgid "'%s' must be a non negative decimal."
-msgstr "'%s' は負の値ではない 10 進数値である必要があります。"
-
-#, python-format
-msgid "'%s' should be non-negative"
-msgstr "'%s' は負の値以外でなければなりません"
 
 msgid "'.' searches are not implemented"
 msgstr "'.' 検索は実装されていません"
@@ -317,13 +206,6 @@ msgstr ""
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 は CIDR プレフィックス長として許可されていません"
-
-msgid ""
-"32-bit BGP identifier, typically an IPv4 address owned by the system running "
-"the BGP DrAgent."
-msgstr ""
-"32 ビットの BGP ID。通常は、BGP DrAgent を実行するシステムが所有する IPv4 ア"
-"ドレスを指します。"
 
 msgid "A QoS driver must be specified"
 msgstr "QoS ドライバーを指定する必要があります"
@@ -347,20 +229,8 @@ msgstr ""
 "この IP ファミリーに対するデフォルトのサブネットプールが既に設定されていま"
 "す。IP ファミリーごとにデフォルトは 1 つしか設定できません。"
 
-msgid ""
-"A list of mappings of physical networks to MTU values. The format of the "
-"mapping is <physnet>:<mtu val>. This mapping allows specifying a physical "
-"network MTU value that differs from the default segment_mtu value."
-msgstr ""
-"物理ネットワークから MTU 値へのマッピングのリスト。このマッピングの形式は"
-"<physnet>:<mtu val> です。このマッピングを使用して、デフォルトのsegment_mtu "
-"値とは異なる物理ネットワーク MTU 値を指定できます。"
-
 msgid "A metering driver must be specified"
 msgstr "計測ドライバーを指定する必要があります"
-
-msgid "A password must be supplied when using auth_type md5."
-msgstr "auth_type md5 を使用する場合は、パスワードを提供する必要があります。"
 
 msgid "API for retrieving service providers for Neutron advanced services"
 msgstr "Neutron 拡張サービス用のサービスプロバイダーを取得するための API"
@@ -417,9 +287,6 @@ msgid "Agent %(id)s is not a valid DHCP Agent or has been disabled"
 msgstr ""
 "エージェント %(id)s は、有効な DHCP エージェントでないか、使用不可になってい"
 "ます"
-
-msgid "Agent has just been revived"
-msgstr "エージェントが復活したばかりです"
 
 msgid ""
 "Agent starts with admin_state_up=False when enable_new_agents=False. In the "
@@ -502,22 +369,6 @@ msgstr ""
 "れません。このオプションを設定するには enable_isolated_metadata = True と設定"
 "する必要があります。"
 
-#, python-format
-msgid ""
-"Already hosting BGP Speaker for local_as=%(current_as)d with router_id="
-"%(rtid)s."
-msgstr ""
-"既に router_id=%(rtid)s で local_as=%(current_as)d の BGP スピーカーをホスト"
-"しています。"
-
-#, python-format
-msgid ""
-"Already hosting maximum number of BGP Speakers. Allowed scheduled count="
-"%(count)d"
-msgstr ""
-"既に最大数の BGP スピーカーをホストしています。スケジュール済みの count="
-"%(count)d が許容されます"
-
 msgid "An RBAC policy already exists with those values."
 msgstr "これらの値に関して RBAC ポリシーが既に存在します。"
 
@@ -543,9 +394,6 @@ msgstr ""
 "neutron.ml2.mechanism_drivers 名前空間からロードされるネットワーキングメカニ"
 "ズムドライバーのエンドポイントの順序付きリスト。"
 
-msgid "An unexpected internal error occurred."
-msgstr "予期しない内部エラーが発生しました。"
-
 msgid "An unknown error has occurred. Please try your request again."
 msgstr "不明なエラーが発生しました。要求を再試行してください。"
 
@@ -555,10 +403,6 @@ msgstr "非同期プロセスが再生成されませんでした"
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "属性 '%s' は POST では許可されません"
-
-#, python-format
-msgid "Authentication type not supported. Requested type=%(auth_type)s."
-msgstr "認証タイプがサポートされません。type=%(auth_type)s が要求されました。"
 
 msgid "Authorization URL for connecting to designate in admin context"
 msgstr "管理者のコンテキストにおける designate への接続用認証 URL"
@@ -582,59 +426,6 @@ msgstr ""
 
 msgid "Available commands"
 msgstr "使用可能なコマンド"
-
-#, python-format
-msgid ""
-"BGP Peer %(peer_ip)s for remote_as=%(remote_as)s, running for BGP Speaker "
-"%(speaker_as)d not added yet."
-msgstr ""
-"まだ追加されていない BGP スピーカー %(speaker_as)d のために実行する、"
-"remote_as=%(remote_as)s の BGP ピア %(peer_ip)s。"
-
-#, python-format
-msgid ""
-"BGP Speaker %(bgp_speaker_id)s is already configured to peer with a BGP Peer "
-"at %(peer_ip)s, it cannot peer with BGP Peer %(bgp_peer_id)s."
-msgstr ""
-"BGP スピーカー %(bgp_speaker_id)s は %(peer_ip)s で BGP ピアと連携するよう設"
-"定されているため、BGP ピア %(bgp_peer_id)s と連携することはできません。"
-
-#, python-format
-msgid ""
-"BGP Speaker for local_as=%(local_as)s with router_id=%(rtid)s not added yet."
-msgstr ""
-"router_id=%(rtid)s がまだ追加されていない local_as=%(local_as)s のBGP スピー"
-"カー"
-
-#, python-format
-msgid ""
-"BGP peer %(bgp_peer_id)s is not associated with BGP speaker "
-"%(bgp_speaker_id)s."
-msgstr ""
-"BGP ピア %(bgp_peer_id)s が BGP スピーカー %(bgp_speaker_id)s と関連付けられ"
-"ていません。"
-
-#, python-format
-msgid "BGP peer %(bgp_peer_id)s not authenticated."
-msgstr "BGP ピア %(bgp_peer_id)s が認証されていません。"
-
-#, python-format
-msgid "BGP peer %(id)s could not be found."
-msgstr "BGP ピア %(id)s が見つかりませんでした。"
-
-#, python-format
-msgid ""
-"BGP speaker %(bgp_speaker_id)s is not hosted by the BgpDrAgent %(agent_id)s."
-msgstr ""
-"BGP スピーカー %(bgp_speaker_id)s は BgpDrAgent %(agent_id)s によってホストさ"
-"れていません。"
-
-#, python-format
-msgid "BGP speaker %(id)s could not be found."
-msgstr "BGP スピーカー %(id)s が見つかりませんでした。"
-
-msgid "BGP speaker driver class to be instantiated."
-msgstr "インスタンス化される BGP スピーカーのドライバークラス。"
 
 msgid "Backend does not support VLAN Transparency."
 msgstr "バックエンドでは VLAN Transparency はサポートされていません。"
@@ -664,18 +455,6 @@ msgstr ""
 "dnsmasq のログを保存する基本となるログディレクトリー。ログには DHCP と DNS の"
 "ログ情報が含まれ、DHCP または DNS のデバッグを行うために役立ちます。このセク"
 "ションに何の値も設定しない場合は、dnsmasq ログを無効化します。"
-
-#, python-format
-msgid "BgpDrAgent %(agent_id)s is already associated to a BGP speaker."
-msgstr "BgpDrAgent %(agent_id)s は既に BGP スピーカーと関連付けられています。"
-
-#, python-format
-msgid "BgpDrAgent %(id)s is invalid or has been disabled."
-msgstr "BgpDrAgent %(id)s が無効であるか、使用不可にされています。"
-
-#, python-format
-msgid "BgpDrAgent updated: %s"
-msgstr "更新された BgpDrAgent : %s"
 
 msgid "Body contains invalid data"
 msgstr "本文に無効なデータが含まれています"
@@ -918,27 +697,6 @@ msgstr ""
 "network_device は、physical_device_mappings リストに表示されます。"
 
 msgid ""
-"Comma-separated list of <physical_network>:<bridge> tuples mapping physical "
-"network names to the agent's node-specific Open vSwitch bridge names to be "
-"used for flat and VLAN networks. The length of bridge names should be no "
-"more than 11. Each bridge must exist, and should have a physical network "
-"interface configured as a port. All physical networks configured on the "
-"server should have mappings to appropriate bridges on each agent. Note: If "
-"you remove a bridge from this mapping, make sure to disconnect it from the "
-"integration bridge as it won't be managed by the agent anymore. Deprecated "
-"for ofagent."
-msgstr ""
-"コンマで区切られた <physical_network> のリスト:<bridge> タプルは物理ネット"
-"ワーク名をエージェントのノード固有の Open vSwitch ブリッジ名にマッピングし、"
-"フラットネットワークと VLAN ネットワークで使用できます。ブリッジ名の長さは "
-"11 を超えることはできません。各ブリッジが存在する必要があり、ポートとして設定"
-"された物理ネットワークインターフェースを持つ必要があります。サーバー上で設定"
-"されたすべての物理ネットワークは、各エージェントの適切なブリッジにマッピング"
-"される必要があります。注意: 統合ブリッジはエージェントによって管理されないた"
-"め、このマッピングからブリッジを削除する場合は、統合ブリッジから必ず削除して"
-"ください。ofagent では使用できません。"
-
-msgid ""
 "Comma-separated list of <physical_network>:<network_device> tuples mapping "
 "physical network names to the agent's node-specific physical network device "
 "interfaces of SR-IOV physical function to be used for VLAN networks. All "
@@ -1116,9 +874,6 @@ msgstr ""
 "default_ipv4_subnet_pool の説明を参照してください。このオプションは N リリー"
 "スでは削除されます。"
 
-msgid "Default driver to use for quota checks"
-msgstr "割り当て量の検査に使用するデフォルトのドライバー"
-
 msgid "Default external networks must be shared to everyone."
 msgstr "デフォルトの外部ネットワークは全メンバーに共有する必要があります"
 
@@ -1281,16 +1036,8 @@ msgstr ""
 "neutron のソースに含まれるエントリーポイントについては、setup.cfg を参照して"
 "ください。"
 
-msgid "Driver used for scheduling BGP speakers to BGP DrAgent"
-msgstr ""
-"BGP DrAgent に対する BGP スピーカーのスケジューリングに使用するドライバー"
-
 msgid "Drivers list to use to send the update notification"
 msgstr "更新の通知を送信するために使用するドライバーリスト"
-
-#, python-format
-msgid "Duplicate IP address '%s'"
-msgstr "重複 IP アドレス '%s'"
 
 #, python-format
 msgid ""
@@ -1310,18 +1057,6 @@ msgstr "POST に重複するセキュリティーグループルールがあり�
 
 msgid "Duplicate address detected"
 msgstr "検出された重複アドレス"
-
-#, python-format
-msgid "Duplicate hostroute '%s'"
-msgstr "重複するホスト経路 '%s'"
-
-#, python-format
-msgid "Duplicate items in the list: '%s'"
-msgstr "リスト内で重複する項目: '%s'"
-
-#, python-format
-msgid "Duplicate nameserver '%s'"
-msgstr "重複するネームサーバー '%s'"
 
 msgid "Duplicate segment entry in request."
 msgstr "重複するセグメントエントリーが要求に含まれています。"
@@ -1352,9 +1087,6 @@ msgstr "物理ネットワーク名が空です。"
 
 msgid "Empty subnet pool prefix list."
 msgstr "サブネットプールのプレフィックスリストが空です。"
-
-msgid "Enable FWaaS"
-msgstr "FWaaS を有効にします"
 
 msgid "Enable HA mode for virtual routers."
 msgstr "仮想ルーターのために HA モードを有効化します。"
@@ -1394,28 +1126,6 @@ msgstr ""
 "ジェントは、このオプションとは無関係に、自動スケジューリング用には選択されま"
 "せん。ただし、このオプションが True の場合、このようなエージェントに対しては"
 "手動スケジューリングが使用できます。"
-
-msgid ""
-"Enable suppression of ARP responses that don't match an IP address that "
-"belongs to the port from which they originate. Note: This prevents the VMs "
-"attached to this agent from spoofing, it doesn't protect them from other "
-"devices which have the capability to spoof (e.g. bare metal or VMs attached "
-"to agents without this flag set to True). Spoofing rules will not be added "
-"to any ports that have port security disabled. For LinuxBridge, this "
-"requires ebtables. For OVS, it requires a version that supports matching ARP "
-"headers. This option will be removed in Newton so the only way to disable "
-"protection will be via the port security extension."
-msgstr ""
-"ARP レスポンスが最初に発生したポートに関連するIP アドレスにマッチしない ARP "
-"レスポンスを消去します。注意: この結果、このエージェントに追加されたする VM "
-"はスプーフィングを行うことができなくなるものの、スプーフィングを行うことがで"
-"きる他のデバイス (このフラグを Trueに設定せずにエージェントに追加されたベアメ"
-"タルや VM など) からこれらの VM を保護することはできません。スプーフィング"
-"ルールは、ポートセキュリティーを無効化したポートには追加できません。"
-"LinuxBridge の場合、このためには ebtables が必要です。OVS の場合は、マッチす"
-"る ARP ヘッダーをサポートするバージョンが必要です。このオプションは Newtron "
-"では削除されるため、保護を無効化するにはポートセキュリティーの拡張機能を必ず"
-"使用する必要があります。"
 
 msgid ""
 "Enable/Disable log watch by metadata proxy. It should be disabled when "
@@ -1475,10 +1185,6 @@ msgstr "分岐ファイル構造を必ず使用するようにします。"
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "操作の試行中に発生したエラー %(reason)s。"
-
-#, python-format
-msgid "Error importing FWaaS device driver: %s"
-msgstr "FWaaS デバイスドライバーのインポート中にエラーが発生しました: %s"
 
 #, python-format
 msgid "Error parsing dns address %s"
@@ -1569,13 +1275,6 @@ msgstr ""
 #, python-format
 msgid "ExtraDhcpOpt %(id)s could not be found"
 msgstr "ExtraDhcpOpt %(id)s が見つかりませんでした"
-
-msgid ""
-"FWaaS plugin is configured in the server side, but FWaaS is disabled in L3-"
-"agent."
-msgstr ""
-"FWaaS プラグインがサーバー側で設定されていますが、 L3 エージェントでは FWaaS "
-"は無効になっています。"
 
 #, python-format
 msgid "Failed rescheduling router %(router_id)s: no eligible l3 agent found."
@@ -1806,14 +1505,6 @@ msgstr ""
 msgid "IP address %(ip)s does not belong to subnet %(subnet_id)s"
 msgstr "IP アドレス %(ip)s がサブネット %(subnet_id)s に属していません"
 
-#, python-format
-msgid ""
-"IP address %(ip_address)s is not a valid IP for any of the subnets on the "
-"specified network."
-msgstr ""
-"IP アドレス %(ip_address)s は、指定されたネットワーク上のどのサブネットに対し"
-"ても有効な IP ではありません。"
-
 msgid "IP address used by Nova metadata server."
 msgstr "Nova メタデータサーバーによって使用される IP アドレス。"
 
@@ -2030,28 +1721,8 @@ msgstr ""
 "認証タイプ %(auth_type)s は無効です。有効なタイプは %(valid_auth_types)s です"
 
 #, python-format
-msgid "Invalid content type %(content_type)s."
-msgstr "無効なコンテンツタイプ %(content_type)s。"
-
-#, python-format
-msgid "Invalid data format for IP pool: '%s'"
-msgstr "IP プールに無効なデータ形式: '%s'"
-
-#, python-format
 msgid "Invalid data format for extra-dhcp-opt: %(data)s"
 msgstr "extra-dhcp-opt のデータ形式が無効です: %(data)s"
-
-#, python-format
-msgid "Invalid data format for fixed IP: '%s'"
-msgstr "Fixed IP に無効なデータ形式: '%s'"
-
-#, python-format
-msgid "Invalid data format for hostroute: '%s'"
-msgstr "ホスト経路の無効なデータ形式: '%s'"
-
-#, python-format
-msgid "Invalid data format for nameserver: '%s'"
-msgstr "ネームサーバーに無効なデータ形式: '%s'"
 
 #, python-format
 msgid "Invalid ethertype %(ethertype)s for protocol %(protocol)s."
@@ -2072,14 +1743,6 @@ msgstr "無効な形式: %s"
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s に無効な入力です。理由: %(reason)s。"
-
-#, python-format
-msgid ""
-"Invalid input. '%(target_dict)s' must be a dictionary with keys: "
-"%(expected_keys)s"
-msgstr ""
-"無効な入力です。'%(target_dict)s' は、キー %(expected_keys)s を持つディクショ"
-"ナリーでなければなりません。"
 
 #, python-format
 msgid "Invalid instance state: %(state)s, valid states are: %(valid_states)s"
@@ -2149,13 +1812,6 @@ msgstr ""
 "Iptables はメタデータの適切な要求を示すために使用されるマークを分割します。こ"
 "のマークを 0xffff でマスキングすることで、後半の 16 ビットのみを使用します。"
 
-msgid ""
-"Keep in track in the database of current resourcequota usage. Plugins which "
-"do not leverage the neutron database should set this flag to False"
-msgstr ""
-"現在のリソースのクォータの使用状況に関するデータベースを管理します。neutron "
-"データベースを使用しないプラグインはこのフラグを False に設定します。"
-
 msgid "Keepalived didn't respawn"
 msgstr "keepalived が再作成されませんでした"
 
@@ -2217,9 +1873,6 @@ msgstr ""
 
 msgid "Local IP address of the VXLAN endpoints."
 msgstr "VXLAN エンドポイントのローカル IP アドレス。"
-
-msgid "Local IP address of tunnel endpoint."
-msgstr "トンネルエンドポイントのローカル IP アドレス。"
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション。"
@@ -2319,27 +1972,6 @@ msgid "Maximum number of routes per router"
 msgstr "ルーターごとに設定可能な経路の最大数"
 
 msgid ""
-"Maximum size of an IP packet (MTU) that can traverse the underlying physical "
-"network infrastructure without fragmentation. For instances using a self-"
-"service/private network, neutron subtracts the overlay protocol overhead "
-"from this value and provides it to instances via DHCP option 26. For "
-"example, using a value of 9000, DHCP provides 8950 to instances using a "
-"VXLAN network that contains 50 bytes of overhead. Using a value of 0 "
-"disables this feature and instances typically default to a 1500 MTU. Only "
-"impacts instances, not neutron network components such as bridges and "
-"routers."
-msgstr ""
-"フラグメント化することなく基盤となる物理ネットワークインフラを通過する IP パ"
-"ケットの最大サイズ (MTU)。セルフサービスネットワークやプライベートネットワー"
-"クを使用するインスタンスの場合、neutron はこの値からオーバーレイプロトコルの"
-"オーバーヘッドを減算し、DHCP のオプション 26 経由でインスタンスに提供します。"
-"例えば、9000 の値を使用すると、50 バイトのオーバーヘッドを含む VXLAN ネット"
-"ワークを使用するインスタンスに対して、DHCP は 8950 を提供します。0 の値を使用"
-"するとこの機能は無効化され、インスタンスは通常 MTU のデフォルト値として 1500 "
-"を使用します。MTU はインスタンスにのみ影響し、ブリッジやルーターのような "
-"neutron ネットワークのコンポーネントには影響しません。"
-
-msgid ""
 "Metadata Proxy UNIX domain socket mode, 4 values allowed: 'deduce': deduce "
 "mode from metadata_proxy_user/group values, 'user': set metadata proxy "
 "socket mode to 0o644, to use when metadata_proxy_user is agent effective "
@@ -2388,13 +2020,6 @@ msgid "Minimize polling by monitoring ovsdb for interface changes."
 msgstr ""
 "インターフェース変更の検出に関して ovsdb をモニターすることでポーリングが最小"
 "化されます。"
-
-msgid ""
-"Minimum number of L3 agents which a HA router will be scheduled on. If it is "
-"set to 0 then the router will be scheduled on every agent."
-msgstr ""
-"HA ルーターがスケジュール設定される L3 エージェントの最小数。この値を 0 に設"
-"定すると、ルーターはすべてのエージェントに対してスケジュール設定されます。"
 
 #, python-format
 msgid "Missing key in mapping: '%s'"
@@ -2498,9 +2123,6 @@ msgstr ""
 "使用する nova リージョンの名前。Keystone で複数のリージョンを管理する場合に役"
 "立ちます。"
 
-msgid "Name of the FWaaS Driver"
-msgstr "FWaaS ドライバーの名前"
-
 msgid "Namespace of the router"
 msgstr "ルーターの名前空間"
 
@@ -2522,31 +2144,6 @@ msgstr "負のデルタ (ダウングレード) はサポートされていま�
 
 msgid "Negative relative revision (downgrade) not supported"
 msgstr "負の相対的な変更 (ダウングレード) はサポートされていません"
-
-#, python-format
-msgid ""
-"Network %(network_id)s is already bound to BgpSpeaker %(bgp_speaker_id)s."
-msgstr ""
-"ネットワーク %(network_id)s は既に BGP スピーカー %(bgp_speaker_id)s とバイン"
-"ドされています。"
-
-#, python-format
-msgid ""
-"Network %(network_id)s is not associated with BGP speaker %(bgp_speaker_id)s."
-msgstr ""
-"ネットワーク %(network_id)s が BGP スピーカー %(bgp_speaker_id)s と関連付けら"
-"れていません。"
-
-#, python-format
-msgid "Network %(network_id)s is not bound to a BgpSpeaker."
-msgstr ""
-"ネットワーク %(network_id)s が BGP スピーカーとバインドされていません。"
-
-#, python-format
-msgid "Network %(network_id)s is not bound to a IPv%(ip_version)s BgpSpeaker."
-msgstr ""
-"ネットワーク %(network_id)s は IPv%(ip_version)s の BGP スピーカーにバインド"
-"されていません。"
 
 #, python-format
 msgid "Network %s does not contain any IPv4 subnet"
@@ -2601,9 +2198,6 @@ msgstr "Neutron の core_plugin が設定されていません。"
 
 msgid "Neutron plugin provider module"
 msgstr "Neutron プラグインプロバイダーモジュール"
-
-msgid "Neutron quota driver class"
-msgstr "Neutron 割り当て量ドライバークラス"
 
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "first_ip または last_ip に対して新規の値を指定する必要があります。"
@@ -2674,12 +2268,6 @@ msgstr ""
 "トの数。この数が 1 より大きい場合、スケジューラーが自動的に特定のテナントネッ"
 "トワークに複数の DHCP エージェントを割り当てるため、DHCP サービスの高可用性が"
 "実現します。"
-
-msgid "Number of RPC worker processes dedicated to state reports queue"
-msgstr "レポートのキューを報告するためにのみ機能する RPC ワーカープロセスの数"
-
-msgid "Number of RPC worker processes for service"
-msgstr "RPC サービスのワーカープロセス数"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "メタデータサーバーソケットの構成に使用されるバックログ要求の数"
@@ -2849,10 +2437,6 @@ msgid "Package %s not installed"
 msgstr "パッケージ %s はインストールされていません"
 
 #, python-format
-msgid "Parameter %(param)s must be of %(param_type)s type."
-msgstr "パラメーター %(param)s は %(param_type)s タイプである必要があります。"
-
-#, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "bridge_mappings の解析に失敗しました: %s。"
 
@@ -2861,10 +2445,6 @@ msgstr "サポートされている pci_vendor_devs の解析に失敗しまし�
 
 msgid "Password for connecting to designate in admin context"
 msgstr "管理者のコンテキストにおける designate への接続用パスワード"
-
-#, python-format
-msgid "Password not specified for authentication type=%(auth_type)s."
-msgstr "パスワードは認証の type=%(auth_type)s で指定されていません。"
 
 msgid "Path to PID file for this process"
 msgstr "このプロセスの PID ファイルのパス"
@@ -3189,11 +2769,6 @@ msgid "Root permissions are required to drop privileges."
 msgstr "特権を除去するにはルート許可が必要です。"
 
 #, python-format
-msgid "Route %(cidr)s not advertised for BGP Speaker %(speaker_as)d."
-msgstr ""
-"BGP スピーカー %(speaker_as)d のためにアドバタイズされない経路 %(cidr)s。"
-
-#, python-format
 msgid "Router %(router_id)s %(reason)s"
 msgstr "ルーター %(router_id)s %(reason)s"
 
@@ -3275,9 +2850,6 @@ msgid ""
 msgstr ""
 "ノード状態をサーバーに報告する間隔 (秒)。agent_down_time  未満である必要があ"
 "ります。agent_down_time  の半分以下であれば最適です。"
-
-msgid "Seconds between running periodic tasks"
-msgstr "定期タスクの実行間隔 (秒)"
 
 msgid ""
 "Seconds to regard the agent is down; should be at least twice "
@@ -3572,14 +3144,6 @@ msgid ""
 "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
 "割り当てプール %(pool)s がサブネット CIDR %(subnet_cidr)s を越えています。"
-
-#, python-format
-msgid ""
-"The attribute '%(attr)s' is reference to other resource, can't used by sort "
-"'%(resource)s'"
-msgstr ""
-"属性 '%(attr)s' は他のリソースへの参照であり、ソート '%(resource)s' によって"
-"使用できません"
 
 msgid ""
 "The base MAC address Neutron will use for VIFs. The first 3 octets will "
@@ -4178,18 +3742,6 @@ msgstr "VRRP 認証タイプ"
 
 msgid "VXLAN network unsupported."
 msgstr "VXLAN ネットワークはサポートされていません。"
-
-#, python-format
-msgid ""
-"Validation of dictionary's keys failed. Expected keys: %(expected_keys)s "
-"Provided keys: %(provided_keys)s"
-msgstr ""
-"ディクショナリーのキーの検証に失敗しました。想定されたキー: "
-"%(expected_keys)s、提供されたキー: %(provided_keys)s"
-
-#, python-format
-msgid "Validator '%s' does not exist."
-msgstr "バリデーター '%s' は存在しません。"
 
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"

@@ -9,9 +9,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.0.1.dev189\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-04-18 05:07+0000\n"
+"POT-Creation-Date: 2016-06-06 07:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -38,10 +38,6 @@ msgstr ""
 "Stdin: %(stdin)s\n"
 "Stdout: %(stdout)s\n"
 "Stderr: %(stderr)s"
-
-#, python-format
-msgid "%(driver)s: Internal driver error."
-msgstr "%(driver)s: Dahili sürücü hatası."
 
 #, python-format
 msgid "%(id)s is not a valid %(type)s identifier"
@@ -104,10 +100,6 @@ msgid "%s cannot be called while in offline mode"
 msgstr "%s çevrim dışı kipte çağrılamaz"
 
 #, python-format
-msgid "%s is invalid attribute for sort_key"
-msgstr "%s sort_key için geçersiz özniteliktir"
-
-#, python-format
 msgid "%s is invalid attribute for sort_keys"
 msgstr "%s sort_keys için geçersiz öznitelik"
 
@@ -132,96 +124,8 @@ msgid "%s prohibited for local provider network"
 msgstr "%s yerel sağlayıcı ağı için yasaklanmış"
 
 #, python-format
-msgid "'%(data)s' exceeds maximum length of %(max_len)s"
-msgstr "'%(data)s' %(max_len)s azami uzunluğunu aşıyor"
-
-#, python-format
-msgid "'%(data)s' is not in %(valid_values)s"
-msgstr "'%(data)s' %(valid_values)s içinde değil"
-
-#, python-format
-msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
-msgstr "'%(data)s' çok büyük - en çok '%(limit)d' olmalı"
-
-#, python-format
-msgid "'%(data)s' is too small - must be at least '%(limit)d'"
-msgstr "'%(data)s' çok küçük - en az '%(limit)d' olmalı"
-
-#, python-format
-msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
-msgstr "'%(data)s' tanınan bir IP alt ağı cidr'i değil, '%(cidr)s' öneriliyor"
-
-#, python-format
-msgid "'%(host)s' is not a valid nameserver. %(msg)s"
-msgstr "'%(host)s' geçerli bir isim sunucu değil. %(msg)s"
-
-#, python-format
-msgid "'%s' Blank strings are not permitted"
-msgstr "'%s' boş karakter dizilerine izin verilmez"
-
-#, python-format
-msgid "'%s' cannot be converted to boolean"
-msgstr "'%s' bool değere çevrilemez"
-
-#, python-format
-msgid "'%s' contains whitespace"
-msgstr "'%s' boşluk içeriyor"
-
-#, python-format
-msgid "'%s' is not a dictionary"
-msgstr "'%s' bir dizin değil"
-
-#, python-format
-msgid "'%s' is not a list"
-msgstr "'%s' liste değil"
-
-#, python-format
-msgid "'%s' is not a valid IP address"
-msgstr "'%s' geçerli bir IP adresi değil"
-
-#, python-format
-msgid "'%s' is not a valid IP subnet"
-msgstr "'%s' geçerli IP alt ağ değil"
-
-#, python-format
-msgid "'%s' is not a valid MAC address"
-msgstr "'%s' geçerli bir MAC adresi değil"
-
-#, python-format
-msgid "'%s' is not a valid UUID"
-msgstr "'%s' geçerli bir UUID değil"
-
-#, python-format
-msgid "'%s' is not a valid boolean value"
-msgstr "'%s' geçerli bir bool değer değil"
-
-#, python-format
-msgid "'%s' is not a valid input"
-msgstr "'%s' geçerli bir girdi değil"
-
-#, python-format
-msgid "'%s' is not a valid string"
-msgstr "'%s' geçerli karakter dizisi değil"
-
-#, python-format
-msgid "'%s' is not an integer"
-msgstr "'%s' tam sayı değil"
-
-#, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr "'%s' bir tam sayı ya da uuid değil"
-
-#, python-format
-msgid "'%s' is not of the form <key>=[value]"
-msgstr "'%s' <anahtar>=[değer] biçiminde olmalı"
-
-#, python-format
-msgid "'%s' must be a non negative decimal."
-msgstr "'%s' negatif olmayan ondalık olmalı."
-
-#, python-format
-msgid "'%s' should be non-negative"
-msgstr "'%s' negatif olmamalı"
 
 msgid "'.' searches are not implemented"
 msgstr "'.' aramaları uygulanmamış"
@@ -231,15 +135,6 @@ msgstr "0 CIDR önek uzunluğuna izin verilmez"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "Alt ağ havuzu olmadığında bir cidr belirtilmelidir"
-
-msgid ""
-"A list of mappings of physical networks to MTU values. The format of the "
-"mapping is <physnet>:<mtu val>. This mapping allows specifying a physical "
-"network MTU value that differs from the default segment_mtu value."
-msgstr ""
-"Fiziksel ağların MTU değerlerine eşleştirilme listesi. Eşleştirme biçimi "
-"<physnet>:<mtu val>. Bu eşleştirme varsayılan segment_mtu değerinden farklı "
-"bir fiziksel ağ MTU değeri belirtmeye izin verir."
 
 msgid "A metering driver must be specified"
 msgstr "Bir ölçme sürücüsü belirtilmeli"
@@ -554,9 +449,6 @@ msgstr ""
 "DHCP kira süresi (saniye olarak). Dnsmasq'a süresiz kira zamanları "
 "kullanmasını söylemek için -1 kullanın."
 
-msgid "Default driver to use for quota checks"
-msgstr "Kota kontrolleri için kullanılacak varsayılan sürücü"
-
 msgid ""
 "Default network type for external networks when no provider attributes are "
 "specified. By default it is None, which means that if provider attributes "
@@ -658,27 +550,11 @@ msgstr "Ağın DHCP ajanlarına zamanlanması için kullanılacak sürücü"
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr "Yönlendiriciyi bir L3 ajanına zamanlamak için gerekli sürücü"
 
-#, python-format
-msgid "Duplicate IP address '%s'"
-msgstr "Kopya IP adresi '%s'"
-
 msgid "Duplicate Metering Rule in POST."
 msgstr "POST'da kopya ölçme kuralı."
 
 msgid "Duplicate Security Group Rule in POST."
 msgstr "POST'da Kopya Güvenlik Grubu Kuralı."
-
-#, python-format
-msgid "Duplicate hostroute '%s'"
-msgstr "Kopya istemci rotası '%s'"
-
-#, python-format
-msgid "Duplicate items in the list: '%s'"
-msgstr "Listede kopya öğeler: '%s'"
-
-#, python-format
-msgid "Duplicate nameserver '%s'"
-msgstr "Kopya isim sunucu '%s'"
 
 msgid "Duplicate segment entry in request."
 msgstr "İstekte kopya dilim girdisi."
@@ -706,9 +582,6 @@ msgstr "subnet_id veya port_id belirtilmeli"
 
 msgid "Empty physical network name."
 msgstr "Boş fiziksel ağ ismi."
-
-msgid "Enable FWaaS"
-msgstr "FWaaS'ı etkinleştir"
 
 msgid "Enable HA mode for virtual routers."
 msgstr "Sanal yönlendiriciler için HA kipini etkinleştir."
@@ -773,10 +646,6 @@ msgid "Error %(reason)s while attempting the operation."
 msgstr "İşlem denenirken %(reason)s hatası."
 
 #, python-format
-msgid "Error importing FWaaS device driver: %s"
-msgstr "FWaaS aygıt sürücüsünü içe aktarmada hata: %s"
-
-#, python-format
 msgid "Error parsing dns address %s"
 msgstr "%s dns adresinin ayrıştırılmasında hata"
 
@@ -829,13 +698,6 @@ msgstr ""
 #, python-format
 msgid "ExtraDhcpOpt %(id)s could not be found"
 msgstr "ExtraDhcpOpt %(id)s bulunamadı"
-
-msgid ""
-"FWaaS plugin is configured in the server side, but FWaaS is disabled in L3-"
-"agent."
-msgstr ""
-"FWaaS eklentisi sunucu tarafında yapılandırılmış, ama FWaaS L3-agent'de "
-"kapalı."
 
 #, python-format
 msgid "Failed rescheduling router %(router_id)s: no eligible l3 agent found."
@@ -977,14 +839,6 @@ msgstr "%(ip)s IP adresi %(subnet_id)s alt ağında zaten ayrılmış"
 msgid "IP address %(ip)s does not belong to subnet %(subnet_id)s"
 msgstr "%(ip)s IP adresi %(subnet_id)s alt ağına ait değil"
 
-#, python-format
-msgid ""
-"IP address %(ip_address)s is not a valid IP for any of the subnets on the "
-"specified network."
-msgstr ""
-"%(ip_address)s IP adresi belirtilen ağdaki alt ağlardan hiçbiri için geçerli "
-"bir IP değil."
-
 msgid "IP address used by Nova metadata server."
 msgstr "Nova metadata sunucusu tarafından kullanılan IP adresi."
 
@@ -1078,28 +932,8 @@ msgstr ""
 "%(valid_auth_types)s"
 
 #, python-format
-msgid "Invalid content type %(content_type)s."
-msgstr "Geçersiz içerik türü %(content_type)s."
-
-#, python-format
-msgid "Invalid data format for IP pool: '%s'"
-msgstr "IP havuzu: '%s' için geçersiz veri biçimi"
-
-#, python-format
 msgid "Invalid data format for extra-dhcp-opt: %(data)s"
 msgstr "extra-dhcp-opt için geçersiz veri biçimi: %(data)s"
-
-#, python-format
-msgid "Invalid data format for fixed IP: '%s'"
-msgstr "Sabit IP için geçersiz veri biçimi: '%s'"
-
-#, python-format
-msgid "Invalid data format for hostroute: '%s'"
-msgstr "İstemci rotası için geçersiz veri biçimi: '%s'"
-
-#, python-format
-msgid "Invalid data format for nameserver: '%s'"
-msgstr "İsim sunucu için geçersiz veri biçimi: '%s'"
 
 #, python-format
 msgid "Invalid format for routes: %(routes)s, %(reason)s"
@@ -1112,14 +946,6 @@ msgstr "Geçersiz biçim: %s"
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s için geçersiz girdi. Sebep: %(reason)s."
-
-#, python-format
-msgid ""
-"Invalid input. '%(target_dict)s' must be a dictionary with keys: "
-"%(expected_keys)s"
-msgstr ""
-"Geçersiz girdi. '%(target_dict)s' şu anahtarları içeren bir sözlük olmalı: "
-"%(expected_keys)s"
 
 #, python-format
 msgid "Invalid instance state: %(state)s, valid states are: %(valid_states)s"
@@ -1189,9 +1015,6 @@ msgstr ""
 
 msgid "Local IP address of the VXLAN endpoints."
 msgstr "VXLAN son uçlarının yerel IP adresi."
-
-msgid "Local IP address of tunnel endpoint."
-msgstr "Tünel uç noktasının yerel IP adresi."
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "Metadata Vekil UNIX alan soketi için konum."
@@ -1294,9 +1117,6 @@ msgstr ""
 "Kullanılacak nova gölgesinin ismi. Keystone birden fazla bölgeyi yönetiyorsa "
 "kullanışlıdır."
 
-msgid "Name of the FWaaS Driver"
-msgstr "FWaaS Sürücüsü ismi"
-
 msgid "Namespace of the router"
 msgstr "Yönetici isim uzayı"
 
@@ -1347,9 +1167,6 @@ msgstr "Neutron core_plugin yapılandırılmamış!"
 msgid "Neutron plugin provider module"
 msgstr "Neutron eklenti sağlayıcı modülü"
 
-msgid "Neutron quota driver class"
-msgstr "Neutron kota sürücü sınıf"
-
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
 msgstr "%s harici ağıyla ilişkilendirilmiş uygun l3 ajanı bulunamadı"
@@ -1387,9 +1204,6 @@ msgstr ""
 "Bir kiracı ağı sunmak için zamanlanan DHCP ajanları sayısı. Bu sayı 1'den "
 "büyükse, zamanlayıcı verilen bir kiracı ağa otomatik olarak birden çok DHCP "
 "ajanı atar, ve DHCP servisi için yüksek kullanılabilirlik sağlar."
-
-msgid "Number of RPC worker processes for service"
-msgstr "Servis için RPC işçi süreçlerinin sayısı"
 
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "Metadata sunucu soketinin yapılandırılacağı birikmiş isteklerin sayısı"
@@ -1719,9 +1533,6 @@ msgstr ""
 "agent_down_time'dan az olmalı, en iyisi agent_down_time'ın yarısı ya da daha "
 "azı olmasıdır."
 
-msgid "Seconds between running periodic tasks"
-msgstr "Devresel görevleri çalıştırma arasındaki saniye"
-
 msgid ""
 "Seconds to regard the agent is down; should be at least twice "
 "report_interval, to be sure the agent is down for good."
@@ -1899,14 +1710,6 @@ msgid ""
 "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
 "Ayırma havuzu %(pool)s %(subnet_cidr)s alt ağ cidr'inin ötesine uzanıyor."
-
-#, python-format
-msgid ""
-"The attribute '%(attr)s' is reference to other resource, can't used by sort "
-"'%(resource)s'"
-msgstr ""
-"'%(attr)s' özniteliği başka kaynağa referans, '%(resource)s' sıralama "
-"tarafından kullanılamaz"
 
 msgid "The core plugin Neutron will use"
 msgstr "Neutron'un kullanacağı çekirdek eklenti"
@@ -2231,18 +2034,6 @@ msgstr "VRRP kimlik doğrulama parolası"
 
 msgid "VRRP authentication type"
 msgstr "VRRP kimlik doğrulama türü"
-
-#, python-format
-msgid ""
-"Validation of dictionary's keys failed. Expected keys: %(expected_keys)s "
-"Provided keys: %(provided_keys)s"
-msgstr ""
-"Sözlük anahtarlarının doğrulanması başarısız. Beklenen anahtarlar: "
-"%(expected_keys)s Sağlanan anahtarlar: %(provided_keys)s"
-
-#, python-format
-msgid "Validator '%s' does not exist."
-msgstr "Onaylayan '%s' mevcut değil."
 
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
