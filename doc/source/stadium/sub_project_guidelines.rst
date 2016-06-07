@@ -39,19 +39,6 @@ enormous number of different plugin entry points provided by Neutron (L2 agent
 extensions, API extensions, service plugins, core plugins, ML2 mechanism
 drivers, etc.)
 
-Oslo Incubator
-~~~~~~~~~~~~~~
-
-Don't ever reuse neutron code that comes from oslo-incubator in your
-subprojects. For neutron repository, the code is usually located under the
-following path: neutron.openstack.common.*
-
-If you need any oslo-incubator code in your repository, copy it into your
-repository from oslo-incubator and then use it from there.
-
-Neutron team does not maintain any backwards compatibility strategy for the
-code subtree and can break anyone who relies on it at any time.
-
 Requirements
 ------------
 
