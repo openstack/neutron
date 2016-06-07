@@ -35,13 +35,12 @@ class SnatNamespace(namespaces.Namespace):
 
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)
-        if ns_ip.netns.exists(self.name):
-            for d in ns_ip.get_devices(exclude_loopback=True):
-                if d.name.startswith(SNAT_INT_DEV_PREFIX):
-                    LOG.debug('Unplugging DVR device %s', d.name)
-                    self.driver.unplug(d.name, namespace=self.name,
-                                       prefix=SNAT_INT_DEV_PREFIX)
+        for d in ns_ip.get_devices(exclude_loopback=True):
+            if d.name.startswith(SNAT_INT_DEV_PREFIX):
+                LOG.debug('Unplugging DVR device %s', d.name)
+                self.driver.unplug(d.name, namespace=self.name,
+                                   prefix=SNAT_INT_DEV_PREFIX)
 
-            # TODO(mrsmith): delete ext-gw-port
-            LOG.debug('DVR: destroy snat ns: %s', self.name)
-            super(SnatNamespace, self).delete()
+        # TODO(mrsmith): delete ext-gw-port
+        LOG.debug('DVR: destroy snat ns: %s', self.name)
+        super(SnatNamespace, self).delete()
