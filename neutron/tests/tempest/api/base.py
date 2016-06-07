@@ -616,6 +616,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
             if prev_links:
                 uri = self.get_bare_url(prev_links['next'])
             else:
+                sort_args.update(self.list_kwargs)
                 uri = self.client.build_uri(
                     self.plural_name, limit=1, **sort_args)
             prev_links, body = self.client.get_uri_with_links(
@@ -674,6 +675,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
             if prev_links:
                 uri = self.get_bare_url(prev_links['previous'])
             else:
+                pagination_args.update(self.list_kwargs)
                 uri = self.client.build_uri(
                     self.plural_name, page_reverse=True, **pagination_args)
             prev_links, body = self.client.get_uri_with_links(
