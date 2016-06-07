@@ -407,6 +407,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             # NOTE: When removing the gateway port, pass in the snat_port
             # cache along with the current ports.
             gateway = self.get_snat_port_for_internal_port(p, self.snat_ports)
+            if not gateway:
+                continue
             internal_interface = self.get_internal_device_name(p['id'])
             self._snat_redirect_remove(gateway, p, internal_interface)
 
