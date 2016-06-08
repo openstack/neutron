@@ -357,6 +357,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     [fixedip for fixedip in
                         cs_port['port']['fixed_ips']
                         if fixedip['subnet_id'] != subnet_id])
+
+                if len(fixed_ips) == len(cs_port['port']['fixed_ips']):
+                    # The subnet being detached from router is not part of
+                    # ipv6 router port. No need to update the multiprefix.
+                    return False
+
                 if fixed_ips:
                     # multiple prefix port - delete prefix from port
                     self._core_plugin.update_port(
