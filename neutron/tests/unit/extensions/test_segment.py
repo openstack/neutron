@@ -282,6 +282,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
         if not plugin:
             plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
+        db.subscribe()
 
     def _get_segments_for_host(self, host):
         ctx = context.get_admin_context()
