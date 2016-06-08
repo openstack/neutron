@@ -80,6 +80,12 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     def _generate_mac():
         return utils.get_random_mac(cfg.CONF.base_mac.split(':'))
 
+    def _is_mac_in_use(self, context, network_id, mac_address):
+        return bool(context.session.query(models_v2.Port).
+                    filter(models_v2.Port.network_id == network_id).
+                    filter(models_v2.Port.mac_address == mac_address).
+                    count())
+
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, ip_address):
 

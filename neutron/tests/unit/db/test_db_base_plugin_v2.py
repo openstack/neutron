@@ -1691,24 +1691,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             return
         self.fail("No exception for illegal base_mac format")
 
-    def test_mac_exhaustion(self):
-        # rather than actually consuming all MAC (would take a LONG time)
-        # we try to allocate an already allocated mac address
-        cfg.CONF.set_override('mac_generation_retries', 3)
-
-        res = self._create_network(fmt=self.fmt, name='net1',
-                                   admin_state_up=True)
-        network = self.deserialize(self.fmt, res)
-        net_id = network['network']['id']
-
-        error = lib_exc.MacAddressInUse(net_id=net_id, mac='00:11:22:33:44:55')
-        with mock.patch.object(
-                neutron.db.db_base_plugin_v2.NeutronDbPluginV2,
-                '_create_port_with_mac', side_effect=error) as create_mock:
-            res = self._create_port(self.fmt, net_id=net_id)
-            self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
-                             res.status_int)
-            self.assertEqual(3, create_mock.call_count)
+    def test_is_mac_in_use(self):
+        ctx = context.get_admin_context()
+        with self.port() as port:
+            net_id = port['port']['network_id']
+            mac = port['port']['mac_address']
+            self.assertTrue(self.plugin._is_mac_in_use(ctx, net_id, mac))
+            mac2 = '00:22:00:44:00:66'  # other mac, same network
+            self.assertFalse(self.plugin._is_mac_in_use(ctx, net_id, mac2))
+            net_id2 = port['port']['id']  # other net uuid, same mac
+            self.assertFalse(self.plugin._is_mac_in_use(ctx, net_id2, mac))
 
     def test_requested_duplicate_ip(self):
         with self.subnet() as subnet:

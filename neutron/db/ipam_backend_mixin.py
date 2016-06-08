@@ -107,12 +107,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def _update_db_port(self, context, db_port, new_port, network_id, new_mac):
         # Remove all attributes in new_port which are not in the port DB model
         # and then update the port
-        try:
-            db_port.update(self._filter_non_model_columns(new_port,
-                                                          models_v2.Port))
-            context.session.flush()
-        except db_exc.DBDuplicateEntry:
+        if (new_mac and new_mac != db_port.mac_address and
+                self._is_mac_in_use(context, network_id, new_mac)):
             raise exc.MacAddressInUse(net_id=network_id, mac=new_mac)
+        db_port.update(self._filter_non_model_columns(new_port,
+                                                      models_v2.Port))
 
     def _update_subnet_host_routes(self, context, id, s):
 
