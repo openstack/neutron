@@ -100,7 +100,11 @@ class CollectionsController(utils.NeutronPecanController):
 
     def get(self, *args, **kwargs):
         # list request
-        fields = self._build_field_list(kwargs.pop('fields', []))
+        fields = kwargs.pop('fields', [])
+        # if only one fields query parameter is passed, pecan will not put
+        # that parameter in a list, so we need to convert it into a list
+        fields = fields if isinstance(fields, list) else [fields]
+        fields = self._build_field_list(fields)
         _listify = lambda x: x if isinstance(x, list) else [x]
         filters = api_common.get_filters_from_dict(
             {k: _listify(v) for k, v in kwargs.items()},
