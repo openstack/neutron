@@ -310,7 +310,7 @@ class SecurityGroupAgentRpc(object):
                 self.refresh_firewall(updated_devices)
 
 
-# TODO(armax): for bw compat with external dependencies; to be dropped in M.
+# TODO(armax): For bw compat with external dependencies; to be dropped in M.
 SG_RPC_VERSION = (
     securitygroups_rpc.SecurityGroupAgentRpcApiMixin.SG_RPC_VERSION
 )

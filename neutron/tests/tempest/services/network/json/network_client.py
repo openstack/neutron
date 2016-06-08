@@ -663,3 +663,57 @@ class NetworkClientJSON(service_client.RestClient):
         self.expected_success(200, resp.status)
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
+
+    def create_security_group_rule(self, direction, security_group_id,
+                                   **kwargs):
+        post_body = {'security_group_rule': kwargs}
+        post_body['security_group_rule']['direction'] = direction
+        post_body['security_group_rule'][
+            'security_group_id'] = security_group_id
+        body = jsonutils.dumps(post_body)
+        uri = '%s/security-group-rules' % self.uri_prefix
+        resp, body = self.post(uri, body)
+        self.expected_success(201, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def list_security_groups(self, **kwargs):
+        post_body = {'security_groups': kwargs}
+        body = jsonutils.dumps(post_body)
+        uri = '%s/security-groups' % self.uri_prefix
+        if kwargs:
+            uri += '?' + urlparse.urlencode(kwargs, doseq=1)
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_security_group(self, security_group_id):
+        uri = '%s/security-groups/%s' % (
+            self.uri_prefix, security_group_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_ports(self, **kwargs):
+        post_body = {'ports': kwargs}
+        body = jsonutils.dumps(post_body)
+        uri = '%s/ports' % self.uri_prefix
+        if kwargs:
+            uri += '?' + urlparse.urlencode(kwargs, doseq=1)
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)
+
+    def create_floatingip(self, floating_network_id, **kwargs):
+        post_body = {'floatingip': {
+            'floating_network_id': floating_network_id}}
+        if kwargs:
+            post_body['floatingip'].update(kwargs)
+        body = jsonutils.dumps(post_body)
+        uri = '%s/floatingips' % self.uri_prefix
+        resp, body = self.post(uri, body)
+        self.expected_success(201, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)

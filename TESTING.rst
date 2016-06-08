@@ -58,7 +58,8 @@ that broad categorization, here are a few more characteristic:
     such as an agent using no mocks.
   * Integration tests - Run against a running cloud, often target the API level,
     but also 'scenarios' or 'user stories'. You may find such tests under
-    tests/api, tests/fullstack and in the Tempest and Rally projects.
+    tests/tempest/api, tests/tempest/scenario, tests/fullstack, and in the
+    Tempest and Rally projects.
 
 Tests in the Neutron tree are typically organized by the testing infrastructure
 used, and not by the scope of the test. For example, many tests under the
@@ -324,6 +325,17 @@ Tests for other resources should be contributed to the Neutron repository.
 Scenario tests should be similarly split up between Tempest and Neutron
 according to the API they're targeting.
 
+Scenario Tests
+~~~~~~~~~~~~~~
+
+Scenario tests (neutron/tests/tempest/scenario), like API tests, use the
+Tempest test infrastructure and have the same requirements. Guidelines for
+writing a good scenario test may be found at the Tempest developer guide:
+http://docs.openstack.org/developer/tempest/field_guide/scenario.html
+
+Scenario tests, like API tests, are split between the Tempest and Neutron
+repositories according to the Neutron API the test is targeting.
+
 Development Process
 -------------------
 
@@ -510,10 +522,10 @@ Logging from the test infrastructure itself is placed in:
 Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
 the test machine is available for its usage.
 
-API Tests
-+++++++++
+API & Scenario Tests
+++++++++++++++++++++
 
-To run the api tests, deploy Tempest and Neutron with DevStack and
+To run the api or scenario tests, deploy Tempest and Neutron with DevStack and
 then run the following command, from the tempest directory: ::
 
     tox -e all-plugin
