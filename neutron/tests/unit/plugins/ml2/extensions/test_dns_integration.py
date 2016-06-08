@@ -13,8 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 import mock
 import netaddr
+import testtools
 
 from neutron import context
 from neutron.db import dns_db
@@ -22,6 +25,7 @@ from neutron.extensions import dns
 from neutron.extensions import providernet as pnet
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import dns_integration
+from neutron.services.externaldns.drivers.designate import driver
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -461,3 +465,58 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         config.cfg.CONF.set_override('dns_domain', DNSDOMAIN)
         net, port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(net, port, dns_data_db)
+
+
+class TestDesignateClient(testtools.TestCase):
+    """Test case for designate clients """
+
+    TEST_URL = 'http://127.0.0.1:9001/v2'
+    TEST_ADMIN_USERNAME = uuid.uuid4().hex
+    TEST_ADMIN_PASSWORD = uuid.uuid4().hex
+    TEST_ADMIN_TENANT_NAME = uuid.uuid4().hex
+    TEST_ADMIN_TENANT_ID = uuid.uuid4().hex
+    TEST_ADMIN_AUTH_URL = 'http://127.0.0.1:35357/v2.0'
+    TEST_CA_CERT = uuid.uuid4().hex
+
+    TEST_CONTEXT = mock.Mock()
+    TEST_CONTEXT.auth_token = uuid.uuid4().hex
+
+    def setUp(self):
+        super(TestDesignateClient, self).setUp()
+        config.cfg.CONF.set_override('url',
+                                     self.TEST_URL,
+                                     group='designate')
+        config.cfg.CONF.set_override('admin_username',
+                                     self.TEST_ADMIN_USERNAME,
+                                     group='designate')
+        config.cfg.CONF.set_override('admin_password',
+                                     self.TEST_ADMIN_PASSWORD,
+                                     group='designate')
+        config.cfg.CONF.set_override('admin_auth_url',
+                                     self.TEST_ADMIN_AUTH_URL,
+                                     group='designate')
+        config.cfg.CONF.set_override('admin_tenant_id',
+                                     self.TEST_ADMIN_TENANT_ID,
+                                     group='designate')
+        config.cfg.CONF.set_override('admin_tenant_name',
+                                     self.TEST_ADMIN_TENANT_NAME,
+                                     group='designate')
+
+        driver.session.Session = mock.MagicMock()
+
+    def test_insecure_client(self):
+        config.cfg.CONF.set_override('insecure',
+                                     True,
+                                     group='designate')
+        driver.get_clients(self.TEST_CONTEXT)
+        driver.session.Session.assert_called_with(verify=False)
+
+    def test_secure_client(self):
+        config.cfg.CONF.set_override('insecure',
+                                     False,
+                                     group='designate')
+        config.cfg.CONF.set_override('ca_cert',
+                                     self.TEST_CA_CERT,
+                                     group='designate')
+        driver.get_clients(self.TEST_CONTEXT)
+        driver.session.Session.assert_called_with(verify=self.TEST_CA_CERT)
