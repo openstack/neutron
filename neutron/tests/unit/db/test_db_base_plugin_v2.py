@@ -15,14 +15,18 @@
 
 import contextlib
 import copy
+import functools
 import itertools
 
+import eventlet
 import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as lib_exc
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 import six
 from sqlalchemy import event
 from sqlalchemy import orm
@@ -6082,6 +6086,100 @@ class DbModelTestCase(testlib_api.SqlTestCase):
         with testtools.ExpectedException(orm.exc.NoResultFound):
             # we want to make sure that the attr resource was removed
             self._get_neutron_attr(ctx, attr_id)
+
+    def test_staledata_error_on_concurrent_object_update_network(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        self._test_staledata_error_on_concurrent_object_update(
+            models_v2.Network, network['id'])
+
+    def test_staledata_error_on_concurrent_object_update_port(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        self._test_staledata_error_on_concurrent_object_update(
+            models_v2.Port, port['id'])
+
+    def test_staledata_error_on_concurrent_object_update_subnet(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        subnet = self._make_subnet(ctx, network.id)
+        self._test_staledata_error_on_concurrent_object_update(
+            models_v2.Subnet, subnet['id'])
+
+    def test_staledata_error_on_concurrent_object_update_subnetpool(self):
+        ctx = context.get_admin_context()
+        subnetpool = self._make_subnetpool(ctx)
+        self._test_staledata_error_on_concurrent_object_update(
+            models_v2.SubnetPool, subnetpool['id'])
+
+    def test_staledata_error_on_concurrent_object_update_router(self):
+        ctx = context.get_admin_context()
+        router = self._make_router(ctx)
+        self._test_staledata_error_on_concurrent_object_update(
+            l3_db.Router, router['id'])
+
+    def test_staledata_error_on_concurrent_object_update_floatingip(self):
+        ctx = context.get_admin_context()
+        network = self._make_network(ctx)
+        port = self._make_port(ctx, network.id)
+        flip = self._make_floating_ip(ctx, port.id)
+        self._test_staledata_error_on_concurrent_object_update(
+            l3_db.FloatingIP, flip['id'])
+
+    def test_staledata_error_on_concurrent_object_update_sg(self):
+        ctx = context.get_admin_context()
+        sg, rule = self._make_security_group_and_rule(ctx)
+        self._test_staledata_error_on_concurrent_object_update(
+            sgdb.SecurityGroup, sg['id'])
+        self._test_staledata_error_on_concurrent_object_update(
+            sgdb.SecurityGroupRule, rule['id'])
+
+    def _test_staledata_error_on_concurrent_object_update(self, model, dbid):
+        """Test revision compare and swap update breaking on concurrent update.
+
+        In this test we start an update of the name on a model in an eventlet
+        coroutine where it will be blocked before it can commit the results.
+        Then while it is blocked, we will update the description of the model
+        in the foregound and ensure that this results in the coroutine
+        receiving a StaleDataError as expected.
+        """
+        lock = functools.partial(lockutils.lock, uuidutils.generate_uuid())
+        self._blocked_on_lock = False
+
+        def _lock_blocked_name_update():
+            ctx = context.get_admin_context()
+            with ctx.session.begin():
+                thing = ctx.session.query(model).filter_by(id=dbid).one()
+                thing.bump_revision()
+                thing.name = 'newname'
+                self._blocked_on_lock = True
+                with lock():
+                    return thing
+
+        with lock():
+            coro = eventlet.spawn(_lock_blocked_name_update)
+            # wait for the coroutine to get blocked on the lock before
+            # we proceed to update the record underneath it
+            while not self._blocked_on_lock:
+                eventlet.sleep(0)
+            ctx = context.get_admin_context()
+            with ctx.session.begin():
+                thing = ctx.session.query(model).filter_by(id=dbid).one()
+                thing.bump_revision()
+                thing.description = 'a description'
+            revision_after_build = thing.revision_number
+
+        with testtools.ExpectedException(orm.exc.StaleDataError):
+            # the coroutine should have encountered a stale data error because
+            # the status update thread would have bumped the revision number
+            # while it was waiting to commit
+            coro.wait()
+        # another attempt should work fine
+        thing = _lock_blocked_name_update()
+        self.assertEqual('a description', thing.description)
+        self.assertEqual('newname', thing.name)
+        self.assertGreater(thing.revision_number, revision_after_build)
 
     def test_standardattr_removed_on_subnet_delete(self):
         ctx = context.get_admin_context()
