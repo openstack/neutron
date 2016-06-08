@@ -100,8 +100,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     """
 
     def dvr_update_router_addvm(self, context, port):
-        port_dict = self._core_plugin.get_port(context, port['id'])
-        port_host = port_dict['binding:host_id']
+        port_host = port[portbindings.HOST_ID]
         l3_agent_on_host = (self.get_l3_agents(
             context, filters={'host': [port_host]}) or [None])[0]
         if not l3_agent_on_host:
