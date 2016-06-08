@@ -1099,7 +1099,30 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                     self.adminContext, kwargs.get('port'))
             self.assertFalse(l3plugin.dvr_handle_new_service_port.called)
 
-    def test__notify_l3_agent_update_port_with_port_binding_change(self):
+    def test__notify_l3_agent_port_binding_change(self):
+        self._test__notify_l3_agent_port_binding_change()
+
+    def test__notify_l3_agent_port_binding_change_removed_routers(self):
+        router_to_remove = [{'agent_id': 'foo_agent',
+                             'router_id': 'foo_id',
+                             'host': 'vm-host1'}]
+        self._test__notify_l3_agent_port_binding_change(router_to_remove)
+
+    def test__notify_l3_agent_port_binding_change_removed_routers_fip(self):
+        fip = {'router_id': 'router_id'}
+        router_to_remove = [{'agent_id': 'foo_agent',
+                             'router_id': 'foo_id',
+                             'host': 'vm-host1'}]
+        self._test__notify_l3_agent_port_binding_change(router_to_remove, fip)
+
+    def test__notify_l3_agent_port_binding_change_with_fip(self):
+        fip = {'router_id': 'router_id'}
+        self._test__notify_l3_agent_port_binding_change(None, fip)
+
+    def _test__notify_l3_agent_port_binding_change(self,
+                                                   routers_to_remove=None,
+                                                   fip=None):
+        source_host = 'vm-host1'
         kwargs = {
             'context': self.adminContext,
             'original_port': {
@@ -1117,16 +1140,22 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                'get_service_plugins',
                                return_value={'L3_ROUTER_NAT': l3plugin}),\
                 mock.patch.object(l3plugin, 'dvr_deletens_if_no_port',
-                                  return_value=[{'agent_id': 'foo_agent',
-                                                 'router_id': 'foo_id'}]):
+                                  return_value=routers_to_remove),\
+                mock.patch.object(l3plugin, '_get_floatingip_on_port',
+                                  return_value=fip):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', mock.ANY, **kwargs)
-            l3plugin.remove_router_from_l3_agent.assert_called_once_with(
-                mock.ANY, 'foo_agent', 'foo_id')
+            if routers_to_remove:
+                (l3plugin.remove_router_from_l3_agent.assert_called_once_with(
+                    mock.ANY, 'foo_agent', 'foo_id'))
+                self.assertEqual(
+                    1,
+                    l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
+            if fip and not routers_to_remove:
+                (l3plugin.l3_rpc_notifier.routers_updated_on_host.
+                 assert_called_once_with(mock.ANY, ['router_id'], source_host))
             self.assertEqual(
                 1, l3plugin.update_arp_entry_for_dvr_service_port.call_count)
-            self.assertEqual(
-                1, l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
             l3plugin.dvr_handle_new_service_port.assert_called_once_with(
                 self.adminContext, kwargs.get('port'))
 
@@ -1160,7 +1189,9 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                return_value={'L3_ROUTER_NAT': l3plugin}),\
                 mock.patch.object(l3plugin, 'dvr_deletens_if_no_port',
                                   return_value=[{'agent_id': 'foo_agent',
-                                             'router_id': 'foo_id'}]):
+                                                 'router_id': 'foo_id'}]),\
+                mock.patch.object(l3plugin, '_get_floatingip_on_port',
+                                  return_value=None):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', plugin, **kwargs)
 
