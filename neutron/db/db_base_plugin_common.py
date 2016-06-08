@@ -89,10 +89,12 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                   {'ip_address': ip_address,
                    'network_id': network_id,
                    'subnet_id': subnet_id})
-        context.session.query(models_v2.IPAllocation).filter_by(
-            network_id=network_id,
-            ip_address=ip_address,
-            subnet_id=subnet_id).delete()
+        with context.session.begin(subtransactions=True):
+            for ipal in (context.session.query(models_v2.IPAllocation).
+                         filter_by(network_id=network_id,
+                                   ip_address=ip_address,
+                                   subnet_id=subnet_id)):
+                context.session.delete(ipal)
 
     @staticmethod
     def _store_ip_allocation(context, ip_address, network_id, subnet_id,

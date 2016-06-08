@@ -739,6 +739,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                        'subnet_id': 'some-id'}],
             remove=[{'ip_address': '192.168.1.10',
                      'subnet_id': 'some-id'}])
+        mocks['ipam']._delete_ip_allocation = mock.Mock()
         mocks['ipam']._make_port_dict = mock.Mock(return_value=old_port)
         mocks['ipam']._update_ips_for_port = mock.Mock(return_value=changes)
         mocks['ipam']._update_db_port = mock.Mock(
