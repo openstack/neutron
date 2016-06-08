@@ -15,6 +15,7 @@
 import os
 import re
 
+from neutron_lib.hacking import checks
 import pep8
 import six
 
@@ -54,7 +55,6 @@ _all_log_levels = {
     'exception': '_LE',
 }
 _all_hints = set(_all_log_levels.values())
-mutable_default_args = re.compile(r"^\s*def .+\((.+=\{\}|.+=\[\])")
 
 
 def _regex_for_level(level, hint):
@@ -70,7 +70,6 @@ log_translation_hint = re.compile(
 
 log_warn = re.compile(
     r"(.)*LOG\.(warn)\(\s*('|\"|_)")
-contextlib_nested = re.compile(r"^with (contextlib\.)?nested\(")
 unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
 unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
 
@@ -158,7 +157,7 @@ def check_no_contextlib_nested(logical_line, filename):
            "docs.python.org/2/library/contextlib.html#contextlib.nested for "
            "more information.")
 
-    if contextlib_nested.match(logical_line):
+    if checks.contextlib_nested.match(logical_line):
         yield(0, msg)
 
 
@@ -200,7 +199,7 @@ def check_asserttrue(logical_line, filename):
 @flake8ext
 def no_mutable_default_args(logical_line):
     msg = "N329: Method's default argument shouldn't be mutable!"
-    if mutable_default_args.match(logical_line):
+    if checks.mutable_default_args.match(logical_line):
         yield (0, msg)
 
 
