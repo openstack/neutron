@@ -1,0 +1,16 @@
+---
+prelude: >
+    Add options to designate external dns driver
+    of neutron for SSL based connections. This makes
+    it possible to use neutron with designate in scenario
+    where endpoints are SSL based. Users can specify to
+    skip cert validation or specify path to a valid cert
+    in [designate] section of neutron.conf file.
+features:
+  - Two new options are added to `[designate]` section to
+    support SSL.
+  - First option `insecure` allows to skip SSL validation
+    when creating a keystone session to initate a designate client.
+    Default value is False, which means to always verify connection.
+  - Second option `ca_cert` allows setting path to a valid cert file.
+    Default is None.
