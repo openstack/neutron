@@ -310,8 +310,7 @@ class _BaseObjectTestCase(object):
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = get_value(generator, ip_version)
-        obj = obj_cls(None, **fields)
-        return obj.modify_fields_to_db(fields)
+        return obj_cls.modify_fields_to_db(fields)
 
     @classmethod
     def generate_object_keys(cls, obj_cls):
@@ -350,7 +349,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 self.assertTrue(self._is_test_class(obj))
                 self.assertEqual(self.obj_fields[0], get_obj_db_fields(obj))
                 get_object_mock.assert_called_once_with(
-                    self.context, self._test_class.db_model, **obj_keys)
+                    self.context, self._test_class.db_model,
+                    **self._test_class.modify_fields_to_db(obj_keys))
 
     def test_get_object_missing_object(self):
         with mock.patch.object(obj_db_api, 'get_object', return_value=None):
@@ -403,8 +403,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self._validate_objects(self.db_objs, objs)
 
         mock_calls = [
-            mock.call(self.context, self._test_class.db_model, _pager=None,
-                      **self.valid_field_filter)
+            mock.call(
+                self.context, self._test_class.db_model, _pager=None,
+                **self._test_class.modify_fields_to_db(self.valid_field_filter)
+            )
         ]
         mock_calls.extend(self._get_synthetic_fields_get_objects_calls(
             [self.db_obj]))
@@ -519,7 +521,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_changes(self, update_mock):
-        fields_to_update = self.get_updatable_fields(self.db_obj)
+        fields_to_update = self.get_updatable_fields(
+            self._test_class.modify_fields_from_db(self.db_obj))
         if not fields_to_update:
             self.skipTest('No updatable fields found in test class %r' %
                           self._test_class)
@@ -532,13 +535,15 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 obj = self._test_class(self.context, **self.obj_fields[0])
                 # get new values and fix keys
                 update_mock.return_value = self.db_objs[1].copy()
-                for key, value in obj._get_composite_keys().items():
+                fixed_keys = self._test_class.modify_fields_to_db(
+                    obj._get_composite_keys())
+                for key, value in fixed_keys.items():
                     update_mock.return_value[key] = value
                 obj.update()
                 update_mock.assert_called_once_with(
                     self.context, self._test_class.db_model,
-                    fields_to_update,
-                    **obj._get_composite_keys())
+                    self._test_class.modify_fields_to_db(fields_to_update),
+                    **fixed_keys)
 
     @mock.patch.object(base.NeutronDbObject,
                        '_get_changed_persistent_fields',
@@ -580,7 +585,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self._check_equal(obj, self.obj_fields[0])
         delete_mock.assert_called_once_with(
             self.context, self._test_class.db_model,
-            **obj._get_composite_keys())
+            **self._test_class.modify_fields_to_db(obj._get_composite_keys()))
 
     @mock.patch(OBJECTS_BASE_OBJ_FROM_PRIMITIVE)
     def test_clean_obj_from_primitive(self, get_prim_m):

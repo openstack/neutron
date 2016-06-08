@@ -276,7 +276,10 @@ class NeutronDbObject(NeutronObject):
                                            missing_keys=missing_keys)
 
         with db_api.autonested_transaction(context.session):
-            db_obj = obj_db_api.get_object(context, cls.db_model, **kwargs)
+            db_obj = obj_db_api.get_object(
+                context, cls.db_model,
+                **cls.modify_fields_to_db(kwargs)
+            )
             if db_obj:
                 return cls._load_object(context, db_obj)
 
@@ -294,7 +297,9 @@ class NeutronDbObject(NeutronObject):
         cls.validate_filters(**kwargs)
         with db_api.autonested_transaction(context.session):
             db_objs = obj_db_api.get_objects(
-                context, cls.db_model, _pager=_pager, **kwargs)
+                context, cls.db_model, _pager=_pager,
+                **cls.modify_fields_to_db(kwargs)
+            )
             return [cls._load_object(context, db_obj) for db_obj in db_objs]
 
     @classmethod
@@ -371,7 +376,7 @@ class NeutronDbObject(NeutronObject):
         keys = {}
         for key in self.primary_keys:
             keys[key] = getattr(self, key)
-        return self.modify_fields_to_db(keys)
+        return keys
 
     def update_nonidentifying_fields(self, obj_data, reset_changes=False):
         """Updates non-identifying fields of an object.
@@ -400,9 +405,11 @@ class NeutronDbObject(NeutronObject):
                 db_obj = obj_db_api.update_object(
                     self.obj_context, self.db_model,
                     self.modify_fields_to_db(updates),
-                    **self._get_composite_keys())
+                    **self.modify_fields_to_db(
+                        self._get_composite_keys()))
                 self.from_db_object(db_obj)
 
     def delete(self):
         obj_db_api.delete_object(self.obj_context, self.db_model,
-                                 **self._get_composite_keys())
+                                 **self.modify_fields_to_db(
+                                     self._get_composite_keys()))

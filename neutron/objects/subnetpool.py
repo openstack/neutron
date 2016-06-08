@@ -63,12 +63,13 @@ class SubnetPool(base.NeutronDbObject):
             ]
         return fields
 
-    def modify_fields_to_db(self, fields):
-        result = super(SubnetPool, self).modify_fields_to_db(fields)
+    @classmethod
+    def modify_fields_to_db(cls, fields):
+        result = super(SubnetPool, cls).modify_fields_to_db(fields)
         if 'prefixes' in result:
             result['prefixes'] = [
                 models.SubnetPoolPrefix(cidr=str(prefix),
-                                        subnetpool_id=self.id)
+                                        subnetpool_id=result['id'])
                 for prefix in result['prefixes']
             ]
         return result
@@ -152,8 +153,9 @@ class SubnetPoolPrefix(base.NeutronDbObject):
 
     # TODO(ihrachys): get rid of it once we switch the db model to using CIDR
     # custom type
-    def modify_fields_to_db(self, fields):
-        result = super(SubnetPoolPrefix, self).modify_fields_to_db(fields)
+    @classmethod
+    def modify_fields_to_db(cls, fields):
+        result = super(SubnetPoolPrefix, cls).modify_fields_to_db(fields)
         if 'cidr' in result:
             result['cidr'] = str(result['cidr'])
         return result

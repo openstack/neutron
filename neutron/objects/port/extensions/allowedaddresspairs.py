@@ -36,8 +36,9 @@ class AllowedAddressPair(base.NeutronDbObject):
 
     # TODO(mhickey): get rid of it once we switch the db model to using
     # custom types.
-    def modify_fields_to_db(self, fields):
-        result = super(AllowedAddressPair, self).modify_fields_to_db(fields)
+    @classmethod
+    def modify_fields_to_db(cls, fields):
+        result = super(AllowedAddressPair, cls).modify_fields_to_db(fields)
         if 'ip_address' in result:
             result['ip_address'] = str(result['ip_address'])
         if 'mac_address' in result:
