@@ -83,13 +83,13 @@ from tenancy.
 
 Prior to the Mitaka release, there was implicitly only a single 'shared'
 address scope.  Arbitrary address overlap was allowed making it pretty much a
-"free for all".  To make things seem somewhat sane, normal tenants are not able
-to use routers to cross-plug networks from different tenants and NAT was used
+"free for all".  To make things seem somewhat sane, normal users are not able
+to use routers to cross-plug networks from different projects and NAT was used
 between internal networks and external networks.  It was almost as if each
-tenant had a private address scope.
+project had a private address scope.
 
 The problem is that this model cannot support use cases where NAT is not
-desired or supported (e.g. IPv6) or we want to allow different tenants to
+desired or supported (e.g. IPv6) or we want to allow different projects to
 cross-plug their networks.
 
 An AddressScope covers only one address family.  But, they work equally well
