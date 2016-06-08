@@ -281,7 +281,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
             target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
 
         attach_rbac_mock.assert_called_with(
-            obj_id, test_neutron_obj._context.tenant_id)
+            obj_id, test_neutron_obj.obj_context.tenant_id)
 
     @mock.patch.object(_test_class, 'attach_rbac')
     @mock.patch.object(obj_db_api, 'get_object',

@@ -345,7 +345,7 @@ class NeutronDbObject(NeutronObject):
             if len(objclass.foreign_keys.keys()) > 1:
                 raise NeutronSyntheticFieldMultipleForeignKeys(field=field)
             objs = objclass.get_objects(
-                self._context, **{
+                self.obj_context, **{
                     k: getattr(
                         self, v) for k, v in objclass.foreign_keys.items()})
             if isinstance(self.fields[field], obj_fields.ObjectField):
@@ -356,10 +356,10 @@ class NeutronDbObject(NeutronObject):
 
     def create(self):
         fields = self._get_changed_persistent_fields()
-        with db_api.autonested_transaction(self._context.session):
+        with db_api.autonested_transaction(self.obj_context.session):
             try:
                 db_obj = obj_db_api.create_object(
-                    self._context, self.db_model,
+                    self.obj_context, self.db_model,
                     self.modify_fields_to_db(fields))
             except obj_exc.DBDuplicateEntry as db_exc:
                 raise NeutronDbObjectDuplicateEntry(
@@ -396,13 +396,13 @@ class NeutronDbObject(NeutronObject):
         updates = self._validate_changed_fields(updates)
 
         if updates:
-            with db_api.autonested_transaction(self._context.session):
+            with db_api.autonested_transaction(self.obj_context.session):
                 db_obj = obj_db_api.update_object(
-                    self._context, self.db_model,
+                    self.obj_context, self.db_model,
                     self.modify_fields_to_db(updates),
                     **self._get_composite_keys())
                 self.from_db_object(db_obj)
 
     def delete(self):
-        obj_db_api.delete_object(self._context, self.db_model,
+        obj_db_api.delete_object(self.obj_context, self.db_model,
                                  **self._get_composite_keys())

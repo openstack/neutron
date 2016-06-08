@@ -77,7 +77,7 @@ class SubnetPool(base.NeutronDbObject):
         prefixes = [
             obj.cidr
             for obj in SubnetPoolPrefix.get_objects(
-                self._context,
+                self.obj_context,
                 subnetpool_id=self.id)
         ]
         setattr(self, 'prefixes', prefixes)
@@ -109,28 +109,28 @@ class SubnetPool(base.NeutronDbObject):
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def create(self):
         synthetic_changes = self._get_changed_synthetic_fields()
-        with db_api.autonested_transaction(self._context.session):
+        with db_api.autonested_transaction(self.obj_context.session):
             super(SubnetPool, self).create()
             if 'prefixes' in synthetic_changes:
                 for prefix in self.prefixes:
                     prefix = SubnetPoolPrefix(
-                        self._context, subnetpool_id=self.id, cidr=prefix)
+                        self.obj_context, subnetpool_id=self.id, cidr=prefix)
                     prefix.create()
             self.reload_prefixes()
 
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def update(self):
-        with db_api.autonested_transaction(self._context.session):
+        with db_api.autonested_transaction(self.obj_context.session):
             synthetic_changes = self._get_changed_synthetic_fields()
             super(SubnetPool, self).update()
             if synthetic_changes:
                 if 'prefixes' in synthetic_changes:
                     old = SubnetPoolPrefix.get_objects(
-                        self._context, subnetpool_id=self.id)
+                        self.obj_context, subnetpool_id=self.id)
                     for prefix in old:
                         prefix.delete()
                     for prefix in self.prefixes:
-                        prefix_obj = SubnetPoolPrefix(self._context,
+                        prefix_obj = SubnetPoolPrefix(self.obj_context,
                                                       subnetpool_id=self.id,
                                                       cidr=prefix)
                         prefix_obj.create()
