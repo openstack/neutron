@@ -17,10 +17,10 @@ from neutron.objects.extensions import port_security as base_ps
 
 
 @obj_base.VersionedObjectRegistry.register
-class PortSecurity(base_ps._PortSecurity):
+class NetworkPortSecurity(base_ps._PortSecurity):
     # Version 1.0: Initial version
     VERSION = "1.0"
 
-    fields_need_translation = {'id': 'port_id'}
+    fields_need_translation = {'id': 'network_id'}
 
-    db_model = models.PortSecurityBinding
+    db_model = models.NetworkSecurityBinding

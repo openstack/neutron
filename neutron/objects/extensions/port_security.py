@@ -10,17 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
+from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db.port_security import models
-from neutron.objects.extensions import port_security as base_ps
+from neutron.extensions import portsecurity
+from neutron.objects import base
 
 
-@obj_base.VersionedObjectRegistry.register
-class PortSecurity(base_ps._PortSecurity):
-    # Version 1.0: Initial version
-    VERSION = "1.0"
-
-    fields_need_translation = {'id': 'port_id'}
-
-    db_model = models.PortSecurityBinding
+class _PortSecurity(base.NeutronDbObject):
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'port_security_enabled': obj_fields.BooleanField(
+            default=portsecurity.DEFAULT_PORT_SECURITY),
+    }
