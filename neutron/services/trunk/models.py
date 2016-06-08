@@ -38,8 +38,6 @@ class SubPort(model_base.BASEV2):
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id',
                                       ondelete='CASCADE'),
-                        nullable=False,
-                        unique=True,
                         primary_key=True)
     port = sa.orm.relationship(
         models_v2.Port,
@@ -49,8 +47,7 @@ class SubPort(model_base.BASEV2):
     trunk_id = sa.Column(sa.String(36),
                          sa.ForeignKey('trunks.id',
                                        ondelete='CASCADE'),
-                         nullable=False,
-                         primary_key=True)
+                         nullable=False)
 
     segmentation_type = sa.Column(sa.String(32), nullable=False)
     segmentation_id = sa.Column(sa.Integer, nullable=False)
