@@ -167,7 +167,8 @@ class ResourceExtensionTest(base.BaseTestCase):
             return {'collection': 'value'}
 
     class DummySvcPlugin(wsgi.Controller):
-            def get_plugin_type(self):
+            @classmethod
+            def get_plugin_type(cls):
                 return constants.DUMMY
 
             def index(self, request, **kwargs):
@@ -215,7 +216,8 @@ class ResourceExtensionTest(base.BaseTestCase):
             def index(self, request):
                 return ""
 
-            def get_plugin_type(self):
+            @classmethod
+            def get_plugin_type(cls):
                 return constants.DUMMY
 
         res_ext = extensions.ResourceExtension(

@@ -180,7 +180,8 @@ class TagPluginBase(service_base.ServicePluginBase):
     def get_plugin_description(self):
         return "Tag support"
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return TAG_PLUGIN_TYPE
 
     @abc.abstractmethod

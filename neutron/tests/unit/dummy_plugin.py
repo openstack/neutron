@@ -95,7 +95,8 @@ class DummyServicePlugin(service_base.ServicePluginBase):
         self.svctype_mgr = servicetype_db.ServiceTypeManager.get_instance()
         self.dummys = {}
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return constants.DUMMY
 
     def get_plugin_description(self):

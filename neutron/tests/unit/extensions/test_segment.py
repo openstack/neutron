@@ -111,7 +111,8 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_plugin_description(self):
         return "Network Segments"
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return "segments"
 
     def create_port(self, context, port):

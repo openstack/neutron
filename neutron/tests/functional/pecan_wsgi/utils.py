@@ -156,8 +156,9 @@ class FakePlugin(object):
     PLUGIN_TYPE = 'fake-ext-plugin'
     supported_extension_aliases = ['fake-ext']
 
-    def get_plugin_type(self):
-        return self.PLUGIN_TYPE
+    @classmethod
+    def get_plugin_type(cls):
+        return cls.PLUGIN_TYPE
 
     def get_meh_meh(self, context, id_, fields=None):
         return {'fake': id_}

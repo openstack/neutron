@@ -33,5 +33,6 @@ class Plugin(db.AutoAllocatedTopologyMixin):
     def get_plugin_description(self):
         return "Auto Allocated Topology - aka get me a network."
 
-    def get_plugin_type(self):
+    @classmethod
+    def get_plugin_type(cls):
         return "auto-allocated-topology"
