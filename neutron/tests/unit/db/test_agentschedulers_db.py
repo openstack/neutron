@@ -261,7 +261,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         self.patched_l3_notify = self.l3_notify_p.start()
         self.l3_periodic_p = mock.patch('neutron.db.l3_agentschedulers_db.'
                                         'L3AgentSchedulerDbMixin.'
-                                        'start_periodic_l3_agent_status_check')
+                                        'add_periodic_l3_agent_status_check')
         self.patched_l3_periodic = self.l3_periodic_p.start()
         self.dhcp_notify_p = mock.patch(
             'neutron.extensions.dhcpagentscheduler.notify')
