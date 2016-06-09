@@ -542,7 +542,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             mock_notify.assert_called_once_with(
                 'router', 'before_update', self.mixin, **kwargs)
 
-    def _test_dvr_vmarp_table_update(self, device_owner, action):
+    def _test_update_arp_entry_for_dvr_service_port(
+            self, device_owner, action):
         with mock.patch.object(manager.NeutronManager, 'get_plugin') as gp,\
                 mock.patch.object(self.mixin, '_get_router') as grtr:
             plugin = mock.Mock()
@@ -570,21 +571,22 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             plugin.get_ports.return_value = [port, dvr_port]
             grtr.return_value = dvr_router
             dvr_router.extra_attributes.distributed = True
-            self.mixin.dvr_vmarp_table_update(self.ctx, port, action)
+            self.mixin.update_arp_entry_for_dvr_service_port(
+                self.ctx, port, action)
             if action == 'add':
                 self.assertEqual(3, l3_notify.add_arp_entry.call_count)
             elif action == 'del':
                 self.assertTrue(3, l3_notify.del_arp_entry.call_count)
 
-    def test_dvr_vmarp_table_update_with_service_port_added(self):
+    def test_update_arp_entry_for_dvr_service_port_added(self):
         action = 'add'
         device_owner = l3_const.DEVICE_OWNER_LOADBALANCER
-        self._test_dvr_vmarp_table_update(device_owner, action)
+        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
 
-    def test_dvr_vmarp_table_update_with_service_port_deleted(self):
+    def test_update_arp_entry_for_dvr_service_port_deleted(self):
         action = 'del'
         device_owner = l3_const.DEVICE_OWNER_LOADBALANCER
-        self._test_dvr_vmarp_table_update(device_owner, action)
+        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
 
     def test_add_router_interface_csnat_ports_failure(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,

@@ -656,12 +656,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     notifier(context, router_id, arp_table)
                     return
 
-    def dvr_vmarp_table_update(self, context, port_dict, action):
-        """Notify L3 agents of VM ARP table changes.
+    def update_arp_entry_for_dvr_service_port(
+            self, context, port_dict, action):
+        """Notify L3 agents of ARP table entry for dvr service port.
 
-        When a VM goes up or down, look for one DVR router on the port's
-        subnet, and send the VM's ARP details to all L3 agents hosting the
-        router.
+        When a dvr service port goes up or down, look for the DVR
+        router on the port's subnet, and send the ARP details to all
+        L3 agents hosting the router.
         """
 
         # Check this is a valid VM or service port
