@@ -204,14 +204,18 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         return self.obj_context.session.delete(shared_prev)
 
 
-def _update_post(self):
-    self.update_shared(self.shared, self.id)
+def _update_post(self, obj_changes):
+    if "shared" in obj_changes:
+        self.update_shared(self.shared, self.id)
 
 
 def _update_hook(self, update_orig):
     with db_api.autonested_transaction(self.obj_context.session):
+        # NOTE(slaweq): copy of object changes is required to pass it later to
+        # _update_post method because update() will reset all those changes
+        obj_changes = self.obj_get_changes()
         update_orig(self)
-        _update_post(self)
+        _update_post(self, obj_changes)
 
 
 def _create_post(self):
