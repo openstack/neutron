@@ -656,30 +656,40 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 notifier(context, router_id, arp_table)
                 return
 
-    def update_arp_entry_for_dvr_service_port(
-            self, context, port_dict, action):
+    def _should_update_arp_entry_for_dvr_service_port(self, port_dict):
+        # Check this is a valid VM or service port
+        return (n_utils.is_dvr_serviced(port_dict['device_owner']) and
+                port_dict['fixed_ips'])
+
+    def update_arp_entry_for_dvr_service_port(self, context, port_dict):
         """Notify L3 agents of ARP table entry for dvr service port.
 
-        When a dvr service port goes up or down, look for the DVR
-        router on the port's subnet, and send the ARP details to all
-        L3 agents hosting the router.
+        When a dvr service port goes up, look for the DVR router on
+        the port's subnet, and send the ARP details to all
+        L3 agents hosting the router to add it.
         """
-
-        # Check this is a valid VM or service port
-        if not (n_utils.is_dvr_serviced(port_dict['device_owner']) and
-                port_dict['fixed_ips']):
+        if not self._should_update_arp_entry_for_dvr_service_port(port_dict):
             return
         changed_fixed_ips = port_dict['fixed_ips']
         for fixed_ip in changed_fixed_ips:
-            if action == "add":
-                notifier = self.l3_rpc_notifier.add_arp_entry
-            elif action == "del":
-                notifier = self.l3_rpc_notifier.del_arp_entry
-            else:
-                return
-
             self._generate_arp_table_and_notify_agent(
-                context, fixed_ip, port_dict['mac_address'], notifier)
+                context, fixed_ip, port_dict['mac_address'],
+                self.l3_rpc_notifier.add_arp_entry)
+
+    def delete_arp_entry_for_dvr_service_port(self, context, port_dict):
+        """Notify L3 agents of ARP table entry for dvr service port.
+
+        When a dvr service port goes down, look for the DVR
+        router on the port's subnet, and send the ARP details to all
+        L3 agents hosting the router to delete it.
+        """
+        if not self._should_update_arp_entry_for_dvr_service_port(port_dict):
+            return
+        changed_fixed_ips = port_dict['fixed_ips']
+        for fixed_ip in changed_fixed_ips:
+            self._generate_arp_table_and_notify_agent(
+                context, fixed_ip, port_dict['mac_address'],
+                self.l3_rpc_notifier.del_arp_entry)
 
     def delete_csnat_router_interface_ports(self, context,
                                             router, subnet_id=None):
