@@ -119,8 +119,6 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             subnet_id=subnet_id
         )
         context.session.add(allocated)
-        # Flush now to ensure duplicates properly trigger retry
-        context.session.flush()
 
         # NOTE(kevinbenton): We add this to the session info so the sqlalchemy
         # object isn't immediately garbage collected. Otherwise when the
