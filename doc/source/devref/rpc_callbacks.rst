@@ -154,6 +154,15 @@ Starting at Mitaka, any agent interested in versioned objects via this API
 should report their resource/version tuples of interest (the resource type/
 version pairs they're subscribed to).
 
+The plugins interested in this RPC mechanism must inherit AgentDbMixin,
+since this mechanism is only intended to be used from agents at the moment,
+while it could be extended to be consumed from other components if necessary.
+
+The AgentDbMixin provides::
+
+   def get_agents_resource_versions(self, tracker):
+      ...
+
 Caching mechanism
 '''''''''''''''''
 The version subset per object will be cached to avoid DB requests on every push

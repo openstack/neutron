@@ -179,11 +179,6 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
 class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     """Mixin class to add agent extension to db_base_plugin_v2."""
 
-    def __init__(self, *args, **kwargs):
-        version_manager.set_consumer_versions_callback(
-            self._get_agents_resource_versions)
-        super(AgentDbMixin, self).__init__(*args, **kwargs)
-
     def _get_agent(self, context, id):
         try:
             agent = self._get_by_id(context, Agent, id)
@@ -428,14 +423,15 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                     filters={'admin_state_up': [True]})
         return filter(self.is_agent_considered_for_versions, up_agents)
 
-    def _get_agents_resource_versions(self, tracker):
+    def get_agents_resource_versions(self, tracker):
         """Get the known agent resource versions and update the tracker.
 
-        Receives a version_manager.ResourceConsumerTracker instance and it's
-        expected to look up in to the database and update every agent resource
-        versions.
+        This function looks up into the database and updates every agent
+        resource versions.
         This method is called from version_manager when the cached information
         has passed TTL.
+
+        :param tracker: receives a version_manager.ResourceConsumerTracker
         """
         for agent in self._get_agents_considered_for_versions():
             resource_versions = agent.get('resource_versions', {})
