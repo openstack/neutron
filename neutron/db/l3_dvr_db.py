@@ -643,18 +643,18 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Generates the arp table entry and notifies the l3 agent."""
         ip_address = fixed_ip['ip_address']
         subnet = fixed_ip['subnet_id']
-        filters = {'fixed_ips': {'subnet_id': [subnet]}}
+        filters = {'fixed_ips': {'subnet_id': [subnet]},
+                   'device_owner': [l3_const.DEVICE_OWNER_DVR_INTERFACE]}
         ports = self._core_plugin.get_ports(context, filters=filters)
         for port in ports:
-            if port['device_owner'] == l3_const.DEVICE_OWNER_DVR_INTERFACE:
-                router_id = port['device_id']
-                router_dict = self._get_router(context, router_id)
-                if router_dict.extra_attributes.distributed:
-                    arp_table = {'ip_address': ip_address,
-                                 'mac_address': mac_address,
-                                 'subnet_id': subnet}
-                    notifier(context, router_id, arp_table)
-                    return
+            router_id = port['device_id']
+            router_dict = self._get_router(context, router_id)
+            if router_dict.extra_attributes.distributed:
+                arp_table = {'ip_address': ip_address,
+                             'mac_address': mac_address,
+                             'subnet_id': subnet}
+                notifier(context, router_id, arp_table)
+                return
 
     def update_arp_entry_for_dvr_service_port(
             self, context, port_dict, action):
