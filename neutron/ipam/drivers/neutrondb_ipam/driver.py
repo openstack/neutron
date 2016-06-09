@@ -207,7 +207,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
                     netaddr.IPAddress(ip_range.last).format())
                 session.add(av_range)
 
-    def _generate_ip(self, session):
+    def _generate_ip(self, session, prefer_next=False):
         """Generate an IP address from the set of available addresses."""
         ip_allocations = netaddr.IPSet()
         for ipallocation in self.subnet_manager.list_allocations(session):
@@ -220,8 +220,11 @@ class NeutronDbSubnet(ipam_base.Subnet):
             if av_set.size == 0:
                 continue
 
-            # Compute a value for the selection window
-            window = min(av_set.size, 10)
+            if prefer_next:
+                window = 1
+            else:
+                # Compute a value for the selection window
+                window = min(av_set.size, 10)
             ip_index = random.randint(1, window)
             candidate_ips = list(itertools.islice(av_set, ip_index))
             allocated_ip = candidate_ips[-1]
@@ -246,7 +249,9 @@ class NeutronDbSubnet(ipam_base.Subnet):
             ip_address = str(address_request.address)
             self._verify_ip(session, ip_address)
         else:
-            ip_address, all_pool_id = self._generate_ip(session)
+            prefer_next = isinstance(address_request,
+                                     ipam_req.PreferNextAddressRequest)
+            ip_address, all_pool_id = self._generate_ip(session, prefer_next)
 
         # Create IP allocation request object
         # The only defined status at this stage is 'ALLOCATED'.

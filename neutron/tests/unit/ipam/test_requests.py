@@ -288,24 +288,35 @@ class TestAddressRequestFactory(base.BaseTestCase):
     def test_specific_address_request_is_loaded(self):
         for address in ('10.12.0.15', 'fffe::1'):
             ip = {'ip_address': address}
+            port = {'device_owner': 'compute:None'}
             self.assertIsInstance(
-                ipam_req.AddressRequestFactory.get_request(None, None, ip),
+                ipam_req.AddressRequestFactory.get_request(None, port, ip),
                 ipam_req.SpecificAddressRequest)
 
     def test_any_address_request_is_loaded(self):
         for addr in [None, '']:
             ip = {'ip_address': addr}
+            port = {'device_owner': 'compute:None'}
             self.assertIsInstance(
-                ipam_req.AddressRequestFactory.get_request(None, None, ip),
+                ipam_req.AddressRequestFactory.get_request(None, port, ip),
                 ipam_req.AnyAddressRequest)
 
     def test_automatic_address_request_is_loaded(self):
         ip = {'mac': '6c:62:6d:de:cf:49',
               'subnet_cidr': '2001:470:abcd::/64',
               'eui64_address': True}
+        port = {'device_owner': 'compute:None'}
         self.assertIsInstance(
-            ipam_req.AddressRequestFactory.get_request(None, None, ip),
+            ipam_req.AddressRequestFactory.get_request(None, port, ip),
             ipam_req.AutomaticAddressRequest)
+
+    def test_prefernext_address_request_on_dhcp_port(self):
+        ip = {}
+        port = {'device_owner': 'network:dhcp'}
+        self.assertIsInstance(
+            ipam_req.AddressRequestFactory.get_request(None, port, ip),
+            ipam_req.PreferNextAddressRequest)
+
 
 
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):

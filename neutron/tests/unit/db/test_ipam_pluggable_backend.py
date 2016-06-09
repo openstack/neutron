@@ -75,6 +75,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             'driver': mock.Mock(),
             'subnet': mock.Mock(),
             'subnets': mock.Mock(),
+            'port': {'device_owner': 'compute:None'},
             'subnet_request': ipam_req.SpecificSubnetRequest(
                 self.tenant_id,
                 self.subnet_id,
@@ -195,7 +196,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             ips[0]['ip_address'] = ip
 
         allocated_ips = mocks['ipam']._ipam_allocate_ips(
-            mock.ANY, mocks['driver'], mock.ANY, ips)
+            mock.ANY, mocks['driver'], mocks['port'], ips)
 
         mocks['driver'].get_allocator.assert_called_once_with([subnet])
 
@@ -262,7 +263,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             subnet_id, auto_ip='172.23.128.94')
 
         mocks['ipam']._ipam_allocate_ips(
-            mock.ANY, mocks['driver'], mock.ANY, ips)
+            mock.ANY, mocks['driver'], mocks['port'], ips)
         get_calls = [mock.call([data[ip][1]]) for ip in data]
         mocks['driver'].get_allocator.assert_has_calls(
             get_calls, any_order=True)
@@ -292,7 +293,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                           mocks['ipam']._ipam_allocate_ips,
                           mock.ANY,
                           mocks['driver'],
-                          mock.ANY,
+                          mocks['port'],
                           ips)
 
         # get_subnet should be called only for the first two networks
