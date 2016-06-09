@@ -316,13 +316,13 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         try:
             # Check if the IPs need to be updated
             network_id = db_port['network_id']
+            for ip in changes.remove:
+                self._delete_ip_allocation(context, network_id,
+                                           ip['subnet_id'], ip['ip_address'])
             for ip in changes.add:
                 self._store_ip_allocation(
                     context, ip['ip_address'], network_id,
                     ip['subnet_id'], db_port.id)
-            for ip in changes.remove:
-                self._delete_ip_allocation(context, network_id,
-                                           ip['subnet_id'], ip['ip_address'])
             self._update_db_port(context, db_port, new_port, network_id,
                                  new_mac)
         except Exception:
