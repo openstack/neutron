@@ -21,6 +21,7 @@ import webob.exc
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron.db import agents_db
+from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
@@ -36,6 +37,8 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 SERVICE_PLUGIN_KLASS = 'neutron.services.segments.plugin.Plugin'
 TEST_PLUGIN_KLASS = (
     'neutron.tests.unit.extensions.test_segment.SegmentTestPlugin')
+DHCP_HOSTA = 'dhcp-host-a'
+DHCP_HOSTB = 'dhcp-host-b'
 
 
 class SegmentTestExtensionManager(object):
@@ -894,3 +897,92 @@ class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
     def setUp(self):
         super(TestSegmentAwareIpamML2, self).setUp(
             plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+
+
+class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
+
+    _mechanism_drivers = ['openvswitch', 'logger']
+    mock_path = 'neutron.services.segments.db.update_segment_host_mapping'
+
+    def setUp(self):
+        super(TestDhcpAgentSegmentScheduling, self).setUp()
+        self.dhcp_agent_db = agentschedulers_db.DhcpAgentSchedulerDbMixin()
+        self.ctx = context.get_admin_context()
+
+    def _test_create_network_and_segment(self, phys_net):
+        with self.network() as net:
+            network = net['network']
+        segment = self._test_create_segment(network_id=network['id'],
+                                            physical_network=phys_net,
+                                            segmentation_id=200,
+                                            network_type='vxlan')
+        dhcp_agents = self.dhcp_agent_db.get_dhcp_agents_hosting_networks(
+            self.ctx, [network['id']])
+        self.assertEqual(0, len(dhcp_agents))
+        return network, segment['segment']
+
+    def _test_create_subnet(self, network, segment, cidr=None,
+                            enable_dhcp=True):
+        cidr = cidr or '10.0.0.0/24'
+        ip_version = 4
+        with self.subnet(network={'network': network},
+                         segment_id=segment['id'],
+                         ip_version=ip_version,
+                         cidr=cidr,
+                         enable_dhcp=enable_dhcp) as subnet:
+            pass
+        return subnet['subnet']
+
+    def _register_dhcp_agents(self, hosts=None):
+        hosts = hosts or [DHCP_HOSTA, DHCP_HOSTB]
+        for host in hosts:
+            helpers.register_dhcp_agent(host)
+
+    def test_network_scheduling_on_segment_creation(self):
+        self._register_dhcp_agents()
+        self._test_create_network_and_segment('phys_net1')
+
+    def test_segment_scheduling_no_host_mapping(self):
+        self._register_dhcp_agents()
+        network, segment = self._test_create_network_and_segment('phys_net1')
+        self._test_create_subnet(network, segment)
+        dhcp_agents = self.dhcp_agent_db.get_dhcp_agents_hosting_networks(
+            self.ctx, [network['id']])
+        self.assertEqual(0, len(dhcp_agents))
+
+    def test_segment_scheduling_with_host_mapping(self):
+        phys_net1 = 'phys_net1'
+        self._register_dhcp_agents()
+        network, segment = self._test_create_network_and_segment(phys_net1)
+        self._register_agent(DHCP_HOSTA,
+                             mappings={phys_net1: 'br-eth-1'},
+                             plugin=self.plugin)
+        self._test_create_subnet(network, segment)
+        dhcp_agents = self.dhcp_agent_db.get_dhcp_agents_hosting_networks(
+            self.ctx, [network['id']])
+        self.assertEqual(1, len(dhcp_agents))
+        self.assertEqual(DHCP_HOSTA, dhcp_agents[0]['host'])
+
+    def test_segment_scheduling_with_multiple_host_mappings(self):
+        phys_net1 = 'phys_net1'
+        phys_net2 = 'phys_net2'
+        self._register_dhcp_agents([DHCP_HOSTA, DHCP_HOSTB, 'MEHA', 'MEHB'])
+        network, segment1 = self._test_create_network_and_segment(phys_net1)
+        segment2 = self._test_create_segment(network_id=network['id'],
+                                             physical_network=phys_net2,
+                                             segmentation_id=200,
+                                             network_type='vxlan')['segment']
+        self._register_agent(DHCP_HOSTA,
+                             mappings={phys_net1: 'br-eth-1'},
+                             plugin=self.plugin)
+        self._register_agent(DHCP_HOSTB,
+                             mappings={phys_net2: 'br-eth-1'},
+                             plugin=self.plugin)
+        self._test_create_subnet(network, segment1)
+        self._test_create_subnet(network, segment2, cidr='11.0.0.0/24')
+        dhcp_agents = self.dhcp_agent_db.get_dhcp_agents_hosting_networks(
+            self.ctx, [network['id']])
+        self.assertEqual(2, len(dhcp_agents))
+        agent_hosts = [agent['host'] for agent in dhcp_agents]
+        self.assertIn(DHCP_HOSTA, agent_hosts)
+        self.assertIn(DHCP_HOSTB, agent_hosts)

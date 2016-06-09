@@ -77,7 +77,9 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                'network_id': segment_db['network_id'],
                db.PHYSICAL_NETWORK: segment_db[db.PHYSICAL_NETWORK],
                db.NETWORK_TYPE: segment_db[db.NETWORK_TYPE],
-               db.SEGMENTATION_ID: segment_db[db.SEGMENTATION_ID]}
+               db.SEGMENTATION_ID: segment_db[db.SEGMENTATION_ID],
+               'hosts': [mapping.host for mapping in
+                         segment_db.segment_host_mapping]}
         return self._fields(res, fields)
 
     def _get_segment(self, context, segment_id):

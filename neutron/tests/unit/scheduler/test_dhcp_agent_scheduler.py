@@ -28,6 +28,7 @@ from neutron.db import models_v2
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
+from neutron.services.segments import db as segments_service_db
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit import testlib_api
@@ -405,6 +406,8 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         self.plugin.network_scheduler = importutils.import_object(
             weight_scheduler)
         cfg.CONF.set_override("dhcp_load_type", "networks")
+        self.segments_plugin = importutils.import_object(
+            'neutron.services.segments.plugin.Plugin')
         self.ctx = context.get_admin_context()
 
     def _create_network(self):
@@ -415,6 +418,15 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
                          'admin_state_up': True,
                          'shared': True}})
         return net['id']
+
+    def _create_segment(self, network_id):
+        seg = self.segments_plugin.create_segment(
+            self.ctx,
+            {'segment': {'network_id': network_id,
+                         'physical_network': constants.ATTR_NOT_SPECIFIED,
+                         'network_type': 'meh',
+                         'segmentation_id': constants.ATTR_NOT_SPECIFIED}})
+        return seg['id']
 
     def test_scheduler_one_agents_per_network(self):
         net_id = self._create_network()
@@ -468,6 +480,85 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual('host-c', agent2[0]['host'])
         self.assertEqual('host-d', agent3[0]['host'])
 
+    def test_schedule_segment_one_hostable_agent(self):
+        net_id = self._create_network()
+        seg_id = self._create_segment(net_id)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_C, {seg_id})
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        agents = self.plugin.network_scheduler.schedule(
+            self.plugin, self.ctx, net)
+        self.assertEqual(1, len(agents))
+        self.assertEqual(HOST_C, agents[0].host)
+
+    def test_schedule_segment_many_hostable_agents(self):
+        net_id = self._create_network()
+        seg_id = self._create_segment(net_id)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_C, {seg_id})
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_D, {seg_id})
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        agents = self.plugin.network_scheduler.schedule(
+            self.plugin, self.ctx, net)
+        self.assertEqual(1, len(agents))
+        self.assertIn(agents[0].host, [HOST_C, HOST_D])
+
+    def test_schedule_segment_no_host_mapping(self):
+        net_id = self._create_network()
+        seg_id = self._create_segment(net_id)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        agents = self.plugin.network_scheduler.schedule(
+            self.plugin, self.ctx, net)
+        self.assertEqual(0, len(agents))
+
+    def test_schedule_segment_two_agents_per_segment(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        net_id = self._create_network()
+        seg_id = self._create_segment(net_id)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_C, {seg_id})
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_D, {seg_id})
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        agents = self.plugin.network_scheduler.schedule(
+            self.plugin, self.ctx, net)
+        self.assertEqual(2, len(agents))
+        self.assertIn(agents[0].host, [HOST_C, HOST_D])
+        self.assertIn(agents[1].host, [HOST_C, HOST_D])
+
+    def test_schedule_segment_two_agents_per_segment_one_hostable_agent(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        net_id = self._create_network()
+        seg_id = self._create_segment(net_id)
+        helpers.register_dhcp_agent(HOST_C)
+        helpers.register_dhcp_agent(HOST_D)
+        segments_service_db.update_segment_host_mapping(
+            self.ctx, HOST_C, {seg_id})
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        agents = self.plugin.network_scheduler.schedule(
+            self.plugin, self.ctx, net)
+        self.assertEqual(1, len(agents))
+        self.assertEqual(HOST_C, agents[0].host)
+
 
 class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
                               sched_db.DhcpAgentSchedulerDbMixin):
@@ -517,6 +608,10 @@ class TestDhcpSchedulerFilter(TestDhcpSchedulerBaseTestCase,
         self._test_get_dhcp_agents_hosting_networks({'host-a', 'host-b',
                                                      'host-c', 'host-d'},
                                                     networks=networks)
+
+    def test_get_dhcp_agents_host_network_filter_by_hosts(self):
+        self._test_get_dhcp_agents_hosting_networks({'host-a'},
+                                                    hosts=['host-a'])
 
 
 class DHCPAgentAZAwareWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
