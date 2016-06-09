@@ -326,12 +326,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if segment_id:
             query = context.session.query(segments_db.NetworkSegment)
             query = query.filter(segments_db.NetworkSegment.id == segment_id)
-            segment = query.one()
-            if segment.network_id != network_id:
+            segment_model = query.one()
+            if segment_model.network_id != network_id:
                 raise segment_exc.NetworkIdsDontMatch(
                     subnet_network=network_id,
                     segment_id=segment_id)
-            if segment.is_dynamic:
+            if segment_model.is_dynamic:
                 raise segment_exc.SubnetCantAssociateToDynamicSegment()
 
     def _get_subnet_for_fixed_ip(self, context, fixed, subnets):
