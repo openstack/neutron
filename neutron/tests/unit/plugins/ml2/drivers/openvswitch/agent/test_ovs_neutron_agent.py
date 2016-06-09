@@ -232,38 +232,54 @@ class TestOvsNeutronAgent(object):
             self.assertEqual(expected,
                              self.agent.agent_state['agent_type'])
 
-    def _test_restore_local_vlan_maps(self, tag, segmentation_id='1'):
-        port = mock.Mock()
-        port.port_name = 'fake_port'
-        net_uuid = 'fake_network_id'
-        local_vlan_map = {'net_uuid': net_uuid,
-                          'network_type': 'vlan',
-                          'physical_network': 'fake_network'}
+    def _test_restore_local_vlan_maps(self, tag1, tag2, segmentation_id='1'):
+        port1 = mock.Mock()
+        port2 = mock.Mock()
+        port1.port_name = 'fake_port1'
+        port2.port_name = 'fake_port2'
+        net_uuid1 = 'fake_network_id1'
+        net_uuid2 = 'fake_network_id2'
+        local_vlan_map1 = {'net_uuid': net_uuid1,
+                           'network_type': 'vlan',
+                           'physical_network': 'fake_network'}
+        local_vlan_map2 = {'net_uuid': net_uuid2,
+                           'network_type': 'vlan',
+                           'physical_network': 'fake_network'}
+        port1_attrib = {'name': port1.port_name,
+                        'other_config': local_vlan_map1,
+                        'tag': tag1}
+        port2_attrib = {'name': port2.port_name,
+                        'other_config': local_vlan_map2,
+                        'tag': tag2}
         if segmentation_id is not None:
-            local_vlan_map['segmentation_id'] = segmentation_id
+            local_vlan_map1['segmentation_id'] = segmentation_id
+            local_vlan_map2['segmentation_id'] = segmentation_id
         with mock.patch.object(self.agent, 'int_br') as int_br:
-            int_br.get_vif_ports.return_value = [port]
-            int_br.get_ports_attributes.return_value = [{
-                'name': port.port_name, 'other_config': local_vlan_map,
-                'tag': tag
-            }]
+            int_br.get_vif_ports.return_value = [port1, port2]
+            int_br.get_ports_attributes.return_value = [port1_attrib,
+                                                        port2_attrib]
             self.agent._restore_local_vlan_map()
             expected_hints = {}
-            if tag:
-                expected_hints[net_uuid] = tag
+            if tag1:
+                expected_hints[net_uuid1] = tag1
+            if tag2:
+                expected_hints[net_uuid2] = tag2
             self.assertEqual(expected_hints, self.agent._local_vlan_hints)
 
     def test_restore_local_vlan_map_with_device_has_tag(self):
-        self._test_restore_local_vlan_maps(2)
+        self._test_restore_local_vlan_maps(2, 3)
+
+    def test_restore_local_vlan_map_with_device_has_tag_dup(self):
+        self._test_restore_local_vlan_maps(2, 2)
 
     def test_restore_local_vlan_map_with_device_no_tag(self):
-        self._test_restore_local_vlan_maps([])
+        self._test_restore_local_vlan_maps([], [])
 
     def test_restore_local_vlan_map_no_segmentation_id(self):
-        self._test_restore_local_vlan_maps(2, segmentation_id=None)
+        self._test_restore_local_vlan_maps(2, 2, segmentation_id=None)
 
     def test_restore_local_vlan_map_segmentation_id_compat(self):
-        self._test_restore_local_vlan_maps(2, segmentation_id='None')
+        self._test_restore_local_vlan_maps(2, 2, segmentation_id='None')
 
     def test_check_agent_configurations_for_dvr_raises(self):
         self.agent.enable_distributed_routing = True
