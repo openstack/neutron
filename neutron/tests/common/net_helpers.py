@@ -155,7 +155,7 @@ def _get_source_ports_from_ss_output(output):
     for line in output.splitlines():
         match = SS_SOURCE_PORT_PATTERN.match(line)
         if match:
-            ports.add(match.group('port'))
+            ports.add(int(match.group('port')))
     return ports
 
 
