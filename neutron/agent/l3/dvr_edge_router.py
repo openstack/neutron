@@ -29,12 +29,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
     def __init__(self, agent, host, *args, **kwargs):
         super(DvrEdgeRouter, self).__init__(agent, host, *args, **kwargs)
-        # NOTE: Initialize the snat_namespace object here.
-        # The namespace can be created later, just to align with the
-        # parent init.
-        self.snat_namespace = dvr_snat_ns.SnatNamespace(
-            self.router_id, self.agent_conf,
-            self.driver, self.use_ipv6)
+        self.snat_namespace = None
         self.snat_iptables_manager = None
 
     def external_gateway_added(self, ex_gw_port, interface_name):
@@ -160,11 +155,10 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         # TODO(mlavalle): in the near future, this method should contain the
         # code in the L3 agent that creates a gateway for a dvr. The first step
         # is to move the creation of the snat namespace here
-        if not self.snat_namespace:
-            self.snat_namespace = dvr_snat_ns.SnatNamespace(self.router['id'],
-                                                            self.agent_conf,
-                                                            self.driver,
-                                                            self.use_ipv6)
+        self.snat_namespace = dvr_snat_ns.SnatNamespace(self.router['id'],
+                                                        self.agent_conf,
+                                                        self.driver,
+                                                        self.use_ipv6)
         self.snat_namespace.create()
         return self.snat_namespace
 
