@@ -34,6 +34,7 @@ from neutron.common import utils
 from neutron import context as ncontext
 from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
@@ -70,19 +71,6 @@ AGENTS_SCHEDULER_OPTS = [
 ]
 
 cfg.CONF.register_opts(AGENTS_SCHEDULER_OPTS)
-
-
-class NetworkDhcpAgentBinding(model_base.BASEV2):
-    """Represents binding between neutron networks and DHCP agents."""
-
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey("networks.id", ondelete='CASCADE'),
-                           primary_key=True)
-    dhcp_agent = orm.relation(agents_db.Agent)
-    dhcp_agent_id = sa.Column(sa.String(36),
-                              sa.ForeignKey("agents.id",
-                                            ondelete='CASCADE'),
-                              primary_key=True)
 
 
 class AgentStatusCheckWorker(neutron_worker.NeutronWorker):
@@ -311,7 +299,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         """
         agent_dead_limit = datetime.timedelta(
             seconds=self.agent_dead_limit_seconds())
-        network_count = (context.session.query(NetworkDhcpAgentBinding).
+        network_count = (context.session.query(ndab_model.
+                                               NetworkDhcpAgentBinding).
                          filter_by(dhcp_agent_id=agent['id']).count())
         # amount of networks assigned to agent affect amount of time we give
         # it so startup. Tests show that it's more or less sage to assume
@@ -393,7 +382,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         context = ncontext.get_admin_context()
         try:
             down_bindings = (
-                context.session.query(NetworkDhcpAgentBinding).
+                context.session.query(ndab_model.NetworkDhcpAgentBinding).
                 join(agents_db.Agent).
                 filter(agents_db.Agent.heartbeat_timestamp < cutoff,
                        agents_db.Agent.admin_state_up))
@@ -453,13 +442,13 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             self, context, network_ids, active=None, admin_state_up=None):
         if not network_ids:
             return []
-        query = context.session.query(NetworkDhcpAgentBinding)
+        query = context.session.query(ndab_model.NetworkDhcpAgentBinding)
         query = query.options(orm.contains_eager(
-                              NetworkDhcpAgentBinding.dhcp_agent))
-        query = query.join(NetworkDhcpAgentBinding.dhcp_agent)
+                              ndab_model.NetworkDhcpAgentBinding.dhcp_agent))
+        query = query.join(ndab_model.NetworkDhcpAgentBinding.dhcp_agent)
         if network_ids:
             query = query.filter(
-                NetworkDhcpAgentBinding.network_id.in_(network_ids))
+                ndab_model.NetworkDhcpAgentBinding.network_id.in_(network_ids))
         if admin_state_up is not None:
             query = query.filter(agents_db.Agent.admin_state_up ==
                                  admin_state_up)
@@ -482,7 +471,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                 if id == dhcp_agent.id:
                     raise dhcpagentscheduler.NetworkHostedByDHCPAgent(
                         network_id=network_id, agent_id=id)
-            binding = NetworkDhcpAgentBinding()
+            binding = ndab_model.NetworkDhcpAgentBinding()
             binding.dhcp_agent_id = id
             binding.network_id = network_id
             context.session.add(binding)
@@ -495,10 +484,10 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                                        notify=True):
         agent = self._get_agent(context, id)
         try:
-            query = context.session.query(NetworkDhcpAgentBinding)
+            query = context.session.query(ndab_model.NetworkDhcpAgentBinding)
             binding = query.filter(
-                NetworkDhcpAgentBinding.network_id == network_id,
-                NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
+                ndab_model.NetworkDhcpAgentBinding.network_id == network_id,
+                ndab_model.NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
         except exc.NoResultFound:
             raise dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
                 network_id=network_id, agent_id=id)
@@ -525,8 +514,10 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                 context, network_id, agent.host)
 
     def list_networks_on_dhcp_agent(self, context, id):
-        query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == id)
+        query = context.session.query(
+            ndab_model.NetworkDhcpAgentBinding.network_id)
+        query = query.filter(
+            ndab_model.NetworkDhcpAgentBinding.dhcp_agent_id == id)
 
         net_ids = [item[0] for item in query]
         if net_ids:
@@ -547,8 +538,10 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
         if not services_available(agent.admin_state_up):
             return []
-        query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
+        query = context.session.query(
+            ndab_model.NetworkDhcpAgentBinding.network_id)
+        query = query.filter(
+            ndab_model.NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
 
         net_ids = [item[0] for item in query]
         if net_ids:

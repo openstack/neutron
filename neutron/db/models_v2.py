@@ -19,7 +19,7 @@ from sqlalchemy import sql
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
-from neutron.db import agentschedulers_db as agt
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import model_base
 from neutron.db import rbac_db_models
 
@@ -283,4 +283,4 @@ class Network(model_base.HasStandardAttributes, model_base.BASEV2,
     availability_zone_hints = sa.Column(sa.String(255))
     dhcp_agents = orm.relationship(
         'Agent', lazy='joined', viewonly=True,
-        secondary=agt.NetworkDhcpAgentBinding.__table__)
+        secondary=ndab_model.NetworkDhcpAgentBinding.__table__)

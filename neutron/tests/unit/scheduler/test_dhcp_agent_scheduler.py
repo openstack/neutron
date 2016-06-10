@@ -22,6 +22,7 @@ from oslo_utils import importutils
 import testscenarios
 
 from neutron import context
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import agentschedulers_db as sched_db
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
@@ -69,7 +70,7 @@ class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
         scheduler = dhcp_agent_scheduler.ChanceScheduler()
         scheduler.resource_filter.bind(self.ctx, agents, network_id)
         results = self.ctx.session.query(
-            sched_db.NetworkDhcpAgentBinding).filter_by(
+            ndab_model.NetworkDhcpAgentBinding).filter_by(
             network_id=network_id).all()
         self.assertEqual(len(agents), len(results))
         for result in results:
@@ -132,7 +133,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
 
     def _get_agent_binding_from_db(self, agent):
         return self.ctx.session.query(
-            sched_db.NetworkDhcpAgentBinding
+            ndab_model.NetworkDhcpAgentBinding
         ).filter_by(dhcp_agent_id=agent[0].id).all()
 
     def _test_auto_reschedule_vs_network_on_dead_agent(self,
@@ -285,7 +286,7 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
             plugin, self.ctx, host)
         self.assertEqual(expected_result, observed_ret_value)
         hosted_agents = self.ctx.session.query(
-            sched_db.NetworkDhcpAgentBinding).all()
+            ndab_model.NetworkDhcpAgentBinding).all()
         self.assertEqual(expected_hosted_agents, len(hosted_agents))
 
 
@@ -345,14 +346,14 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
 
     def test_filter_bindings(self):
         bindings = [
-            sched_db.NetworkDhcpAgentBinding(network_id='foo1',
-                                             dhcp_agent={'id': 'id1'}),
-            sched_db.NetworkDhcpAgentBinding(network_id='foo2',
-                                             dhcp_agent={'id': 'id1'}),
-            sched_db.NetworkDhcpAgentBinding(network_id='foo3',
-                                             dhcp_agent={'id': 'id2'}),
-            sched_db.NetworkDhcpAgentBinding(network_id='foo4',
-                                             dhcp_agent={'id': 'id2'})]
+            ndab_model.NetworkDhcpAgentBinding(network_id='foo1',
+                                               dhcp_agent={'id': 'id1'}),
+            ndab_model.NetworkDhcpAgentBinding(network_id='foo2',
+                                               dhcp_agent={'id': 'id1'}),
+            ndab_model.NetworkDhcpAgentBinding(network_id='foo3',
+                                               dhcp_agent={'id': 'id2'}),
+            ndab_model.NetworkDhcpAgentBinding(network_id='foo4',
+                                               dhcp_agent={'id': 'id2'})]
         with mock.patch.object(self, 'agent_starting_up',
                                side_effect=[True, False]):
             res = [b for b in self._filter_bindings(None, bindings)]
