@@ -263,14 +263,31 @@ class TestResourceController(TestRootController):
             self.assertIn(attribute, item)
         self.assertEqual(len(expected), len(item))
 
-    def test_get_collection_with_fields_selector(self):
-        list_resp = self.app.get('/v2.0/ports.json?fields=id&fields=name',
-                                 headers={'X-Project-Id': 'tenid'})
+    def _test_get_collection_with_fields_selector(self, fields=None):
+        fields = fields or []
+        query_params = ['fields=%s' % field for field in fields]
+        url = '/v2.0/ports.json'
+        if query_params:
+            url = '%s?%s' % (url, '&'.join(query_params))
+        list_resp = self.app.get(url, headers={'X-Project-Id': 'tenid'})
         self.assertEqual(200, list_resp.status_int)
         for item in jsonutils.loads(list_resp.body).get('ports', []):
-            self.assertIn('id', item)
-            self.assertIn('name', item)
-            self.assertEqual(2, len(item))
+            for field in fields:
+                self.assertIn(field, item)
+            if fields:
+                self.assertEqual(len(fields), len(item))
+            else:
+                for field in ('id', 'name', 'device_owner'):
+                    self.assertIn(field, item)
+
+    def test_get_collection_with_multiple_fields_selector(self):
+        self._test_get_collection_with_fields_selector(fields=['id', 'name'])
+
+    def test_get_collection_with_single_fields_selector(self):
+        self._test_get_collection_with_fields_selector(fields=['name'])
+
+    def test_get_collection_without_fields_selector(self):
+        self._test_get_collection_with_fields_selector(fields=[])
 
     def test_get_item_with_fields_selector(self):
         item_resp = self.app.get(
