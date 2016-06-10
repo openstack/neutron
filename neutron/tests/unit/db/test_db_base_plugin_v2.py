@@ -60,6 +60,8 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 DEVICE_OWNER_NOT_COMPUTE = constants.DEVICE_OWNER_DHCP
 
+TEST_TENANT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
+
 
 def optional_ctx(obj, fallback, **kwargs):
     if not obj:
@@ -105,7 +107,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # Save the attributes map in case the plugin will alter it
         # loading extensions
         self.useFixture(tools.AttributeMapMemento())
-        self._tenant_id = 'test-tenant'
+        self._tenant_id = TEST_TENANT_ID
 
         if not plugin:
             plugin = DB_PLUGIN_KLASS
@@ -6168,14 +6170,14 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.net_data = {'network': {'id': 'fake-id',
                                      'name': 'net1',
                                      'admin_state_up': True,
-                                     'tenant_id': 'test-tenant',
+                                     'tenant_id': TEST_TENANT_ID,
                                      'shared': False}}
 
     def test_create_network_with_default_status(self):
         net = self.plugin.create_network(self.context, self.net_data)
         default_net_create_status = 'ACTIVE'
         expected = [('id', 'fake-id'), ('name', 'net1'),
-                    ('admin_state_up', True), ('tenant_id', 'test-tenant'),
+                    ('admin_state_up', True), ('tenant_id', TEST_TENANT_ID),
                     ('shared', False), ('status', default_net_create_status)]
         for k, v in expected:
             self.assertEqual(net[k], v)
@@ -6213,7 +6215,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
 class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestNetworks, self).setUp()
-        self._tenant_id = 'test-tenant'
+        self._tenant_id = TEST_TENANT_ID
 
         # Update the plugin
         self.setup_coreplugin(DB_PLUGIN_KLASS)

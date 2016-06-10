@@ -56,6 +56,8 @@ from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.notifiers import nova as nova_notifier
+from neutron.objects import base as base_obj
+from neutron.objects import subnetpool as subnetpool_obj
 from neutron.plugins.common import constants as service_constants
 
 
@@ -81,6 +83,28 @@ def _check_subnet_not_used(context, subnet_id):
             resources.SUBNET, events.BEFORE_DELETE, None, **kwargs)
     except exceptions.CallbackFailure as e:
         raise exc.SubnetInUse(subnet_id=subnet_id, reason=e)
+
+
+def _update_subnetpool_dict(orig_pool, new_pool):
+    keys_to_update = (
+        set(orig_pool.fields.keys()) - set(orig_pool.synthetic_fields))
+    updated = {k: new_pool.get(k, orig_pool[k]) for k in keys_to_update}
+
+    new_prefixes = new_pool.get('prefixes', constants.ATTR_NOT_SPECIFIED)
+    if new_prefixes is not constants.ATTR_NOT_SPECIFIED:
+        orig_ip_set = netaddr.IPSet(orig_pool.prefixes)
+        new_ip_set = netaddr.IPSet(new_prefixes)
+        if not orig_ip_set.issubset(new_ip_set):
+            msg = _("Existing prefixes must be "
+                    "a subset of the new prefixes")
+            raise n_exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
+        new_ip_set.compact()
+        updated['prefixes'] = [str(prefix.cidr)
+                               for prefix in new_ip_set.iter_cidrs()]
+    else:
+        updated['prefixes'] = [str(prefix)
+                               for prefix in orig_pool.prefixes]
+    return updated
 
 
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
@@ -899,11 +923,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return [self._make_subnet_dict(subnet_db) for subnet_db in
                 self._get_subnets_by_network(context, network_id)]
 
-    def _create_subnetpool_prefix(self, context, cidr, subnetpool_id):
-        prefix_args = {'cidr': cidr, 'subnetpool_id': subnetpool_id}
-        subnetpool_prefix = models_v2.SubnetPoolPrefix(**prefix_args)
-        context.session.add(subnetpool_prefix)
-
     def _validate_address_scope_id(self, context, address_scope_id,
                                    subnetpool_id, sp_prefixes, ip_version):
         """Validate the address scope before associating.
@@ -934,14 +953,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 subnetpool_id=subnetpool_id, address_scope_id=address_scope_id,
                 ip_version=as_ip_version)
 
-        subnetpools = self._get_subnetpools_by_address_scope_id(
-            context, address_scope_id)
+        subnetpools = subnetpool_obj.SubnetPool.get_objects(
+            context, address_scope_id=address_scope_id)
 
         new_set = netaddr.IPSet(sp_prefixes)
         for sp in subnetpools:
             if sp.id == subnetpool_id:
                 continue
-            sp_set = netaddr.IPSet([prefix['cidr'] for prefix in sp.prefixes])
+            sp_set = netaddr.IPSet(sp.prefixes)
             if sp_set.intersection(new_set):
                 raise n_exc.AddressScopePrefixConflict()
 
@@ -974,8 +993,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.InvalidInput(error_message=msg)
 
     def create_subnetpool(self, context, subnetpool):
-        """Create a subnetpool"""
-
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
         if sp_reader.address_scope_id is constants.ATTR_NOT_SPECIFIED:
@@ -986,76 +1003,31 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         self._validate_address_scope_id(context, sp_reader.address_scope_id,
                                         id, sp_reader.prefixes,
                                         sp_reader.ip_version)
-        with context.session.begin(subtransactions=True):
-            pool_args = {'tenant_id': sp['tenant_id'],
-                         'id': sp_reader.id,
-                         'name': sp_reader.name,
-                         'ip_version': sp_reader.ip_version,
-                         'default_prefixlen':
-                         sp_reader.default_prefixlen,
-                         'min_prefixlen': sp_reader.min_prefixlen,
-                         'max_prefixlen': sp_reader.max_prefixlen,
-                         'is_default': sp_reader.is_default,
-                         'shared': sp_reader.shared,
-                         'default_quota': sp_reader.default_quota,
-                         'address_scope_id': sp_reader.address_scope_id,
-                         'description': sp_reader.description}
-            subnetpool = models_v2.SubnetPool(**pool_args)
-            context.session.add(subnetpool)
-            for prefix in sp_reader.prefixes:
-                self._create_subnetpool_prefix(context,
-                                               prefix,
-                                               subnetpool.id)
+        pool_args = {'tenant_id': sp['tenant_id'],
+                     'id': sp_reader.id,
+                     'name': sp_reader.name,
+                     'ip_version': sp_reader.ip_version,
+                     'default_prefixlen':
+                     sp_reader.default_prefixlen,
+                     'min_prefixlen': sp_reader.min_prefixlen,
+                     'max_prefixlen': sp_reader.max_prefixlen,
+                     'is_default': sp_reader.is_default,
+                     'shared': sp_reader.shared,
+                     'default_quota': sp_reader.default_quota,
+                     'address_scope_id': sp_reader.address_scope_id,
+                     'description': sp_reader.description,
+                     'prefixes': sp_reader.prefixes}
+        subnetpool = subnetpool_obj.SubnetPool(context, **pool_args)
+        subnetpool.create()
 
         return self._make_subnetpool_dict(subnetpool)
 
-    def _update_subnetpool_prefixes(self, context, prefix_list, id):
-        with context.session.begin(subtransactions=True):
-            context.session.query(models_v2.SubnetPoolPrefix).filter_by(
-                subnetpool_id=id).delete()
-            for prefix in prefix_list:
-                model_prefix = models_v2.SubnetPoolPrefix(cidr=prefix,
-                                                      subnetpool_id=id)
-                context.session.add(model_prefix)
-
-    def _updated_subnetpool_dict(self, model, new_pool):
-        updated = {}
-        new_prefixes = new_pool.get('prefixes', constants.ATTR_NOT_SPECIFIED)
-        orig_prefixes = [str(x.cidr) for x in model['prefixes']]
-        if new_prefixes is not constants.ATTR_NOT_SPECIFIED:
-            orig_set = netaddr.IPSet(orig_prefixes)
-            new_set = netaddr.IPSet(new_prefixes)
-            if not orig_set.issubset(new_set):
-                msg = _("Existing prefixes must be "
-                        "a subset of the new prefixes")
-                raise n_exc.IllegalSubnetPoolPrefixUpdate(msg=msg)
-            new_set.compact()
-            updated['prefixes'] = [str(x.cidr) for x in new_set.iter_cidrs()]
-        else:
-            updated['prefixes'] = orig_prefixes
-
-        for key in ['id', 'name', 'ip_version', 'min_prefixlen',
-                    'max_prefixlen', 'default_prefixlen', 'is_default',
-                    'shared', 'default_quota', 'address_scope_id',
-                    'standard_attr', 'description']:
-            self._write_key(key, updated, model, new_pool)
-        return updated
-
-    def _write_key(self, key, update, orig, new_dict):
-        new_val = new_dict.get(key, constants.ATTR_NOT_SPECIFIED)
-        if new_val is not constants.ATTR_NOT_SPECIFIED:
-            update[key] = new_dict[key]
-        else:
-            update[key] = orig[key]
-
     def update_subnetpool(self, context, id, subnetpool):
-        """Update a subnetpool"""
         new_sp = subnetpool['subnetpool']
 
         with context.session.begin(subtransactions=True):
-            orig_sp = self._get_subnetpool(context, id)
-            updated = self._updated_subnetpool_dict(orig_sp, new_sp)
-            updated['tenant_id'] = orig_sp.tenant_id
+            orig_sp = self._get_subnetpool(context, id=id)
+            updated = _update_subnetpool_dict(orig_sp, new_sp)
             reader = subnet_alloc.SubnetPoolReader(updated)
             if reader.is_default and not orig_sp.is_default:
                 self._check_default_subnetpool_exists(context,
@@ -1067,15 +1039,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._validate_address_scope_id(context, reader.address_scope_id,
                                             id, reader.prefixes,
                                             reader.ip_version)
-            address_scope_changed = (orig_sp.address_scope_id !=
-                                     reader.address_scope_id)
+            address_scope_changed = (
+                orig_sp.address_scope_id != reader.address_scope_id)
 
-            orig_sp.update(self._filter_non_model_columns(
-                                                      reader.subnetpool,
-                                                      models_v2.SubnetPool))
-            self._update_subnetpool_prefixes(context,
-                                             reader.prefixes,
-                                             id)
+            for k, v in dict(reader.subnetpool).items():
+                # TODO(ihrachys): we should probably have some helper method in
+                # base object to update just updatable fields
+                if k not in subnetpool_obj.SubnetPool.fields_no_update:
+                    orig_sp[k] = v
+            orig_sp.update()
 
         if address_scope_changed:
             # Notify about the update of subnetpool's address scope
@@ -1092,41 +1064,36 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return updated
 
     def get_subnetpool(self, context, id, fields=None):
-        """Retrieve a subnetpool."""
         subnetpool = self._get_subnetpool(context, id)
         return self._make_subnetpool_dict(subnetpool, fields)
 
     def get_subnetpools(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
-        """Retrieve list of subnetpools."""
-        marker_obj = self._get_marker_obj(context, 'subnetpool', limit, marker)
-        collection = self._get_collection(context, models_v2.SubnetPool,
-                                    self._make_subnetpool_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
-        return collection
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        subnetpools = subnetpool_obj.SubnetPool.get_objects(
+            context, _pager=pager, **filters)
+        return [
+            self._make_subnetpool_dict(pool, fields)
+            for pool in subnetpools
+        ]
 
     def get_default_subnetpool(self, context, ip_version):
         """Retrieve the default subnetpool for the given IP version."""
-        filters = {'is_default': [True],
-                   'ip_version': [ip_version]}
+        filters = {'is_default': True,
+                   'ip_version': ip_version}
         subnetpool = self.get_subnetpools(context, filters=filters)
         if subnetpool:
             return subnetpool[0]
 
     def delete_subnetpool(self, context, id):
-        """Delete a subnetpool."""
         with context.session.begin(subtransactions=True):
-            subnetpool = self._get_subnetpool(context, id)
+            subnetpool = self._get_subnetpool(context, id=id)
             subnets = self._get_subnets_by_subnetpool(context, id)
             if subnets:
                 reason = _("Subnet pool has existing allocations")
                 raise n_exc.SubnetPoolDeleteError(reason=reason)
-            context.session.delete(subnetpool)
+            subnetpool.delete()
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and

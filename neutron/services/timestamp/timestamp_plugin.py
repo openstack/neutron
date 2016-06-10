@@ -15,6 +15,7 @@
 from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
+from neutron.objects import base as base_obj
 from neutron.services import service_base
 from neutron.services.timestamp import timestamp_db as ts_db
 
@@ -41,6 +42,9 @@ class TimeStampPlugin(service_base.ServicePluginBase,
                 None,
                 None,
                 self._change_since_result_filter_hook)
+        # TODO(jlibosva): Move this to register_model_query_hook
+        base_obj.register_filter_hook_on_model(
+            models_v2.SubnetPool, ts_db.CHANGED_SINCE)
 
     @classmethod
     def get_plugin_type(cls):

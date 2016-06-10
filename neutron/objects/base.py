@@ -298,6 +298,20 @@ class NeutronDbObject(NeutronObject):
         obj.from_db_object(db_obj)
         return obj
 
+    def obj_load_attr(self, attrname):
+        """Set None for nullable fields that has unknown value.
+
+        In case model attribute is not present in database, value stored under
+        ``attrname'' field will be unknown. In such cases if the field
+        ``attrname'' is a nullable Field return None
+        """
+        try:
+            is_attr_nullable = self.fields[attrname].nullable
+        except KeyError:
+            return super(NeutronDbObject, self).obj_load_attr(attrname)
+        if is_attr_nullable:
+            self[attrname] = None
+
     @classmethod
     def get_object(cls, context, **kwargs):
         """

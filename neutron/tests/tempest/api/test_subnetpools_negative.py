@@ -267,3 +267,14 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
         self.assertRaises(lib_exc.BadRequest, self.client.update_subnetpool,
                           created_subnetpool['id'],
                           address_scope_id=address_scope['id'])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('2f66dc2f-cc32-4caa-91ec-0c0cd7c46d70')
+    def test_update_subnetpool_tenant_id(self):
+        subnetpool = self._create_subnetpool()
+        self.assertRaises(
+            lib_exc.BadRequest,
+            self.admin_client.update_subnetpool,
+            subnetpool['id'],
+            tenant_id=self.admin_client.tenant_id,
+        )
