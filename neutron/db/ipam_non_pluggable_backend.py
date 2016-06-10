@@ -233,6 +233,11 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 original["fixed_ips"], new_port['fixed_ips'],
                 original['mac_address'], db_port['device_owner'])
 
+            # Expire the fixed_ips of db_port in current transaction, because
+            # it will be changed in the following operation and the latest
+            # data is expected.
+            context.session.expire(db_port, ['fixed_ips'])
+
             # Update ips if necessary
             for ip in changes.add:
                 IpamNonPluggableBackend._store_ip_allocation(

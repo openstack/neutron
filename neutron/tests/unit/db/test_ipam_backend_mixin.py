@@ -14,11 +14,17 @@
 #    under the License.
 
 import mock
+import netaddr
 from neutron_lib import constants
+import webob.exc
 
 from neutron.common import constants as n_const
+from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
+from neutron.db import portbindings_db
+from neutron.extensions import portbindings
 from neutron.tests import base
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 class TestIpamBackendMixin(base.BaseTestCase):
@@ -156,3 +162,65 @@ class TestIpamBackendMixin(base.BaseTestCase):
                                                       self.owner_non_router)
         self.assertFalse(result)
         self.assertTrue(self.mixin._get_subnet.called)
+
+
+class TestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
+                 portbindings_db.PortBindingMixin):
+    __native_pagination_support = True
+    __native_sorting_support = True
+
+    supported_extension_aliases = ["binding"]
+
+    def get_plugin_description(self):
+        return "Test Plugin"
+
+    @classmethod
+    def get_plugin_type(cls):
+        return "test_plugin"
+
+    def create_port(self, context, port):
+        port_dict = super(TestPlugin, self).create_port(context, port)
+        self._process_portbindings_create_and_update(
+            context, port['port'], port_dict)
+        return port_dict
+
+
+class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+    def setUp(self, plugin=None):
+        if not plugin:
+            plugin = 'neutron.tests.unit.db.test_ipam_backend_mixin.TestPlugin'
+        super(TestPortUpdateIpam, self).setUp(plugin=plugin)
+
+    def test_port_update_allocate_from_net_subnet(self):
+        """Tests that a port can get address by updating fixed_ips"""
+        with self.network() as network:
+            pass
+
+        # Create a bound port with no IP address (since there is not subnet)
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        port = self.deserialize(self.fmt, response)
+
+        # Create the subnet and try to update the port to get an IP
+        with self.subnet(network=network) as subnet:
+            data = {'port': {
+                'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
+            port_id = port['port']['id']
+            port_req = self.new_update_request('ports', data, port_id)
+            response = port_req.get_response(self.api)
+            res = self.deserialize(self.fmt, response)
+
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+        self.assertEqual(1, len(res['port']['fixed_ips']))
+        ip = res['port']['fixed_ips'][0]['ip_address']
+        ip_net = netaddr.IPNetwork(subnet['subnet']['cidr'])
+        self.assertIn(ip, ip_net)
+
+
+class TestPortUpdateIpamML2(TestPortUpdateIpam):
+    def setUp(self):
+        super(TestPortUpdateIpamML2, self).setUp(
+            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')

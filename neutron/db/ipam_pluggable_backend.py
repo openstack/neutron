@@ -314,6 +314,11 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                 new_port['fixed_ips'],
                                                 new_mac)
         try:
+            # Expire the fixed_ips of db_port in current transaction, because
+            # it will be changed in the following operation and the latest
+            # data is expected.
+            context.session.expire(db_port, ['fixed_ips'])
+
             # Check if the IPs need to be updated
             network_id = db_port['network_id']
             for ip in changes.remove:
