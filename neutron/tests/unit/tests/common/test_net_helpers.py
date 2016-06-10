@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
+from neutron.common import constants as n_const
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 
@@ -35,10 +38,28 @@ LISTEN     0      128                      :::5672                    :::*
 ESTAB      0      0          ::ffff:127.0.0.1:4369      ::ffff:127.0.0.1:32965
 """
 
+ss_output_template = """
+LISTEN     0      10                127.0.0.1:%d                     *:*
+"""
+
 
 class PortAllocationTestCase(base.DietTestCase):
     def test__get_source_ports_from_ss_output(self):
         result = net_helpers._get_source_ports_from_ss_output(ss_output)
-        expected = {'6640', '46675', '5432', '3260', '3306', '22', '32965',
-                    '4369', '5672', '80'}
+        expected = {6640, 46675, 5432, 3260, 3306, 22, 32965,
+                    4369, 5672, 80}
         self.assertEqual(expected, result)
+
+    def test_get_free_namespace_port(self):
+        ss_output2 = ss_output
+        for p in range(1024, 65535):
+            ss_output2 += ss_output_template % p
+
+        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') \
+            as ipwrapper:
+            m = mock.MagicMock()
+            m.netns.execute.return_value = ss_output2
+            ipwrapper.return_value = m
+            result = net_helpers.get_free_namespace_port(
+                n_const.PROTO_NAME_TCP)
+            self.assertEqual(65535, result)
