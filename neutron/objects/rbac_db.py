@@ -302,6 +302,7 @@ class RbacNeutronMetaclass(type):
         mcs.update_synthetic_fields(bases, dct)
         mcs.replace_class_methods_with_hooks(bases, dct)
         cls = type(name, (RbacNeutronDbObjectMixin,) + bases, dct)
+        cls.add_extra_filter_name('shared')
         mcs.subscribe_to_rbac_events(cls)
 
         return cls

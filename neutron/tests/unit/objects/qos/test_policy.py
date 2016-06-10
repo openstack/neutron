@@ -397,3 +397,22 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertNotIn(rule_obj_dscp, policy_obj_v1_0.rules)
         #NOTE(mangelajo): we should not check .VERSION, since that's the
         #                 local version on the class definition
+
+    def test_filter_by_shared(self):
+        policy_obj = policy.QosPolicy(
+            self.context, name='shared-policy', shared=True)
+        policy_obj.create()
+
+        policy_obj = policy.QosPolicy(
+            self.context, name='private-policy', shared=False)
+        policy_obj.create()
+
+        shared_policies = policy.QosPolicy.get_objects(
+            self.context, shared=True)
+        self.assertEqual(1, len(shared_policies))
+        self.assertEqual('shared-policy', shared_policies[0].name)
+
+        private_policies = policy.QosPolicy.get_objects(
+            self.context, shared=False)
+        self.assertEqual(1, len(private_policies))
+        self.assertEqual('private-policy', private_policies[0].name)
