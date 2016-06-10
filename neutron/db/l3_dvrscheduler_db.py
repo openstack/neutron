@@ -429,6 +429,13 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                 }
                 _notify_port_delete(
                     event, resource, trigger, **removed_router_args)
+            fip = l3plugin._get_floatingip_on_port(context,
+                                                   port_id=original_port['id'])
+            if fip and not (removed_routers and
+                            fip['router_id'] in removed_routers):
+                l3plugin.l3_rpc_notifier.routers_updated_on_host(
+                    context, [fip['router_id']],
+                    original_port[portbindings.HOST_ID])
             if not is_new_device_dvr_serviced:
                 return
         is_new_port_binding_changed = (
