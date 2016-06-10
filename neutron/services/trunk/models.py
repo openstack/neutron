@@ -53,7 +53,6 @@ class SubPort(model_base.BASEV2):
     segmentation_id = sa.Column(sa.Integer, nullable=False)
 
     __table_args__ = (
-        sa.Index('ix_subports_trunk_id', 'trunk_id'),
         sa.UniqueConstraint(
             'trunk_id',
             'segmentation_type',
