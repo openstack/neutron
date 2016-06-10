@@ -13,10 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions
+from oslo_serialization import jsonutils
 from testtools import matchers
 from webob import exc
 
 from neutron.api import api_common as common
+from neutron.api.v2 import base as base_v2
+from neutron.common import exceptions as n_exc
 from neutron.tests import base
 
 
@@ -92,3 +96,28 @@ class APICommonTestCase(base.BaseTestCase):
                           self.controller._prepare_request_body,
                           body,
                           params)
+
+    def test_convert_exception_to_http_exc_multiple_different_codes(self):
+        e = n_exc.MultipleExceptions([exceptions.NetworkInUse(net_id='nid'),
+                                      exceptions.PortNotFound(port_id='pid')])
+        conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
+        self.assertIsInstance(conv, exc.HTTPConflict)
+        self.assertEqual(
+            ("HTTP 409 NetworkInUse: Unable to complete operation on network "
+             "nid. There are one or more ports still in use on the network.\n"
+             "HTTP 404 PortNotFound: Port pid could not be found."),
+            jsonutils.loads(conv.body)['NeutronError']['message'])
+
+    def test_convert_exception_to_http_exc_multiple_same_codes(self):
+        e = n_exc.MultipleExceptions([exceptions.NetworkNotFound(net_id='nid'),
+                                      exceptions.PortNotFound(port_id='pid')])
+        conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
+        self.assertIsInstance(conv, exc.HTTPNotFound)
+        self.assertEqual(
+            "Network nid could not be found.\nPort pid could not be found.",
+            jsonutils.loads(conv.body)['NeutronError']['message'])
+
+    def test_convert_exception_to_http_exc_multiple_empty_inner(self):
+        e = n_exc.MultipleExceptions([])
+        conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
+        self.assertIsInstance(conv, exc.HTTPInternalServerError)
