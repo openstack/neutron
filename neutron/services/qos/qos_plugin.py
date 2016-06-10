@@ -17,6 +17,7 @@ from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
+from neutron.objects import base as base_obj
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.notification_drivers import manager as driver_mgr
@@ -31,6 +32,9 @@ class QoSPlugin(qos.QoSPluginBase):
 
     """
     supported_extension_aliases = ['qos']
+
+    __native_pagination_support = True
+    __native_sorting_support = True
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
@@ -132,7 +136,9 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: QosPolicy objects meeting the search criteria
         """
-        return policy_object.QosPolicy.get_objects(context, **filters)
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        return policy_object.QosPolicy.get_objects(context, _pager=pager,
+                                                   **filters)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
@@ -273,4 +279,5 @@ class QoSPlugin(qos.QoSPluginBase):
             self._get_policy_obj(context, policy_id)
             filters = filters or dict()
             filters[qos_consts.QOS_POLICY_ID] = policy_id
-            return rule_obj.get_objects(context, **filters)
+            pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+            return rule_obj.get_objects(context, _pager=pager, **filters)
