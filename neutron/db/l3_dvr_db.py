@@ -33,6 +33,7 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.i18n import _LI, _LW
+from neutron.ipam import utils as ipam_utils
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
@@ -657,14 +658,31 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return (n_utils.is_dvr_serviced(port_dict['device_owner']) and
                 port_dict['fixed_ips'])
 
-    def _get_allowed_address_pair_fixed_ips(self, port_dict):
+    def _get_subnet_id_for_given_fixed_ip(
+        self, context, fixed_ip, port_dict):
+        """Returns the subnet_id that matches the fixedip on a network."""
+        filters = {'network_id': [port_dict['network_id']]}
+        subnets = self._core_plugin.get_subnets(context, filters)
+        for subnet in subnets:
+            if ipam_utils.check_subnet_ip(subnet['cidr'], fixed_ip):
+                return subnet['id']
+
+    def _get_allowed_address_pair_fixed_ips(self, context, port_dict):
         """Returns all fixed_ips associated with the allowed_address_pair."""
         aa_pair_fixed_ips = []
         if port_dict.get('allowed_address_pairs'):
             for address_pair in port_dict['allowed_address_pairs']:
                 aap_ip_cidr = address_pair['ip_address'].split("/")
                 if len(aap_ip_cidr) == 1 or int(aap_ip_cidr[1]) == 32:
-                    aa_pair_fixed_ips.append(aap_ip_cidr[0])
+                    subnet_id = self._get_subnet_id_for_given_fixed_ip(
+                        context, aap_ip_cidr[0], port_dict)
+                    if subnet_id is not None:
+                        fixed_ip = {'subnet_id': subnet_id,
+                                    'ip_address': aap_ip_cidr[0]}
+                        aa_pair_fixed_ips.append(fixed_ip)
+                    else:
+                        LOG.debug("Subnet does not match for the given "
+                                  "fixed_ip %s for arp update", aap_ip_cidr[0])
         return aa_pair_fixed_ips
 
     def update_arp_entry_for_dvr_service_port(self, context, port_dict):
@@ -680,7 +698,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             return
         fixed_ips = port_dict['fixed_ips']
         allowed_address_pair_fixed_ips = (
-            self._get_allowed_address_pair_fixed_ips(port_dict))
+            self._get_allowed_address_pair_fixed_ips(context, port_dict))
         changed_fixed_ips = fixed_ips + allowed_address_pair_fixed_ips
         for fixed_ip in changed_fixed_ips:
             self._generate_arp_table_and_notify_agent(
@@ -702,7 +720,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if not fixed_ips_to_delete:
             fixed_ips = port_dict['fixed_ips']
             allowed_address_pair_fixed_ips = (
-                self._get_allowed_address_pair_fixed_ips(port_dict))
+                self._get_allowed_address_pair_fixed_ips(context, port_dict))
             fixed_ips_to_delete = fixed_ips + allowed_address_pair_fixed_ips
         for fixed_ip in fixed_ips_to_delete:
             self._generate_arp_table_and_notify_agent(
