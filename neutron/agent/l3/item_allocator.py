@@ -65,6 +65,9 @@ class ItemAllocator(object):
         allocations to free the pool.  This final desperate step will not
         happen often in practice.
         """
+        if key in self.allocations:
+            return self.allocations[key]
+
         if key in self.remembered:
             self.allocations[key] = self.remembered.pop(key)
             return self.allocations[key]
