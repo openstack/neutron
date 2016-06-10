@@ -37,15 +37,14 @@ def upgrade():
         sa.UniqueConstraint('standard_attr_id')
     )
     op.create_table('subports',
-        sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.Column('port_id', sa.String(length=36)),
         sa.Column('trunk_id', sa.String(length=36), nullable=False),
         sa.Column('segmentation_type', sa.String(length=32), nullable=False),
         sa.Column('segmentation_id', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['trunk_id'], ['trunks.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('port_id', 'trunk_id'),
-        sa.UniqueConstraint('port_id'),
+        sa.PrimaryKeyConstraint('port_id'),
         sa.UniqueConstraint('trunk_id', 'segmentation_type', 'segmentation_id',
             name='uniq_subport0trunk_id0segmentation_type0segmentation_id')
     )
