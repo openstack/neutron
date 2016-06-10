@@ -485,8 +485,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Returns the portbinding host_id for dvr service port."""
         port_db = port or self._core_plugin.get_port(context, port_id)
         device_owner = port_db['device_owner'] if port_db else ""
-        if (n_utils.is_dvr_serviced(device_owner) or
-            device_owner == l3_const.DEVICE_OWNER_AGENT_GW):
+        if n_utils.is_dvr_serviced(device_owner):
             return port_db[portbindings.HOST_ID]
 
     def _get_agent_gw_ports_exist_for_network(
