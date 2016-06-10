@@ -22,10 +22,12 @@ from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
+import testtools
 
 from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron import context
+from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects import common_types
@@ -682,6 +684,10 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase):
+    def setUp(self):
+        super(BaseDbObjectTestCase, self).setUp()
+        self.useFixture(tools.CommonDbMixinHooksFixture())
+
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
         # implementation for networks
@@ -807,3 +813,60 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         obj = self._test_class.get_object(self.context,
                                           **obj._get_composite_keys())
         self.assertEqual(2, mock_commit.call_count)
+
+    def test_get_objects_supports_extra_filtername(self):
+        self.filtered_args = None
+        def foo_filter(query, filters):
+            self.filtered_args = filters
+            return query
+
+        self.obj_registry.register(self._test_class)
+        db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+            self._test_class.db_model,
+            'foo_filter',
+            None,
+            None,
+            foo_filter)
+        base.register_filter_hook_on_model(self._test_class.db_model, 'foo')
+
+        self._test_class.get_objects(self.context, foo=42)
+        self.assertEqual({'foo': [42]}, self.filtered_args)
+
+
+class UniqueObjectBase(test_base.BaseTestCase):
+     def setUp(self):
+        super(UniqueObjectBase, self).setUp()
+        obj_registry = self.useFixture(
+            fixture.VersionedObjectRegistryFixture())
+        self.db_model = FakeModel
+
+        class RegisteredObject(base.NeutronDbObject):
+            db_model = self.db_model
+
+        self.registered_object = RegisteredObject
+        obj_registry.register(self.registered_object)
+
+
+class GetObjectClassByModelTestCase(UniqueObjectBase):
+    def setUp(self):
+        super(GetObjectClassByModelTestCase, self).setUp()
+        self.not_registered_object = FakeSmallNeutronObject
+
+    def test_object_found_by_model(self):
+        found_obj = base.get_object_class_by_model(
+            self.registered_object.db_model)
+        self.assertIs(self.registered_object, found_obj)
+
+    def test_not_registed_object_raises_exception(self):
+        with testtools.ExpectedException(base.NeutronDbObjectNotFoundByModel):
+            base.get_object_class_by_model(self.not_registered_object.db_model)
+
+
+class RegisterFilterHookOnModelTestCase(UniqueObjectBase):
+    def test_filtername_is_added(self):
+        filter_name = 'foo'
+        self.assertNotIn(
+            filter_name, self.registered_object.extra_filter_names)
+        base.register_filter_hook_on_model(
+            FakeNeutronObject.db_model, filter_name)
+        self.assertIn(filter_name, self.registered_object.extra_filter_names)

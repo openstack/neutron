@@ -27,7 +27,10 @@ from neutron.db import model_base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import standardattributes
 
+_NO_DB_MODEL = object()
 
+
+#TODO(jlibosva): Move these classes to exceptions module
 class NeutronObjectUpdateForbidden(exceptions.NeutronException):
     message = _("Unable to update the following object fields: %(fields)s")
 
@@ -42,6 +45,10 @@ class NeutronDbObjectDuplicateEntry(exceptions.Conflict):
                                                   fully_qualified=False),
             attributes=db_exception.columns,
             values=db_exception.value)
+
+
+class NeutronDbObjectNotFoundByModel(exceptions.NotFound):
+    message = _("NeutronDbObject not found by model %(model)s.")
 
 
 class NeutronPrimaryKeyMissing(exceptions.BadRequest):
@@ -67,6 +74,19 @@ def get_updatable_fields(cls, fields):
         if field in fields:
             del fields[field]
     return fields
+
+
+def get_object_class_by_model(model):
+    for obj_class in obj_base.VersionedObjectRegistry.obj_classes().values():
+        obj_class = obj_class[0]
+        if getattr(obj_class, 'db_model', _NO_DB_MODEL) is model:
+            return obj_class
+    raise NeutronDbObjectNotFoundByModel(model=model.__name__)
+
+
+def register_filter_hook_on_model(model, filter_name):
+    obj_class = get_object_class_by_model(model)
+    obj_class.add_extra_filter_name(filter_name)
 
 
 class Pager(object):
@@ -98,6 +118,7 @@ class NeutronObject(obj_base.VersionedObject,
                     obj_base.ComparableVersionedObject):
 
     synthetic_fields = []
+    extra_filter_names = set()
 
     def __init__(self, context=None, **kwargs):
         super(NeutronObject, self).__init__(context, **kwargs)
@@ -139,9 +160,23 @@ class NeutronObject(obj_base.VersionedObject,
         raise NotImplementedError()
 
     @classmethod
+    def add_extra_filter_name(cls, filter_name):
+        """Register filter passed from API layer.
+
+        :param filter_name: Name of the filter passed in the URL
+
+        Filter names are validated in validate_filters() method which by
+        default allows filters based on fields' names.  Extensions can create
+        new filter names.  Such names must be registered to particular object
+        with this method.
+        """
+        cls.extra_filter_names.add(filter_name)
+
+    @classmethod
     def validate_filters(cls, **kwargs):
-        bad_filters = [key for key in kwargs
-                       if key not in cls.fields or cls.is_synthetic(key)]
+        bad_filters = {key for key in kwargs
+                       if key not in cls.fields or cls.is_synthetic(key)}
+        bad_filters.difference_update(cls.extra_filter_names)
         if bad_filters:
             bad_filters = ', '.join(bad_filters)
             msg = _("'%s' is not supported for filtering") % bad_filters
@@ -174,6 +209,8 @@ class DeclarativeObject(abc.ABCMeta):
         if (hasattr(cls, 'has_standard_attributes') and
                 cls.has_standard_attributes()):
             standardattributes.add_standard_attributes(cls)
+        # Instantiate extra filters per class
+        cls.extra_filter_names = set()
 
 
 @six.add_metaclass(DeclarativeObject)
