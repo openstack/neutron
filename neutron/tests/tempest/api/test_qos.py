@@ -831,3 +831,58 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         rules_ids = [r['id'] for r in rules]
         self.assertIn(rule1['id'], rules_ids)
         self.assertNotIn(rule2['id'], rules_ids)
+
+
+class QosSearchCriteriaTest(base.BaseSearchCriteriaTest,
+                            base.BaseAdminNetworkTest):
+
+    resource = 'policy'
+    plural_name = 'policies'
+
+    # Use unique description to isolate the tests from other QoS tests
+    list_kwargs = {'description': 'search-criteria-test'}
+    list_as_admin = True
+
+    @classmethod
+    @test.requires_ext(extension="qos", service="network")
+    def resource_setup(cls):
+        super(QosSearchCriteriaTest, cls).resource_setup()
+        for name in cls.resource_names:
+            cls.create_qos_policy(
+                name=name, description='search-criteria-test')
+
+    @test.idempotent_id('55fc0103-fdc1-4d34-ab62-c579bb739a91')
+    def test_list_sorts_asc(self):
+        self._test_list_sorts_asc()
+
+    @test.idempotent_id('13e08ac3-bfed-426b-892a-b3b158560c23')
+    def test_list_sorts_desc(self):
+        self._test_list_sorts_desc()
+
+    @test.idempotent_id('719e61cc-e33c-4918-aa4d-1a791e6e0e86')
+    def test_list_pagination(self):
+        self._test_list_pagination()
+
+    @test.idempotent_id('3bd8fb58-c0f8-4954-87fb-f286e1eb096a')
+    def test_list_pagination_with_marker(self):
+        self._test_list_pagination_with_marker()
+
+    @test.idempotent_id('3bad0747-8082-46e9-be4d-c428a842db41')
+    def test_list_pagination_with_href_links(self):
+        self._test_list_pagination_with_href_links()
+
+    @test.idempotent_id('d6a8bacd-d5e8-4ef3-bc55-23ca6998d208')
+    def test_list_pagination_page_reverse_asc(self):
+        self._test_list_pagination_page_reverse_asc()
+
+    @test.idempotent_id('0b9aecdc-2b27-421b-b104-53d24e905ae8')
+    def test_list_pagination_page_reverse_desc(self):
+        self._test_list_pagination_page_reverse_desc()
+
+    @test.idempotent_id('1a3dc257-dafd-4870-8c71-639ae7ddc6ea')
+    def test_list_pagination_page_reverse_with_href_links(self):
+        self._test_list_pagination_page_reverse_with_href_links()
+
+    @test.idempotent_id('40e09b53-4eb8-4526-9181-d438c8005a20')
+    def test_list_no_pagination_limit_0(self):
+        self._test_list_no_pagination_limit_0()
