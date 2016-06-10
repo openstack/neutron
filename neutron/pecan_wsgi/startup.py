@@ -38,7 +38,8 @@ def initialize_all():
     for resource, collection in router.RESOURCES.items():
         resource_registry.register_resource_by_name(resource)
         plugin = manager.NeutronManager.get_plugin()
-        new_controller = res_ctrl.CollectionsController(collection, resource)
+        new_controller = res_ctrl.CollectionsController(collection, resource,
+                                                        plugin=plugin)
         manager.NeutronManager.set_controller_for_resource(
             collection, new_controller)
         manager.NeutronManager.set_plugin_for_resource(resource, plugin)

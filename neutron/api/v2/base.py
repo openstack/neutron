@@ -138,14 +138,10 @@ class Controller(object):
         return getattr(self._plugin, native_bulk_attr_name, False)
 
     def _is_native_pagination_supported(self):
-        native_pagination_attr_name = ("_%s__native_pagination_support"
-                                       % self._plugin.__class__.__name__)
-        return getattr(self._plugin, native_pagination_attr_name, False)
+        return api_common.is_native_pagination_supported(self._plugin)
 
     def _is_native_sorting_supported(self):
-        native_sorting_attr_name = ("_%s__native_sorting_support"
-                                    % self._plugin.__class__.__name__)
-        return getattr(self._plugin, native_sorting_attr_name, False)
+        return api_common.is_native_sorting_supported(self._plugin)
 
     def _exclude_attributes_by_policy(self, context, data):
         """Identifies attributes to exclude according to authZ policies.

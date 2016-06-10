@@ -365,6 +365,122 @@ class TestResourceController(TestRootController):
         self._test_method_returns_code('delete', 405)
 
 
+class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
+
+    RESOURCE_COUNT = 6
+
+    def setUp(self):
+        cfg.CONF.set_override('allow_pagination', True)
+        cfg.CONF.set_override('allow_sorting', True)
+        super(TestPaginationAndSorting, self).setUp()
+        self.plugin = manager.NeutronManager.get_plugin()
+        self.ctx = context.get_admin_context()
+        self._create_networks(self.RESOURCE_COUNT)
+        self.networks = self._get_collection()['networks']
+
+    def _create_networks(self, count=1):
+        network_ids = []
+        for index in range(count):
+            network = {'name': 'pecannet-%d' % index, 'tenant_id': 'tenid',
+                       'shared': False, 'admin_state_up': True,
+                       'status': 'ACTIVE'}
+            network_id = self.plugin.create_network(
+                self.ctx, {'network': network})['id']
+            network_ids.append(network_id)
+        return network_ids
+
+    def _get_collection(self, collection=None, limit=None, marker=None,
+                        fields=None, page_reverse=False, sort_key=None,
+                        sort_dir=None):
+        collection = collection or 'networks'
+        fields = fields or []
+        query_params = []
+        if limit:
+            query_params.append('limit=%d' % limit)
+        if marker:
+            query_params.append('marker=%s' % marker)
+        if page_reverse:
+            query_params.append('page_reverse=True')
+        if sort_key:
+            query_params.append('sort_key=%s' % sort_key)
+        if sort_dir:
+            query_params.append('sort_dir=%s' % sort_dir)
+        query_params.extend(['%s%s' % ('fields=', field) for field in fields])
+        url = '/v2.0/%s.json' % collection
+        if query_params:
+            url = '%s?%s' % (url, '&'.join(query_params))
+        list_resp = self.app.get(url, headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, list_resp.status_int)
+        return list_resp.json
+
+    def _test_get_collection_with_pagination(self, expected_list,
+                                             collection=None,
+                                             limit=None, marker=None,
+                                             fields=None, page_reverse=False,
+                                             sort_key=None, sort_dir=None):
+        expected_list = expected_list or []
+        collection = collection or 'networks'
+        list_resp = self._get_collection(collection=collection, limit=limit,
+                                         marker=marker, fields=fields,
+                                         page_reverse=page_reverse,
+                                         sort_key=sort_key, sort_dir=sort_dir)
+        if limit and marker:
+            links_key = '%s_links' % collection
+            self.assertIn(links_key, list_resp)
+        list_resp_ids = [item['id'] for item in list_resp[collection]]
+        self.assertEqual(expected_list, list_resp_ids)
+        if fields:
+            for item in list_resp[collection]:
+                for field in fields:
+                    self.assertIn(field, item)
+
+    def test_get_collection_with_pagination_limit(self):
+        self._test_get_collection_with_pagination([self.networks[0]['id']],
+                                                  limit=1)
+
+    def test_get_collection_with_pagination_limit_over_count(self):
+        expected_ids = [network['id'] for network in self.networks]
+        self._test_get_collection_with_pagination(
+            expected_ids, limit=self.RESOURCE_COUNT + 1)
+
+    def test_get_collection_with_pagination_marker(self):
+        marker = self.networks[2]['id']
+        expected_ids = [network['id'] for network in self.networks[3:]]
+        self._test_get_collection_with_pagination(expected_ids, limit=3,
+                                                  marker=marker)
+
+    def test_get_collection_with_pagination_marker_without_limit(self):
+        marker = self.networks[2]['id']
+        expected_ids = [network['id'] for network in self.networks]
+        self._test_get_collection_with_pagination(expected_ids, marker=marker)
+
+    def test_get_collection_with_pagination_and_fields(self):
+        expected_ids = [network['id'] for network in self.networks[:2]]
+        self._test_get_collection_with_pagination(
+            expected_ids, limit=2, fields=['id', 'name'])
+
+    def test_get_collection_with_pagination_page_reverse(self):
+        marker = self.networks[2]['id']
+        expected_ids = [network['id'] for network in self.networks[:2]]
+        self._test_get_collection_with_pagination(expected_ids, limit=3,
+                                                  marker=marker,
+                                                  page_reverse=True)
+
+    def test_get_collection_with_sorting_desc(self):
+        nets = sorted(self.networks, key=lambda net: net['name'], reverse=True)
+        expected_ids = [network['id'] for network in nets]
+        self._test_get_collection_with_pagination(expected_ids,
+                                                  sort_key='name',
+                                                  sort_dir='desc')
+
+    def test_get_collection_with_sorting_asc(self):
+        nets = sorted(self.networks, key=lambda net: net['name'])
+        expected_ids = [network['id'] for network in nets]
+        self._test_get_collection_with_pagination(expected_ids,
+                                                  sort_key='name',
+                                                  sort_dir='asc')
+
+
 class TestRequestProcessing(TestRootController):
 
     def setUp(self):

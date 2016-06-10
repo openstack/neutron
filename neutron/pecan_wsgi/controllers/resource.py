@@ -98,13 +98,11 @@ class CollectionsController(utils.NeutronPecanController):
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
-        # NOTE(blogan): these are set in the FieldsAndFiltersHoook
-        fields = request.context['query_params'].get('fields')
-        filters = request.context['query_params'].get('filters')
+        # NOTE(blogan): query_params is set in the QueryParametersHook
+        query_params = request.context['query_params']
         lister = getattr(self.plugin, 'get_%s' % self.collection)
         neutron_context = request.context['neutron_context']
-        return {self.collection: lister(neutron_context,
-                fields=fields, filters=filters)}
+        return {self.collection: lister(neutron_context, **query_params)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')
