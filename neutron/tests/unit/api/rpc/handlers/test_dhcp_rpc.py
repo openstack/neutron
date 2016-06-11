@@ -45,19 +45,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.utils_p = mock.patch('neutron.plugins.common.utils.create_port')
         self.utils = self.utils_p.start()
 
-    def test_get_active_networks(self):
-        plugin_retval = [dict(id='a'), dict(id='b')]
-        self.plugin.get_networks.return_value = plugin_retval
-
-        networks = self.callbacks.get_active_networks(mock.Mock(), host='host')
-
-        self.assertEqual(networks, ['a', 'b'])
-        self.plugin.assert_has_calls(
-            [mock.call.get_networks(mock.ANY,
-                                    filters=dict(admin_state_up=[True]))])
-
-        self.assertEqual(len(self.log.mock_calls), 1)
-
     def test_group_by_network_id(self):
         port1 = {'network_id': 'a'}
         port2 = {'network_id': 'b'}
