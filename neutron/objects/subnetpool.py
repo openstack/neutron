@@ -35,7 +35,7 @@ class SubnetPool(base.NeutronDbObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
-        'tenant_id': obj_fields.UUIDField(nullable=True),
+        'tenant_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
         'default_prefixlen': common_types.IPNetworkPrefixLenField(),

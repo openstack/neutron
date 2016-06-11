@@ -48,7 +48,7 @@ class Trunk(base.NeutronDbObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
-        'tenant_id': obj_fields.UUIDField(),
+        'tenant_id': obj_fields.StringField(),
         'port_id': obj_fields.UUIDField(),
         'sub_ports': obj_fields.ListOfObjectsField(SubPort.__name__),
     }

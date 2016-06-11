@@ -29,7 +29,7 @@ class AddressScope(base.NeutronDbObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
-        'tenant_id': obj_fields.UUIDField(nullable=True),
+        'tenant_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(),
         'shared': obj_fields.BooleanField(),
         'ip_version': common_types.IPVersionEnumField(),
