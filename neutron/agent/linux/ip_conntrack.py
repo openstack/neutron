@@ -72,7 +72,7 @@ class IpConntrackManager(object):
                              extra_ok_codes=[1])
             except RuntimeError:
                 LOG.exception(
-                    _LE("Failed execute conntrack command %s"), str(cmd))
+                    _LE("Failed execute conntrack command %s"), cmd)
 
     def delete_conntrack_state_by_rule(self, device_info_list, rule):
         self._delete_conntrack_state(device_info_list, rule)
