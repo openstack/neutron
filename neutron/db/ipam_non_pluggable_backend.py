@@ -41,7 +41,7 @@ LOG = logging.getLogger(__name__)
 class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     @staticmethod
-    def _generate_ip(context, subnets, filtered_ips=None):
+    def _generate_ip(context, subnets, filtered_ips=None, prefer_next=False):
         """Generate an IP address.
 
         The IP address will be generated from one of the subnets defined on
@@ -84,7 +84,10 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
             # Compute a window size, select an index inside the window, then
             # select the IP address at the selected index within the window
-            window = min(av_set_size, 10)
+            if prefer_next:
+                window = 1
+            else:
+                window = min(av_set_size, 10)
             ip_index = random.randint(1, window)
             candidate_ips = list(itertools.islice(av_set, ip_index))
             if candidate_ips:
@@ -294,7 +297,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         self._validate_max_ips_per_port(fixed_ip_set, device_owner)
         return fixed_ip_set
 
-    def _allocate_fixed_ips(self, context, fixed_ips, mac_address):
+    def _allocate_fixed_ips(self, context, fixed_ips, mac_address,
+                            prefer_next=False):
         """Allocate IP addresses according to the configured fixed_ips."""
         ips = []
 
@@ -326,7 +330,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 else:
                     subnets = [subnet]
                     # IP address allocation
-                    result = self._generate_ip(context, subnets, allocated_ips)
+                    result = self._generate_ip(context, subnets, allocated_ips,
+                                               prefer_next)
                     allocated_ips.append(result['ip_address'])
                     ips.append({'ip_address': result['ip_address'],
                                 'subnet_id': result['subnet_id']})
@@ -378,6 +383,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)
 
+        # preserve previous behavior of DHCP ports choosing start of pool
+        prefer_next = p['device_owner'] == constants.DEVICE_OWNER_DHCP
         fixed_configured = p['fixed_ips'] is not constants.ATTR_NOT_SPECIFIED
         if fixed_configured:
             configured_ips = self._test_fixed_ips_for_port(context,
@@ -387,15 +394,16 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                            subnets)
             ips = self._allocate_fixed_ips(context,
                                            configured_ips,
-                                           p['mac_address'])
+                                           p['mac_address'],
+                                           prefer_next=prefer_next)
 
         else:
             ips = []
             version_subnets = [v4, v6_stateful]
             for subnets in version_subnets:
                 if subnets:
-                    result = IpamNonPluggableBackend._generate_ip(context,
-                                                                  subnets)
+                    result = IpamNonPluggableBackend._generate_ip(
+                        context, subnets, prefer_next=prefer_next)
                     ips.append({'ip_address': result['ip_address'],
                                 'subnet_id': result['subnet_id']})
 

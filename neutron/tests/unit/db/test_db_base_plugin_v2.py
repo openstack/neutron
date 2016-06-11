@@ -1408,6 +1408,19 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 for fixed_ip in updated_fixed_ips:
                     self.assertIn(fixed_ip, result['port']['fixed_ips'])
 
+    def test_dhcp_port_ips_prefer_next_available_ip(self):
+        # test to check that DHCP ports get the first available IP in the
+        # allocation range
+        with self.subnet() as subnet:
+            port_ips = []
+            for _ in range(10):
+                with self.port(device_owner=constants.DEVICE_OWNER_DHCP,
+                               subnet=subnet) as port:
+                    port_ips.append(port['port']['fixed_ips'][0]['ip_address'])
+        first_ip = netaddr.IPAddress(port_ips[0])
+        expected = [str(first_ip + i) for i in range(10)]
+        self.assertEqual(expected, port_ips)
+
     def test_update_port_mac_ip(self):
         with self.subnet() as subnet:
             updated_fixed_ips = [{'subnet_id': subnet['subnet']['id'],

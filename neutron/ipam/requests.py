@@ -206,6 +206,10 @@ class AnyAddressRequest(AddressRequest):
     """Used to request any available address from the pool."""
 
 
+class PreferNextAddressRequest(AnyAddressRequest):
+    """Used to request next available IP address from the pool."""
+
+
 class AutomaticAddressRequest(SpecificAddressRequest):
     """Used to create auto generated addresses, such as EUI64"""
     EUI64 = 'eui64'
@@ -265,6 +269,9 @@ class AddressRequestFactory(object):
         elif ip_dict.get('eui64_address'):
             return AutomaticAddressRequest(prefix=ip_dict['subnet_cidr'],
                                            mac=ip_dict['mac'])
+        elif port['device_owner'] == constants.DEVICE_OWNER_DHCP:
+            # preserve previous behavior of DHCP ports choosing start of pool
+            return PreferNextAddressRequest()
         else:
             return AnyAddressRequest()
 
