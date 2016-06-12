@@ -322,8 +322,8 @@ class DhcpAgent(manager.Manager):
             return
         # NOTE(kevinbenton): we don't exclude dhcp disabled subnets because
         # they still change the indexes used for tags
-        old_cidrs = [s.cidr for s in network.subnets]
-        new_cidrs = [s.cidr for s in old_network.subnets]
+        old_cidrs = [s.cidr for s in old_network.subnets]
+        new_cidrs = [s.cidr for s in network.subnets]
         if old_cidrs == new_cidrs:
             self.call_driver('reload_allocations', network)
             self.cache.put(network)
