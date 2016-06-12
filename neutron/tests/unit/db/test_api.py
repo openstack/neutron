@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from oslo_db import exception as db_exc
+from sqlalchemy.orm import exc
 import testtools
 
 from neutron.common import exceptions
@@ -63,6 +64,10 @@ class TestDeadLockDecorator(base.BaseTestCase):
     def test_regular_exception_excluded(self):
         with testtools.ExpectedException(ValueError):
             self._decorated_function(1, ValueError)
+
+    def test_staledata_error_caught(self):
+        e = exc.StaleDataError()
+        self.assertIsNone(self._decorated_function(1, e))
 
     def test_multi_exception_contains_deadlock(self):
         e = exceptions.MultipleExceptions([ValueError(), db_exc.DBDeadlock()])

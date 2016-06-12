@@ -15,6 +15,7 @@
 
 import contextlib
 
+from debtcollector import moves
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -22,6 +23,7 @@ from oslo_db.sqlalchemy import enginefacade
 from oslo_utils import excutils
 import osprofiler.sqlalchemy
 import sqlalchemy
+from sqlalchemy.orm import exc
 
 from neutron.common import exceptions
 from neutron.common import profiler  # noqa
@@ -34,13 +36,16 @@ _FACADE = None
 MAX_RETRIES = 10
 
 
-def is_deadlock(exc):
-    return _is_nested_instance(exc, db_exc.DBDeadlock)
+def is_retriable(e):
+    return _is_nested_instance(e, (db_exc.DBDeadlock, exc.StaleDataError))
 
+is_deadlock = moves.moved_function(is_retriable, 'is_deadlock', __name__,
+                                   message='use "is_retriable" instead',
+                                   version='newton', removal_version='ocata')
 retry_db_errors = oslo_db_api.wrap_db_retry(
     max_retries=MAX_RETRIES,
     retry_on_request=True,
-    exception_checker=is_deadlock
+    exception_checker=is_retriable
 )
 
 
