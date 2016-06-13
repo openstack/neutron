@@ -102,7 +102,7 @@ class NeutronPecanController(object):
         else:
             self._mandatory_fields = set()
 
-    def _build_field_list(self, request_fields):
+    def build_field_list(self, request_fields):
         if request_fields:
             return set(request_fields) | self._mandatory_fields
         return []

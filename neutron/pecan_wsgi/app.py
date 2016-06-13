@@ -51,6 +51,7 @@ def setup_app(*args, **kwargs):
         hooks.QuotaEnforcementHook(),  # priority 130
         hooks.NotifierHook(),  # priority 135
         hooks.PolicyHook(),  # priority 140
+        hooks.QueryParametersHook(),  # priority 145
     ]
 
     app = pecan.make_app(

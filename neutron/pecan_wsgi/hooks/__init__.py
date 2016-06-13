@@ -18,6 +18,7 @@ from neutron.pecan_wsgi.hooks import context
 from neutron.pecan_wsgi.hooks import notifier
 from neutron.pecan_wsgi.hooks import ownership_validation
 from neutron.pecan_wsgi.hooks import policy_enforcement
+from neutron.pecan_wsgi.hooks import query_parameters
 from neutron.pecan_wsgi.hooks import quota_enforcement
 from neutron.pecan_wsgi.hooks import translation
 
@@ -29,3 +30,4 @@ OwnershipValidationHook = ownership_validation.OwnershipValidationHook
 PolicyHook = policy_enforcement.PolicyHook
 QuotaEnforcementHook = quota_enforcement.QuotaEnforcementHook
 NotifierHook = notifier.NotifierHook
+QueryParametersHook = query_parameters.QueryParametersHook
