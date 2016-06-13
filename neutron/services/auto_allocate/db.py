@@ -223,7 +223,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         try:
             network_args = {
                 'name': 'auto_allocated_network',
-                'admin_state_up': True,
+                'admin_state_up': False,
                 'tenant_id': tenant_id,
                 'shared': False
             }
@@ -285,13 +285,17 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             # NOTE(armax): saving the auto allocated topology in a
             # separate transaction will keep the Neutron DB and the
             # Neutron plugin backend in sync, thus allowing for a
-            # more bullet proof cleanup.
+            # more bullet proof cleanup. Any other error will have
+            # to bubble up.
             with context.session.begin(subtransactions=True):
                 context.session.add(
                     models.AutoAllocatedTopology(
                         tenant_id=tenant_id,
                         network_id=network_id,
                         router_id=router_id))
+            p_utils.update_network(
+                self.core_plugin, context,
+                network_id, {'admin_state_up': True})
         except db_exc.DBDuplicateEntry:
             LOG.error(_LE("Multiple auto-allocated networks detected for "
                           "tenant %(tenant)s. Attempting clean up for "
@@ -302,8 +306,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             self._cleanup(
                 context, network_id=network_id,
                 router_id=router_id, subnets=subnets)
-            network_id = self._get_auto_allocated_network(
-                context, tenant_id)
+            network_id = self._get_auto_allocated_network(context, tenant_id)
         return network_id
 
     def _cleanup(self, context, network_id=None, router_id=None, subnets=None):
