@@ -347,6 +347,8 @@ class SubnetPoolsSearchCriteriaTest(base.BaseSearchCriteriaTest,
 
     resource = 'subnetpool'
 
+    list_kwargs = {'shared': False}
+
     @classmethod
     def resource_setup(cls):
         super(SubnetPoolsSearchCriteriaTest, cls).resource_setup()
