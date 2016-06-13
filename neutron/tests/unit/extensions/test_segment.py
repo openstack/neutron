@@ -314,6 +314,30 @@ class HostSegmentMappingTestCase(SegmentTestCase):
         return segment
 
 
+class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
+
+    def test_update_segment_host_mapping(self):
+        ctx = context.get_admin_context()
+        host = 'host1'
+        physnets = ['phys_net1']
+        with self.network() as network:
+            network = network['network']
+        segment = self._test_create_segment(
+            network_id=network['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+        self._test_create_segment(
+            network_id=network['id'], physical_network='phys_net2',
+            segmentation_id=201, network_type=p_constants.TYPE_VLAN)['segment']
+        segments = db.get_segments_with_phys_nets(ctx, physnets)
+        segment_ids = {segment['id'] for segment in segments}
+        db.update_segment_host_mapping(ctx, host, segment_ids)
+        segments_host_db = self._get_segments_for_host(host)
+        self.assertEqual(1, len(segments_host_db))
+        self.assertEqual(segment['id'],
+                         segments_host_db[segment['id']]['segment_id'])
+        self.assertEqual(host, segments_host_db[segment['id']]['host'])
+
+
 class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
     mock_path = 'neutron.services.segments.db.update_segment_host_mapping'

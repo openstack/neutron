@@ -185,6 +185,22 @@ def _get_phys_nets(agent):
 reported_hosts = set()
 
 
+def get_segments_with_phys_nets(context, phys_nets):
+    """Get segments from physical networks.
+
+    L2 providers usually have information of hostname and physical networks.
+    They could use this method to get related segments and then update
+    SegmentHostMapping.
+    """
+    if not phys_nets:
+        return []
+
+    with context.session.begin(subtransactions=True):
+        segments = context.session.query(db.NetworkSegment).filter(
+            db.NetworkSegment.physical_network.in_(phys_nets))
+        return segments
+
+
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
                                            context, host, plugin, agent):
     check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
@@ -197,13 +213,11 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
     if host in reported_hosts and not start_flag:
         return
     reported_hosts.add(host)
-    with context.session.begin(subtransactions=True):
-        segments = context.session.query(db.NetworkSegment).filter(
-            db.NetworkSegment.physical_network.in_(phys_nets))
-        current_segment_ids = {
-            segment['id'] for segment in segments
-            if check_segment_for_agent(segment, agent)}
-        update_segment_host_mapping(context, host, current_segment_ids)
+    segments = get_segments_with_phys_nets(context, phys_nets)
+    current_segment_ids = {
+        segment['id'] for segment in segments
+        if check_segment_for_agent(segment, agent)}
+    update_segment_host_mapping(context, host, current_segment_ids)
 
 
 def subscribe():
