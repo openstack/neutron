@@ -78,9 +78,9 @@ DNSMASQ_OPTS = [
                help=_('Override the default dnsmasq settings '
                       'with this file.')),
     cfg.ListOpt('dnsmasq_dns_servers',
+                default=[],
                 help=_('Comma-separated list of the DNS servers which will be '
-                       'used as forwarders.'),
-                deprecated_name='dnsmasq_dns_server'),
+                       'used as forwarders.')),
     cfg.StrOpt('dnsmasq_base_log_dir',
                help=_("Base log dir for dnsmasq logging. "
                       "The log contains DHCP and DNS log information and "

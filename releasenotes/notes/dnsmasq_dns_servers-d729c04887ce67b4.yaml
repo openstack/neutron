@@ -1,0 +1,5 @@
+---
+upgrade:
+  - The configuration option dnsmasq_dns_server was
+    deprecated in the kilo cycle. This value is no longer
+    supported.
