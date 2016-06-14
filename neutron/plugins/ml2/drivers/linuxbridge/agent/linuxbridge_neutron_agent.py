@@ -675,10 +675,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         return (agent_ip in entries and mac in entries)
 
     def add_fdb_ip_entry(self, mac, ip, interface):
-        ip_lib.IPDevice(interface).neigh.add(ip, mac)
+        if cfg.CONF.VXLAN.arp_responder:
+            ip_lib.IPDevice(interface).neigh.add(ip, mac)
 
     def remove_fdb_ip_entry(self, mac, ip, interface):
-        ip_lib.IPDevice(interface).neigh.delete(ip, mac)
+        if cfg.CONF.VXLAN.arp_responder:
+            ip_lib.IPDevice(interface).neigh.delete(ip, mac)
 
     def add_fdb_bridge_entry(self, mac, agent_ip, interface, operation="add"):
         utils.execute(['bridge', 'fdb', operation, mac, 'dev', interface,
