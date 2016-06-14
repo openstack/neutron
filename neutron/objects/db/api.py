@@ -26,7 +26,7 @@ def get_object(context, model, **kwargs):
 
 
 def _kwargs_to_filters(**kwargs):
-    return {k: [v]
+    return {k: v if isinstance(v, list) else [v]
             for k, v in kwargs.items()}
 
 

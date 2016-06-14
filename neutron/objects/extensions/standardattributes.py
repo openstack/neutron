@@ -13,7 +13,7 @@
 from oslo_versionedobjects import fields as obj_fields
 
 STANDARD_ATTRIBUTES = {
-    'description': obj_fields.StringField(),
+    'description': obj_fields.StringField(nullable=True),
     'created_at': obj_fields.DateTimeField(nullable=True, tzinfo_aware=False),
     'updated_at': obj_fields.DateTimeField(nullable=True, tzinfo_aware=False),
 }

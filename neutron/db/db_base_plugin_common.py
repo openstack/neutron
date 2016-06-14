@@ -28,6 +28,7 @@ from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron.objects import subnetpool as subnetpool_obj
 
 LOG = logging.getLogger(__name__)
 
@@ -159,7 +160,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'max_prefixlen': max_prefixlen,
                'is_default': subnetpool['is_default'],
                'shared': subnetpool['shared'],
-               'prefixes': [prefix['cidr']
+               'prefixes': [str(prefix)
                             for prefix in subnetpool['prefixes']],
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
@@ -210,20 +211,11 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return subnet
 
     def _get_subnetpool(self, context, id):
-        try:
-            return self._get_by_id(context, models_v2.SubnetPool, id)
-        except exc.NoResultFound:
+        subnetpool = subnetpool_obj.SubnetPool.get_object(
+            context, id=id)
+        if not subnetpool:
             raise exceptions.SubnetPoolNotFound(subnetpool_id=id)
-
-    def _get_all_subnetpools(self, context):
-        # NOTE(tidwellr): see note in _get_all_subnets()
-        return context.session.query(models_v2.SubnetPool).all()
-
-    def _get_subnetpools_by_address_scope_id(self, context, address_scope_id):
-        # NOTE(vikram.choudhary): see note in _get_all_subnets()
-        subnetpool_qry = context.session.query(models_v2.SubnetPool)
-        return subnetpool_qry.filter_by(
-            address_scope_id=address_scope_id).all()
+        return subnetpool
 
     def _get_port(self, context, id):
         try:

@@ -34,6 +34,7 @@ from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
+from neutron.objects import subnetpool as subnetpool_obj
 
 LOG = logging.getLogger(__name__)
 
@@ -464,7 +465,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
         subnetpool = None
         if subnetpool_id and not subnetpool_id == constants.IPV6_PD_POOL_ID:
-            subnetpool = self._get_subnetpool(context, subnetpool_id)
+            subnetpool = self._get_subnetpool(context, id=subnetpool_id)
             self._validate_ip_version_with_subnetpool(subnet, subnetpool)
 
         # gateway_ip and allocation pools should be validated or generated

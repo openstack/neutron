@@ -22,6 +22,7 @@ from neutron.api.v2 import attributes as attr
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.extensions import address_scope as ext_address_scope
+from neutron.objects import subnetpool as subnetpool_obj
 
 
 class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
@@ -122,7 +123,8 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     def delete_address_scope(self, context, id):
         with context.session.begin(subtransactions=True):
-            if self._get_subnetpools_by_address_scope_id(context, id):
+            if subnetpool_obj.SubnetPool.get_objects(context,
+                                                     address_scope_id=id):
                 raise ext_address_scope.AddressScopeInUse(address_scope_id=id)
             address_scope = self._get_address_scope(context, id)
             context.session.delete(address_scope)

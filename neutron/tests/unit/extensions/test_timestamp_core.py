@@ -182,8 +182,8 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
                     self._list_resources_with_changed_since(port)
 
     def test_list_subnetpools_with_changed_since(self):
-        prefixs = ['3.3.3.3/24', '4.4.4.4/24']
-        with self.subnetpool(prefixs, tenant_id='tenant_one',
+        prefixes = ['3.3.3.3/24', '4.4.4.4/24']
+        with self.subnetpool(prefixes, tenant_id=self._tenant_id,
                              name='sp_test02') as subnetpool:
             self._list_resources_with_changed_since(subnetpool)
 
@@ -199,13 +199,13 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
                                                                      subnet2)
 
     def test_list_mutiple_subnetpools_with_changed_since(self):
-        prefixs1 = ['3.3.3.3/24', '4.4.4.4/24']
-        prefixs2 = ['5.5.5.5/24', '6.6.6.6/24']
-        with self.subnetpool(prefixs1,
-                             tenant_id='tenant_one',
+        prefixes1 = ['3.3.3.3/24', '4.4.4.4/24']
+        prefixes2 = ['5.5.5.5/24', '6.6.6.6/24']
+        with self.subnetpool(prefixes1,
+                             tenant_id=self._tenant_id,
                              name='sp01') as sp1:
-            with self.subnetpool(prefixs2,
-                                 tenant_id='tenant_one',
+            with self.subnetpool(prefixes2,
+                                 tenant_id=self._tenant_id,
                                  name='sp02') as sp2:
                 self._test_list_mutiple_resources_with_changed_since(sp1, sp2)
 

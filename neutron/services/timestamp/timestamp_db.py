@@ -27,6 +27,8 @@ from neutron.db import model_base
 
 LOG = log.getLogger(__name__)
 
+CHANGED_SINCE = 'changed_since'
+
 
 class TimeStamp_db_mixin(object):
     """Mixin class to add Time Stamp methods."""
@@ -39,18 +41,18 @@ class TimeStamp_db_mixin(object):
         # And translate it from string to datetime type.
         # Then compare with the timestamp in db which has
         # datetime type.
-        values = filters and filters.get('changed_since', [])
+        values = filters and filters.get(CHANGED_SINCE, [])
         if not values:
             return query
-        data = filters['changed_since'][0]
+        data = filters[CHANGED_SINCE][0]
         try:
             # this block checks queried timestamp format.
             datetime.datetime.fromtimestamp(time.mktime(
                 time.strptime(data,
                               self.ISO8601_TIME_FORMAT)))
         except Exception:
-            msg = _LW("The input changed_since must be in the "
-                      "following format: YYYY-MM-DDTHH:MM:SS")
+            msg = _LW("The input %s must be in the "
+                      "following format: YYYY-MM-DDTHH:MM:SS") % CHANGED_SINCE
             raise n_exc.InvalidInput(error_message=msg)
         changed_since_string = timeutils.parse_isotime(data)
         changed_since = (timeutils.
