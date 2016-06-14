@@ -15,9 +15,9 @@
 
 
 import collections
-import heapq
 
 from neutron_lib import constants
+from operator import itemgetter
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -104,11 +104,27 @@ class AZAwareWeightScheduler(WeightScheduler):
            If the network has multiple AZs, agents are scheduled as
            follows:
            - select AZ with least agents scheduled for the network
-             (nondeterministic for AZs with same amount of agents scheduled)
+           - for AZs with same amount of scheduled agents, the AZ which
+             contains least weight agent will be used first
            - choose agent in the AZ with WeightScheduler
         """
+        # The dict to record the agents in each AZ, the record will be sorted
+        # according to the weight of agent. So that the agent with less weight
+        # will be used first.
         hostable_az_agents = collections.defaultdict(list)
-        num_az_agents = {}
+        # The dict to record the number of agents in each AZ. When the number
+        # of agents in each AZ is the same and num_agents_needed is less than
+        # the number of AZs, we want to select agents with less weight.
+        # Use an OrderedDict here, so that the AZ with least weight agent
+        # will be recorded first in the case described above. And, as a result,
+        # the agent with least weight will be used first.
+        num_az_agents = collections.OrderedDict()
+        # resource_hostable_agents should be a list with agents in the order of
+        # their weight.
+        resource_hostable_agents = (
+            super(AZAwareWeightScheduler, self).select(
+                plugin, context, resource_hostable_agents,
+                resource_hosted_agents, len(resource_hostable_agents)))
         for agent in resource_hostable_agents:
             az_agent = agent['availability_zone']
             hostable_az_agents[az_agent].append(agent)
@@ -121,17 +137,19 @@ class AZAwareWeightScheduler(WeightScheduler):
             if az_agent in num_az_agents:
                 num_az_agents[az_agent] += 1
 
-        num_az_q = [(value, key) for key, value in num_az_agents.items()]
-        heapq.heapify(num_az_q)
         chosen_agents = []
         while num_agents_needed > 0:
-            num, select_az = heapq.heappop(num_az_q)
-            select_agent = super(AZAwareWeightScheduler, self).select(
-                plugin, context, hostable_az_agents[select_az], [], 1)
-            chosen_agents.append(select_agent[0])
-            hostable_az_agents[select_az].remove(select_agent[0])
-            if hostable_az_agents[select_az]:
-                heapq.heappush(num_az_q, (num + 1, select_az))
+            # 'min' will stably output the first min value in the list.
+            select_az = min(num_az_agents.items(), key=itemgetter(1))[0]
+            # Select the agent in AZ with least weight.
+            select_agent = hostable_az_agents[select_az][0]
+            chosen_agents.append(select_agent)
+            # Update the AZ-agents records.
+            del hostable_az_agents[select_az][0]
+            if not hostable_az_agents[select_az]:
+                del num_az_agents[select_az]
+            else:
+                num_az_agents[select_az] += 1
             num_agents_needed -= 1
         return chosen_agents
 
