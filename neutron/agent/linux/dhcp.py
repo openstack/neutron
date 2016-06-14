@@ -390,10 +390,8 @@ class Dnsmasq(DhcpLocalProcess):
                    min(possible_leases, self.conf.dnsmasq_lease_max))
 
         cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
-        if self.conf.dnsmasq_dns_servers:
-            cmd.extend(
-                '--server=%s' % server
-                for server in self.conf.dnsmasq_dns_servers)
+        for server in self.conf.dnsmasq_dns_servers:
+            cmd.append('--server=%s' % server)
 
         if self.conf.dhcp_domain:
             cmd.append('--domain=%s' % self.conf.dhcp_domain)
