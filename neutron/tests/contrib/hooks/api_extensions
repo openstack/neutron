@@ -21,6 +21,7 @@ NETWORK_API_EXTENSIONS="
     net-mtu, \
     network-ip-availability, \
     network_availability_zone, \
+    pagination, \
     port-security, \
     provider, \
     qos, \
@@ -31,6 +32,7 @@ NETWORK_API_EXTENSIONS="
     router_availability_zone, \
     security-group, \
     service-type, \
+    sorting, \
     standard-attr-description, \
     subnet_allocation, \
     tag, \

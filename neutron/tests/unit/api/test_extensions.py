@@ -14,7 +14,9 @@
 #    under the License.
 
 import abc
+import copy
 
+import fixtures
 import mock
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -47,6 +49,27 @@ LOG = logging.getLogger(__name__)
 _uuid = test_base._uuid
 _get_path = test_base._get_path
 extensions_path = ':'.join(neutron.tests.unit.extensions.__path__)
+
+
+class CustomExtensionCheckMapMemento(fixtures.Fixture):
+    """Create a copy of the custom extension support check map so it can be
+    restored during test cleanup.
+    """
+
+    def _setUp(self):
+        self._map_contents_backup = copy.deepcopy(
+            extensions.EXTENSION_SUPPORTED_CHECK_MAP
+        )
+        self._plugin_agnostic_extensions_backup = set(
+            extensions._PLUGIN_AGNOSTIC_EXTENSIONS
+        )
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        extensions.EXTENSION_SUPPORTED_CHECK_MAP = self._map_contents_backup
+        extensions._PLUGIN_AGNOSTIC_EXTENSIONS = (
+            self._plugin_agnostic_extensions_backup
+        )
 
 
 class ExtensionsTestApp(base_wsgi.Router):
@@ -792,6 +815,47 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         self.assertRaises(exceptions.ExtensionsNotFound,
                           extensions.PluginAwareExtensionManager,
                           '', plugin_info)
+
+    def test_custom_supported_implementation(self):
+        self.useFixture(CustomExtensionCheckMapMemento())
+
+        class FakePlugin(object):
+            pass
+
+        class FakeExtension(ext_stubs.StubExtension):
+            extensions.register_custom_supported_check(
+                'stub_extension', lambda: True, plugin_agnostic=True
+            )
+
+        ext = FakeExtension()
+
+        plugin_info = {constants.CORE: FakePlugin()}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+        ext_mgr.add_extension(ext)
+        self.assertIn("stub_extension", ext_mgr.extensions)
+
+        extensions.register_custom_supported_check(
+            'stub_extension', lambda: False, plugin_agnostic=True
+        )
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+        ext_mgr.add_extension(ext)
+        self.assertNotIn("stub_extension", ext_mgr.extensions)
+
+    def test_custom_supported_implementation_plugin_specific(self):
+        self.useFixture(CustomExtensionCheckMapMemento())
+
+        class FakePlugin(object):
+            pass
+
+        class FakeExtension(ext_stubs.StubExtension):
+            extensions.register_custom_supported_check(
+                'stub_plugin_extension', lambda: True, plugin_agnostic=False
+            )
+
+        plugin_info = {constants.CORE: FakePlugin()}
+        self.assertRaises(
+            exceptions.ExtensionsNotFound,
+            extensions.PluginAwareExtensionManager, '', plugin_info)
 
 
 class ExtensionControllerTest(testlib_api.WebTestCase):

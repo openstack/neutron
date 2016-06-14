@@ -1,0 +1,6 @@
+---
+features:
+  - New API extensions, 'sorting' and 'pagination', have been added to allow
+    API users to detect if sorting and pagination features are enabled. These
+    features are controlled by ``allow_sorting`` and ``allow_pagination``
+    configuration options.
