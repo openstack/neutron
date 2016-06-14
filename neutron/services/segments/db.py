@@ -33,6 +33,7 @@ from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
+from neutron import manager
 from neutron.services.segments import exceptions
 
 
@@ -108,6 +109,8 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                     db.SEGMENTATION_ID: segmentation_id}
             new_segment = db.NetworkSegment(**args)
             context.session.add(new_segment)
+            registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
+                            context=context, segment=new_segment)
 
         return self._make_segment_dict(new_segment)
 
@@ -219,6 +222,24 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
     update_segment_host_mapping(context, host, current_segment_ids)
 
 
+def _add_segment_host_mapping_for_segment(resource, event, trigger,
+                                          context, segment):
+    if not segment.physical_network:
+        return
+    cp = manager.NeutronManager.get_plugin()
+    check_segment_for_agent = getattr(cp, 'check_segment_for_agent', None)
+    if not hasattr(cp, 'get_agents') or not check_segment_for_agent:
+        # not an agent-supporting plugin
+        registry.unsubscribe(_add_segment_host_mapping_for_segment,
+                             resources.SEGMENT, events.PRECOMMIT_CREATE)
+        return
+    hosts = {agent['host'] for agent in cp.get_agents(context)
+             if check_segment_for_agent(segment, agent)}
+    for host in hosts:
+        context.session.add(SegmentHostMapping(segment_id=segment.id,
+                                               host=host))
+
+
 def subscribe():
     registry.subscribe(_update_segment_host_mapping_for_agent,
                        resources.AGENT,
@@ -226,5 +247,7 @@ def subscribe():
     registry.subscribe(_update_segment_host_mapping_for_agent,
                        resources.AGENT,
                        events.AFTER_UPDATE)
+    registry.subscribe(_add_segment_host_mapping_for_segment,
+                       resources.SEGMENT, events.PRECOMMIT_CREATE)
 
 subscribe()
