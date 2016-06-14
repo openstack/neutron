@@ -308,7 +308,7 @@ class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
                  resources_rpc.resource_type_versioned_topic(resource_type),
                  [rpc_mock()],
                  fanout=True)
-             for resource_type in self.qos_ext.SUPPORTED_RESOURCES]
+             for resource_type in self.qos_ext.SUPPORTED_RESOURCE_TYPES]
         )
         subscribe_mock.assert_called_with(mock.ANY, resources.QOS_POLICY)
 

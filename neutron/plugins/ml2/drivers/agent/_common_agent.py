@@ -26,7 +26,7 @@ from oslo_service import service
 from osprofiler import profiler
 
 from neutron._i18n import _LE, _LI
-from neutron.agent.l2.extensions import manager as ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -167,7 +167,7 @@ class CommonAgentLoop(service.Service):
     def init_extension_manager(self, connection):
         ext_manager.register_opts(cfg.CONF)
         self.ext_manager = (
-            ext_manager.AgentExtensionsManager(cfg.CONF))
+            ext_manager.L2AgentExtensionsManager(cfg.CONF))
         self.ext_manager.initialize(
             connection, self.mgr.get_extension_driver_type())
 

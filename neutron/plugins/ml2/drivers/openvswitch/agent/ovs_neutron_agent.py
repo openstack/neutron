@@ -37,7 +37,7 @@ from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
-from neutron.agent.l2.extensions import manager as ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -396,7 +396,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def init_extension_manager(self, connection):
         ext_manager.register_opts(self.conf)
         self.ext_manager = (
-            ext_manager.AgentExtensionsManager(self.conf))
+            ext_manager.L2AgentExtensionsManager(self.conf))
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
                                                           self.tun_br)
         self.ext_manager.initialize(

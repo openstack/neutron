@@ -64,6 +64,7 @@ Neutron Internals
    rpc_callbacks
    layer3
    l2_agents
+   agent_extensions
    ovs_vhostuser
    quality_of_service
    service_extensions

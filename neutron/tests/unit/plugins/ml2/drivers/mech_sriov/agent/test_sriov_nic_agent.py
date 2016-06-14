@@ -18,7 +18,7 @@ import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.l2.extensions import manager as l2_ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager as l2_ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config  # noqa

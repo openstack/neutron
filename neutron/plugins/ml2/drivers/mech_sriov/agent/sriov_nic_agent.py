@@ -29,7 +29,7 @@ from osprofiler import profiler
 import six
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.agent.l2.extensions import manager as ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -186,7 +186,7 @@ class SriovNicSwitchAgent(object):
 
     def _create_agent_extension_manager(self, connection):
         ext_manager.register_opts(self.conf)
-        mgr = ext_manager.AgentExtensionsManager(self.conf)
+        mgr = ext_manager.L2AgentExtensionsManager(self.conf)
         mgr.initialize(connection, 'sriov')
         return mgr
 

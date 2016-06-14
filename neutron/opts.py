@@ -17,9 +17,9 @@ import operator
 from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 
+import neutron.agent.agent_extensions_manager
 import neutron.agent.common.config
 import neutron.agent.common.ovs_lib
-import neutron.agent.l2.extensions.manager
 import neutron.agent.l3.config
 import neutron.agent.l3.ha
 import neutron.agent.linux.interface
@@ -288,7 +288,7 @@ def list_sriov_agent_opts():
          neutron.plugins.ml2.drivers.mech_sriov.agent.common.config.
          sriov_nic_opts),
         ('agent',
-         neutron.agent.l2.extensions.manager.L2_AGENT_EXT_MANAGER_OPTS)
+         neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
     ]
 
 
