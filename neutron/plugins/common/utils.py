@@ -143,15 +143,17 @@ def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):
     return res_dict
 
 
-def create_network(core_plugin, context, net):
+def create_network(core_plugin, context, net, check_allow_post=True):
     net_data = _fixup_res_dict(context, attributes.NETWORKS,
-                               net.get('network', {}))
+                               net.get('network', {}),
+                               check_allow_post=check_allow_post)
     return core_plugin.create_network(context, {'network': net_data})
 
 
-def create_subnet(core_plugin, context, subnet):
+def create_subnet(core_plugin, context, subnet, check_allow_post=True):
     subnet_data = _fixup_res_dict(context, attributes.SUBNETS,
-                                  subnet.get('subnet', {}))
+                                  subnet.get('subnet', {}),
+                                  check_allow_post=check_allow_post)
     return core_plugin.create_subnet(context, {'subnet': subnet_data})
 
 
