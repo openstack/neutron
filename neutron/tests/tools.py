@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import importlib
 import os
 import platform
@@ -31,6 +32,7 @@ import unittest2
 
 import neutron
 from neutron.api.v2 import attributes
+from neutron.db import common_db_mixin
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 
@@ -117,6 +119,17 @@ class SafeCleanupFixture(fixtures.Fixture):
 
         self.fixture.setUp()
         self.addCleanup(cleanUp)
+
+
+class CommonDbMixinHooksFixture(fixtures.Fixture):
+    def _setUp(self):
+        self.original_hooks = common_db_mixin.CommonDbMixin._model_query_hooks
+        self.addCleanup(self.restore_hooks)
+        common_db_mixin.CommonDbMixin._model_query_hooks = copy.deepcopy(
+            common_db_mixin.CommonDbMixin._model_query_hooks)
+
+    def restore_hooks(self):
+        common_db_mixin.CommonDbMixin._model_query_hooks = self.original_hooks
 
 
 from neutron.common import utils
