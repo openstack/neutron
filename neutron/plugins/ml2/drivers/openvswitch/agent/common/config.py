@@ -23,8 +23,6 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common \
 
 
 DEFAULT_BRIDGE_MAPPINGS = []
-DEFAULT_VLAN_RANGES = []
-DEFAULT_TUNNEL_RANGES = []
 DEFAULT_TUNNEL_TYPES = []
 
 ovs_opts = [
