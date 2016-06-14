@@ -1,9 +1,0 @@
-[[post-extra|$TEMPEST_CONFIG]]
-
-[neutron_plugin_options]
-validate_sorting = True
-
-[[post-config|$NEUTRON_CONF]]
-
-[DEFAULT]
-allow_sorting=True

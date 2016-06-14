@@ -1,0 +1,3 @@
+---
+upgrade:
+  - API sorting and pagination features are now enabled by default.
