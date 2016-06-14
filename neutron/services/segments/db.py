@@ -173,7 +173,7 @@ def update_segment_host_mapping(context, host, current_segment_ids):
                                                    host=host))
         stale_segment_ids = previous_segment_ids - current_segment_ids
         if stale_segment_ids:
-            context.session.query(SegmentHostMapping).filter(
+            segments_host_query.filter(
                 SegmentHostMapping.segment_id.in_(
                     stale_segment_ids)).delete(synchronize_session=False)
 
