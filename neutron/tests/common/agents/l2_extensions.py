@@ -48,7 +48,7 @@ def wait_until_dscp_marking_rule_applied(bridge, port_vif, rule):
 
         expected = None
         if rule:
-            expected = rule
+            expected = rule << 2
         return dscp_mark == expected
 
     agent_utils.wait_until_true(_dscp_marking_rule_applied)
