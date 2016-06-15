@@ -428,7 +428,7 @@ class BaseAdminNetworkTest(BaseNetworkTest):
 
     @classmethod
     def get_unused_ip(cls, net_id, ip_version=None):
-        """Get an unused ip address in a allocaion pool of net"""
+        """Get an unused ip address in a allocation pool of net"""
         body = cls.admin_client.list_ports(network_id=net_id)
         ports = body['ports']
         used_ips = []
