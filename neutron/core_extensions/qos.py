@@ -37,10 +37,23 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
             raise n_exc.QosPolicyNotFound(policy_id=policy_id)
         return obj
 
+    def _check_policy_change_permission(self, context, old_policy):
+        """An existing policy can be modified only if one of the following is
+        true:
+
+              the policy's tenant is the context's tenant
+              the policy is shared with the tenant
+
+        Using is_accessible expresses these conditions.
+        """
+        if not (policy_object.QosPolicy.is_accessible(context, old_policy)):
+            raise n_exc.PolicyRemoveAuthorizationError(policy_id=old_policy.id)
+
     def _update_port_policy(self, context, port, port_changes):
         old_policy = policy_object.QosPolicy.get_port_policy(
-            context, port['id'])
+            context.elevated(), port['id'])
         if old_policy:
+            self._check_policy_change_permission(context, old_policy)
             old_policy.detach_port(port['id'])
 
         qos_policy_id = port_changes.get(qos_consts.QOS_POLICY_ID)
@@ -51,8 +64,9 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
     def _update_network_policy(self, context, network, network_changes):
         old_policy = policy_object.QosPolicy.get_network_policy(
-            context, network['id'])
+            context.elevated(), network['id'])
         if old_policy:
+            self._check_policy_change_permission(context, old_policy)
             old_policy.detach_network(network['id'])
 
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
