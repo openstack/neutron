@@ -78,6 +78,13 @@ class CallBacksManagerTestCase(base.BaseTestCase):
             2,
             len(self.manager._callbacks[resources.PORT][events.BEFORE_CREATE]))
 
+    def test_unsubscribe_during_iteration(self):
+        unsub = lambda r, e, *a, **k: self.manager.unsubscribe(unsub, r, e)
+        self.manager.subscribe(unsub, resources.PORT,
+                               events.BEFORE_CREATE)
+        self.manager.notify(resources.PORT, events.BEFORE_CREATE, mock.ANY)
+        self.assertNotIn(unsub, self.manager._index)
+
     def test_unsubscribe(self):
         self.manager.subscribe(
             callback_1, resources.PORT, events.BEFORE_CREATE)

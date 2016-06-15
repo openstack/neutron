@@ -138,7 +138,7 @@ class CallbacksManager(object):
                   {'resource': resource, 'event': event})
 
         errors = []
-        callbacks = self._callbacks[resource].get(event, {}).items()
+        callbacks = list(self._callbacks[resource].get(event, {}).items())
         # TODO(armax): consider using a GreenPile
         for callback_id, callback in callbacks:
             try:
