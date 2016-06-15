@@ -1142,33 +1142,18 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         return dns_assignment
 
-    def _create_port_with_mac(self, context, network_id, port_data,
-                              mac_address):
-        try:
-            # since this method could either be used within or outside the
-            # transaction, use convenience method to avoid passing a flag
-            with db_api.autonested_transaction(context.session):
-                db_port = models_v2.Port(mac_address=mac_address, **port_data)
-                context.session.add(db_port)
-                return db_port
-        except db_exc.DBDuplicateEntry:
-            raise exc.MacAddressInUse(net_id=network_id, mac=mac_address)
-
-    def _create_port(self, context, network_id, port_data):
-        max_retries = cfg.CONF.mac_generation_retries
-        for i in range(max_retries):
-            mac = self._generate_mac()
-            try:
-                return self._create_port_with_mac(
-                    context, network_id, port_data, mac)
-            except exc.MacAddressInUse:
-                LOG.debug('Generated mac %(mac_address)s exists on '
-                          'network %(network_id)s',
-                          {'mac_address': mac, 'network_id': network_id})
-
-        LOG.error(_LE("Unable to generate mac address after %s attempts"),
-                  max_retries)
-        raise n_exc.MacAddressGenerationFailure(net_id=network_id)
+    def _create_db_port_obj(self, context, port_data):
+        if port_data.get('mac_address'):
+            mac_address = port_data.pop('mac_address')
+            if self._is_mac_in_use(context, port_data['network_id'],
+                                   mac_address):
+                raise exc.MacAddressInUse(net_id=port_data['network_id'],
+                                          mac=mac_address)
+        else:
+            mac_address = self._generate_mac()
+        db_port = models_v2.Port(mac_address=mac_address, **port_data)
+        context.session.add(db_port)
+        return db_port
 
     def create_port(self, context, port):
         db_port = self.create_port_db(context, port)
@@ -1194,6 +1179,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          device_id=p['device_id'],
                          device_owner=p['device_owner'],
                          description=p.get('description'))
+        if p.get('mac_address') is not constants.ATTR_NOT_SPECIFIED:
+            port_data['mac_address'] = p.get('mac_address')
         if ('dns-integration' in self.supported_extension_aliases and
             'dns_name' in p):
             request_dns_name = self._get_request_dns_name(p)
@@ -1204,12 +1191,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._get_network(context, network_id)
 
             # Create the port
-            if p['mac_address'] is constants.ATTR_NOT_SPECIFIED:
-                db_port = self._create_port(context, network_id, port_data)
-                p['mac_address'] = db_port['mac_address']
-            else:
-                db_port = self._create_port_with_mac(
-                    context, network_id, port_data, p['mac_address'])
+            db_port = self._create_db_port_obj(context, port_data)
+            p['mac_address'] = db_port['mac_address']
 
             ips = self.ipam.allocate_ips_for_port_and_store(context, port,
                                                             port_id)
