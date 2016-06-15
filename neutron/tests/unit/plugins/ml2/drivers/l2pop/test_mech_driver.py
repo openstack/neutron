@@ -982,7 +982,8 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
         original_port = port.copy()
         original_port['mac_address'] = u'12:34:56:78:4b:0f'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments'):
             ctx = driver_context.PortContext(mock.Mock(),
                                              mock.Mock(),
                                              port,

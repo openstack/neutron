@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from debtcollector import moves
 from neutron_lib import constants as n_const
 from oslo_db import exception as db_exc
 from oslo_log import log
@@ -35,17 +36,29 @@ LOG = log.getLogger(__name__)
 MAX_PORTS_PER_QUERY = 500
 
 # The API methods from segments_db
-add_network_segment = segments_db.add_network_segment
+add_network_segment = moves.moved_function(
+    segments_db.add_network_segment, 'add_network_segment', __name__,
+    version='Newton', removal_version='Ocata')
 
-get_network_segments = segments_db.get_network_segments
+get_network_segments = moves.moved_function(
+    segments_db.get_network_segments, 'get_network_segments', __name__,
+    version='Newton', removal_version='Ocata')
 
-get_networks_segments = segments_db.get_networks_segments
+get_networks_segments = moves.moved_function(
+    segments_db.get_networks_segments, 'get_networks_segments', __name__,
+    version='Newton', removal_version='Ocata')
 
-get_segment_by_id = segments_db.get_segment_by_id
+get_segment_by_id = moves.moved_function(
+    segments_db.get_segment_by_id, 'get_segment_by_id', __name__,
+    version='Newton', removal_version='Ocata')
 
-get_dynamic_segment = segments_db.get_dynamic_segment
+get_dynamic_segment = moves.moved_function(
+    segments_db.get_dynamic_segment, 'get_dynamic_segment', __name__,
+    version='Newton', removal_version='Ocata')
 
-delete_network_segment = segments_db.delete_network_segment
+delete_network_segment = moves.moved_function(
+    segments_db.delete_network_segment, 'delete_network_segment', __name__,
+    version='Newton', removal_version='Ocata')
 
 
 def add_port_binding(session, port_id):

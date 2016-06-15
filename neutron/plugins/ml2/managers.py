@@ -23,13 +23,13 @@ import six
 import stevedore
 
 from neutron._i18n import _, _LE, _LI, _LW
+from neutron.db import segments_db
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 from neutron.services.qos import qos_consts
@@ -155,7 +155,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def extend_networks_dict_provider(self, context, networks):
         ids = [network['id'] for network in networks]
-        net_segments = db.get_networks_segments(context.session, ids)
+        net_segments = segments_db.get_networks_segments(context.session, ids)
         for network in networks:
             segments = net_segments[network['id']]
             self._extend_network_dict_provider(network, segments)
@@ -184,7 +184,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def _add_network_segment(self, session, network_id, segment, mtu,
                              segment_index=0):
-        db.add_network_segment(session, network_id, segment, segment_index)
+        segments_db.add_network_segment(
+            session, network_id, segment, segment_index)
         if segment.get(api.MTU, 0) > 0:
             mtu.append(segment[api.MTU])
 
@@ -252,8 +253,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         raise exc.NoNetworkAvailable()
 
     def release_network_segments(self, session, network_id):
-        segments = db.get_network_segments(session, network_id,
-                                           filter_dynamic=None)
+        segments = segments_db.get_network_segments(session, network_id,
+                                                    filter_dynamic=None)
 
         for segment in segments:
             network_type = segment.get(api.NETWORK_TYPE)
@@ -266,7 +267,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def allocate_dynamic_segment(self, session, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
-        dynamic_segment = db.get_dynamic_segment(
+        dynamic_segment = segments_db.get_dynamic_segment(
             session, network_id, segment.get(api.PHYSICAL_NETWORK),
             segment.get(api.SEGMENTATION_ID))
 
@@ -275,18 +276,18 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
         driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
         dynamic_segment = driver.obj.reserve_provider_segment(session, segment)
-        db.add_network_segment(session, network_id, dynamic_segment,
-                               is_dynamic=True)
+        segments_db.add_network_segment(session, network_id, dynamic_segment,
+                                        is_dynamic=True)
         return dynamic_segment
 
     def release_dynamic_segment(self, session, segment_id):
         """Delete a dynamic segment."""
-        segment = db.get_segment_by_id(session, segment_id)
+        segment = segments_db.get_segment_by_id(session, segment_id)
         if segment:
             driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
             if driver:
                 driver.obj.release_segment(session, segment)
-                db.delete_network_segment(session, segment_id)
+                segments_db.delete_network_segment(session, segment_id)
             else:
                 LOG.error(_LE("Failed to release segment '%s' because "
                               "network type is not supported."), segment)

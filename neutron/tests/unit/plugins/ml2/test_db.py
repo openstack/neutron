@@ -24,6 +24,7 @@ from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.db import segments_db
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
@@ -64,11 +65,11 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                          network_id='foo-network-id'):
         self._setup_neutron_network(network_id)
         for segment in segments:
-            ml2_db.add_network_segment(
+            segments_db.add_network_segment(
                 self.ctx.session, network_id, segment,
                 is_dynamic=is_seg_dynamic)
 
-        net_segments = ml2_db.get_network_segments(
+        net_segments = segments_db.get_network_segments(
                            self.ctx.session, network_id,
                            filter_dynamic=is_seg_dynamic)
 
@@ -113,14 +114,16 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                       api.SEGMENTATION_ID: 4}]
         net1segs = self._create_segments(segments1, network_id='net1')
         net2segs = self._create_segments(segments2, network_id='net2')
-        segs = ml2_db.get_networks_segments(self.ctx.session, ['net1', 'net2'])
+        segs = segments_db.get_networks_segments(
+            self.ctx.session, ['net1', 'net2'])
         self.assertEqual(net1segs, segs['net1'])
         self.assertEqual(net2segs, segs['net2'])
 
     def test_get_networks_segments_no_segments(self):
         self._create_segments([], network_id='net1')
         self._create_segments([], network_id='net2')
-        segs = ml2_db.get_networks_segments(self.ctx.session, ['net1', 'net2'])
+        segs = segments_db.get_networks_segments(
+            self.ctx.session, ['net1', 'net2'])
         self.assertEqual([], segs['net1'])
         self.assertEqual([], segs['net2'])
 
@@ -132,12 +135,14 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net_segment = self._create_segments([segment])[0]
         segment_uuid = net_segment[api.ID]
 
-        net_segment = ml2_db.get_segment_by_id(self.ctx.session, segment_uuid)
+        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+                                                    segment_uuid)
         self.assertEqual(segment, net_segment)
 
     def test_get_segment_by_id_result_not_found(self):
         segment_uuid = uuidutils.generate_uuid()
-        net_segment = ml2_db.get_segment_by_id(self.ctx.session, segment_uuid)
+        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+                                                    segment_uuid)
         self.assertIsNone(net_segment)
 
     def test_delete_network_segment(self):
@@ -148,9 +153,10 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net_segment = self._create_segments([segment])[0]
         segment_uuid = net_segment[api.ID]
 
-        ml2_db.delete_network_segment(self.ctx.session, segment_uuid)
+        segments_db.delete_network_segment(self.ctx.session, segment_uuid)
         # Get segment and verify its empty
-        net_segment = ml2_db.get_segment_by_id(self.ctx.session, segment_uuid)
+        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+                                                    segment_uuid)
         self.assertIsNone(net_segment)
 
     def test_add_port_binding(self):

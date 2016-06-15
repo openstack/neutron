@@ -37,7 +37,8 @@ class TestPortContext(base.BaseTestCase):
         port = {'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE}
         binding.host = 'foohost'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments'):
             ctx = driver_context.PortContext(plugin,
                                              plugin_context,
                                              port,
@@ -56,7 +57,8 @@ class TestPortContext(base.BaseTestCase):
                 portbindings.HOST_ID: 'host'}
         binding.host = 'foohost'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments'):
             ctx = driver_context.PortContext(plugin,
                                              plugin_context,
                                              port,
@@ -74,7 +76,8 @@ class TestPortContext(base.BaseTestCase):
         port = {'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE}
         binding.status = 'foostatus'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments'):
             ctx = driver_context.PortContext(plugin,
                                              plugin_context,
                                              port,
@@ -93,7 +96,8 @@ class TestPortContext(base.BaseTestCase):
                 'status': 'status'}
         binding.status = 'foostatus'
 
-        with mock.patch.object(driver_context.db, 'get_network_segments'):
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments'):
             ctx = driver_context.PortContext(plugin,
                                              plugin_context,
                                              port,
