@@ -28,3 +28,15 @@ def upgrade():
         sa.Column('segment_id', sa.String(length=36), nullable=True))
     op.create_foreign_key(
         None, 'subnets', 'networksegments', ['segment_id'], ['id'])
+
+
+def contract_creation_exceptions():
+    """The networksegments table was renamed in the contract branch.
+
+    Because the column being added has a foreign key dependency on a column in
+    a table that was renamed in the contract branch, this column must also be
+    added in the contract branch.
+    """
+    return {
+        sa.Column: ['subnets.segment_id']
+    }

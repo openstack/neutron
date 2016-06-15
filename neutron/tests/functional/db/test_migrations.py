@@ -15,6 +15,7 @@
 import collections
 
 import abc
+from alembic.ddl import base as alembic_ddl
 from alembic import script as alembic_script
 from contextlib import contextmanager
 import os
@@ -29,11 +30,11 @@ from six.moves import configparser
 from six.moves.urllib import parse
 import sqlalchemy
 from sqlalchemy import event
+from sqlalchemy.sql import ddl as sqla_ddl
 import sqlalchemy.sql.expression as expr
 import sqlalchemy.types as types
 import subprocess
 
-import neutron.db.migration as migration_help
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
@@ -43,6 +44,24 @@ from neutron.tests.common import base
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
 CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+
+CREATION_OPERATIONS = {
+    'sqla': (sqla_ddl.CreateIndex,
+             sqla_ddl.CreateTable,
+             sqla_ddl.CreateColumn,
+             ),
+    'alembic': (alembic_ddl.AddColumn,
+                )
+}
+
+DROP_OPERATIONS = {
+    'sqla': (sqla_ddl.DropConstraint,
+             sqla_ddl.DropIndex,
+             sqla_ddl.DropTable,
+             ),
+    'alembic': (alembic_ddl.DropColumn,
+                )
+}
 
 
 class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
@@ -218,7 +237,7 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
             script = alembic_script.ScriptDirectory.from_config(
                 self.alembic_config)
             for m in list(script.walk_revisions(base='base', head='heads')):
-                branches = m.branch_labels or [None]
+                branches = m.branch_labels or []
                 if migration.CONTRACT_BRANCH in branches:
                     method_name = 'contract_creation_exceptions'
                     exceptions_dict = creation_exceptions
@@ -238,8 +257,8 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                 for sa_type, elements in get_excepted_elements().items():
                     exceptions_dict[sa_type].extend(elements)
 
-        def is_excepted(clauseelement, exceptions):
-            # Identify elements that are an exception for the branch
+        def is_excepted_sqla(clauseelement, exceptions):
+            """Identify excepted operations that are allowed for the branch."""
             element = clauseelement.element
             element_name = element.name
             if isinstance(element, sqlalchemy.Index):
@@ -249,25 +268,34 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
                     if element_name in excepted_names:
                         return True
 
-        def check_expand_branch(conn, clauseelement, multiparams, params):
-            if not (isinstance(clauseelement,
-                               migration_help.DROP_OPERATIONS) and
+        def is_excepted_alembic(clauseelement, exceptions):
+            """Identify excepted operations that are allowed for the branch."""
+            # For alembic the clause is AddColumn or DropColumn
+            column = clauseelement.column.name
+            table = clauseelement.column.table.name
+            element_name = '.'.join([table, column])
+            for alembic_type, excepted_names in exceptions.items():
+                if alembic_type == sqlalchemy.Column:
+                    if element_name in excepted_names:
+                        return True
+
+        def is_allowed(clauseelement, exceptions, disallowed_ops):
+            if (isinstance(clauseelement, disallowed_ops['sqla']) and
                     hasattr(clauseelement, 'element')):
-                return
-            # Skip drops that have been explicitly excepted
-            if is_excepted(clauseelement, drop_exceptions):
-                return
-            self.fail("Migration in expand branch contains drop command")
+                return is_excepted_sqla(clauseelement, exceptions)
+            if isinstance(clauseelement, disallowed_ops['alembic']):
+                return is_excepted_alembic(clauseelement, exceptions)
+            return True
+
+        def check_expand_branch(conn, clauseelement, multiparams, params):
+            if not is_allowed(clauseelement, drop_exceptions, DROP_OPERATIONS):
+                self.fail("Migration in expand branch contains drop command")
 
         def check_contract_branch(conn, clauseelement, multiparams, params):
-            if not (isinstance(clauseelement,
-                               migration_help.CREATION_OPERATIONS) and
-                    hasattr(clauseelement, 'element')):
-                return
-            # Skip creations that have been explicitly excepted
-            if is_excepted(clauseelement, creation_exceptions):
-                return
-            self.fail("Migration in contract branch contains create command")
+            if not is_allowed(clauseelement, creation_exceptions,
+                              CREATION_OPERATIONS):
+                self.fail("Migration in contract branch contains create "
+                          "command")
 
         find_migration_exceptions()
         engine = self.get_engine()
