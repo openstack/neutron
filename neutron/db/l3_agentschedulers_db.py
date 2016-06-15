@@ -79,7 +79,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
     router_scheduler = None
 
     @debtcollector.removals.remove(
-        message="This will be removed in the N cycle. "
+        message="This will be removed in the O cycle. "
                 "Please use 'add_periodic_l3_agent_status_check' instead."
     )
     def start_periodic_l3_agent_status_check(self):
