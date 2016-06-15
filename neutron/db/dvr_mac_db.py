@@ -28,6 +28,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
@@ -115,8 +116,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     def _create_dvr_mac_address(self, context, host):
         """Create DVR mac address for a given host."""
         base_mac = cfg.CONF.dvr_base_mac.split(':')
-        max_retries = cfg.CONF.mac_generation_retries
-        for attempt in reversed(range(max_retries)):
+        for attempt in reversed(range(db_api.MAX_RETRIES)):
             try:
                 with context.session.begin(subtransactions=True):
                     mac_address = utils.get_random_mac(base_mac)
@@ -135,7 +135,8 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                 LOG.debug("Generated DVR mac %(mac)s exists."
                           " Remaining attempts %(attempts_left)s.",
                           {'mac': mac_address, 'attempts_left': attempt})
-        LOG.error(_LE("MAC generation error after %s attempts"), max_retries)
+        LOG.error(_LE("MAC generation error after %s attempts"),
+                  db_api.MAX_RETRIES)
         raise ext_dvr.MacAddressGenerationFailure(host=host)
 
     def get_dvr_mac_address_list(self, context):
