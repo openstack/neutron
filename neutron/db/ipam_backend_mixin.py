@@ -542,7 +542,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         query = self._get_collection_query(context, Subnet)
         query = query.filter(Subnet.network_id == network_id)
-        if not validators.is_attr_set(host):
+        # Note:  This seems redundant, but its not.  It has to cover cases
+        # where host is None, ATTR_NOT_SPECIFIED, or '' due to differences in
+        # host binding implementations.
+        if not validators.is_attr_set(host) or not host:
             query = query.filter(Subnet.segment_id.is_(None))
             return [self._make_subnet_dict(c, context=context) for c in query]
 
