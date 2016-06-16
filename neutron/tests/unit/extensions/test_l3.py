@@ -3030,6 +3030,66 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def test_floatingips_op_agent(self):
         self._test_notify_op_agent(self._test_floatingips_op_agent)
 
+    def test_router_create_precommit_event(self):
+        nset = lambda *a, **k: setattr(k['router_db'], 'name', 'hello')
+        registry.subscribe(nset, resources.ROUTER, events.PRECOMMIT_CREATE)
+        with self.router() as r:
+            self.assertEqual('hello', r['router']['name'])
+
+    def test_router_create_event_exception_preserved(self):
+        # this exception should be propagated out of the callback and
+        # converted into its API equivalent of 404
+        e404 = mock.Mock(side_effect=l3.RouterNotFound(router_id='1'))
+        registry.subscribe(e404, resources.ROUTER, events.PRECOMMIT_CREATE)
+        res = self._create_router(self.fmt, 'tenid')
+        self.assertEqual(exc.HTTPNotFound.code, res.status_int)
+        # make sure nothing committed
+        body = self._list('routers')
+        self.assertFalse(body['routers'])
+
+    def test_router_update_precommit_event(self):
+        nset = lambda *a, **k: setattr(k['router_db'], 'name',
+                                       k['old_router']['name'] + '_ha!')
+        registry.subscribe(nset, resources.ROUTER, events.PRECOMMIT_UPDATE)
+        with self.router(name='original') as r:
+            update = self._update('routers', r['router']['id'],
+                                  {'router': {'name': 'hi'}})
+            # our rude callback should have changed the name to the original
+            # plus some extra
+            self.assertEqual('original_ha!', update['router']['name'])
+
+    def test_router_update_event_exception_preserved(self):
+        # this exception should be propagated out of the callback and
+        # converted into its API equivalent of 404
+        e404 = mock.Mock(side_effect=l3.RouterNotFound(router_id='1'))
+        registry.subscribe(e404, resources.ROUTER, events.PRECOMMIT_UPDATE)
+        with self.router(name='a') as r:
+            self._update('routers', r['router']['id'],
+                         {'router': {'name': 'hi'}},
+                         expected_code=exc.HTTPNotFound.code)
+        # ensure it stopped the commit
+        new = self._show('routers', r['router']['id'])
+        self.assertEqual('a', new['router']['name'])
+
+    def test_router_delete_precommit_event(self):
+        deleted = []
+        auditor = lambda *a, **k: deleted.append(k['router_id'])
+        registry.subscribe(auditor, resources.ROUTER, events.PRECOMMIT_DELETE)
+        with self.router() as r:
+            self._delete('routers', r['router']['id'])
+        self.assertEqual([r['router']['id']], deleted)
+
+    def test_router_delete_event_exception_preserved(self):
+        # this exception should be propagated out of the callback and
+        # converted into its API equivalent of 409
+        e409 = mock.Mock(side_effect=l3.RouterInUse(router_id='1'))
+        registry.subscribe(e409, resources.ROUTER, events.PRECOMMIT_DELETE)
+        with self.router() as r:
+            self._delete('routers', r['router']['id'],
+                         expected_code=exc.HTTPConflict.code)
+        # ensure it stopped the commit
+        self.assertTrue(self._show('routers', r['router']['id']))
+
 
 class L3BaseForIntTests(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 

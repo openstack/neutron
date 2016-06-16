@@ -216,14 +216,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # pre-generate id so it will be available when
             # configuring external gw port
             status = router.get('status', n_const.ROUTER_STATUS_ACTIVE)
-            router_db = Router(id=(router.get('id') or
-                                   uuidutils.generate_uuid()),
-                               tenant_id=tenant_id,
+            router.setdefault('id', uuidutils.generate_uuid())
+            router['tenant_id'] = tenant_id
+            router_db = Router(id=router['id'],
+                               tenant_id=router['tenant_id'],
                                name=router['name'],
                                admin_state_up=router['admin_state_up'],
                                status=status,
                                description=router.get('description'))
             context.session.add(router_db)
+            registry.notify(resources.ROUTER, events.PRECOMMIT_CREATE,
+                            self, context=context, router=router,
+                            router_id=router['id'], router_db=router_db)
             return router_db
 
     def create_router(self, context, router):
@@ -245,8 +249,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         """Update the DB object."""
         with context.session.begin(subtransactions=True):
             router_db = self._get_router(context, router_id)
+            old_router = self._make_router_dict(router_db)
             if data:
                 router_db.update(data)
+            registry.notify(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                            self, context=context, router_id=router_id,
+                            router=data, router_db=router_db,
+                            old_router=old_router)
             return router_db
 
     def update_router(self, context, id, router):
@@ -521,6 +530,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                           rp.port.id,
                                           l3_port_check=False)
         with context.session.begin(subtransactions=True):
+            registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
+                            self, context=context, router_id=id)
             context.session.delete(router)
 
     def get_router(self, context, id, fields=None):
