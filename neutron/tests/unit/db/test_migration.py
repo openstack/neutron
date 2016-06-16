@@ -504,15 +504,6 @@ class TestCli(base.BaseTestCase):
         self.assertRaises(
             SystemExit, cli._get_subproject_script_location, 'not-installed')
 
-    def test_get_service_script_location(self):
-        fwaas_ep = cli._get_service_script_location('fwaas')
-        expected = 'neutron_fwaas.db.migration:alembic_migrations'
-        self.assertEqual(expected, fwaas_ep)
-
-    def test_get_service_script_location_not_installed(self):
-        self.assertRaises(
-            SystemExit, cli._get_service_script_location, 'myaas')
-
     def test_get_subproject_base_not_installed(self):
         self.assertRaises(
             SystemExit, cli._get_subproject_base, 'not-installed')
