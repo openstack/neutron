@@ -425,7 +425,7 @@ def _is_backend_avail(backend,
 
 
 @six.add_metaclass(abc.ABCMeta)
-class _TestWalkMigrations(base_tests.BaseTestCase):
+class _TestWalkMigrations(base_tests.BaseTestCase, test_base.DbTestCase):
     '''This will add framework for testing schema migarations
        for different backends.
 
