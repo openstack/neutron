@@ -100,7 +100,7 @@ class TestCachingDecorator(base.BaseTestCase):
         self.decor._cache.get.return_value = self.not_cached
         retval = self.decor.func(*args, **kwargs)
         self.decor._cache.set.assert_called_once_with(
-            expected_key, self.decor.func_retval)
+            str(expected_key), self.decor.func_retval)
         self.assertEqual(self.decor.func_retval, retval)
 
     def test_cache_hit(self):
@@ -110,7 +110,7 @@ class TestCachingDecorator(base.BaseTestCase):
         retval = self.decor.func(*args, **kwargs)
         self.assertFalse(self.decor._cache.set.called)
         self.assertEqual(self.decor._cache.get.return_value, retval)
-        self.decor._cache.get.assert_called_once_with(expected_key)
+        self.decor._cache.get.assert_called_once_with(str(expected_key))
 
     def test_get_unhashable(self):
         expected_key = (self.func_name, [1], 2)
@@ -118,7 +118,7 @@ class TestCachingDecorator(base.BaseTestCase):
         retval = self.decor.func([1], 2)
         self.assertFalse(self.decor._cache.set.called)
         self.assertEqual(self.decor.func_retval, retval)
-        self.decor._cache.get.assert_called_once_with(expected_key)
+        self.decor._cache.get.assert_called_once_with(str(expected_key))
 
     def test_missing_cache(self):
         delattr(self.decor, '_cache')
