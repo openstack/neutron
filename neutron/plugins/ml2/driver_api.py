@@ -363,7 +363,7 @@ class PortContext(object):
     def original_bottom_bound_segment(self):
         """Return the original bottom-level bound segment dictionary.
 
-        This property returns the orignal bottom-level bound segment
+        This property returns the original bottom-level bound segment
         dictionary, or None if the port was previously unbound. For a
         previously bound port, original_bottom_bound_segment is
         equivalent to original_binding_levels[-1][BOUND_SEGMENT], and
