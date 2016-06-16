@@ -55,6 +55,11 @@ designate_opts = [
     cfg.StrOpt('admin_auth_url',
                help=_('Authorization URL for connecting to designate in admin '
                       'context')),
+    cfg.BoolOpt('insecure', default=False,
+                help=_('Skip cert validation for SSL based admin_auth_url')),
+    cfg.StrOpt('ca_cert',
+               help=_('CA certificate file to use to verify '
+                      'connecting clients')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,
                 help=_('Allow the creation of PTR records')),
     cfg.IntOpt('ipv4_ptr_zone_prefix_size', default=24,
@@ -83,7 +88,11 @@ def get_clients(context):
     global _SESSION
 
     if not _SESSION:
-        _SESSION = session.Session()
+        if CONF.designate.insecure:
+            verify = False
+        else:
+            verify = CONF.designate.ca_cert or True
+        _SESSION = session.Session(verify=verify)
 
     auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
     client = d_client.Client(session=_SESSION, auth=auth)
