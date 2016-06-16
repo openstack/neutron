@@ -467,6 +467,12 @@ class TestDhcpAgent(base.BaseTestCase):
         # should have been called with all ports again after the failure
         ready.assert_has_calls([mock.call(set(range(4)))] * 2)
 
+    def test_dhcp_ready_ports_updates_after_enable_dhcp(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        self.assertEqual(set(), dhcp.dhcp_ready_ports)
+        dhcp.configure_dhcp_for_network(fake_network)
+        self.assertEqual({fake_port1.id}, dhcp.dhcp_ready_ports)
+
     def test_report_state_revival_logic(self):
         dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
         with mock.patch.object(dhcp.state_rpc,

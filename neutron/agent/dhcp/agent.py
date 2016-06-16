@@ -277,6 +277,10 @@ class DhcpAgent(manager.Manager):
                 if self.call_driver('enable', network):
                     dhcp_network_enabled = True
                     self.cache.put(network)
+                    # After enabling dhcp for network, mark all existing
+                    # ports as ready. So that the status of ports which are
+                    # created before enabling dhcp can be updated.
+                    self.dhcp_ready_ports |= {p.id for p in network.ports}
                 break
 
         if enable_metadata and dhcp_network_enabled:
