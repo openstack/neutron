@@ -24,7 +24,6 @@ import six
 from stevedore import driver
 
 from neutron._i18n import _
-from neutron.agent.linux import utils as linux_utils
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -221,12 +220,12 @@ class PrefixDelegation(object):
     def _ensure_lla_task(self, gw_ifname, ns_name, lla_with_mask):
         # It would be insane for taking so long unless DAD test failed
         # In that case, the subnet would never be assigned a prefix.
-        linux_utils.wait_until_true(functools.partial(self._lla_available,
-                                                      gw_ifname,
-                                                      ns_name,
-                                                      lla_with_mask),
-                                    timeout=l3_constants.LLA_TASK_TIMEOUT,
-                                    sleep=2)
+        utils.wait_until_true(functools.partial(self._lla_available,
+                                                gw_ifname,
+                                                ns_name,
+                                                lla_with_mask),
+                              timeout=l3_constants.LLA_TASK_TIMEOUT,
+                              sleep=2)
 
     def _lla_available(self, gw_ifname, ns_name, lla_with_mask):
         llas = self._get_llas(gw_ifname, ns_name)

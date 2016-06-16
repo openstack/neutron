@@ -10,8 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import eventlet
 import os.path
 import stat
+import testtools
 
 from neutron.common import utils
 from neutron.tests import base
@@ -49,3 +51,12 @@ class TestReplaceFile(base.BaseTestCase):
         file_mode = 0o777
         utils.replace_file(self.file_name, self.data, file_mode)
         self._verify_result(file_mode)
+
+
+class TestWaitUntilTrue(base.BaseTestCase):
+    def test_wait_until_true_predicate_succeeds(self):
+        utils.wait_until_true(lambda: True)
+
+    def test_wait_until_true_predicate_fails(self):
+        with testtools.ExpectedException(eventlet.timeout.Timeout):
+            utils.wait_until_true(lambda: False, 2)

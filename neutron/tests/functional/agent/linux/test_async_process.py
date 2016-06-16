@@ -18,6 +18,7 @@ import six
 from neutron._i18n import _
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests import base
 
 
@@ -72,7 +73,7 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         self._check_stdout(proc)
         pid = proc.pid
         utils.execute(['kill', '-9', pid])
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: proc.is_active() and pid != proc.pid,
             timeout=5,
             sleep=0.01,

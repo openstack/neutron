@@ -18,7 +18,7 @@ from oslo_config import cfg
 from six import moves
 
 from neutron.agent.linux import external_process
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron.tests import base
 from neutron.tests.functional.agent.linux import simple_daemon
 

@@ -201,7 +201,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
         predicate = lambda: len(
             self._ip_list_for_vif(vif_name, network.namespace))
-        utils.wait_until_true(predicate, 10)
+        common_utils.wait_until_true(predicate, 10)
 
         ip_list = self._ip_list_for_vif(vif_name, network.namespace)
         cidr = ip_list[0].get('cidr')
@@ -286,7 +286,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         self.addCleanup(self.agent.disable_isolated_metadata_proxy, network)
         self.configure_dhcp_for_network(network=network)
         pm = self._get_metadata_proxy_process(network)
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: pm.active,
             timeout=5,
             sleep=0.01,
@@ -298,7 +298,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         old_pid = pm.pid
 
         utils.execute(['kill', '-9', old_pid], run_as_root=True)
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: pm.active and pm.pid != old_pid,
             timeout=5,
             sleep=0.1,
@@ -309,7 +309,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
 
         self.conf.set_override('enable_isolated_metadata', False)
         self.configure_dhcp_for_network(network=network)
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: not pm.active,
             timeout=5,
             sleep=0.1,
@@ -325,7 +325,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         self.agent.start_ready_ports_loop()
         self.configure_dhcp_for_network(network)
         ports_to_send = {p.id for p in network.ports}
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: self.mock_plugin_api.dhcp_ready_on_ports.called,
             timeout=1,
             sleep=0.1,

@@ -21,7 +21,6 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.common import machine_fixtures
@@ -47,7 +46,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
         def is_port_status_active():
             port = self.client.show_port(port_id)
             return port['port']['status'] == 'ACTIVE'
-        utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
+        common_utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
 
     def _create_net_subnet_and_vm(self, tenant_id, subnet_cidrs, host, router):
         network = self.safe_client.create_network(tenant_id)
@@ -87,7 +86,7 @@ class TestLegacyL3Agent(TestL3Agent):
 
     def _assert_namespace_exists(self, ns_name):
         ip = ip_lib.IPWrapper(ns_name)
-        utils.wait_until_true(lambda: ip.netns.exists(ns_name))
+        common_utils.wait_until_true(lambda: ip.netns.exists(ns_name))
 
     def test_namespace_exists(self):
         tenant_id = uuidutils.generate_uuid()
@@ -173,7 +172,7 @@ class TestHAL3Agent(base.BaseFullStackTestCase):
         self.assertEqual(2, len(agents['agents']),
                          'HA router must be scheduled to both nodes')
 
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             functools.partial(
                 self._is_ha_router_active_on_one_agent,
                 router['id']),

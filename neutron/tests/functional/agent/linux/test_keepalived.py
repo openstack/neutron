@@ -19,6 +19,7 @@ from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
@@ -42,7 +43,7 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
     def _spawn_keepalived(self, keepalived_manager):
         keepalived_manager.spawn()
         process = keepalived_manager.get_process()
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: process.active,
             timeout=5,
             sleep=0.01,
@@ -63,7 +64,7 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
         # Exit the process, and see that when it comes back
         # It's indeed a different process
         utils.execute(['kill', exit_code, pid], run_as_root=True)
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: process.active and pid != process.pid,
             timeout=5,
             sleep=0.01,

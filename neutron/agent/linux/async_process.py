@@ -113,7 +113,7 @@ class AsyncProcess(object):
             self._spawn()
 
         if block:
-            utils.wait_until_true(self.is_active)
+            common_utils.wait_until_true(self.is_active)
 
     def stop(self, block=False, kill_signal=signal.SIGKILL):
         """Halt the process and watcher threads.
@@ -131,7 +131,7 @@ class AsyncProcess(object):
             raise AsyncProcessException(_('Process is not running.'))
 
         if block:
-            utils.wait_until_true(lambda: not self.is_active())
+            common_utils.wait_until_true(lambda: not self.is_active())
 
     def _spawn(self):
         """Spawn a process and its watchers."""

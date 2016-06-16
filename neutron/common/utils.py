@@ -33,6 +33,7 @@ import tempfile
 import time
 import uuid
 
+import eventlet
 from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
@@ -599,6 +600,22 @@ def transaction_guard(f):
                                  "transaction."))
         return f(self, context, *args, **kwargs)
     return inner
+
+
+def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
+    """
+    Wait until callable predicate is evaluated as True
+
+    :param predicate: Callable deciding whether waiting should continue.
+    Best practice is to instantiate predicate with functools.partial()
+    :param timeout: Timeout in seconds how long should function wait.
+    :param sleep: Polling interval for results in seconds.
+    :param exception: Exception class for eventlet.Timeout.
+    (see doc for eventlet.Timeout for more information)
+    """
+    with eventlet.timeout.Timeout(timeout, exception):
+        while not predicate():
+            eventlet.sleep(sleep)
 
 
 class _AuthenticBase(object):

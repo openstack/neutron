@@ -29,7 +29,6 @@ from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
@@ -149,7 +148,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 n, len([line for line in out.strip().split('\n') if line]))
 
         if ha:
-            utils.wait_until_true(lambda: router.ha_state == 'master')
+            common_utils.wait_until_true(lambda: router.ha_state == 'master')
 
         with self.assert_max_execution_time(100):
             assert_num_of_conntrack_rules(0)
@@ -233,7 +232,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             interface_name = router.get_external_device_name(port['id'])
             self._assert_no_ip_addresses_on_interface(router.ns_name,
                                                       interface_name)
-            utils.wait_until_true(lambda: router.ha_state == 'master')
+            common_utils.wait_until_true(lambda: router.ha_state == 'master')
 
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
@@ -245,10 +244,10 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 device,
                 router.get_internal_device_name,
                 router.ns_name)
-            utils.wait_until_true(device_exists)
+            common_utils.wait_until_true(device_exists)
 
         self.assertTrue(self._namespace_exists(router.ns_name))
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: self._metadata_proxy_exists(self.agent.conf, router))
         self._assert_internal_devices(router)
         self._assert_external_device(router)
@@ -408,7 +407,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         # then the devices and iptable rules have also been deleted,
         # so there's no need to check that explicitly.
         self.assertFalse(self._namespace_exists(router.ns_name))
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             lambda: not self._metadata_proxy_exists(self.agent.conf, router))
 
     def _assert_snat_chains(self, router):

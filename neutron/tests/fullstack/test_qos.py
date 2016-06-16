@@ -21,7 +21,7 @@ import testscenarios
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import tc_lib
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron.services.qos import qos_consts
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base

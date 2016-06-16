@@ -16,7 +16,7 @@ import netaddr
 
 from neutron_lib import constants
 
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 

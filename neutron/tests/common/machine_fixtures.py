@@ -18,7 +18,7 @@ import functools
 import fixtures
 
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron.tests.common import net_helpers
 
 

@@ -118,7 +118,7 @@ class NeutronServerFixture(fixtures.Fixture):
             config_filenames=config_filenames,
             kill_signal=signal.SIGTERM))
 
-        utils.wait_until_true(self.server_is_live)
+        common_utils.wait_until_true(self.server_is_live)
 
     def server_is_live(self):
         try:

@@ -38,6 +38,7 @@ from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
@@ -237,7 +238,7 @@ class RootHelperProcess(subprocess.Popen):
             poller = select.poll()
             poller.register(stream.fileno())
             poll_predicate = functools.partial(poller.poll, 1)
-            utils.wait_until_true(poll_predicate, timeout, 0.1,
+            common_utils.wait_until_true(poll_predicate, timeout, 0.1,
                                   RuntimeError(
                                       'No output in %.2f seconds' % timeout))
         return stream.readline()
@@ -254,7 +255,7 @@ class RootHelperProcess(subprocess.Popen):
             if utils.pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             child_is_running,
             timeout,
             exception=RuntimeError("Process %s hasn't been spawned "
@@ -304,7 +305,7 @@ class Pinger(object):
 
     def _wait_for_death(self):
         is_dead = lambda: self.proc.poll() is not None
-        utils.wait_until_true(
+        common_utils.wait_until_true(
             is_dead, timeout=self.TIMEOUT, exception=RuntimeError(
                 "Ping command hasn't ended after %d seconds." % self.TIMEOUT))
 

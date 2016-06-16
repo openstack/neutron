@@ -27,7 +27,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.l2.extensions import manager as ext_manager
 from neutron.agent.linux import interface
 from neutron.agent.linux import polling
-from neutron.agent.linux import utils as agent_utils
 from neutron.common import config as common_config
 from neutron.common import utils
 from neutron.plugins.common import constants as p_const
@@ -156,7 +155,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self._mock_get_events(agent, polling_manager, ports)
         self.addCleanup(polling_manager.stop)
         polling_manager.start()
-        agent_utils.wait_until_true(
+        utils.wait_until_true(
             polling_manager._monitor.is_active)
         agent.check_ovs_status = mock.Mock(
             return_value=constants.OVS_NORMAL)
@@ -228,9 +227,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             return agent.int_br.db_get_val(
                 'Interface', port, 'options', check_error=True)
 
-        agent_utils.wait_until_true(
+        utils.wait_until_true(
             lambda: get_peer(self.patch_int) == {'peer': self.patch_tun})
-        agent_utils.wait_until_true(
+        utils.wait_until_true(
             lambda: get_peer(self.patch_tun) == {'peer': self.patch_int})
 
     def assert_bridge_ports(self):
@@ -361,7 +360,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def wait_until_ports_state(self, ports, up, timeout=60):
         port_ids = [p['id'] for p in ports]
-        agent_utils.wait_until_true(
+        utils.wait_until_true(
             lambda: self._expected_plugin_rpc_call(
                 self.agent.plugin_rpc.update_device_list, port_ids, up),
             timeout=timeout)

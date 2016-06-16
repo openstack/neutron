@@ -25,8 +25,8 @@ from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.agent.linux import utils
 from neutron.common import constants as n_const
+from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures

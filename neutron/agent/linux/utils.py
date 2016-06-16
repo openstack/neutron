@@ -23,6 +23,7 @@ import socket
 import struct
 import threading
 
+import debtcollector
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
@@ -288,20 +289,9 @@ def pid_invoked_with_cmdline(pid, expected_cmd):
     return cmd_matches_expected(cmd, expected_cmd)
 
 
-def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
-    """
-    Wait until callable predicate is evaluated as True
-
-    :param predicate: Callable deciding whether waiting should continue.
-    Best practice is to instantiate predicate with functools.partial()
-    :param timeout: Timeout in seconds how long should function wait.
-    :param sleep: Polling interval for results in seconds.
-    :param exception: Exception class for eventlet.Timeout.
-    (see doc for eventlet.Timeout for more information)
-    """
-    with eventlet.timeout.Timeout(timeout, exception):
-        while not predicate():
-            eventlet.sleep(sleep)
+wait_until_true = debtcollector.moves.moved_function(
+    utils.wait_until_true, 'wait_until_true', __name__,
+    version='Newton', removal_version='Ocata')
 
 
 def ensure_directory_exists_without_file(path):
