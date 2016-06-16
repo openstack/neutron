@@ -66,7 +66,6 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
         for extension in self:
             try:
                 extension.obj.handle_port(context, data)
-            # TODO(QoS) add agent extensions exception and catch them here
             except AttributeError:
                 LOG.exception(
                     _LE("Agent Extension '%(name)s' failed "
@@ -79,8 +78,6 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
         for extension in self:
             try:
                 extension.obj.delete_port(context, data)
-            # TODO(QoS) add agent extensions exception and catch them here
-            # instead of AttributeError
             except AttributeError:
                 LOG.exception(
                     _LE("Agent Extension '%(name)s' failed "
