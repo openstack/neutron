@@ -24,8 +24,8 @@ from oslo_log import log as logging
 from sqlalchemy import sql
 
 from neutron._i18n import _LI, _LW
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import agents_db
-from neutron.db import agentschedulers_db
 from neutron.db import api as db_api
 from neutron.extensions import availability_zone as az_ext
 from neutron.scheduler import base_resource_filter
@@ -164,7 +164,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             # saving agent_id to use it after rollback to avoid
             # DetachedInstanceError
             agent_id = agent.id
-            binding = agentschedulers_db.NetworkDhcpAgentBinding()
+            binding = ndab_model.NetworkDhcpAgentBinding()
             binding.dhcp_agent_id = agent_id
             binding.network_id = network_id
             try:

@@ -21,6 +21,7 @@ import six
 import testscenarios
 
 from neutron import context
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
@@ -374,9 +375,9 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
     def _get_hosted_networks_on_dhcp_agent(self, agent_id):
         query = self.ctx.session.query(
-            agentschedulers_db.NetworkDhcpAgentBinding.network_id)
+            ndab_model.NetworkDhcpAgentBinding.network_id)
         query = query.filter(
-            agentschedulers_db.NetworkDhcpAgentBinding.dhcp_agent_id ==
+            ndab_model.NetworkDhcpAgentBinding.dhcp_agent_id ==
             agent_id)
 
         return [item[0] for item in query]
