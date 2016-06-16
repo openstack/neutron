@@ -176,12 +176,12 @@ class TestBwLimitQoS(BaseQoSRuleTestCase):
 class TestDscpMarkingQoS(BaseQoSRuleTestCase):
 
     def setUp(self):
-	self.l2_agent_type = constants.AGENT_TYPE_OVS
+        self.l2_agent_type = constants.AGENT_TYPE_OVS
         super(TestDscpMarkingQoS, self).setUp()
 
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
         l2_extensions.wait_until_dscp_marking_rule_applied(
-                vm.bridge, vm.port.name, dscp_mark)
+            vm.bridge, vm.port.name, dscp_mark)
 
     def _wait_for_dscp_marking_rule_removed(self, vm):
         self._wait_for_dscp_marking_rule_applied(vm, None)
@@ -200,7 +200,7 @@ class TestDscpMarkingQoS(BaseQoSRuleTestCase):
 
         # Create port with qos policy attached
         vm, qos_policy = self._prepare_vm_with_qos_policy(
-             [functools.partial(self._add_dscp_rule, DSCP_MARK)])
+            [functools.partial(self._add_dscp_rule, DSCP_MARK)])
         dscp_rule = qos_policy['rules'][0]
 
         self._wait_for_dscp_marking_rule_applied(vm, DSCP_MARK)
