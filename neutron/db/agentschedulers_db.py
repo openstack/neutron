@@ -156,7 +156,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         self.add_worker(check_worker)
 
     @debtcollector.removals.remove(
-        message="This will be removed in the N cycle. "
+        message="This will be removed in the O cycle. "
                 "Please use 'add_agent_status_check_worker' instead."
     )
     def add_agent_status_check(self, function):
@@ -263,7 +263,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
     network_scheduler = None
 
     @debtcollector.removals.remove(
-        message="This will be removed in the N cycle. "
+        message="This will be removed in the O cycle. "
                 "Please use 'add_periodic_dhcp_agent_status_check' instead."
     )
     def start_periodic_dhcp_agent_status_check(self):
