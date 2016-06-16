@@ -1143,8 +1143,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return dns_assignment
 
     def _create_db_port_obj(self, context, port_data):
-        if port_data.get('mac_address'):
-            mac_address = port_data.pop('mac_address')
+        mac_address = port_data.pop('mac_address', None)
+        if mac_address:
             if self._is_mac_in_use(context, port_data['network_id'],
                                    mac_address):
                 raise exc.MacAddressInUse(net_id=port_data['network_id'],
