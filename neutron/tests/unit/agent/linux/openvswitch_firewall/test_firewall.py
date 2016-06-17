@@ -358,7 +358,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                      'security_groups': [1]}
         self._prepare_security_group()
         self.firewall.prepare_port_filter(port_dict)
-        exp_ingress_classifier = mock.call(
+        exp_egress_classifier = mock.call(
             actions='set_field:{:d}->reg5,set_field:{:d}->reg6,'
                     'resubmit(,{:d})'.format(
                         self.port_ofport, TESTING_VLAN_TAG,
@@ -366,7 +366,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             in_port=self.port_ofport,
             priority=100,
             table=ovs_consts.LOCAL_SWITCHING)
-        exp_egress_classifier = mock.call(
+        exp_ingress_classifier = mock.call(
             actions='set_field:{:d}->reg5,set_field:{:d}->reg6,'
                     'resubmit(,{:d})'.format(
                         self.port_ofport, TESTING_VLAN_TAG,
