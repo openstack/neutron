@@ -14,9 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
 from oslo_config import cfg
 
 from neutron._i18n import _
+
 
 DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
@@ -100,3 +102,9 @@ DNSMASQ_OPTS = [
     cfg.BoolOpt('dhcp_broadcast_reply', default=False,
                 help=_("Use broadcast in DHCP replies.")),
 ]
+
+
+def register_agent_dhcp_opts(cfg=cfg.CONF):
+    cfg.register_opts(DHCP_AGENT_OPTS)
+    cfg.register_opts(DHCP_OPTS)
+    cfg.register_opts(DNSMASQ_OPTS)

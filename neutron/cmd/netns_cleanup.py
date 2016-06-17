@@ -25,7 +25,6 @@ from oslo_utils import importutils
 from neutron._i18n import _, _LE
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
-from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_fip_ns
@@ -34,6 +33,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config
+from neutron.conf.agent import dhcp as dhcp_config
 
 
 LOG = logging.getLogger(__name__)
@@ -72,9 +72,7 @@ def setup_conf():
     conf = cfg.CONF
     conf.register_cli_opts(cli_opts)
     agent_config.register_interface_driver_opts_helper(conf)
-    conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
-    conf.register_opts(dhcp_config.DHCP_OPTS)
-    conf.register_opts(dhcp_config.DNSMASQ_OPTS)
+    dhcp_config.register_agent_dhcp_opts(conf)
     conf.register_opts(interface.OPTS)
     return conf
 

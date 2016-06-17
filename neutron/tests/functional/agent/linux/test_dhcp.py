@@ -16,11 +16,11 @@ import mock
 from oslo_config import cfg
 
 from neutron.agent.common import config
-from neutron.agent.dhcp import config as dhcp_conf
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config as common_conf
+from neutron.conf.agent import dhcp as dhcp_conf
 from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base

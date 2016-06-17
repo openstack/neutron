@@ -19,7 +19,6 @@ from oslo_config import cfg
 
 import neutron.agent.common.config
 import neutron.agent.common.ovs_lib
-import neutron.agent.dhcp.config
 import neutron.agent.l2.extensions.manager
 import neutron.agent.l3.config
 import neutron.agent.l3.ha
@@ -30,6 +29,7 @@ import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
+import neutron.conf.agent.dhcp
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.db.agents_db
@@ -169,9 +169,9 @@ def list_dhcp_agent_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.agent.dhcp.config.DHCP_AGENT_OPTS,
-             neutron.agent.dhcp.config.DHCP_OPTS,
-             neutron.agent.dhcp.config.DNSMASQ_OPTS)
+             neutron.conf.agent.dhcp.DHCP_AGENT_OPTS,
+             neutron.conf.agent.dhcp.DHCP_OPTS,
+             neutron.conf.agent.dhcp.DNSMASQ_OPTS)
          )
     ]
 

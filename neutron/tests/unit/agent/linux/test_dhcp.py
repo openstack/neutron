@@ -21,12 +21,12 @@ from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent.common import config
-from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.common import config as base_config
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.conf.agent import dhcp as dhcp_config
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests import base
 from neutron.tests import tools
