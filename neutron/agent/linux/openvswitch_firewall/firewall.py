@@ -17,13 +17,13 @@ import netaddr
 from neutron_lib import constants as lib_const
 from neutron_lib import exceptions
 from oslo_log import log as logging
+from oslo_utils import netutils
 
 from neutron._i18n import _, _LE, _LW
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import rules
 from neutron.common import constants
-from neutron.common import ipv6_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
@@ -86,7 +86,7 @@ class OFPort(object):
         self.id = port_dict['device']
         self.vlan_tag = vlan_tag
         self.mac = ovs_port.vif_mac
-        self.lla_address = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+        self.lla_address = str(netutils.get_ipv6_addr_by_EUI64(
             lib_const.IPv6_LLA_PREFIX, self.mac))
         self.ofport = ovs_port.ofport
         self.sec_groups = list()

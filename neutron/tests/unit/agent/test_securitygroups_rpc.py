@@ -20,6 +20,7 @@ import mock
 from neutron_lib import constants as const
 from oslo_config import cfg
 import oslo_messaging
+from oslo_utils import netutils
 from testtools import matchers
 import webob.exc
 
@@ -27,7 +28,6 @@ from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import ipv6_utils as ipv6
 from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -578,7 +578,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 security_groups=[sg1_id])
             dhcp_rest = self.deserialize(self.fmt, dhcp_port)
             dhcp_mac = dhcp_rest['port']['mac_address']
-            dhcp_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+            dhcp_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
                 const.IPv6_LLA_PREFIX,
                 dhcp_mac))
 
@@ -702,7 +702,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 device_owner=const.DEVICE_OWNER_ROUTER_INTF)
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
                 const.IPv6_LLA_PREFIX,
                 gateway_mac))
 
@@ -770,7 +770,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 device_owner=const.DEVICE_OWNER_ROUTER_INTF)
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
                 const.IPv6_LLA_PREFIX,
                 gateway_mac))
             # Create another router interface port
@@ -845,7 +845,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 device_owner=const.DEVICE_OWNER_DVR_INTERFACE)
             gateway_mac = gateway_res['port']['mac_address']
             gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
                 const.IPv6_LLA_PREFIX,
                 gateway_mac))
 

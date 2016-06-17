@@ -15,11 +15,11 @@ import abc
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import six
 
 from neutron._i18n import _
-from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import exceptions as ipam_exc
 
@@ -221,7 +221,7 @@ class AutomaticAddressRequest(SpecificAddressRequest):
                 reason=_('must provide exactly 2 arguments - cidr and MAC'))
         prefix = kwargs['prefix']
         mac_address = kwargs['mac']
-        return ipv6_utils.get_ipv6_addr_by_EUI64(prefix, mac_address)
+        return netutils.get_ipv6_addr_by_EUI64(prefix, mac_address)
 
     _address_generators = {EUI64: _generate_eui64_address}
 

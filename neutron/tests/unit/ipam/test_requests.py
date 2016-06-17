@@ -14,9 +14,9 @@ import mock
 import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 
-from neutron.common import ipv6_utils
 from neutron import context
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
@@ -204,8 +204,8 @@ class TestAddressRequest(base.BaseTestCase):
     def test_automatic_address_request_eui64(self):
         subnet_cidr = '2607:f0d0:1002:51::/64'
         port_mac = 'aa:bb:cc:dd:ee:ff'
-        eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                         port_mac))
+        eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                       port_mac))
         request = ipam_req.AutomaticAddressRequest(
             address_type=self.EUI64,
             prefix=subnet_cidr,

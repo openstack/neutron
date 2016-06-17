@@ -18,6 +18,7 @@ IPv6-related utilities and helper functions.
 """
 import os
 
+from debtcollector import removals
 import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
@@ -29,6 +30,10 @@ LOG = log.getLogger(__name__)
 _IS_IPV6_ENABLED = None
 
 
+@removals.remove(
+    message="use get_ipv6_addr_by_EUI64 from oslo_utils.netutils",
+    version="Newton",
+    removal_version="Ocata")
 def get_ipv6_addr_by_EUI64(prefix, mac):
     # Check if the prefix is IPv4 address
     isIPv4 = netaddr.valid_ipv4(prefix)

@@ -16,9 +16,9 @@
 import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
+from oslo_utils import netutils
 
 from neutron.common import constants
-from neutron.common import ipv6_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_non_pluggable_backend as non_ipam
@@ -70,7 +70,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
             'device_owner': n_const.DEVICE_OWNER_COMPUTE_PREFIX}}
         expected = []
         for subnet in subnets:
-            addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+            addr = str(netutils.get_ipv6_addr_by_EUI64(
                             subnet['cidr'], port['port']['mac_address']))
             expected.append({'ip_address': addr, 'subnet_id': subnet['id']})
 
@@ -103,7 +103,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
             'device_owner': n_const.DEVICE_OWNER_COMPUTE_PREFIX}}
         expected = []
         for subnet in subnets:
-            addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+            addr = str(netutils.get_ipv6_addr_by_EUI64(
                             subnet['cidr'], port['port']['mac_address']))
             expected.append({'ip_address': addr, 'subnet_id': subnet['id']})
 

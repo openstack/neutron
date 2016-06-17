@@ -29,6 +29,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
 from oslo_service import systemd
+from oslo_utils import netutils
 from osprofiler import profiler
 import six
 from six import moves
@@ -45,7 +46,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.common import config
 from neutron.common import constants as c_const
-from neutron.common import ipv6_utils as ipv6
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -924,7 +924,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ipv6_addresses = {ip for ip in addresses
                           if netaddr.IPNetwork(ip).version == 6}
         # Allow neighbor advertisements for LLA address.
-        ipv6_addresses |= {str(ipv6.get_ipv6_addr_by_EUI64(
+        ipv6_addresses |= {str(netutils.get_ipv6_addr_by_EUI64(
                                n_const.IPv6_LLA_PREFIX, mac))
                            for mac in mac_addresses}
         if not has_zero_prefixlen_address(ipv6_addresses):

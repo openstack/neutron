@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import netutils
 import six
 
 from neutron._i18n import _LI
@@ -386,7 +387,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv4_pairs.append((mac, ip_address))
         else:
             mac_ipv6_pairs.append((mac, ip_address))
-            lla = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+            lla = str(netutils.get_ipv6_addr_by_EUI64(
                     constants.IPv6_LLA_PREFIX, mac))
             mac_ipv6_pairs.append((mac, lla))
 

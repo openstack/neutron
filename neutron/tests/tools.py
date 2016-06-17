@@ -26,12 +26,12 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
+from oslo_utils import netutils
 import six
 import unittest2
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import common_db_mixin
 
@@ -259,8 +259,8 @@ def get_random_ip_address(version=4):
                                      random.randint(3, 254))
         return netaddr.IPAddress(ip_string)
     else:
-        ip = ipv6_utils.get_ipv6_addr_by_EUI64('2001:db8::/64',
-                                               get_random_mac())
+        ip = netutils.get_ipv6_addr_by_EUI64('2001:db8::/64',
+                                             get_random_mac())
         return ip
 
 
