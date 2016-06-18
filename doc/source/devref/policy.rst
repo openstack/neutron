@@ -61,7 +61,7 @@ This step uses the ``neutron.policy.enforce`` routine. This routine raises
 REST API controllers catch this exception and return:
 
  * A 403 response code on a ``POST`` request or an ``PUT`` request for an
-   object owned by the tenant submitting the request;
+   object owned by the project submitting the request;
  * A 403 response for failures while authorizing API actions such as
    ``add_router_interface``;
  * A 404 response for ``DELETE``, ``GET`` and all other ``PUT`` requests.
@@ -177,7 +177,7 @@ OwnerCheck: Extended Checks for Resource Ownership
 
 This class is registered for rules matching the ``tenant_id`` keyword and
 overrides the generic check performed by oslo_policy in this case.
-It uses for those cases where neutron needs to check whether the tenant
+It uses for those cases where neutron needs to check whether the project
 submitting a request for a new resource owns the parent resource of the one
 being created. Current usages of ``OwnerCheck`` include, for instance,
 creating and updating a subnet.
@@ -214,7 +214,7 @@ FieldCheck: Verify Resource Attributes
 This class is registered with the policy engine for rules matching the 'field'
 keyword, and provides a way to perform fine grained checks on resource
 attributes. For instance, using this class of rules it is possible to specify
-a rule for granting every tenant read access to shared resources.
+a rule for granting every project read access to shared resources.
 
 In policy.json, a FieldCheck rules is specified in the following way::
 
@@ -250,11 +250,11 @@ served by Neutron "core" and for the APIs served by the various Neutron
    policy engine for evaluation;
  * The ``tenant_id`` attribute is a fundamental one in Neutron API request
    authorization. The default policy, ``admin_or_owner``, uses it to validate
-   if a tenant owns the resource it is trying to operate on. To this aim,
+   if a project owns the resource it is trying to operate on. To this aim,
    if a resource without a tenant_id is created, it is important to ensure
    that ad-hoc authZ policies are specified for this resource.
  * There is still only one check which is hardcoded in Neutron's API layer:
-   the check to verify that a tenant owns the network on which it is creating
+   the check to verify that a project owns the network on which it is creating
    a port. This check is hardcoded and is always executed when creating a
    port, unless the network is shared. Unfortunatelu a solution for performing
    this check in an efficient way through the policy engine has not yet been
@@ -274,9 +274,9 @@ Notes
    AMQP channel. For all these requests a neutron admin context is built, and
    the plugins will process them as such.
  * For ``PUT`` and ``DELETE`` requests a 404 error is returned on request
-   authorization failures rather than a 403, unless the tenant submitting the
+   authorization failures rather than a 403, unless the project submitting the
    request own the resource to update or delete. This is to avoid conditions
-   in which an API client might try and find out other tenants' resource
+   in which an API client might try and find out other projects' resource
    identifiers by sending out ``PUT`` and ``DELETE`` requests for random
    resource identifiers.
  * There is no way at the moment to specify an ``OR`` relationship between two

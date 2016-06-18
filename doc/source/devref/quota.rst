@@ -29,10 +29,10 @@ The Neutron API exposes an extension for managing such quotas. Quota limits are
 enforced at the API layer, before the request is dispatched to the plugin.
 
 Default values for quota limits are specified in neutron.conf. Admin users
-can override those defaults values on a per-tenant basis. Limits are stored
-in the Neutron database; if no limit is found for a given resource and tenant,
+can override those defaults values on a per-project basis. Limits are stored
+in the Neutron database; if no limit is found for a given resource and project,
 then the default value for such resource is used.
-Configuration-based quota management, where every tenant gets the same quota
+Configuration-based quota management, where every project gets the same quota
 limit specified in the configuration file, has been deprecated as of the
 Liberty release.
 
@@ -71,10 +71,10 @@ component handles quota enforcement. This API extension is loaded like any
 other extension. For this reason plugins must explicitly support it by including
 "quotas" in the support_extension_aliases attribute.
 
-In the Quota API simple CRUD operations are used for managing tenant quotas.
-Please note that the current behaviour when deleting a tenant quota is to reset
-quota limits for that tenant to configuration defaults. The API
-extension does not validate the tenant identifier with the identity service.
+In the Quota API simple CRUD operations are used for managing project quotas.
+Please note that the current behaviour when deleting a project quota is to reset
+quota limits for that project to configuration defaults. The API
+extension does not validate the project identifier with the identity service.
 
 Performing quota enforcement is the responsibility of the Quota Engine.
 RESTful API controllers, before sending a request to the plugin, try to obtain
@@ -84,7 +84,7 @@ operation to the plugin.
 
 For a reservation to be successful, the total amount of resources requested,
 plus the total amount of resources reserved, plus the total amount of resources
-already stored in the database should not exceed the tenant's quota limit.
+already stored in the database should not exceed the project's quota limit.
 
 Finally, both quota management and enforcement rely on a "quota driver" [#]_,
 whose task is basically to perform database operations.
@@ -99,25 +99,25 @@ controller class [#]_.
 This class does not implement the POST operation. List, get, update, and
 delete operations are implemented by the usual index, show, update and
 delete methods. These method simply call into the quota driver for either
-fetching tenant quotas or updating them.
+fetching project quotas or updating them.
 
 The _update_attributes method is called only once in the controller lifetime.
 This method dynamically updates Neutron's resource attribute map [#]_ so that
 an attribute is added for every resource managed by the quota engine.
 Request authorisation is performed in this controller, and only 'admin' users
-are allowed to modify quotas for tenants. As the neutron policy engine is not
+are allowed to modify quotas for projects. As the neutron policy engine is not
 used, it is not possible to configure which users should be allowed to manage
 quotas using policy.json.
 
 The driver operations dealing with quota management are:
 
  * delete_tenant_quota, which simply removes all entries from the 'quotas'
-   table for a given tenant identifier;
- * update_quota_limit, which adds or updates an entry in the 'quotas' tenant for
-   a given tenant identifier and a given resource name;
- * _get_quotas, which fetches limits for a set of resource and a given tenant
+   table for a given project identifier;
+ * update_quota_limit, which adds or updates an entry in the 'quotas' project
+   for a given project identifier and a given resource name;
+ * _get_quotas, which fetches limits for a set of resource and a given project
    identifier
- * _get_all_quotas, which behaves like _get_quotas, but for all tenants.
+ * _get_all_quotas, which behaves like _get_quotas, but for all projects.
 
 
 Resource Usage Info
@@ -238,12 +238,12 @@ Reservations are committed or cancelled by respectively calling the
 commit_reservation and cancel_reservation methods in neutron.quota.QuotaEngine.
 
 Reservations are not perennial. Eternal reservation would eventually exhaust
-tenants' quotas because they would never be removed when an API worker crashes
+projects' quotas because they would never be removed when an API worker crashes
 whilst in the middle of an operation.
 Reservation expiration is currently set to 120 seconds, and is not
 configurable, not yet at least. Expired reservations are not counted when
 calculating resource usage. While creating a reservation, if any expired
-reservation is found, all expired reservation for that tenant and resource
+reservation is found, all expired reservation for that project and resource
 will be removed from the database, thus avoiding build-up of expired
 reservations.
 

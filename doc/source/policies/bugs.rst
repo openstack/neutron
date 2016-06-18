@@ -199,7 +199,7 @@ following these suggestions:
     the 'why' is important, but can be omitted if obvious (not to you of course).
   * Pre-conditions: what is the initial state of your system? Please consider
     enumerating resources available in the system, if useful in diagnosing
-    the problem. Who are you? A regular tenant or a super-user? Are you
+    the problem. Who are you? A regular user or a super-user? Are you
     describing service-to-service interaction?
   * Step-by-step reproduction steps: these can be actual neutron client
     commands or raw API requests; Grab the output if you think it is useful.

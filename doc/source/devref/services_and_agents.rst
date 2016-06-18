@@ -32,7 +32,7 @@ services. Among those of special interest:
 #. neutron-server that provides API endpoints and serves as a single point of
    access to the database. It usually runs on nodes called Controllers.
 #. Layer2 agent that can utilize Open vSwitch, Linuxbridge or other vendor
-   specific technology to provide network segmentation and isolation for tenant
+   specific technology to provide network segmentation and isolation for project
    networks. The L2 agent should run on every node where it is deemed
    responsible for wiring and securing virtual interfaces (usually both Compute
    and Network nodes).

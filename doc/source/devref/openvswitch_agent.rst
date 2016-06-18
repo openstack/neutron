@@ -29,7 +29,7 @@ connectivity for instances, along with bridges created in conjunction
 with OpenStack Nova for filtering.
 
 ovs-neutron-agent can be configured to use different networking technologies
-to create tenant isolation.
+to create project isolation.
 These technologies are implemented as ML2 type drivers which are used in
 conjunction with the OpenVSwitch mechanism driver.
 
@@ -72,7 +72,7 @@ Bridge Management
 
 In order to make the agent capable of handling more than one tunneling
 technology, to decouple the requirements of segmentation technology
-from tenant isolation, and to preserve backward compatibility for OVS
+from project isolation, and to preserve backward compatibility for OVS
 agents working without tunneling, the agent relies on a tunneling bridge,
 or br-tun, and the well known integration bridge, or br-int.
 
@@ -82,7 +82,7 @@ externally). The VLAN id of this local VLAN is mapped to the physical
 networking details realizing that virtual network.
 
 For virtual networks realized as VXLAN/GRE tunnels, a Logical Switch
-(LS) identifier is used to differentiate tenant traffic on inter-HV
+(LS) identifier is used to differentiate project traffic on inter-HV
 tunnels. A mesh of tunnels is created to other Hypervisors in the
 cloud. These tunnels originate and terminate on the tunneling bridge
 of each hypervisor, leaving br-int unaffected. Port patching is done
