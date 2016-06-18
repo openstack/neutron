@@ -2113,18 +2113,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     body = self._show('routers', router_id)
                     ext_gw_info = body['router']['external_gateway_info']
                     ext_fixed_ip = ext_gw_info['external_fixed_ips'][0]
-                    notify.assert_called_once_with(
-                                          resources.FLOATING_IP,
-                                          events.AFTER_UPDATE,
-                                          mock.ANY,
-                                          context=mock.ANY,
-                                          fixed_ip_address=ip_address,
-                                          fixed_port_id=port_id,
-                                          floating_ip_address=fip_addr,
-                                          floating_network_id=fip_network_id,
-                                          last_known_router_id=None,
-                                          router_id=router_id,
-                                          next_hop=ext_fixed_ip['ip_address'])
+                    notify.assert_any_call(resources.FLOATING_IP,
+                                           events.AFTER_UPDATE,
+                                           mock.ANY,
+                                           context=mock.ANY,
+                                           fixed_ip_address=ip_address,
+                                           fixed_port_id=port_id,
+                                           floating_ip_address=fip_addr,
+                                           floating_network_id=fip_network_id,
+                                           last_known_router_id=None,
+                                           router_id=router_id,
+                                           next_hop=ext_fixed_ip['ip_address'])
 
     def test_floatingip_disassociate_notification(self):
         with self.port() as p:
@@ -2142,18 +2141,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     self._update('floatingips',
                                  fip['floatingip']['id'],
                                  {'floatingip': {'port_id': None}})
-                    notify.assert_called_once_with(
-                                          resources.FLOATING_IP,
-                                          events.AFTER_UPDATE,
-                                          mock.ANY,
-                                          context=mock.ANY,
-                                          fixed_ip_address=None,
-                                          fixed_port_id=None,
-                                          floating_ip_address=fip_addr,
-                                          floating_network_id=fip_network_id,
-                                          last_known_router_id=router_id,
-                                          router_id=None,
-                                          next_hop=None)
+                    notify.assert_any_call(resources.FLOATING_IP,
+                                           events.AFTER_UPDATE,
+                                           mock.ANY,
+                                           context=mock.ANY,
+                                           fixed_ip_address=None,
+                                           fixed_port_id=None,
+                                           floating_ip_address=fip_addr,
+                                           floating_network_id=fip_network_id,
+                                           last_known_router_id=router_id,
+                                           router_id=None,
+                                           next_hop=None)
 
     def test_floatingip_association_on_unowned_router(self):
         # create a router owned by one tenant and associate the FIP with a
