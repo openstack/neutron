@@ -27,7 +27,6 @@ from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
-from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import common_db_mixin
