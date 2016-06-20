@@ -55,12 +55,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
         # Update the plugin and extensions path
         self.setup_coreplugin(TARGET_PLUGIN)
-        cfg.CONF.set_override(
-            'quota_items',
-            ['network', 'subnet', 'port', 'extra1'],
-            group='QUOTAS')
         quota.QUOTAS = quota.QuotaEngine()
-        quota.register_resources_from_config()
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
         self.plugin.return_value.supported_extension_aliases = ['quotas']

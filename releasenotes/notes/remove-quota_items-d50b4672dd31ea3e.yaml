@@ -1,0 +1,8 @@
+---
+prelude: >
+    Remove 'quota_items' configuration option from
+    neutron.conf file. This option was deprecated since
+    Liberty release and has no effect now.
+upgrade:
+  - Remove 'quota_items' configuration option from
+    neutron.conf file.

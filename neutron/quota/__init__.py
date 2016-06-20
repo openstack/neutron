@@ -34,7 +34,6 @@ LOG = logging.getLogger(__name__)
 QUOTA_DB_MODULE = quota.QUOTA_DB_MODULE
 QUOTA_DB_DRIVER = quota.QUOTA_DB_DRIVER
 QUOTA_CONF_DRIVER = quota.QUOTA_CONF_DRIVER
-default_quota_items = quota.default_quota_items
 
 
 # Register the configuration options
@@ -280,15 +279,3 @@ class QuotaEngine(object):
 
 
 QUOTAS = QuotaEngine.get_instance()
-
-
-def register_resources_from_config():
-    # This operation is now deprecated. All the neutron core and extended
-    # resource for which  quota limits are enforced explicitly register
-    # themselves with the quota engine.
-    for resource_item in (set(cfg.CONF.QUOTAS.quota_items) -
-                          set(default_quota_items)):
-        resource_registry.register_resource_by_name(resource_item)
-
-
-register_resources_from_config()
