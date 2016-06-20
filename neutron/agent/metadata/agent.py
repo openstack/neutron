@@ -232,7 +232,6 @@ class UnixDomainMetadataProxy(object):
         self.conf = conf
         agent_utils.ensure_directory_exists_without_file(
             cfg.CONF.metadata_proxy_socket)
-        self._init_state_reporting()
 
     def _init_state_reporting(self):
         self.context = context.get_admin_context_without_session()
@@ -297,4 +296,5 @@ class UnixDomainMetadataProxy(object):
                      workers=self.conf.metadata_workers,
                      backlog=self.conf.metadata_backlog,
                      mode=self._get_socket_mode())
+        self._init_state_reporting()
         server.wait()

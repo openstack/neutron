@@ -489,6 +489,9 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                               backlog=128, mode=0o644),
             mock.call().wait()]
         )
+        self.looping_mock.assert_called_once_with(p._report_state)
+        self.looping_mock.return_value.start.assert_called_once_with(
+            interval=mock.ANY)
 
     def test_main(self):
         with mock.patch.object(agent, 'UnixDomainMetadataProxy') as proxy:
@@ -503,17 +506,11 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                             mock.call().run()]
                         )
 
-    def test_init_state_reporting(self):
-        with mock.patch('os.makedirs'):
-            proxy = agent.UnixDomainMetadataProxy(mock.Mock())
-            self.looping_mock.assert_called_once_with(proxy._report_state)
-            self.looping_mock.return_value.start.assert_called_once_with(
-                interval=mock.ANY)
-
     def test_report_state(self):
         with mock.patch('neutron.agent.rpc.PluginReportStateAPI') as state_api:
             with mock.patch('os.makedirs'):
-                proxy = agent.UnixDomainMetadataProxy(mock.Mock())
+                proxy = agent.UnixDomainMetadataProxy(self.cfg.CONF)
+                proxy._init_state_reporting()
                 self.assertTrue(proxy.agent_state['start_flag'])
                 proxy._report_state()
                 self.assertNotIn('start_flag', proxy.agent_state)
