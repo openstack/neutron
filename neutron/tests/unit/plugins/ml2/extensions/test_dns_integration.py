@@ -538,14 +538,18 @@ class TestDesignateClient(testtools.TestCase):
                                      self.TEST_ADMIN_TENANT_NAME,
                                      group='designate')
 
-        driver.session.Session = mock.MagicMock()
+        # enforce session recalculation
+        mock.patch.object(driver, '_SESSION', new=None).start()
+        self.driver_session = (
+            mock.patch.object(driver.session, 'Session').start()
+        )
 
     def test_insecure_client(self):
         config.cfg.CONF.set_override('insecure',
                                      True,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        driver.session.Session.assert_called_with(verify=False)
+        self.driver_session.assert_called_with(verify=False)
 
     def test_secure_client(self):
         config.cfg.CONF.set_override('insecure',
@@ -555,4 +559,4 @@ class TestDesignateClient(testtools.TestCase):
                                      self.TEST_CA_CERT,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        driver.session.Session.assert_called_with(verify=self.TEST_CA_CERT)
+        self.driver_session.assert_called_with(verify=self.TEST_CA_CERT)
