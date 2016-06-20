@@ -36,7 +36,7 @@ class QuotasTestBase(base.BaseAdminNetworkTest):
             name=test_tenant,
             description=test_description)['tenant']
         self.addCleanup(
-            self.identity_admin_client.create_tenant, tenant['id'])
+            self.identity_admin_client.delete_tenant, tenant['id'])
         return tenant
 
     def _setup_quotas(self, project_id, **new_quotas):
