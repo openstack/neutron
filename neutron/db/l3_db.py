@@ -35,6 +35,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db as l3_agt
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -601,16 +602,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             raise n_exc.BadRequest(resource='router', msg=msg)
         return port
 
-    def _add_interface_by_port(self, context, router, port_id, owner):
-        # Update owner before actual process in order to avoid the
-        # case where a port might get attached to a router without the
-        # owner successfully updating due to an unavailable backend.
-        self._check_router_port(context, port_id, '')
-        self._core_plugin.update_port(
-            context, port_id, {'port': {'device_id': router.id,
-                                        'device_owner': owner}})
-
-        with context.session.begin(subtransactions=True):
+    def _validate_router_port_info(self, context, router, port_id):
+        with db_api.autonested_transaction(context.session):
             # check again within transaction to mitigate race
             port = self._check_router_port(context, port_id, router.id)
 
@@ -645,6 +638,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         "IPv4 subnets on router port")
                 raise n_exc.BadRequest(resource='router', msg=msg)
             return port, subnets
+
+    def _add_interface_by_port(self, context, router, port_id, owner):
+        # Update owner before actual process in order to avoid the
+        # case where a port might get attached to a router without the
+        # owner successfully updating due to an unavailable backend.
+        port = self._check_router_port(context, port_id, '')
+        prev_owner = port['device_owner']
+        self._core_plugin.update_port(
+            context, port_id, {'port': {'device_id': router.id,
+                                        'device_owner': owner}})
+        try:
+            return self._validate_router_port_info(context, router, port_id)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self._core_plugin.update_port(
+                    context, port_id, {'port': {'device_id': '',
+                                                'device_owner': prev_owner}})
 
     def _port_has_ipv6_address(self, port):
         for fixed_ip in port['fixed_ips']:
