@@ -418,6 +418,20 @@ following directive should be added in the contraction script::
     depends_on = ('<expansion-revision>',)
 
 
+Expand and Contract Branch Labeling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before the Newton release, neutron and each sub-project had its own alembic
+environment and each repo could re-use the labels ``contract`` and ``expand``
+for their alembic branches. With the Newton release, all neutron sub-projects
+use neutron's alembic environment, and this requires globally unique branch
+labels.
+
+To be compatible with the Newton release of neutron, all projects must use
+unique alembic branch labels of the form ``<project>-contract`` and
+``<project>-expand``.
+
+
 HEAD files for conflict management
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

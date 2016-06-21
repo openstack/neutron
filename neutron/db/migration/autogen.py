@@ -54,7 +54,8 @@ def _migration_script_ops(context, directive, phase):
     version_path = cli._get_version_branch_path(
         context.config, release=cli.CURRENT_RELEASE, branch=phase)
     autogen_kwargs = {}
-    cli._check_bootstrap_new_branch(phase, version_path, autogen_kwargs)
+    cli._check_bootstrap_new_branch(context.config, phase, version_path,
+                                    autogen_kwargs)
 
     op = ops.MigrationScript(
         new_rev_id(),
