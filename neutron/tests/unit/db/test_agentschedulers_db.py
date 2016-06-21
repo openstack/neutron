@@ -965,39 +965,41 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertIn(router_ids[0], [r['id'] for r in ret_a])
             self.assertIn(router_ids[2], [r['id'] for r in ret_a])
 
-    def test_router_auto_schedule_for_specified_routers(self):
-
-        def _sync_router_with_ids(router_ids, exp_synced, exp_hosted, host_id):
-            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
-                                           router_ids=router_ids)
-            self.assertEqual(exp_synced, len(ret_a))
-            for r in router_ids:
-                self.assertIn(r, [r['id'] for r in ret_a])
-            host_routers = self._list_routers_hosted_by_l3_agent(host_id)
-            num_host_routers = len(host_routers['routers'])
-            self.assertEqual(exp_hosted, num_host_routers)
-
+    def test_sync_router(self):
         l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
         hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3, L3_HOSTA)
 
-        with self.router() as v1,\
-                self.router() as v2,\
-                self.router() as v3,\
-                self.router() as v4:
-            routers = (v1, v2, v3, v4)
-            router_ids = [r['router']['id'] for r in routers]
-            # Sync router1 (router1 is scheduled)
-            _sync_router_with_ids([router_ids[0]], 1, 1, hosta_id)
-            # Sync router1 only (no router is scheduled)
-            _sync_router_with_ids([router_ids[0]], 1, 1, hosta_id)
-            # Schedule router2
-            _sync_router_with_ids([router_ids[1]], 1, 2, hosta_id)
-            # Sync router2 and router4 (router4 is scheduled)
-            _sync_router_with_ids([router_ids[1], router_ids[3]],
-                                  2, 3, hosta_id)
-            # Sync all routers (router3 is scheduled)
-            _sync_router_with_ids(router_ids, 4, 4, hosta_id)
+        with self.router() as r1:
+            ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
+                                           router_ids=[r1['router']['id']])
+            # Not return router to agent if the router is not bound to it.
+            self.assertEqual([], ret_a)
+            host_routers = self._list_routers_hosted_by_l3_agent(hosta_id)
+            # No router will be auto scheduled.
+            self.assertEqual(0, len(host_routers['routers']))
+
+    def test_sync_dvr_router(self):
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
+        dvr_agents = self._register_dvr_agents()
+
+        with self.router() as r1, \
+                mock.patch.object(self.l3plugin, 'get_subnet_ids_on_router',
+                                  return_value=['fake_subnet_id']), \
+                mock.patch.object(self.l3plugin,
+                                  '_check_dvr_serviceable_ports_on_host',
+                                  return_value=True):
+            for l3_agent in dvr_agents:
+                host = l3_agent['host']
+                ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=host,
+                                               router_ids=[r1['router']['id']])
+                router_ids = [r['id'] for r in ret_a]
+                # Return router to agent if there is dvr service port in agent.
+                self.assertIn(r1['router']['id'], router_ids)
+                host_routers = self._list_routers_hosted_by_l3_agent(
+                    l3_agent['id'])
+                # No router will be auto scheduled.
+                self.assertEqual(0, len(host_routers['routers']))
 
     def test_router_schedule_with_candidates(self):
         with self.router() as router1,\
