@@ -378,6 +378,27 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             self.assertRaises(script.DuplicateL3HARouterAgentPortBinding,
                               script.check_sanity, conn)
 
+    def test_check_sanity_030a959ceafa(self):
+        routerports = sqlalchemy.Table(
+            'routerports', sqlalchemy.MetaData(),
+            sqlalchemy.Column('router_id', sqlalchemy.String(36)),
+            sqlalchemy.Column('port_id', sqlalchemy.String(36)),
+            sqlalchemy.Column('port_type', sqlalchemy.String(255)))
+
+        with self.engine.connect() as conn:
+            routerports.create(conn)
+            conn.execute(routerports.insert(), [
+                {'router_id': '1234', 'port_id': '12345',
+                 'port_type': '123'},
+                {'router_id': '12343', 'port_id': '12345',
+                 'port_type': '1232'}
+            ])
+            script_dir = alembic_script.ScriptDirectory.from_config(
+                self.alembic_config)
+            script = script_dir.get_revision("030a959ceafa").module
+            self.assertRaises(script.DuplicatePortRecordinRouterPortdatabase,
+                              script.check_sanity, conn)
+
 
 class TestWalkDowngrade(oslotest_base.BaseTestCase):
 
