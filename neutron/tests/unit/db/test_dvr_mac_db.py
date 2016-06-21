@@ -69,15 +69,12 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(expected, entry)
 
     def test__create_dvr_mac_address_retries_exceeded_retry_logic(self):
-        new_retries = 8
-        cfg.CONF.set_override('mac_generation_retries', new_retries)
         self._create_dvr_mac_entry('foo_host_1', 'non_unique_mac')
         with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
             f.return_value = 'non_unique_mac'
             self.assertRaises(dvr.MacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,
                               self.ctx, "foo_host_2")
-        self.assertEqual(new_retries, f.call_count)
 
     def test_mac_not_cleared_on_agent_delete_event_with_remaining_agents(self):
         plugin = manager.NeutronManager.get_plugin()

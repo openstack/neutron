@@ -63,7 +63,10 @@ core_opts = [
                       "octet is not 00, it will also be used. The others "
                       "will be randomly generated.")),
     cfg.IntOpt('mac_generation_retries', default=16,
-               help=_("How many times Neutron will retry MAC generation")),
+               deprecated_for_removal=True,
+               help=_("How many times Neutron will retry MAC generation. This "
+                      "option is now obsolete and so is deprecated to be "
+                      "removed in the Ocata release.")),
     cfg.BoolOpt('allow_bulk', default=True,
                 help=_("Allow the usage of the bulk API")),
     cfg.BoolOpt('allow_pagination', default=api.DEFAULT_ALLOW_PAGINATION,
