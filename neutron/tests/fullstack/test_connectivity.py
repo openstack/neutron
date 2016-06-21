@@ -19,9 +19,9 @@ import testscenarios
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
+from neutron.tests.unit import testlib_api
 
-
-load_tests = testscenarios.load_tests_apply_scenarios
+load_tests = testlib_api.module_load_tests
 
 
 class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):

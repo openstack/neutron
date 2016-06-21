@@ -28,6 +28,9 @@ from neutron.tests.common import machine_fixtures
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
+from neutron.tests.unit import testlib_api
+
+load_tests = testlib_api.module_load_tests
 
 
 class TestL3Agent(base.BaseFullStackTestCase):
