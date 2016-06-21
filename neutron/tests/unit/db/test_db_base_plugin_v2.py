@@ -1702,6 +1702,20 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             mac = port['port']['mac_address']
             self.assertTrue(mac.startswith("12:34:56:78"))
 
+    def test_duplicate_mac_generation(self):
+        # simulate duplicate mac generation to make sure DBDuplicate is retried
+        responses = ['12:34:56:78:00:00', '12:34:56:78:00:00',
+                     '12:34:56:78:00:01']
+        with mock.patch('neutron.common.utils.get_random_mac',
+                        side_effect=responses) as grand_mac:
+            with self.subnet() as s:
+                with self.port(subnet=s) as p1, self.port(subnet=s) as p2:
+                    self.assertEqual('12:34:56:78:00:00',
+                                     p1['port']['mac_address'])
+                    self.assertEqual('12:34:56:78:00:01',
+                                     p2['port']['mac_address'])
+                    self.assertEqual(3, grand_mac.call_count)
+
     def test_bad_mac_format(self):
         cfg.CONF.set_override('base_mac', "bad_mac")
         try:
