@@ -1,0 +1,10 @@
+---
+prelude: >
+    Remove 'router_id' configuration option from the
+    l3_agent.ini file. 'router_id' option has been defined
+    in order to associate an l3-agent to a specific router
+    when use_namespaces=False. It was deprecated after
+    use_namespaces was removed in Mitaka release.
+upgrade:
+  - Remove 'router_id' configuration option from the
+    l3_agent.ini file.

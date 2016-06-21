@@ -1999,10 +1999,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_disable_metadata_proxy_spawn(self):
         self._configure_metadata_proxy(enableflag=False)
 
-    def test_router_id_specified_in_conf(self):
-        self.conf.set_override('router_id', '1234')
-        self._configure_metadata_proxy()
-
     def _test_process_routers_update_rpc_timeout(self, ext_net_call=False,
                                                  ext_net_call_failed=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -2222,7 +2218,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(agent.namespaces_manager._clean_stale)
 
     def test_cleanup_namespace(self):
-        self.conf.set_override('router_id', None)
         stale_namespaces = [namespaces.NS_PREFIX + 'foo',
                             namespaces.NS_PREFIX + 'bar',
                             dvr_snat_ns.SNAT_NS_PREFIX + 'foo']
@@ -2233,23 +2228,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                      other_namespaces)
 
     def test_cleanup_namespace_with_registered_router_ids(self):
-        self.conf.set_override('router_id', None)
         stale_namespaces = [namespaces.NS_PREFIX + 'cccc',
                             namespaces.NS_PREFIX + 'eeeee',
                             dvr_snat_ns.SNAT_NS_PREFIX + 'fffff']
-        router_list = [{'id': 'foo', 'distributed': False},
-                       {'id': 'aaaa', 'distributed': False}]
-        other_namespaces = ['qdhcp-aabbcc', 'unknown']
-
-        self._cleanup_namespace_test(stale_namespaces,
-                                     router_list,
-                                     other_namespaces)
-
-    def test_cleanup_namespace_with_conf_router_id(self):
-        self.conf.set_override('router_id', 'bbbbb')
-        stale_namespaces = [namespaces.NS_PREFIX + 'cccc',
-                            namespaces.NS_PREFIX + 'eeeee',
-                            namespaces.NS_PREFIX + self.conf.router_id]
         router_list = [{'id': 'foo', 'distributed': False},
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
