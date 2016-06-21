@@ -22,10 +22,10 @@ from oslo_utils import importutils
 import testscenarios
 
 from neutron import context
-from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import agentschedulers_db as sched_db
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import dhcpagentscheduler
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers

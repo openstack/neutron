@@ -21,10 +21,10 @@ import six
 import testscenarios
 
 from neutron import context
-from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
+from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import providernet
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers

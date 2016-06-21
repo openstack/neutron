@@ -15,7 +15,6 @@
 
 import mock
 from neutron_lib import constants
-from oslo_config import cfg
 
 from neutron.callbacks import events
 from neutron.callbacks import registry

@@ -330,4 +330,5 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             timeout=1,
             sleep=0.1,
             exception=RuntimeError("'dhcp_ready_on_ports' not be called"))
-        self.mock_plugin_api.dhcp_ready_on_ports.assert_called_with(ports_to_send)
+        self.mock_plugin_api.dhcp_ready_on_ports.assert_called_with(
+            ports_to_send)

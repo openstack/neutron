@@ -318,7 +318,6 @@ class TestAddressRequestFactory(base.BaseTestCase):
             ipam_req.PreferNextAddressRequest)
 
 
-
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
 
     def _build_subnet_dict(self, id=None, cidr='192.168.1.0/24',

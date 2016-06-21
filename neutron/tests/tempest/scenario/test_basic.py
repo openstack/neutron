@@ -31,7 +31,6 @@ class NetworkBasicTest(base.BaseTempestTestCase):
     # Default to ipv4.
     _ip_version = 4
 
-
     @test.idempotent_id('de07fe0a-e955-449e-b48b-8641c14cd52e')
     def test_basic_instance(self):
         network = self.create_network()
