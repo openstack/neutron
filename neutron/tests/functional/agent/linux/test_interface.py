@@ -56,3 +56,39 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
                             namespace=namespace)
         self.assertIn(device_name, bridge.get_port_name_list())
         self.assertTrue(ip_lib.device_exists(device_name, namespace))
+
+    def test_plug_with_namespace_sets_mtu_higher_than_bridge(self):
+        device_mtu = 1450
+
+        # Create a new OVS bridge
+        ovs_bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.assertFalse(ovs_bridge.get_port_name_list())
+
+        # Add a new linuxbridge port with reduced MTU to OVS bridge
+        lb_bridge = self.useFixture(
+            net_helpers.LinuxBridgeFixture()).bridge
+        lb_bridge_port = self.useFixture(
+            net_helpers.LinuxBridgePortFixture(lb_bridge))
+        lb_bridge_port.port.link.set_mtu(device_mtu - 1)
+        ovs_bridge.add_port(lb_bridge_port.port.name)
+
+        # Now plug a device with intended MTU that is higher than for the port
+        # above and validate that its MTU is not reduced to the least MTU on
+        # the bridge
+        device_name = tests_base.get_rand_name()
+        mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.interface.plug(network_id=uuidutils.generate_uuid(),
+                            port_id=uuidutils.generate_uuid(),
+                            device_name=device_name,
+                            mac_address=mac_address,
+                            bridge=ovs_bridge.br_name,
+                            namespace=namespace,
+                            mtu=device_mtu)
+
+        self.assertIn(device_name, ovs_bridge.get_port_name_list())
+        self.assertTrue(ip_lib.device_exists(device_name, namespace))
+        self.assertEqual(
+            device_mtu,
+            ip_lib.IPDevice(device_name, namespace=namespace).link.mtu
+        )
