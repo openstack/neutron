@@ -385,9 +385,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             net = self.deserialize(self.fmt, res)
             self.assertEqual(0, len(net['network']['subnets']))
 
-    @mock.patch('neutron.ipam.driver.Pool')
-    def test_ipam_subnet_deallocated_if_create_fails(self, pool_mock):
-        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+    def _test_rollback_on_subnet_creation(self, pool_mock, driver_mocks):
         cidr = '10.0.2.0/24'
         with mock.patch.object(
                 ipam_backend_mixin.IpamBackendMixin, '_save_subnet',
@@ -396,13 +394,28 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                 cidr, expected_res_status=500)
             pool_mock.get_instance.assert_any_call(None, mock.ANY)
             self.assertEqual(2, pool_mock.get_instance.call_count)
-            self.assertTrue(mocks['driver'].allocate_subnet.called)
-            request = mocks['driver'].allocate_subnet.call_args[0][0]
+            self.assertTrue(driver_mocks['driver'].allocate_subnet.called)
+            request = driver_mocks['driver'].allocate_subnet.call_args[0][0]
             self.assertIsInstance(request, ipam_req.SpecificSubnetRequest)
             self.assertEqual(netaddr.IPNetwork(cidr), request.subnet_cidr)
             # Verify remove ipam subnet was called
-            mocks['driver'].remove_subnet.assert_called_once_with(
+            driver_mocks['driver'].remove_subnet.assert_called_once_with(
                 self.subnet_id)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_ipam_subnet_deallocated_if_create_fails(self, pool_mock):
+        driver_mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        self._test_rollback_on_subnet_creation(pool_mock, driver_mocks)
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_ipam_subnet_create_and_rollback_fails(self, pool_mock):
+        driver_mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        # remove_subnet is called on rollback stage and n_exc.NotFound
+        # typically produces 404 error. Validate that exception from
+        # rollback stage is silenced and main exception (ValueError in this
+        # case) is reraised. So resulting http status should be 500.
+        driver_mocks['driver'].remove_subnet.side_effect = n_exc.NotFound
+        self._test_rollback_on_subnet_creation(pool_mock, driver_mocks)
 
     @mock.patch('neutron.ipam.driver.Pool')
     def test_update_subnet_over_ipam(self, pool_mock):

@@ -467,5 +467,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             with excutils.save_and_reraise_exception():
                 LOG.debug("An exception occurred during subnet creation. "
                           "Reverting subnet allocation.")
-                self.delete_subnet(context, subnet_request.subnet_id)
+                self._safe_rollback(self.delete_subnet,
+                                    context,
+                                    subnet_request.subnet_id)
         return subnet, ipam_subnet
