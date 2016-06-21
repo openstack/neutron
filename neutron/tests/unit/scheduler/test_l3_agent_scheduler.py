@@ -1165,7 +1165,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                 (l3plugin.l3_rpc_notifier.router_removed_from_agent.
                  assert_called_once_with(mock.ANY, 'foo_id', source_host))
                 self.assertEqual(
-                   1, l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
+                    1,
+                    l3plugin.delete_arp_entry_for_dvr_service_port.call_count)
             if fip and not routers_to_remove:
                 (l3plugin.l3_rpc_notifier.routers_updated_on_host.
                  assert_called_once_with(mock.ANY, ['router_id'], source_host))

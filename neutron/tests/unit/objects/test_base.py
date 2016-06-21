@@ -816,6 +816,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
 
     def test_get_objects_supports_extra_filtername(self):
         self.filtered_args = None
+
         def foo_filter(query, filters):
             self.filtered_args = filters
             return query
@@ -834,7 +835,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
 
 
 class UniqueObjectBase(test_base.BaseTestCase):
-     def setUp(self):
+    def setUp(self):
         super(UniqueObjectBase, self).setUp()
         obj_registry = self.useFixture(
             fixture.VersionedObjectRegistryFixture())

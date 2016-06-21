@@ -13,8 +13,8 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.db import model_base
 from neutron.db import agents_db
+from neutron.db import model_base
 
 
 class NetworkDhcpAgentBinding(model_base.BASEV2):

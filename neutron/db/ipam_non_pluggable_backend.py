@@ -34,7 +34,6 @@ from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
-from neutron.objects import subnetpool as subnetpool_obj
 
 LOG = logging.getLogger(__name__)
 

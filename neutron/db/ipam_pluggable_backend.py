@@ -31,7 +31,6 @@ from neutron.extensions import portbindings
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
-from neutron.objects import subnetpool as subnetpool_obj
 
 
 LOG = logging.getLogger(__name__)

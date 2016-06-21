@@ -16,9 +16,9 @@
 
 import os
 
-import unittest2
 from pecan import set_config
 from pecan.testing import load_test_app
+import unittest2
 
 
 __all__ = ['FunctionalTest']

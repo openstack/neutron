@@ -187,7 +187,7 @@ class DbQuotaDriver(object):
             # Do not even bother counting resources and calculating headroom
             # for resources with unlimited quota
             LOG.debug("Resources %s have unlimited quota limit. It is not "
-                       "required to calculate headroom ",
+                      "required to calculate headroom ",
                       ",".join(unlimited_resources))
             requested_resources = (set(requested_resources) -
                                    unlimited_resources)

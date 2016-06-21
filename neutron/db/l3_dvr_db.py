@@ -214,7 +214,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 models_v2.Port.id == addr_pair_db.AllowedAddressPair.port_id,
                 addr_pair_db.AllowedAddressPair.ip_address == fixed_ip,
                 models_v2.Port.network_id == network_id,
-                models_v2.Port.admin_state_up == True)
+                models_v2.Port.admin_state_up == True)  # noqa
         return query.all()
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
@@ -290,7 +290,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     address_pair_port=allowed_address_port))
             if not updated_port:
                 LOG.warning(_LW("Allowed_address_pair port update failed: %s"),
-                                updated_port)
+                            updated_port)
             self.update_arp_entry_for_dvr_service_port(context,
                                                        service_port_dict)
 

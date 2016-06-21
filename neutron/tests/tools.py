@@ -32,9 +32,9 @@ import unittest2
 
 import neutron
 from neutron.api.v2 import attributes
-from neutron.db import common_db_mixin
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
+from neutron.db import common_db_mixin
 
 
 class AttributeMapMemento(fixtures.Fixture):
