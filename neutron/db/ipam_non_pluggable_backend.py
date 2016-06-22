@@ -23,7 +23,6 @@ from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import and_
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _
@@ -96,97 +95,6 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                         'subnet_id': subnet_id}
         raise n_exc.IpAddressGenerationFailure(
                   net_id=subnets[0]['network_id'])
-
-    @staticmethod
-    def _rebuild_availability_ranges(context, subnets):
-        """Rebuild availability ranges.
-
-        This method is called only when there's no more IP available or by
-        _update_subnet_allocation_pools. Calling
-        _update_subnet_allocation_pools before calling this function deletes
-        the IPAllocationPools associated with the subnet that is updating,
-        which will result in deleting the IPAvailabilityRange too.
-        """
-        ip_qry = context.session.query(
-            models_v2.IPAllocation).with_lockmode('update')
-        # PostgreSQL does not support select...for update with an outer join.
-        # No join is needed here.
-        pool_qry = context.session.query(
-            models_v2.IPAllocationPool).options(
-                orm.noload('available_ranges')).with_lockmode('update')
-        for subnet in sorted(subnets):
-            LOG.debug("Rebuilding availability ranges for subnet %s",
-                      subnet)
-
-            # Create a set of all currently allocated addresses
-            ip_qry_results = ip_qry.filter_by(subnet_id=subnet['id'])
-            allocations = netaddr.IPSet([netaddr.IPAddress(i['ip_address'])
-                                        for i in ip_qry_results])
-
-            for pool in pool_qry.filter_by(subnet_id=subnet['id']):
-                # Create a set of all addresses in the pool
-                poolset = netaddr.IPSet(netaddr.IPRange(pool['first_ip'],
-                                                        pool['last_ip']))
-
-                # Use set difference to find free addresses in the pool
-                available = poolset - allocations
-
-                # Generator compacts an ip set into contiguous ranges
-                def ipset_to_ranges(ipset):
-                    first, last = None, None
-                    for cidr in ipset.iter_cidrs():
-                        if last and last + 1 != cidr.first:
-                            yield netaddr.IPRange(first, last)
-                            first = None
-                        first, last = first if first else cidr.first, cidr.last
-                    if first:
-                        yield netaddr.IPRange(first, last)
-
-                # Write the ranges to the db
-                for ip_range in ipset_to_ranges(available):
-                    available_range = models_v2.IPAvailabilityRange(
-                        allocation_pool_id=pool['id'],
-                        first_ip=str(netaddr.IPAddress(ip_range.first)),
-                        last_ip=str(netaddr.IPAddress(ip_range.last)))
-                    context.session.add(available_range)
-
-    @staticmethod
-    def _allocate_specific_ip(context, subnet_id, ip_address):
-        """Allocate a specific IP address on the subnet."""
-        ip = int(netaddr.IPAddress(ip_address))
-        range_qry = context.session.query(
-            models_v2.IPAvailabilityRange).join(
-                models_v2.IPAllocationPool).with_lockmode('update')
-        results = range_qry.filter_by(subnet_id=subnet_id)
-        for ip_range in results:
-            first = int(netaddr.IPAddress(ip_range['first_ip']))
-            last = int(netaddr.IPAddress(ip_range['last_ip']))
-            if first <= ip <= last:
-                if first == last:
-                    context.session.delete(ip_range)
-                    return
-                elif first == ip:
-                    new_first_ip = str(netaddr.IPAddress(ip_address) + 1)
-                    ip_range['first_ip'] = new_first_ip
-                    return
-                elif last == ip:
-                    new_last_ip = str(netaddr.IPAddress(ip_address) - 1)
-                    ip_range['last_ip'] = new_last_ip
-                    return
-                else:
-                    # Adjust the original range to end before ip_address
-                    old_last_ip = ip_range['last_ip']
-                    new_last_ip = str(netaddr.IPAddress(ip_address) - 1)
-                    ip_range['last_ip'] = new_last_ip
-
-                    # Create a new second range for after ip_address
-                    new_first_ip = str(netaddr.IPAddress(ip_address) + 1)
-                    new_ip_range = models_v2.IPAvailabilityRange(
-                        allocation_pool_id=ip_range['allocation_pool_id'],
-                        first_ip=new_first_ip,
-                        last_ip=old_last_ip)
-                    context.session.add(new_ip_range)
-                    return
 
     @staticmethod
     def _check_unique_ip(context, network_id, subnet_id, ip_address):
@@ -311,10 +219,6 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnet = self._get_subnet(context, fixed['subnet_id'])
             is_auto_addr = ipv6_utils.is_auto_address_subnet(subnet)
             if 'ip_address' in fixed:
-                if not is_auto_addr:
-                    # Remove the IP address from the allocation pool
-                    IpamNonPluggableBackend._allocate_specific_ip(
-                        context, fixed['subnet_id'], fixed['ip_address'])
                 allocated_ips.append(fixed['ip_address'])
                 ips.append({'ip_address': fixed['ip_address'],
                             'subnet_id': fixed['subnet_id']})

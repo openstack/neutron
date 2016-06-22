@@ -52,12 +52,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     Changes = collections.namedtuple('Changes', 'add original remove')
 
     @staticmethod
-    def _rebuild_availability_ranges(context, subnets):
-        """Should be redefined for non-ipam backend only
-        """
-        pass
-
-    @staticmethod
     def _gateway_ip_str(subnet, cidr_net):
         if subnet.get('gateway_ip') is const.ATTR_NOT_SPECIFIED:
             return str(netaddr.IPNetwork(cidr_net).network + 1)
@@ -176,10 +170,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                                 subnet_id=subnet_id)
                      for p in pools]
         context.session.add_all(new_pools)
-        # Call static method with self to redefine in child
-        # (non-pluggable backend)
-        if not ipv6_utils.is_ipv6_pd_enabled(s):
-            self._rebuild_availability_ranges(context, [s])
+
         # Gather new pools for result
         result_pools = [{'start': p[0], 'end': p[1]} for p in pools]
         del s['allocation_pools']

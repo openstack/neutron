@@ -49,7 +49,6 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
-from neutron.db import ipam_non_pluggable_backend as non_ipam
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sgdb
@@ -1927,10 +1926,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(webob.exc.HTTPClientError.code,
                              res.status_int)
 
-    @mock.patch.object(non_ipam.IpamNonPluggableBackend,
-                       '_allocate_specific_ip')
-    def test_requested_fixed_ip_address_v6_slaac_router_iface(
-            self, alloc_specific_ip):
+    def test_requested_fixed_ip_address_v6_slaac_router_iface(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='fe80::/64',
                          ip_version=6,
@@ -1945,7 +1941,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(len(port['port']['fixed_ips']), 1)
             self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
                              'fe80::1')
-            self.assertFalse(alloc_specific_ip.called)
 
     def test_requested_subnet_id_v6_slaac(self):
         with self.subnet(gateway_ip='fe80::1',

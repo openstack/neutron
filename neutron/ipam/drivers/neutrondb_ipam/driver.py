@@ -154,59 +154,6 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 subnet_id=self.subnet_manager.neutron_id,
                 ip=ip_address)
 
-    def _rebuild_availability_ranges(self, session):
-        """Rebuild availability ranges.
-
-        This method should be called only when the availability ranges are
-        exhausted or when the subnet's allocation pools are updated,
-        which may trigger a deletion of the availability ranges.
-
-        For this operation to complete successfully, this method uses a
-        locking query to ensure that no IP is allocated while the regeneration
-        of availability ranges is in progress.
-
-        :param session: database session
-        """
-        # List all currently allocated addresses, and prevent further
-        # allocations with a write-intent lock.
-        # NOTE: because of this driver's logic the write intent lock is
-        # probably unnecessary as this routine is called when the availability
-        # ranges for a subnet are exhausted and no further address can be
-        # allocated.
-        # TODO(salv-orlando): devise, if possible, a more efficient solution
-        # for building the IPSet to ensure decent performances even with very
-        # large subnets.
-        allocations = netaddr.IPSet(
-            [netaddr.IPAddress(allocation['ip_address']) for
-             allocation in self.subnet_manager.list_allocations(
-                 session)])
-
-        # MEH MEH
-        # There should be no need to set a write intent lock on the allocation
-        # pool table. Indeed it is not important for the correctness of this
-        # operation if the allocation pools are updated by another operation,
-        # which will result in the generation of new availability ranges.
-        # NOTE: it might be argued that an allocation pool update should in
-        # theory preempt rebuilding the availability range. This is an option
-        # to consider for future developments.
-        LOG.debug("Rebuilding availability ranges for subnet %s",
-                  self.subnet_manager.neutron_id)
-
-        for pool in self.subnet_manager.list_pools(session):
-            # Create a set of all addresses in the pool
-            poolset = netaddr.IPSet(netaddr.IPRange(pool['first_ip'],
-                                                    pool['last_ip']))
-            # Use set difference to find free addresses in the pool
-            available = poolset - allocations
-            # Write the ranges to the db
-            for ip_range in available.iter_ipranges():
-                av_range = self.subnet_manager.create_range(
-                    session,
-                    pool['id'],
-                    netaddr.IPAddress(ip_range.first).format(),
-                    netaddr.IPAddress(ip_range.last).format())
-                session.add(av_range)
-
     def _generate_ip(self, session, prefer_next=False):
         """Generate an IP address from the set of available addresses."""
         ip_allocations = netaddr.IPSet()
