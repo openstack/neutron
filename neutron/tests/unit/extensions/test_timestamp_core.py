@@ -16,7 +16,6 @@ import datetime
 import six
 
 import mock
-from oslo_config import cfg
 
 from neutron import context
 from neutron.db import db_base_plugin_v2
@@ -61,7 +60,9 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         self.addCleanup(manager.NeutronManager.clear_instance)
 
     def setup_coreplugin(self, core_plugin=None):
-        cfg.CONF.set_override('core_plugin', self.plugin)
+        super(TimeStampChangedsinceTestCase, self).setup_coreplugin(
+            self.plugin)
+        self.patched_default_svc_plugins.return_value = ['timestamp_core']
 
     def _get_resp_with_changed_since(self, resource_type, changed_since):
         query_params = 'changed_since=%s' % changed_since
