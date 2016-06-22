@@ -786,7 +786,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         fip_qry = context.session.query(FloatingIP)
         try:
-            kwargs = {'context': context, 'subnet_id': subnet_id}
+            kwargs = {'context': context, 'router_id': router_id,
+                      'subnet_id': subnet_id}
             registry.notify(
                 resources.ROUTER_INTERFACE,
                 events.BEFORE_DELETE, self, **kwargs)
