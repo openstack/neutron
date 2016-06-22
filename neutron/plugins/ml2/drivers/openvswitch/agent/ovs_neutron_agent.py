@@ -170,10 +170,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         host = self.conf.host
         self.agent_id = 'ovs-agent-%s' % host
 
-        if self.tunnel_types:
-            self.enable_tunneling = True
-        else:
-            self.enable_tunneling = False
+        self.enable_tunneling = bool(self.tunnel_types)
 
         # Validate agent configurations
         self._check_agent_configurations()
