@@ -20,7 +20,7 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 import six
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _LE, _LI
 from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
 from neutron.services import provider_configuration as pconf
@@ -61,7 +61,7 @@ def load_drivers(service_type, plugin):
                      filters={'service_type': [service_type]})
                  )
     if not providers:
-        msg = (_("No providers specified for '%s' service, exiting") %
+        msg = (_LE("No providers specified for '%s' service, exiting") %
                service_type)
         LOG.error(msg)
         raise SystemExit(1)
