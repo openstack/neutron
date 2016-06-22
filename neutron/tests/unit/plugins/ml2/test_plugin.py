@@ -1289,7 +1289,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
     def test_process_dvr_port_binding_update_router_id(self):
         host_id = 'host'
-        binding = models.DVRPortBinding(
+        binding = models.DistributedPortBinding(
                             port_id='port_id',
                             host=host_id,
                             router_id='old_router_id',
@@ -1960,7 +1960,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
     def test_update_dvr_router_interface_port(self):
         """Test validate dvr router interface update succeeds."""
         host_id = 'host'
-        binding = models.DVRPortBinding(
+        binding = models.DistributedPortBinding(
                             port_id='port_id',
                             host=host_id,
                             router_id='old_router_id',

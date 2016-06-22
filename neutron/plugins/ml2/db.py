@@ -132,14 +132,14 @@ def clear_binding_levels(session, port_id, host):
 
 
 def ensure_dvr_port_binding(session, port_id, host, router_id=None):
-    record = (session.query(models.DVRPortBinding).
+    record = (session.query(models.DistributedPortBinding).
               filter_by(port_id=port_id, host=host).first())
     if record:
         return record
 
     try:
         with session.begin(subtransactions=True):
-            record = models.DVRPortBinding(
+            record = models.DistributedPortBinding(
                 port_id=port_id,
                 host=host,
                 router_id=router_id,
@@ -150,7 +150,7 @@ def ensure_dvr_port_binding(session, port_id, host, router_id=None):
             return record
     except db_exc.DBDuplicateEntry:
         LOG.debug("DVR Port %s already bound", port_id)
-        return (session.query(models.DVRPortBinding).
+        return (session.query(models.DistributedPortBinding).
                 filter_by(port_id=port_id, host=host).one())
 
 
@@ -267,9 +267,9 @@ def get_port_binding_host(session, port_id):
 def generate_dvr_port_status(session, port_id):
     # an OR'ed value of status assigned to parent port from the
     # dvrportbinding bucket
-    query = session.query(models.DVRPortBinding)
+    query = session.query(models.DistributedPortBinding)
     final_status = n_const.PORT_STATUS_BUILD
-    for bind in query.filter(models.DVRPortBinding.port_id == port_id):
+    for bind in query.filter(models.DistributedPortBinding.port_id == port_id):
         if bind.status == n_const.PORT_STATUS_ACTIVE:
             return bind.status
         elif bind.status == n_const.PORT_STATUS_DOWN:
@@ -279,9 +279,9 @@ def generate_dvr_port_status(session, port_id):
 
 def get_dvr_port_binding_by_host(session, port_id, host):
     with session.begin(subtransactions=True):
-        binding = (session.query(models.DVRPortBinding).
-                   filter(models.DVRPortBinding.port_id.startswith(port_id),
-                          models.DVRPortBinding.host == host).first())
+        binding = (session.query(models.DistributedPortBinding).
+            filter(models.DistributedPortBinding.port_id.startswith(port_id),
+                   models.DistributedPortBinding.host == host).first())
     if not binding:
         LOG.debug("No binding for DVR port %(port_id)s with host "
                   "%(host)s", {'port_id': port_id, 'host': host})
@@ -290,9 +290,9 @@ def get_dvr_port_binding_by_host(session, port_id, host):
 
 def get_dvr_port_bindings(session, port_id):
     with session.begin(subtransactions=True):
-        bindings = (session.query(models.DVRPortBinding).
-                    filter(models.DVRPortBinding.port_id.startswith(port_id)).
-                    all())
+        bindings = (session.query(models.DistributedPortBinding).
+                    filter(models.DistributedPortBinding.port_id.startswith(
+                           port_id)).all())
     if not bindings:
         LOG.debug("No bindings for DVR port %s", port_id)
     return bindings
