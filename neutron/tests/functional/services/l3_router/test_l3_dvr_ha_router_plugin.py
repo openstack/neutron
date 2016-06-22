@@ -343,11 +343,13 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
     def _check_snat_internal_gateways_presence(self, router, subnet, int_cnt):
         snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
             self.context, [router['id']])
-        self.assertEqual(int_cnt, len(snat_router_intfs))
-        if int_cnt > 1:
+        if int_cnt == 0:
+            self.assertEqual(0, len(snat_router_intfs))
+        else:
+            snat_interfaces = snat_router_intfs[router['id']]
+            self.assertEqual(1, len(snat_interfaces))
             self.assertEqual(subnet['subnet']['id'],
-                             snat_router_intfs.values()[0][0]['fixed_ips'][0][
-                                 'subnet_id'])
+                             snat_interfaces[0]['fixed_ips'][0]['subnet_id'])
 
     def _check_internal_subnet_interface_presence(self, router, subnet,
                                                   int_cnt):
