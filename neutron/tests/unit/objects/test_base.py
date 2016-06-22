@@ -12,6 +12,7 @@
 
 import collections
 import copy
+import itertools
 import random
 
 import mock
@@ -710,18 +711,33 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self._subnet = subnet.Subnet(self.context, **test_subnet)
         self._subnet.create()
 
-    def _create_test_port(self, network):
+    def _create_port(self, **port_attrs):
+        if not hasattr(self, '_mac_address_generator'):
+            self._mac_address_generator = (":".join(["%02x" % i] * 6)
+                                           for i in itertools.count())
+
+        if not hasattr(self, '_port_name_generator'):
+            self._port_name_generator = ("test-port%d" % i
+                                         for i in itertools.count(1))
+
+        attrs = {'tenant_id': 'fake_tenant_id',
+                 'admin_state_up': True,
+                 'status': 'ACTIVE',
+                 'device_id': 'fake_device',
+                 'device_owner': 'fake_owner'}
+        attrs.update(port_attrs)
+
+        if 'name' not in attrs:
+            attrs['name'] = next(self._port_name_generator)
+        if 'mac_address' not in attrs:
+            attrs['mac_address'] = next(self._mac_address_generator)
+
         # TODO(ihrachys): replace with port.create() once we get an object
         # implementation for ports
-        self._port = obj_db_api.create_object(self.context, models_v2.Port,
-                                              {'tenant_id': 'fake_tenant_id',
-                                               'name': 'test-port1',
-                                               'network_id': network['id'],
-                                               'mac_address': 'fake_mac',
-                                               'admin_state_up': True,
-                                               'status': 'ACTIVE',
-                                               'device_id': 'fake_device',
-                                               'device_owner': 'fake_owner'})
+        return obj_db_api.create_object(self.context, models_v2.Port, attrs)
+
+    def _create_test_port(self, network):
+        self._port = self._create_port(network_id=network['id'])
 
     def _make_object(self, fields):
         return self._test_class(

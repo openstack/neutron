@@ -13,10 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import exceptions as n_exc
+from oslo_db import exception as o_db_exc
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
+from neutron.db import api as db_api
 from neutron.objects import base
+from neutron.services.trunk import exceptions as t_exc
 from neutron.services.trunk import models
 
 
@@ -27,7 +31,8 @@ class SubPort(base.NeutronDbObject):
 
     db_model = models.SubPort
 
-    primary_keys = ['port_id', 'trunk_id']
+    primary_keys = ['port_id']
+    foreign_keys = {'trunk_id': 'id'}
 
     fields = {
         'port_id': obj_fields.UUIDField(),
@@ -37,6 +42,30 @@ class SubPort(base.NeutronDbObject):
     }
 
     fields_no_update = ['segmentation_type', 'segmentation_id']
+
+    def create(self):
+        with db_api.autonested_transaction(self.obj_context.session):
+            try:
+                super(SubPort, self).create()
+            except o_db_exc.DBReferenceError as ex:
+                if ex.key_table is None:
+                    # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1]
+                    # only for a limited set of database backends (i.e.
+                    # MySQL and PostgreSQL). Other database backends
+                    # (including SQLite) would have 'key_table' set to None.
+                    # We emulate the 'key_table' support for such database
+                    # backends.
+                    #
+                    # [1] https://github.com/openstack/oslo.db/blob/3fadd5a
+                    #     /oslo_db/sqlalchemy/exc_filters.py#L190-L203
+                    if not Trunk.get_object(self.obj_context,
+                                            id=self.trunk_id):
+                        ex.key_table = Trunk.db_model.__tablename__
+
+                if ex.key_table == Trunk.db_model.__tablename__:
+                    raise t_exc.TrunkNotFound(trunk_id=self.trunk_id)
+
+                raise n_exc.PortNotFound(port_id=self.port_id)
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -56,3 +85,22 @@ class Trunk(base.NeutronDbObject):
     fields_no_update = ['tenant_id', 'port_id']
 
     synthetic_fields = ['sub_ports']
+
+    def create(self):
+        with db_api.autonested_transaction(self.obj_context.session):
+            sub_ports = []
+            if self.obj_attr_is_set('sub_ports'):
+                sub_ports = self.sub_ports
+
+            try:
+                super(Trunk, self).create()
+            except o_db_exc.DBReferenceError:
+                raise n_exc.PortNotFound(port_id=self.port_id)
+
+            for sub_port in sub_ports:
+                sub_port.trunk_id = self.id
+                sub_port.create()
+            self.load_synthetic_db_fields()
+
+    # TODO(ivc): add support for 'sub_ports' in 'Trunk.update' for
+    # consistency with 'Trunk.create'

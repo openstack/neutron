@@ -20,3 +20,7 @@ from neutron_lib import exceptions as n_exc
 
 class TrunkPortInUse(n_exc.InUse):
     message = _("Port %(port_id)s is in use by another trunk.")
+
+
+class TrunkNotFound(n_exc.NotFound):
+    message = _("Trunk %(trunk_id)s could not be found.")
