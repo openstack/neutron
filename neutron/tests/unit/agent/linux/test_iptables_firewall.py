@@ -23,6 +23,7 @@ import testtools
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent import firewall
+from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
@@ -96,9 +97,16 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         self.firewall.iptables = self.iptables_inst
         # don't mess with sysctl knobs in unit tests
         self.firewall._enabled_netfilter_for_bridges = True
-
-
-class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
+        # initial data has 1, 2, and 9 in use, see RAW_TABLE_OUTPUT above.
+        self._dev_zone_map = {'61634509-31': 2, '8f46cf18-12': 9,
+                              '95c24827-02': 2, 'e804433b-61': 1}
+        get_rules_for_table_func = lambda x: RAW_TABLE_OUTPUT.split('\n')
+        filtered_ports = {port_id: self._fake_port()
+                          for port_id in self._dev_zone_map}
+        self.firewall.ipconntrack = ip_conntrack.IpConntrackManager(
+              get_rules_for_table_func, filtered_ports=filtered_ports,
+              unfiltered_ports=dict())
+        self.firewall.ipconntrack._device_zone_map = self._dev_zone_map
 
     def _fake_port(self):
         return {'device': 'tapfake_dev',
@@ -106,6 +114,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 'network_id': 'fake_net',
                 'fixed_ips': [FAKE_IP['IPv4'],
                               FAKE_IP['IPv6']]}
+
+
+class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def test_prepare_port_filter_with_no_sg(self):
         port = self._fake_port()
@@ -1924,46 +1935,56 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def setUp(self):
         super(OVSHybridIptablesFirewallTestCase, self).setUp()
-        self.firewall = iptables_firewall.OVSHybridIptablesFirewallDriver()
-        # initial data has 1, 2, and 9 in use, see RAW_TABLE_OUTPUT above.
-        self._dev_zone_map = {'61634509-31': 2, '8f46cf18-12': 9,
-                              '95c24827-02': 2, 'e804433b-61': 1}
 
     def test__populate_initial_zone_map(self):
-        self.assertEqual(self._dev_zone_map, self.firewall._device_zone_map)
+        self.assertEqual(self._dev_zone_map,
+                   self.firewall.ipconntrack._device_zone_map)
 
     def test__generate_device_zone(self):
         # initial data has 1, 2, and 9 in use.
         # we fill from top up first.
-        self.assertEqual(10, self.firewall._generate_device_zone('test'))
+        self.assertEqual(10,
+                   self.firewall.ipconntrack._generate_device_zone('test'))
 
         # once it's maxed out, it scans for gaps
-        self.firewall._device_zone_map['someport'] = (
-            iptables_firewall.MAX_CONNTRACK_ZONES)
+        self.firewall.ipconntrack._device_zone_map['someport'] = (
+            ip_conntrack.MAX_CONNTRACK_ZONES)
         for i in range(3, 9):
-            self.assertEqual(i, self.firewall._generate_device_zone(i))
+            self.assertEqual(i,
+                   self.firewall.ipconntrack._generate_device_zone(i))
 
         # 9 and 10 are taken so next should be 11
-        self.assertEqual(11, self.firewall._generate_device_zone('p11'))
+        self.assertEqual(11,
+                   self.firewall.ipconntrack._generate_device_zone('p11'))
 
         # take out zone 1 and make sure it's selected
-        self.firewall._device_zone_map.pop('e804433b-61')
-        self.assertEqual(1, self.firewall._generate_device_zone('p1'))
+        self.firewall.ipconntrack._device_zone_map.pop('e804433b-61')
+        self.assertEqual(1,
+                   self.firewall.ipconntrack._generate_device_zone('p1'))
 
         # fill it up and then make sure an extra throws an error
         for i in range(1, 65536):
-            self.firewall._device_zone_map['dev-%s' % i] = i
+            self.firewall.ipconntrack._device_zone_map['dev-%s' % i] = i
         with testtools.ExpectedException(n_exc.CTZoneExhaustedError):
-            self.firewall._find_open_zone()
+            self.firewall.ipconntrack._find_open_zone()
 
         # with it full, try again, this should trigger a cleanup and return 1
-        self.assertEqual(1, self.firewall._generate_device_zone('p12'))
-        self.assertEqual({'p12': 1}, self.firewall._device_zone_map)
+        self.assertEqual(1,
+                   self.firewall.ipconntrack._generate_device_zone('p12'))
+        self.assertEqual({'p12': 1},
+                   self.firewall.ipconntrack._device_zone_map)
 
     def test_get_device_zone(self):
         # initial data has 1, 2, and 9 in use.
         self.assertEqual(10,
-                         self.firewall.get_device_zone('12345678901234567'))
+               self.firewall.ipconntrack.get_device_zone('12345678901234567'))
         # should have been truncated to 11 chars
         self._dev_zone_map.update({'12345678901': 10})
-        self.assertEqual(self._dev_zone_map, self.firewall._device_zone_map)
+        self.assertEqual(self._dev_zone_map,
+               self.firewall.ipconntrack._device_zone_map)
+
+    def test_multiple_firewall_with_common_conntrack(self):
+        self.firewall1 = iptables_firewall.OVSHybridIptablesFirewallDriver()
+        self.firewall2 = iptables_firewall.OVSHybridIptablesFirewallDriver()
+        self.assertEqual(id(self.firewall1.ipconntrack),
+                         id(self.firewall2.ipconntrack))
