@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
 
+from neutron import context as nctx
 from neutron.db import api as db_api
 from neutron.db import external_net_db
 from neutron.db import l3_db
@@ -30,6 +31,7 @@ from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
+from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -389,6 +391,20 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                         ext_gw_info}},
                             expected_code=expected_code,
                             neutron_context=neutron_context)
+
+    def test_router_gateway_set_fail_after_port_create(self):
+        with self.router() as r, self.subnet() as s:
+            ext_net_id = s['subnet']['network_id']
+            self._set_net_external(ext_net_id)
+            plugin = manager.NeutronManager.get_plugin()
+            with mock.patch.object(plugin, '_get_port',
+                                   side_effect=ValueError()):
+                self._set_router_external_gateway(r['router']['id'],
+                                                  ext_net_id,
+                                                  expected_code=500)
+            ports = [p for p in plugin.get_ports(nctx.get_admin_context())
+                     if p['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_GW]
+            self.assertFalse(ports)
 
     def test_router_gateway_set_retry(self):
         with self.router() as r, self.subnet() as s:

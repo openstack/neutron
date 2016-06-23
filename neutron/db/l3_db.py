@@ -368,17 +368,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
                       network_id)
-
-        with context.session.begin(subtransactions=True):
-            router.gw_port = self._core_plugin._get_port(context.elevated(),
-                                                         gw_port['id'])
-            router_port = RouterPort(
-                router_id=router.id,
-                port_id=gw_port['id'],
-                port_type=DEVICE_OWNER_ROUTER_GW
-            )
-            context.session.add(router)
-            context.session.add(router_port)
+        with p_utils.delete_port_on_error(self._core_plugin,
+                                          context.elevated(), gw_port['id']):
+            with context.session.begin(subtransactions=True):
+                router.gw_port = self._core_plugin._get_port(
+                    context.elevated(), gw_port['id'])
+                router_port = RouterPort(
+                    router_id=router.id,
+                    port_id=gw_port['id'],
+                    port_type=DEVICE_OWNER_ROUTER_GW
+                )
+                context.session.add(router)
+                context.session.add(router_port)
 
     def _validate_gw_info(self, context, gw_port, info, ext_ips):
         network_id = info['network_id'] if info else None
@@ -746,6 +747,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         # This should be True unless adding an IPv6 prefix to an existing port
         new_port = True
+        cleanup_port = False
 
         if add_by_port:
             port, subnets = self._add_interface_by_port(
@@ -755,15 +757,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         else:
             port, subnets, new_port = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
+            cleanup_port = new_port  # only cleanup port we created
 
         if new_port:
-            with context.session.begin(subtransactions=True):
-                router_port = RouterPort(
-                    port_id=port['id'],
-                    router_id=router.id,
-                    port_type=device_owner
-                )
-                context.session.add(router_port)
+            with p_utils.delete_port_on_error(self._core_plugin,
+                                              context, port['id']) as delmgr:
+                delmgr.delete_on_error = cleanup_port
+                with context.session.begin(subtransactions=True):
+                    router_port = RouterPort(
+                        port_id=port['id'],
+                        router_id=router.id,
+                        port_type=device_owner
+                    )
+                    context.session.add(router_port)
 
         gw_ips = []
         gw_network_id = None
