@@ -23,7 +23,7 @@ retrying!=1.3.0,>=1.2.3 # Apache-2.0
 ryu!=4.1,!=4.2,!=4.2.1,>=3.30 # Apache-2.0
 SQLAlchemy<1.1.0,>=1.0.10 # MIT
 WebOb>=1.2.3 # MIT
-keystoneauth1>=2.1.0 # Apache-2.0
+keystoneauth1>=2.7.0 # Apache-2.0
 alembic>=0.8.4 # MIT
 six>=1.9.0 # MIT
 stevedore>=1.10.0 # Apache-2.0
