@@ -401,9 +401,6 @@ class L3NATAgent(ha.AgentMixin,
                       self.conf.external_network_bridge)
             return
 
-        if self.conf.router_id and router['id'] != self.conf.router_id:
-            raise n_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
-
         # Either ex_net_id or handle_internal_only_routers must be set
         ex_net_id = (router['external_gateway_info'] or {}).get('network_id')
         if not ex_net_id and not self.conf.handle_internal_only_routers:
@@ -535,8 +532,7 @@ class L3NATAgent(ha.AgentMixin,
         timestamp = timeutils.utcnow()
 
         try:
-            router_ids = ([self.conf.router_id] if self.conf.router_id else
-                          self.plugin_rpc.get_router_ids(context))
+            router_ids = self.plugin_rpc.get_router_ids(context)
             # fetch routers by chunks to reduce the load on server and to
             # start router processing earlier
             for i in range(0, len(router_ids), self.sync_routers_chunk_size):
@@ -624,7 +620,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'topic': topics.L3_AGENT,
             'configurations': {
                 'agent_mode': self.conf.agent_mode,
-                'router_id': self.conf.router_id,
                 'handle_internal_only_routers':
                 self.conf.handle_internal_only_routers,
                 'external_network_bridge': self.conf.external_network_bridge,

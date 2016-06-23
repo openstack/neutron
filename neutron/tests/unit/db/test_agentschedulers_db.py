@@ -927,23 +927,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(2, num_hostb_routers)
         self.assertEqual(0, num_hosta_routers)
 
-    def test_router_auto_schedule_with_candidates(self):
-        with self.router() as router1, self.router() as router2:
-            l3_rpc_cb = l3_rpc.L3RpcCallback()
-            agent = helpers.register_l3_agent(
-                host=L3_HOSTA, router_id=router1['router']['id'])
-            l3_rpc_cb.get_router_ids(self.adminContext, host=L3_HOSTA)
-            hosta_routers = self._list_routers_hosted_by_l3_agent(agent.id)
-            num_hosta_routers = len(hosta_routers['routers'])
-            l3_agents_1 = self._list_l3_agents_hosting_router(
-                router1['router']['id'])
-            l3_agents_2 = self._list_l3_agents_hosting_router(
-                router2['router']['id'])
-        # L3 agent will host only the compatible router.
-        self.assertEqual(1, num_hosta_routers)
-        self.assertEqual(1, len(l3_agents_1['agents']))
-        self.assertEqual(0, len(l3_agents_2['agents']))
-
     def test_rpc_sync_routers(self):
         l3_rpc_cb = l3_rpc.L3RpcCallback()
         self._register_agent_states()
@@ -1016,42 +999,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                   2, 3, hosta_id)
             # Sync all routers (router3 is scheduled)
             _sync_router_with_ids(router_ids, 4, 4, hosta_id)
-
-    def test_router_schedule_with_candidates(self):
-        with self.router() as router1,\
-                self.router() as router2,\
-                self.subnet() as subnet1,\
-                self.subnet(cidr='10.0.3.0/24') as subnet2:
-            agent = helpers.register_l3_agent(
-                host=L3_HOSTA, router_id=router1['router']['id'])
-            self._router_interface_action('add',
-                                          router1['router']['id'],
-                                          subnet1['subnet']['id'],
-                                          None)
-            self._router_interface_action('add',
-                                          router2['router']['id'],
-                                          subnet2['subnet']['id'],
-                                          None)
-            hosta_routers = self._list_routers_hosted_by_l3_agent(agent.id)
-            num_hosta_routers = len(hosta_routers['routers'])
-            l3_agents_1 = self._list_l3_agents_hosting_router(
-                router1['router']['id'])
-            l3_agents_2 = self._list_l3_agents_hosting_router(
-                router2['router']['id'])
-            # safe cleanup
-            self._router_interface_action('remove',
-                                          router1['router']['id'],
-                                          subnet1['subnet']['id'],
-                                          None)
-            self._router_interface_action('remove',
-                                          router2['router']['id'],
-                                          subnet2['subnet']['id'],
-                                          None)
-
-        # L3 agent will host only the compatible router.
-        self.assertEqual(1, num_hosta_routers)
-        self.assertEqual(1, len(l3_agents_1['agents']))
-        self.assertEqual(0, len(l3_agents_2['agents']))
 
     def test_router_without_l3_agents(self):
         with self.subnet() as s:
