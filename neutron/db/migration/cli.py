@@ -69,8 +69,11 @@ _core_opts = [
                        "Can be one of: '%s'.")
                      % "', '".join(INSTALLED_SUBPROJECTS))),
     cfg.BoolOpt('split_branches',
-                default=False,
-                help=_("Enforce using split branches file structure."))
+                default=True,
+                deprecated_for_removal=True,
+                help=_("DEPRECATED. Alembic environments integrating with "
+                       "Neutron must implement split (contract and expand) "
+                       "branches file structure."))
 ]
 
 _db_opts = [
@@ -555,18 +558,6 @@ def _get_version_branch_path(config, release=None, branch=None):
     if branch and release:
         return os.path.join(version_path, release, branch)
     return version_path
-
-
-def _use_separate_migration_branches(config):
-    '''Detect whether split migration branches should be used.'''
-    if CONF.split_branches:
-        return True
-
-    script_dir = alembic_script.ScriptDirectory.from_config(config)
-    if _get_branch_points(script_dir):
-        return True
-
-    return False
 
 
 def _set_version_locations(config):
