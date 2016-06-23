@@ -98,7 +98,30 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                           {'brq': bridge, 'net': physnet})
                 sys.exit(1)
 
+    def _is_valid_multicast_range(self, mrange):
+        try:
+            addr, vxlan_min, vxlan_max = mrange.split(':')
+            if int(vxlan_min) > int(vxlan_max):
+                raise ValueError()
+            try:
+                local_ver = netaddr.IPAddress(self.local_ip).version
+                n_addr = netaddr.IPAddress(addr)
+                if not n_addr.is_multicast() or n_addr.version != local_ver:
+                    raise ValueError()
+            except netaddr.core.AddrFormatError:
+                raise ValueError()
+        except ValueError:
+            return False
+        return True
+
     def validate_vxlan_group_with_local_ip(self):
+        for r in cfg.CONF.VXLAN.multicast_ranges:
+            if not self._is_valid_multicast_range(r):
+                LOG.error("Invalid multicast_range %(r)s. Must be in "
+                          "<multicast address>:<vni_min>:<vni_max> format and "
+                          "addresses must be in the same family as local IP "
+                          "%(loc)s.", {'r': r, 'loc': self.local_ip})
+                sys.exit(1)
         if not cfg.CONF.VXLAN.vxlan_group:
             return
         try:
@@ -186,8 +209,19 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             LOG.warning(_LW("Invalid Segmentation ID: %s, will lead to "
                             "incorrect vxlan device name"), segmentation_id)
 
+    @staticmethod
+    def _match_multicast_range(segmentation_id):
+        for mrange in cfg.CONF.VXLAN.multicast_ranges:
+            addr, vxlan_min, vxlan_max = mrange.split(':')
+            if int(vxlan_min) <= segmentation_id <= int(vxlan_max):
+                return addr
+
     def get_vxlan_group(self, segmentation_id):
-        net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
+        mcast_addr = self._match_multicast_range(segmentation_id)
+        if mcast_addr:
+            net = netaddr.IPNetwork(mcast_addr)
+        else:
+            net = netaddr.IPNetwork(cfg.CONF.VXLAN.vxlan_group)
         # Map the segmentation ID to (one of) the group address(es)
         return str(net.network +
                    (int(segmentation_id) & int(net.hostmask)))
