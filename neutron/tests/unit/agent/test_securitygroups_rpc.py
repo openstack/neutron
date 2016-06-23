@@ -2601,6 +2601,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
                 oslo_messaging.UnsupportedVersion('1.2'))
 
         self.iptables = self.agent.firewall.iptables
+        self.ipconntrack = self.agent.firewall.ipconntrack
         # TODO(jlibosva) Get rid of mocking iptables execute and mock out
         # firewall instead
         self.iptables.use_ipv6 = True
@@ -2756,6 +2757,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             return_value='')
 
     def test_prepare_remove_port(self):
+        self.ipconntrack._device_zone_map = {}
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEFAULT)
@@ -2870,6 +2872,7 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
                          'devices': devices_info2}
 
     def test_prepare_remove_port(self):
+        self.ipconntrack._device_zone_map = {}
         self.sg_info.return_value = self.devices_info1
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEFAULT)
@@ -2936,6 +2939,7 @@ class TestSecurityGroupAgentEnhancedIpsetWithIptables(
                                                "execute").start()
 
     def test_prepare_remove_port(self):
+        self.ipconntrack._device_zone_map = {}
         self.sg_info.return_value = self.devices_info1
         self._replay_iptables(IPSET_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEFAULT)
@@ -3062,6 +3066,7 @@ class TestSecurityGroupAgentWithOVSIptables(
         self.agent.firewall._enabled_netfilter_for_bridges = True
 
     def test_prepare_remove_port(self):
+        self.ipconntrack._device_zone_map = {}
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEVICE_1)
@@ -3074,6 +3079,7 @@ class TestSecurityGroupAgentWithOVSIptables(
         self._verify_mock_calls()
 
     def test_security_group_member_updated(self):
+        self.ipconntrack._device_zone_map = {}
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEVICE_1)
@@ -3100,6 +3106,7 @@ class TestSecurityGroupAgentWithOVSIptables(
         self._verify_mock_calls()
 
     def test_security_group_rule_updated(self):
+        self.ipconntrack._device_zone_map = {}
         self.rpc.security_group_rules_for_devices.return_value = self.devices2
         self._replay_iptables(IPTABLES_FILTER_2, IPTABLES_FILTER_V6_2,
                               IPTABLES_RAW_DEVICE_2)

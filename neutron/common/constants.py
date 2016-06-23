@@ -67,6 +67,11 @@ PROVISIONAL_IPV6_PD_PREFIX = '::/64'
 # Timeout in seconds for getting an IPv6 LLA
 LLA_TASK_TIMEOUT = 40
 
+# length of all device prefixes (e.g. qvo, tap, qvb)
+LINUX_DEV_PREFIX_LEN = 3
+# must be shorter than linux IFNAMSIZ (which is 16)
+LINUX_DEV_LEN = 14
+
 # Possible prefixes to partial port IDs in interface names used by the OVS,
 # Linux Bridge, and IVS VIF drivers in Nova and the neutron agents. See the
 # 'get_ovs_interfaceid' method in Nova (nova/virt/libvirt/vif.py) for details.

@@ -23,11 +23,14 @@ class IPConntrackTestCase(base.BaseTestCase):
     def setUp(self):
         super(IPConntrackTestCase, self).setUp()
         self.execute = mock.Mock()
-        self.mgr = ip_conntrack.IpConntrackManager(self._zone_lookup,
-                                                   self.execute)
+        self.filtered_port = {}
+        self.unfiltered_port = {}
+        self.mgr = ip_conntrack.IpConntrackManager(
+                     self._get_rule_for_table, self.filtered_port,
+                     self.unfiltered_port, self.execute)
 
-    def _zone_lookup(self, dev):
-        return 100
+    def _get_rule_for_table(self, table):
+        return ['test --physdev-in tapdevice -j CT --zone 100']
 
     def test_delete_conntrack_state_dedupes(self):
         rule = {'ethertype': 'IPv4', 'direction': 'ingress'}
