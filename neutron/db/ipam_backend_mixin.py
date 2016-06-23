@@ -35,6 +35,7 @@ from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import models_v2
 from neutron.db import segments_db
+from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import utils as ipam_utils
@@ -177,6 +178,20 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         del s['allocation_pools']
         return result_pools
 
+    def _update_subnet_service_types(self, context, subnet_id, s):
+        old_types = context.session.query(
+                        service_type_db.SubnetServiceType).filter_by(
+                            subnet_id=subnet_id)
+        for service_type in old_types:
+            context.session.delete(service_type)
+        updated_types = s.pop('service_types')
+        for service_type in updated_types:
+            new_type = service_type_db.SubnetServiceType(
+                           subnet_id=subnet_id,
+                           service_type=service_type)
+            context.session.add(new_type)
+        return updated_types
+
     def update_db_subnet(self, context, subnet_id, s, oldpools):
         changes = {}
         if "dns_nameservers" in s:
@@ -190,6 +205,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if "allocation_pools" in s:
             changes['allocation_pools'] = (
                 self._update_subnet_allocation_pools(context, subnet_id, s))
+
+        if "service_types" in s:
+            changes['service_types'] = (
+                self._update_subnet_service_types(context, subnet_id, s))
 
         subnet = self._get_subnet(context, subnet_id)
         subnet.update(s)
@@ -472,6 +491,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                            subnet_args['subnetpool_id'],
                                            subnet_args['ip_version'])
 
+        service_types = subnet_args.pop('service_types', [])
+
         subnet = models_v2.Subnet(**subnet_args)
         segment_id = subnet_args.get('segment_id')
         try:
@@ -498,6 +519,13 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     destination=rt['destination'],
                     nexthop=rt['nexthop'])
                 context.session.add(route)
+
+        if validators.is_attr_set(service_types):
+            for service_type in service_types:
+                service_type_entry = service_type_db.SubnetServiceType(
+                    subnet_id=subnet.id,
+                    service_type=service_type)
+                context.session.add(service_type_entry)
 
         self.save_allocation_pools(context, subnet,
                                    subnet_request.allocation_pools)
@@ -598,6 +626,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             detail, subnet, subnetpool_id)
         if validators.is_attr_set(subnet.get(segment.SEGMENT_ID)):
             args['segment_id'] = subnet[segment.SEGMENT_ID]
+        if validators.is_attr_set(subnet.get('service_types')):
+            args['service_types'] = subnet['service_types']
         return args
 
     def update_port(self, context, old_port_db, old_port, new_port):

@@ -332,7 +332,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         for arg in ('ip_version', 'tenant_id', 'subnetpool_id', 'prefixlen',
                     'enable_dhcp', 'allocation_pools', 'segment_id',
                     'dns_nameservers', 'host_routes',
-                    'shared', 'ipv6_ra_mode', 'ipv6_address_mode'):
+                    'shared', 'ipv6_ra_mode', 'ipv6_address_mode',
+                    'service_types'):
             # Arg must be present and not null (but can be false)
             if kwargs.get(arg) is not None:
                 data['subnet'][arg] = kwargs[arg]
@@ -625,6 +626,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                ipv6_ra_mode=None,
                ipv6_address_mode=None,
                tenant_id=None,
+               service_types=None,
                set_context=False):
         with optional_ctx(network, self.network,
                           set_context=set_context,

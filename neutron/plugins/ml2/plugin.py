@@ -62,6 +62,7 @@ from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
+from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
@@ -103,7 +104,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 addr_pair_db.AllowedAddressPairsMixin,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
-                address_scope_db.AddressScopeDbMixin):
+                address_scope_db.AddressScopeDbMixin,
+                service_type_db.SubnetServiceTypeMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -131,7 +133,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "address-scope",
                                     "availability_zone",
                                     "network_availability_zone",
-                                    "default-subnetpools"]
+                                    "default-subnetpools",
+                                    "subnet-service-types"]
 
     @property
     def supported_extension_aliases(self):
