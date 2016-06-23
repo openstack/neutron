@@ -972,13 +972,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                            for ip in a.port.fixed_ips
                                            if ip.subnet_id != id]}}
                     try:
-                        self.update_port(context, a.port_id, data)
+                        # NOTE Don't inline port_id; needed for PortNotFound.
+                        port_id = a.port_id
+                        self.update_port(context, port_id, data)
                     except exc.PortNotFound:
-                        LOG.debug("Port %s deleted concurrently", a.port_id)
+                        # NOTE Attempting to access a.port_id here is an error.
+                        LOG.debug("Port %s deleted concurrently", port_id)
                     except Exception:
                         with excutils.save_and_reraise_exception():
                             LOG.exception(_LE("Exception deleting fixed_ip "
-                                              "from port %s"), a.port_id)
+                                              "from port %s"), port_id)
 
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
