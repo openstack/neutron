@@ -69,6 +69,11 @@ class TestDeadLockDecorator(base.BaseTestCase):
         e = exc.StaleDataError()
         self.assertIsNone(self._decorated_function(1, e))
 
+    def test_multi_exception_contains_retry(self):
+        e = exceptions.MultipleExceptions(
+            [ValueError(), db_exc.RetryRequest(TypeError())])
+        self.assertIsNone(self._decorated_function(1, e))
+
     def test_multi_exception_contains_deadlock(self):
         e = exceptions.MultipleExceptions([ValueError(), db_exc.DBDeadlock()])
         self.assertIsNone(self._decorated_function(1, e))
