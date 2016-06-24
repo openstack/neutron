@@ -102,7 +102,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         tenant_id = self._validate(context, tenant_id)
         if CHECK_REQUIREMENTS in fields:
             # for dry-run requests, simply validates that subsequent
-            # requests can be fullfilled based on a set of requirements
+            # requests can be fulfilled based on a set of requirements
             # such as existence of default networks, pools, etc.
             return self._check_requirements(context, tenant_id)
         elif fields:

@@ -56,7 +56,7 @@ class TestGetRootHelperChildPid(functional_base.BaseSudoTestCase):
     def test_get_root_helper_child_pid_returns_first_child(self):
         """Test that the first child, not lowest child pid is returned.
 
-        Test creates following proccess tree:
+        Test creates following process tree:
           sudo +
                |
                +--rootwrap +

@@ -875,7 +875,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                                  constants.DEVICE_OWNER_LOADBALANCER)
                 # Now change the compute port admin_state_up from True to
                 # False, and see if the vrrp ports device_owner and binding
-                # inheritence reverts back to normal
+                # inheritance reverts back to normal
                 mod_int_port = self.core_plugin.update_port(
                     self.context, cur_int_port['id'],
                     {'port': {
