@@ -23,6 +23,7 @@ from neutron.api import extensions
 from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
+from neutron.pecan_wsgi.controllers import utils as controller_utils
 from neutron.plugins.common import constants
 from neutron import policy
 from neutron.tests.common import helpers
@@ -34,7 +35,7 @@ _SERVICE_PLUGIN_COLLECTION = _SERVICE_PLUGIN_RESOURCE + 's'
 _SERVICE_PLUGIN_INDEX_BODY = {_SERVICE_PLUGIN_COLLECTION: []}
 
 
-class FakeServicePluginController(object):
+class FakeServicePluginController(controller_utils.NeutronPecanController):
     resource = _SERVICE_PLUGIN_RESOURCE
     collection = _SERVICE_PLUGIN_COLLECTION
 
@@ -58,7 +59,9 @@ class TestRootController(test_functional.PecanFunctionalTest):
 
     def setup_service_plugin(self):
         manager.NeutronManager.set_controller_for_resource(
-            _SERVICE_PLUGIN_COLLECTION, FakeServicePluginController())
+            _SERVICE_PLUGIN_COLLECTION,
+            FakeServicePluginController(_SERVICE_PLUGIN_COLLECTION,
+                                        _SERVICE_PLUGIN_RESOURCE))
 
     def _test_method_returns_code(self, method, code=200):
         api_method = getattr(self.app, method)

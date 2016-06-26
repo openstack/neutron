@@ -17,7 +17,6 @@ import pecan
 from pecan import request
 
 from neutron._i18n import _LW
-from neutron.api import api_common
 from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
 
@@ -39,7 +38,7 @@ class ItemController(utils.NeutronPecanController):
     def get(self, *args, **kwargs):
         getter = getattr(self.plugin, 'get_%s' % self.resource)
         neutron_context = request.context['neutron_context']
-        fields = self._build_field_list(kwargs.pop('fields', []))
+        fields = request.context['query_params'].get('fields')
         return {self.resource: getter(neutron_context, self.item,
                                       fields=fields)}
 
@@ -99,18 +98,9 @@ class CollectionsController(utils.NeutronPecanController):
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
-        # list request
-        fields = kwargs.pop('fields', [])
-        # if only one fields query parameter is passed, pecan will not put
-        # that parameter in a list, so we need to convert it into a list
-        fields = fields if isinstance(fields, list) else [fields]
-        fields = self._build_field_list(fields)
-        _listify = lambda x: x if isinstance(x, list) else [x]
-        filters = api_common.get_filters_from_dict(
-            {k: _listify(v) for k, v in kwargs.items()},
-            self.resource_info,
-            skips=['fields', 'sort_key', 'sort_dir',
-                   'limit', 'marker', 'page_reverse'])
+        # NOTE(blogan): these are set in the FieldsAndFiltersHoook
+        fields = request.context['query_params'].get('fields')
+        filters = request.context['query_params'].get('filters')
         lister = getattr(self.plugin, 'get_%s' % self.collection)
         neutron_context = request.context['neutron_context']
         return {self.collection: lister(neutron_context,
