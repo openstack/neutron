@@ -87,6 +87,8 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
 
         network_id1 = topology['id']
         self.assertIsNotNone(network_id1)
+        network = self.client.show_network(topology['id'])['network']
+        self.assertTrue(network['admin_state_up'])
         resources_after1 = self._count_topology_resources()
         # One network, two subnets (v4 and v6) and one router
         self.assertEqual((1, self.num_subnetpools, 1), resources_after1)
