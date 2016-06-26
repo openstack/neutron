@@ -1411,17 +1411,16 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
             self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
 
     def _is_schedule_network_called(self, device_id):
+        dhcp_notifier_schedule = mock.patch(
+            'neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
+            'DhcpAgentNotifyAPI._schedule_network').start()
         plugin = manager.NeutronManager.get_plugin()
-        notifier = plugin.agent_notifiers[constants.AGENT_TYPE_DHCP]
         with self.subnet() as subnet,\
+                self.port(subnet=subnet, device_id=device_id),\
                 mock.patch.object(plugin,
                                   'get_dhcp_agents_hosting_networks',
-                                  return_value=[]),\
-                mock.patch.object(notifier,
-                                  '_schedule_network',
-                                  return_value=[]) as mock_sched:
-            with self.port(subnet=subnet, device_id=device_id):
-                return mock_sched.called
+                                  return_value=[]):
+                    return dhcp_notifier_schedule.call_count > 1
 
     def test_reserved_dhcp_port_creation(self):
         device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT

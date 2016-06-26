@@ -60,6 +60,18 @@ class DhcpAgentNotifyAPI(object):
                            resources.ROUTER_INTERFACE, events.AFTER_CREATE)
         registry.subscribe(self._after_router_interface_deleted,
                            resources.ROUTER_INTERFACE, events.AFTER_DELETE)
+        # register callbacks for events pertaining resources affecting DHCP
+        callback_resources = (
+            resources.NETWORK,
+            resources.NETWORKS,
+            resources.PORT,
+            resources.PORTS,
+            resources.SUBNET,
+            resources.SUBNETS,
+        )
+        for resource in callback_resources:
+            registry.subscribe(self._send_dhcp_notification,
+                               resource, events.BEFORE_RESPONSE)
 
     @property
     def plugin(self):
@@ -191,6 +203,17 @@ class DhcpAgentNotifyAPI(object):
         self._notify_agents(kwargs['context'], 'port_delete_end',
                             {'port_id': kwargs['port']['id']},
                             kwargs['port']['network_id'])
+
+    def _send_dhcp_notification(self, resource, event, trigger, context=None,
+                                data=None, method_name=None, collection=None,
+                                **kwargs):
+        if cfg.CONF.dhcp_agent_notification:
+            if collection and collection in data:
+                for body in data[collection]:
+                    item = {resource: body}
+                    self.notify(context, item, method_name)
+            else:
+                self.notify(context, data, method_name)
 
     def notify(self, context, data, method_name):
         # data is {'key' : 'value'} with only one key

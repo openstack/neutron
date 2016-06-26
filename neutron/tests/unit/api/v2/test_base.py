@@ -24,7 +24,6 @@ from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_utils import uuidutils
 import six
-from six import moves
 import six.moves.urllib.parse as urlparse
 import webob
 from webob import exc
@@ -32,10 +31,10 @@ import webtest
 
 from neutron.api import api_common
 from neutron.api import extensions
-from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
+from neutron.callbacks import registry
 from neutron import context
 from neutron import manager
 from neutron import policy
@@ -1343,20 +1342,19 @@ class NotificationTest(APIv2TestBase):
         self._resource_op_notifier('update', 'network')
 
 
-class DHCPNotificationTest(APIv2TestBase):
+class RegistryNotificationTest(APIv2TestBase):
 
     def setUp(self):
         # This test does not have database support so tracking cannot be used
         cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
-        super(DHCPNotificationTest, self).setUp()
+        super(RegistryNotificationTest, self).setUp()
 
-    def _test_dhcp_notifier(self, opname, resource, initial_input=None):
+    def _test_registry_notify(self, opname, resource, initial_input=None):
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
-        with mock.patch.object(dhcp_rpc_agent_api.DhcpAgentNotifyAPI,
-                               'notify') as dhcp_notifier:
+        with mock.patch.object(registry, 'notify') as notify:
             if opname == 'create':
                 res = self.api.post_json(
                     _get_path('networks'),
@@ -1369,35 +1367,27 @@ class DHCPNotificationTest(APIv2TestBase):
             if opname == 'delete':
                 res = self.api.delete(_get_path('networks', id=_uuid()))
                 expected_code = exc.HTTPNoContent.code
-            expected_item = mock.call(mock.ANY, mock.ANY,
-                                      resource + "." + opname + ".end")
-            if initial_input and resource not in initial_input:
-                resource += 's'
-            num = len(initial_input[resource]) if initial_input and isinstance(
-                initial_input[resource], list) else 1
-            expected = [expected_item for x in moves.range(num)]
-            self.assertEqual(expected, dhcp_notifier.call_args_list)
-            self.assertEqual(num, dhcp_notifier.call_count)
+            self.assertTrue(notify.called)
         self.assertEqual(expected_code, res.status_int)
 
-    def test_network_create_dhcp_notifer(self):
+    def test_network_create_registry_notify(self):
         input = {'network': {'name': 'net',
                              'tenant_id': _uuid()}}
-        self._test_dhcp_notifier('create', 'network', input)
+        self._test_registry_notify('create', 'network', input)
 
-    def test_network_delete_dhcp_notifer(self):
-        self._test_dhcp_notifier('delete', 'network')
+    def test_network_delete_registry_notify(self):
+        self._test_registry_notify('delete', 'network')
 
-    def test_network_update_dhcp_notifer(self):
+    def test_network_update_registry_notify(self):
         input = {'network': {'name': 'net'}}
-        self._test_dhcp_notifier('update', 'network', input)
+        self._test_registry_notify('update', 'network', input)
 
-    def test_networks_create_bulk_dhcp_notifer(self):
+    def test_networks_create_bulk_registry_notify(self):
         input = {'networks': [{'name': 'net1',
                                'tenant_id': _uuid()},
                               {'name': 'net2',
                                'tenant_id': _uuid()}]}
-        self._test_dhcp_notifier('create', 'network', input)
+        self._test_registry_notify('create', 'network', input)
 
 
 class QuotaTest(APIv2TestBase):
