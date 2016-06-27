@@ -57,6 +57,9 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                    "extraroute", "l3_agent_scheduler",
                                    "l3-ha", "router_availability_zone"]
 
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     @resource_registry.tracked_resources(router=l3_db.Router,
                                          floatingip=l3_db.FloatingIP)
     def __init__(self):
