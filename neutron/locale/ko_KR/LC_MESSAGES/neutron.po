@@ -11,9 +11,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -192,13 +192,6 @@ msgstr "'module' 오브젝트에 '%s' 속성이 없음"
 
 msgid "'port_max' is smaller than 'port_min'"
 msgstr "'port_max'가 'port_min'보다 작음"
-
-msgid ""
-"(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
-"service to execute the command against."
-msgstr ""
-"(더 이상 사용되지 않습니다. '--subproject neutron-SERVICE'를 대신 사용하십시"
-"오.) 명령을 실행할 고급 서비스입니다. "
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0은 CIDR 접두부 길이로 허용되지 않음"
@@ -551,9 +544,6 @@ msgstr "플로우 삭제 또는 수정 시 우선순위와 일치할 수 없음"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr "서브넷 풀에서 IPv4 및 IPv6 접두부를 혼합하여 사용할 수 없습니다."
-
-msgid "Cannot specify both --service and --subproject."
-msgstr "--service와  --subproject를 모두 지정할 수 없습니다. "
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id와 port-id를 둘 다 지정할 수 없음"
@@ -1125,9 +1115,6 @@ msgstr "VLAN 범위의 끝이 VLAN 범위의 시작보다 작습니다. "
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr "터널 범위의 끝이 터널 범위의 시작보다 작음"
 
-msgid "Enforce using split branches file structure."
-msgstr "분할 분기 파일 구조 사용을 적용하십시오. "
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "조작 시도 중 오류 %(reason)s이(가) 발생했습니다. "
@@ -1404,9 +1391,6 @@ msgstr ""
 "름입니다. 이 시스템에서 실행 중인 모든 에이전트 및 서비스는  같은 호스트 값"
 "을 사용해야 합니다."
 
-msgid "How many times Neutron will retry MAC generation"
-msgstr "Neutron이 MAC 생성을 재시도할 횟수"
-
 #, python-format
 msgid ""
 "ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
@@ -1503,13 +1487,6 @@ msgid ""
 msgstr ""
 "True인 경우 이를 지원하는 플러그인을 사용하여 VLAN 투명 네트워크를 작성할 수 "
 "있습니다."
-
-msgid ""
-"If non-empty, the l3 agent can only configure a router that has the matching "
-"router ID."
-msgstr ""
-"비어있지 않으면 l3 에이전트가 일치하는 라우터 ID가 있는 라우터만 구성할 수 있"
-"습니다."
 
 msgid "Illegal IP version number"
 msgstr "올바르지 않은 IP 버전 번호"
@@ -2101,9 +2078,6 @@ msgstr "Neutron 서비스 유형 관리"
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin이 구성되지 않았습니다!"
 
-msgid "Neutron plugin provider module"
-msgstr "Neutron 플러그인 제공자 모듈"
-
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "first_ip 또는 last_ip의 새 값을 지정해야 합니다."
 
@@ -2143,9 +2117,6 @@ msgstr "'%s' 서비스에 대해 제공자가 지정되지 않음, 종료하는 
 #, python-format
 msgid "No shared key in %s fields"
 msgstr "%s 필드의 공유 키가 없음"
-
-msgid "No versions callback provided in ResourceVersionsManager"
-msgstr "ResourceVersionsManager에 버전 콜백이 제공되지 않음"
 
 msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
 msgstr "'dvr' 모드에서 수동으로 에이전트에 라우터를 지정할 수 없습니다."

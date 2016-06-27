@@ -7,9 +7,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -187,13 +187,6 @@ msgstr "El objeto 'module' no tiene ningún atributo '%s'"
 
 msgid "'port_max' is smaller than 'port_min'"
 msgstr "'port_max' es menor que 'port_min'"
-
-msgid ""
-"(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
-"service to execute the command against."
-msgstr ""
-"(En desuso. Utilice '--subproject neutron-SERVICE' en su lugar). Servicio "
-"avanzado contra el que ejecutar el mandato."
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 no está permitido como longitud del prefijo de CIDR"
@@ -576,9 +569,6 @@ msgstr ""
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr "No se pueden mezclar prefijos IPv4 y IPv6 en una agrupación de subred."
-
-msgid "Cannot specify both --service and --subproject."
-msgstr "No se pueden especificar los dos: --service y --subproject."
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "No se puede especificar el ID de subred y el ID de puerto"
@@ -1203,9 +1193,6 @@ msgstr "El final del rango VLAN es menor que el inicio del rango VLAN"
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr "El final del rango de túnel es menor que el inicio del rango de túnel"
 
-msgid "Enforce using split branches file structure."
-msgstr "Imponer utilizando la estructura del archivo de ramas de división."
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "Error %(reason)s al intentar realizar la operación."
@@ -1504,9 +1491,6 @@ msgstr ""
 "Neutron que se ejecutan  en esta máquina. Todos los agentes y servicios que "
 "se ejecutan en esta máquina deben utilizar el mismo valor de host."
 
-msgid "How many times Neutron will retry MAC generation"
-msgstr "Cuántas veces Neutron intentará de nuevo la generación MAC"
-
 #, python-format
 msgid ""
 "ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
@@ -1611,13 +1595,6 @@ msgid ""
 msgstr ""
 "Si es True, permite a los plug-in que la soportan crear redes VLAN "
 "transparentes."
-
-msgid ""
-"If non-empty, the l3 agent can only configure a router that has the matching "
-"router ID."
-msgstr ""
-"Si no está vacío, el agente l3 solo puede configurar un enrutador que tenga "
-"el ID de enrutador correspondiente."
 
 msgid "Illegal IP version number"
 msgstr "Número de versión IP no permitido"
@@ -2241,9 +2218,6 @@ msgstr "Administración del tipo de servicio Neutron"
 msgid "Neutron core_plugin not configured!"
 msgstr "¡Neutron core_plugin no está configurado!"
 
-msgid "Neutron plugin provider module"
-msgstr "Módulo de proveedor de plugin de Neutron"
-
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "Se debe especificar un nuevo valor para  first_ip o last_ip."
 
@@ -2286,11 +2260,6 @@ msgstr "No hay proveedores especificados para '%s' servicio, salir"
 #, python-format
 msgid "No shared key in %s fields"
 msgstr "No hay ninguna clave compartida en los campos de %s"
-
-msgid "No versions callback provided in ResourceVersionsManager"
-msgstr ""
-"No se proporciona devolución de llamada de versiones en "
-"ResourceVersionsManager"
 
 msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
 msgstr ""

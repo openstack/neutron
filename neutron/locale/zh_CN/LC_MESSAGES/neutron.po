@@ -15,9 +15,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -189,13 +189,6 @@ msgstr "“module”对象没有属性“%s”"
 
 msgid "'port_max' is smaller than 'port_min'"
 msgstr "“port_max”小于“port_min”"
-
-msgid ""
-"(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
-"service to execute the command against."
-msgstr ""
-"（建议不要使用。请改为使用“--subproject neutron-SERVICE”。）要对其执行该命令"
-"的高级服务。"
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0不允许作为CIDR前缀长度"
@@ -533,9 +526,6 @@ msgstr "无法匹配删除或修改流时的优先级"
 
 msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr "不能在子网池中同时使用 IPv4 前缀和 IPv6 前缀。"
-
-msgid "Cannot specify both --service and --subproject."
-msgstr "无法同时指定 --service 和 --subproject。"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "无法同时指定 subnet-id 和 port-id"
@@ -1078,9 +1068,6 @@ msgstr "VLAN范围结束值比开始值小"
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr "隧道范围的结束小于隧道范围的起始"
 
-msgid "Enforce using split branches file structure."
-msgstr "强制使用拆分分支文件结构。"
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "尝试执行该操作时发生错误 %(reason)s。"
@@ -1345,9 +1332,6 @@ msgstr ""
 "Neutron 服务器以及此机器上运行的代理程序和服务要使用的主机名。此机器上运行的"
 "所有代理程序和服务必须使用同一主机值。"
 
-msgid "How many times Neutron will retry MAC generation"
-msgstr "Neutron 将重试 MAC 生成的次数"
-
 #, python-format
 msgid ""
 "ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
@@ -1439,11 +1423,6 @@ msgid ""
 "If True, then allow plugins that support it to create VLAN transparent "
 "networks."
 msgstr "如果为 True，那么允许那些支持它的插件创建 VLAN 透明网络。"
-
-msgid ""
-"If non-empty, the l3 agent can only configure a router that has the matching "
-"router ID."
-msgstr "如果非空，那么 L3 代理程序只能配置具有匹配路由器标识的路由器。"
 
 msgid "Illegal IP version number"
 msgstr "IP 版本号不合法"
@@ -2009,9 +1988,6 @@ msgstr "Neutron 服务类型管理"
 msgid "Neutron core_plugin not configured!"
 msgstr "未配置 Neutron core_plugin!"
 
-msgid "Neutron plugin provider module"
-msgstr "Neutron 插件提供程序模块"
-
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "必须对 first_ip 或 last_ip 指定新值。"
 
@@ -2051,9 +2027,6 @@ msgstr "没有为“%s”服务指定任何提供程序，正在退出"
 #, python-format
 msgid "No shared key in %s fields"
 msgstr "%s 字段中没有共享键"
-
-msgid "No versions callback provided in ResourceVersionsManager"
-msgstr "ResourceVersionsManager 中未提供版本回调"
 
 msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
 msgstr "不允许以“dvr”方式将路由器手动分配给代理程序。"
