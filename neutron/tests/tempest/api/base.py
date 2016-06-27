@@ -325,7 +325,8 @@ class BaseNetworkTest(test.BaseTestCase):
         return interface
 
     @classmethod
-    def create_qos_policy(cls, name, description, shared, tenant_id=None):
+    def create_qos_policy(cls, name, description=None, shared=False,
+                          tenant_id=None):
         """Wrapper utility that returns a test QoS policy."""
         body = cls.admin_client.create_qos_policy(
             name, description, shared, tenant_id)
@@ -501,6 +502,8 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
 
     list_kwargs = {}
 
+    list_as_admin = False
+
     def assertSameOrder(self, original, actual):
         # gracefully handle iterators passed
         original = list(original)
@@ -513,8 +516,12 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
     def plural_name(self):
         return '%ss' % self.resource
 
+    @property
+    def list_client(self):
+        return self.admin_client if self.list_as_admin else self.client
+
     def list_method(self, *args, **kwargs):
-        method = getattr(self.client, 'list_%s' % self.plural_name)
+        method = getattr(self.list_client, 'list_%s' % self.plural_name)
         kwargs.update(self.list_kwargs)
         return method(*args, **kwargs)
 
@@ -617,9 +624,9 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
                 uri = self.get_bare_url(prev_links['next'])
             else:
                 sort_args.update(self.list_kwargs)
-                uri = self.client.build_uri(
+                uri = self.list_client.build_uri(
                     self.plural_name, limit=1, **sort_args)
-            prev_links, body = self.client.get_uri_with_links(
+            prev_links, body = self.list_client.get_uri_with_links(
                 self.plural_name, uri
             )
             resources_ = self._extract_resources(body)
@@ -637,7 +644,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
         resources2 = []
         for i in range(niterations):
             uri = self.get_bare_url(prev_links['previous'])
-            prev_links, body = self.client.get_uri_with_links(
+            prev_links, body = self.list_client.get_uri_with_links(
                 self.plural_name, uri
             )
             resources_ = self._extract_resources(body)
@@ -676,9 +683,9 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
                 uri = self.get_bare_url(prev_links['previous'])
             else:
                 pagination_args.update(self.list_kwargs)
-                uri = self.client.build_uri(
+                uri = self.list_client.build_uri(
                     self.plural_name, page_reverse=True, **pagination_args)
-            prev_links, body = self.client.get_uri_with_links(
+            prev_links, body = self.list_client.get_uri_with_links(
                 self.plural_name, uri
             )
             resources_ = self._extract_resources(body)
