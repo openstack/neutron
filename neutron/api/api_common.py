@@ -222,15 +222,31 @@ class PaginationEmulatedHelper(PaginationHelper):
     def paginate(self, items):
         if not self.limit:
             return items
-        i = -1
+
+        if not items:
+            return []
+
+        # first, calculate the base index for pagination
         if self.marker:
+            i = 0
             for item in items:
-                i = i + 1
                 if item[self.primary_key] == self.marker:
                     break
+                i += 1
+            else:
+                # if marker is not found, return nothing
+                return []
+        else:
+            i = len(items) if self.page_reverse else 0
+
         if self.page_reverse:
-            return items[i - self.limit:i]
-        return items[i + 1:i + self.limit + 1]
+            # don't wrap
+            return items[max(i - self.limit, 0):i]
+        else:
+            if self.marker:
+                # skip the matched marker
+                i += 1
+            return items[i:i + self.limit]
 
     def get_links(self, items):
         return get_pagination_links(
