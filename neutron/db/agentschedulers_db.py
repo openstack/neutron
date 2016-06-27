@@ -438,7 +438,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                               "rescheduling"))
 
     def get_dhcp_agents_hosting_networks(
-            self, context, network_ids, active=None, admin_state_up=None):
+            self, context, network_ids, active=None, admin_state_up=None,
+            hosts=None):
         if not network_ids:
             return []
         query = context.session.query(ndab_model.NetworkDhcpAgentBinding)
@@ -448,6 +449,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         if network_ids:
             query = query.filter(
                 ndab_model.NetworkDhcpAgentBinding.network_id.in_(network_ids))
+        if hosts:
+            query = query.filter(agents_db.Agent.host.in_(hosts))
         if admin_state_up is not None:
             query = query.filter(agents_db.Agent.admin_state_up ==
                                  admin_state_up)

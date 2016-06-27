@@ -149,9 +149,17 @@ class DhcpAgentNotifyAPI(object):
         elif cast_required:
             admin_ctx = (context if context.is_admin else context.elevated())
             network = self.plugin.get_network(admin_ctx, network_id)
-            agents = self.plugin.get_dhcp_agents_hosting_networks(
-                context, [network_id])
+            if 'subnet' in payload and payload['subnet'].get('segment_id'):
+                # if segment_id exists then the segment service plugin
+                # must be loaded
+                nm = manager.NeutronManager
+                segment_plugin = nm.get_service_plugins()['segments']
+                segment = segment_plugin.get_segment(
+                    context, payload['subnet']['segment_id'])
+                network['candidate_hosts'] = segment['hosts']
 
+            agents = self.plugin.get_dhcp_agents_hosting_networks(
+                context, [network_id], hosts=network.get('candidate_hosts'))
             # schedule the network first, if needed
             schedule_required = (
                 method == 'subnet_create_end' or

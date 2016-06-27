@@ -199,6 +199,18 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                     'hosted_agents': agents_dict['hosted_agents']}
         return agents_dict
 
+    def _filter_agents_with_network_access(self, hostable_agents, plugin,
+                                           context, network):
+        if 'candidate_hosts' in network:
+            hostable_dhcp_hosts = network['candidate_hosts']
+        else:
+            hostable_dhcp_hosts = plugin.filter_hosts_with_network_access(
+                context, network['id'],
+                [agent['host'] for agent in hostable_agents])
+        reachable_agents = [agent for agent in hostable_agents
+                            if agent['host'] in hostable_dhcp_hosts]
+        return reachable_agents
+
     def _get_dhcp_agents_hosting_network(self, plugin, context, network):
         """Return dhcp agents hosting the given network or None if a given
            network is already hosted by enough number of agents.
@@ -208,7 +220,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         # subnets whose enable_dhcp is false
         with context.session.begin(subtransactions=True):
             network_hosted_agents = plugin.get_dhcp_agents_hosting_networks(
-                context, [network['id']])
+                context, [network['id']], hosts=network.get('candidate_hosts'))
             if len(network_hosted_agents) >= agents_per_network:
                 LOG.debug('Network %s is already hosted by enough agents.',
                           network['id'])
@@ -253,11 +265,8 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                 context, True, agent)
         ]
 
-        hostable_dhcp_hosts = plugin.filter_hosts_with_network_access(
-            context, network['id'],
-            [agent['host'] for agent in hostable_dhcp_agents])
-        hostable_dhcp_agents = [agent for agent in hostable_dhcp_agents
-                                if agent['host'] in hostable_dhcp_hosts]
+        hostable_dhcp_agents = self._filter_agents_with_network_access(
+            hostable_dhcp_agents, plugin, context, network)
 
         if not hostable_dhcp_agents:
             return {'n_agents': 0, 'hostable_agents': [],
