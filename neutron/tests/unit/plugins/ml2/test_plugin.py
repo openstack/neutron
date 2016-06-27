@@ -1367,7 +1367,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                    driver_api.PHYSICAL_NETWORK: 'physnet1'}
         network_id = network['network']['id']
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment)
+            self.context, network_id, segment)
         dynamic_segment = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet1')
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
@@ -1378,7 +1378,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                     driver_api.SEGMENTATION_ID: 1234,
                     driver_api.PHYSICAL_NETWORK: 'physnet3'}
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment2)
+            self.context, network_id, segment2)
         dynamic_segment = segments_db.get_dynamic_segment(
             self.context.session, network_id, segmentation_id='1234')
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
@@ -1396,7 +1396,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                    driver_api.PHYSICAL_NETWORK: 'physnet1'}
         network_id = network['network']['id']
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment)
+            self.context, network_id, segment)
         dynamic_segment = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet1')
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
@@ -1411,7 +1411,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         segment2 = {driver_api.NETWORK_TYPE: 'vlan',
                     driver_api.PHYSICAL_NETWORK: 'physnet2'}
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment2)
+            self.context, network_id, segment2)
         dynamic_segment2 = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet2')
         dynamic_segmentation2_id = dynamic_segment2[driver_api.SEGMENTATION_ID]
@@ -1427,7 +1427,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                    driver_api.PHYSICAL_NETWORK: 'physnet1'}
         network_id = network['network']['id']
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment)
+            self.context, network_id, segment)
         dynamic_segment = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet1')
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
@@ -1564,7 +1564,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         segment = {driver_api.NETWORK_TYPE: 'vlan',
                    driver_api.PHYSICAL_NETWORK: 'physnet2'}
         self.driver.type_manager.allocate_dynamic_segment(
-            self.context.session, network_id, segment)
+            self.context, network_id, segment)
         dynamic_segment = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet2')
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])

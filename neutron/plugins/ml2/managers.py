@@ -182,10 +182,10 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.info(_LI("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 
-    def _add_network_segment(self, session, network_id, segment, mtu,
+    def _add_network_segment(self, context, network_id, segment, mtu,
                              segment_index=0):
         segments_db.add_network_segment(
-            session, network_id, segment, segment_index)
+            context, network_id, segment, segment_index)
         if segment.get(api.MTU, 0) > 0:
             mtu.append(segment[api.MTU])
 
@@ -200,15 +200,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 for segment_index, segment in enumerate(segments):
                     segment = self.reserve_provider_segment(
                         session, segment)
-                    self._add_network_segment(session, network_id, segment,
+                    self._add_network_segment(context, network_id, segment,
                                               mtu, segment_index)
             elif (cfg.CONF.ml2.external_network_type and
                   self._get_attribute(network, external_net.EXTERNAL)):
                 segment = self._allocate_ext_net_segment(session)
-                self._add_network_segment(session, network_id, segment, mtu)
+                self._add_network_segment(context, network_id, segment, mtu)
             else:
                 segment = self._allocate_tenant_net_segment(session)
-                self._add_network_segment(session, network_id, segment, mtu)
+                self._add_network_segment(context, network_id, segment, mtu)
         network[api.MTU] = min(mtu) if mtu else 0
 
     def is_partial_segment(self, segment):
@@ -265,18 +265,19 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 LOG.error(_LE("Failed to release segment '%s' because "
                               "network type is not supported."), segment)
 
-    def allocate_dynamic_segment(self, session, network_id, segment):
+    def allocate_dynamic_segment(self, context, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
         dynamic_segment = segments_db.get_dynamic_segment(
-            session, network_id, segment.get(api.PHYSICAL_NETWORK),
+            context.session, network_id, segment.get(api.PHYSICAL_NETWORK),
             segment.get(api.SEGMENTATION_ID))
 
         if dynamic_segment:
             return dynamic_segment
 
         driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
-        dynamic_segment = driver.obj.reserve_provider_segment(session, segment)
-        segments_db.add_network_segment(session, network_id, dynamic_segment,
+        dynamic_segment = driver.obj.reserve_provider_segment(context.session,
+                                                              segment)
+        segments_db.add_network_segment(context, network_id, dynamic_segment,
                                         is_dynamic=True)
         return dynamic_segment
 

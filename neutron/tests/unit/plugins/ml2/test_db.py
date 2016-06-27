@@ -66,7 +66,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id)
         for segment in segments:
             segments_db.add_network_segment(
-                self.ctx.session, network_id, segment,
+                self.ctx, network_id, segment,
                 is_dynamic=is_seg_dynamic)
 
         net_segments = segments_db.get_network_segments(
