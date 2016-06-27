@@ -18,13 +18,14 @@ import six
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-from neutron.tests.tempest.api import base_routers as base
+from neutron.tests.tempest.api import base
+from neutron.tests.tempest.api import base_routers
 from neutron.tests.tempest import config
 
 CONF = config.CONF
 
 
-class RoutersTest(base.BaseRouterTest):
+class RoutersTest(base_routers.BaseRouterTest):
 
     @classmethod
     @test.requires_ext(extension="router", service="network")
@@ -216,7 +217,7 @@ class RoutersIpV6Test(RoutersTest):
     _ip_version = 6
 
 
-class DvrRoutersTest(base.BaseRouterTest):
+class DvrRoutersTest(base_routers.BaseRouterTest):
 
     @classmethod
     @test.requires_ext(extension="dvr", service="network")
@@ -244,3 +245,64 @@ class DvrRoutersTest(base.BaseRouterTest):
         self.assertTrue(show_body['router']['distributed'])
         show_body = self.client.show_router(router['id'])
         self.assertNotIn('distributed', show_body['router'])
+
+
+class RoutersSearchCriteriaTest(base.BaseSearchCriteriaTest):
+
+    resource = 'router'
+
+    @classmethod
+    @test.requires_ext(extension="router", service="network")
+    def skip_checks(cls):
+        super(RoutersSearchCriteriaTest, cls).skip_checks()
+
+    @classmethod
+    def resource_setup(cls):
+        super(RoutersSearchCriteriaTest, cls).resource_setup()
+        for name in cls.resource_names:
+            cls.create_router(router_name=name)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('03a69efb-90a7-435b-bb5c-3add3612085a')
+    def test_list_sorts_asc(self):
+        self._test_list_sorts_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('95913d30-ff41-4b17-9f44-5258c651e78c')
+    def test_list_sorts_desc(self):
+        self._test_list_sorts_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('7f7d40b1-e165-4817-8dc5-02f8e2f0dff3')
+    def test_list_pagination(self):
+        self._test_list_pagination()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('a5b83e83-3d98-45bb-a2c7-0ee179ffd42c')
+    def test_list_pagination_with_marker(self):
+        self._test_list_pagination_with_marker()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('40804af8-c25d-45f8-b8a8-b4c70345215d')
+    def test_list_pagination_with_href_links(self):
+        self._test_list_pagination_with_href_links()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('77b9676c-d3cb-43af-a0e8-a5b8c6099e70')
+    def test_list_pagination_page_reverse_asc(self):
+        self._test_list_pagination_page_reverse_asc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('3133a2c5-1bb9-4fc7-833e-cf9a1d160255')
+    def test_list_pagination_page_reverse_desc(self):
+        self._test_list_pagination_page_reverse_desc()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('8252e2f0-b3da-4738-8e25-f6f8d878a2da')
+    def test_list_pagination_page_reverse_with_href_links(self):
+        self._test_list_pagination_page_reverse_with_href_links()
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('fb102124-20f8-4cb3-8c81-f16f5e41d192')
+    def test_list_no_pagination_limit_0(self):
+        self._test_list_no_pagination_limit_0()
