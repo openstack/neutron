@@ -21,7 +21,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
 from neutron.db import api as db_api
-from neutron.db import dns_db as dns_models
+from neutron.db.models import dns as dns_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_models
