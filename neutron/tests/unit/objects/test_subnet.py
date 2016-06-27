@@ -11,7 +11,9 @@
 #    under the License.
 
 import itertools
+from operator import itemgetter
 
+from neutron.objects import base as obj_base
 from neutron.objects import subnet
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
@@ -40,6 +42,11 @@ class DNSNameServerObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = subnet.DNSNameServer
 
+    def setUp(self):
+        super(DNSNameServerObjectIfaceTestCase, self).setUp()
+        self.pager_map[self._test_class.obj_name()] = (
+            obj_base.Pager(sorts=[('order', True)]))
+
 
 class DNSNameServerDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                     testlib_api.SqlTestCase):
@@ -48,10 +55,58 @@ class DNSNameServerDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(DNSNameServerDbObjectTestCase, self).setUp()
+        # (NOTE) If two object have the same value for a field and
+        # they are sorted using that field, the order is not deterministic.
+        # To avoid breaking the tests we ensure unique values for every field
+        while not self._is_objects_unique():
+            self.db_objs = list(self.get_random_fields() for _ in range(3))
+        self.obj_fields = [self._test_class.modify_fields_from_db(db_obj)
+                           for db_obj in self.db_objs]
         self._create_test_network()
         self._create_test_subnet(self._network)
         for obj in itertools.chain(self.db_objs, self.obj_fields):
             obj['subnet_id'] = self._subnet['id']
+
+    def _is_objects_unique(self):
+        order_set = set([x['order'] for x in self.db_objs])
+        subnet_id_set = set([x['subnet_id'] for x in self.db_objs])
+        address_set = set([x['address'] for x in self.db_objs])
+        return 3 == len(order_set) == len(subnet_id_set) == len(address_set)
+
+    def _create_dnsnameservers(self):
+        for obj in self.obj_fields:
+            dns = self._make_object(obj)
+            dns.create()
+
+    def test_get_objects_sort_by_order_asc(self):
+        self._create_dnsnameservers()
+        objs = self._test_class.get_objects(self.context)
+        fields_sorted = sorted([dict(obj) for obj in self.obj_fields],
+                               key=itemgetter('order'))
+        self.assertEqual(
+            fields_sorted,
+            [obj_test_base.get_obj_db_fields(obj) for obj in objs])
+
+    def test_get_objects_sort_by_order_desc(self):
+        self._create_dnsnameservers()
+        pager = obj_base.Pager(sorts=[('order', False)])
+        objs = self._test_class.get_objects(self.context, _pager=pager,
+                                            subnet_id=self._subnet.id)
+        fields_sorted = sorted([dict(obj) for obj in self.obj_fields],
+                               key=itemgetter('order'), reverse=True)
+        self.assertEqual(
+            fields_sorted,
+            [obj_test_base.get_obj_db_fields(obj) for obj in objs])
+
+    def test_get_objects_sort_by_address_asc_using_pager(self):
+        self._create_dnsnameservers()
+        pager = obj_base.Pager(sorts=[('address', True)])
+        objs = self._test_class.get_objects(self.context, _pager=pager)
+        fields_sorted = sorted([dict(obj) for obj in self.obj_fields],
+                               key=itemgetter('address'))
+        self.assertEqual(
+            fields_sorted,
+            [obj_test_base.get_obj_db_fields(obj) for obj in objs])
 
 
 class RouteObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -76,6 +131,11 @@ class SubnetObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = subnet.Subnet
 
+    def setUp(self):
+        super(SubnetObjectIfaceTestCase, self).setUp()
+        self.pager_map[subnet.DNSNameServer.obj_name()] = (
+            obj_base.Pager(sorts=[('order', True)]))
+
 
 class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                              testlib_api.SqlTestCase):
@@ -87,3 +147,18 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self._create_test_network()
         for obj in itertools.chain(self.db_objs, self.obj_fields):
             obj['network_id'] = self._network['id']
+
+    def test_get_dns_nameservers_in_order(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        dns_nameservers = [(2, '1.2.3.4'), (1, '5.6.7.8'), (4, '7.7.7.7')]
+        for order, address in dns_nameservers:
+            dns = subnet.DNSNameServer(self.context, order=order,
+                                       address=address,
+                                       subnet_id=obj.id)
+            dns.create()
+
+        new = self._test_class.get_object(self.context, id=obj.id)
+        self.assertEqual(1, new.dns_nameservers[0].order)
+        self.assertEqual(2, new.dns_nameservers[1].order)
+        self.assertEqual(4, new.dns_nameservers[-1].order)

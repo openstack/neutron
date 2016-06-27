@@ -28,6 +28,7 @@ from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
 
 LOG = logging.getLogger(__name__)
@@ -233,9 +234,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return port
 
     def _get_dns_by_subnet(self, context, subnet_id):
-        dns_qry = context.session.query(models_v2.DNSNameServer)
-        return dns_qry.filter_by(subnet_id=subnet_id).order_by(
-            models_v2.DNSNameServer.order).all()
+        return subnet_obj.DNSNameServer.get_objects(context,
+                                                    subnet_id=subnet_id)
 
     def _get_route_by_subnet(self, context, subnet_id):
         route_qry = context.session.query(models_v2.SubnetRoute)

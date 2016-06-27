@@ -341,6 +341,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         super(BaseObjectIfaceTestCase, self).setUp()
         self.model_map = collections.defaultdict(list)
         self.model_map[self._test_class.db_model] = self.db_objs
+        self.pager_map = collections.defaultdict(lambda: None)
 
     def test_get_object(self):
         with mock.patch.object(obj_db_api, 'get_object',
@@ -378,7 +379,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                         field].objname)[0]
                     mock_calls.append(
                         mock.call(
-                            self.context, obj_class.db_model, _pager=None,
+                            self.context, obj_class.db_model,
+                            _pager=self.pager_map[obj_class.obj_name()],
                             **{k: db_obj[v]
                             for k, v in obj_class.foreign_keys.items()}))
         return mock_calls
@@ -390,7 +392,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             objs = self._test_class.get_objects(self.context)
             self._validate_objects(self.db_objs, objs)
         mock_calls = [
-            mock.call(self.context, self._test_class.db_model, _pager=None)
+            mock.call(self.context, self._test_class.db_model,
+                      _pager=self.pager_map[self._test_class.obj_name()])
         ]
         mock_calls.extend(self._get_synthetic_fields_get_objects_calls(
             self.db_objs))
@@ -404,10 +407,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             objs = self._test_class.get_objects(self.context,
                                                 **self.valid_field_filter)
             self._validate_objects(self.db_objs, objs)
-
         mock_calls = [
             mock.call(
-                self.context, self._test_class.db_model, _pager=None,
+                self.context, self._test_class.db_model,
+                _pager=self.pager_map[self._test_class.obj_name()],
                 **self._test_class.modify_fields_to_db(self.valid_field_filter)
             )
         ]
@@ -887,3 +890,13 @@ class RegisterFilterHookOnModelTestCase(UniqueObjectBase):
         base.register_filter_hook_on_model(
             FakeNeutronObject.db_model, filter_name)
         self.assertIn(filter_name, self.registered_object.extra_filter_names)
+
+
+class PagerTestCase(test_base.BaseTestCase):
+    def test_comparison(self):
+        pager = base.Pager(sorts=[('order', True)])
+        pager2 = base.Pager(sorts=[('order', True)])
+        self.assertEqual(pager, pager2)
+
+        pager3 = base.Pager()
+        self.assertNotEqual(pager, pager3)
