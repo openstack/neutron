@@ -392,6 +392,19 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
                          segments_host_db[segment['id']]['segment_id'])
         self.assertEqual(host2, segments_host_db[segment['id']]['host'])
 
+    def test_new_segment_after_host_reg(self):
+        host1 = 'host1'
+        physical_network = 'phys_net1'
+        segment = self._test_one_segment_one_host(host1)
+        with self.network() as network:
+            network = network['network']
+        segment2 = self._test_create_segment(
+            network_id=network['id'], physical_network=physical_network,
+            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+        segments_host_db = self._get_segments_for_host(host1)
+        self.assertEqual(set((segment['id'], segment2['id'])),
+                         set(segments_host_db))
+
     def test_segment_deletion_removes_host_mapping(self):
         host = 'host1'
         segment = self._test_one_segment_one_host(host)
