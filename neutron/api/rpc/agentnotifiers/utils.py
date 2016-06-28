@@ -23,12 +23,12 @@ LOG = logging.getLogger(__name__)
 
 
 def _call_with_retry(max_attempts):
-    """A wrapper to retry function using rpc call in case of
+    """A wrapper to retry a function using rpc call in case of
        MessagingException.
 
     Retries the decorated function in case of MessagingException of some kind
     (a timeout, client send error etc).
-    If maximum attempts exceeded, the exception which occured during last
+    If maximum attempts are exceeded, the exception which occurred during last
     attempt is reraised.
     """
     def wrapper(f):

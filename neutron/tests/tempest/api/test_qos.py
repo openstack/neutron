@@ -124,7 +124,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         # In theory, we could make the test conditional on which ml2 drivers
         # are enabled in gate (or more specifically, on which supported qos
         # rules are claimed by core plugin), but that option doesn't seem to be
-        # available thru tempest.lib framework
+        # available through tempest.lib framework
         expected_rule_types = []
         expected_rule_details = ['type']
 

@@ -527,11 +527,11 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
     dep_id_attr be used to determine if the dependency changed during object
     creation.
 
-    dep_getter should return None if the dependency does not exist
+    dep_getter should return None if the dependency does not exist.
 
     dep_creator can raise a DBDuplicateEntry to indicate that a concurrent
-    create of the dependency occured and the process will restart to get the
-    concurrently created one
+    create of the dependency occurred and the process will restart to get the
+    concurrently created one.
 
     This function will return both the created object and the dependency it
     used/created.
