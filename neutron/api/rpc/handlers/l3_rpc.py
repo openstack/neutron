@@ -90,11 +90,6 @@ class L3RpcCallback(object):
         context = neutron_context.get_admin_context()
         if utils.is_extension_supported(
             self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
-            # only auto schedule routers that were specifically requested;
-            # on agent full sync routers will be auto scheduled in
-            # get_router_ids()
-            if cfg.CONF.router_auto_schedule and router_ids:
-                self.l3plugin.auto_schedule_routers(context, host, router_ids)
             routers = (
                 self.l3plugin.list_active_sync_routers_on_active_l3_agent(
                     context, host, router_ids))
