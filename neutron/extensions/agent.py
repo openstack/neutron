@@ -154,7 +154,7 @@ class AgentPluginBase(object):
     def update_agent(self, context, agent):
         """Disable or Enable the agent.
 
-        Discription also can be updated. Some agents cannot be disabled, such
+        Description also can be updated. Some agents cannot be disabled, such
         as plugins, services. An error code should be reported in this case.
         @raise exceptions.BadRequest:
         """
