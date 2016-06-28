@@ -32,6 +32,8 @@ class Trunk(model_base.HasStandardAttributes, model_base.BASEV2,
         backref=sa.orm.backref('trunk_port', lazy='joined', uselist=False,
                                cascade='delete'))
 
+    sub_ports = sa.orm.relationship('SubPort', lazy='joined', uselist=True)
+
 
 class SubPort(model_base.BASEV2):
 

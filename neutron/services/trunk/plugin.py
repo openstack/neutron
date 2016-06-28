@@ -15,11 +15,13 @@
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
+from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
+from neutron.db import db_base_plugin_v2
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services import service_base
@@ -30,12 +32,28 @@ from neutron.services.trunk import rules
 LOG = logging.getLogger(__name__)
 
 
+def _extend_port_trunk_details(core_plugin, port_res, port_db):
+    """Add trunk details to a port."""
+    if port_db.trunk_port:
+        subports = [{'segmentation_id': x.segmentation_id,
+                     'segmentation_type': x.segmentation_type,
+                     'port_id': x.port_id}
+                    for x in port_db.trunk_port.sub_ports]
+        trunk_details = {'trunk_id': port_db.trunk_port.id,
+                         'sub_ports': subports}
+        port_res['trunk_details'] = trunk_details
+
+    return port_res
+
+
 class TrunkPlugin(service_base.ServicePluginBase,
                   common_db_mixin.CommonDbMixin):
 
     supported_extension_aliases = ["trunk", "trunk-details"]
 
     def __init__(self):
+        db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+            attributes.PORTS, [_extend_port_trunk_details])
         self._segmentation_types = {}
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
         LOG.debug('Trunk plugin loaded')
