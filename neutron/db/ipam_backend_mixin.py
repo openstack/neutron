@@ -38,6 +38,7 @@ from neutron.db import segments_db
 from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import utils as ipam_utils
+from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import db as segment_svc_db
 from neutron.services.segments import exceptions as segment_exc
 
@@ -148,14 +149,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # when update subnet's DNS nameservers. And store new
         # nameservers with order one by one.
         for dns in old_dns_list:
-            context.session.delete(dns)
+            dns.delete()
 
         for order, server in enumerate(new_dns_addr_list):
-            dns = models_v2.DNSNameServer(
-                address=server,
-                order=order,
-                subnet_id=id)
-            context.session.add(dns)
+            dns = subnet_obj.DNSNameServer(context,
+                                           address=server,
+                                           order=order,
+                                           subnet_id=id)
+            dns.create()
         del s["dns_nameservers"]
         return new_dns_addr_list
 
@@ -475,11 +476,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # by one when create subnet with DNS nameservers
         if validators.is_attr_set(dns_nameservers):
             for order, server in enumerate(dns_nameservers):
-                dns = models_v2.DNSNameServer(
-                    address=server,
-                    order=order,
-                    subnet_id=subnet.id)
-                context.session.add(dns)
+                dns = subnet_obj.DNSNameServer(context,
+                                               address=server,
+                                               order=order,
+                                               subnet_id=subnet.id)
+                dns.create()
 
         if validators.is_attr_set(host_routes):
             for rt in host_routes:

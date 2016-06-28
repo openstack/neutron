@@ -37,6 +37,18 @@ class DNSNameServer(base.NeutronDbObject):
         'order': obj_fields.IntegerField()
     }
 
+    @classmethod
+    def get_objects(cls, context, _pager=None, **kwargs):
+        """Fetch DNSNameServer objects with default sort by 'order' field.
+        """
+        if not _pager:
+            _pager = base.Pager()
+        if not _pager.sorts:
+            # (NOTE) True means ASC, False is DESC
+            _pager.sorts = [('order', True)]
+        return super(DNSNameServer, cls).get_objects(context, _pager,
+                                                     **kwargs)
+
 
 @obj_base.VersionedObjectRegistry.register
 class Route(base.NeutronDbObject):
