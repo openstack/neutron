@@ -15,9 +15,9 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -196,13 +196,6 @@ msgstr "'module' オブジェクトに属性 '%s' がありません"
 
 msgid "'port_max' is smaller than 'port_min'"
 msgstr "'port_max' が 'port_min' よりも小さくなっています"
-
-msgid ""
-"(Deprecated. Use '--subproject neutron-SERVICE' instead.) The advanced "
-"service to execute the command against."
-msgstr ""
-"(提供を終了しています。代わりに '--subproject neutron-SERVICE' を使用してくだ"
-"さい。) コマンドの実行の対象となる拡張サービス。"
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 は CIDR プレフィックス長として許可されていません"
@@ -582,9 +575,6 @@ msgid "Cannot mix IPv4 and IPv6 prefixes in a subnet pool."
 msgstr ""
 "1 つのサブネットプールで IPv4 のプレフィックスと IPv6 のプレフィックスを混用"
 "することはできません。"
-
-msgid "Cannot specify both --service and --subproject."
-msgstr "--service と --subproject の両方を指定することはできません。"
 
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "subnet-id と port-id の両方を指定することはできません"
@@ -1179,9 +1169,6 @@ msgstr "VLAN 範囲の終わりが VLAN 範囲の開始より小さくなって�
 msgid "End of tunnel range is less than start of tunnel range"
 msgstr "トンネル範囲の終わりが、トンネル範囲の開始より小さくなっています"
 
-msgid "Enforce using split branches file structure."
-msgstr "分岐ファイル構造を必ず使用するようにします。"
-
 #, python-format
 msgid "Error %(reason)s while attempting the operation."
 msgstr "操作の試行中に発生したエラー %(reason)s。"
@@ -1470,9 +1457,6 @@ msgstr ""
 "スト名。このマシン上で稼働するすべてのエージェントとサービスは同じホスト値を"
 "使用する必要があります。"
 
-msgid "How many times Neutron will retry MAC generation"
-msgstr "Neutron が MAC の生成を再試行する回数"
-
 #, python-format
 msgid ""
 "ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
@@ -1575,13 +1559,6 @@ msgid ""
 msgstr ""
 "True の場合、IPAM ドライバーをサポートするプラグインに VLAN トランスペアレン"
 "トネットワークの作成を許可します。"
-
-msgid ""
-"If non-empty, the l3 agent can only configure a router that has the matching "
-"router ID."
-msgstr ""
-"この値が空でない場合、L3 エージェントは合致するルーター ID を持つルーターのみ"
-"を設定することができます。"
 
 msgid "Illegal IP version number"
 msgstr "IP バージョン番号が正しくありません"
@@ -2196,9 +2173,6 @@ msgstr "Neutron サービスタイプ管理"
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron の core_plugin が設定されていません。"
 
-msgid "Neutron plugin provider module"
-msgstr "Neutron プラグインプロバイダーモジュール"
-
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "first_ip または last_ip に対して新規の値を指定する必要があります。"
 
@@ -2240,9 +2214,6 @@ msgstr "'%s' サービスに対して指定されたプロバイダーはあり�
 #, python-format
 msgid "No shared key in %s fields"
 msgstr "%s フィールドに共有鍵が存在しません"
-
-msgid "No versions callback provided in ResourceVersionsManager"
-msgstr "ResourceVersionsManager ではバージョンのコールバックは提供されません"
 
 msgid "Not allowed to manually assign a router to an agent in 'dvr' mode."
 msgstr ""

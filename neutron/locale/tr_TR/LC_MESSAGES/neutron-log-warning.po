@@ -2,9 +2,9 @@
 # Alex Eng <loones1595@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -263,14 +263,6 @@ msgid ""
 msgstr ""
 "%(network)s ağı %(agent)s ajanından çıkarılıyor çünkü ajan sunucuya son "
 "%(dead_time)s saniye rapor vermedi."
-
-#, python-format
-msgid ""
-"Rescheduling router %(router)s from agent %(agent)s because the agent did "
-"not report to the server in the last %(dead_time)s seconds."
-msgstr ""
-"Yönlendirici %(router)s %(agent)s ajanından yeniden zamanlanıyor çünkü ajan "
-"sunucuya son %(dead_time)s saniye rapor vermedi."
 
 msgid ""
 "Security group agent binding currently not set. This should be set by the "

@@ -1,9 +1,9 @@
 # Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -368,14 +368,6 @@ msgstr ""
 "%(agent)s에서 네트워크 %(network)s 제거"
 
 #, python-format
-msgid ""
-"Rescheduling router %(router)s from agent %(agent)s because the agent did "
-"not report to the server in the last %(dead_time)s seconds."
-msgstr ""
-"마지막 %(dead_time)s초에 에이전트가 서버에 보고하지 않았으므로 에이전트 "
-"%(agent)s에서 라우터 %(router)s 재스케줄링."
-
-#, python-format
 msgid "Respawning %(service)s for uuid %(uuid)s"
 msgstr "uuid %(uuid)s %(service)s 다시 파생"
 
@@ -399,10 +391,6 @@ msgstr ""
 "구성된 드라이버 %(driver)s이(가) 이동되었습니다. 대신 %(new_driver)s을(를) 자"
 "동으로 사용합니다. 이 자동 수정은 향후 릴리스에서 제거되므로 구성 파일을 업데"
 "이트하십시오."
-
-msgid ""
-"The input changed_since must be in the following format: YYYY-MM-DDTHH:MM:SS"
-msgstr "input changed_since 형식은 YYYY-MM-DDTHH:MM:SS이어야 함"
 
 msgid ""
 "The quota driver neutron.quota.ConfDriver is deprecated as of Liberty. "

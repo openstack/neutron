@@ -9,9 +9,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev47\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-06 07:43+0000\n"
+"POT-Creation-Date: 2016-06-26 18:12+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -805,9 +805,6 @@ msgstr ""
 msgid "Group (gid or name) running this process after its initialization"
 msgstr "İlklendirilmesinden sonra bu süreci çalıştıran grup (gid veya isim)"
 
-msgid "How many times Neutron will retry MAC generation"
-msgstr "Neutron kaç kere MAC üretmeyi deneyecek"
-
 #, python-format
 msgid ""
 "ICMP code (port-range-max) %(value)s is provided but ICMP type (port-range-"
@@ -1163,9 +1160,6 @@ msgstr "Neutron Servis Türü Yönetimi"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin yapılandırılmamış!"
-
-msgid "Neutron plugin provider module"
-msgstr "Neutron eklenti sağlayıcı modülü"
 
 #, python-format
 msgid "No eligible l3 agent associated with external network %s found"
