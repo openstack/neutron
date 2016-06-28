@@ -33,6 +33,7 @@ from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import constants
+from neutron.common import utils as common_utils
 from neutron.plugins.common import constants as const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
@@ -244,14 +245,14 @@ class KeepalivedIPv6Test(object):
 
     def verify_ipv6_address_assignment(self, gw_dev):
         process = self.manager.get_process()
-        agent_utils.wait_until_true(lambda: process.active)
+        common_utils.wait_until_true(lambda: process.active)
 
         def _gw_vip_assigned():
             iface_ip = gw_dev.addr.list(ip_version=6, scope='global')
             if iface_ip:
                 return self.gw_vip == iface_ip[0]['cidr']
 
-        agent_utils.wait_until_true(_gw_vip_assigned)
+        common_utils.wait_until_true(_gw_vip_assigned)
 
     def __enter__(self):
         ip_lib.IPWrapper().netns.add(self.nsname)

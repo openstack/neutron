@@ -27,7 +27,7 @@ from oslo_config import cfg
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base as functional_base

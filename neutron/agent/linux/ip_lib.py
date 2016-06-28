@@ -28,6 +28,7 @@ import six
 from neutron._i18n import _, _LE
 from neutron.agent.common import utils
 from neutron.common import exceptions as n_exc
+from neutron.common import utils as common_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -656,7 +657,7 @@ class IpAddrCommand(IpDeviceCommandBase):
                     address=address, reason=_('Duplicate address detected'))
         errmsg = _("Exceeded %s second limit waiting for "
                    "address to leave the tentative state.") % wait_time
-        utils.utils.wait_until_true(
+        common_utils.wait_until_true(
             is_address_ready, timeout=wait_time, sleep=0.20,
             exception=AddressNotReady(address=address, reason=errmsg))
 

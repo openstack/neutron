@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.linux import utils as agent_utils
+from neutron.common import utils as common_utils
 
 
 def extract_mod_nw_tos_action(flows):
@@ -36,7 +36,7 @@ def wait_until_bandwidth_limit_rule_applied(bridge, port_vif, rule):
             expected = rule.max_kbps, rule.max_burst_kbps
         return bw_rule == expected
 
-    agent_utils.wait_until_true(_bandwidth_limit_rule_applied)
+    common_utils.wait_until_true(_bandwidth_limit_rule_applied)
 
 
 def wait_until_dscp_marking_rule_applied(bridge, port_vif, rule):
@@ -51,4 +51,4 @@ def wait_until_dscp_marking_rule_applied(bridge, port_vif, rule):
             expected = rule << 2
         return dscp_mark == expected
 
-    agent_utils.wait_until_true(_dscp_marking_rule_applied)
+    common_utils.wait_until_true(_dscp_marking_rule_applied)

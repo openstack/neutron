@@ -24,7 +24,7 @@ import mock
 from oslo_config import cfg
 import psutil
 
-from neutron.agent.linux import utils
+from neutron.common import utils
 from neutron import service
 from neutron.tests import base
 from neutron import worker as neutron_worker

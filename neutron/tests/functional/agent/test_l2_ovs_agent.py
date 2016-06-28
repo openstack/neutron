@@ -17,7 +17,8 @@
 import time
 
 from eventlet.timeout import Timeout
-from neutron.agent.linux import utils as agent_utils
+
+from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
@@ -60,7 +61,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                    if port.port_name in portnames]
 
         #wait until ports are marked dead, with drop flow
-        agent_utils.wait_until_true(
+        utils.wait_until_true(
             lambda: num_ports_with_drop_flows(
                 ofports,
                 self.agent.int_br.dump_flows(

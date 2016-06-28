@@ -18,7 +18,6 @@ from neutronclient.common import exceptions as nc_exc
 from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
@@ -284,7 +283,7 @@ class Environment(fixtures.Fixture):
         self.hosts = []
 
     def wait_until_env_is_up(self):
-        utils.wait_until_true(self._processes_are_ready)
+        common_utils.wait_until_true(self._processes_are_ready)
 
     def _processes_are_ready(self):
         try:
