@@ -18,7 +18,6 @@ import copy
 
 import netaddr
 from neutron_lib import exceptions
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
@@ -90,9 +89,6 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._notifier = n_rpc.get_notifier('network')
-        if cfg.CONF.notify_nova_on_port_data_changes:
-            from neutron.notifiers import nova
-            self._nova_notifier = nova.Notifier()
         self._member_actions = member_actions
         self._primary_key = self._get_primary_key()
         if self._allow_pagination and self._native_pagination:
@@ -327,10 +323,6 @@ class Controller(object):
                            pluralized=self._collection)
         return obj
 
-    def _send_nova_notification(self, action, orig, returned):
-        if hasattr(self, '_nova_notifier'):
-            self._nova_notifier.send_network_change(action, orig, returned)
-
     @db_api.retry_db_errors
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
@@ -473,7 +465,8 @@ class Controller(object):
             registry.notify(self._resource, events.BEFORE_RESPONSE, self,
                             context=request.context, data=create_result,
                             method_name=notifier_method,
-                            collection=self._collection)
+                            collection=self._collection,
+                            action=action, original={})
             return create_result
 
         def do_create(body, bulk=False, emulated=False):
@@ -519,8 +512,6 @@ class Controller(object):
                 return notify({self._collection: objs})
             else:
                 obj = do_create(body)
-                self._send_nova_notification(action, {},
-                                             {self._resource: obj})
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
@@ -563,10 +554,10 @@ class Controller(object):
                             notifier_method,
                             {self._resource + '_id': id})
         result = {self._resource: self._view(request.context, obj)}
-        self._send_nova_notification(action, {}, result)
         registry.notify(self._resource, events.BEFORE_RESPONSE, self,
                         context=request.context, data=result,
-                        method_name=notifier_method)
+                        method_name=notifier_method, action=action,
+                        original={})
 
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes."""
@@ -637,8 +628,8 @@ class Controller(object):
         self._notifier.info(request.context, notifier_method, result)
         registry.notify(self._resource, events.BEFORE_RESPONSE, self,
                         context=request.context, data=result,
-                        method_name=notifier_method)
-        self._send_nova_notification(action, orig_object_copy, result)
+                        method_name=notifier_method, action=action,
+                        original=orig_object_copy)
         return result
 
     @staticmethod
