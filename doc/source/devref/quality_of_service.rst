@@ -362,7 +362,7 @@ The Linux bridge implementation relies on the new tc_lib functions:
 The ingress bandwidth limit is configured on the tap port by setting a simple
 `tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on the
 port. It requires a value of HZ parameter configured in kernel on the host.
-This value is neccessary to calculate the minimal burst value which is set in
+This value is necessary to calculate the minimal burst value which is set in
 tc. Details about how it is calculated can be found in
 `here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
 vSwitch implementation.

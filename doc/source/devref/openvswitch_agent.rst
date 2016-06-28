@@ -151,7 +151,7 @@ taken into account:
   platform's point of view discerning which tagged packets are meant
   to be treated 'transparently' and which ones are meant to be used
   for demultiplexing (in order to reach the right destination).
-  The outcome might only be predicatble if two layers of vlan tags
+  The outcome might only be predictable if two layers of vlan tags
   are stacked up together, making guest support even more crucial
   for the combined use case.
 
@@ -233,7 +233,7 @@ are:
     and ports participating a trunk with no ability to convert
     from one to the other (and vice versa), no migration is
     required. This is done at a cost of some loss of flexibility
-    and maintainance complexity.
+    and maintenance complexity.
   * Design reusability: a solution to support vlan trunking for
     the Linux Bridge mech driver will still be required to avoid
     widening the gap with Open vSwitch (e.g. OVS has DVR but
@@ -254,7 +254,7 @@ are:
 To summarize:
 
 * VLAN interfaces (A) are compelling because will lead to a relatively
-  contained engineering cost at the expenses of performance. The Open
+  contained engineering cost at the expense of performance. The Open
   vSwitch community will need to be involved in order to deliver vlan
   transparency. Irrespective of whether this strategy is chosen for
   Open vSwitch or not, this is still the only viable approach for Linux
@@ -263,7 +263,7 @@ To summarize:
   strategy for OVS deployments that are unable to adopt DPDK.
 
 * Open Flow (B) is compelling because it will allow Neutron to unlock
-  the full potential of Open vSwitch, at the expenses of development
+  the full potential of Open vSwitch, at the expense of development
   and operations effort. The development is confined within the
   boundaries of the Neutron community in order to address vlan awareness
   and transparency (as two distinct use cases, ie. to be adopted
@@ -275,7 +275,7 @@ To summarize:
 
 * Trunk Bridges (C) tries to bring the best of option A and B together
   as far as OVS development and performance are concerned, but it
-  comes at the expenses of maintainance complexity and loss of flexibility.
+  comes at the expense of maintenance complexity and loss of flexibility.
   A Linux Bridge solution would still be required and, QinQ support will
   still be needed to address vlan transparency.
 
@@ -295,7 +295,7 @@ plane performance improvement is hindered by the extra use of kernel resources,
 this option is not at all appealing in the long term.
 
 Embracing option (B) in the long run may be complicated by the adoption of
-option (C). The development and maintainance complexity involved in Option
+option (C). The development and maintenance complexity involved in Option
 (C) and (B) respectively poses the existential question as to whether
 investing in the agent-based architecture is an effective strategy,
 especially if the end result would look a lot like other maturing
