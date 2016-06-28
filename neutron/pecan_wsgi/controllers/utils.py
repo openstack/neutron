@@ -90,8 +90,15 @@ def when(index, *args, **kwargs):
 
 class NeutronPecanController(object):
 
+    LIST = 'list'
+    SHOW = 'show'
+    CREATE = 'create'
+    UPDATE = 'update'
+    DELETE = 'delete'
+
     def __init__(self, collection, resource, plugin=None, resource_info=None,
-                 allow_pagination=None, allow_sorting=None):
+                 allow_pagination=None, allow_sorting=None,
+                 parent_resource=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
@@ -116,6 +123,17 @@ class NeutronPecanController(object):
         self.native_sorting = api_common.is_native_sorting_supported(
             self.plugin)
         self.primary_key = self._get_primary_key()
+
+        parent_resource = '_%s' % parent_resource if parent_resource else ''
+        self._parent_id_name = ('%s_id' % parent_resource
+                                if parent_resource else None)
+        self._plugin_handlers = {
+            self.LIST: 'get%s_%s' % (parent_resource, self.collection),
+            self.SHOW: 'get%s_%s' % (parent_resource, self.resource)
+        }
+        for action in [self.CREATE, self.UPDATE, self.DELETE]:
+            self._plugin_handlers[action] = '%s%s_%s' % (
+                action, parent_resource, self.resource)
 
     def build_field_list(self, request_fields):
         added_fields = []
@@ -147,6 +165,31 @@ class NeutronPecanController(object):
             if value.get('primary_key', False):
                 return key
         return default_primary_key
+
+    @property
+    def plugin_lister(self):
+        return getattr(self.plugin, self._plugin_handlers[self.LIST])
+
+    @property
+    def plugin_shower(self):
+        return getattr(self.plugin, self._plugin_handlers[self.SHOW])
+
+    @property
+    def plugin_creator(self):
+        return getattr(self.plugin, self._plugin_handlers[self.CREATE])
+
+    @property
+    def plugin_bulk_creator(self):
+        return getattr(self.plugin,
+                       '%s_bulk' % self._plugin_handlers[self.CREATE])
+
+    @property
+    def plugin_deleter(self):
+        return getattr(self.plugin, self._plugin_handlers[self.DELETE])
+
+    @property
+    def plugin_updater(self):
+        return getattr(self.plugin, self._plugin_handlers[self.UPDATE])
 
 
 class ShimRequest(object):
