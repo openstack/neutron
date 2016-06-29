@@ -12,7 +12,7 @@
 
 OVS_REPO=${OVS_REPO:-https://github.com/openvswitch/ovs.git}
 OVS_REPO_NAME=$(basename ${OVS_REPO} | cut -f1 -d'.')
-OVS_BRANCH=${OVS_BRANCH:-origin/master}
+OVS_BRANCH=${OVS_BRANCH:-master}
 
 # Functions
 
