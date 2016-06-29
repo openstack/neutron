@@ -41,8 +41,13 @@ class TestPciLib(base.BaseTestCase):
                          '1500 qdisc  noop state DOWN mode DEFAULT group '
                          'default qlen 500 link/ether 4a:9b:6d:de:65:b5 brd '
                          'ff:ff:ff:ff:ff:ff')
+    MACVTAP_LINK_SHOW2 = ('64: macvtap2@p1p2_1: <BROADCAST,MULTICAST> mtu '
+                          '1500 qdisc  noop state DOWN mode DEFAULT group '
+                          'default qlen 500 link/ether 4a:9b:6d:de:65:b5 brd '
+                          'ff:ff:ff:ff:ff:ff')
 
     IP_LINK_SHOW_WITH_MACVTAP = '\n'.join((VF_LINK_SHOW, MACVTAP_LINK_SHOW))
+    IP_LINK_SHOW_WITH_MACVTAP2 = '\n'.join((VF_LINK_SHOW, MACVTAP_LINK_SHOW2))
 
     MAC_MAPPING = {
         0: "fa:16:3e:b4:81:ac",
@@ -155,6 +160,13 @@ class TestPciLib(base.BaseTestCase):
             mock_exec.return_value = self.IP_LINK_SHOW_WITH_MACVTAP
             self.assertTrue(
                 pci_lib.PciDeviceIPWrapper.is_macvtap_assigned('enp129s0f1'))
+
+    def test_is_macvtap_assigned_interface_with_underscore(self):
+        with mock.patch.object(pci_lib.PciDeviceIPWrapper,
+                               "_execute") as mock_exec:
+            mock_exec.return_value = self.IP_LINK_SHOW_WITH_MACVTAP2
+            self.assertTrue(
+                pci_lib.PciDeviceIPWrapper.is_macvtap_assigned('p1p2_1'))
 
     def test_is_macvtap_assigned_not_assigned(self):
         with mock.patch.object(pci_lib.PciDeviceIPWrapper,
