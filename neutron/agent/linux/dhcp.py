@@ -1259,7 +1259,7 @@ class DeviceManager(object):
                     net = netaddr.IPNetwork(subnet.cidr)
                     ip_cidrs.append('%s/%s' % (gateway, net.prefixlen))
 
-        if self.conf.enable_isolated_metadata:
+        if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(METADATA_DEFAULT_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
