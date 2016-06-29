@@ -392,4 +392,4 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.assertEqual(tags_42, single_value)
         len_0_list = self.ovs.ovsdb.db_find(
             'Port', ('tag', '!=', []), columns=['tag']).execute()
-        self.assertEqual(tags_present, len_0_list)
+        self.assertItemsEqual(tags_present, len_0_list)
