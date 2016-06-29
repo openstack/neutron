@@ -21,6 +21,7 @@ import webtest
 
 from neutron._i18n import _
 from neutron.api.v2 import resource as wsgi_resource
+from neutron.common import utils
 from neutron import context
 from neutron.tests import base
 from neutron import wsgi
@@ -279,6 +280,21 @@ class ResourceTestCase(base.BaseTestCase):
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         res = resource.get('', extra_environ=environ)
         self.assertEqual(200, res.status_int)
+
+    def _test_unhandled_error_logs_details(self, e, expected_details):
+        with mock.patch.object(wsgi_resource.LOG, 'exception') as log:
+            self._make_request_with_side_effect(side_effect=e)
+        log.assert_called_with(
+            mock.ANY, {'action': mock.ANY, 'details': expected_details})
+
+    def test_unhandled_error_logs_attached_details(self):
+        e = Exception()
+        utils.attach_exc_details(e, 'attached_details')
+        self._test_unhandled_error_logs_details(e, 'attached_details')
+
+    def test_unhandled_error_logs_no_attached_details(self):
+        e = Exception()
+        self._test_unhandled_error_logs_details(e, 'No details.')
 
     def test_status_204(self):
         controller = mock.MagicMock()

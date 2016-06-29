@@ -750,3 +750,38 @@ class TestAuthenticIPNetwork(base.BaseTestCase):
         for addr in ('XXXX', 'ypp', 'g3:vvv'):
             with testtools.ExpectedException(netaddr.core.AddrFormatError):
                 utils.AuthenticIPNetwork(addr)
+
+
+class TestExcDetails(base.BaseTestCase):
+
+    def test_attach_exc_details(self):
+        e = Exception()
+        utils.attach_exc_details(e, 'details')
+        self.assertEqual('details', utils.extract_exc_details(e))
+
+    def test_attach_exc_details_with_interpolation(self):
+        e = Exception()
+        utils.attach_exc_details(e, 'details: %s', 'foo')
+        self.assertEqual('details: foo', utils.extract_exc_details(e))
+
+    def test_attach_exc_details_with_None_interpolation(self):
+        e = Exception()
+        utils.attach_exc_details(e, 'details: %s', None)
+        self.assertEqual(
+            'details: %s' % str(None), utils.extract_exc_details(e))
+
+    def test_attach_exc_details_with_multiple_interpolation(self):
+        e = Exception()
+        utils.attach_exc_details(
+            e, 'details: %s, %s', ('foo', 'bar'))
+        self.assertEqual('details: foo, bar', utils.extract_exc_details(e))
+
+    def test_attach_exc_details_with_dict_interpolation(self):
+        e = Exception()
+        utils.attach_exc_details(
+            e, 'details: %(foo)s, %(bar)s', {'foo': 'foo', 'bar': 'bar'})
+        self.assertEqual('details: foo, bar', utils.extract_exc_details(e))
+
+    def test_extract_exc_details_no_details_attached(self):
+        self.assertIsInstance(
+            utils.extract_exc_details(Exception()), six.text_type)

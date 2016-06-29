@@ -23,6 +23,7 @@ import webob.exc
 
 from neutron._i18n import _LE, _LI
 from neutron.api import api_common
+from neutron.common import utils
 from neutron import wsgi
 
 
@@ -83,7 +84,13 @@ def Resource(controller, faults=None, deserializers=None, serializers=None,
                 LOG.info(_LI('%(action)s failed (client error): %(exc)s'),
                          {'action': action, 'exc': mapped_exc})
             else:
-                LOG.exception(_LE('%s failed'), action)
+                LOG.exception(
+                    _LE('%(action)s failed: %(details)s'),
+                    {
+                        'action': action,
+                        'details': utils.extract_exc_details(e),
+                    }
+                )
             raise mapped_exc
 
         status = action_status.get(action, 200)

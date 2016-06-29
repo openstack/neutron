@@ -660,3 +660,22 @@ class classproperty(object):
 
     def __get__(self, obj, owner):
         return self.func(owner)
+
+
+_NO_ARGS_MARKER = object()
+
+
+def attach_exc_details(e, msg, args=_NO_ARGS_MARKER):
+    e._error_context_msg = msg
+    e._error_context_args = args
+
+
+def extract_exc_details(e):
+    for attr in ('_error_context_msg', '_error_context_args'):
+        if not hasattr(e, attr):
+            return _LE('No details.')
+    details = e._error_context_msg
+    args = e._error_context_args
+    if args is _NO_ARGS_MARKER:
+        return details
+    return details % args
