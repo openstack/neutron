@@ -392,6 +392,43 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
                          segments_host_db[segment['id']]['segment_id'])
         self.assertEqual(host2, segments_host_db[segment['id']]['host'])
 
+    def test_update_agent_only_change_agent_host_mapping(self):
+        host1 = 'host1'
+        host2 = 'host2'
+        physical_network = 'phys_net1'
+        with self.network() as network:
+            network = network['network']
+        segment1 = self._test_create_segment(
+            network_id=network['id'],
+            physical_network=physical_network,
+            segmentation_id=200,
+            network_type=p_constants.TYPE_VLAN)['segment']
+        self._register_agent(host1, mappings={physical_network: 'br-eth-1'},
+                             plugin=self.plugin)
+        self._register_agent(host2, mappings={physical_network: 'br-eth-1'},
+                             plugin=self.plugin)
+
+        # Update agent at host2 should only change mapping with host2.
+        other_phys_net = 'phys_net2'
+        segment2 = self._test_create_segment(
+            network_id=network['id'],
+            physical_network=other_phys_net,
+            segmentation_id=201,
+            network_type=p_constants.TYPE_VLAN)['segment']
+        self._register_agent(host2, mappings={other_phys_net: 'br-eth-2'},
+                             plugin=self.plugin)
+        # We should have segment1 map to host1 and segment2 map to host2 now
+        segments_host_db1 = self._get_segments_for_host(host1)
+        self.assertEqual(1, len(segments_host_db1))
+        self.assertEqual(segment1['id'],
+                         segments_host_db1[segment1['id']]['segment_id'])
+        self.assertEqual(host1, segments_host_db1[segment1['id']]['host'])
+        segments_host_db2 = self._get_segments_for_host(host2)
+        self.assertEqual(1, len(segments_host_db2))
+        self.assertEqual(segment2['id'],
+                         segments_host_db2[segment2['id']]['segment_id'])
+        self.assertEqual(host2, segments_host_db2[segment2['id']]['host'])
+
     def test_new_segment_after_host_reg(self):
         host1 = 'host1'
         physical_network = 'phys_net1'
