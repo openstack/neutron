@@ -15,11 +15,11 @@
 import os
 import re
 
+from debtcollector import moves
+from hacking import core
 from neutron_lib.hacking import checks
 import pep8
 import six
-
-from hacking import core
 
 
 def flake8ext(f):
@@ -76,6 +76,7 @@ unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
 
 @flake8ext
 def validate_log_translations(logical_line, physical_line, filename):
+    """N320 - Log messages require translation."""
     # Translations are not required in the test directory
     if "neutron/tests" in filename:
         return
@@ -89,6 +90,7 @@ def validate_log_translations(logical_line, physical_line, filename):
 
 @flake8ext
 def use_jsonutils(logical_line, filename):
+    """N321 - Use jsonutils instead of json."""
     msg = "N321: jsonutils.%(fun)s must be used instead of json.%(fun)s"
 
     # Some files in the tree are not meant to be run from inside Neutron
@@ -112,14 +114,13 @@ def use_jsonutils(logical_line, filename):
 
 @flake8ext
 def no_translate_debug_logs(logical_line, filename):
-    """Check for 'LOG.debug(_(' and 'LOG.debug(_Lx('
+    """N319 - Check for 'LOG.debug(_(' and 'LOG.debug(_Lx('
 
     As per our translation policy,
     https://wiki.openstack.org/wiki/LoggingStandards#Log_Translation
     we shouldn't translate debug level logs.
 
     * This check assumes that 'LOG' is a logger.
-    N319
     """
     for hint in _all_hints:
         if logical_line.startswith("LOG.debug(%s(" % hint):
@@ -128,11 +129,12 @@ def no_translate_debug_logs(logical_line, filename):
 
 @flake8ext
 def check_assert_called_once_with(logical_line, filename):
-    # Try to detect unintended calls of nonexistent mock methods like:
-    #    assert_called_once
-    #    assertCalledOnceWith
-    #    assert_has_called
-    #    called_once_with
+    """N322 - Try to detect unintended calls of nonexistent mock methods like:
+                 assert_called_once
+                 assertCalledOnceWith
+                 assert_has_called
+                 called_once_with
+    """
     if 'neutron/tests/' in filename:
         if '.assert_called_once_with(' in logical_line:
             return
@@ -152,6 +154,7 @@ def check_assert_called_once_with(logical_line, filename):
 
 @flake8ext
 def check_no_contextlib_nested(logical_line, filename):
+    """N324 - Don't use contextlib.nested."""
     msg = ("N324: contextlib.nested is deprecated. With Python 2.7 and later "
            "the with-statement supports multiple nested objects. See https://"
            "docs.python.org/2/library/contextlib.html#contextlib.nested for "
@@ -163,6 +166,7 @@ def check_no_contextlib_nested(logical_line, filename):
 
 @flake8ext
 def check_python3_xrange(logical_line):
+    """N325 - Do not use xrange."""
     if re.search(r"\bxrange\s*\(", logical_line):
         yield(0, "N325: Do not use xrange. Use range, or six.moves.range for "
                  "large loops.")
@@ -170,6 +174,7 @@ def check_python3_xrange(logical_line):
 
 @flake8ext
 def check_no_basestring(logical_line):
+    """N326 - Don't use basestring."""
     if re.search(r"\bbasestring\b", logical_line):
         msg = ("N326: basestring is not Python3-compatible, use "
                "six.string_types instead.")
@@ -178,13 +183,15 @@ def check_no_basestring(logical_line):
 
 @flake8ext
 def check_python3_no_iteritems(logical_line):
+    """N327 - Use six.iteritems()"""
     if re.search(r".*\.iteritems\(\)", logical_line):
         msg = ("N327: Use six.iteritems() instead of dict.iteritems().")
         yield(0, msg)
 
 
 @flake8ext
-def check_asserttrue(logical_line, filename):
+def check_asserttruefalse(logical_line, filename):
+    """N328 - Don't use assertEqual(True/False, observed)."""
     if 'neutron/tests/' in filename:
         if re.search(r"assertEqual\(\s*True,[^,]*(,[^,]*)?\)", logical_line):
             msg = ("N328: Use assertTrue(observed) instead of "
@@ -194,18 +201,6 @@ def check_asserttrue(logical_line, filename):
             msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
-
-
-@flake8ext
-def no_mutable_default_args(logical_line):
-    msg = "N329: Method's default argument shouldn't be mutable!"
-    if checks.mutable_default_args.match(logical_line):
-        yield (0, msg)
-
-
-@flake8ext
-def check_assertfalse(logical_line, filename):
-    if 'neutron/tests/' in filename:
         if re.search(r"assertEqual\(\s*False,[^,]*(,[^,]*)?\)", logical_line):
             msg = ("N328: Use assertFalse(observed) instead of "
                    "assertEqual(False, observed)")
@@ -216,8 +211,31 @@ def check_assertfalse(logical_line, filename):
             yield (0, msg)
 
 
+check_asserttrue = flake8ext(
+    moves.moved_function(
+        check_asserttruefalse, 'check_asserttrue', __name__,
+        version='Newton', removal_version='Ocata'))
+
+
+check_assertfalse = flake8ext(
+    moves.moved_function(
+        check_asserttruefalse, 'check_assertfalse', __name__,
+        version='Newton', removal_version='Ocata'))
+
+
+@flake8ext
+def no_mutable_default_args(logical_line):
+    """N329 - Don't use mutable default arguments."""
+    msg = "N329: Method's default argument shouldn't be mutable!"
+    if checks.mutable_default_args.match(logical_line):
+        yield (0, msg)
+
+
 @flake8ext
 def check_assertempty(logical_line, filename):
+    """N330 - Enforce using assertEqual parameter ordering in case of empty
+              objects.
+    """
     if 'neutron/tests/' in filename:
         msg = ("N330: Use assertEqual(*empty*, observed) instead of "
                "assertEqual(observed, *empty*). *empty* contains "
@@ -230,6 +248,7 @@ def check_assertempty(logical_line, filename):
 
 @flake8ext
 def check_assertisinstance(logical_line, filename):
+    """N331 - Enforce using assertIsInstance."""
     if 'neutron/tests/' in filename:
         if re.search(r"assertTrue\(\s*isinstance\(\s*[^,]*,\s*[^,]*\)\)",
                      logical_line):
@@ -240,6 +259,7 @@ def check_assertisinstance(logical_line, filename):
 
 @flake8ext
 def check_assertequal_for_httpcode(logical_line, filename):
+    """N332 - Enforce correct oredering for httpcode in assertEqual."""
     msg = ("N332: Use assertEqual(expected_http_code, observed_http_code) "
            "instead of assertEqual(observed_http_code, expected_http_code)")
     if 'neutron/tests/' in filename:
@@ -250,6 +270,7 @@ def check_assertequal_for_httpcode(logical_line, filename):
 
 @flake8ext
 def check_log_warn_deprecated(logical_line, filename):
+    """N333 - Use LOG.warning."""
     msg = "N333: Use LOG.warning due to compatibility with py3"
     if log_warn.match(logical_line):
         yield (0, msg)
@@ -257,7 +278,7 @@ def check_log_warn_deprecated(logical_line, filename):
 
 @flake8ext
 def check_oslo_i18n_wrapper(logical_line, filename, noqa):
-    """Check for neutron.i18n usage.
+    """N340 - Check for neutron.i18n usage.
 
     Okay(neutron/foo/bar.py): from neutron._i18n import _
     Okay(neutron_lbaas/foo/bar.py): from neutron_lbaas._i18n import _
@@ -286,7 +307,7 @@ def check_oslo_i18n_wrapper(logical_line, filename, noqa):
 
 @flake8ext
 def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
-    """Check usage of builtins gettext _().
+    """N341 - Check usage of builtins gettext _().
 
     Okay(neutron/foo.py): from neutron._i18n import _\n_('foo')
     N341(neutron/foo.py): _('foo')
@@ -327,6 +348,7 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
 @core.flake8ext
 @core.off_by_default
 def check_unittest_imports(logical_line):
+    """N334 - Use unittest2 instead of unittest"""
     if (re.match(unittest_imports_from, logical_line) or
             re.match(unittest_imports_dot, logical_line)):
         msg = "N334: '%s' must be used instead of '%s'." % (
@@ -343,9 +365,8 @@ def factory(register):
     register(check_python3_xrange)
     register(check_no_basestring)
     register(check_python3_no_iteritems)
-    register(check_asserttrue)
+    register(check_asserttruefalse)
     register(no_mutable_default_args)
-    register(check_assertfalse)
     register(check_assertempty)
     register(check_assertisinstance)
     register(check_assertequal_for_httpcode)

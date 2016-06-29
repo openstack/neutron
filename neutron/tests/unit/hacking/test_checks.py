@@ -165,29 +165,6 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLineFails(f, "d.iteritems()")
         self.assertLinePasses(f, "six.iteritems(d)")
 
-    def test_asserttrue(self):
-        fail_code1 = """
-               test_bool = True
-               self.assertEqual(True, test_bool)
-               """
-        fail_code2 = """
-               test_bool = True
-               self.assertEqual(test_bool, True)
-               """
-        pass_code = """
-               test_bool = True
-               self.assertTrue(test_bool)
-               """
-        self.assertEqual(
-            1, len(list(checks.check_asserttrue(fail_code1,
-                                            "neutron/tests/test_assert.py"))))
-        self.assertEqual(
-            1, len(list(checks.check_asserttrue(fail_code2,
-                                            "neutron/tests/test_assert.py"))))
-        self.assertEqual(
-            0, len(list(checks.check_asserttrue(pass_code,
-                                            "neutron/tests/test_assert.py"))))
-
     def test_no_mutable_default_args(self):
         self.assertEqual(1, len(list(checks.no_mutable_default_args(
             " def fake_suds_context(calls={}):"))))
@@ -201,28 +178,55 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(0, len(list(checks.no_mutable_default_args(
             "defined, undefined = [], {}"))))
 
-    def test_assertfalse(self):
-        fail_code1 = """
+    def test_asserttruefalse(self):
+        true_fail_code1 = """
+               test_bool = True
+               self.assertEqual(True, test_bool)
+               """
+        true_fail_code2 = """
+               test_bool = True
+               self.assertEqual(test_bool, True)
+               """
+        true_pass_code = """
+               test_bool = True
+               self.assertTrue(test_bool)
+               """
+        false_fail_code1 = """
                test_bool = False
                self.assertEqual(False, test_bool)
                """
-        fail_code2 = """
+        false_fail_code2 = """
                test_bool = False
                self.assertEqual(test_bool, False)
                """
-        pass_code = """
+        false_pass_code = """
                test_bool = False
                self.assertFalse(test_bool)
                """
         self.assertEqual(
-            1, len(list(checks.check_assertfalse(fail_code1,
-                                            "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_asserttruefalse(true_fail_code1,
+                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            1, len(list(checks.check_assertfalse(fail_code2,
-                                            "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_asserttruefalse(true_fail_code2,
+                                             "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assertfalse(pass_code,
-                                            "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_asserttruefalse(true_pass_code,
+                                             "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(
+                checks.check_asserttruefalse(false_fail_code1,
+                                             "neutron/tests/test_assert.py"))))
+        self.assertEqual(
+            1, len(list(
+                checks.check_asserttruefalse(false_fail_code2,
+                                             "neutron/tests/test_assert.py"))))
+        self.assertFalse(
+            list(
+                checks.check_asserttruefalse(false_pass_code,
+                                            "neutron/tests/test_assert.py")))
 
     def test_assertempty(self):
         fail_code = """
