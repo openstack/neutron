@@ -335,8 +335,7 @@ def ovs_conntrack_supported():
 
     with ovs_lib.OVSBridge(br_name) as br:
         try:
-            br.set_protocols(
-                "OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13,OpenFlow14")
+            br.set_protocols(["OpenFlow%d" % i for i in range(10, 15)])
         except RuntimeError as e:
             LOG.debug("Exception while checking ovs conntrack support: %s", e)
             return False

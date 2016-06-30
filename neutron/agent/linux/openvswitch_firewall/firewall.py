@@ -164,13 +164,13 @@ class SGPortMap(object):
 
 
 class OVSFirewallDriver(firewall.FirewallDriver):
-    REQUIRED_PROTOCOLS = ",".join([
+    REQUIRED_PROTOCOLS = [
         ovs_consts.OPENFLOW10,
         ovs_consts.OPENFLOW11,
         ovs_consts.OPENFLOW12,
         ovs_consts.OPENFLOW13,
         ovs_consts.OPENFLOW14,
-    ])
+    ]
 
     provides_arp_spoofing_protection = True
 
