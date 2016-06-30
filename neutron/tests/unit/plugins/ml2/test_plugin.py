@@ -242,6 +242,48 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                         ]
         self.nets = self.mp_nets + self.pnets
 
+    def test_network_after_create_callback(self):
+        after_create = mock.Mock()
+        registry.subscribe(after_create, resources.NETWORK,
+                           events.AFTER_CREATE)
+        with self.network() as n:
+            after_create.assert_called_once_with(
+                resources.NETWORK, events.AFTER_CREATE, mock.ANY,
+                context=mock.ANY, network=mock.ANY)
+            kwargs = after_create.mock_calls[0][2]
+            self.assertEqual(n['network']['id'],
+                             kwargs['network']['id'])
+
+    def test_network_after_update_callback(self):
+        after_update = mock.Mock()
+        registry.subscribe(after_update, resources.NETWORK,
+                           events.AFTER_UPDATE)
+        with self.network() as n:
+            data = {'network': {'name': 'updated'}}
+            req = self.new_update_request('networks', data, n['network']['id'])
+            self.deserialize(self.fmt, req.get_response(self.api))
+            after_update.assert_called_once_with(
+                resources.NETWORK, events.AFTER_UPDATE, mock.ANY,
+                context=mock.ANY, network=mock.ANY, original_network=mock.ANY)
+            kwargs = after_update.mock_calls[0][2]
+            self.assertEqual(n['network']['name'],
+                             kwargs['original_network']['name'])
+            self.assertEqual('updated', kwargs['network']['name'])
+
+    def test_network_after_delete_callback(self):
+        after_delete = mock.Mock()
+        registry.subscribe(after_delete, resources.NETWORK,
+                           events.AFTER_DELETE)
+        with self.network() as n:
+            req = self.new_delete_request('networks', n['network']['id'])
+            req.get_response(self.api)
+            after_delete.assert_called_once_with(
+                resources.NETWORK, events.AFTER_DELETE, mock.ANY,
+                context=mock.ANY, network=mock.ANY)
+            kwargs = after_delete.mock_calls[0][2]
+            self.assertEqual(n['network']['id'],
+                             kwargs['network']['id'])
+
     def test_port_delete_helper_tolerates_failure(self):
         plugin = manager.NeutronManager.get_plugin()
         with mock.patch.object(plugin, "delete_port",
@@ -420,6 +462,45 @@ class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                        Ml2PluginV2TestCase):
+
+    def test_subnet_after_create_callback(self):
+        after_create = mock.Mock()
+        registry.subscribe(after_create, resources.SUBNET, events.AFTER_CREATE)
+        with self.subnet() as s:
+            after_create.assert_called_once_with(
+                resources.SUBNET, events.AFTER_CREATE, mock.ANY,
+                context=mock.ANY, subnet=mock.ANY)
+            kwargs = after_create.mock_calls[0][2]
+            self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
+
+    def test_subnet_after_update_callback(self):
+        after_update = mock.Mock()
+        registry.subscribe(after_update, resources.SUBNET, events.AFTER_UPDATE)
+        with self.subnet() as s:
+            data = {'subnet': {'name': 'updated'}}
+            req = self.new_update_request('subnets', data, s['subnet']['id'])
+            self.deserialize(self.fmt, req.get_response(self.api))
+            after_update.assert_called_once_with(
+                resources.SUBNET, events.AFTER_UPDATE, mock.ANY,
+                context=mock.ANY, subnet=mock.ANY,
+                original_subnet=mock.ANY)
+            kwargs = after_update.mock_calls[0][2]
+            self.assertEqual(s['subnet']['name'],
+                             kwargs['original_subnet']['name'])
+            self.assertEqual('updated', kwargs['subnet']['name'])
+
+    def test_subnet_after_delete_callback(self):
+        after_delete = mock.Mock()
+        registry.subscribe(after_delete, resources.SUBNET, events.AFTER_DELETE)
+        with self.subnet() as s:
+            req = self.new_delete_request('subnets', s['subnet']['id'])
+            req.get_response(self.api)
+            after_delete.assert_called_once_with(
+                resources.SUBNET, events.AFTER_DELETE, mock.ANY,
+                context=mock.ANY, subnet=mock.ANY)
+            kwargs = after_delete.mock_calls[0][2]
+            self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
+
     def test_delete_subnet_race_with_dhcp_port_creation(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:

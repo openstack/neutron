@@ -728,6 +728,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_network(self, context, network):
         result, mech_context = self._create_network_db(context, network)
+        kwargs = {'context': context, 'network': result}
+        registry.notify(resources.NETWORK, events.AFTER_CREATE, self, **kwargs)
         try:
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -773,6 +775,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # by re-calling update_network with the previous attributes. For
         # now the error is propagated to the caller, which is expected to
         # either undo/retry the operation or delete the resource.
+        kwargs = {'context': context, 'network': updated_network,
+                  'original_network': original_network}
+        registry.notify(resources.NETWORK, events.AFTER_UPDATE, self, **kwargs)
         self.mechanism_manager.update_network_postcommit(mech_context)
         if need_network_update_notify:
             self.notifier.network_update(context, updated_network)
@@ -899,6 +904,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._delete_ports(context, port_ids)
             self._delete_subnets(context, subnet_ids)
 
+        kwargs = {'context': context, 'network': network}
+        registry.notify(resources.NETWORK, events.AFTER_DELETE, self, **kwargs)
         try:
             self.mechanism_manager.delete_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -924,6 +931,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_subnet(self, context, subnet):
         result, mech_context = self._create_subnet_db(context, subnet)
+        kwargs = {'context': context, 'subnet': result}
+        registry.notify(resources.SUBNET, events.AFTER_CREATE, self, **kwargs)
         try:
             self.mechanism_manager.create_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -955,6 +964,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # by re-calling update_subnet with the previous attributes. For
         # now the error is propagated to the caller, which is expected to
         # either undo/retry the operation or delete the resource.
+        kwargs = {'context': context, 'subnet': updated_subnet,
+                  'original_subnet': original_subnet}
+        registry.notify(resources.SUBNET, events.AFTER_UPDATE, self, **kwargs)
         self.mechanism_manager.update_subnet_postcommit(mech_context)
         return updated_subnet
 
@@ -1074,6 +1086,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                 e, _LE("Exception deleting fixed_ip from "
                                        "port %s"), port_id)
 
+        kwargs = {'context': context, 'subnet': subnet}
+        registry.notify(resources.SUBNET, events.AFTER_DELETE, self, **kwargs)
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
