@@ -41,7 +41,7 @@ from neutron.tests import tools
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
 OBJECTS_BASE_OBJ_FROM_PRIMITIVE = ('oslo_versionedobjects.base.'
                                    'VersionedObject.obj_from_primitive')
-TIMESTAMP_FIELDS = ['created_at', 'updated_at']
+TIMESTAMP_FIELDS = ['created_at', 'updated_at', 'revision_number']
 
 
 class FakeModel(object):
