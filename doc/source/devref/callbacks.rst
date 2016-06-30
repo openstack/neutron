@@ -359,7 +359,7 @@ Is there any ordering guarantee during notifications?
   notified. Priorities can be a future extension, if a use case arises that require enforced
   ordering.
 
-How is the the notifying object expected to interact with the subscribing objects?
+How is the notifying object expected to interact with the subscribing objects?
 
   The ``notify`` method implements a one-way communication paradigm: the notifier sends a message
   without expecting a response back (in other words it fires and forget). However, due to the nature
