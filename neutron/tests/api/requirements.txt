@@ -4,4 +4,4 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
-tempest>=10.0.0  # Apache-2.0
+tempest>=10.0.0,<12.1.0  # Apache-2.0
