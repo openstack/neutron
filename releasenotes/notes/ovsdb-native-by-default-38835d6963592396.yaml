@@ -1,0 +1,15 @@
+---
+prelude: >
+    Prior to Newton, the default option for 'ovsdb_interface'
+    was 'vsctl'. In Newton 'ovsdb_interface' defaults to
+    'native'. This change switches the way of communication
+    with OVSDB from the ovs-vsctl tool to Open vSwitch python
+    api to improve out-of-the-box performance for typical
+    deployments.
+upgrade:
+    - To keep the old default value use 'ovsdb_interface = vsctl'
+      in '[ovs]' section of openvswitch_agent.ini
+      (common path '/etc/neutron/plugins/ml2/openvswitch_agent.ini')
+      if there is a separate openvswitch agent configuration file;
+      otherwise apply changes mentioned above to ml2_conf.ini
+      (common path '/etc/neutron/plugins/ml2/ml2_conf.ini').

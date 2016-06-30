@@ -28,6 +28,10 @@ class TestOVSAgentExtensionAPI(base.BaseTestCase):
 
     def setUp(self):
         super(base.BaseTestCase, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         self.br_int = ovs_bridge.OVSAgentBridge("br-int")
         self.br_tun = ovs_bridge.OVSAgentBridge("br-tun")
 
@@ -61,6 +65,10 @@ class TestOVSCookieBridge(base.DietTestCase):
 
     def setUp(self):
         super(TestOVSCookieBridge, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         self.bridge = ovs_bridge.OVSAgentBridge("br-foo")
         self.bridge.do_action_flows = mock.Mock()
         self.tested_bridge = ovs_ext_agt.OVSCookieBridge(self.bridge)
@@ -146,6 +154,10 @@ class TestOVSDeferredCookieBridge(base.DietTestCase):
 
     def setUp(self):
         super(TestOVSDeferredCookieBridge, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         self.bridge = ovs_bridge.OVSAgentBridge("br-foo")
         self.bridge.do_action_flows = mock.Mock()
         self.cookie_bridge = ovs_ext_agt.OVSCookieBridge(self.bridge)

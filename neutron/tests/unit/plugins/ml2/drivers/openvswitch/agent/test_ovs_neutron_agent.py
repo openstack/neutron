@@ -1145,9 +1145,9 @@ class TestOvsNeutronAgent(object):
     def _test_setup_physical_bridges(self, port_exists=False):
         with mock.patch.object(ip_lib.IPDevice, "exists") as devex_fn,\
                 mock.patch.object(sys, "exit"),\
-                mock.patch.object(utils, "execute"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
-                mock.patch.object(self.agent, 'int_br') as int_br:
+                mock.patch.object(self.agent, 'int_br') as int_br,\
+                mock.patch.object(ovs_lib.BaseOVS, 'get_bridges'):
             devex_fn.return_value = True
             parent = mock.MagicMock()
             phys_br = phys_br_cls()
@@ -1258,11 +1258,11 @@ class TestOvsNeutronAgent(object):
     def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
             self, port_exists=False):
         with mock.patch.object(sys, "exit"),\
-                mock.patch.object(utils, "execute"),\
                 mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
                 mock.patch.object(self.agent, 'int_br') as int_br,\
                 mock.patch.object(self.agent.int_br, 'db_get_val',
-                                  return_value='veth'):
+                                  return_value='veth'),\
+                mock.patch.object(ovs_lib.BaseOVS, 'get_bridges'):
             phys_br = phys_br_cls()
             parent = mock.MagicMock()
             parent.attach_mock(phys_br_cls, 'phys_br_cls')
@@ -2102,6 +2102,10 @@ class AncillaryBridgesTest(object):
 
     def setUp(self):
         super(AncillaryBridgesTest, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

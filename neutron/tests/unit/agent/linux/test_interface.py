@@ -393,42 +393,46 @@ class TestOVSInterfaceDriver(TestBase):
 
     def _test_plug(self, additional_expectation=None, bridge=None,
                    namespace=None):
-        additional_expectation = additional_expectation or []
-        if not bridge:
-            bridge = 'br-int'
+        with mock.patch('neutron.agent.ovsdb.native.connection.'
+                        'Connection.start'):
+            additional_expectation = additional_expectation or []
+            if not bridge:
+                bridge = 'br-int'
 
-        def device_exists(dev, namespace=None):
-            return dev == bridge
+            def device_exists(dev, namespace=None):
+                return dev == bridge
 
-        with mock.patch.object(ovs_lib.OVSBridge, 'replace_port') as replace:
-            ovs = interface.OVSInterfaceDriver(self.conf)
-            self.device_exists.side_effect = device_exists
-            ovs.plug('01234567-1234-1234-99',
-                     'port-1234',
-                     'tap0',
-                     'aa:bb:cc:dd:ee:ff',
-                     bridge=bridge,
-                     namespace=namespace)
-            replace.assert_called_once_with(
-                'tap0',
-                ('type', 'internal'),
-                ('external_ids', {
-                    'iface-id': 'port-1234',
-                    'iface-status': 'active',
-                    'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
+            with mock.patch.object(ovs_lib.OVSBridge,
+                                   'replace_port') as replace:
+                ovs = interface.OVSInterfaceDriver(self.conf)
+                self.device_exists.side_effect = device_exists
+                ovs.plug('01234567-1234-1234-99',
+                         'port-1234',
+                         'tap0',
+                         'aa:bb:cc:dd:ee:ff',
+                         bridge=bridge,
+                         namespace=namespace)
+                replace.assert_called_once_with(
+                    'tap0',
+                    ('type', 'internal'),
+                    ('external_ids', {
+                        'iface-id': 'port-1234',
+                        'iface-status': 'active',
+                        'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
 
-        expected = [mock.call(),
-                    mock.call().device('tap0'),
-                    mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
-        expected.extend(additional_expectation)
-        if namespace:
-            expected.extend(
-                [mock.call().ensure_namespace(namespace),
-                 mock.call().ensure_namespace().add_device_to_namespace(
-                     mock.ANY)])
-        expected.extend([mock.call().device().link.set_up()])
+            expected = [
+                mock.call(),
+                mock.call().device('tap0'),
+                mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
+            expected.extend(additional_expectation)
+            if namespace:
+                expected.extend(
+                    [mock.call().ensure_namespace(namespace),
+                     mock.call().ensure_namespace().add_device_to_namespace(
+                         mock.ANY)])
+            expected.extend([mock.call().device().link.set_up()])
 
-        self.ip.assert_has_calls(expected)
+            self.ip.assert_has_calls(expected)
 
     def test_mtu_int(self):
         self.assertIsNone(self.conf.network_device_mtu)
@@ -472,49 +476,52 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
     def _test_plug(self, devname=None, bridge=None, namespace=None,
                    prefix=None, mtu=None):
+        with mock.patch('neutron.agent.ovsdb.native.connection.'
+                        'Connection.start'):
 
-        if not devname:
-            devname = 'ns-0'
-        if not bridge:
-            bridge = 'br-int'
+            if not devname:
+                devname = 'ns-0'
+            if not bridge:
+                bridge = 'br-int'
 
-        def device_exists(dev, namespace=None):
-            return dev == bridge
+            def device_exists(dev, namespace=None):
+                return dev == bridge
 
-        ovs = interface.OVSInterfaceDriver(self.conf)
-        self.device_exists.side_effect = device_exists
+            ovs = interface.OVSInterfaceDriver(self.conf)
+            self.device_exists.side_effect = device_exists
 
-        root_dev = mock.Mock()
-        ns_dev = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
-        expected = [mock.call(),
-                    mock.call().add_veth('tap0', devname,
-                                         namespace2=namespace)]
+            root_dev = mock.Mock()
+            ns_dev = mock.Mock()
+            self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
+            expected = [mock.call(),
+                        mock.call().add_veth('tap0', devname,
+                                             namespace2=namespace)]
 
-        with mock.patch.object(ovs_lib.OVSBridge, 'replace_port') as replace:
-            ovs.plug('01234567-1234-1234-99',
-                     'port-1234',
-                     devname,
-                     'aa:bb:cc:dd:ee:ff',
-                     bridge=bridge,
-                     namespace=namespace,
-                     prefix=prefix)
-            replace.assert_called_once_with(
-                'tap0',
-                ('external_ids', {
-                    'iface-id': 'port-1234',
-                    'iface-status': 'active',
-                    'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
+            with mock.patch.object(ovs_lib.OVSBridge,
+                                   'replace_port') as replace:
+                ovs.plug('01234567-1234-1234-99',
+                         'port-1234',
+                         devname,
+                         'aa:bb:cc:dd:ee:ff',
+                         bridge=bridge,
+                         namespace=namespace,
+                         prefix=prefix)
+                replace.assert_called_once_with(
+                    'tap0',
+                    ('external_ids', {
+                        'iface-id': 'port-1234',
+                        'iface-status': 'active',
+                        'attached-mac': 'aa:bb:cc:dd:ee:ff'}))
 
-        ns_dev.assert_has_calls(
-            [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
-        if mtu:
-            ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
-            root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
+            ns_dev.assert_has_calls(
+                [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
+            if mtu:
+                ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
+                root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
 
-        self.ip.assert_has_calls(expected)
-        root_dev.assert_has_calls([mock.call.link.set_up()])
-        ns_dev.assert_has_calls([mock.call.link.set_up()])
+            self.ip.assert_has_calls(expected)
+            root_dev.assert_has_calls([mock.call.link.set_up()])
+            ns_dev.assert_has_calls([mock.call.link.set_up()])
 
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)

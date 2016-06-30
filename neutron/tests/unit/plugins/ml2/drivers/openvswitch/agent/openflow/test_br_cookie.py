@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron.agent.common import ovs_lib
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import ovs_bridge
@@ -23,6 +25,10 @@ class TestBRCookieOpenflow(base.BaseTestCase):
 
     def setUp(self):
         super(TestBRCookieOpenflow, self).setUp()
+        conn_patcher = mock.patch(
+            'neutron.agent.ovsdb.native.connection.Connection.start')
+        conn_patcher.start()
+        self.addCleanup(conn_patcher.stop)
         self.br = ovs_bridge.OVSAgentBridge('br-int')
 
     def test_reserved_cookies(self):

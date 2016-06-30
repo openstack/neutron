@@ -30,7 +30,7 @@ interface_map = {
 OPTS = [
     cfg.StrOpt('ovsdb_interface',
                choices=interface_map.keys(),
-               default='vsctl',
+               default='native',
                help=_('The interface for interacting with the OVSDB')),
     cfg.StrOpt('ovsdb_connection',
                default='tcp:127.0.0.1:6640',

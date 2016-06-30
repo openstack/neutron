@@ -20,6 +20,7 @@ from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import testtools
 
+from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.plugins.common import constants
@@ -59,6 +60,16 @@ class OFCTLParamListMatcher(object):
     __repr__ = __str__
 
 
+def vsctl_only(f):
+    # NOTE(ivasilevskaya) as long as some tests rely heavily on mocking
+    # direct vsctl commands, need to ensure that ovsdb_interface = 'vsctl'
+    # TODO(ivasilevskaya) introduce alternative tests for native interface?
+    def wrapper(*args, **kwargs):
+        config.cfg.CONF.set_override("ovsdb_interface", "vsctl", group="OVS")
+        return f(*args, **kwargs)
+    return wrapper
+
+
 class OVS_Lib_Test(base.BaseTestCase):
     """A test suite to exercise the OVS libraries shared by Neutron agents.
 
@@ -66,6 +77,7 @@ class OVS_Lib_Test(base.BaseTestCase):
     can run on any system.  That does, however, limit their scope.
     """
 
+    @vsctl_only
     def setUp(self):
         super(OVS_Lib_Test, self).setUp()
         self.BR_NAME = "br-int"
@@ -906,11 +918,13 @@ class TestDeferredOVSBridge(base.BaseTestCase):
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
             self.assertRaises(AttributeError, getattr, deferred_br, 'failure')
 
+    @vsctl_only
     def test_default_cookie(self):
         self.br = ovs_lib.OVSBridge("br-tun")
         uuid_stamp1 = self.br.default_cookie
         self.assertEqual(uuid_stamp1, self.br.default_cookie)
 
+    @vsctl_only
     def test_cookie_passed_to_addmod(self):
         self.br = ovs_lib.OVSBridge("br-tun")
         stamp = str(self.br.default_cookie)
