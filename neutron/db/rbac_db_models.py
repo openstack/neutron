@@ -35,7 +35,7 @@ class InvalidActionForType(n_exc.InvalidInput):
                 "'%(object_type)s'. Valid actions: %(valid_actions)s")
 
 
-class RBACColumns(model_base.HasId, model_base.HasTenant):
+class RBACColumns(model_base.HasId, model_base.HasProject):
     """Mixin that object-specific RBAC tables should inherit.
 
     All RBAC tables should inherit directly from this one because

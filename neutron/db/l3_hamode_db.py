@@ -124,7 +124,7 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
                       server_default=n_const.HA_ROUTER_STATE_STANDBY)
 
 
-class L3HARouterNetwork(model_base.BASEV2):
+class L3HARouterNetwork(model_base.BASEV2, model_base.HasProjectPrimaryKey):
     """Host HA network for a tenant.
 
     One HA Network is used per tenant, all HA router ports are created
@@ -133,8 +133,6 @@ class L3HARouterNetwork(model_base.BASEV2):
 
     __tablename__ = 'ha_router_networks'
 
-    tenant_id = sa.Column(sa.String(attributes.TENANT_ID_MAX_LEN),
-                          primary_key=True, nullable=False)
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            nullable=False, primary_key=True)

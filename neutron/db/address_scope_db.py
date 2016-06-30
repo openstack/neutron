@@ -25,7 +25,7 @@ from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import subnetpool as subnetpool_obj
 
 
-class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
+class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasProject):
     """Represents a neutron address scope."""
 
     __tablename__ = "address_scopes"

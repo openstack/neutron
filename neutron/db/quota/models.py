@@ -16,7 +16,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
-from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 
 
@@ -31,8 +30,8 @@ class ResourceDelta(model_base.BASEV2):
     amount = sa.Column(sa.Integer)
 
 
-class Reservation(model_base.BASEV2, model_base.HasId):
-    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN))
+class Reservation(model_base.BASEV2, model_base.HasId,
+                  model_base.HasProjectNoIndex):
     expiration = sa.Column(sa.DateTime())
     resource_deltas = orm.relationship(ResourceDelta,
                                        backref='reservation',
@@ -40,7 +39,7 @@ class Reservation(model_base.BASEV2, model_base.HasId):
                                        cascade='all, delete-orphan')
 
 
-class Quota(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
+class Quota(model_base.BASEV2, model_base.HasId, model_base.HasProject):
     """Represent a single quota override for a tenant.
 
     If there is no row for a given tenant id and resource, then the
@@ -50,13 +49,11 @@ class Quota(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
     limit = sa.Column(sa.Integer)
 
 
-class QuotaUsage(model_base.BASEV2):
+class QuotaUsage(model_base.BASEV2, model_base.HasProjectPrimaryKeyIndex):
     """Represents the current usage for a given resource."""
 
     resource = sa.Column(sa.String(255), nullable=False,
                          primary_key=True, index=True)
-    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), nullable=False,
-                          primary_key=True, index=True)
     dirty = sa.Column(sa.Boolean, nullable=False, server_default=sql.false())
 
     in_use = sa.Column(sa.Integer, nullable=False,

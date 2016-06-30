@@ -6007,7 +6007,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(400, res.status_int)
 
 
-class DbModelTestCase(testlib_api.SqlTestCase):
+class DbModelMixin(object):
     """DB model tests."""
     def test_repr(self):
         """testing the string representation of 'model' classes."""
@@ -6016,7 +6016,7 @@ class DbModelTestCase(testlib_api.SqlTestCase):
         actual_repr_output = repr(network)
         exp_start_with = "<neutron.db.models_v2.Network"
         exp_middle = "[object at %x]" % id(network)
-        exp_end_with = (" {tenant_id=None, id=None, "
+        exp_end_with = (" {project_id=None, id=None, "
                         "name='net_net', status='OK', "
                         "admin_state_up=True, "
                         "vlan_transparent=None, "
@@ -6024,43 +6024,6 @@ class DbModelTestCase(testlib_api.SqlTestCase):
                         "standard_attr_id=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(final_exp, actual_repr_output)
-
-    def _make_network(self, ctx):
-        with ctx.session.begin():
-            network = models_v2.Network(name="net_net", status="OK",
-                                        tenant_id='dbcheck',
-                                        admin_state_up=True)
-            ctx.session.add(network)
-        return network
-
-    def _make_subnet(self, ctx, network_id):
-        with ctx.session.begin():
-            subnet = models_v2.Subnet(name="subsub", ip_version=4,
-                                      tenant_id='dbcheck',
-                                      cidr='turn_down_for_what',
-                                      network_id=network_id)
-            ctx.session.add(subnet)
-        return subnet
-
-    def _make_port(self, ctx, network_id):
-        with ctx.session.begin():
-            port = models_v2.Port(network_id=network_id, mac_address='1',
-                                  tenant_id='dbcheck',
-                                  admin_state_up=True, status="COOL",
-                                  device_id="devid", device_owner="me")
-            ctx.session.add(port)
-        return port
-
-    def _make_subnetpool(self, ctx):
-        with ctx.session.begin():
-            subnetpool = models_v2.SubnetPool(
-                ip_version=4, default_prefixlen=4, min_prefixlen=4,
-                max_prefixlen=4, shared=False, default_quota=4,
-                address_scope_id='f', tenant_id='dbcheck',
-                is_default=False
-            )
-            ctx.session.add(subnetpool)
-        return subnetpool
 
     def _make_security_group_and_rule(self, ctx):
         with ctx.session.begin():
@@ -6249,6 +6212,84 @@ class DbModelTestCase(testlib_api.SqlTestCase):
                           ('subnets', subnet), ('subnetpools', spool)):
             self.assertEqual(
                 disc, obj.standard_attr.resource_type)
+
+
+class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
+    def _make_network(self, ctx):
+        with ctx.session.begin():
+            network = models_v2.Network(name="net_net", status="OK",
+                                        tenant_id='dbcheck',
+                                        admin_state_up=True)
+            ctx.session.add(network)
+        return network
+
+    def _make_subnet(self, ctx, network_id):
+        with ctx.session.begin():
+            subnet = models_v2.Subnet(name="subsub", ip_version=4,
+                                      tenant_id='dbcheck',
+                                      cidr='turn_down_for_what',
+                                      network_id=network_id)
+            ctx.session.add(subnet)
+        return subnet
+
+    def _make_port(self, ctx, network_id):
+        with ctx.session.begin():
+            port = models_v2.Port(network_id=network_id, mac_address='1',
+                                  tenant_id='dbcheck',
+                                  admin_state_up=True, status="COOL",
+                                  device_id="devid", device_owner="me")
+            ctx.session.add(port)
+        return port
+
+    def _make_subnetpool(self, ctx):
+        with ctx.session.begin():
+            subnetpool = models_v2.SubnetPool(
+                ip_version=4, default_prefixlen=4, min_prefixlen=4,
+                max_prefixlen=4, shared=False, default_quota=4,
+                address_scope_id='f', tenant_id='dbcheck',
+                is_default=False
+            )
+            ctx.session.add(subnetpool)
+        return subnetpool
+
+
+class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
+    def _make_network(self, ctx):
+        with ctx.session.begin():
+            network = models_v2.Network(name="net_net", status="OK",
+                                        project_id='dbcheck',
+                                        admin_state_up=True)
+            ctx.session.add(network)
+        return network
+
+    def _make_subnet(self, ctx, network_id):
+        with ctx.session.begin():
+            subnet = models_v2.Subnet(name="subsub", ip_version=4,
+                                      project_id='dbcheck',
+                                      cidr='turn_down_for_what',
+                                      network_id=network_id)
+            ctx.session.add(subnet)
+        return subnet
+
+    def _make_port(self, ctx, network_id):
+        with ctx.session.begin():
+            port = models_v2.Port(network_id=network_id, mac_address='1',
+                                  project_id='dbcheck',
+                                  admin_state_up=True, status="COOL",
+                                  device_id="devid", device_owner="me")
+            ctx.session.add(port)
+        return port
+
+    def _make_subnetpool(self, ctx):
+        with ctx.session.begin():
+            subnetpool = models_v2.SubnetPool(
+                ip_version=4, default_prefixlen=4, min_prefixlen=4,
+                max_prefixlen=4, shared=False, default_quota=4,
+                address_scope_id='f', project_id='dbcheck',
+                is_default=False
+            )
+            ctx.session.add(subnetpool)
+        return subnetpool
 
 
 class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
