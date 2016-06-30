@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 import mock
 from neutron_lib import constants as n_const
 from oslo_config import cfg
@@ -761,7 +763,8 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         policy._ENFORCER.set_rules(
             oslo_policy.Rules.from_dict(
                 {'get_meh_meh': '',
-                 'get_meh_mehs': ''}),
+                 'get_meh_mehs': '',
+                 'get_fake_subresources': ''}),
             overwrite=False)
         self.addCleanup(policy.reset)
 
@@ -781,3 +784,19 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         resp = self.app.get(url)
         self.assertEqual(200, resp.status_int)
         self.assertEqual({body_collection: [{'fake': 'fake'}]}, resp.json)
+
+    def test_hyphenated_collection_subresource_controller_not_shimmed(self):
+        body_collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        uri_collection = body_collection.replace('_', '-')
+        # there is only one subresource so far
+        sub_resource_collection = (
+            pecan_utils.FakeExtension.FAKE_SUB_RESOURCE_COLLECTION)
+        temp_id = str(uuid.uuid1())
+        url = '/v2.0/{0}/{1}/{2}'.format(
+            uri_collection,
+            temp_id,
+            sub_resource_collection.replace('_', '-'))
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({sub_resource_collection: {'foo': temp_id}},
+                         resp.json)

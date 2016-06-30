@@ -124,6 +124,7 @@ class NeutronPecanController(object):
             self.plugin)
         self.primary_key = self._get_primary_key()
 
+        self.parent = parent_resource
         parent_resource = '_%s' % parent_resource if parent_resource else ''
         self._parent_id_name = ('%s_id' % parent_resource
                                 if parent_resource else None)
@@ -165,6 +166,10 @@ class NeutronPecanController(object):
             if value.get('primary_key', False):
                 return key
         return default_primary_key
+
+    @property
+    def plugin_handlers(self):
+        return self._plugin_handlers
 
     @property
     def plugin_lister(self):

@@ -26,9 +26,11 @@ LOG = logging.getLogger(__name__)
 
 class ItemController(utils.NeutronPecanController):
 
-    def __init__(self, resource, item, plugin=None, resource_info=None):
+    def __init__(self, resource, item, plugin=None, resource_info=None,
+                 parent_resource=None):
         super(ItemController, self).__init__(None, resource, plugin=plugin,
-                                             resource_info=resource_info)
+                                             resource_info=resource_info,
+                                             parent_resource=parent_resource)
         self.item = item
 
     @utils.expose(generic=True)
@@ -37,9 +39,14 @@ class ItemController(utils.NeutronPecanController):
 
     def get(self, *args, **kwargs):
         neutron_context = request.context['neutron_context']
+        getter_args = [neutron_context, self.item]
+        # NOTE(tonytan4ever): This implicitly forces the getter method
+        # uses the parent_id as the last argument, thus easy for future
+        # refactoring
+        if 'parent_id' in request.context:
+            getter_args.append(request.context['parent_id'])
         fields = request.context['query_params'].get('fields')
-        return {self.resource: self.plugin_shower(neutron_context, self.item,
-                                                  fields=fields)}
+        return {self.resource: self.plugin_shower(*getter_args, fields=fields)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
@@ -55,15 +62,21 @@ class ItemController(utils.NeutronPecanController):
         # Bulk update is not supported, 'resources' always contains a single
         # elemenet
         data = {self.resource: resources[0]}
-        return {self.resource: self.plugin_updater(neutron_context,
-                                                   self.item, data)}
+        updater_args = [neutron_context, self.item]
+        if 'parent_id' in request.context:
+            updater_args.append(request.context['parent_id'])
+        updater_args.append(data)
+        return {self.resource: self.plugin_updater(*updater_args)}
 
     @utils.when(index, method='DELETE')
     def delete(self):
         # TODO(kevinbenton): setting code could be in a decorator
         pecan.response.status = 204
         neutron_context = request.context['neutron_context']
-        return self.plugin_deleter(neutron_context, self.item)
+        deleter_args = [neutron_context, self.item]
+        if 'parent_id' in request.context:
+            deleter_args.append(request.context['parent_id'])
+        return self.plugin_deleter(*deleter_args)
 
     @utils.expose()
     def _lookup(self, collection, *remainder):
@@ -72,8 +85,10 @@ class ItemController(utils.NeutronPecanController):
             collection)
         if not controller:
             LOG.warning(_LW("No controller found for: %s - returning response "
-                         "code 404"), collection)
+                        "code 404"), collection)
             pecan.abort(404)
+        request.context['resource'] = controller.resource
+        request.context['parent_id'] = request.context['resource_id']
         return controller, remainder
 
 
@@ -88,7 +103,11 @@ class CollectionsController(utils.NeutronPecanController):
         uri_identifier = '%s_id' % self.resource
         request.context['uri_identifiers'][uri_identifier] = item
         return (self.item_controller_class(
-            self.resource, item, resource_info=self.resource_info),
+            self.resource, item, resource_info=self.resource_info,
+                # NOTE(tonytan4ever): item needs to share the same
+                # parent as collection
+                parent_resource=self.parent
+                ),
                 remainder)
 
     @utils.expose(generic=True)
@@ -96,10 +115,13 @@ class CollectionsController(utils.NeutronPecanController):
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
-        # NOTE(blogan): query_params is set in the QueryParametersHook
+        # NOTE(blogan): these are set in the FieldsAndFiltersHoook
         query_params = request.context['query_params']
         neutron_context = request.context['neutron_context']
-        return {self.collection: self.plugin_lister(neutron_context,
+        lister_args = [neutron_context]
+        if 'parent_id' in request.context:
+            lister_args.append(request.context['parent_id'])
+        return {self.collection: self.plugin_lister(*lister_args,
                 **query_params)}
 
     @utils.when(index, method='HEAD')
@@ -127,4 +149,8 @@ class CollectionsController(utils.NeutronPecanController):
             key = self.resource
             data = {key: resources[0]}
         neutron_context = request.context['neutron_context']
-        return {key: creator(neutron_context, data)}
+        creator_args = [neutron_context]
+        if 'parent_id' in request.context:
+            creator_args.append(request.context['parent_id'])
+        creator_args.append(data)
+        return {key: creator(*creator_args)}
