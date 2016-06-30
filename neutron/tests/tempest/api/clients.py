@@ -15,8 +15,8 @@
 
 from tempest.lib.services.compute import keypairs_client
 from tempest.lib.services.compute import servers_client
+from tempest.lib.services.identity.v2 import tenants_client
 from tempest import manager
-from tempest.services.identity.v2.json import tenants_client
 
 from neutron.tests.tempest import config
 from neutron.tests.tempest.services.network.json import network_client
