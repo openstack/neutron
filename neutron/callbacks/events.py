@@ -29,6 +29,10 @@ AFTER_DELETE = 'after_delete'
 BEFORE_RESPONSE = 'before_response'
 AFTER_REQUEST = 'after_request'
 
+# String literals representing events associated to process operations
+BEFORE_INIT = 'before_init'
+AFTER_INIT = 'after_init'
+
 # String literals representing events associated to error conditions
 ABORT_CREATE = 'abort_create'
 ABORT_READ = 'abort_read'

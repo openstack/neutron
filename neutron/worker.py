@@ -89,4 +89,7 @@ class NeutronWorker(service.ServiceBase):
 
     def start(self):
         if self.worker_process_count > 0:
+            # TODO(armax): remove the AFTER_CREATE notification once
+            # subscribers have been updated
             registry.notify(resources.PROCESS, events.AFTER_CREATE, self.start)
+            registry.notify(resources.PROCESS, events.AFTER_INIT, self.start)
