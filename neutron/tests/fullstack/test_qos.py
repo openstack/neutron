@@ -16,7 +16,6 @@ import functools
 
 from neutron_lib import constants
 from oslo_utils import uuidutils
-import testscenarios
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
@@ -27,6 +26,7 @@ from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
+from neutron.tests.unit import testlib_api
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import \
     config as linuxbridge_agent_config
@@ -36,8 +36,7 @@ from neutron.plugins.ml2.drivers.openvswitch.mech_driver import \
     mech_openvswitch as mech_ovs
 
 
-load_tests = testscenarios.load_tests_apply_scenarios
-
+load_tests = testlib_api.module_load_tests
 
 BANDWIDTH_BURST = 100
 BANDWIDTH_LIMIT = 500

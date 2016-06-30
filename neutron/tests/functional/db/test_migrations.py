@@ -14,20 +14,15 @@
 
 import collections
 
-import abc
 from alembic.ddl import base as alembic_ddl
 from alembic import script as alembic_script
 from contextlib import contextmanager
-import os
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
-from oslo_db.sqlalchemy import session
-from oslo_db.sqlalchemy import test_base
 from oslo_db.sqlalchemy import test_migrations
 from oslo_db.sqlalchemy import utils as oslo_utils
+from oslotest import base as oslotest_base
 import six
-from six.moves import configparser
-from six.moves.urllib import parse
 import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.sql import ddl as sqla_ddl
@@ -38,8 +33,7 @@ import subprocess
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
-from neutron.tests import base as base_tests
-from neutron.tests.common import base
+from neutron.tests.unit import testlib_api
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
@@ -129,6 +123,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         - wrong value.
     '''
 
+    BUILD_SCHEMA = False
+
     def setUp(self):
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
@@ -207,8 +203,10 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         return True
 
 
-class TestModelsMigrationsMysql(_TestModelsMigrations,
-                                base.MySQLTestCase):
+class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
+                                _TestModelsMigrations,
+                                testlib_api.SqlTestCaseLight):
+
     @contextmanager
     def _listener(self, engine, listener_func):
         try:
@@ -347,12 +345,14 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
         self._test_has_offline_migrations('heads', False)
 
 
-class TestModelsMigrationsPsql(_TestModelsMigrations,
-                               base.PostgreSQLTestCase):
+class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
+                               _TestModelsMigrations,
+                               testlib_api.SqlTestCaseLight):
     pass
 
 
-class TestSanityCheck(test_base.DbTestCase):
+class TestSanityCheck(testlib_api.SqlTestCaseLight):
+    BUILD_SCHEMA = False
 
     def setUp(self):
         super(TestSanityCheck, self).setUp()
@@ -381,7 +381,7 @@ class TestSanityCheck(test_base.DbTestCase):
                               script.check_sanity, conn)
 
 
-class TestWalkDowngrade(test_base.DbTestCase):
+class TestWalkDowngrade(oslotest_base.BaseTestCase):
 
     def setUp(self):
         super(TestWalkDowngrade, self).setUp()
@@ -400,84 +400,16 @@ class TestWalkDowngrade(test_base.DbTestCase):
 
         if failed_revisions:
             self.fail('Migrations %s have downgrade' % failed_revisions)
-
-
-def _is_backend_avail(backend,
-                      user="openstack_citest",
-                      passwd="openstack_citest",
-                      database="openstack_citest"):
-        # is_backend_avail will be soon deprecated from oslo_db
-        # thats why its added here
-        try:
-            connect_uri = oslo_utils.get_connect_string(backend, user=user,
-                                                        passwd=passwd,
-                                                        database=database)
-            engine = session.create_engine(connect_uri)
-            connection = engine.connect()
-        except Exception:
-            # intentionally catch all to handle exceptions even if we don't
-            # have any backend code loaded.
-            return False
-        else:
-            connection.close()
-            engine.dispose()
             return True
 
 
-@six.add_metaclass(abc.ABCMeta)
-class _TestWalkMigrations(base_tests.BaseTestCase, test_base.DbTestCase):
+class _TestWalkMigrations(object):
     '''This will add framework for testing schema migarations
        for different backends.
 
-    Right now it supports pymysql and postgresql backends. Pymysql
-    and postgresql commands are executed to walk between to do updates.
-    For upgrade and downgrade migrate_up and migrate down functions
-    have been added.
     '''
 
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__),
-                                       'test_migrations.conf')
-    CONFIG_FILE_PATH = os.environ.get('NEUTRON_TEST_MIGRATIONS_CONF',
-                                      DEFAULT_CONFIG_FILE)
-
-    def setUp(self):
-        if not _is_backend_avail(self.BACKEND):
-            self.skipTest("%s not available" % self.BACKEND)
-
-        super(_TestWalkMigrations, self).setUp()
-
-        self.snake_walk = False
-        self.test_databases = {}
-
-        if os.path.exists(self.CONFIG_FILE_PATH):
-            cp = configparser.RawConfigParser()
-            try:
-                cp.read(self.CONFIG_FILE_PATH)
-                options = cp.options('migration_dbs')
-                for key in options:
-                    self.test_databases[key] = cp.get('migration_dbs', key)
-                self.snake_walk = cp.getboolean('walk_style', 'snake_walk')
-            except configparser.ParsingError as e:
-                self.fail("Failed to read test_migrations.conf config "
-                          "file. Got error: %s" % e)
-        else:
-            self.fail("Failed to find test_migrations.conf config "
-                      "file.")
-
-        self.engines = {}
-        for key, value in self.test_databases.items():
-            self.engines[key] = sqlalchemy.create_engine(value)
-
-        # We start each test case with a completely blank slate.
-        self._reset_databases()
-
-    def assertColumnInTable(self, engine, table_name, column):
-        table = oslo_utils.get_table(engine, table_name)
-        self.assertIn(column, table.columns)
-
-    def assertColumnNotInTables(self, engine, table_name, column):
-        table = oslo_utils.get_table(engine, table_name)
-        self.assertNotIn(column, table.columns)
+    BUILD_SCHEMA = False
 
     def execute_cmd(self, cmd=None):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -485,23 +417,6 @@ class _TestWalkMigrations(base_tests.BaseTestCase, test_base.DbTestCase):
         output = proc.communicate()[0]
         self.assertEqual(0, proc.returncode, 'Command failed with '
                          'output:\n%s' % output)
-
-    @abc.abstractproperty
-    def BACKEND(self):
-        pass
-
-    @abc.abstractmethod
-    def _database_recreate(self, user, password, database, host):
-        pass
-
-    def _reset_databases(self):
-        for key, engine in self.engines.items():
-            conn_string = self.test_databases[key]
-            conn_pieces = parse.urlparse(conn_string)
-            engine.dispose()
-            user, password, database, host = oslo_utils.get_db_connection_info(
-                conn_pieces)
-            self._database_recreate(user, password, database, host)
 
     def _get_alembic_config(self, uri):
         db_config = migration.get_neutron_config()
@@ -512,71 +427,18 @@ class _TestWalkMigrations(base_tests.BaseTestCase, test_base.DbTestCase):
                                               group='database')
         return db_config
 
-    def _revisions(self, downgrade=False):
+    def _revisions(self):
         """Provides revisions and its parent revisions.
 
-        :param downgrade: whether to include downgrade behavior or not.
-        :type downgrade: Bool
         :return: List of tuples. Every tuple contains revision and its parent
         revision.
         """
         revisions = list(self.script_dir.walk_revisions("base", "heads"))
-        if not downgrade:
-            revisions = list(reversed(revisions))
+        revisions = list(reversed(revisions))
 
         for rev in revisions:
-            if downgrade:
-                # Destination, current
-                yield rev.down_revision, rev.revision
-            else:
-                # Destination, current
-                yield rev.revision, rev.down_revision
-
-    def _walk_versions(self, config, engine, downgrade=True, snake_walk=False):
-        """Test migrations ability to upgrade and downgrade.
-
-        :param downgrade: whether to include downgrade behavior or not.
-        :type downgrade: Bool
-        :snake_walk: enable mode when at every upgrade revision will be
-        downgraded and upgraded in previous state at upgrade and backward at
-        downgrade.
-        :type snake_walk: Bool
-        """
-
-        revisions = self._revisions()
-        for dest, curr in revisions:
-            self._migrate_up(config, engine, dest, curr, with_data=True)
-
-            if snake_walk and dest != 'None':
-                # NOTE(I159): Pass reversed arguments into `_migrate_down`
-                # method because we have been upgraded to a destination
-                # revision and now we going to downgrade back.
-                self._migrate_down(config, engine, curr, dest, with_data=True)
-                self._migrate_up(config, engine, dest, curr, with_data=True)
-
-        if downgrade:
-            revisions = self._revisions(downgrade)
-            for dest, curr in revisions:
-                self._migrate_down(config, engine, dest, curr, with_data=True)
-                if snake_walk:
-                    self._migrate_up(config, engine, curr,
-                                     dest, with_data=True)
-                    self._migrate_down(config, engine, dest,
-                                       curr, with_data=True)
-
-    def _migrate_down(self, config, engine, dest, curr, with_data=False):
-        # First upgrade it to current to do downgrade
-        if dest:
-            migration.do_alembic_command(config, 'downgrade', dest)
-        else:
-            meta = sqlalchemy.MetaData(bind=engine)
-            meta.drop_all()
-
-        if with_data:
-            post_downgrade = getattr(
-                self, "_post_downgrade_%s" % curr, None)
-            if post_downgrade:
-                post_downgrade(engine)
+            # Destination, current
+            yield rev.revision, rev.down_revision
 
     def _migrate_up(self, config, engine, dest, curr, with_data=False):
         if with_data:
@@ -591,71 +453,24 @@ class _TestWalkMigrations(base_tests.BaseTestCase, test_base.DbTestCase):
             if check and data:
                 check(engine, data)
 
+    def test_walk_versions(self):
+        """Test migrations ability to upgrade and downgrade.
 
-class TestWalkMigrationsMysql(_TestWalkMigrations):
-
-    BACKEND = 'mysql+pymysql'
-
-    def _database_recreate(self, user, password, database, host):
-        # We can execute the MySQL client to destroy and re-create
-        # the MYSQL database, which is easier and less error-prone
-        # than using SQLAlchemy to do this via MetaData...trust me.
-        sql = ("drop database if exists %(database)s; create "
-               "database %(database)s;") % {'database': database}
-        cmd = ("mysql -u \"%(user)s\" -p%(password)s -h %(host)s "
-               "-e \"%(sql)s\"") % {'user': user, 'password': password,
-                                    'host': host, 'sql': sql}
-        self.execute_cmd(cmd)
-
-    def test_mysql_opportunistically(self):
-        connect_string = oslo_utils.get_connect_string(self.BACKEND,
-            "openstack_citest", user="openstack_citest",
-            passwd="openstack_citest")
-        engine = session.create_engine(connect_string)
-        config = self._get_alembic_config(connect_string)
-        self.engines["mysqlcitest"] = engine
-        self.test_databases["mysqlcitest"] = connect_string
-
-        # build a fully populated mysql database with all the tables
-        self._reset_databases()
-        self._walk_versions(config, engine, False, False)
+        """
+        engine = self.engine
+        config = self._get_alembic_config(engine.url)
+        revisions = self._revisions()
+        for dest, curr in revisions:
+            self._migrate_up(config, engine, dest, curr, with_data=True)
 
 
-class TestWalkMigrationsPsql(_TestWalkMigrations):
+class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
+                              _TestWalkMigrations,
+                              testlib_api.SqlTestCaseLight):
+    pass
 
-    BACKEND = 'postgresql'
 
-    def _database_recreate(self, user, password, database, host):
-        os.environ['PGPASSWORD'] = password
-        os.environ['PGUSER'] = user
-        # note(boris-42): We must create and drop database, we can't
-        # drop database which we have connected to, so for such
-        # operations there is a special database template1.
-        sqlcmd = ("psql -w -U %(user)s -h %(host)s -c"
-                  " '%(sql)s' -d template1")
-        sql = "drop database if exists %(database)s;"
-        sql = sql % {'database': database}
-        droptable = sqlcmd % {'user': user, 'host': host,
-                              'sql': sql}
-        self.execute_cmd(droptable)
-        sql = "create database %(database)s;"
-        sql = sql % {'database': database}
-        createtable = sqlcmd % {'user': user, 'host': host,
-                                'sql': sql}
-        self.execute_cmd(createtable)
-
-    def test_postgresql_opportunistically(self):
-        # add this to the global lists to make reset work with it, it's removed
-        # automatically in tearDown so no need to clean it up here.
-        connect_string = oslo_utils.get_connect_string(self.BACKEND,
-                                                       "openstack_citest",
-                                                       "openstack_citest",
-                                                       "openstack_citest")
-        engine = session.create_engine(connect_string)
-        config = self._get_alembic_config(connect_string)
-        self.engines["postgresqlcitest"] = engine
-        self.test_databases["postgresqlcitest"] = connect_string
-
-        # build a fully populated postgresql database with all the tables
-        self._reset_databases()
-        self._walk_versions(config, engine, False, False)
+class TestWalkMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
+                             _TestWalkMigrations,
+                             testlib_api.SqlTestCaseLight):
+    pass

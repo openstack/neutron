@@ -73,7 +73,7 @@ class PluginClientFixture(AbstractClientFixture):
 
     def _setUp(self):
         super(PluginClientFixture, self)._setUp()
-        self.useFixture(testlib_api.SqlFixture())
+        self.useFixture(testlib_api.StaticSqlFixture())
         self.useFixture(self.plugin_conf)
         self.useFixture(base.PluginFixture(self.plugin_conf.plugin_name))
 

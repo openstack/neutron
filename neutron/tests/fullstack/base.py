@@ -15,14 +15,11 @@
 import os
 
 from oslo_config import cfg
-from oslo_db.sqlalchemy import test_base
 
-from neutron.db.migration import cli as migration
-from neutron.tests import base as tests_base
-from neutron.tests.common import base
 from neutron.tests.common import helpers
 from neutron.tests.fullstack.resources import client as client_resource
 from neutron.tests import tools
+from neutron.tests.unit import testlib_api
 
 
 # This is the directory from which infra fetches log files for fullstack tests
@@ -30,20 +27,31 @@ DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-fullstack-logs')
 
 
-class BaseFullStackTestCase(base.MySQLTestCase):
+class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
+                            testlib_api.SqlTestCase):
     """Base test class for full-stack tests."""
+
+    BUILD_WITH_MIGRATIONS = True
 
     def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
 
-        tests_base.setup_test_logging(
-            cfg.CONF, DEFAULT_LOG_DIR, '%s.txt' % self.get_name())
+        # NOTE(zzzeek): the opportunistic DB fixtures have built for
+        # us a per-test (or per-process) database.  Set the URL of this
+        # database in CONF as the full stack tests need to actually run a
+        # neutron server against this database.
+        _orig_db_url = cfg.CONF.database.connection
+        cfg.CONF.set_override(
+            'connection', str(self.engine.url), group='database')
+        self.addCleanup(
+            cfg.CONF.set_override,
+            "connection", _orig_db_url, group="database"
+        )
 
         # NOTE(ihrachys): seed should be reset before environment fixture below
         # since the latter starts services that may rely on generated port
         # numbers
         tools.reset_random_seed()
-        self.create_db_tables()
         self.environment = environment
         self.environment.test_name = self.get_name()
         self.useFixture(self.environment)
@@ -54,35 +62,3 @@ class BaseFullStackTestCase(base.MySQLTestCase):
     def get_name(self):
         class_name, test_name = self.id().split(".")[-2:]
         return "%s.%s" % (class_name, test_name)
-
-    def create_db_tables(self):
-        """Populate the new database.
-
-        MySQLTestCase creates a new database for each test, but these need to
-        be populated with the appropriate tables. Before we can do that, we
-        must change the 'connection' option which the Neutron code knows to
-        look at.
-
-        Currently, the username and password options are hard-coded by
-        oslo.db and neutron/tests/functional/contrib/gate_hook.sh. Also,
-        we only support MySQL for now, but the groundwork for adding Postgres
-        is already laid.
-        """
-        conn = ("mysql+pymysql://%(username)s:%(password)s"
-                "@127.0.0.1/%(db_name)s" % {
-                    'username': test_base.DbFixture.USERNAME,
-                    'password': test_base.DbFixture.PASSWORD,
-                    'db_name': self.engine.url.database})
-
-        alembic_config = migration.get_neutron_config()
-        alembic_config.neutron_config = cfg.CONF
-        self.original_conn = cfg.CONF.database.connection
-        self.addCleanup(self._revert_connection_address)
-        cfg.CONF.set_override('connection', conn, group='database')
-
-        migration.do_alembic_command(alembic_config, 'upgrade', 'heads')
-
-    def _revert_connection_address(self):
-        cfg.CONF.set_override('connection',
-                              self.original_conn,
-                              group='database')

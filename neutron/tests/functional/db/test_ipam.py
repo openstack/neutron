@@ -22,12 +22,18 @@ from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import models_v2
 from neutron.ipam.drivers.neutrondb_ipam import db_models as ipam_models
-from neutron.tests import base
-from neutron.tests.common import base as common_base
 from neutron.tests.unit import testlib_api
 
 
-class IpamTestCase(base.BaseTestCase):
+# required in order for testresources to optimize same-backend
+# tests together
+load_tests = testlib_api.module_load_tests
+# FIXME(zzzeek): needs to be provided by oslo.db, current version
+# is not working
+# load_tests = test_base.optimize_db_test_loader(__file__)
+
+
+class IpamTestCase(testlib_api.SqlTestCase):
     """
     Base class for tests that aim to test ip allocation.
     """
@@ -36,7 +42,6 @@ class IpamTestCase(base.BaseTestCase):
     def setUp(self):
         super(IpamTestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
-        self.useFixture(testlib_api.SqlFixture())
         if self.use_pluggable_ipam:
             self._turn_on_pluggable_ipam()
         else:
@@ -155,17 +160,17 @@ class IpamTestCase(base.BaseTestCase):
             self._create_port(self.port_id)
 
 
-class TestIpamMySql(common_base.MySQLTestCase, IpamTestCase):
+class TestIpamMySql(testlib_api.MySQLTestCaseMixin, IpamTestCase):
     pass
 
 
-class TestIpamPsql(common_base.PostgreSQLTestCase, IpamTestCase):
+class TestIpamPsql(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
     pass
 
 
-class TestPluggableIpamMySql(common_base.MySQLTestCase, IpamTestCase):
+class TestPluggableIpamMySql(testlib_api.MySQLTestCaseMixin, IpamTestCase):
     use_pluggable_ipam = True
 
 
-class TestPluggableIpamPsql(common_base.PostgreSQLTestCase, IpamTestCase):
+class TestPluggableIpamPsql(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
     use_pluggable_ipam = True
