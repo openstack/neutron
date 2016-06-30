@@ -25,7 +25,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -59,15 +58,6 @@ class SegmentHostMapping(model_base.BASEV2):
         db.NetworkSegment, backref=orm.backref("segment_host_mapping",
                                                lazy='joined',
                                                cascade='delete'))
-
-
-def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
-    subnet_res['segment_id'] = subnet_db.get('segment_id')
-
-
-# Register dict extend functions for subnets
-common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
-    attributes.SUBNETS, [_extend_subnet_dict_binding])
 
 
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
