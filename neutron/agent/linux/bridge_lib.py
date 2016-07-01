@@ -21,6 +21,7 @@ import os
 from oslo_log import log as logging
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -98,3 +99,24 @@ class BridgeDevice(ip_lib.IPDevice):
             return os.listdir(BRIDGE_INTERFACES_FS % self.name)
         except OSError:
             return []
+
+
+class FdbInterface(object):
+    """provide basic functionality to edit the FDB table"""
+
+    @classmethod
+    def add(cls, mac, dev):
+        return utils.execute(['bridge', 'fdb', 'add', mac, 'dev', dev],
+                run_as_root=True)
+
+    @classmethod
+    def delete(cls, mac, dev):
+        return utils.execute(['bridge', 'fdb', 'delete', mac, 'dev', dev],
+                             run_as_root=True)
+
+    @classmethod
+    def show(cls, dev=None):
+        cmd = ['bridge', 'fdb', 'show']
+        if dev:
+            cmd += ['dev', dev]
+        return utils.execute(cmd, run_as_root=True)
