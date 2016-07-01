@@ -144,20 +144,16 @@ class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
 
 class UtilTestParseVlanRanges(base.BaseTestCase):
     _err_prefix = "Invalid network VLAN range: '"
-    _err_too_few = "' - 'need more than 2 values to unpack'."
-    _err_too_many_prefix = "' - 'too many values to unpack"
-    _err_not_int = "' - 'invalid literal for int() with base 10: '%s''."
+    _err_bad_count = "' - 'Need exactly two values for VLAN range'."
     _err_bad_vlan = "' - '%s is not a valid VLAN tag'."
     _err_range = "' - 'End of VLAN range is less than start of VLAN range'."
 
-    def _range_too_few_err(self, nv_range):
-        return self._err_prefix + nv_range + self._err_too_few
+    def _range_err_bad_count(self, nv_range):
+        return self._err_prefix + nv_range + self._err_bad_count
 
-    def _range_too_many_err_prefix(self, nv_range):
-        return self._err_prefix + nv_range + self._err_too_many_prefix
-
-    def _vlan_not_int_err(self, nv_range, vlan):
-        return self._err_prefix + nv_range + (self._err_not_int % vlan)
+    def _range_invalid_vlan(self, nv_range, n):
+        vlan = nv_range.split(':')[n]
+        return self._err_prefix + nv_range + (self._err_bad_vlan % vlan)
 
     def _nrange_invalid_vlan(self, nv_range, n):
         vlan = nv_range.split(':')[n]
@@ -268,34 +264,31 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
 
     def test_parse_one_net_incomplete_range(self):
         config_str = "net1:100"
-        expected_msg = self._range_too_few_err(config_str)
+        expected_msg = self._range_err_bad_count(config_str)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_one_net_range_too_many(self):
         config_str = "net1:100:150:200"
-        expected_msg_prefix = self._range_too_many_err_prefix(config_str)
+        expected_msg = self._range_err_bad_count(config_str)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        # The error message is not same in Python 2 and Python 3. In Python 3,
-        # it depends on the amount of values used when unpacking, so it cannot
-        # be predicted as a fixed string.
-        self.assertTrue(str(err).startswith(expected_msg_prefix))
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_one_net_vlan1_not_int(self):
         config_str = "net1:foo:199"
-        expected_msg = self._vlan_not_int_err(config_str, 'foo')
+        expected_msg = self._range_invalid_vlan(config_str, 1)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_one_net_vlan2_not_int(self):
         config_str = "net1:100:bar"
-        expected_msg = self._vlan_not_int_err(config_str, 'bar')
+        expected_msg = self._range_invalid_vlan(config_str, 2)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_one_net_and_max_range(self):
         config_str = "net1:1:4094"
@@ -307,14 +300,14 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
         expected_msg = self._nrange_invalid_vlan(config_str, 1)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_one_net_range_bad_vlan2(self):
         config_str = "net1:4000:4999"
         expected_msg = self._nrange_invalid_vlan(config_str, 2)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
 
 class TestParseVlanRangeList(UtilTestParseVlanRanges):
@@ -355,18 +348,18 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
     def test_parse_two_nets_bad_vlan_range1(self):
         config_list = ["net1:100",
                        "net2:200:299"]
-        expected_msg = self._range_too_few_err(config_list[0])
+        expected_msg = self._range_err_bad_count(config_list[0])
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_list, config_list)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_two_nets_vlan_not_int2(self):
         config_list = ["net1:100:199",
                        "net2:200:0x200"]
-        expected_msg = self._vlan_not_int_err(config_list[1], '0x200')
+        expected_msg = self._range_invalid_vlan(config_list[1], 2)
         err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_list, config_list)
-        self.assertEqual(str(err), expected_msg)
+        self.assertEqual(expected_msg, str(err))
 
     def test_parse_two_nets_and_append_1_2(self):
         config_list = ["net1:100:199",
@@ -410,8 +403,8 @@ class TestDictUtils(base.BaseTestCase):
                     {"key2": "value2"},
                     {"key4": "value4"}]
         added, removed = utils.diff_list_of_dict(old_list, new_list)
-        self.assertEqual(added, [dict(key4="value4")])
-        self.assertEqual(removed, [dict(key3="value3")])
+        self.assertEqual([dict(key4="value4")], added)
+        self.assertEqual([dict(key3="value3")], removed)
 
 
 class TestDict2Tuples(base.BaseTestCase):
