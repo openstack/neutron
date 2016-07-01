@@ -104,7 +104,7 @@ Subproject stable branches are supervised by horizontal `neutron-stable-maint
 team <https://review.openstack.org/#/admin/groups/539,members>`_.
 
 More info on stable branch process can be found on `the following page
-<https://wiki.openstack.org/wiki/StableBranch>`_.
+<http://docs.openstack.org/project-team-guide/stable-branches.html>`_.
 
 Stable merge requirements
 -------------------------
@@ -118,7 +118,7 @@ For sub-projects who participate in the Neutron Stadium effort and who also
 create and utilize stable branches, there is an expectation around what is
 allowed to be merged in these stable branches. The Stadium projects should be
 following the stable branch policies as defined by on the `Stable Branch wiki
-<https://wiki.openstack.org/wiki/StableBranch#Stable_branch_policy>`_. This
+<http://docs.openstack.org/project-team-guide/stable-branches.html>`_. This
 means that, among other things, no features are allowed to be backported into
 stable branches.
 
