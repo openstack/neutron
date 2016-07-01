@@ -40,6 +40,7 @@ TEST_PLUGIN_KLASS = (
     'neutron.tests.unit.extensions.test_segment.SegmentTestPlugin')
 DHCP_HOSTA = 'dhcp-host-a'
 DHCP_HOSTB = 'dhcp-host-b'
+HTTP_NOT_FOUND = 404
 
 
 class SegmentTestExtensionManager(object):
@@ -86,6 +87,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _make_segment(self, fmt, **kwargs):
         res = self._create_segment(fmt, **kwargs)
         if res.status_int >= webob.exc.HTTPClientError.code:
+            res.charset = 'utf8'
             raise webob.exc.HTTPClientError(
                 code=res.status_int, explanation=str(res))
         return self.deserialize(fmt, res)
@@ -139,6 +141,15 @@ class TestSegment(SegmentTestCase):
                                   physical_network='phys_net',
                                   segmentation_id=200,
                                   expected=expected_segment)
+
+    def test_create_segment_non_existent_network(self):
+        exc = self.assertRaises(webob.exc.HTTPClientError,
+                                self._test_create_segment,
+                                network_id=uuidutils.generate_uuid(),
+                                physical_network='phys_net',
+                                segmentation_id=200)
+        self.assertEqual(HTTP_NOT_FOUND, exc.code)
+        self.assertIn('NetworkNotFound', exc.explanation)
 
     def test_create_segment_no_phys_net(self):
         with self.network() as network:
