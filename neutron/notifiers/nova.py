@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants
+from neutron.common import exceptions as exc
 from neutron import context
 from neutron.i18n import _LE, _LI, _LW
 from neutron import manager
@@ -177,7 +178,12 @@ class Notifier(object):
                 return
 
             ctx = context.get_admin_context()
-            port = self._plugin.get_port(ctx, port_id)
+            try:
+                port = self._plugin.get_port(ctx, port_id)
+            except exc.PortNotFound:
+                LOG.debug("Port %s was deleted, no need to send any "
+                          "notification", port_id)
+                return
 
         if port and self._is_compute_port(port):
             if action == 'delete_port':

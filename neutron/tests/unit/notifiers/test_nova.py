@@ -22,6 +22,7 @@ from sqlalchemy.orm import attributes as sql_attr
 from oslo_config import cfg
 
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.notifiers import nova
 from neutron.tests import base
@@ -171,6 +172,17 @@ class TestNovaNotify(base.BaseTestCase):
         event = self.nova_notifier.create_port_changed_event(
             'delete_floatingip', {}, returned_obj)
         self.assertEqual(expected_event, event)
+
+    def test_delete_floatingip_deleted_port_no_notify(self):
+        port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
+        with mock.patch.object(
+            self.nova_notifier._plugin_ref, 'get_port',
+            side_effect=n_exc.PortNotFound(port_id=port_id)):
+            returned_obj = {'floatingip':
+                            {'port_id': port_id}}
+            event = self.nova_notifier.create_port_changed_event(
+                'delete_floatingip', {}, returned_obj)
+            self.assertIsNone(event)
 
     def test_delete_floatingip_no_port_id_no_notify(self):
         returned_obj = {'floatingip':
