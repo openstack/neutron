@@ -1027,6 +1027,97 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
             self.context, port_id))
 
 
+class Test_GetNetworkMtu(Ml2PluginV2TestCase):
+
+    def _register_type_driver_with_mtu(self, driver, mtu):
+        plugin = manager.NeutronManager.get_plugin()
+
+        class FakeDriver(object):
+            def get_mtu(self, physical_network=None):
+                return mtu
+
+        driver_mock = mock.Mock()
+        driver_mock.obj = FakeDriver()
+        plugin.type_manager.drivers[driver] = driver_mock
+
+    def test_single_segment(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._register_type_driver_with_mtu('driver1', 1400)
+
+        net = {
+            'name': 'net1',
+            mpnet.SEGMENTS: [
+                {
+                    pnet.NETWORK_TYPE: 'driver1',
+                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                },
+            ]
+        }
+        self.assertEqual(1400, plugin._get_network_mtu(net))
+
+    def test_multiple_segments_returns_minimal_mtu(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._register_type_driver_with_mtu('driver1', 1400)
+        self._register_type_driver_with_mtu('driver2', 1300)
+
+        net = {
+            'name': 'net1',
+            mpnet.SEGMENTS: [
+                {
+                    pnet.NETWORK_TYPE: 'driver1',
+                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                },
+                {
+                    pnet.NETWORK_TYPE: 'driver2',
+                    pnet.PHYSICAL_NETWORK: 'physnet2'
+                },
+            ]
+        }
+        self.assertEqual(1300, plugin._get_network_mtu(net))
+
+    def test_no_segments(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._register_type_driver_with_mtu('driver1', 1400)
+
+        net = {
+            'name': 'net1',
+            pnet.NETWORK_TYPE: 'driver1',
+            pnet.PHYSICAL_NETWORK: 'physnet1',
+        }
+        self.assertEqual(1400, plugin._get_network_mtu(net))
+
+    def test_get_mtu_None_returns_0(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._register_type_driver_with_mtu('driver1', None)
+
+        net = {
+            'name': 'net1',
+            pnet.NETWORK_TYPE: 'driver1',
+            pnet.PHYSICAL_NETWORK: 'physnet1',
+        }
+        self.assertEqual(0, plugin._get_network_mtu(net))
+
+    def test_unknown_segment_type_ignored(self):
+        plugin = manager.NeutronManager.get_plugin()
+        self._register_type_driver_with_mtu('driver1', None)
+        self._register_type_driver_with_mtu('driver2', 1300)
+
+        net = {
+            'name': 'net1',
+            mpnet.SEGMENTS: [
+                {
+                    pnet.NETWORK_TYPE: 'driver1',
+                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                },
+                {
+                    pnet.NETWORK_TYPE: 'driver2',
+                    pnet.PHYSICAL_NETWORK: 'physnet2'
+                },
+            ]
+        }
+        self.assertEqual(1300, plugin._get_network_mtu(net))
+
+
 class TestMl2DvrPortsV2(TestMl2PortsV2):
     def setUp(self):
         super(TestMl2DvrPortsV2, self).setUp()
@@ -2098,7 +2189,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
                                   'update_port'),\
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
-                                  'create_port_db'):
+                                  'create_port_db'),\
+                mock.patch.object(ml2_plugin.Ml2Plugin,
+                                  '_get_network_mtu'):
             init.return_value = None
 
             new_port = mock.MagicMock()
@@ -2136,7 +2229,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                 mock.patch.object(ml2_db, 'get_locked_port_and_binding',
                                   return_value=(original_port_db, binding)),\
                 mock.patch.object(base_plugin.NeutronDbPluginV2,
-                                  'update_port') as db_update_port:
+                                  'update_port') as db_update_port,\
+                mock.patch.object(ml2_plugin.Ml2Plugin,
+                                  '_get_network_mtu'):
             init.return_value = None
             updated_port = mock.MagicMock()
             db_update_port.return_value = updated_port
@@ -2167,7 +2262,9 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
                                return_value=None),\
                 mock.patch.object(manager.NeutronManager,
                                   'get_service_plugins',
-                                  return_value={'L3_ROUTER_NAT': l3plugin}):
+                                  return_value={'L3_ROUTER_NAT': l3plugin}),\
+                mock.patch.object(ml2_plugin.Ml2Plugin,
+                                  '_get_network_mtu'):
             plugin = self._create_plugin_for_create_update_port()
             # Set backend manually here since __init__ was mocked
             plugin.set_ipam_backend()

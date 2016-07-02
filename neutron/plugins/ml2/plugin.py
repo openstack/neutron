@@ -57,7 +57,6 @@ from neutron.db import dvr_mac_db
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
-from neutron.db import netmtu_db
 from neutron.db import provisioning_blocks
 from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_db
@@ -67,6 +66,7 @@ from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import extra_dhcp_opt as edo_ext
+from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
@@ -103,7 +103,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 addr_pair_db.AllowedAddressPairsMixin,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
-                netmtu_db.Netmtu_db_mixin,
                 address_scope_db.AddressScopeDbMixin):
 
     """Implement the Neutron L2 abstractions using modules.
@@ -685,6 +684,41 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                'resource_ids': ', '.join(resource_ids)})
                 self._delete_objects(context, resource, objects)
 
+    def _get_network_mtu(self, network):
+        mtus = []
+        try:
+            segments = network[mpnet.SEGMENTS]
+        except KeyError:
+            segments = [network]
+        for s in segments:
+            segment_type = s[provider.NETWORK_TYPE]
+            try:
+                type_driver = self.type_manager.drivers[segment_type].obj
+            except KeyError:
+                # NOTE(ihrachys) This can happen when type driver is not loaded
+                # for an existing segment. While it's probably an indication of
+                # a bad setup, it's better to be safe than sorry here. Also,
+                # several unit tests use non-existent driver types that may
+                # trigger the exception here.
+                LOG.warning(
+                    _LW("Failed to determine MTU for segment "
+                        "%(segment_type)s:%(segment_id)s; network "
+                        "%(network_id)s MTU calculation may be not accurate"),
+                    {
+                        'segment_type': segment_type,
+                        'segment_id': s[provider.SEGMENTATION_ID],
+                        'network_id': network['id'],
+                    }
+                )
+            else:
+                mtu = type_driver.get_mtu(provider.PHYSICAL_NETWORK)
+                # Some drivers, like 'local', may return None; the assumption
+                # then is that for the segment type, MTU has no meaning or
+                # unlimited, and so we should then ignore those values.
+                if mtu:
+                    mtus.append(mtu)
+        return min(mtus) if mtus else 0
+
     def _create_network_db(self, context, network):
         net_data = network[attributes.NETWORK]
         tenant_id = net_data['tenant_id']
@@ -705,9 +739,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
 
-            if net_data.get(api.MTU, 0) > 0:
-                net_db[api.MTU] = net_data[api.MTU]
-                result[api.MTU] = net_data[api.MTU]
+            result[api.MTU] = self._get_network_mtu(result)
 
             if az_ext.AZ_HINTS in net_data:
                 self.validate_availability_zones(context, 'network',
@@ -758,6 +790,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context,
                                                            updated_network)
 
+            updated_network[api.MTU] = self._get_network_mtu(updated_network)
+
             # TODO(QoS): Move out to the extension framework somehow.
             need_network_update_notify = (
                 qos_consts.QOS_POLICY_ID in net_data and
@@ -783,6 +817,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).get_network(context, id, None)
             self.type_manager.extend_network_dict_provider(context, result)
+            result[api.MTU] = self._get_network_mtu(result)
 
         return self._fields(result, fields)
 
@@ -796,6 +831,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_networks_dict_provider(context, nets)
 
             nets = self._filter_nets_provider(context, nets, filters)
+
+            for net in nets:
+                net[api.MTU] = self._get_network_mtu(net)
 
         return [self._fields(net, fields) for net in nets]
 

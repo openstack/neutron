@@ -182,18 +182,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.info(_LI("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 
-    def _add_network_segment(self, context, network_id, segment, mtu,
+    def _add_network_segment(self, context, network_id, segment,
                              segment_index=0):
         segments_db.add_network_segment(
             context, network_id, segment, segment_index)
-        if segment.get(api.MTU, 0) > 0:
-            mtu.append(segment[api.MTU])
 
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
         session = context.session
-        mtu = []
         with session.begin(subtransactions=True):
             network_id = network['id']
             if segments:
@@ -201,15 +198,14 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                     segment = self.reserve_provider_segment(
                         session, segment)
                     self._add_network_segment(context, network_id, segment,
-                                              mtu, segment_index)
+                                              segment_index)
             elif (cfg.CONF.ml2.external_network_type and
                   self._get_attribute(network, external_net.EXTERNAL)):
                 segment = self._allocate_ext_net_segment(session)
-                self._add_network_segment(context, network_id, segment, mtu)
+                self._add_network_segment(context, network_id, segment)
             else:
                 segment = self._allocate_tenant_net_segment(session)
-                self._add_network_segment(context, network_id, segment, mtu)
-        network[api.MTU] = min(mtu) if mtu else 0
+                self._add_network_segment(context, network_id, segment)
 
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]

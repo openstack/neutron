@@ -353,7 +353,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
-                    'mtu': n.get('mtu', n_const.DEFAULT_NETWORK_MTU),
                     'status': n.get('status', constants.NET_STATUS_ACTIVE),
                     'description': n.get('description')}
             network = models_v2.Network(**args)

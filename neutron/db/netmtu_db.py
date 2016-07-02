@@ -13,16 +13,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
+
 from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import netmtu
+from neutron.plugins.common import utils
 
 
+CONF = cfg.CONF
+
+
+# TODO(ihrachys): the class is not used in the tree; mixins are generally
+# discouraged these days, so maybe it's worth considering deprecation for the
+# class. Interested plugins would be able to ship it on their own, if they want
+# to stick to mixins, or implement the behaviour in another way.
 class Netmtu_db_mixin(object):
-    """Mixin class to add network MTU methods to db_base_plugin_v2."""
+    """Mixin class to add network MTU support to db_base_plugin_v2."""
 
     def _extend_network_dict_mtu(self, network_res, network_db):
-        network_res[netmtu.MTU] = network_db.mtu
+        # don't use network_db argument since MTU is not persisted in database
+        network_res[netmtu.MTU] = utils.get_deployment_physnet_mtu()
         return network_res
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
