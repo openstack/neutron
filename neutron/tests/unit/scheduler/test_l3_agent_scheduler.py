@@ -1675,6 +1675,34 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
     def test_auto_schedule_all_routers_when_agent_added(self):
         self._auto_schedule_when_agent_added(False)
 
+    def test_auto_schedule_ha_router_when_incompatible_agent_exist(self):
+        handle_internal_only_routers_agent = helpers.register_l3_agent(
+            'host_3', n_const.L3_AGENT_MODE_LEGACY, internal_only=False)
+        router = self._create_ha_router()
+
+        self.plugin.auto_schedule_routers(
+            self.adminContext, handle_internal_only_routers_agent.host, [])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [router['id']],
+            admin_state_up=True)
+        agent_ids = [agent['id'] for agent in agents]
+        self.assertEqual(2, len(agents))
+        self.assertNotIn(handle_internal_only_routers_agent.id, agent_ids)
+
+    def test_auto_schedule_ha_router_when_dvr_agent_exist(self):
+        dvr_agent = helpers.register_l3_agent(
+            HOST_DVR, n_const.L3_AGENT_MODE_DVR)
+        router = self._create_ha_router()
+
+        self.plugin.auto_schedule_routers(self.adminContext, dvr_agent.host,
+                                          [])
+        agents = self.plugin.get_l3_agents_hosting_routers(
+            self.adminContext, [router['id']],
+            admin_state_up=True)
+        agent_ids = [agent['id'] for agent in agents]
+        self.assertEqual(2, len(agents))
+        self.assertNotIn(dvr_agent.id, agent_ids)
+
     def _auto_schedule_when_agent_added(self, specific_router):
         router = self._create_ha_router()
         agents = self.plugin.get_l3_agents_hosting_routers(
