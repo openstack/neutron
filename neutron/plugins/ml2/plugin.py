@@ -651,11 +651,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     'result': result,
                                     'attributes': attrs})
 
-        except Exception:
+        except Exception as e:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("An exception occurred while creating "
-                                  "the %(resource)s:%(item)s"),
-                              {'resource': resource, 'item': item})
+                utils.attach_exc_details(
+                    e, _LE("An exception occurred while creating "
+                           "the %(resource)s:%(item)s"),
+                    {'resource': resource, 'item': item})
 
         try:
             postcommit_op = getattr(self.mechanism_manager,
@@ -797,10 +798,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # concurrent port deletion can be performed by
                 # release_dhcp_port caused by concurrent subnet_delete
                 LOG.info(_LI("Port %s was deleted concurrently"), port_id)
-            except Exception:
+            except Exception as e:
                 with excutils.save_and_reraise_exception():
-                    LOG.exception(_LE("Exception auto-deleting port %s"),
-                                  port_id)
+                    utils.attach_exc_details(
+                        e,
+                        _LE("Exception auto-deleting port %s"), port_id)
 
     def _delete_subnets(self, context, subnet_ids):
         for subnet_id in subnet_ids:
@@ -809,10 +811,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             except (exc.SubnetNotFound, sa_exc.ObjectDeletedError):
                 LOG.info(_LI("Subnet %s was deleted concurrently"),
                          subnet_id)
-            except Exception:
+            except Exception as e:
                 with excutils.save_and_reraise_exception():
-                    LOG.exception(_LE("Exception auto-deleting subnet %s"),
-                                  subnet_id)
+                    utils.attach_exc_details(
+                        e,
+                        _LE("Exception auto-deleting subnet %s"), subnet_id)
 
     @utils.transaction_guard
     def delete_network(self, context, id):
@@ -1059,10 +1062,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     except exc.PortNotFound:
                         # NOTE Attempting to access a.port_id here is an error.
                         LOG.debug("Port %s deleted concurrently", port_id)
-                    except Exception:
+                    except Exception as e:
                         with excutils.save_and_reraise_exception():
-                            LOG.exception(_LE("Exception deleting fixed_ip "
-                                              "from port %s"), port_id)
+                            utils.attach_exc_details(
+                                e, _LE("Exception deleting fixed_ip from "
+                                       "port %s"), port_id)
 
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
