@@ -7,9 +7,9 @@
 # Sungjin Kang <gang.sungjin@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-26 18:12+0000\n"
+"POT-Creation-Date: 2016-07-03 04:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -32,10 +32,6 @@ msgstr ""
 #, python-format
 msgid "%s Agent terminated!"
 msgstr "%s 에이전트가 종료됩니다!"
-
-#, python-format
-msgid "%s failed"
-msgstr "%s 실패"
 
 #, python-format
 msgid ""
@@ -921,9 +917,6 @@ msgstr ""
 "서버에서 필수 시간 내에 라우터의 정보를 리턴하지 못하여, 청크 크기가  %s(으)"
 "로 감소됨"
 
-msgid "Switch connection timeout"
-msgstr "스위치 연결 제한시간 초과"
-
 #, python-format
 msgid "The SNAT namespace %s does not exist for the router."
 msgstr "라우터에서 SNAT 네임스페이스 %s이(가) 없습니다."
@@ -1174,14 +1167,6 @@ msgstr "mechanism_manager.delete_subnet_postcommit 실패"
 #, python-format
 msgid "mechanism_manager.update_port_postcommit failed for port %s"
 msgstr "포트  %s의 mechanism_manager.update_port_postcommit 실패"
-
-#, python-format
-msgid "ofctl request %(request)s error %(error)s"
-msgstr "Ofctl 요청 %(request)s 오류 %(error)s"
-
-#, python-format
-msgid "ofctl request %(request)s timed out"
-msgstr "Ofctl 요청 %(request)s 제한시간 초과"
 
 #, python-format
 msgid "tunnel_type %s not supported by agent"

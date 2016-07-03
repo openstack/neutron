@@ -3,13 +3,13 @@
 # KATO Tomoyuki <kato.tomoyuki@jp.fujitsu.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev272\n"
+"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-06-26 18:12+0000\n"
+"POT-Creation-Date: 2016-07-03 04:49+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-06-17 02:41+0000\n"
+"PO-Revision-Date: 2016-07-02 08:18+0000\n"
 "Last-Translator: KATO Tomoyuki <kato.tomoyuki@jp.fujitsu.com>\n"
 "Language-Team: Turkish (Turkey)\n"
 "Language: tr-TR\n"
@@ -290,6 +290,10 @@ msgstr "L2 Ajanı %s MAC'i ile DVR Kipinde çalışıyor"
 
 msgid "L3 agent started"
 msgstr "L3 ajanı başlatıldı"
+
+#, python-format
+msgid "Loaded agent extensions: %s"
+msgstr "Yüklü ajan eklentiler: %s"
 
 #, python-format
 msgid "Loaded extension driver names: %s"
