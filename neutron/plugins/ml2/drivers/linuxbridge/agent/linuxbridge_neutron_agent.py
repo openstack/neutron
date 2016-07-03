@@ -633,10 +633,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return False
 
         try:
-            utils.execute(
-                cmd=['bridge', 'fdb', 'append', constants.FLOODING_ENTRY[0],
-                     'dev', test_iface, 'dst', '1.1.1.1'],
-                run_as_root=True, log_fail_as_error=False)
+            bridge_lib.FdbInterface.append(constants.FLOODING_ENTRY[0],
+                                           test_iface, '1.1.1.1',
+                                           log_fail_as_error=False)
             return True
         except RuntimeError:
             return False
@@ -678,8 +677,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         return mac in entries
 
     def fdb_bridge_entry_exists(self, mac, interface, agent_ip=None):
-        entries = utils.execute(['bridge', 'fdb', 'show', 'dev', interface],
-                                run_as_root=True)
+        entries = bridge_lib.FdbInterface.show(interface)
         if not agent_ip:
             return mac in entries
 
@@ -693,38 +691,29 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if cfg.CONF.VXLAN.arp_responder:
             ip_lib.IPDevice(interface).neigh.delete(ip, mac)
 
-    def add_fdb_bridge_entry(self, mac, agent_ip, interface, operation="add"):
-        utils.execute(['bridge', 'fdb', operation, mac, 'dev', interface,
-                       'dst', agent_ip],
-                      run_as_root=True,
-                      check_exit_code=False)
-
-    def remove_fdb_bridge_entry(self, mac, agent_ip, interface):
-        utils.execute(['bridge', 'fdb', 'del', mac, 'dev', interface,
-                       'dst', agent_ip],
-                      run_as_root=True,
-                      check_exit_code=False)
-
     def add_fdb_entries(self, agent_ip, ports, interface):
         for mac, ip in ports:
             if mac != constants.FLOODING_ENTRY[0]:
                 self.add_fdb_ip_entry(mac, ip, interface)
-                self.add_fdb_bridge_entry(mac, agent_ip, interface,
-                                          operation="replace")
+                bridge_lib.FdbInterface.replace(mac, interface, agent_ip,
+                                                check_exit_code=False)
             elif self.vxlan_mode == lconst.VXLAN_UCAST:
                 if self.fdb_bridge_entry_exists(mac, interface):
-                    self.add_fdb_bridge_entry(mac, agent_ip, interface,
-                                              "append")
+                    bridge_lib.FdbInterface.append(mac, interface, agent_ip,
+                                                   check_exit_code=False)
                 else:
-                    self.add_fdb_bridge_entry(mac, agent_ip, interface)
+                    bridge_lib.FdbInterface.add(mac, interface, agent_ip,
+                                                check_exit_code=False)
 
     def remove_fdb_entries(self, agent_ip, ports, interface):
         for mac, ip in ports:
             if mac != constants.FLOODING_ENTRY[0]:
                 self.remove_fdb_ip_entry(mac, ip, interface)
-                self.remove_fdb_bridge_entry(mac, agent_ip, interface)
+                bridge_lib.FdbInterface.delete(mac, interface, agent_ip,
+                                               check_exit_code=False)
             elif self.vxlan_mode == lconst.VXLAN_UCAST:
-                self.remove_fdb_bridge_entry(mac, agent_ip, interface)
+                bridge_lib.FdbInterface.delete(mac, interface, agent_ip,
+                                               check_exit_code=False)
 
     def get_agent_id(self):
         if self.bridge_mappings:

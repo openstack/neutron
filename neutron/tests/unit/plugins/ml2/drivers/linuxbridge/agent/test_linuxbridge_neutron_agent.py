@@ -1035,12 +1035,12 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             self.lb_rpc.fdb_remove(None, fdb_entries)
 
             expected = [
-                mock.call(['bridge', 'fdb', 'del',
+                mock.call(['bridge', 'fdb', 'delete',
                            constants.FLOODING_ENTRY[0],
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
-                mock.call(['bridge', 'fdb', 'del', 'port_mac',
+                mock.call(['bridge', 'fdb', 'delete', 'port_mac',
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           run_as_root=True,
                           check_exit_code=False),
