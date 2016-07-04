@@ -25,6 +25,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions as c_exc
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
@@ -208,13 +209,14 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         if network:
             return network['network_id']
 
-    def _response(self, network_id, tenant_id, fields=None):
+    @staticmethod
+    def _response(network_id, tenant_id, fields=None):
         """Build response for auto-allocated network."""
         res = {
             'id': network_id,
             'tenant_id': tenant_id
         }
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _get_default_external_network(self, context):
         """Get the default external network for the deployment."""

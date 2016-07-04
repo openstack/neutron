@@ -38,6 +38,7 @@ from neutron.callbacks import resources
 from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron import context
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
 from neutron.extensions import agent as ext_agent
@@ -226,7 +227,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         res['resource_versions'] = self._get_dict(agent, 'resource_versions',
                                                   ignore_missing=True)
         res['availability_zone'] = agent['availability_zone']
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()
     def delete_agent(self, context, id):

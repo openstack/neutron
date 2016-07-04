@@ -24,8 +24,8 @@ from neutron._i18n import _
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.common import exceptions as n_exc
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db import common_db_mixin
 from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac
@@ -68,7 +68,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
     def get_shared_with_tenant(context, rbac_db_model, obj_id, tenant_id):
         # NOTE(korzen) This method enables to query within already started
         # session
-        return (common_db_mixin.model_query(context, rbac_db_model).filter(
+        return (db_utils.model_query(context, rbac_db_model).filter(
                 and_(rbac_db_model.object_id == obj_id,
                      rbac_db_model.action == models.ACCESS_SHARED,
                      rbac_db_model.target_tenant.in_(
@@ -92,7 +92,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
     @classmethod
     def _get_db_obj_rbac_entries(cls, context, rbac_obj_id, rbac_action):
         rbac_db_model = cls.rbac_db_model
-        return common_db_mixin.model_query(context, rbac_db_model).filter(
+        return db_utils.model_query(context, rbac_db_model).filter(
             and_(rbac_db_model.object_id == rbac_obj_id,
                  rbac_db_model.action == rbac_action))
 

@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
 from neutron.common import _deprecate
+from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import address_scope as address_scope_model
 from neutron.extensions import address_scope as ext_address_scope
@@ -33,13 +34,14 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     __native_bulk_support = True
 
-    def _make_address_scope_dict(self, address_scope, fields=None):
+    @staticmethod
+    def _make_address_scope_dict(address_scope, fields=None):
         res = {'id': address_scope['id'],
                'name': address_scope['name'],
                'tenant_id': address_scope['tenant_id'],
                'shared': address_scope['shared'],
                'ip_version': address_scope['ip_version']}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _get_address_scope(self, context, id):
         try:

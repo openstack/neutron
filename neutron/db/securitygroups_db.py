@@ -29,6 +29,7 @@ from neutron.callbacks import resources
 from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import securitygroup as sg_models
@@ -256,12 +257,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                        for r in security_group.rules]
         self._apply_dict_extend_functions(ext_sg.SECURITYGROUPS, res,
                                           security_group)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
-    def _make_security_group_binding_dict(self, security_group, fields=None):
+    @staticmethod
+    def _make_security_group_binding_dict(security_group, fields=None):
         res = {'port_id': security_group['port_id'],
                'security_group_id': security_group['security_group_id']}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()
     def _create_port_security_group_binding(self, context, port_id,
@@ -479,7 +481,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         self._apply_dict_extend_functions(ext_sg.SECURITYGROUPRULES, res,
                                           security_group_rule)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _make_security_group_rule_filter_dict(self, security_group_rule):
         sgr = security_group_rule['security_group_rule']

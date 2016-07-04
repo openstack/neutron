@@ -16,7 +16,7 @@
 import mock
 
 from neutron import context
-from neutron.db import common_db_mixin
+from neutron.db import _utils as db_utils
 from neutron.tests.unit import testlib_api
 
 
@@ -32,7 +32,7 @@ class TestCommonHelpFunctions(testlib_api.SqlTestCase):
         tx_check = lambda i: setattr(self, '_active',
                                      self.admin_ctx.session.is_active)
         delete_fn = mock.Mock(side_effect=tx_check)
-        self.assertRaises(ValueError, common_db_mixin.safe_creation,
+        self.assertRaises(ValueError, db_utils.safe_creation,
                           self.admin_ctx, create_fn, delete_fn,
                           create_bindings)
         delete_fn.assert_called_once_with(1234)
@@ -42,7 +42,7 @@ class TestCommonHelpFunctions(testlib_api.SqlTestCase):
         create_fn = mock.Mock(return_value={'id': 1234})
         create_bindings = mock.Mock(side_effect=ValueError)
         delete_fn = mock.Mock(side_effect=EnvironmentError)
-        self.assertRaises(ValueError, common_db_mixin.safe_creation,
+        self.assertRaises(ValueError, db_utils.safe_creation,
                           self.admin_ctx, create_fn, delete_fn,
                           create_bindings)
         delete_fn.assert_called_once_with(1234)

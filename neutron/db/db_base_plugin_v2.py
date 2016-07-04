@@ -42,6 +42,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import context as ctx
+from neutron.db import _utils as ndb_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
@@ -394,8 +395,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # The filter call removes attributes from the body received from
             # the API that are logically tied to network resources but are
             # stored in other database tables handled by extensions
-            network.update(self._filter_non_model_columns(n,
-                                                          models_v2.Network))
+            network.update(
+                ndb_utils.filter_non_model_columns(n, models_v2.Network))
         return self._make_network_dict(network, context=context)
 
     @db_api.retry_if_session_inactive()

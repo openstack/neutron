@@ -19,8 +19,8 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc as orm_exc
 from sqlalchemy import sql
 
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db import common_db_mixin as common_db_api
 from neutron.db.quota import models as quota_models
 
 
@@ -52,7 +52,7 @@ def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
     :returns: a QuotaUsageInfo instance
     """
 
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource, tenant_id=tenant_id)
 
     if lock_for_update:
@@ -69,7 +69,7 @@ def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
 
 @db_api.retry_if_session_inactive()
 def get_quota_usage_by_resource(context, resource):
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource)
     return [QuotaUsageInfo(item.resource,
                            item.tenant_id,
@@ -79,7 +79,7 @@ def get_quota_usage_by_resource(context, resource):
 
 @db_api.retry_if_session_inactive()
 def get_quota_usage_by_tenant_id(context, tenant_id):
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(tenant_id=tenant_id)
     return [QuotaUsageInfo(item.resource,
                            item.tenant_id,
@@ -102,7 +102,7 @@ def set_quota_usage(context, resource, tenant_id,
                   or a delta (default to False)
     """
     with db_api.autonested_transaction(context.session):
-        query = common_db_api.model_query(context, quota_models.QuotaUsage)
+        query = db_utils.model_query(context, quota_models.QuotaUsage)
         query = query.filter_by(resource=resource).filter_by(
             tenant_id=tenant_id)
         usage_data = query.first()
@@ -135,7 +135,7 @@ def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: 1 if the quota usage data were updated, 0 otherwise.
     """
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource).filter_by(tenant_id=tenant_id)
     return query.update({'dirty': dirty})
 
@@ -151,7 +151,7 @@ def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: the number of records for which the bit was actually set.
     """
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(tenant_id=tenant_id)
     if resources:
         query = query.filter(quota_models.QuotaUsage.resource.in_(resources))
@@ -168,7 +168,7 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
     :returns: the number of tenants for which the dirty bit was
               actually updated
     """
-    query = common_db_api.model_query(context, quota_models.QuotaUsage)
+    query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource)
     return query.update({'dirty': dirty})
 

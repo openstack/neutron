@@ -159,7 +159,7 @@ Document common pitfalls as well as good practices done during database developm
   section because internal transaction from ``_do_other_thing_with_created_object``
   has been rolled back. To avoid this nested transactions should be used.
   For such cases help function ``safe_creation`` has been created in
-  ``neutron/db/common_db_mixin.py``.
+  ``neutron/db/_utils.py``.
   So, the example above should be replaced with:
 
   .. code:: python

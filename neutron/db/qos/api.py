@@ -14,7 +14,7 @@ from oslo_db import exception as oslo_db_exception
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron.common import exceptions as n_exc
-from neutron.db import common_db_mixin as db
+from neutron.db import _utils as db_utils
 from neutron.db.qos import models
 
 
@@ -32,8 +32,8 @@ def create_policy_network_binding(context, policy_id, network_id):
 def delete_policy_network_binding(context, policy_id, network_id):
     try:
         with context.session.begin(subtransactions=True):
-            db_object = (db.model_query(context,
-                                        models.QosNetworkPolicyBinding)
+            db_object = (db_utils.model_query(context,
+                                              models.QosNetworkPolicyBinding)
                          .filter_by(policy_id=policy_id,
                                     network_id=network_id).one())
             context.session.delete(db_object)
@@ -43,7 +43,7 @@ def delete_policy_network_binding(context, policy_id, network_id):
 
 
 def get_network_ids_by_network_policy_binding(context, policy_id):
-    query = (db.model_query(context, models.QosNetworkPolicyBinding)
+    query = (db_utils.model_query(context, models.QosNetworkPolicyBinding)
             .filter_by(policy_id=policy_id).all())
     return [entry.network_id for entry in query]
 
@@ -62,7 +62,8 @@ def create_policy_port_binding(context, policy_id, port_id):
 def delete_policy_port_binding(context, policy_id, port_id):
     try:
         with context.session.begin(subtransactions=True):
-            db_object = (db.model_query(context, models.QosPortPolicyBinding)
+            db_object = (db_utils.model_query(context,
+                                              models.QosPortPolicyBinding)
                          .filter_by(policy_id=policy_id,
                                     port_id=port_id).one())
             context.session.delete(db_object)
@@ -72,6 +73,6 @@ def delete_policy_port_binding(context, policy_id, port_id):
 
 
 def get_port_ids_by_port_policy_binding(context, policy_id):
-    query = (db.model_query(context, models.QosPortPolicyBinding)
+    query = (db_utils.model_query(context, models.QosPortPolicyBinding)
             .filter_by(policy_id=policy_id).all())
     return [entry.port_id for entry in query]

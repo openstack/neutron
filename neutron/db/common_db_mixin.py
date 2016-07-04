@@ -13,89 +13,28 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
 import weakref
 
 from neutron_lib.db import utils as db_utils
 from oslo_db.sqlalchemy import utils as sa_utils
 from oslo_log import log as logging
-from oslo_utils import excutils
 import six
 from sqlalchemy import and_
 from sqlalchemy.ext import associationproxy
 from sqlalchemy import or_
 from sqlalchemy import sql
 
-from neutron._i18n import _LE
 from neutron.api.v2 import attributes
-
+from neutron.db import _utils as ndb_utils
 
 LOG = logging.getLogger(__name__)
 
 
-@contextlib.contextmanager
-def _noop_context_manager():
-    yield
-
-
-def safe_creation(context, create_fn, delete_fn, create_bindings,
-                  transaction=True):
-    '''This function wraps logic of object creation in safe atomic way.
-
-    In case of exception, object is deleted.
-
-    More information when this method could be used can be found in
-    developer guide - Effective Neutron: Database interaction section.
-    http://docs.openstack.org/developer/neutron/devref/effective_neutron.html
-
-    :param context: context
-
-    :param create_fn: function without arguments that is called to create
-        object and returns this object.
-
-    :param delete_fn: function that is called to delete an object. It is
-        called with object's id field as an argument.
-
-    :param create_bindings: function that is called to create bindings for
-        an object. It is called with object's id field as an argument.
-
-    :param transaction: if true the whole operation will be wrapped in a
-        transaction. if false, no transaction will be used.
-    '''
-    cm = (context.session.begin(subtransactions=True)
-          if transaction else _noop_context_manager())
-    with cm:
-        obj = create_fn()
-        try:
-            value = create_bindings(obj['id'])
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                try:
-                    delete_fn(obj['id'])
-                except Exception as e:
-                    LOG.error(_LE("Cannot clean up created object %(obj)s. "
-                                  "Exception: %(exc)s"), {'obj': obj['id'],
-                                                          'exc': e})
-        return obj, value
-
-
-def model_query_scope(context, model):
-    # Unless a context has 'admin' or 'advanced-service' rights the
-    # query will be scoped to a single tenant_id
-    return ((not context.is_admin and hasattr(model, 'tenant_id')) and
-            (not context.is_advsvc and hasattr(model, 'tenant_id')))
-
-
-def model_query(context, model):
-    query = context.session.query(model)
-    # define basic filter condition for model query
-    query_filter = None
-    if model_query_scope(context, model):
-        query_filter = (model.tenant_id == context.tenant_id)
-
-    if query_filter is not None:
-        query = query.filter(query_filter)
-    return query
+# TODO(HenryG): Remove these when available in neutron-lib
+safe_creation = ndb_utils.safe_creation
+model_query_scope = ndb_utils.model_query_scope_is_project
+model_query = ndb_utils.model_query
+resource_fields = ndb_utils.resource_fields
 
 
 class CommonDbMixin(object):
@@ -147,14 +86,15 @@ class CommonDbMixin(object):
         """
         return weakref.proxy(self)
 
+    # TODO(HenryG): Remove this when available in neutron-lib
     def model_query_scope(self, context, model):
-        return model_query_scope(context, model)
+        return ndb_utils.model_query_scope_is_project(context, model)
 
     def _model_query(self, context, model):
         query = context.session.query(model)
         # define basic filter condition for model query
         query_filter = None
-        if self.model_query_scope(context, model):
+        if ndb_utils.model_query_scope_is_project(context, model):
             if hasattr(model, 'rbac_entries'):
                 query = query.outerjoin(model.rbac_entries)
                 rbac_model = model.rbac_entries.property.mapper.class_
@@ -189,11 +129,9 @@ class CommonDbMixin(object):
             query = query.filter(query_filter)
         return query
 
+    # TODO(HenryG): Remove this when available in neutron-lib
     def _fields(self, resource, fields):
-        if fields:
-            resource = {key: item for key, item in resource.items()
-                        if key in fields}
-        return attributes.populate_project_info(resource)
+        return ndb_utils.resource_fields(resource, fields)
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
@@ -315,12 +253,6 @@ class CommonDbMixin(object):
             return getattr(self, '_get_%s' % resource)(context, marker)
         return None
 
+    # TODO(HenryG): Remove this when available in neutron-lib
     def _filter_non_model_columns(self, data, model):
-        """Remove all the attributes from data which are not columns or
-        association proxies of the model passed as second parameter
-        """
-        columns = [c.name for c in model.__table__.columns]
-        return dict((k, v) for (k, v) in
-                    six.iteritems(data) if k in columns or
-                    isinstance(getattr(model, k, None),
-                               associationproxy.AssociationProxy))
+        return ndb_utils.filter_non_model_columns(data, model)

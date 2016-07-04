@@ -38,6 +38,7 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db.models import l3 as l3_models
@@ -135,7 +136,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # plugins.
         if process_extensions:
             self._apply_dict_extend_functions(l3.ROUTERS, res, router)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def filter_allocating_and_missing_routers(self, context, routers):
         """Filter out routers that shouldn't go to the agent.
@@ -974,7 +975,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # plugins.
         if process_extensions:
             self._apply_dict_extend_functions(l3.FLOATINGIPS, res, floatingip)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
                                    internal_subnet_id,

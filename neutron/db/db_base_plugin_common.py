@@ -26,6 +26,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import utils
+from neutron.db import _utils as db_utils
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import subnet as subnet_obj
@@ -153,7 +154,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         res['shared'] = self._is_network_shared(context, subnet.networks)
         # Call auxiliary extend functions, if any
         self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _make_subnetpool_dict(self, subnetpool, fields=None):
         default_prefixlen = str(subnetpool['default_prefixlen'])
@@ -173,7 +174,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'address_scope_id': subnetpool['address_scope_id']}
         self._apply_dict_extend_functions(attributes.SUBNETPOOLS, res,
                                           subnetpool)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
                         process_extensions=True):
@@ -193,7 +194,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.PORTS, res, port)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
         try:
@@ -278,7 +279,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.NETWORKS, res, network)
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _is_network_shared(self, context, network):
         # The shared attribute for a network now reflects if the network
@@ -315,20 +316,22 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                  'ip_address': ip["ip_address"]}
                 for ip in ips]
 
-    def _port_filter_hook(self, context, original_model, conditions):
+    @staticmethod
+    def _port_filter_hook(context, original_model, conditions):
         # Apply the port filter only in non-admin and non-advsvc context
-        if self.model_query_scope(context, original_model):
+        if db_utils.model_query_scope_is_project(context, original_model):
             conditions |= (
                 (context.tenant_id == models_v2.Network.tenant_id) &
                 (models_v2.Network.id == models_v2.Port.network_id))
         return conditions
 
-    def _port_query_hook(self, context, original_model, query):
+    @staticmethod
+    def _port_query_hook(context, original_model, query):
         # we need to outerjoin to networks if the model query scope
         # is necessary so we can filter based on network id. without
         # this the conditions in the filter hook cause the networks
         # table to be added to the FROM statement so we get lots of
         # duplicated rows that break the COUNT operation
-        if self.model_query_scope(context, original_model):
+        if db_utils.model_query_scope_is_project(context, original_model):
             query = query.outerjoin(models_v2.Network)
         return query

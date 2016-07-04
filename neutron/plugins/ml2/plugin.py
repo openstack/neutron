@@ -45,6 +45,7 @@ from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import _utils as db_utils
 from neutron.db import address_scope_db
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -844,7 +845,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context, result)
             result[api.MTU] = self._get_network_mtu(result)
 
-        return self._fields(result, fields)
+        return db_utils.resource_fields(result, fields)
 
     @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
@@ -861,7 +862,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for net in nets:
                 net[api.MTU] = self._get_network_mtu(net)
 
-        return [self._fields(net, fields) for net in nets]
+        return [db_utils.resource_fields(net, fields) for net in nets]
 
     def _delete_ports(self, context, port_ids):
         for port_id in port_ids:

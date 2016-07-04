@@ -28,6 +28,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import _deprecate
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db.models import segment as segment_model
@@ -43,7 +44,8 @@ _deprecate._moved_global('SegmentHostMapping', new_module=segment_model)
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     """Mixin class to add segment."""
 
-    def _make_segment_dict(self, segment_db, fields=None):
+    @staticmethod
+    def _make_segment_dict(segment_db, fields=None):
         res = {'id': segment_db['id'],
                'network_id': segment_db['network_id'],
                'name': segment_db['name'],
@@ -54,7 +56,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                'hosts': [mapping.host for mapping in
                          segment_db.segment_host_mapping],
                'segment_index': segment_db['segment_index']}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _get_segment(self, context, segment_id):
         try:

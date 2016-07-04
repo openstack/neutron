@@ -32,6 +32,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
+from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
@@ -107,8 +108,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if (new_mac and new_mac != db_port.mac_address and
                 self._is_mac_in_use(context, network_id, new_mac)):
             raise exc.MacAddressInUse(net_id=network_id, mac=new_mac)
-        db_port.update(self._filter_non_model_columns(new_port,
-                                                      models_v2.Port))
+        db_port.update(db_utils.filter_non_model_columns(new_port,
+                                                         models_v2.Port))
 
     def _update_subnet_host_routes(self, context, id, s):
 
