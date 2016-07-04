@@ -152,6 +152,9 @@ class SecurityGroupAgentRpc(object):
         if not device_ids:
             return
         LOG.info(_LI("Preparing filters for devices %s"), device_ids)
+        self._apply_port_filter(device_ids)
+
+    def _apply_port_filter(self, device_ids, update_filter=False):
         if self.use_enhanced_rpc:
             devices_info = self.plugin_rpc.security_group_info_for_devices(
                 self.context, list(device_ids))
@@ -169,7 +172,12 @@ class SecurityGroupAgentRpc(object):
                 self._update_security_group_info(
                     security_groups, security_group_member_ips)
             for device in devices.values():
-                self.firewall.prepare_port_filter(device)
+                if update_filter:
+                    LOG.debug("Update port filter for %s", device['device'])
+                    self.firewall.update_port_filter(device)
+                else:
+                    LOG.debug("Prepare port filter for %s", device['device'])
+                    self.firewall.prepare_port_filter(device)
 
     def _update_security_group_info(self, security_groups,
                                     security_group_member_ips):
@@ -242,25 +250,7 @@ class SecurityGroupAgentRpc(object):
             if not device_ids:
                 LOG.info(_LI("No ports here to refresh firewall"))
                 return
-        if self.use_enhanced_rpc:
-            devices_info = self.plugin_rpc.security_group_info_for_devices(
-                self.context, device_ids)
-            devices = devices_info['devices']
-            security_groups = devices_info['security_groups']
-            security_group_member_ips = devices_info['sg_member_ips']
-        else:
-            devices = self.plugin_rpc.security_group_rules_for_devices(
-                self.context, device_ids)
-
-        with self.firewall.defer_apply():
-            if self.use_enhanced_rpc:
-                LOG.debug("Update security group information for ports %s",
-                          devices.keys())
-                self._update_security_group_info(
-                    security_groups, security_group_member_ips)
-            for device in devices.values():
-                LOG.debug("Update port filter for %s", device['device'])
-                self.firewall.update_port_filter(device)
+        self._apply_port_filter(device_ids, update_filter=True)
 
     def firewall_refresh_needed(self):
         return self.global_refresh_firewall or self.devices_to_refilter
