@@ -105,7 +105,7 @@ Document common pitfalls as well as good practices done during database developm
 
      q = query(Object.id, Object.name,
                func.count(Object.number)).group_by(Object.id, Object.name)
-* Beware of the `InvalidRequestError <http://docs.sqlalchemy.org/en/rel_0_8/faq.html#this-session-s-transaction-has-been-rolled-back-due-to-a-previous-exception-during-flush-or-similar>`_ exception.
+* Beware of the `InvalidRequestError <http://docs.sqlalchemy.org/en/latest/faq/sessions.html#this-session-s-transaction-has-been-rolled-back-due-to-a-previous-exception-during-flush-or-similar>`_ exception.
   There is even a `Neutron bug <https://bugs.launchpad.net/neutron/+bug/1409774>`_
   registered for it. Bear in mind that this error may also occur when nesting
   transaction blocks, and the innermost block raises an error without proper
