@@ -431,7 +431,7 @@ IRC
   and send public questions to the channel rather then to a specific person if possible.
   (This increase the chances of getting faster answers to your questions).
   A list of the areas and lieutenants nicknames can be found at
-  `Core Reviewers <http://docs.openstack.org/developer/neutron/policies/core-reviewers.html>`_.
+  `Core Reviewers <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html>`_.
 
 Commit messages
 ~~~~~~~~~~~~~~~
