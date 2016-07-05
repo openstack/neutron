@@ -93,11 +93,14 @@ CONF.register_cli_opts(_db_opts, 'database')
 
 
 def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
+    project = config.get_main_option('neutron_project')
     args = []
     if revision:
+        # We use unique branch labels from Newton onwards.
+        if revision.split('@')[0] in MIGRATION_BRANCHES:
+            revision = '-'.join([project, revision])
         args.append(revision)
 
-    project = config.get_main_option('neutron_project')
     if desc:
         alembic_util.msg(_('Running %(cmd)s (%(desc)s) for %(project)s ...') %
                          {'cmd': cmd, 'desc': desc, 'project': project})
@@ -142,13 +145,13 @@ def add_branch_options(parser):
 def _find_milestone_revisions(config, milestone, branch=None):
     """Return the revision(s) for a given milestone."""
     script = alembic_script.ScriptDirectory.from_config(config)
-    return [
-        (m.revision, label)
-        for m in _get_revisions(script)
-        for label in (m.branch_labels or [None])
-        if milestone in getattr(m.module, 'neutron_milestone', []) and
-        (branch is None or branch in m.branch_labels)
-    ]
+    milestone_revisions = []
+    for m in _get_revisions(script):
+        for branch_label in (m.branch_labels or [None]):
+            if milestone in getattr(m.module, 'neutron_milestone', []):
+                if branch is None or branch_label.endswith(branch):
+                    milestone_revisions.append((m.revision, branch))
+    return milestone_revisions
 
 
 def do_upgrade(config, cmd):
@@ -161,11 +164,11 @@ def do_upgrade(config, cmd):
 
     if CONF.command.expand:
         branch = EXPAND_BRANCH
-        revision = _get_branch_head(EXPAND_BRANCH)
+        revision = _get_branch_head(config, EXPAND_BRANCH)
 
     elif CONF.command.contract:
         branch = CONTRACT_BRANCH
-        revision = _get_branch_head(CONTRACT_BRANCH)
+        revision = _get_branch_head(config, CONTRACT_BRANCH)
 
     elif not CONF.command.revision and not CONF.command.delta:
         raise SystemExit(_('You must provide a revision or relative delta'))
@@ -217,14 +220,26 @@ def do_stamp(config, cmd):
                        sql=CONF.command.sql)
 
 
-def _get_branch_head(branch):
+def _get_branch_head(config, branch):
     '''Get the latest @head specification for a branch.'''
+    script_dir = alembic_script.ScriptDirectory.from_config(config)
+    revs = script_dir.revision_map.get_revisions('heads')
+    for rev in revs:
+        for branch_label in rev.branch_labels:
+            # For forwards and backwards compatibility we handle branch
+            # names of either
+            #    'contract/expand'
+            # or
+            #    'subproject-contract/subproject-expand'.
+            if branch_label.endswith(branch):
+                branch = branch_label
+                break
     return '%s@head' % branch
 
 
-def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
+def _check_bootstrap_new_branch(config, branch, version_path, addn_kwargs):
     addn_kwargs['version_path'] = version_path
-    addn_kwargs['head'] = _get_branch_head(branch)
+    addn_kwargs['head'] = _get_branch_head(config, branch)
     if not os.path.exists(version_path):
         # Bootstrap initial directory structure
         utils.ensure_dir(version_path)
@@ -251,7 +266,7 @@ def do_revision(config, cmd):
             args = copy.copy(kwargs)
             version_path = _get_version_branch_path(
                 config, release=CURRENT_RELEASE, branch=branch)
-            _check_bootstrap_new_branch(branch, version_path, args)
+            _check_bootstrap_new_branch(config, branch, version_path, args)
             do_alembic_command(config, cmd, **args)
     else:
         # autogeneration code will take care of enforcing proper directories
@@ -260,32 +275,15 @@ def do_revision(config, cmd):
     update_head_files(config)
 
 
-def _get_release_labels(labels):
-    result = set()
-    for label in labels:
-        # release labels were introduced Liberty for a short time and dropped
-        # in that same release cycle
-        result.add('%s_%s' % (migration.LIBERTY, label))
-    return result
-
-
 def _compare_labels(revision, expected_labels):
     # validate that the script has expected labels only
-    bad_labels = revision.branch_labels - expected_labels
+    expected_branch_labels = set()
+    for label in revision.branch_labels:
+        for expected_label in expected_labels:
+            if label.endswith(expected_label):
+                expected_branch_labels.add(label)
+    bad_labels = revision.branch_labels - expected_branch_labels
     if bad_labels:
-        # NOTE(ihrachyshka): this hack is temporary to accommodate those
-        # projects that already initialized their branches with liberty_*
-        # labels. Let's notify them about the deprecation for now and drop it
-        # later.
-        bad_labels_with_release = (revision.branch_labels -
-                                   _get_release_labels(expected_labels))
-        if not bad_labels_with_release:
-            alembic_util.warn(
-                _('Release aware branch labels (%s) are deprecated. '
-                  'Please switch to expand@ and contract@ '
-                  'labels.') % bad_labels)
-            return
-
         script_name = os.path.basename(revision.path)
         alembic_util.err(
             _('Unexpected label for script %(script_name)s: %(labels)s') %
@@ -339,6 +337,14 @@ def _get_revisions(script):
     return list(script.walk_revisions(base='base', head='heads'))
 
 
+def _get_branch_type(revision):
+    for branch_label in revision.branch_labels:
+        if branch_label.endswith(CONTRACT_BRANCH):
+            return CONTRACT_BRANCH
+        if branch_label.endswith(EXPAND_BRANCH):
+            return EXPAND_BRANCH
+
+
 def _get_branch_points(script):
     branchpoints = []
     for revision in _get_revisions(script):
@@ -352,10 +358,7 @@ def _get_heads_map(config):
     heads = script.get_heads()
     head_map = {}
     for head in heads:
-        if CONTRACT_BRANCH in script.get_revision(head).branch_labels:
-            head_map[CONTRACT_BRANCH] = head
-        else:
-            head_map[EXPAND_BRANCH] = head
+        head_map[_get_branch_type(script.get_revision(head))] = head
     return head_map
 
 
