@@ -165,6 +165,16 @@ def update_segment_host_mapping(context, host, current_segment_ids):
                     stale_segment_ids)).delete(synchronize_session=False)
 
 
+def get_hosts_mapped_with_segments(context):
+    """Get hosts that are mapped with segments.
+
+    L2 providers can use this method to get an overview of SegmentHostMapping,
+    and then delete the stale SegmentHostMapping.
+    """
+    query = context.session.query(SegmentHostMapping.host)
+    return {row.host for row in query}
+
+
 def _get_phys_nets(agent):
     configurations_dict = agent.get('configurations', {})
     mappings = configurations_dict.get('bridge_mappings', {})
