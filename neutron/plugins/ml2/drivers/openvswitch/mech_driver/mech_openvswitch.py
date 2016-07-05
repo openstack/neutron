@@ -91,8 +91,8 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             details = dict(self.vif_details)
             hybrid = portbindings.OVS_HYBRID_PLUG
             if hybrid in a_config:
-                # we only override the vif_details for hybrid pluggin set
-                # in the constuctor if the agent specifically requests it
+                # we only override the vif_details for hybrid plugging set
+                # in the constructor if the agent specifically requests it
                 details[hybrid] = a_config[hybrid]
             return details
         caps = a_config.get('ovs_capabilities', {})
