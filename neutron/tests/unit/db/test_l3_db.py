@@ -228,6 +228,8 @@ class L3_NAT_db_mixin(base.BaseTestCase):
                               return_value=router_dict),\
             mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
                               '_update_router_gw_info') as urgi,\
+            mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_get_router',
+                              return_value=router_db),\
             mock.patch.object(l3_db.L3_NAT_db_mixin, 'notify_router_updated')\
             as nru:
 
