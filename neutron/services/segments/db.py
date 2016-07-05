@@ -28,6 +28,7 @@ from sqlalchemy.orm import exc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import segments_db as db
@@ -195,6 +196,14 @@ def get_segments_with_phys_nets(context, phys_nets):
         return segments
 
 
+def map_segment_to_hosts(context, segment_id, hosts):
+    """Map segment to a collection of hosts."""
+    with db_api.autonested_transaction(context.session):
+        for host in hosts:
+            context.session.add(SegmentHostMapping(segment_id=segment_id,
+                                                   host=host))
+
+
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
                                            context, host, plugin, agent):
     check_segment_for_agent = getattr(plugin, 'check_segment_for_agent', None)
@@ -227,9 +236,7 @@ def _add_segment_host_mapping_for_segment(resource, event, trigger,
         return
     hosts = {agent['host'] for agent in cp.get_agents(context)
              if check_segment_for_agent(segment, agent)}
-    for host in hosts:
-        context.session.add(SegmentHostMapping(segment_id=segment.id,
-                                               host=host))
+    map_segment_to_hosts(context, segment.id, hosts)
 
 
 def subscribe():

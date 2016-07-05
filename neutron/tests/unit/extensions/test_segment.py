@@ -319,6 +319,11 @@ class HostSegmentMappingTestCase(SegmentTestCase):
 
 class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
 
+    def setUp(self, plugin=None):
+        if not plugin:
+            plugin = TEST_PLUGIN_KLASS
+        super(TestMl2HostSegmentMappingNoAgent, self).setUp(plugin=plugin)
+
     def test_update_segment_host_mapping(self):
         ctx = context.get_admin_context()
         host = 'host1'
@@ -339,6 +344,18 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
         self.assertEqual(segment['id'],
                          segments_host_db[segment['id']]['segment_id'])
         self.assertEqual(host, segments_host_db[segment['id']]['host'])
+
+    def test_map_segment_to_hosts(self):
+        ctx = context.get_admin_context()
+        hosts = {'host1', 'host2', 'host3'}
+        with self.network() as network:
+            network = network['network']
+        segment = self._test_create_segment(
+            network_id=network['id'], physical_network='phys_net1',
+            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+        db.map_segment_to_hosts(ctx, segment['id'], hosts)
+        updated_segment = self.plugin.get_segment(ctx, segment['id'])
+        self.assertEqual(hosts, set(updated_segment['hosts']))
 
 
 class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
