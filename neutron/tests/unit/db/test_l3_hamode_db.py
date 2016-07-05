@@ -122,6 +122,10 @@ class L3HATestCase(L3HATestFramework):
             l3_ext_ha_mode.HAMinimumAgentsNumberNotValid,
             self.plugin._check_num_agents_per_router)
 
+    def test_verify_configuration_min_l3_agents_per_router_eq_one(self):
+        cfg.CONF.set_override('min_l3_agents_per_router', 1)
+        self.plugin._check_num_agents_per_router()
+
     def test_verify_configuration_max_l3_agents_below_min_l3_agents(self):
         cfg.CONF.set_override('max_l3_agents_per_router', 3)
         cfg.CONF.set_override('min_l3_agents_per_router', 4)
