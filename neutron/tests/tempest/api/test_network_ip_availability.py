@@ -86,7 +86,7 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
             mask_bits = config.safe_get_config_value(
                 'network', 'project_network_v6_mask_bits')
 
-        subnet_cidr = cidr.subnet(mask_bits).next()
+        subnet_cidr = next(cidr.subnet(mask_bits))
         prefix_len = subnet_cidr.prefixlen
         subnet = self.create_subnet(network,
                                     cidr=subnet_cidr,
