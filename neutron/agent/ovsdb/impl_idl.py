@@ -88,7 +88,7 @@ class Transaction(api.Transaction):
         attempts = 0
         while True:
             if attempts > 0 and self.timeout_exceeded():
-                raise RuntimeError("OVS transaction timed out")
+                raise RuntimeError(_("OVS transaction timed out"))
             attempts += 1
             # TODO(twilson) Make sure we don't loop longer than vsctl_timeout
             txn = idl.Transaction(self.api.idl)

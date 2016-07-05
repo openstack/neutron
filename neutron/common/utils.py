@@ -314,7 +314,7 @@ def is_cidr_host(cidr):
         plain IP addresses specifically to avoid ambiguity.
     """
     if '/' not in str(cidr):
-        raise ValueError("cidr doesn't contain a '/'")
+        raise ValueError(_("cidr doesn't contain a '/'"))
     net = netaddr.IPNetwork(cidr)
     if net.version == 4:
         return net.prefixlen == n_const.IPv4_BITS
