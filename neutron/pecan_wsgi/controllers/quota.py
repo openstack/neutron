@@ -16,7 +16,6 @@
 from neutron_lib.api import converters
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
-from oslo_log import log
 from oslo_utils import importutils
 import pecan
 from pecan import request
@@ -28,7 +27,6 @@ from neutron.common import constants
 from neutron.pecan_wsgi.controllers import utils
 from neutron.quota import resource_registry
 
-LOG = log.getLogger(__name__)
 RESOURCE_NAME = "quota"
 TENANT_ID_ATTR = {'tenant_id':
                   {'allow_post': False,

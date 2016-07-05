@@ -18,12 +18,8 @@
 
 import os
 
-from oslo_log import log as logging
-
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-
-LOG = logging.getLogger(__name__)
 
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
 # devices are listed here (i.e. when using Xen)

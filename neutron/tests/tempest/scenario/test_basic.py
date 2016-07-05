@@ -12,7 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from oslo_log import log as logging
 from tempest.common import waiters
 from tempest import test
 
@@ -21,7 +20,6 @@ from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import constants
 
 CONF = config.CONF
-LOG = logging.getLogger(__name__)
 
 
 class NetworkBasicTest(base.BaseTempestTestCase):

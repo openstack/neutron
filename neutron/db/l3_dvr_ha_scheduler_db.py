@@ -16,10 +16,6 @@
 import neutron.db.l3_dvrscheduler_db as l3agent_dvr_sch_db
 import neutron.db.l3_hascheduler_db as l3_ha_sch_db
 
-from oslo_log import log as logging
-
-LOG = logging.getLogger(__name__)
-
 
 class L3_DVR_HA_scheduler_db_mixin(l3agent_dvr_sch_db.L3_DVRsch_db_mixin,
                                    l3_ha_sch_db.L3_HA_scheduler_db_mixin):

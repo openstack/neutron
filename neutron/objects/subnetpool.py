@@ -14,7 +14,6 @@
 #    under the License.
 
 import netaddr
-from oslo_log import log
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -22,8 +21,6 @@ from neutron.db import api as db_api
 from neutron.db import models_v2 as models
 from neutron.objects import base
 from neutron.objects import common_types
-
-LOG = log.getLogger(__name__)
 
 
 @obj_base.VersionedObjectRegistry.register
