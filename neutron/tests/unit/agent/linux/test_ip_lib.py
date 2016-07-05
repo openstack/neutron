@@ -281,7 +281,8 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertTrue(fake_str.split.called)
         self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
 
-    def test_get_namespaces(self):
+    def test_get_namespaces_non_root(self):
+        self.config(group='AGENT', use_helper_for_ns_read=False)
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
         retval = ip_lib.IPWrapper.get_namespaces()
         self.assertEqual(retval,
@@ -289,9 +290,11 @@ class TestIpWrapper(base.BaseTestCase):
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
-        self.execute.assert_called_once_with([], 'netns', ('list',))
+        self.execute.assert_called_once_with([], 'netns', ('list',),
+                                             run_as_root=False)
 
-    def test_get_namespaces_iproute2_4(self):
+    def test_get_namespaces_iproute2_4_root(self):
+        self.config(group='AGENT', use_helper_for_ns_read=True)
         self.execute.return_value = '\n'.join(NETNS_SAMPLE_IPROUTE2_4)
         retval = ip_lib.IPWrapper.get_namespaces()
         self.assertEqual(retval,
@@ -299,7 +302,8 @@ class TestIpWrapper(base.BaseTestCase):
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
-        self.execute.assert_called_once_with([], 'netns', ('list',))
+        self.execute.assert_called_once_with([], 'netns', ('list',),
+                                             run_as_root=True)
 
     def test_add_tuntap(self):
         ip_lib.IPWrapper().add_tuntap('tap0')

@@ -246,7 +246,9 @@ class IPWrapper(SubProcessBase):
 
     @classmethod
     def get_namespaces(cls):
-        output = cls._execute([], 'netns', ('list',))
+        output = cls._execute(
+            [], 'netns', ('list',),
+            run_as_root=cfg.CONF.AGENT.use_helper_for_ns_read)
         return [l.split()[0] for l in output.splitlines()]
 
 
