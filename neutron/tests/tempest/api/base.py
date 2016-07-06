@@ -491,6 +491,8 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
     # This should be defined by subclasses to reflect resource name to test
     resource = None
 
+    field = 'name'
+
     # NOTE(ihrachys): some names, like those starting with an underscore (_)
     # are sorted differently depending on whether the plugin implements native
     # sorting support, or not. So we avoid any such cases here, sticking to
@@ -510,7 +512,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
         actual = list(actual)
         self.assertEqual(len(original), len(actual))
         for expected, res in zip(original, actual):
-            self.assertEqual(expected['name'], res['name'])
+            self.assertEqual(expected[self.field], res[self.field])
 
     @utils.classproperty
     def plural_name(self):
@@ -537,13 +539,13 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
     def _test_list_sorts(self, direction):
         sort_args = {
             'sort_dir': direction,
-            'sort_key': 'name'
+            'sort_key': self.field
         }
         body = self.list_method(**sort_args)
         resources = self._extract_resources(body)
         self.assertNotEmpty(
             resources, "%s list returned is empty" % self.resource)
-        retrieved_names = [res['name'] for res in resources]
+        retrieved_names = [res[self.field] for res in resources]
         expected = sorted(retrieved_names)
         if direction == constants.SORT_DIRECTION_DESC:
             expected = list(reversed(expected))
@@ -580,7 +582,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
         # first, collect all resources for later comparison
         sort_args = {
             'sort_dir': constants.SORT_DIRECTION_ASC,
-            'sort_key': 'name'
+            'sort_key': self.field
         }
         body = self.list_method(**sort_args)
         expected_resources = self._extract_resources(body)
@@ -666,7 +668,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
             self, direction=constants.SORT_DIRECTION_ASC):
         pagination_args = {
             'sort_dir': direction,
-            'sort_key': 'name',
+            'sort_key': self.field,
         }
         body = self.list_method(**pagination_args)
         expected_resources = self._extract_resources(body)
@@ -709,7 +711,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
     def _test_list_pagination_page_reverse(self, direction):
         pagination_args = {
             'sort_dir': direction,
-            'sort_key': 'name',
+            'sort_key': self.field,
             'limit': 3,
         }
         body = self.list_method(**pagination_args)
