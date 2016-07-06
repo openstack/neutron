@@ -19,10 +19,10 @@ from oslo_log import log as logging
 from neutron._i18n import _, _LI
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
-from neutron.agent.l3 import config as l3_config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config
+from neutron.conf.agent.l3 import config as l3_config
 
 
 LOG = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def setup_conf():
 
     conf = cfg.CONF
     conf.register_cli_opts(opts)
-    conf.register_opts(l3_config.OPTS)
+    l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     conf.register_opts(interface.OPTS)
     agent_config.register_interface_driver_opts_helper(conf)
     return conf

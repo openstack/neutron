@@ -20,7 +20,6 @@ from oslo_config import cfg
 from oslo_service import service
 
 from neutron.agent.common import config
-from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import ha
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
@@ -29,11 +28,12 @@ from neutron.agent.linux import ra
 from neutron.agent.metadata import config as metadata_config
 from neutron.common import config as common_config
 from neutron.common import topics
+from neutron.conf.agent.l3 import config as l3_config
 from neutron import service as neutron_service
 
 
 def register_opts(conf):
-    conf.register_opts(l3_config.OPTS)
+    l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     conf.register_opts(metadata_config.DRIVER_OPTS)
     conf.register_opts(metadata_config.SHARED_OPTS)
     conf.register_opts(ha.OPTS)

@@ -30,6 +30,7 @@ import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
 import neutron.conf.agent.dhcp
+import neutron.conf.agent.l3.config
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.db.agents_db
@@ -195,7 +196,7 @@ def list_l3_agent_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.agent.l3.config.OPTS,
+             neutron.conf.agent.l3.config.OPTS,
              neutron.conf.service.service_opts,
              neutron.agent.l3.ha.OPTS,
              neutron.agent.linux.pd.OPTS,
