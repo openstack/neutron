@@ -27,7 +27,6 @@ from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
-from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -883,13 +882,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                     port_ids = [port.id for port in ports]
                     subnet_ids = [subnet.id for subnet in subnets]
-            except os_db_exception.DBError as e:
-                with excutils.save_and_reraise_exception() as ctxt:
-                    if isinstance(e.inner_exception, sql_exc.IntegrityError):
-                        ctxt.reraise = False
-                        LOG.warning(_LW("A concurrent port creation has "
-                                        "occurred"))
-                        continue
+            except os_db_exception.DBDuplicateEntry:
+                LOG.warning(_LW("A concurrent port creation has "
+                                "occurred"))
+                continue
             self._delete_ports(context, port_ids)
             self._delete_subnets(context, subnet_ids)
 
