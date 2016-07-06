@@ -29,6 +29,7 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 _uuid = uuidutils.generate_uuid
 
 ADVERTISE_FIPS_KEY = 'advertise_floating_ip_host_routes'
+IMAGINARY = '2b2334c8-adfe-42d9-82c6-ad866c7fc5d8'  # non existent resource id
 
 
 class BgpEntityCreationMixin(object):
@@ -304,7 +305,7 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                   {'bgp_peer_id': peer['id']})
 
     def test_remove_non_existent_bgp_peer(self):
-        bgp_peer_id = "imaginary"
+        bgp_peer_id = IMAGINARY
         with self.subnetpool_with_address_scope(4,
                                                 prefixes=['8.0.0.0/8']) as sp:
             with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
@@ -315,7 +316,7 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                   {'bgp_peer_id': bgp_peer_id})
 
     def test_add_non_existent_bgp_peer(self):
-        bgp_peer_id = "imaginary"
+        bgp_peer_id = IMAGINARY
         with self.subnetpool_with_address_scope(4,
                                                 prefixes=['8.0.0.0/8']) as sp:
             with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
@@ -324,6 +325,36 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                   self.context,
                                   speaker['id'],
                                   {'bgp_peer_id': bgp_peer_id})
+
+    def test_add_bgp_peer_without_id(self):
+        with self.subnetpool_with_address_scope(4,
+                                                prefixes=['8.0.0.0/8']) as sp:
+            with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
+                self.assertRaises(n_exc.BadRequest,
+                                  self.bgp_plugin.add_bgp_peer,
+                                  self.context,
+                                  speaker['id'],
+                                  {})
+
+    def test_add_bgp_peer_with_bad_id(self):
+        with self.subnetpool_with_address_scope(4,
+                                                prefixes=['8.0.0.0/8']) as sp:
+            with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
+                self.assertRaises(n_exc.BadRequest,
+                                  self.bgp_plugin.add_bgp_peer,
+                                  self.context,
+                                  speaker['id'],
+                                  {'bgp_peer_id': 'aaa'})
+
+    def test_add_bgp_peer_with_none_id(self):
+        with self.subnetpool_with_address_scope(4,
+                                                prefixes=['8.0.0.0/8']) as sp:
+            with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
+                self.assertRaises(n_exc.BadRequest,
+                                  self.bgp_plugin.add_bgp_peer,
+                                  self.context,
+                                  speaker['id'],
+                                  {'bgp_peer_id': None})
 
     def test_add_gateway_network(self):
         with self.subnetpool_with_address_scope(4,
@@ -371,7 +402,7 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                 self.assertEqual(1, len(new_speaker['networks']))
 
     def test_add_non_existent_gateway_network(self):
-        network_id = "imaginary"
+        network_id = IMAGINARY
         with self.subnetpool_with_address_scope(4,
                                                 prefixes=['8.0.0.0/8']) as sp:
             with self.bgp_speaker(sp['ip_version'], 1234) as speaker:
@@ -381,7 +412,7 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                   {'network_id': network_id})
 
     def test_remove_non_existent_gateway_network(self):
-        network_id = "imaginary"
+        network_id = IMAGINARY
         with self.subnetpool_with_address_scope(4,
                                                 prefixes=['8.0.0.0/8']) as sp:
             with self.bgp_speaker(sp['ip_version'], 1234) as speaker:

@@ -23,6 +23,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import exc as sa_exc
 
+from neutron_lib.api import validators
 from neutron_lib import constants as lib_consts
 
 from neutron.api.v2 import attributes as attr
@@ -308,11 +309,14 @@ class BgpDbMixin(common_db.CommonDbMixin):
 
     def _get_id_for(self, resource, id_name):
         try:
-            return resource.get(id_name)
-        except AttributeError:
+            uuid = resource[id_name]
+            msg = validators.validate_uuid(uuid)
+        except KeyError:
             msg = _("%s must be specified") % id_name
+        if msg:
             raise n_exc.BadRequest(resource=bgp_ext.BGP_SPEAKER_RESOURCE_NAME,
                                    msg=msg)
+        return uuid
 
     def _get_bgp_peers_by_bgp_speaker_binding(self, context, bgp_speaker_id):
         with context.session.begin(subtransactions=True):
