@@ -1,0 +1,5 @@
+---
+deprecations:
+  - The option min_l3_agents_per_router is deprecated and will be
+    removed for the Ocata release where the scheduling of new HA
+    routers will always be allowed.
