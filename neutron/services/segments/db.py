@@ -19,7 +19,6 @@ import functools
 
 from neutron_lib import constants
 from oslo_log import helpers as log_helpers
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -34,9 +33,6 @@ from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
 from neutron.services.segments import exceptions
-
-
-LOG = logging.getLogger(__name__)
 
 
 class SegmentHostMapping(model_base.BASEV2):

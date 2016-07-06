@@ -17,7 +17,6 @@ import functools
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
-from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
@@ -26,9 +25,6 @@ from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.db import tag_db as tag_model
 from neutron.extensions import tag as tag_ext
-
-
-LOG = logging.getLogger(__name__)
 
 
 resource_model_map = {

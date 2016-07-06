@@ -13,13 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log as logging
-
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import tc_lib
 from neutron.tests.functional import base as functional_base
-
-LOG = logging.getLogger(__name__)
 
 TEST_HZ_VALUE = 250
 LATENCY = 50

@@ -22,7 +22,6 @@ from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
 from neutron_lib import constants
 from oslo_config import cfg
-from oslo_log import log
 
 from neutron._i18n import _
 from neutron.extensions import dns
@@ -33,7 +32,6 @@ IPV4_PTR_ZONE_PREFIX_MAX_SIZE = 24
 IPV6_PTR_ZONE_PREFIX_MIN_SIZE = 4
 IPV6_PTR_ZONE_PREFIX_MAX_SIZE = 124
 
-LOG = log.getLogger(__name__)
 _SESSION = None
 
 designate_opts = [

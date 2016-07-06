@@ -16,10 +16,7 @@
 
 import abc
 
-from oslo_log import log as logging
 import six
-
-LOG = logging.getLogger(__name__)
 
 
 class NetworkSegment(object):

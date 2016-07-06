@@ -15,7 +15,6 @@ import abc
 
 from neutron_lib.api import validators
 from neutron_lib import exceptions
-from oslo_log import log as logging
 import six
 import webob.exc
 
@@ -27,8 +26,6 @@ from neutron.api.v2 import resource as api_resource
 from neutron import manager
 from neutron.services import service_base
 
-
-LOG = logging.getLogger(__name__)
 
 TAG = 'tag'
 TAGS = TAG + 's'
