@@ -103,21 +103,15 @@ class SqlFixture(fixtures.Fixture):
             synchronous_reader=True)
 
         _restore_factory = db_api.context_manager._root_factory
-        _restore_facade = db_api._FACADE
 
         db_api.context_manager._root_factory = self.enginefacade_factory
 
-        db_api._FACADE = self.enginefacade_factory.get_legacy_facade()
-
-        engine = db_api._FACADE.get_engine()
+        engine = db_api.context_manager.get_legacy_facade().get_engine()
 
         self.addCleanup(
             lambda: setattr(
                 db_api.context_manager,
                 "_root_factory", _restore_factory))
-        self.addCleanup(
-            lambda: setattr(
-                db_api, "_FACADE", _restore_facade))
 
         self.useFixture(EnableSQLiteFKsFixture(engine))
 
