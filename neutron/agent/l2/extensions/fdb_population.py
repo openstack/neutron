@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -63,9 +64,9 @@ class FdbPopulationAgentExtension(agent_extension.AgentCoreResourceExtension):
     #       the message will be sent to the wire, causing the message
     #       to get lost in case the sender uses direct port and is
     #       located on the same hypervisor as the network node.
-    PERMITTED_DEVICE_OWNERS = {'compute',
-                               'network:router_interface',
-                               'network:dhcp'}
+    PERMITTED_DEVICE_OWNERS = {constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                               constants.DEVICE_OWNER_ROUTER_INTF,
+                               constants.DEVICE_OWNER_DHCP}
 
     class FdbTableTracker(object):
         """FDB table tracker is a helper class

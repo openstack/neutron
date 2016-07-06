@@ -1025,7 +1025,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             'context': self.adminContext,
             'original_port': None,
             'port': {
-                'device_owner': 'network:None',
+                'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX + 'None',
             }
         }
         l3plugin = mock.Mock()
@@ -1374,7 +1374,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         dvr_port = {
                 'id': 'dvr_port1',
                 'device_id': 'r1',
-                'device_owner': 'network:router_interface_distributed',
+                'device_owner': constants.DEVICE_OWNER_DVR_INTERFACE,
                 'fixed_ips': []
         }
         r1 = {

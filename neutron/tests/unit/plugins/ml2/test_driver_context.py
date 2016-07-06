@@ -53,7 +53,7 @@ class TestPortContext(base.BaseTestCase):
         network = mock.MagicMock()
         binding = mock.Mock()
 
-        port = {'device_owner': 'compute',
+        port = {'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX,
                 portbindings.HOST_ID: 'host'}
         binding.host = 'foohost'
 
@@ -92,7 +92,7 @@ class TestPortContext(base.BaseTestCase):
         network = mock.MagicMock()
         binding = mock.Mock()
 
-        port = {'device_owner': 'compute',
+        port = {'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX,
                 'status': 'status'}
         binding.status = 'foostatus'
 

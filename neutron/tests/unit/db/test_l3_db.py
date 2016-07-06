@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 import testtools
 
@@ -161,7 +162,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     def test_prevent_l3_port_no_fixed_ips(self, gp):
         # without fixed IPs is allowed
         gp.return_value.get_port.return_value = {
-            'device_owner': 'network:router_interface', 'fixed_ips': [],
+            'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF, 'fixed_ips': [],
             'id': 'f'
         }
         self.db.prevent_l3_port_deletion(None, None)
@@ -170,7 +171,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     def test_prevent_l3_port_no_router(self, gp):
         # without router is allowed
         gp.return_value.get_port.return_value = {
-            'device_owner': 'network:router_interface',
+            'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF,
             'device_id': '44', 'id': 'f',
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
         self.db.get_router = mock.Mock()
@@ -180,7 +181,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     @mock.patch.object(manager.NeutronManager, 'get_plugin')
     def test_prevent_l3_port_existing_router(self, gp):
         gp.return_value.get_port.return_value = {
-            'device_owner': 'network:router_interface',
+            'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF,
             'device_id': 'some_router', 'id': 'f',
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
         self.db.get_router = mock.Mock()
@@ -190,7 +191,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     @mock.patch.object(manager.NeutronManager, 'get_plugin')
     def test_prevent_l3_port_existing_floating_ip(self, gp):
         gp.return_value.get_port.return_value = {
-            'device_owner': 'network:floatingip',
+            'device_owner': n_const.DEVICE_OWNER_FLOATINGIP,
             'device_id': 'some_flip', 'id': 'f',
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
         self.db.get_floatingip = mock.Mock()
