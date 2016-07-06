@@ -139,6 +139,7 @@ class TrunksSearchCriteriaTest(base.BaseSearchCriteriaTest):
     field = 'id'
 
     @classmethod
+    @test.requires_ext(extension="trunk", service="network")
     def resource_setup(cls):
         super(TrunksSearchCriteriaTest, cls).resource_setup()
         net = cls.create_network(network_name='trunk-search-test-net')
