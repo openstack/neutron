@@ -1,0 +1,190 @@
+# Copyright 2016 Hewlett Packard Enterprise Development Company LP
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+from oslo_utils import uuidutils
+from tempest.lib import exceptions as lib_exc
+from tempest import test
+
+from neutron.tests.tempest.api import test_trunk
+
+
+class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
+
+    def tearDown(self):
+        # NOTE(tidwellr) These tests create networks and ports, clean them up
+        # after each test to avoid hitting quota limits
+        self.resource_cleanup()
+        super(TrunkTestJSON, self).tearDown()
+
+    @classmethod
+    @test.requires_ext(extension="trunk", service="network")
+    def resource_setup(cls):
+        super(test_trunk.TrunkTestJSONBase, cls).resource_setup()
+
+    @test.attr(type='negative')
+    @test.idempotent_id('1b5cf87a-1d3a-4a94-ba64-647153d54f32')
+    def test_create_trunk_nonexistent_port_id(self):
+        self.assertRaises(lib_exc.NotFound, self.client.create_trunk,
+                          uuidutils.generate_uuid(), [])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('980bca3b-b0be-45ac-8067-b401e445b796')
+    def test_create_trunk_nonexistent_subport_port_id(self):
+        network = self.create_network()
+        parent_port = self.create_port(network)
+        self.assertRaises(lib_exc.NotFound, self.client.create_trunk,
+                          parent_port['id'],
+                          [{'port_id': uuidutils.generate_uuid(),
+                            'segmentation_type': 'vlan',
+                            'segmentation_id': 2}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('a5c5200a-72a0-43c5-a11a-52f808490344')
+    def test_create_subport_nonexistent_port_id(self):
+        trunk = self._create_trunk_with_network_and_parent([])
+        self.assertRaises(lib_exc.NotFound, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          [{'port_id': uuidutils.generate_uuid(),
+                            'segmentation_type': 'vlan',
+                            'segmentation_id': 2}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('80deb6a9-da2a-48db-b7fd-bcef5b14edc1')
+    def test_create_subport_nonexistent_trunk(self):
+        network = self.create_network()
+        parent_port = self.create_port(network)
+        self.assertRaises(lib_exc.NotFound, self.client.add_subports,
+                          uuidutils.generate_uuid(),
+                          [{'port_id': parent_port['id'],
+                            'segmentation_type': 'vlan',
+                            'segmentation_id': 2}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('7e0f99ab-fe37-408b-a889-9e44ef300084')
+    def test_create_subport_missing_segmentation_id(self):
+        trunk = self._create_trunk_with_network_and_parent([])
+        subport_network = self.create_network()
+        parent_port = self.create_port(subport_network)
+        self.assertRaises(lib_exc.BadRequest, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          [{'port_id': parent_port['id'],
+                            'segmentation_type': 'vlan'}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('a315d78b-2f43-4efa-89ae-166044c568aa')
+    def test_create_trunk_with_subport_missing_segmentation_id(self):
+        subport_network = self.create_network()
+        parent_port = self.create_port(subport_network)
+        self.assertRaises(lib_exc.BadRequest, self.client.create_trunk,
+                          parent_port['id'],
+                          [{'port_id': uuidutils.generate_uuid(),
+                            'segmentation_type': 'vlan'}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('33498618-f75a-4796-8ae6-93d4fd203fa4')
+    def test_create_trunk_with_subport_missing_segmentation_type(self):
+        subport_network = self.create_network()
+        parent_port = self.create_port(subport_network)
+        self.assertRaises(lib_exc.BadRequest, self.client.create_trunk,
+                          parent_port['id'],
+                          [{'port_id': uuidutils.generate_uuid(),
+                            'segmentation_id': 3}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('a717691c-4e07-4d81-a98d-6f1c18c5d183')
+    def test_create_trunk_with_subport_missing_port_id(self):
+        subport_network = self.create_network()
+        parent_port = self.create_port(subport_network)
+        self.assertRaises(lib_exc.BadRequest, self.client.create_trunk,
+                          parent_port['id'],
+                          [{'segmentation_type': 'vlan',
+                            'segmentation_id': 3}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('40aed9be-e976-47d0-a555-bde2c7e74e57')
+    def test_create_trunk_duplicate_subport_segmentation_ids(self):
+        trunk = self._create_trunk_with_network_and_parent([])
+        subport_network1 = self.create_network()
+        subport_network2 = self.create_network()
+        parent_port1 = self.create_port(subport_network1)
+        parent_port2 = self.create_port(subport_network2)
+        self.assertRaises(lib_exc.BadRequest, self.client.create_trunk,
+                          trunk['trunk']['id'],
+                          [{'port_id': parent_port1['id'],
+                            'segmentation_id': 2,
+                            'segmentation_type': 'vlan'},
+                           {'port_id': parent_port2['id'],
+                            'segmentation_id': 2,
+                            'segmentation_type': 'vlan'}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('6f132ccc-1380-42d8-9c44-50411612bd01')
+    def test_add_subport_port_id_uses_trunk_port_id(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        self.assertRaises(lib_exc.Conflict, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          [{'port_id': trunk['trunk']['port_id'],
+                            'segmentation_type': 'vlan',
+                            'segmentation_id': 2}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('00cb40bb-1593-44c8-808c-72b47e64252f')
+    def test_add_subport_duplicate_segmentation_details(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        network = self.create_network()
+        parent_port1 = self.create_port(network)
+        parent_port2 = self.create_port(network)
+        self.client.add_subports(trunk['trunk']['id'],
+                                 [{'port_id': parent_port1['id'],
+                                   'segmentation_type': 'vlan',
+                                   'segmentation_id': 2}])
+        self.assertRaises(lib_exc.Conflict, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          [{'port_id': parent_port2['id'],
+                            'segmentation_type': 'vlan',
+                            'segmentation_id': 2}])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('4eac8c25-83ee-4051-9620-34774f565730')
+    def test_add_subport_passing_dict(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        self.assertRaises(lib_exc.BadRequest, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          {'port_id': trunk['trunk']['port_id'],
+                           'segmentation_type': 'vlan',
+                           'segmentation_id': 2})
+
+    @test.attr(type='negative')
+    @test.idempotent_id('17ca7dd7-96a8-445a-941e-53c0c86c2fe2')
+    def test_remove_subport_passing_dict(self):
+        network = self.create_network()
+        parent_port = self.create_port(network)
+        subport_data = {'port_id': parent_port['id'],
+                        'segmentation_type': 'vlan',
+                        'segmentation_id': 2}
+        trunk = self._create_trunk_with_network_and_parent([subport_data])
+        self.assertRaises(lib_exc.BadRequest, self.client.remove_subports,
+                          trunk['trunk']['id'], subport_data)
+
+    @test.attr(type='negative')
+    @test.idempotent_id('aaca7dd7-96b8-445a-931e-63f0d86d2fe2')
+    def test_remove_subport_not_found(self):
+        network = self.create_network()
+        parent_port = self.create_port(network)
+        subport_data = {'port_id': parent_port['id'],
+                        'segmentation_type': 'vlan',
+                        'segmentation_id': 2}
+        trunk = self._create_trunk_with_network_and_parent([])
+        self.assertRaises(lib_exc.NotFound, self.client.remove_subports,
+                          trunk['trunk']['id'], [subport_data])

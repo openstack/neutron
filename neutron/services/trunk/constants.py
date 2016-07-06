@@ -12,4 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import neutron.services.trunk.validators  # noqa
+PARENT_PORT = 'parent_port'
+SUBPORT = 'subport'
+TRUNK = 'trunk'
+TRUNK_PLUGIN = 'trunk_plugin'
+
+VLAN = 'vlan'

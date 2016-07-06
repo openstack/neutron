@@ -33,5 +33,7 @@ NETWORK_API_EXTENSIONS="
     standard-attr-description, \
     subnet_allocation, \
     tag, \
-    timestamp_core"
+    timestamp_core, \
+    trunk, \
+    trunk-details"
 NETWORK_API_EXTENSIONS="$(echo $NETWORK_API_EXTENSIONS | tr -d ' ')"

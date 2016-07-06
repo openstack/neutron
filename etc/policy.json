@@ -218,5 +218,12 @@
     "create_flavor_service_profile": "rule:admin_only",
     "delete_flavor_service_profile": "rule:admin_only",
     "get_flavor_service_profile": "rule:regular_user",
-    "get_auto_allocated_topology": "rule:admin_or_owner"
+    "get_auto_allocated_topology": "rule:admin_or_owner",
+
+    "create_trunk": "rule:regular_user",
+    "get_trunk": "rule:admin_or_owner",
+    "delete_trunk": "rule:admin_or_owner",
+    "get_subports": "",
+    "add_subports": "rule:admin_or_owner",
+    "remove_subports": "rule:admin_or_owner"
 }

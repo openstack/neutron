@@ -12,4 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import neutron.services.trunk.validators  # noqa
+from neutron.services.trunk.validators import vlan
+
+# Register segmentation_type validation drivers
+vlan.register()

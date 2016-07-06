@@ -659,6 +659,64 @@ class NetworkClientJSON(service_client.RestClient):
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
+    def create_trunk(self, parent_port_id, subports, tenant_id=None):
+        uri = '%s/trunks' % self.uri_prefix
+        post_data = {
+            'trunk': {
+                'port_id': parent_port_id,
+            }
+        }
+        if subports is not None:
+            post_data['trunk']['sub_ports'] = subports
+        if tenant_id is not None:
+            post_data['trunk']['tenant_id'] = tenant_id
+        resp, body = self.post(uri, self.serialize(post_data))
+        body = self.deserialize_single(body)
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def show_trunk(self, trunk_id):
+        uri = '%s/trunks/%s' % (self.uri_prefix, trunk_id)
+        resp, body = self.get(uri)
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def list_trunks(self, **kwargs):
+        uri = '%s/trunks' % self.uri_prefix
+        if kwargs:
+            uri += '?' + urlparse.urlencode(kwargs, doseq=1)
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = self.deserialize_single(body)
+        return service_client.ResponseBody(resp, body)
+
+    def delete_trunk(self, trunk_id):
+        uri = '%s/trunks/%s' % (self.uri_prefix, trunk_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def _subports_action(self, action, trunk_id, subports):
+        uri = '%s/trunks/%s/%s' % (self.uri_prefix, trunk_id, action)
+        resp, body = self.put(uri, jsonutils.dumps(subports))
+        body = self.deserialize_single(body)
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
+
+    def add_subports(self, trunk_id, subports):
+        return self._subports_action('add_subports', trunk_id, subports)
+
+    def remove_subports(self, trunk_id, subports):
+        return self._subports_action('remove_subports', trunk_id, subports)
+
+    def get_subports(self, trunk_id):
+        uri = '%s/trunks/%s/%s' % (self.uri_prefix, trunk_id, 'get_subports')
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)
+
     def get_auto_allocated_topology(self, tenant_id=None):
         uri = '%s/auto-allocated-topology/%s' % (self.uri_prefix, tenant_id)
         resp, body = self.get(uri)
