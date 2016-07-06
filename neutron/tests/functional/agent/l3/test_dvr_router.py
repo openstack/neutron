@@ -21,6 +21,7 @@ from neutron_lib import constants as l3_constants
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -83,6 +84,69 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertTrue(self._namespace_exists(fip_ns))
         self._assert_dvr_floating_ips(router)
         self._assert_snat_namespace_does_not_exist(router)
+
+    def test_dvr_router_fips_stale_gw_port(self):
+        self.agent.conf.agent_mode = 'dvr'
+
+        # Create the router with external net
+        dvr_router_kwargs = {'ip_address': '19.4.4.3',
+                             'subnet_cidr': '19.4.4.0/24',
+                             'gateway_ip': '19.4.4.1',
+                             'gateway_mac': 'ca:fe:de:ab:cd:ef'}
+        router_info = self.generate_dvr_router_info(**dvr_router_kwargs)
+        external_gw_port = router_info['gw_port']
+        ext_net_id = router_info['_floatingips'][0]['floating_network_id']
+        self.mock_plugin_api.get_external_network_id.return_value(ext_net_id)
+
+        # Create the fip namespace up front
+        stale_fip_ns = dvr_fip_ns.FipNamespace(ext_net_id,
+                                               self.agent.conf,
+                                               self.agent.driver,
+                                               self.agent.use_ipv6)
+        stale_fip_ns.create()
+
+        # Add a stale fg port to the namespace
+        fixed_ip = external_gw_port['fixed_ips'][0]
+        float_subnet = external_gw_port['subnets'][0]
+        fip_gw_port_ip = str(netaddr.IPAddress(fixed_ip['ip_address']) + 10)
+        prefixlen = netaddr.IPNetwork(float_subnet['cidr']).prefixlen
+        stale_agent_gw_port = {
+            'subnets': [{'cidr': float_subnet['cidr'],
+                         'gateway_ip': float_subnet['gateway_ip'],
+                         'id': fixed_ip['subnet_id']}],
+            'network_id': external_gw_port['network_id'],
+            'device_owner': l3_constants.DEVICE_OWNER_AGENT_GW,
+            'mac_address': 'fa:16:3e:80:8f:89',
+            portbindings.HOST_ID: self.agent.conf.host,
+            'fixed_ips': [{'subnet_id': fixed_ip['subnet_id'],
+                           'ip_address': fip_gw_port_ip,
+                           'prefixlen': prefixlen}],
+            'id': framework._uuid(),
+            'device_id': framework._uuid()}
+        stale_fip_ns.create_gateway_port(stale_agent_gw_port)
+
+        stale_dev_exists = self.device_exists_with_ips_and_mac(
+                stale_agent_gw_port,
+                stale_fip_ns.get_ext_device_name,
+                stale_fip_ns.get_name())
+        self.assertTrue(stale_dev_exists)
+
+        # Create the router, this shouldn't allow the duplicate port to stay
+        router = self.manage_router(self.agent, router_info)
+
+        # Assert the device no longer exists
+        stale_dev_exists = self.device_exists_with_ips_and_mac(
+                stale_agent_gw_port,
+                stale_fip_ns.get_ext_device_name,
+                stale_fip_ns.get_name())
+        self.assertFalse(stale_dev_exists)
+
+        # Validate things are looking good and clean up
+        self._validate_fips_for_external_network(
+            router, router.fip_ns.get_name())
+        ext_gateway_port = router_info['gw_port']
+        self._delete_router(self.agent, router.router_id)
+        self._assert_fip_namespace_deleted(ext_gateway_port)
 
     def test_dvr_router_fips_for_multiple_ext_networks(self):
         agent_mode = 'dvr'

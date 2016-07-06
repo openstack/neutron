@@ -110,6 +110,18 @@ class FipNamespace(namespaces.Namespace):
                          prefix=FIP_EXT_DEV_PREFIX,
                          mtu=ex_gw_port.get('mtu'))
 
+        # Remove stale fg devices
+        ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
+        devices = ip_wrapper.get_devices()
+        for device in devices:
+            name = device.name
+            if name.startswith(FIP_EXT_DEV_PREFIX) and name != interface_name:
+                ext_net_bridge = self.agent_conf.external_network_bridge
+                self.driver.unplug(name,
+                                   bridge=ext_net_bridge,
+                                   namespace=ns_name,
+                                   prefix=FIP_EXT_DEV_PREFIX)
+
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name,
                             clean_connections=True)
@@ -117,8 +129,6 @@ class FipNamespace(namespaces.Namespace):
         self.update_gateway_port(ex_gw_port)
 
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
-        # TODO(Carl) mlavelle's work has self.ip_wrapper
-        ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def create(self):
