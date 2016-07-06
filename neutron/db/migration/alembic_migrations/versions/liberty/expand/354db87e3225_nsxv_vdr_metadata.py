@@ -30,7 +30,7 @@ from neutron.db.migration import cli
 # revision identifiers, used by Alembic.
 revision = '354db87e3225'
 down_revision = 'kilo'
-branch_labels = ('neutron-' + cli.EXPAND_BRANCH,)
+branch_labels = (cli.EXPAND_BRANCH,)
 
 
 def upgrade():

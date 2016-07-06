@@ -237,12 +237,7 @@ class TestModelsMigrationsMysql(_TestModelsMigrations,
             script = alembic_script.ScriptDirectory.from_config(
                 self.alembic_config)
             for m in list(script.walk_revisions(base='base', head='heads')):
-                branches = set()
-                for bl in m.branch_labels:
-                    if bl.endswith(migration.CONTRACT_BRANCH):
-                        branches.add(migration.CONTRACT_BRANCH)
-                    elif bl.endswith(migration.EXPAND_BRANCH):
-                        branches.add(migration.EXPAND_BRANCH)
+                branches = m.branch_labels or []
                 if migration.CONTRACT_BRANCH in branches:
                     method_name = 'contract_creation_exceptions'
                     exceptions_dict = creation_exceptions
