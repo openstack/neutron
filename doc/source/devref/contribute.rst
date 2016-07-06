@@ -118,7 +118,7 @@ Design documents can still be supplied in form of Restructured Text (RST)
 documents, within the same third-party library repo. If changes to the common
 Neutron code are required, an `RFE
 <http://docs.openstack.org/developer/neutron/policies/blueprints.html#neutron-request-for-feature-enhancements>`_
-may need to be filed. However every case is different and you are invited to
+may need to be filed. However, every case is different and you are invited to
 seek guidance from Neutron core reviewers about what steps to follow.
 
 
@@ -126,7 +126,7 @@ Testing and Continuous Integration
 ----------------------------------
 
 The following strategies are recommendations only, since third-party CI testing
-is not a enforced requirement. However, these strategies are employed by the
+is not an enforced requirement. However, these strategies are employed by the
 majority of the plugin/driver contributors that actively participate in the
 Neutron development community, since they have learned from experience how
 quickly their code can fall out of sync with the rapidly changing Neutron core
@@ -188,7 +188,7 @@ reused by any project-team when needed.
 
 The OpenStack VMT directly oversees vulnerability reporting and disclosure for
 a `subset of OpenStack source code repositories
-<https://wiki.openstack.org/wiki/Security_supported_projects>`_.  However they
+<https://wiki.openstack.org/wiki/Security_supported_projects>`_.  However, they
 are still quite happy to answer any questions you might have about
 vulnerability management for your own projects even if they're not part of that
 set. Feel free to reach out to the VMT in public or in private.
@@ -202,7 +202,7 @@ help with security-related issues (vulnerabilities or otherwise).
 - Does a CVE need to be filed?
 
 It can vary widely. If a commercial distribution such as Red Hat is
-redistributing a vulnerable version of your software then they may assign one
+redistributing a vulnerable version of your software, then they may assign one
 anyway even if you don't request one yourself. Or the reporter may request one;
 the reporter may even be affiliated with an organization who has already
 assigned/obtained a CVE before they initiate contact with you.
@@ -329,7 +329,7 @@ Internationalization (I18n) is one of important areas to make OpenStack ubiquito
 Each project is recommended to support i18n.
 
 This section describes how to set up translation support.
-The description in this section uses the following variables.
+The description in this section uses the following variables:
 
 * repository : ``openstack/${REPOSITORY}`` (e.g., ``openstack/networking-foo``)
 * top level python path : ``${MODULE_NAME}`` (e.g., ``networking_foo``)
