@@ -15,12 +15,11 @@
 import os
 
 import mock
-from oslo_config import cfg
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
 
-from neutron._i18n import _
 from neutron.agent.l3 import keepalived_state_change
+from neutron.conf.agent.l3 import keepalived as kd
 from neutron.tests.functional import base
 
 
@@ -28,12 +27,7 @@ class TestKeepalivedStateChange(base.BaseSudoTestCase):
     def setUp(self):
         super(TestKeepalivedStateChange, self).setUp()
         self.conf_fixture = self.useFixture(fixture_config.Config())
-        self.conf_fixture.register_opt(
-            cfg.StrOpt('metadata_proxy_socket',
-                       default='$state_path/metadata_proxy',
-                       help=_('Location of Metadata Proxy UNIX domain '
-                              'socket')))
-
+        kd.register_l3_agent_keepalived_opts(self.conf_fixture)
         self.router_id = uuidutils.generate_uuid()
         self.conf_dir = self.get_default_temp_dir().path
         self.cidr = '169.254.128.1/24'
