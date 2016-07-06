@@ -157,7 +157,11 @@ def list_base_agent_opts():
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS,
              neutron.agent.common.ovs_lib.OPTS)
          ),
-        ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS)
+        ('AGENT',
+         itertools.chain(
+             neutron.agent.common.config.AGENT_STATE_OPTS,
+             neutron.agent.common.config.AVAILABILITY_ZONE_OPTS)
+         )
     ]
 
 
