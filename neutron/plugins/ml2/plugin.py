@@ -204,7 +204,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           **kwargs):
         port_id = object_id
         port = db.get_port(context.session, port_id)
-        if not port:
+        if not port or not port.port_binding:
             LOG.debug("Port %s was deleted so its status cannot be updated.",
                       port_id)
             return

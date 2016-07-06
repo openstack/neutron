@@ -512,6 +512,22 @@ class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
+    def test__port_provisioned_no_binding(self):
+        plugin = manager.NeutronManager.get_plugin()
+        with self.network() as net:
+            net_id = net['network']['id']
+        port_id = 'fake_id'
+        port_db = models_v2.Port(
+            id=port_id, tenant_id='tenant', network_id=net_id,
+            mac_address='08:00:01:02:03:04', admin_state_up=True,
+            status='ACTIVE', device_id='vm_id',
+            device_owner=DEVICE_OWNER_COMPUTE
+        )
+        with self.context.session.begin():
+            self.context.session.add(port_db)
+        self.assertIsNone(plugin._port_provisioned('port', 'evt', 'trigger',
+                                                   self.context, port_id))
+
     def test_create_router_port_and_fail_create_postcommit(self):
 
         with mock.patch.object(managers.MechanismManager,
