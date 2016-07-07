@@ -189,8 +189,6 @@ class HaRouter(router.RouterInfo):
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
         gateway_ips = self._get_external_gw_ips(ex_gw_port)
-        if not gateway_ips:
-            return
 
         default_gw_rts = []
         instance = self._get_keepalived_instance()

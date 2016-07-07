@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import functools
 
 import mock
@@ -777,6 +778,34 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router_updated = self.agent.router_info[router_info['id']]
         self._assert_extra_routes(router_updated, namespace=snat_ns_name)
         self._assert_extra_routes(router_updated)
+
+    def test_dvr_router_gateway_update_to_none(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(enable_snat=True)
+        router = self.manage_router(self.agent, router_info)
+        gw_port = router.get_ex_gw_port()
+        ex_gw_port_name = router.get_external_device_name(gw_port['id'])
+        ex_gw_device = ip_lib.IPDevice(ex_gw_port_name,
+                                       namespace=router.snat_namespace.name)
+        fg_port = router.fip_ns.agent_gateway_port
+        fg_port_name = router.fip_ns.get_ext_device_name(fg_port['id'])
+        fg_device = ip_lib.IPDevice(fg_port_name,
+                                    namespace=router.fip_ns.name)
+        self.assertIn('gateway', ex_gw_device.route.get_gateway())
+        self.assertIn('gateway', fg_device.route.get_gateway())
+
+        # Make this copy to make agent think gw_port changed.
+        router.ex_gw_port = copy.deepcopy(router.ex_gw_port)
+        for subnet in gw_port['subnets']:
+            subnet['gateway_ip'] = None
+        new_fg_port = copy.deepcopy(fg_port)
+        for subnet in new_fg_port['subnets']:
+            subnet['gateway_ip'] = None
+
+        router.router[n_const.FLOATINGIP_AGENT_INTF_KEY] = [new_fg_port]
+        router.process(self.agent)
+        self.assertIsNone(ex_gw_device.route.get_gateway())
+        self.assertIsNone(fg_device.route.get_gateway())
 
     def _assert_fip_namespace_deleted(self, ext_gateway_port):
         ext_net_id = ext_gateway_port['network_id']

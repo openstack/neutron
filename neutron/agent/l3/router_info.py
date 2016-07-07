@@ -615,7 +615,15 @@ class RouterInfo(object):
             clean_connections=True)
 
         device = ip_lib.IPDevice(interface_name, namespace=ns_name)
-        for ip in gateway_ips or []:
+        current_gateways = set()
+        for ip_version in (l3_constants.IP_VERSION_4,
+                           l3_constants.IP_VERSION_6):
+            gateway = device.route.get_gateway(ip_version=ip_version)
+            if gateway and gateway.get('gateway'):
+                current_gateways.add(gateway.get('gateway'))
+        for ip in current_gateways - set(gateway_ips):
+            device.route.delete_gateway(ip)
+        for ip in gateway_ips:
             device.route.add_gateway(ip)
 
         if enable_ra_on_gw:

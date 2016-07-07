@@ -228,6 +228,10 @@ class FipNamespace(namespaces.Namespace):
                 if is_gateway_not_in_subnet:
                     ipd.route.add_route(gw_ip, scope='link')
                 ipd.route.add_gateway(gw_ip)
+            else:
+                current_gateway = ipd.route.get_gateway()
+                if current_gateway and current_gateway.get('gateway'):
+                    ipd.route.delete_gateway(current_gateway.get('gateway'))
 
     def _add_cidr_to_device(self, device, ip_cidr):
         if not device.addr.list(to=ip_cidr):
