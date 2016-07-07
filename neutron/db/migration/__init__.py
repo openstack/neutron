@@ -157,6 +157,27 @@ def create_table_if_not_exist_psql(table_name, values):
                 'columns': values})
 
 
+def get_unique_constraints_map(table):
+    inspector = reflection.Inspector.from_engine(op.get_bind())
+    return {
+        tuple(sorted(cons['column_names'])): cons['name']
+        for cons in inspector.get_unique_constraints(table)
+    }
+
+
+def remove_fk_unique_constraints(table, foreign_keys):
+    unique_constraints_map = get_unique_constraints_map(table)
+    for fk in foreign_keys:
+        constraint_name = unique_constraints_map.get(
+            tuple(sorted(fk['constrained_columns'])))
+        if constraint_name:
+            op.drop_constraint(
+                constraint_name=constraint_name,
+                table_name=table,
+                type_="unique"
+            )
+
+
 def remove_foreign_keys(table, foreign_keys):
     for fk in foreign_keys:
         op.drop_constraint(
@@ -179,11 +200,13 @@ def create_foreign_keys(table, foreign_keys):
 
 
 @contextlib.contextmanager
-def remove_fks_from_table(table):
+def remove_fks_from_table(table, remove_unique_constraints=False):
     try:
         inspector = reflection.Inspector.from_engine(op.get_bind())
         foreign_keys = inspector.get_foreign_keys(table)
         remove_foreign_keys(table, foreign_keys)
+        if remove_unique_constraints:
+            remove_fk_unique_constraints(table, foreign_keys)
         yield
     finally:
         create_foreign_keys(table, foreign_keys)
