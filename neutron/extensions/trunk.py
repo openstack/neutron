@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from oslo_log import log as logging
 
 from neutron_lib.api import converters
@@ -31,15 +33,16 @@ LOG = logging.getLogger(__name__)
 # as there is a new release.
 def validate_subports(data, valid_values=None):
     if not isinstance(data, list):
-        msg = _("Invalid data format for subports: '%s'") % data
+        msg = _("Invalid data format for subports: '%s' is not a list") % data
         LOG.debug(msg)
         return msg
 
     subport_ids = set()
-    segmentation_ids = set()
+    segmentations = collections.defaultdict(set)
     for subport in data:
         if not isinstance(subport, dict):
-            msg = _("Invalid data format for subport: '%s'") % subport
+            msg = _("Invalid data format for subport: "
+                    "'%s' is not a dict") % subport
             LOG.debug(msg)
             return msg
 
@@ -67,14 +70,14 @@ def validate_subports(data, valid_values=None):
                     "segmentation_type") % subport
             LOG.debug(msg)
             return msg
-        if segmentation_id in segmentation_ids:
+        if segmentation_id in segmentations.get(segmentation_type, []):
             msg = _("Segmentation ID '%(seg_id)s' for '%(subport)s' is not "
                     "unique") % {"seg_id": segmentation_id,
-                    "subport": subport["port_id"]}
+                                 "subport": subport["port_id"]}
             LOG.debug(msg)
             return msg
         if segmentation_id:
-            segmentation_ids.add(segmentation_id)
+            segmentations[segmentation_type].add(segmentation_id)
 
 
 validators.validators['type:subports'] = validate_subports
