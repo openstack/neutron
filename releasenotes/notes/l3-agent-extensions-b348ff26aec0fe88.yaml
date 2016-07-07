@@ -1,0 +1,5 @@
+---
+features:
+  - The neutron L3 agent now has the ability to load
+    agent extensions, which allows other services to
+    integrate without additional agent changes.

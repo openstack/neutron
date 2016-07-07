@@ -32,6 +32,7 @@ from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_local_router as dvr_local_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
+from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
@@ -223,6 +224,8 @@ class L3NATAgent(ha.AgentMixin,
                     continue
             break
 
+        self.init_extension_manager(self.plugin_rpc)
+
         self.metadata_driver = None
         if self.conf.enable_metadata_proxy:
             self.metadata_driver = metadata_driver.MetadataDriver(self)
@@ -341,6 +344,7 @@ class L3NATAgent(ha.AgentMixin,
 
         try:
             self._router_removed(router_id)
+            self.l3_ext_manager.delete_router(self.context, router_id)
         except Exception:
             LOG.exception(_LE('Error while deleting router %s'), router_id)
             return False
@@ -362,6 +366,13 @@ class L3NATAgent(ha.AgentMixin,
         del self.router_info[router_id]
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
+
+    def init_extension_manager(self, connection):
+        l3_ext_manager.register_opts(self.conf)
+        self.l3_ext_manager = (
+            l3_ext_manager.L3AgentExtensionsManager(self.conf))
+        self.l3_ext_manager.initialize(
+            connection, l3_constants.L3_AGENT_MODE)
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
@@ -426,6 +437,7 @@ class L3NATAgent(ha.AgentMixin,
         ri.router = router
         ri.process(self)
         registry.notify(resources.ROUTER, events.AFTER_CREATE, self, router=ri)
+        self.l3_ext_manager.add_router(self.context, router)
 
     def _process_updated_router(self, router):
         ri = self.router_info[router['id']]
@@ -434,6 +446,7 @@ class L3NATAgent(ha.AgentMixin,
                         self, router=ri)
         ri.process(self)
         registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
+        self.l3_ext_manager.update_router(self.context, router)
 
     def _resync_router(self, router_update,
                        priority=queue.PRIORITY_SYNC_ROUTERS_TASK):
