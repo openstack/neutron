@@ -782,6 +782,24 @@ class TestSegmentAwareIpam(SegmentTestCase):
         # Gets bad request because there are no eligible subnets.
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
 
+    def test_port_without_ip_not_deferred(self):
+        """Ports without addresses on non-routed networks are not deferred"""
+        with self.network() as network:
+            pass
+
+        # Create a bound port with no IP address (since there is no subnet)
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        port = self.deserialize(self.fmt, response)
+        request = self.new_show_request('ports', port['port']['id'])
+        response = self.deserialize(self.fmt, request.get_response(self.api))
+
+        self.assertEqual(ip_allocation.IP_ALLOCATION_IMMEDIATE,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+
     def test_port_update_is_host_aware(self):
         """Binding information is provided, subnets on segments"""
         with self.network() as network:
@@ -799,11 +817,11 @@ class TestSegmentAwareIpam(SegmentTestCase):
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
-        self._validate_deferred_ip_allocation(port['port']['id'])
 
         # Create the subnet and try to update the port to get an IP
         with self.subnet(network=network,
                          segment_id=segment['segment']['id']) as subnet:
+            self._validate_deferred_ip_allocation(port['port']['id'])
             # Try requesting an IP (but the only subnet is on a segment)
             data = {'port': {
                 'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
@@ -841,8 +859,6 @@ class TestSegmentAwareIpam(SegmentTestCase):
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
 
-        self._validate_deferred_ip_allocation(port['port']['id'])
-
         return port
 
     def test_port_update_deferred_allocation(self):
@@ -853,6 +869,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
 
         port = self._create_deferred_ip_port(network)
+        self._validate_deferred_ip_allocation(port['port']['id'])
 
         # Try requesting an IP (but the only subnet is on a segment)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
@@ -932,6 +949,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
         network, segment, subnet = self._create_test_segment_with_subnet()
 
         port = self._create_deferred_ip_port(network)
+        self._validate_deferred_ip_allocation(port['port']['id'])
 
         # Try requesting an IP (but the only subnet is on a segment)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
@@ -950,6 +968,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
         network, segments, _s = self._create_test_segments_with_subnets(2)
 
         port = self._create_deferred_ip_port(network)
+        self._validate_deferred_ip_allocation(port['port']['id'])
 
         # This host is bound to multiple segments
         self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost'),

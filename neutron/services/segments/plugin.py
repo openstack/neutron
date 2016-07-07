@@ -14,9 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from sqlalchemy.orm import session
 
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
+from neutron.db import models_v2
 from neutron.extensions import ip_allocation
 from neutron.extensions import segment
 from neutron import manager
@@ -31,10 +33,16 @@ def _extend_port_dict_binding(plugin, port_res, port_db):
     if not manager.NeutronManager.get_service_plugins().get('segments'):
         return
 
-    if port_res.get('fixed_ips'):
-        value = ip_allocation.IP_ALLOCATION_IMMEDIATE
-    else:
-        value = ip_allocation.IP_ALLOCATION_DEFERRED
+    value = ip_allocation.IP_ALLOCATION_IMMEDIATE
+    if not port_res.get('fixed_ips'):
+        # NOTE Only routed network ports have deferred allocation. Check if it
+        # is routed by looking for subnets associated with segments.
+        object_session = session.Session.object_session(port_db)
+        query = object_session.query(models_v2.Subnet)
+        query = query.filter_by(network_id=port_db.network_id)
+        query = query.filter(models_v2.Subnet.segment_id.isnot(None))
+        if query.count():
+            value = ip_allocation.IP_ALLOCATION_DEFERRED
     port_res[ip_allocation.IP_ALLOCATION] = value
 
 
