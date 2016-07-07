@@ -89,7 +89,7 @@ class ClientFixture(fixtures.Fixture):
         return self._create_resource(resource_type, spec)
 
     def create_port(self, tenant_id, network_id, hostname=None,
-                    qos_policy_id=None, **kwargs):
+                    qos_policy_id=None, security_groups=None, **kwargs):
         spec = {
             'network_id': network_id,
             'tenant_id': tenant_id,
@@ -99,6 +99,8 @@ class ClientFixture(fixtures.Fixture):
             spec[portbindings.HOST_ID] = hostname
         if qos_policy_id:
             spec['qos_policy_id'] = qos_policy_id
+        if security_groups:
+            spec['security_groups'] = security_groups
         return self._create_resource('port', spec)
 
     def create_floatingip(self, tenant_id, floating_network_id,
@@ -244,3 +246,21 @@ class ClientFixture(fixtures.Fixture):
             'sub_ports': sub_ports,
         }
         return self.client.trunk_remove_subports(trunk_id, spec)
+
+    def create_security_group(self, tenant_id, name=None):
+        resource_type = 'security_group'
+
+        name = name or utils.get_rand_name(prefix=resource_type)
+        spec = {'tenant_id': tenant_id, 'name': name}
+
+        return self._create_resource(resource_type, spec)
+
+    def create_security_group_rule(self, tenant_id, security_group_id,
+                                   **kwargs):
+        resource_type = 'security_group_rule'
+
+        spec = {'tenant_id': tenant_id,
+                'security_group_id': security_group_id}
+        spec.update(kwargs)
+
+        return self._create_resource(resource_type, spec)

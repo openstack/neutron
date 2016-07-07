@@ -154,7 +154,7 @@ class OVSConfigFixture(ConfigFixture):
                 'ovsdb_interface': host_desc.ovsdb_interface,
             },
             'securitygroup': {
-                'firewall_driver': 'noop',
+                'firewall_driver': host_desc.firewall_driver,
             },
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
