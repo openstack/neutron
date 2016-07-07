@@ -53,3 +53,10 @@ class GeneveTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
                                 testlib_api.SqlTestCase):
     DRIVER_CLASS = type_geneve.GeneveTypeDriver
     TYPE = p_const.TYPE_GENEVE
+
+
+class GeneveTypeTunnelMTUTest(base_type_tunnel.TunnelTypeMTUTestMixin,
+                              testlib_api.SqlTestCase):
+    DRIVER_CLASS = type_geneve.GeneveTypeDriver
+    TYPE = p_const.TYPE_GENEVE
+    ENCAP_OVERHEAD = p_const.GENEVE_ENCAP_MIN_OVERHEAD

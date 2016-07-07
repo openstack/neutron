@@ -43,8 +43,12 @@ ovs_opts = [
                help=_("Peer patch port in tunnel bridge for integration "
                       "bridge.")),
     cfg.IPOpt('local_ip',
-              help=_("Local IP address of tunnel endpoint. Can be either "
-                     "an IPv4 or IPv6 address.")),
+              help=_("IP address of local overlay (tunnel) network endpoint. "
+                     "Use either an IPv4 or IPv6 address that resides on one "
+                     "of the host network interfaces. The IP version of this "
+                     "value must match the value of the 'overlay_ip_version' "
+                     "option in the ML2 plug-in configuration file on the "
+                     "neutron server node(s).")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help=_("Comma-separated list of <physical_network>:<bridge> "

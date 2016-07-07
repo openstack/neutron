@@ -61,7 +61,11 @@ ml2_opts = [
                       "will have the same type as tenant networks. Allowed "
                       "values for external_network_type config option depend "
                       "on the network type values configured in type_drivers "
-                      "config option."))
+                      "config option.")),
+    cfg.IntOpt('overlay_ip_version',
+               default=4,
+               help=_("IP version of all overlay (tunnel) network endpoints. "
+                      "Use a value of 4 for IPv4 or 6 for IPv6."))
 ]
 
 

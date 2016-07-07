@@ -14,7 +14,6 @@
 #    under the License.
 
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_vxlan
 from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
 from neutron.tests.unit.plugins.ml2 import test_rpc
@@ -65,30 +64,6 @@ class VxlanTypeTest(base_type_tunnel.TunnelTypeTestMixin,
                 self.assertEqual(VXLAN_UDP_PORT_TWO, endpoint['udp_port'])
                 self.assertEqual(base_type_tunnel.HOST_TWO, endpoint['host'])
 
-    def test_get_mtu(self):
-        config.cfg.CONF.set_override('global_physnet_mtu', 1500)
-        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
-        self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
-        self.assertEqual(1475 - p_const.VXLAN_ENCAP_OVERHEAD,
-                         self.driver.get_mtu('physnet1'))
-
-        config.cfg.CONF.set_override('global_physnet_mtu', 1450)
-        config.cfg.CONF.set_override('path_mtu', 1475, group='ml2')
-        self.driver.physnet_mtus = {'physnet1': 1400, 'physnet2': 1425}
-        self.assertEqual(1450 - p_const.VXLAN_ENCAP_OVERHEAD,
-                         self.driver.get_mtu('physnet1'))
-
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 1450, group='ml2')
-        self.driver.physnet_mtus = {'physnet1': 1425, 'physnet2': 1400}
-        self.assertEqual(1450 - p_const.VXLAN_ENCAP_OVERHEAD,
-                         self.driver.get_mtu('physnet1'))
-
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
-        self.driver.physnet_mtus = {}
-        self.assertEqual(0, self.driver.get_mtu('physnet1'))
-
 
 class VxlanTypeMultiRangeTest(base_type_tunnel.TunnelTypeMultiRangeTestMixin,
                               testlib_api.SqlTestCase):
@@ -100,3 +75,10 @@ class VxlanTypeRpcCallbackTest(base_type_tunnel.TunnelRpcCallbackTestMixin,
                                testlib_api.SqlTestCase):
     DRIVER_CLASS = type_vxlan.VxlanTypeDriver
     TYPE = p_const.TYPE_VXLAN
+
+
+class VxlanTypeTunnelMTUTest(base_type_tunnel.TunnelTypeMTUTestMixin,
+                             testlib_api.SqlTestCase):
+    DRIVER_CLASS = type_vxlan.VxlanTypeDriver
+    TYPE = p_const.TYPE_VXLAN
+    ENCAP_OVERHEAD = p_const.VXLAN_ENCAP_OVERHEAD

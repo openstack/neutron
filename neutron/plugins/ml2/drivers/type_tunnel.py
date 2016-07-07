@@ -16,6 +16,7 @@ import abc
 import itertools
 import operator
 
+import netaddr
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
@@ -28,6 +29,7 @@ from sqlalchemy import or_
 from neutron._i18n import _, _LI, _LW
 from neutron.common import topics
 from neutron.db import api as db_api
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers
@@ -251,7 +253,9 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
             mtu.append(seg_mtu)
         if cfg.CONF.ml2.path_mtu > 0:
             mtu.append(cfg.CONF.ml2.path_mtu)
-        return min(mtu) if mtu else 0
+        version = cfg.CONF.ml2.overlay_ip_version
+        ip_header_length = p_const.IP_HEADER_LENGTH[version]
+        return min(mtu) - ip_header_length if mtu else 0
 
 
 class EndpointTunnelTypeDriver(TunnelTypeDriver):
@@ -324,12 +328,19 @@ class TunnelRpcCallbackMixin(object):
             msg = _("Tunnel IP value needed by the ML2 plugin")
             raise exc.InvalidInput(error_message=msg)
 
+        host = kwargs.get('host')
+        version = netaddr.IPAddress(tunnel_ip).version
+        if version != cfg.CONF.ml2.overlay_ip_version:
+            msg = (_("Tunnel IP version does not match ML2 "
+                     "overlay_ip_version, host: %(host)s, tunnel_ip: %(ip)s"),
+                   {'host': host, 'ip': tunnel_ip})
+            raise exc.InvalidInput(error_message=msg)
+
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
             msg = _("Network type value needed by the ML2 plugin")
             raise exc.InvalidInput(error_message=msg)
 
-        host = kwargs.get('host')
         driver = self._type_manager.drivers.get(tunnel_type)
         if driver:
             # The given conditional statements will verify the following
