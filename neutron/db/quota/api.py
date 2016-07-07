@@ -121,6 +121,7 @@ def set_quota_usage(context, resource, tenant_id,
                           usage_data.dirty)
 
 
+@db_api.context_manager.writer
 def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     """Set quota usage dirty bit for a given resource and tenant.
 
@@ -134,6 +135,7 @@ def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     return query.update({'dirty': dirty})
 
 
+@db_api.context_manager.writer
 def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     """Set quota usage dirty bit for a given tenant and multiple resources.
 
@@ -151,6 +153,7 @@ def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     return query.update({'dirty': dirty}, synchronize_session=False)
 
 
+@db_api.context_manager.writer
 def set_all_quota_usage_dirty(context, resource, dirty=True):
     """Set the dirty bit on quota usage for all tenants.
 
@@ -196,6 +199,7 @@ def get_reservation(context, reservation_id):
                                 for delta in resv.resource_deltas))
 
 
+@db_api.context_manager.writer
 def remove_reservation(context, reservation_id, set_dirty=False):
     delete_query = context.session.query(quota_models.Reservation).filter_by(
         id=reservation_id)
@@ -250,6 +254,7 @@ def get_reservations_for_resources(context, tenant_id, resources,
             for (resource, exp, total_reserved) in resv_query)
 
 
+@db_api.context_manager.writer
 def remove_expired_reservations(context, tenant_id=None):
     now = utcnow()
     resv_query = context.session.query(quota_models.Reservation)
