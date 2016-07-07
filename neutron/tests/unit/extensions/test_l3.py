@@ -2096,6 +2096,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     self.assertEqual(str(ip_range[-2]),
                                      body_2['floatingip']['fixed_ip_address'])
 
+    def test_floatingip_update_invalid_fixed_ip(self):
+        with self.subnet() as s:
+            with self.port(subnet=s) as p:
+                with self.floatingip_with_assoc(
+                    port_id=p['port']['id']) as fip:
+                    self._update(
+                        'floatingips', fip['floatingip']['id'],
+                        {'floatingip': {'port_id': p['port']['id'],
+                                        'fixed_ip_address': '2001:db8::a'}},
+                        expected_code=exc.HTTPBadRequest.code)
+
     def test_first_floatingip_associate_notification(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
@@ -2400,6 +2411,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip(self.fmt, uuidutils.generate_uuid(),
                                       uuidutils.generate_uuid(), 'iamnotnanip')
+        self.assertEqual(400, res.status_int)
+
+    def test_create_floatingip_invalid_fixed_ipv6_address_returns_400(self):
+        # API-level test - no need to create all objects for l3 plugin
+        res = self._create_floatingip(self.fmt, uuidutils.generate_uuid(),
+                                      uuidutils.generate_uuid(), '2001:db8::a')
         self.assertEqual(400, res.status_int)
 
     def test_floatingip_list_with_sort(self):
