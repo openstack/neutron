@@ -17,10 +17,9 @@ from neutron_lib import exceptions
 from oslo_log import log
 
 from neutron.common import exceptions as n_exc
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
-from neutron.db.quota import models as quota_models
+from neutron.objects import quota as quota_obj
 
 LOG = log.getLogger(__name__)
 
@@ -66,9 +65,8 @@ class DbQuotaDriver(object):
                             for key, resource in resources.items())
 
         # update with tenant specific limits
-        q_qry = db_utils.model_query(context, quota_models.Quota).filter_by(
-            tenant_id=tenant_id)
-        for item in q_qry:
+        quota_objs = quota_obj.Quota.get_objects(context, project_id=tenant_id)
+        for item in quota_objs:
             tenant_quota[item['resource']] = item['limit']
 
         return tenant_quota
@@ -82,12 +80,10 @@ class DbQuotaDriver(object):
         Raise a "not found" error if the quota for the given tenant was
         never defined.
         """
-        with context.session.begin():
-            tenant_quotas = context.session.query(quota_models.Quota)
-            tenant_quotas = tenant_quotas.filter_by(tenant_id=tenant_id)
-            if not tenant_quotas.delete():
-                # No record deleted means the quota was not found
-                raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
+        if quota_obj.Quota.delete_objects(
+            context, project_id=tenant_id) < 1:
+            # No record deleted means the quota was not found
+            raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
     @db_api.retry_if_session_inactive()
@@ -104,8 +100,8 @@ class DbQuotaDriver(object):
 
         all_tenant_quotas = {}
 
-        for quota in context.session.query(quota_models.Quota):
-            tenant_id = quota['tenant_id']
+        for quota in quota_obj.Quota.get_objects(context):
+            tenant_id = quota['project_id']
 
             # avoid setdefault() because only want to copy when actually
             # required
@@ -124,17 +120,14 @@ class DbQuotaDriver(object):
     @staticmethod
     @db_api.retry_if_session_inactive()
     def update_quota_limit(context, tenant_id, resource, limit):
-        with context.session.begin():
-            tenant_quota = context.session.query(quota_models.Quota).filter_by(
-                tenant_id=tenant_id, resource=resource).first()
-
-            if tenant_quota:
-                tenant_quota.update({'limit': limit})
-            else:
-                tenant_quota = quota_models.Quota(tenant_id=tenant_id,
-                                                  resource=resource,
-                                                  limit=limit)
-                context.session.add(tenant_quota)
+        tenant_quotas = quota_obj.Quota.get_objects(
+            context, project_id=tenant_id, resource=resource)
+        if tenant_quotas:
+            tenant_quotas[0].limit = limit
+            tenant_quotas[0].update()
+        else:
+            quota_obj.Quota(context, project_id=tenant_id, resource=resource,
+                            limit=limit).create()
 
     def _get_quotas(self, context, tenant_id, resources):
         """Retrieves the quotas for specific resources.

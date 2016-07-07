@@ -15,13 +15,8 @@
 import collections
 import datetime
 
-import sqlalchemy as sa
-from sqlalchemy.orm import exc as orm_exc
-from sqlalchemy import sql
-
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db.quota import models as quota_models
+from neutron.objects import quota as quota_obj
 
 
 # Wrapper for utcnow - needed for mocking it in unit tests
@@ -50,40 +45,30 @@ def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id):
     :returns: a QuotaUsageInfo instance
     """
 
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource, tenant_id=tenant_id)
-
-    # NOTE(manjeets) as lock mode was just for protecting dirty bits
-    # an update on dirty will prevent the race.
-    query.filter_by(dirty=True).update({'dirty': True})
-
-    result = query.first()
+    result = quota_obj.QuotaUsage.get_object_dirty_protected(
+        context, resource=resource, project_id=tenant_id)
     if not result:
         return
-    return QuotaUsageInfo(result.resource,
-                          result.tenant_id,
-                          result.in_use,
+    return QuotaUsageInfo(result.resource, result.project_id, result.in_use,
                           result.dirty)
 
 
 @db_api.retry_if_session_inactive()
 def get_quota_usage_by_resource(context, resource):
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource)
+    objs = quota_obj.QuotaUsage.get_objects(context, resource=resource)
     return [QuotaUsageInfo(item.resource,
-                           item.tenant_id,
+                           item.project_id,
                            item.in_use,
-                           item.dirty) for item in query]
+                           item.dirty) for item in objs]
 
 
 @db_api.retry_if_session_inactive()
 def get_quota_usage_by_tenant_id(context, tenant_id):
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(tenant_id=tenant_id)
+    objs = quota_obj.QuotaUsage.get_objects(context, project_id=tenant_id)
     return [QuotaUsageInfo(item.resource,
-                           item.tenant_id,
+                           tenant_id,
                            item.in_use,
-                           item.dirty) for item in query]
+                           item.dirty) for item in objs]
 
 
 @db_api.retry_if_session_inactive()
@@ -101,16 +86,13 @@ def set_quota_usage(context, resource, tenant_id,
                   or a delta (default to False)
     """
     with db_api.autonested_transaction(context.session):
-        query = db_utils.model_query(context, quota_models.QuotaUsage)
-        query = query.filter_by(resource=resource).filter_by(
-            tenant_id=tenant_id)
-        usage_data = query.first()
+        usage_data = quota_obj.QuotaUsage.get_object(
+            context, resource=resource, project_id=tenant_id)
         if not usage_data:
             # Must create entry
-            usage_data = quota_models.QuotaUsage(
-                resource=resource,
-                tenant_id=tenant_id)
-            context.session.add(usage_data)
+            usage_data = quota_obj.QuotaUsage(
+                context, resource=resource, project_id=tenant_id)
+            usage_data.create()
         # Perform explicit comparison with None as 0 is a valid value
         if in_use is not None:
             if delta:
@@ -118,10 +100,9 @@ def set_quota_usage(context, resource, tenant_id,
             usage_data.in_use = in_use
         # After an explicit update the dirty bit should always be reset
         usage_data.dirty = False
-    return QuotaUsageInfo(usage_data.resource,
-                          usage_data.tenant_id,
-                          usage_data.in_use,
-                          usage_data.dirty)
+        usage_data.update()
+    return QuotaUsageInfo(usage_data.resource, usage_data.project_id,
+                          usage_data.in_use, usage_data.dirty)
 
 
 @db_api.retry_if_session_inactive()
@@ -134,9 +115,13 @@ def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: 1 if the quota usage data were updated, 0 otherwise.
     """
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource).filter_by(tenant_id=tenant_id)
-    return query.update({'dirty': dirty})
+    obj = quota_obj.QuotaUsage.get_object(
+        context, resource=resource, project_id=tenant_id)
+    if obj:
+        obj.dirty = dirty
+        obj.update()
+        return 1
+    return 0
 
 
 @db_api.retry_if_session_inactive()
@@ -150,12 +135,14 @@ def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: the number of records for which the bit was actually set.
     """
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(tenant_id=tenant_id)
+    filters = {'project_id': tenant_id}
     if resources:
-        query = query.filter(quota_models.QuotaUsage.resource.in_(resources))
-    # synchronize_session=False needed because of the IN condition
-    return query.update({'dirty': dirty}, synchronize_session=False)
+        filters['resource'] = resources
+    objs = quota_obj.QuotaUsage.get_objects(context, **filters)
+    for obj in objs:
+        obj.dirty = dirty
+        obj.update()
+    return len(objs)
 
 
 @db_api.retry_if_session_inactive()
@@ -167,66 +154,62 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
     :returns: the number of tenants for which the dirty bit was
               actually updated
     """
-    query = db_utils.model_query(context, quota_models.QuotaUsage)
-    query = query.filter_by(resource=resource)
-    return query.update({'dirty': dirty})
+    # TODO(manjeets) consider squashing this method with
+    # set_resources_quota_usage_dirty
+    objs = quota_obj.QuotaUsage.get_objects(context, resource=resource)
+    for obj in objs:
+        obj.dirty = dirty
+        obj.update()
+    return len(objs)
 
 
 @db_api.retry_if_session_inactive()
 def create_reservation(context, tenant_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested
-    with context.session.begin(subtransactions=True):
-        expiration = expiration or (utcnow() + datetime.timedelta(0, 120))
-        resv = quota_models.Reservation(tenant_id=tenant_id,
-                                        expiration=expiration)
-        context.session.add(resv)
-        for (resource, delta) in deltas.items():
-            context.session.add(
-                quota_models.ResourceDelta(resource=resource,
-                                           amount=delta,
-                                           reservation=resv))
-    return ReservationInfo(resv['id'],
-                           resv['tenant_id'],
-                           resv['expiration'],
+    expiration = expiration or (utcnow() + datetime.timedelta(0, 120))
+    delta_objs = []
+    for (resource, delta) in deltas.items():
+        delta_objs.append(quota_obj.ResourceDelta(
+            context, resource=resource, amount=delta))
+    reserv_obj = quota_obj.Reservation(
+        context, project_id=tenant_id, expiration=expiration,
+        resource_deltas=delta_objs)
+    reserv_obj.create()
+    return ReservationInfo(reserv_obj['id'],
+                           reserv_obj['project_id'],
+                           reserv_obj['expiration'],
                            dict((delta.resource, delta.amount)
-                                for delta in resv.resource_deltas))
+                                for delta in reserv_obj.resource_deltas))
 
 
 @db_api.retry_if_session_inactive()
 def get_reservation(context, reservation_id):
-    query = context.session.query(quota_models.Reservation).filter_by(
-        id=reservation_id)
-    resv = query.first()
-    if not resv:
+    reserv_obj = quota_obj.Reservation.get_object(context, id=reservation_id)
+    if not reserv_obj:
         return
-    return ReservationInfo(resv['id'],
-                           resv['tenant_id'],
-                           resv['expiration'],
+    return ReservationInfo(reserv_obj['id'],
+                           reserv_obj['project_id'],
+                           reserv_obj['expiration'],
                            dict((delta.resource, delta.amount)
-                                for delta in resv.resource_deltas))
+                                for delta in reserv_obj.resource_deltas))
 
 
 @db_api.retry_if_session_inactive()
 @db_api.context_manager.writer
 def remove_reservation(context, reservation_id, set_dirty=False):
-    delete_query = context.session.query(quota_models.Reservation).filter_by(
-        id=reservation_id)
-    # Not handling MultipleResultsFound as the query is filtering by primary
-    # key
-    try:
-        reservation = delete_query.one()
-    except orm_exc.NoResultFound:
+    reservation = quota_obj.Reservation.get_object(context, id=reservation_id)
+    if not reservation:
         # TODO(salv-orlando): Raise here and then handle the exception?
         return
-    tenant_id = reservation.tenant_id
+    tenant_id = reservation.project_id
     resources = [delta.resource for delta in reservation.resource_deltas]
-    num_deleted = delete_query.delete()
+    reservation.delete()
     if set_dirty:
         # quota_usage for all resource involved in this reservation must
         # be marked as dirty
         set_resources_quota_usage_dirty(context, resources, tenant_id)
-    return num_deleted
+    return 1
 
 
 @db_api.retry_if_session_inactive()
@@ -241,38 +224,14 @@ def get_reservations_for_resources(context, tenant_id, resources,
                     reservations (defaults to False)
     :returns: a dictionary mapping resources with corresponding deltas
     """
-    if not resources:
-        # Do not waste time
-        return
-    now = utcnow()
-    resv_query = context.session.query(
-        quota_models.ResourceDelta.resource,
-        quota_models.Reservation.expiration,
-        sql.func.sum(quota_models.ResourceDelta.amount)).join(
-        quota_models.Reservation)
-    if expired:
-        exp_expr = (quota_models.Reservation.expiration < now)
-    else:
-        exp_expr = (quota_models.Reservation.expiration >= now)
-    resv_query = resv_query.filter(sa.and_(
-        quota_models.Reservation.tenant_id == tenant_id,
-        quota_models.ResourceDelta.resource.in_(resources),
-        exp_expr)).group_by(
-        quota_models.ResourceDelta.resource,
-        quota_models.Reservation.expiration)
-    return dict((resource, total_reserved)
-            for (resource, exp, total_reserved) in resv_query)
+    # NOTE(manjeets) we are using utcnow() here because it
+    # can be mocked easily where as datetime is built in type
+    # mock.path does not allow mocking built in types.
+    return quota_obj.Reservation.get_total_reservations_map(
+        context, utcnow(), tenant_id, resources, expired)
 
 
 @db_api.retry_if_session_inactive()
 @db_api.context_manager.writer
 def remove_expired_reservations(context, tenant_id=None):
-    now = utcnow()
-    resv_query = context.session.query(quota_models.Reservation)
-    if tenant_id:
-        tenant_expr = (quota_models.Reservation.tenant_id == tenant_id)
-    else:
-        tenant_expr = sql.true()
-    resv_query = resv_query.filter(sa.and_(
-        tenant_expr, quota_models.Reservation.expiration < now))
-    return resv_query.delete()
+    return quota_obj.Reservation.delete_expired(context, utcnow(), tenant_id)

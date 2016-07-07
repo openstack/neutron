@@ -26,6 +26,9 @@ from neutron.tests.unit import quota as test_quota
 from neutron.tests.unit import testlib_api
 
 
+DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+
 meh_quota_flag = 'quota_meh'
 meh_quota_opts = [cfg.IntOpt(meh_quota_flag, default=99)]
 
@@ -90,6 +93,7 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
     def setUp(self):
         base.BaseTestCase.config_parse()
         cfg.CONF.register_opts(meh_quota_opts, 'QUOTAS')
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         self.addCleanup(cfg.CONF.reset)
         self.resource = 'meh'
         self.other_resource = 'othermeh'
