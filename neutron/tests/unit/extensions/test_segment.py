@@ -15,6 +15,7 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 import webob.exc
 
@@ -916,6 +917,35 @@ class TestSegmentAwareIpam(SegmentTestCase):
         # Since port is bound and there is a mapping to segment, it succeeds.
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
         self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+
+    def test_port_update_deferred_allocation_no_ips(self):
+        """Binding information is provided on update, subnets on segments"""
+        network, segments, subnets = self._create_test_segments_with_subnets(2)
+
+        self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost2'),
+                                   (segments[1]['segment']['id'], 'fakehost')])
+
+        port = self._create_deferred_ip_port(network)
+
+        # Update the subnet on the second segment to be out of IPs
+        subnet_data = {'subnet': {'allocation_pools': []}}
+        subnet_req = self.new_update_request('subnets',
+                                             subnet_data,
+                                             subnets[1]['subnet']['id'])
+        subnet_response = subnet_req.get_response(self.api)
+        res = self.deserialize(self.fmt, subnet_response)
+
+        # Try requesting an IP (but the subnet ran out of ips)
+        data = {'port': {portbindings.HOST_ID: 'fakehost'}}
+        port_id = port['port']['id']
+        port_req = self.new_update_request('ports', data, port_id)
+        response = port_req.get_response(self.api)
+        res = self.deserialize(self.fmt, response)
+
+        # Since port is bound and there is a mapping to segment, it succeeds.
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+        self.assertEqual(n_exc.IpAddressGenerationFailure.__name__,
+                         res['NeutronError']['type'])
 
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
