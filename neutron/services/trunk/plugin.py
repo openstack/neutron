@@ -127,6 +127,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
         subports_validator = rules.SubPortsValidator(
             self._segmentation_types, subports)
         subports = subports_validator.validate(context, basic_validation=True)
+        added_subports = []
 
         with db_api.autonested_transaction(context.session):
             for subport in subports:
@@ -138,7 +139,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                segmentation_id=subport['segmentation_id'])
                 obj.create()
                 trunk['sub_ports'].append(obj)
+                added_subports.append(obj)
 
+        registry.notify(
+            constants.SUBPORTS, events.AFTER_CREATE, self,
+            added_subports=added_subports)
         return trunk
 
     @db_base_plugin_common.convert_result_to_dict
@@ -159,6 +164,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
                 trunk_validation=False)
 
             current_subports = {p.port_id: p for p in trunk.sub_ports}
+            removed_subports = []
 
             for subport in subports:
                 subport_obj = current_subports.pop(subport['port_id'], None)
@@ -167,8 +173,12 @@ class TrunkPlugin(service_base.ServicePluginBase,
                     raise trunk_exc.SubPortNotFound(trunk_id=trunk_id,
                                                     port_id=subport['port_id'])
                 subport_obj.delete()
+                removed_subports.append(subport_obj)
 
             trunk.sub_ports = list(current_subports.values())
+            registry.notify(
+                constants.SUBPORTS, events.AFTER_DELETE, self,
+                removed_subports=removed_subports)
             return trunk
 
     @db_base_plugin_common.filter_fields
