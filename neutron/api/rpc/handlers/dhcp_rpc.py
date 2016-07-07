@@ -33,6 +33,7 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
+from neutron.extensions import segment as segment_ext
 from neutron import manager
 from neutron.plugins.common import utils as p_utils
 from neutron.quota import resource_registry
@@ -143,6 +144,30 @@ class DhcpRpcCallback(object):
         # the order changes.
         subnets = sorted(plugin.get_subnets(context, filters=filters),
                          key=operator.itemgetter('id'))
+        # Handle the possibility that the dhcp agent(s) only has connectivity
+        # inside a segment.  If the segment service plugin is loaded and
+        # there are active dhcp enabled subnets, then filter out the subnets
+        # that are not on the host's segment.
+        seg_plug = manager.NeutronManager.get_service_plugins().get(
+            segment_ext.SegmentPluginBase.get_plugin_type())
+        seg_subnets = [subnet for subnet in subnets
+                       if subnet.get('segment_id')]
+        if seg_plug and seg_subnets:
+            host_segment_ids = seg_plug.get_segments_by_hosts(context, [host])
+            # Gather the ids of all the subnets that are on a segment that
+            # this host touches
+            seg_subnet_ids = {subnet['id'] for subnet in seg_subnets
+                              if subnet['segment_id'] in host_segment_ids}
+            # Gather the ids of all the networks that are routed
+            routed_net_ids = {seg_subnet['network_id']
+                              for seg_subnet in seg_subnets}
+            # Remove the subnets with segments that are not in the same
+            # segments as the host.  Do this only for the networks that are
+            # routed because we want non-routed networks to work as
+            # before.
+            subnets = [subnet for subnet in subnets
+                       if subnet['network_id'] not in routed_net_ids or
+                       subnet['id'] in seg_subnet_ids]
 
         grouped_subnets = self._group_by_network_id(subnets)
         grouped_ports = self._group_by_network_id(ports)
@@ -167,12 +192,27 @@ class DhcpRpcCallback(object):
                       "been deleted concurrently.", network_id)
             return
         filters = dict(network_id=[network_id])
+        subnets = plugin.get_subnets(context, filters=filters)
+        seg_plug = manager.NeutronManager.get_service_plugins().get(
+            segment_ext.SegmentPluginBase.get_plugin_type())
+        if seg_plug and subnets:
+            seg_subnets = [subnet for subnet in subnets
+                           if subnet.get('segment_id')]
+            # If there are no subnets with segments, then this is not a routed
+            # network and no filtering should take place.
+            if seg_subnets:
+                segment_ids = seg_plug.get_segments_by_hosts(context, [host])
+                # There might be something to do if no segment_ids exist that
+                # are mapped to this host.  However, it seems that if this
+                # host is not mapped to any segments and this is a routed
+                # network, then this host shouldn't have even been scheduled
+                # to.
+                subnets = [subnet for subnet in seg_subnets
+                           if subnet['segment_id'] in segment_ids]
         # NOTE(kevinbenton): we sort these because the agent builds tags
         # based on position in the list and has to restart the process if
         # the order changes.
-        network['subnets'] = sorted(
-            plugin.get_subnets(context, filters=filters),
-            key=operator.itemgetter('id'))
+        network['subnets'] = sorted(subnets, key=operator.itemgetter('id'))
         network['ports'] = plugin.get_ports(context, filters=filters)
         return network
 
