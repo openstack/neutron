@@ -219,7 +219,7 @@ class L3NATAgent(ha.AgentMixin,
                                     'to retrieve service plugins enabled. '
                                     'Check connectivity to neutron server. '
                                     'Retrying... '
-                                    'Detailed message: %(msg)s.') % {'msg': e})
+                                    'Detailed message: %(msg)s.'), {'msg': e})
                     continue
             break
 

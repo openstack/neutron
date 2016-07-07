@@ -78,8 +78,8 @@ def build_resource_info(plural_mappings, resource_map, which_service,
     else:
         plugin = manager.NeutronManager.get_plugin()
     path_prefix = getattr(plugin, "path_prefix", "")
-    LOG.debug('Service %(service)s assigned prefix: %(prefix)s'
-              % {'service': which_service, 'prefix': path_prefix})
+    LOG.debug('Service %(service)s assigned prefix: %(prefix)s',
+              {'service': which_service, 'prefix': path_prefix})
     for collection_name in resource_map:
         resource_name = plural_mappings[collection_name]
         params = resource_map.get(collection_name, {})

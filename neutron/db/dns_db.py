@@ -287,11 +287,11 @@ class DNSDbMixin(object):
             LOG.exception(_LE("Error deleting Floating IP data from external "
                               "DNS service. Name: '%(name)s'. Domain: "
                               "'%(domain)s'. IP addresses '%(ips)s'. DNS "
-                              "service driver message '%(message)s'")
-                          % {"name": dns_name,
-                             "domain": dns_domain,
-                             "message": e.msg,
-                             "ips": ', '.join(records)})
+                              "service driver message '%(message)s'"),
+                          {"name": dns_name,
+                           "domain": dns_domain,
+                           "message": e.msg,
+                           "ips": ', '.join(records)})
 
     def _get_requested_state_for_external_dns_service_create(self, context,
                                                              floatingip_data,
@@ -318,7 +318,7 @@ class DNSDbMixin(object):
             LOG.exception(_LE("Error publishing floating IP data in external "
                               "DNS service. Name: '%(name)s'. Domain: "
                               "'%(domain)s'. DNS service driver message "
-                              "'%(message)s'")
-                          % {"name": dns_name,
-                             "domain": dns_domain,
-                             "message": e.msg})
+                              "'%(message)s'"),
+                          {"name": dns_name,
+                           "domain": dns_domain,
+                           "message": e.msg})

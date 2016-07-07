@@ -151,7 +151,7 @@ class DbQuotaDriver(object):
         return dict((k, v) for k, v in quotas.items())
 
     def _handle_expired_reservations(self, context, tenant_id):
-        LOG.debug("Deleting expired reservations for tenant:%s" % tenant_id)
+        LOG.debug("Deleting expired reservations for tenant:%s", tenant_id)
         # Delete expired reservations (we don't want them to accrue
         # in the database)
         quota_api.remove_expired_reservations(
