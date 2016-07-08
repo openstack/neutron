@@ -461,7 +461,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.service_manager.add_provider_configuration(
                 provider.split(':')[0], provconf.ProviderConfiguration())
 
-        dbapi.get_engine()
+        dbapi.context_manager.get_legacy_facade().get_engine()
 
     def _create_flavor(self, description=None):
         flavor = {'flavor': {'name': 'GOLD',

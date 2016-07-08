@@ -26,7 +26,6 @@ import webob
 import webob.exc
 
 from neutron.common import exceptions as n_exc
-from neutron.db import api
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron import wsgi
@@ -67,10 +66,8 @@ class TestServiceBase(base.BaseTestCase):
 class TestWorkerService(TestServiceBase):
     """WorkerService tests."""
 
-    @mock.patch('neutron.db.api.get_engine')
+    @mock.patch('neutron.db.api.context_manager.get_legacy_facade')
     def test_start_withoutdb_call(self, apimock):
-        # clear engine from other tests
-        api._FACADE = None
         _service = mock.Mock()
         _service.pool.spawn.return_value = None
 
