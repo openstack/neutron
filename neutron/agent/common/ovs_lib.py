@@ -403,7 +403,7 @@ class OVSBridge(BaseOVS):
                 execute(check_error=check_error, log_errors=log_errors))
 
     # returns a VIF object for each VIF port
-    def get_vif_ports(self):
+    def get_vif_ports(self, ofport_filter=None):
         edge_ports = []
         port_info = self.get_ports_attributes(
             'Interface', columns=['name', 'external_ids', 'ofport'],
@@ -412,6 +412,8 @@ class OVSBridge(BaseOVS):
             name = port['name']
             external_ids = port['external_ids']
             ofport = port['ofport']
+            if ofport_filter and ofport in ofport_filter:
+                continue
             if "iface-id" in external_ids and "attached-mac" in external_ids:
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)

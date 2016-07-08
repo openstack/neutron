@@ -235,17 +235,41 @@ class TestOvsNeutronAgent(object):
                           'physical_network': 'fake_network'}
         if segmentation_id is not None:
             local_vlan_map['segmentation_id'] = segmentation_id
-        with mock.patch.object(self.agent, 'int_br') as int_br:
-            int_br.get_vif_ports.return_value = [port]
-            int_br.get_ports_attributes.return_value = [{
-                'name': port.port_name, 'other_config': local_vlan_map,
-                'tag': tag
-            }]
+
+        # this is for the call inside get_vif_ports()
+        get_interfaces = [{'name': port.port_name,
+                           'ofport': '1',
+                           'external_ids': {
+                               'iface-id': '1',
+                               'attached-mac': 'mac1'}},
+                          {'name': 'invalid',
+                           'ofport': ovs_lib.INVALID_OFPORT,
+                           'external_ids': {
+                               'iface-id': '2',
+                               'attached-mac': 'mac2'}},
+                          {'name': 'unassigned',
+                           'ofport': ovs_lib.UNASSIGNED_OFPORT,
+                           'external_ids': {
+                               'iface-id': '3',
+                               'attached-mac': 'mac3'}}]
+        # this is for the call inside _restore_local_vlan_map()
+        get_ports = [{'name': port.port_name,
+                      'other_config': local_vlan_map,
+                      'tag': tag}]
+
+        with mock.patch.object(self.agent.int_br,
+                               'get_ports_attributes',
+                               side_effect=[get_interfaces, get_ports]) as gpa:
             self.agent._restore_local_vlan_map()
             expected_hints = {}
             if tag:
                 expected_hints[net_uuid] = tag
             self.assertEqual(expected_hints, self.agent._local_vlan_hints)
+            # make sure invalid and unassigned ports were skipped
+            gpa.assert_has_calls([
+                mock.call('Interface', columns=mock.ANY, if_exists=True),
+                mock.call('Port', columns=mock.ANY, ports=['fake_port'])
+            ])
 
     def test_restore_local_vlan_map_with_device_has_tag(self):
         self._test_restore_local_vlan_maps(2)
