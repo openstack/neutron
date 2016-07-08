@@ -26,7 +26,7 @@
 
 # Note: due to gerrit bug somewhere, this double posts messages. :(
 
-# first purge the all reviews that are more than 4w old and blocked by a core -2
+# first purge all the reviews that are more than 4w old and blocked by a core -2
 
 if [ "$1" = "--dry-run" ]; then
     echo "Enabling dry run mode"
