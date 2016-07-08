@@ -23,6 +23,6 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
     @mock.patch("neutron.api.rpc.callbacks.resource_manager."
                 "ConsumerResourceCallbacksManager.unregister")
     def test___init__(self, mocked_unregister):
-        test_obj = driver.OVSTrunkSkeleton()
+        test_obj = driver.OVSTrunkSkeleton(mock.ANY)
         mocked_unregister.assert_called_with(test_obj.handle_trunks,
                                              resources.TRUNK)

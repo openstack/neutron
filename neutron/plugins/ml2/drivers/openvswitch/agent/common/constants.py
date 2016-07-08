@@ -145,3 +145,6 @@ DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1
 
 # callback resource for setting 'bridge_name' in the 'binding:vif_details'
 OVS_BRIDGE_NAME = 'ovs_bridge_name'
+
+# callback resource for notifying to ovsdb handler
+OVSDB_RESOURCE = 'ovsdb'

@@ -44,6 +44,8 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.callbacks import events as callback_events
+from neutron.callbacks import registry
 from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics
@@ -1866,6 +1868,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                           failed_devices,
                                           failed_ancillary_devices,
                                           updated_ports_copy))
+            registry.notify(
+                constants.OVSDB_RESOURCE,
+                callback_events.AFTER_READ,
+                self,
+                ovsdb_events=events)
+
         return (port_info, ancillary_port_info, consecutive_resyncs,
                 ports_not_ready_yet)
 
