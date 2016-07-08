@@ -215,6 +215,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug("Port %s cannot update to ACTIVE because it "
                       "is not bound.", port_id)
             return
+        else:
+            # port is bound, but we have to check for new provisioning blocks
+            # one last time to detect the case where we were triggered by an
+            # unbound port and the port became bound with new provisioning
+            # blocks before 'get_port' was called above
+            if provisioning_blocks.is_object_blocked(context, port_id,
+                                                     resources.PORT):
+                LOG.debug("Port %s had new provisioning blocks added so it "
+                          "will not transition to active.", port_id)
+                return
         self.update_port_status(context, port_id, const.PORT_STATUS_ACTIVE)
 
     @property

@@ -152,6 +152,22 @@ def provisioning_complete(context, object_id, object_type, entity):
                         context=context, object_id=object_id)
 
 
+def is_object_blocked(context, object_id, object_type):
+    """Return boolean indicating if object has a provisioning block.
+
+    :param context: neutron api request context
+    :param object_id: ID of object that has been provisioned
+    :param object_type: callback resource type of the object
+    """
+    standard_attr_id = _get_standard_attr_id(context, object_id,
+                                             object_type)
+    if not standard_attr_id:
+        # object doesn't exist so it has no blocks
+        return False
+    return bool(context.session.query(ProvisioningBlock).filter_by(
+                standard_attr_id=standard_attr_id).count())
+
+
 def _get_standard_attr_id(context, object_id, object_type):
     model = _RESOURCE_TO_MODEL_MAP.get(object_type)
     if not model:
