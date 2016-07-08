@@ -19,7 +19,6 @@
 
 import copy
 import functools
-import random
 
 import netaddr
 from neutron_lib import constants
@@ -33,8 +32,10 @@ from neutron.agent.linux import openvswitch_firewall
 from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.cmd.sanity import checks
 from neutron.tests.common import conn_testers
+from neutron.tests.common import helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base
+from neutron.tests.functional import constants as test_constants
 
 LOG = logging.getLogger(__name__)
 
@@ -50,7 +51,6 @@ reverse_transport_protocol = {
     conn_testers.ConnectionTester.UDP: conn_testers.ConnectionTester.TCP}
 
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
-VLAN_COUNT = 4096
 
 
 def skip_if_firewall(firewall_name):
@@ -91,7 +91,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
     scenarios = scenarios_iptables + scenarios_ovs_fw_interfaces
 
     ip_cidr = None
-    vlan_range = set(range(VLAN_COUNT))
+    vlan_range = set(range(test_constants.VLAN_COUNT))
 
     def setUp(self):
         cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
@@ -133,17 +133,11 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         return tester, firewall_drv
 
     def assign_vlan_to_peers(self):
-        vlan = self.get_not_used_vlan()
+        vlan = helpers.get_not_used_vlan(self.firewall.int_br.br,
+                                         self.vlan_range)
         LOG.debug("Using %d vlan tag for this test", vlan)
         self.tester.set_vm_tag(vlan)
         self.tester.set_peer_tag(vlan)
-
-    def get_not_used_vlan(self):
-        port_vlans = self.firewall.int_br.br.ovsdb.db_find(
-            'Port', ('tag', '!=', []), columns=['tag']).execute()
-        used_vlan_tags = {val['tag'] for val in port_vlans}
-        available_vlans = self.vlan_range - used_vlan_tags
-        return random.choice(list(available_vlans))
 
     @staticmethod
     def _create_port_description(port_id, ip_addresses, mac_address, sg_ids):

@@ -14,6 +14,7 @@
 
 import datetime
 import os
+import random
 
 from neutron_lib import constants
 from oslo_utils import timeutils
@@ -212,3 +213,11 @@ def requires_py2(testcase):
 
 def requires_py3(testcase):
     return testtools.skipUnless(six.PY3, "requires python 3.x")(testcase)
+
+
+def get_not_used_vlan(bridge, vlan_range):
+    port_vlans = bridge.ovsdb.db_find(
+        'Port', ('tag', '!=', []), columns=['tag']).execute()
+    used_vlan_tags = {val['tag'] for val in port_vlans}
+    available_vlans = vlan_range - used_vlan_tags
+    return random.choice(list(available_vlans))
