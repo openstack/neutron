@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import six
+
 import mock
 from oslo_config import cfg
+from oslo_utils import encodeutils
 from ryu.services.protocols.bgp import bgpspeaker
 from ryu.services.protocols.bgp.rtconf.neighbors import CONNECT_MODE_ACTIVE
 
@@ -95,10 +98,32 @@ class TestRyuBgpDriver(base.BaseTestCase):
                                          FAKE_PEER_PASSWORD)
         speaker = self.ryu_bgp_driver.cache.get_bgp_speaker(FAKE_LOCAL_AS1)
         speaker.neighbor_add.assert_called_once_with(
-                                             address=FAKE_PEER_IP,
-                                             remote_as=FAKE_PEER_AS,
-                                             password=FAKE_PEER_PASSWORD,
-                                             connect_mode=CONNECT_MODE_ACTIVE)
+            address=FAKE_PEER_IP,
+            remote_as=FAKE_PEER_AS,
+            password=encodeutils.to_utf8(FAKE_PEER_PASSWORD),
+            connect_mode=CONNECT_MODE_ACTIVE)
+
+    def test_add_bgp_peer_with_unicode_password(self):
+        self.ryu_bgp_driver.add_bgp_speaker(FAKE_LOCAL_AS1)
+        self.assertEqual(1,
+                self.ryu_bgp_driver.cache.get_hosted_bgp_speakers_count())
+        # In Python3 a str is unicode
+        if six.PY3:
+            NEW_FAKE_PEER_PASSWORD = str(FAKE_PEER_PASSWORD)
+        else:
+            NEW_FAKE_PEER_PASSWORD = unicode(FAKE_PEER_PASSWORD)
+        self.ryu_bgp_driver.add_bgp_peer(
+            FAKE_LOCAL_AS1,
+            FAKE_PEER_IP,
+            FAKE_PEER_AS,
+            FAKE_AUTH_TYPE,
+            NEW_FAKE_PEER_PASSWORD)
+        speaker = self.ryu_bgp_driver.cache.get_bgp_speaker(FAKE_LOCAL_AS1)
+        speaker.neighbor_add.assert_called_once_with(
+            address=FAKE_PEER_IP,
+            remote_as=FAKE_PEER_AS,
+            password=encodeutils.to_utf8(NEW_FAKE_PEER_PASSWORD),
+            connect_mode=CONNECT_MODE_ACTIVE)
 
     def test_remove_bgp_peer(self):
         self.ryu_bgp_driver.add_bgp_speaker(FAKE_LOCAL_AS1)
