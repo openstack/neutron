@@ -70,7 +70,7 @@ def _get_active_network_ports(session, network_id):
         return query
 
 
-def get_nondvr_active_network_ports(session, network_id):
+def get_nondistributed_active_network_ports(session, network_id):
     query = _get_active_network_ports(session, network_id)
     query = query.filter(models_v2.Port.device_owner !=
                          const.DEVICE_OWNER_DVR_INTERFACE)
@@ -78,7 +78,7 @@ def get_nondvr_active_network_ports(session, network_id):
             if get_agent_ip(agent)]
 
 
-def get_dvr_active_network_ports(session, network_id):
+def get_distributed_active_network_ports(session, network_id):
     with session.begin(subtransactions=True):
         query = session.query(ml2_models.DistributedPortBinding,
                               agents_db.Agent)

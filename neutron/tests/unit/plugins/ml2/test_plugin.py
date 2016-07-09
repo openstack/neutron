@@ -1303,7 +1303,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self.assertTrue(update_mock.mock_calls)
             self.assertEqual('test', binding.host)
 
-    def test_process_dvr_port_binding_update_router_id(self):
+    def test_process_distributed_port_binding_update_router_id(self):
         host_id = 'host'
         binding = models.DistributedPortBinding(
                             port_id='port_id',
@@ -1323,12 +1323,13 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                                    return_value=[]):
                 mech_context = driver_context.PortContext(
                     self, context, mock_port, mock_network, binding, None)
-                plugin._process_dvr_port_binding(mech_context, context, attrs)
+                plugin._process_distributed_port_binding(mech_context,
+                                                         context, attrs)
                 self.assertEqual(new_router_id,
                                  mech_context._binding.router_id)
                 self.assertEqual(host_id, mech_context._binding.host)
 
-    def test_update_dvr_port_binding_on_concurrent_port_delete(self):
+    def test_update_distributed_port_binding_on_concurrent_port_delete(self):
         plugin = manager.NeutronManager.get_plugin()
         with self.port() as port:
             port = {
@@ -1336,20 +1337,21 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 portbindings.HOST_ID: 'foo_host',
             }
             with mock.patch.object(plugin, 'get_port', new=plugin.delete_port):
-                res = plugin.update_dvr_port_binding(
+                res = plugin.update_distributed_port_binding(
                     self.context, 'foo_port_id', {'port': port})
         self.assertIsNone(res)
 
-    def test_update_dvr_port_binding_on_non_existent_port(self):
+    def test_update_distributed_port_binding_on_non_existent_port(self):
         plugin = manager.NeutronManager.get_plugin()
         port = {
             'id': 'foo_port_id',
             portbindings.HOST_ID: 'foo_host',
         }
-        with mock.patch.object(ml2_db, 'ensure_dvr_port_binding') as mock_dvr:
-            plugin.update_dvr_port_binding(
+        with mock.patch.object(
+            ml2_db, 'ensure_distributed_port_binding') as mock_dist:
+            plugin.update_distributed_port_binding(
                 self.context, 'foo_port_id', {'port': port})
-        self.assertFalse(mock_dvr.called)
+        self.assertFalse(mock_dist.called)
 
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
@@ -1973,8 +1975,8 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
                     self._delete('ports', port['port']['id'])
 
-    def test_update_dvr_router_interface_port(self):
-        """Test validate dvr router interface update succeeds."""
+    def test_update_distributed_router_interface_port(self):
+        """Test validate distributed router interface update succeeds."""
         host_id = 'host'
         binding = models.DistributedPortBinding(
                             port_id='port_id',
@@ -1990,9 +1992,9 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                 mock.patch.object(
                     mech_test.TestMechanismDriver,
                     'update_port_precommit') as port_pre,\
-                mock.patch.object(ml2_db,
-                                  'get_dvr_port_bindings') as dvr_bindings:
-                dvr_bindings.return_value = [binding]
+                mock.patch.object(
+                    ml2_db, 'get_distributed_port_bindings') as dist_bindings:
+                dist_bindings.return_value = [binding]
                 port_pre.return_value = True
                 with self.network() as network:
                     with self.subnet(network=network) as subnet:
@@ -2017,7 +2019,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                         req = self.new_update_request('ports', data, port_id)
                         res = req.get_response(self.api)
                         self.assertEqual(200, res.status_int)
-                        self.assertTrue(dvr_bindings.called)
+                        self.assertTrue(dist_bindings.called)
                         self.assertTrue(port_pre.called)
                         self.assertTrue(port_post.called)
                         port = self._show('ports', port_id)

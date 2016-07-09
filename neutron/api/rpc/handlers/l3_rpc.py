@@ -193,8 +193,8 @@ class L3RpcCallback(object):
             # Ports that are DVR interfaces have multiple bindings (based on
             # of hosts on which DVR router interfaces are spawned). Such
             # bindings are created/updated here by invoking
-            # update_dvr_port_binding
-            self.plugin.update_dvr_port_binding(context, port['id'],
+            # update_distributed_port_binding
+            self.plugin.update_distributed_port_binding(context, port['id'],
                                                 {'port':
                                                  {portbindings.HOST_ID: host,
                                                   'device_id': router_id}
