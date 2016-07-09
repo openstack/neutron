@@ -50,9 +50,19 @@ function abandon_review {
     fi
 }
 
-PROJECTS="(project:openstack/neutron OR project:openstack/neutron-fwaas OR \
-           project:openstack/neutron-lbaas OR project:openstack/neutron-vpnaas OR \
-           project:openstack/python-neutronclient OR project:openstack/neutron-specs)"
+PROJECTS="($(
+python - <<EOF
+import urllib2
+import yaml
+
+data = urllib2.urlopen("https://raw.githubusercontent.com/openstack/"
+                       "governance/master/reference/projects.yaml")
+governance = yaml.load(data)
+stadium = governance["neutron"]["deliverables"].keys()
+query = ["project:openstack/%s" % p for p in stadium]
+print ' OR '.join(query)
+EOF
+))"
 
 blocked_reviews=$(ssh review.openstack.org "gerrit query --current-patch-set --format json $PROJECTS status:open age:4w label:Code-Review<=-2" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
