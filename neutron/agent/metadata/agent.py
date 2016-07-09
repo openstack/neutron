@@ -134,8 +134,9 @@ class MetadataProxyHandler(object):
             except (oslo_messaging.MessagingException, AttributeError):
                 # TODO(obondarev): remove fallback once RPC is proven
                 # to work fine with metadata agent (K or L release at most)
-                LOG.warning(_LW('Server does not support metadata RPC, '
-                                'fallback to using neutron client'))
+                LOG.exception(_LW(  # noqa
+                    'Server does not support metadata RPC, '  # noqa
+                    'fallback to using neutron client'))  # noqa
                 self.use_rpc = False
 
         return self._get_ports_using_client(filters)
