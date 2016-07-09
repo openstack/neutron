@@ -21,19 +21,12 @@ from neutron._i18n import _
 QUOTA_DB_MODULE = 'neutron.db.quota.driver'
 QUOTA_DB_DRIVER = '%s.DbQuotaDriver' % QUOTA_DB_MODULE
 QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
-default_quota_items = ['network', 'subnet', 'port']
 QUOTAS_CFG_GROUP = 'QUOTAS'
 
 
 # quota_opts from neutron/quota/__init__.py
 # renamed quota_opts to core_quota_opts
 core_quota_opts = [
-    cfg.ListOpt('quota_items',
-                default=default_quota_items,
-                deprecated_for_removal=True,
-                help=_('Resource name(s) that are supported in quota '
-                       'features. This option is now deprecated for '
-                       'removal.')),
     cfg.IntOpt('default_quota',
                default=-1,
                help=_('Default number of resource allowed per tenant. '
