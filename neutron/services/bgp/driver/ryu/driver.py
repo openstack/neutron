@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 from ryu.services.protocols.bgp import bgpspeaker
 from ryu.services.protocols.bgp.rtconf.neighbors import CONNECT_MODE_ACTIVE
 
@@ -119,6 +120,8 @@ class RyuBgpDriver(base.BgpDriverBase):
         utils.validate_as_num('remote_as', peer_as)
         utils.validate_string(peer_ip)
         utils.validate_auth(auth_type, password)
+        if password is not None:
+            password = encodeutils.to_utf8(password)
 
         # Notify Ryu about BGP Peer addition
         curr_speaker.neighbor_add(address=peer_ip,
