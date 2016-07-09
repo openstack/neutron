@@ -43,11 +43,9 @@ ml2_opts = [
     cfg.IntOpt('path_mtu', default=constants.DEFAULT_NETWORK_MTU,
                help=_('Maximum size of an IP packet (MTU) that can traverse '
                       'the underlying physical network infrastructure without '
-                      'fragmentation when using an overlay/tunnel protocol. '
-                      'Either set this to the same value as the '
-                      'global_physnet_mtu value or use it to explicitly '
-                      'specify a physical network MTU value that differs from '
-                      'the default global_physnet_mtu value.')),
+                      'fragmentation for overlay/tunnel networks. In most '
+                      'cases, use the same value as the global_physnet_mtu '
+                      'option.')),
     cfg.ListOpt('physical_network_mtus',
                 default=[],
                 help=_("A list of mappings of physical networks to MTU "
