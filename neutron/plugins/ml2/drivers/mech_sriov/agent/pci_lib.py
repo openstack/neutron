@@ -34,7 +34,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     MAC_PATTERN = r"MAC\s+(?P<mac>[a-fA-F0-9:]+),"
     STATE_PATTERN = r"\s+link-state\s+(?P<state>\w+)"
     ANY_PATTERN = ".*,"
-    MACVTAP_PATTERN = r".*macvtap[0-9]+@(?P<vf_interface>[a-zA-Z0-9]+):"
+    MACVTAP_PATTERN = r".*macvtap[0-9]+@(?P<vf_interface>[a-zA-Z0-9_]+):"
 
     VF_LINE_FORMAT = VF_PATTERN + MAC_PATTERN + ANY_PATTERN + STATE_PATTERN
     VF_DETAILS_REG_EX = re.compile(VF_LINE_FORMAT)
