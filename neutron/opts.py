@@ -32,6 +32,7 @@ import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.ovs_conf
 import neutron.conf.common
+import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.db.agents_db
@@ -48,7 +49,6 @@ import neutron.extensions.l3
 import neutron.extensions.securitygroup
 import neutron.plugins.ml2.config
 import neutron.plugins.ml2.drivers.agent.config
-import neutron.plugins.ml2.drivers.linuxbridge.agent.common.config
 import neutron.plugins.ml2.drivers.macvtap.agent.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver
@@ -181,11 +181,9 @@ def list_dhcp_agent_opts():
 def list_linux_bridge_opts():
     return [
         ('linux_bridge',
-         neutron.plugins.ml2.drivers.linuxbridge.agent.common.config.
-         bridge_opts),
+         neutron.conf.plugins.ml2.drivers.linuxbridge.bridge_opts),
         ('vxlan',
-         neutron.plugins.ml2.drivers.linuxbridge.agent.common.config.
-         vxlan_opts),
+         neutron.conf.plugins.ml2.drivers.linuxbridge.vxlan_opts),
         ('agent',
          neutron.plugins.ml2.drivers.agent.config.agent_opts),
         ('securitygroup',

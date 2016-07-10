@@ -28,8 +28,8 @@ from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
-from neutron.plugins.ml2.drivers.linuxbridge.agent.common import \
-    config as linuxbridge_agent_config
+from neutron.conf.plugins.ml2.drivers import linuxbridge as \
+    linuxbridge_agent_config
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import \
