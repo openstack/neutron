@@ -64,8 +64,13 @@ L3_HA_OPTS = [
                       "be scheduled on every agent.")),
     cfg.IntOpt('min_l3_agents_per_router',
                default=n_const.DEFAULT_MINIMUM_AGENTS_FOR_HA,
-               help=_("Minimum number of L3 agents that have to be available "
-                      "in order to allow a new HA router to be scheduled.")),
+               help=_("DEPRECATED: Minimum number of L3 agents that have to "
+                      "be available in order to allow a new HA router to be "
+                      "scheduled. This option is deprecated in the Newton "
+                      "release and will be removed for the Ocata release "
+                      "where the scheduling of new HA routers will always "
+                      "be allowed."),
+               deprecated_for_removal=True),
     cfg.StrOpt('l3_ha_net_cidr',
                default=n_const.L3_HA_NET_CIDR,
                help=_('Subnet used for the l3 HA admin network.')),
