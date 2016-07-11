@@ -17,6 +17,7 @@ import mock
 from neutron_lib import constants as l3_const
 from neutron_lib import exceptions
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.common import constants as n_const
 from neutron import context
@@ -554,6 +555,45 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     plugin_const.L3_ROUTER_NAT: plugin}
                 self.mixin.manager = manager
                 return router, subnet_v4, subnet_v6
+
+    def test_undo_router_interface_change_on_csnat_error(self):
+        self._test_undo_router_interface_change_on_csnat_error(False)
+
+    def test_undo_router_interface_change_on_csnat_error_revert_failure(self):
+        self._test_undo_router_interface_change_on_csnat_error(True)
+
+    def _test_undo_router_interface_change_on_csnat_error(self, fail_revert):
+        router, subnet_v4, subnet_v6 = self._setup_router_with_v4_and_v6()
+        net = {'network': {'id': subnet_v6['subnet']['network_id'],
+                           'tenant_id': subnet_v6['subnet']['tenant_id']}}
+        orig_update = self.mixin._core_plugin.update_port
+
+        def update_port(*args, **kwargs):
+            # 1st port update is the interface, 2nd is csnat, 3rd is revert
+            # we want to simulate errors after the 1st
+            update_port.calls += 1
+            if update_port.calls == 2:
+                raise RuntimeError('csnat update failure')
+            if update_port.calls == 3 and fail_revert:
+                # this is to ensure that if the revert fails, the original
+                # exception is raised (not this ValueError)
+                raise ValueError('failure from revert')
+            return orig_update(*args, **kwargs)
+        update_port.calls = 0
+        self.mixin._core_plugin.update_port = update_port
+
+        with self.subnet(network=net, cidr='fe81::/64',
+                         gateway_ip='fe81::1', ip_version=6) as subnet2_v6:
+            with testtools.ExpectedException(RuntimeError):
+                self.mixin.add_router_interface(self.ctx, router['id'],
+                    {'subnet_id': subnet2_v6['subnet']['id']})
+            if fail_revert:
+                # a revert failure will mean the interface is still added
+                # so we can't re-add it
+                return
+            # starting over should work if first interface was cleaned up
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet2_v6['subnet']['id']})
 
     def test_remove_router_interface_csnat_ports_removal_with_ipv6(self):
         router, subnet_v4, subnet_v6 = self._setup_router_with_v4_and_v6()

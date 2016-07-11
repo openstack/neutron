@@ -22,7 +22,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _, _LI, _LW
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
@@ -30,6 +30,7 @@ from neutron.callbacks import resources
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.db.allowed_address_pairs import models as addr_pair_db
+from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db as l3_sched_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
@@ -352,9 +353,41 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 if cs_port:
                     fixed_ips = list(cs_port['port']['fixed_ips'])
                     fixed_ips.append(fixed_ip)
-                    updated_port = self._core_plugin.update_port(
-                        context.elevated(),
-                        cs_port['port_id'], {'port': {'fixed_ips': fixed_ips}})
+                    try:
+                        updated_port = self._core_plugin.update_port(
+                            context.elevated(),
+                            cs_port['port_id'],
+                            {'port': {'fixed_ips': fixed_ips}})
+                    except Exception:
+                        with excutils.save_and_reraise_exception():
+                            # we need to try to undo the updated router
+                            # interface from above so it's not out of sync
+                            # with the csnat port.
+                            # TODO(kevinbenton): switch to taskflow to manage
+                            # these rollbacks.
+                            @db_api.retry_db_errors
+                            def revert():
+                                # TODO(kevinbenton): even though we get the
+                                # port each time, there is a potential race
+                                # where we update the port with stale IPs if
+                                # another interface operation is occuring at
+                                # the same time. This can be fixed in the
+                                # future with a compare-and-swap style update
+                                # using the revision number of the port.
+                                p = self._core_plugin.get_port(
+                                    context.elevated(), port['id'])
+                                upd = {'port': {'fixed_ips': [
+                                    ip for ip in p['fixed_ips']
+                                    if ip['subnet_id'] != fixed_ip['subnet_id']
+                                ]}}
+                                self._core_plugin.update_port(
+                                    context.elevated(), port['id'], upd)
+                            try:
+                                revert()
+                            except Exception:
+                                LOG.exception(_LE("Failed to revert change "
+                                                  "to router port %s."),
+                                              port['id'])
                     LOG.debug("CSNAT port updated for IPv6 subnet: "
                               "%s", updated_port)
         router_interface_info = self._make_router_interface_info(
