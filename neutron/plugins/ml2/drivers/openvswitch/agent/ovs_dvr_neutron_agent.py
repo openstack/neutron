@@ -377,8 +377,9 @@ class OVSDVRNeutronAgent(object):
             subnet_info = self.plugin_rpc.get_subnet_for_dvr(
                 self.context, subnet_uuid, fixed_ips=fixed_ips)
             if not subnet_info:
-                LOG.error(_LE("DVR: Unable to retrieve subnet information "
-                              "for subnet_id %s"), subnet_uuid)
+                LOG.warning(_LW("DVR: Unable to retrieve subnet information "
+                                "for subnet_id %s. The subnet or the gateway "
+                                "may have already been deleted"), subnet_uuid)
                 return
             LOG.debug("get_subnet_for_dvr for subnet %(uuid)s "
                       "returned with %(info)s",
@@ -528,6 +529,14 @@ class OVSDVRNeutronAgent(object):
             # for this subnet
             subnet_info = self.plugin_rpc.get_subnet_for_dvr(
                 self.context, subnet_uuid, fixed_ips=fixed_ips)
+            if not subnet_info:
+                LOG.warning(_LW("DVR: Unable to retrieve subnet information "
+                                "for subnet_id %s. The subnet or the gateway "
+                                "may have already been deleted"), subnet_uuid)
+                return
+            LOG.debug("get_subnet_for_dvr for subnet %(uuid)s "
+                      "returned with %(info)s",
+                      {"uuid": subnet_uuid, "info": subnet_info})
             ldm = LocalDVRSubnetMapping(subnet_info, port.ofport)
             self.local_dvr_map[subnet_uuid] = ldm
         else:

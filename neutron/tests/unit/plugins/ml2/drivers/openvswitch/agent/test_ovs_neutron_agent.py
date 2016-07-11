@@ -2239,6 +2239,26 @@ class TestOvsDvrNeutronAgent(object):
                 False)
         return int_br, tun_br
 
+    def test_port_bound_for_dvr_with_csnat_ports_without_subnet(self):
+        self._setup_for_dvr_test()
+        int_br = mock.create_autospec(self.agent.int_br)
+        tun_br = mock.create_autospec(self.agent.tun_br)
+
+        # get_subnet_for_dvr RPC returns {} on error
+        with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                               'get_subnet_for_dvr',
+                               return_value={}),\
+                mock.patch.object(self.agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent, 'tun_br', new=tun_br),\
+                mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
+                mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
+            self.agent.port_bound(
+                self._port, self._net_uuid, 'vxlan',
+                None, None, self._fixed_ips,
+                n_const.DEVICE_OWNER_ROUTER_SNAT,
+                False)
+            self.assertFalse(int_br.install_dvr_to_src_mac.called)
+
     def test_treat_devices_removed_for_dvr_interface(self):
         self._test_treat_devices_removed_for_dvr_interface()
         self._test_treat_devices_removed_for_dvr_interface(ip_version=6)
