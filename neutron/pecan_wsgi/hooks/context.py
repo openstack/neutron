@@ -39,22 +39,15 @@ class ContextHook(hooks.PecanHook):
     priority = 95
 
     def before(self, state):
-        user_id = state.request.headers.get('X-User-Id')
-        user_id = state.request.headers.get('X-User', user_id)
         user_name = state.request.headers.get('X-User-Name', '')
-        tenant_id = state.request.headers.get('X-Project-Id')
         tenant_name = state.request.headers.get('X-Project-Name')
-        auth_token = state.request.headers.get('X-Auth-Token')
-        roles = state.request.headers.get('X-Roles', '').split(',')
-        roles = [r.strip() for r in roles]
-        creds = {'roles': roles}
         req_id = state.request.headers.get(request_id.ENV_REQUEST_ID)
         # TODO(kevinbenton): is_admin logic
         # Create a context with the authentication data
-        ctx = context.Context(user_id, tenant_id=tenant_id,
-                              roles=creds['roles'],
-                              user_name=user_name, tenant_name=tenant_name,
-                              request_id=req_id, auth_token=auth_token)
+        ctx = context.Context.from_environ(state.request.environ,
+                                           user_name=user_name,
+                                           tenant_name=tenant_name,
+                                           request_id=req_id)
 
         # Inject the context...
         state.request.context['neutron_context'] = ctx
