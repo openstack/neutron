@@ -71,44 +71,44 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
             self.ctx.session.add(port_binding_cls(**binding_kwarg))
 
-    def test_get_dvr_active_network_ports(self):
+    def test_get_distributed_active_network_ports(self):
         self._setup_port_binding()
         # Register a L2 agent + A bunch of other agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
-        tunnel_network_ports = l2pop_db.get_dvr_active_network_ports(
+        tunnel_network_ports = l2pop_db.get_distributed_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(1, len(tunnel_network_ports))
         _, agent = tunnel_network_ports[0]
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
 
-    def test_get_dvr_active_network_ports_no_candidate(self):
+    def test_get_distributed_active_network_ports_no_candidate(self):
         self._setup_port_binding()
         # Register a bunch of non-L2 agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
-        tunnel_network_ports = l2pop_db.get_dvr_active_network_ports(
+        tunnel_network_ports = l2pop_db.get_distributed_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(0, len(tunnel_network_ports))
 
-    def test_get_nondvr_active_network_ports(self):
+    def test_get_nondistributed_active_network_ports(self):
         self._setup_port_binding(dvr=False)
         # Register a L2 agent + A bunch of other agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
-        fdb_network_ports = l2pop_db.get_nondvr_active_network_ports(
+        fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(1, len(fdb_network_ports))
         _, agent = fdb_network_ports[0]
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
 
-    def test_get_nondvr_active_network_ports_no_candidate(self):
+    def test_get_nondistributed_active_network_ports_no_candidate(self):
         self._setup_port_binding(dvr=False)
         # Register a bunch of non-L2 agents on the same host
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
-        fdb_network_ports = l2pop_db.get_nondvr_active_network_ports(
+        fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
             self.ctx.session, 'network_id')
         self.assertEqual(0, len(fdb_network_ports))

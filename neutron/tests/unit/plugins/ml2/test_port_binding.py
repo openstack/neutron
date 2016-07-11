@@ -212,7 +212,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             port_dict = plugin.get_port(ctx, port['port']['id'])
             self.assertEqual(const.PORT_STATUS_DOWN, port_dict['status'])
 
-    def test_dvr_binding(self):
+    def test_distributed_binding(self):
         ctx = context.get_admin_context()
         with self.port(device_owner=const.DEVICE_OWNER_DVR_INTERFACE) as port:
             port_id = port['port']['id']
@@ -223,9 +223,9 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual('DOWN', port['port']['status'])
 
             # Update port to bind for a host.
-            self.plugin.update_dvr_port_binding(ctx, port_id, {'port': {
-                portbindings.HOST_ID: 'host-ovs-no_filter',
-                'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
+                {portbindings.HOST_ID: 'host-ovs-no_filter',
+                 'device_id': 'router1'}})
 
             # Get port and verify VIF type and status unchanged.
             port = self._show('ports', port_id)
@@ -267,15 +267,15 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              port['port'][portbindings.VIF_TYPE])
             self.assertEqual('DOWN', port['port']['status'])
 
-    def test_dvr_binding_multi_host_status(self):
+    def test_distributed_binding_multi_host_status(self):
         ctx = context.get_admin_context()
         with self.port(device_owner=const.DEVICE_OWNER_DVR_INTERFACE) as port:
             port_id = port['port']['id']
 
             # Update port to bind for 1st host.
-            self.plugin.update_dvr_port_binding(ctx, port_id, {'port': {
-                portbindings.HOST_ID: 'host-ovs-no_filter',
-                'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
+                {portbindings.HOST_ID: 'host-ovs-no_filter',
+                 'device_id': 'router1'}})
 
             # Mark 1st device up.
             self.plugin.endpoints[0].update_device_up(
@@ -287,9 +287,9 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual('ACTIVE', port['port']['status'])
 
             # Update port to bind for a 2nd host.
-            self.plugin.update_dvr_port_binding(ctx, port_id, {'port': {
-                portbindings.HOST_ID: 'host-bridge-filter',
-                'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
+                {portbindings.HOST_ID: 'host-bridge-filter',
+                 'device_id': 'router1'}})
 
             # Mark 2nd device up.
             self.plugin.endpoints[0].update_device_up(
@@ -318,7 +318,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             port = self._show('ports', port_id)
             self.assertEqual('DOWN', port['port']['status'])
 
-    def test_dvr_binding_update_unbound_host(self):
+    def test_distributed_binding_update_unbound_host(self):
         ctx = context.get_admin_context()
         with self.port(device_owner=const.DEVICE_OWNER_DVR_INTERFACE) as port:
             port_id = port['port']['id']

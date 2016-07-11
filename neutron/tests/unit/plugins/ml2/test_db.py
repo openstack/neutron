@@ -292,7 +292,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(router)
             return router
 
-    def _setup_dvr_binding(self, network_id, port_id, router_id, host_id):
+    def _setup_distributed_binding(self, network_id,
+                                   port_id, router_id, host_id):
         with self.ctx.session.begin(subtransactions=True):
             record = models.DistributedPortBinding(
                 port_id=port_id,
@@ -304,81 +305,85 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(record)
             return record
 
-    def test_ensure_dvr_port_binding_deals_with_db_duplicate(self):
+    def test_ensure_distributed_port_binding_deals_with_db_duplicate(self):
         network_id = 'foo_network_id'
         port_id = 'foo_port_id'
         router_id = 'foo_router_id'
         host_id = 'foo_host_id'
         self._setup_neutron_network(network_id, [port_id])
-        self._setup_dvr_binding(network_id, port_id, router_id, host_id)
+        self._setup_distributed_binding(network_id, port_id,
+                                        router_id, host_id)
         with mock.patch.object(query.Query, 'first') as query_first:
             query_first.return_value = []
             with mock.patch.object(ml2_db.LOG, 'debug') as log_trace:
-                binding = ml2_db.ensure_dvr_port_binding(
+                binding = ml2_db.ensure_distributed_port_binding(
                     self.ctx.session, port_id, host_id, router_id)
         self.assertTrue(query_first.called)
         self.assertTrue(log_trace.called)
         self.assertEqual(port_id, binding.port_id)
 
-    def test_ensure_dvr_port_binding(self):
+    def test_ensure_distributed_port_binding(self):
         network_id = 'foo_network_id'
         port_id = 'foo_port_id'
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
-        ml2_db.ensure_dvr_port_binding(
+        ml2_db.ensure_distributed_port_binding(
             self.ctx.session, port_id, 'foo_host', router.id)
         expected = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).one())
         self.assertEqual(port_id, expected.port_id)
 
-    def test_ensure_dvr_port_binding_multiple_bindings(self):
+    def test_ensure_distributed_port_binding_multiple_bindings(self):
         network_id = 'foo_network_id'
         port_id = 'foo_port_id'
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
-        ml2_db.ensure_dvr_port_binding(
+        ml2_db.ensure_distributed_port_binding(
             self.ctx.session, port_id, 'foo_host_1', router.id)
-        ml2_db.ensure_dvr_port_binding(
+        ml2_db.ensure_distributed_port_binding(
             self.ctx.session, port_id, 'foo_host_2', router.id)
         bindings = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).all())
         self.assertEqual(2, len(bindings))
 
-    def test_delete_dvr_port_binding_if_stale(self):
+    def test_delete_distributed_port_binding_if_stale(self):
         network_id = 'foo_network_id'
         port_id = 'foo_port_id'
         self._setup_neutron_network(network_id, [port_id])
-        binding = self._setup_dvr_binding(
+        binding = self._setup_distributed_binding(
             network_id, port_id, None, 'foo_host_id')
 
-        ml2_db.delete_dvr_port_binding_if_stale(self.ctx.session, binding)
+        ml2_db.delete_distributed_port_binding_if_stale(self.ctx.session,
+                                                        binding)
         count = (self.ctx.session.query(models.DistributedPortBinding).
             filter_by(port_id=binding.port_id).count())
         self.assertFalse(count)
 
-    def test_get_dvr_port_binding_by_host_not_found(self):
-        port = ml2_db.get_dvr_port_binding_by_host(
+    def test_get_distributed_port_binding_by_host_not_found(self):
+        port = ml2_db.get_distributed_port_binding_by_host(
             self.ctx.session, 'foo_port_id', 'foo_host_id')
         self.assertIsNone(port)
 
-    def test_get_dvr_port_bindings_not_found(self):
-        port = ml2_db.get_dvr_port_bindings(self.ctx.session, 'foo_port_id')
+    def test_get_distributed_port_bindings_not_found(self):
+        port = ml2_db.get_distributed_port_bindings(self.ctx.session,
+                                                    'foo_port_id')
         self.assertFalse(len(port))
 
-    def test_get_dvr_port_bindings(self):
+    def test_get_distributed_port_bindings(self):
         network_id = 'foo_network_id'
         port_id_1 = 'foo_port_id_1'
         port_id_2 = 'foo_port_id_2'
         self._setup_neutron_network(network_id, [port_id_1, port_id_2])
         router = self._setup_neutron_router()
-        self._setup_dvr_binding(
+        self._setup_distributed_binding(
             network_id, port_id_1, router.id, 'foo_host_id_1')
-        self._setup_dvr_binding(
+        self._setup_distributed_binding(
             network_id, port_id_1, router.id, 'foo_host_id_2')
-        ports = ml2_db.get_dvr_port_bindings(self.ctx.session, 'foo_port_id')
+        ports = ml2_db.get_distributed_port_bindings(self.ctx.session,
+                                                     'foo_port_id')
         self.assertEqual(2, len(ports))
 
-    def test_dvr_port_binding_deleted_by_port_deletion(self):
+    def test_distributed_port_binding_deleted_by_port_deletion(self):
         with self.ctx.session.begin(subtransactions=True):
             self.ctx.session.add(models_v2.Network(id='network_id'))
             device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
@@ -408,5 +413,6 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             with self.ctx.session.begin(subtransactions=True):
                 self.ctx.session.delete(port)
             self.assertEqual([], warning_list)
-        ports = ml2_db.get_dvr_port_bindings(self.ctx.session, 'port_id')
+        ports = ml2_db.get_distributed_port_bindings(self.ctx.session,
+                                                     'port_id')
         self.assertEqual(0, len(ports))

@@ -184,9 +184,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 admin_context, filters=filter_rtr)
             for port in int_ports:
                 dvr_binding = (ml2_db.
-                               get_dvr_port_binding_by_host(context.session,
-                                                            port['id'],
-                                                            port_host))
+                               get_distributed_port_binding_by_host(
+                                   context.session, port['id'], port_host))
                 if dvr_binding:
                     # unbind this port from router
                     dvr_binding['router_id'] = None
