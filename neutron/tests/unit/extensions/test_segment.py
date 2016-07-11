@@ -25,6 +25,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
+from neutron.extensions import ip_allocation
 from neutron.extensions import portbindings
 from neutron.extensions import segment as ext_segment
 from neutron.plugins.common import constants as p_constants
@@ -109,7 +110,7 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["segment", "binding"]
+    supported_extension_aliases = ["segment", "binding", "ip_allocation"]
 
     def get_plugin_description(self):
         return "Network Segments"
@@ -643,6 +644,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
                                      tenant_id=network['network']['tenant_id'],
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
+        res = self.deserialize(self.fmt, response)
+        self._validate_immediate_ip_allocation(res['port']['id'])
 
         # Since host mapped to middle segment, IP must come from middle subnet
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
@@ -685,6 +688,9 @@ class TestSegmentAwareIpam(SegmentTestCase):
                                      tenant_id=network['network']['tenant_id'],
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
+
+        res = self.deserialize(self.fmt, response)
+        self._validate_immediate_ip_allocation(res['port']['id'])
 
         # Since the subnet is not on a segment, fall back to it
         self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
@@ -775,6 +781,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
+        self._validate_deferred_ip_allocation(port['port']['id'])
 
         # Create the subnet and try to update the port to get an IP
         with self.subnet(network=network,
@@ -790,6 +797,24 @@ class TestSegmentAwareIpam(SegmentTestCase):
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
         self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
 
+    def _validate_deferred_ip_allocation(self, port_id):
+        request = self.new_show_request('ports', port_id)
+        response = self.deserialize(self.fmt, request.get_response(self.api))
+
+        self.assertEqual(ip_allocation.IP_ALLOCATION_DEFERRED,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+        ips = response['port']['fixed_ips']
+        self.assertEqual(0, len(ips))
+
+    def _validate_immediate_ip_allocation(self, port_id):
+        request = self.new_show_request('ports', port_id)
+        response = self.deserialize(self.fmt, request.get_response(self.api))
+
+        self.assertEqual(ip_allocation.IP_ALLOCATION_IMMEDIATE,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+        ips = response['port']['fixed_ips']
+        self.assertNotEqual(0, len(ips))
+
     def _create_deferred_ip_port(self, network):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
@@ -797,6 +822,9 @@ class TestSegmentAwareIpam(SegmentTestCase):
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
+
+        self._validate_deferred_ip_allocation(port['port']['id'])
+
         return port
 
     def test_port_update_deferred_allocation(self):
