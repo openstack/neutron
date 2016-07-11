@@ -13,7 +13,7 @@
 #    under the License.
 
 PARENT_PORT = 'parent_port'
-SUBPORT = 'subport'
+SUBPORTS = 'subports'
 TRUNK = 'trunk'
 TRUNK_PLUGIN = 'trunk_plugin'
 
