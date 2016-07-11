@@ -17,23 +17,16 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _LE
 from neutron.common import _deprecate
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import gre_allocation_endpoints as gre_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
 
-gre_opts = [
-    cfg.ListOpt('tunnel_id_ranges',
-                default=[],
-                help=_("Comma-separated list of <tun_min>:<tun_max> tuples "
-                       "enumerating ranges of GRE tunnel IDs that are "
-                       "available for tenant network allocation"))
-]
-
-cfg.CONF.register_opts(gre_opts, "ml2_type_gre")
+driver_type.register_ml2_drivers_gre_opts()
 
 
 _deprecate._moved_global('GreAllocation', new_module=gre_model)

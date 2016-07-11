@@ -22,6 +22,7 @@ import six
 from neutron._i18n import _, _LI, _LW
 from neutron.common import _deprecate
 from neutron.common import exceptions as n_exc
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import flatallocation as type_flat_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
@@ -29,16 +30,7 @@ from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
 
-flat_opts = [
-    cfg.ListOpt('flat_networks',
-                default='*',
-                help=_("List of physical_network names with which flat "
-                       "networks can be created. Use default '*' to allow "
-                       "flat networks with arbitrary physical_network names. "
-                       "Use an empty list to disable flat networks."))
-]
-
-cfg.CONF.register_opts(flat_opts, "ml2_type_flat")
+driver_type.register_ml2_drivers_flat_opts()
 
 
 _deprecate._moved_global('FlatAllocation', new_module=type_flat_model)
