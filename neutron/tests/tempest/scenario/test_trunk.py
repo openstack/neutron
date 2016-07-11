@@ -37,7 +37,8 @@ class TrunkTest(base.BaseTempestTestCase):
         # setup basic topology for servers we can log into
         cls.network = cls.create_network()
         cls.subnet = cls.create_subnet(cls.network)
-        cls.create_router_and_interface(cls.subnet['id'])
+        router = cls.create_router_by_client()
+        cls.create_router_interface(router['id'], cls.subnet['id'])
         cls.keypair = cls.create_keypair()
         cls.secgroup = cls.manager.network_client.create_security_group(
             name=data_utils.rand_name('secgroup-'))
