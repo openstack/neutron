@@ -37,8 +37,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
     def __init__(self):
         self._segmentation_types = {}
-        #TODO(tidwellr) notify using events.AFTER_INIT once available
-        registry.notify(constants.TRUNK_PLUGIN, events.AFTER_CREATE, self)
+        registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
         LOG.debug('Trunk plugin loaded')
 
     def add_segmentation_type(self, segmentation_type, id_validator):

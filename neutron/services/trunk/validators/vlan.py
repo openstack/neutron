@@ -23,9 +23,8 @@ LOG = logging.getLogger(__name__)
 
 
 def register():
-    #TODO(tidwellr) register for AFTER_INIT once available
     registry.subscribe(handler, trunk_consts.TRUNK_PLUGIN,
-                       events.AFTER_CREATE)
+                       events.AFTER_INIT)
     LOG.debug('Registering for trunk support')
 
 
