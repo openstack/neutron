@@ -55,7 +55,6 @@ from neutron.db import models_v2
 from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.plugins.ml2 import config
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -4004,12 +4003,12 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
     def setUp(self):
         ext_mgr = L3TestExtensionManagerWithDNS()
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(L3NatDBFloatingIpTestCaseWithDNS, self).setUp(plugin=plugin,
                                                             ext_mgr=ext_mgr)
-        config.cfg.CONF.set_override('external_dns_driver', 'designate')
+        cfg.CONF.set_override('external_dns_driver', 'designate')
         self.mock_client.reset_mock()
         self.mock_admin_client.reset_mock()
 
@@ -4096,8 +4095,8 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
     def _get_bytes_or_nybles_to_skip(self, in_addr_name):
         if 'in-addr.arpa' in in_addr_name:
             return ((
-                32 - config.cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
-        return (128 - config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
+                32 - cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+        return (128 - cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
 
     def _get_in_addr(self, record):
         in_addr_name = netaddr.IPAddress(record).reverse_dns
@@ -4133,7 +4132,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_create_with_net_port_dns(self, mock_args):
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns(net_dns_domain=self.DNS_DOMAIN,
                 port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
             floatingip = flip
@@ -4143,7 +4142,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
     def test_floatingip_create_with_flip_and_net_port_dns(self, mock_args):
         # If both network+port and the floating ip have dns domain and
         # dns name, floating ip's information should take priority
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns(net_dns_domain='junkdomain.org.',
                 port_dns_name='junk', flip_dns_domain=self.DNS_DOMAIN,
                 flip_dns_name=self.DNS_NAME, assoc_port=True) as flip:
@@ -4173,7 +4172,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_associate_port_with_net_port_dns(self, mock_args):
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns_on_update(
                 net_dns_domain=self.DNS_DOMAIN,
                 port_dns_name=self.DNS_NAME) as flip:
@@ -4185,7 +4184,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
                                                                   mock_args):
         # If both network+port and the floating ip have dns domain and
         # dns name, floating ip's information should take priority
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns_on_update(
                 net_dns_domain='junkdomain.org.',
                 port_dns_name='junk',
@@ -4198,7 +4197,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_disassociate_port(self, mock_args):
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns(net_dns_domain=self.DNS_DOMAIN,
                 port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
             fake_recordset = {'id': '',
@@ -4224,7 +4223,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_delete(self, mock_args):
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
         with self._create_floatingip_with_dns(flip_dns_domain=self.DNS_DOMAIN,
                 flip_dns_name=self.DNS_NAME) as flip:
             floatingip = flip
@@ -4243,13 +4242,13 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_no_PTR_record(self, mock_args):
-        config.cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
 
         # Disabling this option should stop the admin client from creating
         # PTR records. So set this option and make sure the admin client
         # wasn't called to create any records
-        config.cfg.CONF.set_override('allow_reverse_dns_lookup', False,
-                                     group='designate')
+        cfg.CONF.set_override('allow_reverse_dns_lookup', False,
+                              group='designate')
 
         with self._create_floatingip_with_dns(flip_dns_domain=self.DNS_DOMAIN,
                 flip_dns_name=self.DNS_NAME) as flip:

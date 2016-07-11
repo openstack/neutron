@@ -19,8 +19,8 @@ from neutron_lib.api.definitions import port as port_def
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import data_plane_status
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -30,9 +30,9 @@ class DataPlaneStatusSML2ExtDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['data_plane_status']
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(DataPlaneStatusSML2ExtDriverTestCase, self).setUp()
         self.plugin = directory.get_plugin()
 

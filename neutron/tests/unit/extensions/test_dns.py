@@ -23,7 +23,6 @@ from oslo_config import cfg
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import dns
-from neutron.plugins.ml2 import config
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -57,9 +56,9 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['dns']
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(DnsExtensionTestCase, self).setUp()
 
     def _create_network(self, fmt, name, admin_state_up,

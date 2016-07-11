@@ -17,6 +17,7 @@ import functools
 
 import fixtures
 import mock
+from oslo_config import cfg
 import testtools
 import webob
 
@@ -49,7 +50,6 @@ from neutron.objects import base as base_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers import type_vlan
@@ -72,9 +72,9 @@ from neutron.tests.unit.plugins.ml2.drivers import mechanism_logger as \
 from neutron.tests.unit.plugins.ml2.drivers import mechanism_test as mech_test
 
 
-config.cfg.CONF.import_opt('network_vlan_ranges',
-                           'neutron.plugins.ml2.drivers.type_vlan',
-                           group='ml2_type_vlan')
+cfg.CONF.import_opt('network_vlan_ranges',
+                    'neutron.plugins.ml2.drivers.type_vlan',
+                    group='ml2_type_vlan')
 
 
 PLUGIN_NAME = 'ml2'
@@ -135,18 +135,18 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     self._mechanism_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers',
+                              self._mechanism_drivers,
+                              group='ml2')
         self.physnet = 'physnet1'
         self.vlan_range = '1:100'
         self.vlan_range2 = '200:300'
         self.physnet2 = 'physnet2'
         self.phys_vrange = ':'.join([self.physnet, self.vlan_range])
         self.phys2_vrange = ':'.join([self.physnet2, self.vlan_range2])
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     [self.phys_vrange, self.phys2_vrange],
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              [self.phys_vrange, self.phys2_vrange],
+                              group='ml2_type_vlan')
         self.setup_parent()
         self.driver = directory.get_plugin()
         self.context = context.get_admin_context()
@@ -386,9 +386,9 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         return network
 
     def test_external_network_type_none(self):
-        config.cfg.CONF.set_default('external_network_type',
-                                    None,
-                                    group='ml2')
+        cfg.CONF.set_default('external_network_type',
+                             None,
+                             group='ml2')
 
         network = self._create_external_network()
         # For external network, expected network type to be
@@ -403,9 +403,9 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
     def test_external_network_type_vlan(self):
-        config.cfg.CONF.set_default('external_network_type',
-                                    p_const.TYPE_VLAN,
-                                    group='ml2')
+        cfg.CONF.set_default('external_network_type',
+                             p_const.TYPE_VLAN,
+                             group='ml2')
 
         network = self._create_external_network()
         # For external network, expected network type to be 'vlan'.
@@ -428,7 +428,7 @@ class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
                         'vlan_transparent': 'True'}}
 
     def setUp(self, plugin=None):
-        config.cfg.CONF.set_override('vlan_transparent', True)
+        cfg.CONF.set_override('vlan_transparent', True)
         super(TestMl2NetworksWithVlanTransparencyBase, self).setUp(plugin)
 
 
@@ -466,8 +466,8 @@ class TestMl2NetworksWithVlanTransparencyAndMTU(
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'check_vlan_transparency',
                                return_value=True):
-            config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
-            config.cfg.CONF.set_override('global_physnet_mtu', 1000)
+            cfg.CONF.set_override('path_mtu', 1000, group='ml2')
+            cfg.CONF.set_override('global_physnet_mtu', 1000)
             network_req = self.new_create_request('networks', self.data)
             res = network_req.get_response(self.api)
             self.assertEqual(201, res.status_int)
@@ -1555,7 +1555,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
     def setUp(self, firewall_driver=None):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
-        config.cfg.CONF.set_override(
+        cfg.CONF.set_override(
             'enable_security_group', self.ENABLE_SG,
             group='SECURITYGROUP')
         super(TestMl2PortBinding, self).setUp()
@@ -2150,9 +2150,9 @@ class TestMl2AllowedAddressPairs(Ml2PluginV2TestCase,
     _extension_drivers = ['port_security']
 
     def setUp(self, plugin=None):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(test_pair.TestAllowedAddressPairs, self).setUp(
             plugin=PLUGIN_NAME)
 
@@ -2160,12 +2160,12 @@ class TestMl2AllowedAddressPairs(Ml2PluginV2TestCase,
 class TestMl2PortSecurity(Ml2PluginV2TestCase):
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     ['port_security'],
-                                     group='ml2')
-        config.cfg.CONF.set_override('enable_security_group',
-                                     False,
-                                     group='SECURITYGROUP')
+        cfg.CONF.set_override('extension_drivers',
+                              ['port_security'],
+                              group='ml2')
+        cfg.CONF.set_override('enable_security_group',
+                              False,
+                              group='SECURITYGROUP')
         super(TestMl2PortSecurity, self).setUp()
 
     def test_port_update_without_security_groups(self):
@@ -2250,9 +2250,9 @@ class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['test', 'logger'],
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers',
+                              ['test', 'logger'],
+                              group='ml2')
         super(Ml2PluginV2FaultyDriverTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
 

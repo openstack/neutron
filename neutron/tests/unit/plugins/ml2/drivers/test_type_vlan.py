@@ -17,13 +17,13 @@ import mock
 from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
+from oslo_config import cfg
 from testtools import matchers
 
 from neutron.db import api as db_api
 from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
@@ -44,9 +44,9 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(VlanTypeTest, self).setUp()
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     NETWORK_VLAN_RANGES,
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              NETWORK_VLAN_RANGES,
+                              group='ml2_type_vlan')
         self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
@@ -218,23 +218,23 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                           segment)
 
     def test_get_mtu(self):
-        config.cfg.CONF.set_override('global_physnet_mtu', 1475)
-        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 1475)
+        cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1450, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 1375)
-        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 1375)
+        cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1375, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 0)
+        cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1450, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 0)
+        cfg.CONF.set_override('path_mtu', 0, group='ml2')
         self.driver.physnet_mtus = {}
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
@@ -276,17 +276,17 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
 
     def test_allocate_tenant_segment_in_order_of_config(self):
         ranges = NETWORK_VLAN_RANGES + ['phys_net3:20:30']
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ranges,
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ranges,
+                              group='ml2_type_vlan')
         driver = type_vlan.VlanTypeDriver()
         driver.physnet_mtus = []
         driver._sync_vlan_allocations()
         # swap config order from DB order after sync has happened to
         # ensure config order is followed and not DB order
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     list(reversed(ranges)),
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              list(reversed(ranges)),
+                              group='ml2_type_vlan')
         driver._parse_network_vlan_ranges()
         ctx = context.Context()
         for vlan in range(11):
