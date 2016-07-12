@@ -512,6 +512,17 @@ class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
 
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
+    def test__port_provisioned_with_blocks(self):
+        plugin = manager.NeutronManager.get_plugin()
+        ups = mock.patch.object(plugin, 'update_port_status').start()
+        with self.port() as port:
+            mock.patch('neutron.plugins.ml2.plugin.db.get_port').start()
+            provisioning_blocks.add_provisioning_component(
+                self.context, port['port']['id'], 'port', 'DHCP')
+            plugin._port_provisioned('port', 'evt', 'trigger',
+                                     self.context, port['port']['id'])
+        self.assertFalse(ups.called)
+
     def test__port_provisioned_no_binding(self):
         plugin = manager.NeutronManager.get_plugin()
         with self.network() as net:

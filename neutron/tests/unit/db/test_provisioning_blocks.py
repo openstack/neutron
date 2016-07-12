@@ -94,6 +94,18 @@ class TestStatusBarriers(testlib_api.SqlTestCase):
                                  resources.PORT, 'entity2')
         self.assertFalse(self.provisioned.called)
 
+    def test_is_object_blocked(self):
+        pb.add_provisioning_component(self.ctx, self.port.id, resources.PORT,
+                                      'e1')
+        self.assertTrue(pb.is_object_blocked(self.ctx, self.port.id,
+                                             resources.PORT))
+        self.assertFalse(pb.is_object_blocked(self.ctx, 'xyz',
+                                              resources.PORT))
+        pb.provisioning_complete(self.ctx, self.port.id,
+                                 resources.PORT, 'e1')
+        self.assertFalse(pb.is_object_blocked(self.ctx, self.port.id,
+                                              resources.PORT))
+
     def test_remove_provisioning_component(self):
         pb.add_provisioning_component(self.ctx, self.port.id, resources.PORT,
                                       'e1')
