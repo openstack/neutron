@@ -28,13 +28,13 @@ import testtools
 
 from neutron.agent.common import config
 from neutron.agent.dhcp import agent as dhcp_agent
-from neutron.agent.dhcp import config as dhcp_config
 from neutron.agent import dhcp_agent as entry
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.conf.agent import dhcp as dhcp_config
 from neutron import context
 from neutron.tests import base
 
