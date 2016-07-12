@@ -43,7 +43,8 @@ SNAT_ROUTER_INTF_KEY = '_snat_router_interfaces'
 HA_NETWORK_NAME = 'HA network tenant %s'
 HA_SUBNET_NAME = 'HA subnet tenant %s'
 HA_PORT_NAME = 'HA port tenant %s'
-MINIMUM_AGENTS_FOR_HA = 2
+MINIMUM_MINIMUM_AGENTS_FOR_HA = 1
+DEFAULT_MINIMUM_AGENTS_FOR_HA = 2
 HA_ROUTER_STATE_ACTIVE = 'active'
 HA_ROUTER_STATE_STANDBY = 'standby'
 
