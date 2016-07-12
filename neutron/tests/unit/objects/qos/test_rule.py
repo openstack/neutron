@@ -12,6 +12,8 @@
 
 from neutron_lib import constants
 
+from oslo_versionedobjects import exception
+
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.services.qos import qos_consts
@@ -90,6 +92,19 @@ class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
 class QosDscpMarkingRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     _test_class = rule.QosDscpMarkingRule
+
+    def test_dscp_object_version_degradation(self):
+        dscp_rule = rule.QosDscpMarkingRule()
+
+        self.assertRaises(exception.IncompatibleObjectVersion,
+                     dscp_rule.obj_to_primitive, '1.0')
+
+    def test_dscp_object_version(self):
+        dscp_rule = rule.QosDscpMarkingRule()
+
+        prim = dscp_rule.obj_to_primitive('1.1')
+
+        self.assertTrue(prim)
 
 
 class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,

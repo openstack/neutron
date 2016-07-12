@@ -42,7 +42,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-                                qos_consts.RULE_TYPE_DSCP_MARK]
+                                qos_consts.RULE_TYPE_DSCP_MARKING]
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()

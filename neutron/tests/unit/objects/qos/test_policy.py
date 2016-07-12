@@ -384,10 +384,10 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         self.assertIn(rule_obj_band, policy_obj_v1_1.rules)
         self.assertIn(rule_obj_dscp, policy_obj_v1_1.rules)
-        self.assertEqual(policy_obj.VERSION, '1.1')
 
-    #TODO(davidsha) add testing for object version incrementation
     def test_object_version_degradation_1_1_to_1_0(self):
+        #NOTE(mangelajo): we should not check .VERSION, since that's the
+        #                 local version on the class definition
         policy_obj, rule_obj_band, rule_obj_dscp = (
             self._create_test_policy_with_bw_and_dscp())
 
@@ -395,8 +395,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         self.assertIn(rule_obj_band, policy_obj_v1_0.rules)
         self.assertNotIn(rule_obj_dscp, policy_obj_v1_0.rules)
-        #NOTE(mangelajo): we should not check .VERSION, since that's the
-        #                 local version on the class definition
 
     def test_filter_by_shared(self):
         policy_obj = policy.QosPolicy(

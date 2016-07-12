@@ -6,6 +6,6 @@ prelude: >
 features:
   - Neutron can apply a QoS rule to ports that mark outgoing
     traffic's type of service packet header field.
-  - The Open vSwitch Neutron agent has been extended to mark the type of
-    service packet header field of packets egressing from the VM when the
+  - The Open vSwitch Neutron agent has been extended to mark the Type of
+    Service IP header field of packets egressing from the VM when the
     QoS rule has been applied.
