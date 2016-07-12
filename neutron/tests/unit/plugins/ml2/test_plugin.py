@@ -375,26 +375,64 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
 
-class TestMl2NetworksWithVlanTransparencyAndMTU(TestMl2NetworksV2):
+class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
+    data = {'network': {'name': 'net1',
+                        mpnet.SEGMENTS:
+                        [{pnet.NETWORK_TYPE: 'vlan',
+                          pnet.PHYSICAL_NETWORK: 'physnet1'}],
+                        'tenant_id': 'tenant_one',
+                        'vlan_transparent': 'True'}}
+
     def setUp(self, plugin=None):
-        config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
-        config.cfg.CONF.set_override('global_physnet_mtu', 1000)
-        config.cfg.CONF.set_override('advertise_mtu', True)
         config.cfg.CONF.set_override('vlan_transparent', True)
-        super(TestMl2NetworksWithVlanTransparencyAndMTU, self).setUp(plugin)
+        super(TestMl2NetworksWithVlanTransparencyBase, self).setUp(plugin)
+
+
+class TestMl2NetworksWithVlanTransparency(
+    TestMl2NetworksWithVlanTransparencyBase):
+    _mechanism_drivers = ['test']
+
+    def test_create_network_vlan_transparent_fail(self):
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'check_vlan_transparency',
+                               return_value=False):
+            network_req = self.new_create_request('networks', self.data)
+            res = network_req.get_response(self.api)
+            self.assertEqual(500, res.status_int)
+            error_result = self.deserialize(self.fmt, res)['NeutronError']
+            self.assertEqual("VlanTransparencyDriverError",
+                             error_result['type'])
+
+    def test_create_network_vlan_transparent(self):
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'check_vlan_transparency',
+                               return_value=True):
+            network_req = self.new_create_request('networks', self.data)
+            res = network_req.get_response(self.api)
+            self.assertEqual(201, res.status_int)
+            network = self.deserialize(self.fmt, res)['network']
+            self.assertIn('vlan_transparent', network)
+
+
+class TestMl2NetworksWithVlanTransparencyAndMTU(
+    TestMl2NetworksWithVlanTransparencyBase):
+    _mechanism_drivers = ['test']
 
     def test_create_network_vlan_transparent_and_mtu(self):
-        data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
-                            [{pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1'}],
-                            'tenant_id': 'tenant_one'}}
-        network_req = self.new_create_request('networks', data)
-        res = network_req.get_response(self.api)
-        self.assertEqual(201, res.status_int)
-        network = self.deserialize(self.fmt, res)['network']
-        self.assertEqual(1000, network['mtu'])
-        self.assertIn('vlan_transparent', network)
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'check_vlan_transparency',
+                               return_value=True):
+            config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
+            config.cfg.CONF.set_override('global_physnet_mtu', 1000)
+            config.cfg.CONF.set_override('advertise_mtu', True)
+            network_req = self.new_create_request('networks', self.data)
+            res = network_req.get_response(self.api)
+            self.assertEqual(201, res.status_int)
+            network = self.deserialize(self.fmt, res)['network']
+            self.assertEqual(1000, network['mtu'])
+            self.assertIn('vlan_transparent', network)
+            self.assertTrue(network['vlan_transparent'])
+        self.assertTrue(network['vlan_transparent'])
 
 
 class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
