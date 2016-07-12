@@ -158,12 +158,18 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.wait_until_ports_state(self.ports, up=True)
         self.assert_vlan_tags(self.ports, self.agent)
 
-    def test_assert_bridges_ports_vxlan(self):
-        agent = self.create_agent()
+    def _test_assert_bridges_ports_vxlan(self, local_ip=None):
+        agent = self.create_agent(local_ip=local_ip)
         self.assertTrue(self.ovs.bridge_exists(self.br_int))
         self.assertTrue(self.ovs.bridge_exists(self.br_tun))
         self.assert_bridge_ports()
         self.assert_patch_ports(agent)
+
+    def test_assert_bridges_ports_vxlan_ipv4(self):
+        self._test_assert_bridges_ports_vxlan()
+
+    def test_assert_bridges_ports_vxlan_ipv6(self):
+        self._test_assert_bridges_ports_vxlan(local_ip='2001:db8:100::1')
 
     def test_assert_bridges_ports_no_tunnel(self):
         self.create_agent(create_tunnels=False)
