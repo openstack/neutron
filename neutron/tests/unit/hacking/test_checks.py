@@ -24,6 +24,9 @@ from neutron.hacking import checks
 from neutron.tests import base
 
 
+CREATE_DUMMY_MATCH_OBJECT = re.compile('a')
+
+
 class HackingTestCase(base.BaseTestCase):
 
     def assertLinePasses(self, func, line):
@@ -298,6 +301,38 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLineFails(f, 'from unittest.TestSuite')
         self.assertLineFails(f, 'import unittest')
 
+    def test_check_delayed_string_interpolation(self):
+        dummy_noqa = CREATE_DUMMY_MATCH_OBJECT.search('a')
+
+        # In 'logical_line', Contents of strings replaced with
+        # "xxx" of same length.
+        fail_code1 = 'LOG.error(_LE("xxxxxxxxxxxxxxx") % value)'
+        fail_code2 = "LOG.warning(msg % 'xxxxx')"
+
+        self.assertEqual(
+            1, len(list(checks.check_delayed_string_interpolation(fail_code1,
+                                        "neutron/common/rpc.py", None))))
+        self.assertEqual(
+            1, len(list(checks.check_delayed_string_interpolation(fail_code2,
+                                        "neutron/common/rpc.py", None))))
+
+        pass_code1 = 'LOG.error(_LE("xxxxxxxxxxxxxxxxxx"), value)'
+        pass_code2 = "LOG.warning(msg, 'xxxxx')"
+        self.assertEqual(
+            0, len(list(checks.check_delayed_string_interpolation(pass_code1,
+                                        "neutron/common/rpc.py", None))))
+        self.assertEqual(
+            0, len(list(checks.check_delayed_string_interpolation(pass_code2,
+                                        "neutron/common/rpc.py", None))))
+        # check a file in neutron/tests
+        self.assertEqual(
+            0, len(list(checks.check_delayed_string_interpolation(fail_code1,
+                                        "neutron/tests/test_assert.py",
+                                        None))))
+        # check code including 'noqa'
+        self.assertEqual(
+            0, len(list(checks.check_delayed_string_interpolation(fail_code1,
+                                        "neutron/common/rpc.py", dummy_noqa))))
 
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand

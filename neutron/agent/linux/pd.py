@@ -230,7 +230,7 @@ class PrefixDelegation(object):
     def _lla_available(self, gw_ifname, ns_name, lla_with_mask):
         llas = self._get_llas(gw_ifname, ns_name)
         if self._is_lla_active(lla_with_mask, llas):
-            LOG.debug("LLA %s is active now" % lla_with_mask)
+            LOG.debug("LLA %s is active now", lla_with_mask)
             self.pd_update_cb()
             return True
 

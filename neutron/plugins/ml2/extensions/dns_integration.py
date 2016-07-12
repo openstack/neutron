@@ -248,10 +248,10 @@ def _send_data_to_external_dns_service(context, dns_driver, dns_domain,
     except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
         LOG.exception(_LE("Error publishing port data in external DNS "
                           "service. Name: '%(name)s'. Domain: '%(domain)s'. "
-                          "DNS service driver message '%(message)s'")
-                      % {"name": dns_name,
-                         "domain": dns_domain,
-                         "message": e.msg})
+                          "DNS service driver message '%(message)s'"),
+                      {"name": dns_name,
+                       "domain": dns_domain,
+                       "message": e.msg})
 
 
 def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
@@ -262,11 +262,11 @@ def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
         LOG.exception(_LE("Error deleting port data from external DNS "
                           "service. Name: '%(name)s'. Domain: '%(domain)s'. "
                           "IP addresses '%(ips)s'. DNS service driver message "
-                          "'%(message)s'")
-                      % {"name": dns_name,
-                         "domain": dns_domain,
-                         "message": e.msg,
-                         "ips": ', '.join(records)})
+                          "'%(message)s'"),
+                      {"name": dns_name,
+                       "domain": dns_domain,
+                       "message": e.msg,
+                       "ips": ', '.join(records)})
 
 
 def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):

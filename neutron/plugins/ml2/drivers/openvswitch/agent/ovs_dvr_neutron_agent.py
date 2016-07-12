@@ -570,8 +570,8 @@ class OVSDVRNeutronAgent(object):
         if local_vlan_map.network_type not in (constants.TUNNEL_NETWORK_TYPES
                                                + [p_const.TYPE_VLAN]):
             LOG.debug("DVR: Port %s is with network_type %s not supported"
-                      " for dvr plumbing" % (port.vif_id,
-                                             local_vlan_map.network_type))
+                      " for dvr plumbing", port.vif_id,
+                      local_vlan_map.network_type)
             return
 
         if (port.vif_id in self.local_ports and

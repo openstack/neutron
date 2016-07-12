@@ -28,6 +28,7 @@ Neutron Specific Commandments
 - [N334] Use unittest2 uniformly across Neutron.
 - [N340] Check usage of <module>.i18n (and neutron.i18n)
 - [N341] Check usage of _ from python builtins
+- [N342] String interpolation should be delayed at logging calls.
 
 Creating Unit Tests
 -------------------
