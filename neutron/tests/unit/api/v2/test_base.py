@@ -1329,6 +1329,11 @@ class NotificationTest(APIv2TestBase):
         for msg, event in zip(fake_notifier.NOTIFICATIONS, expected_events):
             self.assertEqual('INFO', msg['priority'])
             self.assertEqual(event, msg['event_type'])
+            if opname == 'delete' and event == 'network.delete.end':
+                self.assertIn('payload', msg)
+                resource = msg['payload']
+                self.assertIn('network_id', resource)
+                self.assertIn('network', resource)
 
         self.assertEqual(expected_code, res.status_int)
 
