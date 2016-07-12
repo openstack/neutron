@@ -51,16 +51,35 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         :returns: set -- a set of tenants' ids dependent on this object.
         """
 
+    @staticmethod
+    def is_network_shared(context, rbac_entries):
+        # NOTE(korzen) this method is copied from db_base_plugin_common.
+        # The shared attribute for a network now reflects if the network
+        # is shared to the calling tenant via an RBAC entry.
+        matches = ('*',) + ((context.tenant_id,) if context else ())
+        for entry in rbac_entries:
+            if (entry.action == models.ACCESS_SHARED and
+                    entry.target_tenant in matches):
+                return True
+        return False
+
+    @staticmethod
+    def get_shared_with_tenant(context, rbac_db_model, obj_id, tenant_id):
+        # NOTE(korzen) This method enables to query within already started
+        # session
+        return (common_db_mixin.model_query(context, rbac_db_model).filter(
+                and_(rbac_db_model.object_id == obj_id,
+                     rbac_db_model.action == models.ACCESS_SHARED,
+                     rbac_db_model.target_tenant.in_(
+                         ['*', tenant_id]))).count() != 0)
+
     @classmethod
     def is_shared_with_tenant(cls, context, obj_id, tenant_id):
         ctx = context.elevated()
         rbac_db_model = cls.rbac_db_model
         with ctx.session.begin(subtransactions=True):
-            return (common_db_mixin.model_query(ctx, rbac_db_model).filter(
-                and_(rbac_db_model.object_id == obj_id,
-                     rbac_db_model.action == models.ACCESS_SHARED,
-                     rbac_db_model.target_tenant.in_(
-                         ['*', tenant_id]))).count() != 0)
+            return cls.get_shared_with_tenant(ctx, rbac_db_model,
+                                              obj_id, tenant_id)
 
     @classmethod
     def is_accessible(cls, context, db_obj):

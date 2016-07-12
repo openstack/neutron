@@ -16,8 +16,10 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.objects import base
 from neutron.objects import common_types
+from neutron.objects import rbac_db
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -130,6 +132,13 @@ class IPAllocationPool(base.NeutronDbObject):
         return result
 
 
+# RBAC metaclass is not applied here because 'shared' attribute of Subnet
+# is dependent on Network 'shared' state, and in Subnet object
+# it can be read-only. The necessary changes are applied manually:
+#   - defined 'shared' attribute in 'fields'
+#   - added 'shared' to synthetic_fields
+#   - registered extra_filter_name for 'shared' attribute
+#   - added loading shared attribute based on network 'rbac_entries'
 @obj_base.VersionedObjectRegistry.register
 class Subnet(base.NeutronDbObject):
     # Version 1.0: Initial version
@@ -149,6 +158,7 @@ class Subnet(base.NeutronDbObject):
         'allocation_pools': obj_fields.ListOfObjectsField('IPAllocationPool',
                                                           nullable=True),
         'enable_dhcp': obj_fields.BooleanField(),
+        'shared': obj_fields.BooleanField(nullable=True),
         'dns_nameservers': obj_fields.ListOfObjectsField('DNSNameServer',
                                                          nullable=True),
         'host_routes': obj_fields.ListOfObjectsField('Route', nullable=True),
@@ -156,13 +166,47 @@ class Subnet(base.NeutronDbObject):
         'ipv6_address_mode': common_types.IPV6ModeEnumField(nullable=True)
     }
 
-    synthetic_fields = ['allocation_pools', 'dns_nameservers', 'host_routes']
+    synthetic_fields = ['allocation_pools', 'dns_nameservers', 'host_routes',
+                        'shared']
 
     foreign_keys = {'network_id': 'id'}
 
     fields_need_translation = {
         'project_id': 'tenant_id'
     }
+
+    def __init__(self, context=None, **kwargs):
+        super(Subnet, self).__init__(context, **kwargs)
+        self.add_extra_filter_name('shared')
+
+    def obj_load_attr(self, attrname):
+        if attrname == 'shared':
+            return self._load_shared()
+        super(Subnet, self).obj_load_attr(attrname)
+
+    def _load_shared(self, db_obj=None):
+        if db_obj:
+            # NOTE(korzen) db_obj is passed when Subnet object is loaded
+            # from DB
+            rbac_entries = db_obj.get('rbac_entries') or {}
+            shared = (rbac_db.RbacNeutronDbObjectMixin.
+                      is_network_shared(self.obj_context, rbac_entries))
+        else:
+            # NOTE(korzen) this case is used when Subnet object was
+            # instantiated and without DB interaction (get_object(s), update,
+            # create), it should be rare case to load 'shared' by that method
+            shared = (rbac_db.RbacNeutronDbObjectMixin.
+                      get_shared_with_tenant(self.obj_context.elevated(),
+                                             rbac_db_models.NetworkRBAC,
+                                             self.network_id,
+                                             self.project_id))
+        setattr(self, 'shared', shared)
+        self.obj_reset_changes(['shared'])
+
+    def from_db_object(self, *objs):
+        super(Subnet, self).from_db_object(*objs)
+        for obj in objs:
+            self._load_shared(obj)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
