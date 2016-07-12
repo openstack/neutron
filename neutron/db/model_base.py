@@ -177,3 +177,13 @@ class HasStandardAttributes(object):
         # for all other modifications or when relevant children are being
         # modified (e.g. fixed_ips change should bump port revision)
         self.standard_attr.revision_number += 1
+
+
+def get_unique_keys(model):
+    try:
+        constraints = model.__table__.constraints
+    except AttributeError:
+        constraints = []
+    return [[c.name for c in constraint.columns]
+            for constraint in constraints
+            if isinstance(constraint, sa.UniqueConstraint)]

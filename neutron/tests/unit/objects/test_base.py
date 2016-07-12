@@ -29,6 +29,7 @@ from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
+from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects import common_types
@@ -143,6 +144,28 @@ class FakeNeutronObjectCompositePrimaryKey(base.NeutronDbObject):
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ListOfObjectsField(
             'FakeWeirdKeySmallNeutronObject')
+    }
+
+    synthetic_fields = ['obj_field']
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectUniqueKey(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    primary_keys = ['id', 'id2']
+    unique_keys = [['unique_key'], ['id2']]
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'id2': obj_fields.UUIDField(),
+        'unique_key': obj_fields.StringField(),
+        'field1': obj_fields.StringField(),
+        'obj_field': obj_fields.ObjectField('FakeSmallNeutronObject',
+                                            nullable=True)
     }
 
     synthetic_fields = ['obj_field']
@@ -316,12 +339,14 @@ class _BaseObjectTestCase(object):
         return obj_cls.modify_fields_to_db(fields)
 
     @classmethod
-    def generate_object_keys(cls, obj_cls):
+    def generate_object_keys(cls, obj_cls, field_names=None):
+        if field_names is None:
+            field_names = obj_cls.primary_keys
         keys = {}
-        for field, field_obj in obj_cls.fields.items():
-            if field in obj_cls.primary_keys:
-                generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
-                keys[field] = generator()
+        for field in field_names:
+            field_obj = obj_cls.fields[field]
+            generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
+            keys[field] = generator()
         return keys
 
     def get_updatable_fields(self, fields):
@@ -363,11 +388,37 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertIsNone(obj)
 
     def test_get_object_missing_primary_key(self):
-        obj_keys = self.generate_object_keys(self._test_class)
-        obj_keys.popitem()
+        non_unique_fields = (set(self._test_class.fields.keys()) -
+                             set(self._test_class.primary_keys) -
+                             set(itertools.chain.from_iterable(
+                                 self._test_class.unique_keys)))
+        obj_keys = self.generate_object_keys(self._test_class,
+                                             non_unique_fields)
         self.assertRaises(base.NeutronPrimaryKeyMissing,
                           self._test_class.get_object,
                           self.context, **obj_keys)
+
+    def test_get_object_unique_key(self):
+        if not self._test_class.unique_keys:
+            self.skipTest('No unique keys found in test class %r' %
+                          self._test_class)
+
+        for unique_keys in self._test_class.unique_keys:
+            with mock.patch.object(obj_db_api, 'get_object',
+                                   return_value=self.db_obj) \
+                    as get_object_mock:
+                with mock.patch.object(obj_db_api, 'get_objects',
+                                       side_effect=self.fake_get_objects):
+                    obj_keys = self.generate_object_keys(self._test_class,
+                                                         unique_keys)
+                    obj = self._test_class.get_object(self.context,
+                                                      **obj_keys)
+                    self.assertTrue(self._is_test_class(obj))
+                    self.assertEqual(self.obj_fields[0],
+                                     get_obj_db_fields(obj))
+                    get_object_mock.assert_called_once_with(
+                        self.context, self._test_class.db_model,
+                        **self._test_class.modify_fields_to_db(obj_keys))
 
     def _get_synthetic_fields_get_objects_calls(self, db_objs):
         mock_calls = []
@@ -664,6 +715,42 @@ class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
 class BaseDbObjectCompositePrimaryKeyTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectCompositePrimaryKey
+
+
+class BaseDbObjectUniqueKeysTestCase(BaseObjectIfaceTestCase):
+
+    _test_class = FakeNeutronObjectUniqueKey
+
+
+class UniqueKeysTestCase(test_base.BaseTestCase):
+
+    def test_class_creation(self):
+        m_get_unique_keys = mock.patch.object(model_base, 'get_unique_keys')
+        with m_get_unique_keys as get_unique_keys:
+            get_unique_keys.return_value = [['field1'],
+                                            ['field2', 'db_field3']]
+
+            @obj_base.VersionedObjectRegistry.register_if(False)
+            class UniqueKeysTestObject(base.NeutronDbObject):
+                # Version 1.0: Initial version
+                VERSION = '1.0'
+
+                db_model = FakeModel
+
+                primary_keys = ['id']
+
+                fields = {
+                    'id': obj_fields.UUIDField(),
+                    'field1': obj_fields.UUIDField(),
+                    'field2': obj_fields.UUIDField(),
+                    'field3': obj_fields.UUIDField(),
+                }
+
+                fields_need_translation = {'field3': 'db_field3'}
+        expected = {('field1',), ('field2', 'field3')}
+        observed = {tuple(sorted(key))
+                    for key in UniqueKeysTestObject.unique_keys}
+        self.assertEqual(expected, observed)
 
 
 class BaseDbObjectCompositePrimaryKeyWithIdTestCase(BaseObjectIfaceTestCase):
