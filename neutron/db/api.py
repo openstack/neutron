@@ -107,7 +107,10 @@ def get_engine():
 
 
 def dispose():
-    get_engine().pool.dispose()
+    # TODO(akamyshnikova): Use context_manager.dispose_pool() when it is
+    #                      available in oslo.db
+    if context_manager._factory._started:
+        get_engine().pool.dispose()
 
 
 #TODO(akamyshnikova): when all places in the code, which use sessions/
