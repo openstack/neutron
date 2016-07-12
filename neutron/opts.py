@@ -187,7 +187,10 @@ def list_linux_bridge_opts():
         ('vxlan',
          neutron.conf.plugins.ml2.drivers.linuxbridge.vxlan_opts),
         ('agent',
-         neutron.conf.plugins.ml2.drivers.agent.agent_opts),
+         itertools.chain(
+             neutron.conf.plugins.ml2.drivers.agent.agent_opts,
+             neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+         ),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
@@ -276,8 +279,11 @@ def list_ovs_opts():
              neutron.agent.ovsdb.api.OPTS)
          ),
         ('agent',
-         neutron.plugins.ml2.drivers.openvswitch.agent.common.config.
-         agent_opts),
+         itertools.chain(
+             neutron.plugins.ml2.drivers.openvswitch.agent.common.config.
+             agent_opts,
+             neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+         ),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
