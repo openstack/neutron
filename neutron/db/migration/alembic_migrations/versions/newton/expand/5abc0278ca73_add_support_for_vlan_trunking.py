@@ -18,14 +18,20 @@ down_revision = '45f8dd33480b'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 
 def upgrade():
     op.create_table('trunks',
+        sa.Column('admin_state_up', sa.Boolean(),
+                  nullable=False, server_default=sql.true()),
         sa.Column('tenant_id', sa.String(length=255), nullable=True,
                   index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.Column('status', sa.String(length=16),
+                  nullable=False, server_default='ACTIVE'),
         sa.Column('standard_attr_id', sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
                                 ondelete='CASCADE'),

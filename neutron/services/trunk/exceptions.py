@@ -43,3 +43,7 @@ class ParentPortInUse(n_exc.InUse):
 
 class TrunkInUse(n_exc.InUse):
     message = _("Trunk %(trunk_id)s is currently in use.")
+
+
+class TrunkDisabled(n_exc.Conflict):
+    message = _("Trunk %(trunk_id)s is currently disabled.")

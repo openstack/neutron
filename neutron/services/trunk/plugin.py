@@ -35,6 +35,9 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
     supported_extension_aliases = ["trunk", "trunk-details"]
 
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     def __init__(self):
         self._segmentation_types = {}
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
@@ -67,11 +70,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     @db_base_plugin_common.convert_result_to_dict
     def get_trunk(self, context, trunk_id, fields=None):
         """Return information for the specified trunk."""
-        obj = trunk_objects.Trunk.get_object(context, id=trunk_id)
-        if obj is None:
-            raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
-
-        return obj
+        return self._get_trunk(context, trunk_id)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
@@ -94,33 +93,42 @@ class TrunkPlugin(service_base.ServicePluginBase,
                          segmentation_id=p['segmentation_id'],
                          segmentation_type=p['segmentation_type'])
                      for p in trunk['sub_ports']]
+        admin_state_up = trunk.get('admin_state_up', True)
         trunk_obj = trunk_objects.Trunk(context=context,
+                                        admin_state_up=admin_state_up,
                                         id=uuidutils.generate_uuid(),
+                                        name=trunk.get('name', ""),
                                         tenant_id=trunk['tenant_id'],
                                         port_id=trunk['port_id'],
                                         sub_ports=sub_ports)
         trunk_obj.create()
         return trunk_obj
 
+    @db_base_plugin_common.convert_result_to_dict
+    def update_trunk(self, context, trunk_id, trunk):
+        """Update information for the specified trunk."""
+        trunk_data = trunk['trunk']
+        with db_api.autonested_transaction(context.session):
+            trunk_obj = self._get_trunk(context, trunk_id)
+            trunk_obj.update_nonidentifying_fields(
+                trunk_data, reset_changes=True)
+            trunk_obj.update()
+            return trunk_obj
+
     def delete_trunk(self, context, trunk_id):
         """Delete the specified trunk."""
-        trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
-        if trunk:
-            trunk_validator = rules.TrunkPortValidator(trunk.port_id)
-            if not trunk_validator.is_bound(context):
+        with db_api.autonested_transaction(context.session):
+            trunk = self._get_trunk(context, trunk_id)
+            rules.trunk_can_be_managed(context, trunk)
+            trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
+            if not trunk_port_validator.is_bound(context):
                 trunk.delete()
-                return
-            raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
-
-        raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
+            else:
+                raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
 
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
         """Add one or more subports to trunk."""
-        trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
-        if trunk is None:
-            raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
-
         # Check for basic validation since the request body here is not
         # automatically validated by the API layer.
         subports_validator = rules.SubPortsValidator(
@@ -129,6 +137,8 @@ class TrunkPlugin(service_base.ServicePluginBase,
         added_subports = []
 
         with db_api.autonested_transaction(context.session):
+            trunk = self._get_trunk(context, trunk_id)
+            rules.trunk_can_be_managed(context, trunk)
             for subport in subports:
                 obj = trunk_objects.SubPort(
                                context=context,
@@ -149,9 +159,8 @@ class TrunkPlugin(service_base.ServicePluginBase,
     def remove_subports(self, context, trunk_id, subports):
         """Remove one or more subports from trunk."""
         with db_api.autonested_transaction(context.session):
-            trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
-            if trunk is None:
-                raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
+            trunk = self._get_trunk(context, trunk_id)
+            rules.trunk_can_be_managed(context, trunk)
 
             subports_validator = rules.SubPortsValidator(
                 self._segmentation_types, subports)
@@ -185,3 +194,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
         """Return subports for the specified trunk."""
         trunk = self.get_trunk(context, trunk_id)
         return {'sub_ports': trunk['sub_ports']}
+
+    def _get_trunk(self, context, trunk_id):
+        """Return the trunk object or raise if not found."""
+        obj = trunk_objects.Trunk.get_object(context, id=trunk_id)
+        if obj is None:
+            raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
+
+        return obj
