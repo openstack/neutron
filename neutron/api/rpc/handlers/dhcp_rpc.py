@@ -232,6 +232,7 @@ class DhcpRpcCallback(object):
                    'host': host})
         return self._port_action(plugin, context, port, 'update_port')
 
+    @db_api.retry_db_errors
     def dhcp_ready_on_ports(self, context, port_ids):
         for port_id in port_ids:
             provisioning_blocks.provisioning_complete(
