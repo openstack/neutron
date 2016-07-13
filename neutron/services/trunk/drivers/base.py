@@ -18,6 +18,7 @@ import abc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.services.trunk import constants as trunk_consts
+from neutron.services.trunk.rpc import backend
 
 
 class DriverBase(object):
@@ -65,6 +66,14 @@ class DriverBase(object):
         External drivers must subscribe to the AFTER_INIT event for the
         trunk plugin so that they can integrate without an explicit
         register() method invocation.
+
+        :param resource: neutron.services.trunk.constants.TRUNK_PLUGIN
+        :param event: neutron.callbacks.events.AFTER_INIT
+        :param trigger: neutron.service.trunks.plugin.TrunkPlugin
         """
-        # Advertise yourself!
+
         trigger.register_driver(self)
+        # Set up the server-side RPC backend if the driver is loaded,
+        # it is agent based, and the RPC backend is not already initialized.
+        if self.is_loaded and self.agent_type and not trigger.is_rpc_enabled():
+            trigger.set_rpc_backend(backend.ServerSideRpcBackend())
