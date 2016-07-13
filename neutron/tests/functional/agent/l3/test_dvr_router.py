@@ -517,6 +517,22 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             router_ns, floating_ips[0]['fixed_ip_address'])
         self.assertNotEqual(fip_rule_prio_1, fip_rule_prio_2)
 
+    def test_dvr_router_floating_ip_moved(self):
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        router = self.manage_router(self.agent, router_info)
+        floating_ips = router.router[l3_constants.FLOATINGIP_KEY]
+        router_ns = router.ns_name
+        fixed_ip = floating_ips[0]['fixed_ip_address']
+        self.assertTrue(self._fixed_ip_rule_exists(router_ns, fixed_ip))
+        # Floating IP reassigned to another fixed IP
+        new_fixed_ip = '10.0.0.2'
+        self.assertNotEqual(new_fixed_ip, fixed_ip)
+        floating_ips[0]['fixed_ip_address'] = new_fixed_ip
+        self.agent._process_updated_router(router.router)
+        self.assertFalse(self._fixed_ip_rule_exists(router_ns, fixed_ip))
+        self.assertTrue(self._fixed_ip_rule_exists(router_ns, new_fixed_ip))
+
     def _assert_iptables_rules_exist(
         self, router_iptables_manager, table_name, expected_rules):
         rules = router_iptables_manager.get_rules_for_table(table_name)
@@ -550,6 +566,17 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             if fip in line:
                 info = iprule.rule._parse_line(4, line)
                 return info['priority']
+
+    def _fixed_ip_rule_exists(self, namespace, ip):
+        iprule = ip_lib.IPRule(namespace)
+        lines = iprule.rule._as_root([4], ['show']).splitlines()
+        for line in lines:
+            if ip in line:
+                info = iprule.rule._parse_line(4, line)
+                if info['from'] == ip:
+                    return True
+
+        return False
 
     def test_dvr_router_add_internal_network_set_arp_cache(self):
         # Check that, when the router is set up and there are
