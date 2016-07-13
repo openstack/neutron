@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 
 import mock
 from neutron_lib import constants as l3_constants
@@ -77,6 +78,23 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
                                      'fe80::f816:3eff:fe2e:1')
         self._router_lifecycle(enable_ha=False, dual_stack=True,
                                v6_ext_gw_with_sub=False)
+
+    def test_legacy_router_gateway_update_to_none(self):
+        router_info = self.generate_router_info(False)
+        router = self.manage_router(self.agent, router_info)
+        gw_port = router.get_ex_gw_port()
+        interface_name = router.get_external_device_name(gw_port['id'])
+        device = ip_lib.IPDevice(interface_name, namespace=router.ns_name)
+        self.assertIn('gateway', device.route.get_gateway())
+
+        # Make this copy, so that the agent will think there is change in
+        # external gateway port.
+        router.ex_gw_port = copy.deepcopy(router.ex_gw_port)
+        for subnet in gw_port['subnets']:
+            subnet['gateway_ip'] = None
+        router.process(self.agent)
+
+        self.assertIsNone(device.route.get_gateway())
 
     def test_legacy_router_ns_rebuild(self):
         router_info = self.generate_router_info(False)
