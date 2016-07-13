@@ -51,6 +51,21 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertIn('da873ca2', a.remembered)
         self.assertEqual({}, a.allocations)
 
+    def test__init__readfile_error(self):
+        test_pool = set(TestObject(s) for s in range(32768, 40000))
+        with mock.patch.object(ia.ItemAllocator, '_read') as read,\
+                mock.patch.object(ia.ItemAllocator, '_write') as write:
+            read.return_value = ["da873ca2,10\n",
+                                 "corrupt_entry_no_delimiter\n",
+                                 "42c9daf7,11\n"]
+            a = ia.ItemAllocator('/file', TestObject, test_pool)
+
+        self.assertIn('da873ca2', a.remembered)
+        self.assertIn('42c9daf7', a.remembered)
+        self.assertNotIn('corrupt_entry_no_delimiter', a.remembered)
+        self.assertEqual({}, a.allocations)
+        self.assertTrue(write.called)
+
     def test_allocate(self):
         test_pool = set([TestObject(33000), TestObject(33001)])
         a = ia.ItemAllocator('/file', TestObject, test_pool)
