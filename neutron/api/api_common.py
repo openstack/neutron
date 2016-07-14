@@ -186,6 +186,18 @@ def get_pagination_links(request, items, limit,
     return links
 
 
+def is_native_pagination_supported(plugin):
+    native_pagination_attr_name = ("_%s__native_pagination_support"
+                                   % plugin.__class__.__name__)
+    return getattr(plugin, native_pagination_attr_name, False)
+
+
+def is_native_sorting_supported(plugin):
+    native_sorting_attr_name = ("_%s__native_sorting_support"
+                                % plugin.__class__.__name__)
+    return getattr(plugin, native_sorting_attr_name, False)
+
+
 class PaginationHelper(object):
 
     def __init__(self, request, primary_key='id'):

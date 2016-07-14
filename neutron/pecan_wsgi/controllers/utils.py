@@ -17,9 +17,12 @@ import copy
 import functools
 
 from neutron_lib import constants
+from oslo_config import cfg
 import pecan
 from pecan import request
+import six
 
+from neutron.api import api_common
 from neutron.api.v2 import attributes as api_attributes
 from neutron.db import api as db_api
 from neutron import manager
@@ -87,7 +90,8 @@ def when(index, *args, **kwargs):
 
 class NeutronPecanController(object):
 
-    def __init__(self, collection, resource, plugin=None, resource_info=None):
+    def __init__(self, collection, resource, plugin=None, resource_info=None,
+                 allow_pagination=None, allow_sorting=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
@@ -101,11 +105,26 @@ class NeutronPecanController(object):
                                           data.get('required_by_policy')])
         else:
             self._mandatory_fields = set()
+        self.allow_pagination = allow_pagination
+        if self.allow_pagination is None:
+            self.allow_pagination = cfg.CONF.allow_pagination
+        self.allow_sorting = allow_sorting
+        if self.allow_sorting is None:
+            self.allow_sorting = cfg.CONF.allow_sorting
+        self.native_pagination = api_common.is_native_pagination_supported(
+            self.plugin)
+        self.native_sorting = api_common.is_native_sorting_supported(
+            self.plugin)
+        self.primary_key = self._get_primary_key()
 
     def build_field_list(self, request_fields):
+        added_fields = []
+        combined_fields = []
         if request_fields:
-            return set(request_fields) | self._mandatory_fields
-        return []
+            req_fields_set = set(request_fields)
+            added_fields = self._mandatory_fields - req_fields_set
+            combined_fields = req_fields_set | self._mandatory_fields
+        return list(combined_fields), list(added_fields)
 
     @property
     def plugin(self):
@@ -120,6 +139,14 @@ class NeutronPecanController(object):
             self._resource_info = api_attributes.get_collection_info(
                 self.collection)
         return self._resource_info
+
+    def _get_primary_key(self, default_primary_key='id'):
+        if not self.resource_info:
+            return default_primary_key
+        for key, value in six.iteritems(self.resource_info):
+            if value.get('primary_key', False):
+                return key
+        return default_primary_key
 
 
 class ShimRequest(object):
