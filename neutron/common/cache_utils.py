@@ -65,7 +65,6 @@ def _get_cache_region_for_legacy(url):
     backend = parsed.scheme
 
     if backend == 'memory':
-        backend = 'oslo_cache.dict'
         query = parsed.query
         # NOTE(fangzhen): The following NOTE and code is from legacy
         # oslo-incubator cache module. Previously reside in neutron at
@@ -78,11 +77,17 @@ def _get_cache_region_for_legacy(url):
         if not query and '?' in parsed.path:
             query = parsed.path.split('?', 1)[-1]
         parameters = parse.parse_qs(query)
-        expiration_time = int(parameters.get('default_ttl', [0])[0])
 
-        region = cache.create_region()
-        region.configure(backend, expiration_time=expiration_time)
-        return region
+        conf = cfg.ConfigOpts()
+        register_oslo_configs(conf)
+        cache_conf_dict = {
+            'enabled': True,
+            'backend': 'oslo_cache.dict',
+            'expiration_time': int(parameters.get('default_ttl', [0])[0]),
+        }
+        for k, v in cache_conf_dict.items():
+            conf.set_override(k, v, group='cache')
+        return _get_cache_region(conf)
     else:
         raise RuntimeError(_('Old style configuration can use only memory '
                              '(dict) backend'))
@@ -108,6 +113,8 @@ class cache_method_results(object):
         key = (func_name,) + args
         if kwargs:
             key += utils.dict2tuple(kwargs)
+        # oslo.cache expects a string or a buffer
+        key = str(key)
         try:
             item = target_self._cache.get(key)
         except TypeError:

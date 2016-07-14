@@ -51,6 +51,16 @@ class CacheConfFixture(ConfFixture):
         self.config(cache_url='memory://?default_ttl=5')
 
 
+class NewCacheConfFixture(ConfFixture):
+    def setUp(self):
+        super(NewCacheConfFixture, self).setUp()
+        self.config(
+            group='cache',
+            enabled=True,
+            backend='oslo_cache.dict',
+            expiration_time=5)
+
+
 class TestMetadataProxyHandlerBase(base.BaseTestCase):
     fake_conf = cfg.CONF
     fake_conf_fixture = ConfFixture(fake_conf)
@@ -96,9 +106,7 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
         self.assertEqual(expected, ports)
 
 
-class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
-    fake_conf = cfg.CONF
-    fake_conf_fixture = CacheConfFixture(fake_conf)
+class _TestMetadataProxyHandlerCacheMixin(object):
 
     def test_call(self):
         req = mock.Mock()
@@ -409,6 +417,18 @@ class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase):
             self.handler._sign_instance_id('foo'),
             '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4'
         )
+
+
+class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase,
+                                    _TestMetadataProxyHandlerCacheMixin):
+    fake_conf = cfg.CONF
+    fake_conf_fixture = CacheConfFixture(fake_conf)
+
+
+class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
+                                       _TestMetadataProxyHandlerCacheMixin):
+    fake_conf = cfg.CONF
+    fake_conf_fixture = NewCacheConfFixture(fake_conf)
 
 
 class TestMetadataProxyHandlerNoCache(TestMetadataProxyHandlerCache):
