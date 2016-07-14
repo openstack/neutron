@@ -128,7 +128,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         fdb_extension = self._get_fdb_extension(mock_execute, '')
         mock_execute.reset_mock()
         details = copy.deepcopy(self.UPDATE_MSG)
-        details['device_owner'] = 'network:dhcp'
+        details['device_owner'] = 'neutron:LOADBALANCER'
         fdb_extension.handle_port(context=None, details=details)
         self.assertFalse(mock_execute.called)
         updated_macs_for_device = (

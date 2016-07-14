@@ -54,11 +54,18 @@ class FdbPopulationAgentExtension(agent_extension.AgentCoreResourceExtension):
     # - device owner "compute": updates the FDB with normal port instances,
     #       required in order to enable communication between
     #       SR-IOV direct port instances and normal port instance.
-    # - device owner "router_interface": updates the FDB woth OVS/LB ports,
+    # - device owner "router_interface": updates the FDB with OVS/LB ports,
     #       required in order to enable communication for SR-IOV instances
     #       with floating ip that are located with the network node.
-    # - device owner "DHCP": not required because messages are broadcast.
-    PERMITTED_DEVICE_OWNERS = {'compute', 'network:router_interface'}
+    # - device owner "DHCP": updates the FDB with the dhcp server.
+    #       When the lease expires a unicast renew message is sent
+    #       to the dhcp server. In case the FDB is not updated
+    #       the message will be sent to the wire, causing the message
+    #       to get lost in case the sender uses direct port and is
+    #       located on the same hypervisor as the network node.
+    PERMITTED_DEVICE_OWNERS = {'compute',
+                               'network:router_interface',
+                               'network:dhcp'}
 
     class FdbTableTracker(object):
         """FDB table tracker is a helper class
