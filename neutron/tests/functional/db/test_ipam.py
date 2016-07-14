@@ -129,7 +129,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
                 'admin_state_up': True,
                 'status': constants.PORT_STATUS_ACTIVE,
                 'device_id': 'test_dev_id',
-                'device_owner': 'compute',
+                'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX,
                 'fixed_ips': port_fixed_ips}
         self.plugin.create_port(self.cxt, {'port': port})
 

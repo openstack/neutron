@@ -67,7 +67,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
             'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
             'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
             'mac_address': '12:34:56:78:44:ab',
-            'device_owner': 'compute'}}
+            'device_owner': n_const.DEVICE_OWNER_COMPUTE_PREFIX}}
         expected = []
         for subnet in subnets:
             addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
@@ -100,7 +100,7 @@ class TestIpamNonPluggableBackend(base.BaseTestCase):
             'network_id': 'fbb9b578-95eb-4b79-a116-78e5c4927176',
             'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
             'mac_address': '12:34:56:78:44:ab',
-            'device_owner': 'compute'}}
+            'device_owner': n_const.DEVICE_OWNER_COMPUTE_PREFIX}}
         expected = []
         for subnet in subnets:
             addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
