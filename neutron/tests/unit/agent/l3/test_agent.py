@@ -878,11 +878,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(distributed, ri.process_floating_ip_addresses.called)
         self.assertEqual(distributed, ri.process_floating_ip_nat_rules.called)
 
-    @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
-    def _test_process_floating_ip_addresses_add(self, ri, agent, IPDevice):
+    def _test_process_floating_ip_addresses_add(self, ri, agent):
         floating_ips = ri.get_floating_ips()
         fip_id = floating_ips[0]['id']
-        IPDevice.return_value = device = mock.Mock()
+        device = self.mock_ip_dev
         device.addr.list.return_value = []
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         ex_gw_port = {'id': _uuid(), 'network_id': mock.sentinel.ext_net_id}
