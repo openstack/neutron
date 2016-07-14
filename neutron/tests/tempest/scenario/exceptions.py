@@ -12,24 +12,22 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from tempest import test
+from tempest.lib import exceptions
 
-from neutron.tests.tempest import config
-from neutron.tests.tempest.scenario import base
-
-CONF = config.CONF
+TempestException = exceptions.TempestException
 
 
-class NetworkBasicTest(base.BaseTempestTestCase):
-    credentials = ['primary']
-    force_tenant_isolation = False
+class QoSLimitReached(TempestException):
+    message = "Limit reached, limit = %(limit)d"
 
-    # Default to ipv4.
-    _ip_version = 4
 
-    @test.idempotent_id('de07fe0a-e955-449e-b48b-8641c14cd52e')
-    def test_basic_instance(self):
-        self.setup_network_and_server()
-        self.check_connectivity(self.fip['floating_ip_address'],
-                                CONF.validation.image_ssh_user,
-                                self.keypair['private_key'])
+class SocketConnectionRefused(TempestException):
+    message = "Unable to connect to %(host)s port %(port)d:Connection Refused"
+
+
+class ConnectionTimeoutException(TempestException):
+    message = "Timeout connecting to %(host)s port %(port)d"
+
+
+class FileCreationFailedException(TempestException):
+    message = "File %(file)s has not been created or has the wrong size"
