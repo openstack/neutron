@@ -19,6 +19,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
+from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
@@ -52,6 +53,9 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         response = (
             self.trunk_plugin.create_trunk(self.context, {'trunk': trunk}))
         return response
+
+    def _get_trunk_obj(self, trunk_id):
+        return trunk_objects.Trunk.get_object(self.context, id=trunk_id)
 
     def _get_subport_obj(self, port_id):
         subports = trunk_objects.SubPort.get_objects(
@@ -88,24 +92,129 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                               self.trunk_plugin.delete_trunk,
                               self.context, trunk['id'])
 
-    def _test_subports_action_notify(self, event, payload_key):
+    def _test_trunk_create_notify(self, event):
+        with self.port() as parent_port:
+            callback = register_mock_callback(constants.TRUNK, event)
+            trunk = self._create_test_trunk(parent_port)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            payload = callbacks.TrunkPayload(self.context, trunk['id'],
+                                             current_trunk=trunk_obj)
+            callback.assert_called_once_with(
+                constants.TRUNK, event, self.trunk_plugin, payload=payload)
+
+    def test_create_trunk_notify_after_create(self):
+        self._test_trunk_create_notify(events.AFTER_CREATE)
+
+    def test_create_trunk_notify_precommit_create(self):
+        self._test_trunk_create_notify(events.PRECOMMIT_CREATE)
+
+    def _test_trunk_update_notify(self, event):
+        with self.port() as parent_port:
+            callback = register_mock_callback(constants.TRUNK, event)
+            trunk = self._create_test_trunk(parent_port)
+            orig_trunk_obj = self._get_trunk_obj(trunk['id'])
+            trunk_req = {'trunk': {'name': 'foo'}}
+            self.trunk_plugin.update_trunk(self.context, trunk['id'],
+                                           trunk_req)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            payload = callbacks.TrunkPayload(self.context, trunk['id'],
+                                             original_trunk=orig_trunk_obj,
+                                             current_trunk=trunk_obj)
+            callback.assert_called_once_with(
+                constants.TRUNK, event, self.trunk_plugin, payload=payload)
+
+    def test_trunk_update_notify_after_update(self):
+        self._test_trunk_update_notify(events.AFTER_UPDATE)
+
+    def test_trunk_update_notify_precommit_update(self):
+        self._test_trunk_update_notify(events.PRECOMMIT_UPDATE)
+
+    def _test_trunk_delete_notify(self, event):
+        with self.port() as parent_port:
+            callback = register_mock_callback(constants.TRUNK, event)
+            trunk = self._create_test_trunk(parent_port)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            self.trunk_plugin.delete_trunk(self.context, trunk['id'])
+            payload = callbacks.TrunkPayload(self.context, trunk['id'],
+                                             original_trunk=trunk_obj)
+            callback.assert_called_once_with(
+                constants.TRUNK, event, self.trunk_plugin, payload=payload)
+
+    def test_delete_trunk_notify_after_delete(self):
+        self._test_trunk_delete_notify(events.AFTER_DELETE)
+
+    def test_delete_trunk_notify_precommit_delete(self):
+        self._test_trunk_delete_notify(events.PRECOMMIT_DELETE)
+
+    def _test_subport_action_empty_list_no_notify(self, event, subport_method):
+        with self.port() as parent_port:
+            trunk = self._create_test_trunk(parent_port)
+            callback = register_mock_callback(constants.SUBPORTS, event)
+            subport_method(self.context, trunk['id'], {'sub_ports': []})
+            callback.assert_not_called()
+
+    def _test_add_subports_no_notification(self, event):
+        self._test_subport_action_empty_list_no_notify(
+            event, self.trunk_plugin.add_subports)
+
+    def test_add_subports_notify_after_create_empty_list(self):
+        self._test_add_subports_no_notification(events.AFTER_CREATE)
+
+    def test_add_subports_notify_precommit_create_empty_list(self):
+        self._test_add_subports_no_notification(events.PRECOMMIT_CREATE)
+
+    def _test_remove_subports_no_notification(self, event):
+        self._test_subport_action_empty_list_no_notify(
+            event, self.trunk_plugin.remove_subports)
+
+    def test_remove_subports_notify_after_delete_empty_list(self):
+        self._test_remove_subports_no_notification(events.AFTER_DELETE)
+
+    def test_remove_subports_notify_precommit_delete_empty_list(self):
+        self._test_remove_subports_no_notification(events.PRECOMMIT_DELETE)
+
+    def _test_add_subports_notify(self, event):
         with self.port() as parent_port, self.port() as child_port:
             trunk = self._create_test_trunk(parent_port)
+            orig_trunk_obj = self._get_trunk_obj(trunk['id'])
             subport = create_subport_dict(child_port['port']['id'])
             callback = register_mock_callback(constants.SUBPORTS, event)
             self.trunk_plugin.add_subports(
                 self.context, trunk['id'], {'sub_ports': [subport]})
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            subport_obj = self._get_subport_obj(subport['port_id'])
+            payload = callbacks.TrunkPayload(self.context, trunk['id'],
+                                             current_trunk=trunk_obj,
+                                             original_trunk=orig_trunk_obj,
+                                             subports=[subport_obj])
+            callback.assert_called_once_with(
+                constants.SUBPORTS, event, self.trunk_plugin, payload=payload)
+
+    def test_add_subports_notify_after_create(self):
+        self._test_add_subports_notify(events.AFTER_CREATE)
+
+    def test_add_subports_notify_precommit_create(self):
+        self._test_add_subports_notify(events.PRECOMMIT_CREATE)
+
+    def _test_remove_subports_notify(self, event):
+        with self.port() as parent_port, self.port() as child_port:
+            subport = create_subport_dict(child_port['port']['id'])
+            trunk = self._create_test_trunk(parent_port, [subport])
+            orig_trunk_obj = self._get_trunk_obj(trunk['id'])
+            callback = register_mock_callback(constants.SUBPORTS, event)
             subport_obj = self._get_subport_obj(subport['port_id'])
             self.trunk_plugin.remove_subports(
                 self.context, trunk['id'], {'sub_ports': [subport]})
-            payload = {payload_key: [subport_obj]}
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            payload = callbacks.TrunkPayload(self.context, trunk['id'],
+                                             current_trunk=trunk_obj,
+                                             original_trunk=orig_trunk_obj,
+                                             subports=[subport_obj])
             callback.assert_called_once_with(
-                constants.SUBPORTS, event, self.trunk_plugin, **payload)
+                constants.SUBPORTS, event, self.trunk_plugin, payload=payload)
 
-    def test_add_subports_notify(self):
-        self._test_subports_action_notify(events.AFTER_CREATE,
-                                          'added_subports')
+    def test_remove_subports_notify_after_delete(self):
+        self._test_remove_subports_notify(events.AFTER_DELETE)
 
-    def test_remove_subports_notify(self):
-        self._test_subports_action_notify(events.AFTER_DELETE,
-                                          'removed_subports')
+    def test_remove_subports_notify_precommit_delete(self):
+        self._test_remove_subports_notify(events.PRECOMMIT_DELETE)
