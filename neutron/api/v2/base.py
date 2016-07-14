@@ -550,10 +550,12 @@ class Controller(object):
         # usage trackers as dirty
         resource_registry.set_resources_dirty(request.context)
         notifier_method = self._resource + '.delete.end'
+        result = {self._resource: self._view(request.context, obj)}
+        notifier_payload = {self._resource + '_id': id}
+        notifier_payload.update(result)
         self._notifier.info(request.context,
                             notifier_method,
-                            {self._resource + '_id': id})
-        result = {self._resource: self._view(request.context, obj)}
+                            notifier_payload)
         registry.notify(self._resource, events.BEFORE_RESPONSE, self,
                         context=request.context, data=result,
                         method_name=notifier_method, action=action,
