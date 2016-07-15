@@ -280,7 +280,7 @@ If the bug report is sound, move next:
 * Depending on ease of reproduction (or if the issue can be spotted in the
   code), mark it as 'Confirmed'. If you are unable to assess/triage the
   issue because you do not have access to a repro environment, consider
-  reaching out the `Lieutenant <http://docs.openstack.org/developer/neutron/policies/core-reviewers.html#core-review-hierarchy>`_,
+  reaching out the `Lieutenant <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#core-review-hierarchy>`_,
   go-to person for the affected component;
   he/she may be able to help: assign the bug to him/her for further
   screening. If the bug already has an assignee, check that a patch is
@@ -352,7 +352,7 @@ Proposing New Tags
 New tags, or changes in the meaning of existing tags (or deletion), are to be
 proposed via patch to this section. After discussion, and approval, a member of
 the bug team will create/delete the tag in Launchpad. Each tag covers an area
-with an identified go-to contact or `Lieutenant <http://docs.openstack.org/developer/neutron/policies/core-reviewers.html#core-review-hierarchy>`_,
+with an identified go-to contact or `Lieutenant <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#core-review-hierarchy>`_,
 who can provide further insight. Bug queries are provided below for convenience,
 more will be added over time if needed.
 
