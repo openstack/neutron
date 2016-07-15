@@ -30,7 +30,6 @@ from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
-from neutron.ipam import requests as ipam_req
 
 
 LOG = logging.getLogger(__name__)
@@ -407,10 +406,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                      ~models_v2.Port.device_owner.in_(
                          constants.ROUTER_INTERFACE_OWNERS_SNAT)))
             updated_ports = []
+            ipam_driver = driver.Pool.get_instance(None, context)
+            factory = ipam_driver.get_address_request_factory()
             for port in ports:
-                ip_request = ipam_req.AutomaticAddressRequest(
-                    prefix=subnet['cidr'],
-                    mac=port['mac_address'])
+                ip = {'subnet_id': subnet['id'],
+                      'subnet_cidr': subnet['cidr'],
+                      'eui64_address': True,
+                      'mac': port['mac_address']}
+                ip_request = factory.get_request(context, port, ip)
                 ip_address = ipam_subnet.allocate(ip_request)
                 allocated = models_v2.IPAllocation(network_id=network_id,
                                                    port_id=port['id'],
