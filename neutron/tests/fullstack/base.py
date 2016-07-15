@@ -16,6 +16,7 @@ import os
 
 from oslo_config import cfg
 
+from neutron.tests import base as tests_base
 from neutron.tests.common import helpers
 from neutron.tests.fullstack.resources import client as client_resource
 from neutron.tests import tools
@@ -35,6 +36,9 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
+
+        tests_base.setup_test_logging(
+            cfg.CONF, DEFAULT_LOG_DIR, '%s.txt' % self.get_name())
 
         # NOTE(zzzeek): the opportunistic DB fixtures have built for
         # us a per-test (or per-process) database.  Set the URL of this
