@@ -154,7 +154,7 @@ class SubnetPoolPrefix(base.NeutronDbObject):
     def modify_fields_to_db(cls, fields):
         result = super(SubnetPoolPrefix, cls).modify_fields_to_db(fields)
         if 'cidr' in result:
-            result['cidr'] = str(result['cidr'])
+            result['cidr'] = cls.filter_to_str(result['cidr'])
         return result
 
     # TODO(ihrachys): get rid of it once we switch the db model to using CIDR

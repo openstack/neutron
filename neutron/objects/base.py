@@ -386,6 +386,12 @@ class NeutronDbObject(NeutronObject):
         return (context.is_admin or
                 context.tenant_id == db_obj.tenant_id)
 
+    @staticmethod
+    def filter_to_str(value):
+        if isinstance(value, list):
+            return [str(val) for val in value]
+        return str(value)
+
     def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()
         for field in self.synthetic_fields:

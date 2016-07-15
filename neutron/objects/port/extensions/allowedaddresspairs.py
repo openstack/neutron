@@ -40,9 +40,9 @@ class AllowedAddressPair(base.NeutronDbObject):
     def modify_fields_to_db(cls, fields):
         result = super(AllowedAddressPair, cls).modify_fields_to_db(fields)
         if 'ip_address' in result:
-            result['ip_address'] = str(result['ip_address'])
+            result['ip_address'] = cls.filter_to_str(result['ip_address'])
         if 'mac_address' in result:
-            result['mac_address'] = str(result['mac_address'])
+            result['mac_address'] = cls.filter_to_str(result['mac_address'])
         return result
 
     # TODO(mhickey): get rid of it once we switch the db model to using
