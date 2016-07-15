@@ -33,7 +33,6 @@ from sqlalchemy.orm import exc
 import traceback
 
 from neutron._i18n import _LE
-from neutron.common import profiler  # noqa
 
 
 def set_hook(engine):
