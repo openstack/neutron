@@ -49,6 +49,10 @@ MAX_CONNTRACK_ZONES = 65535
 comment_rule = iptables_manager.comment_rule
 
 
+def get_hybrid_port_name(port_name):
+    return (constants.TAP_DEVICE_PREFIX + port_name)[:LINUX_DEV_LEN]
+
+
 class mac_iptables(netaddr.mac_eui48):
     """mac format class for netaddr to match iptables representation."""
     word_sep = ':'
@@ -916,11 +920,11 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
         return iptables_manager.get_chain_name(
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
 
-    def _get_device_name(self, port):
-        return (self.OVS_HYBRID_TAP_PREFIX + port['device'])[:LINUX_DEV_LEN]
-
     def _get_br_device_name(self, port):
         return ('qvb' + port['device'])[:LINUX_DEV_LEN]
+
+    def _get_device_name(self, port):
+        return get_hybrid_port_name(port['device'])
 
     def _get_jump_rule(self, port, direction):
         if direction == firewall.INGRESS_DIRECTION:

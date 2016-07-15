@@ -17,6 +17,7 @@ import netaddr
 from neutron_lib import constants
 
 from neutron.common import utils
+from neutron.extensions import portbindings as pbs
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
@@ -43,11 +44,13 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
                 tenant_id=self.tenant_id,
                 hostname=self.host.hostname)
         mac_address = self.neutron_port['mac_address']
+        hybrid_plug = self.neutron_port[pbs.VIF_DETAILS].get(
+            pbs.OVS_HYBRID_PLUG, False)
 
         self.port = self.useFixture(
             net_helpers.PortFixture.get(
                 self.bridge, self.namespace, mac_address,
-                self.neutron_port['id'])).port
+                self.neutron_port['id'], hybrid_plug)).port
 
         for fixed_ip in self.neutron_port['fixed_ips']:
             self._configure_ipaddress(fixed_ip)
