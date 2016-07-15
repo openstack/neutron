@@ -77,6 +77,11 @@ class QoSTest(base.BaseTempestTestCase):
                        * TOLERANCE_FACTOR / 8.0)
     FILE_PATH = "/tmp/img"
 
+    @classmethod
+    @test.requires_ext(extension="qos", service="network")
+    def resource_setup(cls):
+        super(QoSTest, cls).resource_setup()
+
     def _create_file_for_bw_tests(self, ssh_client):
         cmd = ("(dd if=/dev/zero bs=%(bs)d count=%(count)d of=%(file_path)s) "
                % {'bs': QoSTest.BS, 'count': QoSTest.COUNT,
