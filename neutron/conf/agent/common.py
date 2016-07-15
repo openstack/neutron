@@ -131,7 +131,7 @@ def get_log_args(conf, log_file_name, **kwargs):
     return cmd_args
 
 
-def register_root_helper(conf):
+def register_root_helper(conf=cfg.CONF):
     conf.register_opts(ROOT_HELPER_OPTS, 'AGENT')
 
 

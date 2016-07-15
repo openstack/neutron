@@ -24,7 +24,6 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 
 from neutron._i18n import _LE, _LW
-from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
@@ -36,6 +35,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import config
 from neutron.conf.agent import cmd
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import dhcp as dhcp_config
 
 

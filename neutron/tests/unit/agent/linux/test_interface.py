@@ -16,11 +16,11 @@
 import mock
 from neutron_lib import constants
 
-from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.conf.agent import common as config
 from neutron.tests import base
 
 

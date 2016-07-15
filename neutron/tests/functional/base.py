@@ -17,8 +17,8 @@ import os
 
 from oslo_config import cfg
 
-from neutron.agent.common import config
 from neutron.agent.linux import utils
+from neutron.conf.agent import common as config
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers

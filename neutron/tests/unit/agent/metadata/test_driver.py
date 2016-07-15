@@ -19,11 +19,11 @@ import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import router_info
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.metadata import config as meta_conf

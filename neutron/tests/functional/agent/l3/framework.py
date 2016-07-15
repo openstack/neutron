@@ -25,7 +25,6 @@ from oslo_utils import uuidutils
 import testtools
 import textwrap
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import namespaces
@@ -35,6 +34,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import utils as common_utils
+from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers

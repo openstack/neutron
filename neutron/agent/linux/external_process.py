@@ -24,9 +24,10 @@ from oslo_utils import fileutils
 import six
 
 from neutron._i18n import _, _LW, _LE
-from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+
+from neutron.conf.agent import common as agent_cfg
 
 LOG = logging.getLogger(__name__)
 

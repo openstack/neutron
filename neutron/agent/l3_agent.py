@@ -19,13 +19,13 @@ import sys
 from oslo_config import cfg
 from oslo_service import service
 
-from neutron.agent.common import config
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import pd
 from neutron.agent.linux import ra
 from neutron.common import config as common_config
 from neutron.common import topics
+from neutron.conf.agent import common as config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.metadata import config as meta_conf

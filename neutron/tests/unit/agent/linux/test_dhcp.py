@@ -23,10 +23,10 @@ import oslo_messaging
 from oslo_utils import fileutils
 import testtools
 
-from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.common import constants as n_const
+from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
 from neutron.extensions import extra_dhcp_opt as edo_ext

@@ -23,10 +23,10 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 import testtools
 
-from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
+from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
 

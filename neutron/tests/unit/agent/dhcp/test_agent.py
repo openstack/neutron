@@ -26,7 +26,6 @@ from oslo_config import cfg
 import oslo_messaging
 import testtools
 
-from neutron.agent.common import config
 from neutron.agent.dhcp import agent as dhcp_agent
 from neutron.agent import dhcp_agent as entry
 from neutron.agent.linux import dhcp
@@ -35,6 +34,7 @@ from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.tests import base
 

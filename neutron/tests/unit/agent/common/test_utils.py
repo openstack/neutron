@@ -15,9 +15,9 @@
 
 import mock
 
-from neutron.agent.common import config
 from neutron.agent.common import utils
 from neutron.agent.linux import interface
+from neutron.conf.agent import common as config
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
 

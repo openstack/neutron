@@ -24,7 +24,6 @@ from neutron_lib import constants as lib_const
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
 
-from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.dhcp import agent
 from neutron.agent import dhcp_agent
@@ -34,6 +33,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base

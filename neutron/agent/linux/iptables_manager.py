@@ -32,11 +32,11 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _, _LE, _LW
-from neutron.agent.common import config
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron.conf.agent import common as config
 
 LOG = logging.getLogger(__name__)
 

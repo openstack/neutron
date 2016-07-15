@@ -33,7 +33,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import six
 
-from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import interface
@@ -41,6 +40,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent import common as config
 from neutron.db import db_base_plugin_common
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent

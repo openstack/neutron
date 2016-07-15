@@ -19,7 +19,6 @@ from oslo_utils import importutils
 import six
 
 from neutron._i18n import _, _LE, _LI
-from neutron.agent.common import config
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import interface
@@ -27,6 +26,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
+from neutron.conf.agent import common as config
 from neutron.services.metering.drivers import abstract_driver
 
 

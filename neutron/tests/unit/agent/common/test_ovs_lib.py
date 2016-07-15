@@ -21,9 +21,9 @@ from oslo_utils import uuidutils
 import tenacity
 import testtools
 
-from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
+from neutron.conf.agent import common as config
 from neutron.plugins.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as p_const

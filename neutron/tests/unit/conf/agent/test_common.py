@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.common import config
+from neutron.conf.agent import common as config
 from neutron.tests import base
 
 

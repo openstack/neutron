@@ -20,8 +20,8 @@ from oslo_log import log as logging
 from oslo_utils import timeutils
 
 from neutron._i18n import _LE
-from neutron.agent.common import config
 from neutron.common import utils as neutron_utils
+from neutron.conf.agent import common as config
 from neutron.conf.agent.database import agents_db
 
 

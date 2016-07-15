@@ -23,12 +23,12 @@ from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent.linux import interface
 from neutron.agent.linux import polling
 from neutron.common import utils
+from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.common import constants as p_const

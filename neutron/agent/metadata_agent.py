@@ -17,11 +17,11 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.agent.common import config as agent_conf
 from neutron.agent.metadata import agent
 from neutron.common import cache_utils as cache
 from neutron.common import config
 from neutron.common import utils
+from neutron.conf.agent import common as agent_conf
 from neutron.conf.agent.metadata import config as meta
 
 LOG = logging.getLogger(__name__)

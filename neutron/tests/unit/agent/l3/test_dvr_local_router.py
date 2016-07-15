@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import uuidutils
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_local_router as dvr_router
 from neutron.agent.l3 import link_local_allocator as lla
@@ -29,6 +28,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config

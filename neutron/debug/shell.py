@@ -20,9 +20,9 @@ from oslo_utils import importutils
 
 from neutron._i18n import _
 from neutron._i18n import _LW
-from neutron.agent.common import config
 from neutron.agent.common import utils
 from neutron.agent.linux import interface
+from neutron.conf.agent import common as config
 from neutron.debug import debug_agent
 from neutronclient.common import exceptions as exc
 from neutronclient import shell

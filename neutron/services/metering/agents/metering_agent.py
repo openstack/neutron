@@ -26,13 +26,13 @@ from oslo_utils import importutils
 from oslo_utils import timeutils
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.conf.agent import common as config
 from neutron.conf.services import metering_agent
 from neutron import manager
 from neutron import service as neutron_service

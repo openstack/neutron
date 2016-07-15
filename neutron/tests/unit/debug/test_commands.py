@@ -18,9 +18,9 @@ import socket
 import mock
 from oslo_config import cfg
 
-from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.common import config as common_config
+from neutron.conf.agent import common as config
 from neutron.debug import commands
 from neutron.debug import debug_agent
 from neutron.extensions import portbindings

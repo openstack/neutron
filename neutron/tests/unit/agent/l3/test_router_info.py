@@ -14,10 +14,10 @@ import mock
 from neutron_lib import constants as lib_constants
 from oslo_utils import uuidutils
 
-from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as n_exc
+from neutron.conf.agent import common as config
 from neutron.tests import base
 
 
@@ -28,7 +28,7 @@ class TestRouterInfo(base.BaseTestCase):
     def setUp(self):
         super(TestRouterInfo, self).setUp()
 
-        conf = agent_config.setup_conf()
+        conf = config.setup_conf()
 
         self.ip_cls_p = mock.patch('neutron.agent.linux.ip_lib.IPWrapper')
         ip_cls = self.ip_cls_p.start()
