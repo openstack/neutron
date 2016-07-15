@@ -16,7 +16,6 @@
 import mock
 from neutron_lib import constants
 from oslo_log import versionutils
-import testtools
 
 from neutron.agent.common import config
 from neutron.agent.common import ovs_lib
@@ -391,11 +390,9 @@ class TestOVSInterfaceDriver(TestBase):
                                          'aa:bb:cc:dd:ee:ff',
                                          internal=True)
 
-    def _test_plug(self, additional_expectation=None, bridge=None,
-                   namespace=None):
+    def _test_plug(self, bridge=None, namespace=None):
         with mock.patch('neutron.agent.ovsdb.native.connection.'
                         'Connection.start'):
-            additional_expectation = additional_expectation or []
             if not bridge:
                 bridge = 'br-int'
 
@@ -411,7 +408,8 @@ class TestOVSInterfaceDriver(TestBase):
                          'tap0',
                          'aa:bb:cc:dd:ee:ff',
                          bridge=bridge,
-                         namespace=namespace)
+                         namespace=namespace,
+                         mtu=9000)
                 replace.assert_called_once_with(
                     'tap0',
                     ('type', 'internal'),
@@ -424,31 +422,17 @@ class TestOVSInterfaceDriver(TestBase):
                 mock.call(),
                 mock.call().device('tap0'),
                 mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
-            expected.extend(additional_expectation)
             if namespace:
                 expected.extend(
                     [mock.call().ensure_namespace(namespace),
                      mock.call().ensure_namespace().add_device_to_namespace(
                          mock.ANY)])
-            expected.extend([mock.call().device().link.set_up()])
+            expected.extend([
+                mock.call().device().link.set_mtu(9000),
+                mock.call().device().link.set_up(),
+            ])
 
             self.ip.assert_has_calls(expected)
-
-    def test_mtu_int(self):
-        self.assertIsNone(self.conf.network_device_mtu)
-        self.conf.set_override('network_device_mtu', 9000)
-        self.assertEqual(self.conf.network_device_mtu, 9000)
-
-    def test_validate_min_ipv6_mtu(self):
-        self.conf.set_override('network_device_mtu', 1200)
-        with mock.patch('neutron.common.ipv6_utils.is_enabled') as ipv6_status:
-            with testtools.ExpectedException(SystemExit):
-                ipv6_status.return_value = True
-                BaseChild(self.conf)
-
-    def test_plug_mtu(self):
-        self.conf.set_override('network_device_mtu', 9000)
-        self._test_plug([mock.call().device().link.set_mtu(9000)])
 
     def test_unplug(self, bridge=None):
         if not bridge:
@@ -475,7 +459,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
         self._test_plug(devname='qr-0', prefix='qr-')
 
     def _test_plug(self, devname=None, bridge=None, namespace=None,
-                   prefix=None, mtu=None):
+                   prefix=None):
         with mock.patch('neutron.agent.ovsdb.native.connection.'
                         'Connection.start'):
 
@@ -505,7 +489,8 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
                          'aa:bb:cc:dd:ee:ff',
                          bridge=bridge,
                          namespace=namespace,
-                         prefix=prefix)
+                         prefix=prefix,
+                         mtu=9000)
                 replace.assert_called_once_with(
                     'tap0',
                     ('external_ids', {
@@ -515,17 +500,12 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
             ns_dev.assert_has_calls(
                 [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
-            if mtu:
-                ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
-                root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
+            ns_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
+            root_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
 
             self.ip.assert_has_calls(expected)
             root_dev.assert_has_calls([mock.call.link.set_up()])
             ns_dev.assert_has_calls([mock.call.link.set_up()])
-
-    def test_plug_mtu(self):
-        self.conf.set_override('network_device_mtu', 9000)
-        self._test_plug(mtu=9000)
 
     def test_unplug(self, bridge=None):
         if not bridge:
@@ -551,7 +531,7 @@ class TestBridgeInterfaceDriver(TestBase):
     def test_plug_with_ns(self):
         self._test_plug(namespace='01234567-1234-1234-99')
 
-    def _test_plug(self, namespace=None, mtu=None):
+    def _test_plug(self, namespace=None):
         def device_exists(device, namespace=None):
             return device.startswith('brq')
 
@@ -567,14 +547,14 @@ class TestBridgeInterfaceDriver(TestBase):
                 'port-1234',
                 'ns-0',
                 mac_address,
-                namespace=namespace)
+                namespace=namespace,
+                mtu=9000)
 
         ip_calls = [mock.call(),
                     mock.call().add_veth('tap0', 'ns-0', namespace2=namespace)]
         ns_veth.assert_has_calls([mock.call.link.set_address(mac_address)])
-        if mtu:
-            ns_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
-            root_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
+        ns_veth.assert_has_calls([mock.call.link.set_mtu(9000)])
+        root_veth.assert_has_calls([mock.call.link.set_mtu(9000)])
 
         self.ip.assert_has_calls(ip_calls)
 
@@ -591,11 +571,6 @@ class TestBridgeInterfaceDriver(TestBase):
                     'aa:bb:cc:dd:ee:ff')
             self.assertFalse(self.ip_dev.called)
             self.assertEqual(log.call_count, 1)
-
-    def test_plug_mtu(self):
-        self.device_exists.return_value = False
-        self.conf.set_override('network_device_mtu', 9000)
-        self._test_plug(mtu=9000)
 
     def test_unplug_no_device(self):
         self.device_exists.return_value = False
@@ -630,8 +605,7 @@ class TestIVSInterfaceDriver(TestBase):
     def test_plug_with_prefix(self):
         self._test_plug(devname='qr-0', prefix='qr-')
 
-    def _test_plug(self, devname=None, namespace=None,
-                   prefix=None, mtu=None):
+    def _test_plug(self, devname=None, namespace=None, prefix=None):
 
         if not devname:
             devname = 'ns-0'
@@ -658,14 +632,14 @@ class TestIVSInterfaceDriver(TestBase):
                      devname,
                      'aa:bb:cc:dd:ee:ff',
                      namespace=namespace,
-                     prefix=prefix)
+                     prefix=prefix,
+                     mtu=9000)
             execute.assert_called_once_with(ivsctl_cmd, run_as_root=True)
 
         ns_dev.assert_has_calls(
             [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
-        if mtu:
-            ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
-            root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
+        ns_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
+        root_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
         if namespace:
             expected.extend(
                 [mock.call().ensure_namespace(namespace),
@@ -675,10 +649,6 @@ class TestIVSInterfaceDriver(TestBase):
         self.ip.assert_has_calls(expected)
         root_dev.assert_has_calls([mock.call.link.set_up()])
         ns_dev.assert_has_calls([mock.call.link.set_up()])
-
-    def test_plug_mtu(self):
-        self.conf.set_override('network_device_mtu', 9000)
-        self._test_plug(mtu=9000)
 
     def test_plug_namespace(self):
         self._test_plug(namespace='mynamespace')

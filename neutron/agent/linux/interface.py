@@ -26,9 +26,7 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants as n_const
 from neutron.common import exceptions
-from neutron.common import ipv6_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -43,12 +41,6 @@ OPTS = [
                        'Support kernels with limited namespace support '
                        '(e.g. RHEL 6.5) so long as ovs_use_veth is set to '
                        'True.')),
-    cfg.IntOpt('network_device_mtu',
-               deprecated_for_removal=True,
-               help=_('MTU setting for device. This option will be removed in '
-                      'Newton. Please use the system-wide segment_mtu setting '
-                      'which the agents will take into account when wiring '
-                      'VIFs.')),
 ]
 
 
@@ -61,17 +53,6 @@ class LinuxInterfaceDriver(object):
 
     def __init__(self, conf):
         self.conf = conf
-        if self.conf.network_device_mtu:
-            self._validate_network_device_mtu()
-
-    def _validate_network_device_mtu(self):
-        if (ipv6_utils.is_enabled() and
-            self.conf.network_device_mtu < n_const.IPV6_MIN_MTU):
-            LOG.error(_LE("IPv6 protocol requires a minimum MTU of "
-                          "%(min_mtu)s, while the configured value is "
-                          "%(current_mtu)s"), {'min_mtu': n_const.IPV6_MIN_MTU,
-                          'current_mtu': self.conf.network_device_mtu})
-            raise SystemExit(1)
 
     @property
     def use_gateway_ips(self):
@@ -352,7 +333,6 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         # the device is moved into a namespace, otherwise OVS bridge does not
         # allow to set MTU that is higher than the least of all device MTUs on
         # the bridge
-        mtu = self.conf.network_device_mtu or mtu
         if mtu:
             ns_dev.link.set_mtu(mtu)
             if self.conf.ovs_use_veth:
@@ -416,7 +396,6 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
         ns_dev = ip.device(device_name)
         ns_dev.link.set_address(mac_address)
 
-        mtu = self.conf.network_device_mtu or mtu
         if mtu:
             ns_dev.link.set_mtu(mtu)
             root_dev.link.set_mtu(mtu)
@@ -463,7 +442,6 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         root_veth.disable_ipv6()
         ns_veth.link.set_address(mac_address)
 
-        mtu = self.conf.network_device_mtu or mtu
         if mtu:
             root_veth.link.set_mtu(mtu)
             ns_veth.link.set_mtu(mtu)
