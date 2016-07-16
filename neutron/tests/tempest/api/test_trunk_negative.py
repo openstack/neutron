@@ -21,17 +21,6 @@ from neutron.tests.tempest.api import test_trunk
 
 class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
 
-    def tearDown(self):
-        # NOTE(tidwellr) These tests create networks and ports, clean them up
-        # after each test to avoid hitting quota limits
-        self.resource_cleanup()
-        super(TrunkTestJSON, self).tearDown()
-
-    @classmethod
-    @test.requires_ext(extension="trunk", service="network")
-    def resource_setup(cls):
-        super(test_trunk.TrunkTestJSONBase, cls).resource_setup()
-
     @test.attr(type='negative')
     @test.idempotent_id('1b5cf87a-1d3a-4a94-ba64-647153d54f32')
     def test_create_trunk_nonexistent_port_id(self):
