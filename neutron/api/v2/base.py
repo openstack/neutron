@@ -101,7 +101,7 @@ class Controller(object):
                 LOG.info(_LI("Allow sorting is enabled because native "
                              "pagination requires native sorting"))
                 self._allow_sorting = True
-
+        self.parent = parent
         if parent:
             self._parent_id_name = '%s_id' % parent['member_name']
             parent_part = '_%s' % parent['member_name']

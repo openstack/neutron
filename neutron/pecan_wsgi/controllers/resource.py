@@ -36,11 +36,10 @@ class ItemController(utils.NeutronPecanController):
         return self.get(*args, **kwargs)
 
     def get(self, *args, **kwargs):
-        getter = getattr(self.plugin, 'get_%s' % self.resource)
         neutron_context = request.context['neutron_context']
         fields = request.context['query_params'].get('fields')
-        return {self.resource: getter(neutron_context, self.item,
-                                      fields=fields)}
+        return {self.resource: self.plugin_shower(neutron_context, self.item,
+                                                  fields=fields)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
@@ -53,19 +52,18 @@ class ItemController(utils.NeutronPecanController):
         neutron_context = request.context['neutron_context']
         resources = request.context['resources']
         # TODO(kevinbenton): bulk?
-        updater = getattr(self.plugin, 'update_%s' % self.resource)
         # Bulk update is not supported, 'resources' always contains a single
         # elemenet
         data = {self.resource: resources[0]}
-        return {self.resource: updater(neutron_context, self.item, data)}
+        return {self.resource: self.plugin_updater(neutron_context,
+                                                   self.item, data)}
 
     @utils.when(index, method='DELETE')
     def delete(self):
         # TODO(kevinbenton): setting code could be in a decorator
         pecan.response.status = 204
         neutron_context = request.context['neutron_context']
-        deleter = getattr(self.plugin, 'delete_%s' % self.resource)
-        return deleter(neutron_context, self.item)
+        return self.plugin_deleter(neutron_context, self.item)
 
     @utils.expose()
     def _lookup(self, collection, *remainder):
@@ -100,9 +98,9 @@ class CollectionsController(utils.NeutronPecanController):
     def get(self, *args, **kwargs):
         # NOTE(blogan): query_params is set in the QueryParametersHook
         query_params = request.context['query_params']
-        lister = getattr(self.plugin, 'get_%s' % self.collection)
         neutron_context = request.context['neutron_context']
-        return {self.collection: lister(neutron_context, **query_params)}
+        return {self.collection: self.plugin_lister(neutron_context,
+                **query_params)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')
@@ -121,13 +119,12 @@ class CollectionsController(utils.NeutronPecanController):
     def create(self, resources):
         if len(resources) > 1:
             # Bulk!
-            method = 'create_%s_bulk' % self.resource
+            creator = self.plugin_bulk_creator
             key = self.collection
             data = {key: [{self.resource: res} for res in resources]}
         else:
-            method = 'create_%s' % self.resource
+            creator = self.plugin_creator
             key = self.resource
             data = {key: resources[0]}
-        creator = getattr(self.plugin, method)
         neutron_context = request.context['neutron_context']
         return {key: creator(neutron_context, data)}
