@@ -304,6 +304,20 @@ class TestCli(base.BaseTestCase):
             self._main_test_helper(
                 ['prog', 'upgrade', '--%s +3' % mode], 'upgrade')
 
+    def _test_revision_autogenerate_conflicts_with_branch(self, branch):
+        with testlib_api.ExpectedException(SystemExit):
+            self._main_test_helper(
+                ['prog', 'revision', '--autogenerate', '--%s' % branch],
+                'revision')
+
+    def test_revision_autogenerate_conflicts_with_expand(self):
+        self._test_revision_autogenerate_conflicts_with_branch(
+            cli.EXPAND_BRANCH)
+
+    def test_revision_autogenerate_conflicts_with_contract(self):
+        self._test_revision_autogenerate_conflicts_with_branch(
+            cli.CONTRACT_BRANCH)
+
     def test_upgrade_expand_conflicts_with_revision(self):
         self._test_upgrade_conflicts_with_revision('expand')
 

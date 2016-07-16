@@ -155,6 +155,7 @@ def add_branch_options(parser):
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--expand', action='store_true')
     group.add_argument('--contract', action='store_true')
+    return group
 
 
 def _find_milestone_revisions(config, milestone, branch=None):
@@ -505,9 +506,9 @@ def add_command_parsers(subparsers):
 
     parser = add_alembic_subparser(subparsers, 'revision')
     parser.add_argument('-m', '--message')
-    parser.add_argument('--autogenerate', action='store_true')
     parser.add_argument('--sql', action='store_true')
-    add_branch_options(parser)
+    group = add_branch_options(parser)
+    group.add_argument('--autogenerate', action='store_true')
     parser.set_defaults(func=do_revision)
 
     parser = subparsers.add_parser(
