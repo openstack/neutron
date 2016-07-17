@@ -292,6 +292,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             [subnet['id'] for subnet in subnets])
         self.notify_router_interface_action(
             context, router_interface_info, 'add')
+        if router.gw_port:
+            gw_network_id = router.gw_port.network_id
+            gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
+            registry.notify(resources.ROUTER_INTERFACE,
+                        events.AFTER_CREATE,
+                        self,
+                        context=context,
+                        network_id=gw_network_id,
+                        gateway_ips=gw_ips,
+                        cidrs=[x['cidr'] for x in subnets],
+                        port_id=port['id'],
+                        router_id=router_id,
+                        port=port,
+                        interface_info=interface_info)
         return router_interface_info
 
     def _port_has_ipv6_address(self, port):

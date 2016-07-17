@@ -664,6 +664,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 )
                 context.session.add(router_port)
 
+        registry.notify(resources.ROUTER_INTERFACE,
+                        events.AFTER_CREATE,
+                        self,
+                        context=context,
+                        port=port)
+
         return self._make_router_interface_info(
             router.id, port['tenant_id'], port['id'], subnets[-1]['id'],
             [subnet['id'] for subnet in subnets])
@@ -768,6 +774,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             port, subnets = self._remove_interface_by_subnet(
                     context, router_id, subnet_id, device_owner)
 
+        registry.notify(resources.ROUTER_INTERFACE,
+                        events.AFTER_DELETE,
+                        self,
+                        context=context,
+                        port=port)
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], subnets[0]['id'],
                                                 [subnet['id'] for subnet in
