@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1250,14 +1250,6 @@ msgstr "未啟用特性。"
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "找不到浮動 IP %(floatingip_id)s"
 
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"浮動 IP %(floatingip_id)s 與非 IPv4 位址 %s(internal_ip)s 相關聯，因此無法將"
-"其連結。"
-
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "對於 TCP/UDP 通訊協定，port_range_min 必須 <= port_range_max"
 
@@ -1688,9 +1680,6 @@ msgid ""
 msgstr ""
 "可用來建立平面網路的 physical_network 名稱清單。使用預設值 '*' 可容許含有任"
 "意 physical_network 名稱的平面網路。使用空白清單可停用平面網路。"
-
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "VXLAN 端點的本端 IP 位址。"
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "meta 資料 Proxy UNIX 網域 Socket 的位置"
@@ -2457,11 +2446,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "需要資源主體"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr "配額功能中支援的資源名稱。現在，這個選項已遭到淘汰，將予以移除。"
 
 msgid "Resource not found."
 msgstr "找不到資源。"
@@ -3566,13 +3550,6 @@ msgid ""
 msgstr ""
 "max_l3_agents_per_router %(max_agents)s 配置參數無效。它必須大於或等於 "
 "min_l3_agents_per_router %(min_agents)s。"
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"min_l3_agents_per_router 配置參數無效。該配置參數必須等於或大於 HA 的 %s。"
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "必須提供 2 個確切引數 - cidr 和 MAC"

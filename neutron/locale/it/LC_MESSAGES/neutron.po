@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1384,14 +1384,6 @@ msgstr "Flavor non è abilitato."
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "Impossibile trovare l'IP mobile %(floatingip_id)s"
 
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"L'IP mobile %(floatingip_id)s è associato all'indirizzo non IPv4 "
-"%s(internal_ip)s e pertanto non è possibile collegarlo."
-
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "Per i protocolli TCP/UDP, port_range_min deve essere <= port_range_max"
 
@@ -1874,9 +1866,6 @@ msgstr ""
 "Utilizzare il valore '*' predefinito per consentire reti flat con nomi "
 "physical_network arbitrari. Utilizzare un elenco vuoto per disabilitare le "
 "reti flat."
-
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "Indirizzo IP locale degli endpoint VXLAN."
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "Ubicazione per il socket del dominio UNIX del proxy di metadati."
@@ -2747,13 +2736,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "Corpo risorsa richiesto"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr ""
-"Nomi risorsa supportati nelle funzioni quota. Questa opzione è ora obsoleta "
-"per la rimozione."
 
 msgid "Resource not found."
 msgstr "Risorsa non trovata."
@@ -3973,14 +3955,6 @@ msgstr ""
 "Il parametro di configurazione max_l3_agents_per_router %(max_agents)s non è "
 "valido. Deve essere maggiore o uguale a min_l3_agents_per_router "
 "%(min_agents)s."
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"il parametro di configurazione min_l3_agents_per_router non è valido. Deve "
-"essere uguale o maggiore di %s per HA."
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "è necessario fornire esattamente 2 argomenti - cidr e MAC"
