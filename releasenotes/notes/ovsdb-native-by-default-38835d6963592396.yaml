@@ -13,3 +13,7 @@ upgrade:
       if there is a separate openvswitch agent configuration file;
       otherwise apply changes mentioned above to ml2_conf.ini
       (common path '/etc/neutron/plugins/ml2/ml2_conf.ini').
+    - The native interface configures ovsdb-server to listen for
+      connections on 127.0.0.1:6640 by default. The address can be
+      configured with the ovsdb_connection config option. Ensure that
+      ovsdb-server has permissions to listen on the configured address.

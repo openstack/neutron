@@ -8,3 +8,8 @@ upgrade:
   - To retain the old default for neutron-openvswitch-agent, use
     'of_interface = ovs-ofctl' in the '[ovs]' section of your
     openvswitch agent configuration file.
+  - By default, the native interface will have the Ryu controller
+    listen on 127.0.0.1:6633. The listen address can be configured
+    with of_listen_address and of_listen_port options. Ensure that
+    the controller has permission to listen at the configured
+    address.
