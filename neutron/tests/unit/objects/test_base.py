@@ -343,6 +343,10 @@ def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
 
 
+def get_random_direction():
+    return random.choice(constants.VALID_DIRECTIONS)
+
+
 def get_list_of_random_networks(num=10):
     for i in range(5):
         res = [tools.get_random_ip_network() for i in range(num)]
@@ -360,6 +364,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],
     common_types.DscpMarkField: get_random_dscp_mark,
+    common_types.FlowDirectionEnumField: get_random_direction,
     obj_fields.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,

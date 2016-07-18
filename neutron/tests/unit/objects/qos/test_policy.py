@@ -17,8 +17,16 @@ from neutron.db import models_v2
 from neutron.objects.db import api as db_api
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.services.qos import qos_consts
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
+
+
+RULE_OBJ_CLS = {
+    qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: rule.QosBandwidthLimitRule,
+    qos_consts.RULE_TYPE_DSCP_MARKING: rule.QosDscpMarkingRule,
+    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: rule.QosMinimumBandwidthRule,
+}
 
 
 class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
@@ -36,13 +44,19 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             self.get_random_fields(rule.QosDscpMarkingRule)
             for _ in range(3)]
 
+        self.db_qos_minimum_bandwidth_rules = [
+            self.get_random_fields(rule.QosMinimumBandwidthRule)
+            for _ in range(3)]
+
         self.model_map = {
             self._test_class.db_model: self.db_objs,
             self._test_class.rbac_db_model: [],
             self._test_class.port_binding_model: [],
             self._test_class.network_binding_model: [],
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules,
-            rule.QosDscpMarkingRule.db_model: self.db_qos_dscp_rules}
+            rule.QosDscpMarkingRule.db_model: self.db_qos_dscp_rules,
+            rule.QosMinimumBandwidthRule.db_model:
+                self.db_qos_minimum_bandwidth_rules}
 
         self.get_object = mock.patch.object(
             db_api, 'get_object', side_effect=self.fake_get_object).start()
@@ -127,17 +141,20 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj.create()
         return policy_obj
 
-    def _create_test_policy_with_bwrule(self):
+    def _create_test_policy_with_rules(self, rule_type, reload_rules=False):
         policy_obj = self._create_test_policy()
+        rules = []
+        for obj_cls in (RULE_OBJ_CLS.get(rule_type)
+                        for rule_type in rule_type):
+            rule_fields = self.get_random_fields(obj_cls=obj_cls)
+            rule_fields['qos_policy_id'] = policy_obj.id
+            rule_obj = obj_cls(self.context, **rule_fields)
+            rule_obj.create()
+            rules.append(rule_obj)
 
-        rule_fields = self.get_random_fields(
-            obj_cls=rule.QosBandwidthLimitRule)
-        rule_fields['qos_policy_id'] = policy_obj.id
-
-        rule_obj = rule.QosBandwidthLimitRule(self.context, **rule_fields)
-        rule_obj.create()
-
-        return policy_obj, rule_obj
+        if reload_rules:
+            policy_obj.reload_rules()
+        return policy_obj, rules
 
     def test_attach_network_get_network_policy(self):
 
@@ -291,27 +308,30 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                           policy_obj.detach_network, self._network['id'])
 
     def test_synthetic_rule_fields(self):
-        policy_obj, rule_obj = self._create_test_policy_with_bwrule()
+        policy_obj, rule_obj = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
         policy_obj = policy.QosPolicy.get_object(self.context,
                                                  id=policy_obj.id)
-        self.assertEqual([rule_obj], policy_obj.rules)
+        self.assertEqual(rule_obj, policy_obj.rules)
 
     def test_get_object_fetches_rules_non_lazily(self):
-        policy_obj, rule_obj = self._create_test_policy_with_bwrule()
+        policy_obj, rule_obj = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
         policy_obj = policy.QosPolicy.get_object(self.context,
                                                  id=policy_obj.id)
-        self.assertEqual([rule_obj], policy_obj.rules)
+        self.assertEqual(rule_obj, policy_obj.rules)
 
         primitive = policy_obj.obj_to_primitive()
         self.assertNotEqual([], (primitive['versioned_object.data']['rules']))
 
     def test_to_dict_returns_rules_as_dicts(self):
-        policy_obj, rule_obj = self._create_test_policy_with_bwrule()
+        policy_obj, rule_obj = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
         policy_obj = policy.QosPolicy.get_object(self.context,
                                                  id=policy_obj.id)
 
         obj_dict = policy_obj.to_dict()
-        rule_dict = rule_obj.to_dict()
+        rule_dict = rule_obj[0].to_dict()
 
         # first make sure that to_dict() is still sane and does not return
         # objects
@@ -343,11 +363,12 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj.delete()
 
     def test_reload_rules_reloads_rules(self):
-        policy_obj, rule_obj = self._create_test_policy_with_bwrule()
+        policy_obj, rule_obj = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
         self.assertEqual([], policy_obj.rules)
 
         policy_obj.reload_rules()
-        self.assertEqual([rule_obj], policy_obj.rules)
+        self.assertEqual(rule_obj, policy_obj.rules)
 
     def test_get_bound_tenant_ids_returns_set_of_tenant_ids(self):
         obj = self._create_test_policy()
@@ -364,37 +385,40 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         primitive = obj.obj_to_primitive(target_version=version)
         return policy.QosPolicy.clean_obj_from_primitive(primitive)
 
-    def _create_test_policy_with_bw_and_dscp(self):
-        policy_obj, rule_obj_band = self._create_test_policy_with_bwrule()
-
-        rule_fields = self.get_random_fields(obj_cls=rule.QosDscpMarkingRule)
-        rule_fields['qos_policy_id'] = policy_obj.id
-
-        rule_obj_dscp = rule.QosDscpMarkingRule(self.context, **rule_fields)
-        rule_obj_dscp.create()
-
-        policy_obj.reload_rules()
-        return policy_obj, rule_obj_band, rule_obj_dscp
-
     def test_object_version(self):
-        policy_obj, rule_obj_band, rule_obj_dscp = (
-            self._create_test_policy_with_bw_and_dscp())
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            RULE_OBJ_CLS.keys(), reload_rules=True)
 
-        policy_obj_v1_1 = self._policy_through_version(policy_obj, '1.1')
+        policy_obj_v1_2 = self._policy_through_version(policy_obj, '1.2')
 
-        self.assertIn(rule_obj_band, policy_obj_v1_1.rules)
-        self.assertIn(rule_obj_dscp, policy_obj_v1_1.rules)
+        for rule_obj in rule_objs:
+            self.assertIn(rule_obj, policy_obj_v1_2.rules)
 
     def test_object_version_degradation_1_1_to_1_0(self):
         #NOTE(mangelajo): we should not check .VERSION, since that's the
         #                 local version on the class definition
-        policy_obj, rule_obj_band, rule_obj_dscp = (
-            self._create_test_policy_with_bw_and_dscp())
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING], reload_rules=True)
 
         policy_obj_v1_0 = self._policy_through_version(policy_obj, '1.0')
 
-        self.assertIn(rule_obj_band, policy_obj_v1_0.rules)
-        self.assertNotIn(rule_obj_dscp, policy_obj_v1_0.rules)
+        self.assertIn(rule_objs[0], policy_obj_v1_0.rules)
+        self.assertNotIn(rule_objs[1], policy_obj_v1_0.rules)
+
+    def test_object_version_degradation_1_2_to_1_1(self):
+        #NOTE(mangelajo): we should not check .VERSION, since that's the
+        #                 local version on the class definition
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
+
+        policy_obj_v1_1 = self._policy_through_version(policy_obj, '1.1')
+
+        self.assertIn(rule_objs[0], policy_obj_v1_1.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_1.rules)
+        self.assertNotIn(rule_objs[2], policy_obj_v1_1.rules)
 
     def test_filter_by_shared(self):
         policy_obj = policy.QosPolicy(

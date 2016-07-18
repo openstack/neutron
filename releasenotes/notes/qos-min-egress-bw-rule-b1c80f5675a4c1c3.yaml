@@ -1,0 +1,10 @@
+---
+features:
+  - Users can now apply a QoS rule to a port or network to
+    setup the minimum egress bandwidth per queue and port.
+    The minimum egress bandwidth rule is applied to each port
+    individually.
+other:
+  - At the time of writing, Neutron bandwidth booking is not
+    integrated with Compute scheduler, which means that minimal
+    bandwidth is not guaranteed but provided as best effort.

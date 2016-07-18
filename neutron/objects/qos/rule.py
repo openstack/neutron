@@ -49,11 +49,12 @@ def get_rules(context, qos_policy_id):
 class QosRule(base.NeutronDbObject):
     # Version 1.0: Initial version, only BandwidthLimitRule
     #         1.1: Added DscpMarkingRule
+    #         1.2: Added QosMinimumBandwidthRule
     #
     #NOTE(mangelajo): versions need to be handled from the top QosRule object
     #                 because it's the only reference QosPolicy can make
     #                 to them via obj_relationships version map
-    VERSION = '1.1'
+    VERSION = '1.2'
 
     fields = {
         'id': obj_fields.UUIDField(),
@@ -117,3 +118,23 @@ class QosDscpMarkingRule(QosRule):
             raise exception.IncompatibleObjectVersion(
                                  objver=target_version,
                                  objname="QosDscpMarkingRule")
+
+
+@obj_base.VersionedObjectRegistry.register
+class QosMinimumBandwidthRule(QosRule):
+
+    db_model = qos_db_model.QosMinimumBandwidthRule
+
+    fields = {
+        'min_kbps': obj_fields.IntegerField(nullable=True),
+        'direction': common_types.FlowDirectionEnumField(),
+    }
+
+    rule_type = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 2):
+            raise exception.IncompatibleObjectVersion(
+                                 objver=target_version,
+                                 objname="QosMinimumBandwidthRule")

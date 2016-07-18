@@ -95,6 +95,21 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
                                   'is_visible': True, 'default': None,
                                   'validate': {'type:values': common_constants.
                                               VALID_DSCP_MARKS}}})
+    },
+    'minimum_bandwidth_rules': {
+        'parent': {'collection_name': 'policies',
+                   'member_name': 'policy'},
+        'parameters': dict(QOS_RULE_COMMON_FIELDS,
+                           **{'min_kbps': {
+                                  'allow_post': True, 'allow_put': True,
+                                  'is_visible': True, 'default': None,
+                                  'validate': {'type:range': [0,
+                                  common_constants.DB_INTEGER_MAX_VALUE]}},
+                              'direction': {
+                                  'allow_post': True, 'allow_put': True,
+                                  'is_visible': True, 'default': 'egress',
+                                  'validate': {'type:values':
+                                        [common_constants.EGRESS_DIRECTION]}}})
     }
 }
 
@@ -194,7 +209,8 @@ class QoSPluginBase(service_base.ServicePluginBase):
 
     # The rule object type to use for each incoming rule-related request.
     rule_objects = {'bandwidth_limit': rule_object.QosBandwidthLimitRule,
-                    'dscp_marking': rule_object.QosDscpMarkingRule}
+                    'dscp_marking': rule_object.QosDscpMarkingRule,
+                    'minimum_bandwidth': rule_object.QosMinimumBandwidthRule}
 
     # Patterns used to call method proxies for all policy-rule-specific
     # method calls (see __getattr__ docstring, below).
