@@ -76,7 +76,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             'subnet': mock.Mock(),
             'subnets': mock.Mock(),
             'port': {
-                'device_owner': n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'None'
+                'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX + 'None'
             },
             'subnet_request': ipam_req.SpecificSubnetRequest(
                 self.tenant_id,
