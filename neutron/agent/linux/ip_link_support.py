@@ -41,6 +41,7 @@ class IpLinkConstants(object):
     IP_LINK_CAPABILITY_STATE = "state"
     IP_LINK_CAPABILITY_VLAN = "vlan"
     IP_LINK_CAPABILITY_RATE = "rate"
+    IP_LINK_CAPABILITY_MIN_TX_RATE = "min_tx_rate"
     IP_LINK_CAPABILITY_SPOOFCHK = "spoofchk"
     IP_LINK_SUB_CAPABILITY_QOS = "qos"
 

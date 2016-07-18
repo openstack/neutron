@@ -144,12 +144,8 @@ def icmpv6_header_match_supported():
                                actions="NORMAL")
 
 
-def vf_management_supported():
+def _vf_management_support(required_caps):
     is_supported = True
-    required_caps = (
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
-        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
     try:
         vf_section = ip_link_support.IpLinkSupport.get_vf_mgmt_section()
         for cap in required_caps:
@@ -163,6 +159,24 @@ def vf_management_supported():
                           "ip link command"))
         return False
     return is_supported
+
+
+def vf_management_supported():
+    required_caps = (
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
+    return _vf_management_support(required_caps)
+
+
+def vf_extended_management_supported():
+    required_caps = (
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_STATE,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_SPOOFCHK,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE,
+        ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
+    )
+    return _vf_management_support(required_caps)
 
 
 def netns_read_requires_helper():
