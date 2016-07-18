@@ -281,6 +281,28 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.assertFalse(ri.fip_ns.unsubscribe.called)
         ri.fip_ns.local_subnets.allocate.assert_called_once_with(ri.router_id)
 
+    @mock.patch.object(ip_lib, 'IPRule')
+    def test_floating_ip_moved_dist(self, mIPRule):
+        router = mock.MagicMock()
+        ri = self._create_router(router)
+        floating_ip_address = '15.1.2.3'
+        fip = {'floating_ip_address': floating_ip_address,
+               'fixed_ip_address': '192.168.0.1'}
+        ri.floating_ips_dict['15.1.2.3'] = FIP_PRI
+        ri.fip_ns = mock.Mock()
+        ri.fip_ns.allocate_rule_priority.return_value = FIP_PRI
+        ri.floating_ip_moved_dist(fip)
+
+        mIPRule().rule.delete.assert_called_once_with(
+            ip=floating_ip_address, table=16, priority=FIP_PRI)
+        ri.fip_ns.deallocate_rule_priority.assert_called_once_with(
+            floating_ip_address)
+        ri.fip_ns.allocate_rule_priority.assert_called_once_with(
+            floating_ip_address)
+        mIPRule().rule.add.assert_called_with(ip='192.168.0.1',
+                                              table=16,
+                                              priority=FIP_PRI)
+
     def _test_add_floating_ip(self, ri, fip, is_failure):
         ri._add_fip_addr_to_device = mock.Mock(return_value=is_failure)
         ri.floating_ip_added_dist = mock.Mock()

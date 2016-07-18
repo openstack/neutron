@@ -422,3 +422,22 @@ class TestFloatingIpWithMockDevice(BasicRouterTestCaseFramework):
             mock.sentinel.interface_name)
         self.assertEqual({}, fip_statuses)
         ri.remove_floating_ip.assert_called_once_with(device, '15.1.2.3/32')
+
+    def test_process_floating_ip_reassignment(self, IPDevice):
+        IPDevice.return_value = device = mock.Mock()
+        device.addr.list.return_value = [{'cidr': '15.1.2.3/32'}]
+
+        fip_id = _uuid()
+        fip = {
+            'id': fip_id, 'port_id': _uuid(),
+            'floating_ip_address': '15.1.2.3',
+            'fixed_ip_address': '192.168.0.3',
+            'status': 'DOWN'
+        }
+        ri = self._create_router()
+        ri.get_floating_ips = mock.Mock(return_value=[fip])
+        ri.move_floating_ip = mock.Mock()
+        ri.fip_map = {'15.1.2.3': '192.168.0.2'}
+
+        ri.process_floating_ip_addresses(mock.sentinel.interface_name)
+        ri.move_floating_ip.assert_called_once_with(fip)
