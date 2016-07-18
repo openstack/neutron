@@ -372,6 +372,21 @@ def get_other_dvr_serviced_device_owners():
             n_const.DEVICE_OWNER_DHCP]
 
 
+def get_dvr_allowed_address_pair_device_owners():
+    """Return device_owner names for allowed_addr_pair ports serviced by DVR
+
+    This just returns the device owners that are used by the
+    allowed_address_pair ports. Right now only the device_owners shown
+    below are used by the allowed_address_pair ports.
+    Later if other device owners are used for allowed_address_pairs those
+    device_owners should be added to the list below.
+    """
+    # TODO(Swami): Convert these methods to constants.
+    # Add the constants variable to the neutron-lib
+    return [n_const.DEVICE_OWNER_LOADBALANCER,
+            n_const.DEVICE_OWNER_LOADBALANCERV2]
+
+
 def is_dvr_serviced(device_owner):
     """Check if the port need to be serviced by DVR
 
