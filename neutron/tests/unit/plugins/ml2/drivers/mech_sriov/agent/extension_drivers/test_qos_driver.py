@@ -16,6 +16,7 @@
 import mock
 from oslo_utils import uuidutils
 
+from neutron.common import constants
 from neutron import context
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
@@ -38,11 +39,20 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         self.qos_driver.initialize()
         self.qos_driver.eswitch_mgr = mock.Mock()
         self.qos_driver.eswitch_mgr.set_device_max_rate = mock.Mock()
+        self.qos_driver.eswitch_mgr.set_device_min_tx_rate = mock.Mock()
         self.qos_driver.eswitch_mgr.clear_max_rate = mock.Mock()
+        self.qos_driver.eswitch_mgr.clear_min_tx_rate = mock.Mock()
         self.max_rate_mock = self.qos_driver.eswitch_mgr.set_device_max_rate
+        self.min_tx_rate_mock = \
+            self.qos_driver.eswitch_mgr.set_device_min_tx_rate
         self.clear_max_rate_mock = self.qos_driver.eswitch_mgr.clear_max_rate
+        self.clear_min_tx_rate_mock = \
+            self.qos_driver.eswitch_mgr.clear_min_tx_rate
         self.rule = self._create_bw_limit_rule_obj()
+        self.rule_min_tx_rate = self._create_minimum_bandwidth_rule_obj()
         self.qos_policy = self._create_qos_policy_obj([self.rule])
+        self.qos_policy_min_tx_rate = self._create_qos_policy_obj(
+            [self.rule_min_tx_rate])
         self.port = self._create_fake_port(self.qos_policy.id)
 
     def _create_bw_limit_rule_obj(self):
@@ -50,6 +60,14 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         rule_obj.id = uuidutils.generate_uuid()
         rule_obj.max_kbps = 2
         rule_obj.max_burst_kbps = 200
+        rule_obj.obj_reset_changes()
+        return rule_obj
+
+    def _create_minimum_bandwidth_rule_obj(self):
+        rule_obj = rule.QosMinimumBandwidthRule()
+        rule_obj.id = uuidutils.generate_uuid()
+        rule_obj.min_kbps = 200
+        rule_obj.direction = constants.EGRESS_DIRECTION
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -104,3 +122,23 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
                                return_value=False):
             self.qos_driver._set_vf_max_rate(self.ASSIGNED_MAC, self.PCI_SLOT)
             self.assertFalse(self.max_rate_mock.called)
+
+    def test_create_minimum_bandwidth(self):
+        self.qos_driver.create(self.port, self.qos_policy_min_tx_rate)
+        self.min_tx_rate_mock.assert_called_once_with(
+            self.ASSIGNED_MAC, self.PCI_SLOT, self.rule_min_tx_rate.min_kbps)
+
+    def test_update_minimum_bandwidth(self):
+        self.qos_driver.update(self.port, self.qos_policy_min_tx_rate)
+        self.min_tx_rate_mock.assert_called_once_with(
+            self.ASSIGNED_MAC, self.PCI_SLOT, self.rule_min_tx_rate.min_kbps)
+
+    def test_delete_minimum_bandwidth_on_assigned_vf(self):
+        self.qos_driver.delete(self.port, self.qos_policy_min_tx_rate)
+        self.min_tx_rate_mock.assert_called_once_with(
+            self.ASSIGNED_MAC, self.PCI_SLOT, 0)
+
+    def test_delete_minimum_bandwidth_on_released_vf(self):
+        del self.port['device_owner']
+        self.qos_driver.delete(self.port, self.qos_policy_min_tx_rate)
+        self.clear_min_tx_rate_mock.assert_called_once_with(self.PCI_SLOT)

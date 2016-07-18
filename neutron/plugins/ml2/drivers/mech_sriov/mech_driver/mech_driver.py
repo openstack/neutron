@@ -62,7 +62,10 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     L2 Agent presents in  order to manage port update events.
     """
 
-    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
+    supported_qos_rule_types = [
+        qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+        qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+    ]
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,

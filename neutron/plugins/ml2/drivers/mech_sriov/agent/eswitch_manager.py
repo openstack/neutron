@@ -20,6 +20,7 @@ from oslo_log import log as logging
 import six
 
 from neutron._i18n import _, _LE, _LW
+from neutron.agent.linux import ip_link_support
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -170,37 +171,40 @@ class EmbSwitch(object):
         vf_index = self._get_vf_index(pci_slot)
         return self.pci_dev_wrapper.set_vf_state(vf_index, state)
 
-    def set_device_max_rate(self, pci_slot, max_kbps):
-        """Set device max rate.
+    def set_device_rate(self, pci_slot, rate_type, rate_kbps):
+        """Set device rate: rate (max_tx_rate), min_tx_rate
 
         @param pci_slot: Virtual Function address
-        @param max_kbps: device max rate in kbps
+        @param rate_type: device rate name type. Could be 'rate' and
+                          'min_tx_rate'.
+        @param rate_kbps: device rate in kbps
         """
         vf_index = self._get_vf_index(pci_slot)
-        #(Note): ip link set max rate in Mbps therefore
-        #we need to convert the max_kbps to Mbps.
-        #Zero means to disable the rate so the lowest rate
-        #available is 1Mbps. Floating numbers are not allowed
-        if max_kbps > 0 and max_kbps < 1000:
-            max_mbps = 1
+        #NOTE(ralonsoh): ip link sets rate in Mbps therefore we need to convert
+        #the rate_kbps value from kbps to Mbps.
+        #Zero means to disable the rate so the lowest rate available is 1Mbps.
+        #Floating numbers are not allowed
+        if rate_kbps > 0 and rate_kbps < 1000:
+            rate_mbps = 1
         else:
-            max_mbps = utils.round_val(max_kbps / 1000.0)
+            rate_mbps = utils.round_val(rate_kbps / 1000.0)
 
         log_dict = {
-            'max_rate': max_mbps,
-            'max_kbps': max_kbps,
-            'vf_index': vf_index
+            'rate_mbps': rate_mbps,
+            'rate_kbps': rate_kbps,
+            'vf_index': vf_index,
+            'rate_type': rate_type
         }
-        if max_kbps % 1000 != 0:
-            LOG.debug("Maximum rate for SR-IOV ports is counted in Mbps; "
-                      "setting %(max_rate)s Mbps limit for port %(vf_index)s "
-                      "instead of %(max_kbps)s kbps",
+        if rate_kbps % 1000 != 0:
+            LOG.debug("'%(rate_type)s' for SR-IOV ports is counted in Mbps; "
+                      "setting %(rate_mbps)s Mbps limit for port %(vf_index)s "
+                      "instead of %(rate_kbps)s kbps",
                       log_dict)
         else:
-            LOG.debug("Setting %(max_rate)s Mbps limit for port %(vf_index)s",
+            LOG.debug("Setting %(rate_mbps)s Mbps limit for port %(vf_index)s",
                       log_dict)
 
-        return self.pci_dev_wrapper.set_vf_max_rate(vf_index, max_mbps)
+        return self.pci_dev_wrapper.set_vf_rate(vf_index, rate_type, rate_mbps)
 
     def _get_vf_index(self, pci_slot):
         vf_index = self.pci_slot_map.get(pci_slot)
@@ -301,8 +305,25 @@ class ESwitchManager(object):
         """
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
-            embedded_switch.set_device_max_rate(pci_slot,
-                                                max_kbps)
+            embedded_switch.set_device_rate(
+                pci_slot,
+                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE,
+                max_kbps)
+
+    def set_device_min_tx_rate(self, device_mac, pci_slot, min_kbps):
+        """Set device min_tx_rate
+
+        Sets the device min_tx_rate in kbps
+        @param device_mac: device mac
+        @param pci_slot: pci slot
+        @param max_kbps: device min_tx_rate in kbps
+        """
+        embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
+        if embedded_switch:
+            embedded_switch.set_device_rate(
+                pci_slot,
+                ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
+                min_kbps)
 
     def set_device_state(self, device_mac, pci_slot, admin_state_up):
         """Set device state
@@ -367,27 +388,29 @@ class ESwitchManager(object):
                 embedded_switch = None
         return embedded_switch
 
-    def clear_max_rate(self, pci_slot):
-        """Clear the max rate
+    def clear_rate(self, pci_slot, rate_type):
+        """Clear the VF rate
 
-        Clear the max rate configuration from VF by setting it to 0
+        Clear the rate configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
+        @param rate_type: rate to clear ('rate', 'min_tx_rate')
         """
-        #(Note): we don't use the self._get_emb_eswitch here, because when
-        #clearing the VF it may be not assigned. This happens when libvirt
-        #releases the VF back to the hypervisor on delete VM. Therefore we
-        #should just clear the VF max rate according to pci_slot no matter
+        #NOTE(Moshe Levi): we don't use the self._get_emb_eswitch here, because
+        #when clearing the VF it may be not assigned. This happens when
+        #libvirt releases the VF back to the hypervisor on delete VM. Therefore
+        #we should just clear the VF rate according to pci_slot no matter
         #if VF is assigned or not.
         embedded_switch = self.pci_slot_map.get(pci_slot)
         if embedded_switch:
-            #(Note): check the pci_slot is not assigned to some
-            # other port before resetting the max rate.
+            #NOTE(Moshe Levi): check the pci_slot is not assigned to some
+            #other port before resetting the rate.
             if embedded_switch.get_pci_device(pci_slot) is None:
-                embedded_switch.set_device_max_rate(pci_slot, 0)
+                embedded_switch.set_device_rate(pci_slot, rate_type, 0)
             else:
                 LOG.warning(_LW("VF with PCI slot %(pci_slot)s is already "
-                                "assigned; skipping reset maximum rate"),
-                            {'pci_slot': pci_slot})
+                                "assigned; skipping reset for '%(rate_type)s' "
+                                "device configuration parameter"),
+                            {'pci_slot': pci_slot, 'rate_type': rate_type})
         else:
             LOG.error(_LE("PCI slot %(pci_slot)s has no mapping to Embedded "
                           "Switch; skipping"), {'pci_slot': pci_slot})
