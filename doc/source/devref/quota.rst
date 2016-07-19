@@ -217,7 +217,7 @@ In order to ensure correct operations, a row-level lock is acquired in
 the transaction which creates the reservation. The lock is acquired when
 reading usage data. In case of write-set certification failures,
 which can occur in active/active clusters such as MySQL galera, the decorator
-oslo_db.api.wrap_db_retry will retry the transaction if a DBDeadLock
+neutron.db.api.retry_db_errors will retry the transaction if a DBDeadLock
 exception is raised.
 While non-locking approaches are possible, it has been found out that, since
 a non-locking algorithms increases the chances of collision, the cost of

@@ -14,7 +14,6 @@
 #    under the License.
 
 from neutron_lib import exceptions
-from oslo_db import api as oslo_db_api
 from oslo_log import log
 
 from neutron.common import exceptions as n_exc
@@ -157,11 +156,7 @@ class DbQuotaDriver(object):
         quota_api.remove_expired_reservations(
             context, tenant_id=tenant_id)
 
-    @oslo_db_api.wrap_db_retry(max_retries=db_api.MAX_RETRIES,
-                               retry_interval=0.1,
-                               inc_retry_interval=True,
-                               retry_on_request=True,
-                               exception_checker=db_api.is_retriable)
+    @db_api.retry_db_errors
     def make_reservation(self, context, tenant_id, resources, deltas, plugin):
         # Lock current reservation table
         # NOTE(salv-orlando): This routine uses DB write locks.
