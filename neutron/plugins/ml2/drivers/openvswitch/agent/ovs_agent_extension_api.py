@@ -74,7 +74,7 @@ class OVSAgentExtensionAPI(object):
     '''Implements the Agent API for Open vSwitch agent.
 
     Extensions can gain access to this API by overriding the consume_api
-    method which has been added to the AgentCoreResourceExtension class.
+    method which has been added to the AgentExtension class.
     '''
 
     def __init__(self, int_br, tun_br):

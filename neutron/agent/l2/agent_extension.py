@@ -17,52 +17,11 @@ import abc
 
 import six
 
+from neutron.agent.l2 import l2_agent_extension
+
 
 @six.add_metaclass(abc.ABCMeta)
-class AgentCoreResourceExtension(object):
-    """Define stable abstract interface for agent extensions.
-
-    An agent extension extends the agent core functionality.
+class AgentCoreResourceExtension(l2_agent_extension.L2AgentExtension):
+    """This is a shim around L2AgentExtension class.  It is intended for use by
+    out of tree extensions that were inheriting AgentCoreResourceExtension.
     """
-
-    def initialize(self, connection, driver_type):
-        """Perform agent core resource extension initialization.
-
-        :param connection: RPC connection that can be reused by the extension
-                           to define its RPC endpoints
-        :param driver_type: a string that defines the agent type to the
-                            extension. Can be used to choose the right backend
-                            implementation.
-
-        Called after all extensions have been loaded.
-        No port handling will be called before this method.
-        """
-
-    @abc.abstractmethod
-    def handle_port(self, context, data):
-        """Handle agent extension for port.
-
-        This can be called on either create or update, depending on the
-        code flow. Thus, it's this function's responsibility to check what
-        actually changed.
-
-        :param context: rpc context
-        :param data: port data
-        """
-
-    @abc.abstractmethod
-    def delete_port(self, context, data):
-        """Delete port from agent extension.
-
-        :param context: rpc context
-        :param data: port data
-        """
-
-    def consume_api(self, agent_api):
-        """Consume the AgentAPI instance from the AgentExtensionsManager
-
-        This allows extensions to gain access to resources limited to the
-        NeutronAgent.
-
-        :param agent_api: An instance of an agent specific API
-        """

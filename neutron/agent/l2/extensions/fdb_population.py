@@ -20,7 +20,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE, _LW
-from neutron.agent.l2 import agent_extension
+from neutron.agent.l2 import l2_agent_extension
 from neutron.agent.linux import bridge_lib
 from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
@@ -42,7 +42,8 @@ cfg.CONF.register_opts(fdb_population_opt, 'FDB')
 LOG = logging.getLogger(__name__)
 
 
-class FdbPopulationAgentExtension(agent_extension.AgentCoreResourceExtension):
+class FdbPopulationAgentExtension(
+        l2_agent_extension.L2AgentExtension):
     """The FDB population is an agent extension to OVS or linux bridge
     who's objective is to update the FDB table for existing instance
     using normal port, thus enabling communication between SR-IOV instances

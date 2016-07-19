@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import six
 
 from neutron._i18n import _LW, _LI
-from neutron.agent.l2 import agent_extension
+from neutron.agent.l2 import l2_agent_extension
 from neutron.agent.linux import tc_lib
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
@@ -185,13 +185,12 @@ class PortPolicyMap(object):
         del self.known_policies[qos_policy_id]
 
 
-class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
-    SUPPORTED_RESOURCES = [resources.QOS_POLICY]
+class QosAgentExtension(l2_agent_extension.L2AgentExtension):
+    SUPPORTED_RESOURCE_TYPES = [resources.QOS_POLICY]
 
     def initialize(self, connection, driver_type):
-        """Perform Agent Extension initialization.
+        """Initialize agent extension."""
 
-        """
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self.qos_driver = manager.NeutronManager.load_class_for_provider(
             'neutron.qos.agent_drivers', driver_type)()
@@ -200,17 +199,23 @@ class QosAgentExtension(agent_extension.AgentCoreResourceExtension):
 
         self.policy_map = PortPolicyMap()
 
-        registry.subscribe(self._handle_notification, resources.QOS_POLICY)
         self._register_rpc_consumers(connection)
 
     def consume_api(self, agent_api):
+        """Allows an extension to gain access to resources internal to the
+           neutron agent and otherwise unavailable to the extension.
+        """
         self.agent_api = agent_api
 
     def _register_rpc_consumers(self, connection):
+        """Allows an extension to receive notifications of updates made to
+           items of interest.
+        """
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
-        for resource_type in self.SUPPORTED_RESOURCES:
-            # we assume that neutron-server always broadcasts the latest
+        for resource_type in self.SUPPORTED_RESOURCE_TYPES:
+            # We assume that the neutron server always broadcasts the latest
             # version known to the agent
+            registry.subscribe(self._handle_notification, resource_type)
             topic = resources_rpc.resource_type_versioned_topic(resource_type)
             connection.create_consumer(topic, endpoints, fanout=True)
 

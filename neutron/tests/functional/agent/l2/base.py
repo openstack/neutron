@@ -24,7 +24,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
-from neutron.agent.l2.extensions import manager as ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent.linux import interface
 from neutron.agent.linux import polling
 from neutron.common import config as common_config
