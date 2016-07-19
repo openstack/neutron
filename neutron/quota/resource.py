@@ -13,8 +13,6 @@
 #    under the License.
 
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
-from oslo_db import exception as oslo_db_exception
 from oslo_log import log
 from oslo_utils import excutils
 from sqlalchemy import event
@@ -209,11 +207,7 @@ class TrackedResource(BaseResource):
     # can happen is two or more workers are trying to create a resource of a
     # give kind for the same tenant concurrently. Retrying the operation will
     # ensure that an UPDATE statement is emitted rather than an INSERT one
-    @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES,
-        exception_checker=lambda exc:
-        isinstance(exc, (oslo_db_exception.DBDuplicateEntry,
-                         oslo_db_exception.DBDeadlock)))
+    @db_api.retry_db_errors
     def _set_quota_usage(self, context, tenant_id, in_use):
         return quota_api.set_quota_usage(
             context, self.name, tenant_id, in_use=in_use)
