@@ -29,11 +29,14 @@ class TestCommonHelpFunctions(testlib_api.SqlTestCase):
     def test__safe_creation_create_bindings_fails(self):
         create_fn = mock.Mock(return_value={'id': 1234})
         create_bindings = mock.Mock(side_effect=ValueError)
-        delete_fn = mock.Mock()
+        tx_check = lambda i: setattr(self, '_active',
+                                     self.admin_ctx.session.is_active)
+        delete_fn = mock.Mock(side_effect=tx_check)
         self.assertRaises(ValueError, common_db_mixin.safe_creation,
                           self.admin_ctx, create_fn, delete_fn,
                           create_bindings)
         delete_fn.assert_called_once_with(1234)
+        self.assertTrue(self._active)
 
     def test__safe_creation_deletion_fails(self):
         create_fn = mock.Mock(return_value={'id': 1234})

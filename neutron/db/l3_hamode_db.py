@@ -240,7 +240,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
 
     def _create_ha_network_tenant_binding(self, context, tenant_id,
                                           network_id):
-        with context.session.begin(nested=True):
+        with context.session.begin():
             ha_network = L3HARouterNetwork(tenant_id=tenant_id,
                                            network_id=network_id)
             context.session.add(ha_network)
@@ -271,7 +271,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
                                      admin_ctx)
 
         network, ha_network = common_db_mixin.safe_creation(
-            context, creation, deletion, content)
+            context, creation, deletion, content, transaction=False)
         try:
             self._create_ha_subnet(admin_ctx, network['id'], tenant_id)
         except Exception:
@@ -308,7 +308,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         return num_agents
 
     def _create_ha_port_binding(self, context, router_id, port_id):
-        with context.session.begin(nested=True):
+        with context.session.begin():
             portbinding = L3HARouterAgentPortBinding(port_id=port_id,
                                                      router_id=router_id)
             context.session.add(portbinding)
@@ -338,7 +338,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin):
         deletion = functools.partial(self._core_plugin.delete_port, context,
                                      l3_port_check=False)
         port, bindings = common_db_mixin.safe_creation(context, creation,
-                                                       deletion, content)
+                                                       deletion, content,
+                                                       transaction=False)
         return bindings
 
     def _create_ha_interfaces(self, context, router, ha_network):

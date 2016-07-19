@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import weakref
 
 from oslo_log import log as logging
@@ -29,7 +30,13 @@ from neutron.db import sqlalchemyutils
 LOG = logging.getLogger(__name__)
 
 
-def safe_creation(context, create_fn, delete_fn, create_bindings):
+@contextlib.contextmanager
+def _noop_context_manager():
+    yield
+
+
+def safe_creation(context, create_fn, delete_fn, create_bindings,
+                  transaction=True):
     '''This function wraps logic of object creation in safe atomic way.
 
     In case of exception, object is deleted.
@@ -48,9 +55,13 @@ def safe_creation(context, create_fn, delete_fn, create_bindings):
 
     :param create_bindings: function that is called to create bindings for
         an object. It is called with object's id field as an argument.
-    '''
 
-    with context.session.begin(subtransactions=True):
+    :param transaction: if true the whole operation will be wrapped in a
+        transaction. if false, no transaction will be used.
+    '''
+    cm = (context.session.begin(subtransactions=True)
+          if transaction else _noop_context_manager())
+    with cm:
         obj = create_fn()
         try:
             value = create_bindings(obj['id'])
