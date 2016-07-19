@@ -142,6 +142,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def update_security_group_members(self, sg_id, sg_members):
         LOG.debug("Update members of security group (%s)", sg_id)
         self.sg_members[sg_id] = collections.defaultdict(list, sg_members)
+        if self.enable_ipset:
+            for ip_version, current_ips in sg_members.items():
+                self.ipset.set_members(sg_id, ip_version, current_ips)
 
     def _set_ports(self, port):
         if not firewall.port_sec_enabled(port):
@@ -501,10 +504,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # select rules for current port and direction
         security_group_rules = self._select_sgr_by_direction(port, direction)
         security_group_rules += self._select_sg_rules_for_port(port, direction)
-        # make sure ipset members are updated for remote security groups
-        if self.enable_ipset:
-            remote_sg_ids = self._get_remote_sg_ids(port, direction)
-            self._update_ipset_members(remote_sg_ids)
         # split groups by ip version
         # for ipv4, iptables command is used
         # for ipv6, iptables6 command is used
@@ -535,12 +534,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                             ipv4_iptables_rules,
                             ipv6_iptables_rules)
         self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
-
-    def _update_ipset_members(self, security_group_ids):
-        for ip_version, sg_ids in security_group_ids.items():
-            for sg_id in sg_ids:
-                current_ips = self.sg_members[sg_id][ip_version]
-                self.ipset.set_members(sg_id, ip_version, current_ips)
 
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):
         ethertype = sg_rule.get('ethertype')
