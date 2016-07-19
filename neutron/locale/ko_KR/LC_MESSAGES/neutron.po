@@ -9,16 +9,17 @@
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
+# jtjang <jang.jitae@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 08:19+0000\n"
-"Last-Translator: SeYeon Lee <sy_lee@kr.ibm.com>\n"
+"PO-Revision-Date: 2016-07-15 08:26+0000\n"
+"Last-Translator: jtjang <jang.jitae@gmail.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -640,6 +641,9 @@ msgstr "특정 에이전트 유형의 자원만 정리합니다."
 
 msgid "Client certificate for nova metadata api server."
 msgstr "nova 메타데이터 api 서버에 대한 클라이언트 인증서입니다."
+
+msgid "Column type and condition operand do not match"
+msgstr "컬럼 타입과 조건 피연산자가 일치하지 않음"
 
 msgid ""
 "Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
@@ -1272,6 +1276,13 @@ msgstr "요청을 구문 분석하지 못했습니다. '%s' 매개변수가 지�
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr "요청을 구문 분석하지 못했습니다. 필수 속성 '%s'이(가) 지정되지 않음"
 
+#, python-format
+msgid ""
+"Failed to remove provided policy %(policy_id)s because you are not "
+"authorized."
+msgstr ""
+"당신은 권한이 없기 때문에 제공하는 정책 %(policy_id)s을 제거할 수 없습니다."
+
 msgid "Failed to remove supplemental groups"
 msgstr "보조 그룹을 제거하지 못함"
 
@@ -1311,14 +1322,6 @@ msgstr "Flavor가 사용되지 않습니다."
 #, python-format
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "%(floatingip_id)s 부동 IP를 찾을 수 없음"
-
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"부동 IP %(floatingip_id)s이(가) 비IPv4 주소 %s(internal_ip)s과(와) 연관되어 "
-"있으므로 바인드할 수 없습니다. "
 
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "TCP/UDP 프로토콜의 경우 port_range_min은 port_range_max 이하여야 함"
@@ -1430,6 +1433,9 @@ msgstr "IP 할당에 실패했습니다. 나중에 다시 시도하십시오."
 
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 할당은 subnet_id 또는 ip_address가 필요함"
+
+msgid "IP allocation requires subnets for network"
+msgstr "IP 할당은 네트워크의 서브넷을 필요로 합니다."
 
 #, python-format
 msgid ""
@@ -1774,9 +1780,6 @@ msgstr ""
 "에 임의의 physical_network 이름을 사용하려면 기본값 '*'를 사용하십시오. 빈 목"
 "록을 사용하여 플랫 네트워크를 비활성화합니다."
 
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "VXLAN 엔드포인트의 로컬 IP 주소."
-
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "메타데이터 프록시 UNIX 도메인 소켓의 위치입니다."
 
@@ -2098,6 +2101,9 @@ msgstr "외부 네트워크 %s과(와) 연관된 적합한 l3 에이전트를 �
 #, python-format
 msgid "No more IP addresses available for subnet %(subnet_id)s."
 msgstr "서브넷 %(subnet_id)s에 대해 사용 가능한 IP 주소가 더 이상 없습니다. "
+
+msgid "No more IP addresses available."
+msgstr "사용 가능한 IP 주소가 더 이상 없습니다."
 
 #, python-format
 msgid ""
@@ -2579,13 +2585,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "자원 본문 필수"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr ""
-"할당량 기능에서 지원되는 자원 이름입니다. 이 옵션은 이제 제거를 위해더 이상 "
-"사용되지 않습니다. "
 
 msgid "Resource not found."
 msgstr "자원을 찾을 수 없습니다."
@@ -3756,14 +3755,6 @@ msgstr ""
 "max_l3_agents_per_router %(max_agents)s 구성 매개변수가 올바르지 않습니다. "
 "min_l3_agents_per_router와 같거나 이보다 커야 합니다.%(min_agents)s과(와) 연"
 "관되어 있습니다."
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"min_l3_agents_per_router 구성 매개변수가 올바르지 않습니다.HA의 %s과(와) 동일"
-"하거나 이상이어야 합니다."
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "정확히 두 개의 인수 - cidr 및 MAC를 제공해야 함"

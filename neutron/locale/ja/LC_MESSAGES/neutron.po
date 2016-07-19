@@ -15,9 +15,9 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1370,14 +1370,6 @@ msgstr "フレーバーが有効化されていません。"
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "Floating IP %(floatingip_id)s が見つかりませんでした"
 
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"Floating IP %(floatingip_id)s は IPv4 ではないアドレス %s(internal_ip)s と関"
-"連付けられているため、バインドできません。"
-
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr ""
 "TCP/UDP プロトコルの場合、port_range_min は port_range_max 以下でなければなり"
@@ -1847,9 +1839,6 @@ msgstr ""
 "フラットネットワークの作成が可能な physical_network 名のリスト。デフォルト値"
 "の '*' を使用すると、任意の physical_network 名を持つフラットネットワークを作"
 "成できます。空のリストを使用すると、フラットネットワークが無効化されます。"
-
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "VXLAN エンドポイントのローカル IP アドレス。"
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "メタデータプロキシー UNIX ドメインソケットのロケーション。"
@@ -2704,13 +2693,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "リソース本文が必要です"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr ""
-"クォータ機能でサポートされるリソースの名前。現在、このオプションは提供を終了"
-"しています。"
 
 msgid "Resource not found."
 msgstr "リソースが見つかりません。"
@@ -3917,14 +3899,6 @@ msgid ""
 msgstr ""
 "max_l3_agents_per_router %(max_agents)s 構成パラメーターが無効です。"
 "min_l3_agents_per_router %(min_agents)s 以上でなければなりません。"
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"min_l3_agents_per_router 構成パラメーターが無効です。HA では、%s 以上でなけれ"
-"ばなりません。"
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "必ず 2 つの引数 (cidr および MAC) を提供する必要があります"

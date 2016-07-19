@@ -8,9 +8,9 @@
 # Frank Kloeker <eumel@arcor.de>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1489,14 +1489,6 @@ msgstr "Die Variante ist nicht aktiviert."
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "Dynamische IP-Adresse %(floatingip_id)s konnte nicht gefunden werden"
 
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"Dynamische IP-Adresse %(floatingip_id)s wurde der Nicht-IPv4-Adresse "
-"%s(internal_ip)s zugeordnet und kann daher nicht gebunden werden."
-
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr "Für TCP/UDP-Protokolle muss 'port_range_min' '<= port_range_max' sein"
 
@@ -1987,9 +1979,6 @@ msgstr ""
 "können. Verwenden Sie den Standardwert '*', um einfache Netze mit beliebigen "
 "physical_network-Namen zuzulassen. Verwenden Sie eine leere Liste, um "
 "einfache Netze zu inaktivieren."
-
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "Lokale IP-Adresse von VXLAN-Endpunkten."
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "Position für UNIX-Domänensocket von Metadaten-Proxy."
@@ -2894,13 +2883,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "Ressourcen-Nachrichtentext erforderlich"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr ""
-"Resourcenname(n), die in Quotenfunktionen unterstützt werden. Diese Option "
-"wird jetzt nicht weiter unterstützt und kann später entfernt werden."
 
 msgid "Resource not found."
 msgstr "Ressource nicht gefunden."
@@ -4158,14 +4140,6 @@ msgid ""
 msgstr ""
 "Der Konfigurationsparameter max_l3_agents_per_router %(max_agents)s ist "
 "ungültig. Ermuss größer-gleich min_l3_agents_per_router %(min_agents)s sein."
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"Konfigurationsparameter min_l3_agents_per_router ist nicht gültig. Der Wert "
-"muss für hohe Verfügbarkeit größer-gleich %s sein."
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "Es müssen exakt 2 Argumente angegeben werden: cidr und MAC."

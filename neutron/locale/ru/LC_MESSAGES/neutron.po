@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b2.dev347\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-03 04:49+0000\n"
+"POT-Creation-Date: 2016-07-15 19:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1367,15 +1367,6 @@ msgstr "Разновидность не включена."
 msgid "Floating IP %(floatingip_id)s could not be found"
 msgstr "Не найден нефиксированный IP-адрес %(floatingip_id)s"
 
-#, python-format
-msgid ""
-"Floating IP %(floatingip_id)s is associated with non-IPv4 address "
-"%s(internal_ip)s and therefore cannot be bound."
-msgstr ""
-"Нефиксированный IP-адрес %(floatingip_id)s связан с адресом,  "
-"%s(internal_ip)s, отличным от IPv4, и поэтому для него нельзя задать "
-"ограничение."
-
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr ""
 "Для протоколов TCP/UDP значение port_range_min должно быть <= port_range_max"
@@ -1849,9 +1840,6 @@ msgstr ""
 "Список имен физических сетей, с которыми можно создавать одноуровневые сети. "
 "Для создания одноуровневых сетей с произвольными именами физических сетей "
 "используйте символ *. Пустой список запрещает создание одноуровневых сетей."
-
-msgid "Local IP address of the VXLAN endpoints."
-msgstr "Локальный IP-адрес конечных точек VXLAN."
 
 msgid "Location for Metadata Proxy UNIX domain socket."
 msgstr "Расположение сокета домена UNIX прокси метаданных. "
@@ -2707,13 +2695,6 @@ msgstr ""
 
 msgid "Resource body required"
 msgstr "Требуется тело ресурса"
-
-msgid ""
-"Resource name(s) that are supported in quota features. This option is now "
-"deprecated for removal."
-msgstr ""
-"Имена ресурсов, которые поддерживаются в функциях квоты. Эта функция "
-"устарела и будет удалена."
 
 msgid "Resource not found."
 msgstr "Ресурс не найден."
@@ -3912,14 +3893,6 @@ msgid ""
 msgstr ""
 "Недопустимый параметр конфигурации max_l3_agents_per_router %(max_agents)s. "
 "Он должен быть больше либо равен min_l3_agents_per_router %(min_agents)s."
-
-#, python-format
-msgid ""
-"min_l3_agents_per_router config parameter is not valid. It has to be equal "
-"to or more than %s for HA."
-msgstr ""
-"Недопустимый параметр конфигурации min_l3_agents_per_router. Он должен быть "
-"не меньше %s для высокой готовности."
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "Необходимо задать ровно 2 аргумента - cidr и MAC"
