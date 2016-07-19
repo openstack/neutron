@@ -27,8 +27,8 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent.linux import interface
 from neutron.agent.linux import polling
-from neutron.common import config as common_config
 from neutron.common import utils
+from neutron.conf import common as common_config
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import config \
     as ovs_config

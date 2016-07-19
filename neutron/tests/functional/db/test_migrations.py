@@ -35,7 +35,7 @@ from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
 from neutron.tests.unit import testlib_api
 
-cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
+cfg.CONF.import_opt('core_plugin', 'neutron.conf.common')
 
 CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
