@@ -16,6 +16,9 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LI
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db import model_base
 
 LOG = logging.getLogger(__name__)
@@ -60,9 +63,9 @@ def _make_segment_dict(record):
             SEGMENTATION_ID: record.segmentation_id}
 
 
-def add_network_segment(session, network_id, segment, segment_index=0,
+def add_network_segment(context, network_id, segment, segment_index=0,
                         is_dynamic=False):
-    with session.begin(subtransactions=True):
+    with context.session.begin(subtransactions=True):
         record = NetworkSegment(
             id=uuidutils.generate_uuid(),
             network_id=network_id,
@@ -72,7 +75,12 @@ def add_network_segment(session, network_id, segment, segment_index=0,
             segment_index=segment_index,
             is_dynamic=is_dynamic
         )
-        session.add(record)
+        context.session.add(record)
+        registry.notify(resources.SEGMENT,
+                        events.PRECOMMIT_CREATE,
+                        trigger=add_network_segment,
+                        context=context,
+                        segment=record)
         segment['id'] = record.id
     LOG.info(_LI("Added segment %(id)s of type %(network_type)s for network "
                  "%(network_id)s"),

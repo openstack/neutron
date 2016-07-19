@@ -259,7 +259,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         network_id = self._network_context.current['id']
 
         return self._plugin.type_manager.allocate_dynamic_segment(
-                self._plugin_context.session, network_id, segment)
+                self._plugin_context, network_id, segment)
 
     def release_dynamic_segment(self, segment_id):
         return self._plugin.type_manager.release_dynamic_segment(

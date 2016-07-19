@@ -20,6 +20,9 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -194,6 +197,22 @@ class TestSegment(SegmentTestCase):
         self.assertEqual(2, len(res['segments']))
 
 
+class TestSegmentML2(SegmentTestCase):
+    def setUp(self):
+        super(TestSegmentML2, self).setUp(
+            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+
+    def test_segment_notification_on_create_network(self):
+        with mock.patch.object(registry, 'notify') as notify:
+            with self.network():
+                pass
+        notify.assert_any_call(resources.SEGMENT,
+                               events.PRECOMMIT_CREATE,
+                               context=mock.ANY,
+                               segment=mock.ANY,
+                               trigger=mock.ANY)
+
+
 class TestSegmentSubnetAssociation(SegmentTestCase):
     def test_basic_association(self):
         with self.network() as network:
@@ -264,7 +283,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         segment = {segments_db.NETWORK_TYPE: 'phys_net',
                    segments_db.PHYSICAL_NETWORK: 'net_type',
                    segments_db.SEGMENTATION_ID: 200}
-        segments_db.add_network_segment(cxt.session,
+        segments_db.add_network_segment(cxt,
                                         network_id=net['id'],
                                         segment=segment,
                                         is_dynamic=True)
