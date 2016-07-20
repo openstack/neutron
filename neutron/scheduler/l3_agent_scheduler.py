@@ -307,17 +307,19 @@ class L3Scheduler(object):
                                                               agent)
         scheduled = False
         admin_ctx = context.elevated()
-        for router, agents in routers_agents:
-            max_agents_not_reached = (
-                not self.max_ha_agents or agents < self.max_ha_agents)
-            if max_agents_not_reached:
-                if not self._router_has_binding(admin_ctx, router['id'],
-                                                agent.id):
-                    self.create_ha_port_and_bind(plugin, admin_ctx,
-                                                 router['id'],
-                                                 router['tenant_id'],
-                                                 agent)
-                    scheduled = True
+        underscheduled_routers = [router for router, agents in routers_agents
+                                  if (not self.max_ha_agents or
+                                      agents < self.max_ha_agents)]
+        schedulable_routers = self._get_routers_can_schedule(
+            admin_ctx, plugin, underscheduled_routers, agent)
+        for router in schedulable_routers:
+            if not self._router_has_binding(admin_ctx, router['id'],
+                                            agent.id):
+                self.create_ha_port_and_bind(plugin, admin_ctx,
+                                             router['id'],
+                                             router['tenant_id'],
+                                             agent)
+                scheduled = True
 
         return scheduled
 
