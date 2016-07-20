@@ -21,6 +21,9 @@ from neutron.tests.tempest.api import base
 
 def trunks_cleanup(client, trunks):
     for trunk in trunks:
+        # NOTE(armax): deleting a trunk with subports is permitted, however
+        # for testing purposes it is safer to be explicit and clean all the
+        # resources associated with the trunk beforehand.
         subports = test_utils.call_and_ignore_notfound_exc(
             client.get_subports, trunk['id'])
         if subports:
@@ -128,6 +131,16 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.assertEqual(1, len(observed_subports))
         created_subport = observed_subports[0]
         self.assertEqual(subports[0], created_subport)
+
+    @test.idempotent_id('ee5fcead-1abf-483a-bce6-43d1e06d6aa0')
+    def test_delete_trunk_with_subport_is_allowed(self):
+        network = self.create_network()
+        port = self.create_port(network)
+        subports = [{'port_id': port['id'],
+                     'segmentation_type': 'vlan',
+                     'segmentation_id': 2}]
+        trunk = self._create_trunk_with_network_and_parent(subports)
+        self.client.delete_trunk(trunk['trunk']['id'])
 
     @test.idempotent_id('96eea398-a03c-4c3e-a99e-864392c2ca53')
     def test_remove_subport(self):
