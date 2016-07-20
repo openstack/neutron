@@ -55,10 +55,10 @@ class TrunkTestJSONBase(base.BaseAdminNetworkTest):
         trunks_cleanup(cls.client, cls.trunks)
         super(TrunkTestJSONBase, cls).resource_cleanup()
 
-    def _create_trunk_with_network_and_parent(self, subports):
+    def _create_trunk_with_network_and_parent(self, subports, **kwargs):
         network = self.create_network()
         parent_port = self.create_port(network)
-        trunk = self.client.create_trunk(parent_port['id'], subports)
+        trunk = self.client.create_trunk(parent_port['id'], subports, **kwargs)
         self.trunks.append(trunk['trunk'])
         return trunk
 
@@ -87,6 +87,20 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.assertEqual(parent_port_id, res['trunk']['port_id'])
         self.client.delete_trunk(trunk_id)
         self.assertRaises(lib_exc.NotFound, self.client.show_trunk, trunk_id)
+
+    @test.idempotent_id('4ce46c22-a2b6-4659-bc5a-0ef2463cab32')
+    def test_create_update_trunk(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        trunk_id = trunk['trunk']['id']
+        res = self.client.show_trunk(trunk_id)
+        self.assertTrue(res['trunk']['admin_state_up'])
+        self.assertEqual("", res['trunk']['name'])
+        res = self.client.update_trunk(
+            trunk_id, name='foo', admin_state_up=False)
+        self.assertFalse(res['trunk']['admin_state_up'])
+        self.assertEqual("foo", res['trunk']['name'])
+        # enable the trunk so that it can be managed
+        self.client.update_trunk(trunk_id, admin_state_up=True)
 
     @test.idempotent_id('73365f73-bed6-42cd-960b-ec04e0c99d85')
     def test_list_trunks(self):
@@ -162,7 +176,6 @@ class TrunkTestJSON(TrunkTestJSONBase):
 class TrunksSearchCriteriaTest(base.BaseSearchCriteriaTest):
 
     resource = 'trunk'
-    field = 'id'
 
     @classmethod
     def skip_checks(cls):
@@ -178,7 +191,7 @@ class TrunksSearchCriteriaTest(base.BaseSearchCriteriaTest):
         net = cls.create_network(network_name='trunk-search-test-net')
         for name in cls.resource_names:
             parent_port = cls.create_port(net)
-            trunk = cls.client.create_trunk(parent_port['id'], [])
+            trunk = cls.client.create_trunk(parent_port['id'], [], name=name)
             cls.trunks.append(trunk['trunk'])
 
     @classmethod

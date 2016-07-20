@@ -26,6 +26,13 @@ from neutron.services.trunk import exceptions as trunk_exc
 # This layer is introduced for keeping busines logic and
 # data persistence decoupled.
 
+
+def trunk_can_be_managed(context, trunk):
+    """Validate that the trunk can be managed."""
+    if not trunk.admin_state_up:
+        raise trunk_exc.TrunkDisabled(trunk_id=trunk.id)
+
+
 class TrunkPortValidator(object):
 
     def __init__(self, port_id):

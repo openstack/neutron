@@ -85,9 +85,16 @@ validators.validators['type:subports'] = validate_subports
 
 RESOURCE_ATTRIBUTE_MAP = {
     'trunks': {
+        'admin_state_up': {'allow_post': True, 'allow_put': True,
+                           'default': True,
+                           'convert_to': converters.convert_to_boolean,
+                           'is_visible': True},
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True, 'primary_key': True},
+        'name': {'allow_post': True, 'allow_put': True,
+                 'validate': {'type:string': attr.NAME_MAX_LEN},
+                 'default': '', 'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate':
@@ -97,6 +104,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                     'required_by_policy': True,
                     'validate': {'type:uuid': None},
                     'is_visible': True},
+        'status': {'allow_post': False, 'allow_put': False,
+                   'is_visible': True},
         'sub_ports': {'allow_post': True, 'allow_put': False,
                       'default': [],
                       'convert_list_to': converters.convert_kvp_list_to_dict,

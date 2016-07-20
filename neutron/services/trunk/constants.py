@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+ACTIVE_STATUS = 'ACTIVE'
+
 PARENT_PORT = 'parent_port'
 SUBPORTS = 'subports'
 TRUNK = 'trunk'

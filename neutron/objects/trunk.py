@@ -87,13 +87,16 @@ class Trunk(base.NeutronDbObject):
     db_model = models.Trunk
 
     fields = {
+        'admin_state_up': obj_fields.BooleanField(),
         'id': obj_fields.UUIDField(),
         'tenant_id': obj_fields.StringField(),
+        'name': obj_fields.StringField(),
         'port_id': obj_fields.UUIDField(),
+        'status': obj_fields.StringField(),
         'sub_ports': obj_fields.ListOfObjectsField(SubPort.__name__),
     }
 
-    fields_no_update = ['tenant_id', 'port_id']
+    fields_no_update = ['tenant_id', 'port_id', 'status']
 
     synthetic_fields = ['sub_ports']
 

@@ -128,6 +128,45 @@ class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
                             'segmentation_id': 2}])
 
     @test.attr(type='negative')
+    @test.idempotent_id('7f132ccc-1380-42d8-9c44-50411612bd01')
+    def test_add_subport_port_id_disabled_trunk(self):
+        trunk = self._create_trunk_with_network_and_parent(
+            None, admin_state_up=False)
+        self.assertRaises(lib_exc.Conflict,
+            self.client.add_subports,
+            trunk['trunk']['id'],
+            [{'port_id': trunk['trunk']['port_id'],
+              'segmentation_type': 'vlan',
+              'segmentation_id': 2}])
+        self.client.update_trunk(
+            trunk['trunk']['id'], admin_state_up=True)
+
+    @test.attr(type='negative')
+    @test.idempotent_id('8f132ccc-1380-42d8-9c44-50411612bd01')
+    def test_remove_subport_port_id_disabled_trunk(self):
+        trunk = self._create_trunk_with_network_and_parent(
+            None, admin_state_up=False)
+        self.assertRaises(lib_exc.Conflict,
+            self.client.remove_subports,
+            trunk['trunk']['id'],
+            [{'port_id': trunk['trunk']['port_id'],
+              'segmentation_type': 'vlan',
+              'segmentation_id': 2}])
+        self.client.update_trunk(
+            trunk['trunk']['id'], admin_state_up=True)
+
+    @test.attr(type='negative')
+    @test.idempotent_id('9f132ccc-1380-42d8-9c44-50411612bd01')
+    def test_delete_trunk_disabled_trunk(self):
+        trunk = self._create_trunk_with_network_and_parent(
+            None, admin_state_up=False)
+        self.assertRaises(lib_exc.Conflict,
+            self.client.delete_trunk,
+            trunk['trunk']['id'])
+        self.client.update_trunk(
+            trunk['trunk']['id'], admin_state_up=True)
+
+    @test.attr(type='negative')
     @test.idempotent_id('00cb40bb-1593-44c8-808c-72b47e64252f')
     def test_add_subport_duplicate_segmentation_details(self):
         trunk = self._create_trunk_with_network_and_parent(None)
