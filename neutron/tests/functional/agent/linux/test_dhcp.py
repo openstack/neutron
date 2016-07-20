@@ -80,10 +80,10 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         self.assertEqual(2, len(devices))
         # setting up dhcp for the network
         dev_mgr.setup(tests_base.AttributeDict(network))
-        devices = ipw.get_devices(exclude_loopback=True)
         common_utils.wait_until_true(
-            lambda: 1 == len(devices),
+            lambda: 1 == len(ipw.get_devices(exclude_loopback=True)),
             timeout=5,
             sleep=0.1,
             exception=RuntimeError("only one non-loopback device must remain"))
+        devices = ipw.get_devices(exclude_loopback=True)
         self.assertEqual("tapfoo_port_id", devices[0].name)
