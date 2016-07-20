@@ -307,6 +307,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         # This should be True unless adding an IPv6 prefix to an existing port
         new_port = True
+        cleanup_port = False
 
         if add_by_port:
             port, subnets = self._add_interface_by_port(
@@ -314,31 +315,27 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         elif add_by_sub:
             port, subnets, new_port = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
+            cleanup_port = new_port
 
         subnet = subnets[0]
 
         if new_port:
-            if router.extra_attributes.distributed and router.gw_port:
-                try:
+            with p_utils.delete_port_on_error(self._core_plugin,
+                                              context, port['id']) as delmgr:
+                if router.extra_attributes.distributed and router.gw_port:
                     admin_context = context.elevated()
                     self._add_csnat_router_interface_port(
                         admin_context, router, port['network_id'],
                         port['fixed_ips'][-1]['subnet_id'])
-                except Exception:
-                    with excutils.save_and_reraise_exception():
-                        # we need to preserve the original state prior
-                        # the request by rolling back the port creation
-                        # that led to new_port=True
-                        self._core_plugin.delete_port(
-                            admin_context, port['id'], l3_port_check=False)
 
-            with context.session.begin(subtransactions=True):
-                router_port = l3_db.RouterPort(
-                    port_id=port['id'],
-                    router_id=router.id,
-                    port_type=device_owner
-                )
-                context.session.add(router_port)
+                delmgr.delete_on_error = cleanup_port
+                with context.session.begin(subtransactions=True):
+                    router_port = l3_db.RouterPort(
+                        port_id=port['id'],
+                        router_id=router.id,
+                        port_type=device_owner
+                    )
+                    context.session.add(router_port)
 
         # NOTE: For IPv6 additional subnets added to the same
         # network we need to update the CSNAT port with respective

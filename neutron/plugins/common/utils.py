@@ -16,6 +16,7 @@
 Common utilities and helper functions for OpenStack Networking Plugins.
 """
 
+import contextlib
 import hashlib
 
 from neutron_lib import constants as n_const
@@ -23,9 +24,10 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
+from oslo_utils import excutils
 import webob.exc
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _, _LE, _LI
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -193,6 +195,26 @@ def create_port(core_plugin, context, port, check_allow_post=True):
                                 port.get('port', {}),
                                 check_allow_post=check_allow_post)
     return core_plugin.create_port(context, {'port': port_data})
+
+
+class _DelManager(object):
+    def __init__(self):
+        self.delete_on_error = True
+
+
+@contextlib.contextmanager
+def delete_port_on_error(core_plugin, context, port_id):
+    mgr = _DelManager()
+    try:
+        yield mgr
+    except Exception:
+        with excutils.save_and_reraise_exception():
+            try:
+                if mgr.delete_on_error:
+                    core_plugin.delete_port(context, port_id,
+                                            l3_port_check=False)
+            except Exception:
+                LOG.exception(_LE("Failed to cleanup port: %s"), port_id)
 
 
 def get_interface_name(name, prefix='', max_len=n_const.DEVICE_NAME_MAX_LEN):
