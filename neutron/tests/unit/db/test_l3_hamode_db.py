@@ -807,6 +807,15 @@ class L3HATestCase(L3HATestFramework):
                           self.plugin.get_number_of_agents_for_scheduling,
                           self.admin_ctx)
 
+    def test_ha_ports_deleted_in_parent_router_removal(self):
+        router1 = self._create_router()
+        # router cleanup should no longer depend on this function for
+        # newly created routers.
+        self.plugin._delete_ha_interfaces = mock.Mock()
+        self.plugin.delete_router(self.admin_ctx, router1['id'])
+        self.assertEqual([], self.core_plugin.get_ports(
+              self.admin_ctx, filters={'device_id': [router1['id']]}))
+
     def test_ha_network_deleted_if_no_ha_router_present_two_tenants(self):
         # Create two routers in different tenants.
         router1 = self._create_router()
