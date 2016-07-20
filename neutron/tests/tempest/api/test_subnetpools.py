@@ -355,47 +355,38 @@ class SubnetPoolsSearchCriteriaTest(base.BaseSearchCriteriaTest,
         for name in cls.resource_names:
             cls._create_subnetpool(name=name)
 
-    @test.attr(type='smoke')
     @test.idempotent_id('6e3f842e-6bfb-49cb-82d3-0026be4e8e04')
     def test_list_sorts_asc(self):
         self._test_list_sorts_asc()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f336859b-b868-438c-a6fc-2c06374115f2')
     def test_list_sorts_desc(self):
         self._test_list_sorts_desc()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1291fae7-c196-4372-ad59-ce7988518f7b')
     def test_list_pagination(self):
         self._test_list_pagination()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('ddb20d14-1952-49b4-a17e-231cc2239a52')
     def test_list_pagination_with_marker(self):
         self._test_list_pagination_with_marker()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('b3bd9665-2769-4a43-b50c-31b1add12891')
     def test_list_pagination_with_href_links(self):
         self._test_list_pagination_with_href_links()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('1ec1f325-43b0-406e-96ce-20539e38a61d')
     def test_list_pagination_page_reverse_asc(self):
         self._test_list_pagination_page_reverse_asc()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('f43a293e-4aaa-48f4-aeaf-de63a676357c')
     def test_list_pagination_page_reverse_desc(self):
         self._test_list_pagination_page_reverse_desc()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('73511385-839c-4829-8ac1-b5ad992126c4')
     def test_list_pagination_page_reverse_with_href_links(self):
         self._test_list_pagination_page_reverse_with_href_links()
 
-    @test.attr(type='smoke')
     @test.idempotent_id('82a13efc-c18f-4249-b8ec-cec7cf26fbd6')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
