@@ -15,6 +15,7 @@ from pecan import hooks
 from neutron.api import api_common
 from neutron import manager
 from neutron.pecan_wsgi.hooks import policy_enforcement
+from neutron.pecan_wsgi.hooks import utils
 
 
 # TODO(blogan): ideally it'd be nice to get the pagination and sorting
@@ -93,8 +94,7 @@ class QueryParametersHook(hooks.PecanHook):
         collection = state.request.context.get('collection')
         if not collection:
             return
-        controller = manager.NeutronManager.get_controller_for_resource(
-            collection)
+        controller = utils.get_controller(state)
         combined_fields, added_fields = _set_fields(state, controller)
         filters = _set_filters(state, controller)
         query_params = {'fields': combined_fields, 'filters': filters}

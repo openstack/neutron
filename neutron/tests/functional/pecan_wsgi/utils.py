@@ -150,14 +150,15 @@ class FakeExtension(extensions.ExtensionDescriptor):
         params = self.RAM.get(self.HYPHENATED_COLLECTION, {})
         attributes.PLURALS.update({self.HYPHENATED_COLLECTION:
                                    self.HYPHENATED_RESOURCE})
+        member_actions = {'put_meh': 'PUT', 'boo_meh': 'GET'}
         fake_plugin = FakePlugin()
         controller = base.create_resource(
             collection, self.HYPHENATED_RESOURCE, FakePlugin(),
             params, allow_bulk=True, allow_pagination=True,
-            allow_sorting=True)
-        resources = [extensions.ResourceExtension(collection,
-                                                  controller,
-                                                  attr_map=params)]
+            allow_sorting=True, member_actions=member_actions)
+        resources = [extensions.ResourceExtension(
+            collection, controller, attr_map=params,
+            member_actions=member_actions)]
         for collection_name in self.SUB_RESOURCE_ATTRIBUTE_MAP:
             resource_name = collection_name
             parent = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
@@ -204,3 +205,9 @@ class FakePlugin(object):
     def get_meh_meh_fake_subresources(self, context, id_, fields=None,
                                       filters=None):
         return {'foo': id_}
+
+    def put_meh(self, context, id_, data):
+        return {'poo_yah': id_}
+
+    def boo_meh(self, context, id_, fields=None):
+        return {'boo_yah': id_}

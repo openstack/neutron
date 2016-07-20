@@ -26,6 +26,7 @@ from neutron.extensions import quotasv2
 from neutron import manager
 from neutron.pecan_wsgi import constants as pecan_constants
 from neutron.pecan_wsgi.controllers import quota
+from neutron.pecan_wsgi.hooks import utils
 from neutron import policy
 
 
@@ -35,10 +36,8 @@ def _custom_getter(resource, resource_id):
         return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
-def fetch_resource(neutron_context, collection, resource, resource_id,
+def fetch_resource(neutron_context, controller, resource, resource_id,
                    parent_id=None):
-    controller = manager.NeutronManager.get_controller_for_resource(
-        collection)
     attrs = controller.resource_info
     if not attrs:
         # this isn't a request for a normal resource. it could be
@@ -51,7 +50,10 @@ def fetch_resource(neutron_context, collection, resource, resource_id,
                       value.get('primary_key') or 'default' not in value)]
     plugin = manager.NeutronManager.get_plugin_for_resource(resource)
     if plugin:
-        getter = controller.plugin_shower
+        if utils.is_member_action(controller):
+            getter = controller.parent_controller.plugin_shower
+        else:
+            getter = controller.plugin_shower
         getter_args = [neutron_context, resource_id]
         if parent_id:
             getter_args.append(parent_id)
@@ -80,15 +82,14 @@ class PolicyHook(hooks.PecanHook):
         # policies
         if not resource:
             return
+        controller = utils.get_controller(state)
+        if not controller or utils.is_member_action(controller):
+            return
         collection = state.request.context.get('collection')
         needs_prefetch = (state.request.method == 'PUT' or
                           state.request.method == 'DELETE')
         policy.init()
 
-        # NOTE(tonytan4ever): needs to get the actual action from controller's
-        # _plugin_handlers
-        controller = manager.NeutronManager.get_controller_for_resource(
-            collection)
         action = controller.plugin_handlers[
             pecan_constants.ACTION_MAP[state.request.method]]
 
@@ -106,7 +107,7 @@ class PolicyHook(hooks.PecanHook):
                 item = {}
             resource_id = state.request.context.get('resource_id')
             parent_id = state.request.context.get('parent_id')
-            resource_obj = fetch_resource(neutron_context, collection,
+            resource_obj = fetch_resource(neutron_context, controller,
                                           resource, resource_id,
                                           parent_id=parent_id)
             if resource_obj:
@@ -141,6 +142,7 @@ class PolicyHook(hooks.PecanHook):
         neutron_context = state.request.context.get('neutron_context')
         resource = state.request.context.get('resource')
         collection = state.request.context.get('collection')
+        controller = utils.get_controller(state)
         if not resource:
             # can't filter a resource we don't recognize
             return
@@ -165,8 +167,8 @@ class PolicyHook(hooks.PecanHook):
         policy_method = policy.enforce if is_single else policy.check
         plugin = manager.NeutronManager.get_plugin_for_resource(resource)
         try:
-            resp = [self._get_filtered_item(state.request, resource,
-                                            collection, item)
+            resp = [self._get_filtered_item(state.request, controller,
+                                            resource, collection, item)
                     for item in to_process
                     if (state.request.method != 'GET' or
                         policy_method(neutron_context, action, item,
@@ -182,10 +184,11 @@ class PolicyHook(hooks.PecanHook):
             resp = resp[0]
         state.response.json = {key: resp}
 
-    def _get_filtered_item(self, request, resource, collection, data):
+    def _get_filtered_item(self, request, controller, resource, collection,
+                           data):
         neutron_context = request.context.get('neutron_context')
         to_exclude = self._exclude_attributes_by_policy(
-            neutron_context, resource, collection, data)
+            neutron_context, controller, resource, collection, data)
         return self._filter_attributes(request, data, to_exclude)
 
     def _filter_attributes(self, request, data, fields_to_strip):
@@ -197,7 +200,7 @@ class PolicyHook(hooks.PecanHook):
                     if (item[0] not in fields_to_strip and
                         (not user_fields or item[0] in user_fields)))
 
-    def _exclude_attributes_by_policy(self, context, resource,
+    def _exclude_attributes_by_policy(self, context, controller, resource,
                                       collection, data):
         """Identifies attributes to exclude according to authZ policies.
 
@@ -207,8 +210,6 @@ class PolicyHook(hooks.PecanHook):
         """
         attributes_to_exclude = []
         for attr_name in data.keys():
-            controller = manager.NeutronManager.get_controller_for_resource(
-                collection)
             attr_data = controller.resource_info.get(attr_name)
             if attr_data and attr_data['is_visible']:
                 if policy.check(

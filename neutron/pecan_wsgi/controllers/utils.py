@@ -98,10 +98,11 @@ class NeutronPecanController(object):
 
     def __init__(self, collection, resource, plugin=None, resource_info=None,
                  allow_pagination=None, allow_sorting=None,
-                 parent_resource=None):
+                 parent_resource=None, member_actions=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
+        self._member_actions = member_actions or {}
         self._resource_info = resource_info
         self._plugin = plugin
         # Controllers for some resources that are not mapped to anything in

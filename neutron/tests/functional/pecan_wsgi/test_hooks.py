@@ -335,7 +335,9 @@ class TestNovaNotifierHook(test_functional.PecanFunctionalTest):
         # NOTE(kevinbenton): the original passed into the notifier does
         # not contain all of the fields of the object. Only those required
         # by the policy engine are included.
-        orig = pe.fetch_resource(context.get_admin_context(), 'networks',
+        controller = manager.NeutronManager.get_controller_for_resource(
+            'networks')
+        orig = pe.fetch_resource(context.get_admin_context(), controller,
                                  'network', network_id)
         response = self.app.put_json(
             '/v2.0/networks/%s.json' % network_id,
@@ -347,7 +349,7 @@ class TestNovaNotifierHook(test_functional.PecanFunctionalTest):
                                                    orig, json_body)
         self.mock_notifier.reset_mock()
 
-        orig = pe.fetch_resource(context.get_admin_context(), 'networks',
+        orig = pe.fetch_resource(context.get_admin_context(), controller,
                                  'network', network_id)
         response = self.app.delete(
             '/v2.0/networks/%s.json' % network_id, headers=req_headers)
