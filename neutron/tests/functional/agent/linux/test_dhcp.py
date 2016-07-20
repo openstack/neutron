@@ -20,6 +20,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config as common_conf
+from neutron.common import utils as common_utils
 from neutron.conf.agent import dhcp as dhcp_conf
 from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
@@ -80,6 +81,9 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         # setting up dhcp for the network
         dev_mgr.setup(tests_base.AttributeDict(network))
         devices = ipw.get_devices(exclude_loopback=True)
-        # only one non-loopback device should remain
-        self.assertEqual(1, len(devices))
+        common_utils.wait_until_true(
+            lambda: 1 == len(devices),
+            timeout=5,
+            sleep=0.1,
+            exception=RuntimeError("only one non-loopback device must remain"))
         self.assertEqual("tapfoo_port_id", devices[0].name)
