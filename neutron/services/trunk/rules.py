@@ -33,6 +33,24 @@ def trunk_can_be_managed(context, trunk):
         raise trunk_exc.TrunkDisabled(trunk_id=trunk.id)
 
 
+def enforce_port_deletion_rules(resource, event, trigger, **kwargs):
+    """Prohibit the deletion of a port that's used in a trunk."""
+    # NOTE: the ML2 plugin properly catches these exceptions when raised, but
+    # non-ML2 plugins might not. To address this we should move the callback
+    # registry notification emitted in the ML2 plugin's delete_port() higher
+    # up in the plugin hierarchy.
+    context = kwargs['context']
+    port_id = kwargs['port_id']
+    subport_obj = trunk_objects.SubPort.get_object(context, port_id=port_id)
+    if subport_obj:
+        raise trunk_exc.PortInUseAsSubPort(port_id=port_id,
+                                           trunk_id=subport_obj.trunk_id)
+    trunk_obj = trunk_objects.Trunk.get_object(context, port_id=port_id)
+    if trunk_obj:
+        raise trunk_exc.PortInUseAsTrunkParent(port_id=port_id,
+                                               trunk_id=trunk_obj.id)
+
+
 class TrunkPortValidator(object):
 
     def __init__(self, port_id):

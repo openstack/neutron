@@ -58,6 +58,26 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.context, port_id=port_id)
         return subports[0]
 
+    def _test_delete_port_raise_in_use(self, parent_port, child_port, port_id,
+                                       exception):
+        subport = create_subport_dict(child_port['port']['id'])
+        self._create_test_trunk(parent_port, [subport])
+        core_plugin = manager.NeutronManager.get_plugin()
+        self.assertRaises(exception, core_plugin.delete_port,
+                          self.context, port_id)
+
+    def test_delete_port_raise_in_use_by_trunk(self):
+        with self.port() as parent_port, self.port() as child_port:
+            self._test_delete_port_raise_in_use(
+                parent_port, child_port, parent_port['port']['id'],
+                trunk_exc.PortInUseAsTrunkParent)
+
+    def test_delete_port_raise_in_use_by_subport(self):
+        with self.port() as parent_port, self.port() as child_port:
+            self._test_delete_port_raise_in_use(
+                parent_port, child_port, child_port['port']['id'],
+                trunk_exc.PortInUseAsSubPort)
+
     def test_delete_trunk_raise_in_use(self):
         with self.port() as port:
             trunk = self._create_test_trunk(port)

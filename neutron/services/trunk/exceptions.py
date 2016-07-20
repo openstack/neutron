@@ -41,6 +41,16 @@ class ParentPortInUse(n_exc.InUse):
                 "eligible for use as a parent port.")
 
 
+class PortInUseAsTrunkParent(n_exc.InUse):
+    message = _("Port %(port_id)s is currently a parent port "
+                "for trunk %(trunk_id)s.")
+
+
+class PortInUseAsSubPort(n_exc.InUse):
+    message = _("Port %(port_id)s is currently a subport for "
+                "trunk %(trunk_id)s.")
+
+
 class TrunkInUse(n_exc.InUse):
     message = _("Trunk %(trunk_id)s is currently in use.")
 
