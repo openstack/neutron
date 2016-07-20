@@ -25,10 +25,10 @@ import oslo_messaging
 from oslo_utils import timeutils
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as n_const
 from neutron.common import utils
+from neutron.conf.agent.database import agentschedulers_db
 from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
 from neutron.extensions import agent as ext_agent
@@ -39,34 +39,8 @@ from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
 
-AGENTS_SCHEDULER_OPTS = [
-    cfg.StrOpt('network_scheduler_driver',
-               default='neutron.scheduler.'
-                       'dhcp_agent_scheduler.WeightScheduler',
-               help=_('Driver to use for scheduling network to DHCP agent')),
-    cfg.BoolOpt('network_auto_schedule', default=True,
-                help=_('Allow auto scheduling networks to DHCP agent.')),
-    cfg.BoolOpt('allow_automatic_dhcp_failover', default=True,
-                help=_('Automatically remove networks from offline DHCP '
-                       'agents.')),
-    cfg.IntOpt('dhcp_agents_per_network', default=1,
-               help=_('Number of DHCP agents scheduled to host a tenant '
-                      'network. If this number is greater than 1, the '
-                      'scheduler automatically assigns multiple DHCP agents '
-                      'for a given tenant network, providing high '
-                      'availability for DHCP service.')),
-    cfg.BoolOpt('enable_services_on_agents_with_admin_state_down',
-                default=False,
-                help=_('Enable services on an agent with admin_state_up '
-                       'False. If this option is False, when admin_state_up '
-                       'of an agent is turned False, services on it will be '
-                       'disabled. Agents with admin_state_up False are not '
-                       'selected for automatic scheduling regardless of this '
-                       'option. But manual scheduling to such agents is '
-                       'available if this option is True.')),
-]
 
-cfg.CONF.register_opts(AGENTS_SCHEDULER_OPTS)
+agentschedulers_db.register_db_agentschedulers_opts()
 
 
 class AgentSchedulerDbMixin(agents_db.AgentDbMixin):

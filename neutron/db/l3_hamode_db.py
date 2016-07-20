@@ -39,6 +39,7 @@ from sqlalchemy import orm
 from neutron._i18n import _
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
+from neutron.conf.db import l3_hamode_db
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
@@ -59,29 +60,7 @@ UNLIMITED_AGENTS_PER_ROUTER = 0
 
 LOG = logging.getLogger(__name__)
 
-L3_HA_OPTS = [
-    cfg.BoolOpt('l3_ha',
-                default=False,
-                help=_('Enable HA mode for virtual routers.')),
-    cfg.IntOpt('max_l3_agents_per_router',
-               default=3,
-               help=_("Maximum number of L3 agents which a HA router will be "
-                      "scheduled on. If it is set to 0 then the router will "
-                      "be scheduled on every agent.")),
-    cfg.StrOpt('l3_ha_net_cidr',
-               default=n_const.L3_HA_NET_CIDR,
-               help=_('Subnet used for the l3 HA admin network.')),
-    cfg.StrOpt('l3_ha_network_type', default='',
-               help=_("The network type to use when creating the HA network "
-                      "for an HA router. By default or if empty, the first "
-                      "'tenant_network_types' is used. This is helpful when "
-                      "the VRRP traffic should use a specific network which "
-                      "is not the default one.")),
-    cfg.StrOpt('l3_ha_network_physical_name', default='',
-               help=_("The physical network name with which the HA network "
-                      "can be created."))
-]
-cfg.CONF.register_opts(L3_HA_OPTS)
+l3_hamode_db.register_db_l3_hamode_opts()
 
 
 @registry.has_registry_receivers

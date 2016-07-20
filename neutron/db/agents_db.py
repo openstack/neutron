@@ -32,10 +32,10 @@ from oslo_utils import timeutils
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
-from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants as n_const
+from neutron.conf.agent.database import agents_db
 from neutron.db import _model_query as model_query
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
@@ -43,33 +43,10 @@ from neutron.db.models import agent as agent_model
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 
+
 LOG = logging.getLogger(__name__)
 
-AGENT_OPTS = [
-    cfg.StrOpt('dhcp_load_type', default='networks',
-               choices=['networks', 'subnets', 'ports'],
-               help=_('Representing the resource type whose load is being '
-                      'reported by the agent. This can be "networks", '
-                      '"subnets" or "ports". '
-                      'When specified (Default is networks), the server will '
-                      'extract particular load sent as part of its agent '
-                      'configuration object from the agent report state, '
-                      'which is the number of resources being consumed, at '
-                      'every report_interval.'
-                      'dhcp_load_type can be used in combination with '
-                      'network_scheduler_driver = '
-                      'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler '
-                      'When the network_scheduler_driver is WeightScheduler, '
-                      'dhcp_load_type can be configured to represent the '
-                      'choice for the resource being balanced. '
-                      'Example: dhcp_load_type=networks')),
-    cfg.BoolOpt('enable_new_agents', default=True,
-                help=_("Agent starts with admin_state_up=False when "
-                       "enable_new_agents=False. In the case, user's "
-                       "resources will not be scheduled automatically to the "
-                       "agent until admin changes admin_state_up to True.")),
-]
-cfg.CONF.register_opts(AGENT_OPTS)
+agents_db.register_db_agents_opts()
 
 # this is the ratio from agent_down_time to the time we use to consider
 # the agents down for considering their resource versions in the
