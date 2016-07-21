@@ -207,11 +207,23 @@ class DeclarativeObject(abc.ABCMeta):
 
     def __init__(cls, name, bases, dct):
         super(DeclarativeObject, cls).__init__(name, bases, dct)
+        if 'project_id' in cls.fields:
+            obj_extra_fields_set = set(cls.obj_extra_fields)
+            obj_extra_fields_set.add('tenant_id')
+            cls.obj_extra_fields = list(obj_extra_fields_set)
+            setattr(cls, 'tenant_id', property(lambda x: x.project_id))
+
+        fields_no_update_set = set(cls.fields_no_update)
         for base in itertools.chain([cls], bases):
+            keys_set = set()
             if hasattr(base, 'primary_keys'):
-                cls.fields_no_update += base.primary_keys
-        # avoid duplicate entries
-        cls.fields_no_update = list(set(cls.fields_no_update))
+                keys_set.update(base.primary_keys)
+            if hasattr(base, 'obj_extra_fields'):
+                keys_set.update(base.obj_extra_fields)
+            for key in keys_set:
+                if key in cls.fields:
+                    fields_no_update_set.add(key)
+        cls.fields_no_update = list(fields_no_update_set)
 
         # generate unique_keys from the model
         model = getattr(cls, 'db_model', None)
@@ -259,6 +271,13 @@ class NeutronDbObject(NeutronObject):
 
     # dict with name mapping: {'field_name_in_object': 'field_name_in_db'}
     fields_need_translation = {}
+
+    # obj_extra_fields defines properties that are not part of the model
+    # but we want to expose them for easier usage of the object.
+    # Handling of obj_extra_fields is in oslo.versionedobjects.
+    # The extra fields can be accessed as read only property and are exposed
+    # in to_dict()
+    # obj_extra_fields = []
 
     def from_db_object(self, *objs):
         db_objs = [self.modify_fields_from_db(db_obj) for db_obj in objs]
