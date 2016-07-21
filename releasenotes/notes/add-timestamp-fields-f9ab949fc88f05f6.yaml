@@ -1,9 +1,9 @@
 ---
 prelude: >
-    Timestamp fields are now added to neutron core resources.
+    Timestamp fields have been added to neutron core resources.
 features:
-  - Add timestamp fields 'created_at', 'updated_at' into neutron core
-    resources like network, subnet, port and subnetpool.
-  - And support for querying these resources by changed-since, it will
-    return the resources changed after the specfic time string like
-    YYYY-MM-DDTHH:MM:SS
+  - Add timestamp fields ``created_at``, ``updated_at`` into neutron core
+    resources for example networks, subnets, ports and subnetpools.
+  - These resources can now be queried by ``changed-since``, which
+    returns the resources changed after a specific time string like
+    ``YYYY-MM-DDTHH:MM:SS``.
