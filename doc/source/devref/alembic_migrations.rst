@@ -417,6 +417,27 @@ following directive should be added in the contraction script::
 
     depends_on = ('<expansion-revision>',)
 
+Expand and Contract Branch Exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In some cases, we have to have "expand" operations in contract migrations. For
+example, table 'networksegments' was renamed in contract migration, so all
+operations with this table are required to be in contract branch as well.
+For such cases, we use the ``contract_creation_exceptions`` that should be
+implemented as part of such migrations. This is needed to get functional tests
+pass.
+
+Usage::
+
+    def contract_creation_exceptions():
+        """Docstring should explain why we allow such exception for contract
+        branch.
+        """
+        return {
+            sqlalchemy_obj_type: ['name']
+            # For example: sa.Column: ['subnets.segment_id']
+        }
+
 
 HEAD files for conflict management
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
