@@ -164,6 +164,35 @@ class TestProcessManager(base.BaseTestCase):
                 manager.enable(callback)
                 self.assertFalse(callback.called)
 
+    def test_reload_cfg_without_custom_reload_callback(self):
+        with mock.patch.object(ep.ProcessManager, 'disable') as disable:
+            manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
+            manager.reload_cfg()
+            disable.assert_called_once_with('HUP')
+
+    def test_reload_cfg_with_custom_reload_callback(self):
+        reload_callback = mock.sentinel.callback
+        with mock.patch.object(ep.ProcessManager, 'disable') as disable:
+            manager = ep.ProcessManager(
+                self.conf, 'uuid', namespace='ns',
+                custom_reload_callback=reload_callback)
+            manager.reload_cfg()
+            disable.assert_called_once_with(get_stop_command=reload_callback)
+
+    def test_disable_get_stop_command(self):
+        cmd = ['the', 'cmd']
+        reload_callback = mock.Mock(return_value=cmd)
+        with mock.patch.object(ep.ProcessManager, 'pid',
+                               mock.PropertyMock(return_value=4)):
+            with mock.patch.object(ep.ProcessManager, 'active',
+                                   mock.PropertyMock(return_value=True)):
+                manager = ep.ProcessManager(
+                    self.conf, 'uuid',
+                    custom_reload_callback=reload_callback)
+                manager.disable(
+                    get_stop_command=manager.custom_reload_callback)
+                self.assertIn(cmd, self.execute.call_args[0])
+
     def test_disable_no_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
             pid.__get__ = mock.Mock(return_value=4)
