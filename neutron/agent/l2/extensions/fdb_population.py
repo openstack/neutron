@@ -88,8 +88,8 @@ class FdbPopulationAgentExtension(
                 self.device_to_macs[device] = _stdout.split()[::3]
 
         def update_port(self, device, port_id, mac):
-            # check if port id is updated
-            if self.portid_to_mac.get(port_id) == mac:
+            # check if device is updated
+            if self.device_to_macs.get(device) == mac:
                 return
             # delete invalid port_id's mac from the FDB,
             # in case the port was updated to another mac
