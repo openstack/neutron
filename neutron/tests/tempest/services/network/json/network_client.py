@@ -713,7 +713,7 @@ class NetworkClientJSON(service_client.RestClient):
 
     def _subports_action(self, action, trunk_id, subports):
         uri = '%s/trunks/%s/%s' % (self.uri_prefix, trunk_id, action)
-        resp, body = self.put(uri, jsonutils.dumps(subports))
+        resp, body = self.put(uri, jsonutils.dumps({'sub_ports': subports}))
         body = self.deserialize_single(body)
         self.expected_success(200, resp.status)
         return service_client.ResponseBody(resp, body)

@@ -74,10 +74,10 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             subport = create_subport_dict(child_port['port']['id'])
             callback = register_mock_callback(constants.SUBPORTS, event)
             self.trunk_plugin.add_subports(
-                self.context, trunk['id'], [subport])
+                self.context, trunk['id'], {'sub_ports': [subport]})
             subport_obj = self._get_subport_obj(subport['port_id'])
             self.trunk_plugin.remove_subports(
-                self.context, trunk['id'], [subport])
+                self.context, trunk['id'], {'sub_ports': [subport]})
             payload = {payload_key: [subport_obj]}
             callback.assert_called_once_with(
                 constants.SUBPORTS, event, self.trunk_plugin, **payload)
