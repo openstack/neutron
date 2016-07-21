@@ -20,11 +20,11 @@ from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
 from neutron import manager
+from neutron.plugins.common import utils
 from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.services.trunk import rules
-from neutron.services.trunk.validators import vlan as vlan_driver
 from neutron.tests import base
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -33,7 +33,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(SubPortsValidatorTestCase, self).setUp()
-        self.segmentation_types = {constants.VLAN: vlan_driver.vlan_range}
+        self.segmentation_types = {constants.VLAN: utils.is_valid_vlan_tag}
         self.context = mock.ANY
 
     def test_validate_subport_subport_and_trunk_shared_port_id(self):
@@ -56,6 +56,26 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
         self.assertRaises(n_exc.InvalidInput,
                           validator.validate,
                           self.context)
+
+    def test_validate_subport_vlan_id_not_an_int(self):
+        validator = rules.SubPortsValidator(
+            self.segmentation_types,
+            [{'port_id': uuidutils.generate_uuid(),
+              'segmentation_type': 'vlan',
+              'segmentation_id': 'IamNotAnumber'}])
+        self.assertRaises(n_exc.InvalidInput,
+                          validator.validate,
+                          self.context)
+
+    def test_validate_subport_valid_vlan_id_as_string(self):
+        validator = rules.SubPortsValidator(
+            self.segmentation_types,
+            [{'port_id': uuidutils.generate_uuid(),
+              'segmentation_type': 'vlan',
+              'segmentation_id': '2'}])
+        with mock.patch.object(rules.TrunkPortValidator, 'validate') as f:
+            validator.validate(self.context)
+            f.assert_called_once_with(self.context)
 
     def test_validate_subport_subport_invalid_segmenation_type(self):
         validator = rules.SubPortsValidator(
@@ -101,7 +121,7 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
         super(TrunkPortValidatorTestCase, self).setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.add_segmentation_type(constants.VLAN,
-                                                vlan_driver.vlan_range)
+                                                utils.is_valid_vlan_tag)
 
     def test_validate_port_parent_in_use_by_trunk(self):
         with self.port() as trunk_parent:

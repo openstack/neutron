@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 
@@ -102,20 +103,26 @@ class SubPortsValidator(object):
         # figure out defaults when the time comes to support Ironic.
         # We can reasonably expect segmentation details to be provided
         # in all other cases for now.
-        segmentation_id = subport.get("segmentation_id")
-        segmentation_type = subport.get("segmentation_type")
-        if not segmentation_id or not segmentation_type:
+        try:
+            segmentation_type = subport["segmentation_type"]
+            segmentation_id = (
+                converters.convert_to_int(subport["segmentation_id"]))
+        except KeyError:
             msg = _("Invalid subport details '%s': missing segmentation "
                     "information. Must specify both segmentation_id and "
                     "segmentation_type") % subport
             raise n_exc.InvalidInput(error_message=msg)
+        except n_exc.InvalidInput:
+            msg = _("Invalid subport details: segmentation_id '%s' is "
+                    "not an integer") % subport["segmentation_id"]
+            raise n_exc.InvalidInput(error_message=msg)
 
         if segmentation_type not in self._segmentation_types:
-            msg = _("Invalid segmentation_type '%s'") % segmentation_type
+            msg = _("Unknown segmentation_type '%s'") % segmentation_type
             raise n_exc.InvalidInput(error_message=msg)
 
         if not self._segmentation_types[segmentation_type](segmentation_id):
-            msg = _("Invalid segmentation id '%s'") % segmentation_id
+            msg = _("Segmentation ID '%s' is not in range") % segmentation_id
             raise n_exc.InvalidInput(error_message=msg)
 
         trunk_validator = TrunkPortValidator(subport['port_id'])
