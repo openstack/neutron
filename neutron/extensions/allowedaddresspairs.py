@@ -22,14 +22,9 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
+from neutron.conf.extensions import allowedaddresspairs as addr_pair
 
-allowed_address_pair_opts = [
-    #TODO(limao): use quota framework when it support quota for attributes
-    cfg.IntOpt('max_allowed_address_pair', default=10,
-               help=_("Maximum number of allowed address pairs")),
-]
-
-cfg.CONF.register_opts(allowed_address_pair_opts)
+addr_pair.register_allowed_address_pair_opts()
 
 
 class AllowedAddressPairsMissingIP(nexception.InvalidInput):

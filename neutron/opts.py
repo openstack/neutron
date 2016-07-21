@@ -32,6 +32,7 @@ import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.ovs_conf
 import neutron.conf.common
+import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.quota
 import neutron.conf.service
@@ -44,7 +45,6 @@ import neutron.db.l3_dvr_db
 import neutron.db.l3_gwmode_db
 import neutron.db.l3_hamode_db
 import neutron.db.migration.cli
-import neutron.extensions.allowedaddresspairs
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
 import neutron.plugins.ml2.config
@@ -100,7 +100,8 @@ def list_agent_opts():
 def list_extension_opts():
     return [
         ('DEFAULT',
-         neutron.extensions.allowedaddresspairs.allowed_address_pair_opts),
+         neutron.conf.extensions.allowedaddresspairs
+         .allowed_address_pair_opts),
         ('quotas',
          itertools.chain(
              neutron.conf.quota.l3_quota_opts,
