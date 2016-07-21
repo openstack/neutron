@@ -142,22 +142,39 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
             ipam_req.AnySubnetRequest(self._tenant_id, 'meh',
                                       constants.IPv4, 24))
 
-    def test_update_subnet_pools(self):
+    def _test_update_subnet_pools(self, allocation_pools, expected_pools=None):
+        if expected_pools is None:
+            expected_pools = allocation_pools
         cidr = '10.0.0.0/24'
         subnet, subnet_req = self._prepare_specific_subnet_request(cidr)
         self.ipam_pool.allocate_subnet(subnet_req)
-        allocation_pools = [netaddr.IPRange('10.0.0.100', '10.0.0.150'),
-                            netaddr.IPRange('10.0.0.200', '10.0.0.250')]
         update_subnet_req = ipam_req.SpecificSubnetRequest(
             self._tenant_id,
             subnet['id'],
             cidr,
             gateway_ip=subnet['gateway_ip'],
             allocation_pools=allocation_pools)
-        ipam_subnet = self.ipam_pool.update_subnet(update_subnet_req)
+        self.ipam_pool.update_subnet(update_subnet_req)
+        ipam_subnet = self.ipam_pool.get_subnet(subnet['id'])
         self._verify_ipam_subnet_details(
             ipam_subnet,
-            cidr, self._tenant_id, subnet['gateway_ip'], allocation_pools)
+            cidr, self._tenant_id, subnet['gateway_ip'], expected_pools)
+
+    def test_update_subnet_pools(self):
+        allocation_pools = [netaddr.IPRange('10.0.0.100', '10.0.0.150'),
+                            netaddr.IPRange('10.0.0.200', '10.0.0.250')]
+        self._test_update_subnet_pools(allocation_pools)
+
+    def test_update_subnet_pools_with_blank_pools(self):
+        allocation_pools = []
+        self._test_update_subnet_pools(allocation_pools)
+
+    def test_update_subnet_pools_with_none_pools(self):
+        allocation_pools = None
+        expected_pools = [netaddr.IPRange('10.0.0.2', '10.0.0.254')]
+        # Pools should not be changed on update
+        self._test_update_subnet_pools(allocation_pools,
+                                       expected_pools=expected_pools)
 
     def test_get_subnet(self):
         cidr = '10.0.0.0/24'
