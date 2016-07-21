@@ -17,6 +17,7 @@
 import mock
 from neutron_lib import constants
 from oslo_config import cfg
+import testtools
 
 from neutron.agent.linux import bridge_lib
 from neutron.common import constants as n_const
@@ -447,6 +448,36 @@ class TestCommonAgentLoop(base.BaseTestCase):
                                'setup_arp_spoofing_protection') as set_arp:
             agent.treat_devices_added_updated(set(['tap1']))
             set_arp.assert_called_with(mock_details['device'], mock_details)
+
+    def test__process_device_if_exists_missing_intf(self):
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'physical_network': 'physnet1',
+                        'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX}
+        self.agent.mgr = mock.Mock()
+        self.agent.mgr.get_all_devices.return_value = []
+        self.agent.mgr.plug_interface.side_effect = RuntimeError()
+        self.agent._process_device_if_exists(mock_details)
+
+    def test__process_device_if_exists_error(self):
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'physical_network': 'physnet1',
+                        'device_owner': constants.DEVICE_OWNER_NETWORK_PREFIX}
+        self.agent.mgr = mock.Mock()
+        self.agent.mgr.get_all_devices.return_value = ['dev123']
+        self.agent.mgr.plug_interface.side_effect = RuntimeError()
+        with testtools.ExpectedException(RuntimeError):
+            # device exists so it should raise
+            self.agent._process_device_if_exists(mock_details)
 
     def test_set_rpc_timeout(self):
         self.agent.stop()

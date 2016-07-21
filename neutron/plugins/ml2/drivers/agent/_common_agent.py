@@ -15,6 +15,7 @@
 #    under the License.
 
 import collections
+import contextlib
 import sys
 import time
 
@@ -23,6 +24,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import loopingcall
 from oslo_service import service
+from oslo_utils import excutils
 from osprofiler import profiler
 
 from neutron._i18n import _LE, _LI
@@ -216,7 +218,15 @@ class CommonAgentLoop(service.Service):
             return True
 
         for device_details in devices_details_list:
-            device = device_details['device']
+            self._process_device_if_exists(device_details)
+        # no resync is needed
+        return False
+
+    def _process_device_if_exists(self, device_details):
+        # ignore exceptions from devices that disappear because they will
+        # be handled as removed in the next iteration
+        device = device_details['device']
+        with self._ignore_missing_device_exceptions(device):
             LOG.debug("Port %s added", device)
 
             if 'port_id' in device_details:
@@ -295,8 +305,16 @@ class CommonAgentLoop(service.Service):
                 self.ext_manager.handle_port(self.context, device_details)
             else:
                 LOG.info(_LI("Device %s not defined on plugin"), device)
-        # no resync is needed
-        return False
+
+    @contextlib.contextmanager
+    def _ignore_missing_device_exceptions(self, device):
+        try:
+            yield
+        except Exception:
+            with excutils.save_and_reraise_exception() as ectx:
+                if device not in self.mgr.get_all_devices():
+                    ectx.reraise = False
+                    LOG.debug("%s was removed during processing.", device)
 
     def treat_devices_removed(self, devices):
         resync = False
