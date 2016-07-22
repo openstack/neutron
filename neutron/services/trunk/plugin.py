@@ -149,6 +149,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
         """Add one or more subports to trunk."""
         # Check for basic validation since the request body here is not
         # automatically validated by the API layer.
+        subports = subports['sub_ports']
         subports_validator = rules.SubPortsValidator(
             self._segmentation_types, subports)
         subports = subports_validator.validate(context, basic_validation=True)
@@ -176,6 +177,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     @db_base_plugin_common.convert_result_to_dict
     def remove_subports(self, context, trunk_id, subports):
         """Remove one or more subports from trunk."""
+        subports = subports['sub_ports']
         with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
