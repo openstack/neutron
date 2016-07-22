@@ -378,6 +378,24 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
         updated_segment = self.plugin.get_segment(ctx, segment['id'])
         self.assertEqual(hosts, set(updated_segment['hosts']))
 
+    def test_get_all_hosts_mapped_with_segments(self):
+        ctx = context.get_admin_context()
+        hosts = set()
+        with self.network() as network:
+            network_id = network['network']['id']
+        for i in range(1, 3):
+            host = "host%s" % i
+            segment = self._test_create_segment(
+                network_id=network_id, physical_network='phys_net%s' % i,
+                segmentation_id=200 + i, network_type=p_constants.TYPE_VLAN)
+            db.update_segment_host_mapping(
+                ctx, host, {segment['segment']['id']})
+            hosts.add(host)
+
+        # Now they are 2 hosts with segment being mapped.
+        actual_hosts = db.get_hosts_mapped_with_segments(ctx)
+        self.assertEqual(hosts, actual_hosts)
+
 
 class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
