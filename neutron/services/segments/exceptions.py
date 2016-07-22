@@ -48,3 +48,9 @@ class HostNotConnectedToAnySegment(exceptions.Conflict):
     message = _("Host %(host)s is not connected to any segments on routed "
                 "provider network '%(network_id)s'.  It should be connected "
                 "to one.")
+
+
+class HostNotCompatibleWithFixedIps(exceptions.Conflict):
+    message = _("Host %(host)s is not connected to a segment where the "
+                "existing fixed_ips on port %(port_id)s will function given "
+                "the routed network topology.")

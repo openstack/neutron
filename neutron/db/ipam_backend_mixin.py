@@ -615,10 +615,21 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                             new_port.get('mac_address'))
 
         fixed_ips_requested = validators.is_attr_set(new_port.get('fixed_ips'))
+        old_ips = old_port.get('fixed_ips')
         deferred_ip_allocation = (host and not old_host
-                                  and not old_port.get('fixed_ips')
+                                  and not old_ips
                                   and not fixed_ips_requested)
         if not deferred_ip_allocation:
+            # Check that any existing IPs are valid on the new segment
+            new_host_requested = host and host != old_host
+            if old_ips and new_host_requested and not fixed_ips_requested:
+                valid_subnets = self._ipam_get_subnets(
+                    context, old_port['network_id'], host)
+                valid_subnet_ids = {s['id'] for s in valid_subnets}
+                for fixed_ip in old_ips:
+                    if fixed_ip['subnet_id'] not in valid_subnet_ids:
+                        raise segment_exc.HostNotCompatibleWithFixedIps(
+                            host=host, port_id=old_port['id'])
             return changes
 
         # Allocate as if this were the port create.

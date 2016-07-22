@@ -129,6 +129,13 @@ class SegmentTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             context, port['port'], port_dict)
         return port_dict
 
+    def update_port(self, context, id, port):
+        port_dict = super(SegmentTestPlugin, self).update_port(
+            context, id, port)
+        self._process_portbindings_create_and_update(
+            context, port['port'], port_dict)
+        return port_dict
+
 
 class TestSegment(SegmentTestCase):
 
@@ -1035,6 +1042,55 @@ class TestSegmentAwareIpam(SegmentTestCase):
         self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
         self.assertEqual(n_exc.IpAddressGenerationFailure.__name__,
                          res['NeutronError']['type'])
+
+    def test_port_update_fails_if_host_on_wrong_segment(self):
+        """Update a port with existing IPs to a host where they don't work"""
+        network, segments, subnets = self._create_test_segments_with_subnets(2)
+
+        self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost2'),
+                                   (segments[1]['segment']['id'], 'fakehost')])
+
+        # Create a bound port with an IP address
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
+        port = self.deserialize(self.fmt, response)
+
+        # Now, try to update binding to a host on the other segment
+        data = {'port': {portbindings.HOST_ID: 'fakehost2'}}
+        port_req = self.new_update_request('ports', data, port['port']['id'])
+        response = port_req.get_response(self.api)
+
+        # It fails since the IP address isn't compatible with the new segment
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+
+    def test_port_update_fails_if_host_on_good_segment(self):
+        """Update a port with existing IPs to a host where they don't work"""
+        network, segments, subnets = self._create_test_segments_with_subnets(2)
+
+        self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost2'),
+                                   (segments[1]['segment']['id'], 'fakehost1'),
+                                   (segments[1]['segment']['id'], 'fakehost')])
+
+        # Create a bound port with an IP address
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     arg_list=(portbindings.HOST_ID,),
+                                     **{portbindings.HOST_ID: 'fakehost'})
+        self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
+        port = self.deserialize(self.fmt, response)
+
+        # Now, try to update binding to another host in same segment
+        data = {'port': {portbindings.HOST_ID: 'fakehost1'}}
+        port_req = self.new_update_request('ports', data, port['port']['id'])
+        response = port_req.get_response(self.api)
+
+        # Since the new host is in the same segment, it succeeds.
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
 
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
