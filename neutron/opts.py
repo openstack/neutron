@@ -19,7 +19,6 @@ from oslo_config import cfg
 
 import neutron.agent.agent_extensions_manager
 import neutron.agent.common.config
-import neutron.agent.l3.ha
 import neutron.agent.linux.interface
 import neutron.agent.linux.pd
 import neutron.agent.linux.ra
@@ -29,6 +28,7 @@ import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
+import neutron.conf.agent.l3.ha
 import neutron.conf.agent.ovs_conf
 import neutron.conf.common
 import neutron.conf.extensions.allowedaddresspairs
@@ -201,7 +201,7 @@ def list_l3_agent_opts():
          itertools.chain(
              neutron.conf.agent.l3.config.OPTS,
              neutron.conf.service.service_opts,
-             neutron.agent.l3.ha.OPTS,
+             neutron.conf.agent.l3.ha.OPTS,
              neutron.agent.linux.pd.OPTS,
              neutron.agent.linux.ra.OPTS)
          )

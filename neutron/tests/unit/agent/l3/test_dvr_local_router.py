@@ -22,7 +22,6 @@ from oslo_utils import uuidutils
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_local_router as dvr_router
-from neutron.agent.l3 import ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import external_process
@@ -31,6 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config
 from neutron.extensions import portbindings
 from neutron.tests import base
@@ -51,7 +51,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         log.register_options(self.conf)
         self.conf.register_opts(agent_config.AGENT_STATE_OPTS, 'AGENT')
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, self.conf)
-        self.conf.register_opts(ha.OPTS)
+        ha_conf.register_l3_agent_ha_opts(self.conf)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
         self.conf.register_opts(interface.OPTS)
