@@ -18,6 +18,8 @@
 import functools
 
 from neutron_lib import constants
+from neutron_lib import exceptions as n_exc
+from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 import sqlalchemy as sa
@@ -97,7 +99,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                     db.NETWORK_TYPE: network_type,
                     db.SEGMENTATION_ID: segmentation_id}
             new_segment = db.NetworkSegment(**args)
-            context.session.add(new_segment)
+            try:
+                context.session.add(new_segment)
+                context.session.flush([new_segment])
+            except db_exc.DBReferenceError:
+                raise n_exc.NetworkNotFound(net_id=network_id)
             registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
                             context=context, segment=new_segment)
 
