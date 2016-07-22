@@ -82,9 +82,9 @@ class Route(base.NeutronDbObject):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
         result = super(Route, cls).modify_fields_to_db(fields)
         if 'destination' in result:
-            result['destination'] = str(result['destination'])
+            result['destination'] = cls.filter_to_str(result['destination'])
         if 'nexthop' in fields:
-            result['nexthop'] = str(result['nexthop'])
+            result['nexthop'] = cls.filter_to_str(result['nexthop'])
         return result
 
 
@@ -124,9 +124,9 @@ class IPAllocationPool(base.NeutronDbObject):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
         result = super(IPAllocationPool, cls).modify_fields_to_db(fields)
         if 'first_ip' in result:
-            result['first_ip'] = str(result['first_ip'])
+            result['first_ip'] = cls.filter_to_str(result['first_ip'])
         if 'last_ip' in result:
-            result['last_ip'] = str(result['last_ip'])
+            result['last_ip'] = cls.filter_to_str(result['last_ip'])
         return result
 
 
@@ -179,7 +179,7 @@ class Subnet(base.NeutronDbObject):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
         result = super(Subnet, cls).modify_fields_to_db(fields)
         if 'cidr' in result:
-            result['cidr'] = str(result['cidr'])
+            result['cidr'] = cls.filter_to_str(result['cidr'])
         if 'gateway_ip' in result and result['gateway_ip'] is not None:
-            result['gateway_ip'] = str(result['gateway_ip'])
+            result['gateway_ip'] = cls.filter_to_str(result['gateway_ip'])
         return result
