@@ -75,7 +75,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
             db_data[dns.DNSDOMAIN] = new_value
 
     def process_create_port(self, plugin_context, request_data, db_data):
-        if not request_data[dns.DNSNAME]:
+        if not request_data.get(dns.DNSNAME):
             return
         network = self._get_network(plugin_context, db_data['network_id'])
         if not network[dns.DNSDOMAIN]:
