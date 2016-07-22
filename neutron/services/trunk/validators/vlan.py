@@ -16,7 +16,7 @@ from oslo_log import log as logging
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
-from neutron.plugins.common import constants as common_consts
+from neutron.plugins.common import utils
 from neutron.services.trunk import constants as trunk_consts
 
 LOG = logging.getLogger(__name__)
@@ -29,10 +29,6 @@ def register():
 
 
 def handler(resource, event, trigger, **kwargs):
-    trigger.add_segmentation_type(trunk_consts.VLAN, vlan_range)
+    trigger.add_segmentation_type(
+        trunk_consts.VLAN, utils.is_valid_vlan_tag)
     LOG.debug('Registration complete')
-
-
-def vlan_range(segmentation_id):
-    min_vid, max_vid = common_consts.MIN_VLAN_TAG, common_consts.MAX_VLAN_TAG
-    return min_vid <= segmentation_id <= max_vid
