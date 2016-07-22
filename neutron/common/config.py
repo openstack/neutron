@@ -184,7 +184,11 @@ core_opts = [
                       'this value without modification. For overlay networks '
                       'such as VXLAN, neutron automatically subtracts the '
                       'overlay protocol overhead from this value. Defaults '
-                      'to 1500, the standard value for Ethernet.'))
+                      'to 1500, the standard value for Ethernet. If you want '
+                      'to propagate a change to infrastructure MTU into the '
+                      'backend, you may need to resync agents that manage '
+                      'ports, as well as re-attach VIFs to affected '
+                      'instances.'))
 ]
 
 core_cli_opts = [

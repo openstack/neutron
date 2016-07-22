@@ -275,7 +275,6 @@ class Network(model_base.HasStandardAttributes, model_base.BASEV2,
         lazy="joined")
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
-    mtu = sa.Column(sa.Integer, nullable=True)
     vlan_transparent = sa.Column(sa.Boolean, nullable=True)
     rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
                                     backref='network', lazy='joined',

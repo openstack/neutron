@@ -6018,7 +6018,7 @@ class DbModelTestCase(testlib_api.SqlTestCase):
         exp_middle = "[object at %x]" % id(network)
         exp_end_with = (" {tenant_id=None, id=None, "
                         "name='net_net', status='OK', "
-                        "admin_state_up=True, mtu=None, "
+                        "admin_state_up=True, "
                         "vlan_transparent=None, "
                         "availability_zone_hints=None, "
                         "standard_attr_id=None}>")

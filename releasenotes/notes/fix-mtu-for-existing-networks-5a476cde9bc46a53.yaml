@@ -1,0 +1,12 @@
+---
+features:
+  - net-mtu extension now recalculates network MTU on each network access, not
+    just on creation. It now allows operators to tweak MTU related
+    configuration options and see them applied to all network resources right
+    after controller restart, both old and new.
+upgrade:
+  - Existing networks with MTU values that don't reflect configuration
+    will receive new MTU values after controller upgrade. Note that to
+    propagate new correct MTU values to your backend, you may need to resync
+    all agents that set up ports, as well as re-attach VIFs to affected
+    instances.
