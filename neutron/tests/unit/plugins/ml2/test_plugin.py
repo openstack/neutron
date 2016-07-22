@@ -32,6 +32,7 @@ from neutron._i18n import _
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context
 from neutron.db import agents_db
@@ -2149,6 +2150,25 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
 
             driver_mock().allocate_subnet.assert_called_with(mock.ANY)
             driver_mock().remove_subnet.assert_called_with(request.subnet_id)
+
+    def test_delete_subnet_deallocates_slaac_correctly(self):
+        driver = 'neutron.ipam.drivers.neutrondb_ipam.driver.NeutronDbPool'
+        with self.network() as network:
+            with self.subnet(network=network,
+                             cidr='2001:100::0/64',
+                             ip_version=6,
+                             ipv6_ra_mode=n_const.IPV6_SLAAC) as subnet:
+                with self.port(subnet=subnet) as port:
+                    with mock.patch(driver) as driver_mock:
+                        # Validate that deletion of SLAAC allocation happens
+                        # via IPAM interface, i.e. ipam_subnet.deallocate is
+                        # called prior to subnet deletiong from db.
+                        self._delete('subnets', subnet['subnet']['id'])
+                        dealloc = driver_mock().get_subnet().deallocate
+                        dealloc.assert_called_with(
+                            port['port']['fixed_ips'][0]['ip_address'])
+                        driver_mock().remove_subnet.assert_called_with(
+                            subnet['subnet']['id'])
 
 
 class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
