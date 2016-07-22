@@ -19,18 +19,18 @@ from oslo_log import log as logging
 
 from neutron.agent.common import config as agent_conf
 from neutron.agent.metadata import agent
-from neutron.agent.metadata import config as metadata_conf
 from neutron.common import cache_utils as cache
 from neutron.common import config
 from neutron.common import utils
+from neutron.conf.agent.metadata import config as meta
 
 LOG = logging.getLogger(__name__)
 
 
 def main():
-    cfg.CONF.register_opts(metadata_conf.SHARED_OPTS)
-    cfg.CONF.register_opts(metadata_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
-    cfg.CONF.register_opts(metadata_conf.METADATA_PROXY_HANDLER_OPTS)
+    meta.register_meta_conf_opts(meta.SHARED_OPTS)
+    meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
+    meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
     cache.register_oslo_configs(cfg.CONF)
     cfg.CONF.set_default(name='cache_url', default='memory://?default_ttl=5')
     agent_conf.register_agent_state_opts_helper(cfg.CONF)

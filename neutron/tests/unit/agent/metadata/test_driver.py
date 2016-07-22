@@ -20,11 +20,11 @@ from oslo_utils import uuidutils
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import router_info
-from neutron.agent.metadata import config
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
+from neutron.conf.agent.metadata import config as meta_conf
 from neutron.tests import base
 
 
@@ -77,8 +77,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         ha_conf.register_l3_agent_ha_opts()
-        cfg.CONF.register_opts(config.SHARED_OPTS)
-        cfg.CONF.register_opts(config.DRIVER_OPTS)
+        meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, cfg.CONF)
+        meta_conf.register_meta_conf_opts(meta_conf.DRIVER_OPTS, cfg.CONF)
 
     def test_after_router_updated_called_on_agent_process_update(self):
         with mock.patch.object(metadata_driver, 'after_router_updated') as f,\

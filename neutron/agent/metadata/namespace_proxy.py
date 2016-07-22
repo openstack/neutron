@@ -27,6 +27,7 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
 from neutron.common import exceptions
 from neutron.common import utils
+from neutron.conf.agent.metadata import namespace_proxy as namespace
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -137,40 +138,7 @@ class ProxyDaemon(daemon.Daemon):
 
 
 def main():
-    opts = [
-        cfg.StrOpt('network_id',
-                   help=_('Network that will have instance metadata '
-                          'proxied.')),
-        cfg.StrOpt('router_id',
-                   help=_('Router that will have connected instances\' '
-                          'metadata proxied.')),
-        cfg.StrOpt('pid_file',
-                   help=_('Location of pid file of this process.')),
-        cfg.BoolOpt('daemonize',
-                    default=True,
-                    help=_('Run as daemon.')),
-        cfg.PortOpt('metadata_port',
-                    default=9697,
-                    help=_("TCP Port to listen for metadata server "
-                           "requests.")),
-        cfg.StrOpt('metadata_proxy_socket',
-                   default='$state_path/metadata_proxy',
-                   help=_('Location of Metadata Proxy UNIX domain '
-                          'socket')),
-        cfg.StrOpt('metadata_proxy_user',
-                   help=_("User (uid or name) running metadata proxy after "
-                          "its initialization")),
-        cfg.StrOpt('metadata_proxy_group',
-                   help=_("Group (gid or name) running metadata proxy after "
-                          "its initialization")),
-        cfg.BoolOpt('metadata_proxy_watch_log',
-                    default=True,
-                    help=_("Watch file log. Log watch should be disabled when "
-                           "metadata_proxy_user/group has no read/write "
-                           "permissions on metadata proxy log file.")),
-    ]
-
-    cfg.CONF.register_cli_opts(opts)
+    namespace.register_namespace_proxy_opts(cfg.CONF)
     # Don't get the default configuration file
     cfg.CONF(project='neutron', default_config_files=[])
     config.setup_logging()

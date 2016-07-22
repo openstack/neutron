@@ -28,12 +28,12 @@ import webob
 
 from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import utils as agent_utils
-from neutron.agent.metadata import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.conf.agent.metadata import config
 from neutron import context
 
 LOG = logging.getLogger(__name__)

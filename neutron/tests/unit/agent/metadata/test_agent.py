@@ -23,17 +23,18 @@ from oslo_utils import fileutils
 
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
-from neutron.agent.metadata import config
 from neutron.agent import metadata_agent
 from neutron.common import cache_utils as cache
 from neutron.common import utils
+from neutron.conf.agent.metadata import config as meta_conf
 from neutron.tests import base
 
 
 class ConfFixture(config_fixture.Config):
     def setUp(self):
         super(ConfFixture, self).setUp()
-        self.conf.register_opts(config.METADATA_PROXY_HANDLER_OPTS)
+        meta_conf.register_meta_conf_opts(
+            meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
         self.config(auth_ca_cert=None,
                     nova_metadata_ip='9.9.9.9',
                     nova_metadata_port=8775,
@@ -458,7 +459,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
         self.cfg.CONF.metadata_workers = 0
         self.cfg.CONF.metadata_backlog = 128
-        self.cfg.CONF.metadata_proxy_socket_mode = config.USER_MODE
+        self.cfg.CONF.metadata_proxy_socket_mode = meta_conf.USER_MODE
 
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_init_doesnot_exists(self, ensure_dir):
