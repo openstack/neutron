@@ -305,8 +305,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                     validate=True):
         if validate:
             self._validate_security_group_rule(context, security_group_rule)
-            self._check_for_duplicate_rules_in_db(context, security_group_rule)
-
         rule_dict = security_group_rule['security_group_rule']
         kwargs = {
             'context': context,
@@ -317,6 +315,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                               exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
 
         with context.session.begin(subtransactions=True):
+            if validate:
+                self._check_for_duplicate_rules_in_db(context,
+                                                      security_group_rule)
             db = sg_models.SecurityGroupRule(
                 id=(rule_dict.get('id') or uuidutils.generate_uuid()),
                 tenant_id=rule_dict['tenant_id'],
