@@ -39,6 +39,7 @@ MAX_RETRIES = 10
 
 def is_retriable(e):
     if _is_nested_instance(e, (db_exc.DBDeadlock, exc.StaleDataError,
+                               db_exc.DBConnectionError,
                                db_exc.DBDuplicateEntry, db_exc.RetryRequest)):
         return True
     # looking savepoints mangled by deadlocks. see bug/1590298 for details.
