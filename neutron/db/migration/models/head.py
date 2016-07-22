@@ -40,8 +40,8 @@ from neutron.db import l3_hamode_db  # noqa
 from neutron.db.metering import metering_db  # noqa
 from neutron.db import model_base
 from neutron.db import models_v2  # noqa
+from neutron.db.port_security import models  # noqa
 from neutron.db import portbindings_db  # noqa
-from neutron.db import portsecurity_db  # noqa
 from neutron.db import provisioning_blocks  # noqa
 from neutron.db.qos import models as qos_models  # noqa
 from neutron.db.quota import models  # noqa

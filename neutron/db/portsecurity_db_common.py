@@ -12,42 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-from sqlalchemy import orm
-from sqlalchemy.orm import exc
-
-from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.extensions import portsecurity as psec
-
-
-class PortSecurityBinding(model_base.BASEV2):
-    port_id = sa.Column(sa.String(36),
-                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
-                        primary_key=True)
-    port_security_enabled = sa.Column(sa.Boolean(), nullable=False)
-
-    # Add a relationship to the Port model in order to be to able to
-    # instruct SQLAlchemy to eagerly load port security binding
-    port = orm.relationship(
-        models_v2.Port,
-        backref=orm.backref("port_security", uselist=False,
-                            cascade='delete', lazy='joined'))
-
-
-class NetworkSecurityBinding(model_base.BASEV2):
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                           primary_key=True)
-    port_security_enabled = sa.Column(sa.Boolean(), nullable=False)
-
-    # Add a relationship to the Port model in order to be able to instruct
-    # SQLAlchemy to eagerly load default port security setting for ports
-    # on this network
-    network = orm.relationship(
-        models_v2.Network,
-        backref=orm.backref("port_security", uselist=False,
-                            cascade='delete', lazy='joined'))
+from neutron.objects.network.extensions import port_security as n_ps
+from neutron.objects.port.extensions import port_security as p_ps
 
 
 class PortSecurityDbCommon(object):
@@ -60,90 +27,71 @@ class PortSecurityDbCommon(object):
             response_data[psec.PORTSECURITY] = (
                                 db_data['port_security'][psec.PORTSECURITY])
 
-    def _process_network_port_security_create(
-        self, context, network_req, network_res):
-        with context.session.begin(subtransactions=True):
-            db = NetworkSecurityBinding(
-                network_id=network_res['id'],
-                port_security_enabled=network_req[psec.PORTSECURITY])
-            context.session.add(db)
-        network_res[psec.PORTSECURITY] = network_req[psec.PORTSECURITY]
-        return self._make_network_port_security_dict(db)
+    def _process_port_security_create(
+        self, context, obj_cls, res_name, req, res):
+        obj = obj_cls(
+            context,
+            id=res['id'],
+            port_security_enabled=req[psec.PORTSECURITY]
+        )
+        obj.create()
+        res[psec.PORTSECURITY] = req[psec.PORTSECURITY]
+        return self._make_port_security_dict(obj, res_name)
 
     def _process_port_port_security_create(
         self, context, port_req, port_res):
-        with context.session.begin(subtransactions=True):
-            db = PortSecurityBinding(
-                port_id=port_res['id'],
-                port_security_enabled=port_req[psec.PORTSECURITY])
-            context.session.add(db)
-        port_res[psec.PORTSECURITY] = port_req[psec.PORTSECURITY]
-        return self._make_port_security_dict(db)
+        self._process_port_security_create(
+            context, p_ps.PortSecurity, 'port',
+            port_req, port_res)
+
+    def _process_network_port_security_create(
+        self, context, network_req, network_res):
+        self._process_port_security_create(
+            context, n_ps.NetworkPortSecurity, 'network',
+            network_req, network_res)
+
+    def _get_security_binding(self, context, obj_cls, res_id):
+        obj = obj_cls.get_object(context, id=res_id)
+        # NOTE(ihrachys) the resource may have been created before port
+        # security extension was enabled; return default value
+        return obj.port_security_enabled if obj else psec.DEFAULT_PORT_SECURITY
 
     def _get_network_security_binding(self, context, network_id):
-        try:
-            query = self._model_query(context, NetworkSecurityBinding)
-            binding = query.filter(
-                NetworkSecurityBinding.network_id == network_id).one()
-            return binding.port_security_enabled
-        except exc.NoResultFound:
-            # NOTE(ihrachys) the resource may have been created before port
-            # security extension was enabled; return default value
-            return psec.DEFAULT_PORT_SECURITY
+        return self._get_security_binding(
+            context, n_ps.NetworkPortSecurity, network_id)
 
     def _get_port_security_binding(self, context, port_id):
-        try:
-            query = self._model_query(context, PortSecurityBinding)
-            binding = query.filter(
-                PortSecurityBinding.port_id == port_id).one()
-            return binding.port_security_enabled
-        except exc.NoResultFound:
-            # NOTE(ihrachys) the resource may have been created before port
-            # security extension was enabled; return default value
-            return psec.DEFAULT_PORT_SECURITY
+        return self._get_security_binding(context, p_ps.PortSecurity, port_id)
 
     def _process_port_port_security_update(
         self, context, port_req, port_res):
-        if psec.PORTSECURITY not in port_req:
-            return
-        port_security_enabled = port_req[psec.PORTSECURITY]
-        try:
-            query = self._model_query(context, PortSecurityBinding)
-            port_id = port_res['id']
-            binding = query.filter(
-                PortSecurityBinding.port_id == port_id).one()
-            binding.port_security_enabled = port_security_enabled
-            port_res[psec.PORTSECURITY] = port_security_enabled
-        except exc.NoResultFound:
-            # NOTE(ihrachys) the resource may have been created before port
-            # security extension was enabled; create the binding model
-            self._process_port_port_security_create(
-                context, port_req, port_res)
+        self._process_port_security_update(
+            context, p_ps.PortSecurity, 'port', port_req, port_res)
 
     def _process_network_port_security_update(
         self, context, network_req, network_res):
-        if psec.PORTSECURITY not in network_req:
+        self._process_port_security_update(
+            context, n_ps.NetworkPortSecurity, 'network',
+            network_req, network_res)
+
+    def _process_port_security_update(
+        self, context, obj_cls, res_name, req, res):
+        if psec.PORTSECURITY not in req:
             return
-        port_security_enabled = network_req[psec.PORTSECURITY]
-        try:
-            query = self._model_query(context, NetworkSecurityBinding)
-            network_id = network_res['id']
-            binding = query.filter(
-                NetworkSecurityBinding.network_id == network_id).one()
-            binding.port_security_enabled = port_security_enabled
-            network_res[psec.PORTSECURITY] = port_security_enabled
-        except exc.NoResultFound:
+        port_security_enabled = req[psec.PORTSECURITY]
+
+        obj = obj_cls.get_object(context, id=res['id'])
+        if obj:
+            obj.port_security_enabled = port_security_enabled
+            obj.update()
+            res[psec.PORTSECURITY] = port_security_enabled
+        else:
             # NOTE(ihrachys) the resource may have been created before port
             # security extension was enabled; create the binding model
-            self._process_network_port_security_create(
-                context, network_req, network_res)
+            self._process_port_security_create(
+                context, obj_cls, res_name, req, res)
 
-    def _make_network_port_security_dict(self, port_security, fields=None):
-        res = {'network_id': port_security['network_id'],
-               psec.PORTSECURITY: port_security.port_security_enabled}
-        return self._fields(res, fields)
-
-    def _make_port_security_dict(self, port, fields=None):
-        res = {'port_id': port['port_id'],
-               psec.PORTSECURITY: port.port_security_enabled}
-        return self._fields(res, fields)
+    def _make_port_security_dict(self, res, res_name, fields=None):
+        res_ = {'%s_id' % res_name: res.id,
+                psec.PORTSECURITY: res.port_security_enabled}
+        return self._fields(res_, fields)

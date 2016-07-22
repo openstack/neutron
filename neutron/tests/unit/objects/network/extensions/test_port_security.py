@@ -12,26 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.objects.port.extensions import port_security
+from neutron.objects.network.extensions import port_security
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
-class PortSecurityIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
+class NetworkPortSecurityIfaceObjTestCase(
+    obj_test_base.BaseObjectIfaceTestCase):
 
-    _test_class = port_security.PortSecurity
+    _test_class = port_security.NetworkPortSecurity
 
 
-class PortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
-                                testlib_api.SqlTestCase):
+class NetworkPortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
+                                       testlib_api.SqlTestCase):
 
-    _test_class = port_security.PortSecurity
+    _test_class = port_security.NetworkPortSecurity
 
     def setUp(self):
-        super(PortSecurityDbObjTestCase, self).setUp()
+        super(NetworkPortSecurityDbObjTestCase, self).setUp()
         self._create_test_network()
-        self._create_test_port(self._network)
         for obj in self.db_objs:
-            obj['port_id'] = self._port['id']
+            obj['network_id'] = self._network['id']
         for obj in self.obj_fields:
-            obj['id'] = self._port['id']
+            obj['id'] = self._network['id']
