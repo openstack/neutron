@@ -15,6 +15,7 @@ import netaddr
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
+from neutron.common import utils
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.objects import base
@@ -65,7 +66,7 @@ class Route(base.NeutronDbObject):
 
     fields = {
         'subnet_id': obj_fields.UUIDField(),
-        'destination': obj_fields.IPNetworkField(),
+        'destination': common_types.IPNetworkField(),
         'nexthop': obj_fields.IPAddressField()
     }
 
@@ -74,7 +75,8 @@ class Route(base.NeutronDbObject):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
         result = super(Route, cls).modify_fields_from_db(db_obj)
         if 'destination' in result:
-            result['destination'] = netaddr.IPNetwork(result['destination'])
+            result['destination'] = utils.AuthenticIPNetwork(
+                result['destination'])
         if 'nexthop' in result:
             result['nexthop'] = netaddr.IPAddress(result['nexthop'])
         return result
@@ -148,16 +150,17 @@ class Subnet(base.NeutronDbObject):
 
     fields = {
         'id': obj_fields.UUIDField(),
-        'project_id': obj_fields.UUIDField(),
-        'name': obj_fields.StringField(),
+        'project_id': obj_fields.StringField(nullable=True),
+        'name': obj_fields.StringField(nullable=True),
         'network_id': obj_fields.UUIDField(),
+        'segment_id': obj_fields.UUIDField(nullable=True),
         'subnetpool_id': obj_fields.UUIDField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
-        'cidr': obj_fields.IPNetworkField(),
+        'cidr': common_types.IPNetworkField(),
         'gateway_ip': obj_fields.IPAddressField(nullable=True),
         'allocation_pools': obj_fields.ListOfObjectsField('IPAllocationPool',
                                                           nullable=True),
-        'enable_dhcp': obj_fields.BooleanField(),
+        'enable_dhcp': obj_fields.BooleanField(nullable=True),
         'shared': obj_fields.BooleanField(nullable=True),
         'dns_nameservers': obj_fields.ListOfObjectsField('DNSNameServer',
                                                          nullable=True),
@@ -213,7 +216,7 @@ class Subnet(base.NeutronDbObject):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
         result = super(Subnet, cls).modify_fields_from_db(db_obj)
         if 'cidr' in result:
-            result['cidr'] = netaddr.IPNetwork(result['cidr'])
+            result['cidr'] = utils.AuthenticIPNetwork(result['cidr'])
         if 'gateway_ip' in result and result['gateway_ip'] is not None:
             result['gateway_ip'] = netaddr.IPAddress(result['gateway_ip'])
         return result

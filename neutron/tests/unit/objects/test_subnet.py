@@ -152,8 +152,10 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(SubnetDbObjectTestCase, self).setUp()
         self._create_test_network()
+        self._create_test_segment(self._network)
         for obj in itertools.chain(self.db_objs, self.obj_fields):
             obj['network_id'] = self._network['id']
+            obj['segment_id'] = self._segment['id']
 
     def test_get_dns_nameservers_in_order(self):
         obj = self._make_object(self.obj_fields[0])

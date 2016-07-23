@@ -13,6 +13,7 @@
 import collections
 import copy
 import itertools
+import netaddr
 import random
 
 import mock
@@ -31,6 +32,7 @@ from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import segments_db
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
@@ -244,6 +246,20 @@ class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
     }
 
     synthetic_fields = ['obj_field']
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'project_id': obj_fields.StringField(),
+        'field2': obj_fields.UUIDField(),
+    }
 
 
 def get_random_dscp_mark():
@@ -566,6 +582,30 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             obj.update_nonidentifying_fields(self.obj_fields[1])
             self.assertFalse(obj.obj_reset_changes.called)
 
+    def test_extra_fields(self):
+        if not len(self._test_class.obj_extra_fields):
+            self.skipTest(
+                'Test class %r has no obj_extra_fields' % self._test_class)
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        for field in self._test_class.obj_extra_fields:
+            # field is accessible and cannot be set by any value
+            getattr(obj, field)
+            self.assertTrue(field in obj.to_dict().keys())
+            self.assertRaises(AttributeError, setattr, obj, field, "1")
+
+    def test_fields_no_update(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        for field in self._test_class.fields_no_update:
+            self.assertTrue(hasattr(obj, field))
+
+    def test_get_tenant_id(self):
+        if not hasattr(self._test_class, 'project_id'):
+            self.skipTest(
+                'Test class %r has no project_id field' % self._test_class)
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        project_id = self.obj_fields[0]['project_id']
+        self.assertEqual(project_id, obj.tenant_id)
+
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_no_changes(self, update_mock):
         with mock.patch.object(base.NeutronDbObject,
@@ -687,7 +727,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 continue
             objclass = objclasses[0]
             child = objclass(
-                self.context, **self.get_random_fields(obj_cls=objclass)
+                self.context, **objclass.modify_fields_from_db(
+                    self.get_random_fields(obj_cls=objclass))
             )
             child_dict = child.to_dict()
             if isinstance(cls_.fields[field], obj_fields.ListOfObjectsField):
@@ -763,6 +804,11 @@ class BaseDbObjectRenamedFieldTestCase(BaseObjectIfaceTestCase):
     _test_class = FakeNeutronObjectRenamedField
 
 
+class BaseObjectIfaceWithProjectId(BaseObjectIfaceTestCase):
+
+    _test_class = FakeNeutronObjectWithProjectId
+
+
 class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
                                               test_base.BaseTestCase):
 
@@ -788,11 +834,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
 
     def _create_test_subnet(self, network):
         test_subnet = {
-            'tenant_id': uuidutils.generate_uuid(),
+            'project_id': uuidutils.generate_uuid(),
             'name': 'test-subnet1',
             'network_id': network['id'],
             'ip_version': 4,
-            'cidr': '10.0.0.0/24',
+            'cidr': netaddr.IPNetwork('10.0.0.0/24'),
             'gateway_ip': '10.0.0.1',
             'enable_dhcp': 1,
             'ipv6_ra_mode': None,
@@ -825,6 +871,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         # TODO(ihrachys): replace with port.create() once we get an object
         # implementation for ports
         return obj_db_api.create_object(self.context, models_v2.Port, attrs)
+
+    def _create_test_segment(self, network):
+        test_segment = {
+            'network_id': network['id'],
+            'network_type': 'vxlan',
+        }
+        # TODO(korzen): replace with segment.create() once we get an object
+        # implementation for segments
+        self._segment = obj_db_api.create_object(self.context,
+                                                 segments_db.NetworkSegment,
+                                                 test_segment)
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])
