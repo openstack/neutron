@@ -216,3 +216,22 @@ class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
         trunk = self._create_trunk_with_network_and_parent([])
         self.assertRaises(lib_exc.NotFound, self.client.remove_subports,
                           trunk['trunk']['id'], [subport_data])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('6c9c5126-4f61-11e6-8248-40a8f063c891')
+    def test_delete_port_in_use_by_trunk(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        self.assertRaises(lib_exc.Conflict, self.client.delete_port,
+                          trunk['trunk']['port_id'])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('343a03d0-4f7c-11e6-97fa-40a8f063c891')
+    def test_delete_port_in_use_by_subport(self):
+        network = self.create_network()
+        port = self.create_port(network)
+        subports = [{'port_id': port['id'],
+                     'segmentation_type': 'vlan',
+                     'segmentation_id': 2}]
+        self._create_trunk_with_network_and_parent(subports)
+        self.assertRaises(lib_exc.Conflict, self.client.delete_port,
+                          port['id'])

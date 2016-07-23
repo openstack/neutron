@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
@@ -58,6 +59,8 @@ class TrunkPlugin(service_base.ServicePluginBase,
         db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
             attributes.PORTS, [_extend_port_trunk_details])
         self._segmentation_types = {}
+        registry.subscribe(rules.enforce_port_deletion_rules,
+                           resources.PORT, events.BEFORE_DELETE)
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
         LOG.debug('Trunk plugin loaded')
 
