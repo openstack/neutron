@@ -18,6 +18,7 @@ import six
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
+from neutron.common import utils
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest.api import base_routers
 from neutron.tests.tempest import config
@@ -152,6 +153,17 @@ class RoutersTest(base_routers.BaseRouterTest):
             {'network_id': CONF.network.public_network_id,
              'enable_snat': False})
         self._verify_gateway_port(router['id'])
+
+    @test.idempotent_id('db3093b1-93b6-4893-be83-c4716c251b3e')
+    def test_router_interface_status(self):
+        network = self.create_network()
+        subnet = self.create_subnet(network)
+        # Add router interface with subnet id
+        router = self._create_router(data_utils.rand_name('router-'), True)
+        intf = self.create_router_interface(router['id'], subnet['id'])
+        status_active = lambda: self.client.show_port(
+            intf['port_id'])['port']['status'] == 'ACTIVE'
+        utils.wait_until_true(status_active)
 
     @test.idempotent_id('c86ac3a8-50bd-4b00-a6b8-62af84a0765c')
     @test.requires_ext(extension='extraroute', service='network')
