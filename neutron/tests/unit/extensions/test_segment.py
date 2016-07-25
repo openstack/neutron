@@ -199,8 +199,7 @@ class TestSegment(SegmentTestCase):
 
 class TestSegmentML2(SegmentTestCase):
     def setUp(self):
-        super(TestSegmentML2, self).setUp(
-            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+        super(TestSegmentML2, self).setUp(plugin='ml2')
 
     def test_segment_notification_on_create_network(self):
         with mock.patch.object(registry, 'notify') as notify:
@@ -305,7 +304,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
                                      self._mechanism_drivers,
                                      group='ml2')
         if not plugin:
-            plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+            plugin = 'ml2'
         super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
         db.subscribe()
 
@@ -1039,8 +1038,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
     def setUp(self):
-        super(TestSegmentAwareIpamML2, self).setUp(
-            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+        super(TestSegmentAwareIpamML2, self).setUp(plugin='ml2')
 
 
 class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):

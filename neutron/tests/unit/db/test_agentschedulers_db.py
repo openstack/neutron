@@ -225,7 +225,6 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
                                     AgentSchedulerTestMixIn,
                                     test_plugin.NeutronDbPluginV2TestCase):
     fmt = 'json'
-    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
     l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
                  'TestL3NatAgentSchedulingServicePlugin')
 
@@ -241,7 +240,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         mock.patch('neutron.common.rpc.get_client'
                    ).start().return_value = self.client_mock
         super(OvsAgentSchedulerTestCaseBase, self).setUp(
-            self.plugin_str, service_plugins=service_plugins)
+            'ml2', service_plugins=service_plugins)
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
             side_effect=lambda context, network_id, hosts: hosts).start()
@@ -1292,11 +1291,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,
                                    test_plugin.NeutronDbPluginV2TestCase):
-    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-
     def setUp(self):
         self.useFixture(tools.AttributeMapMemento())
-        super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
+        super(OvsDhcpAgentNotifierTestCase, self).setUp('ml2')
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
             side_effect=lambda context, network_id, hosts: hosts).start()
@@ -1437,7 +1434,6 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
                                  test_agent.AgentDBTestMixIn,
                                  AgentSchedulerTestMixIn,
                                  test_plugin.NeutronDbPluginV2TestCase):
-    plugin_str = 'neutron.plugins.ml2.plugin.Ml2Plugin'
     l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
                  'TestL3NatAgentSchedulingServicePlugin')
 
@@ -1456,7 +1452,7 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         else:
             service_plugins = None
         super(OvsL3AgentNotifierTestCase, self).setUp(
-            self.plugin_str, service_plugins=service_plugins)
+            'ml2', service_plugins=service_plugins)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()

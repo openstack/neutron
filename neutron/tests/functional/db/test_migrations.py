@@ -37,8 +37,6 @@ from neutron.tests.unit import testlib_api
 
 cfg.CONF.import_opt('core_plugin', 'neutron.common.config')
 
-CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-
 CREATION_OPERATIONS = {
     'sqla': (sqla_ddl.CreateIndex,
              sqla_ddl.CreateTable,
@@ -128,7 +126,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     def setUp(self):
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
-        self.cfg.config(core_plugin=CORE_PLUGIN)
+        self.cfg.config(core_plugin='ml2')
         self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 

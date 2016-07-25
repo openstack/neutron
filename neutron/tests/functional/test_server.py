@@ -223,7 +223,7 @@ class TestRPCServer(TestNeutronServer):
 
     def setUp(self):
         super(TestRPCServer, self).setUp()
-        self.setup_coreplugin(TARGET_PLUGIN)
+        self.setup_coreplugin('ml2')
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
         self.plugin.return_value.rpc_workers_supported = True
@@ -257,7 +257,7 @@ class TestPluginWorker(TestNeutronServer):
 
     def setUp(self):
         super(TestPluginWorker, self).setUp()
-        self.setup_coreplugin(TARGET_PLUGIN)
+        self.setup_coreplugin('ml2')
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
 

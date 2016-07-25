@@ -280,8 +280,7 @@ class L3LeastRoutersSchedulerTestCase(L3SchedulerBaseTest):
 class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
-        core_plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        super(L3AZSchedulerBaseTest, self).setUp(plugin=core_plugin)
+        super(L3AZSchedulerBaseTest, self).setUp(plugin='ml2')
 
         self.l3_plugin = l3_router_plugin.L3RouterPlugin()
         self.l3_plugin.router_scheduler = None

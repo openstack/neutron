@@ -54,7 +54,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         super(L3HATestFramework, self).setUp()
 
         self.admin_ctx = context.get_admin_context()
-        self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
+        self.setup_coreplugin('ml2')
         self.core_plugin = manager.NeutronManager.get_plugin()
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
                                     '_notify_ha_interfaces_updated')

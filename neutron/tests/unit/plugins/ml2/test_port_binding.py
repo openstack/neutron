@@ -25,12 +25,7 @@ from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
 
-PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-
-
 class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
-
-    _plugin_name = PLUGIN_NAME
 
     def setUp(self):
         # Enable the test mechanism driver to ensure that
@@ -42,7 +37,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('network_vlan_ranges',
                                      ['physnet1:1000:1099'],
                                      group='ml2_type_vlan')
-        super(PortBindingTestCase, self).setUp(PLUGIN_NAME)
+        super(PortBindingTestCase, self).setUp('ml2')
         self.port_create_status = 'DOWN'
         self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.start_rpc_listeners()
