@@ -72,8 +72,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         policy_data = policy['policy']
         policy_obj = policy_object.QosPolicy(context, id=policy_id)
-        policy_obj.update_nonidentifying_fields(policy_data,
-                                                reset_changes=True)
+        policy_obj.update_fields(policy_data, reset_changes=True)
         policy_obj.update()
         self.notification_driver_manager.update_policy(context, policy_obj)
         return policy_obj
@@ -203,7 +202,7 @@ class QoSPlugin(qos.QoSPluginBase):
             # Ensure the rule belongs to the policy.
             policy.get_rule_by_id(rule_id)
             rule = rule_obj(context, id=rule_id)
-            rule.update_nonidentifying_fields(rule_data, reset_changes=True)
+            rule.update_fields(rule_data, reset_changes=True)
             rule.update()
             policy.reload_rules()
         self.notification_driver_manager.update_policy(context, policy)

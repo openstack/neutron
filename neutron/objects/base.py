@@ -221,7 +221,7 @@ class DeclarativeObject(abc.ABCMeta):
             if hasattr(base, 'obj_extra_fields'):
                 keys_set.update(base.obj_extra_fields)
             for key in keys_set:
-                if key in cls.fields:
+                if key in cls.fields or key in cls.obj_extra_fields:
                     fields_no_update_set.add(key)
         cls.fields_no_update = list(fields_no_update_set)
 
@@ -482,8 +482,8 @@ class NeutronDbObject(NeutronObject):
             keys[key] = getattr(self, key)
         return keys
 
-    def update_nonidentifying_fields(self, obj_data, reset_changes=False):
-        """Updates non-identifying fields of an object.
+    def update_fields(self, obj_data, reset_changes=False):
+        """Updates fields of an object that are not forbidden to be updated.
 
         :param obj_data: the full set of object data
         :type obj_data: dict
@@ -493,11 +493,10 @@ class NeutronDbObject(NeutronObject):
 
         :returns: None
         """
-
         if reset_changes:
             self.obj_reset_changes()
         for k, v in obj_data.items():
-            if k not in self.primary_keys:
+            if k not in self.fields_no_update:
                 setattr(self, k, v)
 
     def update(self):

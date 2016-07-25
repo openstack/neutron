@@ -561,7 +561,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             obj = self._test_class(self.context, **self.obj_fields[0])
             self.assertRaises(base.NeutronDbObjectDuplicateEntry, obj.create)
 
-    def test_update_nonidentifying_fields(self):
+    def test_update_fields(self):
         if not self._test_class.primary_keys:
             self.skipTest(
                 'Test class %r has no primary keys' % self._test_class)
@@ -569,17 +569,16 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(obj_base.VersionedObject, 'obj_reset_changes'):
             expected = self._test_class(self.context, **self.obj_fields[0])
             for key, val in self.obj_fields[1].items():
-                if key not in expected.primary_keys:
+                if key not in expected.fields_no_update:
                     setattr(expected, key, val)
             observed = self._test_class(self.context, **self.obj_fields[0])
-            observed.update_nonidentifying_fields(self.obj_fields[1],
-                                                  reset_changes=True)
+            observed.update_fields(self.obj_fields[1], reset_changes=True)
             self.assertEqual(expected, observed)
             self.assertTrue(observed.obj_reset_changes.called)
 
         with mock.patch.object(obj_base.VersionedObject, 'obj_reset_changes'):
             obj = self._test_class(self.context, **self.obj_fields[0])
-            obj.update_nonidentifying_fields(self.obj_fields[1])
+            obj.update_fields(self.obj_fields[1])
             self.assertFalse(obj.obj_reset_changes.called)
 
     def test_extra_fields(self):
@@ -804,9 +803,22 @@ class BaseDbObjectRenamedFieldTestCase(BaseObjectIfaceTestCase):
     _test_class = FakeNeutronObjectRenamedField
 
 
-class BaseObjectIfaceWithProjectId(BaseObjectIfaceTestCase):
+class BaseObjectIfaceWithProjectIdTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectWithProjectId
+
+    def test_update_fields_using_tenant_id(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        obj.obj_reset_changes()
+
+        tenant_id = obj['tenant_id']
+        new_obj_fields = dict()
+        new_obj_fields['tenant_id'] = uuidutils.generate_uuid()
+        new_obj_fields['field2'] = uuidutils.generate_uuid()
+
+        obj.update_fields(new_obj_fields)
+        self.assertEqual(set(['field2']), obj.obj_what_changed())
+        self.assertEqual(tenant_id, obj.project_id)
 
 
 class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
