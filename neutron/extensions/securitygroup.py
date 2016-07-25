@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import six
 
@@ -175,13 +176,9 @@ def convert_ethertype_to_case_insensitive(value):
 def convert_validate_port_value(port):
     if port is None:
         return port
-    try:
-        val = int(port)
-    except (ValueError, TypeError):
-        raise SecurityGroupInvalidPortValue(port=port)
 
-    if val >= 0 and val <= 65535:
-        return val
+    if netutils.is_valid_port(port):
+        return int(port)
     else:
         raise SecurityGroupInvalidPortValue(port=port)
 
