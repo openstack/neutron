@@ -31,7 +31,6 @@ from testtools import matchers
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
-from neutron.agent.l3 import config as l3_config
 from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha
@@ -51,6 +50,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as base_config
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base
@@ -71,7 +71,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.register_opts(base_config.core_opts)
         log.register_options(self.conf)
         self.conf.register_opts(agent_config.AGENT_STATE_OPTS, 'AGENT')
-        self.conf.register_opts(l3_config.OPTS)
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, self.conf)
         self.conf.register_opts(ha.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
