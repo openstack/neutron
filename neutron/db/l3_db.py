@@ -38,6 +38,7 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db as l3_agt
 from neutron.db import model_base
@@ -634,7 +635,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return port
 
     def _validate_router_port_info(self, context, router, port_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.autonested_transaction(context.session):
             # check again within transaction to mitigate race
             port = self._check_router_port(context, port_id, router.id)
 

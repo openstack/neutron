@@ -2918,6 +2918,58 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         routers = plugin.get_routers(ctx)
         self.assertEqual(0, len(routers))
 
+    def test_router_add_interface_by_port_fails_nested(self):
+        # Force _validate_router_port_info failure
+        plugin = manager.NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
+        if not isinstance(plugin, l3_db.L3_NAT_dbonly_mixin):
+            self.skipTest("Plugin is not L3_NAT_dbonly_mixin")
+        orig_update_port = self.plugin.update_port
+
+        def mock_fail__validate_router_port_info(ctx, router, port_id):
+            # Fail with raising BadRequest exception
+            msg = _("Failure mocking...")
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
+        def mock_update_port_with_transaction(ctx, id, port):
+            # Update port within a sub-transaction
+            with ctx.session.begin(subtransactions=True):
+                orig_update_port(ctx, id, port)
+
+        def add_router_interface_with_transaction(ctx, router_id,
+                                                  interface_info):
+            # Call add_router_interface() within a sub-transaction
+            with ctx.session.begin():
+                plugin.add_router_interface(ctx, router_id, interface_info)
+
+        tenant_id = _uuid()
+        ctx = context.Context('', tenant_id)
+        with self.network(tenant_id=tenant_id) as network, (
+             self.router(name='router1', admin_state_up=True,
+                         tenant_id=tenant_id)) as router:
+            with self.subnet(network=network, cidr='10.0.0.0/24',
+                             tenant_id=tenant_id) as subnet:
+                fixed_ips = [{'subnet_id': subnet['subnet']['id']}]
+                with self.port(subnet=subnet, fixed_ips=fixed_ips,
+                               tenant_id=tenant_id) as port:
+                    mock.patch.object(
+                        self.plugin, 'update_port',
+                        side_effect=(
+                            mock_update_port_with_transaction)).start()
+                    mock.patch.object(
+                        plugin, '_validate_router_port_info',
+                        side_effect=(
+                            mock_fail__validate_router_port_info)).start()
+                    self.assertRaises(n_exc.BadRequest,
+                        add_router_interface_with_transaction,
+                        ctx, router['router']['id'],
+                        {'port_id': port['port']['id']})
+
+                    # fetch port and confirm device_id and device_owner
+                    body = self._show('ports', port['port']['id'])
+                    self.assertEqual('', body['port']['device_owner'])
+                    self.assertEqual('', body['port']['device_id'])
+
     def test_update_subnet_gateway_for_external_net(self):
         """Test to make sure notification to routers occurs when the gateway
             ip address of a subnet of the external network is changed.
