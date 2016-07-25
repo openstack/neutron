@@ -204,12 +204,6 @@ def get_value_from_file(filename, converter=None):
         LOG.debug('Unable to access %s', filename)
 
 
-def get_value_from_conf_file(cfg_root, uuid, cfg_file, converter=None):
-    """A helper function to read a value from one of a config file."""
-    file_name = get_conf_file_name(cfg_root, uuid, cfg_file)
-    return get_value_from_file(file_name, converter)
-
-
 def remove_conf_files(cfg_root, uuid):
     conf_base = _get_conf_base(cfg_root, uuid, False)
     for file_path in glob.iglob("%s.*" % conf_base):
