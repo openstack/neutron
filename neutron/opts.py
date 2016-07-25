@@ -35,6 +35,8 @@ import neutron.conf.common
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.quota
 import neutron.conf.service
+import neutron.conf.services.metering_agent
+import neutron.conf.services.qos_driver_manager
 import neutron.conf.wsgi
 import neutron.db.agents_db
 import neutron.db.agentschedulers_db
@@ -59,8 +61,6 @@ import neutron.plugins.ml2.drivers.type_geneve
 import neutron.plugins.ml2.drivers.type_gre
 import neutron.plugins.ml2.drivers.type_vlan
 import neutron.plugins.ml2.drivers.type_vxlan
-import neutron.services.metering.agents.metering_agent
-import neutron.services.qos.notification_drivers.manager
 import neutron.wsgi
 
 
@@ -148,7 +148,7 @@ def list_opts():
 def list_qos_opts():
     return [
         ('qos',
-         neutron.services.qos.notification_drivers.manager.QOS_PLUGIN_OPTS)
+         neutron.conf.services.qos_driver_manager.QOS_PLUGIN_OPTS)
     ]
 
 
@@ -233,8 +233,7 @@ def list_metering_agent_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.services.metering.agents.metering_agent.MeteringAgent.
-             Opts,
+             neutron.conf.services.metering_agent.metering_agent_opts,
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS)
          )
     ]
