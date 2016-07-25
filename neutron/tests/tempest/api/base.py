@@ -61,10 +61,11 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def get_client_manager(cls, credential_type=None, roles=None,
                            force_new=None):
-        manager = test.BaseTestCase.get_client_manager(
-                credential_type=credential_type,
-                roles=roles,
-                force_new=force_new)
+        manager = super(BaseNetworkTest, cls).get_client_manager(
+            credential_type=credential_type,
+            roles=roles,
+            force_new=force_new
+        )
         # Neutron uses a different clients manager than the one in the Tempest
         return clients.Manager(manager.credentials)
 
