@@ -172,26 +172,31 @@ class Notifier(object):
             else:
                 return self._get_network_changed_event(port['device_id'])
 
+    def _can_notify(self, port):
+        if not port.id:
+            LOG.warning(_LW("Port ID not set! Nova will not be notified of "
+                            "port status change."))
+            return False
+
+        # If there is no device_id set there is nothing we can do here.
+        if not port.device_id:
+            LOG.debug("device_id is not set on port %s yet.", port.id)
+            return False
+
+        # We only want to notify about nova ports.
+        if not self._is_compute_port(port):
+            return False
+
+        return True
+
     def record_port_status_changed(self, port, current_port_status,
                                    previous_port_status, initiator):
         """Determine if nova needs to be notified due to port status change.
         """
         # clear out previous _notify_event
         port._notify_event = None
-        # If there is no device_id set there is nothing we can do here.
-        if not port.device_id:
-            LOG.debug("device_id is not set on port yet.")
+        if not self._can_notify(port):
             return
-
-        if not port.id:
-            LOG.warning(_LW("Port ID not set! Nova will not be notified of "
-                            "port status change."))
-            return
-
-        # We only want to notify about nova ports.
-        if not self._is_compute_port(port):
-            return
-
         # We notify nova when a vif is unplugged which only occurs when
         # the status goes from ACTIVE to DOWN.
         if (previous_port_status == constants.PORT_STATUS_ACTIVE and
@@ -227,6 +232,24 @@ class Notifier(object):
         event = getattr(port, "_notify_event", None)
         self.batch_notifier.queue_event(event)
         port._notify_event = None
+
+    def notify_port_active_direct(self, port):
+        """Notify nova about active port
+
+        Used when port was wired on the host other than port's current host
+        according to port binding. This happens during live migration.
+        In this case ml2 plugin skips port status update but we still we need
+        to notify nova.
+        """
+        if not self._can_notify(port):
+            return
+
+        port._notify_event = (
+            {'server_uuid': port.device_id,
+             'name': VIF_PLUGGED,
+             'status': 'completed',
+             'tag': port.id})
+        self.send_port_status(None, None, port)
 
     def send_events(self, batched_events):
         LOG.debug("Sending events: %s", batched_events)

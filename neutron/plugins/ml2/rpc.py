@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib import exceptions
 from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
@@ -209,6 +210,17 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             LOG.debug("Device %(device)s not bound to the"
                       " agent host %(host)s",
                       {'device': device, 'host': host})
+            # this might mean that a VM is in the process of live migration
+            # and vif was plugged on the destination compute node;
+            # need to notify nova explicitly
+            try:
+                port = plugin._get_port(rpc_context, port_id)
+            except exceptions.PortNotFound:
+                LOG.debug("Port %s not found, will not notify nova.", port_id)
+            else:
+                if port.device_owner.startswith(
+                        n_const.DEVICE_OWNER_COMPUTE_PREFIX):
+                    plugin.nova_notifier.notify_port_active_direct(port)
             return
         if port and port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
             # NOTE(kevinbenton): we have to special case DVR ports because of
