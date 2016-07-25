@@ -37,13 +37,6 @@ class TestIpWrapper(base.BaseTestCase):
 
         self.assertEqual(mock_dev2, ret)
 
-    @mock.patch.object(ip_lib.IPWrapper, 'get_devices')
-    def test_get_device_by_ip_exception(self, mock_get_devices):
-        mock_get_devices.side_effects = OSError
-        ret = ip_lib.IPWrapper().get_device_by_ip(mock.sentinel.fake_ip)
-
-        self.assertIsNone(ret)
-
     @mock.patch('netifaces.interfaces')
     def test_get_devices(self, mock_interfaces):
         mock_interfaces.return_value = [mock.sentinel.dev1,
