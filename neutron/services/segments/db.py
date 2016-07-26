@@ -146,6 +146,14 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                                           filters=filters)
 
     @log_helpers.log_method_call
+    def get_segments_by_hosts(self, context, hosts):
+        if not hosts:
+            return []
+        query = context.session.query(SegmentHostMapping).filter(
+            SegmentHostMapping.host.in_(hosts))
+        return list({mapping.segment_id for mapping in query})
+
+    @log_helpers.log_method_call
     def delete_segment(self, context, uuid):
         """Delete an existing segment."""
         with context.session.begin(subtransactions=True):

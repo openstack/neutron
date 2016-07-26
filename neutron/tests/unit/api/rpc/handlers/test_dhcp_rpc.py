@@ -44,6 +44,10 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.mock_set_dirty = set_dirty_p.start()
         self.utils_p = mock.patch('neutron.plugins.common.utils.create_port')
         self.utils = self.utils_p.start()
+        self.segment_p = mock.patch(
+            'neutron.manager.NeutronManager.get_service_plugins')
+        self.get_service_plugins = self.segment_p.start()
+        self.segment_plugin = mock.MagicMock()
 
     def test_group_by_network_id(self):
         port1 = {'network_id': 'a'}
@@ -65,6 +69,26 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                                                            host='host')
         expected = [{'id': 'a', 'subnets': [], 'ports': [port]},
                     {'id': 'b', 'subnets': [subnet], 'ports': []}]
+        self.assertEqual(expected, networks)
+
+    def test_get_active_networks_info_with_routed_networks(self):
+        self.get_service_plugins.return_value = {
+            'segments': self.segment_plugin
+        }
+        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
+        port = {'network_id': 'a'}
+        subnets = [{'network_id': 'b', 'id': 'c', 'segment_id': '1'},
+                   {'network_id': 'a', 'id': 'e'},
+                   {'network_id': 'b', 'id': 'd', 'segment_id': '3'}]
+        self.plugin.get_ports.return_value = [port]
+        self.plugin.get_networks.return_value = plugin_retval
+        hostseg_retval = ['1', '2']
+        self.segment_plugin.get_segments_by_hosts.return_value = hostseg_retval
+        self.plugin.get_subnets.return_value = subnets
+        networks = self.callbacks.get_active_networks_info(mock.Mock(),
+                                                           host='host')
+        expected = [{'id': 'a', 'subnets': [subnets[1]], 'ports': [port]},
+                    {'id': 'b', 'subnets': [subnets[0]], 'ports': []}]
         self.assertEqual(expected, networks)
 
     def _test__port_action_with_failures(self, exc=None, action=None):
@@ -139,21 +163,55 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
         self.assertIsNone(retval)
 
-    def test_get_network_info(self):
+    def _test_get_network_info(self, segmented_network=False,
+                               routed_network=False):
         network_retval = dict(id='a')
-
-        subnet_retval = [dict(id='a'), dict(id='c'), dict(id='b')]
+        if not routed_network:
+            subnet_retval = [dict(id='a'), dict(id='c'), dict(id='b')]
+        else:
+            subnet_retval = [dict(id='c', segment_id='1'),
+                             dict(id='a', segment_id='1')]
         port_retval = mock.Mock()
 
         self.plugin.get_network.return_value = network_retval
         self.plugin.get_subnets.return_value = subnet_retval
         self.plugin.get_ports.return_value = port_retval
+        if segmented_network:
+            self.segment_plugin.get_segments.return_value = [dict(id='1'),
+                                                             dict(id='2')]
+            self.segment_plugin.get_segments_by_hosts.return_value = ['1']
 
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
         self.assertEqual(retval, network_retval)
-        sorted_subnet_retval = [dict(id='a'), dict(id='b'), dict(id='c')]
+        if not routed_network:
+            sorted_subnet_retval = [dict(id='a'), dict(id='b'), dict(id='c')]
+        else:
+            sorted_subnet_retval = [dict(id='a', segment_id='1'),
+                                    dict(id='c', segment_id='1')]
         self.assertEqual(retval['subnets'], sorted_subnet_retval)
         self.assertEqual(retval['ports'], port_retval)
+
+    def test_get_network_info(self):
+        self._test_get_network_info()
+
+    def test_get_network_info_with_routed_network(self):
+        self.get_service_plugins.return_value = {
+            'segments': self.segment_plugin
+        }
+        self._test_get_network_info(segmented_network=True,
+                                    routed_network=True)
+
+    def test_get_network_info_with_segmented_network_but_not_routed(self):
+        self.get_service_plugins.return_value = {
+            'segments': self.segment_plugin
+        }
+        self._test_get_network_info(segmented_network=True)
+
+    def test_get_network_info_with_non_segmented_network(self):
+        self.get_service_plugins.return_value = {
+            'segments': self.segment_plugin
+        }
+        self._test_get_network_info()
 
     def test_update_dhcp_port_verify_port_action_port_dict(self):
         port = {'port': {'network_id': 'foo_network_id',
