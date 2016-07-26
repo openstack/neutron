@@ -1041,11 +1041,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             address_scope_changed = (
                 orig_sp.address_scope_id != reader.address_scope_id)
 
-            for k, v in dict(reader.subnetpool).items():
-                # TODO(ihrachys): we should probably have some helper method in
-                # base object to update just updatable fields
-                if k not in subnetpool_obj.SubnetPool.fields_no_update:
-                    orig_sp[k] = v
+            orig_sp.update_fields(reader.subnetpool)
             orig_sp.update()
 
         if address_scope_changed:

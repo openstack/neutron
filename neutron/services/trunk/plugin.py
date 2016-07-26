@@ -131,8 +131,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
         trunk_data = trunk['trunk']
         with db_api.autonested_transaction(context.session):
             trunk_obj = self._get_trunk(context, trunk_id)
-            trunk_obj.update_nonidentifying_fields(
-                trunk_data, reset_changes=True)
+            trunk_obj.update_fields(trunk_data, reset_changes=True)
             trunk_obj.update()
             return trunk_obj
 
