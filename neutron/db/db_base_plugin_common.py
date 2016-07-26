@@ -190,13 +190,6 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                              for ip in port["fixed_ips"]],
                "device_id": port["device_id"],
                "device_owner": port["device_owner"]}
-        if "dns_name" in port:
-            res["dns_name"] = port["dns_name"]
-        if "dns_assignment" in port:
-            res["dns_assignment"] = [{"ip_address": a["ip_address"],
-                                      "hostname": a["hostname"],
-                                      "fqdn": a["fqdn"]}
-                                     for a in port["dns_assignment"]]
         # Call auxiliary extend functions, if any
         if process_extensions:
             self._apply_dict_extend_functions(

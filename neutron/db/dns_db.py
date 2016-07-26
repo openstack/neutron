@@ -94,7 +94,7 @@ class PortDNS(model_base.BASEV2):
                                   nullable=False)
     previous_dns_domain = sa.Column(sa.String(255),
                                     nullable=False)
-
+    dns_name = sa.Column(sa.String(255), nullable=False)
     # Add a relationship to the Port model in order to instruct
     # SQLAlchemy to eagerly load this association
     port = orm.relationship(models_v2.Port,
@@ -268,15 +268,17 @@ class DNSDbMixin(object):
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
     def _get_internal_port_dns_data(self, context, floatingip_data):
-        internal_port = context.session.query(models_v2.Port).filter_by(
-            id=floatingip_data['port_id']).one()
-        dns_domain = None
-        if internal_port['dns_name']:
-            net_dns = context.session.query(NetworkDNSDomain).filter_by(
-                network_id=internal_port['network_id']).one_or_none()
-            if net_dns:
-                dns_domain = net_dns['dns_domain']
-        return internal_port['dns_name'], dns_domain
+        port_dns = context.session.query(PortDNS).filter_by(
+            port_id=floatingip_data['port_id']).one_or_none()
+        if not (port_dns and port_dns['dns_name']):
+            return None, None
+        net_dns = context.session.query(NetworkDNSDomain).join(
+            models_v2.Port, NetworkDNSDomain.network_id ==
+            models_v2.Port.network_id).filter_by(
+            id=floatingip_data['port_id']).one_or_none()
+        if not net_dns:
+            return port_dns['dns_name'], None
+        return port_dns['dns_name'], net_dns['dns_domain']
 
     def _delete_floatingip_from_external_dns_service(self, context, dns_domain,
                                                      dns_name, records):
