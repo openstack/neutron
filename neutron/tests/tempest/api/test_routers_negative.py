@@ -24,6 +24,11 @@ from neutron.tests.tempest.api import base_routers as base
 class RoutersNegativeTestBase(base.BaseRouterTest):
 
     @classmethod
+    @test.requires_ext(extension="router", service="network")
+    def skip_checks(cls):
+        super(RoutersNegativeTestBase, cls).skip_checks()
+
+    @classmethod
     def resource_setup(cls):
         super(RoutersNegativeTestBase, cls).resource_setup()
         cls.router = cls.create_router(data_utils.rand_name('router'))
@@ -32,11 +37,6 @@ class RoutersNegativeTestBase(base.BaseRouterTest):
 
 
 class RoutersNegativeTest(RoutersNegativeTestBase):
-
-    @classmethod
-    @test.requires_ext(extension="router", service="network")
-    def skip_checks(cls):
-        super(RoutersNegativeTest, cls).skip_checks()
 
     @test.attr(type='negative')
     @test.idempotent_id('e3e751af-15a2-49cc-b214-a7154579e94f')
@@ -47,6 +47,28 @@ class RoutersNegativeTest(RoutersNegativeTestBase):
             self.router['id'], port['port']['id'])
         with testtools.ExpectedException(lib_exc.Conflict):
             self.client.delete_router(self.router['id'])
+
+
+class RoutersNegativePolicyTest(RoutersNegativeTestBase):
+
+    credentials = ['admin', 'primary', 'alt']
+
+    @test.attr(type='negative')
+    @test.idempotent_id('159f576d-a423-46b5-b501-622694c02f6b')
+    def test_add_interface_wrong_tenant(self):
+        client2 = self.alt_manager.network_client
+        network = client2.create_network()['network']
+        self.addCleanup(client2.delete_network, network['id'])
+        subnet = self.create_subnet(network, client=client2)
+        # This port is deleted after a test by remove_router_interface.
+        port = client2.create_port(network_id=network['id'])['port']
+        self.addCleanup(client2.delete_port, port['id'])
+        with testtools.ExpectedException(lib_exc.NotFound):
+            client2.add_router_interface_with_port_id(
+                self.router['id'], port['id'])
+        with testtools.ExpectedException(lib_exc.NotFound):
+            client2.add_router_interface_with_subnet_id(
+                self.router['id'], subnet['id'])
 
 
 class DvrRoutersNegativeTest(RoutersNegativeTestBase):
