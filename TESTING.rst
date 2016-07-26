@@ -121,6 +121,28 @@ its output. The test has many things going for it:
 This is allowed by the fact that the method was built to be testable -
 The method has clear input and output with no side effects.
 
+You can get oslo.db to generate a file-based sqlite database by setting
+OS_TEST_DBAPI_ADMIN_CONNECTION to a file based URL as described in `this
+mailing list post`__. This file will be created but (confusingly) won't be the
+actual file used for the database. To find the actual file, set a break point
+in your test method and inspect self.engine.url.
+
+__ file-based-sqlite_
+
+.. code-block:: shell
+
+    $ OS_TEST_DBAPI_ADMIN_CONNECTION=sqlite:///sqlite.db .tox/py27/bin/python -m \
+        testtools.run neutron.tests.unit...
+    ...
+    (Pdb) self.engine.url
+    sqlite:////tmp/iwbgvhbshp.db
+
+Now, you can inspect this file using sqlite3.
+
+.. code-block:: shell
+
+    $ sqlite3 /tmp/iwbgvhbshp.db
+
 Functional Tests
 ~~~~~~~~~~~~~~~~
 
@@ -637,3 +659,4 @@ References
 
 .. [#pudb] PUDB debugger:
    https://pypi.python.org/pypi/pudb
+.. _file-based-sqlite: http://lists.openstack.org/pipermail/openstack-dev/2016-July/099861.html
