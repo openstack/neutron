@@ -30,7 +30,7 @@ from neutron.tests.unit import testlib_api
 class PecanFunctionalTest(testlib_api.SqlTestCase):
 
     def setUp(self, service_plugins=None, extensions=None):
-        self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
+        self.setup_coreplugin('ml2')
         super(PecanFunctionalTest, self).setUp()
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.addCleanup(set_config, {}, overwrite=True)

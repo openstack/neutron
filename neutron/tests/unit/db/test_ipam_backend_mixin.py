@@ -260,5 +260,4 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
 class TestPortUpdateIpamML2(TestPortUpdateIpam):
     def setUp(self):
-        super(TestPortUpdateIpamML2, self).setUp(
-            plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
+        super(TestPortUpdateIpamML2, self).setUp(plugin='ml2')

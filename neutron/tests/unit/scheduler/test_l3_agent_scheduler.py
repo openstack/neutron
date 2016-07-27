@@ -863,8 +863,7 @@ class L3DvrScheduler(l3_db.L3_NAT_db_mixin,
 class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
-        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        self.setup_coreplugin(plugin)
+        self.setup_coreplugin('ml2')
         super(L3DvrSchedulerTestCase, self).setUp()
         self.adminContext = n_context.get_admin_context()
         self.dut = L3DvrScheduler()
@@ -1418,7 +1417,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         mock.patch('neutron.common.rpc.get_client').start()
         self.plugin = L3HAPlugin()
 
-        self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
+        self.setup_coreplugin('ml2')
         cfg.CONF.set_override('service_plugins',
                               ['neutron.services.l3_router.'
                               'l3_router_plugin.L3RouterPlugin'])
@@ -1849,7 +1848,7 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
     def setUp(self):
         super(TestGetL3AgentsWithAgentModeFilter, self).setUp()
         self.plugin = L3HAPlugin()
-        self.setup_coreplugin('neutron.plugins.ml2.plugin.Ml2Plugin')
+        self.setup_coreplugin('ml2')
         self.adminContext = n_context.get_admin_context()
         hosts = ['host_1', 'host_2', 'host_3', 'host_4', 'host_5']
         agent_modes = ['legacy', 'dvr_snat', 'dvr', 'fake_mode', 'legacy']

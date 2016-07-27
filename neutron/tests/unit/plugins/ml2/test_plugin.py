@@ -77,7 +77,7 @@ config.cfg.CONF.import_opt('network_vlan_ranges',
                            group='ml2_type_vlan')
 
 
-PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
+PLUGIN_NAME = 'ml2'
 
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 HOST = 'fake_host'

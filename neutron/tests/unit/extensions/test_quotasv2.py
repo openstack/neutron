@@ -54,7 +54,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         self.config_parse()
 
         # Update the plugin and extensions path
-        self.setup_coreplugin(TARGET_PLUGIN)
+        self.setup_coreplugin('ml2')
         quota.QUOTAS = quota.QuotaEngine()
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()

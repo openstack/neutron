@@ -42,8 +42,7 @@ class FakeL3Plugin(common_db_mixin.CommonDbMixin,
 class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
-        core_plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        super(L3DvrTestCase, self).setUp(plugin=core_plugin)
+        super(L3DvrTestCase, self).setUp(plugin='ml2')
         self.core_plugin = manager.NeutronManager.get_plugin()
         self.ctx = context.get_admin_context()
         self.mixin = FakeL3Plugin()

@@ -618,8 +618,7 @@ class DHCPAgentAZAwareWeightSchedulerTestCase(TestDhcpSchedulerBaseTestCase):
 
     def setUp(self):
         super(DHCPAgentAZAwareWeightSchedulerTestCase, self).setUp()
-        DB_PLUGIN_KLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
-        self.setup_coreplugin(DB_PLUGIN_KLASS)
+        self.setup_coreplugin('ml2')
         cfg.CONF.set_override("network_scheduler_driver",
             'neutron.scheduler.dhcp_agent_scheduler.AZAwareWeightScheduler')
         self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'

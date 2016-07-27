@@ -94,9 +94,8 @@ class TestAZAgentCase(AZTestCommon):
 
 class TestAZNetworkCase(AZTestCommon):
     def setUp(self):
-        plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         ext_mgr = AZExtensionManager()
-        super(TestAZNetworkCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super(TestAZNetworkCase, self).setUp(plugin='ml2', ext_mgr=ext_mgr)
 
     def test_availability_zones_in_create_response(self):
         with self.network() as net:

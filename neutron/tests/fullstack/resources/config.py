@@ -65,7 +65,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'lock_path': '$state_path/lock',
                 'api_paste_config': self._generate_api_paste(),
                 'policy_file': self._generate_policy_json(),
-                'core_plugin': 'neutron.plugins.ml2.plugin.Ml2Plugin',
+                'core_plugin': 'ml2',
                 'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
                 'debug': 'True',
